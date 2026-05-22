@@ -36,7 +36,10 @@ ENV VITE_API_URL=$VITE_API_URL
 # ¿Para qué? Optimización del caché de Docker — si el código cambia pero package.json
 #            y pnpm-lock.yaml no, la capa de `pnpm install` se reutiliza del caché.
 # ¿Impacto? Build hasta 5x más rápido en iteraciones sin cambios de dependencias.
-COPY package.json pnpm-lock.yaml ./
+#           pnpm-workspace.yaml contiene los build approvals (allowBuilds) requeridos
+#           por pnpm v11 para ejecutar install scripts de core-js y esbuild.
+#           Sin él, pnpm install --frozen-lockfile falla con ERR_PNPM_IGNORED_BUILDS.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # ¿Qué? Instala dependencias con --frozen-lockfile para builds reproducibles.
 # ¿Para qué? Garantizar que se usen exactamente las versiones del pnpm-lock.yaml.
