@@ -276,8 +276,8 @@ Estos plazos también se muestran en el panel de confirmación de envío exitoso
 | `fe/src/pages/ContactPage.tsx`                       | Nuevo        | Página completa del formulario de contacto          |
 | `fe/src/App.tsx`                                     | Modificado   | Import + `<Route path="/contacto">`                 |
 | `fe/src/pages/LandingPage.tsx`                       | Modificado   | Enlace "Contacto" en nav `aria-label="Aviso legal"` |
-| `_docs/requisitos/HUs/HU-011_formulario_contacto.md` | Nuevo        | Historia de usuario del formulario                  |
-| `_docs/requisitos/RFs/RF-013_formulario_contacto.md` | Este archivo | Requisitos funcionales                              |
+| `docs/requisitos/HUs/HU-011_formulario_contacto.md` | Nuevo        | Historia de usuario del formulario                  |
+| `docs/requisitos/RFs/RF-013_formulario_contacto.md` | Este archivo | Requisitos funcionales                              |
 
 ---
 

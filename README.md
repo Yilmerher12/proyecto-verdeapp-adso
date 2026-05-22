@@ -222,8 +222,8 @@ proyecto/
 ├── .gitignore                        # Archivos ignorados por git
 ├── docker-compose.yml                # PostgreSQL 17 para desarrollo
 ├── README.md                         # ← Este archivo
-├── _docs/                            # Documentación técnica
-├── _assets/                          # Recursos estáticos
+├── docs/                             # Documentación técnica
+├── assets/                           # Recursos estáticos
 ├── be/                               # Backend — FastAPI + Python
 │   ├── app/                          # Código fuente
 │   │   ├── main.py                   # Punto de entrada FastAPI
@@ -271,11 +271,11 @@ Para las reglas completas, ver [`.github/copilot-instructions.md`](.github/copil
 
 | Documento                                                                                    | Descripción                                              |
 | -------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| [`_docs/referencia-tecnica/architecture.md`](_docs/referencia-tecnica/architecture.md)       | Arquitectura general, flujos y decisiones técnicas       |
-| [`_docs/referencia-tecnica/api-endpoints.md`](_docs/referencia-tecnica/api-endpoints.md)     | Todos los endpoints con parámetros, respuestas y errores |
-| [`_docs/referencia-tecnica/database-schema.md`](_docs/referencia-tecnica/database-schema.md) | Esquema ER, tablas, columnas y migraciones               |
-| [`_docs/conceptos/owasp-top-10.md`](_docs/conceptos/owasp-top-10.md)                         | Implementación del OWASP Top 10 2021                     |
-| [`_docs/conceptos/accesibilidad-aria-wcag.md`](_docs/conceptos/accesibilidad-aria-wcag.md)   | Estándares ARIA/WCAG 2.1 AA aplicados                    |
+| [`docs/referencia-tecnica/architecture.md`](docs/referencia-tecnica/architecture.md)         | Arquitectura general, flujos y decisiones técnicas       |
+| [`docs/referencia-tecnica/api-endpoints.md`](docs/referencia-tecnica/api-endpoints.md)       | Todos los endpoints con parámetros, respuestas y errores |
+| [`docs/referencia-tecnica/database-schema.md`](docs/referencia-tecnica/database-schema.md)   | Esquema ER, tablas, columnas y migraciones               |
+| [`docs/conceptos/owasp-top-10.md`](docs/conceptos/owasp-top-10.md)                           | Implementación del OWASP Top 10 2021                     |
+| [`docs/conceptos/accesibilidad-aria-wcag.md`](docs/conceptos/accesibilidad-aria-wcag.md)     | Estándares ARIA/WCAG 2.1 AA aplicados                    |
 | [`.github/copilot-instructions.md`](.github/copilot-instructions.md)                         | Reglas y convenciones del proyecto                       |
 
 ---

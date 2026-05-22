@@ -147,7 +147,7 @@ docker compose version
 >
 > - `docker-compose.yml` — el archivo que orquesta todos los servicios
 > - `README.md` — documentación de arranque rápido
-> - `_docs/` — toda la documentación técnica del proyecto
+> - `docs/` — toda la documentación técnica del proyecto
 > - `be/` — el backend con FastAPI
 > - `fe/` — el frontend con React
 >
@@ -1594,7 +1594,7 @@ cd fe && pnpm dev
 
 ### 🎙️ Guión
 
-**[Pantalla: carpeta `_docs/` abierta + `be/app/main.py`]**
+**[Pantalla: carpeta `docs/` abierta + `be/app/main.py`]**
 
 > "Antes de cerrar, mostramos las mejoras más recientes para dejar trazabilidad técnica:
 >
@@ -1705,11 +1705,11 @@ cd be && source .venv/bin/activate && alembic upgrade head
 | 27    | `fe/src/components/ProtectedRoute.tsx`        | Rutas protegidas                          |
 | 28    | `fe/src/App.tsx`                              | Enrutamiento principal                    |
 | 29    | `fe/src/pages/*.tsx`                          | Páginas de la app                         |
-| 30    | `_docs/referencia-tecnica/architecture.md`    | Arquitectura actualizada                  |
-| 31    | `_docs/referencia-tecnica/api-endpoints.md`   | Catálogo completo de endpoints            |
-| 32    | `_docs/referencia-tecnica/database-schema.md` | Esquema y relaciones de BD                |
-| 33    | `_docs/conceptos/owasp-top-10.md`             | Mitigaciones de seguridad OWASP           |
-| 34    | `_docs/conceptos/accesibilidad-aria-wcag.md`  | Evidencia de accesibilidad frontend       |
+| 30    | `docs/referencia-tecnica/architecture.md`    | Arquitectura actualizada                  |
+| 31    | `docs/referencia-tecnica/api-endpoints.md`   | Catálogo completo de endpoints            |
+| 32    | `docs/referencia-tecnica/database-schema.md` | Esquema y relaciones de BD                |
+| 33    | `docs/conceptos/owasp-top-10.md`             | Mitigaciones de seguridad OWASP           |
+| 34    | `docs/conceptos/accesibilidad-aria-wcag.md`  | Evidencia de accesibilidad frontend       |
 
 
 implementación SSL

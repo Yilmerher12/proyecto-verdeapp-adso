@@ -37,7 +37,7 @@ El sistema aplica **10 patrones arquitectónicos y de diseño** de uso profesion
 
 ## Vista general del sistema
 
-![](../_assets/pa-01-overview.svg)
+![](../assets/pa-01-overview.svg)
 
 El sistema sigue una **arquitectura Cliente–Servidor** de tres capas lógicas:
 
@@ -51,7 +51,7 @@ La comunicación entre frontend y backend es exclusivamente **HTTP + JSON**. Los
 
 ## Patrón 1 — Arquitectura en Capas
 
-![](../_assets/pa-02-backend-layers.svg)
+![](../assets/pa-02-backend-layers.svg)
 
 ### ¿Qué es?
 
@@ -100,7 +100,7 @@ Un cambio en la base de datos **no afecta** el router. Un cambio en el router **
 
 ## Patrón 2 — DTO (Data Transfer Object)
 
-![](../_assets/pa-04-dto-pattern.svg)
+![](../assets/pa-04-dto-pattern.svg)
 
 ### ¿Qué es?
 
@@ -197,7 +197,7 @@ app.dependency_overrides[get_db] = override_get_db  # BD de test en memoria
 
 ## Patrón 4 — JWT Stateless
 
-![](../_assets/pa-03-jwt-flow.svg)
+![](../assets/pa-03-jwt-flow.svg)
 
 ### ¿Qué es?
 
@@ -234,7 +234,7 @@ El backend puede escalar a múltiples instancias sin compartir estado de sesión
 
 ## Patrones 5, 6, 7 y 8 — Frontend React
 
-![](../_assets/pa-05-react-patterns.svg)
+![](../assets/pa-05-react-patterns.svg)
 
 ---
 

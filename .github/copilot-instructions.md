@@ -327,12 +327,12 @@ proyecto/                          # Raíz del monorepo
 ├── docker-compose.yml             # Servicios: PostgreSQL
 ├── README.md                      # Documentación principal del proyecto
 │
-├── _docs/                         # 📚 Documentación del proyecto
+├── docs/                          # 📚 Documentación del proyecto
 │   ├── architecture.md            # Arquitectura general y diagramas
 │   ├── api-endpoints.md           # Documentación de todos los endpoints
 │   └── database-schema.md         # Esquema de base de datos y ER diagram
 │
-├── _assets/                       # 🖼️ Recursos estáticos (imágenes, diagramas)
+├── assets/                        # 🖼️ Recursos estáticos (imágenes, diagramas)
 │
 ├── be/                            # 🐍 Backend — FastAPI
 │   ├── .env                       # Variables de entorno (NO versionado)
@@ -973,14 +973,14 @@ Este proyecto pertenece a una **serie educativa** de múltiples repos que implem
 el mismo sistema con stacks backend diferentes. Cada proyecto tiene un color de acento
 único asignado a su stack:
 
-| Stack              | Proyecto              | Color Tailwind | Rol en la serie    |
-|--------------------|-----------------------|----------------|--------------------|
-| **FastAPI (Python)** | `proyecto-be-fe`    | **`emerald`**  | **← ESTE PROYECTO** |
-| Express.js (Node)  | `proyecto-beex-fe`    | `blue`         | referencia         |
-| Next.js fullstack  | `proyecto-be-fe-next` | `violet`       |                    |
-| Spring Boot Java   | `proyecto-besb-fe`    | `amber`        |                    |
-| Spring Boot Kotlin | `proyecto-besbk-fe`   | `fuchsia`      |                    |
-| Go REST API        | `proyecto-bego-fe`    | `cyan`         |                    |
+| Stack                | Proyecto              | Color Tailwind | Rol en la serie     |
+| -------------------- | --------------------- | -------------- | ------------------- |
+| **FastAPI (Python)** | `proyecto-be-fe`      | **`emerald`**  | **← ESTE PROYECTO** |
+| Express.js (Node)    | `proyecto-beex-fe`    | `blue`         | referencia          |
+| Next.js fullstack    | `proyecto-be-fe-next` | `violet`       |                     |
+| Spring Boot Java     | `proyecto-besb-fe`    | `amber`        |                     |
+| Spring Boot Kotlin   | `proyecto-besbk-fe`   | `fuchsia`      |                     |
+| Go REST API          | `proyecto-bego-fe`    | `cyan`         |                     |
 
 #### Regla fundamental: usar `accent-*`, nunca colores concretos
 
@@ -1010,18 +1010,18 @@ para elementos de marca o interacción primaria. **SIEMPRE** usar el token `acce
 ```
 
 **Clonar el tema** = cambiar 11 líneas en `index.css` + 2 valores SVG en el logo.
-Ver `_docs/referencia-tecnica/design-system.md` para instrucciones completas.
+Ver `docs/referencia-tecnica/design-system.md` para instrucciones completas.
 
 #### Colores semánticos — NO cambian entre proyectos
 
 Los colores de estado son fijos independientemente del stack. **No reemplazar con `accent-`**:
 
-| Estado      | Color   | Ejemplo de uso              |
-|-------------|---------|---------------------------  |
-| Éxito       | `green` | Alert type="success"        |
-| Error       | `red`   | Alert type="error", inputs inválidos |
-| Información | `blue`  | Alert type="info", avisos informativos |
-| Advertencia | `yellow`| Avisos no críticos          |
+| Estado      | Color    | Ejemplo de uso                         |
+| ----------- | -------- | -------------------------------------- |
+| Éxito       | `green`  | Alert type="success"                   |
+| Error       | `red`    | Alert type="error", inputs inválidos   |
+| Información | `blue`   | Alert type="info", avisos informativos |
+| Advertencia | `yellow` | Avisos no críticos                     |
 
 ```typescript
 // ✅ CORRECTO — info SIEMPRE azul aunque el proyecto sea emerald/violet/amber
@@ -1131,9 +1131,9 @@ Los colores de estado son fijos independientemente del stack. **No reemplazar co
 
 ### Fase 8 — Documentación Final
 
-- [ ] Crear `_docs/architecture.md` — arquitectura y diagramas
-- [ ] Crear `_docs/api-endpoints.md` — documentación de endpoints
-- [ ] Crear `_docs/database-schema.md` — esquema ER
+- [ ] Crear `docs/architecture.md` — arquitectura y diagramas
+- [ ] Crear `docs/api-endpoints.md` — documentación de endpoints
+- [ ] Crear `docs/database-schema.md` — esquema ER
 - [ ] Actualizar `README.md` con instrucciones finales
 - [x] Crear `HU-009` — Historia de usuario: landing page pública
 - [x] Crear `RF-011` — Requisito funcional: landing page pública

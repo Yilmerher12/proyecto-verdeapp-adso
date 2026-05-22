@@ -49,7 +49,7 @@ El cuerpo (`For:` / `Impact:`) puede estar en inglés o español.
 | `test`     | Tests                                       |
 | `deps`     | Dependencias (actualización, pinning, CVEs) |
 | `i18n`     | Internacionalización y traducciones         |
-| `docs`     | Documentación (README, \_docs/)             |
+| `docs`     | Documentación (README, docs/)               |
 | `security` | Correcciones de seguridad                   |
 
 ## Ejemplos del proyecto
