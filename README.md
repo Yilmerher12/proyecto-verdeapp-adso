@@ -1,326 +1,220 @@
-# 🔐 NN Auth System
+# ♻️ Verde App — Sistema de Gestión de Residuos
 
-<!--
-  ¿Qué? Documentación principal del proyecto NN Auth System.
-  ¿Para qué? Guiar a cualquier desarrollador o aprendiz para entender, configurar y ejecutar el proyecto.
-  ¿Impacto? Sin este README, los nuevos colaboradores no sabrían cómo levantar el proyecto
-  ni entenderían su propósito, arquitectura o convenciones.
--->
+> **Proyecto de Formación Titulada** — SENA ADSO | Año 2026
+> **Versión:** `v1.0.0-dev` (Fase de Desarrollo)
+> **Estado de Acreditación Académica:** Sincronizado con los criterios de evaluación del trimestre.
 
-> **Proyecto educativo** — SENA | Febrero 2026
-
-Sistema de autenticación completo para una empresa genérica **"NN"**, diseñado como ejercicio formativo.
-Incluye landing page pública, registro de usuarios, login, cambio de contraseña y recuperación por email.
+**Verde App** es una plataforma tecnológica e integral (Full Stack) diseñada para incentivar, coordinar y optimizar la separación de residuos en la fuente dentro de los conjuntos residenciales de Bogotá. El sistema actúa como un canal de comunicación directo y seguro entre los residentes locales y los recicladores de oficio oficiales de cada zona, permitiendo mitigar el impacto ambiental y formalizar los flujos de recolección selectiva en la ciudad.
 
 ---
 
-## 📋 Tabla de Contenidos
+## 👥 Integrantes del Proyecto (Grupo de Trabajo)
 
-- [🔐 NN Auth System](#-nn-auth-system)
-  - [📋 Tabla de Contenidos](#-tabla-de-contenidos)
-  - [🛠️ Stack Tecnológico](#️-stack-tecnológico)
-  - [✅ Prerrequisitos](#-prerrequisitos)
-    - [Instalar pnpm (si no lo tienes)](#instalar-pnpm-si-no-lo-tienes)
-  - [🚀 Instalación y Setup](#-instalación-y-setup)
-    - [1. Clonar el repositorio](#1-clonar-el-repositorio)
-    - [2. Levantar la base de datos](#2-levantar-la-base-de-datos)
-    - [3. Configurar el Backend](#3-configurar-el-backend)
-    - [4. Configurar el Frontend](#4-configurar-el-frontend)
-  - [▶️ Ejecución](#️-ejecución)
-    - [Levantar todo el sistema (3 terminales)](#levantar-todo-el-sistema-3-terminales)
-  - [🧪 Testing](#-testing)
-    - [Backend](#backend)
-    - [Frontend](#frontend)
-    - [Linting](#linting)
-  - [📁 Estructura del Proyecto](#-estructura-del-proyecto)
-  - [📏 Convenciones](#-convenciones)
-  - [📚 Documentación Adicional](#-documentación-adicional)
-  - [🎓 Propósito Educativo](#-propósito-educativo)
-  - [⚠️ Exención de Responsabilidades](#️-exención-de-responsabilidades)
-  - [📄 Licencia](#-licencia)
+* **Yilmer Hernández Camargo** — Aprendiz ADSO (Desarrollador Full Stack / Core Backend)
+* **Juan Barajas** — Aprendiz ADSO (Desarrollador Frontend / UI Designer)
+* **Eisin Yordan Castro** — Aprendiz ADSO (Especialista en Bases de Datos / QA)
+* **Jose Guerrero** — Aprendiz ADSO (Documentador Técnico / Analista de Requisitos)
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 📋 Arquitectura y Modularidad del Repositorio
 
-| Capa              | Tecnologías                                         |
-| ----------------- | --------------------------------------------------- |
-| **Backend**       | Python 3.12+, FastAPI, SQLAlchemy 2.0, Alembic, JWT |
-| **Frontend**      | React 18+, Vite, TypeScript, TailwindCSS 4+         |
-| **Base de datos** | PostgreSQL 17+ (Docker Compose)                     |
-| **Email (dev)**   | Mailpit — captura SMTP local, UI en puerto 8025     |
-| **Testing**       | pytest + httpx (BE), Vitest + Testing Library (FE)  |
-| **Linting**       | ruff (Python), ESLint + Prettier (TypeScript)       |
+El proyecto utiliza una estructura de arquitectura limpia y desacoplada, facilitando que cualquier desarrollador o instructor pueda entender e implementar el ecosistema completo sin configuraciones complejas:
+
+* **`be/` (Backend):** API REST robusta construida sobre Python y FastAPI. Administra la lógica de negocio modular, la seguridad criptográfica, autenticación mediante tokens mutables y el mapeo objeto-relacional (ORM).
+* **`fe/` (Frontend):** Aplicación de una sola página (SPA) interactiva y de alta fidelidad visual (Estilo Figma) desarrollada en React con tipado estricto en TypeScript y componentes estilizados mediante utilidades de TailwindCSS.
+* **`docs/` (Documentación Técnica):** Contiene los artefactos del ciclo de vida del software, incluyendo especificaciones de Requisitos Funcionales (RF), Esquema de Entidad-Relación de la Base de Datos, y configuraciones de despliegue.
 
 ---
 
-## ✅ Prerrequisitos
+## 🛠️ Stack Tecnológico y Control de Versiones
 
-Antes de comenzar, asegúrate de tener instalado:
+| Capa / Componente  | Elemento Tecnológico    | Versión de Referencia | Impacto Operativo                                                                 |
+| :----------------- | :---------------------- | :-------------------- | :-------------------------------------------------------------------------------- |
+| Backend Core       | Python & FastAPI        | 3.12-slim / 0.110+    | Ejecución asíncrona de alto rendimiento para endpoints corporativos.              |
+| Persistencia / ORM | PostgreSQL & SQLAlchemy | 17-alpine / 2.0+      | Motor relacional robusto con consultas tipadas y transacciones atómicas.          |
+| Control de BD      | Alembic Migrations      | 1.13+                 | Control de versiones del esquema de la base de datos sin pérdida de datos.        |
+| Seguridad          | JWT & bcrypt            | 0.2.0 / 4.1+          | Cifrado de contraseñas en Hash y tokens de sesión con claims de roles inyectados. |
+| Frontend Core      | React & TypeScript      | 18.3 / 5.4+           | Interfaz reactiva basada en componentes modulares y tipado seguro.                |
+| Estilos UI         | TailwindCSS             | 4.0-beta+             | Paradigma Utility-First para diseño adaptivo y consistente con Figma.             |
+| Gestor de Paquetes | pnpm (Corepack)         | 11.0.9                | Resolución eficiente de dependencias mediante almacenamiento enlazado.            |
+| Infraestructura    | Docker & Docker Compose | 24+ / 2.20+           | Contenedores herméticos que aseguran el funcionamiento idéntico en cualquier PC.  |
+| Servidor Web FE    | Nginx                   | 1.27-alpine           | Servidor de alto rendimiento para la distribución de los estáticos del Frontend.  |
+| Servidor SMTP Dev  | Mailpit                 | 1.15+                 | Captura local de correos (activación de cuentas) en el puerto 8025.               |
 
-| Herramienta        | Versión mínima | Verificar con            |
-| ------------------ | -------------- | ------------------------ |
-| **Python**         | 3.12+          | `python3 --version`      |
-| **Node.js**        | 20 LTS+        | `node --version`         |
-| **pnpm**           | 9+             | `pnpm --version`         |
-| **Docker**         | 24+            | `docker --version`       |
-| **Docker Compose** | 2.20+          | `docker compose version` |
-| **Git**            | 2.40+          | `git --version`          |
+---
 
-> ⚠️ **Importante**: Usar **pnpm** como gestor de paquetes de Node.js. **Nunca usar npm ni yarn.**
+## ✅ Prerrequisitos del Sistema
 
-> 🖥️ **Usuarios de Windows — leer antes de continuar**
-> Todos los comandos de este proyecto usan sintaxis Bash (`source`, `export`, `/`, etc.).
-> Usa siempre **Git Bash** como terminal — viene incluido al instalar
-> [Git para Windows](https://git-scm.com/download/win).
-> **No uses CMD ni PowerShell** — los comandos no funcionarán igual.
+Para garantizar que el proyecto se ejecute de forma inmediata en cualquier máquina (Windows, macOS o Linux), se asegura contar con:
 
-### Instalar pnpm (si no lo tienes)
+* Docker Desktop (Esencial para la inicialización automática de servicios).
+* Node.js (Versión 20 LTS o superior).
+* pnpm (Habilitado globalmente mediante `corepack enable`).
+* Git Bash (Requerido estrictamente en sistemas Windows para la ejecución nativa de scripts y comandos de consola).
+
+---
+
+## 🚀 Guías de Ejecución (Portabilidad Total)
+
+El entorno soporta dos métodos de inicialización dependiendo de los objetivos de la sesión de trabajo:
+
+### Método A: Inicialización Total Automatizada (Modo Sustentación / Demo)
+
+Ideal para desplegar toda la aplicación con un solo comando sin necesidad de configurar lenguajes locales. Docker se encargará de compilar el Frontend, levantar el Backend, estructurar PostgreSQL y encender Mailpit.
 
 ```bash
-# Opción recomendada — vía corepack (incluido con Node.js 16+)
-corepack enable
-corepack prepare pnpm@latest --activate
+# 1. Clonar el repositorio oficial
+git clone https://github.com/Yilmerher12/proyecto-verdeapp-adso.git
+cd verde-app
 
-# Alternativa — instalación independiente
-curl -fsSL https://get.pnpm.io/install.sh | sh -
-```
+# 2. Construir y encender todos los servicios en segundo plano
+docker compose up -d --build
 
----
-
-## 🚀 Instalación y Setup
-
-### 1. Clonar el repositorio
-
-```bash
-git clone <url-del-repositorio>
-cd proyecto
-```
-
-### 2. Levantar la base de datos
-
-```bash
-# Inicia PostgreSQL 17 + Mailpit (captura de emails) en contenedores Docker
-docker compose up -d
-
-# Verificar que están corriendo
+# 3. Validar el estado de salud de los contenedores
 docker compose ps
-# Deberías ver nn_auth_db y nn_auth_mailpit con estado "healthy"
 ```
 
-### 3. Configurar el Backend
+**Frontend Web:** http://localhost:3000 (Servido por Nginx).
+**Backend API:** http://localhost:8000/docs (Documentación interactiva Swagger).
+**Buzón de Correos Local:** http://localhost:8025 (Panel de Mailpit para verificar tokens de registro).
+
+### Método B: Entorno de Desarrollo Local (Modo Programación / Hot-Reload)
+
+Recomendado para realizar modificaciones en tiempo real en el código fuente con recarga inmediata en el navegador.
+
+#### 1. Infraestructura Base (Base de Datos y Servidor de Correo)
+
+Deje corriendo únicamente los motores de soporte en Docker:
+
+```bash
+# Apagar servicios completos si están activos
+docker compose down
+
+# Levantar exclusivamente PostgreSQL y Mailpit
+docker compose up -d db mailpit
+```
+
+#### 2. Configuración y Lanzamiento del Backend (be/)
+
+Abra una terminal Git Bash y configure el servidor FastAPI:
 
 ```bash
 cd be
 
-# Crear entorno virtual de Python
-python3 -m venv .venv
+# Crear y activar el entorno virtual de Python
+python -m venv .venv
+source .venv/bin/activate
 
-# Activar el entorno virtual
-source .venv/bin/activate          # Linux/macOS y Windows (Git Bash) ← usar siempre
-# source .venv/Scripts/activate    # Windows (Git Bash — ruta alternativa si la anterior falla)
-
-# Instalar dependencias
+# Instalar dependencias del archivo de requisitos
 pip install -r requirements.txt
 
-# Copiar y configurar variables de entorno
+# Inicializar variables de entorno base
 cp .env.example .env
-# Editar .env con tus valores si es necesario
 
-# Ejecutar migraciones de base de datos
+# Sincronizar PostgreSQL con el historial de migraciones de Alembic
 alembic upgrade head
+
+# Iniciar el servidor Uvicorn con escucha de cambios activa
+uvicorn app.main:app --reload --port 8000
 ```
 
-### 4. Configurar el Frontend
+#### 3. Configuración y Lanzamiento del Frontend (fe/)
+
+Abra una segunda terminal y active la interfaz de desarrollo de Vite:
 
 ```bash
 cd fe
 
-# Instalar dependencias con pnpm (¡NUNCA con npm!)
+# Instalar las dependencias bloqueadas de forma segura con pnpm
 pnpm install
 
-# Copiar y configurar variables de entorno
+# Copiar configuración de variables de entorno
 cp .env.example .env
+
+# Lanzar el servidor de desarrollo local
+pnpm dev
 ```
 
+En este modo, el Frontend de desarrollo estará disponible en:
+
+`http://localhost:5173`
+
 ---
 
-## ▶️ Ejecución
+## 📁 Estructura Detallada del Proyecto
 
-### Levantar todo el sistema (3 terminales)
+## 📁 Estructura Detallada del Proyecto
 
-```bash
-# Terminal 1 — Base de datos (si no está corriendo)
-docker compose up -d
+A continuación se detalla la organización exacta del monorepositorio alojado en GitHub. Cabe destacar que, por seguridad y rendimiento, los archivos de entorno (`.env`), módulos de Node (`node_modules`) y entornos virtuales de Python (`.venv`) están excluidos mediante el `.gitignore`.
 
-# Terminal 2 — Backend (FastAPI)
-cd be && source .venv/bin/activate
-uvicorn app.main:app --reload
-# → API disponible en http://localhost:8000
-# → Swagger UI en http://localhost:8000/docs  (solo si ENVIRONMENT=development, que es el default)
-
-# Terminal 3 — Frontend (React + Vite)
-cd fe && pnpm dev
-# → Landing page en http://localhost:5173
-# → App disponible en http://localhost:5173
+```plaintext
+verde-app/
+├── .github/                 # Configuraciones del repositorio y flujos de trabajo
+├── .vscode/                 # Configuraciones de interfaz y entorno para VS Code
+├── assets/                  # Diagramas SVG y recursos gráficos de la arquitectura
+├── scripts/                 # Utilidades Bash (start.sh, stop.sh) para automatizar contenedores
+├── be/                      # Backend (Python + FastAPI)
+│   ├── alembic/             # Control de versiones e historial de migraciones de BD
+│   ├── app/                 # Código fuente principal de la API
+│   │   ├── models/          # Entidades e imperativos relacionales de SQLAlchemy
+│   │   ├── routers/         # Controladores de endpoints divididos por recursos
+│   │   ├── schemas/         # Modelos de validación estricta de Pydantic (DTOs)
+│   │   ├── services/        # Lógica de negocio pura encapsulada
+│   │   ├── tests/           # Entorno de pruebas automatizadas (pytest)
+│   │   ├── utils/           # Helpers de infraestructura (Seguridad, utilidades)
+│   │   ├── database.py      # Configuración de la sesión y conexión con la BD
+│   │   ├── dependencies.py  # Inyección de dependencias (Autenticación, Sesión DB)
+│   │   └── main.py          # Punto de entrada y configuración central de FastAPI
+│   ├── .env.example         # Plantilla de variables de entorno (Sin datos sensibles)
+│   ├── alembic.ini          # Archivo de configuración del gestor de migraciones
+│   ├── Dockerfile           # Instrucciones de empaquetado para la imagen Docker
+│   └── requirements.txt     # Manifiesto estricto de paquetes y dependencias
+├── fe/                      # Frontend (React + TypeScript + Vite)
+│   ├── src/                 # Código fuente de la interfaz
+│   │   ├── __tests__/       # Entorno de pruebas del Frontend
+│   │   ├── api/             # Instancias y configuraciones de clientes Axios/Fetch
+│   │   ├── components/      # Componentes UI reutilizables (Botones, Formularios)
+│   │   ├── context/         # Proveedores de estado global (Context API)
+│   │   ├── hooks/           # Ganchos personalizados (Lógica reutilizable)
+│   │   ├── locales/         # Archivos de internacionalización
+│   │   ├── pages/           # Vistas principales de la aplicación
+│   │   └── types/           # Definiciones estrictas de interfaces TypeScript
+│   ├── .env.example         # Plantilla de variables de entorno del Frontend
+│   ├── Dockerfile           # Instrucciones de empaquetado para la imagen Docker
+│   ├── nginx.conf           # Configuración del servidor Nginx para despliegue
+│   ├── package.json         # Manifiesto de dependencias y scripts de Node.js
+│   ├── pnpm-lock.yaml       # Árbol de dependencias bloqueado (Instalaciones exactas)
+│   └── vite.config.ts       # Configuración del empaquetador Vite
+├── .gitignore               # Reglas de exclusión de Git (Ignora credenciales y cachés)
+├── docker-compose.yml       # Archivo maestro de orquestación de contenedores Docker
+├── init_db.sql              # Script SQL de arranque para la creación de PostgreSQL
+├── LICENSE                  # Licencia del proyecto (CC BY-NC-SA 4.0)
+└── README.md                # Documento principal de presentación y guía (Este archivo)
 ```
 
-> 📧 **Mailpit** — bandeja de entrada de emails de desarrollo: `http://localhost:8025`
-> Aquí se capturan los emails de verificación de cuenta y recuperación de contraseña.
+## 📏 Convenciones del Equipo de Desarrollo
+
+### Código Limpio e Idioma Homogéneo
+
+Toda la lógica de persistencia, nombres de variables, funciones, rutas de endpoints y nombres de tablas en PostgreSQL se escriben estrictamente en inglés, manteniendo consistencia con los estándares internacionales de desarrollo de software **(actualmente este proceso de estandarización aún se encuentra en implementación y parte del proyecto conserva nomenclatura provisional mientras avanza el desarrollo).**
+
+### Documentación Estructural Obligatoria
+
+Los bloques funcionales y métodos de negocio del backend y frontend deben incorporar comentarios bajo el estándar pedagógico de responder de manera explícita:
+
+* **¿Qué hace?**: Propósito inmediato del bloque de código.
+* **¿Para qué sirve?**: Justificación de su existencia en la regla de negocio.
+* **¿Impacto técnico?**: Comportamiento en memoria, base de datos o UI.
+
+NOTA: **(actualmente este proceso de documentacion aún se encuentra en implementación y parte del proyecto no esta 100% documentado).**
+
+### Gobernanza del Gestor de Paquetes
+
+Queda estrictamente restringido el uso de npm o yarn en el directorio frontend. Toda adición de bibliotecas debe ejecutarse a través de pnpm para salvaguardar la integridad estructural del archivo `pnpm-lock.yaml`.
 
 ---
 
-## 🧪 Testing
+## 🎓 Contexto Formativo
 
-### Backend
-
-```bash
-cd be && source .venv/bin/activate
-
-# Ejecutar todos los tests
-pytest -v
-
-# Ejecutar con cobertura
-pytest --cov=app --cov-report=term-missing
-
-# Ejecutar un test específico
-pytest app/tests/test_auth.py -v
-```
-
-### Frontend
-
-```bash
-cd fe
-
-# Ejecutar todos los tests
-pnpm test
-
-# Ejecutar en modo watch
-pnpm test:watch
-
-# Ejecutar con cobertura
-pnpm test:coverage
-```
-
-### Linting
-
-```bash
-# Backend
-cd be && ruff check app/ && ruff format app/
-
-# Frontend
-cd fe && pnpm lint && pnpm format
-```
-
----
-
-## 📁 Estructura del Proyecto
-
-```
-proyecto/
-├── .github/copilot-instructions.md   # Reglas y convenciones del proyecto
-├── .gitignore                        # Archivos ignorados por git
-├── docker-compose.yml                # PostgreSQL 17 para desarrollo
-├── README.md                         # ← Este archivo
-├── docs/                             # Documentación técnica
-├── assets/                           # Recursos estáticos
-├── be/                               # Backend — FastAPI + Python
-│   ├── app/                          # Código fuente
-│   │   ├── main.py                   # Punto de entrada FastAPI
-│   │   ├── config.py                 # Configuración (Pydantic Settings)
-│   │   ├── database.py               # Conexión a PostgreSQL
-│   │   ├── models/                   # Modelos ORM (User, PasswordResetToken, EmailVerificationToken)
-│   │   ├── schemas/                  # Schemas Pydantic (request/response)
-│   │   ├── routers/                  # Endpoints (auth, users)
-│   │   ├── services/                 # Lógica de negocio
-│   │   ├── utils/                    # Utilidades (security, email)
-│   │   └── tests/                    # Tests con pytest
-│   ├── alembic/                      # Migraciones de BD
-│   └── requirements.txt              # Dependencias Python
-└── fe/                               # Frontend — React + Vite + TypeScript
-    ├── src/
-    │   ├── api/                      # Clientes HTTP
-    │   ├── components/               # Componentes reutilizables
-    │   ├── pages/                    # Páginas/vistas (Landing, Login, Register, Dashboard…)
-    │   ├── hooks/                    # Custom hooks
-    │   ├── context/                  # Context providers
-    │   └── types/                    # Tipos TypeScript
-    ├── package.json                  # Dependencias (pnpm)
-    └── vite.config.ts                # Configuración de Vite
-```
-
----
-
-## 📏 Convenciones
-
-| Aspecto              | Regla                                            |
-| -------------------- | ------------------------------------------------ |
-| Nomenclatura técnica | Inglés (variables, funciones, clases, endpoints) |
-| Comentarios/docs     | Español (con ¿Qué? ¿Para qué? ¿Impacto?)         |
-| Commits              | Conventional Commits en inglés + What/For/Impact |
-| Python               | PEP 8 + type hints obligatorios + ruff           |
-| TypeScript           | strict mode + ESLint + Prettier                  |
-| Gestor de paquetes   | `venv` (Python), `pnpm` (Node.js)                |
-| Testing              | Código generado = código probado                 |
-
-Para las reglas completas, ver [`.github/copilot-instructions.md`](.github/copilot-instructions.md).
-
----
-
-## 📚 Documentación Adicional
-
-| Documento                                                                                    | Descripción                                              |
-| -------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| [`docs/referencia-tecnica/architecture.md`](docs/referencia-tecnica/architecture.md)         | Arquitectura general, flujos y decisiones técnicas       |
-| [`docs/referencia-tecnica/api-endpoints.md`](docs/referencia-tecnica/api-endpoints.md)       | Todos los endpoints con parámetros, respuestas y errores |
-| [`docs/referencia-tecnica/database-schema.md`](docs/referencia-tecnica/database-schema.md)   | Esquema ER, tablas, columnas y migraciones               |
-| [`docs/conceptos/owasp-top-10.md`](docs/conceptos/owasp-top-10.md)                           | Implementación del OWASP Top 10 2021                     |
-| [`docs/conceptos/accesibilidad-aria-wcag.md`](docs/conceptos/accesibilidad-aria-wcag.md)     | Estándares ARIA/WCAG 2.1 AA aplicados                    |
-| [`.github/copilot-instructions.md`](.github/copilot-instructions.md)                         | Reglas y convenciones del proyecto                       |
-
----
-
-## 🎓 Propósito Educativo
-
-Este proyecto está diseñado para **aprender haciendo**. Cada archivo, función y componente incluye comentarios pedagógicos que explican:
-
-- **¿Qué?** — Qué hace este código
-- **¿Para qué?** — Por qué existe y cuál es su propósito
-- **¿Impacto?** — Qué pasa si no existiera o si se implementa mal
-
-> _"La calidad no es una opción, es una obligación."_
-
----
-
-## ⚠️ Exención de Responsabilidades
-
-Este proyecto es de naturaleza **exclusivamente educativa**, desarrollado como ejercicio formativo en el marco del SENA.
-
-- **No apto para producción** — El sistema no ha sido auditado ni endurecido para entornos productivos reales. No debe usarse para proteger datos sensibles de usuarios reales sin una revisión de seguridad profesional previa.
-- **Credenciales de ejemplo** — Las contraseñas, claves secretas y cadenas de conexión presentes en `.env.example` y en la documentación son únicamente ilustrativas. **Nunca usarlas en producción.**
-- **Sin garantía de disponibilidad** — El proyecto puede contener bugs o comportamientos no documentados propios de un entorno de aprendizaje.
-- **Uso de terceros** — El proyecto referencia servicios externos (Resend, Neon, Supabase, Railway) como ejemplos pedagógicos. El autor no tiene afiliación con dichos servicios ni garantiza su disponibilidad o condiciones de uso.
-- **Responsabilidad del aprendiz** — Cada aprendiz es responsable de comprender el código que ejecuta en su equipo y de no reutilizarlo sin entenderlo completamente.
-
-> Este material se provee **"tal cual"**, sin garantías explícitas ni implícitas de ningún tipo.
-
----
-
-## 📄 Licencia
-
-[![CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-
-Este proyecto está licenciado bajo **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**.
-
-**Puedes:**
-
-- ✅ Compartir — copiar y redistribuir el material en cualquier medio o formato
-- ✅ Adaptar — remezclar, transformar y crear a partir del material (forks educativos permitidos)
-
-**Bajo las siguientes condiciones:**
-
-- 📝 **Atribución** — Debes dar crédito apropiado, enlazar la licencia e indicar si se realizaron cambios.
-- 🚫 **No Comercial** — No puedes usar el material con fines comerciales.
-- 🔄 **Compartir Igual** — Si remezclas o transformas el material, debes distribuir tus contribuciones bajo la misma licencia.
-
-Consulta el archivo [LICENSE](./LICENSE) o visita [creativecommons.org/licenses/by-nc-sa/4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) para más información.
+Este software se desarrolla bajo la metodología activa de "Apropiación de Conocimiento Mediante Proyectos" en cumplimiento con las fases de análisis, diseño y desarrollo del programa de formación tecnológica ADSO del SENA. Su distribución tiene fines netamente pedagógicos, ilustrativos y demostrativos para el portafolio de evidencias del equipo de trabajo.
