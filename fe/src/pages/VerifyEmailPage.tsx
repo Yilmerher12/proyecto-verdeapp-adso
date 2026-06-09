@@ -3,79 +3,55 @@
  * Descripción: Página de verificación de email — procesa el token del enlace enviado al registrarse.
  * ¿Para qué? Capturar el token UUID de la URL (?token=...), llamar al backend y mostrar el resultado.
  * ¿Impacto? Sin esta página, el enlace del email de verificación lleva a un 404 y el usuario
- *           nunca puede activar su cuenta ni iniciar sesión.
+ * nunca puede activar su cuenta ni iniciar sesión.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { verifyEmail } from "@/api/auth";
 
-// ¿Qué? Estados posibles de la verificación.
-// ¿Para qué? Controlar qué se muestra en pantalla según el resultado del proceso.
-// ¿Impacto? Permite dar feedback claro al usuario: cargando, éxito o error.
 type VerifyStatus = "loading" | "success" | "error";
 
-/**
- * ¿Qué? Página que verifica el email del usuario al visitar el enlace del correo de registro.
- * ¿Para qué? Activar la cuenta del usuario llamando a POST /api/v1/auth/verify-email.
- * ¿Impacto? Tras la verificación exitosa, el usuario puede iniciar sesión normalmente.
- */
 export function VerifyEmailPage() {
-  // ¿Qué? Hook para leer los query params de la URL (ej: ?token=uuid).
-  // ¿Para qué? Extraer el token UUID que viene en el enlace del email de verificación.
-  // ¿Impacto? Si no hay token en la URL, mostramos error inmediatamente.
   const [searchParams] = useSearchParams();
+  const tokenFromUrl = searchParams.get("token");
 
-  const [status, setStatus] = useState<VerifyStatus>("loading");
-  const [message, setMessage] = useState<string>("");
+  // 🛠️ OPTIMIZACIÓN: Evaluamos el token en el nacimiento del estado para evitar renders en cascada
+  const [status, setStatus] = useState<VerifyStatus>(tokenFromUrl ? "loading" : "error");
+  const [message, setMessage] = useState<string>(
+    tokenFromUrl ? "" : "El enlace de verificación no es válido. No se encontró un token."
+  );
 
-  // ¿Qué? Ref para evitar que useEffect llame a la API dos veces en React StrictMode.
-  // ¿Para qué? En desarrollo, React monta, desmonta y vuelve a montar los componentes —
-  //           sin este ref, el token se usaría dos veces y la segunda llamada fallaría.
-  // ¿Impacto? Previene un 400 "token ya usado" inmediatamente después del primer intento exitoso.
   const hasCalled = useRef(false);
 
   useEffect(() => {
-    // ¿Qué? Evitar doble ejecución en React StrictMode (desarrollo).
     if (hasCalled.current) return;
     hasCalled.current = true;
 
-    const token = searchParams.get("token");
+    // Si desde el inicio nació con error por falta de token, no ejecutamos nada más
+    if (!tokenFromUrl) return;
 
-    // ¿Qué? Si no hay token en la URL, no llamamos a la API.
-    // ¿Para qué? Evitar una llamada inútil con un token vacío.
-    // ¿Impacto? El usuario ve un mensaje de error claro en lugar de un error genérico del servidor.
-    if (!token) {
-      setStatus("error");
-      setMessage("El enlace de verificación no es válido. No se encontró un token.");
-      return;
-    }
-
-    // ¿Qué? Función async para llamar al endpoint de verificación.
-    // ¿Para qué? No se pueden usar funciones async directamente en useEffect.
-    // ¿Impacto? La verificación es asíncrona — debemos esperar la respuesta del servidor.
     async function verify() {
       try {
-        await verifyEmail(token as string);
+        // Ejecución asíncrona contra el backend (Llamada limpia)
+        await verifyEmail(tokenFromUrl as string);
         setStatus("success");
         setMessage("¡Tu email ha sido verificado exitosamente! Ya puedes iniciar sesión.");
-      } catch {
+      } catch (err) {
+        console.error("Fallo en verificación:", err);
         setStatus("error");
         setMessage(
-          "El enlace de verificación no es válido o ya fue utilizado. " +
-            "Por favor, solicita un nuevo enlace.",
+          "El enlace de verificación no es válido o ya fue utilizado. Por favor, solicita un nuevo enlace."
         );
       }
     }
 
     verify();
-  }, [searchParams]);
+  }, [tokenFromUrl]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
       <div className="w-full max-w-md">
-        {/* ¿Qué? Contenedor de la tarjeta de verificación. */}
-        {/* ¿Para qué? Centrar el contenido y darle un aspecto limpio y consistente con el resto del app. */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Verificación de email
@@ -84,8 +60,6 @@ export function VerifyEmailPage() {
           {/* ──── Estado: cargando ──── */}
           {status === "loading" && (
             <div className="mt-6">
-              {/* ¿Qué? Spinner de carga animado con TailwindCSS. */}
-              {/* ¿Para qué? Indicar al usuario que la verificación está en progreso. */}
               <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-accent-600 border-t-transparent" />
               <p className="mt-4 text-gray-600 dark:text-gray-400">Verificando tu email...</p>
             </div>
@@ -95,7 +69,6 @@ export function VerifyEmailPage() {
           {status === "success" && (
             <div className="mt-6">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                {/* ¿Qué? Ícono de check para confirmar éxito visualmente. */}
                 <svg
                   className="h-7 w-7 text-green-600 dark:text-green-400"
                   fill="none"
@@ -122,7 +95,6 @@ export function VerifyEmailPage() {
           {status === "error" && (
             <div className="mt-6">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                {/* ¿Qué? Ícono de X para indicar el error visualmente. */}
                 <svg
                   className="h-7 w-7 text-red-600 dark:text-red-400"
                   fill="none"

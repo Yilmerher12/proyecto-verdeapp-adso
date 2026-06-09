@@ -1,171 +1,178 @@
-/**
- * Archivo: components/layout/AppShell.tsx
- * Descripción: Shell principal para la zona autenticada — sidebar colapsible + área de contenido.
- * ¿Para qué? Proveer navegación lateral, identidad de marca y controles de preferencias
- *            para todas las páginas que requieren sesión activa.
- * ¿Impacto? Reemplaza el layout de navbar superior por un patrón de aplicación más moderno
- *           con sidebar colapsible, permitiendo más espacio horizontal para contenido tabular.
- */
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, type ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
-  Users,
-  Package,
-  BarChart3,
   ShieldCheck,
   LogOut,
   ChevronsLeft,
   ChevronsRight,
+  BookOpen,
+  MapPin,
+  Newspaper,
+  User,
+  Leaf
 } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
-import { NNAuthLogo } from "@/pages/LandingPage";
 
 interface AppShellProps {
   children: ReactNode;
 }
 
-// ¿Qué? Definición declarativa de los ítems de navegación del sidebar.
-// ¿Para qué? Separar la estructura del menú del JSX de renderizado, facilitando agregar o quitar ítems.
-// ¿Impacto? Cambiar el menú no requiere modificar el HTML del sidebar — solo este array.
-const NAV_ITEMS = [
-  {
-    icon: LayoutDashboard,
-    labelKey: "nav.sidebar.dashboard",
-    href: "/dashboard",
-    enabled: true,
-  },
-  {
-    icon: Users,
-    labelKey: "nav.sidebar.employees",
-    href: null,
-    enabled: false,
-  },
-  {
-    icon: Package,
-    labelKey: "nav.sidebar.products",
-    href: null,
-    enabled: false,
-  },
-  {
-    icon: BarChart3,
-    labelKey: "nav.sidebar.reports",
-    href: null,
-    enabled: false,
-  },
-  {
-    icon: ShieldCheck,
-    labelKey: "nav.sidebar.security",
-    href: "/change-password",
-    enabled: true,
-  },
-] as const;
-
-/**
- * ¿Qué? Layout principal para páginas autenticadas con sidebar colapsible siempre oscuro.
- * ¿Para qué? Proveer estructura visual consistente — navegación a la izquierda, contenido a la derecha.
- * ¿Impacto? El sidebar es siempre dark (bg-gray-950) independientemente del tema de la app,
- *           lo que crea un contraste visual claro entre navegación y área de trabajo.
- */
 export function AppShell({ children }: AppShellProps) {
-  // ¿Qué? Estado booleano que controla si el sidebar está colapsado (solo íconos) o expandido.
-  // ¿Para qué? Dar al usuario control sobre el espacio horizontal disponible para el contenido.
-  // ¿Impacto? Al colapsar, el sidebar pasa de w-60 a w-16, liberando ~176px de ancho.
   const [collapsed, setCollapsed] = useState(false);
-
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
+  // 🛠️ MAPEÓ DE ROLES NUMÉRICOS REALES DEL BACKEND
+  const userData = user as any;
+  const roleId = userData?.role_id || userData?.id_rol || 2; 
+  
+  let userRoleLabel = "Residente";
+  let dashboardHref = "/dashboard/residente";
+
+  if (roleId === 1) {
+    userRoleLabel = "Administrador";
+    dashboardHref = "/dashboard/admin";
+  } else if (roleId === 3) {
+    userRoleLabel = "Reciclador";
+    dashboardHref = "/dashboard/reciclador";
+  }
+
+  // Extraer un nombre limpio basado en el correo si no viene el nombre real en el token
+  const rawEmail = userData?.correo_electronico || userData?.email || userData?.sub || "usuario@verdeapp.com";
+  const fallbackName = rawEmail.split("@")[0].toUpperCase();
+  const displayName = userData?.first_name && userData.first_name !== "Usuario" 
+    ? `${userData.first_name} ${userData.last_name || ""}`.toUpperCase()
+    : fallbackName;
+
+  const getNavItemsByRole = () => {
+    const commonStart = [
+      {
+        icon: LayoutDashboard,
+        label: "Panel Principal",
+        href: dashboardHref,
+        enabled: true,
+      }
+    ];
+
+    const commonEnd = [
+      {
+        icon: ShieldCheck,
+        label: "Seguridad",
+        href: "/change-password",
+        enabled: true,
+      }
+    ];
+
+    if (roleId === 1) {
+      return [
+        ...commonStart,
+        { icon: Newspaper, label: "Crear Novedades", href: null, enabled: false },
+        { icon: BookOpen, label: "Contenido Educativo", href: null, enabled: false },
+        ...commonEnd
+      ];
+    }
+
+    if (roleId === 3) {
+      return [
+        ...commonStart,
+        { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
+        { icon: Newspaper, label: "Novedades Gobierno", href: null, enabled: false },
+        { icon: MapPin, label: "Puntos de Acopio", href: null, enabled: false },
+        ...commonEnd
+      ];
+    }
+
+    return [
+      ...commonStart,
+      { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
+      { icon: Newspaper, label: "Novedades Conjunto", href: null, enabled: false },
+      { icon: BookOpen, label: "Aprender (Guías)", href: null, enabled: false },
+      { icon: MapPin, label: "Directorio Zona", href: null, enabled: false },
+      ...commonEnd
+    ];
+  };
+
+  const navItems = getNavItemsByRole();
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
-      {/* ════════════════════════════════════════════════════
-          SIDEBAR — navegación lateral siempre oscura
-          ════════════════════════════════════════════════════ */}
+      {/* SIDEBAR: Se agrega overflow-x-hidden para matar la barra gris */}
       <aside
         className={`
-          flex shrink-0 flex-col bg-gray-950
-          transition-[width] duration-200 ease-in-out
-          ${collapsed ? "w-16" : "w-60"}
+          flex shrink-0 flex-col bg-green-950 dark:bg-gray-950 border-r border-green-900/30
+          transition-[width] duration-200 ease-in-out text-gray-200 overflow-x-hidden
+          ${collapsed ? "w-16" : "w-64"}
         `}
       >
-        {/* ── Logo / wordmark ── */}
-        <div
-          className={`
-            flex h-14 shrink-0 items-center border-b border-gray-800
-            ${collapsed ? "justify-center px-0" : "gap-3 px-4"}
-          `}
-        >
-          <NNAuthLogo size={26} />
+        <div className={`flex h-16 shrink-0 items-center border-b border-green-900/40 ${collapsed ? "justify-center" : "gap-3 px-4"}`}>
+          <Leaf className="h-6 w-6 text-green-400 shrink-0" />
           {!collapsed && (
-            <span className="truncate text-sm font-semibold text-gray-100">NN Auth System</span>
+            <span className="text-base font-bold text-white tracking-wide">Verde App</span>
           )}
         </div>
 
-        {/* ── Ítems de navegación ── */}
-        {/*
-          ¿Qué? Lista de ítems de navegación con soporte para rutas reales y placeholders.
-          ¿Para qué? Mostrar las secciones disponibles de la aplicación y las que vendrán.
-          ¿Impacto? Los ítems deshabilitados muestran un indicador "pronto" cuando el sidebar
-                     está expandido, o el título completo en tooltip cuando está colapsado.
-        */}
-        <nav className="flex-1 overflow-y-auto py-3" aria-label="Navegación de la aplicación">
-          <ul className="space-y-0.5 px-2" role="list">
-            {NAV_ITEMS.map(({ icon: Icon, labelKey, href, enabled }) => {
-              const label = t(labelKey);
+        {!collapsed && user && (
+          <div className="px-4 py-4 border-b border-green-900/40 bg-green-900/10 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-green-800 flex items-center justify-center text-white font-bold shrink-0 border border-green-600/40">
+              {displayName.charAt(0)}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-white tracking-wide">
+                {displayName}
+              </p>
+              <p className="truncate text-xs text-green-400 font-medium mt-0.5">
+                🏡 {userRoleLabel}
+              </p>
+            </div>
+          </div>
+        )}
 
-              // Ítem con ruta real → NavLink detecta el estado activo automáticamente
+        {/* Listado de rutas con overflow-x-hidden para evitar barras inferiores */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4" aria-label="Navegación VerdeApp">
+          <ul className="space-y-1 px-3">
+            {navItems.map(({ icon: Icon, label, href, enabled }, idx) => {
               if (enabled && href) {
                 return (
-                  <li key={labelKey}>
+                  <li key={idx}>
                     <NavLink
                       to={href}
-                      title={collapsed ? label : undefined}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors
+                        `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all
                         ${collapsed ? "justify-center" : ""}
                         ${
                           isActive
-                            ? "bg-accent-600/20 text-accent-400"
-                            : "text-gray-400 hover:bg-gray-800 hover:text-gray-100"
+                            ? "bg-green-600/30 text-green-300 border-l-4 border-green-500 font-semibold"
+                            : "text-gray-300 hover:bg-green-900/40 hover:text-white"
                         }`
                       }
                     >
-                      <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                      <Icon className="h-5 w-5 shrink-0" />
                       {!collapsed && <span className="truncate">{label}</span>}
                     </NavLink>
                   </li>
                 );
               }
 
-              // Ítem placeholder (funcionalidad próxima) → div no interactivo
               return (
-                <li key={labelKey}>
+                <li key={idx}>
                   <div
-                    className={`
-                      flex cursor-not-allowed items-center gap-3 rounded-lg px-2.5 py-2
-                      text-sm font-medium text-gray-700
-                      ${collapsed ? "justify-center" : ""}
-                    `}
-                    title={collapsed ? `${label} — ${t("nav.sidebar.comingSoon")}` : undefined}
-                    aria-disabled="true"
-                    role="presentation"
+                    className={`flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 ${collapsed ? "justify-center" : ""}`}
                   >
-                    <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <Icon className="h-5 w-5 shrink-0 opacity-40" />
                     {!collapsed && (
                       <span className="flex flex-1 items-center justify-between">
                         <span className="truncate">{label}</span>
-                        <span className="ml-2 shrink-0 rounded bg-gray-800 px-1.5 py-0.5 text-[10px] font-normal text-gray-600">
-                          {t("nav.sidebar.comingSoon")}
+                        <span className="ml-2 shrink-0 rounded bg-green-900/40 px-1.5 py-0.5 text-[9px] font-normal text-green-400 uppercase tracking-wider">
+                          Pronto
                         </span>
                       </span>
                     )}
@@ -176,72 +183,34 @@ export function AppShell({ children }: AppShellProps) {
           </ul>
         </nav>
 
-        {/* ── Usuario + cerrar sesión ── */}
-        <div className="border-t border-gray-800 px-2 py-3">
-          {!collapsed && user && (
-            <div className="mb-2 rounded-lg bg-gray-900 px-3 py-2">
-              <p className="truncate text-xs font-semibold text-gray-100">
-                {user.first_name} {user.last_name}
-              </p>
-              <p className="truncate text-xs text-gray-500">{user.email}</p>
-            </div>
-          )}
+        <div className="border-t border-green-900/40 px-3 py-3">
           <button
             type="button"
             onClick={handleLogout}
-            title={collapsed ? t("nav.logout") : undefined}
-            className={`
-              flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium
-              text-gray-400 transition-colors hover:bg-gray-800 hover:text-red-400
-              ${collapsed ? "justify-center" : ""}
-            `}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-red-950/30 hover:text-red-400 ${collapsed ? "justify-center" : ""}`}
           >
-            <LogOut className="h-5 w-5 shrink-0" aria-hidden="true" />
-            {!collapsed && <span>{t("nav.logout")}</span>}
+            <LogOut className="h-5 w-5 shrink-0" />
+            {!collapsed && <span>Cerrar sesión</span>}
           </button>
         </div>
 
-        {/* ── Botón de colapsar/expandir ──
-            ¿Qué? Botón al fondo del sidebar que alterna entre estado colapsado y expandido.
-            ¿Para qué? Dar al usuario control explícito sobre el espacio de navegación.
-            ¿Impacto? Al colapsar se liberan ~176px de ancho para el área de contenido.
-        */}
         <button
           type="button"
           onClick={() => setCollapsed((prev) => !prev)}
-          className="flex h-9 w-full shrink-0 items-center justify-center border-t border-gray-800
-            text-gray-600 transition-colors hover:bg-gray-900 hover:text-gray-400"
-          aria-label={collapsed ? "Expandir menú lateral" : "Colapsar menú lateral"}
+          className="flex h-10 w-full shrink-0 items-center justify-center border-t border-green-900/40 text-green-700 transition-colors hover:bg-green-900/20 hover:text-green-400"
         >
-          {collapsed ? (
-            <ChevronsRight className="h-4 w-4" aria-hidden="true" />
-          ) : (
-            <ChevronsLeft className="h-4 w-4" aria-hidden="true" />
-          )}
+          {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </button>
       </aside>
 
-      {/* ════════════════════════════════════════════════════
-          ÁREA PRINCIPAL — topbar + contenido de la página
-          ════════════════════════════════════════════════════ */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Top bar — controles de preferencias */}
-        {/*
-          ¿Qué? Barra superior minimalista con selector de idioma y alternador de tema.
-          ¿Para qué? Mantener acceso rápido a preferencias sin ocupar el área de navegación lateral.
-          ¿Impacto? El sidebar oscuro fijo + esta barra clara crean jerarquía visual clara.
-        */}
-        <header
-          className="flex h-14 shrink-0 items-center justify-end gap-2 border-b border-gray-200
-            bg-white px-5 dark:border-gray-800 dark:bg-gray-900"
-        >
+        <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-gray-800 dark:bg-gray-900 shadow-sm">
           <LanguageSwitcher />
           <ThemeToggle />
         </header>
 
-        {/* Área de contenido — renderiza la página activa */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-7xl px-5 py-7">{children}</div>
+        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
+          <div className="mx-auto max-w-7xl px-6 py-6">{children}</div>
         </main>
       </div>
     </div>

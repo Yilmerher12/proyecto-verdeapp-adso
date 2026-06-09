@@ -3,7 +3,7 @@
  * Descripción: Utilidades compartidas para tests — wrappers de renderizado con providers.
  * ¿Para qué? Proveer AuthContext y Router a los componentes bajo test.
  * ¿Impacto? Sin estos helpers, cada test tendría que configurar providers manualmente,
- *           causando duplicación y posibles inconsistencias.
+ * causando duplicación y posibles inconsistencias.
  */
 
 import { render, type RenderOptions } from "@testing-library/react";
@@ -14,22 +14,19 @@ import type { ReactNode } from "react";
 
 // ¿Qué? Usuario fake para tests que necesitan sesión activa.
 // ¿Para qué? Simular un usuario autenticado sin llamar al backend.
-// ¿Impacto? Se usa en tests de Dashboard, ChangePassword, ProtectedRoute, etc.
+// ¿Impacto? Se adaptaron las propiedades para que coincidan con el UserResponse de VerdeApp.
 export const mockUser: UserResponse = {
-  id: "550e8400-e29b-41d4-a716-446655440000",
-  email: "test@nn-company.com",
+  id: 1,
+  email: "test@example.com",
   first_name: "Test",
   last_name: "User",
+  role_id: 2, // Añadido: Rol de residente por defecto para las pruebas
   is_active: true,
-  is_email_verified: false,
   locale: "es",
-  created_at: "2026-01-01T00:00:00Z",
-  updated_at: "2026-01-01T00:00:00Z",
 };
 
 // ¿Qué? Valor por defecto del AuthContext para tests.
 // ¿Para qué? Proveer un contexto de auth controlado por cada test.
-// ¿Impacto? Cada test puede sobreescribir las propiedades que necesite.
 export const defaultAuthContext: AuthContextType = {
   user: null,
   accessToken: null,
@@ -56,7 +53,6 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
 /**
  * ¿Qué? Función de render personalizada que envuelve el componente con providers.
  * ¿Para qué? Simplificar los tests — no es necesario repetir AuthContext.Provider + MemoryRouter.
- * ¿Impacto? Todos los tests usan esta función en lugar de render() directo.
  */
 export function renderWithProviders(
   ui: ReactNode,

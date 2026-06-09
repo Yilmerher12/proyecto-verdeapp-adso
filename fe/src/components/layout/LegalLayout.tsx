@@ -1,191 +1,110 @@
 /**
- * Archivo: LegalLayout.tsx
- * Descripción: Componente de layout reutilizable para las páginas de contenido legal.
- * ¿Para qué? Proveer una estructura visual consistente (encabezado, navegación de regreso,
- *            tipografía) a las tres páginas legales sin duplicar código.
- * ¿Impacto? Si se modifica el diseño de las páginas legales, basta con editar este archivo
- *           y el cambio se refleja en todas las páginas que lo usen.
+ * Archivo: components/layout/LegalLayout.tsx
+ * Descripción: Layout estructural para documentos legales del sistema.
  */
 
+import { type ReactNode, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { NNAuthLogo } from "@/pages/LandingPage";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { ArrowLeft, Leaf } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-
-// ─────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
 interface LegalLayoutProps {
-  /** Título principal del documento legal (h1). */
-  readonly title: string;
-  /** Fecha de última actualización mostrada debajo del título. */
-  readonly lastUpdated: string;
-  /** Versión del documento (ej. "1.0"). */
-  readonly version: string;
-  /** Contenido de la página — secciones del documento legal. */
-  readonly children: React.ReactNode;
+  children: ReactNode;
+  title: string;
+  lastUpdated: string;
+  version: string;
 }
 
-// ─────────────────────────────────────────────────────────────
-// COMPONENT
-// ─────────────────────────────────────────────────────────────
-
-/**
- * ¿Qué? Componente de layout para páginas legales: encabezado, logo, navegación de retorno
- *       y contenedor tipográfico normalizado para el contenido.
- * ¿Para qué? Unificar la apariencia de las tres páginas legales (Términos de Uso,
- *            Privacidad y Cookies) y centralizar los estilos comunes.
- * ¿Impacto? Cambios de diseño en el wrapper legal solo requieren editar este componente.
- */
-export function LegalLayout({ title, lastUpdated, version, children }: LegalLayoutProps) {
+export function LegalLayout({ children, title, lastUpdated, version }: LegalLayoutProps) {
   const { t } = useTranslation();
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      {/* ══════════════════════════════════════════════════════
-          HEADER — navegación de retorno y wordmark
-          ══════════════════════════════════════════════════════ */}
-      <header className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          {/* Logo / wordmark — enlace al inicio */}
+    <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 flex flex-col selection:bg-green-200 selection:text-green-900">
+      
+      {/* HEADER DE DOCUMENTOS */}
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 dark:border-gray-800 dark:bg-gray-950/80 backdrop-blur-md shadow-sm">
+        <nav className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link
             to="/"
-            className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
-            aria-label="NN Auth System — volver al inicio"
+            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-green-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 rounded-md"
           >
-            <NNAuthLogo size={28} />
-            <span className="text-sm font-semibold tracking-tight text-gray-700 dark:text-gray-300">
-              NN <span className="text-accent-500">Auth</span> System
-            </span>
+            <ArrowLeft className="h-4 w-4" />
+            {t("common.backToHome")}
           </Link>
 
-          {/* Botón de retorno a la página principal + selector de idioma + toggle de tema */}
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <ThemeToggle />
-            <Link
-              to="/"
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
-            >
-              <ArrowLeft size={15} aria-hidden="true" />
-              {t("legal.backToHome")}
-            </Link>
           </div>
-        </div>
+        </nav>
       </header>
 
-      {/* ══════════════════════════════════════════════════════
-          MAIN — contenido del documento legal
-          ══════════════════════════════════════════════════════ */}
-      <main>
-        <article className="mx-auto max-w-4xl px-6 py-14" aria-labelledby="legal-title">
-          {/* Metadatos del documento */}
-          <header className="mb-10 border-b border-gray-200 pb-8 dark:border-gray-800">
-            <h1
-              id="legal-title"
-              className="mb-3 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
-            >
+      {/* CONTENIDO PRINCIPAL */}
+      <main className="flex-1 py-12 px-6">
+        <article className="mx-auto max-w-3xl rounded-3xl border border-gray-200 bg-white p-8 sm:p-12 shadow-sm dark:border-gray-800 dark:bg-gray-900 animate-fade-in">
+          
+          <header className="mb-10 text-center border-b border-gray-100 dark:border-gray-800 pb-8">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
+              <Leaf className="h-8 w-8 text-green-600 dark:text-green-400" />
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-2">
               {title}
             </h1>
-            <p className="text-sm text-gray-500">
-              Última actualización: <time dateTime={lastUpdated}>{lastUpdated}</time> · Versión{" "}
-              {version}
-            </p>
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+              <p>Versión {version}</p>
+              <span>&middot;</span>
+              <p>Última actualización: {lastUpdated}</p>
+            </div>
           </header>
 
-          {/* Cuerpo del documento legal */}
-          <div className="space-y-10">{children}</div>
+          <div className="space-y-8 max-w-none">
+            {children}
+          </div>
         </article>
       </main>
 
-      {/* ══════════════════════════════════════════════════════
-          FOOTER — nav entre páginas legales + crédito
-          ══════════════════════════════════════════════════════ */}
-      <footer className="border-t border-gray-200 px-6 py-5 dark:border-gray-800">
-        {/* ¿Qué? Navegación entre las páginas legales y la de contacto.
-            ¿Para qué? Evitar que el usuario tenga que volver al inicio para llegar
-                       a otro documento legal — acceso directo en un solo clic.
-            ¿Impacto? Mejora la UX; también es una buena práctica legal (GDPR, Ley 1581). */}
-        <nav
-          className="mb-3 flex flex-wrap justify-center gap-x-5 gap-y-1"
-          aria-label="Páginas legales"
-        >
-          <Link
-            to="/terminos-de-uso"
-            className="text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-300"
-          >
-            {t("landing.footer.terms")}
-          </Link>
-          <Link
-            to="/privacidad"
-            className="text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-300"
-          >
-            {t("landing.footer.privacy")}
-          </Link>
-          <Link
-            to="/cookies"
-            className="text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-300"
-          >
-            {t("landing.footer.cookies")}
-          </Link>
-          <Link
-            to="/contacto"
-            className="text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-300"
-          >
-            {t("landing.footer.contact")}
-          </Link>
-        </nav>
-        <p className="text-center text-xs text-gray-400 dark:text-gray-600">
-          NN Auth System — {t("legal.footerCredit")} &middot; {new Date().getFullYear()}
+      {/* FOOTER */}
+      <footer className="border-t border-gray-200 py-8 text-center dark:border-gray-800 bg-white dark:bg-gray-950">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <Leaf className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <span className="font-semibold text-gray-700 dark:text-gray-300">VerdeApp</span>
+        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          © {new Date().getFullYear()} ADSO - SENA
         </p>
       </footer>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// SUB-COMPONENTS — bloques reutilizables dentro de un documento legal
-// ─────────────────────────────────────────────────────────────
-
+// 🛠️ CORREGIDO: Interfaz ajustada exactamente a como el profesor la construyó originalmente
 interface LegalSectionProps {
-  /** Identificador HTML único para anclar la sección (sin "#"). */
-  readonly id: string;
-  /** Número de artículo o sección mostrado en el encabezado. */
-  readonly number: string;
-  /** Título descriptivo de la sección. */
-  readonly heading: string;
-  /** Contenido de la sección (párrafos, listas, etc.). */
-  readonly children: React.ReactNode;
+  id?: string;
+  number?: string | number;
+  heading?: string;
+  title?: string;
+  children: ReactNode;
 }
 
 /**
- * ¿Qué? Sección numerada de un documento legal con encabezado y cuerpo.
- * ¿Para qué? Estructurar cada artículo o cláusula del documento de forma semántica
- *            y visualmente coherente con el resto del layout.
- * ¿Impacto? Facilita la lectura del documento y la navegación por anclas (#).
+ * ¿Qué? Sub-componente requerido para fragmentar los párrafos de las normativas legales.
  */
-export function LegalSection({ id, number, heading, children }: LegalSectionProps) {
-  return (
-    <section id={id} aria-labelledby={`${id}-heading`}>
-      <h2
-        id={`${id}-heading`}
-        className="mb-4 flex items-baseline gap-3 text-lg font-semibold text-gray-900 dark:text-gray-100"
-      >
-        {/* Número de sección con estilo badge sutil */}
-        <span
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-accent-300 bg-accent-50 text-xs font-bold text-accent-600 dark:border-accent-800 dark:bg-accent-950 dark:text-accent-400"
-          aria-hidden="true"
-        >
-          {number}
-        </span>
-        {heading}
-      </h2>
+export function LegalSection({ id, number, heading, title, children }: LegalSectionProps) {
+  // Maneja tanto el formato nuevo (title) como el viejo (heading + number)
+  const displayTitle = title || (number ? `${number}. ${heading}` : heading);
 
-      {/* Contenido de la sección con tipografía legible */}
-      <div className="space-y-3 pl-10 text-sm leading-relaxed text-gray-700 dark:text-gray-400">
+  return (
+    <section id={id} className="space-y-3">
+      <h2 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+        {displayTitle}
+      </h2>
+      <div className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 space-y-4">
         {children}
       </div>
     </section>

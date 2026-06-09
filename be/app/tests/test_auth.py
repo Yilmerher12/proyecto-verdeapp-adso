@@ -314,7 +314,7 @@ class TestLogin:
         ¿Para qué? Verificar que cuentas desactivadas no pueden acceder.
         ¿Impacto? Sin esto, usuarios suspendidos podrían seguir accediendo al sistema.
         """
-        from app.models.user import User
+        from be.app.models.usuario import User
 
         test_user.is_active = False  # type: ignore[attr-defined]
         db.commit()  # type: ignore[attr-defined]

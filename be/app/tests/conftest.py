@@ -24,7 +24,7 @@ from app.dependencies import get_db
 from app.main import app
 from app.models.password_reset_token import PasswordResetToken
 from app.models.email_verification_token import EmailVerificationToken
-from app.models.user import User
+from be.app.models.usuario import User
 from app.utils.security import create_access_token, hash_password
 
 # ────────────────────────────

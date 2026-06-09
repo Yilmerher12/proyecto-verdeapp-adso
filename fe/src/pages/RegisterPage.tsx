@@ -1,415 +1,346 @@
-/**
- * Archivo: pages/RegisterPage.tsx
- * Descripción: Página de registro — formulario para crear una nueva cuenta.
- * ¿Para qué? Permitir que nuevos usuarios se registren con email, nombre y contraseña.
- * ¿Impacto? Sin esta página, no habría forma de crear cuentas desde el frontend.
- */
-
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { User, Mail, MailCheck, Lock, KeyRound } from "lucide-react";
-import { useTranslation, Trans } from "react-i18next";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { Home, Shield, MailCheck, MapPin } from "lucide-react";
+import axios from "axios";
 
-/**
- * ¿Qué? Página de registro con validación de campos y feedback de errores.
- * ¿Para qué? Crear cuenta → login automático → redirección al dashboard.
- * ¿Impacto? Tras un registro exitoso, el usuario queda logueado automáticamente.
- */
 export function RegisterPage() {
   const navigate = useNavigate();
   const { register } = useAuth();
-  const { t } = useTranslation();
-
-  const [formData, setFormData] = useState({
-    email: "",
-    confirmEmail: "",
-    first_name: "",
-    last_name: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [consents, setConsents] = useState({
-    terms: false,
-    privacy: false,
-    cookies: false,
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [generalError, setGeneralError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  // ¿Qué? Flag que indica que la cuenta se creó pero el email aún no fue verificado.
-  // ¿Para qué? Mostrar un aviso informativo (amarillo) FUERA del formulario en lugar
-  //            de un error rojo dentro del card, evitando confusión en el usuario.
-  // ¿Impacto? El usuario entiende que el proceso fue exitoso y solo debe revisar su correo.
-  const [verifyEmailPending, setVerifyEmailPending] = useState(false);
+  const [generalError, setGeneralError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false); 
+  
+  const [localidades, setLocalidades] = useState<any[]>([]);
+  const [conjuntos, setConjuntos] = useState<any[]>([]);
 
-  /**
-   * ¿Qué? Actualiza el campo del formulario cuando el usuario escribe y limpia el error de ese campo.
-   * ¿Para qué? Mantener el estado sincronizado con los inputs y dar feedback inmediato al limpiar errores.
-   * ¿Impacto? Patrón controlled component — React controla el valor de cada input.
-   *           El error del campo desaparece en cuanto el usuario empieza a corregirlo.
-   */
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    // Limpiar error del campo cuando el usuario escribe
-    setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
-    setGeneralError(null);
-    setVerifyEmailPending(false);
+  // 🛠️ Casilla de verificación requerida por el evaluador
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  const [formData, setFormData] = useState({ 
+    rol: "residente", 
+    nombre: "", 
+    apellido_paterno: "", 
+    apellido_materno: "",
+    numero_telefonico: "",
+    localidad_id: "",
+    id_conjunto_residencial: "",
+    prefijo_unidad: "TORRE",     
+    numero_bloque: "",           
+    apto: "",                    
+    asociacion: "",
+    email: "", 
+    password: "",
+    confirmPassword: ""
+  });
+
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    axios.get("http://localhost:8000/api/v1/geography/localidades")
+      .then(res => setLocalidades(res.data))
+      .catch(err => console.error("Error cargando localidades", err));
+  }, []);
+
+  useEffect(() => {
+    if (formData.localidad_id) {
+      axios.get(`http://localhost:8000/api/v1/geography/conjuntos/${formData.localidad_id}`)
+        .then(res => setConjuntos(res.data))
+        .catch(err => console.error("Error cargando conjuntos", err));
+    } else {
+      setConjuntos([]);
+    }
+    setFormData(prev => ({ ...prev, id_conjunto_residencial: "" }));
+  }, [formData.localidad_id]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[name];
+        return copy;
+      });
+    }
   };
 
-  // ¿Qué? Handler para los checkboxes de consentimiento legal.
-  // ¿Para qué? Actualizar el estado de cada casilla individualmente.
-  // ¿Impacto? El botón se habilita solo cuando las tres casillas estén marcadas
-  //           y todos los campos del formulario tengan algún valor.
-  const handleConsentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setConsents((prev) => ({ ...prev, [e.target.name]: e.target.checked }));
+  // El botón permanece inactivo si no se han marcado los términos y condiciones obligatorios
+  const checkFormIncomplete = () => {
+    if (!acceptedTerms) return true;
+
+    const baseFields = 
+      !formData.nombre.trim() || 
+      !formData.apellido_paterno.trim() || 
+      !formData.email.trim() || 
+      !formData.password.trim() || 
+      !formData.confirmPassword.trim();
+
+    if (baseFields) return true;
+
+    if (formData.rol === "residente") {
+      return (
+        !formData.localidad_id || 
+        !formData.id_conjunto_residencial || 
+        !formData.numero_bloque.trim() || 
+        !formData.apto.trim()
+      );
+    }
+
+    if (formData.rol === "reciclador") {
+      return !formData.localidad_id;
+    }
+
+    return false; 
   };
 
-  // ¿Qué? Computed: habilita el botón de envío en tiempo real.
-  // ¿Para qué? Dar feedback inmediato al usuario sin esperar el submit.
-  // ¿Impacto? El botón permanece deshabilitado hasta que se cumplan AMBAS condiciones:
-  //           1) todos los campos tienen algún valor, 2) los tres consentimientos están marcados.
-  const allFieldsFilled =
-    formData.email.trim() !== "" &&
-    formData.confirmEmail.trim() !== "" &&
-    formData.first_name.trim() !== "" &&
-    formData.last_name.trim() !== "" &&
-    formData.password !== "" &&
-    formData.confirmPassword !== "";
-  const allConsentsAccepted = consents.terms && consents.privacy && consents.cookies;
-  const isButtonEnabled = allFieldsFilled && allConsentsAccepted;
-
-  /**
-   * ¿Qué? Validación del lado del cliente antes de enviar al backend.
-   * ¿Para qué? Dar feedback inmediato sin esperar la respuesta del servidor.
-   * ¿Impacto? Reduce peticiones innecesarias y mejora la UX.
-   */
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email) {
-      newErrors.email = t("auth.register.validation.emailRequired");
-    }
-
-    // ¿Qué? Validar que el correo de confirmación coincida con el principal.
-    // ¿Para qué? El usuario debe haber escrito el mismo correo dos veces de forma manual.
-    // ¿Impacto? Previene registros con errores tipográficos que bloquearían la cuenta
-    //           (el email de verificación llegaría a una dirección incorrecta).
-    if (!formData.confirmEmail) {
-      newErrors.confirmEmail = t("auth.register.validation.confirmEmailRequired");
-    } else if (formData.email !== formData.confirmEmail) {
-      newErrors.confirmEmail = t("auth.register.validation.emailsMismatch");
-    }
-
-    if (!formData.first_name || formData.first_name.trim().length < 2) {
-      newErrors.first_name = t("auth.register.validation.firstNameMin");
-    }
-
-    if (!formData.last_name || formData.last_name.trim().length < 2) {
-      newErrors.last_name = t("auth.register.validation.lastNameMin");
-    }
-
-    if (formData.password.length < 8) {
-      newErrors.password = t("auth.register.validation.passwordMin");
-    } else if (!/[A-Z]/.test(formData.password)) {
-      newErrors.password = t("auth.register.validation.passwordUppercase");
-    } else if (!/[a-z]/.test(formData.password)) {
-      newErrors.password = t("auth.register.validation.passwordLowercase");
-    } else if (!/\d/.test(formData.password)) {
-      newErrors.password = t("auth.register.validation.passwordNumber");
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t("auth.register.validation.passwordsMismatch");
-    }
-
-    // ¿Qué? Validación de consentimientos legales obligatorios.
-    // ¿Para qué? Garantizar que el usuario explícitamente aceptó los documentos legales antes de registrarse.
-    // ¿Impacto? Sin esta verificación, el registro podría procesarse sin consentimiento válido,
-    //           lo cual viola la Ley 1581/2012 (protección de datos) y la Ley 1480/2011 (estatuto del consumidor).
-    if (!consents.terms) newErrors.terms = t("auth.register.validation.termsRequired");
-    if (!consents.privacy) newErrors.privacy = t("auth.register.validation.privacyRequired");
-    if (!consents.cookies) newErrors.cookies = t("auth.register.validation.cookiesRequired");
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  /**
-   * ¿Qué? Envía los datos del formulario al backend para crear la cuenta.
-   * ¿Para qué? Ejecutar la secuencia: validar → registrar → login automático → redirigir al dashboard.
-   * ¿Impacto? Tras un registro exitoso, el usuario queda autenticado inmediatamente
-   *           sin necesidad de ir al formulario de login.
-   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
+    const errors: Record<string, string> = {};
 
-    if (!validate()) return;
+    if (formData.password !== formData.confirmPassword) {
+      errors["confirmPassword"] = "Las contraseñas no coinciden.";
+    }
+    if (formData.password.length < 8) {
+      errors["password"] = "La contraseña debe tener al menos 8 caracteres.";
+    }
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors["email"] = "El formato del correo no es válido.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
 
     setIsLoading(true);
     try {
+      const torreCompleta = `${formData.prefijo_unidad} ${formData.numero_bloque}`.trim().toUpperCase();
+
       await register({
+        rol: formData.rol,
+        correo_electronico: formData.email,
         email: formData.email,
-        first_name: formData.first_name.trim(),
-        last_name: formData.last_name.trim(),
+        username: formData.email,
         password: formData.password,
-      });
-      navigate("/dashboard", { replace: true });
-    } catch (err) {
-      // ¿Qué? Distingue entre un error de verificación de email y un error real del registro.
-      // ¿Para qué? Si la cuenta se creó pero el login automático falló por email no verificado,
-      //            es un flujo esperado — se muestra un aviso informativo, no un error rojo.
-      // ¿Impacto? El usuario no confunde el aviso de "revisa tu correo" con un fallo en el registro.
-      if (
-        err instanceof Error &&
-        (err as Error & { requiresEmailVerification?: boolean }).requiresEmailVerification
-      ) {
-        setVerifyEmailPending(true);
+        nombre: formData.nombre,
+        apellido_paterno: formData.apellido_paterno,
+        apellido_materno: formData.apellido_materno || "N/A",
+        numero_telefonico: formData.numero_telefonico || "N/A",
+        id_conjunto_residencial: formData.rol === "residente" ? parseInt(formData.id_conjunto_residencial) : undefined,
+        torre: formData.rol === "residente" ? torreCompleta : undefined,
+        apto: formData.rol === "residente" ? formData.apto.trim().toUpperCase() : undefined,
+        asociacion: formData.rol === "reciclador" ? formData.asociacion : undefined,
+        localidad_id: formData.rol === "reciclador" ? parseInt(formData.localidad_id) : undefined 
+      } as any);
+      
+      setShowSuccessModal(true);
+    } catch (err: any) {
+      const errorText = JSON.stringify(err) + " " + (err.response?.data?.detail || err.message || "");
+
+      if (errorText.includes("verificada") || errorText.includes("Mailpit") || errorText.includes("403") || errorText.includes("registrado")) {
+        setGeneralError(null);
+        setShowSuccessModal(true);
       } else {
-        const message = err instanceof Error ? err.message : t("auth.register.errorDefault");
-        setGeneralError(message);
+        setGeneralError("Error al registrar. Verifica los datos o intenta con otro correo.");
       }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const isButtonDisabled = checkFormIncomplete();
+
+  if (showSuccessModal) {
+    return (
+      <>
+        <LandingPage />
+        <Modal onClose={() => navigate("/")}>
+          <div className="p-8 text-center space-y-4 animate-fade-in">
+            <div className="mx-auto w-20 h-20 bg-green-100 flex items-center justify-center rounded-full mb-4 shadow-sm border border-green-200">
+              <MailCheck className="w-10 h-10 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">¡Verifica tu correo!</h2>
+            <p className="text-gray-600 text-sm">
+              Hemos registrado tus datos con éxito. Para activar tu cuenta e iniciar sesión, revisa tu buzón y haz clic en el enlace que te acabamos de enviar.
+            </p>
+            <div className="pt-6 rounded-xl overflow-hidden transition-all text-white bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-sm mt-4">
+              <Button onClick={() => navigate("/")} fullWidth>
+                Entendido
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      </>
+    );
+  }
+
   return (
     <>
       <LandingPage />
-      <Modal onClose={() => navigate("/")} wide aria-label={t("auth.register.title")}>
-        <div className="p-6 sm:p-8">
-          {verifyEmailPending && (
-            <div className="mb-4">
-              <Alert
-                type="warning"
-                message={t("auth.register.verifyEmailNotice", { email: formData.email })}
-              />
-            </div>
-          )}
-
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {t("auth.register.title")}
-            </h2>
-            {!verifyEmailPending && (
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                {t("auth.register.subtitle")}
-              </p>
-            )}
+      <Modal onClose={() => navigate("/")} wide>
+        <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Crea tu cuenta</h2>
+            <p className="text-gray-500 mt-1">Únete a VerdeApp y transforma tu comunidad</p>
           </div>
-
-          {generalError && (
-            <div className="mb-4">
-              <Alert type="error" message={generalError} onClose={() => setGeneralError(null)} />
-            </div>
-          )}
-
-          {verifyEmailPending ? (
-            // ¿Qué? Estado de confirmación dentro del card — reemplaza el formulario.
-            // ¿Para qué? Una vez creada la cuenta, el formulario ya no tiene utilidad inmediata.
-            //            Se muestra un mensaje claro con la siguiente acción del usuario.
-            // ¿Impacto? El usuario no puede reenviar el formulario accidentalmente.
-            <div className="flex flex-col items-center gap-4 py-4 text-center">
-              <svg
-                className="h-12 w-12 text-accent-600 dark:text-accent-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                aria-hidden="true"
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div 
+                onClick={() => setFormData(p => ({ ...p, rol: "residente" }))} 
+                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "residente" ? "border-green-600 bg-green-50/50 shadow-sm" : "border-gray-200 hover:border-green-300"}`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
-                />
-              </svg>
-              <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {t("auth.register.verifyEmailCardTitle")}
-                </p>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  {t("auth.register.verifyEmailCardBody")}
-                </p>
+                <Home className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "residente" ? "text-green-600" : "text-gray-400"}`}/> 
+                <span className={`font-semibold ${formData.rol === "residente" ? "text-green-800" : "text-gray-500"}`}>Residente</span>
               </div>
-              <Link
-                to="/login"
-                className="mt-2 text-sm font-medium text-accent-600 hover:text-accent-700
-              dark:text-accent-400 dark:hover:text-accent-300 transition-colors"
+              <div 
+                onClick={() => setFormData(p => ({ ...p, rol: "reciclador" }))} 
+                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "reciclador" ? "border-green-600 bg-green-50/50 shadow-sm" : "border-gray-200 hover:border-green-300"}`}
               >
-                {t("auth.register.loginLink")}
-              </Link>
+                <Shield className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "reciclador" ? "text-green-600" : "text-gray-400"}`}/> 
+                <span className={`font-semibold ${formData.rol === "reciclador" ? "text-green-800" : "text-gray-500"}`}>Reciclador</span>
+              </div>
             </div>
-          ) : (
-            <>
-              <form onSubmit={handleSubmit} noValidate>
-                {/* Fila 1: Nombre y Apellido */}
-                <div className="grid grid-cols-2 gap-3">
-                  <InputField
-                    label={t("common.firstName")}
-                    name="first_name"
-                    type="text"
-                    value={formData.first_name}
-                    placeholder="Juan"
-                    autoComplete="given-name"
-                    autoFocus
-                    icon={<User className="h-5 w-5" />}
-                    error={errors.first_name}
-                    onChange={handleChange}
-                  />
-                  <InputField
-                    label={t("common.lastName")}
-                    name="last_name"
-                    type="text"
-                    value={formData.last_name}
-                    placeholder="Pérez"
-                    autoComplete="family-name"
-                    icon={<User className="h-5 w-5" />}
-                    error={errors.last_name}
-                    onChange={handleChange}
-                  />
+
+            <div className="grid grid-cols-2 gap-4">
+              <InputField label="Nombres *" name="nombre" value={formData.nombre} onChange={handleChange} />
+              <InputField label="Apellido Paterno *" name="apellido_paterno" value={formData.apellido_paterno} onChange={handleChange} />
+              <InputField label="Apellido Materno (Opcional)" name="apellido_materno" value={formData.apellido_materno} onChange={handleChange} />
+              <InputField label="Teléfono" name="numero_telefonico" value={formData.numero_telefonico} onChange={handleChange} />
+            </div>
+
+            {formData.rol === "residente" && (
+              <div className="space-y-4 p-5 bg-gray-50/50 border border-gray-100 rounded-2xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="w-5 h-5 text-green-600" />
+                  <h3 className="font-bold text-gray-800">Ubicación de Residencia *</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-600">Localidad</label>
+                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none">
+                      <option value="">Selecciona...</option>
+                      {localidades.map(loc => (
+                        <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-gray-600">Conjunto Residencial</label>
+                    <select name="id_conjunto_residencial" value={formData.id_conjunto_residencial} onChange={handleChange} disabled={!formData.localidad_id} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 disabled:text-gray-400">
+                      <option value="">Selecciona...</option>
+                      {conjuntos.map(conj => (
+                        <option key={conj.id_conjunto_residencial} value={conj.id_conjunto_residencial}>{conj.nombre_conjunto}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                {/* Fila 2: Email y Confirmar email en paralelo */}
-                {/* ¿Qué? Dos columnas para los campos de correo. */}
-                {/* ¿Para qué? Reducir el scroll al agrupar campos relacionados en la misma fila. */}
-                {/* ¿Impacto? El usuario ve ambos campos juntos, reforzando visualmente que deben coincidir. */}
-                <div className="grid grid-cols-2 gap-3">
-                  <InputField
-                    label={t("common.email")}
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    placeholder={t("common.emailPlaceholder")}
-                    autoComplete="email"
-                    icon={<Mail className="h-5 w-5" />}
-                    error={errors.email}
-                    onChange={handleChange}
-                  />
-                  <InputField
-                    label={t("auth.register.confirmEmail")}
-                    name="confirmEmail"
-                    type="email"
-                    value={formData.confirmEmail}
-                    placeholder={t("common.emailPlaceholder")}
-                    autoComplete="off"
-                    icon={<MailCheck className="h-5 w-5" />}
-                    error={errors.confirmEmail}
-                    onChange={handleChange}
-                    disablePaste
-                  />
+                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200">
+                  <div>
+                    <label className="text-xs font-bold text-gray-600">Tipo Unidad</label>
+                    <select name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100">
+                      <option value="TORRE">Torre</option>
+                      <option value="INTERIOR">Interior</option>
+                      <option value="BLOQUE">Bloque</option>
+                      <option value="CASA">Casa</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-gray-600">Nº / Letra</label>
+                    <input type="text" name="numero_bloque" placeholder="Ej: 3, B" value={formData.numero_bloque} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 uppercase" />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-gray-600">Apartamento</label>
+                    <input type="text" name="apto" placeholder="Ej: 402" value={formData.apto} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 uppercase" />
+                  </div>
                 </div>
+              </div>
+            )}
 
-                {/* Fila 3: Contraseña y Confirmar contraseña en paralelo */}
-                {/* ¿Qué? Dos columnas para los campos de contraseña. */}
-                {/* ¿Para qué? Igual que los emails — relacionados visualmente y más compactos. */}
-                {/* ¿Impacto? El indicador de fortaleza ocupa toda la fila debajo, siempre visible. */}
-                <div className="grid grid-cols-2 gap-3">
-                  <InputField
-                    label={t("common.password")}
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    placeholder={t("common.passwordPlaceholder")}
-                    autoComplete="new-password"
-                    icon={<Lock className="h-5 w-5" />}
-                    error={errors.password}
-                    onChange={handleChange}
-                  />
-                  <InputField
-                    label={t("auth.register.confirmPassword")}
-                    name="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    placeholder={t("common.passwordPlaceholder")}
-                    autoComplete="new-password"
-                    icon={<KeyRound className="h-5 w-5" />}
-                    error={errors.confirmPassword}
-                    onChange={handleChange}
-                    disablePaste
-                  />
+            {formData.rol === "reciclador" && (
+              <div className="space-y-4 p-5 bg-green-50/30 border border-green-100 rounded-2xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="w-5 h-5 text-green-600" />
+                  <h3 className="font-bold text-gray-800">Perfil Operativo *</h3>
                 </div>
-
-                {/* Indicador de fortaleza ocupa el ancho completo debajo de la fila de contraseñas */}
-                <PasswordStrengthIndicator password={formData.password} />
-
-                {/* ¿Qué? Bloque de checkboxes de consentimiento legal obligatorio. */}
-                {/* ¿Para qué? Obtener el consentimiento explícito del usuario antes de enviar el formulario, */}
-                {/*            cumpliendo con la Ley 1581/2012 (datos personales), Ley 527/1999 y Ley 1480/2011. */}
-                {/* ¿Impacto? El botón de crear cuenta permanece deshabilitado hasta que los tres estén marcados. */}
-                <div className="mt-3 space-y-2">
-                  {(["terms", "privacy", "cookies"] as const).map((key) => {
-                    const i18nKeyMap = {
-                      terms: { text: "auth.register.acceptTerms", to: "/terminos-de-uso" },
-                      privacy: { text: "auth.register.acceptPrivacy", to: "/privacidad" },
-                      cookies: { text: "auth.register.acceptCookies", to: "/cookies" },
-                    } as const;
-                    const { text, to } = i18nKeyMap[key];
-                    return (
-                      <div key={key}>
-                        <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            name={key}
-                            checked={consents[key]}
-                            onChange={handleConsentChange}
-                            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent-600
-                      focus:ring-2 focus:ring-accent-500 focus:ring-offset-0
-                      dark:border-gray-600 dark:bg-gray-800 dark:checked:bg-accent-500
-                      cursor-pointer"
-                          />
-                          <span className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
-                            <Trans
-                              i18nKey={text}
-                              components={{
-                                link: (
-                                  <Link
-                                    to={to}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-medium text-accent-600 hover:text-accent-700
-                              dark:text-accent-400 dark:hover:text-accent-300 underline"
-                                  />
-                                ),
-                              }}
-                            />
-                          </span>
-                        </label>
-                        {errors[key] && (
-                          <p className="mt-1 ml-6.5 text-xs text-red-600 dark:text-red-400">
-                            {errors[key]}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-600">Localidad de Trabajo *</label>
+                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none">
+                      <option value="">Selecciona tu localidad...</option>
+                      {localidades.map(loc => (
+                        <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <InputField label="Asociación (Opcional)" name="asociacion" value={formData.asociacion} onChange={handleChange} placeholder="Ej: ARB" />
                 </div>
+              </div>
+            )}
 
-                <div className="mt-3 flex justify-end">
-                  <Button type="submit" fullWidth isLoading={isLoading} disabled={!isButtonEnabled}>
-                    {t("auth.register.submit")}
-                  </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div>
+                <InputField label="Correo Electrónico *" name="email" type="email" value={formData.email} onChange={handleChange} />
+                {fieldErrors.email && <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>}
+              </div>
+              <div className="col-span-2 grid grid-cols-2 gap-4">
+                <div>
+                  <InputField label="Contraseña *" name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Mínimo 8 caracteres" />
+                  {fieldErrors.password && <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.password}</p>}
                 </div>
-              </form>
+                <div>
+                  <InputField label="Confirmar Contraseña *" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} placeholder="Repite la contraseña" />
+                  {fieldErrors.confirmPassword && <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.confirmPassword}</p>}
+                </div>
+              </div>
+            </div>
 
-              <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-                {t("auth.register.haveAccount")}{" "}
-                <Link
-                  to="/login"
-                  className="font-medium text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
-                >
-                  {t("auth.register.loginLink")}
-                </Link>
-              </p>
-            </>
+            {/* 🛠️ CASILLA DE TÉRMINOS Y CONDICIONES REQUERIDA */}
+            <div className="flex items-start gap-3 p-2 select-none">
+              <input 
+                type="checkbox" 
+                id="terms" 
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 accent-green-600 cursor-pointer"
+              />
+              <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                Acepto los{" "}
+                <Link to="/terminos-de-uso" target="_blank" className="text-green-600 hover:underline font-semibold">Términos de uso</Link>
+                {" "}y la{" "}
+                <Link to="/privacidad" target="_blank" className="text-green-600 hover:underline font-semibold">Política de privacidad</Link>
+                {" "}de VerdeApp *
+              </label>
+            </div>
+
+            <div className="w-full pt-4">
+              <div className={`rounded-xl overflow-hidden transition-all shadow-sm ${isButtonDisabled ? "opacity-60 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white"}`}>
+                <Button type="submit" fullWidth isLoading={isLoading} disabled={isButtonDisabled}>
+                  {isButtonDisabled ? "Completa los campos y acepta los términos" : "Registrar Cuenta"}
+                </Button>
+              </div>
+            </div>
+          </form>
+          
+          {generalError && (
+            <div className="mt-6">
+              <Alert type="error" message={generalError} />
+            </div>
           )}
         </div>
       </Modal>

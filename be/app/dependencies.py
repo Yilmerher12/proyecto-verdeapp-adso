@@ -16,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
-from app.models.user import User
+from app.models.usuario import Usuario
 from app.utils.security import decode_token
 
 # ¿Qué? Esquema OAuth2 que indica a FastAPI dónde obtener el token del request.
@@ -49,7 +49,7 @@ def get_db() -> Generator[Session, None, None]:
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
-) -> User:
+) -> Usuario:
     """Obtiene el usuario autenticado a partir del access token JWT.
 
     ¿Qué? Decodifica el token del header Authorization, extrae el email (sub)
@@ -102,12 +102,11 @@ def get_current_user(
     # ¿Para qué? Verificar que el usuario sigue existiendo y está activo.
     # ¿Impacto? Si el usuario fue eliminado después de obtener el token, esta verificación
     #           lo detecta y le niega el acceso.
-    stmt = select(User).where(User.email == email)
+    stmt = select(Usuario).where(Usuario.correo_electronico == email)
     user = db.execute(stmt).scalar_one_or_none()
 
     if not user:
         raise credentials_exception
-
     # ¿Qué? Verificar que la cuenta esté activa.
     # ¿Para qué? Un admin podría desactivar una cuenta; si el usuario tiene un token vigente,
     #            esta verificación le niega el acceso.
