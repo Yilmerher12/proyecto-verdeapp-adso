@@ -76,7 +76,9 @@ docker compose ps
 ```
 
 **Frontend Web:** http://localhost:3000 (Servido por Nginx).
+
 **Backend API:** http://localhost:8000/docs (Documentación interactiva Swagger).
+
 **Buzón de Correos Local:** http://localhost:8025 (Panel de Mailpit para verificar tokens de registro).
 
 ### Método B: Entorno de Desarrollo Local (Modo Programación / Hot-Reload)
