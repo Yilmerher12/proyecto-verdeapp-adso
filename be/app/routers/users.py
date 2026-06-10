@@ -8,10 +8,13 @@ Descripción: Endpoints de usuario — perfil del usuario autenticado y preferen
 """
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db
 from app.models.usuario import Usuario
+from app.models.residente import Residente
+from app.models.reciclador import Reciclador
 from app.schemas.user import UpdateLocaleRequest, UserResponse
 from app.services.auth_service import update_user_locale
 
@@ -24,34 +27,40 @@ router = APIRouter(
     tags=["users"],
 )
 
-
-@router.get(
-    "/me",
-    response_model=UserResponse,
-    summary="Obtener perfil del usuario actual",
-)
-def get_current_user_profile(
-    current_user: Usuario = Depends(get_current_user),
-) -> UserResponse:
-    """Retorna los datos del perfil del usuario autenticado.
-
-    ¿Qué? Endpoint que retorna los datos del usuario que está haciendo el request.
-    ¿Para qué? El frontend lo usa para mostrar el nombre, email y datos del usuario
-              en el dashboard, navbar, perfil, etc.
+@router.get("/me", summary="Obtiene el perfil del usuario activo")
+def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    # Mapeo manual directo: Asignamos los atributos del ORM (español) 
-    # a las llaves requeridas por el Schema Pydantic y el Frontend (inglés).
-    # Añadimos fallbacks temporales de texto para cumplir con la verificación de tipos.
-    return UserResponse(
-        id=current_user.id_usuario,
-        email=current_user.correo_electronico,
-        role_id=current_user.id_rol,
-        is_active=current_user.is_active,
-        first_name="Usuario",
-        last_name="VerdeApp",
-        locale="es"
-    )
+    Retorna la información del usuario en sesión, inyectando su nombre 
+    real desde la base de datos para que el Frontend lo muestre.
+    """
+    # 1. Definimos los nombres por defecto si algo falla
+    real_first_name = "Administrador"
+    real_last_name = "del Sistema"
+    
+    # 2. Consultamos la base de datos según el rol
+    if current_user.id_rol == 2:  # Residente
+        stmt = select(Residente).where(Residente.id_usuario == current_user.id_usuario)
+        residente = db.execute(stmt).scalar_one_or_none()
+        if residente:
+            real_first_name = residente.nombre
+            real_last_name = f"{residente.apellido_paterno} {residente.apellido_materno}".strip()
+            
+    elif current_user.id_rol == 3:  # Reciclador
+        stmt = select(Reciclador).where(Reciclador.id_usuario == current_user.id_usuario)
+        reciclador = db.execute(stmt).scalar_one_or_none()
+        if reciclador:
+            real_first_name = reciclador.nombre
+            real_last_name = f"{reciclador.apellido_paterno} {reciclador.apellido_materno}".strip()
 
+    # 3. Retornamos la respuesta al Frontend sobreescribiendo los valores
+    return {
+        "id": current_user.id_usuario,
+        "email": current_user.correo_electronico,
+        "role_id": current_user.id_rol,
+        "first_name": real_first_name,
+        "last_name": real_last_name,
+        # Si tienes otras propiedades que enviar, ponlas aquí
+    }
 
 @router.patch(
     "/me/locale",

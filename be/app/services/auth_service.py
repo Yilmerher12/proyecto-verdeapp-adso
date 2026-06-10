@@ -143,12 +143,13 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
 
 
 def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
+    """Valida credenciales y genera tokens inyectando los NOMBRES REALES de la base de datos."""
     correo = login_data.correo_electronico or login_data.email or login_data.username
     
     if not correo:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="El campo de correo electrónico es totalmente obligatorio."
+            detail="El campo de correo electrónico es obligatorio."
         )
 
     stmt = select(Usuario).where(Usuario.correo_electronico == correo)
@@ -160,14 +161,37 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Tu cuenta no ha sido verificada aún. Por favor, revisa tu buzón en Mailpit para activarla."
+            detail="Tu cuenta no ha sido verificada aún. Por favor, revisa tu buzón en Mailpit."
         )
 
-    access_token = create_access_token(data={"sub": user.correo_electronico, "role_id": user.id_rol})
+    # 🛠️ SOLUCIÓN REAL: Buscar los nombres exactos en la Base de Datos según el Rol
+    real_first_name = "Administrador"
+    real_last_name = "del Sistema"
+
+    if user.id_rol == 2:  # Es Residente
+        stmt_res = select(Residente).where(Residente.id_usuario == user.id_usuario)
+        residente = db.execute(stmt_res).scalar_one_or_none()
+        if residente:
+            real_first_name = residente.nombre
+            real_last_name = f"{residente.apellido_paterno} {residente.apellido_materno}".strip()
+
+    elif user.id_rol == 3:  # Es Reciclador
+        stmt_rec = select(Reciclador).where(Reciclador.id_usuario == user.id_usuario)
+        reciclador = db.execute(stmt_rec).scalar_one_or_none()
+        if reciclador:
+            real_first_name = reciclador.nombre
+            real_last_name = f"{reciclador.apellido_paterno} {reciclador.apellido_materno}".strip()
+
+    # Ahora sí, el token lleva los datos verdaderos
+    access_token = create_access_token(data={
+        "sub": user.correo_electronico, 
+        "role_id": user.id_rol,
+        "first_name": real_first_name,
+        "last_name": real_last_name
+    })
     refresh_token = create_refresh_token(data={"sub": user.correo_electronico, "role_id": user.id_rol})
 
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
-
 
 def verify_email(db: Session, token: str) -> bool:
     db_token = db.query(EmailVerificationToken).filter(
