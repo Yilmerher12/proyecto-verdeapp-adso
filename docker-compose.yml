@@ -1,5 +1,4 @@
 services:
-  # 🐘 PostgreSQL — Base de datos oficial VerdeApp
   verde_db:
     image: postgres:17-alpine
     container_name: verde_db
@@ -11,7 +10,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # Montamos el script de inicialización para que se ejecute al crear la BD
       - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,25 +20,14 @@ services:
     networks:
       - verde_network
 
-  # 🐍 Backend — FastAPI
   verde_be:
     build:
       context: ./be
       dockerfile: Dockerfile
     container_name: verde_be
     restart: unless-stopped
-    # 🛠️ SE ELIMINÓ env_file PARA EVITAR CONFLICTOS. Todo se inyecta directamente.
-    environment:
-      # Variables forzadas para el ecosistema Docker
-      DATABASE_URL: postgresql://verde_user:verde_password@verde_db:5432/verdeapp_db
-      SMTP_HOST: verde_mailpit
-      SMTP_PORT: 1025
-      SECRET_KEY: 9b8c2dfa8e34bc112a57f3de6c89fa0123de45fa67bc89de012345fa67bc89ab
-      ALGORITHM: HS256
-      ACCESS_TOKEN_EXPIRE_MINUTES: 60
-      REFRESH_TOKEN_EXPIRE_DAYS: 7
-      FRONTEND_URL: http://localhost:3000
-      ENVIRONMENT: development
+    env_file:
+      - ./be/.env # 🛡️ Lee las variables de forma segura y oculta
     ports:
       - "8000:8000"
     depends_on:
@@ -49,15 +36,14 @@ services:
     networks:
       - verde_network
 
-  # ⚛️ Frontend — React + Vite
   verde_fe:
     build:
       context: ./fe
       dockerfile: Dockerfile
-      args:
-        VITE_API_URL: http://localhost:8000
     container_name: verde_fe
     restart: unless-stopped
+    env_file:
+      - ./fe/.env # 🛡️ Lee las variables de forma segura y oculta
     ports:
       - "3000:80"
     depends_on:
@@ -65,7 +51,6 @@ services:
     networks:
       - verde_network
 
-  # 📧 Mailpit — Captura de emails local
   verde_mailpit:
     image: axllent/mailpit:latest
     container_name: verde_mailpit
@@ -81,4 +66,4 @@ networks:
     driver: bridge
 
 volumes:
-  db_data:
+  db_data:  
