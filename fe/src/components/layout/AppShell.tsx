@@ -181,7 +181,7 @@ export function AppShell({ children }: AppShellProps) {
                     {!collapsed && (
                       <span className="flex flex-1 items-center justify-between">
                         <span className="truncate">{label}</span>
-                        <span className="ml-2 shrink-0 rounded bg-green-900/40 px-1.5 py-0.5 text-[9px] font-normal text-green-400 uppercase tracking-wider">
+                        <span className="ml-2 shrink-0 rounded bg-green-900/40 px-1.5 py-0.5 text-[9px] font-normal text-green-200 uppercase tracking-wider">
                           Pronto
                         </span>
                       </span>

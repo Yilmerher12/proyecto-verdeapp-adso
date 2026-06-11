@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * Archivo: components/ui/PasswordStrengthIndicator.tsx
  * Descripción: Indicador visual de fortaleza de contraseña con barras de colores y etiqueta.

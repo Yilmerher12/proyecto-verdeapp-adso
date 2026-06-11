@@ -126,10 +126,11 @@ CREATE TABLE IF NOT EXISTS recicladores (
     nombre VARCHAR(100) NOT NULL,
     apellido_paterno VARCHAR(100) NOT NULL,
     apellido_materno VARCHAR(100) NOT NULL,
+    numero_telefonico VARCHAR(15),
     asociacion VARCHAR(255),
     CONSTRAINT fk_recicladores_usuarios FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario),
     CONSTRAINT fk_recicladores_localidades FOREIGN KEY (localidad_id) REFERENCES localidades(id_localidad)
-);
+    );
 
 -- ────────────────────────────────────────────────────────
 -- 📌 5. TABLAS INTERMEDIAS (Muchos a Muchos)

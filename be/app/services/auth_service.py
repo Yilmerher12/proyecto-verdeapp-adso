@@ -107,6 +107,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
                 nombre=user_data.nombre.strip().upper(),
                 apellido_paterno=user_data.apellido_paterno.strip().upper(),
                 apellido_materno=user_data.apellido_materno.strip().upper() if user_data.apellido_materno else "N/A",
+                numero_telefonico=user_data.numero_telefonico,  # 🛠️ SE GUARDA EL TELÉFONO DEL RECICLADOR
                 asociacion=user_data.asociacion.strip().upper() if user_data.asociacion else "INDEPENDIENTE",
             )
             db.add(nuevo_reciclador)
@@ -164,7 +165,6 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
             detail="Tu cuenta no ha sido verificada aún. Por favor, revisa tu buzón en Mailpit."
         )
 
-    # 🛠️ SOLUCIÓN REAL: Buscar los nombres exactos en la Base de Datos según el Rol
     real_first_name = "Administrador"
     real_last_name = "del Sistema"
 
@@ -182,7 +182,6 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
             real_first_name = reciclador.nombre
             real_last_name = f"{reciclador.apellido_paterno} {reciclador.apellido_materno}".strip()
 
-    # Ahora sí, el token lleva los datos verdaderos
     access_token = create_access_token(data={
         "sub": user.correo_electronico, 
         "role_id": user.id_rol,

@@ -1,24 +1,12 @@
 /**
  * Archivo: LandingPage.tsx
  * Descripción: Página de aterrizaje pública de VerdeApp.
- * ¿Para qué? Presentar el proyecto, sus características y guiar al usuario hacia el registro
- * o el inicio de sesión con una experiencia visual clara y profesional.
- * ¿Impacto? Es la primera impresión del sistema — define la percepción de calidad y confianza.
  */
 
 import { Link } from "react-router-dom";
 import { Recycle, Users, MapPin, ArrowRight, Leaf } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
-// ─────────────────────────────────────────────────────────────
-// DATA (CONTENIDO EDITABLE POR EL EQUIPO)
-// ─────────────────────────────────────────────────────────────
-
-/**
- * ¿Qué? Tecnologías usadas en el proyecto para mostrar en la sección de stack.
- * ¿Para qué? Transparencia técnica y reconocimiento de las herramientas involucradas.
- * ¿Impacto? Establece credibilidad técnica ante el instructor y el usuario.
- */
 const techStack = [
   "Python",
   "FastAPI",
@@ -31,29 +19,15 @@ const techStack = [
   "Docker",
 ] as const;
 
-// ─────────────────────────────────────────────────────────────
-// PAGE COMPONENT
-// ─────────────────────────────────────────────────────────────
-
-/**
- * ¿Qué? Componente de página para la ruta raíz "/".
- * ¿Para qué? Servir como punto de entrada público que presenta el sistema y dirige al usuario
- * a registrarse o iniciar sesión, sin necesidad de autenticación previa.
- * ¿Impacto? Primera impresión del sistema — define confianza, claridad y propuesta de valor.
- */
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 selection:bg-green-200 selection:text-green-900">
       
-      {/* ══════════════════════════════════════════════════════
-          HEADER — navegación sticky con logo y acciones
-          ══════════════════════════════════════════════════════ */}
       <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/80 dark:border-gray-800 dark:bg-gray-950/80 backdrop-blur-md">
         <nav
           className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
           aria-label="Navegación principal"
         >
-          {/* Logo y Nombre del Proyecto */}
           <Link
             to="/"
             className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 rounded-lg"
@@ -65,7 +39,6 @@ export function LandingPage() {
             <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">VerdeApp</span>
           </Link>
 
-          {/* Acciones Rápidas */}
           <ul className="m-0 flex list-none items-center gap-4 p-0">
             <li>
               <ThemeToggle />
@@ -91,22 +64,19 @@ export function LandingPage() {
       </header>
 
       <main>
-        {/* ══════════════════════════════════════════════════════
-            HERO — propuesta de valor principal
-            ══════════════════════════════════════════════════════ */}
         <section
           className="relative px-6 py-24 sm:py-32 lg:px-8 overflow-hidden"
           aria-labelledby="hero-heading"
         >
-          {/* Fondo difuminado moderno (Estilo Figma) */}
           <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
-            <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-green-200 to-green-600 opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"></div>
+            {/* 🛠️ CORRECCIÓN TAILWIND: Clases sugeridas aplicadas */}
+            <div className="relative left-[calc(50%-11rem)] aspect-1155/678 w-144.5 -translate-x-1/2 rotate-30 bg-linear-to-tr from-green-200 to-green-600 opacity-20 sm:left-[calc(50%-30rem)] sm:w-288.75"></div>
           </div>
 
           <div className="mx-auto max-w-3xl text-center animate-fade-in">
             <div className="mb-8 flex justify-center">
               <span className="rounded-full bg-green-50 dark:bg-green-900/30 px-4 py-1.5 text-sm font-semibold text-green-600 dark:text-green-400 ring-1 ring-inset ring-green-600/20">
-                ADSO SENA - [Editar Trimestre]
+                ADSO SENA - Proyecto VerdeApp
               </span>
             </div>
             
@@ -114,14 +84,20 @@ export function LandingPage() {
               id="hero-heading"
               className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-6xl mb-6"
             >
-              [Editar Slogan Principal de VerdeApp]
+              VerdeApp
             </h1>
+
+            <div className="mx-auto max-w-3xl text-center animate-fade-in">
+            <div className="mb-8 flex justify-center">
+              <span className="rounded-full bg-green-50 dark:bg-green-900/30 px-4 py-1.5 text-sm font-semibold text-green-600 dark:text-green-400 ring-1 ring-inset ring-green-600/20">
+              Aplicacion de educación ambiental para conjuntos residenciales
+              </span>
+            </div>
             
             <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300 mb-10">
-              [Editar introducción: Explica brevemente qué problema resuelve la aplicación en Bogotá, cómo conecta a los residentes con los recicladores y el impacto ambiental].
+              Optimización en la comunicación entre tu conjunto y los recicladores locales. Gestiona el estado de tus residuos al instante, accede a educación ambiental y haz que el proceso sea más fácil y eficiente para todos.
             </p>
 
-            {/* ¿Por qué flex-col en móvil y flex-row en desktop? Mejora la accesibilidad y el área táctil en pantallas pequeñas. */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 to="/register"
@@ -139,9 +115,6 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* ══════════════════════════════════════════════════════
-            FEATURES — tarjetas de características del sistema
-            ══════════════════════════════════════════════════════ */}
         <section
           className="border-t border-gray-100 px-6 py-16 sm:py-24 dark:border-gray-900"
           aria-labelledby="features-heading"
@@ -159,9 +132,7 @@ export function LandingPage() {
               </p>
             </header>
 
-            {/* Grid con 3 tarjetas estructuradas para beneficios del proyecto */}
             <ul className="m-0 grid list-none grid-cols-1 gap-8 p-0 sm:grid-cols-3">
-              {/* Tarjeta 1 */}
               <li>
                 <article className="h-full rounded-3xl border border-gray-100 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
                   <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/30" aria-hidden="true">
@@ -176,7 +147,6 @@ export function LandingPage() {
                 </article>
               </li>
 
-              {/* Tarjeta 2 */}
               <li>
                 <article className="h-full rounded-3xl border border-gray-100 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
                   <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/30" aria-hidden="true">
@@ -191,7 +161,6 @@ export function LandingPage() {
                 </article>
               </li>
 
-              {/* Tarjeta 3 */}
               <li>
                 <article className="h-full rounded-3xl border border-gray-100 bg-white p-8 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
                   <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/30" aria-hidden="true">
@@ -209,9 +178,6 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* ══════════════════════════════════════════════════════
-            TECH STACK — badges de tecnologías (Demuestra conocimiento técnico)
-            ══════════════════════════════════════════════════════ */}
         <section
           className="border-t border-gray-100 px-6 py-20 dark:border-gray-800"
           aria-labelledby="stack-heading"
@@ -237,9 +203,6 @@ export function LandingPage() {
         </section>
       </main>
 
-      {/* ══════════════════════════════════════════════════════
-          FOOTER — información legal y créditos
-          ══════════════════════════════════════════════════════ */}
       <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-gray-900 dark:bg-gray-950 mt-auto">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-5">
           <div className="flex w-full flex-col items-center justify-between gap-4 sm:flex-row">
