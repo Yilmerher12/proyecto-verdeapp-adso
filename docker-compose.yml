@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: verde_password
       POSTGRES_DB: verdeapp_db
     ports:
-      - "5432:5432"
+        - "5433:5432"  # antes era 5432:5432
     volumes:
       - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
       - db_data:/var/lib/postgresql/data
@@ -66,4 +66,4 @@ networks:
     driver: bridge
 
 volumes:
-  db_data:  
+  db_data:
