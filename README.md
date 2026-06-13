@@ -64,16 +64,39 @@ El entorno soporta dos métodos de inicialización dependiendo de los objetivos 
 Ideal para desplegar toda la aplicación con un solo comando sin necesidad de configurar lenguajes locales. Docker se encargará de compilar el Frontend, levantar el Backend, estructurar PostgreSQL y encender Mailpit.
 
 ```bash
-# 1. Clonar el repositorio oficial
+# 1. Clonar el repo
 git clone https://github.com/Yilmerher12/proyecto-verdeapp-adso.git
-cd verde-app
+cd proyecto-verdeapp-adso
 
-# 2. Construir y encender todos los servicios en segundo plano
+# 2. Crear el .env del backend
+cd be
+cp .env.example .env
+cd ..
+
+# 3. Crear el .env del frontend
+cd fe
+cp .env.example .env
+cd ..
+
+# 4. Levantar todo
 docker compose up -d --build
+```
 
-# 3. Validar el estado de salud de los contenedores
+- Verificar que todo este bien: 
+
+```bash
 docker compose ps
 ```
+
+Los 4 contenedores deben aparecer como ``healthy`` o ``Up``: 
+- ``verde_db`` → healthy
+- ``verde_be`` → Up
+- ``verde_fe`` → Up
+- ``verde_mailpit`` → Up
+
+**Frontend dev**: http://localhost:5173 (Modo local con pnpm dev)
+
+**Swagger UI**: http://localhost:8000/docs (Documentacion de FastAPI)
 
 **Frontend Web:** http://localhost:3000 (Servido por Nginx).
 
@@ -90,16 +113,17 @@ Recomendado para realizar modificaciones en tiempo real en el código fuente con
 Deje corriendo únicamente los motores de soporte en Docker:
 
 ```bash
-# Apagar servicios completos si están activos
+# 1. Bajar todo
 docker compose down
 
-# Levantar exclusivamente PostgreSQL y Mailpit
-docker compose up -d db mailpit
+# 2. Levantar SOLO la BD y Mailpit
+docker compose up -d verde_db verde_mailpit
 ```
 
 #### 2. Configuración y Lanzamiento del Backend (be/)
 
-Abra una terminal Git Bash y configure el servidor FastAPI:
+Luego en dos terminales separadas:
+Terminal 1 — Backend:
 
 ```bash
 cd be
@@ -138,13 +162,9 @@ cp .env.example .env
 pnpm dev
 ```
 
-En este modo, el Frontend de desarrollo estará disponible en:
-
-`http://localhost:5173`
+La app estará en http://localhost:5173 en vez de 3000, y el backend sigue en http://localhost:8000.
 
 ---
-
-## 📁 Estructura Detallada del Proyecto
 
 ## 📁 Estructura Detallada del Proyecto
 
