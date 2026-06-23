@@ -16,7 +16,7 @@
 | **Nombre** | Actualizar Perfil   |
 | **Módulo** | Usuarios / Perfil   |
 | **Prioridad** | Media               |
-| **Estado** | Por implementar     |
+| **Estado** | Parcialmente implementado (UI lista, integración backend en progreso) |
 | **Usuarios** | reciclador, residente|
 
 ---
@@ -43,9 +43,9 @@ El sistema debe permitir a los usuarios con rol 'Reciclador' o 'Residente' modif
 1. El usuario accede a la vista de "Mi Perfil" y modifica sus datos.
 2. El frontend (React) previene la edición de campos restringidos (ID, correo, conjunto) deshabilitando sus inputs.
 3. El usuario envía el formulario.
-4. El backend (Spring Boot) recibe la petición `PATCH` o `PUT`.
-5. El backend ignora de forma estricta (mediante DTOs) cualquier campo en el payload que corresponda a llaves foráneas (`conjunto_id`) o credenciales.
-6. El backend actualiza los campos permitidos en la base de datos MySQL.
+4. El backend (FastAPI) recibe la petición `PATCH` o `PUT`.
+5. El backend ignora de forma estricta (mediante esquemas Pydantic) cualquier campo en el payload que corresponda a llaves foráneas (`conjunto_id`) o credenciales.
+6. El backend actualiza los campos permitidos en la base de datos PostgreSQL.
 7. El backend retorna el objeto del perfil actualizado.
 
 ---

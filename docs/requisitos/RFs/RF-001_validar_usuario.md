@@ -16,8 +16,8 @@
 | **Nombre** | Validar Usuario     |
 | **Módulo** | Autenticación       |
 | **Prioridad** | Alta                |
-| **Estado** | Por implementar     |
-| **Usuarios** | residente, reciclador|
+| **Estado** | Implementado        |
+| **Usuarios** | residente, reciclador, administrador, admin_conjunto |
 
 ---
 

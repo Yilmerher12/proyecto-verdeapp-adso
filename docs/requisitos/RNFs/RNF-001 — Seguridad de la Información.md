@@ -10,7 +10,7 @@
 | **Nombre** | Seguridad de la Información                            |
 | **Categoría** | Seguridad                                              |
 | **Prioridad** | Crítica                                                |
-| **Estado** | Por implementar                                        |
+| **Estado** | Implementado                                        |
 
 ---
 
@@ -21,7 +21,7 @@ Las contraseñas de los usuarios deben encriptarse en la base de datos utilizand
 
 ### RNF-001.2 — Tokens JWT
 La autenticación debe basarse en tokens JWT (JSON Web Tokens) firmados con algoritmo **HS256**:
-- **Access token**: duración de 15 minutos.
+- **Access token**: duración de 60 minutos.
 - **Refresh token**: duración de 7 días.
 - La clave secreta debe tener mínimo 32 caracteres y almacenarse en variable de entorno.
 
@@ -32,10 +32,10 @@ Los mensajes de error en endpoints de autenticación deben ser genéricos:
 ### RNF-001.4 — Validación de entradas
 Todas las entradas del usuario deben validarse tanto en el frontend como en el backend:
 - Frontend: validación con lógica React/TypeScript antes de enviar.
-- Backend: validación con DTOs en Spring Boot para restringir campos no permitidos.
+- Backend: validación con esquemas Pydantic en FastAPI para restringir campos no permitidos.
 
 ### RNF-001.5 — Protección contra inyección SQL
-El sistema debe usar el ORM de Spring Data JPA (Hibernate) para todas las consultas a la base de datos MySQL. No se permite SQL crudo sin parametrizar.
+El sistema debe usar el ORM **SQLAlchemy** para todas las consultas a la base de datos PostgreSQL. No se permite SQL crudo sin parametrizar.
 
 ### RNF-001.6 — CORS (Cross-Origin Resource Sharing)
 - En desarrollo: permitir únicamente el puerto local de Vite (ej. `http://localhost:5173`).

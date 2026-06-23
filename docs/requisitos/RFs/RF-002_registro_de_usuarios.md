@@ -16,8 +16,8 @@
 | **Nombre** | Registro de Usuarios|
 | **Módulo** | Autenticación       |
 | **Prioridad** | Alta                |
-| **Estado** | Por implementar     |
-| **Usuarios** | residente, reciclador|
+| **Estado** | Implementado        |
+| **Usuarios** | residente, reciclador, admin_conjunto |
 
 ---
 
@@ -33,8 +33,8 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 | ----------- | ------------- | ----------- | ---------------------------------------------------------------------------- |
 | `nombre`    | Texto         | Sí          | Mínimo 2 caracteres, máximo 255                                              |
 | `correo`    | Texto (email) | Sí          | Formato válido, máximo 255 caracteres, único en BD                           |
-| `contraseña`| Texto         | Sí          | Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número                      |
-| `rol`       | Enum          | Sí          | Valores permitidos: `residente`, `reciclador`                                |
+| `contraseña`| Texto         | Sí          | Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 carácter especial (`!@#$%^&*...`) |
+| `rol`       | Enum          | Sí          | Valores permitidos: `residente`, `reciclador`, `admin_conjunto`               |
 
 ---
 

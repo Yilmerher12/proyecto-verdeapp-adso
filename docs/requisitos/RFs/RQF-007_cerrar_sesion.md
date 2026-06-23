@@ -16,14 +16,14 @@
 | **Nombre** | Cerrar sesión       |
 | **Módulo** | Autenticación       |
 | **Prioridad** | Alta                |
-| **Estado** | Por implementar     |
-| **Usuarios** | reciclador, residente|
+| **Estado** | Implementado        |
+| **Usuarios** | reciclador, residente, administrador, admin_conjunto |
 
 ---
 
 ## Descripción
 
-El sistema debe invalidar el token de sesión activo del usuario y redirigirlo automáticamente a la vista de inicio de sesión.
+El sistema debe mostrar un modal de confirmación antes de cerrar la sesión. Al confirmar, elimina los tokens del almacenamiento de sesión del navegador y redirige al usuario.
 
 ---
 
@@ -37,12 +37,11 @@ El sistema debe invalidar el token de sesión activo del usuario y redirigirlo a
 
 ## Proceso
 
-1. El usuario hace clic en la opción "Cerrar sesión" en la interfaz.
-2. El frontend (React) envía una petición `POST` al backend incluyendo el token JWT actual en los headers.
-3. El backend (Spring Boot) recibe la petición, extrae el token y lo añade a una lista negra (blacklist) para evitar que sea re-utilizado hasta su expiración.
-4. El backend responde con un código de éxito 200 OK.
-5. El frontend elimina el token del almacenamiento local (Local Storage/Session Storage) y limpia el estado global.
-6. El frontend redirige al usuario a la vista de login.
+1. El usuario hace clic en "Cerrar sesión" en el sidebar de la aplicación.
+2. El frontend muestra un modal de confirmación ("¿Cerrar sesión? Sí / Cancelar").
+3. Si el usuario cancela, el modal se cierra y la sesión continúa.
+4. Si el usuario confirma, el frontend elimina `access_token` y `refresh_token` del `sessionStorage` y limpia el estado global de autenticación (React Context).
+5. El frontend redirige al usuario fuera de las rutas protegidas.
 
 ---
 

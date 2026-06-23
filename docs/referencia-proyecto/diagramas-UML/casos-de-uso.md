@@ -42,6 +42,18 @@ Usuario responsable de:
 
 ---
 
+## Admin_conjunto
+
+Usuario responsable de la gestión de uno o más conjuntos residenciales:
+
+* Registrarse en el sistema.
+* Consultar y administrar los conjuntos que gestiona.
+* Invitar recicladores autorizados a sus conjuntos.
+* Gestionar su perfil.
+* Cerrar sesión.
+
+---
+
 # 📋 Catálogo de Casos de Uso
 
 | Código | Caso de Uso                                              | Actor(es)                            |
@@ -52,8 +64,8 @@ Usuario responsable de:
 | RQF004 | Visualizar catálogo educativo                            | Residente                            |
 | RQF005 | Visualizar directorio de recicladores y puntos de acopio | Residente                            |
 | RQF006 | Notificar llegada al conjunto residencial                | Reciclador                           |
-| RQF007 | Cerrar sesión                                            | Residente, Reciclador, Admin_sistema |
-| RQF008 | Actualizar perfil                                        | Residente, Reciclador                |
+| RQF007 | Cerrar sesión                                            | Residente, Reciclador, Admin_sistema, Admin_conjunto |
+| RQF008 | Actualizar perfil                                        | Residente, Reciclador, Admin_conjunto |
 | RQF009 | Visualizar gestión de residuos del conjunto              | Residente, Reciclador                |
 | RQF010 | Gestionar contenido educativo                            | Admin_sistema                        |
 | RQF011 | Gestionar directorio de puntos de acopio y recicladores  | Admin_sistema                        |
@@ -68,6 +80,7 @@ flowchart TB
     Residente([Residente])
     Reciclador([Reciclador])
     Admin([Admin_sistema])
+    AdminConjunto([Admin_conjunto])
 
     RQF001([RQF001\nValidar Usuario])
     RQF002([RQF002\nRegistrar Usuarios])
@@ -102,6 +115,11 @@ flowchart TB
     Admin --> RQF007
     Admin --> RQF010
     Admin --> RQF011
+
+    AdminConjunto --> RQF001
+    AdminConjunto --> RQF002
+    AdminConjunto --> RQF007
+    AdminConjunto --> RQF008
 ```
 
 ---
