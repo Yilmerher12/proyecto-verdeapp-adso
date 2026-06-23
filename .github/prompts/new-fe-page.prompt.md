@@ -1,11 +1,11 @@
----
+﻿---
 description: "Crea una nueva página React completa: componente, claves i18n (es+en), registro de ruta en App.tsx y test. Usar cuando se necesite agregar una nueva vista a la aplicación."
 name: "Nueva página React"
 argument-hint: "Describe la página: nombre, ruta URL, propósito, si requiere auth, datos que muestra o formularios que contiene"
 agent: "agent"
 ---
 
-# Nueva página React — NN Auth System
+# Nueva página React — VerdeApp
 
 Crea una página React completa siguiendo las convenciones del proyecto.
 

@@ -7,9 +7,8 @@
   ¿Impacto? Una guía bien estructurada evita errores de configuración y consolida el aprendizaje.
 -->
 
-> Este documento es tu guía completa para entender y reproducir el backend del proyecto.
+> Este documento es la documentación técnica del backend de VerdeApp.
 > Cada sección explica **qué se hace**, **por qué se hace así** y **qué pasaría si no se hiciera**.
-> Puedes seguir esta guía de forma independiente a los videos.
 
 ---
 
@@ -41,7 +40,7 @@
 
 ## 1. Prerrequisitos
 
-Antes de empezar, verifica que tienes instalado:
+El backend de VerdeApp requiere las siguientes herramientas instaladas:
 
 ```bash
 # Python 3.12 o superior
@@ -53,14 +52,10 @@ docker --version
 docker compose version
 ```
 
-> 🖥️ **Usuarios de Windows — leer antes de continuar**
-> Todos los comandos de este documento usan sintaxis Bash (`source`, `export`, rutas con `/`, etc.).
-> Debes usar **Git Bash** como terminal — viene incluido al instalar
-> [Git para Windows](https://git-scm.com/download/win).
-> **No uses CMD ni PowerShell** — los comandos de activación del `venv` y demás no
-> funcionarán igual. En Git Bash, `source .venv/bin/activate` funciona directamente.
+> 🖥️ **En Windows** — Se recomienda usar **PowerShell** para los comandos de este proyecto.
+> Para el entorno virtual, el comando de activación es `.\.venv\Scripts\Activate.ps1`.
 
-También necesitas tener la base de datos PostgreSQL corriendo. Desde la **raíz del monorepo**:
+También se necesita tener la base de datos PostgreSQL corriendo. Desde la **raíz del repositorio**:
 
 ```bash
 # Levanta PostgreSQL 17 en un contenedor Docker
@@ -130,8 +125,8 @@ be/
 
 ## 3. Entorno virtual Python (`venv`)
 
-> **Regla de oro:** NUNCA instalar paquetes en el Python del sistema.
-> Siempre usar un entorno virtual aislado por proyecto.
+> **Convención del proyecto:** No se instalan paquetes en el Python del sistema.
+> Siempre se usa un entorno virtual aislado por proyecto.
 
 ```bash
 # Entrar a la carpeta del backend
@@ -222,14 +217,14 @@ slowapi>=0.1.9          # Rate limiting — limita peticiones por IP (seguridad 
 Las variables de entorno almacenan configuración sensible (contraseñas, claves, URLs)
 fuera del código fuente. **Nunca** van en el código ni en git.
 
-**Paso 1:** Copia el archivo de ejemplo:
+**Paso 1:** Se copia el archivo de ejemplo:
 
 ```bash
 # Desde be/
 cp .env.example .env
 ```
 
-**Paso 2:** Edita `.env` con tus valores reales:
+**Paso 2:** Se edita `.env` con los valores del entorno:
 
 ```bash
 # be/.env

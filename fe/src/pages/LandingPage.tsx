@@ -26,22 +26,22 @@ const techStack = [
 
 const pilares = [
   {
-    icon: Recycle,
+    icon: MapPin,
     titulo: "Separación en la fuente",
     descripcion:
-      "Guía a los residentes de tu conjunto en la correcta clasificación de residuos: orgánicos, reciclables y ordinarios, directamente desde la app.",
+      "Guía a los residentes de tu conjunto en la correcta clasificación de residuos reciclables, directamente desde la app.",
   },
   {
     icon: Users,
     titulo: "Conexión con recicladores",
     descripcion:
-      "Formaliza y dignifica la labor de los recicladores de oficio. Coordina rutas, solicitudes y notificaciones en tiempo real entre el conjunto y el reciclador asignado.",
+      "Formaliza y dignifica la labor de los recicladores de oficio. Permite solicitudes y notificaciones en tiempo real entre el conjunto y el reciclador asignado. Así, se convierte en un actor activo en cada conjunto en el que trabaja.",
   },
   {
-    icon: MapPin,
-    titulo: "Puntos de acopio en Bogotá",
+    icon: Recycle,
+    titulo: "Educaciòn ambiental",
     descripcion:
-      "Directorio geolocalizado de puntos de acopio autorizados y estaciones de clasificación cercanas a tu conjunto residencial.",
+      "Guías y contenido interactivo sobre cómo separar, limpiar y entregar tus materiales reciclables de manera correcta en tu comunidad residencial. ",
   },
 ] as const;
 
@@ -55,14 +55,14 @@ const pasos = [
   {
     icon: Recycle,
     numero: "2",
-    titulo: "Los residentes reportan",
-    descripcion: "Cada residente separa sus residuos y notifica desde la app cuándo están listos para recoger.",
+    titulo: "Los residentes se registran",
+    descripcion: "Cada residente puede aprender, a partir de un contenido educativo, a reciclar de la mejor manera e indicar cuándo el SHUT se encuentre en su capacidad máxima para una buena comunicación con el conjunto.",
   },
   {
     icon: Truck,
     numero: "3",
     titulo: "El reciclador recoge",
-    descripcion: "El reciclador asignado recibe la alerta, visita el conjunto y confirma la recolección.",
+    descripcion: "El reciclador, afiliado al conjunto por invitación del administrador, puede indicar la llegada al SHUT y el restablecimiento de este para que los residentes entreguen su material y se genere una auditoría de rendimiento general.",
   },
 ] as const;
 
@@ -89,9 +89,7 @@ export function LandingPage() {
           </Link>
 
           <ul className="m-0 flex list-none items-center gap-3 p-0">
-            <li>
-              <LanguageSwitcher />
-            </li>
+            {/* <li><LanguageSwitcher /></li> */}
             <li>
               <ThemeToggle />
             </li>
@@ -106,7 +104,7 @@ export function LandingPage() {
             <li>
               <Link
                 to="/register"
-                className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl shadow-sm transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
+                className="bg-green-700 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl shadow-sm transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
               >
                 Registrarse
               </Link>
@@ -154,7 +152,7 @@ export function LandingPage() {
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-6 flex justify-center">
               <span className="rounded-full bg-green-50 dark:bg-green-900/30 px-4 py-1.5 text-sm font-semibold text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20">
-                🌿 ADSO SENA · Proyecto 2026
+                ADSO SENA · Proyecto 2026
               </span>
             </div>
 
@@ -169,8 +167,7 @@ export function LandingPage() {
               Gestión de residuos para conjuntos residenciales en Bogotá
             </p>
             <p className="text-base leading-8 text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
-              Conecta a los residentes de tu conjunto con recicladores de oficio certificados.
-              Coordina rutas, reporta residuos y accede a educación ambiental — todo en un solo lugar.
+              Conecta a los residentes de tu conjunto con recicladores de oficio certificados. Recibe notificaciones clave en tiempo real, accede a educación ambiental y mantente al tanto de las auditorías de reciclaje de tu comunidad — todo en un solo lugar.
             </p>
 
             <div className="flex flex-col-reverse sm:flex-row items-center justify-center gap-4">
@@ -249,7 +246,7 @@ export function LandingPage() {
         >
           <div className="mx-auto max-w-7xl">
             <header className="mx-auto max-w-2xl text-center mb-16">
-              <p className="text-base font-semibold text-green-600 dark:text-green-400 mb-2">
+              <p className="text-base font-semibold text-green-600 dark:text-green-400 mb-6">
                 Nuestros Pilares
               </p>
               <h2
@@ -260,7 +257,7 @@ export function LandingPage() {
               </h2>
               <p className="mt-4 text-gray-500 dark:text-gray-400">
                 VerdeApp aborda el problema del reciclaje desde la educación, la coordinación y la
-                geolocalización.
+                comunicaciòn.
               </p>
             </header>
 
@@ -268,7 +265,7 @@ export function LandingPage() {
               {pilares.map(({ icon: Icon, titulo, descripcion }) => (
                 <li key={titulo}>
                   <article className="h-full rounded-3xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-1 dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-                    <div className="h-2 bg-linear-to-r from-green-400 to-green-600" aria-hidden="true" />
+                    <div className="h-2 bg-linear-to-r from-green-500 to-green-600" aria-hidden="true" />
                     <div className="p-8">
                       <div
                         className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30"
@@ -291,10 +288,10 @@ export function LandingPage() {
         </section>
 
         {/* ── IMPACTO — fondo verde sólido ──────────────────── */}
-        <section className="bg-green-700 dark:bg-green-900 px-6 py-16 sm:py-20" aria-labelledby="impacto-heading">
+        <section className="bg-green-800 dark:bg-green-900 px-6 py-16 sm:py-20" aria-labelledby="impacto-heading">
           <div className="mx-auto max-w-5xl text-center">
             <h2 id="impacto-heading" className="text-2xl sm:text-3xl font-bold text-white mb-4">
-              Reciclar bien, juntos
+              Reciclar bien, JUNTOS
             </h2>
             <p className="text-green-100 max-w-2xl mx-auto mb-10">
               Cada conjunto que se afilia a VerdeApp formaliza el trabajo de sus recicladores
@@ -364,7 +361,7 @@ export function LandingPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
               © {new Date().getFullYear()} Proyecto Formativo ADSO - SENA.{" "}
               <br className="sm:hidden" />
-              Yilmer Hernández, Juan Barajas, Eisin Yordan.
+              Yilmer Hernández, Juan Barajas, Eisin Yordan, Josè Guerrero
             </p>
           </div>
 

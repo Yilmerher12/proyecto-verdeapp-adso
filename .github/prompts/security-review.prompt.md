@@ -1,11 +1,11 @@
----
+﻿---
 description: "Revisa código (backend o frontend) en busca de vulnerabilidades del OWASP Top 10. Devuelve un informe con severidad, descripción y corrección concreta para cada hallazgo. Usar antes de hacer commit de código de seguridad crítica."
 name: "Revisión de seguridad OWASP Top 10"
 argument-hint: "Pega o describe el código a revisar, o usa #selection para revisar el código seleccionado"
 agent: "agent"
 ---
 
-# Revisión de seguridad OWASP Top 10 — NN Auth System
+# Revisión de seguridad OWASP Top 10 — VerdeApp
 
 Realiza una auditoría de seguridad exhaustiva del código indicado, enfocada en el
 OWASP Top 10 (2021) en el contexto de una API REST con FastAPI + React/TypeScript.

@@ -1,11 +1,11 @@
----
+﻿---
 description: "Genera una migración Alembic para cambios en el esquema de la base de datos: nuevas tablas, columnas, índices o constraints. Usar cuando se modifica un modelo SQLAlchemy."
 name: "Migración Alembic"
 argument-hint: "Describe el cambio en la BD: qué tabla/columna se crea, modifica o elimina, y por qué"
 agent: "agent"
 ---
 
-# Migración Alembic — NN Auth System
+# Migración Alembic — VerdeApp
 
 Genera la migración Alembic para el cambio de esquema indicado.
 

@@ -1,9 +1,7 @@
 ﻿# Frontend — VerdeApp
 
-> Guía pedagógica paso a paso: cómo se construyó el frontend del sistema de autenticación.
->
-> **Para quién:** Aprendices SENA que leen este repositorio como complemento al video.
-> **Objetivo:** Entender **cada decisión** de arquitectura, no solo copiar el código.
+> Documentación técnica del frontend de VerdeApp.
+> Cada sección explica **qué se implementó**, **por qué se tomó esa decisión** y **qué impacto tiene**.
 
 ---
 
@@ -33,19 +31,14 @@
 
 ## 1. Prerrequisitos
 
-Antes de tocar código, asegúrate de tener instalado:
+El frontend de VerdeApp requiere las siguientes herramientas instaladas:
 
 | Herramienta | Versión mínima | Verificar con    |
 | ----------- | -------------- | ---------------- |
 | Node.js     | 20 LTS         | `node --version` |
 | pnpm        | 9+             | `pnpm --version` |
 
-> 🖥️ **Usuarios de Windows — leer antes de continuar**
-> Todos los comandos de este documento usan sintaxis Bash.
-> Usa siempre **Git Bash** como terminal — viene incluido al instalar
-> [Git para Windows](https://git-scm.com/download/win).
-> **No uses CMD ni PowerShell** — algunos comandos (`cp`, rutas con `/`, etc.) no funcionarán igual.
-> Abre Git Bash, navega a la carpeta del proyecto y ejecuta los comandos desde ahí.
+> 🖥️ **En Windows** — Se recomienda usar **PowerShell** para los comandos de este proyecto.
 
 ### ¿Por qué pnpm y no npm?
 
@@ -56,15 +49,15 @@ Antes de tocar código, asegúrate de tener instalado:
 - En este proyecto usamos `pnpm` **siempre**. Si ves instrucciones con `npm install`, tradúcelas a `pnpm install`.
 
 ```bash
-# Si no tienes pnpm, instalarlo con npm (única excepción permitida):
+# Instalar pnpm globalmente (si no está instalado):
 npm install -g pnpm
 
 # Verificar instalación:
 pnpm --version
 ```
 
-> **Regla del proyecto:** Nunca usar `npm install`, `npm run`, `yarn`, ni `npx` directamente.
-> Usar siempre el equivalente `pnpm`:
+> **Convención del proyecto:** No se usa `npm install`, `npm run`, `yarn` ni `npx` directamente.
+> Siempre se usa el equivalente `pnpm`:
 >
 > | Comando npm     | Equivalente pnpm     |
 > | --------------- | -------------------- |
@@ -153,10 +146,10 @@ Esto se conoce como **Separation of Concerns** (separación de responsabilidades
 
 ## 3. Instalación con pnpm
 
-### Paso 1 — Posicionarse en la carpeta del frontend
+### Paso 1 — Ir a la carpeta del frontend
 
 ```bash
-cd proyecto-be-fe/fe
+cd fe
 ```
 
 ### Paso 2 — Instalar dependencias

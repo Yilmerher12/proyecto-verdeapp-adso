@@ -9,7 +9,7 @@
   // 🐍 Python — Intérprete y entorno virtual
   // ────────────────────────────
   "python.defaultInterpreterPath": "${workspaceFolder}/be/.venv/bin/python",
-  "python.terminal.activateEnvironment": true,
+  "python.terminal.activateEnvironment": false,
 
   // ────────────────────────────
   // 🔍 Python — Linting y formateo con ruff
@@ -50,10 +50,10 @@
       "server": "localhost",
       "port": 5432,
       "driver": "PostgreSQL",
-      "name": "be-fe",
-      "database": "nn_auth_db",
-      "username": "nn_user",
-      "password": "nn_password"
+      "name": "VerdeApp",
+      "database": "verdeapp_db",
+      "username": "verde_user",
+      "password": "verde_password"
     }
   ],
   "workbench.colorCustomizations": {

@@ -1,11 +1,11 @@
----
+﻿---
 description: "Crea un nuevo componente UI reutilizable para el frontend con TypeScript, TailwindCSS, soporte dark/light mode y test. Usar cuando se necesite un componente que se usará en múltiples páginas."
 name: "Nuevo componente UI"
 argument-hint: "Describe el componente: nombre, qué renderiza, qué props recibe, comportamiento interactivo, si necesita i18n"
 agent: "agent"
 ---
 
-# Nuevo componente UI reutilizable — NN Auth System
+# Nuevo componente UI reutilizable — VerdeApp
 
 Crea un componente React reutilizable siguiendo las convenciones del proyecto.
 

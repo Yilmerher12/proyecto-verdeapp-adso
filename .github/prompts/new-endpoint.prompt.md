@@ -1,11 +1,11 @@
----
+﻿---
 description: "Crea un endpoint FastAPI completo: router, schema Pydantic, servicio y test. Usar cuando se necesite agregar una nueva ruta a la API."
 name: "Nuevo endpoint FastAPI"
 argument-hint: "Describe el endpoint: método HTTP, ruta, qué hace, qué datos recibe y devuelve"
 agent: "agent"
 ---
 
-# Nuevo endpoint FastAPI — NN Auth System
+# Nuevo endpoint FastAPI — VerdeApp
 
 Crea un endpoint FastAPI completo siguiendo las convenciones del proyecto.
 

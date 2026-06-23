@@ -17,6 +17,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { Modal } from "@/components/ui/Modal";
 
 interface AppShellProps {
   children: ReactNode;
@@ -31,12 +32,13 @@ const ROLE_META: Record<number, { label: string; emoji: string; dashboardHref: s
 
 export function AppShell({ children }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
     navigate("/");
+    logout();
   };
 
   const userData = user as any;
@@ -81,7 +83,6 @@ export function AppShell({ children }: AppShellProps) {
       return [
         ...commonStart,
         { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
-        { icon: Building2, label: "Mis Conjuntos", href: "/dashboard/admin-conjunto", enabled: true },
         { icon: Newspaper, label: "Novedades de mis Conjuntos", href: null, enabled: false },
         ...commonEnd,
       ];
@@ -204,7 +205,7 @@ export function AppShell({ children }: AppShellProps) {
         <div className={`min-w-0 border-t border-white/10 px-3 py-3 ${collapsed ? "hidden sm:block" : "block"}`}>
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className={`
               flex w-full min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
               text-green-50/70 transition-colors hover:bg-red-900/30 hover:text-red-200
@@ -215,6 +216,38 @@ export function AppShell({ children }: AppShellProps) {
             {!collapsed && <span className="truncate">Cerrar sesión</span>}
           </button>
         </div>
+
+        {showLogoutConfirm && (
+          <Modal onClose={() => setShowLogoutConfirm(false)}>
+            <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
+                <LogOut className="h-6 w-6 text-red-500 dark:text-red-400" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                ¿Cerrar sesión?
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                Tu sesión se cerrará y serás redirigido al inicio.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+                >
+                  Sí, cerrar sesión
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
 
         {/* Alternador de ancho (solo desktop) */}
         <button
@@ -231,7 +264,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* Área de contenido */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-gray-800 dark:bg-gray-900">
-          <LanguageSwitcher />
+          {/* <LanguageSwitcher /> */}
           <ThemeToggle />
         </header>
 

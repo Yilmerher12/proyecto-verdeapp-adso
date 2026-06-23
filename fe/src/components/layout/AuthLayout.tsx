@@ -25,7 +25,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-950">
       <div className="flex justify-end gap-2 p-4">
-        <LanguageSwitcher />
+        {/* <LanguageSwitcher /> */}
         <ThemeToggle />
       </div>
 

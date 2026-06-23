@@ -1,4 +1,4 @@
-# 🎓 Instrucciones del Proyecto — NN Auth System
+﻿# 🎓 Instrucciones del Proyecto — VerdeApp
 
 <!--
   ¿Qué? Archivo de instrucciones para GitHub Copilot y colaboradores del proyecto.
@@ -14,7 +14,7 @@
 
 | Campo               | Valor                                                                                                                   |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Nombre**          | NN Auth System                                                                                                          |
+| **Nombre**          | VerdeApp                                                                                                          |
 | **Tipo**            | Proyecto educativo — SENA                                                                                               |
 | **Propósito**       | Sistema de autenticación completo (registro, login, cambio y recuperación de contraseña) para una empresa genérica "NN" |
 | **Enfoque**         | Aprendizaje guiado: cada línea de código y documentación debe enseñar                                                   |
@@ -303,7 +303,7 @@ pnpm audit --audit-level=high          # Solo reporta severidad high/critical
 
 ```bash
 # be/.env.example
-DATABASE_URL=postgresql://nn_user:nn_password@localhost:5432/nn_auth_db
+DATABASE_URL=postgresql://verde_user:verde_password@localhost:5432/verdeapp_db
 SECRET_KEY=your-super-secret-key-change-in-production
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=15
@@ -626,7 +626,7 @@ git commit -m "feat(auth): add user registration endpoint
 
 What: Creates POST /api/v1/auth/register endpoint with email validation,
 password hashing, and duplicate email check
-For: Allow new users to create accounts in the NN Auth System
+For: Allow new users to create accounts in the VerdeApp
 Impact: Enables the user onboarding flow; stores hashed passwords using
 bcrypt in the users table"
 
@@ -884,18 +884,18 @@ Servicios necesarios para desarrollo:
 services:
   db:
     image: postgres:17-alpine
-    container_name: nn_auth_db
+    container_name: verdeapp_db
     environment:
-      POSTGRES_USER: nn_user
-      POSTGRES_PASSWORD: nn_password
-      POSTGRES_DB: nn_auth_db
+      POSTGRES_USER: verde_user
+      POSTGRES_PASSWORD: verde_password
+      POSTGRES_DB: verdeapp_db
     ports:
       - "5432:5432"
     volumes:
-      - nn_auth_data:/var/lib/postgresql/data
+      - verdeapp_data:/var/lib/postgresql/data
 
 volumes:
-  nn_auth_data:
+  verdeapp_data:
 ```
 
 ---

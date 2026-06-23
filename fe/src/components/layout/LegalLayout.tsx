@@ -85,7 +85,7 @@ export function LegalLayout({
           </Link>
 
           <div className="flex items-center gap-2">
-            <LanguageSwitcher />
+            {/* <LanguageSwitcher /> */}
             <ThemeToggle />
           </div>
         </nav>

@@ -1,11 +1,11 @@
----
+﻿---
 description: "Genera un mensaje de commit Conventional Commits con cuerpo pedagógico (What/For/Impact) a partir de los cambios realizados. Usar antes de hacer git commit."
 name: "Mensaje de commit"
 argument-hint: "Describe brevemente los cambios realizados, o usa #changes para que el agente los analice"
 agent: "agent"
 ---
 
-# Generar mensaje de commit — NN Auth System
+# Generar mensaje de commit — VerdeApp
 
 Analiza los cambios del workspace y genera un mensaje de commit siguiendo las
 convenciones **Conventional Commits** del proyecto con cuerpo pedagógico.
