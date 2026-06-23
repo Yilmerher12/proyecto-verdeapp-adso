@@ -58,7 +58,7 @@ Para garantizar que el proyecto se ejecute de forma inmediata en cualquier máqu
 
 ## 🚀 Cómo ejecutar el proyecto
 
-Hay dos formas de correr la aplicación. Elige la que mejor se adapte a tu situación:
+Hay dos formas de correr la aplicación. Elegir la que mejor que se adapte o se desee:
 
 ---
 
@@ -114,7 +114,7 @@ docker compose down
 
 ### Método B: Modo desarrollo local (backend y frontend sin Docker)
 
-Con este método, la base de datos corre en Docker pero el backend y el frontend corren directamente en tu máquina. Sirve para ver los cambios en tiempo real mientras programas.
+Con este método, la base de datos corre en Docker pero el backend y el frontend corren directamente en tu máquina. Sirve para ver los cambios en tiempo real mientras programamos.
 
 **Requisitos:** Docker Desktop, Python 3.12 y Node.js 20 instalados.
 
@@ -153,7 +153,7 @@ alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
-> En ejecuciones siguientes solo necesitas activar el entorno y correr uvicorn:
+> En ejecuciones siguientes solo necesitamos activar el entorno y correr uvicorn:
 > ```powershell
 > .\.venv\Scripts\Activate.ps1
 > uvicorn app.main:app --reload --port 8000
@@ -184,7 +184,7 @@ Una vez encendido, la aplicación está disponible en:
 
 ## 🗄️ Conexión a la Base de Datos
 
-La base de datos vive dentro de Docker pero se puede consultar desde tu máquina. Antes de conectarte, asegúrate de que el contenedor `verde_db` esté corriendo.
+La base de datos vive dentro de Docker pero se puede consultar desde tu máquina. Antes de conectarnos, asegurarse de que el contenedor `verde_db` esté corriendo.
 
 **Datos de conexión:**
 
