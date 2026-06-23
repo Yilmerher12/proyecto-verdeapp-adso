@@ -1,7 +1,7 @@
-# 🐍 Backend — NN Auth System
+﻿# 🐍 Backend — VerdeApp
 
 <!--
-  ¿Qué? Guía pedagógica paso a paso para construir el backend del NN Auth System.
+  ¿Qué? Guía pedagógica paso a paso para construir el backend del VerdeApp.
   ¿Para qué? Permitir que cualquier aprendiz pueda reproducir la construcción del backend
              sin necesitar ver los videos, entendiendo el "por qué" de cada decisión.
   ¿Impacto? Una guía bien estructurada evita errores de configuración y consolida el aprendizaje.
@@ -236,7 +236,7 @@ cp .env.example .env
 
 # Cadena de conexión a PostgreSQL
 # Formato: postgresql://usuario:contraseña@host:puerto/nombre_bd
-DATABASE_URL=postgresql://nn_user:nn_password@localhost:5432/nn_auth_db
+DATABASE_URL=postgresql://verde_user:verde_password@localhost:5432/verdeapp_db
 
 # Clave secreta para firmar los tokens JWT
 # IMPORTANTE: debe tener mínimo 32 caracteres y ser aleatoria
@@ -258,7 +258,7 @@ RESEND_API_KEY=
 
 # Email remitente (visible para el destinatario)
 RESEND_FROM_EMAIL=onboarding@resend.dev
-RESEND_FROM_NAME=NN Auth System
+RESEND_FROM_NAME=VerdeApp
 
 # ── Email — SMTP (alternativa a Resend, sin cuenta ni dominio) ──
 # Con Docker Compose (automático): SMTP_HOST=mailpit ya está en docker-compose.yml
@@ -979,7 +979,7 @@ def _send_email_smtp(to_email: str, subject: str, html: str) -> None:
 
 async def send_verification_email(email: str, token: str) -> None:
     verification_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
-    subject = "NN Auth System — Verifica tu cuenta"
+    subject = "VerdeApp — Verifica tu cuenta"
     html = f'<a href="{verification_url}">Verificar mi cuenta</a>'
 
     # 1. SMTP disponible (Mailpit en Docker o binario standalone)
@@ -1079,14 +1079,14 @@ from app.utils.limiter import limiter
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Se ejecuta al arrancar y al apagar la aplicación."""
-    print("✅ NN Auth System iniciando...")
+    print("✅ VerdeApp iniciando...")
     yield  # ← aquí corre la app
-    print("🛑 NN Auth System cerrando...")
+    print("🛑 VerdeApp cerrando...")
 
 # En producción, desactiva Swagger UI (/docs) y ReDoc (/redoc)
 # Un atacante no debería ver la documentación de tu API en producción (OWASP A05)
 app = FastAPI(
-    title="NN Auth System",
+    title="VerdeApp",
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
     redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None,
     lifespan=lifespan,
@@ -1237,7 +1237,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Verificar que funciona
 curl http://localhost:8000/api/v1/health
-# Respuesta: {"status":"healthy","project":"NN Auth System","version":"0.1.0"}
+# Respuesta: {"status":"healthy","project":"VerdeApp","version":"0.1.0"}
 ```
 
 ### 18.2 Swagger UI
@@ -1307,8 +1307,8 @@ brew install postgresql@17 && brew services start postgresql@17
 
 # Crear usuario y base de datos
 sudo -u postgres psql <<SQL
-CREATE USER nn_user WITH PASSWORD 'nn_password';
-CREATE DATABASE nn_auth_db OWNER nn_user;
+CREATE USER verde_user WITH PASSWORD 'verde_password';
+CREATE DATABASE verdeapp_db OWNER verde_user;
 \q
 SQL
 ```
@@ -1316,7 +1316,7 @@ SQL
 Edita `be/.env`:
 
 ```bash
-DATABASE_URL=postgresql://nn_user:nn_password@localhost:5432/nn_auth_db
+DATABASE_URL=postgresql://verde_user:verde_password@localhost:5432/verdeapp_db
 ```
 
 ### 19.2 Opción B — Base de datos cloud gratuita
@@ -1330,7 +1330,7 @@ Servicios como **[Neon](https://neon.tech)**, **[Supabase](https://supabase.com)
 
 ```bash
 # Ejemplo (Neon)
-DATABASE_URL=postgresql://usuario:contraseña@ep-xxx.us-east-1.aws.neon.tech/nn_auth_db
+DATABASE_URL=postgresql://usuario:contraseña@ep-xxx.us-east-1.aws.neon.tech/verdeapp_db
 ```
 
 ### 19.3 Email sin Docker — Mailpit binario standalone
