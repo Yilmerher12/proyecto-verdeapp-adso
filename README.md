@@ -10,10 +10,10 @@
 
 ## 👥 Integrantes del Proyecto (Grupo de Trabajo)
 
-* **Yilmer Hernández Camargo** — Aprendiz ADSO (Desarrollador Full Stack / Core Backend)
-* **Juan Barajas** — Aprendiz ADSO (Desarrollador Frontend / UI Designer)
-* **Eisin Yordan Castro** — Aprendiz ADSO (Especialista en Bases de Datos / QA)
-* **Jose Guerrero** — Aprendiz ADSO (Documentador Técnico / Analista de Requisitos)
+* **Yilmer Hernández Camargo** — Aprendiz ADSO
+* **Juan Barajas** — Aprendiz ADSO
+* **Eisin Yordan Castro** — Aprendiz ADSO
+* **Jose Guerrero** — Aprendiz ADSO
 
 ---
 
@@ -56,149 +56,148 @@ Para garantizar que el proyecto se ejecute de forma inmediata en cualquier máqu
 ---
 
 
-## 🚀 Guías de Ejecución (Portabilidad Total)
+## 🚀 Cómo ejecutar el proyecto
 
-El entorno soporta dos métodos de inicialización dependiendo de los objetivos de la sesión de trabajo:
+Hay dos formas de correr la aplicación. Elige la que mejor se adapte a tu situación:
 
-### Método A: Inicialización Total Automatizada (Modo Sustentación / Demo)
+---
 
-Ideal para desplegar toda la aplicación con un solo comando sin necesidad de configurar lenguajes locales. Docker compilará el frontend, levantará el backend, estructurará PostgreSQL y encenderá Mailpit.
+### Método A: Todo con Docker (recomendado para sustentación / demo)
+
+Con este método, un solo comando levanta todo: base de datos, backend, frontend y correo. No se necesita instalar Python ni Node.js.
+
+**Requisito:** tener Docker Desktop instalado y corriendo.
+
+**Pasos:**
 
 ```bash
 # 1. Clonar el repositorio
 git clone https://github.com/Yilmerher12/proyecto-verdeapp-adso.git
 cd proyecto-verdeapp-adso
 
-# 2. Crear los archivos .env (los valores del .env.example funcionan directamente con Docker)
+# 2. Copiar los archivos de configuración (no hay que editarlos, funcionan tal cual)
 cp be/.env.example be/.env
 cp fe/.env.example fe/.env
 
-# 3. Construir y levantar todos los servicios
+# 3. Construir y encender todos los servicios
 docker compose up -d --build
 ```
 
-Verificar que todo esté bien:
+Para verificar que todo quedó encendido:
 
 ```bash
 docker compose ps
 ```
 
-Los 4 contenedores deben aparecer como `healthy` o `Up`:
-- `verde_db` → healthy
-- `verde_be` → Up
-- `verde_fe` → Up
-- `verde_mailpit` → Up
+Deben aparecer 4 servicios activos (`Up` o `healthy`):
+- `verde_db` — Base de datos PostgreSQL
+- `verde_be` — Backend (API)
+- `verde_fe` — Frontend (interfaz web)
+- `verde_mailpit` — Servidor de correo local
 
-| Servicio | URL |
+Una vez encendido, la aplicación está disponible en:
+
+| Qué | Dirección |
 |---|---|
-| Frontend | http://localhost:3000 |
-| Backend / Swagger | http://localhost:8000/docs |
-| Mailpit (emails) | http://localhost:8025 |
-| BD (pgAdmin/cliente) | `localhost:5433` |
+| Aplicación web | http://localhost:3000 |
+| API / documentación | http://localhost:8000/docs |
+| Bandeja de correos (Mailpit) | http://localhost:8025 |
+| Base de datos | `localhost:5433` |
+
+Para apagar todo cuando termines:
+
+```bash
+docker compose down
+```
 
 ---
 
-### Método B: Entorno de Desarrollo Local (Modo Programación / Hot-Reload)
+### Método B: Modo desarrollo local (backend y frontend sin Docker)
 
-Recomendado para ver cambios en tiempo real sin hacer rebuild de Docker. La BD y Mailpit siguen en Docker; el backend y frontend corren localmente.
+Con este método, la base de datos corre en Docker pero el backend y el frontend corren directamente en tu máquina. Sirve para ver los cambios en tiempo real mientras programas.
 
-#### 1. Infraestructura base (BD y correo en Docker)
+**Requisitos:** Docker Desktop, Python 3.12 y Node.js 20 instalados.
+
+#### Paso 1 — Encender solo la base de datos y el correo
 
 ```bash
-# Si tenías todo corriendo, primero bajar
-docker compose down
-
-# Levantar SOLO la BD y Mailpit
 docker compose up -d verde_db verde_mailpit
 ```
 
-#### 2. Configurar el `.env` del backend para modo local
-
-⚠️ **Paso crítico** — el `.env.example` viene configurado para Docker. En modo local hay que cambiar dos valores:
+#### Paso 2 — Configurar el backend
 
 ```bash
+# Copiar el archivo de configuración
 cp be/.env.example be/.env
 ```
 
-Luego abrir `be/.env` en VSCode y cambiar estas dos líneas:
+Luego abrir `be/.env` y verificar que estas dos líneas estén así (deben estar así por defecto):
 
 ```dotenv
-# CAMBIAR ESTO (host de Docker → host local):
 DATABASE_URL=postgresql://verde_user:verde_password@localhost:5433/verdeapp_db
-
-# CAMBIAR ESTO (nombre del servicio Docker → localhost):
+SMTP_HOST=localhost
 ```
 
-El resto de variables no se tocan.
+#### Paso 3 — Encender el backend (Terminal 1 — PowerShell)
 
-#### 3. Lanzar el backend (Terminal 1)
-
-```bash
+```powershell
 cd be
 
-# Crear y activar el entorno virtual (solo la primera vez)
+# Solo la primera vez: crear entorno virtual e instalar dependencias
 python -m venv .venv
-source .venv/Scripts/activate
-.\.venv\Scripts\Activate.ps1 # Windows Git Bash
-# source .venv/bin/activate    # Linux / macOS
-
-# Instalar dependencias (solo la primera vez)
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-
-# Aplicar migraciones de base de datos (solo la primera vez o tras nuevas migraciones)
 alembic upgrade head
 
-# Iniciar el servidor con hot-reload
+# Encender el servidor
 uvicorn app.main:app --reload --port 8000
 ```
 
-#### 4. Lanzar el frontend (Terminal 2)
+> En ejecuciones siguientes solo necesitas activar el entorno y correr uvicorn:
+> ```powershell
+> .\.venv\Scripts\Activate.ps1
+> uvicorn app.main:app --reload --port 8000
+> ```
 
-```bash
+#### Paso 4 — Encender el frontend (Terminal 2 — PowerShell)
+
+```powershell
 cd fe
 
-# Instalar dependencias (solo la primera vez)
+# Solo la primera vez: instalar dependencias
 pnpm install
 
-# Copiar variables de entorno (no requiere cambios para modo local)
-cp fe/.env.example fe/.env
-
-# Iniciar el servidor de desarrollo
+# Encender el servidor de desarrollo
 pnpm dev
 ```
 
-| Servicio | URL en modo local |
+Una vez encendido, la aplicación está disponible en:
+
+| Qué | Dirección |
 |---|---|
-| Frontend (Vite) | http://localhost:5173 |
-| Backend / Swagger | http://localhost:8000/docs |
-| Mailpit (emails) | http://localhost:8025 |
-| BD (pgAdmin/cliente) | `localhost:5433` |
-
-> **Nota:** Cuando termines el desarrollo y quieras volver al modo Docker completo, restaura los valores originales en `be/.env` (`verde_db:5432` y `verde_mailpit`) antes de hacer `docker compose up -d --build`.
-
-
-Aquí está el apartado listo para agregar al README:
+| Aplicación web | http://localhost:5173 |
+| API / documentación | http://localhost:8000/docs |
+| Bandeja de correos (Mailpit) | http://localhost:8025 |
+| Base de datos | `localhost:5433` |
 
 ---
 
 ## 🗄️ Conexión a la Base de Datos
 
-La base de datos corre dentro de Docker pero es accesible desde tu máquina local. Hay tres formas de visualizarla:
+La base de datos vive dentro de Docker pero se puede consultar desde tu máquina. Antes de conectarte, asegúrate de que el contenedor `verde_db` esté corriendo.
 
-> ⚠️ **Requisito previo:** el contenedor `verde_db` debe estar corriendo antes de conectarte (`docker compose up -d verde_db` o `docker compose up -d --build`).
-
-**Datos de conexión** (iguales para las tres opciones):
+**Datos de conexión:**
 
 | Campo | Valor |
 |---|---|
 | Host | `localhost` |
-| Port | `5433` |
-| Database | `verdeapp_db` |
-| Username | `verde_user` |
-| Password | `verde_password` |
+| Puerto | `5433` |
+| Base de datos | `verdeapp_db` |
+| Usuario | `verde_user` |
+| Contraseña | `verde_password` |
 | SSL | `disable` |
 
-> ⚠️ El puerto es `5433` (no 5432) porque la mayoría de equipos ya tienen PostgreSQL instalado localmente usando ese puerto, lo que generaría un conflicto.
+> El puerto es `5433` y no `5432` para evitar conflictos con instalaciones locales de PostgreSQL.
 
 ---
 
@@ -206,60 +205,36 @@ La base de datos corre dentro de Docker pero es accesible desde tu máquina loca
 
 1. Abrir pgAdmin
 2. Clic derecho en **Servers** → **Register** → **Server**
-3. Pestaña **General** → Name: `VerdeApp Docker`
-4. Pestaña **Connection**:
-   - Host: `localhost`
-   - Port: `5433`
-   - Database: `verdeapp_db`
-   - Username: `verde_user`
-   - Password: `verde_password`
+3. Pestaña **General** → escribir como nombre: `VerdeApp`
+4. Pestaña **Connection** → llenar los datos de la tabla de arriba
 5. Pestaña **SSL** → SSL mode: `disable`
-6. **Save**
+6. Clic en **Save**
 
 ---
 
-### Opción 2: Database Client (extensión VSCode)
+### Opción 2: Extensión de VS Code (SQLTools)
 
-1. Instalar la extensión **Database Client** de Weijan Chen en VSCode
-2. En el panel izquierdo, clic en el ícono de base de datos
-3. Clic en **+** para nueva conexión → seleccionar **PostgreSQL**
-4. Llenar los campos:
-   - Host: `localhost`
-   - Port: `5433`
-   - Database: `verdeapp_db`
-   - Username: `verde_user`
-   - Password: `verde_password`
-   - SSL: dejar vacío o `disable`
-5. Clic en **Connect**
+El proyecto ya incluye la conexión preconfigurada. Solo necesitas:
+
+1. Instalar la extensión **SQLTools** y **SQLTools PostgreSQL Driver** en VS Code
+2. Abrir el panel de SQLTools (ícono de base de datos en la barra lateral)
+3. Aparecerá la conexión **VerdeApp** lista para usar — solo hacer clic en **Connect**
 
 ---
 
-### Opción 3: Terminal de Docker (sin instalar nada)
-
-Si no tienes pgAdmin ni la extensión, puedes entrar directamente al contenedor desde Git Bash:
+### Opción 3: Desde la terminal (sin instalar nada extra)
 
 ```bash
-# Abrir una sesión interactiva de PostgreSQL dentro del contenedor
 docker exec -it verde_db psql -U verde_user -d verdeapp_db
-
-# Comandos útiles dentro de psql:
-\dt                  # listar todas las tablas
-\d nombre_tabla      # ver estructura de una tabla
-SELECT * FROM users; # consultar datos (ejemplo)
-\q                   # salir
 ```
 
-Ejemplos de consultas útiles para el proyecto:
+Comandos útiles dentro de la consola de PostgreSQL:
 
 ```sql
--- Ver todos los usuarios registrados
-SELECT id, email, first_name, last_name, is_email_verified, role_id FROM users;
-
--- Ver roles disponibles
-SELECT * FROM roles;
-
--- Contar usuarios por rol
-SELECT role_id, COUNT(*) FROM users GROUP BY role_id;
+\dt                    -- ver todas las tablas
+SELECT * FROM users;   -- ver usuarios registrados
+SELECT * FROM roles;   -- ver roles disponibles
+\q                     -- salir
 ```
 
 ## 📁 Estructura Detallada del Proyecto
