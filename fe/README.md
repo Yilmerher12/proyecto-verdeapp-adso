@@ -1,4 +1,4 @@
-# Frontend — NN Auth System
+﻿# Frontend — VerdeApp
 
 > Guía pedagógica paso a paso: cómo se construyó el frontend del sistema de autenticación.
 >
@@ -441,7 +441,7 @@ createRoot(document.getElementById("root")!).render(
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>NN Auth System</title>
+    <title>VerdeApp</title>
   </head>
   <body>
     <div id="root"></div>
@@ -1151,7 +1151,7 @@ Estructura visual:
 ┌─────────────────────────────────┐
 │ [ThemeToggle]          (esquina) │
 │                                  │
-│         NN Auth                  │  ← Logo/nombre
+│         VerdeApp                  │  ← Logo/nombre
 │                                  │
 │  ┌─────────────────────────┐    │
 │  │  {title}                │    │  ← Tarjeta blanca
@@ -1204,7 +1204,7 @@ export function Navbar() {
     <nav aria-label="Navegación principal"
       className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       {/* Logo — navega a dashboard si autenticado, login si no */}
-      <Link to={isAuthenticated ? "/dashboard" : "/login"}>NN Auth</Link>
+      <Link to={isAuthenticated ? "/dashboard" : "/login"}>VerdeApp</Link>
 
       {/* Nombre del usuario (oculto en mobile) + ThemeToggle + botón de salida */}
       <div className="flex items-center gap-3">
