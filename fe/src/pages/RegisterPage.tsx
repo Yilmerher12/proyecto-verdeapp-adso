@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { calculatePasswordStrength } from "@/components/ui/PasswordStrengthIndicator";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
@@ -123,8 +124,8 @@ export function RegisterPage() {
     } else if (formData.email !== formData.confirmEmail) {
       errors["confirmEmail"] = "Los correos electrónicos no coinciden.";
     }
-    if (formData.password.length < 8) {
-      errors["password"] = "La contraseña debe tener al menos 8 caracteres.";
+    if (calculatePasswordStrength(formData.password) < 5) {
+      errors["password"] = "La contraseña debe ser Fuerte: mínimo 8 caracteres, mayúscula, minúscula, número y símbolo (!@#$...).";
     }
     if (formData.password !== formData.confirmPassword) {
       errors["confirmPassword"] = "Las contraseñas no coinciden.";
@@ -177,19 +178,39 @@ export function RegisterPage() {
       <>
         <LandingPage />
         <Modal onClose={() => navigate("/")}>
-          <div className="p-8 text-center space-y-4 animate-fade-in">
-            <div className="mx-auto w-20 h-20 bg-green-100 flex items-center justify-center rounded-full mb-4 shadow-sm border border-green-200">
-              <MailCheck className="w-10 h-10 text-green-600" />
+          <div className="p-6 sm:p-8 text-center max-w-sm mx-auto">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 ring-8 ring-green-50 dark:bg-green-900/20 dark:ring-green-900/20">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-800/40">
+                <MailCheck className="h-7 w-7 text-green-600 dark:text-green-400" strokeWidth={2} />
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">¡Verifica tu correo!</h2>
-            <p className="text-gray-600 text-sm">
-              Hemos registrado tus datos con éxito. Para activar tu cuenta e iniciar sesión, revisa tu buzón y haz clic en el enlace que te acabamos de enviar.
+
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+              ¡Revisa tu bandeja!
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 leading-relaxed">
+              Enviamos un enlace de verificación a{" "}
+              <span className="font-semibold text-gray-700 dark:text-gray-300">{formData.email}</span>.
             </p>
-            <div className="pt-6 rounded-xl overflow-hidden transition-all text-white bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-sm mt-4">
-              <Button onClick={() => navigate("/")} fullWidth>
-                Entendido
-              </Button>
+
+            <div className="text-left bg-green-50 dark:bg-green-900/20 rounded-xl p-4 mb-6 space-y-3">
+              {[
+                "Abre tu correo electrónico",
+                "Busca el email de VerdeApp",
+                'Haz clic en "Verificar mi cuenta"',
+              ].map((step, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">
+                    {i + 1}
+                  </span>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{step}</p>
+                </div>
+              ))}
             </div>
+
+            <Button onClick={() => navigate("/")} fullWidth>
+              Entendido
+            </Button>
           </div>
         </Modal>
       </>

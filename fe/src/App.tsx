@@ -33,6 +33,7 @@ import { AdminDashboard } from "@/pages/dashboards/AdminDashboard";
 import { AdminConjuntoDashboard } from "@/pages/dashboards/AdminConjuntoDashboard";
 import { ChangePasswordPage } from "@/pages/ChangePasswordPage";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { DirectorioPage } from "@/pages/DirectorioPage";
 
 interface CustomUser {
   role_id?: number;
@@ -144,6 +145,34 @@ function App() {
                 <AppShell>
                   <ProfilePage />
                 </AppShell>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Directorio — Residente (tabs: recicladores + puntos de acopio) */}
+          <Route
+            path="/directorio"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[2]}>
+                  <AppShell>
+                    <DirectorioPage />
+                  </AppShell>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Puntos de acopio — Reciclador (solo puntos de acopio) */}
+          <Route
+            path="/puntos-acopio"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[3]}>
+                  <AppShell>
+                    <DirectorioPage soloAcopio />
+                  </AppShell>
+                </RoleGuard>
               </ProtectedRoute>
             }
           />

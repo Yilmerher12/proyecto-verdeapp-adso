@@ -1,27 +1,29 @@
-/**
- * Archivo: LandingPage.tsx
- * Descripción: Página de aterrizaje pública de VerdeApp.
- * ¿Para qué? Cambios respecto a la versión anterior:
- *   - El Hero vuelve a texto centrado (sin la ilustración de edificio,
- *     que no se leía bien).
- *   - Se mantienen: sección "Cómo funciona", Pilares con franja de color,
- *     sección de Impacto con fondo verde sólido.
- *
- * PENDIENTE (futuro): agregar un carrusel/slider de imágenes reales
- * (conjuntos residenciales, recicladores trabajando, separación de
- * residuos) en el Hero o en una sección dedicada. Falta decidir la
- * fuente de esas fotos (fotos propias del equipo vs. banco con licencia
- * clara) antes de implementarlo, para no tener problemas de derechos.
- */
-
 import { Link } from "react-router-dom";
-import { Recycle, Users, MapPin, ArrowRight, Leaf, UserPlus, Truck, CheckCircle2 } from "lucide-react";
+import { ArrowRight, MapPin, Users, Recycle } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
-const techStack = [
-  "Python", "FastAPI", "PostgreSQL", "SQLAlchemy",
-  "Alembic", "React", "TypeScript", "TailwindCSS", "Docker",
+const pasos = [
+  {
+    imgSrc: "/icono_conjunto_que_se_afilia.png",
+    numero: "01",
+    titulo: "El conjunto se afilia",
+    descripcion:
+      "El administrador registra el conjunto en VerdeApp e invita a los residentes y al reciclador asignado.",
+  },
+  {
+    imgSrc: "/icono-los-residentes-participan.png",
+    numero: "02",
+    titulo: "Los residentes participan",
+    descripcion:
+      "Aprenden a reciclar con el contenido educativo e indican cuándo el SHUT está en su capacidad máxima.",
+  },
+  {
+    imgSrc: "/icono-reciclador-que-actua.png",
+    numero: "03",
+    titulo: "El reciclador actúa",
+    descripcion:
+      "Notifica su llegada al SHUT. Al finalizar, el sistema registra la gestión y genera una auditoría de rendimiento.",
+  },
 ] as const;
 
 const pilares = [
@@ -29,74 +31,50 @@ const pilares = [
     icon: MapPin,
     titulo: "Separación en la fuente",
     descripcion:
-      "Guía a los residentes de tu conjunto en la correcta clasificación de residuos reciclables, directamente desde la app.",
+      "Guía a los residentes en la correcta clasificación de residuos reciclables, directamente desde la app.",
   },
   {
     icon: Users,
     titulo: "Conexión con recicladores",
     descripcion:
-      "Formaliza y dignifica la labor de los recicladores de oficio. Permite solicitudes y notificaciones en tiempo real entre el conjunto y el reciclador asignado. Así, se convierte en un actor activo en cada conjunto en el que trabaja.",
+      "Formaliza la labor de los recicladores de oficio. Permite solicitudes y notificaciones en tiempo real entre el conjunto y el reciclador asignado.",
   },
   {
     icon: Recycle,
-    titulo: "Educaciòn ambiental",
+    titulo: "Educación ambiental",
     descripcion:
-      "Guías y contenido interactivo sobre cómo separar, limpiar y entregar tus materiales reciclables de manera correcta en tu comunidad residencial. ",
-  },
-] as const;
-
-const pasos = [
-  {
-    icon: UserPlus,
-    numero: "1",
-    titulo: "Tu conjunto se afilia",
-    descripcion: "El administrador registra el conjunto residencial en VerdeApp con su dirección y datos.",
-  },
-  {
-    icon: Recycle,
-    numero: "2",
-    titulo: "Los residentes se registran",
-    descripcion: "Cada residente puede aprender, a partir de un contenido educativo, a reciclar de la mejor manera e indicar cuándo el SHUT se encuentre en su capacidad máxima para una buena comunicación con el conjunto.",
-  },
-  {
-    icon: Truck,
-    numero: "3",
-    titulo: "El reciclador recoge",
-    descripcion: "El reciclador, afiliado al conjunto por invitación del administrador, puede indicar la llegada al SHUT y el restablecimiento de este para que los residentes entreguen su material y se genere una auditoría de rendimiento general.",
+      "Guías y contenido interactivo sobre cómo separar, limpiar y entregar materiales reciclables correctamente en tu comunidad.",
   },
 ] as const;
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 selection:bg-green-200 selection:text-green-900">
-      {/* ── HEADER ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/80 dark:border-gray-800 dark:bg-gray-950/80 backdrop-blur-md">
-        <nav
-          className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
-          aria-label="Navegación principal"
-        >
+    <div className="min-h-screen bg-white dark:bg-gray-950">
+
+      {/* ── HEADER ── */}
+      <header
+        className="fixed left-0 right-0 top-0 z-50 backdrop-blur-md"
+        style={{ background: "rgba(5,46,22,0.58)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+      >
+        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             to="/"
-            className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 rounded-lg"
-            aria-label="VerdeApp — ir al inicio"
+            className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
+            aria-label="VerdeApp — inicio"
           >
-            <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg" aria-hidden="true">
-              <Leaf className="h-6 w-6 text-green-600 dark:text-green-400" />
-            </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-              VerdeApp
-            </span>
+            <img
+              src="/logo-blanco.png"
+              alt="VerdeApp"
+              className="h-8 w-auto object-contain"
+            />
           </Link>
 
-          <ul className="m-0 flex list-none items-center gap-3 p-0">
-            {/* <li><LanguageSwitcher /></li> */}
-            <li>
-              <ThemeToggle />
-            </li>
+          <ul className="m-0 flex list-none items-center gap-2 p-0">
+            <li><ThemeToggle /></li>
             <li className="hidden sm:block">
               <Link
                 to="/login"
-                className="text-sm font-medium text-gray-600 hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 rounded-md px-2 py-1"
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-white/75 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
               >
                 Iniciar sesión
               </Link>
@@ -104,7 +82,7 @@ export function LandingPage() {
             <li>
               <Link
                 to="/register"
-                className="bg-green-700 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl shadow-sm transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
+                className="rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-400 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
               >
                 Registrarse
               </Link>
@@ -114,101 +92,119 @@ export function LandingPage() {
       </header>
 
       <main>
-        {/* ── HERO — texto centrado, sin ilustración ── */}
+        {/* ── HERO ── */}
         <section
-          className="relative px-6 py-24 sm:py-36 lg:px-8 overflow-hidden"
+          className="relative flex min-h-screen items-center justify-center overflow-hidden"
           aria-labelledby="hero-heading"
         >
-          <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+          {/* Fondo */}
+          <div className="absolute inset-0" aria-hidden="true">
+            <img
+              src="/conjuntos-residenciales-fondo.jpeg"
+              alt=""
+              className="h-full w-full object-cover object-center"
+              style={{ filter: "brightness(0.40) saturate(1.15)" }}
+            />
             <div
-              className="absolute -top-40 left-1/2 -translate-x-1/2 w-225 h-150 rounded-full opacity-20 dark:opacity-10"
+              className="absolute inset-0"
               style={{
-                background: "radial-gradient(ellipse at center, #16a34a 0%, #4ade80 40%, transparent 70%)",
-                animation: "pulse 8s ease-in-out infinite",
+                background:
+                  "linear-gradient(160deg, rgba(5,46,22,0.80) 0%, rgba(21,128,61,0.42) 55%, rgba(5,46,22,0.78) 100%)",
               }}
             />
             <div
-              className="absolute top-20 -left-32 w-96 h-96 rounded-full opacity-10 dark:opacity-5"
+              className="absolute inset-0 opacity-15"
               style={{
-                background: "radial-gradient(circle, #22c55e, transparent 70%)",
-                animation: "pulse 6s ease-in-out infinite 2s",
-              }}
-            />
-            <div
-              className="absolute bottom-0 -right-20 w-80 h-80 rounded-full opacity-10 dark:opacity-5"
-              style={{
-                background: "radial-gradient(circle, #86efac, transparent 70%)",
-                animation: "pulse 7s ease-in-out infinite 1s",
-              }}
-            />
-            <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 Q45 20 30 35 Q15 20 30 5Z' fill='%2316a34a'/%3E%3C/svg%3E")`,
-                backgroundSize: "60px 60px",
+                backgroundImage: "url('/hojas-fondo.jpg')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                mixBlendMode: "overlay",
               }}
             />
           </div>
 
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 flex justify-center">
-              <span className="rounded-full bg-green-50 dark:bg-green-900/30 px-4 py-1.5 text-sm font-semibold text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20">
-                ADSO SENA · Proyecto 2026
-              </span>
-            </div>
+          {/* Contenido */}
+          <div className="relative mx-auto max-w-3xl px-6 pt-24 pb-32 text-center lg:px-8">
+
+            {/*
+              Logo: una vez tengas el PNG con fondo transparente y colores blancos,
+              descomenta esto y ajusta la ruta:
+
+              <div className="mb-8 flex justify-center">
+                <img
+                  src="/logo-verde-app-blanco.png"
+                  alt="VerdeApp"
+                  className="h-28 w-auto object-contain drop-shadow-2xl"
+                />
+              </div>
+            */}
 
             <h1
               id="hero-heading"
-              className="text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-7xl mb-6"
+              className="mb-4 text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow sm:text-7xl"
             >
-              Verde<span className="text-green-600 dark:text-green-400">App</span>
+              Verde<span className="text-green-400">App</span>
             </h1>
 
-            <p className="text-xl leading-relaxed text-gray-600 dark:text-gray-300 mb-4 font-medium">
+            <p className="mb-3 text-lg font-semibold text-white/90 sm:text-xl">
               Gestión de residuos para conjuntos residenciales en Bogotá
             </p>
-            <p className="text-base leading-8 text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
-              Conecta a los residentes de tu conjunto con recicladores de oficio certificados. Recibe notificaciones clave en tiempo real, accede a educación ambiental y mantente al tanto de las auditorías de reciclaje de tu comunidad — todo en un solo lugar.
+
+            <p
+              className="mx-auto mb-10 max-w-xl text-sm leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.55)" }}
+            >
+              Conectamos residentes, recicladores y administradores para transformar
+              la gestión de residuos en tu comunidad.
             </p>
 
-            <div className="flex flex-col-reverse sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
                 to="/login"
-                className="flex items-center justify-center w-full sm:w-auto text-sm font-semibold text-gray-900 dark:text-white px-8 py-3.5 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500"
+                className="flex w-full items-center justify-center rounded-xl px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:w-auto"
+                style={{ border: "1px solid rgba(255,255,255,0.28)" }}
               >
                 Ya tengo cuenta
               </Link>
               <Link
                 to="/register"
-                className="flex items-center justify-center gap-2 w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3.5 rounded-xl shadow-md transition-all hover:shadow-lg active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-green-400 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 sm:w-auto"
               >
-                Unirse a VerdeApp <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                Unirse a VerdeApp <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
+          </div>
 
-            <div className="mt-16 grid grid-cols-3 gap-6 max-w-md mx-auto">
-              {[
-                { valor: "4", label: "Roles de usuario" },
-                { valor: "100%", label: "Código documentado" },
-                { valor: "Bogotá", label: "Foco territorial" },
-              ].map(({ valor, label }) => (
-                <div key={label} className="text-center">
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">{valor}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
-                </div>
-              ))}
-            </div>
+          {/* Ola de transición */}
+          <div className="absolute bottom-0 left-0 right-0 z-10" aria-hidden="true">
+            <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" className="block w-full dark:hidden">
+              <path d="M0 80L48 70C96 60 192 40 288 34C384 28 480 36 576 42C672 48 768 48 864 43C960 37 1056 26 1152 23C1248 20 1344 26 1392 29L1440 32V80H0Z" fill="white" />
+            </svg>
+            <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" className="hidden w-full dark:block">
+              <path d="M0 80L48 70C96 60 192 40 288 34C384 28 480 36 576 42C672 48 768 48 864 43C960 37 1056 26 1152 23C1248 20 1344 26 1392 29L1440 32V80H0Z" fill="rgb(3 7 18)" />
+            </svg>
           </div>
         </section>
 
-        {/* ── CÓMO FUNCIONA ──────────────────────────────────── */}
+        {/* ── CÓMO FUNCIONA ── */}
         <section
-          className="border-t border-gray-100 dark:border-gray-900 px-6 py-16 sm:py-24 bg-gray-50/50 dark:bg-gray-900/20"
+          className="relative overflow-hidden px-6 py-20 sm:py-28"
           aria-labelledby="como-funciona-heading"
         >
-          <div className="mx-auto max-w-5xl">
-            <header className="mx-auto max-w-2xl text-center mb-16">
-              <p className="text-base font-semibold text-green-600 dark:text-green-400 mb-2">
-                Cómo funciona
+          <div className="absolute inset-0" aria-hidden="true">
+            <img
+              src="/fondo-adicional.jpeg"
+              alt=""
+              className="h-full w-full object-cover object-center"
+              style={{ filter: "blur(3px) brightness(1.8) saturate(0.3)", transform: "scale(1.06)" }}
+            />
+            <div className="absolute inset-0 bg-white/90 dark:bg-gray-950/93" />
+          </div>
+
+          <div className="relative mx-auto max-w-5xl">
+            <div className="mb-14 text-center">
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-green-600 dark:text-green-400">
+                ¿Cómo funciona?
               </p>
               <h2
                 id="como-funciona-heading"
@@ -216,203 +212,116 @@ export function LandingPage() {
               >
                 Tres pasos, un ciclo completo
               </h2>
-            </header>
+              <p className="mx-auto mt-3 max-w-lg text-sm text-gray-500 dark:text-gray-400">
+                VerdeApp conecta a todos los actores del reciclaje en el conjunto residencial.
+              </p>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 relative">
-              {pasos.map(({ icon: Icon, numero, titulo, descripcion }) => (
-                <div key={numero} className="flex flex-col items-center text-center">
-                  <div className="relative mb-5">
-                    <div className="h-20 w-20 rounded-full bg-green-600 flex items-center justify-center shadow-lg shadow-green-600/20">
-                      <Icon className="h-9 w-9 text-white" aria-hidden="true" />
-                    </div>
-                    <span className="absolute -top-1 -right-1 h-7 w-7 rounded-full bg-white dark:bg-gray-900 border-2 border-green-600 flex items-center justify-center text-xs font-bold text-green-700 dark:text-green-400">
-                      {numero}
-                    </span>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+              {pasos.map(({ imgSrc, numero, titulo, descripcion }, i) => (
+                <article
+                  key={numero}
+                  className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900"
+                >
+                  <span
+                    className="absolute right-4 top-3 select-none text-7xl font-black leading-none text-green-50 dark:text-green-950/50"
+                    aria-hidden="true"
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="mb-5 h-14 w-14">
+                    <img src={imgSrc} alt="" aria-hidden="true" className="h-full w-full object-contain drop-shadow-md" />
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-2">{titulo}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                    {descripcion}
-                  </p>
-                </div>
+                  <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{titulo}</h3>
+                  <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{descripcion}</p>
+                </article>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── PILARES ────────────────────────────────────────── */}
+        {/* ── PILARES ── fondo verde oscuro, layout horizontal ── */}
         <section
-          className="border-t border-gray-100 dark:border-gray-900 px-6 py-16 sm:py-24"
+          className="px-6 py-20 sm:py-28"
+          style={{ background: "linear-gradient(160deg, #052e16 0%, #14532d 60%, #166534 100%)" }}
           aria-labelledby="pilares-heading"
         >
-          <div className="mx-auto max-w-7xl">
-            <header className="mx-auto max-w-2xl text-center mb-16">
-              <p className="text-base font-semibold text-green-600 dark:text-green-400 mb-6">
-                Nuestros Pilares
+          <div className="mx-auto max-w-4xl">
+            <div className="mb-12">
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-green-400">
+                Nuestros pilares
               </p>
               <h2
                 id="pilares-heading"
-                className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl"
+                className="text-3xl font-bold text-white sm:text-4xl"
               >
-                Una plataforma, tres ejes de impacto
+                Una plataforma,<br className="hidden sm:block" /> tres ejes de impacto
               </h2>
-              <p className="mt-4 text-gray-500 dark:text-gray-400">
-                VerdeApp aborda el problema del reciclaje desde la educación, la coordinación y la
-                comunicaciòn.
-              </p>
-            </header>
+            </div>
 
-            <ul className="m-0 grid list-none grid-cols-1 gap-8 p-0 sm:grid-cols-3">
-              {pilares.map(({ icon: Icon, titulo, descripcion }) => (
-                <li key={titulo}>
-                  <article className="h-full rounded-3xl border border-gray-100 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-1 dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-                    <div className="h-2 bg-linear-to-r from-green-500 to-green-600" aria-hidden="true" />
-                    <div className="p-8">
-                      <div
-                        className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30"
-                        aria-hidden="true"
-                      >
-                        <Icon className="h-7 w-7 text-green-600 dark:text-green-400" />
-                      </div>
-                      <h3 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
-                        {titulo}
-                      </h3>
-                      <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                        {descripcion}
-                      </p>
+            <div className="divide-y divide-white/10">
+              {pilares.map(({ icon: Icon, titulo, descripcion }, i) => (
+                <div key={titulo} className="flex gap-6 py-9 sm:gap-10">
+                  <div className="shrink-0 flex flex-col items-center gap-3 pt-1">
+                    <span className="text-[10px] font-bold tracking-widest text-green-500">
+                      0{i + 1}
+                    </span>
+                    <div
+                      className="flex h-11 w-11 items-center justify-center rounded-xl"
+                      style={{ background: "rgba(255,255,255,0.08)" }}
+                    >
+                      <Icon className="h-5 w-5 text-green-300" aria-hidden="true" />
                     </div>
-                  </article>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* ── IMPACTO — fondo verde sólido ──────────────────── */}
-        <section className="bg-green-800 dark:bg-green-900 px-6 py-16 sm:py-20" aria-labelledby="impacto-heading">
-          <div className="mx-auto max-w-5xl text-center">
-            <h2 id="impacto-heading" className="text-2xl sm:text-3xl font-bold text-white mb-4">
-              Reciclar bien, JUNTOS
-            </h2>
-            <p className="text-green-100 max-w-2xl mx-auto mb-10">
-              Cada conjunto que se afilia a VerdeApp formaliza el trabajo de sus recicladores
-              y mejora la separación de residuos en su comunidad.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
-              {[
-                { texto: "Conjuntos verificados antes de operar" },
-                { texto: "Recicladores conectados directamente" },
-                { texto: "Educación ambiental incluida" },
-              ].map(({ texto }) => (
-                <div
-                  key={texto}
-                  className="flex items-start gap-3 bg-white/10 rounded-2xl p-5 text-left"
-                >
-                  <CheckCircle2 className="h-5 w-5 text-green-200 shrink-0 mt-0.5" aria-hidden="true" />
-                  <p className="text-sm text-white font-medium">{texto}</p>
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+                      {descripcion}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* ── STACK TECNOLÓGICO ──────────────────────────────── */}
-        <section
-          className="border-t border-gray-100 dark:border-gray-800 px-6 py-20"
-          aria-labelledby="stack-heading"
-        >
-          <div className="mx-auto max-w-4xl text-center">
-            <h2
-              id="stack-heading"
-              className="mb-3 text-3xl font-bold text-gray-900 dark:text-gray-100"
-            >
-              Tecnologías Implementadas
-            </h2>
-            <p className="mb-10 text-gray-500 dark:text-gray-400">
-              Arquitectura moderna, escalable y segura.
-            </p>
-
-            <ul
-              className="m-0 flex list-none flex-wrap justify-center gap-3 p-0"
-              aria-label="Lista de tecnologías"
-            >
-              {techStack.map((tech) => (
-                <li key={tech}>
-                  <span className="rounded-full border border-gray-200 bg-gray-50 px-4 py-1.5 text-sm font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                    {tech}
-                  </span>
-                </li>
-              ))}
-            </ul>
           </div>
         </section>
       </main>
 
-      {/* ── FOOTER ─────────────────────────────────────────── */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-gray-900 dark:bg-gray-950">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-5">
-          <div className="flex w-full flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex items-center gap-2" aria-label="VerdeApp Logo">
-              <Leaf className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                VerdeApp
-              </span>
-            </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-              © {new Date().getFullYear()} Proyecto Formativo ADSO - SENA.{" "}
-              <br className="sm:hidden" />
-              Yilmer Hernández, Juan Barajas, Eisin Yordan, Josè Guerrero
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-gray-800 dark:bg-gray-950">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <span className="text-sm font-extrabold tracking-tight text-gray-800 dark:text-gray-200">
+              Verde<span className="text-green-600 dark:text-green-400">App</span>
+            </span>
+            <p className="text-center text-xs text-gray-400 dark:text-gray-500">
+              © {new Date().getFullYear()} VerdeApp. Todos los derechos reservados.
             </p>
           </div>
 
           <nav
             aria-label="Aviso legal"
-            className="w-full border-t border-gray-100 pt-4 dark:border-gray-800"
+            className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-800"
           >
-            <ul className="m-0 flex list-none flex-wrap justify-center gap-x-6 gap-y-2 p-0">
-              <li>
-                <Link
-                  to="/terminos-de-uso"
-                  className="rounded text-xs text-gray-500 hover:text-green-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
-                >
-                  Términos de uso
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/privacidad"
-                  className="rounded text-xs text-gray-500 hover:text-green-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
-                >
-                  Privacidad
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/politica-cookies"
-                  className="rounded text-xs text-gray-500 hover:text-green-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
-                >
-                  Cookies
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contacto"
-                  className="rounded text-xs text-gray-500 hover:text-green-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
-                >
-                  Contacto
-                </Link>
-              </li>
+            <ul className="m-0 flex list-none flex-wrap justify-center gap-x-5 gap-y-1 p-0">
+              {[
+                { to: "/terminos-de-uso", label: "Términos de uso" },
+                { to: "/privacidad", label: "Privacidad" },
+                { to: "/politica-cookies", label: "Cookies" },
+                { to: "/contacto", label: "Contacto" },
+              ].map(({ to, label }) => (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    className="rounded text-xs text-gray-400 transition-colors hover:text-green-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 dark:text-gray-500 dark:hover:text-green-400"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </nav>
         </div>
       </footer>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { transform: scale(1) translateY(0); opacity: 0.2; }
-          50% { transform: scale(1.08) translateY(-20px); opacity: 0.28; }
-        }
-      `}</style>
     </div>
   );
 }
