@@ -100,14 +100,39 @@ CREATE TABLE IF NOT EXISTS unidades (
     CONSTRAINT fk_unidades_conjuntos FOREIGN KEY (id_conjunto_residencial) REFERENCES conjuntos_residenciales(id_conjunto_residencial)
 );
 
--- ¿Qué? Tabla de directorios públicos de reciclaje de la alcaldía.
+-- ¿Qué? Tabla de directorios públicos de reciclaje de la alcaldía (Puntos Limpios UAESP).
 CREATE TABLE IF NOT EXISTS puntos_acopios (
     id_punto_acopio SERIAL PRIMARY KEY,
     id_localidad INT NOT NULL,
+    nombre VARCHAR(200) NOT NULL DEFAULT '',
     nombre_encargado VARCHAR(100),
     direccion VARCHAR(255) NOT NULL,
     telefono_contacto VARCHAR(15),
     CONSTRAINT fk_puntos_localidades FOREIGN KEY (id_localidad) REFERENCES localidades(id_localidad)
+);
+ALTER TABLE puntos_acopios ADD COLUMN IF NOT EXISTS nombre VARCHAR(200) NOT NULL DEFAULT '';
+
+-- ¿Qué? Tabla de notificaciones enviadas entre roles.
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id SERIAL PRIMARY KEY,
+    tipo VARCHAR(50) NOT NULL,
+    id_conjunto_residencial INT NOT NULL,
+    id_emisor INT,
+    mensaje TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT fk_notif_conjunto FOREIGN KEY (id_conjunto_residencial) REFERENCES conjuntos_residenciales(id_conjunto_residencial) ON DELETE CASCADE,
+    CONSTRAINT fk_notif_emisor FOREIGN KEY (id_emisor) REFERENCES usuarios(id_usuario) ON DELETE SET NULL
+);
+
+-- ¿Qué? Tabla de destinatarios de cada notificación (con estado leída/no leída).
+CREATE TABLE IF NOT EXISTS notificaciones_destinatarios (
+    id_notificacion INT NOT NULL,
+    id_usuario INT NOT NULL,
+    leida BOOLEAN NOT NULL DEFAULT FALSE,
+    leida_at TIMESTAMP WITH TIME ZONE,
+    PRIMARY KEY (id_notificacion, id_usuario),
+    CONSTRAINT fk_nd_notificacion FOREIGN KEY (id_notificacion) REFERENCES notificaciones(id) ON DELETE CASCADE,
+    CONSTRAINT fk_nd_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
 
 -- ────────────────────────────────────────────────────────
@@ -435,6 +460,108 @@ FROM recicladores r
 JOIN usuarios u ON u.id_usuario = r.id_usuario
 WHERE u.correo_electronico = 'reciclador.prueba@verdeapp.com'
 ON CONFLICT DO NOTHING;
+-- Usuario 3 — Residente de prueba
+--   Correo:      residente.prueba@verdeapp.com
+--   Contraseña:  AdminVerde2026*
+--   Conjunto:    TORRES DE ARANJUEZ (mismo que el reciclador de prueba → pueden notificarse)
+INSERT INTO usuarios (id_rol, correo_electronico, password, is_active) VALUES
+(2, 'residente.prueba@verdeapp.com', '$2b$12$xSluyevTDoPhwiydwB3OhetVHh1miUiGivw99ChVJxBGl.zaC6EMW', true)
+ON CONFLICT DO NOTHING;
+
+-- Unidad para el residente de prueba en Torres de Aranjuez
+INSERT INTO unidades (id_conjunto_residencial, torre, apto)
+SELECT id_conjunto_residencial, 'Torre A', '101'
+FROM conjuntos_residenciales
+WHERE nombre_conjunto = 'TORRES DE ARANJUEZ'
+LIMIT 1
+ON CONFLICT DO NOTHING;
+
+-- Perfil del residente de prueba
+INSERT INTO residentes (id_usuario, id_unidad, nombre, apellidos, numero_telefonico)
+SELECT
+    u.id_usuario,
+    un.id_unidad,
+    'RESIDENTE',
+    'DE PRUEBA',
+    '3000000002'
+FROM usuarios u
+CROSS JOIN (
+    SELECT un2.id_unidad
+    FROM unidades un2
+    JOIN conjuntos_residenciales c ON c.id_conjunto_residencial = un2.id_conjunto_residencial
+    WHERE c.nombre_conjunto = 'TORRES DE ARANJUEZ'
+      AND un2.torre = 'Torre A' AND un2.apto = '101'
+    LIMIT 1
+) un
+WHERE u.correo_electronico = 'residente.prueba@verdeapp.com'
+ON CONFLICT DO NOTHING;
+
 -- ============================================================================
 -- 🧪 FIN DE LA SECCIÓN DE USUARIOS SEMILLA DE PRUEBA — borrar hasta aquí.
 -- ============================================================================
+
+-- ============================================================================
+-- 📍 PUNTOS LIMPIOS / PUNTOS DE ACOPIO — Bogotá (fuente: UAESP)
+-- ============================================================================
+DELETE FROM puntos_acopios;
+
+INSERT INTO puntos_acopios (id_localidad, nombre, direccion, telefono_contacto) VALUES
+-- 1. Usaquén
+(1,  'Punto Limpio Usaquén Centro',         'Calle 119 # 6-22',               '3165551001'),
+(1,  'Punto Limpio Santa Bárbara',           'Carrera 15 # 127-40',            '3165551002'),
+-- 2. Chapinero
+(2,  'Punto Limpio Chapinero Alto',          'Calle 67 # 9-38',                '3165551003'),
+(2,  'Punto Limpio El Lago',                 'Carrera 13 # 64-15',             '3165551004'),
+-- 3. Santa Fe
+(3,  'Punto Limpio La Candelaria Sur',       'Calle 19 # 4-10',                '3165551005'),
+(3,  'Punto Limpio Las Cruces',              'Carrera 5 # 12B-20',             '3165551006'),
+-- 4. San Cristóbal
+(4,  'Punto Limpio San Cristóbal Norte',     'Calle 26 Sur # 8-34',            '3165551007'),
+(4,  'Punto Limpio Los Alpes',               'Carrera 11 # 44 Sur-05',         '3165551008'),
+-- 5. Usme
+(5,  'Punto Limpio Usme Centro',             'Calle 91 Sur # 14-23',           '3165551009'),
+(5,  'Punto Limpio Gran Yomasa',             'Carrera 13A # 97B Sur-10',       '3165551010'),
+-- 6. Tunjuelito
+(6,  'Punto Limpio Abraham Lincoln',         'Calle 52 Sur # 22-45',           '3165551011'),
+(6,  'Punto Limpio Venecia',                 'Carrera 24 # 48B Sur-12',        '3165551012'),
+-- 7. Bosa
+(7,  'Punto Limpio Bosa Centro',             'Calle 68F Sur # 80B-05',         '3165551013'),
+(7,  'Punto Limpio El Recreo',               'Carrera 95 # 75B Sur-20',        '3165551014'),
+-- 8. Kennedy
+(8,  'Punto Limpio Kennedy Central',         'Calle 38A Sur # 74-15',          '3165551015'),
+(8,  'Punto Limpio Tintal',                  'Carrera 86 # 42B Sur-08',        '3165551016'),
+-- 9. Fontibón
+(9,  'Punto Limpio Fontibón Centro',         'Carrera 99 # 17-30',             '3165551017'),
+(9,  'Punto Limpio Capellanía',              'Calle 19 # 107-50',              '3165551018'),
+-- 10. Engativá
+(10, 'Punto Limpio Engativá Centro',         'Carrera 112 # 80A-22',           '3165551019'),
+(10, 'Punto Limpio Álamos Norte',            'Calle 83 # 95-10',               '3165551020'),
+-- 11. Suba
+(11, 'Punto Limpio Suba Centro',             'Carrera 91 # 148-14',            '3165551021'),
+(11, 'Punto Limpio Lisboa',                  'Calle 134 # 107-30',             '3165551022'),
+-- 12. Barrios Unidos
+(12, 'Punto Limpio Los Andes',               'Calle 72 # 52-18',               '3165551023'),
+(12, 'Punto Limpio La Castellana',           'Carrera 50 # 80-40',             '3165551024'),
+-- 13. Teusaquillo
+(13, 'Punto Limpio Palermo',                 'Calle 47 # 25-12',               '3165551025'),
+(13, 'Punto Limpio Galerías',                'Carrera 29 # 53-20',             '3165551026'),
+-- 14. Los Mártires
+(14, 'Punto Limpio La Favorita',             'Calle 9 # 20-35',                '3165551027'),
+(14, 'Punto Limpio Ricaurte',                'Carrera 22 # 13-15',             '3165551028'),
+-- 15. Antonio Nariño
+(15, 'Punto Limpio Restrepo',                'Calle 16 Sur # 25-08',           '3165551029'),
+(15, 'Punto Limpio Ciudad Jardín Sur',       'Carrera 28 # 19B Sur-05',        '3165551030'),
+-- 16. Puente Aranda
+(16, 'Punto Limpio Zona Industrial',         'Calle 13 # 52-40',               '3165551031'),
+(16, 'Punto Limpio San Rafael',              'Carrera 57 # 6-25',              '3165551032'),
+-- 17. La Candelaria
+(17, 'Punto Limpio Centro Histórico',        'Calle 11 # 4-02',                '3165551033'),
+-- 18. Rafael Uribe Uribe
+(18, 'Punto Limpio Quiroga',                 'Calle 27B Sur # 17-10',          '3165551034'),
+(18, 'Punto Limpio Marco Fidel Suárez',      'Carrera 15 # 35 Sur-22',         '3165551035'),
+-- 19. Ciudad Bolívar
+(19, 'Punto Limpio Perdomo',                 'Calle 63 Sur # 20-45',           '3165551036'),
+(19, 'Punto Limpio Lucero',                  'Carrera 18A # 68B Sur-12',       '3165551037'),
+-- 20. Sumapaz
+(20, 'Punto Limpio Nazareth',                'Vía Nazareth Km 2',              NULL)
+ON CONFLICT DO NOTHING;
