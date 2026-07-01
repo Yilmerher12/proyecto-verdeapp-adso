@@ -101,7 +101,7 @@ export function InputField({
           type={inputType}
           value={value}
           placeholder={placeholder}
-          autoComplete={autoComplete}
+          autoComplete={disablePaste ? "off" : autoComplete}
           autoFocus={autoFocus}
           onChange={onChange}
           aria-invalid={!!error}

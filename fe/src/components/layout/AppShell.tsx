@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -11,9 +11,13 @@ import {
   MapPin,
   Newspaper,
   User,
-  Leaf,
   Building2,
+  Bell,
+  Home,
+  Recycle,
+  Shield,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
@@ -23,23 +27,75 @@ interface AppShellProps {
   children: ReactNode;
 }
 
-const ROLE_META: Record<number, { label: string; emoji: string; dashboardHref: string }> = {
-  1: { label: "Administrador", emoji: "🛠️", dashboardHref: "/dashboard/admin" },
-  2: { label: "Residente", emoji: "🏠", dashboardHref: "/dashboard/residente" },
-  3: { label: "Reciclador", emoji: "♻️", dashboardHref: "/dashboard/reciclador" },
-  4: { label: "Admin. de Conjunto", emoji: "🏢", dashboardHref: "/dashboard/admin-conjunto" },
+const ROLE_META: Record<number, {
+  label: string;
+  Icon: LucideIcon;
+  dashboardHref: string;
+  sidebarColor: string;   // color de fondo del sidebar
+  activeColor: string;    // resaltado del ítem activo en la nav
+  badgeColor: string;     // color del badge de rol
+}> = {
+  1: {
+    label: "Administrador",
+    Icon: Shield,
+    dashboardHref: "/dashboard/admin",
+    sidebarColor: "#1c2b3a",   // pizarra profunda — sistema, tecnología
+    activeColor:  "bg-white/15",
+    badgeColor:   "text-slate-300/80",
+  },
+  2: {
+    label: "Residente",
+    Icon: Home,
+    dashboardHref: "/dashboard/residente",
+    sidebarColor: "#14532d",   // verde bosque — hogar en la naturaleza
+    activeColor:  "bg-white/15",
+    badgeColor:   "text-green-300/80",
+  },
+  3: {
+    label: "Reciclador",
+    Icon: Recycle,
+    dashboardHref: "/dashboard/reciclador",
+    sidebarColor: "#134e4a",   // teal profundo — ciclos, agua, naturaleza activa
+    activeColor:  "bg-white/15",
+    badgeColor:   "text-teal-300/80",
+  },
+  4: {
+    label: "Admin. de Conjunto",
+    Icon: Building2,
+    dashboardHref: "/dashboard/admin-conjunto",
+    sidebarColor: "#1a3a52",   // azul pizarra — gestión, estructura urbana
+    activeColor:  "bg-white/15",
+    badgeColor:   "text-sky-300/80",
+  },
 };
 
 export function AppShell({ children }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { user, logout } = useAuth();
+  const [noLeidas, setNoLeidas] = useState(0);
+  const { user, logout, accessToken } = useAuth() as any;
   const navigate = useNavigate();
 
   const handleLogout = () => {
     navigate("/");
     logout();
   };
+
+  // Polling de notificaciones no leídas cada 20s
+  useEffect(() => {
+    if (!accessToken) return;
+    const fetchCount = () => {
+      fetch("http://localhost:8000/api/v1/notificaciones/no-leidas-count", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+        .then((r) => r.json())
+        .then((d) => setNoLeidas(d.count ?? 0))
+        .catch(() => {});
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 20000);
+    return () => clearInterval(interval);
+  }, [accessToken]);
 
   const userData = user as any;
   const roleId = (userData?.role_id || userData?.id_rol || 2) as number;
@@ -74,7 +130,7 @@ export function AppShell({ children }: AppShellProps) {
         ...commonStart,
         { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
         { icon: Newspaper, label: "Novedades Gobierno", href: null, enabled: false },
-        { icon: MapPin, label: "Puntos de Acopio", href: null, enabled: false },
+        { icon: MapPin, label: "Puntos de Acopio", href: "/puntos-acopio", enabled: true },
         ...commonEnd,
       ];
     }
@@ -93,12 +149,13 @@ export function AppShell({ children }: AppShellProps) {
       { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
       { icon: Newspaper, label: "Novedades Conjunto", href: null, enabled: false },
       { icon: BookOpen, label: "Aprender (Guías)", href: null, enabled: false },
-      { icon: MapPin, label: "Directorio Zona", href: null, enabled: false },
+      { icon: MapPin, label: "Directorio General", href: "/directorio", enabled: true },
       ...commonEnd,
     ];
   };
 
   const navItems = getNavItemsByRole();
+
 
   return (
     // ¿Qué? w-full en el contenedor raíz + min-w-0 en cada nivel flex hijo.
@@ -114,19 +171,19 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-gray-950 flex-col sm:flex-row">
       <aside
         className={`
-          flex min-w-0 shrink-0 flex-col bg-green-800 dark:bg-gray-950 border-r border-green-900/20
+          flex min-w-0 shrink-0 flex-col border-r border-white/[0.06]
           transition-[width] duration-200 ease-in-out text-gray-100
           overflow-hidden
           ${collapsed ? "sm:w-16 h-16 sm:h-screen" : "sm:w-64 h-auto sm:h-screen"}
         `}
+        style={{ backgroundColor: roleMeta.sidebarColor }}
       >
         {/* Identidad de marca */}
-        <div className={`flex min-w-0 shrink-0 items-center border-b border-white/10 h-16 ${collapsed ? "justify-center" : "gap-3 px-5"}`}>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
-            <Leaf className="h-5 w-5 text-green-200" />
-          </div>
-          {!collapsed && (
-            <span className="min-w-0 truncate text-base font-bold text-white tracking-tight">Verde App</span>
+        <div className={`flex min-w-0 shrink-0 items-center border-b border-white/10 h-16 ${collapsed ? "justify-center px-3" : "px-5"}`}>
+          {collapsed ? (
+            <img src="/logo-blanco.png" alt="VerdeApp" className="h-7 w-auto object-contain" />
+          ) : (
+            <img src="/logo-blanco.png" alt="VerdeApp" className="h-8 w-auto object-contain" />
           )}
         </div>
 
@@ -141,8 +198,8 @@ export function AppShell({ children }: AppShellProps) {
                 <p className="truncate text-sm font-bold text-white">
                   {displayName}
                 </p>
-                <span className="flex min-w-0 items-center gap-1 text-xs font-medium text-green-100/90 mt-0.5">
-                  <span className="shrink-0" aria-hidden="true">{roleMeta.emoji}</span>
+                <span className={`flex min-w-0 items-center gap-1.5 text-xs font-medium mt-0.5 ${roleMeta.badgeColor}`}>
+                  <roleMeta.Icon className="h-3 w-3 shrink-0" />
                   <span className="truncate">{roleMeta.label}</span>
                 </span>
               </div>
@@ -264,12 +321,28 @@ export function AppShell({ children }: AppShellProps) {
       {/* Área de contenido */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-gray-800 dark:bg-gray-900">
+          {/* Campana de notificaciones */}
+          <button
+            onClick={() => navigate(roleMeta.dashboardHref)}
+            className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+            aria-label="Notificaciones"
+          >
+            <Bell className="h-5 w-5" />
+            {noLeidas > 0 && (
+              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                {noLeidas > 9 ? "9+" : noLeidas}
+              </span>
+            )}
+          </button>
           {/* <LanguageSwitcher /> */}
           <ThemeToggle />
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
-          <div className="mx-auto max-w-7xl px-6 py-6">{children}</div>
+        <main
+          className="flex-1 overflow-y-auto dark:bg-gray-950"
+          style={{ backgroundColor: "#f3f8f3" }}
+        >
+          <div className="mx-auto max-w-7xl px-6 pb-6">{children}</div>
         </main>
       </div>
     </div>

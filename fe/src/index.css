@@ -45,7 +45,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================================
-   TEMA PERSONALIZADO — NN Auth System (FastAPI Edition)
+   TEMA PERSONALIZADO — VerdeApp (FastAPI Edition)
    ¿Qué? Define la escala de color `accent` mapeada a `emerald` para este stack.
    ¿Para qué? Crear un token de diseño abstracto que desacopla el color concreto
               del código de los componentes. Los componentes usan bg-accent-600;

@@ -13,58 +13,28 @@
  * ¿Para qué? Tipado explícito para evitar valores inválidos en el cálculo de fortaleza.
  * ¿Impacto? TypeScript garantiza que solo se usen los cuatro valores definidos.
  */
-export type PasswordStrength = 0 | 1 | 2 | 3 | 4;
+export type PasswordStrength = 0 | 1 | 2 | 3 | 4 | 5;
 
-/**
- * ¿Qué? Calcula la fortaleza de una contraseña evaluando cuatro criterios.
- * ¿Para qué? Centralizamos la lógica de cálculo fuera del componente para poder testearla
- *            de forma independiente y reutilizarla si fuese necesario.
- * ¿Impacto? Un punto por cada criterio:
- *           1 — longitud >= 8 caracteres
- *           2 — contiene al menos una letra mayúscula
- *           3 — contiene al menos una letra minúscula
- *           4 — contiene al menos un número
- *           Total 0 (vacío), 1 (muy débil), 2 (débil), 3 (buena), 4 (fuerte).
- */
 export function calculatePasswordStrength(password: string): PasswordStrength {
   if (!password) return 0;
-
   let score = 0;
   if (password.length >= 8) score++;
   if (/[A-Z]/.test(password)) score++;
   if (/[a-z]/.test(password)) score++;
   if (/\d/.test(password)) score++;
-
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)) score++;
   return score as PasswordStrength;
 }
 
-// ¿Qué? Metadatos de presentación indexados por nivel de fortaleza.
-// ¿Para qué? Evitar condicionales repetitivos — un solo lookup da etiqueta y color.
-// ¿Impacto? Al cambiar el texto o color de un nivel, solo se toca esta tabla.
 const STRENGTH_META: Record<
   Exclude<PasswordStrength, 0>,
   { label: string; labelColor: string; barColor: string }
 > = {
-  1: {
-    label: "Muy débil",
-    labelColor: "text-red-600 dark:text-red-400",
-    barColor: "bg-red-500",
-  },
-  2: {
-    label: "Débil",
-    labelColor: "text-orange-500 dark:text-orange-400",
-    barColor: "bg-orange-400",
-  },
-  3: {
-    label: "Buena",
-    labelColor: "text-yellow-600 dark:text-yellow-400",
-    barColor: "bg-yellow-400",
-  },
-  4: {
-    label: "Fuerte",
-    labelColor: "text-green-600 dark:text-green-500",
-    barColor: "bg-green-500",
-  },
+  1: { label: "Muy débil",  labelColor: "text-red-600 dark:text-red-400",     barColor: "bg-red-500" },
+  2: { label: "Débil",      labelColor: "text-red-500 dark:text-red-400",     barColor: "bg-red-400" },
+  3: { label: "Regular",    labelColor: "text-orange-500 dark:text-orange-400", barColor: "bg-orange-400" },
+  4: { label: "Buena",      labelColor: "text-yellow-600 dark:text-yellow-400", barColor: "bg-yellow-400" },
+  5: { label: "Fuerte",     labelColor: "text-green-600 dark:text-green-500", barColor: "bg-green-500" },
 };
 
 interface PasswordStrengthIndicatorProps {
@@ -97,7 +67,7 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
       {/* ¿Para qué? Representación visual inmediata — más barras = más fuerte. */}
       {/* ¿Impacto? Las barras inactivas (grises) muestran cuánto falta para el siguiente nivel. */}
       <div className="flex gap-1" aria-hidden="true">
-        {[1, 2, 3, 4].map((bar) => (
+        {[1, 2, 3, 4, 5].map((bar) => (
           <div
             key={bar}
             className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
