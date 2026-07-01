@@ -1,11 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.database import Base, engine
+import app.models  # noqa: F401 — registra todos los modelos antes del create_all
 from app.routers import auth, users, geography, admin
 from app.routers import admin_conjunto
 from app.routers import conjunto_panel
 from app.routers import reciclador_conjunto
+from app.routers import directorio
+from app.routers import notificaciones
 
 app = FastAPI(title="VerdeApp API")
+
+# Crea las tablas que falten en la BD sin tocar las existentes.
+# Esto permite agregar nuevos modelos sin reiniciar el volumen de Docker.
+Base.metadata.create_all(bind=engine)
 
 # ¿Qué? Lista explícita de orígenes permitidos para hablarle al backend.
 # ¿Para qué? Antes se usaba allow_origins=["*"] ("cualquier sitio web del
@@ -39,6 +47,8 @@ app.include_router(admin.router)
 app.include_router(admin_conjunto.router)
 app.include_router(conjunto_panel.router)
 app.include_router(reciclador_conjunto.router)
+app.include_router(directorio.router)
+app.include_router(notificaciones.router)
 
 
 @app.get("/api/v1/health")

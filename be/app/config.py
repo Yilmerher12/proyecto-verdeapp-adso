@@ -100,9 +100,9 @@ class Settings(BaseSettings):
     RESEND_FROM_EMAIL: str = "onboarding@resend.dev"
 
     # ¿Qué? Nombre visible del remitente en los emails.
-    # ¿Para qué? El usuario ve "NN Auth System <onboarding@resend.dev>" en su bandeja.
+    # ¿Para qué? El usuario ve "VerdeApp <onboarding@resend.dev>" en su bandeja.
     # ¿Impacto? Un nombre reconocible reduce las posibilidades de que el email sea marcado como spam.
-    RESEND_FROM_NAME: str = "NN Auth System"
+    RESEND_FROM_NAME: str = "VerdeApp"
 
     # ────────────────────────────
     # 📧 Email — SMTP (alternativa a Resend, sin cuenta ni dominio)

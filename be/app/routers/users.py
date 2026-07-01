@@ -17,7 +17,7 @@ from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.localidad import Localidad
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.unidad import Unidad
-from app.schemas.user import UpdateLocaleRequest, UserResponse
+from app.schemas.user import UpdateLocaleRequest, UpdateProfileBody, UserResponse
 from app.services.auth_service import update_user_locale
 
 router = APIRouter(
@@ -112,6 +112,43 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
             ]
 
     return payload
+
+
+@router.put("/me", summary="Actualizar nombre, apellidos y teléfono del usuario")
+def update_profile(
+    body: UpdateProfileBody,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from fastapi import HTTPException
+    nombre = body.nombre.strip()
+    apellidos = body.apellidos.strip()
+    if not nombre or not apellidos:
+        raise HTTPException(status_code=422, detail="Nombre y apellidos son obligatorios.")
+
+    if current_user.id_rol == 2:
+        row = db.execute(select(Residente).where(Residente.id_usuario == current_user.id_usuario)).scalar_one_or_none()
+        if row:
+            row.nombre = nombre
+            row.apellidos = apellidos
+            row.numero_telefonico = body.numero_telefonico or "N/A"
+    elif current_user.id_rol == 3:
+        row = db.execute(select(Reciclador).where(Reciclador.id_usuario == current_user.id_usuario)).scalar_one_or_none()
+        if row:
+            row.nombre = nombre
+            row.apellidos = apellidos
+            row.numero_telefonico = body.numero_telefonico or "N/A"
+    elif current_user.id_rol == 4:
+        row = db.execute(select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == current_user.id_usuario)).scalar_one_or_none()
+        if row:
+            row.nombre = nombre
+            row.apellidos = apellidos
+            row.numero_telefonico = body.numero_telefonico or "N/A"
+    else:
+        raise HTTPException(status_code=403, detail="El perfil del administrador del sistema no es editable.")
+
+    db.commit()
+    return {"ok": True}
 
 
 @router.patch(

@@ -118,6 +118,12 @@ class MessageResponse(BaseModel):
     message: str
 
 
+class UpdateProfileBody(BaseModel):
+    nombre: str
+    apellidos: str
+    numero_telefonico: Optional[str] = None
+
+
 class UpdateLocaleRequest(BaseModel):
     locale: str
 

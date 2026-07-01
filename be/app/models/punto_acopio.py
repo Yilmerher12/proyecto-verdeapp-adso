@@ -7,6 +7,7 @@ class PuntoAcopio(Base):
 
     id_punto_acopio = Column(Integer, primary_key=True, index=True)
     id_localidad = Column(Integer, ForeignKey("localidades.id_localidad"), nullable=False)
+    nombre = Column(String(200), nullable=False)
     nombre_encargado = Column(String(100), nullable=True)
     direccion = Column(String(255), nullable=False)
     telefono_contacto = Column(String(15), nullable=True)

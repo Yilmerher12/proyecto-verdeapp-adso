@@ -1,5 +1,5 @@
-# ========================
-# NN Auth System — Dependencias del Backend
+﻿# ========================
+# VerdeApp — Dependencias del Backend
 # ========================
 # ¿Qué? Lista de todas las dependencias Python del backend con versiones exactas.
 # ¿Para qué? Garantizar instalaciones 100% reproducibles y sin CVEs activos.

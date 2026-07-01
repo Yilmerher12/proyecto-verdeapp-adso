@@ -39,3 +39,6 @@ from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjun
 # 🔐 Tokens de Seguridad (¡Esenciales para que Alembic no falle!)
 from app.models.password_reset_token import PasswordResetToken
 from app.models.email_verification_token import EmailVerificationToken
+
+# Notificaciones
+from app.models.notificacion import Notificacion, NotificacionDestinatario
