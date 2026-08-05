@@ -28,15 +28,23 @@ export interface LoginRequest {
   password: string;
 }
 
+// Este tipo se había quedado desactualizado: tenía apellido_paterno/apellido_materno
+// separados, pero el backend real (be/app/schemas/user.py) ya solo pide un único
+// campo "apellidos" desde hace rato. RegisterPage.tsx ya enviaba los campos correctos,
+// pero tenía que forzar el envío con "as any" porque este tipo no coincidía — es decir,
+// TypeScript no estaba revisando de verdad si el registro mandaba los datos correctos.
 export interface RegisterRequest {
   rol: string;
-  nombre: string;
-  apellido_paterno: string;
-  apellido_materno?: string;
-  numero_telefonico?: string;
-  email: string;
+  correo_electronico: string;
+  email: string; // se reutiliza para el auto-login que hace AuthContext justo después de registrarse
   password: string;
-  unidad_id?: number;
+  nombre: string;
+  apellidos: string;
+  numero_telefonico?: string;
+  localidad_id?: number; // solo aplica para reciclador
+  id_conjunto_residencial?: number; // solo aplica para residente
+  torre?: string;
+  apto?: string;
   asociacion?: string;
 }
 

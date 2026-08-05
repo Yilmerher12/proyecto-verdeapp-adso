@@ -145,7 +145,6 @@ export function RegisterPage() {
         rol: formData.rol,
         correo_electronico: formData.email,
         email: formData.email,
-        username: formData.email,
         password: formData.password,
         nombre: formData.nombre,
         apellidos: formData.apellidos,
@@ -155,7 +154,7 @@ export function RegisterPage() {
         apto: formData.rol === "residente" ? formData.apto.trim().toUpperCase() : undefined,
         asociacion: formData.rol === "reciclador" ? formData.asociacion : undefined,
         localidad_id: formData.rol === "reciclador" ? parseInt(formData.localidad_id) : undefined
-      } as any);
+      });
 
       setShowSuccessModal(true);
     } catch (err: any) {
