@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -38,7 +39,7 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
     //       localidad, porque aquí el Administrador del Sistema necesita
     //       ver el listado completo para elegir a cuáles asignar.
     axios
-      .get("http://localhost:8000/api/v1/geography/conjuntos/todos")
+      .get(`${API_BASE_URL}/api/v1/geography/conjuntos/todos`)
       .then((res) => setConjuntos(res.data))
       .catch((err) => console.error("Error cargando conjuntos", err));
   }, []);

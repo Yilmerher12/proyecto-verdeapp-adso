@@ -8,10 +8,14 @@
 
 import axios from "axios";
 
-// ¿Qué? URL base de la API leída desde variables de entorno de Vite.
-// ¿Para qué? Permite cambiar la URL sin tocar código (dev: localhost:8000, prod: dominio real).
-// ¿Impacto? Si VITE_API_URL no está definida, las peticiones irán a la URL relativa (fallará).
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// La URL de la API sale de esta única variable de entorno de Vite. Antes había
+// varias pantallas (dashboards, formularios, DirectorioPage) que se escribían
+// "http://localhost:8000" directo en el código — funcionaba mientras probábamos
+// en nuestra propia máquina, pero el día que subamos esto a un servidor real,
+// esas pantallas específicas se hubieran quedado intentando hablarle a
+// "localhost" en vez del servidor de verdad. La exportamos para que cualquier
+// archivo del proyecto la pueda importar en vez de escribir la URL a mano.
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 /**
  * ¿Qué? Instancia de Axios preconfigurada con URL base, headers y timeout.
@@ -20,7 +24,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
  *           y la misma URL base.
  */
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Home, Shield, MailCheck, MapPin } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
 import { PoliticaPrivacidadPage } from "@/pages/PoliticaPrivacidadPage";
 
@@ -53,14 +54,14 @@ export function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    axios.get("http://localhost:8000/api/v1/geography/localidades")
+    axios.get(`${API_BASE_URL}/api/v1/geography/localidades`)
       .then(res => setLocalidades(res.data))
       .catch(err => console.error("Error cargando localidades", err));
   }, []);
 
   useEffect(() => {
     if (formData.localidad_id) {
-      axios.get(`http://localhost:8000/api/v1/geography/conjuntos/${formData.localidad_id}`)
+      axios.get(`${API_BASE_URL}/api/v1/geography/conjuntos/${formData.localidad_id}`)
         .then(res => setConjuntos(res.data))
         .catch(err => console.error("Error cargando conjuntos", err));
     } else {

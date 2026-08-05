@@ -23,6 +23,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 /*import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";*/
 import { Modal } from "@/components/ui/Modal";
 import { RoleId } from "@/types/auth";
+import { API_BASE_URL } from "@/api/axios";
 
 interface AppShellProps {
   children: ReactNode;
@@ -86,7 +87,7 @@ export function AppShell({ children }: AppShellProps) {
   useEffect(() => {
     if (!accessToken) return;
     const fetchCount = () => {
-      fetch("http://localhost:8000/api/v1/notificaciones/no-leidas-count", {
+      fetch(`${API_BASE_URL}/api/v1/notificaciones/no-leidas-count`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
         .then((r) => r.json())

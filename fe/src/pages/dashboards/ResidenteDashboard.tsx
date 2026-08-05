@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Home, AlertTriangle, Bell, CheckCircle2, Clock, Truck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRecord = Record<string, any>;
@@ -52,8 +53,8 @@ export function ResidenteDashboard() {
   const cargarDatos = async () => {
     try {
       const [resEstado, resNotifs] = await Promise.all([
-        axios.get("http://localhost:8000/api/v1/notificaciones/estado-shut", { headers }),
-        axios.get("http://localhost:8000/api/v1/notificaciones/mis-notificaciones", { headers }),
+        axios.get(`${API_BASE_URL}/api/v1/notificaciones/estado-shut`, { headers }),
+        axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers }),
       ]);
       setEstadoShut(resEstado.data);
       setNotificaciones(resNotifs.data);
@@ -76,7 +77,7 @@ export function ResidenteDashboard() {
     setEnviando(true);
     try {
       await axios.post(
-        "http://localhost:8000/api/v1/notificaciones/enviar",
+        `${API_BASE_URL}/api/v1/notificaciones/enviar`,
         { tipo: "SHUT_LLENO" },
         { headers }
       );
@@ -91,12 +92,12 @@ export function ResidenteDashboard() {
   };
 
   const marcarLeida = async (id: number) => {
-    await axios.post(`http://localhost:8000/api/v1/notificaciones/${id}/leer`, {}, { headers });
+    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
     setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
   };
 
   const marcarTodasLeidas = async () => {
-    await axios.post("http://localhost:8000/api/v1/notificaciones/marcar-todas-leidas", {}, { headers });
+    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
     setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
   };
 
@@ -104,7 +105,7 @@ export function ResidenteDashboard() {
   const [expandido, setExpandido] = useState(false);
 
   const limpiarLeidas = async () => {
-    await axios.delete("http://localhost:8000/api/v1/notificaciones/limpiar-leidas", { headers });
+    await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers });
     setNotificaciones((prev) => prev.filter((n) => !n.leida));
   };
 

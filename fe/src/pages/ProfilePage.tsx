@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 import {
   Mail,
   Phone,
@@ -69,7 +70,7 @@ export function ProfilePage() {
   const cargarPerfil = () => {
     if (!accessToken) return;
     axios
-      .get("http://localhost:8000/api/v1/users/me", { headers })
+      .get(`${API_BASE_URL}/api/v1/users/me`, { headers })
       .then((res) => setPerfil(res.data))
       .catch(() => {})
       .finally(() => setCargando(false));
@@ -102,7 +103,7 @@ export function ProfilePage() {
     setErrorMsg(null);
     try {
       await axios.put(
-        "http://localhost:8000/api/v1/users/me",
+        `${API_BASE_URL}/api/v1/users/me`,
         {
           nombre: formNombre.trim(),
           apellidos: formApellidos.trim(),

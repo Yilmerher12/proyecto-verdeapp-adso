@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, Users, Database, UserPlus } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
 
 interface ResidenteRow {
@@ -26,11 +27,11 @@ export function AdminDashboard() {
   const [mostrarInvitar, setMostrarInvitar] = useState(false);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/api/v1/admin/vista-residentes")
+    axios.get(`${API_BASE_URL}/api/v1/admin/vista-residentes`)
       .then(res => setResidentesData(res.data))
       .catch(err => console.error("Error cargando vista SQL", err));
 
-    axios.get("http://localhost:8000/api/v1/admin/sp-recicladores")
+    axios.get(`${API_BASE_URL}/api/v1/admin/sp-recicladores`)
       .then(res => setRecicladoresData(res.data))
       .catch(err => console.error("Error cargando SP", err));
   }, []);

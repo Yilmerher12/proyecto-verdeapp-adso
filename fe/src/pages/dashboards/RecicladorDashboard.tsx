@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 
 interface InvitacionPendiente {
   id: string;
@@ -99,9 +100,9 @@ export function RecicladorDashboard() {
 
   const cargarDatos = () => {
     Promise.all([
-      axios.get("http://localhost:8000/api/v1/reciclador-conjunto/mis-invitaciones", { headers }),
-      axios.get("http://localhost:8000/api/v1/reciclador-conjunto/mis-conjuntos-autorizados", { headers }),
-      axios.get("http://localhost:8000/api/v1/notificaciones/mis-notificaciones", { headers }),
+      axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-invitaciones`, { headers }),
+      axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-conjuntos-autorizados`, { headers }),
+      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers }),
     ])
       .then(([resInv, resConj, resNotifs]) => {
         setInvitaciones(resInv.data);
@@ -125,7 +126,7 @@ export function RecicladorDashboard() {
     setProcesandoId(id);
     try {
       await axios.post(
-        `http://localhost:8000/api/v1/reciclador-conjunto/invitaciones/${id}/responder`,
+        `${API_BASE_URL}/api/v1/reciclador-conjunto/invitaciones/${id}/responder`,
         { aceptar },
         { headers }
       );
@@ -150,7 +151,7 @@ export function RecicladorDashboard() {
     setEnviandoNotif(true);
     try {
       await axios.post(
-        "http://localhost:8000/api/v1/notificaciones/enviar",
+        `${API_BASE_URL}/api/v1/notificaciones/enviar`,
         { tipo: modalTipo, id_conjunto_residencial: conjuntoSeleccionado },
         { headers }
       );
@@ -167,12 +168,12 @@ export function RecicladorDashboard() {
   };
 
   const marcarLeida = async (id: number) => {
-    await axios.post(`http://localhost:8000/api/v1/notificaciones/${id}/leer`, {}, { headers });
+    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
     setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
   };
 
   const marcarTodasLeidas = async () => {
-    await axios.post("http://localhost:8000/api/v1/notificaciones/marcar-todas-leidas", {}, { headers });
+    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
     setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
   };
 
@@ -180,7 +181,7 @@ export function RecicladorDashboard() {
   const [expandido, setExpandido] = useState(false);
 
   const limpiarLeidas = async () => {
-    await axios.delete("http://localhost:8000/api/v1/notificaciones/limpiar-leidas", { headers });
+    await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers });
     setNotificaciones((prev) => prev.filter((n) => !n.leida));
   };
 

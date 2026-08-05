@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, Truck, AlertTriangle, PackageCheck, Bell } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 import {
   obtenerMisConjuntos,
   editarMiConjunto,
@@ -213,23 +214,23 @@ export function AdminConjuntoDashboard() {
   const cargarNotificaciones = () => {
     if (!accessToken) return;
     axios
-      .get("http://localhost:8000/api/v1/notificaciones/mis-notificaciones", { headers: authHeaders })
+      .get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers: authHeaders })
       .then((res) => setNotificaciones(res.data))
       .catch(() => {});
   };
 
   const marcarLeida = async (id: number) => {
-    await axios.post(`http://localhost:8000/api/v1/notificaciones/${id}/leer`, {}, { headers: authHeaders });
+    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers: authHeaders });
     setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
   };
 
   const marcarTodasLeidas = async () => {
-    await axios.post("http://localhost:8000/api/v1/notificaciones/marcar-todas-leidas", {}, { headers: authHeaders });
+    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers: authHeaders });
     setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
   };
 
   const limpiarLeidas = async () => {
-    await axios.delete("http://localhost:8000/api/v1/notificaciones/limpiar-leidas", { headers: authHeaders });
+    await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers: authHeaders });
     setNotificaciones((prev) => prev.filter((n) => !n.leida));
   };
 
