@@ -13,3 +13,26 @@
 | Calificar Gestión       | Como reciclador, quiero calificar cómo clasificaron los residuos. | 1. Elegir calificación (Verde/Amarillo/Rojo).<br>2. Escribir comentario (opcional).<br>3. Validar que sea una vez al día.<br>4. Guardar en el historial.<br>5. Confirmar registro.                     | LOW       | Ayuda a los conjuntos a mejorar su clasificación.            | CREATE       |
 | Gestionar Educación     | Como Admin, quiero actualizar el contenido educativo.             | 1. Crear nuevo artículo.<br>2. Editar artículo existente.<br>3. Eliminar artículos obsoletos.<br>4. Validar que los campos no estén vacíos.<br>5. Confirmar cambios al sistema.                        | MEDIUM    | Acceso restringido solo para administradores.                | CRUD         |
 | Gestionar Directorio    | Como Admin, quiero mantener los puntos de acopio.                 | 1. Registrar punto de acopio.<br>2. Editar datos de un punto.<br>3. Asignar localidad al punto.<br>4. Dar de baja puntos.<br>5. Validar datos antes de guardar.                                        | HIGH      | Garantiza que los residentes vean información real y útil.   | CRUD         |
+
+---
+
+## Historias de usuario derivadas de RQF-012 a RQF-015
+
+> Estas historias ya están numeradas (HU-024 a HU-037) y sus criterios de aceptación completos viven dentro del archivo RF correspondiente, para no duplicar contenido. Esta tabla es solo un índice de navegación para que el catálogo de HUs quede completo en un solo lugar.
+
+| HU     | Descripción                                                        | RF asociado                                                     |
+| ------ | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| HU-024 | Admin Conjunto solicita desvinculación                             | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md)         |
+| HU-025 | Admin Sistema gestiona solicitudes                                  | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md)         |
+| HU-026 | Admin Sistema asigna nuevo conjunto                                 | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md)         |
+| HU-027 | Sistema recomienda contenido según la auditoría                     | [RQF-013](../RFs/RQF-013_recomendacion_contenido_educativo.md)     |
+| HU-028 | Residente ve el contenido educativo recomendado                     | [RQF-013](../RFs/RQF-013_recomendacion_contenido_educativo.md)     |
+| HU-029 | Admin Conjunto crea un comunicado del conjunto                      | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)        |
+| HU-030 | Residente/Reciclador ve el feed de comunicados                      | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)        |
+| HU-031 | Admin Conjunto edita un comunicado                                  | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)        |
+| HU-032 | Admin Conjunto elimina un comunicado                                | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)        |
+| HU-033 | Residente/Reciclador recibe notificación de comunicado nuevo        | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)        |
+| HU-034 | Admin Sistema publica una novedad general                           | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)         |
+| HU-035 | Usuario ve las novedades del sistema según su rol                   | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)         |
+| HU-036 | Admin Sistema edita una novedad general                              | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)         |
+| HU-037 | Admin Sistema archiva una novedad / sistema la archiva al expirar    | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)         |

@@ -26,6 +26,7 @@ class Usuarios {
     +int id_rol
     +string correo_electronico
     +string password
+    +bool is_active
 
     +getIdUsuario()
     +getIdRol()
@@ -48,24 +49,21 @@ class Residentes {
     +int id_usuario
     +int id_unidad
     +string nombre
-    +string apellido_materno
-    +string apellido_paterno
+    +string apellidos
     +string numero_telefonico
 
     +getIdResidente()
     +getIdUsuario()
     +getIdUnidad()
     +getNombreResidente()
-    +getApellidoMaterno()
-    +getApellidoPaterno()
+    +getApellidos()
     +getNumeroTelefonico()
 
     +setIdResidente()
     +setIdUsuario()
     +setIdUnidad()
     +setNombreResidente()
-    +setApellidoMaterno()
-    +setApellidoPaterno()
+    +setApellidos()
     +setNumeroTelefonico()
 
     +actualizarPerfil()
@@ -76,16 +74,15 @@ class Recicladores {
     +int id_usuario
     +int id_localidad
     +string nombre
-    +string apellido_materno
-    +string apellido_paterno
+    +string apellidos
     +string asociacion
+    +string numero_telefonico
 
     +getIdReciclador()
     +getIdUsuario()
     +getIdLocalidad()
     +getNombreReciclador()
-    +getApellidoMaterno()
-    +getApellidoPaterno()
+    +getApellidos()
 
     +setIdReciclador()
     +setIdUsuario()
@@ -94,6 +91,77 @@ class Recicladores {
     +enviarNotificacionLlegada()
     +enviarNotificacionCapacidadMaxima()
     +actualizarPerfil()
+}
+
+class AdministradoresConjunto {
+    +int id_administrador
+    +int id_usuario
+    +string nombre
+    +string apellidos
+    +string numero_telefonico
+
+    +getIdAdministrador()
+    +getIdUsuario()
+    +getNombre()
+    +getApellidos()
+
+    +setNombre()
+    +setApellidos()
+    +setNumeroTelefonico()
+
+    +actualizarPerfil()
+}
+
+class AdministradorConjuntoAsignacion {
+    +int id_administrador_conjunto
+    +int id_administrador
+    +int id_conjunto_residencial
+    +datetime fecha_asignacion
+}
+
+class InvitacionAdminConjunto {
+    +string id
+    +string correo_electronico
+    +string token
+    +string conjuntos_asignados
+    +int invitado_por_id
+    +datetime expires_at
+    +bool used
+
+    +crearInvitacion()
+    +aceptarInvitacion()
+}
+
+class InvitacionRecicladorConjunto {
+    +string id
+    +int id_reciclador
+    +int id_conjunto_residencial
+    +int invitado_por_id
+    +string estado
+    +datetime expires_at
+
+    +crearInvitacion()
+    +responderInvitacion()
+}
+
+class Notificacion {
+    +int id
+    +string tipo
+    +int id_conjunto_residencial
+    +int id_emisor
+    +string mensaje
+    +datetime created_at
+
+    +enviarNotificacion()
+}
+
+class NotificacionDestinatario {
+    +int id_notificacion
+    +int id_usuario
+    +bool leida
+    +datetime leida_at
+
+    +marcarLeida()
 }
 
 class Localidades {
@@ -111,15 +179,19 @@ class ConjuntosResidenciales {
     +string nombre_conjunto
     +string nit
     +string direccion
+    +bool verificado
+    +int verificado_por_id
 
     +getIdConjuntoResidencial()
     +getNombreConjunto()
     +getNitConjunto()
     +getDireccionConjunto()
+    +isVerificado()
 
     +setNombreConjunto()
     +setNitConjunto()
     +setDireccionConjunto()
+    +setVerificado()
 }
 
 class Unidades {
@@ -176,6 +248,7 @@ class ContenidoEducativo {
 Roles "1" --> "*" Usuarios
 Usuarios "1" --> "1" Residentes
 Usuarios "1" --> "1" Recicladores
+Usuarios "1" --> "1" AdministradoresConjunto
 
 Localidades "1" --> "*" ConjuntosResidenciales
 Localidades "1" --> "*" PuntoAcopios
@@ -184,6 +257,19 @@ ConjuntosResidenciales "1" --> "*" Unidades
 Unidades "1" --> "*" Residentes
 
 Localidades "1" --> "*" Recicladores
+
+Recicladores "*" --> "*" ConjuntosResidenciales : recicladores_conjuntos
+
+AdministradoresConjunto "1" --> "*" AdministradorConjuntoAsignacion
+ConjuntosResidenciales "1" --> "*" AdministradorConjuntoAsignacion
+
+Usuarios "1" --> "*" InvitacionAdminConjunto : invita
+InvitacionRecicladorConjunto "*" --> "1" Recicladores
+InvitacionRecicladorConjunto "*" --> "1" ConjuntosResidenciales
+
+ConjuntosResidenciales "1" --> "*" Notificacion
+Notificacion "1" --> "*" NotificacionDestinatario
+Usuarios "1" --> "*" NotificacionDestinatario
 ```
 
 ---
@@ -236,6 +322,43 @@ Representa los recicladores vinculados al sistema.
 * Recibir alertas.
 * Notificar llegada a conjuntos.
 * Gestionar su perfil.
+
+---
+
+## AdministradoresConjunto
+
+Representa a la persona (natural o de una empresa de administración) que gestiona uno o varios conjuntos residenciales por contrato. A diferencia de Residentes/Recicladores, esta cuenta nunca se crea por registro público: solo un Admin_sistema puede originarla, mediante una invitación (ver `InvitacionAdminConjunto`).
+
+### Responsabilidades
+
+* Administrar los conjuntos que tiene asignados.
+* Invitar recicladores a trabajar en sus conjuntos.
+* Publicar comunicados dirigidos a sus conjuntos.
+* Gestionar su perfil.
+
+---
+
+## AdministradorConjuntoAsignacion
+
+Tabla de asociación con datos propios (`fecha_asignacion`) entre `AdministradoresConjunto` y `ConjuntosResidenciales`: un administrador puede manejar varios conjuntos, y un conjunto puede tener más de un administrador asignado a lo largo del tiempo.
+
+---
+
+## InvitacionAdminConjunto
+
+Representa una invitación que el Admin_sistema envía por correo a una persona para que se convierta en Administrador de Conjunto. Al aceptarla (con un token único, antes de expirar) se crea la cuenta nueva — la contraseña la define únicamente la persona invitada.
+
+---
+
+## InvitacionRecicladorConjunto
+
+Representa la solicitud de autorización que un Admin_conjunto envía a un Reciclador ya existente para que trabaje en su conjunto. A diferencia de la anterior, aquí el reciclador ya tiene cuenta: aceptar solo crea el vínculo en `recicladores_conjuntos`. Puede quedar `PENDIENTE`, `ACEPTADA` o `RECHAZADA`.
+
+---
+
+## Notificacion / NotificacionDestinatario
+
+Representa los avisos del sistema (llegada del reciclador, SHUT lleno/vaciado) enviados a los usuarios de un conjunto. `Notificacion` guarda el evento una sola vez; `NotificacionDestinatario` es la tabla por-usuario que registra si cada destinatario ya la leyó.
 
 ---
 
@@ -297,23 +420,34 @@ Representa los módulos educativos publicados en la plataforma.
 
 # 🔗 Relaciones Entre Clases
 
-| Clase Origen           | Clase Destino          | Relación |
-| ---------------------- | ---------------------- | -------- |
-| Roles                  | Usuarios               | 1 : N    |
-| Usuarios               | Residentes             | 1 : 1    |
-| Usuarios               | Recicladores           | 1 : 1    |
-| Localidades            | ConjuntosResidenciales | 1 : N    |
-| Localidades            | PuntoAcopios           | 1 : N    |
-| Localidades            | Recicladores           | 1 : N    |
-| ConjuntosResidenciales | Unidades               | 1 : N    |
-| Unidades               | Residentes             | 1 : N    |
+| Clase Origen               | Clase Destino                    | Relación |
+| --------------------------- | --------------------------------- | -------- |
+| Roles                       | Usuarios                          | 1 : N    |
+| Usuarios                    | Residentes                        | 1 : 1    |
+| Usuarios                    | Recicladores                      | 1 : 1    |
+| Usuarios                    | AdministradoresConjunto           | 1 : 1    |
+| Localidades                 | ConjuntosResidenciales            | 1 : N    |
+| Localidades                 | PuntoAcopios                       | 1 : N    |
+| Localidades                 | Recicladores                      | 1 : N    |
+| ConjuntosResidenciales      | Unidades                          | 1 : N    |
+| Unidades                    | Residentes                        | 1 : N    |
+| Recicladores                | ConjuntosResidenciales            | N : M (vía `recicladores_conjuntos`) |
+| AdministradoresConjunto     | ConjuntosResidenciales            | N : M (vía `AdministradorConjuntoAsignacion`) |
+| Usuarios                    | InvitacionAdminConjunto           | 1 : N (invita)|
+| Recicladores                | InvitacionRecicladorConjunto      | 1 : N    |
+| ConjuntosResidenciales      | InvitacionRecicladorConjunto      | 1 : N    |
+| ConjuntosResidenciales      | Notificacion                      | 1 : N    |
+| Notificacion                | NotificacionDestinatario          | 1 : N    |
+| Usuarios                    | NotificacionDestinatario          | 1 : N    |
 
 ---
 
 # 📌 Observaciones
 
-* El modelo sigue una estructura orientada a objetos alineada con la base de datos del proyecto.
+* El modelo sigue una estructura orientada a objetos alineada con la base de datos del proyecto (`be/app/models/`).
 * La clase `Usuarios` centraliza los procesos de autenticación.
-* Las clases `Residentes` y `Recicladores` representan perfiles especializados asociados a un usuario.
-* La clase `ContenidoEducativo` funciona como entidad independiente para la gestión de publicaciones.
+* Las clases `Residentes`, `Recicladores` y `AdministradoresConjunto` representan perfiles especializados asociados 1:1 a un usuario, uno por cada rol (2, 3 y 4 respectivamente). El rol 1 (Admin_sistema) no tiene una clase de perfil propia: sus datos viven directamente en `Usuarios`.
+* `AdministradoresConjunto` nunca se crea por registro público — únicamente mediante `InvitacionAdminConjunto`, aceptada con un token de un solo uso.
+* Las relaciones N:M (`Recicladores`↔`ConjuntosResidenciales` y `AdministradoresConjunto`↔`ConjuntosResidenciales`) se muestran aquí como asociaciones directas; sus tablas intermedias (`recicladores_conjuntos`, `administradores_conjuntos`) se detallan como entidades en el diagrama Entidad-Relación.
+* La clase `ContenidoEducativo` funciona como entidad independiente para la gestión de publicaciones; en el código actual el modelo ya existe pero todavía no tiene un router que lo exponga (RQF-010 sigue "Por implementar").
 * Las relaciones mantienen coherencia con el modelo entidad-relación definido para VerdeApp.

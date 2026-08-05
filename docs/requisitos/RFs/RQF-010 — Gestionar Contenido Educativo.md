@@ -38,8 +38,8 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' crear, modificar y e
 2. Selecciona la opción para agregar un nuevo artículo o editar uno existente.
 3. El usuario completa el formulario con el título y el cuerpo del texto.
 4. El frontend envía la petición respectiva (`POST`, `PUT` o `DELETE`) al backend.
-5. El backend (Spring Boot) valida el token JWT para confirmar que el usuario tiene el rol de administrador.
-6. El backend ejecuta la instrucción en MySQL insertando, actualizando o borrando el registro en la tabla `Contenido_Educativo`.
+5. El backend (FastAPI) valida el token JWT para confirmar que el usuario tiene el rol de administrador.
+6. El backend ejecuta la instrucción en PostgreSQL insertando, actualizando o borrando el registro en la tabla `Contenido_Educativo`.
 7. El sistema retorna un mensaje de confirmación y actualiza la vista del catálogo para los residentes.
 
 ---
