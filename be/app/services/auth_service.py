@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.models.usuario import Usuario
 from app.models.residente import Residente
 from app.models.reciclador import Reciclador
+from app.models.rol import RolId
 from app.models.unidad import Unidad
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.password_reset_token import PasswordResetToken
@@ -47,7 +48,9 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
             detail="El correo ya está registrado.",
         )
 
-    role_id_mapped = 2 if user_data.rol == "residente" else 3
+    # Por ahora el registro público solo deja escoger entre residente y reciclador
+    # (el rol de Administrador de Conjunto se crea aparte, por invitación).
+    role_id_mapped = RolId.RESIDENTE if user_data.rol == "residente" else RolId.RECICLADOR
 
     try:
         nuevo_usuario = Usuario(
@@ -198,21 +201,21 @@ def _obtener_nombre_real(db: Session, user: Usuario):
     real_first_name = "Administrador"
     real_last_name = "del Sistema"
 
-    if user.id_rol == 2:  # Residente
+    if user.id_rol == RolId.RESIDENTE:
         stmt_res = select(Residente).where(Residente.id_usuario == user.id_usuario)
         residente = db.execute(stmt_res).scalar_one_or_none()
         if residente:
             real_first_name = residente.nombre
             real_last_name = residente.apellidos
 
-    elif user.id_rol == 3:  # Reciclador
+    elif user.id_rol == RolId.RECICLADOR:
         stmt_rec = select(Reciclador).where(Reciclador.id_usuario == user.id_usuario)
         reciclador = db.execute(stmt_rec).scalar_one_or_none()
         if reciclador:
             real_first_name = reciclador.nombre
             real_last_name = reciclador.apellidos
 
-    elif user.id_rol == 4:  # Administrador de Conjunto
+    elif user.id_rol == RolId.ADMIN_CONJUNTO:
         from app.models.administrador_conjunto import AdministradorConjunto
         stmt_admin = select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == user.id_usuario)
         administrador = db.execute(stmt_admin).scalar_one_or_none()

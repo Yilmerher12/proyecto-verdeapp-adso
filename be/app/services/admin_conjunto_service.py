@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.models.usuario import Usuario
 from app.models.conjunto_residencial import ConjuntoResidencial
+from app.models.rol import RolId
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto
@@ -31,9 +32,6 @@ from app.schemas.admin_conjunto import (
 from app.utils.email import send_admin_conjunto_invitation_email
 from app.utils.security import hash_password
 
-
-# ¿Qué? El rol "ADMIN_CONJUNTO" corresponde al id_rol = 4 (ver init_db.sql).
-ID_ROL_ADMIN_CONJUNTO = 4
 
 # ¿Qué? Las invitaciones son válidas por 48 horas.
 HORAS_VALIDEZ_INVITACION = 48
@@ -131,7 +129,7 @@ def aceptar_invitacion(db: Session, datos: AceptarInvitacionAdminConjuntoRequest
     try:
         nuevo_usuario = Usuario(
             correo_electronico=invitacion.correo_electronico,
-            id_rol=ID_ROL_ADMIN_CONJUNTO,
+            id_rol=RolId.ADMIN_CONJUNTO,
             password=hash_password(datos.password),
             is_active=True,  # Ya no necesita verificar correo: la invitación ya lo confirmó.
         )

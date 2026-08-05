@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.dependencies import get_current_user, get_db
 from app.models.usuario import Usuario
+from app.models.rol import RolId
 
 router = APIRouter(
     prefix="/api/v1/admin",
@@ -16,12 +17,10 @@ router = APIRouter(
 )
 
 
-# ¿Qué? Solo el Administrador del Sistema (id_rol = 1) puede ver estos listados.
-# ¿Para qué? Estos endpoints exponen datos personales (correo, teléfono, dirección)
-#           de todos los residentes/recicladores; deben quedar restringidos igual
-#           que el resto de rutas administrativas del proyecto.
+# Estos dos endpoints muestran datos de todos los residentes/recicladores (correo,
+# teléfono, dirección), así que solo el Administrador del Sistema puede verlos.
 def _verificar_es_admin_sistema(current_user: Usuario) -> None:
-    if current_user.id_rol != 1:
+    if current_user.id_rol != RolId.ADMIN_SISTEMA:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo un Administrador del Sistema puede acceder a este recurso.",

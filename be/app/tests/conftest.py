@@ -26,6 +26,7 @@ from app.main import app
 from app.models.usuario import Usuario
 from app.models.residente import Residente
 from app.models.reciclador import Reciclador
+from app.models.rol import RolId
 from app.models.localidad import Localidad
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.unidad import Unidad
@@ -77,13 +78,13 @@ def setup_database() -> Generator[None, None, None]:
     Base.metadata.create_all(bind=test_engine)
 
     with TestSessionLocal(bind=test_engine.connect()) as seed_session:
-        from app.models.rol import Role
+        from app.models.rol import Role, RolId
 
         roles_seed = [
-            Role(id_rol=1, tipo_rol="ADMINISTRADOR"),
-            Role(id_rol=2, tipo_rol="RESIDENTE"),
-            Role(id_rol=3, tipo_rol="RECICLADOR"),
-            Role(id_rol=4, tipo_rol="ADMIN_CONJUNTO"),
+            Role(id_rol=RolId.ADMIN_SISTEMA, tipo_rol="ADMINISTRADOR"),
+            Role(id_rol=RolId.RESIDENTE, tipo_rol="RESIDENTE"),
+            Role(id_rol=RolId.RECICLADOR, tipo_rol="RECICLADOR"),
+            Role(id_rol=RolId.ADMIN_CONJUNTO, tipo_rol="ADMIN_CONJUNTO"),
         ]
         seed_session.add_all(roles_seed)
         seed_session.commit()
@@ -225,7 +226,7 @@ def test_user(db: Session, conjunto_verificado: ConjuntoResidencial) -> Usuario:
     """Crea un Usuario Residente de prueba, activo y con su perfil completo."""
     usuario = Usuario(
         correo_electronico=TEST_USER_EMAIL,
-        id_rol=2,
+        id_rol=RolId.RESIDENTE,
         password=hash_password(TEST_USER_PASSWORD),
         is_active=True,
     )
@@ -270,7 +271,7 @@ def unverified_user(db: Session, conjunto_verificado: ConjuntoResidencial) -> Us
     """Crea un Usuario Residente SIN verificar (is_active=False)."""
     usuario = Usuario(
         correo_electronico=UNVERIFIED_USER_EMAIL,
-        id_rol=2,
+        id_rol=RolId.RESIDENTE,
         password=hash_password(TEST_USER_PASSWORD),
         is_active=False,
     )

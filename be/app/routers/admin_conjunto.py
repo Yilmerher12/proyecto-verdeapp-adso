@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db
 from app.models.usuario import Usuario
+from app.models.rol import RolId
 from app.schemas.admin_conjunto import (
     AceptarInvitacionAdminConjuntoRequest,
     InvitacionInfoResponse,
@@ -24,11 +25,10 @@ from app.utils.security import create_access_token, create_refresh_token
 router = APIRouter(prefix="/api/v1/admin-conjunto", tags=["admin-conjunto"])
 
 
-# ¿Qué? Solo el Administrador del Sistema (id_rol = 1) puede invitar.
-# ¿Para qué? Esto es lo que evita que cualquiera se autoasigne el rol
-#           de Administrador de Conjunto.
+# Solo el Administrador del Sistema puede invitar — esto evita que cualquiera
+# se autoasigne el rol de Administrador de Conjunto.
 def _verificar_es_admin_sistema(current_user: Usuario) -> None:
-    if current_user.id_rol != 1:
+    if current_user.id_rol != RolId.ADMIN_SISTEMA:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo un Administrador del Sistema puede invitar administradores de conjunto.",

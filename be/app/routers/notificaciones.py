@@ -13,6 +13,7 @@ from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
 from app.models.residente import Residente
+from app.models.rol import RolId
 from app.models.tablas_asociacion import recicladores_conjuntos
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
@@ -89,7 +90,7 @@ def enviar_notificacion(
 
     role_id = current_user.id_rol
 
-    if role_id == 2:  # Residente
+    if role_id == RolId.RESIDENTE:
         if body.tipo != "SHUT_LLENO":
             raise HTTPException(status_code=403, detail="El residente solo puede enviar SHUT_LLENO.")
         id_conjunto = _conjunto_del_residente(db, current_user.id_usuario)
@@ -98,7 +99,7 @@ def enviar_notificacion(
         mensaje = MENSAJE_RESIDENTE_SHUT
         destinatarios = set(_recicladores_del_conjunto(db, id_conjunto) + _admins_del_conjunto(db, id_conjunto))
 
-    elif role_id == 3:  # Reciclador
+    elif role_id == RolId.RECICLADOR:
         if not body.id_conjunto_residencial:
             raise HTTPException(status_code=400, detail="Se requiere id_conjunto_residencial.")
         id_conjunto = body.id_conjunto_residencial
@@ -256,7 +257,7 @@ def estado_shut(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    if current_user.id_rol != 2:
+    if current_user.id_rol != RolId.RESIDENTE:
         return EstadoShutResponse(lleno=False)
 
     id_conjunto = _conjunto_del_residente(db, current_user.id_usuario)
