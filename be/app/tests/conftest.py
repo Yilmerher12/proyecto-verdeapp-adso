@@ -32,6 +32,9 @@ from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.unidad import Unidad
 from app.models.password_reset_token import PasswordResetToken
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.administrador_conjunto import AdministradorConjunto
+from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
+from app.models.punto_acopio import PuntoAcopio
 from app.utils.security import create_access_token, hash_password
 
 # ────────────────────────────
@@ -399,3 +402,144 @@ def used_verification_token(db: Session, unverified_user: Usuario) -> str:
     db.add(token_record)
     db.commit()
     return token
+
+
+# ────────────────────────────
+# 👤 Fixtures de usuarios de prueba (Reciclador, Admin del Sistema, Admin de Conjunto)
+# ────────────────────────────
+# Estos tres roles no tenían ningún fixture antes porque solo existían las pruebas
+# de auth/login (que solo usan Residente). Los agregamos aquí para poder probar
+# los routers de admin, admin_conjunto, conjunto_panel, reciclador_conjunto,
+# directorio y notificaciones, que necesitan un usuario autenticado de cada rol.
+
+RECICLADOR_EMAIL = "reciclador.test@verdeapp.com"
+RECICLADOR_NOMBRE = "RECI"
+RECICLADOR_APELLIDOS = "CLADOR"
+
+ADMIN_SISTEMA_EMAIL = "admin.test@verdeapp.com"
+
+ADMIN_CONJUNTO_EMAIL = "adminconjunto.test@verdeapp.com"
+ADMIN_CONJUNTO_NOMBRE = "ADMIN"
+ADMIN_CONJUNTO_APELLIDOS = "CONJUNTO"
+
+
+@pytest.fixture()
+def reciclador_test(db: Session, localidad_test: Localidad) -> Usuario:
+    """Crea un Usuario Reciclador de prueba, activo y con su perfil completo."""
+    usuario = Usuario(
+        correo_electronico=RECICLADOR_EMAIL,
+        id_rol=RolId.RECICLADOR,
+        password=hash_password(TEST_USER_PASSWORD),
+        is_active=True,
+    )
+    db.add(usuario)
+    db.flush()
+
+    reciclador = Reciclador(
+        id_usuario=usuario.id_usuario,
+        localidad_id=localidad_test.id_localidad,
+        nombre=RECICLADOR_NOMBRE,
+        apellidos=RECICLADOR_APELLIDOS,
+        numero_telefonico="3000000002",
+    )
+    db.add(reciclador)
+    db.commit()
+    db.refresh(usuario)
+    return usuario
+
+
+@pytest.fixture()
+def reciclador_auth_headers(reciclador_test: Usuario) -> dict[str, str]:
+    """Headers de autenticación válidos para el reciclador de prueba."""
+    access_token = create_access_token(data={
+        "sub": reciclador_test.correo_electronico,
+        "role_id": reciclador_test.id_rol,
+        "first_name": RECICLADOR_NOMBRE,
+        "last_name": RECICLADOR_APELLIDOS,
+    })
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture()
+def admin_sistema_test(db: Session) -> Usuario:
+    """Crea un Usuario Administrador del Sistema — este rol no tiene tabla de perfil propia."""
+    usuario = Usuario(
+        correo_electronico=ADMIN_SISTEMA_EMAIL,
+        id_rol=RolId.ADMIN_SISTEMA,
+        password=hash_password(TEST_USER_PASSWORD),
+        is_active=True,
+    )
+    db.add(usuario)
+    db.commit()
+    db.refresh(usuario)
+    return usuario
+
+
+@pytest.fixture()
+def admin_sistema_auth_headers(admin_sistema_test: Usuario) -> dict[str, str]:
+    """Headers de autenticación válidos para el administrador del sistema de prueba."""
+    access_token = create_access_token(data={
+        "sub": admin_sistema_test.correo_electronico,
+        "role_id": admin_sistema_test.id_rol,
+    })
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture()
+def admin_conjunto_test(db: Session, conjunto_verificado: ConjuntoResidencial) -> AdministradorConjunto:
+    """Crea un Administrador de Conjunto ya asignado a `conjunto_verificado`."""
+    usuario = Usuario(
+        correo_electronico=ADMIN_CONJUNTO_EMAIL,
+        id_rol=RolId.ADMIN_CONJUNTO,
+        password=hash_password(TEST_USER_PASSWORD),
+        is_active=True,
+    )
+    db.add(usuario)
+    db.flush()
+
+    administrador = AdministradorConjunto(
+        id_usuario=usuario.id_usuario,
+        nombre=ADMIN_CONJUNTO_NOMBRE,
+        apellidos=ADMIN_CONJUNTO_APELLIDOS,
+        numero_telefonico="3000000003",
+    )
+    db.add(administrador)
+    db.flush()
+
+    asignacion = AdministradorConjuntoAsignacion(
+        id_administrador=administrador.id_administrador,
+        id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
+    )
+    db.add(asignacion)
+    db.commit()
+    db.refresh(administrador)
+    return administrador
+
+
+@pytest.fixture()
+def admin_conjunto_auth_headers(admin_conjunto_test: AdministradorConjunto) -> dict[str, str]:
+    """Headers de autenticación válidos para el administrador de conjunto de prueba."""
+    usuario = admin_conjunto_test.usuario
+    access_token = create_access_token(data={
+        "sub": usuario.correo_electronico,
+        "role_id": usuario.id_rol,
+        "first_name": ADMIN_CONJUNTO_NOMBRE,
+        "last_name": ADMIN_CONJUNTO_APELLIDOS,
+    })
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture()
+def punto_acopio_test(db: Session, localidad_test: Localidad) -> PuntoAcopio:
+    """Crea un Punto de Acopio de prueba en la misma localidad de `localidad_test`."""
+    punto = PuntoAcopio(
+        id_localidad=localidad_test.id_localidad,
+        nombre="PUNTO DE PRUEBA",
+        nombre_encargado="ENCARGADO PRUEBA",
+        direccion="Calle 50 # 5-50",
+        telefono_contacto="3000000004",
+    )
+    db.add(punto)
+    db.commit()
+    db.refresh(punto)
+    return punto
