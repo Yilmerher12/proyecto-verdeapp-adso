@@ -14,6 +14,7 @@ import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { RoleId } from "@/types/auth";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -46,11 +47,11 @@ export function LoginPage() {
       
       const roleId = userData?.role_id || userData?.id_rol;
       
-      if (roleId === 1) {
+      if (roleId === RoleId.ADMIN_SISTEMA) {
         navigate("/dashboard/admin", { replace: true });
-      } else if (roleId === 3) {
+      } else if (roleId === RoleId.RECICLADOR) {
         navigate("/dashboard/reciclador", { replace: true });
-      } else if (roleId === 2) {
+      } else if (roleId === RoleId.RESIDENTE) {
         navigate("/dashboard/residente", { replace: true });
       } else {
         navigate("/dashboard", { replace: true }); 

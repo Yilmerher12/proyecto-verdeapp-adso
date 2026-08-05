@@ -20,14 +20,15 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+/*import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";*/
 import { Modal } from "@/components/ui/Modal";
+import { RoleId } from "@/types/auth";
 
 interface AppShellProps {
   children: ReactNode;
 }
 
-const ROLE_META: Record<number, {
+const ROLE_META: Record<RoleId, {
   label: string;
   Icon: LucideIcon;
   dashboardHref: string;
@@ -35,7 +36,7 @@ const ROLE_META: Record<number, {
   activeColor: string;    // resaltado del ítem activo en la nav
   badgeColor: string;     // color del badge de rol
 }> = {
-  1: {
+  [RoleId.ADMIN_SISTEMA]: {
     label: "Administrador",
     Icon: Shield,
     dashboardHref: "/dashboard/admin",
@@ -43,7 +44,7 @@ const ROLE_META: Record<number, {
     activeColor:  "bg-white/15",
     badgeColor:   "text-slate-300/80",
   },
-  2: {
+  [RoleId.RESIDENTE]: {
     label: "Residente",
     Icon: Home,
     dashboardHref: "/dashboard/residente",
@@ -51,7 +52,7 @@ const ROLE_META: Record<number, {
     activeColor:  "bg-white/15",
     badgeColor:   "text-green-300/80",
   },
-  3: {
+  [RoleId.RECICLADOR]: {
     label: "Reciclador",
     Icon: Recycle,
     dashboardHref: "/dashboard/reciclador",
@@ -59,7 +60,7 @@ const ROLE_META: Record<number, {
     activeColor:  "bg-white/15",
     badgeColor:   "text-teal-300/80",
   },
-  4: {
+  [RoleId.ADMIN_CONJUNTO]: {
     label: "Admin. de Conjunto",
     Icon: Building2,
     dashboardHref: "/dashboard/admin-conjunto",
@@ -98,8 +99,8 @@ export function AppShell({ children }: AppShellProps) {
   }, [accessToken]);
 
   const userData = user as any;
-  const roleId = (userData?.role_id || userData?.id_rol || 2) as number;
-  const roleMeta = ROLE_META[roleId] ?? ROLE_META[2];
+  const roleId = (userData?.role_id || userData?.id_rol || RoleId.RESIDENTE) as RoleId;
+  const roleMeta = ROLE_META[roleId] ?? ROLE_META[RoleId.RESIDENTE];
 
   const rawEmail = userData?.correo_electronico || userData?.email || userData?.sub || "usuario@verdeapp.com";
   const fallbackName = rawEmail.split("@")[0].toUpperCase();
@@ -116,7 +117,7 @@ export function AppShell({ children }: AppShellProps) {
       { icon: ShieldCheck, label: "Seguridad", href: "/change-password", enabled: true },
     ];
 
-    if (roleId === 1) {
+    if (roleId === RoleId.ADMIN_SISTEMA) {
       return [
         ...commonStart,
         { icon: Newspaper, label: "Crear Novedades", href: null, enabled: false },
@@ -125,7 +126,7 @@ export function AppShell({ children }: AppShellProps) {
       ];
     }
 
-    if (roleId === 3) {
+    if (roleId === RoleId.RECICLADOR) {
       return [
         ...commonStart,
         { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
@@ -135,7 +136,7 @@ export function AppShell({ children }: AppShellProps) {
       ];
     }
 
-    if (roleId === 4) {
+    if (roleId === RoleId.ADMIN_CONJUNTO) {
       return [
         ...commonStart,
         { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
@@ -171,7 +172,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-gray-950 flex-col sm:flex-row">
       <aside
         className={`
-          flex min-w-0 shrink-0 flex-col border-r border-white/[0.06]
+          flex min-w-0 shrink-0 flex-col border-r border-white/6
           transition-[width] duration-200 ease-in-out text-gray-100
           overflow-hidden
           ${collapsed ? "sm:w-16 h-16 sm:h-screen" : "sm:w-64 h-auto sm:h-screen"}

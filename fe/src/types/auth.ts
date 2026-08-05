@@ -7,6 +7,18 @@
  * permitiendo errores que solo se detectarían en producción.
  */
 
+// Antes cada pantalla comparaba el rol del usuario contra números sueltos (1, 2, 3, 4),
+// cada una a su manera, sin que hubiera un solo lugar que dijera qué significa cada
+// número. Con esto, en cualquier componente comparamos contra RoleId.RESIDENTE en vez
+// del número 2 — se entiende de una con solo leerlo, y coincide siempre con el mismo
+// enum que ya usamos en el backend (be/app/models/rol.py).
+export enum RoleId {
+  ADMIN_SISTEMA = 1,
+  RESIDENTE = 2,
+  RECICLADOR = 3,
+  ADMIN_CONJUNTO = 4,
+}
+
 // ════════════════════════════════════════
 // 📥 Tipos de REQUEST
 // ════════════════════════════════════════
@@ -49,7 +61,7 @@ export interface ResetPasswordRequest {
 export interface UserResponse {
   id: number; // Sincronizado como número para coincidir con la BD relacional
   email: string;
-  role_id: number;
+  role_id: RoleId;
   is_active: boolean;
   locale?: string;
   first_name: string; // Sincronizado para Navbar y AppShell

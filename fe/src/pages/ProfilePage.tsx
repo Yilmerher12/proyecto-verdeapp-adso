@@ -15,11 +15,12 @@ import {
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { RoleId } from "@/types/auth";
 
 interface PerfilData {
   id: number;
   email: string;
-  role_id: number;
+  role_id: RoleId;
   first_name: string;
   last_name: string;
   numero_telefonico: string | null;
@@ -31,11 +32,11 @@ interface PerfilData {
   conjuntos_administrados: string[] | null;
 }
 
-const ROLE_META: Record<number, { label: string; Icon: LucideIcon; color: string; bg: string }> = {
-  1: { label: "Administrador del Sistema", Icon: Building2, color: "text-gray-600 dark:text-gray-400",  bg: "bg-gray-100 dark:bg-gray-800/60" },
-  2: { label: "Residente",                 Icon: Home,      color: "text-green-700 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/30" },
-  3: { label: "Reciclador",                Icon: Recycle,   color: "text-teal-700 dark:text-teal-400",  bg: "bg-teal-50 dark:bg-teal-900/30" },
-  4: { label: "Admin. de Conjunto",        Icon: Building2, color: "text-blue-700 dark:text-blue-400",  bg: "bg-blue-50 dark:bg-blue-900/30" },
+const ROLE_META: Record<RoleId, { label: string; Icon: LucideIcon; color: string; bg: string }> = {
+  [RoleId.ADMIN_SISTEMA]: { label: "Administrador del Sistema", Icon: Building2, color: "text-gray-600 dark:text-gray-400",  bg: "bg-gray-100 dark:bg-gray-800/60" },
+  [RoleId.RESIDENTE]:     { label: "Residente",                 Icon: Home,      color: "text-green-700 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/30" },
+  [RoleId.RECICLADOR]:    { label: "Reciclador",                Icon: Recycle,   color: "text-teal-700 dark:text-teal-400",  bg: "bg-teal-50 dark:bg-teal-900/30" },
+  [RoleId.ADMIN_CONJUNTO]: { label: "Admin. de Conjunto",        Icon: Building2, color: "text-blue-700 dark:text-blue-400",  bg: "bg-blue-50 dark:bg-blue-900/30" },
 };
 
 function InfoField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
@@ -166,7 +167,7 @@ export function ProfilePage() {
 
           {/* Datos de contexto (no editables) */}
           <div className="w-full mt-6 space-y-2 text-left">
-            {perfil.role_id === 2 && (
+            {perfil.role_id === RoleId.RESIDENTE && (
               <>
                 {perfil.nombre_conjunto && (
                   <InfoField
@@ -184,7 +185,7 @@ export function ProfilePage() {
               </>
             )}
 
-            {perfil.role_id === 3 && (
+            {perfil.role_id === RoleId.RECICLADOR && (
               <>
                 {perfil.nombre_localidad && (
                   <InfoField
@@ -203,7 +204,7 @@ export function ProfilePage() {
               </>
             )}
 
-            {perfil.role_id === 4 &&
+            {perfil.role_id === RoleId.ADMIN_CONJUNTO &&
               perfil.conjuntos_administrados &&
               perfil.conjuntos_administrados.length > 0 && (
                 <InfoField
