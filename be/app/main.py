@@ -1,7 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import Base, engine
-import app.models  # noqa: F401 — registra todos los modelos antes del create_all
 from app.routers import auth, users, geography, admin
 from app.routers import admin_conjunto
 from app.routers import conjunto_panel
@@ -9,11 +7,17 @@ from app.routers import reciclador_conjunto
 from app.routers import directorio
 from app.routers import notificaciones
 
+# ¿Qué? El esquema de la base de datos ya NO se crea aquí en tiempo de ejecución.
+# ¿Para qué? Antes esta sección llamaba a Base.metadata.create_all(bind=engine), que
+#           solo puede AGREGAR tablas nuevas — nunca modifica ni elimina columnas de
+#           tablas que ya existen. Ahora el esquema se gestiona con Alembic
+#           (be/alembic/versions/), que sí sabe aplicar cambios incrementales.
+# ¿Impacto? El Dockerfile del backend ya ejecuta "alembic upgrade head" antes de
+#           levantar Uvicorn (ver be/Dockerfile), así que el esquema se actualiza
+#           solo al iniciar el contenedor. En desarrollo local (sin Docker), hay que
+#           correr "alembic upgrade head" manualmente después de cada cambio en los
+#           modelos — ver docs/setup o preguntar antes de generar una migración nueva.
 app = FastAPI(title="VerdeApp API")
-
-# Crea las tablas que falten en la BD sin tocar las existentes.
-# Esto permite agregar nuevos modelos sin reiniciar el volumen de Docker.
-Base.metadata.create_all(bind=engine)
 
 # ¿Qué? Lista explícita de orígenes permitidos para hablarle al backend.
 # ¿Para qué? Antes se usaba allow_origins=["*"] ("cualquier sitio web del
