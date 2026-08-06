@@ -1,24 +1,24 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { ArrowRight, MapPin, Users, Recycle } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const pasos = [
   {
-    imgSrc: "/icono_conjunto_que_se_afilia.png",
+    imgSrc: "/landing/step-1-registration.png",
     numero: "01",
     titulo: "El conjunto se afilia",
     descripcion:
       "El administrador registra el conjunto en VerdeApp e invita a los residentes y al reciclador asignado.",
   },
   {
-    imgSrc: "/icono-los-residentes-participan.png",
+    imgSrc: "/landing/step-2-verification.png",
     numero: "02",
     titulo: "Los residentes participan",
     descripcion:
       "Aprenden a reciclar con el contenido educativo e indican cuándo el SHUT está en su capacidad máxima.",
   },
   {
-    imgSrc: "/icono-reciclador-que-actua.png",
+    imgSrc: "/landing/step-3-recycler-pickup.png",
     numero: "03",
     titulo: "El reciclador actúa",
     descripcion:
@@ -49,7 +49,7 @@ const pilares = [
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-white dark:bg-green-950">
 
       {/* ── HEADER ── */}
       <header
@@ -63,7 +63,7 @@ export function LandingPage() {
             aria-label="VerdeApp — inicio"
           >
             <img
-              src="/logo-blanco.png"
+              src="/logos/logo-white.png"
               alt="VerdeApp"
               className="h-8 w-auto object-contain"
             />
@@ -97,25 +97,29 @@ export function LandingPage() {
           className="relative flex min-h-screen items-center justify-center overflow-hidden"
           aria-labelledby="hero-heading"
         >
-          {/* Fondo */}
-          <div className="absolute inset-0" aria-hidden="true">
-            <img
-              src="/conjuntos-residenciales-fondo.jpeg"
-              alt=""
-              className="h-full w-full object-cover object-center"
-              style={{ filter: "brightness(0.40) saturate(1.15)" }}
-            />
+          {/* Fondo — antes era una <img> normal que se iba con el scroll junto
+              con el resto del Hero. Ahora es un fondo "fijo" (igual que en
+              "¿Cómo funciona?"): la foto se queda pegada a la pantalla y el
+              contenido se desliza encima, en vez de quedarse estática. */}
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: "url('/landing/hero-background.jpg')",
+              backgroundAttachment: "fixed",
+            }}
+            aria-hidden="true"
+          >
+            {/* Este degradado es DISTINTO en modo claro y en modo oscuro —
+                no es el mismo verde con una capa negra encima. En oscuro es
+                más profundo y menos brillante, para que se sienta como la
+                versión de noche, no como el mismo día con un filtro. */}
             <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(160deg, rgba(5,46,22,0.80) 0%, rgba(21,128,61,0.42) 55%, rgba(5,46,22,0.78) 100%)",
-              }}
+              className="absolute inset-0 bg-[linear-gradient(160deg,rgba(5,46,22,0.80)_0%,rgba(21,128,61,0.42)_55%,rgba(5,46,22,0.78)_100%)] dark:bg-[linear-gradient(160deg,rgba(1,10,5,0.92)_0%,rgba(6,54,30,0.55)_55%,rgba(1,10,5,0.95)_100%)]"
             />
             <div
               className="absolute inset-0 opacity-15"
               style={{
-                backgroundImage: "url('/hojas-fondo.jpg')",
+                backgroundImage: "url('/landing/leaves-overlay.jpg')",
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 mixBlendMode: "overlay",
@@ -127,12 +131,12 @@ export function LandingPage() {
           <div className="relative mx-auto max-w-3xl px-6 pt-24 pb-32 text-center lg:px-8">
 
             {/*
-              Logo: una vez tengas el PNG con fondo transparente y colores blancos,
+              Logo: una vez tengasel PNG con fondo transparente y colores blancos,
               descomenta esto y ajusta la ruta:
 
               <div className="mb-8 flex justify-center">
                 <img
-                  src="/logo-verde-app-blanco.png"
+                  src="/logos/logo-white-transparent.png"
                   alt="VerdeApp"
                   className="h-28 w-auto object-contain drop-shadow-2xl"
                 />
@@ -174,32 +178,28 @@ export function LandingPage() {
               </Link>
             </div>
           </div>
-
-          {/* Ola de transición */}
-          <div className="absolute bottom-0 left-0 right-0 z-10" aria-hidden="true">
-            <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" className="block w-full dark:hidden">
-              <path d="M0 80L48 70C96 60 192 40 288 34C384 28 480 36 576 42C672 48 768 48 864 43C960 37 1056 26 1152 23C1248 20 1344 26 1392 29L1440 32V80H0Z" fill="white" />
-            </svg>
-            <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" className="hidden w-full dark:block">
-              <path d="M0 80L48 70C96 60 192 40 288 34C384 28 480 36 576 42C672 48 768 48 864 43C960 37 1056 26 1152 23C1248 20 1344 26 1392 29L1440 32V80H0Z" fill="rgb(3 7 18)" />
-            </svg>
-          </div>
         </section>
 
-        {/* ── CÓMO FUNCIONA ── */}
+        {/* ── CÓMO FUNCIONA ──
+             Pasarela versión 3: reutilizamos la MISMA foto del Hero, pero con
+             "background-attachment: fixed" — la foto se queda quieta en la
+             pantalla y el contenido se desliza encima, dando sensación de
+             continuidad en vez de un corte entre secciones.
+             Ojo: en Safari de iPhone este efecto no aplica (se ignora
+             "fixed" y hace scroll normal) — no se rompe nada, solo no se ve
+             el efecto ahí. */}
         <section
-          className="relative overflow-hidden px-6 py-20 sm:py-28"
+          className="relative overflow-hidden bg-cover bg-center px-6 py-20 sm:py-28"
+          style={{
+            backgroundImage: "url('/landing/hero-background.jpg')",
+            backgroundAttachment: "fixed",
+          }}
           aria-labelledby="como-funciona-heading"
         >
-          <div className="absolute inset-0" aria-hidden="true">
-            <img
-              src="/fondo-adicional.jpeg"
-              alt=""
-              className="h-full w-full object-cover object-center"
-              style={{ filter: "blur(3px) brightness(1.8) saturate(0.3)", transform: "scale(1.06)" }}
-            />
-            <div className="absolute inset-0 bg-white/90 dark:bg-gray-950/93" />
-          </div>
+          {/* En modo claro la foto se asoma con un velo blanco; en modo oscuro
+              se asoma igual, pero con un velo verde oscuro — así el efecto de
+              "la foto sigue el scroll" se ve en los dos temas, no solo en claro. */}
+          <div className="absolute inset-0 bg-white/90 dark:bg-green-950/90" aria-hidden="true" />
 
           <div className="relative mx-auto max-w-5xl">
             <div className="mb-14 text-center">
@@ -221,10 +221,10 @@ export function LandingPage() {
               {pasos.map(({ imgSrc, numero, titulo, descripcion }, i) => (
                 <article
                   key={numero}
-                  className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900"
+                  className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-green-800 dark:bg-green-900"
                 >
                   <span
-                    className="absolute right-4 top-3 select-none text-7xl font-black leading-none text-green-50 dark:text-green-950/50"
+                    className="absolute right-4 top-3 select-none text-7xl font-black leading-none text-green-50 dark:text-white/10"
                     aria-hidden="true"
                   >
                     {i + 1}
@@ -240,14 +240,18 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* ── PILARES ── fondo verde oscuro, layout horizontal ── */}
+        {/* ── PILARES ── antes era una lista apilada verticalmente (muy larga);
+             ahora son 3 columnas lado a lado, igual que "¿Cómo funciona?", para
+             que la sección no se sienta tan alargada. ── */}
+        {/* Mismo criterio que en el Hero: el degradado de modo oscuro no es
+            "el mismo verde con negro encima", son tonos propios, más
+            profundos, pensados como la versión de noche de este bloque. */}
         <section
-          className="px-6 py-20 sm:py-28"
-          style={{ background: "linear-gradient(160deg, #052e16 0%, #14532d 60%, #166534 100%)" }}
+          className="relative overflow-hidden bg-[linear-gradient(160deg,#052e16_0%,#14532d_60%,#166534_100%)] px-6 py-16 dark:bg-[linear-gradient(160deg,#01100a_0%,#052e16_60%,#0a3d1f_100%)] sm:py-20"
           aria-labelledby="pilares-heading"
         >
-          <div className="mx-auto max-w-4xl">
-            <div className="mb-12">
+          <div className="relative mx-auto max-w-5xl">
+            <div className="mb-12 text-center">
               <p className="mb-2 text-xs font-bold uppercase tracking-widest text-green-400">
                 Nuestros pilares
               </p>
@@ -255,30 +259,28 @@ export function LandingPage() {
                 id="pilares-heading"
                 className="text-3xl font-bold text-white sm:text-4xl"
               >
-                Una plataforma,<br className="hidden sm:block" /> tres ejes de impacto
+                Una plataforma, tres ejes de impacto
               </h2>
             </div>
 
-            <div className="divide-y divide-white/10">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
               {pilares.map(({ icon: Icon, titulo, descripcion }, i) => (
-                <div key={titulo} className="flex gap-6 py-9 sm:gap-10">
-                  <div className="shrink-0 flex flex-col items-center gap-3 pt-1">
-                    <span className="text-[10px] font-bold tracking-widest text-green-500">
-                      0{i + 1}
-                    </span>
+                <div key={titulo} className="text-left">
+                  <div className="mb-4 flex items-center gap-3">
                     <div
-                      className="flex h-11 w-11 items-center justify-center rounded-xl"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
                       style={{ background: "rgba(255,255,255,0.08)" }}
                     >
                       <Icon className="h-5 w-5 text-green-300" aria-hidden="true" />
                     </div>
+                    <span className="text-[10px] font-bold tracking-widest text-green-500">
+                      0{i + 1}
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
-                    <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
-                      {descripcion}
-                    </p>
-                  </div>
+                  <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+                    {descripcion}
+                  </p>
                 </div>
               ))}
             </div>
@@ -287,7 +289,11 @@ export function LandingPage() {
       </main>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-gray-800 dark:bg-gray-950">
+      {/* En modo oscuro el footer necesita verse claramente MÁS oscuro que el
+          final de "Pilares" (que termina en un verde más claro, #0a3d1f) —
+          si usan un tono parecido, las dos secciones se leen como una sola,
+          sin ningún corte entre ellas. */}
+      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-white/10 dark:bg-[#010a05]">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <span className="text-sm font-extrabold tracking-tight text-gray-800 dark:text-gray-200">
@@ -300,7 +306,7 @@ export function LandingPage() {
 
           <nav
             aria-label="Aviso legal"
-            className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-800"
+            className="mt-4 border-t border-gray-100 pt-4 dark:border-green-900"
           >
             <ul className="m-0 flex list-none flex-wrap justify-center gap-x-5 gap-y-1 p-0">
               {[

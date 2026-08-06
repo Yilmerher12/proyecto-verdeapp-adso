@@ -183,9 +183,9 @@ export function AppShell({ children }: AppShellProps) {
         {/* Identidad de marca */}
         <div className={`flex min-w-0 shrink-0 items-center border-b border-white/10 h-16 ${collapsed ? "justify-center px-3" : "px-5"}`}>
           {collapsed ? (
-            <img src="/logo-blanco.png" alt="VerdeApp" className="h-7 w-auto object-contain" />
+            <img src="/logos/logo-white.png" alt="VerdeApp" className="h-7 w-auto object-contain" />
           ) : (
-            <img src="/logo-blanco.png" alt="VerdeApp" className="h-8 w-auto object-contain" />
+            <img src="/logos/logo-white.png" alt="VerdeApp" className="h-8 w-auto object-contain" />
           )}
         </div>
 
