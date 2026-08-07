@@ -2,24 +2,24 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 import {
   Mail,
   Phone,
   MapPin,
   Building2,
   Users as UsersIcon,
-  Home,
-  Recycle,
   Pencil,
   CheckCircle2,
   X,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { RoleId } from "@/types/auth";
+import { ROLE_THEME } from "@/config/roleTheme";
 
 interface PerfilData {
   id: number;
   email: string;
-  role_id: number;
+  role_id: RoleId;
   first_name: string;
   last_name: string;
   numero_telefonico: string | null;
@@ -30,13 +30,6 @@ interface PerfilData {
   nombre_localidad: string | null;
   conjuntos_administrados: string[] | null;
 }
-
-const ROLE_META: Record<number, { label: string; Icon: LucideIcon; color: string; bg: string }> = {
-  1: { label: "Administrador del Sistema", Icon: Building2, color: "text-gray-600 dark:text-gray-400",  bg: "bg-gray-100 dark:bg-gray-800/60" },
-  2: { label: "Residente",                 Icon: Home,      color: "text-green-700 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/30" },
-  3: { label: "Reciclador",                Icon: Recycle,   color: "text-teal-700 dark:text-teal-400",  bg: "bg-teal-50 dark:bg-teal-900/30" },
-  4: { label: "Admin. de Conjunto",        Icon: Building2, color: "text-blue-700 dark:text-blue-400",  bg: "bg-blue-50 dark:bg-blue-900/30" },
-};
 
 function InfoField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
@@ -68,7 +61,7 @@ export function ProfilePage() {
   const cargarPerfil = () => {
     if (!accessToken) return;
     axios
-      .get("http://localhost:8000/api/v1/users/me", { headers })
+      .get(`${API_BASE_URL}/api/v1/users/me`, { headers })
       .then((res) => setPerfil(res.data))
       .catch(() => {})
       .finally(() => setCargando(false));
@@ -101,7 +94,7 @@ export function ProfilePage() {
     setErrorMsg(null);
     try {
       await axios.put(
-        "http://localhost:8000/api/v1/users/me",
+        `${API_BASE_URL}/api/v1/users/me`,
         {
           nombre: formNombre.trim(),
           apellidos: formApellidos.trim(),
@@ -123,7 +116,7 @@ export function ProfilePage() {
   if (cargando) return <p className="text-sm text-gray-400 px-2 pt-6">Cargando tu perfil...</p>;
   if (!perfil) return <p className="text-sm text-red-500 px-2 pt-6">No se pudo cargar tu perfil.</p>;
 
-  const role = ROLE_META[perfil.role_id] ?? ROLE_META[2];
+  const role = ROLE_THEME[perfil.role_id] ?? ROLE_THEME[RoleId.RESIDENTE];
   const { Icon: RoleIcon } = role;
   const nombreCompleto = `${perfil.first_name} ${perfil.last_name}`.trim();
   const inicial = perfil.first_name?.charAt(0)?.toUpperCase() || "U";
@@ -159,14 +152,14 @@ export function ProfilePage() {
           </h2>
 
           {/* Badge de rol — icono Lucide, sin emoji */}
-          <span className={`inline-flex items-center gap-1.5 mt-3 rounded-full ${role.bg} px-3 py-1 text-xs font-semibold ${role.color}`}>
+          <span className={`inline-flex items-center gap-1.5 mt-3 rounded-full ${role.badgeBg} px-3 py-1 text-xs font-semibold ${role.badgeText}`}>
             <RoleIcon className="h-3.5 w-3.5 shrink-0" />
             {role.label}
           </span>
 
           {/* Datos de contexto (no editables) */}
           <div className="w-full mt-6 space-y-2 text-left">
-            {perfil.role_id === 2 && (
+            {perfil.role_id === RoleId.RESIDENTE && (
               <>
                 {perfil.nombre_conjunto && (
                   <InfoField
@@ -184,7 +177,7 @@ export function ProfilePage() {
               </>
             )}
 
-            {perfil.role_id === 3 && (
+            {perfil.role_id === RoleId.RECICLADOR && (
               <>
                 {perfil.nombre_localidad && (
                   <InfoField
@@ -203,7 +196,7 @@ export function ProfilePage() {
               </>
             )}
 
-            {perfil.role_id === 4 &&
+            {perfil.role_id === RoleId.ADMIN_CONJUNTO &&
               perfil.conjuntos_administrados &&
               perfil.conjuntos_administrados.length > 0 && (
                 <InfoField

@@ -14,22 +14,20 @@ from app.dependencies import get_current_user, get_db
 from app.models.usuario import Usuario
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.conjunto_residencial import ConjuntoResidencial
+from app.models.rol import RolId
 from app.schemas.conjunto_panel import ConjuntoAdministradoResponse, EditarConjuntoRequest
 from app.schemas.user import MessageResponse
 
 router = APIRouter(prefix="/api/v1/conjunto-panel", tags=["conjunto-panel"])
 
-ID_ROL_ADMIN_CONJUNTO = 4
-
 
 def _obtener_administrador_o_rechazar(db: Session, current_user: Usuario) -> AdministradorConjunto:
     """
-    ¿Qué? Confirma que quien hace la petición es realmente un Administrador
-          de Conjunto (rol 4) y devuelve su registro de datos personales.
-    ¿Para qué? Evitar que cualquier otro rol consulte o edite conjuntos
-              por esta ruta.
+    Confirma que quien hace la petición es realmente un Administrador de
+    Conjunto y devuelve su registro de datos personales — así evitamos que
+    cualquier otro rol consulte o edite conjuntos por esta ruta.
     """
-    if current_user.id_rol != ID_ROL_ADMIN_CONJUNTO:
+    if current_user.id_rol != RolId.ADMIN_CONJUNTO:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo un Administrador de Conjunto puede acceder a este panel.",

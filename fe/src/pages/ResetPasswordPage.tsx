@@ -15,6 +15,7 @@ import { AuthLayout } from "@/components/layout/AuthLayout";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { PasswordStrengthIndicator, getPasswordRequirementError } from "@/components/ui/PasswordStrengthIndicator";
 
 /**
  * ¿Qué? Formulario de restablecimiento de contraseña con token de email.
@@ -64,13 +65,14 @@ export function ResetPasswordPage() {
       return false;
     }
 
-    if (formData.new_password.length < 8) {
+    const passwordError = getPasswordRequirementError(formData.new_password);
+    if (passwordError === "too_short") {
       newErrors.new_password = t("auth.register.validation.passwordMin");
-    } else if (!/[A-Z]/.test(formData.new_password)) {
+    } else if (passwordError === "no_uppercase") {
       newErrors.new_password = t("auth.register.validation.passwordUppercase");
-    } else if (!/[a-z]/.test(formData.new_password)) {
+    } else if (passwordError === "no_lowercase") {
       newErrors.new_password = t("auth.register.validation.passwordLowercase");
-    } else if (!/\d/.test(formData.new_password)) {
+    } else if (passwordError === "no_digit") {
       newErrors.new_password = t("auth.register.validation.passwordNumber");
     }
 
@@ -155,6 +157,7 @@ export function ResetPasswordPage() {
             error={errors.new_password}
             onChange={handleChange}
           />
+          <PasswordStrengthIndicator password={formData.new_password} />
 
           <InputField
             label={t("auth.changePassword.confirmPassword")}

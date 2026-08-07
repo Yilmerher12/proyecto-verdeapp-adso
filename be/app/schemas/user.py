@@ -25,7 +25,7 @@ def _validate_password_strength(v: str) -> str:
 
 class UserCreate(BaseModel):
     rol: str
-    correo_electronico: str
+    correo_electronico: EmailStr
     password: str
     nombre: str
     # ¿Qué? Antes existían apellido_paterno (obligatorio) y apellido_materno

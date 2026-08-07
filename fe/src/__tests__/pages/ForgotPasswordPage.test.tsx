@@ -37,6 +37,11 @@ describe("ForgotPasswordPage", () => {
   });
 
   // ¿Qué? Verifica que forgotPassword() se ejecuta correctamente.
+  // ¿Para qué? El clic en "Enviar enlace" solo abre un modal de confirmación
+  //           ("¿Enviar enlace de recuperación?") — forgotPassword() se dispara
+  //           recién cuando el usuario confirma con "Sí, enviar". Este paso extra
+  //           evita que alguien envíe el correo por error antes de revisar la
+  //           dirección que escribió.
   it("ejecuta forgotPassword al enviar email válido", async () => {
     const forgotPasswordMock = vi.fn().mockResolvedValue(undefined);
     const user = userEvent.setup();
@@ -48,6 +53,7 @@ describe("ForgotPasswordPage", () => {
 
     await user.type(screen.getByLabelText("Correo electrónico"), "test@nn.com");
     await user.click(screen.getByRole("button", { name: "Enviar enlace" }));
+    await user.click(screen.getByRole("button", { name: "Sí, enviar" }));
 
     expect(forgotPasswordMock).toHaveBeenCalledWith({ email: "test@nn.com" });
   });
@@ -64,6 +70,7 @@ describe("ForgotPasswordPage", () => {
 
     await user.type(screen.getByLabelText("Correo electrónico"), "test@nn.com");
     await user.click(screen.getByRole("button", { name: "Enviar enlace" }));
+    await user.click(screen.getByRole("button", { name: "Sí, enviar" }));
 
     expect(
       await screen.findByText(
@@ -84,6 +91,7 @@ describe("ForgotPasswordPage", () => {
 
     await user.type(screen.getByLabelText("Correo electrónico"), "test@nn.com");
     await user.click(screen.getByRole("button", { name: "Enviar enlace" }));
+    await user.click(screen.getByRole("button", { name: "Sí, enviar" }));
 
     expect(await screen.findByText("Error del servidor")).toBeInTheDocument();
   });

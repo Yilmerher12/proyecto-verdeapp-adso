@@ -18,6 +18,7 @@ from app.models.reciclador import Reciclador
 from app.models.usuario import Usuario
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
+from app.models.rol import RolId
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjunto
 from app.utils.email import send_reciclador_conjunto_invitation_email
@@ -55,7 +56,7 @@ async def invitar_reciclador(db: Session, id_usuario_admin: int, correo_reciclad
     """Crea la invitación y envía el correo al Reciclador."""
     _verificar_admin_administra_conjunto(db, id_usuario_admin, id_conjunto)
 
-    stmt_usuario = select(Usuario).where(Usuario.correo_electronico == correo_reciclador, Usuario.id_rol == 3)
+    stmt_usuario = select(Usuario).where(Usuario.correo_electronico == correo_reciclador, Usuario.id_rol == RolId.RECICLADOR)
     usuario_reciclador = db.execute(stmt_usuario).scalar_one_or_none()
 
     if not usuario_reciclador:

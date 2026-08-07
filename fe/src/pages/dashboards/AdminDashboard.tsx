@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, Users, Database, UserPlus } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
+import { ROLE_THEME } from "@/config/roleTheme";
+import { RoleId } from "@/types/auth";
 
 interface ResidenteRow {
   Correo: string;
@@ -24,24 +27,37 @@ export function AdminDashboard() {
   const [residentesData, setResidentesData] = useState<ResidenteRow[]>([]);
   const [recicladoresData, setRecicladoresData] = useState<RecicladorRow[]>([]);
   const [mostrarInvitar, setMostrarInvitar] = useState(false);
+  // Antes solo mirábamos si la lista estaba vacía para decidir si mostrar
+  // "Cargando datos..." — pero una lista vacía DE VERDAD (un conjunto sin
+  // residentes todavía) se veía igual que "todavía no ha llegado la
+  // respuesta", y el mensaje de "Cargando..." se quedaba ahí para siempre.
+  // Con esto sí distinguimos "sigue cargando" de "ya cargó y no hay nada".
+  const [cargandoResidentes, setCargandoResidentes] = useState(true);
+  const [cargandoRecicladores, setCargandoRecicladores] = useState(true);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/api/v1/admin/vista-residentes")
+    axios.get(`${API_BASE_URL}/api/v1/admin/vista-residentes`)
       .then(res => setResidentesData(res.data))
-      .catch(err => console.error("Error cargando vista SQL", err));
+      .catch(err => console.error("Error cargando vista SQL", err))
+      .finally(() => setCargandoResidentes(false));
 
-    axios.get("http://localhost:8000/api/v1/admin/sp-recicladores")
+    axios.get(`${API_BASE_URL}/api/v1/admin/sp-recicladores`)
       .then(res => setRecicladoresData(res.data))
-      .catch(err => console.error("Error cargando SP", err));
+      .catch(err => console.error("Error cargando SP", err))
+      .finally(() => setCargandoRecicladores(false));
   }, []);
 
   const fullName = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || "Administrador";
+  const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_SISTEMA];
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
-        <div className="flex items-center gap-4">
+      {/* Header — el ícono grande de fondo (Shield) es solo un detalle visual
+          tenue para que este panel se sienta del Admin del Sistema, sin
+          estorbar la lectura del texto encima. */}
+      <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+        <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-slate-900/5 dark:text-white/5" aria-hidden="true" />
+        <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
             <Shield className="h-7 w-7 text-green-700 dark:text-green-400" />
           </div>
@@ -50,6 +66,7 @@ export function AdminDashboard() {
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               Bienvenido,{" "}
               <span className="font-semibold text-gray-800 dark:text-gray-200 uppercase">{fullName}</span>
+              .
             </p>
             <p className="text-xs text-green-700 dark:text-green-400 font-semibold mt-1">{user?.email}</p>
           </div>
@@ -100,10 +117,16 @@ export function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {residentesData.length === 0 ? (
+              {cargandoResidentes ? (
                 <tr>
                   <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-400">
                     Cargando datos...
+                  </td>
+                </tr>
+              ) : residentesData.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-400">
+                    No hay residentes registrados todavía.
                   </td>
                 </tr>
               ) : (
@@ -142,10 +165,16 @@ export function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {recicladoresData.length === 0 ? (
+              {cargandoRecicladores ? (
                 <tr>
                   <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-400">
                     Cargando datos...
+                  </td>
+                </tr>
+              ) : recicladoresData.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-400">
+                    No hay recicladores registrados todavía.
                   </td>
                 </tr>
               ) : (

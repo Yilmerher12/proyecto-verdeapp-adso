@@ -9,7 +9,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+/*import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";*/
 
 interface AuthLayoutProps {
   children: React.ReactNode;

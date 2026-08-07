@@ -26,6 +26,39 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
   return score as PasswordStrength;
 }
 
+/**
+ * Antes cada uno de los 4 formularios que piden una contraseña nueva
+ * (Registro, Cambiar contraseña, Restablecer contraseña, Aceptar invitación)
+ * traía su propia versión de "¿esta contraseña sirve?" copiada y pegada —
+ * y no siempre decían lo mismo: Registro exigía además un símbolo especial
+ * que el backend nunca pidió, y Aceptar invitación solo revisaba el largo,
+ * sin mayúscula/minúscula/número. Esta función es la única fuente de verdad
+ * de ahora en adelante, y refleja EXACTAMENTE la regla real del backend
+ * (be/app/schemas/user.py: 8+ caracteres, mayúscula, minúscula, número — el
+ * símbolo especial es un extra que suma puntos en la barra, pero nunca es
+ * obligatorio para poder enviar el formulario).
+ *
+ * Devuelve un código (no un texto) para que cada pantalla pueda traducirlo
+ * a su propio idioma/formato — las que ya usan i18n, y las que todavía no.
+ */
+export type PasswordRequirementError = "too_short" | "no_uppercase" | "no_lowercase" | "no_digit";
+
+export function getPasswordRequirementError(password: string): PasswordRequirementError | null {
+  if (password.length < 8) return "too_short";
+  if (!/[A-Z]/.test(password)) return "no_uppercase";
+  if (!/[a-z]/.test(password)) return "no_lowercase";
+  if (!/\d/.test(password)) return "no_digit";
+  return null;
+}
+
+/** Mensajes en español listos para usar en pantallas que todavía no tienen i18n conectado. */
+export const PASSWORD_ERROR_MESSAGES_ES: Record<PasswordRequirementError, string> = {
+  too_short: "La contraseña debe tener al menos 8 caracteres.",
+  no_uppercase: "La contraseña debe contener al menos una mayúscula.",
+  no_lowercase: "La contraseña debe contener al menos una minúscula.",
+  no_digit: "La contraseña debe contener al menos un número.",
+};
+
 const STRENGTH_META: Record<
   Exclude<PasswordStrength, 0>,
   { label: string; labelColor: string; barColor: string }

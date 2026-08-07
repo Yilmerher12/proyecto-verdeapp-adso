@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Phone, MapPin, Users, Building2, MessageCircle } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 
 interface Localidad {
   id_localidad: number;
@@ -51,8 +52,8 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
     if (!accessToken) return;
 
     Promise.all([
-      axios.get<Localidad[]>("http://localhost:8000/api/v1/geography/localidades"),
-      axios.get("http://localhost:8000/api/v1/users/me", { headers }),
+      axios.get<Localidad[]>(`${API_BASE_URL}/api/v1/geography/localidades`),
+      axios.get(`${API_BASE_URL}/api/v1/users/me`, { headers }),
     ])
       .then(([resLocalidades, resPerfil]) => {
         const lista: Localidad[] = resLocalidades.data;
@@ -78,13 +79,13 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
 
     if (tab === "recicladores") {
       axios
-        .get("http://localhost:8000/api/v1/directorio/recicladores", { headers, params })
+        .get(`${API_BASE_URL}/api/v1/directorio/recicladores`, { headers, params })
         .then((res) => setRecicladores(res.data))
         .catch(() => setRecicladores([]))
         .finally(() => setCargandoDirectorio(false));
     } else {
       axios
-        .get("http://localhost:8000/api/v1/directorio/puntos-acopio", { headers, params })
+        .get(`${API_BASE_URL}/api/v1/directorio/puntos-acopio`, { headers, params })
         .then((res) => setPuntos(res.data))
         .catch(() => setPuntos([]))
         .finally(() => setCargandoDirectorio(false));
