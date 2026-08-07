@@ -1,0 +1,134 @@
+/**
+ * Este bloque (el título, el contador de no leídas, la lista, el botón de
+ * "ver más", marcar leídas / limpiar leídas) estaba copiado casi igual en
+ * los 3 dashboards que reciben notificaciones (Residente, Reciclador, Admin
+ * de Conjunto) — cada uno con su propia copia de TIPO_META y tiempoRelativo()
+ * incluida. Si mañana querían cambiarle algo a cómo se ve una notificación,
+ * tocaba acordarse de cambiarlo en los 3 archivos. Ahora es un solo
+ * componente: cada dashboard solo le pasa su título, sus datos, y de qué
+ * color quiere el acento (verde, ámbar, etc. — el que le corresponda a su rol).
+ */
+
+import { useState } from "react";
+import { AlertTriangle, Bell, CheckCircle2, Clock, PackageCheck, Truck } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+export interface NotificacionItem {
+  id: number;
+  tipo: string;
+  mensaje: string;
+  nombre_conjunto: string;
+  leida: boolean;
+  created_at: string;
+}
+
+const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
+  LLEGADA_RECICLADOR: { Icon: Truck, color: "text-teal-700 dark:text-teal-400" },
+  SHUT_LLENO: { Icon: AlertTriangle, color: "text-amber-700 dark:text-amber-500" },
+  SHUT_LIBRE: { Icon: PackageCheck, color: "text-green-700 dark:text-green-500" },
+};
+
+export function tiempoRelativo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "hace un momento";
+  if (mins < 60) return `hace ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `hace ${hrs}h`;
+  return `hace ${Math.floor(hrs / 24)}d`;
+}
+
+interface NotificationFeedProps {
+  title: string;
+  notifications: NotificacionItem[];
+  emptyMessage: string;
+  /** Color del contador y el punto de "no leída" — el acento del rol (ej: "bg-green-600" / "bg-amber-500"). */
+  accentBg: string;
+  /** Fondo de la fila cuando está sin leer (claro + oscuro), a tono con el mismo acento. */
+  accentHighlight: string;
+  onMarkRead: (id: number) => void;
+  onMarkAllRead: () => void;
+  onClearRead: () => void;
+}
+
+export function NotificationFeed({
+  title,
+  notifications,
+  emptyMessage,
+  accentBg,
+  accentHighlight,
+  onMarkRead,
+  onMarkAllRead,
+  onClearRead,
+}: NotificationFeedProps) {
+  const [expandido, setExpandido] = useState(false);
+  const noLeidas = notifications.filter((n) => !n.leida).length;
+
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+      <div className="flex items-center justify-between px-5 pt-5 pb-3">
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-green-600" />
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h2>
+          {noLeidas > 0 && (
+            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white ${accentBg}`}>
+              {noLeidas}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {noLeidas > 0 && (
+            <button onClick={onMarkAllRead} className="text-xs font-medium text-green-600 hover:text-green-500">
+              Marcar leídas
+            </button>
+          )}
+          {notifications.some((n) => n.leida) && (
+            <button onClick={onClearRead} className="text-xs font-medium text-gray-400 hover:text-red-400">
+              Limpiar leídas
+            </button>
+          )}
+        </div>
+      </div>
+
+      {notifications.length === 0 ? (
+        <p className="px-5 pb-5 text-sm text-gray-400">{emptyMessage}</p>
+      ) : (
+        <>
+          <ul className="divide-y divide-gray-50 dark:divide-gray-800">
+            {(expandido ? notifications : notifications.slice(0, 5)).map((n) => {
+              const meta = TIPO_META[n.tipo] ?? { Icon: Bell, color: "text-gray-500" };
+              return (
+                <li
+                  key={n.id}
+                  onClick={() => !n.leida && onMarkRead(n.id)}
+                  className={`flex cursor-pointer items-start gap-3 px-5 py-3.5 transition-colors ${
+                    !n.leida ? accentHighlight : "hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                  }`}
+                >
+                  <meta.Icon className={`mt-0.5 h-4 w-4 shrink-0 ${meta.color}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm ${!n.leida ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
+                      {n.mensaje}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-400">
+                      {n.nombre_conjunto} · {tiempoRelativo(n.created_at)}
+                    </p>
+                  </div>
+                  {!n.leida && <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${accentBg}`} />}
+                </li>
+              );
+            })}
+          </ul>
+          {notifications.length > 5 && (
+            <button
+              onClick={() => setExpandido((v) => !v)}
+              className="w-full py-2.5 text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 border-t border-gray-50 dark:border-gray-800 transition-colors"
+            >
+              {expandido ? "Ver menos" : `Ver ${notifications.length - 5} más`}
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
