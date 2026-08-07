@@ -6,6 +6,11 @@ import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import {
+  PasswordStrengthIndicator,
+  getPasswordRequirementError,
+  PASSWORD_ERROR_MESSAGES_ES,
+} from "@/components/ui/PasswordStrengthIndicator";
 import { Building2, ShieldCheck, XCircle } from "lucide-react";
 import {
     consultarInvitacion,
@@ -70,8 +75,9 @@ export function AceptarInvitacionPage() {
 
     if (!formData.nombre.trim()) errors["nombre"] = "El nombre es obligatorio.";
     if (!formData.apellidos.trim()) errors["apellidos"] = "Los apellidos son obligatorios.";
-    if (formData.password.length < 8) {
-      errors["password"] = "La contraseña debe tener al menos 8 caracteres.";
+    const passwordError = getPasswordRequirementError(formData.password);
+    if (passwordError) {
+      errors["password"] = PASSWORD_ERROR_MESSAGES_ES[passwordError];
     }
     if (formData.password !== formData.confirmPassword) {
       errors["confirmPassword"] = "Las contraseñas no coinciden.";
@@ -153,7 +159,7 @@ export function AceptarInvitacionPage() {
               Ya puedes iniciar sesión con tu correo y la contraseña que
               acabas de definir, para administrar tus conjuntos asignados.
             </p>
-            <div className="pt-4 rounded-xl overflow-hidden bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm">
+            <div className="pt-4">
               <Button onClick={() => navigate("/")} fullWidth>
                 Ir a iniciar sesión
               </Button>
@@ -227,6 +233,7 @@ export function AceptarInvitacionPage() {
                   onChange={handleChange}
                   placeholder="Mínimo 8 caracteres"
                 />
+                <PasswordStrengthIndicator password={formData.password} />
                 {fieldErrors.password && (
                   <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.password}</p>
                 )}
@@ -248,11 +255,9 @@ export function AceptarInvitacionPage() {
             </div>
 
             <div className="w-full pt-4">
-              <div className="rounded-xl overflow-hidden bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm">
-                <Button type="submit" fullWidth isLoading={isLoading}>
-                  Crear mi cuenta
-                </Button>
-              </div>
+              <Button type="submit" fullWidth isLoading={isLoading}>
+                Crear mi cuenta
+              </Button>
             </div>
           </form>
 

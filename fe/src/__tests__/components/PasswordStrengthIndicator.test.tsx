@@ -1,7 +1,7 @@
 /**
  * Archivo: __tests__/components/PasswordStrengthIndicator.test.tsx
  * Descripción: Tests del indicador de fortaleza de contraseña — cálculo, renderizado y accesibilidad.
- * ¿Para qué? Garantizar que las 4 barras y etiquetas reflejan correctamente la fortaleza calculada.
+ * ¿Para qué? Garantizar que las 5 barras y etiquetas reflejan correctamente la fortaleza calculada.
  * ¿Impacto? Un indicador incorrecto daría retroalimentación falsa, induciendo al usuario a
  *           creer que su contraseña es fuerte cuando no lo es.
  */
@@ -84,16 +84,25 @@ describe("PasswordStrengthIndicator", () => {
     expect(screen.getByText("Débil")).toBeInTheDocument();
   });
 
-  // ¿Qué? Muestra etiqueta "Buena" para contraseñas de nivel 3.
-  it('muestra "Buena" para contraseña de nivel 3', () => {
-    // longitud(8) + mayúscula + minúscula = 3 criterios
+  // ¿Qué? Muestra etiqueta "Regular" para contraseñas de nivel 3.
+  it('muestra "Regular" para contraseña de nivel 3', () => {
+    // longitud(8) + mayúscula + minúscula = 3 criterios (falta número y símbolo)
     render(<PasswordStrengthIndicator password="Aaaaaaaa" />);
+    expect(screen.getByText("Regular")).toBeInTheDocument();
+  });
+
+  // ¿Qué? Muestra etiqueta "Buena" para contraseñas que cumplen los 4 criterios base
+  //       (longitud, mayúscula, minúscula, número) pero sin símbolo especial.
+  it('muestra "Buena" para contraseña con los 4 criterios base (sin símbolo)', () => {
+    render(<PasswordStrengthIndicator password="Password1" />);
     expect(screen.getByText("Buena")).toBeInTheDocument();
   });
 
-  // ¿Qué? Muestra etiqueta "Fuerte" para contraseñas que cumplen todos los criterios.
-  it('muestra "Fuerte" para contraseña que cumple todos los criterios', () => {
-    render(<PasswordStrengthIndicator password="Password1" />);
+  // ¿Qué? Muestra etiqueta "Fuerte" solo cuando además se agrega un símbolo especial —
+  //       el símbolo es el 5to criterio, un extra que suma en la barra pero que el
+  //       backend nunca exige para poder registrarse.
+  it('muestra "Fuerte" para contraseña que cumple los 5 criterios (incluye símbolo)', () => {
+    render(<PasswordStrengthIndicator password="Password1!" />);
     expect(screen.getByText("Fuerte")).toBeInTheDocument();
   });
 
@@ -101,18 +110,19 @@ describe("PasswordStrengthIndicator", () => {
   // ¿Para qué? Accesibilidad — lectores de pantalla anuncian la fortaleza sin depender del color.
   // ¿Impacto? WCAG 1.4.1 exige que la información no se transmita solo por color.
   it("tiene aria-label con la descripción textual del nivel", () => {
-    render(<PasswordStrengthIndicator password="Password1" />);
+    render(<PasswordStrengthIndicator password="Password1!" />);
     expect(
       screen.getByRole("status", { name: "Fortaleza de contraseña: Fuerte" }),
     ).toBeInTheDocument();
   });
 
-  // ¿Qué? Verifica que siempre se renderizan exactamente 4 barras.
-  // ¿Para qué? La representación visual de "4 barras = 4 criterios" es parte del contrato de diseño.
-  it("siempre renderiza 4 barras", () => {
-    const { container } = render(<PasswordStrengthIndicator password="Password1" />);
+  // ¿Qué? Verifica que siempre se renderizan exactamente 5 barras.
+  // ¿Para qué? La barra tiene 5 criterios posibles (longitud, mayúscula, minúscula,
+  //           número y símbolo) — "5 barras = 5 criterios" es el contrato de diseño actual.
+  it("siempre renderiza 5 barras", () => {
+    const { container } = render(<PasswordStrengthIndicator password="Password1!" />);
     // Las barras son div hijos directos del contenedor de barras (aria-hidden)
     const barsContainer = container.querySelector("[aria-hidden='true']");
-    expect(barsContainer?.children).toHaveLength(4);
+    expect(barsContainer?.children).toHaveLength(5);
   });
 });

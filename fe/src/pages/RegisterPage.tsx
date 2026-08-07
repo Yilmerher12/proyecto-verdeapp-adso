@@ -2,13 +2,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { calculatePasswordStrength } from "@/components/ui/PasswordStrengthIndicator";
+import {
+  PasswordStrengthIndicator,
+  getPasswordRequirementError,
+  PASSWORD_ERROR_MESSAGES_ES,
+} from "@/components/ui/PasswordStrengthIndicator";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { Home, Shield, MailCheck, MapPin } from "lucide-react";
+import { Home, Recycle, MailCheck, MapPin } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
@@ -125,8 +129,9 @@ export function RegisterPage() {
     } else if (formData.email !== formData.confirmEmail) {
       errors["confirmEmail"] = "Los correos electrónicos no coinciden.";
     }
-    if (calculatePasswordStrength(formData.password) < 5) {
-      errors["password"] = "La contraseña debe ser Fuerte: mínimo 8 caracteres, mayúscula, minúscula, número y símbolo (!@#$...).";
+    const passwordError = getPasswordRequirementError(formData.password);
+    if (passwordError) {
+      errors["password"] = PASSWORD_ERROR_MESSAGES_ES[passwordError];
     }
     if (formData.password !== formData.confirmPassword) {
       errors["confirmPassword"] = "Las contraseñas no coinciden.";
@@ -243,24 +248,24 @@ export function RegisterPage() {
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Crea tu cuenta</h2>
-            <p className="text-gray-500 mt-1">Únete a VerdeApp y transforma tu comunidad</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">Únete a VerdeApp y transforma tu comunidad</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div
                 onClick={() => setFormData(p => ({ ...p, rol: "residente" }))}
-                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "residente" ? "border-green-600 bg-green-50/50 shadow-sm" : "border-gray-200 hover:border-green-300"}`}
+                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "residente" ? "border-green-600 bg-green-50/50 dark:bg-green-900/20 shadow-sm" : "border-gray-200 dark:border-gray-700 hover:border-green-300"}`}
               >
                 <Home className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "residente" ? "text-green-600" : "text-gray-400"}`}/>
-                <span className={`font-semibold ${formData.rol === "residente" ? "text-green-800" : "text-gray-500"}`}>Residente</span>
+                <span className={`font-semibold ${formData.rol === "residente" ? "text-green-800 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>Residente</span>
               </div>
               <div
                 onClick={() => setFormData(p => ({ ...p, rol: "reciclador" }))}
-                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "reciclador" ? "border-green-600 bg-green-50/50 shadow-sm" : "border-gray-200 hover:border-green-300"}`}
+                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "reciclador" ? "border-green-600 bg-green-50/50 dark:bg-green-900/20 shadow-sm" : "border-gray-200 dark:border-gray-700 hover:border-green-300"}`}
               >
-                <Shield className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "reciclador" ? "text-green-600" : "text-gray-400"}`}/>
-                <span className={`font-semibold ${formData.rol === "reciclador" ? "text-green-800" : "text-gray-500"}`}>Reciclador</span>
+                <Recycle className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "reciclador" ? "text-green-600" : "text-gray-400"}`}/>
+                <span className={`font-semibold ${formData.rol === "reciclador" ? "text-green-800 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>Reciclador</span>
               </div>
             </div>
 
@@ -292,16 +297,16 @@ export function RegisterPage() {
             </div>
 
             {formData.rol === "residente" && (
-              <div className="space-y-4 p-5 bg-gray-50/50 border border-gray-100 rounded-2xl">
+              <div className="space-y-4 p-5 bg-gray-50/50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700 rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="w-5 h-5 text-green-600" />
-                  <h3 className="font-bold text-gray-800">Ubicación de Residencia *</h3>
+                  <h3 className="font-bold text-gray-800 dark:text-gray-200">Ubicación de Residencia *</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Localidad</label>
-                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none">
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Localidad</label>
+                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none">
                       <option value="">Selecciona...</option>
                       {localidades.map(loc => (
                         <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
@@ -310,8 +315,8 @@ export function RegisterPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Conjunto Residencial</label>
-                    <select name="id_conjunto_residencial" value={formData.id_conjunto_residencial} onChange={handleChange} disabled={!formData.localidad_id} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 disabled:text-gray-400">
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Conjunto Residencial</label>
+                    <select name="id_conjunto_residencial" value={formData.id_conjunto_residencial} onChange={handleChange} disabled={!formData.localidad_id} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400">
                       <option value="">Selecciona...</option>
                       {conjuntos.map(conj => (
                         <option key={conj.id_conjunto_residencial} value={conj.id_conjunto_residencial}>{conj.nombre_conjunto}</option>
@@ -320,10 +325,10 @@ export function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200">
+                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Tipo Unidad</label>
-                    <select name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100">
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Tipo Unidad</label>
+                    <select name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800">
                       <option value="TORRE">Torre</option>
                       <option value="INTERIOR">Interior</option>
                       <option value="BLOQUE">Bloque</option>
@@ -332,29 +337,29 @@ export function RegisterPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Nº / Letra</label>
-                    <input type="text" name="numero_bloque" placeholder="Ej: 3, B" value={formData.numero_bloque} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 uppercase" />
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Nº / Letra</label>
+                    <input type="text" name="numero_bloque" placeholder="Ej: 3, B" value={formData.numero_bloque} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 uppercase" />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Apartamento</label>
-                    <input type="text" name="apto" placeholder="Ej: 402" value={formData.apto} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 uppercase" />
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Apartamento</label>
+                    <input type="text" name="apto" placeholder="Ej: 402" value={formData.apto} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 uppercase" />
                   </div>
                 </div>
               </div>
             )}
 
             {formData.rol === "reciclador" && (
-              <div className="space-y-4 p-5 bg-green-50/30 border border-green-100 rounded-2xl">
+              <div className="space-y-4 p-5 bg-green-50/30 dark:bg-green-900/10 border border-green-100 dark:border-green-900/40 rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
-                  <Shield className="w-5 h-5 text-green-600" />
-                  <h3 className="font-bold text-gray-800">Perfil Operativo *</h3>
+                  <Recycle className="w-5 h-5 text-green-600" />
+                  <h3 className="font-bold text-gray-800 dark:text-gray-200">Perfil Operativo *</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Localidad de Trabajo *</label>
-                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none">
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Localidad de Trabajo *</label>
+                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none">
                       <option value="">Selecciona tu localidad...</option>
                       {localidades.map(loc => (
                         <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
@@ -408,6 +413,7 @@ export function RegisterPage() {
                   onChange={handleChange}
                   placeholder="Mínimo 8 caracteres"
                 />
+                <PasswordStrengthIndicator password={formData.password} />
                 {fieldErrors.password && <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.password}</p>}
               </div>
 
@@ -436,7 +442,7 @@ export function RegisterPage() {
                 id="terms"
                 checked={acceptedTerms}
                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 accent-green-600 cursor-pointer"
+                className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 accent-green-600 cursor-pointer"
               />
               <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
                 Acepto los{" "}
@@ -460,11 +466,9 @@ export function RegisterPage() {
             </div>
 
             <div className="w-full pt-4">
-              <div className={`rounded-xl overflow-hidden transition-all shadow-sm ${isButtonDisabled ? "opacity-60 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white"}`}>
-                <Button type="submit" fullWidth isLoading={isLoading} disabled={isButtonDisabled}>
-                  {isButtonDisabled ? "Completa los campos y acepta los términos" : "Registrar Cuenta"}
-                </Button>
-              </div>
+              <Button type="submit" fullWidth isLoading={isLoading} disabled={isButtonDisabled}>
+                {isButtonDisabled ? "Completa los campos y acepta los términos" : "Registrar Cuenta"}
+              </Button>
             </div>
           </form>
 
