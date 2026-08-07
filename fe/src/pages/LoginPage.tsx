@@ -124,8 +124,7 @@ export function LoginPage() {
               </Link>
             </div>
 
-            {/* 🛠️ CORREGIDO: Quitamos className de <Button> y aplicamos los estilos de Figma en un contenedor div */}
-            <div className="pt-2 rounded-xl overflow-hidden shadow-sm transition-all text-white bg-green-600 hover:bg-green-700 active:bg-green-800">
+            <div className="pt-2">
               <Button type="submit" fullWidth isLoading={isLoading}>
                 Iniciar Sesión
               </Button>

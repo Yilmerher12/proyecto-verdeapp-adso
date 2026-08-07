@@ -129,11 +129,9 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
           )}
         </div>
 
-        <div className="rounded-xl overflow-hidden bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm">
-          <Button type="submit" fullWidth isLoading={isLoading}>
-            Enviar invitación
-          </Button>
-        </div>
+        <Button type="submit" fullWidth isLoading={isLoading}>
+          Enviar invitación
+        </Button>
       </form>
 
       {mensajeExito && (
