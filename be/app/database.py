@@ -2,9 +2,9 @@
 Módulo: database.py
 Descripción: Configuración de la conexión a PostgreSQL con SQLAlchemy 2.0.
 ¿Para qué? Proveer el engine (motor de conexión), la sesión (SessionLocal) y la
-           clase base (Base) que todos los modelos ORM heredan.
+clase base (Base) que todos los modelos ORM heredan.
 ¿Impacto? Este módulo es el puente entre Python y PostgreSQL. Sin él, ningún modelo
-          puede crear tablas ni hacer consultas a la base de datos.
+puede crear tablas ni hacer consultas a la base de datos.
 """
 
 from sqlalchemy import create_engine
@@ -42,9 +42,9 @@ class Base(DeclarativeBase):
 
     ¿Qué? Clase abstracta de la que heredan todos los modelos (User, PasswordResetToken, etc.).
     ¿Para qué? SQLAlchemy usa esta clase para llevar el registro de todos los modelos definidos
-               y poder crear/migrar sus tablas automáticamente.
+    y poder crear/migrar sus tablas automáticamente.
     ¿Impacto? Cada modelo que herede de Base se convierte automáticamente en una tabla de la BD.
-              Sin esta clase, SQLAlchemy no sabría qué tablas crear.
+    Sin esta clase, SQLAlchemy no sabría qué tablas crear.
     """
 
     pass

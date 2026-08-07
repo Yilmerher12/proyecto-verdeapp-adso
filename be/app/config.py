@@ -2,10 +2,10 @@
 Módulo: config.py
 Descripción: Configuración centralizada del backend usando Pydantic Settings.
 ¿Para qué? Cargar y validar TODAS las variables de entorno necesarias al iniciar la app.
-           Si falta alguna variable o tiene un formato inválido, la app no arranca y muestra
-           un error claro indicando cuál es el problema.
+Si falta alguna variable o tiene un formato inválido, la app no arranca y muestra
+un error claro indicando cuál es el problema.
 ¿Impacto? Sin este módulo, las variables de entorno se leerían con os.getenv() sin validación,
-          lo que podría causar errores silenciosos o difíciles de depurar en tiempo de ejecución.
+lo que podría causar errores silenciosos o difíciles de depurar en tiempo de ejecución.
 """
 
 from pydantic import field_validator
@@ -17,8 +17,7 @@ class Settings(BaseSettings):
 
     ¿Qué? Clase que define todas las variables de entorno que necesita el backend.
     ¿Para qué? Centralizar la configuración en un solo lugar con validación automática.
-    ¿Impacto? Pydantic valida tipos y valores al instanciar — si DATABASE_URL no es un string
-              válido o si SECRET_KEY está vacía, la app falla inmediatamente con un error descriptivo.
+    ¿Impacto? Pydantic valida tipos y valores al instanciar — si DATABASE_URL no es un string válido o si SECRET_KEY está vacía, la app falla inmediatamente con un error descriptivo.
     """
 
     # ────────────────────────────
@@ -45,11 +44,8 @@ class Settings(BaseSettings):
         """Valida que SECRET_KEY tenga longitud mínima aceptable.
 
         ¿Qué? Verifica que la clave secreta tenga al menos 32 caracteres.
-        ¿Para qué? Una SECRET_KEY corta puede romperse por fuerza bruta, permitiendo
-                   al atacante forjar tokens JWT para cualquier usuario.
-        ¿Impacto? OWASP A02 — Cryptographic Failures: 32 caracteres es el mínimo
-                   recomendado para HMAC-SHA256 (la base de HS256). En producción
-                   usar `openssl rand -hex 32` para generar una clave aleatoria segura.
+        ¿Para qué? Una SECRET_KEY corta puede romperse por fuerza bruta, permitiendo al atacante forjar tokens JWT para cualquier usuario.
+        ¿Impacto? OWASP A02 — Cryptographic Failures: 32 caracteres es el mínimo recomendado para HMAC-SHA256 (la base de HS256). En producción usar `openssl rand -hex 32` para generar una clave aleatoria segura.
 
         Args:
             v: Valor de SECRET_KEY de la variable de entorno.
