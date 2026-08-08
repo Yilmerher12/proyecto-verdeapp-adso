@@ -16,7 +16,7 @@
 | **Nombre** | Alerta SHUT Bidireccional|
 | **Módulo** | Notificaciones          |
 | **Prioridad** | Alta                    |
-| **Estado** | Por implementar         |
+| **Estado** | Implementado            |
 | **Usuarios** | reciclador, residente   |
 
 ---
