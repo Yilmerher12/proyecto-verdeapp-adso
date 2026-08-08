@@ -8,7 +8,7 @@
 | **Nombre**    | Gestión de Vinculación de Conjuntos      |
 | **Módulo**    | Administración / Conjuntos               |
 | **Prioridad** | Media                                    |
-| **Estado**    | Por implementar                          |
+| **Estado**    | Implementado                             |
 | **Usuarios**  | admin_conjunto, admin_sistema            |
 
 ---

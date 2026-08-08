@@ -16,7 +16,7 @@
 | **Nombre** | Notificación llegada del reciclador al conjunto|
 | **Módulo** | Notificaciones / Operación                     |
 | **Prioridad** | Alta                                           |
-| **Estado** | Por implementar                                |
+| **Estado** | Implementado                                   |
 | **Usuarios** | reciclador, residente                          |
 
 ---
