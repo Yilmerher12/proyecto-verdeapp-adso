@@ -75,8 +75,8 @@ Los usuarios destinatarios ven los comunicados en un feed dentro de la app y rec
 
 | HU      | Descripción                                          |
 | ------- | ---------------------------------------------------- |
-| HU-029  | Admin Conjunto crea un comunicado del conjunto       |
-| HU-030  | Residente/Reciclador ve el feed de comunicados       |
-| HU-031  | Admin Conjunto edita un comunicado                   |
-| HU-032  | Admin Conjunto elimina un comunicado                 |
-| HU-033  | Residente/Reciclador recibe notificación de comunicado nuevo |
+| [HU-027](../HUs/HU-027_admin_conjunto_crea_comunicado.md) | Admin Conjunto crea un comunicado del conjunto       |
+| [HU-028](../HUs/HU-028_ver_feed_comunicados.md) | Residente/Reciclador ve el feed de comunicados       |
+| [HU-029](../HUs/HU-029_admin_conjunto_edita_comunicado.md) | Admin Conjunto edita un comunicado                   |
+| [HU-030](../HUs/HU-030_admin_conjunto_elimina_comunicado.md) | Admin Conjunto elimina un comunicado                 |
+| [HU-031](../HUs/HU-031_notificacion_comunicado_nuevo.md) | Residente/Reciclador recibe notificación de comunicado nuevo |

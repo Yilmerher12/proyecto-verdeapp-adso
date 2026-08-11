@@ -65,7 +65,7 @@ A diferencia de los comunicados de conjunto (RQF-014), las novedades las publica
 
 | HU      | Descripción                                             |
 | ------- | ------------------------------------------------------- |
-| HU-034  | Admin Sistema publica una novedad general               |
-| HU-035  | Usuario ve las novedades del sistema según su rol       |
-| HU-036  | Admin Sistema edita una novedad general                 |
-| HU-037  | Admin Sistema archiva una novedad / sistema la archiva al expirar |
+| [HU-032](../HUs/HU-032_admin_sistema_publica_novedad.md) | Admin Sistema publica una novedad general               |
+| [HU-033](../HUs/HU-033_usuario_ve_novedades.md) | Usuario ve las novedades del sistema según su rol       |
+| [HU-034](../HUs/HU-034_admin_sistema_edita_novedad.md) | Admin Sistema edita una novedad general                 |
+| [HU-035](../HUs/HU-035_admin_sistema_archiva_novedad.md) | Admin Sistema archiva una novedad / sistema la archiva al expirar |

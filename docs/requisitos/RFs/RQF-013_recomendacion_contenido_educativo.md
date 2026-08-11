@@ -50,5 +50,5 @@ Este RF extiende el funcionamiento de **RQF-009** (Auditoría de Residuos con Se
 
 | HU      | Descripción                                              |
 | ------- | -------------------------------------------------------- |
-| HU-027  | Sistema recomienda contenido según la auditoría          |
-| HU-028  | Residente ve el contenido educativo recomendado          |
+| [HU-025](../HUs/HU-025_sistema_recomienda_contenido_por_auditoria.md) | Sistema recomienda contenido según la auditoría          |
+| [HU-026](../HUs/HU-026_residente_ve_contenido_recomendado.md) | Residente ve el contenido educativo recomendado          |
