@@ -1,38 +1,49 @@
 # Historias de Usuario — VerdeApp
 
-| Título                  | Historia de Usuario                                               | Criterios de Aceptación                                                                                                                                                                                | Prioridad | Descripción                                                  | Tipo de CRUD |
-| ----------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- | ------------------------------------------------------------ | ------------ |
-| Inicio de Sesión        | Como usuario, quiero entrar con mis datos para usar la app.       | 1. Ingresar correo y clave.<br>2. Acceso con datos correctos.<br>3. Ver mensaje de error si los datos no coinciden.<br>4. Bloqueo temporal tras 5 intentos fallidos.<br>5. No mostrar cuál dato falló. | HIGH      | Mantiene la seguridad al no indicar qué campo es incorrecto. | READ         |
-| Registro de Usuario     | Como residente o reciclador, quiero crear una cuenta.             | 1. Ingresar nombre, correo y clave.<br>2. Validar que el correo sea real.<br>3. Verificar que el correo no esté usado.<br>4. Encriptar la contraseña.<br>5. Recibir correo de activación.              | HIGH      | Requiere validación de correo único en la base de datos.     | CREATE       |
-| Alertar SHUT Lleno      | Como residente, quiero avisar que el SHUT está lleno.             | 1. Botón visible en el panel.<br>2. Validar que el SHUT no esté ya lleno.<br>3. Guardar el estado en el sistema.<br>4. Enviar aviso al reciclador.<br>5. Confirmar envío al residente.                 | HIGH      | Evita reportes duplicados si ya está marcado como lleno.     | UPDATE       |
-| Ver Contenido Educativo | Como residente, quiero leer cómo reciclar.                        | 1. Entrar a la sección de educación.<br>2. Ver lista de módulos.<br>3. Abrir el contenido de cada módulo.<br>4. Leer solo texto e imágenes.<br>5. Volver al catálogo fácilmente.                       | MEDIUM    | Acceso de solo lectura para el usuario final.                | READ         |
-| Directorio de Acopio    | Como residente, quiero ver dónde reciclar.                        | 1. Buscar puntos por localidad.<br>2. Ver lista de puntos disponibles.<br>3. Ver teléfono o botón de chat.<br>4. Ver datos solo de puntos activos.<br>5. Filtrar resultados por conjunto.              | MEDIUM    | Permite contacto directo vía WhatsApp o llamada.             | READ         |
-| Reportar Llegada        | Como reciclador, quiero avisar que llegué al conjunto.            | 1. Presionar botón de llegada.<br>2. Validar mi permiso en el conjunto.<br>3. Guardar registro de hora.<br>4. Enviar aviso a los residentes.<br>5. Bloqueo de 2 horas entre reportes.                  | HIGH      | Evita el envío de notificaciones repetitivas.                | CREATE       |
-| Cerrar Sesión           | Como usuario, quiero salir de mi cuenta de forma segura.          | 1. Presionar el botón cerrar sesión.<br>2. Mostrar modal de confirmación.<br>3. Al confirmar, borrar los tokens de sesión.<br>4. Redirigir al inicio.<br>5. No permitir reingreso con token viejo.     | HIGH      | Asegura la privacidad si se comparte el dispositivo.         | DELETE       |
-| Actualizar Perfil       | Como usuario, quiero cambiar mis datos básicos.                   | 1. Entrar a mi perfil.<br>2. Cambiar nombre o teléfono.<br>3. Validar que el teléfono sea numérico.<br>4. Guardar cambios en el sistema.<br>5. Mostrar mensaje de éxito.                               | MEDIUM    | Solo permite editar información básica, no claves ni roles.  | UPDATE       |
-| Calificar Gestión       | Como reciclador, quiero calificar cómo clasificaron los residuos. | 1. Elegir calificación (Verde/Amarillo/Rojo).<br>2. Escribir comentario (opcional).<br>3. Validar que sea una vez al día.<br>4. Guardar en el historial.<br>5. Confirmar registro.                     | LOW       | Ayuda a los conjuntos a mejorar su clasificación.            | CREATE       |
-| Gestionar Educación     | Como Admin, quiero actualizar el contenido educativo.             | 1. Crear nuevo artículo.<br>2. Editar artículo existente.<br>3. Eliminar artículos obsoletos.<br>4. Validar que los campos no estén vacíos.<br>5. Confirmar cambios al sistema.                        | MEDIUM    | Acceso restringido solo para administradores.                | CRUD         |
-| Gestionar Directorio    | Como Admin, quiero mantener los puntos de acopio.                 | 1. Registrar punto de acopio.<br>2. Editar datos de un punto.<br>3. Asignar localidad al punto.<br>4. Dar de baja puntos.<br>5. Validar datos antes de guardar.                                        | HIGH      | Garantiza que los residentes vean información real y útil.   | CRUD         |
+<!--
+  ¿Qué? Índice de navegación de todas las Historias de Usuario del proyecto.
+  ¿Para qué? Cada HU vive en su propio archivo (formato Identificación + Historia +
+            Criterios de aceptación Given/When/Then), siguiendo la misma estructura
+            que usa el repositorio de referencia del profesor. Esta tabla es solo
+            un mapa para encontrarlas rápido — el contenido real está en cada archivo.
+  ¿Impacto? Antes había una sola tabla gigante con criterios resumidos en una línea;
+            ahora cada HU tiene su propio detalle completo y trazable a su RF.
+-->
 
----
-
-## Historias de usuario derivadas de RQF-012 a RQF-015
-
-> Estas historias ya están numeradas (HU-024 a HU-037) y sus criterios de aceptación completos viven dentro del archivo RF correspondiente, para no duplicar contenido. Esta tabla es solo un índice de navegación para que el catálogo de HUs quede completo en un solo lugar.
-
-| HU     | Descripción                                                        | RF asociado                                                     |
-| ------ | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| HU-024 | Admin Conjunto solicita desvinculación                             | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md)         |
-| HU-025 | Admin Sistema gestiona solicitudes                                  | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md)         |
-| HU-026 | Admin Sistema asigna nuevo conjunto                                 | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md)         |
-| HU-027 | Sistema recomienda contenido según la auditoría                     | [RQF-013](../RFs/RQF-013_recomendacion_contenido_educativo.md)     |
-| HU-028 | Residente ve el contenido educativo recomendado                     | [RQF-013](../RFs/RQF-013_recomendacion_contenido_educativo.md)     |
-| HU-029 | Admin Conjunto crea un comunicado del conjunto                      | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)        |
-| HU-030 | Residente/Reciclador ve el feed de comunicados                      | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)        |
-| HU-031 | Admin Conjunto edita un comunicado                                  | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)        |
-| HU-032 | Admin Conjunto elimina un comunicado                                | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)        |
-| HU-033 | Residente/Reciclador recibe notificación de comunicado nuevo        | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)        |
-| HU-034 | Admin Sistema publica una novedad general                           | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)         |
-| HU-035 | Usuario ve las novedades del sistema según su rol                   | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)         |
-| HU-036 | Admin Sistema edita una novedad general                              | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)         |
-| HU-037 | Admin Sistema archiva una novedad / sistema la archiva al expirar    | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)         |
+| HU     | Título                                                             | RF asociado                                                        |
+| ------ | ------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| HU-001 | [Inicio de sesión](HU-001_inicio_de_sesion.md)                       | [RQF-001](../RFs/RF-001_validar_usuario.md)                          |
+| HU-002 | [Registro de cuenta](HU-002_registro_de_cuenta.md)                    | [RQF-002](../RFs/RF-002_registro_de_usuarios.md)                     |
+| HU-003 | [Residente reporta SHUT lleno](HU-003_residente_reporta_shut_lleno.md) | [RQF-003](../RFs/RQF-003_alerta_shut_bidireccional.md)               |
+| HU-004 | [Reciclador reporta SHUT vaciado](HU-004_reciclador_reporta_shut_vaciado.md) | [RQF-003](../RFs/RQF-003_alerta_shut_bidireccional.md)         |
+| HU-005 | [Residente consulta el catálogo educativo](HU-005_consultar_catalogo_educativo.md) | [RQF-004](../RFs/RQF-004_catalogo_educativo.md)          |
+| HU-006 | [Residente consulta el directorio](HU-006_consultar_directorio.md)    | [RQF-005](../RFs/RQF-005_directorio_integral.md)                     |
+| HU-007 | [Reciclador notifica su llegada](HU-007_reciclador_notifica_llegada.md) | [RQF-006](../RFs/RQF-006_notificacion_llegada_reciclador.md)       |
+| HU-008 | [Cerrar sesión](HU-008_cerrar_sesion.md)                              | [RQF-007](../RFs/RQF-007_cerrar_sesion.md)                           |
+| HU-009 | [Actualizar datos del perfil](HU-009_actualizar_perfil.md)           | [RQF-008](../RFs/RQF-008_actualizar_perfil.md)                       |
+| HU-010 | [Reciclador califica la gestión (semáforo)](HU-010_reciclador_califica_semaforo.md) | [RQF-009](<../RFs/RQF-009 — Semáforo de Gestión de Residuos.md>) |
+| HU-011 | [Residente consulta el historial del semáforo](HU-011_residente_ve_historial_semaforo.md) | [RQF-009](<../RFs/RQF-009 — Semáforo de Gestión de Residuos.md>) |
+| HU-012 | [Admin Sistema crea contenido educativo](HU-012_admin_crea_contenido_educativo.md) | [RQF-010](<../RFs/RQF-010 — Gestionar Contenido Educativo.md>) |
+| HU-013 | [Admin Sistema edita contenido educativo](HU-013_admin_edita_contenido_educativo.md) | [RQF-010](<../RFs/RQF-010 — Gestionar Contenido Educativo.md>) |
+| HU-014 | [Admin Sistema elimina contenido educativo](HU-014_admin_elimina_contenido_educativo.md) | [RQF-010](<../RFs/RQF-010 — Gestionar Contenido Educativo.md>) |
+| HU-015 | [Admin Sistema registra un punto de acopio](HU-015_admin_registra_punto_acopio.md) | [RQF-011](<../RFs/RQF-011 — Gestionar Directorio de Acopio.md>) |
+| HU-016 | [Admin Sistema actualiza un punto de acopio](HU-016_admin_actualiza_punto_acopio.md) | [RQF-011](<../RFs/RQF-011 — Gestionar Directorio de Acopio.md>) |
+| HU-017 | [Admin Sistema da de baja un punto de acopio](HU-017_admin_da_de_baja_punto_acopio.md) | [RQF-011](<../RFs/RQF-011 — Gestionar Directorio de Acopio.md>) |
+| HU-018 | [Admin Sistema invita a un nuevo Admin de Conjunto](HU-018_admin_sistema_invita_admin_conjunto.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
+| HU-019 | [Persona invitada acepta y crea su cuenta de Admin de Conjunto](HU-019_persona_acepta_invitacion_admin_conjunto.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
+| HU-020 | [Admin de Conjunto invita a un reciclador](HU-020_admin_conjunto_invita_reciclador.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
+| HU-021 | [Reciclador acepta o rechaza la invitación](HU-021_reciclador_responde_invitacion.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
+| HU-022 | [Admin Conjunto solicita desvinculación](HU-022_admin_conjunto_solicita_desvinculacion.md) | [RQF-016](../RFs/RQF-016_desvinculacion_reasignacion_conjuntos.md) |
+| HU-023 | [Admin Sistema gestiona solicitudes de desvinculación](HU-023_admin_sistema_gestiona_solicitudes_desvinculacion.md) | [RQF-016](../RFs/RQF-016_desvinculacion_reasignacion_conjuntos.md) |
+| HU-024 | [Admin Sistema asigna un conjunto adicional](HU-024_admin_sistema_asigna_conjunto_adicional.md) | [RQF-016](../RFs/RQF-016_desvinculacion_reasignacion_conjuntos.md) |
+| HU-025 | [Sistema recomienda contenido según la auditoría](HU-025_sistema_recomienda_contenido_por_auditoria.md) | [RQF-013](../RFs/RQF-013_recomendacion_contenido_educativo.md) |
+| HU-026 | [Residente ve el contenido recomendado](HU-026_residente_ve_contenido_recomendado.md) | [RQF-013](../RFs/RQF-013_recomendacion_contenido_educativo.md) |
+| HU-027 | [Admin Conjunto crea un comunicado](HU-027_admin_conjunto_crea_comunicado.md) | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)     |
+| HU-028 | [Residente/Reciclador ve el feed de comunicados](HU-028_ver_feed_comunicados.md) | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)   |
+| HU-029 | [Admin Conjunto edita un comunicado](HU-029_admin_conjunto_edita_comunicado.md) | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)    |
+| HU-030 | [Admin Conjunto elimina un comunicado](HU-030_admin_conjunto_elimina_comunicado.md) | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md) |
+| HU-031 | [Notificación de comunicado nuevo](HU-031_notificacion_comunicado_nuevo.md) | [RQF-014](../RFs/RQF-014_gestionar_comunicados_conjunto.md)    |
+| HU-032 | [Admin Sistema publica una novedad general](HU-032_admin_sistema_publica_novedad.md) | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)   |
+| HU-033 | [Usuario ve las novedades según su rol](HU-033_usuario_ve_novedades.md) | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)      |
+| HU-034 | [Admin Sistema edita una novedad general](HU-034_admin_sistema_edita_novedad.md) | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)  |
+| HU-035 | [Admin Sistema archiva una novedad](HU-035_admin_sistema_archiva_novedad.md) | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)     |
