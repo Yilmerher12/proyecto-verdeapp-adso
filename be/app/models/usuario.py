@@ -14,6 +14,13 @@ class Usuario(Base):
     # Mantener este campo por control de estado en la aplicación
     is_active = Column(Boolean, default=True)
 
+    # ¿Qué? Idioma preferido de la interfaz para este usuario ("es" o "en").
+    # ¿Para qué? Que la preferencia de idioma siga a la persona entre dispositivos,
+    #           no solo al navegador donde la eligió (eso lo cubre localStorage).
+    # ¿Impacto? Sin esta columna, el idioma se perdería al iniciar sesión desde
+    #           un dispositivo distinto al que lo configuró.
+    locale = Column(String(10), nullable=False, default="es", server_default="es")
+
     # Puentes del Usuario
     rol = relationship("Role", back_populates="usuarios")
     residente = relationship("Residente", back_populates="usuario", uselist=False)

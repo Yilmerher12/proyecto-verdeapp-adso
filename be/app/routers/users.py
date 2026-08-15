@@ -38,6 +38,7 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
         "id": current_user.id_usuario,
         "email": current_user.correo_electronico,
         "role_id": current_user.id_rol,
+        "locale": current_user.locale,
         "first_name": "Administrador",
         "last_name": "del Sistema",
         "numero_telefonico": "No registrado",
@@ -170,5 +171,5 @@ def update_locale(
         is_active=updated_user.is_active,
         first_name="Usuario",
         last_name="VerdeApp",
-        locale=locale_data.locale
+        locale=updated_user.locale
     )

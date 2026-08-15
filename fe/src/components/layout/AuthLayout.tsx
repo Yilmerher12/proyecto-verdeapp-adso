@@ -9,7 +9,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-/*import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";*/
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -25,7 +25,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-950">
       <div className="flex justify-end gap-2 p-4">
-        {/* <LanguageSwitcher /> */}
+        <LanguageSwitcher />
         <ThemeToggle />
       </div>
 

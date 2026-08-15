@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-/*import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";*/
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { Modal } from "@/components/ui/Modal";
 import { RoleId } from "@/types/auth";
 import { API_BASE_URL } from "@/api/axios";
@@ -297,7 +297,7 @@ export function AppShell({ children }: AppShellProps) {
               </span>
             )}
           </button>
-          {/* <LanguageSwitcher /> */}
+          <LanguageSwitcher />
           <ThemeToggle />
         </header>
 

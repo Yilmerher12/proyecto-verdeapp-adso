@@ -378,7 +378,13 @@ def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
 
 def update_user_locale(db: Session, user: Usuario, locale: str) -> Usuario:
     """
-    Función mantenida exclusivamente para evitar el ImportError en routers/users.py.
-    Como desactivamos el componente de idiomas, solo retorna el usuario de forma segura.
+    ¿Qué? Guarda el idioma preferido del usuario en su cuenta.
+    ¿Para qué? Que la preferencia lo siga entre dispositivos, no solo en el
+              navegador donde la eligió (RQF-017).
+    ¿Impacto? El validador de UpdateLocaleRequest ya garantiza que locale sea
+              "es" o "en" antes de llegar aquí.
     """
+    user.locale = locale
+    db.commit()
+    db.refresh(user)
     return user
