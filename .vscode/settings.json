@@ -1,9 +1,12 @@
 {
   // ¿Qué? Configuración de VS Code para el workspace del proyecto.
-  // ¿Para qué? Activar automáticamente el venv en cada terminal nueva y configurar
-  //            herramientas de desarrollo (linter, formatter, intérprete Python).
-  // ¿Impacto? Sin esto, habría que activar el venv manualmente con `source .venv/bin/activate`
-  //           en cada terminal nueva, lo cual es tedioso y propenso a olvidos.
+  // ¿Para qué? Que el editor sepa qué intérprete de Python usar (el de be/.venv/,
+  //            el que crea "uv sync") y configurar herramientas de desarrollo
+  //            (linter, formatter).
+  // ¿Impacto? La activación automática del entorno en cada terminal nueva está
+  //           apagada a propósito (activateEnvironment: false) — con uv ya no
+  //           hace falta "activar" nada a mano, los comandos del proyecto se
+  //           corren con "uv run <comando>" y uv usa el entorno correcto solo.
 
   // ────────────────────────────
   // 🐍 Python — Intérprete y entorno virtual
