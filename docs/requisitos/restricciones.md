@@ -33,7 +33,7 @@ Este documento fija seis categorías de restricciones para VerdeApp: tecnología
 | Alembic      | 1.18.4 (migraciones versionadas — nunca `Base.metadata.create_all()`)|
 | Pydantic     | 2.12.5             |
 
-No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `requirements.txt` — toda dependencia va con `==`, según la regla ya documentada ahí mismo.
+No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `pyproject.toml` — toda dependencia va con `==`, reforzado además por `uv.lock`, que fija también las dependencias transitivas.
 
 ### Frontend
 
