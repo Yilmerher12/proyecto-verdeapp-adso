@@ -33,7 +33,7 @@ El proyecto utiliza una estructura de arquitectura limpia y desacoplada, facilit
 | :----------------- | :---------------------- | :-------------------- | :-------------------------------------------------------------------------------- |
 | Backend Core       | Python & FastAPI        | 3.12-slim / 0.110+    | Ejecución asíncrona de alto rendimiento para endpoints corporativos.              |
 | Persistencia / ORM | PostgreSQL & SQLAlchemy | 17-alpine / 2.0+      | Motor relacional robusto con consultas tipadas y transacciones atómicas.          |
-| Control de BD      | init_db.sql + create_all | —                    | El esquema se crea con `init_db.sql` al levantar Docker y con `create_all` en cada arranque del backend para tablas nuevas. |
+| Control de BD      | Alembic                  | —                    | El esquema (tablas y cambios futuros) se crea y versiona con migraciones de Alembic al arrancar el backend; los datos de prueba se siembran aparte con `be/app/seed.py`. |
 | Seguridad          | JWT & bcrypt            | 0.2.0 / 4.1+          | Cifrado de contraseñas en Hash y tokens de sesión con claims de roles inyectados. |
 | Frontend Core      | React & TypeScript      | 18.3 / 5.4+           | Interfaz reactiva basada en componentes modulares y tipado seguro.                |
 | Estilos UI         | TailwindCSS             | 4.0-beta+             | Paradigma Utility-First para diseño adaptivo y consistente con Figma.             |
@@ -281,7 +281,6 @@ verde-app/
 │   └── vite.config.ts       # Configuración del empaquetador Vite
 ├── .gitignore               # Reglas de exclusión de Git (Ignora credenciales y cachés)
 ├── docker-compose.yml       # Archivo maestro de orquestación de contenedores Docker
-├── init_db.sql              # Script SQL de arranque para la creación de PostgreSQL
 ├── LICENSE                  # Licencia del proyecto (CC BY-NC-SA 4.0)
 └── README.md                # Documento principal de presentación y guía (Este archivo)
 ```
