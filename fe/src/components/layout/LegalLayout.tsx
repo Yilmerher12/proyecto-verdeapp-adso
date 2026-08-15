@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Leaf } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-/*import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";*/
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
 interface LegalLayoutProps {
   children: ReactNode;
@@ -85,7 +85,7 @@ export function LegalLayout({
           </Link>
 
           <div className="flex items-center gap-2">
-            {/* <LanguageSwitcher /> */}
+            <LanguageSwitcher />
             <ThemeToggle />
           </div>
         </nav>
