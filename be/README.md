@@ -18,8 +18,8 @@
 | --- | ------------------------------------------------------------------------------------------- | ---------------------------- |
 | 1   | [Prerrequisitos](#1-prerrequisitos)                                                         | Herramientas necesarias      |
 | 2   | [Estructura del backend](#2-estructura-del-backend)                                         | Cómo se organiza el código   |
-| 3   | [Entorno virtual Python](#3-entorno-virtual-python-venv)                                    | Aislamiento de dependencias  |
-| 4   | [Dependencias (`requirements.txt`)](#4-dependencias-requirementstxt)                        | Cada librería y su rol       |
+| 3   | [Entorno virtual con uv](#3-entorno-virtual-con-uv)                                          | Aislamiento de dependencias  |
+| 4   | [Dependencias (`pyproject.toml`)](#4-dependencias-pyprojecttoml)                             | Cada librería y su rol       |
 | 5   | [Variables de entorno](#5-variables-de-entorno)                                             | Configuración segura         |
 | 6   | [Configuración (`config.py`)](#6-configuración-configpy)                                    | Pydantic Settings            |
 | 7   | [Base de datos (`database.py`)](#7-base-de-datos-databasepy)                                | SQLAlchemy engine y sesión   |
@@ -43,17 +43,20 @@
 El backend de VerdeApp requiere las siguientes herramientas instaladas:
 
 ```bash
-# Python 3.12 o superior
-python3 --version
-# Esperado: Python 3.12.x
+# uv — instalador y gestor de dependencias de Python (reemplaza a pip + venv)
+uv --version
+# Si no lo tienes: https://docs.astral.sh/uv/getting-started/installation/
+# uv puede descargar por su cuenta la versión exacta de Python que pide el
+# proyecto (3.12) — no hace falta instalar Python por separado a mano.
 
 # Docker y Docker Compose (para la base de datos)
 docker --version
 docker compose version
 ```
 
-> 🖥️ **En Windows** — Se recomienda usar **PowerShell** para los comandos de este proyecto.
-> Para el entorno virtual, el comando de activación es `.\.venv\Scripts\Activate.ps1`.
+> 🖥️ **En Windows** — Se recomienda usar **PowerShell** o **Git Bash** para los comandos
+> de este proyecto. Con `uv` no hace falta activar manualmente ningún entorno virtual —
+> los comandos `uv run ...` lo usan automáticamente por debajo.
 
 También se necesita tener la base de datos PostgreSQL corriendo. Desde la **raíz del repositorio**:
 
@@ -78,7 +81,8 @@ docker compose ps
 be/
 ├── .env                    # Variables de entorno — NO versionado en git
 ├── .env.example            # Plantilla de variables — SÍ versionado en git
-├── requirements.txt        # Dependencias Python del proyecto
+├── pyproject.toml          # Dependencias del proyecto y metadatos (lo lee uv)
+├── uv.lock                 # Versiones EXACTAS resueltas de cada dependencia — SÍ versionado
 ├── alembic.ini             # Configuración de Alembic (migraciones)
 ├── alembic/
 │   ├── env.py              # Conecta Alembic con la BD y los modelos
@@ -123,92 +127,93 @@ be/
 
 ---
 
-## 3. Entorno virtual Python (`venv`)
+## 3. Entorno virtual con `uv`
 
 > **Convención del proyecto:** No se instalan paquetes en el Python del sistema.
-> Siempre se usa un entorno virtual aislado por proyecto.
+> `uv` crea y administra un entorno virtual aislado por proyecto automáticamente —
+> ya no hace falta crearlo ni activarlo a mano como con `venv` + `pip`.
 
 ```bash
 # Entrar a la carpeta del backend
 cd be
 
-# Crear el entorno virtual (se crea la carpeta .venv/ dentro de be/)
-python3 -m venv .venv
+# Instala Python 3.12 (si hace falta) y todas las dependencias exactas de uv.lock,
+# creando .venv/ automáticamente dentro de be/
+uv sync
 
-# Activar el entorno virtual
-source .venv/bin/activate
-# ← Este comando funciona en Linux, macOS y Windows con Git Bash.
-#   Si usas Windows, abre Git Bash (no CMD ni PowerShell) y ejecuta el mismo comando.
-# Después de activar, el prompt cambia a algo como: (.venv) $
+# Cualquier comando del proyecto se corre con "uv run" adelante — uv se encarga
+# de usar el entorno virtual correcto, sin que tengas que activarlo tú mismo:
+uv run python --version
+# Debe mostrar: Python 3.12.x
 
-# Verificar que Python apunta al del entorno (no al del sistema)
-which python3
-# Debe mostrar: .../be/.venv/bin/python3
-
-# Instalar todas las dependencias
-pip install -r requirements.txt
+# Ejemplo: correr un script cualquiera dentro del entorno del proyecto
+uv run python -c "import fastapi; print(fastapi.__version__)"
 ```
 
-> **¿Por qué `venv`?**
-> Imagina que tienes dos proyectos: uno usa `fastapi==0.100` y otro necesita `fastapi==0.115`.
-> Sin entornos virtuales, instalar uno rompe el otro. Con `venv`, cada proyecto tiene su propio
-> "universo" de paquetes totalmente aislado del sistema y de otros proyectos.
+> **¿Por qué `uv` en vez de `venv` + `pip`?**
+> `uv` resuelve e instala dependencias mucho más rápido, y genera `uv.lock`: un archivo
+> que fija la versión EXACTA de cada dependencia, incluidas las transitivas (las que tus
+> dependencias necesitan, no solo las que tú pediste). Con `pip install -r requirements.txt`,
+> dos personas podían terminar con versiones ligeramente distintas de una dependencia
+> indirecta sin darse cuenta; con `uv sync`, todo el equipo instala exactamente lo mismo.
 
-**Para desactivar el entorno** (cuando terminas de trabajar):
-
-```bash
-deactivate
-```
-
-**La próxima vez que abras una terminal**, vuelves a activarlo:
-
-```bash
-cd be && source .venv/bin/activate
-```
+**Ya no hace falta "activar" ni "desactivar" nada manualmente** — cada comando que necesite
+el entorno del proyecto se corre con `uv run <comando>` delante, y `uv` se encarga del resto.
 
 ---
 
-## 4. Dependencias (`requirements.txt`)
+## 4. Dependencias (`pyproject.toml`)
 
+Las dependencias ya no viven en un archivo de texto plano (`requirements.txt`) sino en
+`pyproject.toml`, agrupadas en dependencias normales (las que corren en producción) y
+dependencias de desarrollo (solo para testing y linting, nunca se instalan en la imagen
+de producción — ver el `Dockerfile`, que usa `uv sync --no-dev`).
+
+```toml
+# pyproject.toml (resumen)
+[project]
+dependencies = [
+    "fastapi==0.135.1",              # El framework web — maneja rutas, requests, responses
+    "uvicorn[standard]==0.42.0",     # Servidor ASGI que ejecuta FastAPI
+    "python-multipart==0.0.22",      # Necesario para leer form data (como el login)
+    "sqlalchemy==2.0.48",            # ORM — permite manejar la BD con clases Python
+    "alembic==1.18.4",               # Migraciones versionadas de la BD
+    "psycopg2-binary==2.9.11",       # Driver que conecta Python con PostgreSQL
+    "pydantic==2.12.5",              # Validación de datos con tipos Python
+    "pydantic-settings==2.13.1",     # Leer y validar variables de entorno
+    "email-validator==2.3.0",        # Validar formato de emails (lo usa Pydantic)
+    "python-jose[cryptography]==3.5.0",  # Crear y verificar tokens JWT
+    "passlib[bcrypt]==1.7.4",        # Hashear contraseñas con bcrypt
+    "bcrypt==4.0.1",                 # Motor de bcrypt (versión fijada por compatibilidad)
+    "resend==2.25.0",                # SDK del servicio de envío de emails Resend
+    "slowapi==0.1.9",                # Rate limiting — limita peticiones por IP (OWASP A04)
+    # + pines de seguridad de dependencias transitivas con CVEs conocidos
+    # (cryptography, ecdsa, pygments, requests) — ver pyproject.toml para el detalle.
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.0.2",           # Framework de testing
+    "pytest-asyncio==1.3.0",   # Soporte para funciones async en tests
+    "httpx==0.28.1",           # Cliente HTTP para llamar a la API en los tests
+    "pytest-cov==7.0.0",       # Medir cobertura de código
+    "ruff==0.15.7",            # Linter y formateador ultrarrápido
+]
 ```
-# Framework y servidor
-fastapi>=0.115.0        # El framework web — maneja rutas, requests, responses
-uvicorn[standard]>=0.32.0  # Servidor ASGI que ejecuta FastAPI
-python-multipart>=0.0.18   # Necesario para leer form data (como el login)
 
-# ORM y base de datos
-sqlalchemy>=2.0.0       # ORM — permite manejar la BD con clases Python
-alembic>=1.14.0         # Migraciones versionadas de la BD
-psycopg2-binary>=2.9.0  # Driver que conecta Python con PostgreSQL
+> **¿Por qué todas las versiones fijas con `==`?**
+> Es la misma regla que ya seguíamos en `requirements.txt`: nunca `>=` ni sin versión.
+> `uv.lock` refuerza esto un nivel más abajo, fijando también las dependencias transitivas
+> que `pyproject.toml` ni siquiera menciona directamente.
 
-# Validación y configuración
-pydantic>=2.0.0         # Validación de datos con tipos Python
-pydantic-settings>=2.0.0  # Leer y validar variables de entorno
-email-validator>=2.0.0  # Validar formato de emails (lo usa Pydantic)
+**Para agregar una dependencia nueva:**
 
-# Seguridad
-python-jose[cryptography]>=3.3.0  # Crear y verificar tokens JWT
-passlib[bcrypt]>=1.7.0            # Hashear contraseñas con bcrypt
-bcrypt>=4.0.0,<4.1.0              # Motor de bcrypt (versión fijada por compatibilidad)
-
-# Email
-resend>=2.25.0          # SDK del servicio de envío de emails Resend
-
-# Testing
-pytest>=8.0.0           # Framework de testing
-pytest-asyncio>=0.24.0  # Soporte para funciones async en tests
-httpx>=0.27.0           # Cliente HTTP para llamar a la API en los tests
-pytest-cov>=6.0.0       # Medir cobertura de código
-
-# Linting
-ruff>=0.8.0             # Linter y formateador ultrarrápido (reemplaza black + flake8)
-slowapi>=0.1.9          # Rate limiting — limita peticiones por IP (seguridad OWASP A04)
+```bash
+uv add nombre-del-paquete==X.Y.Z          # dependencia normal
+uv add --dev nombre-del-paquete==X.Y.Z    # solo para desarrollo/testing
 ```
 
-> **¿Por qué separar testing y linting en `requirements.txt`?**
-> En un proyecto de producción, se separarian en `requirements-dev.txt`. Aquí los mantenemos
-> juntos por simplicidad pedagógica, pero la idea es la misma: las dependencias de desarrollo
-> no deben instalarse en los servidores de producción.
+Esto actualiza `pyproject.toml` y `uv.lock` automáticamente — nunca se editan a mano.
 
 ---
 
@@ -456,7 +461,7 @@ cambio es un archivo Python con fecha y descripción.
 
 ```bash
 # Este comando ya fue ejecutado al crear el proyecto
-alembic init alembic
+uv run alembic init alembic
 ```
 
 ### 9.2 El archivo `alembic/env.py`
@@ -485,12 +490,11 @@ target_metadata = Base.metadata
 ### 9.3 Crear una migración
 
 ```bash
-# Asegúrate de estar en be/ con el .venv activado
-source .venv/bin/activate
+# Desde be/ — no hace falta activar nada, "uv run" usa el entorno del proyecto solo
 
 # Auto-generar una migración basada en los modelos actuales
 # Alembic compara los modelos ORM con el estado real de la BD y genera el diff
-alembic revision --autogenerate -m "create users and password reset tokens"
+uv run alembic revision --autogenerate -m "create users and password reset tokens"
 # Se crea: alembic/versions/xxxx_create_users_and_password_reset_tokens.py
 ```
 
@@ -498,13 +502,13 @@ alembic revision --autogenerate -m "create users and password reset tokens"
 
 ```bash
 # Aplicar todas las migraciones pendientes (actualiza la BD al estado más reciente)
-alembic upgrade head
+uv run alembic upgrade head
 
 # Ver el historial de migraciones aplicadas
-alembic history --verbose
+uv run alembic history --verbose
 
 # Revertir la última migración (útil para pruebas)
-alembic downgrade -1
+uv run alembic downgrade -1
 ```
 
 > **Regla fundamental:** NUNCA modificar las tablas directamente con SQL en producción.
@@ -1176,20 +1180,19 @@ def reset_rate_limiter():
 ### 17.3 Ejecutar los tests
 
 ```bash
-# Desde be/ con el .venv activado
-cd be && source .venv/bin/activate
+cd be
 
 # Todos los tests con salida detallada
-pytest -v
+uv run pytest -v
 
 # Con reporte de cobertura
-pytest --cov=app --cov-report=term-missing
+uv run pytest --cov=app --cov-report=term-missing
 
 # Un test específico
-pytest app/tests/test_auth.py::TestLogin::test_login_success -v
+uv run pytest app/tests/test_auth.py::TestLogin::test_login_success -v
 
 # Un archivo específico
-pytest app/tests/test_auth.py -v
+uv run pytest app/tests/test_auth.py -v
 ```
 
 ### 17.4 Cobertura del proyecto
@@ -1224,11 +1227,10 @@ pytest app/tests/test_auth.py -v
 ### 18.1 Modo desarrollo (con auto-reload)
 
 ```bash
-# Desde be/ con el .venv activado
-cd be && source .venv/bin/activate
+cd be
 
 # Arrancar el servidor con recarga automática al guardar cambios
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Verificar que funciona
 curl http://localhost:8000/api/v1/health
@@ -1253,13 +1255,13 @@ ver los schemas de request/response y obtener el token JWT para los endpoints pr
 
 ```bash
 # Verificar errores de estilo y problemas de código
-ruff check app/
+uv run ruff check app/
 
 # Formatear el código automáticamente
-ruff format app/
+uv run ruff format app/
 
 # Verificar y formatear de una vez
-ruff check --fix app/ && ruff format app/
+uv run ruff check --fix app/ && uv run ruff format app/
 ```
 
 ### 18.4 Flujo completo de verificación
@@ -1268,20 +1270,20 @@ ruff check --fix app/ && ruff format app/
 # 1. Base de datos corriendo
 docker compose up -d
 
-# 2. Activar entorno virtual
-cd be && source .venv/bin/activate
+# 2. Entrar a la carpeta del backend (uv usa el entorno del proyecto automáticamente)
+cd be
 
 # 3. Aplicar migraciones
-alembic upgrade head
+uv run alembic upgrade head
 
 # 4. Linting (sin errores antes de testear)
-ruff check app/
+uv run ruff check app/
 
 # 5. Tests completos con cobertura
-pytest --cov=app --cov-report=term-missing -v
+uv run pytest --cov=app --cov-report=term-missing -v
 
 # 6. Arrancar el servidor
-uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload
 ```
 
 ---
@@ -1362,9 +1364,9 @@ SMTP_PASSWORD=
 ./mailpit
 
 # Terminal 2 — Backend
-cd be && source .venv/bin/activate
-alembic upgrade head
-uvicorn app.main:app --reload
+cd be
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload
 
 # Terminal 3 — Frontend
 cd fe && pnpm dev

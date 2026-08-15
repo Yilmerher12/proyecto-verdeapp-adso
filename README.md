@@ -116,7 +116,7 @@ docker compose down
 
 Con este método, la base de datos corre en Docker pero el backend y el frontend corren directamente en tu máquina. Sirve para ver los cambios en tiempo real mientras programamos.
 
-**Requisitos:** Docker Desktop, Python 3.12 y Node.js 20 instalados.
+**Requisitos:** Docker Desktop, [uv](https://docs.astral.sh/uv/getting-started/installation/) (instala Python 3.12 automáticamente si hace falta) y Node.js 20 instalados.
 
 #### Paso 1 — Encender solo la base de datos y el correo
 
@@ -143,21 +143,20 @@ SMTP_HOST=localhost
 ```powershell
 cd be
 
-# Solo la primera vez: crear entorno virtual e instalar dependencias
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+# Solo la primera vez: instalar dependencias exactas del uv.lock (uv crea el
+# entorno virtual solo, no hace falta crearlo ni activarlo a mano)
+uv sync
+
+# Aplicar las migraciones de Alembic
+uv run alembic upgrade head
 
 # Encender el servidor
-uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
-> El esquema de la base de datos se crea automáticamente al arrancar el backend (`Base.metadata.create_all`). No se necesita ejecutar ningún comando de migración.
-
-> En ejecuciones siguientes solo necesitamos activar el entorno y correr uvicorn:
+> En ejecuciones siguientes solo necesitamos correr uvicorn (uv usa el entorno correcto solo):
 > ```powershell
-> .\.venv\Scripts\Activate.ps1
-> uvicorn app.main:app --reload --port 8000
+> uv run uvicorn app.main:app --reload --port 8000
 > ```
 
 #### Paso 4 — Encender el frontend (Terminal 2 — PowerShell)
@@ -260,9 +259,10 @@ verde-app/
 │   │   ├── dependencies.py  # Inyección de dependencias (Autenticación, Sesión DB)
 │   │   └── main.py          # Punto de entrada y configuración central de FastAPI
 │   ├── .env.example         # Plantilla de variables de entorno (Sin datos sensibles)
-│   ├── alembic.ini          # Configuración heredada de Alembic (no se usa activamente; el esquema lo gestiona init_db.sql + create_all)
+│   ├── alembic.ini          # Configuración de Alembic — el esquema se versiona con migraciones reales
 │   ├── Dockerfile           # Instrucciones de empaquetado para la imagen Docker
-│   └── requirements.txt     # Manifiesto estricto de paquetes y dependencias
+│   ├── pyproject.toml       # Manifiesto de dependencias (lo lee uv)
+│   └── uv.lock              # Versiones EXACTAS resueltas de cada dependencia
 ├── fe/                      # Frontend (React + TypeScript + Vite)
 │   ├── src/                 # Código fuente de la interfaz
 │   │   ├── __tests__/       # Entorno de pruebas del Frontend
