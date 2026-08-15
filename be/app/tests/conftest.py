@@ -19,7 +19,6 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.config import settings
 from app.database import Base
 from app.dependencies import get_db
 from app.main import app
@@ -69,13 +68,15 @@ def setup_database() -> Generator[None, None, None]:
     ¿Qué? Además de crear la estructura de tablas, este fixture inserta
           las 4 filas de la tabla "roles" que el esquema real exige
           como referencia obligatoria (FK) en la tabla "usuarios".
-    ¿Para qué? La BD de desarrollo siembra estos roles vía init_db.sql
-              al levantar Docker — pero la BD de TEST se crea limpia
-              en cada sesión de pytest, solo con la estructura. Sin
-              esta siembra, cualquier fixture que cree un Usuario con
-              id_rol=2 (o cualquier rol) falla con ForeignKeyViolation.
-    ¿Impacto? Se siembran los mismos 4 roles que existen en init_db.sql,
-              para que el comportamiento de test coincida con el real.
+    ¿Para qué? La BD de desarrollo siembra estos roles vía app/seed.py
+              (be/app/seed_data.sql) al levantar Docker — pero la BD de
+              TEST se crea limpia en cada sesión de pytest, solo con la
+              estructura. Sin esta siembra, cualquier fixture que cree
+              un Usuario con id_rol=2 (o cualquier rol) falla con
+              ForeignKeyViolation.
+    ¿Impacto? Se siembran los mismos 4 roles que existen en
+              be/app/seed_data.sql, para que el comportamiento de test
+              coincida con el real.
     """
     Base.metadata.drop_all(bind=test_engine)
     Base.metadata.create_all(bind=test_engine)
