@@ -1,5 +1,5 @@
 # ========================
-# NN Auth System — .gitignore
+# VerdeApp — .gitignore
 # ========================
 # ¿Qué? Archivo que define qué archivos y carpetas NO deben ser rastreados por Git.
 # ¿Para qué? Evitar subir archivos sensibles, temporales o generados al repositorio.
@@ -71,8 +71,17 @@ fe/coverage/
 # ────────────────────────────
 # 🖥️ IDEs y Editores
 # ────────────────────────────
-# .vscode/settings.json → SÍ se versiona (config compartida del proyecto)
+# ¿Qué? .vscode/settings.json y .claude/ (skills, memoria, etc.) SÍ se versionan
+#        en general — son configuración compartida del equipo (formateo, linter,
+#        skills del proyecto). Lo que NO se versiona es lo que depende de la
+#        ruta o la máquina de cada persona.
+# ¿Para qué? launch.json de ambos guarda rutas absolutas (ej: C:\Users\tu-usuario\...)
+#           que solo funcionan en el computador de quien lo creó.
+# ¿Impacto? Sin esto, cada quien pisaría el launch.json de otra persona con el
+#           suyo propio, o el proyecto intentaría abrir una ruta que no existe
+#           en su máquina.
 .vscode/launch.json
+.claude/launch.json
 .idea/
 *.swp
 *.swo

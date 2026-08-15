@@ -1,9 +1,12 @@
 {
   // ¿Qué? Configuración de VS Code para el workspace del proyecto.
-  // ¿Para qué? Activar automáticamente el venv en cada terminal nueva y configurar
-  //            herramientas de desarrollo (linter, formatter, intérprete Python).
-  // ¿Impacto? Sin esto, habría que activar el venv manualmente con `source .venv/bin/activate`
-  //           en cada terminal nueva, lo cual es tedioso y propenso a olvidos.
+  // ¿Para qué? Que el editor sepa qué intérprete de Python usar (el de be/.venv/,
+  //            el que crea "uv sync") y configurar herramientas de desarrollo
+  //            (linter, formatter).
+  // ¿Impacto? La activación automática del entorno en cada terminal nueva está
+  //           apagada a propósito (activateEnvironment: false) — con uv ya no
+  //           hace falta "activar" nada a mano, los comandos del proyecto se
+  //           corren con "uv run <comando>" y uv usa el entorno correcto solo.
 
   // ────────────────────────────
   // 🐍 Python — Intérprete y entorno virtual
@@ -42,38 +45,5 @@
     "**/.pytest_cache": true,
     "**/.ruff_cache": true,
     "**/node_modules": true
-  },
-  "sqltools.connections": [
-    {
-      "ssh": "Disabled",
-      "previewLimit": 50,
-      "server": "localhost",
-      "port": 5432,
-      "driver": "PostgreSQL",
-      "name": "VerdeApp",
-      "database": "verdeapp_db",
-      "username": "verde_user",
-      "password": "verde_password"
-    }
-  ],
-  "workbench.colorCustomizations": {
-    "activityBar.activeBackground": "#115cd0",
-    "activityBar.background": "#115cd0",
-    "activityBar.foreground": "#e7e7e7",
-    "activityBar.inactiveForeground": "#e7e7e799",
-    "activityBarBadge.background": "#f36ca1",
-    "activityBarBadge.foreground": "#15202b",
-    "commandCenter.border": "#e7e7e799",
-    "sash.hoverBorder": "#115cd0",
-    "statusBar.background": "#0d47a1",
-    "statusBar.foreground": "#e7e7e7",
-    "statusBarItem.hoverBackground": "#115cd0",
-    "statusBarItem.remoteBackground": "#0d47a1",
-    "statusBarItem.remoteForeground": "#e7e7e7",
-    "titleBar.activeBackground": "#0d47a1",
-    "titleBar.activeForeground": "#e7e7e7",
-    "titleBar.inactiveBackground": "#0d47a199",
-    "titleBar.inactiveForeground": "#e7e7e799"
-  },
-  "peacock.color": "#0D47A1"
+  }
 }
