@@ -12,12 +12,20 @@
 // número. Con esto, en cualquier componente comparamos contra RoleId.RESIDENTE en vez
 // del número 2 — se entiende de una con solo leerlo, y coincide siempre con el mismo
 // enum que ya usamos en el backend (be/app/models/rol.py).
-export enum RoleId {
-  ADMIN_SISTEMA = 1,
-  RESIDENTE = 2,
-  RECICLADOR = 3,
-  ADMIN_CONJUNTO = 4,
-}
+//
+// Se usa un objeto "as const" + un tipo derivado, en vez de un "enum" de TypeScript,
+// porque el proyecto tiene activado erasableSyntaxOnly (tsconfig.app.json) — exige que
+// todo lo que no sea puramente un tipo se pueda "borrar" al compilar sin generar código
+// extra, y un enum normal sí genera código JS real. Este patrón se usa exactamente
+// igual que un enum (RoleId.RESIDENTE), tanto como valor como tipo.
+export const RoleId = {
+  ADMIN_SISTEMA: 1,
+  RESIDENTE: 2,
+  RECICLADOR: 3,
+  ADMIN_CONJUNTO: 4,
+} as const;
+
+export type RoleId = (typeof RoleId)[keyof typeof RoleId];
 
 // ════════════════════════════════════════
 // 📥 Tipos de REQUEST
