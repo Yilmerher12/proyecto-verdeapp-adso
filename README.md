@@ -33,7 +33,7 @@ El proyecto utiliza una estructura de arquitectura limpia y desacoplada, facilit
 | :----------------- | :---------------------- | :-------------------- | :-------------------------------------------------------------------------------- |
 | Backend Core       | Python & FastAPI        | 3.12-slim / 0.110+    | Ejecución asíncrona de alto rendimiento para endpoints corporativos.              |
 | Persistencia / ORM | PostgreSQL & SQLAlchemy | 17-alpine / 2.0+      | Motor relacional robusto con consultas tipadas y transacciones atómicas.          |
-| Control de BD      | Alembic Migrations      | 1.13+                 | Control de versiones del esquema de la base de datos sin pérdida de datos.        |
+| Control de BD      | init_db.sql + create_all | —                    | El esquema se crea con `init_db.sql` al levantar Docker y con `create_all` en cada arranque del backend para tablas nuevas. |
 | Seguridad          | JWT & bcrypt            | 0.2.0 / 4.1+          | Cifrado de contraseñas en Hash y tokens de sesión con claims de roles inyectados. |
 | Frontend Core      | React & TypeScript      | 18.3 / 5.4+           | Interfaz reactiva basada en componentes modulares y tipado seguro.                |
 | Estilos UI         | TailwindCSS             | 4.0-beta+             | Paradigma Utility-First para diseño adaptivo y consistente con Figma.             |
@@ -116,7 +116,7 @@ docker compose down
 
 Con este método, la base de datos corre en Docker pero el backend y el frontend corren directamente en tu máquina. Sirve para ver los cambios en tiempo real mientras programamos.
 
-**Requisitos:** Docker Desktop, Python 3.12 y Node.js 20 instalados.
+**Requisitos:** Docker Desktop, [uv](https://docs.astral.sh/uv/getting-started/installation/) (instala Python 3.12 automáticamente si hace falta) y Node.js 20 instalados.
 
 #### Paso 1 — Encender solo la base de datos y el correo
 
@@ -143,20 +143,20 @@ SMTP_HOST=localhost
 ```powershell
 cd be
 
-# Solo la primera vez: crear entorno virtual e instalar dependencias
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-alembic upgrade head
+# Solo la primera vez: instalar dependencias exactas del uv.lock (uv crea el
+# entorno virtual solo, no hace falta crearlo ni activarlo a mano)
+uv sync
+
+# Aplicar las migraciones de Alembic
+uv run alembic upgrade head
 
 # Encender el servidor
-uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
-> En ejecuciones siguientes solo necesitamos activar el entorno y correr uvicorn:
+> En ejecuciones siguientes solo necesitamos correr uvicorn (uv usa el entorno correcto solo):
 > ```powershell
-> .\.venv\Scripts\Activate.ps1
-> uvicorn app.main:app --reload --port 8000
+> uv run uvicorn app.main:app --reload --port 8000
 > ```
 
 #### Paso 4 — Encender el frontend (Terminal 2 — PowerShell)
@@ -231,10 +231,10 @@ docker exec -it verde_db psql -U verde_user -d verdeapp_db
 Comandos útiles dentro de la consola de PostgreSQL:
 
 ```sql
-\dt                    -- ver todas las tablas
-SELECT * FROM users;   -- ver usuarios registrados
-SELECT * FROM roles;   -- ver roles disponibles
-\q                     -- salir
+\dt                       -- ver todas las tablas
+SELECT * FROM usuarios;   -- ver usuarios registrados
+SELECT * FROM roles;      -- ver roles disponibles
+\q                        -- salir
 ```
 
 ## 📁 Estructura Detallada del Proyecto
@@ -248,7 +248,6 @@ verde-app/
 ├── assets/                  # Diagramas SVG y recursos gráficos de la arquitectura
 ├── scripts/                 # Utilidades Bash (start.sh, stop.sh) para automatizar contenedores
 ├── be/                      # Backend (Python + FastAPI)
-│   ├── alembic/             # Control de versiones e historial de migraciones de BD
 │   ├── app/                 # Código fuente principal de la API
 │   │   ├── models/          # Entidades e imperativos relacionales de SQLAlchemy
 │   │   ├── routers/         # Controladores de endpoints divididos por recursos
@@ -260,9 +259,10 @@ verde-app/
 │   │   ├── dependencies.py  # Inyección de dependencias (Autenticación, Sesión DB)
 │   │   └── main.py          # Punto de entrada y configuración central de FastAPI
 │   ├── .env.example         # Plantilla de variables de entorno (Sin datos sensibles)
-│   ├── alembic.ini          # Archivo de configuración del gestor de migraciones
+│   ├── alembic.ini          # Configuración de Alembic — el esquema se versiona con migraciones reales
 │   ├── Dockerfile           # Instrucciones de empaquetado para la imagen Docker
-│   └── requirements.txt     # Manifiesto estricto de paquetes y dependencias
+│   ├── pyproject.toml       # Manifiesto de dependencias (lo lee uv)
+│   └── uv.lock              # Versiones EXACTAS resueltas de cada dependencia
 ├── fe/                      # Frontend (React + TypeScript + Vite)
 │   ├── src/                 # Código fuente de la interfaz
 │   │   ├── __tests__/       # Entorno de pruebas del Frontend

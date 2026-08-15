@@ -4,10 +4,12 @@ Descripción: Endpoints exclusivos para el panel de administración.
 Cumple con los Criterios 6 (Vistas SQL) y 7 (Procedimientos Almacenados).
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.dependencies import get_db
+from app.dependencies import get_current_user, get_db
+from app.models.usuario import Usuario
+from app.models.rol import RolId
 
 router = APIRouter(
     prefix="/api/v1/admin",
@@ -15,9 +17,23 @@ router = APIRouter(
 )
 
 
+# Estos dos endpoints muestran datos de todos los residentes/recicladores (correo,
+# teléfono, dirección), así que solo el Administrador del Sistema puede verlos.
+def _verificar_es_admin_sistema(current_user: Usuario) -> None:
+    if current_user.id_rol != RolId.ADMIN_SISTEMA:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo un Administrador del Sistema puede acceder a este recurso.",
+        )
+
+
 @router.get("/vista-residentes", summary="Criterio 6: Listado mediante Vista SQL")
-def obtener_vista_residentes(db: Session = Depends(get_db)):
+def obtener_vista_residentes(
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Crea (si no existe) y consulta una Vista SQL de Residentes sin mostrar IDs."""
+    _verificar_es_admin_sistema(current_user)
 
     # 1. Crear o reemplazar la Vista SQL
     # ¿Qué? Antes leía r.apellido_paterno (columna eliminada al fusionar
@@ -48,8 +64,12 @@ def obtener_vista_residentes(db: Session = Depends(get_db)):
 
 
 @router.get("/sp-recicladores", summary="Criterio 7: Listado mediante Procedimiento Almacenado")
-def obtener_sp_recicladores(db: Session = Depends(get_db)):
+def obtener_sp_recicladores(
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Crea y ejecuta un Procedimiento Almacenado (Función) de Recicladores sin IDs."""
+    _verificar_es_admin_sistema(current_user)
 
     # 1. Crear el Procedimiento Almacenado / Función
     # ¿Qué? Igual que la vista: rec.apellido_paterno -> rec.apellidos.

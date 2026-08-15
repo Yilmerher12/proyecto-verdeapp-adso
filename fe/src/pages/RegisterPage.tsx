@@ -2,13 +2,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  PasswordStrengthIndicator,
+  getPasswordRequirementError,
+  PASSWORD_ERROR_MESSAGES_ES,
+} from "@/components/ui/PasswordStrengthIndicator";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { Home, Shield, MailCheck, MapPin } from "lucide-react";
+import { Home, Recycle, MailCheck, MapPin } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
 import { PoliticaPrivacidadPage } from "@/pages/PoliticaPrivacidadPage";
 
@@ -52,14 +58,14 @@ export function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    axios.get("http://localhost:8000/api/v1/geography/localidades")
+    axios.get(`${API_BASE_URL}/api/v1/geography/localidades`)
       .then(res => setLocalidades(res.data))
       .catch(err => console.error("Error cargando localidades", err));
   }, []);
 
   useEffect(() => {
     if (formData.localidad_id) {
-      axios.get(`http://localhost:8000/api/v1/geography/conjuntos/${formData.localidad_id}`)
+      axios.get(`${API_BASE_URL}/api/v1/geography/conjuntos/${formData.localidad_id}`)
         .then(res => setConjuntos(res.data))
         .catch(err => console.error("Error cargando conjuntos", err));
     } else {
@@ -123,8 +129,9 @@ export function RegisterPage() {
     } else if (formData.email !== formData.confirmEmail) {
       errors["confirmEmail"] = "Los correos electrónicos no coinciden.";
     }
-    if (formData.password.length < 8) {
-      errors["password"] = "La contraseña debe tener al menos 8 caracteres.";
+    const passwordError = getPasswordRequirementError(formData.password);
+    if (passwordError) {
+      errors["password"] = PASSWORD_ERROR_MESSAGES_ES[passwordError];
     }
     if (formData.password !== formData.confirmPassword) {
       errors["confirmPassword"] = "Las contraseñas no coinciden.";
@@ -143,7 +150,6 @@ export function RegisterPage() {
         rol: formData.rol,
         correo_electronico: formData.email,
         email: formData.email,
-        username: formData.email,
         password: formData.password,
         nombre: formData.nombre,
         apellidos: formData.apellidos,
@@ -153,7 +159,7 @@ export function RegisterPage() {
         apto: formData.rol === "residente" ? formData.apto.trim().toUpperCase() : undefined,
         asociacion: formData.rol === "reciclador" ? formData.asociacion : undefined,
         localidad_id: formData.rol === "reciclador" ? parseInt(formData.localidad_id) : undefined
-      } as any);
+      });
 
       setShowSuccessModal(true);
     } catch (err: any) {
@@ -177,19 +183,39 @@ export function RegisterPage() {
       <>
         <LandingPage />
         <Modal onClose={() => navigate("/")}>
-          <div className="p-8 text-center space-y-4 animate-fade-in">
-            <div className="mx-auto w-20 h-20 bg-green-100 flex items-center justify-center rounded-full mb-4 shadow-sm border border-green-200">
-              <MailCheck className="w-10 h-10 text-green-600" />
+          <div className="p-6 sm:p-8 text-center max-w-sm mx-auto">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 ring-8 ring-green-50 dark:bg-green-900/20 dark:ring-green-900/20">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-800/40">
+                <MailCheck className="h-7 w-7 text-green-600 dark:text-green-400" strokeWidth={2} />
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">¡Verifica tu correo!</h2>
-            <p className="text-gray-600 text-sm">
-              Hemos registrado tus datos con éxito. Para activar tu cuenta e iniciar sesión, revisa tu buzón y haz clic en el enlace que te acabamos de enviar.
+
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+              ¡Revisa tu bandeja!
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 leading-relaxed">
+              Enviamos un enlace de verificación a{" "}
+              <span className="font-semibold text-gray-700 dark:text-gray-300">{formData.email}</span>.
             </p>
-            <div className="pt-6 rounded-xl overflow-hidden transition-all text-white bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-sm mt-4">
-              <Button onClick={() => navigate("/")} fullWidth>
-                Entendido
-              </Button>
+
+            <div className="text-left bg-green-50 dark:bg-green-900/20 rounded-xl p-4 mb-6 space-y-3">
+              {[
+                "Abre tu correo electrónico",
+                "Busca el email de VerdeApp",
+                'Haz clic en "Verificar mi cuenta"',
+              ].map((step, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">
+                    {i + 1}
+                  </span>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{step}</p>
+                </div>
+              ))}
             </div>
+
+            <Button onClick={() => navigate("/")} fullWidth>
+              Entendido
+            </Button>
           </div>
         </Modal>
       </>
@@ -222,24 +248,24 @@ export function RegisterPage() {
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Crea tu cuenta</h2>
-            <p className="text-gray-500 mt-1">Únete a VerdeApp y transforma tu comunidad</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">Únete a VerdeApp y transforma tu comunidad</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div
                 onClick={() => setFormData(p => ({ ...p, rol: "residente" }))}
-                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "residente" ? "border-green-600 bg-green-50/50 shadow-sm" : "border-gray-200 hover:border-green-300"}`}
+                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "residente" ? "border-green-600 bg-green-50/50 dark:bg-green-900/20 shadow-sm" : "border-gray-200 dark:border-gray-700 hover:border-green-300"}`}
               >
                 <Home className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "residente" ? "text-green-600" : "text-gray-400"}`}/>
-                <span className={`font-semibold ${formData.rol === "residente" ? "text-green-800" : "text-gray-500"}`}>Residente</span>
+                <span className={`font-semibold ${formData.rol === "residente" ? "text-green-800 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>Residente</span>
               </div>
               <div
                 onClick={() => setFormData(p => ({ ...p, rol: "reciclador" }))}
-                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "reciclador" ? "border-green-600 bg-green-50/50 shadow-sm" : "border-gray-200 hover:border-green-300"}`}
+                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "reciclador" ? "border-green-600 bg-green-50/50 dark:bg-green-900/20 shadow-sm" : "border-gray-200 dark:border-gray-700 hover:border-green-300"}`}
               >
-                <Shield className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "reciclador" ? "text-green-600" : "text-gray-400"}`}/>
-                <span className={`font-semibold ${formData.rol === "reciclador" ? "text-green-800" : "text-gray-500"}`}>Reciclador</span>
+                <Recycle className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "reciclador" ? "text-green-600" : "text-gray-400"}`}/>
+                <span className={`font-semibold ${formData.rol === "reciclador" ? "text-green-800 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>Reciclador</span>
               </div>
             </div>
 
@@ -271,16 +297,16 @@ export function RegisterPage() {
             </div>
 
             {formData.rol === "residente" && (
-              <div className="space-y-4 p-5 bg-gray-50/50 border border-gray-100 rounded-2xl">
+              <div className="space-y-4 p-5 bg-gray-50/50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700 rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="w-5 h-5 text-green-600" />
-                  <h3 className="font-bold text-gray-800">Ubicación de Residencia *</h3>
+                  <h3 className="font-bold text-gray-800 dark:text-gray-200">Ubicación de Residencia *</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Localidad</label>
-                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none">
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Localidad</label>
+                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none">
                       <option value="">Selecciona...</option>
                       {localidades.map(loc => (
                         <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
@@ -289,8 +315,8 @@ export function RegisterPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Conjunto Residencial</label>
-                    <select name="id_conjunto_residencial" value={formData.id_conjunto_residencial} onChange={handleChange} disabled={!formData.localidad_id} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 disabled:text-gray-400">
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Conjunto Residencial</label>
+                    <select name="id_conjunto_residencial" value={formData.id_conjunto_residencial} onChange={handleChange} disabled={!formData.localidad_id} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400">
                       <option value="">Selecciona...</option>
                       {conjuntos.map(conj => (
                         <option key={conj.id_conjunto_residencial} value={conj.id_conjunto_residencial}>{conj.nombre_conjunto}</option>
@@ -299,10 +325,10 @@ export function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200">
+                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Tipo Unidad</label>
-                    <select name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100">
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Tipo Unidad</label>
+                    <select name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800">
                       <option value="TORRE">Torre</option>
                       <option value="INTERIOR">Interior</option>
                       <option value="BLOQUE">Bloque</option>
@@ -311,29 +337,29 @@ export function RegisterPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Nº / Letra</label>
-                    <input type="text" name="numero_bloque" placeholder="Ej: 3, B" value={formData.numero_bloque} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 uppercase" />
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Nº / Letra</label>
+                    <input type="text" name="numero_bloque" placeholder="Ej: 3, B" value={formData.numero_bloque} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 uppercase" />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Apartamento</label>
-                    <input type="text" name="apto" placeholder="Ej: 402" value={formData.apto} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 uppercase" />
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Apartamento</label>
+                    <input type="text" name="apto" placeholder="Ej: 402" value={formData.apto} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 uppercase" />
                   </div>
                 </div>
               </div>
             )}
 
             {formData.rol === "reciclador" && (
-              <div className="space-y-4 p-5 bg-green-50/30 border border-green-100 rounded-2xl">
+              <div className="space-y-4 p-5 bg-green-50/30 dark:bg-green-900/10 border border-green-100 dark:border-green-900/40 rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
-                  <Shield className="w-5 h-5 text-green-600" />
-                  <h3 className="font-bold text-gray-800">Perfil Operativo *</h3>
+                  <Recycle className="w-5 h-5 text-green-600" />
+                  <h3 className="font-bold text-gray-800 dark:text-gray-200">Perfil Operativo *</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-gray-600">Localidad de Trabajo *</label>
-                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border rounded-xl mt-1 bg-white focus:ring-2 focus:ring-green-500 outline-none">
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Localidad de Trabajo *</label>
+                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none">
                       <option value="">Selecciona tu localidad...</option>
                       {localidades.map(loc => (
                         <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
@@ -387,6 +413,7 @@ export function RegisterPage() {
                   onChange={handleChange}
                   placeholder="Mínimo 8 caracteres"
                 />
+                <PasswordStrengthIndicator password={formData.password} />
                 {fieldErrors.password && <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.password}</p>}
               </div>
 
@@ -415,7 +442,7 @@ export function RegisterPage() {
                 id="terms"
                 checked={acceptedTerms}
                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 accent-green-600 cursor-pointer"
+                className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 accent-green-600 cursor-pointer"
               />
               <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
                 Acepto los{" "}
@@ -439,11 +466,9 @@ export function RegisterPage() {
             </div>
 
             <div className="w-full pt-4">
-              <div className={`rounded-xl overflow-hidden transition-all shadow-sm ${isButtonDisabled ? "opacity-60 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white"}`}>
-                <Button type="submit" fullWidth isLoading={isLoading} disabled={isButtonDisabled}>
-                  {isButtonDisabled ? "Completa los campos y acepta los términos" : "Registrar Cuenta"}
-                </Button>
-              </div>
+              <Button type="submit" fullWidth isLoading={isLoading} disabled={isButtonDisabled}>
+                {isButtonDisabled ? "Completa los campos y acepta los términos" : "Registrar Cuenta"}
+              </Button>
             </div>
           </form>
 

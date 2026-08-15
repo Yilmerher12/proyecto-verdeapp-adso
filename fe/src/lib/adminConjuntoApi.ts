@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 
 // ¿Qué? Cliente HTTP dedicado a los endpoints de /api/v1/admin-conjunto.
 // ¿Para qué? Mantener en un solo lugar la URL base y los métodos del
 //           flujo de invitación, en vez de repetir axios.get/post sueltos
 //           en cada pantalla.
-const API_BASE = "http://localhost:8000/api/v1/admin-conjunto";
+const API_BASE = `${API_BASE_URL}/api/v1/admin-conjunto`;
 
 export interface ConjuntoOption {
     id_conjunto_residencial: number;

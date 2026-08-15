@@ -11,11 +11,16 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-# ¿Qué? Importamos la Base de SQLAlchemy y todos los modelos.
+# ¿Qué? Importamos la Base de SQLAlchemy y el paquete completo de modelos.
 # ¿Para qué? Alembic necesita acceso a Base.metadata para comparar el estado actual
-#            de los modelos con el estado de la BD y detectar diferencias.
+#            de los modelos con el estado de la BD y detectar diferencias. Antes solo
+#            se importaban 3 modelos (herencia de la plantilla genérica), por lo que
+#            Alembic no veía las otras 14 tablas reales de VerdeApp (residentes,
+#            recicladores, conjuntos, notificaciones, etc.).
+# ¿Impacto? Sin "import app.models" (el paquete completo), cualquier migración
+#           autogenerada ignoraría todas las tablas que no estuvieran en esa lista.
 from app.database import Base
-from app.models import Usuario, PasswordResetToken, EmailVerificationToken  # noqa: F401
+import app.models  # noqa: F401 — registra TODOS los modelos antes de leer target_metadata
 from app.config import settings
 
 # ¿Qué? Objeto de configuración de Alembic que lee alembic.ini.

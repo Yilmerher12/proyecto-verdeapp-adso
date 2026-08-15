@@ -4,7 +4,19 @@ from app.routers import auth, users, geography, admin
 from app.routers import admin_conjunto
 from app.routers import conjunto_panel
 from app.routers import reciclador_conjunto
+from app.routers import directorio
+from app.routers import notificaciones
 
+# ¿Qué? El esquema de la base de datos ya NO se crea aquí en tiempo de ejecución.
+# ¿Para qué? Antes esta sección llamaba a Base.metadata.create_all(bind=engine), que
+#           solo puede AGREGAR tablas nuevas — nunca modifica ni elimina columnas de
+#           tablas que ya existen. Ahora el esquema se gestiona con Alembic
+#           (be/alembic/versions/), que sí sabe aplicar cambios incrementales.
+# ¿Impacto? El Dockerfile del backend ya ejecuta "alembic upgrade head" antes de
+#           levantar Uvicorn (ver be/Dockerfile), así que el esquema se actualiza
+#           solo al iniciar el contenedor. En desarrollo local (sin Docker), hay que
+#           correr "alembic upgrade head" manualmente después de cada cambio en los
+#           modelos — ver docs/setup o preguntar antes de generar una migración nueva.
 app = FastAPI(title="VerdeApp API")
 
 # ¿Qué? Lista explícita de orígenes permitidos para hablarle al backend.
@@ -39,6 +51,8 @@ app.include_router(admin.router)
 app.include_router(admin_conjunto.router)
 app.include_router(conjunto_panel.router)
 app.include_router(reciclador_conjunto.router)
+app.include_router(directorio.router)
+app.include_router(notificaciones.router)
 
 
 @app.get("/api/v1/health")

@@ -1,5 +1,5 @@
 # ========================
-# NN Auth System — Dockerfile del Backend
+# VerdeApp — Dockerfile del Backend
 # ========================
 # ¿Qué? Imagen Docker multi-stage para el backend FastAPI.
 # ¿Para qué? Separar la instalación de dependencias (builder) del runtime final,
@@ -9,32 +9,31 @@
 
 # ────────────────────────────
 # Stage 1: builder
-# ¿Qué? Instala todas las dependencias Python en un venv aislado.
-# ¿Para qué? Aprovechar el caché de capas de Docker — si requirements.txt no cambia,
-#            esta capa se reutiliza y el build es mucho más rápido.
+# ¿Qué? Instala todas las dependencias Python con uv, usando pyproject.toml + uv.lock.
+# ¿Para qué? uv resuelve e instala mucho más rápido que pip, y uv.lock congela las
+#            versiones EXACTAS de cada dependencia (directa y transitiva) — algo que
+#            requirements.txt con pines manuales no garantizaba por sí solo.
 # ¿Impacto? Sin este stage, cada rebuild reinstalaría todas las dependencias desde cero.
+#           La imagen oficial de uv ya trae el binario listo, sin que nosotros lo instalemos.
 # ────────────────────────────
-FROM python:3.12-slim AS builder
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 
 WORKDIR /app
 
-# ¿Qué? Crea un entorno virtual en /opt/venv para instalar dependencias.
-# ¿Para qué? Aislar los paquetes del sistema base Python — buena práctica igual
-#            que usar .venv en desarrollo local.
-# ¿Impacto? Permite copiar el venv completo al stage runtime de forma limpia.
-RUN python -m venv /opt/venv
-
-# Activar el venv para los comandos RUN siguientes
-ENV PATH="/opt/venv/bin:$PATH"
-
-# ¿Qué? Copia SOLO el archivo de dependencias antes que el resto del código.
-# ¿Para qué? Optimizar el caché de Docker — si el código cambia pero requirements.txt
-#            no, Docker reutiliza la capa de instalación de paquetes.
+# ¿Qué? Copia SOLO los archivos de dependencias antes que el resto del código.
+# ¿Para qué? Optimizar el caché de Docker — si el código cambia pero pyproject.toml/
+#            uv.lock no, Docker reutiliza la capa de instalación de paquetes.
 # ¿Impacto? Build hasta 10x más rápido en iteraciones del día a día.
-COPY requirements.txt .
+COPY pyproject.toml uv.lock ./
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+# ¿Qué? Instala las dependencias exactas del lockfile, sin las de desarrollo
+#       (pytest, ruff), en un entorno virtual dentro de la imagen.
+# ¿Para qué? --frozen falla si uv.lock no está sincronizado con pyproject.toml, en vez
+#            de resolver versiones nuevas silenciosamente. --no-dev evita instalar
+#            herramientas de testing/lint en la imagen que corre en producción.
+# ¿Impacto? Garantiza que la imagen Docker use EXACTAMENTE lo mismo que cualquier
+#           desarrollador con `uv sync` en su máquina.
+RUN uv sync --frozen --no-dev
 
 
 # ────────────────────────────
@@ -55,12 +54,13 @@ WORKDIR /app
 #           o no aparecer si el contenedor falla antes de vaciar el buffer.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PATH="/opt/venv/bin:$PATH"
+    PATH="/app/.venv/bin:$PATH"
 
-# ¿Qué? Copia el venv con todas las dependencias instaladas desde el stage builder.
+# ¿Qué? Copia el entorno virtual (.venv) que uv creó y llenó en el stage builder.
 # ¿Para qué? Evitar reinstalar paquetes en el stage runtime — el builder ya lo hizo.
-# ¿Impacto? El stage runtime no necesita pip ni compiladores C, lo que reduce la imagen.
-COPY --from=builder /opt/venv /opt/venv
+# ¿Impacto? El stage runtime no necesita el binario de uv ni compiladores C, lo que
+#           reduce el tamaño de la imagen final.
+COPY --from=builder /app/.venv /app/.venv
 
 # ¿Qué? Copia el código fuente completo del backend al contenedor.
 # ¿Para qué? Proveer al servidor uvicorn todos los módulos de la aplicación.

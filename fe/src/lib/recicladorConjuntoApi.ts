@@ -6,8 +6,9 @@
  */
 
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 
-const API_BASE = "http://localhost:8000/api/v1/reciclador-conjunto";
+const API_BASE = `${API_BASE_URL}/api/v1/reciclador-conjunto`;
 
 export interface InvitacionEnviada {
   id: string;

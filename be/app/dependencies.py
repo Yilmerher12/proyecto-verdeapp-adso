@@ -11,7 +11,7 @@ Descripción: Dependencias inyectables de FastAPI — funciones reutilizables qu
 from collections.abc import Generator
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -19,22 +19,21 @@ from app.database import SessionLocal
 from app.models.usuario import Usuario
 from app.utils.security import decode_token
 
-# ¿Qué? Esquema OAuth2 que indica a FastAPI dónde obtener el token del request.
-# ¿Para qué? FastAPI extrae automáticamente el token del header "Authorization: Bearer <token>"
-#            y lo pasa como parámetro a las dependencias que lo necesiten.
-# ¿Impacto? tokenUrl es la ruta donde el cliente obtiene el token (login).
-#           Swagger UI usa esta URL para su botón "Authorize".
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+# ¿Qué? Esquema HTTPBearer que extrae el token JWT del header "Authorization: Bearer <token>".
+# ¿Para qué? A diferencia de OAuth2PasswordBearer, HTTPBearer hace que Swagger UI muestre
+#            un campo simple de texto para pegar el token directamente — sin formulario
+#            de usuario/contraseña que enviaría form-data incompatible con nuestro login JSON.
+# ¿Impacto? El flujo en Swagger es: 1) POST /auth/login → copiar access_token,
+#           2) clic en Authorize → pegar el token → todos los endpoints protegidos funcionan.
+http_bearer = HTTPBearer()
 
 
 def get_db() -> Generator[Session, None, None]:
     """Provee una sesión de base de datos para cada request.
 
     ¿Qué? Generador que crea una sesión de BD, la entrega al endpoint, y la cierra al terminar.
-    ¿Para qué? Garantizar que cada request tenga su propia sesión aislada y que siempre
-              se cierre correctamente, incluso si ocurre un error.
-    ¿Impacto? El patrón try/finally asegura que la conexión se devuelve al pool SIEMPRE.
-              Sin esto, las conexiones se agotarían y la app dejaría de responder.
+    ¿Para qué? Garantizar que cada request tenga su propia sesión aislada y que siempre se cierre correctamente, incluso si ocurre un error.
+    ¿Impacto? El patrón try/finally asegura que la conexión se devuelve al pool SIEMPRE. Sin esto, las conexiones se agotarían y la app dejaría de responder.
 
     Yields:
         Session: Sesión de SQLAlchemy lista para hacer queries.
@@ -47,7 +46,7 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
     db: Session = Depends(get_db),
 ) -> Usuario:
     """Obtiene el usuario autenticado a partir del access token JWT.
@@ -83,6 +82,7 @@ def get_current_user(
     # ¿Para qué? Extraer el email del usuario del campo "sub" del payload.
     # ¿Impacto? Si el token expiró, fue manipulado, o tiene firma incorrecta, decode_token
     #           retorna None y se lanza la excepción 401.
+    token = credentials.credentials  # HTTPBearer entrega solo el token, sin el prefijo "Bearer "
     payload = decode_token(token)
     if not payload:
         raise credentials_exception

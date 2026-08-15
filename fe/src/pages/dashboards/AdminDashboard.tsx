@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, Users, Database, UserPlus } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/api/axios";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
+import { ROLE_THEME } from "@/config/roleTheme";
+import { RoleId } from "@/types/auth";
 
-// Interfaces estrictas para eliminar la palabra 'any' por completo
 interface ResidenteRow {
   Correo: string;
   Nombre: string;
@@ -21,69 +23,71 @@ interface RecicladorRow {
 }
 
 export function AdminDashboard() {
-  // ¿Qué? El AuthContext expone "accessToken" directamente (no dentro de
-  //       "user"). Antes este componente intentaba leer "user.token",
-  //       que no existe — por eso InvitarAdminConjuntoForm enviaba un
-  //       token vacío y el backend respondía 401 Unauthorized.
   const { user, accessToken } = useAuth();
-
-  // Estados tipados correctamente sin usar 'any'
   const [residentesData, setResidentesData] = useState<ResidenteRow[]>([]);
   const [recicladoresData, setRecicladoresData] = useState<RecicladorRow[]>([]);
-
-  // ¿Qué? Sección nueva: invitar administradores de conjunto.
-  // ¿Para qué? Mostrarla u ocultarla con un botón, en vez de saturar el
-  //           dashboard de una sola vez.
   const [mostrarInvitar, setMostrarInvitar] = useState(false);
+  // Antes solo mirábamos si la lista estaba vacía para decidir si mostrar
+  // "Cargando datos..." — pero una lista vacía DE VERDAD (un conjunto sin
+  // residentes todavía) se veía igual que "todavía no ha llegado la
+  // respuesta", y el mensaje de "Cargando..." se quedaba ahí para siempre.
+  // Con esto sí distinguimos "sigue cargando" de "ya cargó y no hay nada".
+  const [cargandoResidentes, setCargandoResidentes] = useState(true);
+  const [cargandoRecicladores, setCargandoRecicladores] = useState(true);
 
   useEffect(() => {
-    // Consumir la Vista SQL (Criterio 6)
-    axios.get("http://localhost:8000/api/v1/admin/vista-residentes")
+    axios.get(`${API_BASE_URL}/api/v1/admin/vista-residentes`)
       .then(res => setResidentesData(res.data))
-      .catch(err => console.error("Error cargando vista SQL", err));
+      .catch(err => console.error("Error cargando vista SQL", err))
+      .finally(() => setCargandoResidentes(false));
 
-    // Consumir el Procedimiento Almacenado (Criterio 7)
-    axios.get("http://localhost:8000/api/v1/admin/sp-recicladores")
+    axios.get(`${API_BASE_URL}/api/v1/admin/sp-recicladores`)
       .then(res => setRecicladoresData(res.data))
-      .catch(err => console.error("Error cargando SP", err));
+      .catch(err => console.error("Error cargando SP", err))
+      .finally(() => setCargandoRecicladores(false));
   }, []);
 
+  const fullName = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || "Administrador";
+  const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_SISTEMA];
+
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6 animate-fade-in">
-      {/* TARJETA DE PERFIL (CUMPLE CRITERIO 5) */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border-l-4 border-purple-600">
-        <div className="flex items-center gap-4">
-          <div className="bg-purple-100 p-4 rounded-full">
-            <Shield className="text-purple-600 w-8 h-8" />
+    <div className="p-6 max-w-6xl mx-auto space-y-5">
+      {/* Header — el ícono grande de fondo (Shield) es solo un detalle visual
+          tenue para que este panel se sienta del Admin del Sistema, sin
+          estorbar la lectura del texto encima. */}
+      <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+        <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-slate-900/5 dark:text-white/5" aria-hidden="true" />
+        <div className="relative flex items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
+            <Shield className="h-7 w-7 text-green-700 dark:text-green-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Panel de Administración</h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Sistema de gestión. Usuario activo: <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Panel de Administración</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              Bienvenido,{" "}
+              <span className="font-semibold text-gray-800 dark:text-gray-200 uppercase">{fullName}</span>
+              .
             </p>
-            <p className="text-xs text-purple-600 font-semibold mt-1 tracking-wide">
-              PERFIL: ADMINISTRADOR MÁSTER | {user?.email}
-            </p>
+            <p className="text-xs text-green-700 dark:text-green-400 font-semibold mt-1">{user?.email}</p>
           </div>
         </div>
       </div>
 
-      {/* Sección: invitar Administradores de Conjunto */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-100">
+      {/* Invitar Administradores de Conjunto */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <UserPlus className="text-green-600 w-5 h-5" />
-            <h3 className="font-bold text-gray-800 dark:text-white">Administradores de Conjunto</h3>
+            <UserPlus className="h-4 w-4 text-green-600" />
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Administradores de Conjunto</h3>
           </div>
           <button
             type="button"
             onClick={() => setMostrarInvitar((prev) => !prev)}
-            className="text-sm font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-4 py-2 rounded-xl transition-colors"
+            className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 px-3 py-1.5 rounded-xl transition-colors"
           >
             {mostrarInvitar ? "Ocultar" : "+ Invitar administrador"}
           </button>
         </div>
-
         {mostrarInvitar && (
           <div className="mt-4">
             <InvitarAdminConjuntoForm token={accessToken || ""} />
@@ -91,80 +95,104 @@ export function AdminDashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-8 pt-4">
-
-        {/* 📋 TABLA 1: VISTA SQL (CRITERIO 6) */}
-        <div className="p-6 border rounded-lg shadow-sm bg-white overflow-hidden">
-          <div className="flex items-center gap-2 mb-4 border-b pb-2">
-            <Database className="text-purple-600 w-5 h-5" />
-            <h3 className="font-bold text-gray-800">Listado de Residentes (Mediante Vista SQL)</h3>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-500">
-              <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+      {/* Tabla: Residentes (Vista SQL) */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <Database className="h-4 w-4 text-green-600" />
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+            Listado de Residentes
+          </h3>
+          <span className="ml-auto rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+            Vista SQL
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead>
+              <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40">
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Correo</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Nombre</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Conjunto</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Unidad</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+              {cargandoResidentes ? (
                 <tr>
-                  <th className="px-6 py-3">Correo</th>
-                  <th className="px-6 py-3">Nombres</th>
-                  <th className="px-6 py-3">Conjunto</th>
-                  <th className="px-6 py-3">Ubicación</th>
+                  <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-400">
+                    Cargando datos...
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {residentesData.length === 0 ? (
-                  <tr><td colSpan={4} className="px-6 py-4 text-center">Cargando datos...</td></tr>
-                ) : (
-                  residentesData.map((residente, idx) => (
-                    <tr key={idx} className="bg-white border-b hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-gray-900">{residente.Correo}</td>
-                      <td className="px-6 py-4">{residente.Nombre} {residente.Apellido}</td>
-                      <td className="px-6 py-4">{residente.Conjunto}</td>
-                      <td className="px-6 py-4 text-xs">Blq {residente.Bloque} - Apto {residente.Apartamento}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+              ) : residentesData.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-400">
+                    No hay residentes registrados todavía.
+                  </td>
+                </tr>
+              ) : (
+                residentesData.map((r, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                    <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
+                    <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">{r.Nombre} {r.Apellido}</td>
+                    <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{r.Conjunto}</td>
+                    <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">Blq {r.Bloque} · Apto {r.Apartamento}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        {/* 📋 TABLA 2: PROCEDIMIENTO ALMACENADO (CRITERIO 7) */}
-        <div className="p-6 border rounded-lg shadow-sm bg-white overflow-hidden">
-           <div className="flex items-center gap-2 mb-4 border-b pb-2">
-             <Users className="text-purple-600 w-5 h-5" />
-             <h3 className="font-bold text-gray-800">Listado de Recicladores (Mediante Procedimiento Almacenado)</h3>
-           </div>
-
-           <div className="overflow-x-auto">
-             <table className="w-full text-sm text-left text-gray-500">
-               <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
-                 <tr>
-                   <th className="px-6 py-3">Correo Electrónico</th>
-                   <th className="px-6 py-3">Nombre Completo</th>
-                   <th className="px-6 py-3">Asociación</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {recicladoresData.length === 0 ? (
-                   <tr><td colSpan={3} className="px-6 py-4 text-center">Cargando datos...</td></tr>
-                 ) : (
-                   recicladoresData.map((reciclador, idx) => (
-                     <tr key={idx} className="bg-white border-b hover:bg-gray-50">
-                       <td className="px-6 py-4 font-medium text-gray-900">{reciclador.Correo}</td>
-                       <td className="px-6 py-4">{reciclador.Nombre_Completo}</td>
-                       <td className="px-6 py-4">
-                          <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                            {reciclador.Asociacion}
-                          </span>
-                       </td>
-                     </tr>
-                   ))
-                 )}
-               </tbody>
-             </table>
-           </div>
+      {/* Tabla: Recicladores (Procedimiento Almacenado) */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <Users className="h-4 w-4 text-green-600" />
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+            Listado de Recicladores
+          </h3>
+          <span className="ml-auto rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+            Procedimiento Almacenado
+          </span>
         </div>
-
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead>
+              <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40">
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Correo</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Nombre completo</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Asociación</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+              {cargandoRecicladores ? (
+                <tr>
+                  <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-400">
+                    Cargando datos...
+                  </td>
+                </tr>
+              ) : recicladoresData.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-400">
+                    No hay recicladores registrados todavía.
+                  </td>
+                </tr>
+              ) : (
+                recicladoresData.map((r, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                    <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
+                    <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">{r.Nombre_Completo}</td>
+                    <td className="px-5 py-3">
+                      <span className="rounded-full bg-green-50 dark:bg-green-900/20 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:text-green-400">
+                        {r.Asociacion}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

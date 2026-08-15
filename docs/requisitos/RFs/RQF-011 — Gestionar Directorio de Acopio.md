@@ -39,7 +39,7 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 3. Llena el formulario ingresando nombre, dirección, datos de contacto y selecciona la localidad desde un menú desplegable.
 4. El frontend envía la petición `POST` o `PUT` al backend.
 5. El backend valida los permisos de administrador del usuario.
-6. El backend verifica la integridad referencial (asegurando que `localidad_id` exista en MySQL).
+6. El backend verifica la integridad referencial (asegurando que `localidad_id` exista en PostgreSQL).
 7. Se inserta o actualiza el registro en la tabla `Puntos_Acopio`.
 8. El sistema notifica el éxito de la operación.
 

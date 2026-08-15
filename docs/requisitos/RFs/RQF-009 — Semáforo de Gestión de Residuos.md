@@ -36,7 +36,7 @@ El sistema debe implementar un panel de auditoría cualitativa donde el 'Recicla
 1. El usuario con rol **Reciclador**, tras realizar la recolección, ingresa al panel de auditoría en la aplicación.
 2. Selecciona el `conjunto_id` y asigna un color del semáforo basado en la calidad de separación de los residuos. Opcionalmente, añade una observación.
 3. El frontend (React) envía una petición `POST` al backend con estos datos.
-4. El backend (Spring Boot) valida que el reciclador tenga permisos sobre ese conjunto y guarda el registro en la base de datos MySQL (tabla `historial_semaforo`) con la fecha y hora actual.
+4. El backend (FastAPI) valida que el reciclador tenga permisos sobre ese conjunto y guarda el registro en la base de datos PostgreSQL (tabla `historial_semaforo`) con la fecha y hora actual.
 5. El usuario con rol **Residente** ingresa a su panel y realiza una petición `GET` para consultar el historial de su conjunto.
 6. El backend retorna la lista de calificaciones históricas.
 7. El frontend renderiza el historial utilizando indicadores visuales (Rojo, Amarillo, Verde).

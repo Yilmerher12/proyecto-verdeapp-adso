@@ -51,6 +51,7 @@ fe/dist/
 
 # Cache de Vite
 fe/.vite/
+.vite/
 
 # Vitest
 fe/coverage/

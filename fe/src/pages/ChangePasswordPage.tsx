@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { PasswordStrengthIndicator, getPasswordRequirementError } from "@/components/ui/PasswordStrengthIndicator";
 
 /**
  * ¿Qué? Formulario de cambio de contraseña con validación y feedback.
@@ -58,13 +58,14 @@ export function ChangePasswordPage() {
       newErrors.current_password = t("auth.changePassword.validation.currentRequired");
     }
 
-    if (formData.new_password.length < 8) {
+    const passwordError = getPasswordRequirementError(formData.new_password);
+    if (passwordError === "too_short") {
       newErrors.new_password = t("auth.register.validation.passwordMin");
-    } else if (!/[A-Z]/.test(formData.new_password)) {
+    } else if (passwordError === "no_uppercase") {
       newErrors.new_password = t("auth.register.validation.passwordUppercase");
-    } else if (!/[a-z]/.test(formData.new_password)) {
+    } else if (passwordError === "no_lowercase") {
       newErrors.new_password = t("auth.register.validation.passwordLowercase");
-    } else if (!/\d/.test(formData.new_password)) {
+    } else if (passwordError === "no_digit") {
       newErrors.new_password = t("auth.register.validation.passwordNumber");
     }
 
@@ -106,7 +107,7 @@ export function ChangePasswordPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto max-w-md pt-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
           {t("auth.changePassword.title")}

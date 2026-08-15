@@ -69,6 +69,10 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 | RQF009 | Visualizar gestión de residuos del conjunto              | Residente, Reciclador                |
 | RQF010 | Gestionar contenido educativo                            | Admin_sistema                        |
 | RQF011 | Gestionar directorio de puntos de acopio y recicladores  | Admin_sistema                        |
+| RQF012 | Gestionar vinculación de conjuntos                       | Admin_conjunto, Admin_sistema         |
+| RQF013 | Recomendar contenido educativo por auditoría             | Reciclador (dispara), Residente (recibe) |
+| RQF014 | Gestionar comunicados del conjunto                       | Admin_conjunto, Residente, Reciclador |
+| RQF015 | Publicar novedades generales                             | Admin_sistema, Residente, Reciclador, Admin_conjunto |
 
 ---
 
@@ -93,6 +97,10 @@ flowchart TB
     RQF009([RQF009\nVisualizar Gestión de Residuos])
     RQF010([RQF010\nGestionar Contenido Educativo])
     RQF011([RQF011\nGestionar Directorio])
+    RQF012([RQF012\nGestionar Vinculación de Conjuntos])
+    RQF013([RQF013\nRecomendar Contenido por Auditoría])
+    RQF014([RQF014\nGestionar Comunicados del Conjunto])
+    RQF015([RQF015\nPublicar Novedades Generales])
 
     Residente --> RQF001
     Residente --> RQF002
@@ -102,6 +110,9 @@ flowchart TB
     Residente --> RQF007
     Residente --> RQF008
     Residente --> RQF009
+    Residente --> RQF013
+    Residente --> RQF014
+    Residente --> RQF015
 
     Reciclador --> RQF001
     Reciclador --> RQF002
@@ -110,16 +121,24 @@ flowchart TB
     Reciclador --> RQF007
     Reciclador --> RQF008
     Reciclador --> RQF009
+    Reciclador --> RQF013
+    Reciclador --> RQF014
+    Reciclador --> RQF015
 
     Admin --> RQF001
     Admin --> RQF007
     Admin --> RQF010
     Admin --> RQF011
+    Admin --> RQF012
+    Admin --> RQF015
 
     AdminConjunto --> RQF001
     AdminConjunto --> RQF002
     AdminConjunto --> RQF007
     AdminConjunto --> RQF008
+    AdminConjunto --> RQF012
+    AdminConjunto --> RQF014
+    AdminConjunto --> RQF015
 ```
 
 ---
@@ -304,5 +323,99 @@ Permite administrar el directorio de recicladores y puntos de acopio registrados
 * Eliminar registros.
 * Consultar registros.
 
-```
-```
+---
+
+## RQF012 - Gestionar Vinculación de Conjuntos
+
+### Actores
+
+* Admin_conjunto
+* Admin_sistema
+
+### Descripción
+
+Permite que un Admin_conjunto solicite desvincularse de un conjunto que ya no administra, y que el Admin_sistema gestione esas solicitudes (aprobar/rechazar) y asigne nuevos conjuntos a administradores existentes. El proceso requiere aprobación humana para evitar que un conjunto quede sin administrador sin aviso previo.
+
+### Flujo Principal
+
+1. El Admin_conjunto selecciona uno de sus conjuntos y envía una solicitud de desvinculación con motivo opcional.
+2. La solicitud queda pendiente hasta que el Admin_sistema la gestione.
+3. El Admin_sistema aprueba o rechaza la solicitud, o asigna un nuevo conjunto al administrador.
+4. El Admin_conjunto recibe notificación del resultado.
+
+---
+
+## RQF013 - Recomendar Contenido Educativo por Auditoría
+
+### Actores
+
+* Reciclador (dispara el evento al calificar)
+* Residente (recibe la recomendación)
+* Sistema (proceso automático)
+
+### Descripción
+
+Cuando un reciclador registra una calificación de auditoría (RQF-009) con categorías negativas (Separación, Preparación, Presentación o Contaminación), el sistema recomienda automáticamente módulos del contenido educativo (RQF-010) relacionados a los residentes del conjunto auditado.
+
+### Flujo Principal
+
+1. El reciclador guarda la calificación de auditoría del conjunto.
+2. El sistema detecta las categorías con resultado negativo.
+3. Busca módulos educativos etiquetados con esas categorías.
+4. Marca los módulos encontrados como "Recomendados" para los residentes de ese conjunto.
+
+### Flujo Alternativo
+
+* Si no hay módulos disponibles para una categoría fallida, no se genera una recomendación vacía.
+
+---
+
+## RQF014 - Gestionar Comunicados del Conjunto
+
+### Actores
+
+* Admin_conjunto
+* Residente
+* Reciclador
+
+### Descripción
+
+Permite que el Admin_conjunto publique comunicados (texto, imágenes, video, PDF, documentos de office) dirigidos a los residentes y/o recicladores de su conjunto, con fecha de expiración según el tipo (Informativo, Urgente, Convocatoria, Mantenimiento, Reciclaje).
+
+### Flujo Principal
+
+1. El Admin_conjunto redacta el comunicado y selecciona destinatarios (residentes y/o recicladores) y tipo.
+2. Adjunta archivos si aplica.
+3. El sistema publica el comunicado en el feed de los destinatarios y les notifica.
+4. El comunicado se oculta automáticamente al expirar según su tipo.
+
+### Flujo Alternativo
+
+* El Admin_conjunto puede editar o eliminar un comunicado antes de que expire.
+
+---
+
+## RQF015 - Publicar Novedades Generales
+
+### Actores
+
+* Admin_sistema
+* Residente
+* Reciclador
+* Admin_conjunto
+
+### Descripción
+
+Permite que el Admin_sistema publique novedades de alcance general (no ligadas a un conjunto específico) dirigidas a todos los usuarios o a grupos de roles concretos, con adjuntos y expiración configurable.
+
+### Flujo Principal
+
+1. El Admin_sistema redacta la novedad y elige el alcance (todos, solo residentes, solo recicladores o solo Admin_conjunto).
+2. Adjunta archivos o links externos si aplica.
+3. El sistema sugiere una fecha de expiración, que el Admin_sistema puede modificar.
+4. Los usuarios del alcance seleccionado ven la novedad hasta que expire o sea archivada.
+
+### Flujo Alternativo
+
+* El Admin_sistema puede editar la novedad o archivarla manualmente antes de que expire.
+

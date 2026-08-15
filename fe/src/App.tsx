@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleGuard } from "@/components/RoleGuard";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
+import { RoleId } from "@/types/auth";
 
 // Vistas públicas y de acceso
 import { LoginPage } from "@/pages/LoginPage";
@@ -33,10 +34,11 @@ import { AdminDashboard } from "@/pages/dashboards/AdminDashboard";
 import { AdminConjuntoDashboard } from "@/pages/dashboards/AdminConjuntoDashboard";
 import { ChangePasswordPage } from "@/pages/ChangePasswordPage";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { DirectorioPage } from "@/pages/DirectorioPage";
 
 interface CustomUser {
-  role_id?: number;
-  id_rol?: number;
+  role_id?: RoleId;
+  id_rol?: RoleId;
   [key: string]: unknown;
 }
 
@@ -46,9 +48,9 @@ function DashboardRedirect() {
   const typedUser = user as CustomUser | null;
   const userRole = typedUser?.role_id || typedUser?.id_rol;
 
-  if (userRole === 1) return <Navigate to="/dashboard/admin" replace />;
-  if (userRole === 3) return <Navigate to="/dashboard/reciclador" replace />;
-  if (userRole === 4) return <Navigate to="/dashboard/admin-conjunto" replace />;
+  if (userRole === RoleId.ADMIN_SISTEMA) return <Navigate to="/dashboard/admin" replace />;
+  if (userRole === RoleId.RECICLADOR) return <Navigate to="/dashboard/reciclador" replace />;
+  if (userRole === RoleId.ADMIN_CONJUNTO) return <Navigate to="/dashboard/admin-conjunto" replace />;
   return <Navigate to="/dashboard/residente" replace />;
 }
 
@@ -79,7 +81,7 @@ function App() {
             path="/dashboard/residente"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[2]}>
+                <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
                   <AppShell>
                     <ResidenteDashboard />
                   </AppShell>
@@ -92,7 +94,7 @@ function App() {
             path="/dashboard/reciclador"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[3]}>
+                <RoleGuard allowedRoles={[RoleId.RECICLADOR]}>
                   <AppShell>
                     <RecicladorDashboard />
                   </AppShell>
@@ -105,7 +107,7 @@ function App() {
             path="/dashboard/admin"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[1]}>
+                <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
                   <AppShell>
                     <AdminDashboard />
                   </AppShell>
@@ -118,7 +120,7 @@ function App() {
             path="/dashboard/admin-conjunto"
             element={
               <ProtectedRoute>
-                <RoleGuard allowedRoles={[4]}>
+                <RoleGuard allowedRoles={[RoleId.ADMIN_CONJUNTO]}>
                   <AppShell>
                     <AdminConjuntoDashboard />
                   </AppShell>
@@ -144,6 +146,34 @@ function App() {
                 <AppShell>
                   <ProfilePage />
                 </AppShell>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Directorio — Residente (tabs: recicladores + puntos de acopio) */}
+          <Route
+            path="/directorio"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
+                  <AppShell>
+                    <DirectorioPage />
+                  </AppShell>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Puntos de acopio — Reciclador (solo puntos de acopio) */}
+          <Route
+            path="/puntos-acopio"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[RoleId.RECICLADOR]}>
+                  <AppShell>
+                    <DirectorioPage soloAcopio />
+                  </AppShell>
+                </RoleGuard>
               </ProtectedRoute>
             }
           />

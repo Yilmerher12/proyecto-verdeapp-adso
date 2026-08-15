@@ -17,7 +17,8 @@ from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.localidad import Localidad
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.unidad import Unidad
-from app.schemas.user import UpdateLocaleRequest, UserResponse
+from app.models.rol import RolId
+from app.schemas.user import UpdateLocaleRequest, UpdateProfileBody, UserResponse
 from app.services.auth_service import update_user_locale
 
 router = APIRouter(
@@ -45,13 +46,12 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
         "apto": None,
         "asociacion": None,
         "nombre_localidad": None,
-        # ¿Qué? Lista de conjuntos que administra, solo aplica si
-        #       current_user.id_rol == 4 (Administrador de Conjunto).
+        # Lista de conjuntos que administra, solo aplica si es Administrador de Conjunto.
         "conjuntos_administrados": None,
     }
 
     # Consultas relacionales por estrategia de JOINs explícitos
-    if current_user.id_rol == 2:  # Rol: Residente
+    if current_user.id_rol == RolId.RESIDENTE:
         stmt = (
             select(
                 Residente.nombre,
@@ -75,7 +75,7 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
             payload["torre"] = res.torre
             payload["apto"] = res.apto
 
-    elif current_user.id_rol == 3:  # Rol: Reciclador
+    elif current_user.id_rol == RolId.RECICLADOR:
         stmt = (
             select(
                 Reciclador.nombre,
@@ -96,7 +96,7 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
             payload["asociacion"] = res.asociacion or "INDEPENDIENTE"
             payload["nombre_localidad"] = res.nombre_localidad
 
-    elif current_user.id_rol == 4:  # Rol: Administrador de Conjunto
+    elif current_user.id_rol == RolId.ADMIN_CONJUNTO:
         stmt = select(AdministradorConjunto).where(
             AdministradorConjunto.id_usuario == current_user.id_usuario
         )
@@ -112,6 +112,43 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
             ]
 
     return payload
+
+
+@router.put("/me", summary="Actualizar nombre, apellidos y teléfono del usuario")
+def update_profile(
+    body: UpdateProfileBody,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from fastapi import HTTPException
+    nombre = body.nombre.strip()
+    apellidos = body.apellidos.strip()
+    if not nombre or not apellidos:
+        raise HTTPException(status_code=422, detail="Nombre y apellidos son obligatorios.")
+
+    if current_user.id_rol == RolId.RESIDENTE:
+        row = db.execute(select(Residente).where(Residente.id_usuario == current_user.id_usuario)).scalar_one_or_none()
+        if row:
+            row.nombre = nombre
+            row.apellidos = apellidos
+            row.numero_telefonico = body.numero_telefonico or "N/A"
+    elif current_user.id_rol == RolId.RECICLADOR:
+        row = db.execute(select(Reciclador).where(Reciclador.id_usuario == current_user.id_usuario)).scalar_one_or_none()
+        if row:
+            row.nombre = nombre
+            row.apellidos = apellidos
+            row.numero_telefonico = body.numero_telefonico or "N/A"
+    elif current_user.id_rol == RolId.ADMIN_CONJUNTO:
+        row = db.execute(select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == current_user.id_usuario)).scalar_one_or_none()
+        if row:
+            row.nombre = nombre
+            row.apellidos = apellidos
+            row.numero_telefonico = body.numero_telefonico or "N/A"
+    else:
+        raise HTTPException(status_code=403, detail="El perfil del administrador del sistema no es editable.")
+
+    db.commit()
+    return {"ok": True}
 
 
 @router.patch(

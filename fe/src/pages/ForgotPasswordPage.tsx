@@ -15,6 +15,7 @@ import { AuthLayout } from "@/components/layout/AuthLayout";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { Modal } from "@/components/ui/Modal";
 
 /**
  * ¿Qué? Formulario de solicitud de recuperación de contraseña.
@@ -29,23 +30,20 @@ export function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  /**
-   * ¿Qué? Envía el email al backend para iniciar el flujo de recuperación de contraseña.
-   * ¿Para qué? El backend genera un token de reset y envía un email con el enlace.
-   * ¿Impacto? La respuesta siempre es de éxito (sin revelar si el email existe en el sistema).
-   *           Esto previene ataques de enumeración de usuarios (OWASP A07: Identification Failures).
-   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
-
     if (!email) {
       setError(t("auth.forgotPassword.validation.emailRequired"));
       return;
     }
+    setShowConfirm(true);
+  };
 
+  const confirmSend = async () => {
+    setShowConfirm(false);
     setIsLoading(true);
     try {
       await forgotPassword({ email });
@@ -60,6 +58,41 @@ export function ForgotPasswordPage() {
   };
 
   return (
+    <>
+    {showConfirm && (
+      <Modal onClose={() => setShowConfirm(false)}>
+        <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50 dark:bg-green-900/20">
+            <Mail className="h-6 w-6 text-green-600 dark:text-green-400" />
+          </div>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+            ¿Enviar enlace de recuperación?
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Se enviará un correo a:
+          </p>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-6 break-all">
+            {email}
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setShowConfirm(false)}
+              className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmSend}
+              className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+            >
+              Sí, enviar
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
     <AuthLayout title={t("auth.forgotPassword.title")} subtitle={t("auth.forgotPassword.subtitle")}>
       {success && (
         <div className="mb-4">
@@ -104,5 +137,6 @@ export function ForgotPasswordPage() {
         </Link>
       </p>
     </AuthLayout>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -11,29 +11,32 @@ import {
   MapPin,
   Newspaper,
   User,
-  Leaf,
-  Building2,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+/*import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";*/
 import { Modal } from "@/components/ui/Modal";
+import { RoleId } from "@/types/auth";
+import { API_BASE_URL } from "@/api/axios";
+import { ROLE_THEME } from "@/config/roleTheme";
 
 interface AppShellProps {
   children: ReactNode;
 }
 
-const ROLE_META: Record<number, { label: string; emoji: string; dashboardHref: string }> = {
-  1: { label: "Administrador", emoji: "🛠️", dashboardHref: "/dashboard/admin" },
-  2: { label: "Residente", emoji: "🏠", dashboardHref: "/dashboard/residente" },
-  3: { label: "Reciclador", emoji: "♻️", dashboardHref: "/dashboard/reciclador" },
-  4: { label: "Admin. de Conjunto", emoji: "🏢", dashboardHref: "/dashboard/admin-conjunto" },
-};
+// El sidebar usa el mismo par de colores (blanco / verde oscuro) para los 4
+// roles — antes cada rol tenía un color de fondo totalmente distinto y se
+// sentían como 4 apps separadas. Lo único que cambia por rol viene de
+// ROLE_THEME (fe/src/config/roleTheme.ts): el ícono, el color del ítem activo
+// del menú, y la marca de agua del banner de bienvenida de cada dashboard.
+// El verde oscuro de modo oscuro es el mismo que ya usamos en el landing page.
 
 export function AppShell({ children }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { user, logout } = useAuth();
+  const [noLeidas, setNoLeidas] = useState(0);
+  const { user, logout, accessToken } = useAuth() as any;
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -41,9 +44,25 @@ export function AppShell({ children }: AppShellProps) {
     logout();
   };
 
+  // Polling de notificaciones no leídas cada 20s
+  useEffect(() => {
+    if (!accessToken) return;
+    const fetchCount = () => {
+      fetch(`${API_BASE_URL}/api/v1/notificaciones/no-leidas-count`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+        .then((r) => r.json())
+        .then((d) => setNoLeidas(d.count ?? 0))
+        .catch(() => {});
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 20000);
+    return () => clearInterval(interval);
+  }, [accessToken]);
+
   const userData = user as any;
-  const roleId = (userData?.role_id || userData?.id_rol || 2) as number;
-  const roleMeta = ROLE_META[roleId] ?? ROLE_META[2];
+  const roleId = (userData?.role_id || userData?.id_rol || RoleId.RESIDENTE) as RoleId;
+  const roleMeta = ROLE_THEME[roleId] ?? ROLE_THEME[RoleId.RESIDENTE];
 
   const rawEmail = userData?.correo_electronico || userData?.email || userData?.sub || "usuario@verdeapp.com";
   const fallbackName = rawEmail.split("@")[0].toUpperCase();
@@ -60,7 +79,7 @@ export function AppShell({ children }: AppShellProps) {
       { icon: ShieldCheck, label: "Seguridad", href: "/change-password", enabled: true },
     ];
 
-    if (roleId === 1) {
+    if (roleId === RoleId.ADMIN_SISTEMA) {
       return [
         ...commonStart,
         { icon: Newspaper, label: "Crear Novedades", href: null, enabled: false },
@@ -69,17 +88,17 @@ export function AppShell({ children }: AppShellProps) {
       ];
     }
 
-    if (roleId === 3) {
+    if (roleId === RoleId.RECICLADOR) {
       return [
         ...commonStart,
         { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
         { icon: Newspaper, label: "Novedades Gobierno", href: null, enabled: false },
-        { icon: MapPin, label: "Puntos de Acopio", href: null, enabled: false },
+        { icon: MapPin, label: "Puntos de Acopio", href: "/puntos-acopio", enabled: true },
         ...commonEnd,
       ];
     }
 
-    if (roleId === 4) {
+    if (roleId === RoleId.ADMIN_CONJUNTO) {
       return [
         ...commonStart,
         { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
@@ -93,12 +112,13 @@ export function AppShell({ children }: AppShellProps) {
       { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
       { icon: Newspaper, label: "Novedades Conjunto", href: null, enabled: false },
       { icon: BookOpen, label: "Aprender (Guías)", href: null, enabled: false },
-      { icon: MapPin, label: "Directorio Zona", href: null, enabled: false },
+      { icon: MapPin, label: "Directorio General", href: "/directorio", enabled: true },
       ...commonEnd,
     ];
   };
 
   const navItems = getNavItemsByRole();
+
 
   return (
     // ¿Qué? w-full en el contenedor raíz + min-w-0 en cada nivel flex hijo.
@@ -114,35 +134,33 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-gray-950 flex-col sm:flex-row">
       <aside
         className={`
-          flex min-w-0 shrink-0 flex-col bg-green-800 dark:bg-gray-950 border-r border-green-900/20
-          transition-[width] duration-200 ease-in-out text-gray-100
+          flex min-w-0 shrink-0 flex-col border-r border-gray-200 dark:border-white/6
+          bg-white dark:bg-[#052e16]
+          transition-[width] duration-200 ease-in-out text-gray-700 dark:text-gray-100
           overflow-hidden
           ${collapsed ? "sm:w-16 h-16 sm:h-screen" : "sm:w-64 h-auto sm:h-screen"}
         `}
       >
-        {/* Identidad de marca */}
-        <div className={`flex min-w-0 shrink-0 items-center border-b border-white/10 h-16 ${collapsed ? "justify-center" : "gap-3 px-5"}`}>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
-            <Leaf className="h-5 w-5 text-green-200" />
-          </div>
-          {!collapsed && (
-            <span className="min-w-0 truncate text-base font-bold text-white tracking-tight">Verde App</span>
-          )}
+        {/* Identidad de marca — logo a color en modo claro, logo blanco en modo
+            oscuro (sobre el verde oscuro del sidebar el blanco sí se lee). */}
+        <div className={`flex min-w-0 shrink-0 items-center border-b border-gray-100 dark:border-white/10 h-16 ${collapsed ? "justify-center px-3" : "px-5"}`}>
+          <img src="/logos/logo-color.png" alt="VerdeApp" className={`${collapsed ? "h-7" : "h-8"} w-auto object-contain dark:hidden`} />
+          <img src="/logos/logo-white.png" alt="VerdeApp" className={`${collapsed ? "h-7" : "h-8"} hidden w-auto object-contain dark:block`} />
         </div>
 
         {/* Tarjeta de perfil */}
         {!collapsed && user && (
-          <div className="min-w-0 px-5 py-5 border-b border-white/10">
+          <div className="min-w-0 px-5 py-5 border-b border-gray-100 dark:border-white/10">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-white font-bold text-sm select-none">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-800 dark:bg-white/15 dark:text-white font-bold text-sm select-none">
                 {displayName.charAt(0)}
               </div>
               <div className="min-w-0 flex-1 overflow-hidden">
-                <p className="truncate text-sm font-bold text-white">
+                <p className="truncate text-sm font-bold text-gray-900 dark:text-white">
                   {displayName}
                 </p>
-                <span className="flex min-w-0 items-center gap-1 text-xs font-medium text-green-100/90 mt-0.5">
-                  <span className="shrink-0" aria-hidden="true">{roleMeta.emoji}</span>
+                <span className={`flex min-w-0 items-center gap-1.5 text-xs font-medium mt-0.5 ${roleMeta.sidebarAccentText}`}>
+                  <roleMeta.Icon className="h-3 w-3 shrink-0" />
                   <span className="truncate">{roleMeta.label}</span>
                 </span>
               </div>
@@ -164,8 +182,8 @@ export function AppShell({ children }: AppShellProps) {
                         ${collapsed ? "justify-center" : ""}
                         ${
                           isActive
-                            ? "bg-white/15 text-white font-semibold"
-                            : "text-green-50/80 hover:bg-white/10 hover:text-white"
+                            ? roleMeta.sidebarActiveNav
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-green-50/80 dark:hover:bg-white/10 dark:hover:text-white"
                         }`
                       }
                     >
@@ -181,7 +199,7 @@ export function AppShell({ children }: AppShellProps) {
                   <div
                     className={`
                       flex min-w-0 cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5
-                      text-sm font-medium text-green-100/40
+                      text-sm font-medium text-gray-400 dark:text-green-100/40
                       ${collapsed ? "justify-center" : ""}
                     `}
                   >
@@ -189,7 +207,7 @@ export function AppShell({ children }: AppShellProps) {
                     {!collapsed && (
                       <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                         <span className="min-w-0 truncate">{label}</span>
-                        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-green-100/70">
+                        <span className="shrink-0 rounded bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-gray-400 dark:text-green-100/70">
                           Pronto
                         </span>
                       </span>
@@ -202,13 +220,14 @@ export function AppShell({ children }: AppShellProps) {
         </nav>
 
         {/* Footer — cerrar sesión */}
-        <div className={`min-w-0 border-t border-white/10 px-3 py-3 ${collapsed ? "hidden sm:block" : "block"}`}>
+        <div className={`min-w-0 border-t border-gray-100 dark:border-white/10 px-3 py-3 ${collapsed ? "hidden sm:block" : "block"}`}>
           <button
             type="button"
             onClick={() => setShowLogoutConfirm(true)}
             className={`
               flex w-full min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
-              text-green-50/70 transition-colors hover:bg-red-900/30 hover:text-red-200
+              text-gray-600 hover:bg-red-50 hover:text-red-600
+              dark:text-green-50/70 dark:hover:bg-red-900/30 dark:hover:text-red-200
               ${collapsed ? "justify-center" : ""}
             `}
           >
@@ -253,8 +272,9 @@ export function AppShell({ children }: AppShellProps) {
         <button
           type="button"
           onClick={() => setCollapsed((prev) => !prev)}
-          className="hidden sm:flex h-9 w-full shrink-0 items-center justify-center border-t border-white/10
-            text-green-100/50 transition-colors hover:bg-white/5 hover:text-white"
+          className="hidden sm:flex h-9 w-full shrink-0 items-center justify-center border-t border-gray-100 dark:border-white/10
+            text-gray-400 hover:bg-gray-100 hover:text-gray-900
+            dark:text-green-100/50 dark:hover:bg-white/5 dark:hover:text-white transition-colors"
           aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
@@ -264,12 +284,25 @@ export function AppShell({ children }: AppShellProps) {
       {/* Área de contenido */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-gray-800 dark:bg-gray-900">
+          {/* Campana de notificaciones */}
+          <button
+            onClick={() => navigate(roleMeta.dashboardHref)}
+            className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+            aria-label="Notificaciones"
+          >
+            <Bell className="h-5 w-5" />
+            {noLeidas > 0 && (
+              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                {noLeidas > 9 ? "9+" : noLeidas}
+              </span>
+            )}
+          </button>
           {/* <LanguageSwitcher /> */}
           <ThemeToggle />
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
-          <div className="mx-auto max-w-7xl px-6 py-6">{children}</div>
+        <main className="flex-1 overflow-y-auto bg-[#f3f8f3] dark:bg-gray-950">
+          <div className="mx-auto max-w-7xl px-6 pb-6">{children}</div>
         </main>
       </div>
     </div>

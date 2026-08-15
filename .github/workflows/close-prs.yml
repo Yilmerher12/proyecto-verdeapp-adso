@@ -11,6 +11,12 @@ permissions:
 
 jobs:
   close-pr:
+    # Solo se ejecuta si la PR viene de un "fork" (una copia del repo hecha
+    # por otra persona) — es decir, alguien de verdad externo al proyecto.
+    # Las ramas creadas DENTRO de nuestro propio repositorio (nuestro flujo
+    # normal: feat/algo, fix/algo, etc.) tienen el mismo repo de origen y
+    # destino, así que esta condición las deja pasar sin cerrarlas.
+    if: github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     runs-on: ubuntu-24.04
     steps:
       - name: Cerrar PR automáticamente

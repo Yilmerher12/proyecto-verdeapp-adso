@@ -103,14 +103,12 @@ export function ContactoModalPage() {
                 />
               </div>
 
-              <div className={`rounded-xl overflow-hidden transition-all shadow-sm ${isFormIncomplete ? "opacity-60 cursor-not-allowed bg-green-600/50 text-white" : "bg-green-600 hover:bg-green-700 text-white"}`}>
-                <Button type="submit" fullWidth isLoading={status === "loading"} disabled={isFormIncomplete}>
-                  <span className="flex items-center gap-2">
-                    {isFormIncomplete ? "Completa todos los campos" : "Enviar Mensaje"}
-                    <Send className="h-4 w-4" />
-                  </span>
-                </Button>
-              </div>
+              <Button type="submit" fullWidth isLoading={status === "loading"} disabled={isFormIncomplete}>
+                <span className="flex items-center gap-2">
+                  {isFormIncomplete ? "Completa todos los campos" : "Enviar Mensaje"}
+                  <Send className="h-4 w-4" />
+                </span>
+              </Button>
             </form>
           )}
         </div>

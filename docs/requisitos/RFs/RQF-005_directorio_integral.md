@@ -16,7 +16,7 @@
 | **Nombre** | Directorio Integral |
 | **Módulo** | Directorio          |
 | **Prioridad** | Media               |
-| **Estado** | Por implementar     |
+| **Estado** | Implementado        |
 | **Usuarios** | residente           |
 
 ---
