@@ -10,7 +10,6 @@ services:
     ports:
         - "5433:5432"  # antes era 5432:5432
     volumes:
-      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
       - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U verde_user -d verdeapp_db"]

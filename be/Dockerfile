@@ -73,10 +73,15 @@ COPY . .
 EXPOSE 8000
 
 # ¿Qué? Comando de inicio del contenedor.
-# ¿Para qué? Primero ejecuta las migraciones pendientes de Alembic, luego arranca
-#            Uvicorn escuchando en todas las interfaces (0.0.0.0) en el puerto 8000.
+# ¿Para qué? Primero ejecuta las migraciones pendientes de Alembic (crea/ajusta las
+#            tablas), luego siembra los datos de prueba con app/seed.py (solo si la
+#            base está vacía), y por último arranca Uvicorn en todas las interfaces
+#            (0.0.0.0) en el puerto 8000.
 # ¿Impacto? Sin `alembic upgrade head`, el backend podría arrancar con un esquema de
-#           BD desactualizado, causando errores en las primeras operaciones.
-#           Sin `--host 0.0.0.0`, Uvicorn escucharía solo en localhost y el contenedor
-#           no sería accesible desde fuera.
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+#           BD desactualizado, causando errores en las primeras operaciones. El orden
+#           importa: la siembra necesita que las tablas ya existan, por eso corre
+#           DESPUÉS de las migraciones y nunca antes (así se evitó el error histórico
+#           de "relation ... already exists" que causaba init_db.sql al competir con
+#           Alembic por crear las mismas tablas). Sin `--host 0.0.0.0`, Uvicorn
+#           escucharía solo en localhost y el contenedor no sería accesible desde fuera.
+CMD ["sh", "-c", "alembic upgrade head && python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
