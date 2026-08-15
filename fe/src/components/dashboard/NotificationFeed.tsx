@@ -10,7 +10,7 @@
  */
 
 import { useState } from "react";
-import { AlertTriangle, Bell, CheckCircle2, Clock, PackageCheck, Truck } from "lucide-react";
+import { AlertTriangle, Bell, Clock, PackageCheck, Truck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface NotificacionItem {
