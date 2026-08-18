@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# ¿Qué? Script de parada del sistema NN Auth.
+# ¿Qué? Script de parada del sistema VerdeApp.
 # ¿Para qué? Detener y eliminar todos los contenedores de forma ordenada.
-# ¿Impacto? Los datos de PostgreSQL se conservan en el volumen nn_auth_data.
+# ¿Impacto? Los datos de PostgreSQL se conservan en el volumen db_data.
 #           Usar --volumes para borrar también los datos (¡irreversible!).
 #
 # Uso:
@@ -48,7 +48,7 @@ fi
 header "Deteniendo servicios..."
 # ¿Qué? docker compose down detiene y elimina los contenedores y la red interna.
 # ¿Para qué? Liberar puertos y recursos del sistema de forma limpia.
-# ¿Impacto? Sin --volumes, el volumen nn_auth_data persiste para el próximo start.
+# ¿Impacto? Sin --volumes, el volumen db_data persiste para el próximo start.
 #           Con --volumes, se borra definitivamente.
 info "Ejecutando: docker compose down ${VOLUMES_FLAG}"
 # shellcheck disable=SC2086
@@ -58,14 +58,14 @@ docker compose down ${VOLUMES_FLAG}
 echo ""
 if [[ -n "${VOLUMES_FLAG}" ]]; then
   echo -e "${BOLD}${YELLOW}╔══════════════════════════════════════════════════════╗${RESET}"
-  echo -e "${BOLD}${YELLOW}║   NN Auth System detenido — volúmenes eliminados     ║${RESET}"
+  echo -e "${BOLD}${YELLOW}║       VerdeApp detenido — volúmenes eliminados       ║${RESET}"
   echo -e "${BOLD}${YELLOW}╚══════════════════════════════════════════════════════╝${RESET}"
   warn "Los datos de PostgreSQL fueron eliminados permanentemente."
 else
   echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════════╗${RESET}"
-  echo -e "${BOLD}${GREEN}║       NN Auth System detenido correctamente          ║${RESET}"
+  echo -e "${BOLD}${GREEN}║           VerdeApp detenido correctamente            ║${RESET}"
   echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════════╝${RESET}"
-  success "Los datos de PostgreSQL se conservaron en el volumen nn_auth_data."
+  success "Los datos de PostgreSQL se conservaron en el volumen db_data."
 fi
 echo ""
 echo -e "  Para volver a levantar todo: ${BOLD}./scripts/start.sh${RESET}"
