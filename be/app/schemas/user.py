@@ -6,7 +6,7 @@ Adaptado para VerdeApp: Recibe datos completos del formulario (Rol, Datos Person
 
 import re
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr, field_validator, model_validator
+from pydantic import BaseModel, Field, EmailStr, field_validator
 
 
 def _validate_password_strength(v: str) -> str:
@@ -122,6 +122,10 @@ class UpdateProfileBody(BaseModel):
     nombre: str
     apellidos: str
     numero_telefonico: Optional[str] = None
+    # ¿Qué? Solo aplica al rol Reciclador (ver RQF-008). El endpoint la
+    #       ignora para Residente/Admin de Conjunto, cuyos modelos no
+    #       tienen esta columna.
+    asociacion: Optional[str] = None
 
 
 class UpdateLocaleRequest(BaseModel):

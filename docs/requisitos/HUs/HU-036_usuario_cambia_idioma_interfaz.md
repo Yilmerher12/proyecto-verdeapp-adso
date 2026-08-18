@@ -16,7 +16,7 @@
 | **Título**         | Usuario cambia el idioma de la interfaz             |
 | **Módulo**         | Internacionalización (i18n)                          |
 | **Prioridad**      | Media                                                  |
-| **Estado**         | Parcialmente implementada                               |
+| **Estado**         | Implementada                                            |
 | **RF asociados**   | RQF-017                                                |
 
 ---

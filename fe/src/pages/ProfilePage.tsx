@@ -52,9 +52,14 @@ export function ProfilePage() {
   const [formNombre, setFormNombre] = useState("");
   const [formApellidos, setFormApellidos] = useState("");
   const [formTelefono, setFormTelefono] = useState("");
+  const [formAsociacion, setFormAsociacion] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [exito, setExito] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // ¿Qué? Mismo formato que valida el backend (RQF-008): solo dígitos,
+  //       entre 7 (fijo) y 10 (celular) caracteres.
+  const TELEFONO_REGEX = /^\d{7,10}$/;
 
   const headers = { Authorization: `Bearer ${accessToken}` };
 
@@ -75,6 +80,8 @@ export function ProfilePage() {
     setFormApellidos(perfil.last_name);
     const tel = perfil.numero_telefonico;
     setFormTelefono(tel && tel !== "No registrado" && tel !== "N/A" ? tel : "");
+    const asoc = perfil.asociacion;
+    setFormAsociacion(asoc && asoc !== "INDEPENDIENTE" ? asoc : "");
     setEditando(true);
     setExito(false);
     setErrorMsg(null);
@@ -90,6 +97,11 @@ export function ProfilePage() {
       setErrorMsg("Nombre y apellidos son obligatorios.");
       return;
     }
+    const telefono = formTelefono.trim();
+    if (telefono && !TELEFONO_REGEX.test(telefono)) {
+      setErrorMsg("El número telefónico tiene un formato inválido.");
+      return;
+    }
     setGuardando(true);
     setErrorMsg(null);
     try {
@@ -98,7 +110,8 @@ export function ProfilePage() {
         {
           nombre: formNombre.trim(),
           apellidos: formApellidos.trim(),
-          numero_telefonico: formTelefono.trim() || null,
+          numero_telefonico: telefono || null,
+          asociacion: formAsociacion.trim() || null,
         },
         { headers }
       );
@@ -106,8 +119,11 @@ export function ProfilePage() {
       setExito(true);
       setTimeout(() => setExito(false), 3000);
       cargarPerfil();
-    } catch {
-      setErrorMsg("No se pudo guardar. Intenta de nuevo.");
+    } catch (err) {
+      const backendMsg = axios.isAxiosError(err)
+        ? (err.response?.data as { detail?: string } | undefined)?.detail
+        : undefined;
+      setErrorMsg(backendMsg || "No se pudo guardar. Intenta de nuevo.");
     } finally {
       setGuardando(false);
     }
@@ -291,6 +307,20 @@ export function ProfilePage() {
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
+
+              {perfil.role_id === RoleId.RECICLADOR && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                    Asociación
+                  </label>
+                  <input
+                    value={formAsociacion}
+                    onChange={(e) => setFormAsociacion(e.target.value)}
+                    placeholder="Ej: INDEPENDIENTE"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">

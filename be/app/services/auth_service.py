@@ -20,7 +20,6 @@ from app.models.password_reset_token import PasswordResetToken
 from app.models.email_verification_token import EmailVerificationToken
 
 from app.schemas.user import (
-    ChangePasswordRequest,
     ResetPasswordRequest,
     TokenResponse,
     UserCreate,
@@ -283,7 +282,7 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
 def verify_email(db: Session, token: str) -> bool:
     db_token = db.query(EmailVerificationToken).filter(
         EmailVerificationToken.token == token,
-        EmailVerificationToken.used == False
+        EmailVerificationToken.used.is_(False)
     ).first()
 
     if not db_token:
@@ -340,7 +339,7 @@ async def request_password_reset(db: Session, email: str) -> bool:
 def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
     db_token = db.query(PasswordResetToken).filter(
         PasswordResetToken.token == reset_data.token,
-        PasswordResetToken.used == False
+        PasswordResetToken.used.is_(False)
     ).first()
 
     if not db_token:

@@ -7,8 +7,6 @@ Descripción: Paquete de modelos ORM — exporta todos los modelos para facilita
           generadas estarían vacías (uno de los errores más comunes al configurar Alembic).
 """
 
-from app.database import Base
-
 # ¿Qué? Tabla puente (muchos-a-muchos) sin clase ORM propia.
 # ¿Para qué? secondary="recicladores_conjuntos" en Reciclador y en
 #           ConjuntoResidencial necesita que esta tabla ya esté
@@ -42,3 +40,29 @@ from app.models.email_verification_token import EmailVerificationToken
 
 # Notificaciones
 from app.models.notificacion import Notificacion, NotificacionDestinatario
+
+# ¿Qué? Declara explícitamente qué exporta este paquete.
+# ¿Para qué? Todos los imports de arriba son a propósito (ver docstring del
+#           archivo) aunque este módulo no los use directamente — sin __all__,
+#           herramientas de lint como ruff los marca como "no usados" y podría
+#           llevar a alguien a borrarlos por error, rompiendo Alembic.
+__all__ = [
+    "recicladores_conjuntos",
+    "Role",
+    "Localidad",
+    "ContenidoEducativo",
+    "Usuario",
+    "ConjuntoResidencial",
+    "PuntoAcopio",
+    "Unidad",
+    "Residente",
+    "Reciclador",
+    "AdministradorConjunto",
+    "AdministradorConjuntoAsignacion",
+    "InvitacionAdminConjunto",
+    "InvitacionRecicladorConjunto",
+    "PasswordResetToken",
+    "EmailVerificationToken",
+    "Notificacion",
+    "NotificacionDestinatario",
+]

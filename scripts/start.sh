@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ¿Qué? Script de arranque completo del sistema NN Auth.
+# ¿Qué? Script de arranque completo del sistema VerdeApp.
 # ¿Para qué? Levantar todos los servicios (db, be, fe, mailpit) con construcción de
 #            imágenes, esperar sus healthchecks y reportar el estado final.
 # ¿Impacto? Un único comando inicializa todo el entorno de desarrollo sin pasos manuales.
@@ -86,7 +86,7 @@ docker compose up ${BUILD_FLAG} -d
 
 # ─── Esperar healthcheck de PostgreSQL ──────────────────────────────────────
 header "Esperando PostgreSQL (db)..."
-# ¿Qué? Consulta el estado del healthcheck del contenedor nn_auth_db hasta que sea
+# ¿Qué? Consulta el estado del healthcheck del contenedor verde_db hasta que sea
 #       "healthy" o se agote el tiempo de espera.
 # ¿Para qué? PostgreSQL necesita unos segundos para inicializar antes de aceptar conexiones.
 # ¿Impacto? Sin esta espera, el backend podría fallar al intentar migrar la BD.
@@ -94,7 +94,7 @@ MAX_RETRIES=30
 RETRY_INTERVAL=2
 attempt=0
 
-until [[ "$(docker inspect --format='{{.State.Health.Status}}' nn_auth_db 2>/dev/null)" == "healthy" ]]; do
+until [[ "$(docker inspect --format='{{.State.Health.Status}}' verde_db 2>/dev/null)" == "healthy" ]]; do
   attempt=$(( attempt + 1 ))
   if (( attempt > MAX_RETRIES )); then
     error "PostgreSQL no alcanzó estado 'healthy' después de $(( MAX_RETRIES * RETRY_INTERVAL ))s."
@@ -164,14 +164,14 @@ fi
 # ─── Resumen final ──────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}${GREEN}║        NN Auth System — TODOS LOS SERVICIOS OK       ║${RESET}"
+echo -e "${BOLD}${GREEN}║          VerdeApp — TODOS LOS SERVICIOS OK           ║${RESET}"
 echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo -e "  ${CYAN}Frontend${RESET}         →  http://localhost:3000"
 echo -e "  ${CYAN}Backend API${RESET}      →  http://localhost:8000"
 echo -e "  ${CYAN}Swagger UI${RESET}       →  http://localhost:8000/docs"
 echo -e "  ${CYAN}Mailpit (emails)${RESET} →  http://localhost:8025"
-echo -e "  ${CYAN}PostgreSQL${RESET}       →  localhost:5432  (nn_user / nn_auth_db)"
+echo -e "  ${CYAN}PostgreSQL${RESET}       →  localhost:5433  (verde_user / verdeapp_db)"
 echo ""
 echo -e "  Para detener todo: ${BOLD}./scripts/stop.sh${RESET}"
 echo ""
