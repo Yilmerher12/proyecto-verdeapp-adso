@@ -1,8 +1,9 @@
 /**
  * Archivo: __tests__/components/LanguageSwitcher.test.tsx
  * Descripción: Tests del componente LanguageSwitcher — selector de idioma ES/EN.
- * ¿Para qué? Verificar que los botones se renderizan, tienen estado correcto y
- *            llaman a i18n.changeLanguage() al hacer clic.
+ * ¿Para qué? Verificar que los botones se renderizan (con sigla visible y nombre
+ *            completo accesible), tienen estado correcto y llaman a
+ *            i18n.changeLanguage() al hacer clic.
  * ¿Impacto? Sin estos tests, un cambio en LanguageSwitcher podría romper el sistema i18n
  *           sin ser detectado hasta que el usuario lo reporte.
  */
@@ -41,13 +42,21 @@ describe("LanguageSwitcher", () => {
     mockI18n.language = "es";
   });
 
-  // ¿Qué? Verifica que se renderizan los dos botones de idioma.
-  it("renderiza los botones de idioma Español e English", () => {
+  // ¿Qué? Verifica que se renderizan los dos botones, con la sigla visible.
+  it("renderiza los botones de idioma con sus siglas ES y EN", () => {
     renderWithProviders(<LanguageSwitcher />);
 
-    // Los botones muestran el nombre propio del idioma (no traducido).
-    expect(screen.getByText("Español")).toBeInTheDocument();
-    expect(screen.getByText("English")).toBeInTheDocument();
+    expect(screen.getByText("ES")).toBeInTheDocument();
+    expect(screen.getByText("EN")).toBeInTheDocument();
+  });
+
+  // ¿Qué? El texto visible es la sigla, pero el nombre accesible sigue siendo completo.
+  // ¿Para qué? Un lector de pantalla debe anunciar "Español"/"English", no "ES"/"EN".
+  it("expone el nombre completo del idioma como nombre accesible (aria-label)", () => {
+    renderWithProviders(<LanguageSwitcher />);
+
+    expect(screen.getByRole("button", { name: "Español" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "English" })).toBeInTheDocument();
   });
 
   // ¿Qué? Verifica que el botón activo tiene aria-pressed="true".
@@ -55,8 +64,8 @@ describe("LanguageSwitcher", () => {
   it("marca el idioma activo con aria-pressed=true", () => {
     renderWithProviders(<LanguageSwitcher />);
 
-    const esButton = screen.getByText("Español");
-    const enButton = screen.getByText("English");
+    const esButton = screen.getByRole("button", { name: "Español" });
+    const enButton = screen.getByRole("button", { name: "English" });
 
     // Español activo → aria-pressed="true".
     expect(esButton).toHaveAttribute("aria-pressed", "true");
@@ -64,12 +73,12 @@ describe("LanguageSwitcher", () => {
     expect(enButton).toHaveAttribute("aria-pressed", "false");
   });
 
-  // ¿Qué? Verifica que al hacer clic en "English" se llama a changeLanguage("en").
-  it("llama a changeLanguage('en') al hacer clic en English", async () => {
+  // ¿Qué? Verifica que al hacer clic en "EN" se llama a changeLanguage("en").
+  it("llama a changeLanguage('en') al hacer clic en EN", async () => {
     const user = userEvent.setup();
     renderWithProviders(<LanguageSwitcher />);
 
-    await user.click(screen.getByText("English"));
+    await user.click(screen.getByRole("button", { name: "English" }));
 
     expect(mockChangeLanguage).toHaveBeenCalledWith("en");
     expect(mockChangeLanguage).toHaveBeenCalledTimes(1);
@@ -80,8 +89,8 @@ describe("LanguageSwitcher", () => {
     const user = userEvent.setup();
     renderWithProviders(<LanguageSwitcher />);
 
-    // Clic en "Español" cuando ya está activo (mockI18n.language === "es").
-    await user.click(screen.getByText("Español"));
+    // Clic en "ES" cuando ya está activo (mockI18n.language === "es").
+    await user.click(screen.getByRole("button", { name: "Español" }));
 
     expect(mockChangeLanguage).not.toHaveBeenCalled();
   });
@@ -91,8 +100,8 @@ describe("LanguageSwitcher", () => {
   it("asigna el atributo lang correcto a cada botón", () => {
     renderWithProviders(<LanguageSwitcher />);
 
-    expect(screen.getByText("Español")).toHaveAttribute("lang", "es");
-    expect(screen.getByText("English")).toHaveAttribute("lang", "en");
+    expect(screen.getByRole("button", { name: "Español" })).toHaveAttribute("lang", "es");
+    expect(screen.getByRole("button", { name: "English" })).toHaveAttribute("lang", "en");
   });
 
   // ¿Qué? Verifica que el grupo tiene aria-label accesible.

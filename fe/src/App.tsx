@@ -35,6 +35,9 @@ import { AdminConjuntoDashboard } from "@/pages/dashboards/AdminConjuntoDashboar
 import { ChangePasswordPage } from "@/pages/ChangePasswordPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { DirectorioPage } from "@/pages/DirectorioPage";
+import { CatalogoEducativoPage } from "@/pages/CatalogoEducativoPage";
+import { CategoriaEducativaPage } from "@/pages/CategoriaEducativaPage";
+import { AdminContenidoEducativoPage } from "@/pages/AdminContenidoEducativoPage";
 
 interface CustomUser {
   role_id?: RoleId;
@@ -172,6 +175,46 @@ function App() {
                 <RoleGuard allowedRoles={[RoleId.RECICLADOR]}>
                   <AppShell>
                     <DirectorioPage soloAcopio />
+                  </AppShell>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catálogo educativo — Residente (solo lectura, RQF-004/HU-005) */}
+          <Route
+            path="/catalogo-educativo"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
+                  <AppShell>
+                    <CatalogoEducativoPage />
+                  </AppShell>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/catalogo-educativo/:categoria"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
+                  <AppShell>
+                    <CategoriaEducativaPage />
+                  </AppShell>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Gestión de contenido educativo — Admin Sistema (RQF-010) */}
+          <Route
+            path="/admin/contenido-educativo"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
+                  <AppShell>
+                    <AdminContenidoEducativoPage />
                   </AppShell>
                 </RoleGuard>
               </ProtectedRoute>

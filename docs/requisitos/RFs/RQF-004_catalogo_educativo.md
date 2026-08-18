@@ -16,7 +16,7 @@
 | **Nombre** | Catálogo Educativo  |
 | **Módulo** | Educación           |
 | **Prioridad** | Media               |
-| **Estado** | Por implementar     |
+| **Estado** | Implementado        |
 | **Usuarios** | sistema (Residente) |
 
 ---
