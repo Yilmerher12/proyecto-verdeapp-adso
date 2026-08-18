@@ -456,76 +456,59 @@
   },
   "landing": {
     "nav": {
+      "homeAriaLabel": "VerdeApp — inicio",
       "login": "Iniciar sesión",
       "register": "Registrarse"
     },
     "hero": {
-      "title": "Autenticación segura,",
-      "titleHighlight": "lista para producción",
-      "subtitle": "Registro, login, verificación de email, cambio y recuperación de contraseña. Un sistema completo construido con FastAPI, React y las mejores prácticas de seguridad.",
-      "ctaPrimary": "Comenzar ahora",
-      "ctaSecondary": "Iniciar sesión"
-    },
-    "features": {
-      "title": "Características del sistema",
-      "subtitle": "Todo lo necesario para un sistema de autenticación robusto y educativo.",
-      "register": {
-        "title": "Registro seguro",
-        "description": "Validación de datos en tiempo real. Las contraseñas se almacenan hasheadas con bcrypt — nunca en texto plano."
-      },
-      "jwt": {
-        "title": "Autenticación JWT",
-        "description": "Access tokens de 15 min y refresh tokens de 7 días. Stateless, eficiente y estándar en la industria."
-      },
-      "email": {
-        "title": "Verificación de email",
-        "description": "Confirma la identidad antes de activar la cuenta. Enlace de un solo uso enviado automáticamente al registro."
-      },
-      "password": {
-        "title": "Cambio de contraseña",
-        "description": "El usuario autenticado puede cambiar su contraseña ingresando la actual. Validación estricta en el backend."
-      },
-      "recovery": {
-        "title": "Recuperación por email",
-        "description": "Flujo completo de forgot/reset con token de un solo uso y expiración de 1 hora."
-      },
-      "security": {
-        "title": "Seguridad OWASP",
-        "description": "Diseñado con seguridad primero: sin SQL injection, sin XSS, CORS configurado e inputs validados con Pydantic."
-      }
+      "subtitle": "Gestión de residuos para conjuntos residenciales en Bogotá",
+      "description": "Conectamos residentes, recicladores y administradores para transformar la gestión de residuos en tu comunidad.",
+      "ctaLogin": "Ya tengo cuenta",
+      "ctaRegister": "Unirse a VerdeApp"
     },
     "howItWorks": {
-      "title": "¿Cómo funciona?",
-      "subtitle": "Tres pasos para empezar a usar el sistema.",
+      "eyebrow": "¿Cómo funciona?",
+      "title": "Tres pasos, un ciclo completo",
+      "subtitle": "VerdeApp conecta a todos los actores del reciclaje en el conjunto residencial.",
       "step1": {
-        "title": "Crea tu cuenta",
-        "description": "Registra tu email y contraseña. Recibirás un correo para verificar y activar tu cuenta."
+        "title": "El conjunto se afilia",
+        "description": "El administrador registra el conjunto en VerdeApp e invita a los residentes y al reciclador asignado."
       },
       "step2": {
-        "title": "Inicia sesión",
-        "description": "Autentícate con tus credenciales. El sistema emitirá un access token y un refresh token."
+        "title": "Los residentes participan",
+        "description": "Aprenden a reciclar con el contenido educativo e indican cuándo el SHUT está en su capacidad máxima."
       },
       "step3": {
-        "title": "Accede al sistema",
-        "description": "Con tu sesión activa, gestiona tu perfil y contraseña desde el dashboard."
+        "title": "El reciclador actúa",
+        "description": "Notifica su llegada al SHUT. Al finalizar, el sistema registra la gestión y genera una auditoría de rendimiento."
       }
     },
-    "techStack": {
-      "title": "Stack tecnológico",
-      "subtitle": "Herramientas modernas, tipadas y probadas en la industria.",
-      "ariaLabel": "Tecnologías del proyecto"
-    },
-    "cta": {
-      "title": "Listo para comenzar",
-      "subtitle": "Crea tu cuenta y explora el sistema de autenticación completo. Aprende implementando.",
-      "button": "Crear cuenta gratis"
+    "pillars": {
+      "eyebrow": "Nuestros pilares",
+      "title": "Una plataforma, tres ejes de impacto",
+      "pillar1": {
+        "title": "Separación en la fuente",
+        "description": "Guía a los residentes en la correcta clasificación de residuos reciclables, directamente desde la app."
+      },
+      "pillar2": {
+        "title": "Conexión con recicladores",
+        "description": "Formaliza la labor de los recicladores de oficio. Permite solicitudes y notificaciones en tiempo real entre el conjunto y el reciclador asignado."
+      },
+      "pillar3": {
+        "title": "Educación ambiental",
+        "description": "Guías y contenido interactivo sobre cómo separar, limpiar y entregar materiales reciclables correctamente en tu comunidad."
+      }
     },
     "footer": {
       "credit": "Proyecto educativo — SENA",
       "terms": "Términos de uso",
       "privacy": "Política de privacidad",
       "cookies": "Política de cookies",
-      "contact": "Contacto"
+      "contact": "Contacto",
+      "navPrivacy": "Privacidad",
+      "navCookies": "Cookies",
+      "rights": "© {{year}} VerdeApp. Todos los derechos reservados.",
+      "legalAriaLabel": "Aviso legal"
     }
   },
   "contact": {
