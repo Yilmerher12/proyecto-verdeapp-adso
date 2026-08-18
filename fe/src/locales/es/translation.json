@@ -1,16 +1,43 @@
 {
-  "nav": {
-    "brand": "VerdeApp",
-    "logout": "Salir",
-    "language": "Idioma",
-    "sidebar": {
-      "dashboard": "Panel principal",
-      "employees": "Empleados",
-      "products": "Productos",
-      "reports": "Reportes",
-      "security": "Seguridad",
-      "comingSoon": "pronto"
+  "appShell": {
+    "ariaLabel": "Navegación VerdeApp",
+    "nav": {
+      "panelPrincipal": "Panel Principal",
+      "seguridad": "Seguridad",
+      "crearNovedades": "Crear Novedades",
+      "contenidoEducativo": "Contenido Educativo",
+      "miPerfil": "Mi Perfil",
+      "novedadesGobierno": "Novedades Gobierno",
+      "puntosAcopio": "Puntos de Acopio",
+      "novedadesConjuntos": "Novedades de mis Conjuntos",
+      "novedadesConjunto": "Novedades Conjunto",
+      "aprenderGuias": "Aprender (Guías)",
+      "directorioGeneral": "Directorio General"
+    },
+    "proximamente": "Pronto",
+    "notificaciones": "Notificaciones",
+    "expandirMenu": "Expandir menú",
+    "colapsarMenu": "Colapsar menú",
+    "cerrarSesion": "Cerrar sesión",
+    "confirmarLogout": {
+      "titulo": "¿Cerrar sesión?",
+      "mensaje": "Tu sesión se cerrará y serás redirigido al inicio.",
+      "confirmar": "Sí, cerrar sesión"
     }
+  },
+  "passwordStrength": {
+    "ariaLabel": "Fortaleza de contraseña: {{label}}",
+    "1": "Muy débil",
+    "2": "Débil",
+    "3": "Regular",
+    "4": "Buena",
+    "5": "Fuerte"
+  },
+  "roles": {
+    "adminSistema": "Administrador",
+    "residente": "Residente",
+    "reciclador": "Reciclador",
+    "adminConjunto": "Admin. de Conjunto"
   },
   "common": {
     "loading": "Cargando...",
@@ -28,17 +55,17 @@
   },
   "auth": {
     "login": {
-      "title": "Iniciar sesión",
-      "subtitle": "Ingresa tus credenciales para acceder",
+      "title": "Ingresa a VerdeApp",
+      "subtitle": "Gestiona el reciclaje y los reportes de tu comunidad.",
       "forgotPassword": "¿Olvidaste tu contraseña?",
-      "noAccount": "¿No tienes cuenta?",
-      "createAccountLink": "Crear cuenta",
-      "submit": "Iniciar sesión",
-      "errorDefault": "Error al iniciar sesión"
+      "noAccount": "¿No tienes cuenta aún?",
+      "createAccountLink": "Regístrate aquí",
+      "submit": "Iniciar Sesión",
+      "errorDefault": "Credenciales incorrectas. Verifica tu correo y contraseña."
     },
     "register": {
-      "title": "Crear cuenta",
-      "subtitle": "Completa tus datos para registrarte",
+      "title": "Crea tu cuenta",
+      "subtitle": "Únete a VerdeApp y transforma tu comunidad",
       "confirmEmail": "Confirmar correo electrónico",
       "confirmPassword": "Confirmar contraseña",
       "submit": "Crear cuenta",
@@ -50,6 +77,7 @@
       "verifyEmailCardBody": "Te enviamos un correo de verificación. Revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.",
       "validation": {
         "emailRequired": "El correo es obligatorio",
+        "emailInvalid": "El formato del correo no es válido.",
         "confirmEmailRequired": "Debes confirmar tu correo electrónico",
         "emailsMismatch": "Los correos electrónicos no coinciden",
         "firstNameMin": "El nombre debe tener al menos 2 caracteres",
@@ -65,7 +93,54 @@
       },
       "acceptTerms": "He leído y acepto los <link>Términos de uso</link>",
       "acceptPrivacy": "He leído y acepto la <link>Política de privacidad</link>",
-      "acceptCookies": "He leído y acepto la <link>Política de cookies</link>"
+      "acceptCookies": "He leído y acepto la <link>Política de cookies</link>",
+      "roleResident": "Residente",
+      "roleRecycler": "Reciclador",
+      "fields": {
+        "firstName": "Nombres *",
+        "lastName": "Apellidos *",
+        "phone": "Teléfono",
+        "residenceLocationHeading": "Ubicación de Residencia *",
+        "locality": "Localidad",
+        "selectPlaceholder": "Selecciona...",
+        "conjunto": "Conjunto Residencial",
+        "unitType": "Tipo Unidad",
+        "unitTypeTower": "Torre",
+        "unitTypeInterior": "Interior",
+        "unitTypeBlock": "Bloque",
+        "unitTypeHouse": "Casa",
+        "unitNumber": "Nº / Letra",
+        "unitNumberPlaceholder": "Ej: 3, B",
+        "apto": "Apartamento",
+        "aptoPlaceholder": "Ej: 402",
+        "operativeProfileHeading": "Perfil Operativo *",
+        "workLocality": "Localidad de Trabajo *",
+        "selectYourLocality": "Selecciona tu localidad...",
+        "association": "Asociación (Opcional)",
+        "associationPlaceholder": "Ej: ARB",
+        "email": "Correo Electrónico *",
+        "confirmEmailField": "Confirmar Correo Electrónico *",
+        "password": "Contraseña *",
+        "passwordPlaceholder": "Mínimo 8 caracteres",
+        "confirmPasswordField": "Confirmar Contraseña *",
+        "confirmPasswordPlaceholder": "Repite la contraseña"
+      },
+      "termsPrefix": "Acepto los",
+      "termsLinkLabel": "Términos de uso",
+      "andThe": "y la",
+      "privacyLinkLabel": "Política de privacidad",
+      "brandSuffix": "de VerdeApp *",
+      "submitIncomplete": "Completa los campos y acepta los términos",
+      "submitFull": "Registrar Cuenta",
+      "genericError": "Error al registrar. Verifica los datos o intenta con otro correo.",
+      "success": {
+        "title": "¡Revisa tu bandeja!",
+        "bodyPrefix": "Enviamos un enlace de verificación a",
+        "step1": "Abre tu correo electrónico",
+        "step2": "Busca el email de VerdeApp",
+        "step3": "Haz clic en \"Verificar mi cuenta\"",
+        "understood": "Entendido"
+      }
     },
     "changePassword": {
       "title": "Cambiar contraseña",
