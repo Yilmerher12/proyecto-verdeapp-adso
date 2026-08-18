@@ -314,7 +314,16 @@ export function AppShell({ children }: AppShellProps) {
           <ThemeToggle />
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-[#f3f8f3] dark:bg-gray-950">
+        {/* ¿Qué? Fondo del área de contenido suavizado — antes era #f3f8f3 en
+            claro (casi blanco puro) y gray-950 en oscuro (casi negro puro),
+            ambos extremos. #eef3ee es la misma familia de color (verde muy
+            claro) pero un poco más presente. En oscuro NO se pudo usar
+            gray-900 directo: las tarjetas del dashboard (bg-white
+            dark:bg-gray-900) usan justo ese tono, y el fondo quedaría
+            idéntico a las tarjetas — #0a0f14 es un tono intermedio entre
+            gray-900 y gray-950, más suave que el original pero todavía
+            claramente más oscuro que las tarjetas. */}
+        <main className="flex-1 overflow-y-auto bg-[#eef3ee] dark:bg-[#0a0f14]">
           <div className="mx-auto max-w-7xl px-6 pb-6">{children}</div>
         </main>
       </div>
