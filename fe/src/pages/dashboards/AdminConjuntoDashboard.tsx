@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
@@ -23,15 +24,16 @@ import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/
  *           RECHAZADA (rojo) sin tener que leer el texto con atención.
  */
 function BadgeEstado({ estado }: { estado: string }) {
+  const { t } = useTranslation();
   const estilos: Record<string, string> = {
     PENDIENTE: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     ACEPTADA: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
     RECHAZADA: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   };
   const etiquetas: Record<string, string> = {
-    PENDIENTE: "Pendiente",
-    ACEPTADA: "Aceptada",
-    RECHAZADA: "Rechazada",
+    PENDIENTE: t("dashboards.adminConjunto.estado.pendiente"),
+    ACEPTADA: t("dashboards.adminConjunto.estado.aceptada"),
+    RECHAZADA: t("dashboards.adminConjunto.estado.rechazada"),
   };
   return (
     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${estilos[estado] || "bg-gray-100 text-gray-600"}`}>
@@ -47,6 +49,7 @@ function BadgeEstado({ estado }: { estado: string }) {
  *           lista de invitaciones, así que esto vive por tarjeta.
  */
 function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; accessToken: string }) {
+  const { t } = useTranslation();
   const [invitaciones, setInvitaciones] = useState<InvitacionEnviada[]>([]);
   const [cargando, setCargando] = useState(true);
   const [correoNuevo, setCorreoNuevo] = useState("");
@@ -82,7 +85,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const detalle = err?.response?.data?.detail;
-      setErrorInvitar(detalle || "No se pudo enviar la invitación. Verifica el correo.");
+      setErrorInvitar(detalle || t("dashboards.adminConjunto.recyclersSection.errorDefault"));
     } finally {
       setEnviando(false);
     }
@@ -93,14 +96,14 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-green-600" />
-          <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">Recicladores Autorizados</h5>
+          <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.recyclersSection.title")}</h5>
         </div>
         <button
           type="button"
           onClick={() => setMostrarFormulario((v) => !v)}
           className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
         >
-          + Invitar reciclador
+          {t("dashboards.adminConjunto.recyclersSection.invite")}
         </button>
       </div>
 
@@ -110,7 +113,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="email"
-              placeholder="correo.del.reciclador@ejemplo.com"
+              placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
               value={correoNuevo}
               onChange={(e) => setCorreoNuevo(e.target.value)}
               className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
@@ -122,7 +125,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
             className="flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
-            {enviando ? "Enviando..." : "Invitar"}
+            {enviando ? t("dashboards.adminConjunto.recyclersSection.sending") : t("dashboards.adminConjunto.recyclersSection.inviteButton")}
           </button>
         </form>
       )}
@@ -132,10 +135,10 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
       )}
 
       {cargando ? (
-        <p className="text-xs text-gray-400">Cargando recicladores...</p>
+        <p className="text-xs text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
       ) : invitaciones.length === 0 ? (
         <p className="text-xs text-gray-400">
-          Todavía no has invitado a ningún reciclador a este conjunto.
+          {t("dashboards.adminConjunto.recyclersSection.empty")}
         </p>
       ) : (
         <div className="space-y-2">
@@ -166,6 +169,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
  *           también invitar recicladores autorizados por conjunto.
  */
 export function AdminConjuntoDashboard() {
+  const { t } = useTranslation();
   const { user, accessToken } = useAuth();
   const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_CONJUNTO];
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
@@ -248,12 +252,12 @@ export function AdminConjuntoDashboard() {
         },
         accessToken
       );
-      setMensaje("Conjunto actualizado correctamente.");
+      setMensaje(t("dashboards.adminConjunto.editForm.successMessage"));
       setEditandoId(null);
       cargarConjuntos();
     } catch (err) {
       console.error("Error al editar conjunto", err);
-      setMensaje("No se pudo guardar el cambio. Intenta de nuevo.");
+      setMensaje(t("dashboards.adminConjunto.editForm.errorMessage"));
     } finally {
       setGuardando(false);
     }
@@ -271,9 +275,9 @@ export function AdminConjuntoDashboard() {
             <Building2 className="h-7 w-7 text-amber-600 dark:text-amber-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Panel de Administrador de Conjunto</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("dashboards.adminConjunto.title")}</h1>
             <p className="text-gray-600 dark:text-gray-300">
-              Bienvenido, <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
+              {t("dashboards.common.welcomePrefix")} <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
             </p>
             <p className="text-xs text-green-600 font-semibold mt-1 tracking-wide">
               {user?.email}
@@ -291,14 +295,14 @@ export function AdminConjuntoDashboard() {
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-gray-800 pb-2">
           <Building2 className="text-green-600 w-5 h-5" />
-          <h3 className="font-bold text-gray-800 dark:text-white">Conjuntos que administras</h3>
+          <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
         </div>
 
         {cargando ? (
-          <p className="text-sm text-gray-400 py-4">Cargando tus conjuntos...</p>
+          <p className="text-sm text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
         ) : conjuntos.length === 0 ? (
           <p className="text-sm text-gray-400 py-4">
-            Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp.
+            {t("dashboards.adminConjunto.myConjuntos.empty")}
           </p>
         ) : (
           <div className="space-y-4">
@@ -310,7 +314,7 @@ export function AdminConjuntoDashboard() {
                 {editandoId === c.id_conjunto_residencial ? (
                   <div className="space-y-3">
                     <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Nombre del conjunto</label>
+                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.name")}</label>
                       <input
                         type="text"
                         value={formEdicion.nombre_conjunto}
@@ -321,7 +325,7 @@ export function AdminConjuntoDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">NIT (opcional)</label>
+                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
                       <input
                         type="text"
                         value={formEdicion.nit}
@@ -330,7 +334,7 @@ export function AdminConjuntoDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Dirección</label>
+                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.address")}</label>
                       <input
                         type="text"
                         value={formEdicion.direccion}
@@ -347,14 +351,14 @@ export function AdminConjuntoDashboard() {
                         disabled={guardando}
                         className="flex items-center gap-1 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl transition-colors disabled:opacity-60"
                       >
-                        <Check className="w-4 h-4" /> Guardar
+                        <Check className="w-4 h-4" /> {t("common.save")}
                       </button>
                       <button
                         type="button"
                         onClick={cancelarEdicion}
                         className="flex items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                       >
-                        <X className="w-4 h-4" /> Cancelar
+                        <X className="w-4 h-4" /> {t("common.cancel")}
                       </button>
                     </div>
                   </div>
@@ -367,14 +371,14 @@ export function AdminConjuntoDashboard() {
                           <MapPin className="w-3.5 h-3.5" />
                           {c.direccion} — {c.nombre_localidad}
                         </p>
-                        {c.nit && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">NIT: {c.nit}</p>}
+                        {c.nit && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>}
                       </div>
                       <button
                         type="button"
                         onClick={() => iniciarEdicion(c)}
                         className="flex items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
                       >
-                        <Pencil className="w-3.5 h-3.5" /> Editar
+                        <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
                       </button>
                     </div>
 
@@ -400,13 +404,13 @@ export function AdminConjuntoDashboard() {
       {/* Feed de notificaciones */}
       {cargandoNotifs ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5">
-          <p className="text-sm text-gray-400">Cargando...</p>
+          <p className="text-sm text-gray-400">{t("common.loading")}</p>
         </div>
       ) : (
         <NotificationFeed
-          title="Actividad del conjunto"
+          title={t("dashboards.adminConjunto.notifications.title")}
           notifications={notificaciones}
-          emptyMessage="No hay actividad aún. Las notificaciones de recicladores y residentes aparecerán aquí."
+          emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
           accentBg="bg-amber-500"
           accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
           onMarkRead={marcarLeida}
