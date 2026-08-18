@@ -54,7 +54,13 @@ def _admins_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
             AdministradorConjuntoAsignacion,
             AdministradorConjunto.id_administrador == AdministradorConjuntoAsignacion.id_administrador,
         )
-        .where(AdministradorConjuntoAsignacion.id_conjunto_residencial == id_conjunto)
+        .where(
+            AdministradorConjuntoAsignacion.id_conjunto_residencial == id_conjunto,
+            # ¿Qué? Solo el vínculo activo — un admin ya desvinculado
+            #       (RQF-016) no debe seguir recibiendo notificaciones
+            #       del conjunto que dejó.
+            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
+        )
     )
     return [r[0] for r in db.execute(stmt).all()]
 
