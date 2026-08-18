@@ -10,7 +10,6 @@ from typing import List
 from app.dependencies import get_db
 from app.models.localidad import Localidad
 from app.models.conjunto_residencial import ConjuntoResidencial
-from app.models.unidad import Unidad
 from app.schemas.geography import LocalidadResponse, ConjuntoResponse, UnidadResponse
 
 router = APIRouter(

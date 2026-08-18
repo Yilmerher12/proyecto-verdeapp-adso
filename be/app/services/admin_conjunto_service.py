@@ -173,7 +173,7 @@ def _obtener_invitacion_valida(db: Session, token: str, lanzar_error: bool):
     """
     invitacion = db.query(InvitacionAdminConjunto).filter(
         InvitacionAdminConjunto.token == token,
-        InvitacionAdminConjunto.used == False,
+        InvitacionAdminConjunto.used.is_(False),
     ).first()
 
     if not invitacion:
