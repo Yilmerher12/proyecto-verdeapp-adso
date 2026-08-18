@@ -455,74 +455,56 @@
     }
   },
   "landing": {
-    "nav": { "login": "Sign in", "register": "Sign up" },
+    "nav": { "homeAriaLabel": "VerdeApp — home", "login": "Sign in", "register": "Sign up" },
     "hero": {
-      "title": "Secure authentication,",
-      "titleHighlight": "production ready",
-      "subtitle": "Registration, login, email verification, password change and recovery. A complete system built with FastAPI, React and security best practices.",
-      "ctaPrimary": "Get started",
-      "ctaSecondary": "Sign in"
-    },
-    "features": {
-      "title": "System features",
-      "subtitle": "Everything you need for a robust and educational authentication system.",
-      "register": {
-        "title": "Secure registration",
-        "description": "Real-time data validation. Passwords are hashed with bcrypt — never stored in plain text."
-      },
-      "jwt": {
-        "title": "JWT authentication",
-        "description": "15-minute access tokens and 7-day refresh tokens. Stateless, efficient, and industry standard."
-      },
-      "email": {
-        "title": "Email verification",
-        "description": "Confirms identity before activating the account. Single-use link sent automatically upon registration."
-      },
-      "password": {
-        "title": "Password change",
-        "description": "Authenticated users can change their password by entering the current one. Strict backend validation."
-      },
-      "recovery": {
-        "title": "Email recovery",
-        "description": "Complete forgot/reset flow with a single-use token and 1-hour expiration."
-      },
-      "security": {
-        "title": "OWASP security",
-        "description": "Security-first design: no SQL injection, no XSS, configured CORS, and inputs validated with Pydantic."
-      }
+      "subtitle": "Waste management for residential buildings in Bogotá",
+      "description": "We connect residents, recyclers, and administrators to transform waste management in your community.",
+      "ctaLogin": "I already have an account",
+      "ctaRegister": "Join VerdeApp"
     },
     "howItWorks": {
-      "title": "How does it work?",
-      "subtitle": "Three steps to start using the system.",
+      "eyebrow": "How does it work?",
+      "title": "Three steps, one complete cycle",
+      "subtitle": "VerdeApp connects everyone involved in recycling at the residential building.",
       "step1": {
-        "title": "Create your account",
-        "description": "Register your email and password. You'll receive an email to verify and activate your account."
+        "title": "The building joins",
+        "description": "The administrator registers the building on VerdeApp and invites the residents and the assigned recycler."
       },
       "step2": {
-        "title": "Sign in",
-        "description": "Authenticate with your credentials. The system will issue an access token and a refresh token."
+        "title": "Residents get involved",
+        "description": "They learn to recycle with the educational content and report when the waste room reaches full capacity."
       },
       "step3": {
-        "title": "Access the system",
-        "description": "With your active session, manage your profile and password from the dashboard."
+        "title": "The recycler takes action",
+        "description": "They report their arrival at the waste room. Once done, the system logs the pickup and generates a performance audit."
       }
     },
-    "techStack": {
-      "title": "Tech stack",
-      "subtitle": "Modern, typed, and industry-tested tools.",
-      "ariaLabel": "Project technologies"
-    },
-    "cta": {
-      "title": "Ready to get started",
-      "subtitle": "Create your account and explore the complete authentication system. Learn by implementing.",
-      "button": "Create free account"
+    "pillars": {
+      "eyebrow": "Our pillars",
+      "title": "One platform, three areas of impact",
+      "pillar1": {
+        "title": "Separation at the source",
+        "description": "Guides residents in properly sorting recyclable waste, directly from the app."
+      },
+      "pillar2": {
+        "title": "Connection with recyclers",
+        "description": "Formalizes the work of independent recyclers. Enables real-time requests and notifications between the building and the assigned recycler."
+      },
+      "pillar3": {
+        "title": "Environmental education",
+        "description": "Guides and interactive content on how to separate, clean, and hand over recyclable materials correctly in your community."
+      }
     },
     "footer": {
       "credit": "Educational project — SENA",
       "terms": "Terms of use",
       "privacy": "Privacy policy",
       "cookies": "Cookies policy",
-      "contact": "Contact"
+      "contact": "Contact",
+      "navPrivacy": "Privacy",
+      "navCookies": "Cookies",
+      "rights": "© {{year}} VerdeApp. All rights reserved.",
+      "legalAriaLabel": "Legal notice"
     }
   },
   "contact": {
