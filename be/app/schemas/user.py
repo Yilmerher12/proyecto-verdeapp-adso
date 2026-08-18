@@ -122,6 +122,10 @@ class UpdateProfileBody(BaseModel):
     nombre: str
     apellidos: str
     numero_telefonico: Optional[str] = None
+    # ¿Qué? Solo aplica al rol Reciclador (ver RQF-008). El endpoint la
+    #       ignora para Residente/Admin de Conjunto, cuyos modelos no
+    #       tienen esta columna.
+    asociacion: Optional[str] = None
 
 
 class UpdateLocaleRequest(BaseModel):

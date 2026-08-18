@@ -16,7 +16,7 @@
 | **Título**         | Actualizar datos personales del perfil      |
 | **Módulo**         | Usuarios / Perfil                            |
 | **Prioridad**      | Media                                        |
-| **Estado**         | Parcialmente implementada                     |
+| **Estado**         | Implementada                                  |
 | **RF asociados**   | RQF-008                                      |
 
 ---
