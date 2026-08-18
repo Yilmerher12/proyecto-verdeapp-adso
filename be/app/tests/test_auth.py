@@ -3,7 +3,6 @@ Módulo: tests/test_auth.py
 Descripción: Tests de integración para los endpoints de autenticación y usuario de VerdeApp.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app as fastapi_app
@@ -376,6 +375,96 @@ class TestGetMe:
         assert response.status_code == 401
 
 
+class TestUpdateProfile:
+    """Tests para PUT /api/v1/users/me (HU-009 / RQF-008)."""
+
+    URL = "/api/v1/users/me"
+
+    def test_update_profile_success(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        response = client.put(
+            self.URL,
+            json={"nombre": "Nuevo", "apellidos": "Nombre", "numero_telefonico": "3009998877"},
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+
+        get_response = client.get(self.URL, headers=auth_headers)
+        data = get_response.json()
+        assert data["first_name"] == "Nuevo"
+        assert data["last_name"] == "Nombre"
+        assert data["numero_telefonico"] == "3009998877"
+
+    def test_update_profile_missing_nombre(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        response = client.put(
+            self.URL,
+            json={"nombre": "  ", "apellidos": "Nombre"},
+            headers=auth_headers,
+        )
+        assert response.status_code == 422
+
+    def test_update_profile_invalid_phone(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        response = client.put(
+            self.URL,
+            json={"nombre": "Nombre", "apellidos": "Apellido", "numero_telefonico": "abc123"},
+            headers=auth_headers,
+        )
+        assert response.status_code == 400
+        assert "formato inválido" in response.json()["detail"]
+
+    def test_update_profile_no_auth(self, client: TestClient) -> None:
+        response = client.put(
+            self.URL, json={"nombre": "Nombre", "apellidos": "Apellido"}
+        )
+        assert response.status_code == 401
+
+    def test_update_profile_admin_sistema_forbidden(
+        self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
+    ) -> None:
+        response = client.put(
+            self.URL,
+            json={"nombre": "Nombre", "apellidos": "Apellido"},
+            headers=admin_sistema_auth_headers,
+        )
+        assert response.status_code == 403
+
+    def test_update_profile_reciclador_updates_asociacion(
+        self, client: TestClient, reciclador_auth_headers: dict[str, str]
+    ) -> None:
+        response = client.put(
+            self.URL,
+            json={
+                "nombre": "Reci",
+                "apellidos": "Clador",
+                "numero_telefonico": "3001112233",
+                "asociacion": "ASOREC BOGOTÁ",
+            },
+            headers=reciclador_auth_headers,
+        )
+        assert response.status_code == 200
+
+        get_response = client.get(self.URL, headers=reciclador_auth_headers)
+        assert get_response.json()["asociacion"] == "ASOREC BOGOTÁ"
+
+    def test_update_profile_reciclador_empty_asociacion_defaults_independiente(
+        self, client: TestClient, reciclador_auth_headers: dict[str, str]
+    ) -> None:
+        response = client.put(
+            self.URL,
+            json={"nombre": "Reci", "apellidos": "Clador", "asociacion": ""},
+            headers=reciclador_auth_headers,
+        )
+        assert response.status_code == 200
+
+        get_response = client.get(self.URL, headers=reciclador_auth_headers)
+        assert get_response.json()["asociacion"] == "INDEPENDIENTE"
+
+
 class TestHealthCheck:
     """Tests para el endpoint de verificación de salud del servidor."""
 
@@ -444,10 +533,6 @@ class TestEmailVerification:
         assert "utilizado" in response.json()["detail"].lower()
 
 
-@pytest.mark.skip(
-    reason="update_user_locale() es un no-op: no persiste el locale en la BD. "
-    "Pendiente implementar la columna real antes de habilitar este test."
-)
 class TestUpdateLocale:
     """Tests para el endpoint de actualización de preferencia de idioma."""
 

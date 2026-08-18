@@ -16,7 +16,7 @@
 | **Nombre** | Actualizar Perfil   |
 | **Módulo** | Usuarios / Perfil   |
 | **Prioridad** | Media               |
-| **Estado** | Parcialmente implementado (UI lista, integración backend en progreso) |
+| **Estado** | Implementado |
 | **Usuarios** | reciclador, residente|
 
 ---

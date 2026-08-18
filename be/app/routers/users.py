@@ -6,7 +6,9 @@ y preferencias de la aplicación (idioma, etc.).
 ¿Impacto? Sin este router, el frontend no podría mostrar los datos del usuario logueado
 (nombre, email, fecha de registro, etc.) ni persistir preferencias como el idioma.
 """
-from fastapi import APIRouter, Depends
+import re
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.dependencies import get_current_user, get_db
@@ -25,6 +27,10 @@ router = APIRouter(
     prefix="/api/v1/users",
     tags=["users"],
 )
+
+# ¿Qué? Formato válido de teléfono local (RQF-008): solo dígitos, entre 7
+#       (fijo con indicativo corto) y 10 (celular colombiano) caracteres.
+TELEFONO_REGEX = re.compile(r"^\d{7,10}$")
 
 
 @router.get("/me", summary="Obtiene el perfil del usuario activo")
@@ -115,36 +121,44 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
     return payload
 
 
-@router.put("/me", summary="Actualizar nombre, apellidos y teléfono del usuario")
+@router.put("/me", summary="Actualizar nombre, apellidos, teléfono y asociación del usuario")
 def update_profile(
     body: UpdateProfileBody,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from fastapi import HTTPException
     nombre = body.nombre.strip()
     apellidos = body.apellidos.strip()
     if not nombre or not apellidos:
         raise HTTPException(status_code=422, detail="Nombre y apellidos son obligatorios.")
+
+    telefono = (body.numero_telefonico or "").strip()
+    if telefono and not TELEFONO_REGEX.match(telefono):
+        raise HTTPException(
+            status_code=400,
+            detail="El número telefónico tiene un formato inválido.",
+        )
 
     if current_user.id_rol == RolId.RESIDENTE:
         row = db.execute(select(Residente).where(Residente.id_usuario == current_user.id_usuario)).scalar_one_or_none()
         if row:
             row.nombre = nombre
             row.apellidos = apellidos
-            row.numero_telefonico = body.numero_telefonico or "N/A"
+            row.numero_telefonico = telefono or "N/A"
     elif current_user.id_rol == RolId.RECICLADOR:
         row = db.execute(select(Reciclador).where(Reciclador.id_usuario == current_user.id_usuario)).scalar_one_or_none()
         if row:
             row.nombre = nombre
             row.apellidos = apellidos
-            row.numero_telefonico = body.numero_telefonico or "N/A"
+            row.numero_telefonico = telefono or "N/A"
+            asociacion = (body.asociacion or "").strip()
+            row.asociacion = asociacion or "INDEPENDIENTE"
     elif current_user.id_rol == RolId.ADMIN_CONJUNTO:
         row = db.execute(select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == current_user.id_usuario)).scalar_one_or_none()
         if row:
             row.nombre = nombre
             row.apellidos = apellidos
-            row.numero_telefonico = body.numero_telefonico or "N/A"
+            row.numero_telefonico = telefono or "N/A"
     else:
         raise HTTPException(status_code=403, detail="El perfil del administrador del sistema no es editable.")
 
