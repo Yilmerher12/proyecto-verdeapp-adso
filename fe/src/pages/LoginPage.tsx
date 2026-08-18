@@ -7,6 +7,7 @@
  */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Mail, Lock, Leaf } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
@@ -19,6 +20,7 @@ import { RoleId } from "@/types/auth";
 export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export function LoginPage() {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Credenciales incorrectas. Verifica tu correo y contraseña.");
+        setError(t("auth.login.errorDefault"));
       }
     } finally {
       setIsLoading(false);
@@ -78,10 +80,10 @@ export function LoginPage() {
               <Leaf className="h-6 w-6" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Ingresa a VerdeApp
+              {t("auth.login.title")}
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Gestiona el reciclaje y los reportes de tu comunidad.
+              {t("auth.login.subtitle")}
             </p>
           </div>
 
@@ -93,11 +95,11 @@ export function LoginPage() {
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <InputField
-              label="Correo Electrónico"
+              label={t("common.email")}
               name="email"
               type="email"
               value={formData.email}
-              placeholder="tu_correo@ejemplo.com"
+              placeholder={t("common.emailPlaceholder")}
               autoComplete="email"
               autoFocus
               icon={<Mail className="h-5 w-5 text-gray-400" />}
@@ -105,11 +107,11 @@ export function LoginPage() {
             />
 
             <InputField
-              label="Contraseña"
+              label={t("common.password")}
               name="password"
               type="password"
               value={formData.password}
-              placeholder="••••••••"
+              placeholder={t("common.passwordPlaceholder")}
               autoComplete="current-password"
               icon={<Lock className="h-5 w-5 text-gray-400" />}
               onChange={handleChange}
@@ -120,24 +122,24 @@ export function LoginPage() {
                 to="/forgot-password"
                 className="text-xs font-semibold text-green-600 hover:text-green-700 dark:text-green-400"
               >
-                ¿Olvidaste tu contraseña?
+                {t("auth.login.forgotPassword")}
               </Link>
             </div>
 
             <div className="pt-2">
               <Button type="submit" fullWidth isLoading={isLoading}>
-                Iniciar Sesión
+                {t("auth.login.submit")}
               </Button>
             </div>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            ¿No tienes cuenta aún?{" "}
+            {t("auth.login.noAccount")}{" "}
             <Link
               to="/register"
               className="font-bold text-green-600 hover:text-green-700 dark:text-green-400"
             >
-              Regístrate aquí
+              {t("auth.login.createAccountLink")}
             </Link>
           </p>
         </div>
