@@ -52,7 +52,10 @@
     "back": "Back",
     "or": "or",
     "close": "Close",
-    "edit": "Edit"
+    "edit": "Edit",
+    "phone": "Phone",
+    "saving": "Saving...",
+    "saveError": "Could not save. Please try again."
   },
   "auth": {
     "login": {
@@ -707,5 +710,150 @@
         "empty": "You have no notifications yet. They will appear here when the recycler sends notices."
       }
     }
+  },
+  "notificationFeed": {
+    "markAllRead": "Mark all read",
+    "clearRead": "Clear read",
+    "showLess": "Show less",
+    "showMore": "Show {{count}} more",
+    "time": {
+      "justNow": "just now",
+      "minutesAgo": "{{count}} min ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    }
+  },
+  "profile": {
+    "title": "My profile",
+    "subtitle": "Manage your personal information",
+    "updateSuccess": "Profile updated successfully.",
+    "loading": "Loading your profile...",
+    "loadError": "Could not load your profile.",
+    "fields": {
+      "conjunto": "Building",
+      "unit": "Unit",
+      "unitFormat": "{{torre}} · Apt {{apto}}",
+      "baseLocality": "Base district",
+      "association": "Association",
+      "firstName": "First name",
+      "lastName": "Last name"
+    },
+    "managedConjuntoSingular": "Building you administer",
+    "managedConjuntoPlural": "Buildings you administer",
+    "personalInfoSection": {
+      "title": "Personal information"
+    },
+    "notRegistered": "Not registered",
+    "emailNote": "Your email can't be changed from here.",
+    "validation": {
+      "nameRequired": "First and last name are required.",
+      "phoneInvalid": "The phone number format is invalid."
+    },
+    "phonePlaceholder": "E.g.: 3001234567",
+    "associationPlaceholder": "E.g.: INDEPENDENT",
+    "saveChanges": "Save changes"
+  },
+  "directorio": {
+    "subtitleGeneral": "Connect with recyclers and collection points in your district.",
+    "subtitleAcopio": "Find the points where you can drop off recyclable material.",
+    "tabs": {
+      "recyclers": "Recyclers"
+    },
+    "allLocalities": "All districts",
+    "emptyRecyclers": "No recyclers registered in this district.",
+    "emptyPoints": "No collection points registered in this district.",
+    "call": "Call",
+    "noPhone": "No phone registered"
+  },
+  "catalogoEducativo": {
+    "title": "Learn to recycle",
+    "subtitle": "Choose a topic to see its videos and support guides.",
+    "loading": "Loading content...",
+    "loadError": "Could not load the educational catalog.",
+    "emptyState": "No educational content published yet.",
+    "tema": "topic",
+    "temas": "topics"
+  },
+  "categoriaEducativa": {
+    "back": "Back to Learn to recycle",
+    "emptyForCategory": "No content was found for this category.",
+    "viewGuide": "View support guide"
+  },
+  "adminContenidoEducativo": {
+    "title": "Educational content",
+    "subtitle": "Create, edit, and delete the catalog modules.",
+    "newModule": "New module",
+    "emptyState": "No modules created yet.",
+    "editAria": "Edit {{titulo}}",
+    "deleteAria": "Delete {{titulo}}",
+    "modal": {
+      "editTitle": "Edit module",
+      "deleteAriaLabel": "Confirm deletion"
+    },
+    "validation": {
+      "required": "Category, title, and content are required."
+    },
+    "deleteError": "Could not delete. Please try again.",
+    "fields": {
+      "category": "Category",
+      "categoryPlaceholder": "E.g.: Separation at the source",
+      "titleField": "Title",
+      "titlePlaceholder": "E.g.: Color-coding for bags",
+      "content": "Content",
+      "videoLink": "Video link (YouTube)",
+      "guideLink": "Support guide link (PDF, Drive, etc.)"
+    },
+    "deleteConfirm": {
+      "title": "Delete \"{{titulo}}\"?",
+      "warning": "This action cannot be undone.",
+      "confirm": "Yes, delete"
+    }
+  },
+  "aceptarInvitacion": {
+    "verifying": "Verifying your invitation...",
+    "invalid": {
+      "title": "Invalid invitation",
+      "message": "This link has already been used, expired, or is incorrect. Ask the VerdeApp team to send you a new invitation.",
+      "backHome": "Back to home"
+    },
+    "success": {
+      "title": "Account created!",
+      "message": "You can now sign in with your email and the password you just set, to administer your assigned buildings.",
+      "goToLogin": "Go to sign in"
+    },
+    "form": {
+      "title": "Create your administrator account",
+      "invitationFor": "Invitation for:",
+      "willAdminister": "You will administer:",
+      "submit": "Create my account"
+    },
+    "errors": {
+      "nameRequired": "The first name is required.",
+      "lastNameRequired": "The last name is required.",
+      "passwordsMismatch": "Passwords do not match."
+    },
+    "genericError": "Your account could not be created. The link may have expired or already been used."
+  },
+  "verifyEmail": {
+    "title": "Email verification",
+    "noTokenError": "The verification link is not valid. No token was found.",
+    "verifying": "Verifying your email...",
+    "successMessage": "Your email has been successfully verified! You can now sign in.",
+    "errorMessage": "The verification link is not valid or has already been used. Please request a new link.",
+    "goToLogin": "Go to login"
+  },
+  "invitarAdminConjunto": {
+    "title": "Invite Building Administrator",
+    "description": "You only need their email. The invited person will set their own password and complete their details when accepting the invitation.",
+    "emailLabel": "Email of the administrator to invite *",
+    "conjuntosLabel": "Buildings to assign *",
+    "loadingConjuntos": "Loading buildings...",
+    "selectedCount": "{{count}} building(s) selected",
+    "submit": "Send invitation",
+    "validation": {
+      "noConjuntoSelected": "Select at least one residential building to assign."
+    },
+    "successMessage": "Invitation sent to {{correo}}. Once accepted, they will be assigned to the selected buildings.",
+    "errorDefault": "The invitation could not be sent. Check the details and try again."
   }
 }

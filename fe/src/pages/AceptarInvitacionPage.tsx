@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
@@ -9,7 +10,7 @@ import { Alert } from "@/components/ui/Alert";
 import {
   PasswordStrengthIndicator,
   getPasswordRequirementError,
-  PASSWORD_ERROR_MESSAGES_ES,
+  type PasswordRequirementError,
 } from "@/components/ui/PasswordStrengthIndicator";
 import { Building2, ShieldCheck, XCircle } from "lucide-react";
 import {
@@ -17,6 +18,23 @@ import {
     aceptarInvitacion,
     type InvitacionInfo,
 } from "@/lib/adminConjuntoApi";
+
+// ¿Qué? Misma función que en RegisterPage.tsx — mapea el código devuelto por
+//       getPasswordRequirementError() a las claves compartidas de
+//       auth.register.validation, la única fuente de verdad para los
+//       mensajes de requisitos de contraseña en toda la app.
+function traducirErrorPassword(
+  codigo: PasswordRequirementError,
+  t: (key: string) => string,
+): string {
+  const claves: Record<PasswordRequirementError, string> = {
+    too_short: "auth.register.validation.passwordMin",
+    no_uppercase: "auth.register.validation.passwordUppercase",
+    no_lowercase: "auth.register.validation.passwordLowercase",
+    no_digit: "auth.register.validation.passwordNumber",
+  };
+  return t(claves[codigo]);
+}
 
 /**
  * ¿Qué? Pantalla pública a la que llega la persona invitada al hacer
@@ -26,6 +44,7 @@ import {
  *           Sistema que la invitó nunca ve ni define esta información.
  */
 export function AceptarInvitacionPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") || "";
@@ -73,14 +92,14 @@ export function AceptarInvitacionPage() {
     setGeneralError(null);
     const errors: Record<string, string> = {};
 
-    if (!formData.nombre.trim()) errors["nombre"] = "El nombre es obligatorio.";
-    if (!formData.apellidos.trim()) errors["apellidos"] = "Los apellidos son obligatorios.";
+    if (!formData.nombre.trim()) errors["nombre"] = t("aceptarInvitacion.errors.nameRequired");
+    if (!formData.apellidos.trim()) errors["apellidos"] = t("aceptarInvitacion.errors.lastNameRequired");
     const passwordError = getPasswordRequirementError(formData.password);
     if (passwordError) {
-      errors["password"] = PASSWORD_ERROR_MESSAGES_ES[passwordError];
+      errors["password"] = traducirErrorPassword(passwordError, t);
     }
     if (formData.password !== formData.confirmPassword) {
-      errors["confirmPassword"] = "Las contraseñas no coinciden.";
+      errors["confirmPassword"] = t("aceptarInvitacion.errors.passwordsMismatch");
     }
 
     if (Object.keys(errors).length > 0) {
@@ -101,7 +120,7 @@ export function AceptarInvitacionPage() {
     } catch (err: any) {
       setGeneralError(
         err.response?.data?.detail ||
-          "No se pudo crear tu cuenta. El enlace puede haber expirado o ya fue utilizado."
+          t("aceptarInvitacion.genericError")
       );
     } finally {
       setIsLoading(false);
@@ -114,7 +133,7 @@ export function AceptarInvitacionPage() {
       <>
         <LandingPage />
         <Modal onClose={() => navigate("/")}>
-          <div className="p-10 text-center text-gray-500">Verificando tu invitación...</div>
+          <div className="p-10 text-center text-gray-500">{t("aceptarInvitacion.verifying")}</div>
         </Modal>
       </>
     );
@@ -130,13 +149,12 @@ export function AceptarInvitacionPage() {
             <div className="mx-auto w-16 h-16 bg-red-100 flex items-center justify-center rounded-full border border-red-200">
               <XCircle className="w-8 h-8 text-red-600" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Invitación no válida</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t("aceptarInvitacion.invalid.title")}</h2>
             <p className="text-gray-600 text-sm">
-              Este enlace ya fue utilizado, expiró, o no es correcto. Pide al
-              equipo de VerdeApp que te envíe una nueva invitación.
+              {t("aceptarInvitacion.invalid.message")}
             </p>
             <Button onClick={() => navigate("/")} fullWidth>
-              Volver al inicio
+              {t("aceptarInvitacion.invalid.backHome")}
             </Button>
           </div>
         </Modal>
@@ -154,14 +172,13 @@ export function AceptarInvitacionPage() {
             <div className="mx-auto w-20 h-20 bg-green-100 flex items-center justify-center rounded-full border border-green-200">
               <ShieldCheck className="w-10 h-10 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">¡Cuenta creada!</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t("aceptarInvitacion.success.title")}</h2>
             <p className="text-gray-600 text-sm">
-              Ya puedes iniciar sesión con tu correo y la contraseña que
-              acabas de definir, para administrar tus conjuntos asignados.
+              {t("aceptarInvitacion.success.message")}
             </p>
             <div className="pt-4">
               <Button onClick={() => navigate("/")} fullWidth>
-                Ir a iniciar sesión
+                {t("aceptarInvitacion.success.goToLogin")}
               </Button>
             </div>
           </div>
@@ -177,9 +194,9 @@ export function AceptarInvitacionPage() {
       <Modal onClose={() => navigate("/")} wide>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-900">Crea tu cuenta de administrador</h2>
+            <h2 className="text-3xl font-bold text-gray-900">{t("aceptarInvitacion.form.title")}</h2>
             <p className="text-gray-500 mt-1">
-              Invitación para: <strong>{infoInvitacion.correo_electronico}</strong>
+              {t("aceptarInvitacion.form.invitationFor")} <strong>{infoInvitacion.correo_electronico}</strong>
             </p>
           </div>
 
@@ -187,7 +204,7 @@ export function AceptarInvitacionPage() {
             <div className="flex items-center gap-2 mb-2">
               <Building2 className="w-4 h-4 text-green-600" />
               <span className="text-sm font-bold text-gray-700">
-                Vas a administrar:
+                {t("aceptarInvitacion.form.willAdminister")}
               </span>
             </div>
             <ul className="text-sm text-gray-600 list-disc list-inside">
@@ -199,7 +216,7 @@ export function AceptarInvitacionPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <InputField
-              label="Nombres *"
+              label={t("auth.register.fields.firstName")}
               name="nombre"
               value={formData.nombre}
               onChange={handleChange}
@@ -207,7 +224,7 @@ export function AceptarInvitacionPage() {
             {fieldErrors.nombre && <p className="text-xs text-red-500">{fieldErrors.nombre}</p>}
 
             <InputField
-              label="Apellidos *"
+              label={t("auth.register.fields.lastName")}
               name="apellidos"
               value={formData.apellidos}
               onChange={handleChange}
@@ -216,7 +233,7 @@ export function AceptarInvitacionPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
-                label="Teléfono"
+                label={t("common.phone")}
                 name="numero_telefonico"
                 value={formData.numero_telefonico}
                 onChange={handleChange}
@@ -226,12 +243,12 @@ export function AceptarInvitacionPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div>
                 <InputField
-                  label="Contraseña *"
+                  label={t("auth.register.fields.password")}
                   name="password"
                   type="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder={t("auth.register.fields.passwordPlaceholder")}
                 />
                 <PasswordStrengthIndicator password={formData.password} />
                 {fieldErrors.password && (
@@ -240,12 +257,12 @@ export function AceptarInvitacionPage() {
               </div>
               <div>
                 <InputField
-                  label="Confirmar Contraseña *"
+                  label={t("auth.register.fields.confirmPasswordField")}
                   name="confirmPassword"
                   type="password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  placeholder="Repite la contraseña"
+                  placeholder={t("auth.register.fields.confirmPasswordPlaceholder")}
                   disablePaste
                 />
                 {fieldErrors.confirmPassword && (
@@ -256,7 +273,7 @@ export function AceptarInvitacionPage() {
 
             <div className="w-full pt-4">
               <Button type="submit" fullWidth isLoading={isLoading}>
-                Crear mi cuenta
+                {t("aceptarInvitacion.form.submit")}
               </Button>
             </div>
           </form>

@@ -52,7 +52,10 @@
     "back": "Volver",
     "or": "o",
     "close": "Cerrar",
-    "edit": "Editar"
+    "edit": "Editar",
+    "phone": "Teléfono",
+    "saving": "Guardando...",
+    "saveError": "No se pudo guardar. Intenta de nuevo."
   },
   "auth": {
     "login": {
@@ -711,5 +714,150 @@
         "empty": "No tienes notificaciones aún. Aparecerán aquí cuando el reciclador envíe avisos."
       }
     }
+  },
+  "notificationFeed": {
+    "markAllRead": "Marcar leídas",
+    "clearRead": "Limpiar leídas",
+    "showLess": "Ver menos",
+    "showMore": "Ver {{count}} más",
+    "time": {
+      "justNow": "hace un momento",
+      "minutesAgo": "hace {{count}} min",
+      "hoursAgo": "hace {{count}}h",
+      "daysAgo": "hace {{count}}d"
+    }
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "subtitle": "Gestiona tu información personal",
+    "updateSuccess": "Perfil actualizado correctamente.",
+    "loading": "Cargando tu perfil...",
+    "loadError": "No se pudo cargar tu perfil.",
+    "fields": {
+      "conjunto": "Conjunto",
+      "unit": "Unidad",
+      "unitFormat": "{{torre}} · Apto {{apto}}",
+      "baseLocality": "Localidad base",
+      "association": "Asociación",
+      "firstName": "Nombre",
+      "lastName": "Apellidos"
+    },
+    "managedConjuntoSingular": "Conjunto que administras",
+    "managedConjuntoPlural": "Conjuntos que administras",
+    "personalInfoSection": {
+      "title": "Información personal"
+    },
+    "notRegistered": "No registrado",
+    "emailNote": "El correo no se puede cambiar desde aquí.",
+    "validation": {
+      "nameRequired": "Nombre y apellidos son obligatorios.",
+      "phoneInvalid": "El número telefónico tiene un formato inválido."
+    },
+    "phonePlaceholder": "Ej: 3001234567",
+    "associationPlaceholder": "Ej: INDEPENDIENTE",
+    "saveChanges": "Guardar cambios"
+  },
+  "directorio": {
+    "subtitleGeneral": "Conecta con los recicladores y puntos de acopio de tu localidad.",
+    "subtitleAcopio": "Encuentra los puntos donde puedes entregar material reciclado.",
+    "tabs": {
+      "recyclers": "Recicladores"
+    },
+    "allLocalities": "Todas las localidades",
+    "emptyRecyclers": "No hay recicladores registrados en esta localidad.",
+    "emptyPoints": "No hay puntos de acopio registrados en esta localidad.",
+    "call": "Llamar",
+    "noPhone": "Sin teléfono registrado"
+  },
+  "catalogoEducativo": {
+    "title": "Aprender a reciclar",
+    "subtitle": "Elige un tema para ver sus videos y guías de apoyo.",
+    "loading": "Cargando contenido...",
+    "loadError": "No se pudo cargar el catálogo educativo.",
+    "emptyState": "Todavía no hay contenido educativo publicado.",
+    "tema": "tema",
+    "temas": "temas"
+  },
+  "categoriaEducativa": {
+    "back": "Volver a Aprender a reciclar",
+    "emptyForCategory": "No se encontró contenido para esta categoría.",
+    "viewGuide": "Ver guía de apoyo"
+  },
+  "adminContenidoEducativo": {
+    "title": "Contenido educativo",
+    "subtitle": "Crea, edita y elimina los módulos del catálogo.",
+    "newModule": "Nuevo módulo",
+    "emptyState": "Todavía no hay módulos creados.",
+    "editAria": "Editar {{titulo}}",
+    "deleteAria": "Eliminar {{titulo}}",
+    "modal": {
+      "editTitle": "Editar módulo",
+      "deleteAriaLabel": "Confirmar eliminación"
+    },
+    "validation": {
+      "required": "Categoría, título y contenido son obligatorios."
+    },
+    "deleteError": "No se pudo eliminar. Intenta de nuevo.",
+    "fields": {
+      "category": "Categoría",
+      "categoryPlaceholder": "Ej: Separación en la fuente",
+      "titleField": "Título",
+      "titlePlaceholder": "Ej: Código de colores de bolsas",
+      "content": "Contenido",
+      "videoLink": "Link de video (YouTube)",
+      "guideLink": "Link de guía de apoyo (PDF, Drive, etc.)"
+    },
+    "deleteConfirm": {
+      "title": "¿Eliminar \"{{titulo}}\"?",
+      "warning": "Esta acción no se puede deshacer.",
+      "confirm": "Sí, eliminar"
+    }
+  },
+  "aceptarInvitacion": {
+    "verifying": "Verificando tu invitación...",
+    "invalid": {
+      "title": "Invitación no válida",
+      "message": "Este enlace ya fue utilizado, expiró, o no es correcto. Pide al equipo de VerdeApp que te envíe una nueva invitación.",
+      "backHome": "Volver al inicio"
+    },
+    "success": {
+      "title": "¡Cuenta creada!",
+      "message": "Ya puedes iniciar sesión con tu correo y la contraseña que acabas de definir, para administrar tus conjuntos asignados.",
+      "goToLogin": "Ir a iniciar sesión"
+    },
+    "form": {
+      "title": "Crea tu cuenta de administrador",
+      "invitationFor": "Invitación para:",
+      "willAdminister": "Vas a administrar:",
+      "submit": "Crear mi cuenta"
+    },
+    "errors": {
+      "nameRequired": "El nombre es obligatorio.",
+      "lastNameRequired": "Los apellidos son obligatorios.",
+      "passwordsMismatch": "Las contraseñas no coinciden."
+    },
+    "genericError": "No se pudo crear tu cuenta. El enlace puede haber expirado o ya fue utilizado."
+  },
+  "verifyEmail": {
+    "title": "Verificación de email",
+    "noTokenError": "El enlace de verificación no es válido. No se encontró un token.",
+    "verifying": "Verificando tu email...",
+    "successMessage": "¡Tu email ha sido verificado exitosamente! Ya puedes iniciar sesión.",
+    "errorMessage": "El enlace de verificación no es válido o ya fue utilizado. Por favor, solicita un nuevo enlace.",
+    "goToLogin": "Ir al login"
+  },
+  "invitarAdminConjunto": {
+    "title": "Invitar Administrador de Conjunto",
+    "description": "Solo necesitas su correo. La persona invitada definirá su propia contraseña y completará sus datos al aceptar la invitación.",
+    "emailLabel": "Correo del administrador a invitar *",
+    "conjuntosLabel": "Conjuntos a asignar *",
+    "loadingConjuntos": "Cargando conjuntos...",
+    "selectedCount": "{{count}} conjunto(s) seleccionado(s)",
+    "submit": "Enviar invitación",
+    "validation": {
+      "noConjuntoSelected": "Selecciona al menos un conjunto residencial para asignar."
+    },
+    "successMessage": "Invitación enviada a {{correo}}. Cuando la acepte, quedará asignado a los conjuntos seleccionados.",
+    "errorDefault": "No se pudo enviar la invitación. Verifica los datos e intenta de nuevo."
   }
 }

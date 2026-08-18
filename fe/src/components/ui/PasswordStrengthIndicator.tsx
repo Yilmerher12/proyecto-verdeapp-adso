@@ -40,8 +40,8 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
  * símbolo especial es un extra que suma puntos en la barra, pero nunca es
  * obligatorio para poder enviar el formulario).
  *
- * Devuelve un código (no un texto) para que cada pantalla pueda traducirlo
- * a su propio idioma/formato — las que ya usan i18n, y las que todavía no.
+ * Devuelve un código (no un texto) para que cada pantalla lo traduzca con
+ * sus propias claves de i18next (todas los 4 formularios ya usan i18n).
  */
 export type PasswordRequirementError = "too_short" | "no_uppercase" | "no_lowercase" | "no_digit";
 
@@ -52,14 +52,6 @@ export function getPasswordRequirementError(password: string): PasswordRequireme
   if (!/\d/.test(password)) return "no_digit";
   return null;
 }
-
-/** Mensajes en español listos para usar en pantallas que todavía no tienen i18n conectado. */
-export const PASSWORD_ERROR_MESSAGES_ES: Record<PasswordRequirementError, string> = {
-  too_short: "La contraseña debe tener al menos 8 caracteres.",
-  no_uppercase: "La contraseña debe contener al menos una mayúscula.",
-  no_lowercase: "La contraseña debe contener al menos una minúscula.",
-  no_digit: "La contraseña debe contener al menos un número.",
-};
 
 // ¿Qué? Solo colores — la etiqueta de texto ahora viene de translation.json
 //       (clave "passwordStrength.1".."passwordStrength.5") para que cambie
