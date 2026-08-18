@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema elimina un módulo de contenido educativo           |
 | **Módulo**         | Educación / Administración                                      |
 | **Prioridad**      | Media                                                             |
-| **Estado**         | Por implementar                                                   |
+| **Estado**         | Implementada                                                      |
 | **RF asociados**   | RQF-010                                                          |
 
 ---

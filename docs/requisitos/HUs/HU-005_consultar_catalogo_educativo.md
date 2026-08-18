@@ -16,7 +16,7 @@
 | **Título**         | Residente consulta el catálogo educativo |
 | **Módulo**         | Educación                             |
 | **Prioridad**      | Media                                  |
-| **Estado**         | Por implementar                        |
+| **Estado**         | Implementada                           |
 | **RF asociados**   | RQF-004                               |
 
 ---

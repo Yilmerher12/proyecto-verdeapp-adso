@@ -1,6 +1,7 @@
 ﻿import { Link } from "react-router-dom";
 import { ArrowRight, MapPin, Users, Recycle } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
 const pasos = [
   {
@@ -70,6 +71,7 @@ export function LandingPage() {
           </Link>
 
           <ul className="m-0 flex list-none items-center gap-2 p-0">
+            <li><LanguageSwitcher /></li>
             <li><ThemeToggle /></li>
             <li className="hidden sm:block">
               <Link
