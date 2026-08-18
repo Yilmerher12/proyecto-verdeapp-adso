@@ -6,7 +6,7 @@ Adaptado para VerdeApp: Recibe datos completos del formulario (Rol, Datos Person
 
 import re
 from typing import Optional
-from pydantic import BaseModel, Field, EmailStr, field_validator, model_validator
+from pydantic import BaseModel, Field, EmailStr, field_validator
 
 
 def _validate_password_strength(v: str) -> str:
