@@ -40,8 +40,21 @@ export function AppShell({ children }: AppShellProps) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    navigate("/");
+    // ¿Qué? logout() limpia sessionStorage (síncrono), y luego una recarga
+    //       completa de página lleva a "/".
+    // ¿Para qué? Probé navigate("/") + logout() en varios órdenes (incluso
+    //           con delays) y siempre perdían contra ProtectedRoute: aunque
+    //           la URL cambiaba a "/" casi al instante, React todavía no
+    //           había terminado de reemplazar el árbol de componentes (el
+    //           ProtectedRoute de la ruta protegida seguía montado un
+    //           instante más), así que su propio <Navigate to="/login">
+    //           terminaba ganando la carrera sin importar el orden.
+    // ¿Impacto? Con una recarga completa, toda la app arranca de cero — no
+    //           queda ningún componente viejo montado que pueda competir.
+    //           Es la forma más simple de garantizar que esto no vuelva a
+    //           fallar por una condición de carrera similar en el futuro.
     logout();
+    window.location.href = "/";
   };
 
   // Polling de notificaciones no leídas cada 20s
@@ -83,7 +96,7 @@ export function AppShell({ children }: AppShellProps) {
       return [
         ...commonStart,
         { icon: Newspaper, label: "Crear Novedades", href: null, enabled: false },
-        { icon: BookOpen, label: "Contenido Educativo", href: null, enabled: false },
+        { icon: BookOpen, label: "Contenido Educativo", href: "/admin/contenido-educativo", enabled: true },
         ...commonEnd,
       ];
     }
@@ -111,7 +124,7 @@ export function AppShell({ children }: AppShellProps) {
       ...commonStart,
       { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
       { icon: Newspaper, label: "Novedades Conjunto", href: null, enabled: false },
-      { icon: BookOpen, label: "Aprender (Guías)", href: null, enabled: false },
+      { icon: BookOpen, label: "Aprender (Guías)", href: "/catalogo-educativo", enabled: true },
       { icon: MapPin, label: "Directorio General", href: "/directorio", enabled: true },
       ...commonEnd,
     ];

@@ -10,7 +10,7 @@
 | **Nombre** | Gestionar Contenido Educativo  |
 | **Módulo** | Educación / Administración     |
 | **Prioridad** | Media                          |
-| **Estado** | Por implementar                |
+| **Estado** | Implementado                   |
 | **Usuarios** | admin_sistema                  |
 
 ---

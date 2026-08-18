@@ -24,15 +24,21 @@ import { updateLocale } from "@/api/auth";
 type SupportedLocale = "es" | "en";
 
 // ¿Qué? Configuración declarativa de los idiomas disponibles.
-// ¿Para qué? Centralizar los datos de cada opción — etiqueta, código y accesibilidad.
+// ¿Para qué? Centralizar los datos de cada opción — sigla visible, nombre
+//           completo (para accesibilidad), código y atributo lang.
 // ¿Impacto? Para agregar un nuevo idioma, solo se agrega un objeto a este array.
-const SUPPORTED_LOCALES: Array<{ code: SupportedLocale; label: string; langAttr: string }> = [
+const SUPPORTED_LOCALES: Array<{
+  code: SupportedLocale;
+  sigla: string;
+  nombreCompleto: string;
+  langAttr: string;
+}> = [
   // ¿Qué? langAttr es el valor del atributo HTML `lang` para esta opción.
   // ¿Para qué? WCAG 3.1.2 Language of Parts — lectores de pantalla usan este atributo
   //            para pronunciar correctamente en el idioma de la opción.
   // ¿Impacto? Sin lang, NVDA/VoiceOver pronunciaría "Español" con acento del idioma activo.
-  { code: "es", label: "Español", langAttr: "es" },
-  { code: "en", label: "English", langAttr: "en" },
+  { code: "es", sigla: "ES", nombreCompleto: "Español", langAttr: "es" },
+  { code: "en", sigla: "EN", nombreCompleto: "English", langAttr: "en" },
 ];
 
 /**
@@ -104,11 +110,13 @@ export function LanguageSwitcher() {
   const currentLocale = i18n.language?.split("-")[0] as SupportedLocale;
 
   return (
-    // ¿Qué? Contenedor del selector con aria-label para accesibilidad.
+    // ¿Qué? Contenedor del selector — ahora es un toggle compacto tipo
+    //       "píldora" (fondo gris, el activo resaltado), con solo las siglas
+    //       (ES/EN) en vez del nombre completo del idioma.
     // ¿Para qué? WCAG 1.3.1 — el propósito del grupo debe ser identificable por tecnologías asistivas.
     // ¿Impacto? Los lectores de pantalla anuncian "Selector de idioma" al entrar al grupo.
     <div
-      className="flex items-center gap-1 rounded-lg border border-gray-200 p-1 dark:border-gray-700"
+      className="flex items-center gap-0.5 rounded-full bg-gray-100 p-0.5 dark:bg-gray-800"
       role="group"
       aria-label={t("language.selector")}
     >
@@ -127,18 +135,22 @@ export function LanguageSwitcher() {
             //            en el idioma del botón (ej: "Español" con pronunciación española).
             // ¿Impacto? Sin esto, "Español" se pronunciaría con el acento del idioma activo.
             lang={locale.langAttr}
+            // ¿Qué? aria-label con el nombre completo, aunque el texto visible sea la sigla.
+            // ¿Para qué? "ES"/"EN" es claro visualmente, pero un lector de pantalla
+            //           debe seguir anunciando el nombre completo del idioma.
+            aria-label={locale.nombreCompleto}
             // ¿Qué? aria-pressed indica si el idioma está activo (patrón toggle button).
             // ¿Para qué? WCAG 4.1.2 — el estado del botón es comunicado a tecnologías asistivas.
             // ¿Impacto? Un usuario con lector de pantalla escucha "Español, seleccionado" o
             //            "English, no seleccionado" — sin esto, no sabría cuál está activo.
             aria-pressed={isActive}
-            className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${
               isActive
-                ? "bg-accent-600 text-white dark:bg-accent-500"
-                : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                ? "bg-white text-accent-700 shadow-sm dark:bg-gray-700 dark:text-accent-400"
+                : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
-            {locale.label}
+            {locale.sigla}
           </button>
         );
       })}
