@@ -2,6 +2,7 @@
 import { ArrowRight, MapPin, Users, Recycle } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { useRestoreScroll } from "@/hooks/useRestoreScroll";
 
 const pasos = [
   {
@@ -49,6 +50,11 @@ const pilares = [
 ] as const;
 
 export function LandingPage() {
+  // ¿Qué? Recuerda dónde estaba el usuario en el Landing y lo restaura al
+  //       volver (ej: después de cerrar Términos/Privacidad/Cookies desde
+  //       el footer, que remontan esta página desde cero).
+  useRestoreScroll("landing-scroll-y");
+
   return (
     <div className="min-h-screen bg-white dark:bg-green-950">
 
