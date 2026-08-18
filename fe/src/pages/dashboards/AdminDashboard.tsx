@@ -5,6 +5,8 @@ import { Shield, Users, Database, UserPlus } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
+import { SolicitudesDesvinculacion } from "@/components/SolicitudesDesvinculacion";
+import { AsignarConjuntoAdicionalForm } from "@/components/AsignarConjuntoAdicionalForm";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 
@@ -96,6 +98,14 @@ export function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Desvinculación y reasignación de conjuntos (RQF-016) */}
+      {accessToken && (
+        <>
+          <SolicitudesDesvinculacion token={accessToken} />
+          <AsignarConjuntoAdicionalForm token={accessToken} />
+        </>
+      )}
 
       {/* Tabla: Residentes (Vista SQL) */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">

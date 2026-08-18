@@ -859,5 +859,48 @@
     },
     "successMessage": "Invitación enviada a {{correo}}. Cuando la acepte, quedará asignado a los conjuntos seleccionados.",
     "errorDefault": "No se pudo enviar la invitación. Verifica los datos e intenta de nuevo."
+  },
+  "desvinculacion": {
+    "solicitarButton": "Solicitar desvinculación",
+    "pendingBadge": "Solicitud pendiente",
+    "motivoLabel": "Motivo (opcional)",
+    "motivoPlaceholder": "Ej: Fin de contrato",
+    "submit": "Enviar solicitud",
+    "sending": "Enviando...",
+    "successMessage": "Solicitud de desvinculación enviada. Un Administrador del Sistema la revisará.",
+    "errorDefault": "No se pudo enviar la solicitud. Intenta de nuevo.",
+    "adminSistema": {
+      "sectionTitle": "Solicitudes de desvinculación",
+      "empty": "No hay solicitudes pendientes.",
+      "requestedBy": "Solicitado por {{nombre}}",
+      "motivoLabel": "Motivo:",
+      "noMotivo": "Sin motivo indicado",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "rejectModal": {
+        "title": "Rechazar solicitud",
+        "motivoLabel": "Motivo del rechazo *",
+        "motivoPlaceholder": "Explica por qué se rechaza",
+        "confirm": "Rechazar solicitud"
+      },
+      "approveSuccess": "Solicitud aprobada.",
+      "rejectSuccess": "Solicitud rechazada.",
+      "errorDefault": "No se pudo procesar la solicitud."
+    },
+    "asignarAdicional": {
+      "sectionTitle": "Asignar conjunto adicional",
+      "searchLabel": "Buscar administrador",
+      "searchPlaceholder": "Nombre, apellidos o correo",
+      "searchButton": "Buscar",
+      "noResults": "No se encontraron administradores.",
+      "currentConjuntos": "Administra:",
+      "noConjuntos": "Ningún conjunto todavía",
+      "selectConjuntoLabel": "Conjunto a asignar",
+      "noConjuntosDisponibles": "No hay conjuntos sin administrador disponibles.",
+      "assignButton": "Asignar",
+      "assigning": "Asignando...",
+      "successMessage": "Conjunto asignado correctamente.",
+      "errorDefault": "No se pudo asignar el conjunto."
+    }
   }
 }

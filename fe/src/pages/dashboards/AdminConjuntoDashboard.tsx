@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send } from "lucide-react";
+import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send, Clock } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -9,6 +9,7 @@ import { API_BASE_URL } from "@/api/axios";
 import {
   obtenerMisConjuntos,
   editarMiConjunto,
+  solicitarDesvinculacion,
   type ConjuntoAdministrado,
 } from "@/lib/conjuntoPanelApi";
 import {
@@ -156,6 +157,106 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
               <BadgeEstado estado={inv.estado} />
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * ¿Qué? Botón/formulario para pedir dejar de administrar UN conjunto
+ *       específico (RQF-016, HU-022).
+ * ¿Para qué? Si ya hay una solicitud pendiente para ese conjunto, se
+ *           muestra un badge en vez del botón — evita que el usuario
+ *           choque con el error de "ya tienes una solicitud pendiente".
+ */
+function SeccionDesvinculacion({
+  idConjunto,
+  tieneSolicitudPendiente,
+  accessToken,
+  onSolicitudEnviada,
+}: {
+  idConjunto: number;
+  tieneSolicitudPendiente: boolean;
+  accessToken: string;
+  onSolicitudEnviada: () => void;
+}) {
+  const { t } = useTranslation();
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSolicitar = async () => {
+    setEnviando(true);
+    setError(null);
+    try {
+      await solicitarDesvinculacion(idConjunto, motivo.trim() || undefined, accessToken);
+      setMostrarFormulario(false);
+      setMotivo("");
+      onSolicitudEnviada();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      const detalle = err?.response?.data?.detail;
+      setError(detalle || t("desvinculacion.errorDefault"));
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  if (tieneSolicitudPendiente) {
+    return (
+      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 px-2.5 py-1 rounded-full">
+          <Clock className="w-3.5 h-3.5" /> {t("desvinculacion.pendingBadge")}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+      {!mostrarFormulario ? (
+        <button
+          type="button"
+          onClick={() => setMostrarFormulario(true)}
+          className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          {t("desvinculacion.solicitarButton")}
+        </button>
+      ) : (
+        <div className="bg-gray-50 dark:bg-gray-800/40 p-3 rounded-xl space-y-2">
+          <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
+            {t("desvinculacion.motivoLabel")}
+          </label>
+          <textarea
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            placeholder={t("desvinculacion.motivoPlaceholder")}
+            rows={2}
+            className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          />
+          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleSolicitar}
+              disabled={enviando}
+              className="text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {enviando ? t("desvinculacion.sending") : t("desvinculacion.submit")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMostrarFormulario(false);
+                setError(null);
+              }}
+              className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              {t("common.cancel")}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -391,7 +492,15 @@ export function AdminConjuntoDashboard() {
                                 que en una sección global aparte.
                     */}
                     {accessToken && (
-                      <SeccionRecicladores idConjunto={c.id_conjunto_residencial} accessToken={accessToken} />
+                      <>
+                        <SeccionRecicladores idConjunto={c.id_conjunto_residencial} accessToken={accessToken} />
+                        <SeccionDesvinculacion
+                          idConjunto={c.id_conjunto_residencial}
+                          tieneSolicitudPendiente={c.tiene_solicitud_pendiente}
+                          accessToken={accessToken}
+                          onSolicitudEnviada={cargarConjuntos}
+                        />
+                      </>
                     )}
                   </>
                 )}

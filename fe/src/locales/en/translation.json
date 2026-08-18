@@ -855,5 +855,48 @@
     },
     "successMessage": "Invitation sent to {{correo}}. Once accepted, they will be assigned to the selected buildings.",
     "errorDefault": "The invitation could not be sent. Check the details and try again."
+  },
+  "desvinculacion": {
+    "solicitarButton": "Request unlink",
+    "pendingBadge": "Request pending",
+    "motivoLabel": "Reason (optional)",
+    "motivoPlaceholder": "E.g.: Contract ended",
+    "submit": "Send request",
+    "sending": "Sending...",
+    "successMessage": "Unlink request sent. A System Administrator will review it.",
+    "errorDefault": "The request could not be sent. Please try again.",
+    "adminSistema": {
+      "sectionTitle": "Unlink requests",
+      "empty": "No pending requests.",
+      "requestedBy": "Requested by {{nombre}}",
+      "motivoLabel": "Reason:",
+      "noMotivo": "No reason given",
+      "approve": "Approve",
+      "reject": "Reject",
+      "rejectModal": {
+        "title": "Reject request",
+        "motivoLabel": "Rejection reason *",
+        "motivoPlaceholder": "Explain why it's being rejected",
+        "confirm": "Reject request"
+      },
+      "approveSuccess": "Request approved.",
+      "rejectSuccess": "Request rejected.",
+      "errorDefault": "The request could not be processed."
+    },
+    "asignarAdicional": {
+      "sectionTitle": "Assign additional building",
+      "searchLabel": "Search administrator",
+      "searchPlaceholder": "Name, last name, or email",
+      "searchButton": "Search",
+      "noResults": "No administrators found.",
+      "currentConjuntos": "Administers:",
+      "noConjuntos": "No buildings yet",
+      "selectConjuntoLabel": "Building to assign",
+      "noConjuntosDisponibles": "No unassigned buildings available.",
+      "assignButton": "Assign",
+      "assigning": "Assigning...",
+      "successMessage": "Building assigned successfully.",
+      "errorDefault": "The building could not be assigned."
+    }
   }
 }
