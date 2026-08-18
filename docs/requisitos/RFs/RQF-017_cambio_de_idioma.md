@@ -19,7 +19,7 @@
 | **Nombre**    | Cambio de Idioma de la Interfaz (i18n)    |
 | **Módulo**    | Internacionalización (i18n)                |
 | **Prioridad** | Media                                        |
-| **Estado**    | Parcialmente implementado                     |
+| **Estado**    | Implementado                                  |
 | **Usuarios**  | residente, reciclador, administrador, admin_conjunto |
 
 ---

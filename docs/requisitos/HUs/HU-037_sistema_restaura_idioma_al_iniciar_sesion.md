@@ -17,7 +17,7 @@
 | **Título**         | Sistema restaura el idioma guardado al iniciar sesión                            |
 | **Módulo**         | Internacionalización (i18n)                                                     |
 | **Prioridad**      | Media                                                                             |
-| **Estado**         | Por implementar                                                                    |
+| **Estado**         | Implementada                                                                       |
 | **RF asociados**   | RQF-017                                                                           |
 
 ---
