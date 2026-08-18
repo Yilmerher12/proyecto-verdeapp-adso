@@ -51,7 +51,8 @@
     "cancel": "Cancelar",
     "back": "Volver",
     "or": "o",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "edit": "Editar"
   },
   "auth": {
     "login": {
@@ -585,6 +586,130 @@
     },
     "footer": {
       "credit": "Proyecto educativo SENA"
+    }
+  },
+  "dashboards": {
+    "common": {
+      "welcomePrefix": "Bienvenido,"
+    },
+    "admin": {
+      "title": "Panel de Administración",
+      "inviteSection": {
+        "title": "Administradores de Conjunto",
+        "show": "+ Invitar administrador",
+        "hide": "Ocultar"
+      },
+      "loadingData": "Cargando datos...",
+      "residentsTable": {
+        "title": "Listado de Residentes",
+        "badge": "Vista SQL",
+        "headers": {
+          "email": "Correo",
+          "name": "Nombre",
+          "conjunto": "Conjunto",
+          "unit": "Unidad"
+        },
+        "unitFormat": "Blq {{bloque}} · Apto {{apto}}",
+        "empty": "No hay residentes registrados todavía."
+      },
+      "recyclersTable": {
+        "title": "Listado de Recicladores",
+        "badge": "Procedimiento Almacenado",
+        "headers": {
+          "email": "Correo",
+          "fullName": "Nombre completo",
+          "association": "Asociación"
+        },
+        "empty": "No hay recicladores registrados todavía."
+      }
+    },
+    "adminConjunto": {
+      "title": "Panel de Administrador de Conjunto",
+      "estado": {
+        "pendiente": "Pendiente",
+        "aceptada": "Aceptada",
+        "rechazada": "Rechazada"
+      },
+      "recyclersSection": {
+        "title": "Recicladores Autorizados",
+        "invite": "+ Invitar reciclador",
+        "emailPlaceholder": "correo.del.reciclador@ejemplo.com",
+        "sending": "Enviando...",
+        "inviteButton": "Invitar",
+        "errorDefault": "No se pudo enviar la invitación. Verifica el correo.",
+        "loading": "Cargando recicladores...",
+        "empty": "Todavía no has invitado a ningún reciclador a este conjunto."
+      },
+      "myConjuntos": {
+        "title": "Conjuntos que administras",
+        "loading": "Cargando tus conjuntos...",
+        "empty": "Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp."
+      },
+      "editForm": {
+        "name": "Nombre del conjunto",
+        "nit": "NIT (opcional)",
+        "address": "Dirección",
+        "successMessage": "Conjunto actualizado correctamente.",
+        "errorMessage": "No se pudo guardar el cambio. Intenta de nuevo."
+      },
+      "nitLabel": "NIT: {{nit}}",
+      "notifications": {
+        "title": "Actividad del conjunto",
+        "empty": "No hay actividad aún. Las notificaciones de recicladores y residentes aparecerán aquí."
+      }
+    },
+    "reciclador": {
+      "title": "Panel del Reciclador",
+      "acciones": {
+        "llegada": "Llegué al conjunto",
+        "shutLleno": "SHUT está lleno",
+        "shutLibre": "SHUT ya está libre"
+      },
+      "feedbackSent": "Notificación enviada: \"{{label}}\"",
+      "genericNotificationSent": "Notificación enviada",
+      "sendSection": {
+        "title": "Enviar notificación",
+        "subtitle": "Avisa a los residentes y al administrador del conjunto.",
+        "noConjuntos": "Aún no tienes conjuntos autorizados. Acepta una invitación para poder enviar notificaciones."
+      },
+      "invitations": {
+        "title": "Invitaciones pendientes",
+        "invitedBy": "Invitado por {{nombre}}",
+        "accept": "Aceptar",
+        "reject": "Rechazar"
+      },
+      "myConjuntos": {
+        "title": "Mis conjuntos autorizados",
+        "empty": "Todavía no estás autorizado en ningún conjunto. Cuando un administrador te invite y aceptes, aparecerá aquí."
+      },
+      "notifications": {
+        "title": "Notificaciones recibidas",
+        "empty": "No tienes notificaciones. Cuando un residente reporte el SHUT lleno, aparecerá aquí."
+      },
+      "modal": {
+        "title": "¿A qué conjunto notificas?",
+        "subtitle": "Selecciona el conjunto al que llegaste o sobre el que quieres avisar.",
+        "sending": "Enviando...",
+        "submit": "Enviar aviso"
+      }
+    },
+    "residente": {
+      "title": "Panel del Residente",
+      "shutBanner": {
+        "title": "El SHUT está lleno",
+        "reportedAt": "Reportado {{time}}",
+        "warning": "No bajes más material reciclable hasta que el reciclador indique que está libre."
+      },
+      "reportSection": {
+        "title": "Reportar SHUT lleno",
+        "description": "Avisa al reciclador y al administrador que el cuarto de basuras está lleno. El reporte es anónimo.",
+        "sent": "Enviado",
+        "submit": "Reportar"
+      },
+      "notifications": {
+        "title": "Actividad reciente",
+        "empty": "No tienes notificaciones aún. Aparecerán aquí cuando el reciclador envíe avisos."
+      }
     }
   }
 }

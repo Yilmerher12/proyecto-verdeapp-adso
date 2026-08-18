@@ -51,7 +51,8 @@
     "cancel": "Cancel",
     "back": "Back",
     "or": "or",
-    "close": "Close"
+    "close": "Close",
+    "edit": "Edit"
   },
   "auth": {
     "login": {
@@ -581,6 +582,130 @@
     },
     "footer": {
       "credit": "SENA educational project"
+    }
+  },
+  "dashboards": {
+    "common": {
+      "welcomePrefix": "Welcome,"
+    },
+    "admin": {
+      "title": "Administration Panel",
+      "inviteSection": {
+        "title": "Building Administrators",
+        "show": "+ Invite administrator",
+        "hide": "Hide"
+      },
+      "loadingData": "Loading data...",
+      "residentsTable": {
+        "title": "Residents List",
+        "badge": "SQL View",
+        "headers": {
+          "email": "Email",
+          "name": "Name",
+          "conjunto": "Building",
+          "unit": "Unit"
+        },
+        "unitFormat": "Blk {{bloque}} · Apt {{apto}}",
+        "empty": "No residents registered yet."
+      },
+      "recyclersTable": {
+        "title": "Recyclers List",
+        "badge": "Stored Procedure",
+        "headers": {
+          "email": "Email",
+          "fullName": "Full name",
+          "association": "Association"
+        },
+        "empty": "No recyclers registered yet."
+      }
+    },
+    "adminConjunto": {
+      "title": "Building Administrator Panel",
+      "estado": {
+        "pendiente": "Pending",
+        "aceptada": "Accepted",
+        "rechazada": "Rejected"
+      },
+      "recyclersSection": {
+        "title": "Authorized Recyclers",
+        "invite": "+ Invite recycler",
+        "emailPlaceholder": "recycler.email@example.com",
+        "sending": "Sending...",
+        "inviteButton": "Invite",
+        "errorDefault": "The invitation could not be sent. Check the email address.",
+        "loading": "Loading recyclers...",
+        "empty": "You haven't invited any recycler to this building yet."
+      },
+      "myConjuntos": {
+        "title": "Buildings you administer",
+        "loading": "Loading your buildings...",
+        "empty": "You don't have any building assigned yet. Contact the VerdeApp team."
+      },
+      "editForm": {
+        "name": "Building name",
+        "nit": "Tax ID (optional)",
+        "address": "Address",
+        "successMessage": "Building updated successfully.",
+        "errorMessage": "The change could not be saved. Please try again."
+      },
+      "nitLabel": "Tax ID: {{nit}}",
+      "notifications": {
+        "title": "Building activity",
+        "empty": "No activity yet. Notifications from recyclers and residents will appear here."
+      }
+    },
+    "reciclador": {
+      "title": "Recycler Panel",
+      "acciones": {
+        "llegada": "I arrived at the building",
+        "shutLleno": "Waste room is full",
+        "shutLibre": "Waste room is now free"
+      },
+      "feedbackSent": "Notification sent: \"{{label}}\"",
+      "genericNotificationSent": "Notification sent",
+      "sendSection": {
+        "title": "Send notification",
+        "subtitle": "Notify residents and the building administrator.",
+        "noConjuntos": "You don't have any authorized buildings yet. Accept an invitation to be able to send notifications."
+      },
+      "invitations": {
+        "title": "Pending invitations",
+        "invitedBy": "Invited by {{nombre}}",
+        "accept": "Accept",
+        "reject": "Reject"
+      },
+      "myConjuntos": {
+        "title": "My authorized buildings",
+        "empty": "You're not authorized in any building yet. Once an administrator invites you and you accept, it will appear here."
+      },
+      "notifications": {
+        "title": "Received notifications",
+        "empty": "You have no notifications. When a resident reports the waste room is full, it will appear here."
+      },
+      "modal": {
+        "title": "Which building are you notifying?",
+        "subtitle": "Select the building you arrived at or want to notify about.",
+        "sending": "Sending...",
+        "submit": "Send notice"
+      }
+    },
+    "residente": {
+      "title": "Resident Panel",
+      "shutBanner": {
+        "title": "The waste room is full",
+        "reportedAt": "Reported {{time}}",
+        "warning": "Don't bring down more recyclable material until the recycler indicates it's free."
+      },
+      "reportSection": {
+        "title": "Report waste room full",
+        "description": "Notify the recycler and the administrator that the waste room is full. The report is anonymous.",
+        "sent": "Sent",
+        "submit": "Report"
+      },
+      "notifications": {
+        "title": "Recent activity",
+        "empty": "You have no notifications yet. They will appear here when the recycler sends notices."
+      }
     }
   }
 }
