@@ -8,6 +8,7 @@ from app.routers import directorio
 from app.routers import notificaciones
 from app.routers import contenido_educativo
 from app.routers import comunicados
+from app.routers import novedades
 
 # ¿Qué? El esquema de la base de datos ya NO se crea aquí en tiempo de ejecución.
 # ¿Para qué? Antes esta sección llamaba a Base.metadata.create_all(bind=engine), que
@@ -57,6 +58,7 @@ app.include_router(directorio.router)
 app.include_router(notificaciones.router)
 app.include_router(contenido_educativo.router)
 app.include_router(comunicados.router)
+app.include_router(novedades.router)
 
 
 @app.get("/api/v1/health")

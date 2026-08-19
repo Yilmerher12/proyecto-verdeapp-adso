@@ -111,7 +111,7 @@ export function AppShell({ children }: AppShellProps) {
     if (roleId === RoleId.ADMIN_SISTEMA) {
       return [
         ...commonStart,
-        { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: null, enabled: false },
+        { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: "/admin/novedades", enabled: true },
         { icon: BookOpen, label: t("appShell.nav.contenidoEducativo"), href: "/admin/contenido-educativo", enabled: true },
         ...commonEnd,
       ];
@@ -122,7 +122,7 @@ export function AppShell({ children }: AppShellProps) {
         ...commonStart,
         { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
         { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true },
-        { icon: Newspaper, label: t("appShell.nav.novedadesGobierno"), href: null, enabled: false },
+        { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true },
         { icon: MapPin, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true },
         ...commonEnd,
       ];
@@ -133,6 +133,7 @@ export function AppShell({ children }: AppShellProps) {
         ...commonStart,
         { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
         { icon: Megaphone, label: t("appShell.nav.gestionarComunicados"), href: "/admin-conjunto/comunicados", enabled: true },
+        { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true },
         ...commonEnd,
       ];
     }
@@ -141,6 +142,7 @@ export function AppShell({ children }: AppShellProps) {
       ...commonStart,
       { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
       { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true },
+      { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true },
       { icon: BookOpen, label: t("appShell.nav.aprenderGuias"), href: "/catalogo-educativo", enabled: true },
       { icon: MapPin, label: t("appShell.nav.directorioGeneral"), href: "/directorio", enabled: true },
       ...commonEnd,

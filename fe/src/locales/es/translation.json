@@ -7,7 +7,7 @@
       "crearNovedades": "Crear Novedades",
       "contenidoEducativo": "Contenido Educativo",
       "miPerfil": "Mi Perfil",
-      "novedadesGobierno": "Novedades Gobierno",
+      "novedades": "Novedades",
       "puntosAcopio": "Puntos de Acopio",
       "gestionarComunicados": "Comunicados de mis Conjuntos",
       "comunicados": "Comunicados",
@@ -716,6 +716,7 @@
     }
   },
   "notificationFeed": {
+    "platformLabel": "VerdeApp",
     "markAllRead": "Marcar leídas",
     "clearRead": "Limpiar leídas",
     "showLess": "Ver menos",
@@ -957,6 +958,42 @@
       "title": "Comunicados",
       "subtitle": "Avisos activos de tu conjunto.",
       "empty": "No hay comunicados activos por ahora."
+    }
+  },
+  "novedades": {
+    "archivedBadge": "Archivada",
+    "alcances": {
+      "TODOS": "Todos",
+      "RESIDENTES": "Residentes",
+      "RECICLADORES": "Recicladores",
+      "ADMIN_CONJUNTO": "Admins. de Conjunto"
+    },
+    "admin": {
+      "title": "Novedades",
+      "subtitle": "Publica avisos generales para toda la plataforma VerdeApp.",
+      "newButton": "Nueva novedad",
+      "emptyState": "Todavía no has publicado ninguna novedad.",
+      "editAria": "Editar novedad",
+      "archiveAria": "Archivar novedad",
+      "editTitle": "Editar novedad",
+      "expiraEl": "Expira el {{fecha}}",
+      "archiveError": "No se pudo archivar. Intenta de nuevo.",
+      "alcanceNoEditable": "El alcance no se puede cambiar después de publicar. Si te equivocaste, archívala y crea una nueva.",
+      "validation": {
+        "textoRequerido": "El texto de la novedad es obligatorio."
+      },
+      "fields": {
+        "alcance": "Alcance",
+        "texto": "Mensaje",
+        "urlAdjunto": "Link de adjunto (imagen, PDF, link externo, etc.) — opcional",
+        "fechaExpiracion": "Fecha de expiración (opcional)",
+        "fechaExpiracionHint": "Si la dejas vacía, se usa una fecha sugerida por el sistema."
+      }
+    },
+    "feed": {
+      "title": "Novedades",
+      "subtitle": "Avisos generales de la plataforma VerdeApp.",
+      "empty": "No hay novedades activas por ahora."
     }
   }
 }
