@@ -108,7 +108,7 @@ export function ChangePasswordPage() {
 
   return (
     <div className="mx-auto max-w-md pt-6">
-      <div className="mb-6">
+      <div className="mb-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
           {t("auth.changePassword.title")}
         </h1>

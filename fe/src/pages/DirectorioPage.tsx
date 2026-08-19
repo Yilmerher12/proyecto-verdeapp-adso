@@ -101,7 +101,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
       {/* Encabezado */}
-      <div>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {soloAcopio ? t("appShell.nav.puntosAcopio") : t("appShell.nav.directorioGeneral")}
         </h1>

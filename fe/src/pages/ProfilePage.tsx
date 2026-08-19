@@ -150,7 +150,7 @@ export function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
       {/* Header */}
-      <div>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("profile.subtitle")}</p>
       </div>
