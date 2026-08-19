@@ -9,8 +9,8 @@
       "miPerfil": "My Profile",
       "novedadesGobierno": "Government Updates",
       "puntosAcopio": "Collection Points",
-      "novedadesConjuntos": "My Buildings' Updates",
-      "novedadesConjunto": "Building Updates",
+      "gestionarComunicados": "My Buildings' Announcements",
+      "comunicados": "Announcements",
       "aprenderGuias": "Learn (Guides)",
       "directorioGeneral": "General Directory"
     },
@@ -897,6 +897,62 @@
       "assigning": "Assigning...",
       "successMessage": "Building assigned successfully.",
       "errorDefault": "The building could not be assigned."
+    }
+  },
+  "comunicados": {
+    "editedBadge": "Edited",
+    "viewAttachment": "View attachment",
+    "tipos": {
+      "INFORMATIVO": "Informative",
+      "URGENTE": "Urgent",
+      "CONVOCATORIA": "Meeting/Event",
+      "MANTENIMIENTO": "Maintenance",
+      "RECICLAJE": "Recycling"
+    },
+    "destinatarios": {
+      "RESIDENTES": "Residents",
+      "RECICLADORES": "Recyclers",
+      "AMBOS": "Both"
+    },
+    "admin": {
+      "title": "Announcements",
+      "subtitle": "Post announcements for the residents and/or recyclers of your buildings.",
+      "newButton": "New announcement",
+      "noConjuntos": "You don't administer any building yet.",
+      "emptyState": "You haven't posted any announcement yet.",
+      "editAria": "Edit announcement",
+      "deleteAria": "Delete announcement",
+      "editTitle": "Edit announcement",
+      "expiraEl": "Expires on {{fecha}}",
+      "destinatariosNoEditable": "The building and recipients can't be changed after publishing. If you made a mistake, delete this announcement and create a new one.",
+      "deleteError": "Could not delete. Please try again.",
+      "validation": {
+        "textoRequerido": "The announcement text is required.",
+        "conjuntoRequerido": "Select which of your buildings it's for.",
+        "fechaEventoRequerida": "Meeting/Event announcements need the event date."
+      },
+      "fields": {
+        "conjunto": "Building",
+        "destinatarios": "Recipients",
+        "tipo": "Announcement type",
+        "fechaEvento": "Event date",
+        "texto": "Message",
+        "urlAdjunto": "Attachment link (image, video, PDF, etc.) — optional",
+        "urlAdjuntoPlaceholder": "https://...",
+        "fechaExpiracion": "Expiration date (optional)",
+        "fechaExpiracionHint": "If left blank, the suggested date for this announcement type is used."
+      },
+      "deleteConfirm": {
+        "ariaLabel": "Confirm deletion",
+        "title": "Delete this announcement?",
+        "warning": "This action cannot be undone.",
+        "confirm": "Yes, delete"
+      }
+    },
+    "feed": {
+      "title": "Announcements",
+      "subtitle": "Active announcements for your building.",
+      "empty": "No active announcements right now."
     }
   }
 }

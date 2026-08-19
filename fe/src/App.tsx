@@ -38,6 +38,8 @@ import { DirectorioPage } from "@/pages/DirectorioPage";
 import { CatalogoEducativoPage } from "@/pages/CatalogoEducativoPage";
 import { CategoriaEducativaPage } from "@/pages/CategoriaEducativaPage";
 import { AdminContenidoEducativoPage } from "@/pages/AdminContenidoEducativoPage";
+import { AdminConjuntoComunicadosPage } from "@/pages/AdminConjuntoComunicadosPage";
+import { ComunicadosFeedPage } from "@/pages/ComunicadosFeedPage";
 
 interface CustomUser {
   role_id?: RoleId;
@@ -215,6 +217,34 @@ function App() {
                 <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
                   <AppShell>
                     <AdminContenidoEducativoPage />
+                  </AppShell>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Comunicados del conjunto — Admin Conjunto gestiona (RQF-014) */}
+          <Route
+            path="/admin-conjunto/comunicados"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[RoleId.ADMIN_CONJUNTO]}>
+                  <AppShell>
+                    <AdminConjuntoComunicadosPage />
+                  </AppShell>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Comunicados del conjunto — Residente/Reciclador ven el feed (RQF-014) */}
+          <Route
+            path="/comunicados"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[RoleId.RESIDENTE, RoleId.RECICLADOR]}>
+                  <AppShell>
+                    <ComunicadosFeedPage />
                   </AppShell>
                 </RoleGuard>
               </ProtectedRoute>
