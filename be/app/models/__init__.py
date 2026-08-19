@@ -35,6 +35,7 @@ from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto
 from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjunto
 from app.models.solicitud_desvinculacion import SolicitudDesvinculacion, EstadoSolicitudDesvinculacion
 from app.models.comunicado import Comunicado, TipoComunicado, DestinatariosComunicado
+from app.models.novedad import Novedad, AlcanceNovedad
 
 # 🔐 Tokens de Seguridad (¡Esenciales para que Alembic no falle!)
 from app.models.password_reset_token import PasswordResetToken
@@ -68,6 +69,8 @@ __all__ = [
     "Comunicado",
     "TipoComunicado",
     "DestinatariosComunicado",
+    "Novedad",
+    "AlcanceNovedad",
     "PasswordResetToken",
     "EmailVerificationToken",
     "Notificacion",

@@ -160,7 +160,10 @@ def mis_notificaciones(
             NotificacionDestinatario.leida,
         )
         .join(NotificacionDestinatario, Notificacion.id == NotificacionDestinatario.id_notificacion)
-        .join(ConjuntoResidencial, Notificacion.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial)
+        # ¿Qué? outerjoin (LEFT JOIN), no join — las novedades de plataforma
+        #       (RQF-015) tienen id_conjunto_residencial NULL, y un JOIN
+        #       normal las excluiría por completo del resultado.
+        .outerjoin(ConjuntoResidencial, Notificacion.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial)
         .where(NotificacionDestinatario.id_usuario == current_user.id_usuario)
         .order_by(Notificacion.created_at.desc())
         .limit(30)

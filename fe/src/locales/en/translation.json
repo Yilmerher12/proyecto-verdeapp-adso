@@ -7,7 +7,7 @@
       "crearNovedades": "Post Updates",
       "contenidoEducativo": "Educational Content",
       "miPerfil": "My Profile",
-      "novedadesGobierno": "Government Updates",
+      "novedades": "News",
       "puntosAcopio": "Collection Points",
       "gestionarComunicados": "My Buildings' Announcements",
       "comunicados": "Announcements",
@@ -712,6 +712,7 @@
     }
   },
   "notificationFeed": {
+    "platformLabel": "VerdeApp",
     "markAllRead": "Mark all read",
     "clearRead": "Clear read",
     "showLess": "Show less",
@@ -953,6 +954,42 @@
       "title": "Announcements",
       "subtitle": "Active announcements for your building.",
       "empty": "No active announcements right now."
+    }
+  },
+  "novedades": {
+    "archivedBadge": "Archived",
+    "alcances": {
+      "TODOS": "Everyone",
+      "RESIDENTES": "Residents",
+      "RECICLADORES": "Recyclers",
+      "ADMIN_CONJUNTO": "Building Admins"
+    },
+    "admin": {
+      "title": "News",
+      "subtitle": "Post general announcements for the whole VerdeApp platform.",
+      "newButton": "New item",
+      "emptyState": "You haven't posted any news item yet.",
+      "editAria": "Edit news item",
+      "archiveAria": "Archive news item",
+      "editTitle": "Edit news item",
+      "expiraEl": "Expires on {{fecha}}",
+      "archiveError": "Could not archive. Please try again.",
+      "alcanceNoEditable": "The scope can't be changed after publishing. If you made a mistake, archive it and create a new one.",
+      "validation": {
+        "textoRequerido": "The news item text is required."
+      },
+      "fields": {
+        "alcance": "Scope",
+        "texto": "Message",
+        "urlAdjunto": "Attachment link (image, PDF, external link, etc.) — optional",
+        "fechaExpiracion": "Expiration date (optional)",
+        "fechaExpiracionHint": "If left blank, a system-suggested date is used."
+      }
+    },
+    "feed": {
+      "title": "News",
+      "subtitle": "General announcements from the VerdeApp platform.",
+      "empty": "No active news right now."
     }
   }
 }

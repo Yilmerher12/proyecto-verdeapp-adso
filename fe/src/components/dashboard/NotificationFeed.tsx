@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Bell, Building2, Clock, Megaphone, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
+import { AlertTriangle, Bell, Building2, Clock, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import i18n from "@/i18n";
 
@@ -20,7 +20,9 @@ export interface NotificacionItem {
   id: number;
   tipo: string;
   mensaje: string;
-  nombre_conjunto: string;
+  // ¿Qué? Puede ser null — las novedades de plataforma (RQF-015) no
+  //       pertenecen a ningún conjunto residencial.
+  nombre_conjunto: string | null;
   leida: boolean;
   created_at: string;
 }
@@ -36,6 +38,9 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   // RQF-014 (comunicados del conjunto)
   COMUNICADO_NUEVO: { Icon: Megaphone, color: "text-purple-700 dark:text-purple-400" },
   COMUNICADO_ACTUALIZADO: { Icon: Megaphone, color: "text-purple-500 dark:text-purple-300" },
+  // RQF-015 (novedades generales de la plataforma)
+  NOVEDAD_NUEVA: { Icon: Newspaper, color: "text-indigo-700 dark:text-indigo-400" },
+  NOVEDAD_ACTUALIZADA: { Icon: Newspaper, color: "text-indigo-500 dark:text-indigo-300" },
 };
 
 // ¿Qué? Se usa i18n.t() directamente (no el hook useTranslation) porque esta
@@ -126,7 +131,7 @@ export function NotificationFeed({
                       {n.mensaje}
                     </p>
                     <p className="mt-0.5 text-xs text-gray-400">
-                      {n.nombre_conjunto} · {tiempoRelativo(n.created_at)}
+                      {n.nombre_conjunto ?? t("notificationFeed.platformLabel")} · {tiempoRelativo(n.created_at)}
                     </p>
                   </div>
                   {!n.leida && <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${accentBg}`} />}
