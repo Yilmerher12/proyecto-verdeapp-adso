@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema edita una novedad general              |
 | **Módulo**         | Comunicación / Sistema                                |
 | **Prioridad**      | Media                                                  |
-| **Estado**         | Por implementar                                        |
+| **Estado**         | Implementada                                           |
 | **RF asociados**   | RQF-015                                               |
 
 ---

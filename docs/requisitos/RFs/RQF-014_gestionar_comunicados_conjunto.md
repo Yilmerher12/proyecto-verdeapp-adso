@@ -8,14 +8,14 @@
 | **Nombre**    | Gestionar Comunicados del Conjunto      |
 | **Módulo**    | Comunicación / Conjuntos                |
 | **Prioridad** | Media                                   |
-| **Estado**    | Por implementar                         |
+| **Estado**    | Implementada                            |
 | **Usuarios**  | admin_conjunto, residente, reciclador   |
 
 ---
 
 ## Descripción
 
-El sistema debe permitir que el Administrador de Conjunto publique comunicados dirigidos a los residentes y/o recicladores de su conjunto. Estos comunicados pueden incluir texto, imágenes, videos, PDFs y documentos de office, y tienen una fecha de expiración para que no permanezcan en el feed de forma indefinida.
+El sistema debe permitir que el Administrador de Conjunto publique comunicados dirigidos a los residentes y/o recicladores de su conjunto. Estos comunicados pueden incluir texto y, de forma opcional, un enlace (URL) a un archivo adjunto alojado externamente (imagen, video, PDF, documento de office), y tienen una fecha de expiración para que no permanezcan en el feed de forma indefinida.
 
 Los usuarios destinatarios ven los comunicados en un feed dentro de la app y reciben una notificación cuando se publica uno nuevo.
 
@@ -38,7 +38,7 @@ Los usuarios destinatarios ven los comunicados en un feed dentro de la app y rec
 ### Flujo A — Publicar comunicado (Admin Conjunto)
 1. El Admin Conjunto selecciona el conjunto y los destinatarios: solo residentes, solo recicladores o ambos.
 2. Elige el tipo de comunicado y escribe el contenido (texto obligatorio).
-3. Puede adjuntar archivos: imágenes, videos, PDFs, Word, Excel.
+3. Puede adjuntar un enlace (URL) a un archivo alojado externamente: imagen, video, PDF, Word, Excel.
 4. El sistema sugiere la fecha de expiración según el tipo, pero el admin puede cambiarla.
 5. Al publicar, los destinatarios reciben una notificación y el comunicado aparece en su feed.
 

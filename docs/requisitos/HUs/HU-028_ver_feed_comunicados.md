@@ -16,7 +16,7 @@
 | **Título**         | Residente/Reciclador ve el feed de comunicados          |
 | **Módulo**         | Comunicación / Conjuntos                                |
 | **Prioridad**      | Media                                                     |
-| **Estado**         | Por implementar                                           |
+| **Estado**         | Implementada                                              |
 | **RF asociados**   | RQF-014                                                  |
 
 ---
