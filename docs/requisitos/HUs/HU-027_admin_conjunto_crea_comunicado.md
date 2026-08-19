@@ -16,7 +16,7 @@
 | **Título**         | Admin Conjunto crea un comunicado del conjunto             |
 | **Módulo**         | Comunicación / Conjuntos                                  |
 | **Prioridad**      | Media                                                       |
-| **Estado**         | Por implementar                                             |
+| **Estado**         | Implementada                                                |
 | **RF asociados**   | RQF-014                                                    |
 
 ---
@@ -49,11 +49,11 @@
 - **cuando** el sistema arma el formulario,
 - **entonces** debe sugerirme una fecha de expiración según el tipo (ej. 48 horas para Urgente, 30 días para Informativo), y debo poder cambiarla.
 
-### CA-027.4 — Adjuntar archivos (opcional)
+### CA-027.4 — Adjuntar enlace (opcional)
 
 - **Dado que** estoy creando un comunicado,
 - **cuando** completo el formulario,
-- **entonces** debo poder adjuntar imágenes, videos, PDF o documentos de office, de forma opcional — el texto sí es obligatorio.
+- **entonces** debo poder agregar un enlace (URL) a un archivo alojado externamente (imagen, video, PDF, documento de office), de forma opcional — el texto sí es obligatorio.
 
 ### CA-027.5 — Publicación exitosa
 

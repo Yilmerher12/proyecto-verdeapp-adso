@@ -1,54 +1,54 @@
 ﻿import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ArrowRight, MapPin, Users, Recycle } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { useRestoreScroll } from "@/hooks/useRestoreScroll";
 
-const pasos = [
-  {
-    imgSrc: "/landing/step-1-registration.png",
-    numero: "01",
-    titulo: "El conjunto se afilia",
-    descripcion:
-      "El administrador registra el conjunto en VerdeApp e invita a los residentes y al reciclador asignado.",
-  },
-  {
-    imgSrc: "/landing/step-2-verification.png",
-    numero: "02",
-    titulo: "Los residentes participan",
-    descripcion:
-      "Aprenden a reciclar con el contenido educativo e indican cuándo el SHUT está en su capacidad máxima.",
-  },
-  {
-    imgSrc: "/landing/step-3-recycler-pickup.png",
-    numero: "03",
-    titulo: "El reciclador actúa",
-    descripcion:
-      "Notifica su llegada al SHUT. Al finalizar, el sistema registra la gestión y genera una auditoría de rendimiento.",
-  },
+// ¿Qué? Solo la parte visual (imagen/ícono, número) queda fuera del
+//       componente — título y descripción se resuelven adentro con t(),
+//       porque estos arreglos ya no pueden tener texto fijo en español.
+const PASOS_META = [
+  { imgSrc: "/landing/step-1-registration.png", key: "step1" },
+  { imgSrc: "/landing/step-2-verification.png", key: "step2" },
+  { imgSrc: "/landing/step-3-recycler-pickup.png", key: "step3" },
 ] as const;
 
-const pilares = [
-  {
-    icon: MapPin,
-    titulo: "Separación en la fuente",
-    descripcion:
-      "Guía a los residentes en la correcta clasificación de residuos reciclables, directamente desde la app.",
-  },
-  {
-    icon: Users,
-    titulo: "Conexión con recicladores",
-    descripcion:
-      "Formaliza la labor de los recicladores de oficio. Permite solicitudes y notificaciones en tiempo real entre el conjunto y el reciclador asignado.",
-  },
-  {
-    icon: Recycle,
-    titulo: "Educación ambiental",
-    descripcion:
-      "Guías y contenido interactivo sobre cómo separar, limpiar y entregar materiales reciclables correctamente en tu comunidad.",
-  },
+const PILARES_META = [
+  { icon: MapPin, key: "pillar1" },
+  { icon: Users, key: "pillar2" },
+  { icon: Recycle, key: "pillar3" },
 ] as const;
 
 export function LandingPage() {
+  const { t } = useTranslation();
+
+  // ¿Qué? Recuerda dónde estaba el usuario en el Landing y lo restaura al
+  //       volver (ej: después de cerrar Términos/Privacidad/Cookies desde
+  //       el footer, que remontan esta página desde cero).
+  useRestoreScroll("landing-scroll-y");
+
+  const pasos = PASOS_META.map(({ imgSrc, key }) => ({
+    imgSrc,
+    key,
+    titulo: t(`landing.howItWorks.${key}.title`),
+    descripcion: t(`landing.howItWorks.${key}.description`),
+  }));
+
+  const pilares = PILARES_META.map(({ icon, key }) => ({
+    icon,
+    key,
+    titulo: t(`landing.pillars.${key}.title`),
+    descripcion: t(`landing.pillars.${key}.description`),
+  }));
+
+  const enlacesFooter = [
+    { to: "/terminos-de-uso", label: t("landing.footer.terms") },
+    { to: "/privacidad", label: t("landing.footer.navPrivacy") },
+    { to: "/politica-cookies", label: t("landing.footer.navCookies") },
+    { to: "/contacto", label: t("landing.footer.contact") },
+  ];
+
   return (
     <div className="min-h-screen bg-white dark:bg-green-950">
 
@@ -61,7 +61,7 @@ export function LandingPage() {
           <Link
             to="/"
             className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
-            aria-label="VerdeApp — inicio"
+            aria-label={t("landing.nav.homeAriaLabel")}
           >
             <img
               src="/logos/logo-white.png"
@@ -78,7 +78,7 @@ export function LandingPage() {
                 to="/login"
                 className="rounded-lg px-3 py-1.5 text-sm font-medium text-white/75 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
               >
-                Iniciar sesión
+                {t("landing.nav.login")}
               </Link>
             </li>
             <li>
@@ -86,7 +86,7 @@ export function LandingPage() {
                 to="/register"
                 className="rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-400 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
               >
-                Registrarse
+                {t("landing.nav.register")}
               </Link>
             </li>
           </ul>
@@ -153,15 +153,14 @@ export function LandingPage() {
             </h1>
 
             <p className="mb-3 text-lg font-semibold text-white/90 sm:text-xl">
-              Gestión de residuos para conjuntos residenciales en Bogotá
+              {t("landing.hero.subtitle")}
             </p>
 
             <p
               className="mx-auto mb-10 max-w-xl text-sm leading-relaxed"
               style={{ color: "rgba(255,255,255,0.55)" }}
             >
-              Conectamos residentes, recicladores y administradores para transformar
-              la gestión de residuos en tu comunidad.
+              {t("landing.hero.description")}
             </p>
 
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -170,13 +169,13 @@ export function LandingPage() {
                 className="flex w-full items-center justify-center rounded-xl px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:w-auto"
                 style={{ border: "1px solid rgba(255,255,255,0.28)" }}
               >
-                Ya tengo cuenta
+                {t("landing.hero.ctaLogin")}
               </Link>
               <Link
                 to="/register"
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-green-400 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 sm:w-auto"
               >
-                Unirse a VerdeApp <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                {t("landing.hero.ctaRegister")} <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
           </div>
@@ -206,23 +205,23 @@ export function LandingPage() {
           <div className="relative mx-auto max-w-5xl">
             <div className="mb-14 text-center">
               <p className="mb-2 text-xs font-bold uppercase tracking-widest text-green-600 dark:text-green-400">
-                ¿Cómo funciona?
+                {t("landing.howItWorks.eyebrow")}
               </p>
               <h2
                 id="como-funciona-heading"
                 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl"
               >
-                Tres pasos, un ciclo completo
+                {t("landing.howItWorks.title")}
               </h2>
               <p className="mx-auto mt-3 max-w-lg text-sm text-gray-500 dark:text-gray-400">
-                VerdeApp conecta a todos los actores del reciclaje en el conjunto residencial.
+                {t("landing.howItWorks.subtitle")}
               </p>
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {pasos.map(({ imgSrc, numero, titulo, descripcion }, i) => (
+              {pasos.map(({ imgSrc, key, titulo, descripcion }, i) => (
                 <article
-                  key={numero}
+                  key={key}
                   className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-green-800 dark:bg-green-900"
                 >
                   <span
@@ -255,19 +254,19 @@ export function LandingPage() {
           <div className="relative mx-auto max-w-5xl">
             <div className="mb-12 text-center">
               <p className="mb-2 text-xs font-bold uppercase tracking-widest text-green-400">
-                Nuestros pilares
+                {t("landing.pillars.eyebrow")}
               </p>
               <h2
                 id="pilares-heading"
                 className="text-3xl font-bold text-white sm:text-4xl"
               >
-                Una plataforma, tres ejes de impacto
+                {t("landing.pillars.title")}
               </h2>
             </div>
 
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
-              {pilares.map(({ icon: Icon, titulo, descripcion }, i) => (
-                <div key={titulo} className="text-left">
+              {pilares.map(({ icon: Icon, key, titulo, descripcion }, i) => (
+                <div key={key} className="text-left">
                   <div className="mb-4 flex items-center gap-3">
                     <div
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
@@ -302,21 +301,16 @@ export function LandingPage() {
               Verde<span className="text-green-600 dark:text-green-400">App</span>
             </span>
             <p className="text-center text-xs text-gray-400 dark:text-gray-500">
-              © {new Date().getFullYear()} VerdeApp. Todos los derechos reservados.
+              {t("landing.footer.rights", { year: new Date().getFullYear() })}
             </p>
           </div>
 
           <nav
-            aria-label="Aviso legal"
+            aria-label={t("landing.footer.legalAriaLabel")}
             className="mt-4 border-t border-gray-100 pt-4 dark:border-green-900"
           >
             <ul className="m-0 flex list-none flex-wrap justify-center gap-x-5 gap-y-1 p-0">
-              {[
-                { to: "/terminos-de-uso", label: "Términos de uso" },
-                { to: "/privacidad", label: "Privacidad" },
-                { to: "/politica-cookies", label: "Cookies" },
-                { to: "/contacto", label: "Contacto" },
-              ].map(({ to, label }) => (
+              {enlacesFooter.map(({ to, label }) => (
                 <li key={to}>
                   <Link
                     to={to}

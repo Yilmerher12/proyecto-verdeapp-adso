@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema gestiona solicitudes de desvinculación           |
 | **Módulo**         | Administración / Conjuntos                                      |
 | **Prioridad**      | Media                                                             |
-| **Estado**         | Por implementar                                                    |
+| **Estado**         | Implementada                                                       |
 | **RF asociados**   | RQF-016                                                            |
 
 ---

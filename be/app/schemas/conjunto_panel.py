@@ -16,6 +16,11 @@ class ConjuntoAdministradoResponse(BaseModel):
     nit: Optional[str] = None
     direccion: str
     nombre_localidad: str
+    # ¿Qué? RQF-016: si ya hay una solicitud de desvinculación pendiente
+    #       para este conjunto, para que el frontend oculte el botón de
+    #       "solicitar desvinculación" en vez de dejar que el usuario
+    #       choque con el error de solicitud duplicada (RN-002).
+    tiene_solicitud_pendiente: bool = False
 
 
 class EditarConjuntoRequest(BaseModel):

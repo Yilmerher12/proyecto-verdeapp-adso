@@ -206,6 +206,22 @@ def conjunto_verificado(db: Session, localidad_test: Localidad) -> ConjuntoResid
 
 
 @pytest.fixture()
+def conjunto_verificado_sin_admin(db: Session, localidad_test: Localidad) -> ConjuntoResidencial:
+    """Crea un segundo Conjunto Residencial VERIFICADO, sin ningún administrador asignado (RQF-016)."""
+    conjunto = ConjuntoResidencial(
+        id_localidad=localidad_test.id_localidad,
+        nombre_conjunto="RESERVA DE PRUEBA",
+        nit="900000000-1",
+        direccion="Carrera 50 # 20-20",
+        verificado=True,
+    )
+    db.add(conjunto)
+    db.commit()
+    db.refresh(conjunto)
+    return conjunto
+
+
+@pytest.fixture()
 def conjunto_no_verificado(db: Session, localidad_test: Localidad) -> ConjuntoResidencial:
     """Crea un Conjunto Residencial SIN verificar (verificado=False)."""
     conjunto = ConjuntoResidencial(
