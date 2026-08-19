@@ -15,8 +15,11 @@ from app.models.usuario import Usuario
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.rol import RolId
+from app.models.solicitud_desvinculacion import EstadoSolicitudDesvinculacion, SolicitudDesvinculacion
 from app.schemas.conjunto_panel import ConjuntoAdministradoResponse, EditarConjuntoRequest
+from app.schemas.desvinculacion import SolicitarDesvinculacionRequest
 from app.schemas.user import MessageResponse
+from app.services import desvinculacion_service
 
 router = APIRouter(prefix="/api/v1/conjunto-panel", tags=["conjunto-panel"])
 
@@ -55,6 +58,15 @@ def listar_mis_conjuntos(
     """Devuelve todos los conjuntos que administra la persona en sesión."""
     administrador = _obtener_administrador_o_rechazar(db, current_user)
 
+    ids_con_solicitud_pendiente = set(
+        db.execute(
+            select(SolicitudDesvinculacion.id_conjunto_residencial).where(
+                SolicitudDesvinculacion.id_administrador == administrador.id_administrador,
+                SolicitudDesvinculacion.estado == EstadoSolicitudDesvinculacion.PENDIENTE,
+            )
+        ).scalars().all()
+    )
+
     return [
         ConjuntoAdministradoResponse(
             id_conjunto_residencial=c.id_conjunto_residencial,
@@ -62,6 +74,7 @@ def listar_mis_conjuntos(
             nit=c.nit,
             direccion=c.direccion,
             nombre_localidad=c.localidad.nombre_localidad,
+            tiene_solicitud_pendiente=c.id_conjunto_residencial in ids_con_solicitud_pendiente,
         )
         for c in administrador.conjuntos
     ]
@@ -109,3 +122,25 @@ def editar_mi_conjunto(
     db.commit()
 
     return MessageResponse(message="Conjunto actualizado correctamente.")
+
+
+@router.post(
+    "/mis-conjuntos/{id_conjunto_residencial}/solicitar-desvinculacion",
+    response_model=MessageResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def solicitar_desvinculacion(
+    id_conjunto_residencial: int,
+    datos: SolicitarDesvinculacionRequest,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """RQF-016 / HU-022: pide dejar de administrar uno de mis conjuntos. Queda pendiente hasta que el Admin Sistema la resuelva."""
+    administrador = _obtener_administrador_o_rechazar(db, current_user)
+    desvinculacion_service.solicitar_desvinculacion(
+        db=db,
+        administrador=administrador,
+        id_conjunto=id_conjunto_residencial,
+        motivo=datos.motivo,
+    )
+    return MessageResponse(message="Solicitud de desvinculación enviada. Un Administrador del Sistema la revisará.")

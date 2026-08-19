@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, Users, Database, UserPlus } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
+import { SolicitudesDesvinculacion } from "@/components/SolicitudesDesvinculacion";
+import { AsignarConjuntoAdicionalForm } from "@/components/AsignarConjuntoAdicionalForm";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 
@@ -23,6 +26,7 @@ interface RecicladorRow {
 }
 
 export function AdminDashboard() {
+  const { t } = useTranslation();
   const { user, accessToken } = useAuth();
   const [residentesData, setResidentesData] = useState<ResidenteRow[]>([]);
   const [recicladoresData, setRecicladoresData] = useState<RecicladorRow[]>([]);
@@ -47,7 +51,7 @@ export function AdminDashboard() {
       .finally(() => setCargandoRecicladores(false));
   }, []);
 
-  const fullName = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || "Administrador";
+  const fullName = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || t("roles.adminSistema");
   const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_SISTEMA];
 
   return (
@@ -62,9 +66,9 @@ export function AdminDashboard() {
             <Shield className="h-7 w-7 text-green-700 dark:text-green-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Panel de Administración</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.admin.title")}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              Bienvenido,{" "}
+              {t("dashboards.common.welcomePrefix")}{" "}
               <span className="font-semibold text-gray-800 dark:text-gray-200 uppercase">{fullName}</span>
               .
             </p>
@@ -78,14 +82,14 @@ export function AdminDashboard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <UserPlus className="h-4 w-4 text-green-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Administradores de Conjunto</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
           </div>
           <button
             type="button"
             onClick={() => setMostrarInvitar((prev) => !prev)}
             className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 px-3 py-1.5 rounded-xl transition-colors"
           >
-            {mostrarInvitar ? "Ocultar" : "+ Invitar administrador"}
+            {mostrarInvitar ? t("dashboards.admin.inviteSection.hide") : t("dashboards.admin.inviteSection.show")}
           </button>
         </div>
         {mostrarInvitar && (
@@ -95,38 +99,46 @@ export function AdminDashboard() {
         )}
       </div>
 
+      {/* Desvinculación y reasignación de conjuntos (RQF-016) */}
+      {accessToken && (
+        <>
+          <SolicitudesDesvinculacion token={accessToken} />
+          <AsignarConjuntoAdicionalForm token={accessToken} />
+        </>
+      )}
+
       {/* Tabla: Residentes (Vista SQL) */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
           <Database className="h-4 w-4 text-green-600" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-            Listado de Residentes
+            {t("dashboards.admin.residentsTable.title")}
           </h3>
           <span className="ml-auto rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
-            Vista SQL
+            {t("dashboards.admin.residentsTable.badge")}
           </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40">
-                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Correo</th>
-                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Nombre</th>
-                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Conjunto</th>
-                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Unidad</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.email")}</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.name")}</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.conjunto")}</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.unit")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
               {cargandoResidentes ? (
                 <tr>
                   <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-400">
-                    Cargando datos...
+                    {t("dashboards.admin.loadingData")}
                   </td>
                 </tr>
               ) : residentesData.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-400">
-                    No hay residentes registrados todavía.
+                    {t("dashboards.admin.residentsTable.empty")}
                   </td>
                 </tr>
               ) : (
@@ -135,7 +147,9 @@ export function AdminDashboard() {
                     <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
                     <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">{r.Nombre} {r.Apellido}</td>
                     <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{r.Conjunto}</td>
-                    <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">Blq {r.Bloque} · Apto {r.Apartamento}</td>
+                    <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">
+                      {t("dashboards.admin.residentsTable.unitFormat", { bloque: r.Bloque, apto: r.Apartamento })}
+                    </td>
                   </tr>
                 ))
               )}
@@ -149,32 +163,32 @@ export function AdminDashboard() {
         <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
           <Users className="h-4 w-4 text-green-600" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-            Listado de Recicladores
+            {t("dashboards.admin.recyclersTable.title")}
           </h3>
           <span className="ml-auto rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
-            Procedimiento Almacenado
+            {t("dashboards.admin.recyclersTable.badge")}
           </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40">
-                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Correo</th>
-                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Nombre completo</th>
-                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Asociación</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.email")}</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.fullName")}</th>
+                <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.association")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
               {cargandoRecicladores ? (
                 <tr>
                   <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-400">
-                    Cargando datos...
+                    {t("dashboards.admin.loadingData")}
                   </td>
                 </tr>
               ) : recicladoresData.length === 0 ? (
                 <tr>
                   <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-400">
-                    No hay recicladores registrados todavía.
+                    {t("dashboards.admin.recyclersTable.empty")}
                   </td>
                 </tr>
               ) : (

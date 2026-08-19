@@ -42,6 +42,10 @@ def _verificar_admin_administra_conjunto(db: Session, id_usuario_admin: int, id_
     stmt_asignacion = select(AdministradorConjuntoAsignacion).where(
         AdministradorConjuntoAsignacion.id_administrador == administrador.id_administrador,
         AdministradorConjuntoAsignacion.id_conjunto_residencial == id_conjunto,
+        # ¿Qué? Solo cuenta si el vínculo sigue activo — un admin ya
+        #       desvinculado (RQF-016) no debe poder seguir invitando
+        #       recicladores a un conjunto que ya no administra.
+        AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
     )
     asignacion = db.execute(stmt_asignacion).scalar_one_or_none()
 
