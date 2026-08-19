@@ -9,8 +9,8 @@
       "miPerfil": "Mi Perfil",
       "novedadesGobierno": "Novedades Gobierno",
       "puntosAcopio": "Puntos de Acopio",
-      "novedadesConjuntos": "Novedades de mis Conjuntos",
-      "novedadesConjunto": "Novedades Conjunto",
+      "gestionarComunicados": "Comunicados de mis Conjuntos",
+      "comunicados": "Comunicados",
       "aprenderGuias": "Aprender (Guías)",
       "directorioGeneral": "Directorio General"
     },
@@ -901,6 +901,62 @@
       "assigning": "Asignando...",
       "successMessage": "Conjunto asignado correctamente.",
       "errorDefault": "No se pudo asignar el conjunto."
+    }
+  },
+  "comunicados": {
+    "editedBadge": "Editado",
+    "viewAttachment": "Ver adjunto",
+    "tipos": {
+      "INFORMATIVO": "Informativo",
+      "URGENTE": "Urgente",
+      "CONVOCATORIA": "Convocatoria",
+      "MANTENIMIENTO": "Mantenimiento",
+      "RECICLAJE": "Reciclaje"
+    },
+    "destinatarios": {
+      "RESIDENTES": "Residentes",
+      "RECICLADORES": "Recicladores",
+      "AMBOS": "Ambos"
+    },
+    "admin": {
+      "title": "Comunicados",
+      "subtitle": "Publica avisos para los residentes y/o recicladores de tus conjuntos.",
+      "newButton": "Nuevo comunicado",
+      "noConjuntos": "No administras ningún conjunto todavía.",
+      "emptyState": "Todavía no has publicado ningún comunicado.",
+      "editAria": "Editar comunicado",
+      "deleteAria": "Eliminar comunicado",
+      "editTitle": "Editar comunicado",
+      "expiraEl": "Expira el {{fecha}}",
+      "destinatariosNoEditable": "El conjunto y los destinatarios no se pueden cambiar después de publicar. Si te equivocaste, elimina este comunicado y crea uno nuevo.",
+      "deleteError": "No se pudo eliminar. Intenta de nuevo.",
+      "validation": {
+        "textoRequerido": "El texto del comunicado es obligatorio.",
+        "conjuntoRequerido": "Selecciona a cuál de tus conjuntos va dirigido.",
+        "fechaEventoRequerida": "Los comunicados de tipo Convocatoria necesitan la fecha del evento."
+      },
+      "fields": {
+        "conjunto": "Conjunto",
+        "destinatarios": "Destinatarios",
+        "tipo": "Tipo de comunicado",
+        "fechaEvento": "Fecha del evento",
+        "texto": "Mensaje",
+        "urlAdjunto": "Link de adjunto (imagen, video, PDF, etc.) — opcional",
+        "urlAdjuntoPlaceholder": "https://...",
+        "fechaExpiracion": "Fecha de expiración (opcional)",
+        "fechaExpiracionHint": "Si la dejas vacía, se usa la sugerida según el tipo de comunicado."
+      },
+      "deleteConfirm": {
+        "ariaLabel": "Confirmar eliminación",
+        "title": "¿Eliminar este comunicado?",
+        "warning": "Esta acción no se puede deshacer.",
+        "confirm": "Sí, eliminar"
+      }
+    },
+    "feed": {
+      "title": "Comunicados",
+      "subtitle": "Avisos activos de tu conjunto.",
+      "empty": "No hay comunicados activos por ahora."
     }
   }
 }

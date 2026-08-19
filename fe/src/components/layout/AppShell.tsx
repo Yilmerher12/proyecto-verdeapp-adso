@@ -10,6 +10,7 @@ import {
   ChevronsRight,
   BookOpen,
   MapPin,
+  Megaphone,
   Newspaper,
   User,
   Bell,
@@ -120,6 +121,7 @@ export function AppShell({ children }: AppShellProps) {
       return [
         ...commonStart,
         { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
+        { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true },
         { icon: Newspaper, label: t("appShell.nav.novedadesGobierno"), href: null, enabled: false },
         { icon: MapPin, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true },
         ...commonEnd,
@@ -130,7 +132,7 @@ export function AppShell({ children }: AppShellProps) {
       return [
         ...commonStart,
         { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
-        { icon: Newspaper, label: t("appShell.nav.novedadesConjuntos"), href: null, enabled: false },
+        { icon: Megaphone, label: t("appShell.nav.gestionarComunicados"), href: "/admin-conjunto/comunicados", enabled: true },
         ...commonEnd,
       ];
     }
@@ -138,7 +140,7 @@ export function AppShell({ children }: AppShellProps) {
     return [
       ...commonStart,
       { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
-      { icon: Newspaper, label: t("appShell.nav.novedadesConjunto"), href: null, enabled: false },
+      { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true },
       { icon: BookOpen, label: t("appShell.nav.aprenderGuias"), href: "/catalogo-educativo", enabled: true },
       { icon: MapPin, label: t("appShell.nav.directorioGeneral"), href: "/directorio", enabled: true },
       ...commonEnd,

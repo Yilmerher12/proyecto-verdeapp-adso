@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Bell, Building2, Clock, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
+import { AlertTriangle, Bell, Building2, Clock, Megaphone, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import i18n from "@/i18n";
 
@@ -33,6 +33,9 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   DESVINCULACION_APROBADA: { Icon: Unlink, color: "text-gray-600 dark:text-gray-400" },
   DESVINCULACION_RECHAZADA: { Icon: XCircle, color: "text-red-600 dark:text-red-400" },
   CONJUNTO_ASIGNADO: { Icon: Building2, color: "text-green-700 dark:text-green-500" },
+  // RQF-014 (comunicados del conjunto)
+  COMUNICADO_NUEVO: { Icon: Megaphone, color: "text-purple-700 dark:text-purple-400" },
+  COMUNICADO_ACTUALIZADO: { Icon: Megaphone, color: "text-purple-500 dark:text-purple-300" },
 };
 
 // ¿Qué? Se usa i18n.t() directamente (no el hook useTranslation) porque esta
