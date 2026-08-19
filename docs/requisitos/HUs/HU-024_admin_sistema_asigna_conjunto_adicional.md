@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema asigna un conjunto adicional a un Admin de Conjunto existente               |
 | **Módulo**         | Administración / Conjuntos                                                              |
 | **Prioridad**      | Media                                                                                     |
-| **Estado**         | Por implementar                                                                           |
+| **Estado**         | Implementada                                                                              |
 | **RF asociados**   | RQF-016                                                                                   |
 
 ---
