@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema archiva una novedad / el sistema la archiva al expirar             |
 | **Módulo**         | Comunicación / Sistema                                                          |
 | **Prioridad**      | Media                                                                            |
-| **Estado**         | Por implementar                                                                  |
+| **Estado**         | Implementada                                                                     |
 | **RF asociados**   | RQF-015                                                                         |
 
 ---
