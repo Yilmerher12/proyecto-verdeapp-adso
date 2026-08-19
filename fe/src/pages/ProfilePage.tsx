@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
@@ -45,7 +44,6 @@ function InfoField({ label, value, icon }: { label: string; value: string; icon?
 }
 
 export function ProfilePage() {
-  const { t } = useTranslation();
   const { accessToken } = useAuth() as any;
   const [perfil, setPerfil] = useState<PerfilData | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -96,12 +94,12 @@ export function ProfilePage() {
 
   const guardarPerfil = async () => {
     if (!formNombre.trim() || !formApellidos.trim()) {
-      setErrorMsg(t("profile.validation.nameRequired"));
+      setErrorMsg("Nombre y apellidos son obligatorios.");
       return;
     }
     const telefono = formTelefono.trim();
     if (telefono && !TELEFONO_REGEX.test(telefono)) {
-      setErrorMsg(t("profile.validation.phoneInvalid"));
+      setErrorMsg("El número telefónico tiene un formato inválido.");
       return;
     }
     setGuardando(true);
@@ -125,24 +123,17 @@ export function ProfilePage() {
       const backendMsg = axios.isAxiosError(err)
         ? (err.response?.data as { detail?: string } | undefined)?.detail
         : undefined;
-      setErrorMsg(backendMsg || t("common.saveError"));
+      setErrorMsg(backendMsg || "No se pudo guardar. Intenta de nuevo.");
     } finally {
       setGuardando(false);
     }
   };
 
-  if (cargando) return <p className="text-sm text-gray-400 px-2 pt-6">{t("profile.loading")}</p>;
-  if (!perfil) return <p className="text-sm text-red-500 px-2 pt-6">{t("profile.loadError")}</p>;
+  if (cargando) return <p className="text-sm text-gray-400 px-2 pt-6">Cargando tu perfil...</p>;
+  if (!perfil) return <p className="text-sm text-red-500 px-2 pt-6">No se pudo cargar tu perfil.</p>;
 
   const role = ROLE_THEME[perfil.role_id] ?? ROLE_THEME[RoleId.RESIDENTE];
   const { Icon: RoleIcon } = role;
-  const ROLE_LABEL_KEY: Record<RoleId, string> = {
-    [RoleId.ADMIN_SISTEMA]: "roles.adminSistema",
-    [RoleId.RESIDENTE]: "roles.residente",
-    [RoleId.RECICLADOR]: "roles.reciclador",
-    [RoleId.ADMIN_CONJUNTO]: "roles.adminConjunto",
-  };
-  const roleLabel = t(ROLE_LABEL_KEY[perfil.role_id] ?? ROLE_LABEL_KEY[RoleId.RESIDENTE]);
   const nombreCompleto = `${perfil.first_name} ${perfil.last_name}`.trim();
   const inicial = perfil.first_name?.charAt(0)?.toUpperCase() || "U";
   const canEdit = perfil.role_id !== 1;
@@ -151,15 +142,15 @@ export function ProfilePage() {
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("profile.subtitle")}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mi perfil</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Gestiona tu información personal</p>
       </div>
 
       {/* Success banner */}
       {exito && (
         <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
-          {t("profile.updateSuccess")}
+          Perfil actualizado correctamente.
         </div>
       )}
 
@@ -179,7 +170,7 @@ export function ProfilePage() {
           {/* Badge de rol — icono Lucide, sin emoji */}
           <span className={`inline-flex items-center gap-1.5 mt-3 rounded-full ${role.badgeBg} px-3 py-1 text-xs font-semibold ${role.badgeText}`}>
             <RoleIcon className="h-3.5 w-3.5 shrink-0" />
-            {roleLabel}
+            {role.label}
           </span>
 
           {/* Datos de contexto (no editables) */}
@@ -188,15 +179,15 @@ export function ProfilePage() {
               <>
                 {perfil.nombre_conjunto && (
                   <InfoField
-                    label={t("profile.fields.conjunto")}
+                    label="Conjunto"
                     value={perfil.nombre_conjunto}
                     icon={<Building2 className="h-3 w-3" />}
                   />
                 )}
                 {(perfil.torre || perfil.apto) && (
                   <InfoField
-                    label={t("profile.fields.unit")}
-                    value={t("profile.fields.unitFormat", { torre: perfil.torre ?? "", apto: perfil.apto ?? "" })}
+                    label="Unidad"
+                    value={`${perfil.torre ?? ""} · Apto ${perfil.apto ?? ""}`}
                   />
                 )}
               </>
@@ -206,14 +197,14 @@ export function ProfilePage() {
               <>
                 {perfil.nombre_localidad && (
                   <InfoField
-                    label={t("profile.fields.baseLocality")}
+                    label="Localidad base"
                     value={perfil.nombre_localidad}
                     icon={<MapPin className="h-3 w-3" />}
                   />
                 )}
                 {perfil.asociacion && (
                   <InfoField
-                    label={t("profile.fields.association")}
+                    label="Asociación"
                     value={perfil.asociacion}
                     icon={<UsersIcon className="h-3 w-3" />}
                   />
@@ -227,8 +218,8 @@ export function ProfilePage() {
                 <InfoField
                   label={
                     perfil.conjuntos_administrados.length === 1
-                      ? t("profile.managedConjuntoSingular")
-                      : t("profile.managedConjuntoPlural")
+                      ? "Conjunto que administras"
+                      : "Conjuntos que administras"
                   }
                   value={perfil.conjuntos_administrados.join(", ")}
                   icon={<Building2 className="h-3 w-3" />}
@@ -240,14 +231,14 @@ export function ProfilePage() {
         {/* RIGHT — Información personal editable (3/5) */}
         <div className="lg:col-span-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("profile.personalInfoSection.title")}</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">Información personal</h3>
             {canEdit && !editando && (
               <button
                 onClick={iniciarEdicion}
                 className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
               >
                 <Pencil className="h-3.5 w-3.5" />
-                {t("common.edit")}
+                Editar
               </button>
             )}
           </div>
@@ -255,21 +246,21 @@ export function ProfilePage() {
           {!editando ? (
             /* Modo lectura */
             <div className="space-y-3">
-              <InfoField label={t("profile.fields.firstName")} value={perfil.first_name} />
-              <InfoField label={t("profile.fields.lastName")} value={perfil.last_name} />
+              <InfoField label="Nombre" value={perfil.first_name} />
+              <InfoField label="Apellidos" value={perfil.last_name} />
               <InfoField
-                label={t("common.phone")}
+                label="Teléfono"
                 value={
                   perfil.numero_telefonico &&
                   perfil.numero_telefonico !== "No registrado" &&
                   perfil.numero_telefonico !== "N/A"
                     ? perfil.numero_telefonico
-                    : t("profile.notRegistered")
+                    : "No registrado"
                 }
                 icon={<Phone className="h-3 w-3" />}
               />
               <InfoField
-                label={t("common.email")}
+                label="Correo electrónico"
                 value={perfil.email}
                 icon={<Mail className="h-3 w-3" />}
               />
@@ -285,7 +276,7 @@ export function ProfilePage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("profile.fields.firstName")} <span className="text-red-500">*</span>
+                  Nombre <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={formNombre}
@@ -296,7 +287,7 @@ export function ProfilePage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("profile.fields.lastName")} <span className="text-red-500">*</span>
+                  Apellidos <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={formApellidos}
@@ -307,12 +298,12 @@ export function ProfilePage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("common.phone")}
+                  Teléfono
                 </label>
                 <input
                   value={formTelefono}
                   onChange={(e) => setFormTelefono(e.target.value)}
-                  placeholder={t("profile.phonePlaceholder")}
+                  placeholder="Ej: 3001234567"
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
@@ -320,12 +311,12 @@ export function ProfilePage() {
               {perfil.role_id === RoleId.RECICLADOR && (
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                    {t("profile.fields.association")}
+                    Asociación
                   </label>
                   <input
                     value={formAsociacion}
                     onChange={(e) => setFormAsociacion(e.target.value)}
-                    placeholder={t("profile.associationPlaceholder")}
+                    placeholder="Ej: INDEPENDIENTE"
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   />
                 </div>
@@ -333,12 +324,12 @@ export function ProfilePage() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("common.email")}
+                  Correo electrónico
                 </label>
                 <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-800/40">
                   <p className="text-sm text-gray-400 dark:text-gray-500">{perfil.email}</p>
                 </div>
-                <p className="mt-1 text-[11px] text-gray-400">{t("profile.emailNote")}</p>
+                <p className="mt-1 text-[11px] text-gray-400">El correo no se puede cambiar desde aquí.</p>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -347,7 +338,7 @@ export function ProfilePage() {
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
                 >
                   <X className="h-4 w-4" />
-                  {t("common.cancel")}
+                  Cancelar
                 </button>
                 <button
                   onClick={guardarPerfil}
@@ -355,7 +346,7 @@ export function ProfilePage() {
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60 transition-colors"
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  {guardando ? t("common.saving") : t("profile.saveChanges")}
+                  {guardando ? "Guardando..." : "Guardar cambios"}
                 </button>
               </div>
             </div>

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Home, AlertTriangle, Bell, CheckCircle2 } from "lucide-react";
 import axios from "axios";
@@ -17,9 +16,8 @@ interface EstadoShut {
 }
 
 export function ResidenteDashboard() {
-  const { t } = useTranslation();
   const { user, accessToken } = useAuth() as AnyRecord;
-  const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || t("roles.residente");
+  const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || "Residente";
   const { WatermarkIcon } = ROLE_THEME[RoleId.RESIDENTE];
 
   const [estadoShut, setEstadoShut] = useState<EstadoShut>({ lleno: false, created_at: null });
@@ -98,9 +96,9 @@ export function ResidenteDashboard() {
             <Home className="h-7 w-7 text-green-600 dark:text-green-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.residente.title")}</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Panel del Residente</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {t("dashboards.common.welcomePrefix")}{" "}
+              Bienvenido,{" "}
               <span className="font-semibold text-gray-800 dark:text-gray-200 uppercase">
                 {fullName}
               </span>
@@ -116,15 +114,15 @@ export function ResidenteDashboard() {
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
           <div>
             <p className="text-sm font-semibold text-amber-900 dark:text-amber-400">
-              {t("dashboards.residente.shutBanner.title")}
+              El SHUT está lleno
             </p>
             {estadoShut.created_at && (
               <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-500">
-                {t("dashboards.residente.shutBanner.reportedAt", { time: tiempoRelativo(estadoShut.created_at) })}
+                Reportado {tiempoRelativo(estadoShut.created_at)}
               </p>
             )}
             <p className="mt-1 text-xs text-amber-700 dark:text-amber-500">
-              {t("dashboards.residente.shutBanner.warning")}
+              No bajes más material reciclable hasta que el reciclador indique que está libre.
             </p>
           </div>
         </div>
@@ -135,10 +133,11 @@ export function ResidenteDashboard() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              {t("dashboards.residente.reportSection.title")}
+              Reportar SHUT lleno
             </p>
             <p className="mt-1 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-              {t("dashboards.residente.reportSection.description")}
+              Avisa al reciclador y al administrador que el cuarto de basuras está lleno.
+              El reporte es anónimo.
             </p>
           </div>
           <button
@@ -153,12 +152,12 @@ export function ResidenteDashboard() {
             {feedbackOk ? (
               <>
                 <CheckCircle2 className="h-4 w-4" />
-                {t("dashboards.residente.reportSection.sent")}
+                Enviado
               </>
             ) : (
               <>
                 <Bell className="h-4 w-4" />
-                {t("dashboards.residente.reportSection.submit")}
+                Reportar
               </>
             )}
           </button>
@@ -168,13 +167,13 @@ export function ResidenteDashboard() {
       {/* Actividad reciente (notificaciones recibidas) */}
       {cargando ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5">
-          <p className="text-sm text-gray-400">{t("common.loading")}</p>
+          <p className="text-sm text-gray-400">Cargando...</p>
         </div>
       ) : (
         <NotificationFeed
-          title={t("dashboards.residente.notifications.title")}
+          title="Actividad reciente"
           notifications={notificaciones}
-          emptyMessage={t("dashboards.residente.notifications.empty")}
+          emptyMessage="No tienes notificaciones aún. Aparecerán aquí cuando el reciclador envíe avisos."
           accentBg="bg-green-600"
           accentHighlight="bg-green-50/60 hover:bg-green-50 dark:bg-green-900/10 dark:hover:bg-green-900/20"
           onMarkRead={marcarLeida}

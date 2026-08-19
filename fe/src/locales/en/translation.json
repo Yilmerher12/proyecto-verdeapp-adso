@@ -1,43 +1,16 @@
 {
-  "appShell": {
-    "ariaLabel": "VerdeApp navigation",
-    "nav": {
-      "panelPrincipal": "Dashboard",
-      "seguridad": "Security",
-      "crearNovedades": "Post Updates",
-      "contenidoEducativo": "Educational Content",
-      "miPerfil": "My Profile",
-      "novedades": "News",
-      "puntosAcopio": "Collection Points",
-      "gestionarComunicados": "My Buildings' Announcements",
-      "comunicados": "Announcements",
-      "aprenderGuias": "Learn (Guides)",
-      "directorioGeneral": "General Directory"
-    },
-    "proximamente": "Coming soon",
-    "notificaciones": "Notifications",
-    "expandirMenu": "Expand menu",
-    "colapsarMenu": "Collapse menu",
-    "cerrarSesion": "Sign out",
-    "confirmarLogout": {
-      "titulo": "Sign out?",
-      "mensaje": "Your session will end and you'll be redirected to the home page.",
-      "confirmar": "Yes, sign out"
+  "nav": {
+    "brand": "VerdeApp",
+    "logout": "Sign out",
+    "language": "Language",
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "employees": "Employees",
+      "products": "Products",
+      "reports": "Reports",
+      "security": "Security",
+      "comingSoon": "soon"
     }
-  },
-  "passwordStrength": {
-    "ariaLabel": "Password strength: {{label}}",
-    "1": "Very weak",
-    "2": "Weak",
-    "3": "Fair",
-    "4": "Good",
-    "5": "Strong"
-  },
-  "roles": {
-    "adminSistema": "System Admin",
-    "residente": "Resident",
-    "reciclador": "Recycler",
-    "adminConjunto": "Building Admin"
   },
   "common": {
     "loading": "Loading...",
@@ -51,25 +24,21 @@
     "cancel": "Cancel",
     "back": "Back",
     "or": "or",
-    "close": "Close",
-    "edit": "Edit",
-    "phone": "Phone",
-    "saving": "Saving...",
-    "saveError": "Could not save. Please try again."
+    "close": "Close"
   },
   "auth": {
     "login": {
-      "title": "Log in to VerdeApp",
-      "subtitle": "Manage recycling and reports for your community.",
+      "title": "Sign in",
+      "subtitle": "Enter your credentials to access your account",
       "forgotPassword": "Forgot your password?",
-      "noAccount": "Don't have an account yet?",
-      "createAccountLink": "Sign up here",
-      "submit": "Log In",
-      "errorDefault": "Incorrect credentials. Check your email and password."
+      "noAccount": "Don't have an account?",
+      "createAccountLink": "Create account",
+      "submit": "Sign in",
+      "errorDefault": "Error signing in"
     },
     "register": {
-      "title": "Create your account",
-      "subtitle": "Join VerdeApp and transform your community",
+      "title": "Create account",
+      "subtitle": "Fill in your details to register",
       "confirmEmail": "Confirm email",
       "confirmPassword": "Confirm password",
       "submit": "Create account",
@@ -81,7 +50,6 @@
       "verifyEmailCardBody": "We sent you a verification email. Check your inbox and click the link to activate your account.",
       "validation": {
         "emailRequired": "Email is required",
-        "emailInvalid": "The email format is not valid.",
         "confirmEmailRequired": "Please confirm your email address",
         "emailsMismatch": "Email addresses do not match",
         "firstNameMin": "First name must be at least 2 characters",
@@ -97,54 +65,7 @@
       },
       "acceptTerms": "I have read and accept the <link>Terms of Use</link>",
       "acceptPrivacy": "I have read and accept the <link>Privacy Policy</link>",
-      "acceptCookies": "I have read and accept the <link>Cookies Policy</link>",
-      "roleResident": "Resident",
-      "roleRecycler": "Recycler",
-      "fields": {
-        "firstName": "First name *",
-        "lastName": "Last name *",
-        "phone": "Phone",
-        "residenceLocationHeading": "Residence Location *",
-        "locality": "District",
-        "selectPlaceholder": "Select...",
-        "conjunto": "Residential Building",
-        "unitType": "Unit Type",
-        "unitTypeTower": "Tower",
-        "unitTypeInterior": "Interior",
-        "unitTypeBlock": "Block",
-        "unitTypeHouse": "House",
-        "unitNumber": "No. / Letter",
-        "unitNumberPlaceholder": "E.g.: 3, B",
-        "apto": "Apartment",
-        "aptoPlaceholder": "E.g.: 402",
-        "operativeProfileHeading": "Operating Profile *",
-        "workLocality": "Work District *",
-        "selectYourLocality": "Select your district...",
-        "association": "Association (Optional)",
-        "associationPlaceholder": "E.g.: ARB",
-        "email": "Email *",
-        "confirmEmailField": "Confirm Email *",
-        "password": "Password *",
-        "passwordPlaceholder": "Minimum 8 characters",
-        "confirmPasswordField": "Confirm Password *",
-        "confirmPasswordPlaceholder": "Repeat the password"
-      },
-      "termsPrefix": "I accept the",
-      "termsLinkLabel": "Terms of Use",
-      "andThe": "and the",
-      "privacyLinkLabel": "Privacy Policy",
-      "brandSuffix": "of VerdeApp *",
-      "submitIncomplete": "Complete the fields and accept the terms",
-      "submitFull": "Register Account",
-      "genericError": "Error registering. Check your details or try a different email.",
-      "success": {
-        "title": "Check your inbox!",
-        "bodyPrefix": "We sent a verification link to",
-        "step1": "Open your email",
-        "step2": "Look for the email from VerdeApp",
-        "step3": "Click \"Verify my account\"",
-        "understood": "Got it"
-      }
+      "acceptCookies": "I have read and accept the <link>Cookies Policy</link>"
     },
     "changePassword": {
       "title": "Change password",
@@ -459,56 +380,74 @@
     }
   },
   "landing": {
-    "nav": { "homeAriaLabel": "VerdeApp — home", "login": "Sign in", "register": "Sign up" },
+    "nav": { "login": "Sign in", "register": "Sign up" },
     "hero": {
-      "subtitle": "Waste management for residential buildings in Bogotá",
-      "description": "We connect residents, recyclers, and administrators to transform waste management in your community.",
-      "ctaLogin": "I already have an account",
-      "ctaRegister": "Join VerdeApp"
+      "title": "Secure authentication,",
+      "titleHighlight": "production ready",
+      "subtitle": "Registration, login, email verification, password change and recovery. A complete system built with FastAPI, React and security best practices.",
+      "ctaPrimary": "Get started",
+      "ctaSecondary": "Sign in"
+    },
+    "features": {
+      "title": "System features",
+      "subtitle": "Everything you need for a robust and educational authentication system.",
+      "register": {
+        "title": "Secure registration",
+        "description": "Real-time data validation. Passwords are hashed with bcrypt — never stored in plain text."
+      },
+      "jwt": {
+        "title": "JWT authentication",
+        "description": "15-minute access tokens and 7-day refresh tokens. Stateless, efficient, and industry standard."
+      },
+      "email": {
+        "title": "Email verification",
+        "description": "Confirms identity before activating the account. Single-use link sent automatically upon registration."
+      },
+      "password": {
+        "title": "Password change",
+        "description": "Authenticated users can change their password by entering the current one. Strict backend validation."
+      },
+      "recovery": {
+        "title": "Email recovery",
+        "description": "Complete forgot/reset flow with a single-use token and 1-hour expiration."
+      },
+      "security": {
+        "title": "OWASP security",
+        "description": "Security-first design: no SQL injection, no XSS, configured CORS, and inputs validated with Pydantic."
+      }
     },
     "howItWorks": {
-      "eyebrow": "How does it work?",
-      "title": "Three steps, one complete cycle",
-      "subtitle": "VerdeApp connects everyone involved in recycling at the residential building.",
+      "title": "How does it work?",
+      "subtitle": "Three steps to start using the system.",
       "step1": {
-        "title": "The building joins",
-        "description": "The administrator registers the building on VerdeApp and invites the residents and the assigned recycler."
+        "title": "Create your account",
+        "description": "Register your email and password. You'll receive an email to verify and activate your account."
       },
       "step2": {
-        "title": "Residents get involved",
-        "description": "They learn to recycle with the educational content and report when the waste room reaches full capacity."
+        "title": "Sign in",
+        "description": "Authenticate with your credentials. The system will issue an access token and a refresh token."
       },
       "step3": {
-        "title": "The recycler takes action",
-        "description": "They report their arrival at the waste room. Once done, the system logs the pickup and generates a performance audit."
+        "title": "Access the system",
+        "description": "With your active session, manage your profile and password from the dashboard."
       }
     },
-    "pillars": {
-      "eyebrow": "Our pillars",
-      "title": "One platform, three areas of impact",
-      "pillar1": {
-        "title": "Separation at the source",
-        "description": "Guides residents in properly sorting recyclable waste, directly from the app."
-      },
-      "pillar2": {
-        "title": "Connection with recyclers",
-        "description": "Formalizes the work of independent recyclers. Enables real-time requests and notifications between the building and the assigned recycler."
-      },
-      "pillar3": {
-        "title": "Environmental education",
-        "description": "Guides and interactive content on how to separate, clean, and hand over recyclable materials correctly in your community."
-      }
+    "techStack": {
+      "title": "Tech stack",
+      "subtitle": "Modern, typed, and industry-tested tools.",
+      "ariaLabel": "Project technologies"
+    },
+    "cta": {
+      "title": "Ready to get started",
+      "subtitle": "Create your account and explore the complete authentication system. Learn by implementing.",
+      "button": "Create free account"
     },
     "footer": {
       "credit": "Educational project — SENA",
       "terms": "Terms of use",
       "privacy": "Privacy policy",
       "cookies": "Cookies policy",
-      "contact": "Contact",
-      "navPrivacy": "Privacy",
-      "navCookies": "Cookies",
-      "rights": "© {{year}} VerdeApp. All rights reserved.",
-      "legalAriaLabel": "Legal notice"
+      "contact": "Contact"
     }
   },
   "contact": {
@@ -585,411 +524,6 @@
     },
     "footer": {
       "credit": "SENA educational project"
-    }
-  },
-  "dashboards": {
-    "common": {
-      "welcomePrefix": "Welcome,"
-    },
-    "admin": {
-      "title": "Administration Panel",
-      "inviteSection": {
-        "title": "Building Administrators",
-        "show": "+ Invite administrator",
-        "hide": "Hide"
-      },
-      "loadingData": "Loading data...",
-      "residentsTable": {
-        "title": "Residents List",
-        "badge": "SQL View",
-        "headers": {
-          "email": "Email",
-          "name": "Name",
-          "conjunto": "Building",
-          "unit": "Unit"
-        },
-        "unitFormat": "Blk {{bloque}} · Apt {{apto}}",
-        "empty": "No residents registered yet."
-      },
-      "recyclersTable": {
-        "title": "Recyclers List",
-        "badge": "Stored Procedure",
-        "headers": {
-          "email": "Email",
-          "fullName": "Full name",
-          "association": "Association"
-        },
-        "empty": "No recyclers registered yet."
-      }
-    },
-    "adminConjunto": {
-      "title": "Building Administrator Panel",
-      "estado": {
-        "pendiente": "Pending",
-        "aceptada": "Accepted",
-        "rechazada": "Rejected"
-      },
-      "recyclersSection": {
-        "title": "Authorized Recyclers",
-        "invite": "+ Invite recycler",
-        "emailPlaceholder": "recycler.email@example.com",
-        "sending": "Sending...",
-        "inviteButton": "Invite",
-        "errorDefault": "The invitation could not be sent. Check the email address.",
-        "loading": "Loading recyclers...",
-        "empty": "You haven't invited any recycler to this building yet."
-      },
-      "myConjuntos": {
-        "title": "Buildings you administer",
-        "loading": "Loading your buildings...",
-        "empty": "You don't have any building assigned yet. Contact the VerdeApp team."
-      },
-      "editForm": {
-        "name": "Building name",
-        "nit": "Tax ID (optional)",
-        "address": "Address",
-        "successMessage": "Building updated successfully.",
-        "errorMessage": "The change could not be saved. Please try again."
-      },
-      "nitLabel": "Tax ID: {{nit}}",
-      "notifications": {
-        "title": "Building activity",
-        "empty": "No activity yet. Notifications from recyclers and residents will appear here."
-      }
-    },
-    "reciclador": {
-      "title": "Recycler Panel",
-      "acciones": {
-        "llegada": "I arrived at the building",
-        "shutLleno": "Waste room is full",
-        "shutLibre": "Waste room is now free"
-      },
-      "feedbackSent": "Notification sent: \"{{label}}\"",
-      "genericNotificationSent": "Notification sent",
-      "sendSection": {
-        "title": "Send notification",
-        "subtitle": "Notify residents and the building administrator.",
-        "noConjuntos": "You don't have any authorized buildings yet. Accept an invitation to be able to send notifications."
-      },
-      "invitations": {
-        "title": "Pending invitations",
-        "invitedBy": "Invited by {{nombre}}",
-        "accept": "Accept",
-        "reject": "Reject"
-      },
-      "myConjuntos": {
-        "title": "My authorized buildings",
-        "empty": "You're not authorized in any building yet. Once an administrator invites you and you accept, it will appear here."
-      },
-      "notifications": {
-        "title": "Received notifications",
-        "empty": "You have no notifications. When a resident reports the waste room is full, it will appear here."
-      },
-      "modal": {
-        "title": "Which building are you notifying?",
-        "subtitle": "Select the building you arrived at or want to notify about.",
-        "sending": "Sending...",
-        "submit": "Send notice"
-      }
-    },
-    "residente": {
-      "title": "Resident Panel",
-      "shutBanner": {
-        "title": "The waste room is full",
-        "reportedAt": "Reported {{time}}",
-        "warning": "Don't bring down more recyclable material until the recycler indicates it's free."
-      },
-      "reportSection": {
-        "title": "Report waste room full",
-        "description": "Notify the recycler and the administrator that the waste room is full. The report is anonymous.",
-        "sent": "Sent",
-        "submit": "Report"
-      },
-      "notifications": {
-        "title": "Recent activity",
-        "empty": "You have no notifications yet. They will appear here when the recycler sends notices."
-      }
-    }
-  },
-  "notificationFeed": {
-    "platformLabel": "VerdeApp",
-    "markAllRead": "Mark all read",
-    "clearRead": "Clear read",
-    "showLess": "Show less",
-    "showMore": "Show {{count}} more",
-    "time": {
-      "justNow": "just now",
-      "minutesAgo": "{{count}} min ago",
-      "hoursAgo": "{{count}}h ago",
-      "daysAgo": "{{count}}d ago"
-    }
-  },
-  "profile": {
-    "title": "My profile",
-    "subtitle": "Manage your personal information",
-    "updateSuccess": "Profile updated successfully.",
-    "loading": "Loading your profile...",
-    "loadError": "Could not load your profile.",
-    "fields": {
-      "conjunto": "Building",
-      "unit": "Unit",
-      "unitFormat": "{{torre}} · Apt {{apto}}",
-      "baseLocality": "Base district",
-      "association": "Association",
-      "firstName": "First name",
-      "lastName": "Last name"
-    },
-    "managedConjuntoSingular": "Building you administer",
-    "managedConjuntoPlural": "Buildings you administer",
-    "personalInfoSection": {
-      "title": "Personal information"
-    },
-    "notRegistered": "Not registered",
-    "emailNote": "Your email can't be changed from here.",
-    "validation": {
-      "nameRequired": "First and last name are required.",
-      "phoneInvalid": "The phone number format is invalid."
-    },
-    "phonePlaceholder": "E.g.: 3001234567",
-    "associationPlaceholder": "E.g.: INDEPENDENT",
-    "saveChanges": "Save changes"
-  },
-  "directorio": {
-    "subtitleGeneral": "Connect with recyclers and collection points in your district.",
-    "subtitleAcopio": "Find the points where you can drop off recyclable material.",
-    "tabs": {
-      "recyclers": "Recyclers"
-    },
-    "allLocalities": "All districts",
-    "emptyRecyclers": "No recyclers registered in this district.",
-    "emptyPoints": "No collection points registered in this district.",
-    "call": "Call",
-    "noPhone": "No phone registered"
-  },
-  "catalogoEducativo": {
-    "title": "Learn to recycle",
-    "subtitle": "Choose a topic to see its videos and support guides.",
-    "loading": "Loading content...",
-    "loadError": "Could not load the educational catalog.",
-    "emptyState": "No educational content published yet.",
-    "tema": "topic",
-    "temas": "topics"
-  },
-  "categoriaEducativa": {
-    "back": "Back to Learn to recycle",
-    "emptyForCategory": "No content was found for this category.",
-    "viewGuide": "View support guide"
-  },
-  "adminContenidoEducativo": {
-    "title": "Educational content",
-    "subtitle": "Create, edit, and delete the catalog modules.",
-    "newModule": "New module",
-    "emptyState": "No modules created yet.",
-    "editAria": "Edit {{titulo}}",
-    "deleteAria": "Delete {{titulo}}",
-    "modal": {
-      "editTitle": "Edit module",
-      "deleteAriaLabel": "Confirm deletion"
-    },
-    "validation": {
-      "required": "Category, title, and content are required."
-    },
-    "deleteError": "Could not delete. Please try again.",
-    "fields": {
-      "category": "Category",
-      "categoryPlaceholder": "E.g.: Separation at the source",
-      "titleField": "Title",
-      "titlePlaceholder": "E.g.: Color-coding for bags",
-      "content": "Content",
-      "videoLink": "Video link (YouTube)",
-      "guideLink": "Support guide link (PDF, Drive, etc.)"
-    },
-    "deleteConfirm": {
-      "title": "Delete \"{{titulo}}\"?",
-      "warning": "This action cannot be undone.",
-      "confirm": "Yes, delete"
-    }
-  },
-  "aceptarInvitacion": {
-    "verifying": "Verifying your invitation...",
-    "invalid": {
-      "title": "Invalid invitation",
-      "message": "This link has already been used, expired, or is incorrect. Ask the VerdeApp team to send you a new invitation.",
-      "backHome": "Back to home"
-    },
-    "success": {
-      "title": "Account created!",
-      "message": "You can now sign in with your email and the password you just set, to administer your assigned buildings.",
-      "goToLogin": "Go to sign in"
-    },
-    "form": {
-      "title": "Create your administrator account",
-      "invitationFor": "Invitation for:",
-      "willAdminister": "You will administer:",
-      "submit": "Create my account"
-    },
-    "errors": {
-      "nameRequired": "The first name is required.",
-      "lastNameRequired": "The last name is required.",
-      "passwordsMismatch": "Passwords do not match."
-    },
-    "genericError": "Your account could not be created. The link may have expired or already been used."
-  },
-  "verifyEmail": {
-    "title": "Email verification",
-    "noTokenError": "The verification link is not valid. No token was found.",
-    "verifying": "Verifying your email...",
-    "successMessage": "Your email has been successfully verified! You can now sign in.",
-    "errorMessage": "The verification link is not valid or has already been used. Please request a new link.",
-    "goToLogin": "Go to login"
-  },
-  "invitarAdminConjunto": {
-    "title": "Invite Building Administrator",
-    "description": "You only need their email. The invited person will set their own password and complete their details when accepting the invitation.",
-    "emailLabel": "Email of the administrator to invite *",
-    "conjuntosLabel": "Buildings to assign *",
-    "loadingConjuntos": "Loading buildings...",
-    "selectedCount": "{{count}} building(s) selected",
-    "submit": "Send invitation",
-    "validation": {
-      "noConjuntoSelected": "Select at least one residential building to assign."
-    },
-    "successMessage": "Invitation sent to {{correo}}. Once accepted, they will be assigned to the selected buildings.",
-    "errorDefault": "The invitation could not be sent. Check the details and try again."
-  },
-  "desvinculacion": {
-    "solicitarButton": "Request unlink",
-    "pendingBadge": "Request pending",
-    "motivoLabel": "Reason (optional)",
-    "motivoPlaceholder": "E.g.: Contract ended",
-    "submit": "Send request",
-    "sending": "Sending...",
-    "successMessage": "Unlink request sent. A System Administrator will review it.",
-    "errorDefault": "The request could not be sent. Please try again.",
-    "adminSistema": {
-      "sectionTitle": "Unlink requests",
-      "empty": "No pending requests.",
-      "requestedBy": "Requested by {{nombre}}",
-      "motivoLabel": "Reason:",
-      "noMotivo": "No reason given",
-      "approve": "Approve",
-      "reject": "Reject",
-      "rejectModal": {
-        "title": "Reject request",
-        "motivoLabel": "Rejection reason *",
-        "motivoPlaceholder": "Explain why it's being rejected",
-        "confirm": "Reject request"
-      },
-      "approveSuccess": "Request approved.",
-      "rejectSuccess": "Request rejected.",
-      "errorDefault": "The request could not be processed."
-    },
-    "asignarAdicional": {
-      "sectionTitle": "Assign additional building",
-      "searchLabel": "Search administrator",
-      "searchPlaceholder": "Name, last name, or email",
-      "searchButton": "Search",
-      "noResults": "No administrators found.",
-      "currentConjuntos": "Administers:",
-      "noConjuntos": "No buildings yet",
-      "selectConjuntoLabel": "Building to assign",
-      "noConjuntosDisponibles": "No unassigned buildings available.",
-      "assignButton": "Assign",
-      "assigning": "Assigning...",
-      "successMessage": "Building assigned successfully.",
-      "errorDefault": "The building could not be assigned."
-    }
-  },
-  "comunicados": {
-    "editedBadge": "Edited",
-    "viewAttachment": "View attachment",
-    "tipos": {
-      "INFORMATIVO": "Informative",
-      "URGENTE": "Urgent",
-      "CONVOCATORIA": "Meeting/Event",
-      "MANTENIMIENTO": "Maintenance",
-      "RECICLAJE": "Recycling"
-    },
-    "destinatarios": {
-      "RESIDENTES": "Residents",
-      "RECICLADORES": "Recyclers",
-      "AMBOS": "Both"
-    },
-    "admin": {
-      "title": "Announcements",
-      "subtitle": "Post announcements for the residents and/or recyclers of your buildings.",
-      "newButton": "New announcement",
-      "noConjuntos": "You don't administer any building yet.",
-      "emptyState": "You haven't posted any announcement yet.",
-      "editAria": "Edit announcement",
-      "deleteAria": "Delete announcement",
-      "editTitle": "Edit announcement",
-      "expiraEl": "Expires on {{fecha}}",
-      "destinatariosNoEditable": "The building and recipients can't be changed after publishing. If you made a mistake, delete this announcement and create a new one.",
-      "deleteError": "Could not delete. Please try again.",
-      "validation": {
-        "textoRequerido": "The announcement text is required.",
-        "conjuntoRequerido": "Select which of your buildings it's for.",
-        "fechaEventoRequerida": "Meeting/Event announcements need the event date."
-      },
-      "fields": {
-        "conjunto": "Building",
-        "destinatarios": "Recipients",
-        "tipo": "Announcement type",
-        "fechaEvento": "Event date",
-        "texto": "Message",
-        "urlAdjunto": "Attachment link (image, video, PDF, etc.) — optional",
-        "urlAdjuntoPlaceholder": "https://...",
-        "fechaExpiracion": "Expiration date (optional)",
-        "fechaExpiracionHint": "If left blank, the suggested date for this announcement type is used."
-      },
-      "deleteConfirm": {
-        "ariaLabel": "Confirm deletion",
-        "title": "Delete this announcement?",
-        "warning": "This action cannot be undone.",
-        "confirm": "Yes, delete"
-      }
-    },
-    "feed": {
-      "title": "Announcements",
-      "subtitle": "Active announcements for your building.",
-      "empty": "No active announcements right now."
-    }
-  },
-  "novedades": {
-    "archivedBadge": "Archived",
-    "alcances": {
-      "TODOS": "Everyone",
-      "RESIDENTES": "Residents",
-      "RECICLADORES": "Recyclers",
-      "ADMIN_CONJUNTO": "Building Admins"
-    },
-    "admin": {
-      "title": "News",
-      "subtitle": "Post general announcements for the whole VerdeApp platform.",
-      "newButton": "New item",
-      "emptyState": "You haven't posted any news item yet.",
-      "editAria": "Edit news item",
-      "archiveAria": "Archive news item",
-      "editTitle": "Edit news item",
-      "expiraEl": "Expires on {{fecha}}",
-      "archiveError": "Could not archive. Please try again.",
-      "alcanceNoEditable": "The scope can't be changed after publishing. If you made a mistake, archive it and create a new one.",
-      "validation": {
-        "textoRequerido": "The news item text is required."
-      },
-      "fields": {
-        "alcance": "Scope",
-        "texto": "Message",
-        "urlAdjunto": "Attachment link (image, PDF, external link, etc.) — optional",
-        "fechaExpiracion": "Expiration date (optional)",
-        "fechaExpiracionHint": "If left blank, a system-suggested date is used."
-      }
-    },
-    "feed": {
-      "title": "News",
-      "subtitle": "General announcements from the VerdeApp platform.",
-      "empty": "No active news right now."
     }
   }
 }

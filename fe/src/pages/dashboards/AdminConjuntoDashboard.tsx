@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send, Clock } from "lucide-react";
+import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -9,7 +8,6 @@ import { API_BASE_URL } from "@/api/axios";
 import {
   obtenerMisConjuntos,
   editarMiConjunto,
-  solicitarDesvinculacion,
   type ConjuntoAdministrado,
 } from "@/lib/conjuntoPanelApi";
 import {
@@ -25,16 +23,15 @@ import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/
  *           RECHAZADA (rojo) sin tener que leer el texto con atención.
  */
 function BadgeEstado({ estado }: { estado: string }) {
-  const { t } = useTranslation();
   const estilos: Record<string, string> = {
     PENDIENTE: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     ACEPTADA: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
     RECHAZADA: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   };
   const etiquetas: Record<string, string> = {
-    PENDIENTE: t("dashboards.adminConjunto.estado.pendiente"),
-    ACEPTADA: t("dashboards.adminConjunto.estado.aceptada"),
-    RECHAZADA: t("dashboards.adminConjunto.estado.rechazada"),
+    PENDIENTE: "Pendiente",
+    ACEPTADA: "Aceptada",
+    RECHAZADA: "Rechazada",
   };
   return (
     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${estilos[estado] || "bg-gray-100 text-gray-600"}`}>
@@ -50,7 +47,6 @@ function BadgeEstado({ estado }: { estado: string }) {
  *           lista de invitaciones, así que esto vive por tarjeta.
  */
 function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; accessToken: string }) {
-  const { t } = useTranslation();
   const [invitaciones, setInvitaciones] = useState<InvitacionEnviada[]>([]);
   const [cargando, setCargando] = useState(true);
   const [correoNuevo, setCorreoNuevo] = useState("");
@@ -86,7 +82,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const detalle = err?.response?.data?.detail;
-      setErrorInvitar(detalle || t("dashboards.adminConjunto.recyclersSection.errorDefault"));
+      setErrorInvitar(detalle || "No se pudo enviar la invitación. Verifica el correo.");
     } finally {
       setEnviando(false);
     }
@@ -97,14 +93,14 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-green-600" />
-          <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.recyclersSection.title")}</h5>
+          <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">Recicladores Autorizados</h5>
         </div>
         <button
           type="button"
           onClick={() => setMostrarFormulario((v) => !v)}
           className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
         >
-          {t("dashboards.adminConjunto.recyclersSection.invite")}
+          + Invitar reciclador
         </button>
       </div>
 
@@ -114,7 +110,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="email"
-              placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
+              placeholder="correo.del.reciclador@ejemplo.com"
               value={correoNuevo}
               onChange={(e) => setCorreoNuevo(e.target.value)}
               className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
@@ -126,7 +122,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
             className="flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
-            {enviando ? t("dashboards.adminConjunto.recyclersSection.sending") : t("dashboards.adminConjunto.recyclersSection.inviteButton")}
+            {enviando ? "Enviando..." : "Invitar"}
           </button>
         </form>
       )}
@@ -136,10 +132,10 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
       )}
 
       {cargando ? (
-        <p className="text-xs text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
+        <p className="text-xs text-gray-400">Cargando recicladores...</p>
       ) : invitaciones.length === 0 ? (
         <p className="text-xs text-gray-400">
-          {t("dashboards.adminConjunto.recyclersSection.empty")}
+          Todavía no has invitado a ningún reciclador a este conjunto.
         </p>
       ) : (
         <div className="space-y-2">
@@ -164,113 +160,12 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
 }
 
 /**
- * ¿Qué? Botón/formulario para pedir dejar de administrar UN conjunto
- *       específico (RQF-016, HU-022).
- * ¿Para qué? Si ya hay una solicitud pendiente para ese conjunto, se
- *           muestra un badge en vez del botón — evita que el usuario
- *           choque con el error de "ya tienes una solicitud pendiente".
- */
-function SeccionDesvinculacion({
-  idConjunto,
-  tieneSolicitudPendiente,
-  accessToken,
-  onSolicitudEnviada,
-}: {
-  idConjunto: number;
-  tieneSolicitudPendiente: boolean;
-  accessToken: string;
-  onSolicitudEnviada: () => void;
-}) {
-  const { t } = useTranslation();
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [motivo, setMotivo] = useState("");
-  const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSolicitar = async () => {
-    setEnviando(true);
-    setError(null);
-    try {
-      await solicitarDesvinculacion(idConjunto, motivo.trim() || undefined, accessToken);
-      setMostrarFormulario(false);
-      setMotivo("");
-      onSolicitudEnviada();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      const detalle = err?.response?.data?.detail;
-      setError(detalle || t("desvinculacion.errorDefault"));
-    } finally {
-      setEnviando(false);
-    }
-  };
-
-  if (tieneSolicitudPendiente) {
-    return (
-      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 px-2.5 py-1 rounded-full">
-          <Clock className="w-3.5 h-3.5" /> {t("desvinculacion.pendingBadge")}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-      {!mostrarFormulario ? (
-        <button
-          type="button"
-          onClick={() => setMostrarFormulario(true)}
-          className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          {t("desvinculacion.solicitarButton")}
-        </button>
-      ) : (
-        <div className="bg-gray-50 dark:bg-gray-800/40 p-3 rounded-xl space-y-2">
-          <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
-            {t("desvinculacion.motivoLabel")}
-          </label>
-          <textarea
-            value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
-            placeholder={t("desvinculacion.motivoPlaceholder")}
-            rows={2}
-            className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-          />
-          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleSolicitar}
-              disabled={enviando}
-              className="text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {enviando ? t("desvinculacion.sending") : t("desvinculacion.submit")}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMostrarFormulario(false);
-                setError(null);
-              }}
-              className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              {t("common.cancel")}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
  * ¿Qué? Dashboard del rol Administrador de Conjunto (id_rol = 4).
  * ¿Para qué? Mostrar SOLO los conjuntos que esta persona administra,
  *           permitirle editar nombre/NIT/dirección de cada uno, y ahora
  *           también invitar recicladores autorizados por conjunto.
  */
 export function AdminConjuntoDashboard() {
-  const { t } = useTranslation();
   const { user, accessToken } = useAuth();
   const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_CONJUNTO];
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
@@ -353,12 +248,12 @@ export function AdminConjuntoDashboard() {
         },
         accessToken
       );
-      setMensaje(t("dashboards.adminConjunto.editForm.successMessage"));
+      setMensaje("Conjunto actualizado correctamente.");
       setEditandoId(null);
       cargarConjuntos();
     } catch (err) {
       console.error("Error al editar conjunto", err);
-      setMensaje(t("dashboards.adminConjunto.editForm.errorMessage"));
+      setMensaje("No se pudo guardar el cambio. Intenta de nuevo.");
     } finally {
       setGuardando(false);
     }
@@ -376,9 +271,9 @@ export function AdminConjuntoDashboard() {
             <Building2 className="h-7 w-7 text-amber-600 dark:text-amber-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("dashboards.adminConjunto.title")}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Panel de Administrador de Conjunto</h1>
             <p className="text-gray-600 dark:text-gray-300">
-              {t("dashboards.common.welcomePrefix")} <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
+              Bienvenido, <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
             </p>
             <p className="text-xs text-green-600 font-semibold mt-1 tracking-wide">
               {user?.email}
@@ -396,14 +291,14 @@ export function AdminConjuntoDashboard() {
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-gray-800 pb-2">
           <Building2 className="text-green-600 w-5 h-5" />
-          <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
+          <h3 className="font-bold text-gray-800 dark:text-white">Conjuntos que administras</h3>
         </div>
 
         {cargando ? (
-          <p className="text-sm text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
+          <p className="text-sm text-gray-400 py-4">Cargando tus conjuntos...</p>
         ) : conjuntos.length === 0 ? (
           <p className="text-sm text-gray-400 py-4">
-            {t("dashboards.adminConjunto.myConjuntos.empty")}
+            Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp.
           </p>
         ) : (
           <div className="space-y-4">
@@ -415,7 +310,7 @@ export function AdminConjuntoDashboard() {
                 {editandoId === c.id_conjunto_residencial ? (
                   <div className="space-y-3">
                     <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.name")}</label>
+                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Nombre del conjunto</label>
                       <input
                         type="text"
                         value={formEdicion.nombre_conjunto}
@@ -426,7 +321,7 @@ export function AdminConjuntoDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
+                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">NIT (opcional)</label>
                       <input
                         type="text"
                         value={formEdicion.nit}
@@ -435,7 +330,7 @@ export function AdminConjuntoDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.address")}</label>
+                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Dirección</label>
                       <input
                         type="text"
                         value={formEdicion.direccion}
@@ -452,14 +347,14 @@ export function AdminConjuntoDashboard() {
                         disabled={guardando}
                         className="flex items-center gap-1 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl transition-colors disabled:opacity-60"
                       >
-                        <Check className="w-4 h-4" /> {t("common.save")}
+                        <Check className="w-4 h-4" /> Guardar
                       </button>
                       <button
                         type="button"
                         onClick={cancelarEdicion}
                         className="flex items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                       >
-                        <X className="w-4 h-4" /> {t("common.cancel")}
+                        <X className="w-4 h-4" /> Cancelar
                       </button>
                     </div>
                   </div>
@@ -472,14 +367,14 @@ export function AdminConjuntoDashboard() {
                           <MapPin className="w-3.5 h-3.5" />
                           {c.direccion} — {c.nombre_localidad}
                         </p>
-                        {c.nit && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>}
+                        {c.nit && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">NIT: {c.nit}</p>}
                       </div>
                       <button
                         type="button"
                         onClick={() => iniciarEdicion(c)}
                         className="flex items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
                       >
-                        <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
+                        <Pencil className="w-3.5 h-3.5" /> Editar
                       </button>
                     </div>
 
@@ -492,15 +387,7 @@ export function AdminConjuntoDashboard() {
                                 que en una sección global aparte.
                     */}
                     {accessToken && (
-                      <>
-                        <SeccionRecicladores idConjunto={c.id_conjunto_residencial} accessToken={accessToken} />
-                        <SeccionDesvinculacion
-                          idConjunto={c.id_conjunto_residencial}
-                          tieneSolicitudPendiente={c.tiene_solicitud_pendiente}
-                          accessToken={accessToken}
-                          onSolicitudEnviada={cargarConjuntos}
-                        />
-                      </>
+                      <SeccionRecicladores idConjunto={c.id_conjunto_residencial} accessToken={accessToken} />
                     )}
                   </>
                 )}
@@ -513,13 +400,13 @@ export function AdminConjuntoDashboard() {
       {/* Feed de notificaciones */}
       {cargandoNotifs ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5">
-          <p className="text-sm text-gray-400">{t("common.loading")}</p>
+          <p className="text-sm text-gray-400">Cargando...</p>
         </div>
       ) : (
         <NotificationFeed
-          title={t("dashboards.adminConjunto.notifications.title")}
+          title="Actividad del conjunto"
           notifications={notificaciones}
-          emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
+          emptyMessage="No hay actividad aún. Las notificaciones de recicladores y residentes aparecerán aquí."
           accentBg="bg-amber-500"
           accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
           onMarkRead={marcarLeida}

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Phone, MapPin, Users, Building2, MessageCircle } from "lucide-react";
 import axios from "axios";
@@ -35,7 +34,6 @@ interface DirectorioPageProps {
 }
 
 export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
-  const { t } = useTranslation();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { accessToken } = useAuth() as any;
 
@@ -103,12 +101,12 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
       {/* Encabezado */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {soloAcopio ? t("appShell.nav.puntosAcopio") : t("appShell.nav.directorioGeneral")}
+          {soloAcopio ? "Puntos de Acopio" : "Directorio General"}
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           {soloAcopio
-            ? t("directorio.subtitleAcopio")
-            : t("directorio.subtitleGeneral")}
+            ? "Encuentra los puntos donde puedes entregar material reciclado."
+            : "Conecta con los recicladores y puntos de acopio de tu localidad."}
         </p>
       </div>
 
@@ -118,8 +116,8 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           <div className="flex rounded-xl border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-900">
             {(
               [
-                { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <Users className="h-4 w-4" /> },
-                { id: "puntos" as TabId, label: t("appShell.nav.puntosAcopio"), icon: <Building2 className="h-4 w-4" /> },
+                { id: "recicladores" as TabId, label: "Recicladores", icon: <Users className="h-4 w-4" /> },
+                { id: "puntos" as TabId, label: "Puntos de Acopio", icon: <Building2 className="h-4 w-4" /> },
               ] as const
             ).map(({ id, label, icon }) => (
               <button
@@ -147,7 +145,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             }
             className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
           >
-            <option value="">{t("directorio.allLocalities")}</option>
+            <option value="">Todas las localidades</option>
             {localidades.map((l) => (
               <option key={l.id_localidad} value={l.id_localidad}>
                 {l.nombre_localidad}
@@ -159,10 +157,10 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
 
       {/* Contenido */}
       {cargandoDirectorio ? (
-        <div className="py-12 text-center text-sm text-gray-400">{t("common.loading")}</div>
+        <div className="py-12 text-center text-sm text-gray-400">Cargando...</div>
       ) : tab === "recicladores" && !soloAcopio ? (
         recicladores.length === 0 ? (
-          <EmptyState mensaje={t("directorio.emptyRecyclers")} />
+          <EmptyState mensaje="No hay recicladores registrados en esta localidad." />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {recicladores.map((r) => (
@@ -176,7 +174,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           </div>
         )
       ) : puntos.length === 0 ? (
-        <EmptyState mensaje={t("directorio.emptyPoints")} />
+        <EmptyState mensaje="No hay puntos de acopio registrados en esta localidad." />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {puntos.map((p) => (
@@ -197,7 +195,6 @@ function TarjetaReciclador({
   waLink: (t: string) => string;
   callLink: (t: string) => string;
 }) {
-  const { t } = useTranslation();
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="mb-4 flex items-center gap-3">
@@ -228,7 +225,7 @@ function TarjetaReciclador({
             className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             <Phone className="h-3.5 w-3.5" />
-            {t("directorio.call")}
+            Llamar
           </a>
           <a
             href={waLink(r.numero_telefonico)}
@@ -241,7 +238,7 @@ function TarjetaReciclador({
           </a>
         </div>
       ) : (
-        <p className="text-xs text-gray-400">{t("directorio.noPhone")}</p>
+        <p className="text-xs text-gray-400">Sin teléfono registrado</p>
       )}
     </div>
   );

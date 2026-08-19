@@ -8,15 +8,11 @@ class Notificacion(Base):
     __tablename__ = "notificaciones"
 
     id = Column(Integer, primary_key=True, index=True)
-    tipo = Column(String(50), nullable=False)  # LLEGADA_RECICLADOR | SHUT_LLENO | SHUT_LIBRE | ...
-    # ¿Qué? NULL para notificaciones de toda la plataforma (RQF-015,
-    #       novedades del Admin del Sistema) — esas no pertenecen a un
-    #       conjunto específico, a diferencia de SHUT/comunicados/
-    #       desvinculación, que sí siempre tienen uno.
+    tipo = Column(String(50), nullable=False)  # LLEGADA_RECICLADOR | SHUT_LLENO | SHUT_LIBRE
     id_conjunto_residencial = Column(
         Integer,
         ForeignKey("conjuntos_residenciales.id_conjunto_residencial", ondelete="CASCADE"),
-        nullable=True,
+        nullable=False,
     )
     id_emisor = Column(
         Integer,

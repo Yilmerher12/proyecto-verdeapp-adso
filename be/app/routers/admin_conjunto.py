@@ -1,14 +1,11 @@
 """
 Módulo: routers/admin_conjunto.py
-Descripción: Endpoints del flujo de invitación, desvinculación y reasignación de Administradores de Conjunto.
-¿Para qué? Rutas con permisos distintos:
+Descripción: Endpoints del flujo de invitación de Administradores de Conjunto.
+¿Para qué? Dos rutas separadas, con permisos distintos:
            - POST /invitar      -> SOLO el Administrador del Sistema (id_rol=1).
            - GET  /invitacion    -> pública (la persona invitada todavía no tiene cuenta).
            - POST /aceptar       -> pública, pero requiere un token de invitación válido.
-           - El resto (solicitudes de desvinculación, buscar/asignar) -> SOLO el Administrador del Sistema (RQF-016).
 """
-
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -21,14 +18,8 @@ from app.schemas.admin_conjunto import (
     InvitacionInfoResponse,
     InvitarAdminConjuntoRequest,
 )
-from app.schemas.desvinculacion import (
-    AdministradorConjuntoResumenResponse,
-    AsignarConjuntoAdicionalRequest,
-    ResolverSolicitudDesvinculacionRequest,
-    SolicitudDesvinculacionResponse,
-)
 from app.schemas.user import MessageResponse, TokenResponse
-from app.services import admin_conjunto_service, desvinculacion_service
+from app.services import admin_conjunto_service
 from app.utils.security import create_access_token, create_refresh_token
 
 router = APIRouter(prefix="/api/v1/admin-conjunto", tags=["admin-conjunto"])
@@ -92,60 +83,3 @@ def aceptar_invitacion(
     })
 
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
-
-
-@router.get("/solicitudes-desvinculacion", response_model=List[SolicitudDesvinculacionResponse])
-def listar_solicitudes_desvinculacion(
-    current_user: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """RQF-016 / HU-023 (CA-023.1): solicitudes de desvinculación pendientes de resolver."""
-    _verificar_es_admin_sistema(current_user)
-    return desvinculacion_service.listar_solicitudes_pendientes(db)
-
-
-@router.post("/solicitudes-desvinculacion/{id_solicitud}/resolver", response_model=MessageResponse)
-def resolver_solicitud_desvinculacion(
-    id_solicitud: int,
-    datos: ResolverSolicitudDesvinculacionRequest,
-    current_user: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """RQF-016 / HU-023 (CA-023.2, CA-023.3): aprueba o rechaza una solicitud de desvinculación."""
-    _verificar_es_admin_sistema(current_user)
-    desvinculacion_service.resolver_solicitud(
-        db=db,
-        id_solicitud=id_solicitud,
-        aprobar=datos.aprobar,
-        motivo_rechazo=datos.motivo_rechazo,
-        resuelta_por=current_user,
-    )
-    mensaje = "Solicitud aprobada. El conjunto quedó desvinculado." if datos.aprobar else "Solicitud rechazada."
-    return MessageResponse(message=mensaje)
-
-
-@router.get("/listar", response_model=List[AdministradorConjuntoResumenResponse])
-def listar_administradores_conjunto(
-    query: Optional[str] = None,
-    current_user: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """RQF-016 / HU-024 (CA-024.1): busca Administradores de Conjunto ya existentes, por nombre/apellidos/correo."""
-    _verificar_es_admin_sistema(current_user)
-    return desvinculacion_service.buscar_administradores(db, query)
-
-
-@router.post("/asignar-conjunto-adicional", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
-def asignar_conjunto_adicional(
-    datos: AsignarConjuntoAdicionalRequest,
-    current_user: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """RQF-016 / HU-024 (CA-024.2, CA-024.3): vincula un conjunto sin administrador a un Admin Conjunto existente."""
-    _verificar_es_admin_sistema(current_user)
-    desvinculacion_service.asignar_conjunto_adicional(
-        db=db,
-        id_administrador=datos.id_administrador,
-        id_conjunto=datos.id_conjunto_residencial,
-    )
-    return MessageResponse(message="Conjunto asignado correctamente.")

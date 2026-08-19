@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Recycle,
@@ -35,39 +34,31 @@ interface ConjuntoAutorizado {
   nombre_localidad: string;
 }
 
-const ACCIONES_META = [
+const ACCIONES = [
   {
     tipo: "LLEGADA_RECICLADOR",
-    key: "llegada",
+    label: "Llegué al conjunto",
     icon: Truck,
     color: "bg-[#134e4a] hover:bg-teal-800 text-white",   // teal bosque — llegada activa
   },
   {
     tipo: "SHUT_LLENO",
-    key: "shutLleno",
+    label: "SHUT está lleno",
     icon: AlertTriangle,
     color: "bg-amber-700 hover:bg-amber-600 text-white",  // ámbar tierra — advertencia cálida
   },
   {
     tipo: "SHUT_LIBRE",
-    key: "shutLibre",
+    label: "SHUT ya está libre",
     icon: PackageCheck,
     color: "bg-[#14532d] hover:bg-green-800 text-white",  // verde bosque — despejado, natural
   },
 ] as const;
 
 export function RecicladorDashboard() {
-  const { t } = useTranslation();
   const { user, accessToken }: any = useAuth();
-  const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || t("roles.reciclador");
+  const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || "Reciclador";
   const { WatermarkIcon } = ROLE_THEME[RoleId.RECICLADOR];
-
-  const ACCIONES = ACCIONES_META.map(({ tipo, key, icon, color }) => ({
-    tipo,
-    icon,
-    color,
-    label: t(`dashboards.reciclador.acciones.${key}`),
-  }));
 
   const [invitaciones, setInvitaciones] = useState<InvitacionPendiente[]>([]);
   const [conjuntosAutorizados, setConjuntosAutorizados] = useState<ConjuntoAutorizado[]>([]);
@@ -141,7 +132,7 @@ export function RecicladorDashboard() {
         { headers }
       );
       const accion = ACCIONES.find((a) => a.tipo === modalTipo);
-      setFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
+      setFeedbackOk(accion?.label ?? "Notificación enviada");
       setTimeout(() => setFeedbackOk(null), 3500);
       setModalTipo(null);
       cargarDatos();
@@ -179,9 +170,9 @@ export function RecicladorDashboard() {
             <Recycle className="h-7 w-7 text-teal-600 dark:text-teal-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.title")}</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Panel del Reciclador</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {t("dashboards.common.welcomePrefix")}{" "}
+              Bienvenido,{" "}
               <span className="font-semibold text-gray-800 dark:text-gray-200 uppercase">
                 {fullName}
               </span>
@@ -195,19 +186,19 @@ export function RecicladorDashboard() {
       {feedbackOk && (
         <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
-          {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
+          Notificación enviada: "{feedbackOk}"
         </div>
       )}
 
       {/* Acciones de notificación */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
-        <p className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</p>
+        <p className="mb-1 text-sm font-bold text-gray-900 dark:text-white">Enviar notificación</p>
         <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-          {t("dashboards.reciclador.sendSection.subtitle")}
+          Avisa a los residentes y al administrador del conjunto.
         </p>
         {conjuntosAutorizados.length === 0 && !cargando ? (
           <p className="text-xs text-gray-400">
-            {t("dashboards.reciclador.sendSection.noConjuntos")}
+            Aún no tienes conjuntos autorizados. Acepta una invitación para poder enviar notificaciones.
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -230,7 +221,7 @@ export function RecicladorDashboard() {
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <Mail className="h-4 w-4 text-amber-600" />
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">Invitaciones pendientes</h2>
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
               {invitaciones.length}
             </span>
@@ -244,7 +235,7 @@ export function RecicladorDashboard() {
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-white text-sm">{inv.nombre_conjunto}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{inv.direccion_conjunto}</p>
-                  <p className="mt-0.5 text-xs text-gray-400">{t("dashboards.reciclador.invitations.invitedBy", { nombre: inv.invitado_por_nombre })}</p>
+                  <p className="mt-0.5 text-xs text-gray-400">Invitado por {inv.invitado_por_nombre}</p>
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <button
@@ -253,7 +244,7 @@ export function RecicladorDashboard() {
                     className="flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-500 disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    {t("dashboards.reciclador.invitations.accept")}
+                    Aceptar
                   </button>
                   <button
                     onClick={() => responderInvitacion(inv.id, false)}
@@ -261,7 +252,7 @@ export function RecicladorDashboard() {
                     className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
                   >
                     <XCircle className="h-3.5 w-3.5" />
-                    {t("dashboards.reciclador.invitations.reject")}
+                    Rechazar
                   </button>
                 </div>
               </div>
@@ -274,13 +265,14 @@ export function RecicladorDashboard() {
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
           <Building2 className="h-4 w-4 text-green-600" />
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white">Mis conjuntos autorizados</h2>
         </div>
         {cargando ? (
-          <p className="text-sm text-gray-400">{t("common.loading")}</p>
+          <p className="text-sm text-gray-400">Cargando...</p>
         ) : conjuntosAutorizados.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t("dashboards.reciclador.myConjuntos.empty")}
+            Todavía no estás autorizado en ningún conjunto. Cuando un administrador
+            te invite y aceptes, aparecerá aquí.
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -301,13 +293,13 @@ export function RecicladorDashboard() {
       {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) */}
       {cargando ? (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5">
-          <p className="text-sm text-gray-400">{t("common.loading")}</p>
+          <p className="text-sm text-gray-400">Cargando...</p>
         </div>
       ) : (
         <NotificationFeed
-          title={t("dashboards.reciclador.notifications.title")}
+          title="Notificaciones recibidas"
           notifications={notificaciones}
-          emptyMessage={t("dashboards.reciclador.notifications.empty")}
+          emptyMessage="No tienes notificaciones. Cuando un residente reporte el SHUT lleno, aparecerá aquí."
           accentBg="bg-amber-500"
           accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
           onMarkRead={marcarLeida}
@@ -325,7 +317,7 @@ export function RecicladorDashboard() {
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                {t("dashboards.reciclador.modal.title")}
+                ¿A qué conjunto notificas?
               </h3>
               <button
                 onClick={() => setModalTipo(null)}
@@ -336,7 +328,7 @@ export function RecicladorDashboard() {
             </div>
 
             <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-              {t("dashboards.reciclador.modal.subtitle")}
+              Selecciona el conjunto al que llegaste o sobre el que quieres avisar.
             </p>
 
             <div className="space-y-2 mb-5">
@@ -361,14 +353,14 @@ export function RecicladorDashboard() {
                 onClick={() => setModalTipo(null)}
                 className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
-                {t("common.cancel")}
+                Cancelar
               </button>
               <button
                 onClick={enviarNotificacion}
                 disabled={!conjuntoSeleccionado || enviandoNotif}
                 className="flex-1 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-500 disabled:opacity-50"
               >
-                {enviandoNotif ? t("dashboards.reciclador.modal.sending") : t("dashboards.reciclador.modal.submit")}
+                {enviandoNotif ? "Enviando..." : "Enviar aviso"}
               </button>
             </div>
           </div>

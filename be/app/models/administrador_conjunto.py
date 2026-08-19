@@ -1,8 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, and_
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
-from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
-from app.models.conjunto_residencial import ConjuntoResidencial
 
 
 class AdministradorConjunto(Base):
@@ -30,22 +28,9 @@ class AdministradorConjunto(Base):
     # Puente al usuario de login (correo, contraseña, rol)
     usuario = relationship("Usuario", back_populates="administrador_conjunto")
 
-    # ¿Qué? Puente a los conjuntos que administra ACTIVAMENTE (puede ser
-    #       varios) — excluye los que ya desvinculó (RQF-016).
-    # ¿Para qué? secondary= por sí solo no permite filtrar la tabla
-    #           intermedia, así que se define el join a mano para excluir
-    #           las filas con fecha_desvinculacion ya puesta.
-    # ¿Impacto? viewonly=True porque las asignaciones se crean/terminan a
-    #           mano (ver admin_conjunto_service.py), nunca escribiendo a
-    #           través de esta relación.
+    # Puente a los conjuntos que administra (puede ser varios)
     conjuntos = relationship(
-        ConjuntoResidencial,
-        secondary=AdministradorConjuntoAsignacion.__table__,
-        primaryjoin=lambda: AdministradorConjunto.id_administrador == AdministradorConjuntoAsignacion.id_administrador,
-        secondaryjoin=lambda: and_(
-            AdministradorConjuntoAsignacion.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial,
-            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
-        ),
-        back_populates="administradores",
-        viewonly=True,
+        "ConjuntoResidencial",
+        secondary="administradores_conjuntos",
+        back_populates="administradores"
     )

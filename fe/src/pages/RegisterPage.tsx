@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import {
   PasswordStrengthIndicator,
   getPasswordRequirementError,
-  type PasswordRequirementError,
+  PASSWORD_ERROR_MESSAGES_ES,
 } from "@/components/ui/PasswordStrengthIndicator";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
@@ -21,29 +20,9 @@ import { PoliticaPrivacidadPage } from "@/pages/PoliticaPrivacidadPage";
 
 type DocumentoLegal = "terminos" | "privacidad" | null;
 
-// ¿Qué? Traduce el código que devuelve getPasswordRequirementError() al
-//       mensaje correcto según el idioma activo.
-// ¿Para qué? PasswordStrengthIndicator.tsx devuelve un CÓDIGO a propósito
-//           (ver su propio comentario) para que cada pantalla lo traduzca
-//           a su idioma — antes esta pantalla usaba PASSWORD_ERROR_MESSAGES_ES,
-//           que solo existe en español.
-function traducirErrorPassword(
-  codigo: PasswordRequirementError,
-  t: (key: string) => string,
-): string {
-  const claves: Record<PasswordRequirementError, string> = {
-    too_short: "auth.register.validation.passwordMin",
-    no_uppercase: "auth.register.validation.passwordUppercase",
-    no_lowercase: "auth.register.validation.passwordLowercase",
-    no_digit: "auth.register.validation.passwordNumber",
-  };
-  return t(claves[codigo]);
-}
-
 export function RegisterPage() {
   const navigate = useNavigate();
   const { register } = useAuth();
-  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -143,19 +122,19 @@ export function RegisterPage() {
     const errors: Record<string, string> = {};
 
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors["email"] = t("auth.register.validation.emailInvalid");
+      errors["email"] = "El formato del correo no es válido.";
     }
     if (!formData.confirmEmail) {
-      errors["confirmEmail"] = t("auth.register.validation.confirmEmailRequired");
+      errors["confirmEmail"] = "Debes confirmar tu correo electrónico.";
     } else if (formData.email !== formData.confirmEmail) {
-      errors["confirmEmail"] = t("auth.register.validation.emailsMismatch");
+      errors["confirmEmail"] = "Los correos electrónicos no coinciden.";
     }
     const passwordError = getPasswordRequirementError(formData.password);
     if (passwordError) {
-      errors["password"] = traducirErrorPassword(passwordError, t);
+      errors["password"] = PASSWORD_ERROR_MESSAGES_ES[passwordError];
     }
     if (formData.password !== formData.confirmPassword) {
-      errors["confirmPassword"] = t("auth.register.validation.passwordsMismatch");
+      errors["confirmPassword"] = "Las contraseñas no coinciden.";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -190,7 +169,7 @@ export function RegisterPage() {
         setGeneralError(null);
         setShowSuccessModal(true);
       } else {
-        setGeneralError(t("auth.register.genericError"));
+        setGeneralError("Error al registrar. Verifica los datos o intenta con otro correo.");
       }
     } finally {
       setIsLoading(false);
@@ -212,18 +191,18 @@ export function RegisterPage() {
             </div>
 
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-              {t("auth.register.success.title")}
+              ¡Revisa tu bandeja!
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 leading-relaxed">
-              {t("auth.register.success.bodyPrefix")}{" "}
+              Enviamos un enlace de verificación a{" "}
               <span className="font-semibold text-gray-700 dark:text-gray-300">{formData.email}</span>.
             </p>
 
             <div className="text-left bg-green-50 dark:bg-green-900/20 rounded-xl p-4 mb-6 space-y-3">
               {[
-                t("auth.register.success.step1"),
-                t("auth.register.success.step2"),
-                t("auth.register.success.step3"),
+                "Abre tu correo electrónico",
+                "Busca el email de VerdeApp",
+                'Haz clic en "Verificar mi cuenta"',
               ].map((step, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">
@@ -235,7 +214,7 @@ export function RegisterPage() {
             </div>
 
             <Button onClick={() => navigate("/")} fullWidth>
-              {t("auth.register.success.understood")}
+              Entendido
             </Button>
           </div>
         </Modal>
@@ -268,8 +247,8 @@ export function RegisterPage() {
       <Modal onClose={() => navigate("/")} wide>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("auth.register.title")}</h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">{t("auth.register.subtitle")}</p>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Crea tu cuenta</h2>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">Únete a VerdeApp y transforma tu comunidad</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -279,14 +258,14 @@ export function RegisterPage() {
                 className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "residente" ? "border-green-600 bg-green-50/50 dark:bg-green-900/20 shadow-sm" : "border-gray-200 dark:border-gray-700 hover:border-green-300"}`}
               >
                 <Home className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "residente" ? "text-green-600" : "text-gray-400"}`}/>
-                <span className={`font-semibold ${formData.rol === "residente" ? "text-green-800 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>{t("auth.register.roleResident")}</span>
+                <span className={`font-semibold ${formData.rol === "residente" ? "text-green-800 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>Residente</span>
               </div>
               <div
                 onClick={() => setFormData(p => ({ ...p, rol: "reciclador" }))}
                 className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "reciclador" ? "border-green-600 bg-green-50/50 dark:bg-green-900/20 shadow-sm" : "border-gray-200 dark:border-gray-700 hover:border-green-300"}`}
               >
                 <Recycle className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "reciclador" ? "text-green-600" : "text-gray-400"}`}/>
-                <span className={`font-semibold ${formData.rol === "reciclador" ? "text-green-800 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>{t("auth.register.roleRecycler")}</span>
+                <span className={`font-semibold ${formData.rol === "reciclador" ? "text-green-800 dark:text-green-400" : "text-gray-500 dark:text-gray-400"}`}>Reciclador</span>
               </div>
             </div>
 
@@ -298,19 +277,19 @@ export function RegisterPage() {
             */}
             <div className="space-y-4">
               <InputField
-                label={t("auth.register.fields.firstName")}
+                label="Nombres *"
                 name="nombre"
                 value={formData.nombre}
                 onChange={handleChange}
               />
               <InputField
-                label={t("auth.register.fields.lastName")}
+                label="Apellidos *"
                 name="apellidos"
                 value={formData.apellidos}
                 onChange={handleChange}
               />
               <InputField
-                label={t("auth.register.fields.phone")}
+                label="Teléfono"
                 name="numero_telefonico"
                 value={formData.numero_telefonico}
                 onChange={handleChange}
@@ -321,14 +300,14 @@ export function RegisterPage() {
               <div className="space-y-4 p-5 bg-gray-50/50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700 rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="w-5 h-5 text-green-600" />
-                  <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("auth.register.fields.residenceLocationHeading")}</h3>
+                  <h3 className="font-bold text-gray-800 dark:text-gray-200">Ubicación de Residencia *</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.locality")}</label>
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Localidad</label>
                     <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none">
-                      <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
+                      <option value="">Selecciona...</option>
                       {localidades.map(loc => (
                         <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
                       ))}
@@ -336,9 +315,9 @@ export function RegisterPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.conjunto")}</label>
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Conjunto Residencial</label>
                     <select name="id_conjunto_residencial" value={formData.id_conjunto_residencial} onChange={handleChange} disabled={!formData.localidad_id} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400">
-                      <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
+                      <option value="">Selecciona...</option>
                       {conjuntos.map(conj => (
                         <option key={conj.id_conjunto_residencial} value={conj.id_conjunto_residencial}>{conj.nombre_conjunto}</option>
                       ))}
@@ -348,23 +327,23 @@ export function RegisterPage() {
 
                 <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div>
-                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitType")}</label>
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Tipo Unidad</label>
                     <select name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800">
-                      <option value="TORRE">{t("auth.register.fields.unitTypeTower")}</option>
-                      <option value="INTERIOR">{t("auth.register.fields.unitTypeInterior")}</option>
-                      <option value="BLOQUE">{t("auth.register.fields.unitTypeBlock")}</option>
-                      <option value="CASA">{t("auth.register.fields.unitTypeHouse")}</option>
+                      <option value="TORRE">Torre</option>
+                      <option value="INTERIOR">Interior</option>
+                      <option value="BLOQUE">Bloque</option>
+                      <option value="CASA">Casa</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitNumber")}</label>
-                    <input type="text" name="numero_bloque" placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 uppercase" />
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Nº / Letra</label>
+                    <input type="text" name="numero_bloque" placeholder="Ej: 3, B" value={formData.numero_bloque} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 uppercase" />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
-                    <input type="text" name="apto" placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 uppercase" />
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Apartamento</label>
+                    <input type="text" name="apto" placeholder="Ej: 402" value={formData.apto} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-gray-800 uppercase" />
                   </div>
                 </div>
               </div>
@@ -374,20 +353,20 @@ export function RegisterPage() {
               <div className="space-y-4 p-5 bg-green-50/30 dark:bg-green-900/10 border border-green-100 dark:border-green-900/40 rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
                   <Recycle className="w-5 h-5 text-green-600" />
-                  <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("auth.register.fields.operativeProfileHeading")}</h3>
+                  <h3 className="font-bold text-gray-800 dark:text-gray-200">Perfil Operativo *</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.workLocality")}</label>
+                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">Localidad de Trabajo *</label>
                     <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-xl mt-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none">
-                      <option value="">{t("auth.register.fields.selectYourLocality")}</option>
+                      <option value="">Selecciona tu localidad...</option>
                       {localidades.map(loc => (
                         <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
                       ))}
                     </select>
                   </div>
-                  <InputField label={t("auth.register.fields.association")} name="asociacion" value={formData.asociacion} onChange={handleChange} placeholder={t("auth.register.fields.associationPlaceholder")} />
+                  <InputField label="Asociación (Opcional)" name="asociacion" value={formData.asociacion} onChange={handleChange} placeholder="Ej: ARB" />
                 </div>
               </div>
             )}
@@ -402,7 +381,7 @@ export function RegisterPage() {
             <div className="space-y-4 pt-2">
               <div>
                 <InputField
-                  label={t("auth.register.fields.email")}
+                  label="Correo Electrónico *"
                   name="email"
                   type="email"
                   value={formData.email}
@@ -413,7 +392,7 @@ export function RegisterPage() {
 
               <div>
                 <InputField
-                  label={t("auth.register.fields.confirmEmailField")}
+                  label="Confirmar Correo Electrónico *"
                   name="confirmEmail"
                   type="email"
                   value={formData.confirmEmail}
@@ -427,12 +406,12 @@ export function RegisterPage() {
 
               <div>
                 <InputField
-                  label={t("auth.register.fields.password")}
+                  label="Contraseña *"
                   name="password"
                   type="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder={t("auth.register.fields.passwordPlaceholder")}
+                  placeholder="Mínimo 8 caracteres"
                 />
                 <PasswordStrengthIndicator password={formData.password} />
                 {fieldErrors.password && <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.password}</p>}
@@ -440,12 +419,12 @@ export function RegisterPage() {
 
               <div>
                 <InputField
-                  label={t("auth.register.fields.confirmPasswordField")}
+                  label="Confirmar Contraseña *"
                   name="confirmPassword"
                   type="password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  placeholder={t("auth.register.fields.confirmPasswordPlaceholder")}
+                  placeholder="Repite la contraseña"
                   disablePaste
                 />
                 {fieldErrors.confirmPassword && <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.confirmPassword}</p>}
@@ -466,29 +445,29 @@ export function RegisterPage() {
                 className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 accent-green-600 cursor-pointer"
               />
               <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
-                {t("auth.register.termsPrefix")}{" "}
+                Acepto los{" "}
                 <button
                   type="button"
                   onClick={() => setDocumentoAbierto("terminos")}
                   className="text-green-600 hover:underline font-semibold"
                 >
-                  {t("auth.register.termsLinkLabel")}
+                  Términos de uso
                 </button>
-                {" "}{t("auth.register.andThe")}{" "}
+                {" "}y la{" "}
                 <button
                   type="button"
                   onClick={() => setDocumentoAbierto("privacidad")}
                   className="text-green-600 hover:underline font-semibold"
                 >
-                  {t("auth.register.privacyLinkLabel")}
+                  Política de privacidad
                 </button>
-                {" "}{t("auth.register.brandSuffix")}
+                {" "}de VerdeApp *
               </label>
             </div>
 
             <div className="w-full pt-4">
               <Button type="submit" fullWidth isLoading={isLoading} disabled={isButtonDisabled}>
-                {isButtonDisabled ? t("auth.register.submitIncomplete") : t("auth.register.submitFull")}
+                {isButtonDisabled ? "Completa los campos y acepta los términos" : "Registrar Cuenta"}
               </Button>
             </div>
           </form>

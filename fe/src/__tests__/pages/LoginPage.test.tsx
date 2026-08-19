@@ -22,7 +22,7 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />, { initialRoute: "/login" });
 
     expect(screen.getByRole("heading", { name: "Ingresa a VerdeApp" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Correo electrónico")).toBeInTheDocument();
+    expect(screen.getByLabelText("Correo Electrónico")).toBeInTheDocument();
     expect(screen.getByLabelText("Contraseña")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Iniciar Sesión" })).toBeInTheDocument();
   });
@@ -45,7 +45,7 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
     renderWithProviders(<LoginPage />, { initialRoute: "/login" });
 
-    const emailInput = screen.getByLabelText("Correo electrónico");
+    const emailInput = screen.getByLabelText("Correo Electrónico");
     const passwordInput = screen.getByLabelText("Contraseña");
 
     await user.type(emailInput, "test@example.com");
@@ -70,7 +70,7 @@ describe("LoginPage", () => {
       authContext: { login: loginMock },
     });
 
-    await user.type(screen.getByLabelText("Correo electrónico"), "test@example.com");
+    await user.type(screen.getByLabelText("Correo Electrónico"), "test@example.com");
     await user.type(screen.getByLabelText("Contraseña"), "Password1");
     await user.click(screen.getByRole("button", { name: "Iniciar Sesión" }));
 
@@ -91,7 +91,7 @@ describe("LoginPage", () => {
       authContext: { login: loginMock },
     });
 
-    await user.type(screen.getByLabelText("Correo electrónico"), "bad@email.com");
+    await user.type(screen.getByLabelText("Correo Electrónico"), "bad@email.com");
     await user.type(screen.getByLabelText("Contraseña"), "wrongpass");
     await user.click(screen.getByRole("button", { name: "Iniciar Sesión" }));
 
@@ -110,14 +110,14 @@ describe("LoginPage", () => {
       authContext: { login: loginMock },
     });
 
-    await user.type(screen.getByLabelText("Correo electrónico"), "x@x.com");
+    await user.type(screen.getByLabelText("Correo Electrónico"), "x@x.com");
     await user.type(screen.getByLabelText("Contraseña"), "x");
     await user.click(screen.getByRole("button", { name: "Iniciar Sesión" }));
 
     expect(await screen.findByText("Credenciales incorrectas")).toBeInTheDocument();
 
     // Al escribir de nuevo, el error debe desaparecer.
-    await user.type(screen.getByLabelText("Correo electrónico"), "a");
+    await user.type(screen.getByLabelText("Correo Electrónico"), "a");
     expect(screen.queryByText("Credenciales incorrectas")).not.toBeInTheDocument();
   });
 
@@ -135,7 +135,7 @@ describe("LoginPage", () => {
       authContext: { login: loginMock },
     });
 
-    await user.type(screen.getByLabelText("Correo electrónico"), "reciclador@correo.com");
+    await user.type(screen.getByLabelText("Correo Electrónico"), "reciclador@correo.com");
     await user.type(screen.getByLabelText("Contraseña"), "Password1");
     await user.click(screen.getByRole("button", { name: "Iniciar Sesión" }));
 
