@@ -167,10 +167,7 @@ describe("RegisterPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
 
-    // ¿Qué? Mismo texto que usan ChangePasswordPage/ResetPasswordPage — las
-    //       4 pantallas que piden contraseña comparten a propósito las
-    //       claves auth.register.validation.* (ver PasswordStrengthIndicator.tsx).
-    expect(screen.getByText("Mínimo 8 caracteres")).toBeInTheDocument();
+    expect(screen.getByText("La contraseña debe tener al menos 8 caracteres.")).toBeInTheDocument();
   });
 
   it("muestra error si las contraseñas no coinciden", async () => {
@@ -185,7 +182,7 @@ describe("RegisterPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
 
-    expect(screen.getByText("Las contraseñas no coinciden")).toBeInTheDocument();
+    expect(screen.getByText("Las contraseñas no coinciden.")).toBeInTheDocument();
   });
 
   it("muestra error si los correos no coinciden", async () => {
@@ -200,7 +197,7 @@ describe("RegisterPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
 
-    expect(screen.getByText("Los correos electrónicos no coinciden")).toBeInTheDocument();
+    expect(screen.getByText("Los correos electrónicos no coinciden.")).toBeInTheDocument();
   });
 
   it("bloquea el pegado en el campo Confirmar Correo Electrónico", () => {

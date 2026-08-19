@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, type ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
   ShieldCheck,
@@ -10,7 +9,6 @@ import {
   ChevronsRight,
   BookOpen,
   MapPin,
-  Megaphone,
   Newspaper,
   User,
   Bell,
@@ -40,7 +38,6 @@ export function AppShell({ children }: AppShellProps) {
   const [noLeidas, setNoLeidas] = useState(0);
   const { user, logout, accessToken } = useAuth() as any;
   const navigate = useNavigate();
-  const { t } = useTranslation();
 
   const handleLogout = () => {
     // ¿Qué? logout() limpia sessionStorage (síncrono), y luego una recarga
@@ -80,19 +77,6 @@ export function AppShell({ children }: AppShellProps) {
   const roleId = (userData?.role_id || userData?.id_rol || RoleId.RESIDENTE) as RoleId;
   const roleMeta = ROLE_THEME[roleId] ?? ROLE_THEME[RoleId.RESIDENTE];
 
-  // ¿Qué? ROLE_THEME (fe/src/config/roleTheme.ts) es un objeto de configuración
-  //       plano, no un componente — no puede llamar a useTranslation() por su
-  //       cuenta. Por eso la etiqueta traducida del rol se resuelve aquí, en
-  //       vez de leer roleMeta.label directamente (que sigue en español fijo,
-  //       usado como fallback si el rol no está mapeado).
-  const ROLE_LABEL_KEY: Record<RoleId, string> = {
-    [RoleId.ADMIN_SISTEMA]: "roles.adminSistema",
-    [RoleId.RESIDENTE]: "roles.residente",
-    [RoleId.RECICLADOR]: "roles.reciclador",
-    [RoleId.ADMIN_CONJUNTO]: "roles.adminConjunto",
-  };
-  const roleLabel = t(ROLE_LABEL_KEY[roleId] ?? ROLE_LABEL_KEY[RoleId.RESIDENTE]);
-
   const rawEmail = userData?.correo_electronico || userData?.email || userData?.sub || "usuario@verdeapp.com";
   const fallbackName = rawEmail.split("@")[0].toUpperCase();
   const displayName = userData?.first_name && userData.first_name !== "Usuario"
@@ -101,18 +85,18 @@ export function AppShell({ children }: AppShellProps) {
 
   const getNavItemsByRole = () => {
     const commonStart = [
-      { icon: LayoutDashboard, label: t("appShell.nav.panelPrincipal"), href: roleMeta.dashboardHref, enabled: true },
+      { icon: LayoutDashboard, label: "Panel Principal", href: roleMeta.dashboardHref, enabled: true },
     ];
 
     const commonEnd = [
-      { icon: ShieldCheck, label: t("appShell.nav.seguridad"), href: "/change-password", enabled: true },
+      { icon: ShieldCheck, label: "Seguridad", href: "/change-password", enabled: true },
     ];
 
     if (roleId === RoleId.ADMIN_SISTEMA) {
       return [
         ...commonStart,
-        { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: "/admin/novedades", enabled: true },
-        { icon: BookOpen, label: t("appShell.nav.contenidoEducativo"), href: "/admin/contenido-educativo", enabled: true },
+        { icon: Newspaper, label: "Crear Novedades", href: null, enabled: false },
+        { icon: BookOpen, label: "Contenido Educativo", href: "/admin/contenido-educativo", enabled: true },
         ...commonEnd,
       ];
     }
@@ -120,10 +104,9 @@ export function AppShell({ children }: AppShellProps) {
     if (roleId === RoleId.RECICLADOR) {
       return [
         ...commonStart,
-        { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
-        { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true },
-        { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true },
-        { icon: MapPin, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true },
+        { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
+        { icon: Newspaper, label: "Novedades Gobierno", href: null, enabled: false },
+        { icon: MapPin, label: "Puntos de Acopio", href: "/puntos-acopio", enabled: true },
         ...commonEnd,
       ];
     }
@@ -131,20 +114,18 @@ export function AppShell({ children }: AppShellProps) {
     if (roleId === RoleId.ADMIN_CONJUNTO) {
       return [
         ...commonStart,
-        { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
-        { icon: Megaphone, label: t("appShell.nav.gestionarComunicados"), href: "/admin-conjunto/comunicados", enabled: true },
-        { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true },
+        { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
+        { icon: Newspaper, label: "Novedades de mis Conjuntos", href: null, enabled: false },
         ...commonEnd,
       ];
     }
 
     return [
       ...commonStart,
-      { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
-      { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true },
-      { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true },
-      { icon: BookOpen, label: t("appShell.nav.aprenderGuias"), href: "/catalogo-educativo", enabled: true },
-      { icon: MapPin, label: t("appShell.nav.directorioGeneral"), href: "/directorio", enabled: true },
+      { icon: User, label: "Mi Perfil", href: "/profile", enabled: true },
+      { icon: Newspaper, label: "Novedades Conjunto", href: null, enabled: false },
+      { icon: BookOpen, label: "Aprender (Guías)", href: "/catalogo-educativo", enabled: true },
+      { icon: MapPin, label: "Directorio General", href: "/directorio", enabled: true },
       ...commonEnd,
     ];
   };
@@ -193,7 +174,7 @@ export function AppShell({ children }: AppShellProps) {
                 </p>
                 <span className={`flex min-w-0 items-center gap-1.5 text-xs font-medium mt-0.5 ${roleMeta.sidebarAccentText}`}>
                   <roleMeta.Icon className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{roleLabel}</span>
+                  <span className="truncate">{roleMeta.label}</span>
                 </span>
               </div>
             </div>
@@ -201,7 +182,7 @@ export function AppShell({ children }: AppShellProps) {
         )}
 
         {/* Navegación */}
-        <nav className={`min-w-0 flex-1 overflow-y-auto overflow-x-hidden py-3 ${collapsed ? "hidden sm:block" : "block"}`} aria-label={t("appShell.ariaLabel")}>
+        <nav className={`min-w-0 flex-1 overflow-y-auto overflow-x-hidden py-3 ${collapsed ? "hidden sm:block" : "block"}`} aria-label="Navegación VerdeApp">
           <ul className="min-w-0 space-y-0.5 px-3">
             {navItems.map(({ icon: Icon, label, href, enabled }, idx) => {
               if (enabled && href) {
@@ -240,7 +221,7 @@ export function AppShell({ children }: AppShellProps) {
                       <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                         <span className="min-w-0 truncate">{label}</span>
                         <span className="shrink-0 rounded bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-gray-400 dark:text-green-100/70">
-                          {t("appShell.proximamente")}
+                          Pronto
                         </span>
                       </span>
                     )}
@@ -264,7 +245,7 @@ export function AppShell({ children }: AppShellProps) {
             `}
           >
             <LogOut className="h-4.5 w-4.5 shrink-0" />
-            {!collapsed && <span className="truncate">{t("appShell.cerrarSesion")}</span>}
+            {!collapsed && <span className="truncate">Cerrar sesión</span>}
           </button>
         </div>
 
@@ -275,10 +256,10 @@ export function AppShell({ children }: AppShellProps) {
                 <LogOut className="h-6 w-6 text-red-500 dark:text-red-400" />
               </div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                {t("appShell.confirmarLogout.titulo")}
+                ¿Cerrar sesión?
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                {t("appShell.confirmarLogout.mensaje")}
+                Tu sesión se cerrará y serás redirigido al inicio.
               </p>
               <div className="flex gap-3">
                 <button
@@ -286,14 +267,14 @@ export function AppShell({ children }: AppShellProps) {
                   onClick={() => setShowLogoutConfirm(false)}
                   className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
-                  {t("common.cancel")}
+                  Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={handleLogout}
                   className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
                 >
-                  {t("appShell.confirmarLogout.confirmar")}
+                  Sí, cerrar sesión
                 </button>
               </div>
             </div>
@@ -307,7 +288,7 @@ export function AppShell({ children }: AppShellProps) {
           className="hidden sm:flex h-9 w-full shrink-0 items-center justify-center border-t border-gray-100 dark:border-white/10
             text-gray-400 hover:bg-gray-100 hover:text-gray-900
             dark:text-green-100/50 dark:hover:bg-white/5 dark:hover:text-white transition-colors"
-          aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
+          aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </button>
@@ -320,7 +301,7 @@ export function AppShell({ children }: AppShellProps) {
           <button
             onClick={() => navigate(roleMeta.dashboardHref)}
             className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-            aria-label={t("appShell.notificaciones")}
+            aria-label="Notificaciones"
           >
             <Bell className="h-5 w-5" />
             {noLeidas > 0 && (
@@ -333,16 +314,7 @@ export function AppShell({ children }: AppShellProps) {
           <ThemeToggle />
         </header>
 
-        {/* ¿Qué? Fondo del área de contenido suavizado — antes era #f3f8f3 en
-            claro (casi blanco puro) y gray-950 en oscuro (casi negro puro),
-            ambos extremos. #eef3ee es la misma familia de color (verde muy
-            claro) pero un poco más presente. En oscuro NO se pudo usar
-            gray-900 directo: las tarjetas del dashboard (bg-white
-            dark:bg-gray-900) usan justo ese tono, y el fondo quedaría
-            idéntico a las tarjetas — #0a0f14 es un tono intermedio entre
-            gray-900 y gray-950, más suave que el original pero todavía
-            claramente más oscuro que las tarjetas. */}
-        <main className="flex-1 overflow-y-auto bg-[#eef3ee] dark:bg-[#0a0f14]">
+        <main className="flex-1 overflow-y-auto bg-[#f3f8f3] dark:bg-gray-950">
           <div className="mx-auto max-w-7xl px-6 pb-6">{children}</div>
         </main>
       </div>

@@ -16,7 +16,7 @@
 | **Título**         | Admin Conjunto edita un comunicado             |
 | **Módulo**         | Comunicación / Conjuntos                        |
 | **Prioridad**      | Media                                             |
-| **Estado**         | Implementada                                       |
+| **Estado**         | Por implementar                                    |
 | **RF asociados**   | RQF-014                                          |
 
 ---

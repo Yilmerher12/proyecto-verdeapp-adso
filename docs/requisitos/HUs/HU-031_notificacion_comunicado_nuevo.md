@@ -16,7 +16,7 @@
 | **Título**         | Residente/Reciclador recibe notificación de comunicado nuevo                    |
 | **Módulo**         | Comunicación / Conjuntos                                                        |
 | **Prioridad**      | Media                                                                             |
-| **Estado**         | Implementada                                                                      |
+| **Estado**         | Por implementar                                                                   |
 | **RF asociados**   | RQF-014                                                                          |
 
 ---

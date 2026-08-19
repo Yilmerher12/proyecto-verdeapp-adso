@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { InputField } from "@/components/ui/InputField";
@@ -28,7 +27,6 @@ interface InvitarAdminConjuntoFormProps {
  *           persona invitada por su cuenta, ver AceptarInvitacionPage).
  */
 export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProps) {
-  const { t } = useTranslation();
   const [correo, setCorreo] = useState("");
   const [conjuntos, setConjuntos] = useState<ConjuntoOption[]>([]);
   const [idsSeleccionados, setIdsSeleccionados] = useState<number[]>([]);
@@ -58,20 +56,22 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
     setMensajeExito(null);
 
     if (idsSeleccionados.length === 0) {
-      setError(t("invitarAdminConjunto.validation.noConjuntoSelected"));
+      setError("Selecciona al menos un conjunto residencial para asignar.");
       return;
     }
 
     setIsLoading(true);
     try {
       await invitarAdministradorConjunto(correo, idsSeleccionados, token);
-      setMensajeExito(t("invitarAdminConjunto.successMessage", { correo }));
+      setMensajeExito(
+        `Invitación enviada a ${correo}. Cuando la acepte, quedará asignado a los conjuntos seleccionados.`
+      );
       setCorreo("");
       setIdsSeleccionados([]);
     } catch (err: any) {
       setError(
         err.response?.data?.detail ||
-          t("invitarAdminConjunto.errorDefault")
+          "No se pudo enviar la invitación. Verifica los datos e intenta de nuevo."
       );
     } finally {
       setIsLoading(false);
@@ -82,15 +82,16 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
     <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-xl">
       <div className="flex items-center gap-2 mb-4">
         <UserPlus className="w-5 h-5 text-green-600" />
-        <h3 className="font-bold text-gray-800 text-lg">{t("invitarAdminConjunto.title")}</h3>
+        <h3 className="font-bold text-gray-800 text-lg">Invitar Administrador de Conjunto</h3>
       </div>
       <p className="text-sm text-gray-500 mb-6">
-        {t("invitarAdminConjunto.description")}
+        Solo necesitas su correo. La persona invitada definirá su propia
+        contraseña y completará sus datos al aceptar la invitación.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <InputField
-          label={t("invitarAdminConjunto.emailLabel")}
+          label="Correo del administrador a invitar *"
           name="correo"
           type="email"
           value={correo}
@@ -100,11 +101,11 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
         <div>
           <label className="text-xs font-bold text-gray-600 flex items-center gap-1 mb-2">
             <Building2 className="w-4 h-4" />
-            {t("invitarAdminConjunto.conjuntosLabel")}
+            Conjuntos a asignar *
           </label>
           <div className="max-h-56 overflow-y-auto border border-gray-200 rounded-xl p-3 space-y-2">
             {conjuntos.length === 0 && (
-              <p className="text-sm text-gray-400">{t("invitarAdminConjunto.loadingConjuntos")}</p>
+              <p className="text-sm text-gray-400">Cargando conjuntos...</p>
             )}
             {conjuntos.map((c) => (
               <label
@@ -123,13 +124,13 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
           </div>
           {idsSeleccionados.length > 0 && (
             <p className="text-xs text-gray-500 mt-1">
-              {t("invitarAdminConjunto.selectedCount", { count: idsSeleccionados.length })}
+              {idsSeleccionados.length} conjunto(s) seleccionado(s)
             </p>
           )}
         </div>
 
         <Button type="submit" fullWidth isLoading={isLoading}>
-          {t("invitarAdminConjunto.submit")}
+          Enviar invitación
         </Button>
       </form>
 

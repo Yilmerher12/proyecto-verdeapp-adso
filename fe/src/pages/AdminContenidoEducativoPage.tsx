@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
@@ -21,7 +20,6 @@ const FORM_VACIO: ContenidoEducativoPayload = {
 };
 
 export function AdminContenidoEducativoPage() {
-  const { t } = useTranslation();
   const { accessToken } = useAuth();
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -39,11 +37,10 @@ export function AdminContenidoEducativoPage() {
     setCargando(true);
     listarContenido(accessToken)
       .then(setContenido)
-      .catch(() => setErrorMsg(t("catalogoEducativo.loadError")))
+      .catch(() => setErrorMsg("No se pudo cargar el catálogo educativo."))
       .finally(() => setCargando(false));
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(cargar, [accessToken]);
 
   const abrirCrear = () => {
@@ -71,7 +68,7 @@ export function AdminContenidoEducativoPage() {
   const guardar = async () => {
     if (!accessToken) return;
     if (!form.modulo_categoria.trim() || !form.titulo_tema.trim() || !form.cuerpo_texto.trim()) {
-      setErrorMsg(t("adminContenidoEducativo.validation.required"));
+      setErrorMsg("Categoría, título y contenido son obligatorios.");
       return;
     }
     setGuardando(true);
@@ -90,7 +87,7 @@ export function AdminContenidoEducativoPage() {
       cerrarFormulario();
       cargar();
     } catch {
-      setErrorMsg(t("common.saveError"));
+      setErrorMsg("No se pudo guardar. Intenta de nuevo.");
     } finally {
       setGuardando(false);
     }
@@ -103,7 +100,7 @@ export function AdminContenidoEducativoPage() {
       setAEliminar(null);
       cargar();
     } catch {
-      setErrorMsg(t("adminContenidoEducativo.deleteError"));
+      setErrorMsg("No se pudo eliminar. Intenta de nuevo.");
     }
   };
 
@@ -111,9 +108,9 @@ export function AdminContenidoEducativoPage() {
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("adminContenidoEducativo.title")}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Contenido educativo</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t("adminContenidoEducativo.subtitle")}
+            Crea, edita y elimina los módulos del catálogo.
           </p>
         </div>
         <button
@@ -121,16 +118,16 @@ export function AdminContenidoEducativoPage() {
           className="flex items-center gap-1.5 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-500 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          {t("adminContenidoEducativo.newModule")}
+          Nuevo módulo
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
+      {cargando && <p className="text-sm text-gray-400">Cargando...</p>}
 
       {!cargando && contenido.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-gray-800">
           <BookOpen className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-400">{t("adminContenidoEducativo.emptyState")}</p>
+          <p className="text-sm text-gray-400">Todavía no hay módulos creados.</p>
         </div>
       )}
 
@@ -152,14 +149,14 @@ export function AdminContenidoEducativoPage() {
               <button
                 onClick={() => abrirEditar(item)}
                 className="rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-                aria-label={t("adminContenidoEducativo.editAria", { titulo: item.titulo_tema })}
+                aria-label={`Editar ${item.titulo_tema}`}
               >
                 <Pencil className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setAEliminar(item)}
                 className="rounded-lg border border-gray-200 p-2 text-red-500 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-red-900/20"
-                aria-label={t("adminContenidoEducativo.deleteAria", { titulo: item.titulo_tema })}
+                aria-label={`Eliminar ${item.titulo_tema}`}
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -169,10 +166,10 @@ export function AdminContenidoEducativoPage() {
       </div>
 
       {(creando || editando) && (
-        <Modal onClose={cerrarFormulario} wide aria-label={editando ? t("adminContenidoEducativo.modal.editTitle") : t("adminContenidoEducativo.newModule")}>
+        <Modal onClose={cerrarFormulario} wide aria-label={editando ? "Editar módulo" : "Nuevo módulo"}>
           <div className="p-6 sm:p-8 space-y-4">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-              {editando ? t("adminContenidoEducativo.modal.editTitle") : t("adminContenidoEducativo.newModule")}
+              {editando ? "Editar módulo" : "Nuevo módulo"}
             </h2>
 
             {errorMsg && (
@@ -183,31 +180,31 @@ export function AdminContenidoEducativoPage() {
 
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminContenidoEducativo.fields.category")} <span className="text-red-500">*</span>
+                Categoría <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.modulo_categoria}
                 onChange={(e) => setForm({ ...form, modulo_categoria: e.target.value })}
-                placeholder={t("adminContenidoEducativo.fields.categoryPlaceholder")}
+                placeholder="Ej: Separación en la fuente"
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
 
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminContenidoEducativo.fields.titleField")} <span className="text-red-500">*</span>
+                Título <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.titulo_tema}
                 onChange={(e) => setForm({ ...form, titulo_tema: e.target.value })}
-                placeholder={t("adminContenidoEducativo.fields.titlePlaceholder")}
+                placeholder="Ej: Código de colores de bolsas"
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
 
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminContenidoEducativo.fields.content")} <span className="text-red-500">*</span>
+                Contenido <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={form.cuerpo_texto}
@@ -219,7 +216,7 @@ export function AdminContenidoEducativoPage() {
 
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminContenidoEducativo.fields.videoLink")}
+                Link de video (YouTube)
               </label>
               <input
                 value={form.url_video ?? ""}
@@ -231,7 +228,7 @@ export function AdminContenidoEducativoPage() {
 
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminContenidoEducativo.fields.guideLink")}
+                Link de guía de apoyo (PDF, Drive, etc.)
               </label>
               <input
                 value={form.url_guia ?? ""}
@@ -246,14 +243,14 @@ export function AdminContenidoEducativoPage() {
                 onClick={cerrarFormulario}
                 className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
               >
-                {t("common.cancel")}
+                Cancelar
               </button>
               <button
                 onClick={guardar}
                 disabled={guardando}
                 className="flex-1 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60 transition-colors"
               >
-                {guardando ? t("common.saving") : t("common.save")}
+                {guardando ? "Guardando..." : "Guardar"}
               </button>
             </div>
           </div>
@@ -261,29 +258,29 @@ export function AdminContenidoEducativoPage() {
       )}
 
       {aEliminar && (
-        <Modal onClose={() => setAEliminar(null)} aria-label={t("adminContenidoEducativo.modal.deleteAriaLabel")}>
+        <Modal onClose={() => setAEliminar(null)} aria-label="Confirmar eliminación">
           <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
               <Trash2 className="h-6 w-6 text-red-500 dark:text-red-400" />
             </div>
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("adminContenidoEducativo.deleteConfirm.title", { titulo: aEliminar.titulo_tema })}
+              ¿Eliminar "{aEliminar.titulo_tema}"?
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("adminContenidoEducativo.deleteConfirm.warning")}
+              Esta acción no se puede deshacer.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setAEliminar(null)}
                 className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
-                {t("common.cancel")}
+                Cancelar
               </button>
               <button
                 onClick={confirmarEliminar}
                 className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
               >
-                {t("adminContenidoEducativo.deleteConfirm.confirm")}
+                Sí, eliminar
               </button>
             </div>
           </div>

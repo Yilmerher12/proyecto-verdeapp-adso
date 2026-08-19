@@ -16,7 +16,7 @@
 | **Título**         | Admin Conjunto solicita desvinculación             |
 | **Módulo**         | Administración / Conjuntos                          |
 | **Prioridad**      | Media                                                |
-| **Estado**         | Implementada                                          |
+| **Estado**         | Por implementar                                       |
 | **RF asociados**   | RQF-016                                              |
 
 ---

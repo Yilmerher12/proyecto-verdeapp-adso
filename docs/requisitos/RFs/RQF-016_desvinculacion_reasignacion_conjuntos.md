@@ -19,7 +19,7 @@
 | **Nombre**    | Desvinculación y Reasignación de Conjuntos     |
 | **Módulo**    | Administración / Conjuntos                      |
 | **Prioridad** | Media                                            |
-| **Estado**    | Implementada                                     |
+| **Estado**    | Por implementar                                  |
 | **Usuarios**  | admin_conjunto, admin_sistema                   |
 
 ---

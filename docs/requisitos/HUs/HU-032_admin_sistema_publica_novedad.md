@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema publica una novedad general                  |
 | **Módulo**         | Comunicación / Sistema                                     |
 | **Prioridad**      | Media                                                        |
-| **Estado**         | Implementada                                                 |
+| **Estado**         | Por implementar                                              |
 | **RF asociados**   | RQF-015                                                     |
 
 ---
@@ -37,11 +37,11 @@
 - **cuando** completo el formulario,
 - **entonces** debo poder elegir el alcance: todos los usuarios, solo residentes, solo recicladores, o solo Admins de Conjunto.
 
-### CA-032.2 — Enlace opcional
+### CA-032.2 — Adjuntos y links opcionales
 
 - **Dado que** estoy creando una novedad,
 - **cuando** completo el formulario,
-- **entonces** debo poder agregar un enlace (URL) a un archivo alojado externamente o a un sitio externo, de forma opcional — el texto sí es obligatorio.
+- **entonces** debo poder adjuntar imágenes, PDF, Word, Excel o agregar links externos, de forma opcional — el texto sí es obligatorio.
 
 ### CA-032.3 — Fecha de expiración
 

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { ArrowLeft, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
@@ -11,7 +10,6 @@ import {
 } from "@/lib/contenidoEducativoApi";
 
 export function CategoriaEducativaPage() {
-  const { t } = useTranslation();
   const { categoria } = useParams<{ categoria: string }>();
   const categoriaDecodificada = decodeURIComponent(categoria ?? "");
   const { accessToken } = useAuth();
@@ -40,7 +38,7 @@ export function CategoriaEducativaPage() {
         className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" />
-        {t("categoriaEducativa.back")}
+        Volver a Aprender a reciclar
       </button>
 
       <div className="flex items-center gap-3">
@@ -50,10 +48,10 @@ export function CategoriaEducativaPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{categoriaDecodificada}</h1>
       </div>
 
-      {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
+      {cargando && <p className="text-sm text-gray-400">Cargando...</p>}
 
       {!cargando && temas.length === 0 && (
-        <p className="text-sm text-gray-400">{t("categoriaEducativa.emptyForCategory")}</p>
+        <p className="text-sm text-gray-400">No se encontró contenido para esta categoría.</p>
       )}
 
       <div className="space-y-4">
@@ -77,7 +75,7 @@ export function CategoriaEducativaPage() {
                 className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <FileText className="h-4 w-4 shrink-0" />
-                {t("categoriaEducativa.viewGuide")}
+                Ver guía de apoyo
               </a>
             )}
           </div>

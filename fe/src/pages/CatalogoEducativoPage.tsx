@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { BookOpen, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
@@ -18,7 +17,6 @@ import {
 // ¿Impacto? No requiere ningún cambio de backend — la categoría ya agrupa
 //           el contenido en la base de datos, esto es solo cómo se navega.
 export function CatalogoEducativoPage() {
-  const { t } = useTranslation();
   const { accessToken } = useAuth();
   const navigate = useNavigate();
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
@@ -29,9 +27,8 @@ export function CatalogoEducativoPage() {
     if (!accessToken) return;
     listarContenido(accessToken)
       .then(setContenido)
-      .catch(() => setError(t("catalogoEducativo.loadError")))
+      .catch(() => setError("No se pudo cargar el catálogo educativo."))
       .finally(() => setCargando(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
   const categorias = Array.from(new Set(contenido.map((c) => c.modulo_categoria)));
@@ -39,19 +36,19 @@ export function CatalogoEducativoPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("catalogoEducativo.title")}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Aprender a reciclar</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t("catalogoEducativo.subtitle")}
+          Elige un tema para ver sus videos y guías de apoyo.
         </p>
       </div>
 
-      {cargando && <p className="text-sm text-gray-400">{t("catalogoEducativo.loading")}</p>}
+      {cargando && <p className="text-sm text-gray-400">Cargando contenido...</p>}
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       {!cargando && !error && categorias.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-gray-800">
           <BookOpen className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-400">{t("catalogoEducativo.emptyState")}</p>
+          <p className="text-sm text-gray-400">Todavía no hay contenido educativo publicado.</p>
         </div>
       )}
 
@@ -74,7 +71,7 @@ export function CatalogoEducativoPage() {
                   {categoria}
                 </span>
                 <span className="mt-0.5 block text-xs text-gray-400 dark:text-gray-500">
-                  {temas} {temas === 1 ? t("catalogoEducativo.tema") : t("catalogoEducativo.temas")}
+                  {temas} {temas === 1 ? "tema" : "temas"}
                 </span>
               </span>
               <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 dark:text-gray-600" />

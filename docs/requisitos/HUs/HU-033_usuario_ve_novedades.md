@@ -16,7 +16,7 @@
 | **Título**         | Usuario ve las novedades del sistema según su rol                    |
 | **Módulo**         | Comunicación / Sistema                                              |
 | **Prioridad**      | Media                                                                |
-| **Estado**         | Implementada                                                         |
+| **Estado**         | Por implementar                                                      |
 | **RF asociados**   | RQF-015                                                              |
 
 ---

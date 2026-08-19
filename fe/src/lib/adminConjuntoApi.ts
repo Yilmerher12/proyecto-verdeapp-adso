@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 
@@ -17,32 +18,6 @@ export interface InvitacionInfo {
     correo_electronico: string;
     nombres_conjuntos: string[];
     valido: boolean;
-}
-
-export interface SolicitudDesvinculacion {
-    id: number;
-    id_conjunto_residencial: number;
-    nombre_conjunto: string;
-    id_administrador: number;
-    nombre_administrador: string;
-    apellidos_administrador: string;
-    motivo: string | null;
-    estado: string;
-    created_at: string;
-}
-
-export interface ConjuntoSinAdministrador {
-    id_conjunto_residencial: number;
-    nombre_conjunto: string;
-    nombre_localidad: string;
-}
-
-export interface AdministradorConjuntoResumen {
-    id_administrador: number;
-    nombre: string;
-    apellidos: string;
-    correo_electronico: string;
-    conjuntos_actuales: string[];
 }
 
 /**
@@ -89,65 +64,5 @@ export async function aceptarInvitacion(payload: {
     numero_telefonico: string;
 }) {
 const { data } = await axios.post(`${API_BASE}/aceptar`, payload);
-    return data;
-}
-
-// ¿Qué? RQF-016 (HU-023, CA-023.1): solicitudes de desvinculación pendientes de resolver.
-export async function listarSolicitudesDesvinculacion(token: string): Promise<SolicitudDesvinculacion[]> {
-    const { data } = await axios.get(`${API_BASE}/solicitudes-desvinculacion`, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
-    return data;
-}
-
-/**
- * ¿Qué? RQF-016 (HU-023, CA-023.2/CA-023.3): aprueba o rechaza una solicitud.
- * ¿Para qué? motivoRechazo es obligatorio cuando aprobar=false (el backend lo valida igual).
- */
-export async function resolverSolicitudDesvinculacion(
-    idSolicitud: number,
-    aprobar: boolean,
-    motivoRechazo: string | undefined,
-    token: string
-) {
-    const { data } = await axios.post(
-        `${API_BASE}/solicitudes-desvinculacion/${idSolicitud}/resolver`,
-        { aprobar, motivo_rechazo: motivoRechazo || null },
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return data;
-}
-
-// ¿Qué? RQF-016 (HU-024, CA-024.2): conjuntos verificados sin ningún administrador activo hoy.
-export async function listarConjuntosSinAdministrador(token: string): Promise<ConjuntoSinAdministrador[]> {
-    const { data } = await axios.get(`${API_BASE_URL}/api/v1/geography/conjuntos/sin-administrador`, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
-    return data;
-}
-
-// ¿Qué? RQF-016 (HU-024, CA-024.1): busca Admin de Conjunto ya existentes en la plataforma.
-export async function buscarAdministradoresConjunto(
-    query: string,
-    token: string
-): Promise<AdministradorConjuntoResumen[]> {
-    const { data } = await axios.get(`${API_BASE}/listar`, {
-        params: query ? { query } : {},
-        headers: { Authorization: `Bearer ${token}` },
-    });
-    return data;
-}
-
-// ¿Qué? RQF-016 (HU-024, CA-024.3): vincula un conjunto sin administrador a un Admin Conjunto existente.
-export async function asignarConjuntoAdicional(
-    idAdministrador: number,
-    idConjuntoResidencial: number,
-    token: string
-) {
-    const { data } = await axios.post(
-        `${API_BASE}/asignar-conjunto-adicional`,
-        { id_administrador: idAdministrador, id_conjunto_residencial: idConjuntoResidencial },
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
     return data;
 }

@@ -8,14 +8,14 @@
 | **Nombre**    | Publicar Novedades Generales                    |
 | **Módulo**    | Comunicación / Sistema                          |
 | **Prioridad** | Media                                           |
-| **Estado**    | Implementada                                     |
+| **Estado**    | Por implementar                                 |
 | **Usuarios**  | admin_sistema, residente, reciclador, admin_conjunto |
 
 ---
 
 ## Descripción
 
-El Admin Sistema puede publicar novedades generales sobre la aplicación, los puntos de acopio o temas ambientales, dirigidas a uno o varios grupos de usuarios de toda la plataforma (no solo de un conjunto). Estas novedades pueden incluir texto y, de forma opcional, un enlace (URL) a un archivo alojado externamente (imagen, PDF, Word, Excel) o a un sitio externo, y tienen una fecha de expiración que puede configurarse manualmente o dejar que el sistema la sugiera.
+El Admin Sistema puede publicar novedades generales sobre la aplicación, los puntos de acopio o temas ambientales, dirigidas a uno o varios grupos de usuarios de toda la plataforma (no solo de un conjunto). Estas novedades pueden incluir texto, imágenes, archivos PDF, Word, Excel y links externos, y tienen una fecha de expiración que puede configurarse manualmente o dejar que el sistema la sugiera.
 
 A diferencia de los comunicados de conjunto (RQF-014), las novedades las publica el equipo de VerdeApp para todos sus usuarios o para grupos específicos de roles.
 
@@ -26,7 +26,7 @@ A diferencia de los comunicados de conjunto (RQF-014), las novedades las publica
 ### Flujo A — Publicar novedad (Admin Sistema)
 1. El Admin Sistema escribe el contenido de la novedad (texto obligatorio).
 2. Selecciona el alcance: todos los usuarios, solo residentes, solo recicladores o solo Admins de Conjunto.
-3. Puede agregar un enlace (URL) a un archivo alojado externamente o a un sitio externo.
+3. Puede adjuntar imágenes, PDFs, Word, Excel o agregar links externos.
 4. El sistema sugiere una fecha de expiración que puede modificar.
 5. Al publicar, los usuarios del alcance seleccionado reciben una notificación y ven la novedad en su sección de novedades.
 
