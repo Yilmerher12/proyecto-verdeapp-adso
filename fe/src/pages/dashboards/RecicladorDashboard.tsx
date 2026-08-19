@@ -18,6 +18,7 @@ import { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 
 interface InvitacionPendiente {
   id: string;
@@ -155,11 +156,13 @@ export function RecicladorDashboard() {
   const marcarLeida = async (id: number) => {
     await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
     setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+    notificarNotificacionesActualizadas();
   };
 
   const marcarTodasLeidas = async () => {
     await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
     setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+    notificarNotificacionesActualizadas();
   };
 
   const limpiarLeidas = async () => {
