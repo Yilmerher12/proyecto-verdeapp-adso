@@ -7,6 +7,7 @@ import { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed, tiempoRelativo, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRecord = Record<string, any>;
@@ -74,11 +75,13 @@ export function ResidenteDashboard() {
   const marcarLeida = async (id: number) => {
     await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
     setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+    notificarNotificacionesActualizadas();
   };
 
   const marcarTodasLeidas = async () => {
     await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
     setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+    notificarNotificacionesActualizadas();
   };
 
   const limpiarLeidas = async () => {
