@@ -47,6 +47,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const clearAuth = useCallback(() => {
     sessionStorage.removeItem("access_token");
     sessionStorage.removeItem("refresh_token");
+    // ¿Qué? También se borra la posición de scroll guardada del Landing.
+    // ¿Para qué? AppShell hace un recargue completo hacia "/" al cerrar
+    //           sesión, y el Landing (useRestoreScroll) restaura esta clave
+    //           si existe — sin este borrado, el usuario vuelve a caer en el
+    //           punto donde estaba desplazado ANTES de haber iniciado sesión.
+    // ¿Impacto? Sin esto, cerrar sesión se sentía "roto": la página parecía
+    //           recordar un scroll viejo que no tenía nada que ver con la
+    //           sesión que se acaba de cerrar.
+    sessionStorage.removeItem("landing-scroll-y");
     setAccessToken(null);
     setRefreshToken(null);
     setUser(null);
