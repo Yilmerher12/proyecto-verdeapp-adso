@@ -1,16 +1,43 @@
 {
-  "nav": {
-    "brand": "VerdeApp",
-    "logout": "Salir",
-    "language": "Idioma",
-    "sidebar": {
-      "dashboard": "Panel principal",
-      "employees": "Empleados",
-      "products": "Productos",
-      "reports": "Reportes",
-      "security": "Seguridad",
-      "comingSoon": "pronto"
+  "appShell": {
+    "ariaLabel": "Navegación VerdeApp",
+    "nav": {
+      "panelPrincipal": "Panel Principal",
+      "seguridad": "Seguridad",
+      "crearNovedades": "Crear Novedades",
+      "contenidoEducativo": "Contenido Educativo",
+      "miPerfil": "Mi Perfil",
+      "novedades": "Novedades",
+      "puntosAcopio": "Puntos de Acopio",
+      "gestionarComunicados": "Comunicados de mis Conjuntos",
+      "comunicados": "Comunicados",
+      "aprenderGuias": "Aprender (Guías)",
+      "directorioGeneral": "Directorio General"
+    },
+    "proximamente": "Pronto",
+    "notificaciones": "Notificaciones",
+    "expandirMenu": "Expandir menú",
+    "colapsarMenu": "Colapsar menú",
+    "cerrarSesion": "Cerrar sesión",
+    "confirmarLogout": {
+      "titulo": "¿Cerrar sesión?",
+      "mensaje": "Tu sesión se cerrará y serás redirigido al inicio.",
+      "confirmar": "Sí, cerrar sesión"
     }
+  },
+  "passwordStrength": {
+    "ariaLabel": "Fortaleza de contraseña: {{label}}",
+    "1": "Muy débil",
+    "2": "Débil",
+    "3": "Regular",
+    "4": "Buena",
+    "5": "Fuerte"
+  },
+  "roles": {
+    "adminSistema": "Administrador",
+    "residente": "Residente",
+    "reciclador": "Reciclador",
+    "adminConjunto": "Admin. de Conjunto"
   },
   "common": {
     "loading": "Cargando...",
@@ -24,21 +51,25 @@
     "cancel": "Cancelar",
     "back": "Volver",
     "or": "o",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "edit": "Editar",
+    "phone": "Teléfono",
+    "saving": "Guardando...",
+    "saveError": "No se pudo guardar. Intenta de nuevo."
   },
   "auth": {
     "login": {
-      "title": "Iniciar sesión",
-      "subtitle": "Ingresa tus credenciales para acceder",
+      "title": "Ingresa a VerdeApp",
+      "subtitle": "Gestiona el reciclaje y los reportes de tu comunidad.",
       "forgotPassword": "¿Olvidaste tu contraseña?",
-      "noAccount": "¿No tienes cuenta?",
-      "createAccountLink": "Crear cuenta",
-      "submit": "Iniciar sesión",
-      "errorDefault": "Error al iniciar sesión"
+      "noAccount": "¿No tienes cuenta aún?",
+      "createAccountLink": "Regístrate aquí",
+      "submit": "Iniciar Sesión",
+      "errorDefault": "Credenciales incorrectas. Verifica tu correo y contraseña."
     },
     "register": {
-      "title": "Crear cuenta",
-      "subtitle": "Completa tus datos para registrarte",
+      "title": "Crea tu cuenta",
+      "subtitle": "Únete a VerdeApp y transforma tu comunidad",
       "confirmEmail": "Confirmar correo electrónico",
       "confirmPassword": "Confirmar contraseña",
       "submit": "Crear cuenta",
@@ -50,6 +81,7 @@
       "verifyEmailCardBody": "Te enviamos un correo de verificación. Revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.",
       "validation": {
         "emailRequired": "El correo es obligatorio",
+        "emailInvalid": "El formato del correo no es válido.",
         "confirmEmailRequired": "Debes confirmar tu correo electrónico",
         "emailsMismatch": "Los correos electrónicos no coinciden",
         "firstNameMin": "El nombre debe tener al menos 2 caracteres",
@@ -65,7 +97,54 @@
       },
       "acceptTerms": "He leído y acepto los <link>Términos de uso</link>",
       "acceptPrivacy": "He leído y acepto la <link>Política de privacidad</link>",
-      "acceptCookies": "He leído y acepto la <link>Política de cookies</link>"
+      "acceptCookies": "He leído y acepto la <link>Política de cookies</link>",
+      "roleResident": "Residente",
+      "roleRecycler": "Reciclador",
+      "fields": {
+        "firstName": "Nombres *",
+        "lastName": "Apellidos *",
+        "phone": "Teléfono",
+        "residenceLocationHeading": "Ubicación de Residencia *",
+        "locality": "Localidad",
+        "selectPlaceholder": "Selecciona...",
+        "conjunto": "Conjunto Residencial",
+        "unitType": "Tipo Unidad",
+        "unitTypeTower": "Torre",
+        "unitTypeInterior": "Interior",
+        "unitTypeBlock": "Bloque",
+        "unitTypeHouse": "Casa",
+        "unitNumber": "Nº / Letra",
+        "unitNumberPlaceholder": "Ej: 3, B",
+        "apto": "Apartamento",
+        "aptoPlaceholder": "Ej: 402",
+        "operativeProfileHeading": "Perfil Operativo *",
+        "workLocality": "Localidad de Trabajo *",
+        "selectYourLocality": "Selecciona tu localidad...",
+        "association": "Asociación (Opcional)",
+        "associationPlaceholder": "Ej: ARB",
+        "email": "Correo Electrónico *",
+        "confirmEmailField": "Confirmar Correo Electrónico *",
+        "password": "Contraseña *",
+        "passwordPlaceholder": "Mínimo 8 caracteres",
+        "confirmPasswordField": "Confirmar Contraseña *",
+        "confirmPasswordPlaceholder": "Repite la contraseña"
+      },
+      "termsPrefix": "Acepto los",
+      "termsLinkLabel": "Términos de uso",
+      "andThe": "y la",
+      "privacyLinkLabel": "Política de privacidad",
+      "brandSuffix": "de VerdeApp *",
+      "submitIncomplete": "Completa los campos y acepta los términos",
+      "submitFull": "Registrar Cuenta",
+      "genericError": "Error al registrar. Verifica los datos o intenta con otro correo.",
+      "success": {
+        "title": "¡Revisa tu bandeja!",
+        "bodyPrefix": "Enviamos un enlace de verificación a",
+        "step1": "Abre tu correo electrónico",
+        "step2": "Busca el email de VerdeApp",
+        "step3": "Haz clic en \"Verificar mi cuenta\"",
+        "understood": "Entendido"
+      }
     },
     "changePassword": {
       "title": "Cambiar contraseña",
@@ -381,76 +460,59 @@
   },
   "landing": {
     "nav": {
+      "homeAriaLabel": "VerdeApp — inicio",
       "login": "Iniciar sesión",
       "register": "Registrarse"
     },
     "hero": {
-      "title": "Autenticación segura,",
-      "titleHighlight": "lista para producción",
-      "subtitle": "Registro, login, verificación de email, cambio y recuperación de contraseña. Un sistema completo construido con FastAPI, React y las mejores prácticas de seguridad.",
-      "ctaPrimary": "Comenzar ahora",
-      "ctaSecondary": "Iniciar sesión"
-    },
-    "features": {
-      "title": "Características del sistema",
-      "subtitle": "Todo lo necesario para un sistema de autenticación robusto y educativo.",
-      "register": {
-        "title": "Registro seguro",
-        "description": "Validación de datos en tiempo real. Las contraseñas se almacenan hasheadas con bcrypt — nunca en texto plano."
-      },
-      "jwt": {
-        "title": "Autenticación JWT",
-        "description": "Access tokens de 15 min y refresh tokens de 7 días. Stateless, eficiente y estándar en la industria."
-      },
-      "email": {
-        "title": "Verificación de email",
-        "description": "Confirma la identidad antes de activar la cuenta. Enlace de un solo uso enviado automáticamente al registro."
-      },
-      "password": {
-        "title": "Cambio de contraseña",
-        "description": "El usuario autenticado puede cambiar su contraseña ingresando la actual. Validación estricta en el backend."
-      },
-      "recovery": {
-        "title": "Recuperación por email",
-        "description": "Flujo completo de forgot/reset con token de un solo uso y expiración de 1 hora."
-      },
-      "security": {
-        "title": "Seguridad OWASP",
-        "description": "Diseñado con seguridad primero: sin SQL injection, sin XSS, CORS configurado e inputs validados con Pydantic."
-      }
+      "subtitle": "Gestión de residuos para conjuntos residenciales en Bogotá",
+      "description": "Conectamos residentes, recicladores y administradores para transformar la gestión de residuos en tu comunidad.",
+      "ctaLogin": "Ya tengo cuenta",
+      "ctaRegister": "Unirse a VerdeApp"
     },
     "howItWorks": {
-      "title": "¿Cómo funciona?",
-      "subtitle": "Tres pasos para empezar a usar el sistema.",
+      "eyebrow": "¿Cómo funciona?",
+      "title": "Tres pasos, un ciclo completo",
+      "subtitle": "VerdeApp conecta a todos los actores del reciclaje en el conjunto residencial.",
       "step1": {
-        "title": "Crea tu cuenta",
-        "description": "Registra tu email y contraseña. Recibirás un correo para verificar y activar tu cuenta."
+        "title": "El conjunto se afilia",
+        "description": "El administrador registra el conjunto en VerdeApp e invita a los residentes y al reciclador asignado."
       },
       "step2": {
-        "title": "Inicia sesión",
-        "description": "Autentícate con tus credenciales. El sistema emitirá un access token y un refresh token."
+        "title": "Los residentes participan",
+        "description": "Aprenden a reciclar con el contenido educativo e indican cuándo el SHUT está en su capacidad máxima."
       },
       "step3": {
-        "title": "Accede al sistema",
-        "description": "Con tu sesión activa, gestiona tu perfil y contraseña desde el dashboard."
+        "title": "El reciclador actúa",
+        "description": "Notifica su llegada al SHUT. Al finalizar, el sistema registra la gestión y genera una auditoría de rendimiento."
       }
     },
-    "techStack": {
-      "title": "Stack tecnológico",
-      "subtitle": "Herramientas modernas, tipadas y probadas en la industria.",
-      "ariaLabel": "Tecnologías del proyecto"
-    },
-    "cta": {
-      "title": "Listo para comenzar",
-      "subtitle": "Crea tu cuenta y explora el sistema de autenticación completo. Aprende implementando.",
-      "button": "Crear cuenta gratis"
+    "pillars": {
+      "eyebrow": "Nuestros pilares",
+      "title": "Una plataforma, tres ejes de impacto",
+      "pillar1": {
+        "title": "Separación en la fuente",
+        "description": "Guía a los residentes en la correcta clasificación de residuos reciclables, directamente desde la app."
+      },
+      "pillar2": {
+        "title": "Conexión con recicladores",
+        "description": "Formaliza la labor de los recicladores de oficio. Permite solicitudes y notificaciones en tiempo real entre el conjunto y el reciclador asignado."
+      },
+      "pillar3": {
+        "title": "Educación ambiental",
+        "description": "Guías y contenido interactivo sobre cómo separar, limpiar y entregar materiales reciclables correctamente en tu comunidad."
+      }
     },
     "footer": {
       "credit": "Proyecto educativo — SENA",
       "terms": "Términos de uso",
       "privacy": "Política de privacidad",
       "cookies": "Política de cookies",
-      "contact": "Contacto"
+      "contact": "Contacto",
+      "navPrivacy": "Privacidad",
+      "navCookies": "Cookies",
+      "rights": "© {{year}} VerdeApp. Todos los derechos reservados.",
+      "legalAriaLabel": "Aviso legal"
     }
   },
   "contact": {
@@ -527,6 +589,411 @@
     },
     "footer": {
       "credit": "Proyecto educativo SENA"
+    }
+  },
+  "dashboards": {
+    "common": {
+      "welcomePrefix": "Bienvenido,"
+    },
+    "admin": {
+      "title": "Panel de Administración",
+      "inviteSection": {
+        "title": "Administradores de Conjunto",
+        "show": "+ Invitar administrador",
+        "hide": "Ocultar"
+      },
+      "loadingData": "Cargando datos...",
+      "residentsTable": {
+        "title": "Listado de Residentes",
+        "badge": "Vista SQL",
+        "headers": {
+          "email": "Correo",
+          "name": "Nombre",
+          "conjunto": "Conjunto",
+          "unit": "Unidad"
+        },
+        "unitFormat": "Blq {{bloque}} · Apto {{apto}}",
+        "empty": "No hay residentes registrados todavía."
+      },
+      "recyclersTable": {
+        "title": "Listado de Recicladores",
+        "badge": "Procedimiento Almacenado",
+        "headers": {
+          "email": "Correo",
+          "fullName": "Nombre completo",
+          "association": "Asociación"
+        },
+        "empty": "No hay recicladores registrados todavía."
+      }
+    },
+    "adminConjunto": {
+      "title": "Panel de Administrador de Conjunto",
+      "estado": {
+        "pendiente": "Pendiente",
+        "aceptada": "Aceptada",
+        "rechazada": "Rechazada"
+      },
+      "recyclersSection": {
+        "title": "Recicladores Autorizados",
+        "invite": "+ Invitar reciclador",
+        "emailPlaceholder": "correo.del.reciclador@ejemplo.com",
+        "sending": "Enviando...",
+        "inviteButton": "Invitar",
+        "errorDefault": "No se pudo enviar la invitación. Verifica el correo.",
+        "loading": "Cargando recicladores...",
+        "empty": "Todavía no has invitado a ningún reciclador a este conjunto."
+      },
+      "myConjuntos": {
+        "title": "Conjuntos que administras",
+        "loading": "Cargando tus conjuntos...",
+        "empty": "Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp."
+      },
+      "editForm": {
+        "name": "Nombre del conjunto",
+        "nit": "NIT (opcional)",
+        "address": "Dirección",
+        "successMessage": "Conjunto actualizado correctamente.",
+        "errorMessage": "No se pudo guardar el cambio. Intenta de nuevo."
+      },
+      "nitLabel": "NIT: {{nit}}",
+      "notifications": {
+        "title": "Actividad del conjunto",
+        "empty": "No hay actividad aún. Las notificaciones de recicladores y residentes aparecerán aquí."
+      }
+    },
+    "reciclador": {
+      "title": "Panel del Reciclador",
+      "acciones": {
+        "llegada": "Llegué al conjunto",
+        "shutLleno": "SHUT está lleno",
+        "shutLibre": "SHUT ya está libre"
+      },
+      "feedbackSent": "Notificación enviada: \"{{label}}\"",
+      "genericNotificationSent": "Notificación enviada",
+      "sendSection": {
+        "title": "Enviar notificación",
+        "subtitle": "Avisa a los residentes y al administrador del conjunto.",
+        "noConjuntos": "Aún no tienes conjuntos autorizados. Acepta una invitación para poder enviar notificaciones."
+      },
+      "invitations": {
+        "title": "Invitaciones pendientes",
+        "invitedBy": "Invitado por {{nombre}}",
+        "accept": "Aceptar",
+        "reject": "Rechazar"
+      },
+      "myConjuntos": {
+        "title": "Mis conjuntos autorizados",
+        "empty": "Todavía no estás autorizado en ningún conjunto. Cuando un administrador te invite y aceptes, aparecerá aquí."
+      },
+      "notifications": {
+        "title": "Notificaciones recibidas",
+        "empty": "No tienes notificaciones. Cuando un residente reporte el SHUT lleno, aparecerá aquí."
+      },
+      "modal": {
+        "title": "¿A qué conjunto notificas?",
+        "subtitle": "Selecciona el conjunto al que llegaste o sobre el que quieres avisar.",
+        "sending": "Enviando...",
+        "submit": "Enviar aviso"
+      }
+    },
+    "residente": {
+      "title": "Panel del Residente",
+      "shutBanner": {
+        "title": "El SHUT está lleno",
+        "reportedAt": "Reportado {{time}}",
+        "warning": "No bajes más material reciclable hasta que el reciclador indique que está libre."
+      },
+      "reportSection": {
+        "title": "Reportar SHUT lleno",
+        "description": "Avisa al reciclador y al administrador que el cuarto de basuras está lleno. El reporte es anónimo.",
+        "sent": "Enviado",
+        "submit": "Reportar"
+      },
+      "notifications": {
+        "title": "Actividad reciente",
+        "empty": "No tienes notificaciones aún. Aparecerán aquí cuando el reciclador envíe avisos."
+      }
+    }
+  },
+  "notificationFeed": {
+    "platformLabel": "VerdeApp",
+    "markAllRead": "Marcar leídas",
+    "clearRead": "Limpiar leídas",
+    "showLess": "Ver menos",
+    "showMore": "Ver {{count}} más",
+    "time": {
+      "justNow": "hace un momento",
+      "minutesAgo": "hace {{count}} min",
+      "hoursAgo": "hace {{count}}h",
+      "daysAgo": "hace {{count}}d"
+    }
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "subtitle": "Gestiona tu información personal",
+    "updateSuccess": "Perfil actualizado correctamente.",
+    "loading": "Cargando tu perfil...",
+    "loadError": "No se pudo cargar tu perfil.",
+    "fields": {
+      "conjunto": "Conjunto",
+      "unit": "Unidad",
+      "unitFormat": "{{torre}} · Apto {{apto}}",
+      "baseLocality": "Localidad base",
+      "association": "Asociación",
+      "firstName": "Nombre",
+      "lastName": "Apellidos"
+    },
+    "managedConjuntoSingular": "Conjunto que administras",
+    "managedConjuntoPlural": "Conjuntos que administras",
+    "personalInfoSection": {
+      "title": "Información personal"
+    },
+    "notRegistered": "No registrado",
+    "emailNote": "El correo no se puede cambiar desde aquí.",
+    "validation": {
+      "nameRequired": "Nombre y apellidos son obligatorios.",
+      "phoneInvalid": "El número telefónico tiene un formato inválido."
+    },
+    "phonePlaceholder": "Ej: 3001234567",
+    "associationPlaceholder": "Ej: INDEPENDIENTE",
+    "saveChanges": "Guardar cambios"
+  },
+  "directorio": {
+    "subtitleGeneral": "Conecta con los recicladores y puntos de acopio de tu localidad.",
+    "subtitleAcopio": "Encuentra los puntos donde puedes entregar material reciclado.",
+    "tabs": {
+      "recyclers": "Recicladores"
+    },
+    "allLocalities": "Todas las localidades",
+    "emptyRecyclers": "No hay recicladores registrados en esta localidad.",
+    "emptyPoints": "No hay puntos de acopio registrados en esta localidad.",
+    "call": "Llamar",
+    "noPhone": "Sin teléfono registrado"
+  },
+  "catalogoEducativo": {
+    "title": "Aprender a reciclar",
+    "subtitle": "Elige un tema para ver sus videos y guías de apoyo.",
+    "loading": "Cargando contenido...",
+    "loadError": "No se pudo cargar el catálogo educativo.",
+    "emptyState": "Todavía no hay contenido educativo publicado.",
+    "tema": "tema",
+    "temas": "temas"
+  },
+  "categoriaEducativa": {
+    "back": "Volver a Aprender a reciclar",
+    "emptyForCategory": "No se encontró contenido para esta categoría.",
+    "viewGuide": "Ver guía de apoyo"
+  },
+  "adminContenidoEducativo": {
+    "title": "Contenido educativo",
+    "subtitle": "Crea, edita y elimina los módulos del catálogo.",
+    "newModule": "Nuevo módulo",
+    "emptyState": "Todavía no hay módulos creados.",
+    "editAria": "Editar {{titulo}}",
+    "deleteAria": "Eliminar {{titulo}}",
+    "modal": {
+      "editTitle": "Editar módulo",
+      "deleteAriaLabel": "Confirmar eliminación"
+    },
+    "validation": {
+      "required": "Categoría, título y contenido son obligatorios."
+    },
+    "deleteError": "No se pudo eliminar. Intenta de nuevo.",
+    "fields": {
+      "category": "Categoría",
+      "categoryPlaceholder": "Ej: Separación en la fuente",
+      "titleField": "Título",
+      "titlePlaceholder": "Ej: Código de colores de bolsas",
+      "content": "Contenido",
+      "videoLink": "Link de video (YouTube)",
+      "guideLink": "Link de guía de apoyo (PDF, Drive, etc.)"
+    },
+    "deleteConfirm": {
+      "title": "¿Eliminar \"{{titulo}}\"?",
+      "warning": "Esta acción no se puede deshacer.",
+      "confirm": "Sí, eliminar"
+    }
+  },
+  "aceptarInvitacion": {
+    "verifying": "Verificando tu invitación...",
+    "invalid": {
+      "title": "Invitación no válida",
+      "message": "Este enlace ya fue utilizado, expiró, o no es correcto. Pide al equipo de VerdeApp que te envíe una nueva invitación.",
+      "backHome": "Volver al inicio"
+    },
+    "success": {
+      "title": "¡Cuenta creada!",
+      "message": "Ya puedes iniciar sesión con tu correo y la contraseña que acabas de definir, para administrar tus conjuntos asignados.",
+      "goToLogin": "Ir a iniciar sesión"
+    },
+    "form": {
+      "title": "Crea tu cuenta de administrador",
+      "invitationFor": "Invitación para:",
+      "willAdminister": "Vas a administrar:",
+      "submit": "Crear mi cuenta"
+    },
+    "errors": {
+      "nameRequired": "El nombre es obligatorio.",
+      "lastNameRequired": "Los apellidos son obligatorios.",
+      "passwordsMismatch": "Las contraseñas no coinciden."
+    },
+    "genericError": "No se pudo crear tu cuenta. El enlace puede haber expirado o ya fue utilizado."
+  },
+  "verifyEmail": {
+    "title": "Verificación de email",
+    "noTokenError": "El enlace de verificación no es válido. No se encontró un token.",
+    "verifying": "Verificando tu email...",
+    "successMessage": "¡Tu email ha sido verificado exitosamente! Ya puedes iniciar sesión.",
+    "errorMessage": "El enlace de verificación no es válido o ya fue utilizado. Por favor, solicita un nuevo enlace.",
+    "goToLogin": "Ir al login"
+  },
+  "invitarAdminConjunto": {
+    "title": "Invitar Administrador de Conjunto",
+    "description": "Solo necesitas su correo. La persona invitada definirá su propia contraseña y completará sus datos al aceptar la invitación.",
+    "emailLabel": "Correo del administrador a invitar *",
+    "conjuntosLabel": "Conjuntos a asignar *",
+    "loadingConjuntos": "Cargando conjuntos...",
+    "selectedCount": "{{count}} conjunto(s) seleccionado(s)",
+    "submit": "Enviar invitación",
+    "validation": {
+      "noConjuntoSelected": "Selecciona al menos un conjunto residencial para asignar."
+    },
+    "successMessage": "Invitación enviada a {{correo}}. Cuando la acepte, quedará asignado a los conjuntos seleccionados.",
+    "errorDefault": "No se pudo enviar la invitación. Verifica los datos e intenta de nuevo."
+  },
+  "desvinculacion": {
+    "solicitarButton": "Solicitar desvinculación",
+    "pendingBadge": "Solicitud pendiente",
+    "motivoLabel": "Motivo (opcional)",
+    "motivoPlaceholder": "Ej: Fin de contrato",
+    "submit": "Enviar solicitud",
+    "sending": "Enviando...",
+    "successMessage": "Solicitud de desvinculación enviada. Un Administrador del Sistema la revisará.",
+    "errorDefault": "No se pudo enviar la solicitud. Intenta de nuevo.",
+    "adminSistema": {
+      "sectionTitle": "Solicitudes de desvinculación",
+      "empty": "No hay solicitudes pendientes.",
+      "requestedBy": "Solicitado por {{nombre}}",
+      "motivoLabel": "Motivo:",
+      "noMotivo": "Sin motivo indicado",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "rejectModal": {
+        "title": "Rechazar solicitud",
+        "motivoLabel": "Motivo del rechazo *",
+        "motivoPlaceholder": "Explica por qué se rechaza",
+        "confirm": "Rechazar solicitud"
+      },
+      "approveSuccess": "Solicitud aprobada.",
+      "rejectSuccess": "Solicitud rechazada.",
+      "errorDefault": "No se pudo procesar la solicitud."
+    },
+    "asignarAdicional": {
+      "sectionTitle": "Asignar conjunto adicional",
+      "searchLabel": "Buscar administrador",
+      "searchPlaceholder": "Nombre, apellidos o correo",
+      "searchButton": "Buscar",
+      "noResults": "No se encontraron administradores.",
+      "currentConjuntos": "Administra:",
+      "noConjuntos": "Ningún conjunto todavía",
+      "selectConjuntoLabel": "Conjunto a asignar",
+      "noConjuntosDisponibles": "No hay conjuntos sin administrador disponibles.",
+      "assignButton": "Asignar",
+      "assigning": "Asignando...",
+      "successMessage": "Conjunto asignado correctamente.",
+      "errorDefault": "No se pudo asignar el conjunto."
+    }
+  },
+  "comunicados": {
+    "editedBadge": "Editado",
+    "viewAttachment": "Ver adjunto",
+    "tipos": {
+      "INFORMATIVO": "Informativo",
+      "URGENTE": "Urgente",
+      "CONVOCATORIA": "Convocatoria",
+      "MANTENIMIENTO": "Mantenimiento",
+      "RECICLAJE": "Reciclaje"
+    },
+    "destinatarios": {
+      "RESIDENTES": "Residentes",
+      "RECICLADORES": "Recicladores",
+      "AMBOS": "Ambos"
+    },
+    "admin": {
+      "title": "Comunicados",
+      "subtitle": "Publica avisos para los residentes y/o recicladores de tus conjuntos.",
+      "newButton": "Nuevo comunicado",
+      "noConjuntos": "No administras ningún conjunto todavía.",
+      "emptyState": "Todavía no has publicado ningún comunicado.",
+      "editAria": "Editar comunicado",
+      "deleteAria": "Eliminar comunicado",
+      "editTitle": "Editar comunicado",
+      "expiraEl": "Expira el {{fecha}}",
+      "destinatariosNoEditable": "El conjunto y los destinatarios no se pueden cambiar después de publicar. Si te equivocaste, elimina este comunicado y crea uno nuevo.",
+      "deleteError": "No se pudo eliminar. Intenta de nuevo.",
+      "validation": {
+        "textoRequerido": "El texto del comunicado es obligatorio.",
+        "conjuntoRequerido": "Selecciona a cuál de tus conjuntos va dirigido.",
+        "fechaEventoRequerida": "Los comunicados de tipo Convocatoria necesitan la fecha del evento."
+      },
+      "fields": {
+        "conjunto": "Conjunto",
+        "destinatarios": "Destinatarios",
+        "tipo": "Tipo de comunicado",
+        "fechaEvento": "Fecha del evento",
+        "texto": "Mensaje",
+        "urlAdjunto": "Link de adjunto (imagen, video, PDF, etc.) — opcional",
+        "urlAdjuntoPlaceholder": "https://...",
+        "fechaExpiracion": "Fecha de expiración (opcional)",
+        "fechaExpiracionHint": "Si la dejas vacía, se usa la sugerida según el tipo de comunicado."
+      },
+      "deleteConfirm": {
+        "ariaLabel": "Confirmar eliminación",
+        "title": "¿Eliminar este comunicado?",
+        "warning": "Esta acción no se puede deshacer.",
+        "confirm": "Sí, eliminar"
+      }
+    },
+    "feed": {
+      "title": "Comunicados",
+      "subtitle": "Avisos activos de tu conjunto.",
+      "empty": "No hay comunicados activos por ahora."
+    }
+  },
+  "novedades": {
+    "archivedBadge": "Archivada",
+    "alcances": {
+      "TODOS": "Todos",
+      "RESIDENTES": "Residentes",
+      "RECICLADORES": "Recicladores",
+      "ADMIN_CONJUNTO": "Admins. de Conjunto"
+    },
+    "admin": {
+      "title": "Novedades",
+      "subtitle": "Publica avisos generales para toda la plataforma VerdeApp.",
+      "newButton": "Nueva novedad",
+      "emptyState": "Todavía no has publicado ninguna novedad.",
+      "editAria": "Editar novedad",
+      "archiveAria": "Archivar novedad",
+      "editTitle": "Editar novedad",
+      "expiraEl": "Expira el {{fecha}}",
+      "archiveError": "No se pudo archivar. Intenta de nuevo.",
+      "alcanceNoEditable": "El alcance no se puede cambiar después de publicar. Si te equivocaste, archívala y crea una nueva.",
+      "validation": {
+        "textoRequerido": "El texto de la novedad es obligatorio."
+      },
+      "fields": {
+        "alcance": "Alcance",
+        "texto": "Mensaje",
+        "urlAdjunto": "Link de adjunto (imagen, PDF, link externo, etc.) — opcional",
+        "fechaExpiracion": "Fecha de expiración (opcional)",
+        "fechaExpiracionHint": "Si la dejas vacía, se usa una fecha sugerida por el sistema."
+      }
+    },
+    "feed": {
+      "title": "Novedades",
+      "subtitle": "Avisos generales de la plataforma VerdeApp.",
+      "empty": "No hay novedades activas por ahora."
     }
   }
 }

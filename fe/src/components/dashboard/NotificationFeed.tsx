@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * Este bloque (el título, el contador de no leídas, la lista, el botón de
  * "ver más", marcar leídas / limpiar leídas) estaba copiado casi igual en
@@ -10,14 +11,18 @@
  */
 
 import { useState } from "react";
-import { AlertTriangle, Bell, Clock, PackageCheck, Truck } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { AlertTriangle, Bell, Building2, Clock, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import i18n from "@/i18n";
 
 export interface NotificacionItem {
   id: number;
   tipo: string;
   mensaje: string;
-  nombre_conjunto: string;
+  // ¿Qué? Puede ser null — las novedades de plataforma (RQF-015) no
+  //       pertenecen a ningún conjunto residencial.
+  nombre_conjunto: string | null;
   leida: boolean;
   created_at: string;
 }
@@ -26,16 +31,30 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   LLEGADA_RECICLADOR: { Icon: Truck, color: "text-teal-700 dark:text-teal-400" },
   SHUT_LLENO: { Icon: AlertTriangle, color: "text-amber-700 dark:text-amber-500" },
   SHUT_LIBRE: { Icon: PackageCheck, color: "text-green-700 dark:text-green-500" },
+  // RQF-016 (desvinculación y reasignación de conjuntos)
+  DESVINCULACION_APROBADA: { Icon: Unlink, color: "text-gray-600 dark:text-gray-400" },
+  DESVINCULACION_RECHAZADA: { Icon: XCircle, color: "text-red-600 dark:text-red-400" },
+  CONJUNTO_ASIGNADO: { Icon: Building2, color: "text-green-700 dark:text-green-500" },
+  // RQF-014 (comunicados del conjunto)
+  COMUNICADO_NUEVO: { Icon: Megaphone, color: "text-purple-700 dark:text-purple-400" },
+  COMUNICADO_ACTUALIZADO: { Icon: Megaphone, color: "text-purple-500 dark:text-purple-300" },
+  // RQF-015 (novedades generales de la plataforma)
+  NOVEDAD_NUEVA: { Icon: Newspaper, color: "text-indigo-700 dark:text-indigo-400" },
+  NOVEDAD_ACTUALIZADA: { Icon: Newspaper, color: "text-indigo-500 dark:text-indigo-300" },
 };
 
+// ¿Qué? Se usa i18n.t() directamente (no el hook useTranslation) porque esta
+//       es una función común, no un componente — pero como siempre se llama
+//       desde el render de un componente que sí usa el hook, el texto se
+//       actualiza igual al cambiar de idioma.
 export function tiempoRelativo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "hace un momento";
-  if (mins < 60) return `hace ${mins} min`;
+  if (mins < 1) return i18n.t("notificationFeed.time.justNow");
+  if (mins < 60) return i18n.t("notificationFeed.time.minutesAgo", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `hace ${hrs}h`;
-  return `hace ${Math.floor(hrs / 24)}d`;
+  if (hrs < 24) return i18n.t("notificationFeed.time.hoursAgo", { count: hrs });
+  return i18n.t("notificationFeed.time.daysAgo", { count: Math.floor(hrs / 24) });
 }
 
 interface NotificationFeedProps {
@@ -61,6 +80,7 @@ export function NotificationFeed({
   onMarkAllRead,
   onClearRead,
 }: NotificationFeedProps) {
+  const { t } = useTranslation();
   const [expandido, setExpandido] = useState(false);
   const noLeidas = notifications.filter((n) => !n.leida).length;
 
@@ -79,12 +99,12 @@ export function NotificationFeed({
         <div className="flex items-center gap-3">
           {noLeidas > 0 && (
             <button onClick={onMarkAllRead} className="text-xs font-medium text-green-600 hover:text-green-500">
-              Marcar leídas
+              {t("notificationFeed.markAllRead")}
             </button>
           )}
           {notifications.some((n) => n.leida) && (
             <button onClick={onClearRead} className="text-xs font-medium text-gray-400 hover:text-red-400">
-              Limpiar leídas
+              {t("notificationFeed.clearRead")}
             </button>
           )}
         </div>
@@ -111,7 +131,7 @@ export function NotificationFeed({
                       {n.mensaje}
                     </p>
                     <p className="mt-0.5 text-xs text-gray-400">
-                      {n.nombre_conjunto} · {tiempoRelativo(n.created_at)}
+                      {n.nombre_conjunto ?? t("notificationFeed.platformLabel")} · {tiempoRelativo(n.created_at)}
                     </p>
                   </div>
                   {!n.leida && <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${accentBg}`} />}
@@ -124,7 +144,7 @@ export function NotificationFeed({
               onClick={() => setExpandido((v) => !v)}
               className="w-full py-2.5 text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 border-t border-gray-50 dark:border-gray-800 transition-colors"
             >
-              {expandido ? "Ver menos" : `Ver ${notifications.length - 5} más`}
+              {expandido ? t("notificationFeed.showLess") : t("notificationFeed.showMore", { count: notifications.length - 5 })}
             </button>
           )}
         </>

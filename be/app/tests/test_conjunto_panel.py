@@ -28,6 +28,22 @@ class TestMisConjuntos:
         ids = [c["id_conjunto_residencial"] for c in response.json()]
         assert ids == [conjunto_verificado.id_conjunto_residencial]
 
+    def test_marca_tiene_solicitud_pendiente(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """RQF-016: el flag debe reflejar si ya hay una solicitud de desvinculación pendiente para ese conjunto."""
+        antes = client.get("/api/v1/conjunto-panel/mis-conjuntos", headers=admin_conjunto_auth_headers)
+        assert antes.json()[0]["tiene_solicitud_pendiente"] is False
+
+        client.post(
+            f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}/solicitar-desvinculacion",
+            headers=admin_conjunto_auth_headers,
+            json={},
+        )
+
+        despues = client.get("/api/v1/conjunto-panel/mis-conjuntos", headers=admin_conjunto_auth_headers)
+        assert despues.json()[0]["tiene_solicitud_pendiente"] is True
+
 
 class TestEditarConjunto:
     def test_puede_editar_un_conjunto_propio(

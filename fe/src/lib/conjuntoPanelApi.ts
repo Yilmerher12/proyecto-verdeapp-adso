@@ -9,6 +9,7 @@ export interface ConjuntoAdministrado {
   nit: string | null;
   direccion: string;
   nombre_localidad: string;
+  tiene_solicitud_pendiente: boolean;
 }
 
 export async function obtenerMisConjuntos(token: string): Promise<ConjuntoAdministrado[]> {
@@ -26,6 +27,21 @@ export async function editarMiConjunto(
   const { data } = await axios.patch(
     `${API_BASE}/mis-conjuntos/${idConjunto}`,
     datos,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return data;
+}
+
+// ¿Qué? RQF-016 (HU-022): pide dejar de administrar un conjunto que hoy administro.
+// ¿Para qué? El motivo es opcional — queda pendiente hasta que el Admin Sistema la resuelva.
+export async function solicitarDesvinculacion(
+  idConjunto: number,
+  motivo: string | undefined,
+  token: string
+) {
+  const { data } = await axios.post(
+    `${API_BASE}/mis-conjuntos/${idConjunto}/solicitar-desvinculacion`,
+    { motivo: motivo || null },
     { headers: { Authorization: `Bearer ${token}` } }
   );
   return data;

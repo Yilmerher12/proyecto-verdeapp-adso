@@ -3,13 +3,17 @@ Módulo: routers/geography.py
 Descripción: Endpoints optimizados para el llenado dinámico de formularios geográficos.
 """
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import List
-from app.dependencies import get_db
+from app.dependencies import get_current_user, get_db
+from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.localidad import Localidad
 from app.models.conjunto_residencial import ConjuntoResidencial
+from app.models.rol import RolId
+from app.models.usuario import Usuario
+from app.schemas.desvinculacion import ConjuntoSinAdministradorResponse
 from app.schemas.geography import LocalidadResponse, ConjuntoResponse, UnidadResponse
 
 router = APIRouter(
@@ -41,6 +45,57 @@ def listar_todos_los_conjuntos_verificados(db: Session = Depends(get_db)):
         )
         .join(Localidad, ConjuntoResidencial.id_localidad == Localidad.id_localidad)
         .where(ConjuntoResidencial.verificado.is_(True))
+        .order_by(Localidad.nombre_localidad, ConjuntoResidencial.nombre_conjunto)
+    )
+    resultados = db.execute(stmt).all()
+
+    return [
+        {
+            "id_conjunto_residencial": fila.id_conjunto_residencial,
+            "nombre_conjunto": fila.nombre_conjunto,
+            "nombre_localidad": fila.nombre_localidad,
+        }
+        for fila in resultados
+    ]
+
+
+@router.get(
+    "/conjuntos/sin-administrador",
+    response_model=List[ConjuntoSinAdministradorResponse],
+    summary="Conjuntos verificados que hoy no tienen ningún administrador activo",
+)
+def listar_conjuntos_sin_administrador(
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    ¿Qué? RQF-016 / HU-024 (CA-024.2): de uso exclusivo del Administrador
+          del Sistema, para elegir a qué conjunto asignar un Administrador
+          de Conjunto adicional.
+    ¿Para qué? Solo debe poder elegir conjuntos que no tengan ya un
+              administrador activo (RN-003).
+    """
+    if current_user.id_rol != RolId.ADMIN_SISTEMA:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo un Administrador del Sistema puede ver esta lista.",
+        )
+
+    ids_con_administrador_activo = select(AdministradorConjuntoAsignacion.id_conjunto_residencial).where(
+        AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None)
+    )
+
+    stmt = (
+        select(
+            ConjuntoResidencial.id_conjunto_residencial,
+            ConjuntoResidencial.nombre_conjunto,
+            Localidad.nombre_localidad,
+        )
+        .join(Localidad, ConjuntoResidencial.id_localidad == Localidad.id_localidad)
+        .where(
+            ConjuntoResidencial.verificado.is_(True),
+            ConjuntoResidencial.id_conjunto_residencial.not_in(ids_con_administrador_activo),
+        )
         .order_by(Localidad.nombre_localidad, ConjuntoResidencial.nombre_conjunto)
     )
     resultados = db.execute(stmt).all()

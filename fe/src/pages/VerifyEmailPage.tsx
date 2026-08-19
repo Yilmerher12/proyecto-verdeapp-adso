@@ -8,19 +8,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { verifyEmail } from "@/api/auth";
 
 type VerifyStatus = "loading" | "success" | "error";
 
 export function VerifyEmailPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const tokenFromUrl = searchParams.get("token");
 
   // 🛠️ OPTIMIZACIÓN: Evaluamos el token en el nacimiento del estado para evitar renders en cascada
   const [status, setStatus] = useState<VerifyStatus>(tokenFromUrl ? "loading" : "error");
-  const [message, setMessage] = useState<string>(
-    tokenFromUrl ? "" : "El enlace de verificación no es válido. No se encontró un token."
-  );
 
   const hasCalled = useRef(false);
 
@@ -36,32 +35,38 @@ export function VerifyEmailPage() {
         // Ejecución asíncrona contra el backend (Llamada limpia)
         await verifyEmail(tokenFromUrl as string);
         setStatus("success");
-        setMessage("¡Tu email ha sido verificado exitosamente! Ya puedes iniciar sesión.");
       } catch (err) {
         console.error("Fallo en verificación:", err);
         setStatus("error");
-        setMessage(
-          "El enlace de verificación no es válido o ya fue utilizado. Por favor, solicita un nuevo enlace."
-        );
       }
     }
 
     verify();
   }, [tokenFromUrl]);
 
+  // ¿Qué? El mensaje se calcula en cada render (no se guarda en estado) para
+  //       que cambie de idioma en vivo si el usuario cambia de idioma
+  //       mientras está viendo esta página.
+  const message =
+    status === "success"
+      ? t("verifyEmail.successMessage")
+      : !tokenFromUrl
+        ? t("verifyEmail.noTokenError")
+        : t("verifyEmail.errorMessage");
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Verificación de email
+            {t("verifyEmail.title")}
           </h1>
 
           {/* ──── Estado: cargando ──── */}
           {status === "loading" && (
             <div className="mt-6">
               <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-accent-600 border-t-transparent" />
-              <p className="mt-4 text-gray-600 dark:text-gray-400">Verificando tu email...</p>
+              <p className="mt-4 text-gray-600 dark:text-gray-400">{t("verifyEmail.verifying")}</p>
             </div>
           )}
 
@@ -85,7 +90,7 @@ export function VerifyEmailPage() {
                   to="/login"
                   className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600 rounded-lg transition-colors"
                 >
-                  Iniciar sesión
+                  {t("landing.nav.login")}
                 </Link>
               </div>
             </div>
@@ -111,13 +116,13 @@ export function VerifyEmailPage() {
                   to="/login"
                   className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
-                  Ir al login
+                  {t("verifyEmail.goToLogin")}
                 </Link>
                 <Link
                   to="/register"
                   className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600 rounded-lg transition-colors"
                 >
-                  Crear cuenta
+                  {t("auth.register.submit")}
                 </Link>
               </div>
             </div>

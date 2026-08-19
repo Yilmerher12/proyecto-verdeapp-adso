@@ -12,7 +12,10 @@ class NotificacionResponse(BaseModel):
     id: int
     tipo: str
     mensaje: str
-    nombre_conjunto: str
+    # ¿Qué? Opcional porque RQF-015 (novedades del Admin del Sistema) son
+    #       de toda la plataforma, no de un conjunto — esas notificaciones
+    #       no tienen id_conjunto_residencial.
+    nombre_conjunto: Optional[str] = None
     leida: bool
     created_at: datetime
 
