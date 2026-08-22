@@ -85,7 +85,7 @@ export function NotificationFeed({
   const noLeidas = notifications.filter((n) => !n.leida).length;
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+    <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-green-600" />
@@ -122,7 +122,7 @@ export function NotificationFeed({
                   key={n.id}
                   onClick={() => !n.leida && onMarkRead(n.id)}
                   className={`flex cursor-pointer items-start gap-3 px-5 py-3.5 transition-colors ${
-                    !n.leida ? accentHighlight : "hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                    !n.leida ? accentHighlight : "hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
                   }`}
                 >
                   <meta.Icon className={`mt-0.5 h-4 w-4 shrink-0 ${meta.color}`} />
@@ -142,7 +142,7 @@ export function NotificationFeed({
           {notifications.length > 5 && (
             <button
               onClick={() => setExpandido((v) => !v)}
-              className="w-full py-2.5 text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 border-t border-gray-50 dark:border-gray-800 transition-colors"
+              className="w-full py-2.5 text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 border-t border-gray-50 dark:border-[#2a4d34] transition-colors"
             >
               {expandido ? t("notificationFeed.showLess") : t("notificationFeed.showMore", { count: notifications.length - 5 })}
             </button>

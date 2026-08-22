@@ -59,7 +59,7 @@ export function AdminDashboard() {
       {/* Header — el ícono grande de fondo (Shield) es solo un detalle visual
           tenue para que este panel se sienta del Admin del Sistema, sin
           estorbar la lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-slate-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
@@ -78,7 +78,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Invitar Administradores de Conjunto */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <UserPlus className="h-4 w-4 text-green-600" />
@@ -108,20 +108,20 @@ export function AdminDashboard() {
       )}
 
       {/* Tabla: Residentes (Vista SQL) */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-[#2a4d34]">
           <Database className="h-4 w-4 text-green-600" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">
             {t("dashboards.admin.residentsTable.title")}
           </h3>
-          <span className="ml-auto rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+          <span className="ml-auto rounded-full bg-gray-100 dark:bg-[#0d2116] px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
             {t("dashboards.admin.residentsTable.badge")}
           </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
-              <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40">
+              <tr className="border-b border-gray-100 dark:border-[#2a4d34] bg-gray-50 dark:bg-[#0d2116]/60">
                 <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.email")}</th>
                 <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.name")}</th>
                 <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.conjunto")}</th>
@@ -143,7 +143,7 @@ export function AdminDashboard() {
                 </tr>
               ) : (
                 residentesData.map((r, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-[#0d2116]/40 transition-colors">
                     <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
                     <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">{r.Nombre} {r.Apellido}</td>
                     <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{r.Conjunto}</td>
@@ -159,20 +159,20 @@ export function AdminDashboard() {
       </div>
 
       {/* Tabla: Recicladores (Procedimiento Almacenado) */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-[#2a4d34]">
           <Users className="h-4 w-4 text-green-600" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">
             {t("dashboards.admin.recyclersTable.title")}
           </h3>
-          <span className="ml-auto rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+          <span className="ml-auto rounded-full bg-gray-100 dark:bg-[#0d2116] px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
             {t("dashboards.admin.recyclersTable.badge")}
           </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
-              <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40">
+              <tr className="border-b border-gray-100 dark:border-[#2a4d34] bg-gray-50 dark:bg-[#0d2116]/60">
                 <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.email")}</th>
                 <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.fullName")}</th>
                 <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.association")}</th>
@@ -193,7 +193,7 @@ export function AdminDashboard() {
                 </tr>
               ) : (
                 recicladoresData.map((r, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-[#0d2116]/40 transition-colors">
                     <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
                     <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">{r.Nombre_Completo}</td>
                     <td className="px-5 py-3">

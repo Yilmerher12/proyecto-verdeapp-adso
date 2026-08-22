@@ -43,7 +43,7 @@ export function CategoriaEducativaPage() {
         {t("categoriaEducativa.back")}
       </button>
 
-      <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="flex items-center gap-3 bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
           <Icono className="h-5.5 w-5.5" />
         </span>
@@ -60,7 +60,7 @@ export function CategoriaEducativaPage() {
         {temas.map((item) => (
           <div
             key={item.id_contenido}
-            className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-gray-800 dark:bg-gray-900"
+            className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#2a4d34] dark:bg-[#132a1c]"
           >
             <h2 className="text-base font-bold text-gray-900 dark:text-white">{item.titulo_tema}</h2>
             <p className="mt-2 whitespace-pre-line text-sm text-gray-600 dark:text-gray-300">
@@ -74,7 +74,7 @@ export function CategoriaEducativaPage() {
                 href={item.url_guia}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-200 dark:hover:bg-[#2a4d34]"
               >
                 <FileText className="h-4 w-4 shrink-0" />
                 {t("categoriaEducativa.viewGuide")}

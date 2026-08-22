@@ -40,7 +40,7 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
 
   const S = <strong className="text-gray-700 dark:text-gray-300" />;
   const C = (
-    <code className="rounded bg-gray-100 dark:bg-gray-800 px-1 text-xs text-accent-600 dark:text-accent-300" />
+    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1 text-xs text-accent-600 dark:text-accent-300" />
   );
   const privacyLink = (
     <a
@@ -80,7 +80,7 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
         <p>{t("legal.cookies.s2.p1")}</p>
 
         <div className="mt-4 space-y-4">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900 p-4">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-[#2a4d34] dark:bg-[#132a1c] p-4">
             <h3 className="mb-1 text-sm font-semibold text-accent-400">
               {t("legal.cookies.s2.authCategory.title")}
             </h3>
@@ -95,7 +95,7 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
             </p>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900 p-4">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-[#2a4d34] dark:bg-[#132a1c] p-4">
             <h3 className="mb-1 text-sm font-semibold text-accent-400">
               {t("legal.cookies.s2.prefCategory.title")}
             </h3>
@@ -109,9 +109,9 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
           <Trans i18nKey="legal.cookies.s3.intro" components={{ strong: S }} />
         </p>
 
-        <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+        <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a4d34]">
           <table className="w-full text-sm">
-            <thead className="bg-gray-100 dark:bg-gray-900">
+            <thead className="bg-gray-100 dark:bg-[#132a1c]">
               <tr>
                 {(["name", "purpose", "duration", "type"] as const).map((header) => (
                   <th
@@ -128,10 +128,10 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
               {SERVICE_COOKIES.map((cookie) => (
                 <tr
                   key={cookie.name}
-                  className="bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  className="bg-white dark:bg-[#03130b] hover:bg-gray-50 dark:hover:bg-[#132a1c] transition-colors"
                 >
                   <td className="px-4 py-3">
-                    <code className="rounded bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-xs text-accent-600 dark:text-accent-300">
+                    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1.5 py-0.5 text-xs text-accent-600 dark:text-accent-300">
                       {cookie.name}
                     </code>
                   </td>

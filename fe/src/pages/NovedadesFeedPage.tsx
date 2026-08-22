@@ -28,7 +28,7 @@ export function NovedadesFeedPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pt-6">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("novedades.feed.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("novedades.feed.subtitle")}</p>
       </div>
@@ -36,7 +36,7 @@ export function NovedadesFeedPage() {
       {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
 
       {!cargando && novedades.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-gray-800">
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
           <p className="text-sm text-gray-400">{t("novedades.feed.empty")}</p>
         </div>
@@ -46,7 +46,7 @@ export function NovedadesFeedPage() {
         {novedades.map((item) => (
           <article
             key={item.id_novedad}
-            className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+            className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-[#2a4d34] dark:bg-[#132a1c]"
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">

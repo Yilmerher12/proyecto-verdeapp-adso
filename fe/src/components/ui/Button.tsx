@@ -46,7 +46,7 @@ export function Button({
     primary:
       "bg-accent-600 text-white hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600 focus:ring-accent-500/20",
     secondary:
-      "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 focus:ring-gray-500/20",
+      "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-[#0d2116] dark:text-gray-300 dark:border-[#2a4d34] dark:hover:bg-[#2a4d34] focus:ring-gray-500/20",
     danger:
       "bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 focus:ring-red-500/20",
   };

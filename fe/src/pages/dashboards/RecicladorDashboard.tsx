@@ -175,7 +175,7 @@ export function RecicladorDashboard() {
       {/* Header — el símbolo de reciclaje de fondo es solo un detalle tenue,
           para que este panel se sienta del Reciclador, sin estorbar la
           lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-teal-900/30">
@@ -203,7 +203,7 @@ export function RecicladorDashboard() {
       )}
 
       {/* Acciones de notificación */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <p className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</p>
         <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
           {t("dashboards.reciclador.sendSection.subtitle")}
@@ -230,7 +230,7 @@ export function RecicladorDashboard() {
 
       {/* Invitaciones pendientes */}
       {!cargando && invitaciones.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
+        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <Mail className="h-4 w-4 text-amber-600" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
@@ -274,7 +274,7 @@ export function RecicladorDashboard() {
       )}
 
       {/* Mis conjuntos autorizados */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
           <Building2 className="h-4 w-4 text-green-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
@@ -290,7 +290,7 @@ export function RecicladorDashboard() {
             {conjuntosAutorizados.map((c) => (
               <div
                 key={c.id_conjunto_residencial}
-                className="rounded-xl bg-gray-50 p-4 dark:bg-gray-800/40"
+                className="rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/60"
               >
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{c.nombre_conjunto}</p>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{c.direccion}</p>
@@ -303,7 +303,7 @@ export function RecicladorDashboard() {
 
       {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) */}
       {cargando ? (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5">
+        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
           <p className="text-sm text-gray-400">{t("common.loading")}</p>
         </div>
       ) : (
@@ -325,14 +325,14 @@ export function RecicladorDashboard() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
           onClick={(e) => e.target === e.currentTarget && setModalTipo(null)}
         >
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-[#132a1c]">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">
                 {t("dashboards.reciclador.modal.title")}
               </h3>
               <button
                 onClick={() => setModalTipo(null)}
-                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-[#2a4d34]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -350,7 +350,7 @@ export function RecicladorDashboard() {
                   className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                     conjuntoSeleccionado === c.id_conjunto_residencial
                       ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                      : "border-gray-200 hover:border-green-300 dark:border-gray-700 dark:hover:border-green-700"
+                      : "border-gray-200 hover:border-green-300 dark:border-[#2a4d34] dark:hover:border-green-700"
                   }`}
                 >
                   <p className="font-semibold text-gray-900 dark:text-white">{c.nombre_conjunto}</p>
@@ -362,7 +362,7 @@ export function RecicladorDashboard() {
             <div className="flex gap-2">
               <button
                 onClick={() => setModalTipo(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
               >
                 {t("common.cancel")}
               </button>

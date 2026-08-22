@@ -99,7 +99,7 @@ export function ContactoModalPage() {
                   onChange={handleChange}
                   placeholder="Escribe tu mensaje aquí..."
                   required
-                  className="block w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-green-400 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-500/10 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500 dark:hover:border-green-500"
+                  className="block w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-green-400 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-500/10 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white dark:placeholder:text-gray-500 dark:hover:border-green-500"
                 />
               </div>
 

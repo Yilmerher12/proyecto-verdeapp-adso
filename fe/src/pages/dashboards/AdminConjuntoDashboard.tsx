@@ -94,7 +94,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
   };
 
   return (
-    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2a4d34]">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-green-600" />
@@ -110,7 +110,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
       </div>
 
       {mostrarFormulario && (
-        <form onSubmit={handleInvitar} className="flex flex-col sm:flex-row gap-2 mb-4 bg-gray-50 dark:bg-gray-800/40 p-3 rounded-xl">
+        <form onSubmit={handleInvitar} className="flex flex-col sm:flex-row gap-2 mb-4 bg-gray-50 dark:bg-[#0d2116]/60 p-3 rounded-xl">
           <div className="flex-1 relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -118,7 +118,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
               placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
               value={correoNuevo}
               onChange={(e) => setCorreoNuevo(e.target.value)}
-              className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
             />
           </div>
           <button
@@ -147,7 +147,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
           {invitaciones.map((inv) => (
             <div
               key={inv.id}
-              className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800/40 rounded-lg px-3 py-2"
+              className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-[#0d2116]/60 rounded-lg px-3 py-2"
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
@@ -207,7 +207,7 @@ function SeccionDesvinculacion({
 
   if (tieneSolicitudPendiente) {
     return (
-      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-[#2a4d34]">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 px-2.5 py-1 rounded-full">
           <Clock className="w-3.5 h-3.5" /> {t("desvinculacion.pendingBadge")}
         </span>
@@ -216,7 +216,7 @@ function SeccionDesvinculacion({
   }
 
   return (
-    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-[#2a4d34]">
       {!mostrarFormulario ? (
         <button
           type="button"
@@ -226,7 +226,7 @@ function SeccionDesvinculacion({
           {t("desvinculacion.solicitarButton")}
         </button>
       ) : (
-        <div className="bg-gray-50 dark:bg-gray-800/40 p-3 rounded-xl space-y-2">
+        <div className="bg-gray-50 dark:bg-[#0d2116]/60 p-3 rounded-xl space-y-2">
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("desvinculacion.motivoLabel")}
           </label>
@@ -235,7 +235,7 @@ function SeccionDesvinculacion({
             onChange={(e) => setMotivo(e.target.value)}
             placeholder={t("desvinculacion.motivoPlaceholder")}
             rows={2}
-            className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
           />
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex gap-2">
@@ -253,7 +253,7 @@ function SeccionDesvinculacion({
                 setMostrarFormulario(false);
                 setError(null);
               }}
-              className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+              className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-[#1f4029] dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
             >
               {t("common.cancel")}
             </button>
@@ -372,7 +372,7 @@ export function AdminConjuntoDashboard() {
       {/* TARJETA DE PERFIL — el maletín de fondo es solo un detalle tenue,
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-amber-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
@@ -396,8 +396,8 @@ export function AdminConjuntoDashboard() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-gray-800 pb-2">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-[#2a4d34] pb-2">
           <Building2 className="text-green-600 w-5 h-5" />
           <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
         </div>
@@ -413,7 +413,7 @@ export function AdminConjuntoDashboard() {
             {conjuntos.map((c) => (
               <div
                 key={c.id_conjunto_residencial}
-                className="border border-gray-200 dark:border-gray-800 rounded-xl p-4"
+                className="border border-gray-200 dark:border-[#2a4d34] rounded-xl p-4"
               >
                 {editandoId === c.id_conjunto_residencial ? (
                   <div className="space-y-3">
@@ -425,7 +425,7 @@ export function AdminConjuntoDashboard() {
                         onChange={(e) =>
                           setFormEdicion((p) => ({ ...p, nombre_conjunto: e.target.value }))
                         }
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                       />
                     </div>
                     <div>
@@ -434,7 +434,7 @@ export function AdminConjuntoDashboard() {
                         type="text"
                         value={formEdicion.nit}
                         onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                       />
                     </div>
                     <div>
@@ -445,7 +445,7 @@ export function AdminConjuntoDashboard() {
                         onChange={(e) =>
                           setFormEdicion((p) => ({ ...p, direccion: e.target.value }))
                         }
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                       />
                     </div>
                     <div className="flex gap-2 pt-2">
@@ -460,7 +460,7 @@ export function AdminConjuntoDashboard() {
                       <button
                         type="button"
                         onClick={cancelarEdicion}
-                        className="flex items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        className="flex items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-[#1f4029] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
                       >
                         <X className="w-4 h-4" /> {t("common.cancel")}
                       </button>
@@ -515,7 +515,7 @@ export function AdminConjuntoDashboard() {
 
       {/* Feed de notificaciones */}
       {cargandoNotifs ? (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5">
+        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
           <p className="text-sm text-gray-400">{t("common.loading")}</p>
         </div>
       ) : (
