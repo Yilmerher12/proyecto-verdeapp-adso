@@ -29,18 +29,20 @@ El proyecto utiliza una estructura de arquitectura limpia y desacoplada, facilit
 
 ## 🛠️ Stack Tecnológico y Control de Versiones
 
-| Capa / Componente  | Elemento Tecnológico    | Versión de Referencia | Impacto Operativo                                                                 |
-| :----------------- | :---------------------- | :-------------------- | :-------------------------------------------------------------------------------- |
-| Backend Core       | Python & FastAPI        | 3.12-slim / 0.110+    | Ejecución asíncrona de alto rendimiento para endpoints corporativos.              |
-| Persistencia / ORM | PostgreSQL & SQLAlchemy | 17-alpine / 2.0+      | Motor relacional robusto con consultas tipadas y transacciones atómicas.          |
-| Control de BD      | Alembic                  | —                    | El esquema (tablas y cambios futuros) se crea y versiona con migraciones de Alembic al arrancar el backend; los datos de prueba se siembran aparte con `be/app/seed.py`. |
-| Seguridad          | JWT & bcrypt            | 0.2.0 / 4.1+          | Cifrado de contraseñas en Hash y tokens de sesión con claims de roles inyectados. |
-| Frontend Core      | React & TypeScript      | 18.3 / 5.4+           | Interfaz reactiva basada en componentes modulares y tipado seguro.                |
-| Estilos UI         | TailwindCSS             | 4.0-beta+             | Paradigma Utility-First para diseño adaptivo y consistente con Figma.             |
-| Gestor de Paquetes | pnpm (Corepack)         | 11.0.9                | Resolución eficiente de dependencias mediante almacenamiento enlazado.            |
-| Infraestructura    | Docker & Docker Compose | 24+ / 2.20+           | Contenedores herméticos que aseguran el funcionamiento idéntico en cualquier PC.  |
-| Servidor Web FE    | Nginx                   | 1.27-alpine           | Servidor de alto rendimiento para la distribución de los estáticos del Frontend.  |
-| Servidor SMTP Dev  | Mailpit                 | 1.15+                 | Captura local de correos (activación de cuentas) en el puerto 8025.               |
+| Capa / Componente             | Elemento Tecnológico    | Versión de Referencia   | Impacto Operativo                                                                 |
+| :----------------------------- | :---------------------- | :----------------------- | :-------------------------------------------------------------------------------- |
+| Backend Core                  | Python & FastAPI        | 3.12-slim / 0.135+      | Ejecución asíncrona de alto rendimiento para endpoints corporativos.              |
+| Gestor de Paquetes (Backend)  | uv                      | —                        | Resuelve e instala las dependencias exactas de `pyproject.toml`/`uv.lock` — reemplazó a pip + requirements.txt por resolución más rápida y reproducible. |
+| Persistencia / ORM            | PostgreSQL & SQLAlchemy | 17-alpine / 2.0+         | Motor relacional robusto con consultas tipadas y transacciones atómicas.          |
+| Control de BD                 | Alembic                 | 1.18+                    | El esquema (tablas y cambios futuros) se crea y versiona con migraciones de Alembic al arrancar el backend; los datos de prueba se siembran aparte con `be/app/seed.py`. |
+| Seguridad                     | python-jose & bcrypt    | 3.5+ / 4.0+              | Cifrado de contraseñas en hash y tokens de sesión (JWT) con claims de roles inyectados. |
+| Frontend Core                 | React & TypeScript      | 19.2 / 5.9+              | Interfaz reactiva basada en componentes modulares y tipado seguro.                |
+| Empaquetador Frontend         | Vite                    | 7.3+                     | Servidor de desarrollo con recarga instantánea (HMR) y build de producción optimizado. |
+| Estilos UI                    | TailwindCSS             | 4.1+                     | Paradigma Utility-First para diseño adaptivo y consistente con Figma.             |
+| Gestor de Paquetes (Frontend) | pnpm (Corepack)         | 11.0.9                   | Resolución eficiente de dependencias mediante almacenamiento enlazado.            |
+| Infraestructura               | Docker & Docker Compose | 24+ / 2.20+              | Contenedores herméticos que aseguran el funcionamiento idéntico en cualquier PC.  |
+| Servidor Web FE               | Nginx                   | 1.27-alpine              | Servidor de alto rendimiento para la distribución de los estáticos del Frontend.  |
+| Servidor SMTP Dev             | Mailpit                 | latest (sin versión fija) | Captura local de correos (verificación, recuperación, invitaciones) en el puerto 8025. |
 
 ---
 
