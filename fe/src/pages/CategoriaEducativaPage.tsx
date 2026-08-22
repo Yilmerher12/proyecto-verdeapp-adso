@@ -43,7 +43,7 @@ export function CategoriaEducativaPage() {
         {t("categoriaEducativa.back")}
       </button>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
           <Icono className="h-5.5 w-5.5" />
         </span>

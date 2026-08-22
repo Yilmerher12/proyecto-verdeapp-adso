@@ -22,6 +22,7 @@ import { Modal } from "@/components/ui/Modal";
 import { RoleId } from "@/types/auth";
 import { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
+import { onNotificacionesActualizadas } from "@/lib/notificationEvents";
 
 interface AppShellProps {
   children: ReactNode;
@@ -73,7 +74,15 @@ export function AppShell({ children }: AppShellProps) {
     };
     fetchCount();
     const interval = setInterval(fetchCount, 20000);
-    return () => clearInterval(interval);
+    // ¿Qué? Además del polling, escucha el evento que disparan los
+    //       dashboards al marcar notificaciones como leídas.
+    // ¿Para qué? Para que el número baje al instante en vez de esperar
+    //           hasta 20s al siguiente ciclo de polling.
+    const unsubscribe = onNotificacionesActualizadas(fetchCount);
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, [accessToken]);
 
   const userData = user as any;
@@ -176,7 +185,7 @@ export function AppShell({ children }: AppShellProps) {
         {/* Identidad de marca — logo a color en modo claro, logo blanco en modo
             oscuro (sobre el verde oscuro del sidebar el blanco sí se lee). */}
         <div className={`flex min-w-0 shrink-0 items-center border-b border-gray-100 dark:border-white/10 h-16 ${collapsed ? "justify-center px-3" : "px-5"}`}>
-          <img src="/logos/logo-color.png" alt="VerdeApp" className={`${collapsed ? "h-7" : "h-8"} w-auto object-contain dark:hidden`} />
+          <img src="/logos/logo-color-padded.png" alt="VerdeApp" className={`${collapsed ? "h-7" : "h-8"} w-auto object-contain dark:hidden`} />
           <img src="/logos/logo-white.png" alt="VerdeApp" className={`${collapsed ? "h-7" : "h-8"} hidden w-auto object-contain dark:block`} />
         </div>
 

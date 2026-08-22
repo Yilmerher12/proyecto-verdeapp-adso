@@ -18,6 +18,7 @@ import {
   type InvitacionEnviada,
 } from "@/lib/recicladorConjuntoApi";
 import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -306,11 +307,13 @@ export function AdminConjuntoDashboard() {
   const marcarLeida = async (id: number) => {
     await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers: authHeaders });
     setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+    notificarNotificacionesActualizadas();
   };
 
   const marcarTodasLeidas = async () => {
     await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers: authHeaders });
     setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+    notificarNotificacionesActualizadas();
   };
 
   const limpiarLeidas = async () => {
