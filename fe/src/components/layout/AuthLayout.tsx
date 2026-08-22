@@ -23,7 +23,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
   const { t } = useTranslation();
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-950">
+    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-[#03130b]">
       <div className="flex justify-end gap-2 p-4">
         <LanguageSwitcher />
         <ThemeToggle />
@@ -45,7 +45,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
 
           {notice && <div className="mb-4">{notice}</div>}
 
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-8">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c] sm:p-8">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
               {subtitle && (
@@ -58,7 +58,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
         </div>
       </main>
 
-      <footer className="border-t border-gray-200 px-6 py-5 dark:border-gray-800">
+      <footer className="border-t border-gray-200 px-6 py-5 dark:border-[#2a4d34]">
         <nav
           className="mb-3 flex flex-wrap justify-center gap-x-5 gap-y-1"
           aria-label="Información legal"

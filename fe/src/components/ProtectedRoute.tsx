@@ -40,7 +40,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     //           usuarios de lectores de pantalla — no sabrían que la app está trabajando.
     return (
       <div
-        className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950"
+        className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-[#03130b]"
         role="status"
         aria-live="polite"
         aria-label="Verificando sesión, por favor espera"

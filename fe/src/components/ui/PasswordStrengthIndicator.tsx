@@ -103,7 +103,7 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
           <div
             key={bar}
             className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
-              bar <= strength ? meta.barColor : "bg-gray-200 dark:bg-gray-700"
+              bar <= strength ? meta.barColor : "bg-gray-200 dark:bg-[#0d2116]"
             }`}
           />
         ))}

@@ -34,7 +34,7 @@ interface PerfilData {
 
 function InfoField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 px-4 py-3">
+    <div className="rounded-xl bg-gray-50 dark:bg-[#1f4029]/60 px-4 py-3">
       <p className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
         {icon}
         {label}
@@ -150,7 +150,7 @@ export function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("profile.subtitle")}</p>
       </div>
@@ -165,7 +165,7 @@ export function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* LEFT — Avatar + rol + datos de contexto (2/5) */}
-        <div className="lg:col-span-2 lg:self-start bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8 flex flex-col items-center text-center">
+        <div className="lg:col-span-2 lg:self-start bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8 flex flex-col items-center text-center">
           {/* Avatar */}
           <div className="h-20 w-20 rounded-full bg-green-700 flex items-center justify-center text-white text-3xl font-bold mb-4 select-none">
             {inicial}
@@ -238,13 +238,13 @@ export function ProfilePage() {
         </div>
 
         {/* RIGHT — Información personal editable (3/5) */}
-        <div className="lg:col-span-3 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8">
+        <div className="lg:col-span-3 bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("profile.personalInfoSection.title")}</h3>
             {canEdit && !editando && (
               <button
                 onClick={iniciarEdicion}
-                className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 {t("common.edit")}
@@ -290,7 +290,7 @@ export function ProfilePage() {
                 <input
                   value={formNombre}
                   onChange={(e) => setFormNombre(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -301,7 +301,7 @@ export function ProfilePage() {
                 <input
                   value={formApellidos}
                   onChange={(e) => setFormApellidos(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -313,7 +313,7 @@ export function ProfilePage() {
                   value={formTelefono}
                   onChange={(e) => setFormTelefono(e.target.value)}
                   placeholder={t("profile.phonePlaceholder")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -326,7 +326,7 @@ export function ProfilePage() {
                     value={formAsociacion}
                     onChange={(e) => setFormAsociacion(e.target.value)}
                     placeholder={t("profile.associationPlaceholder")}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                   />
                 </div>
               )}
@@ -335,7 +335,7 @@ export function ProfilePage() {
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("common.email")}
                 </label>
-                <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-gray-700 dark:bg-gray-800/40">
+                <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-[#2a4d34] dark:bg-[#0d2116]/60">
                   <p className="text-sm text-gray-400 dark:text-gray-500">{perfil.email}</p>
                 </div>
                 <p className="mt-1 text-[11px] text-gray-400">{t("profile.emailNote")}</p>
@@ -344,7 +344,7 @@ export function ProfilePage() {
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={cancelarEdicion}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
                 >
                   <X className="h-4 w-4" />
                   {t("common.cancel")}

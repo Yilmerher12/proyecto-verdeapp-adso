@@ -113,7 +113,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
+    <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <UserCog className="h-4 w-4 text-green-600" />
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">
@@ -129,7 +129,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("desvinculacion.asignarAdicional.searchPlaceholder")}
-            className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
           />
         </div>
         <button
@@ -161,7 +161,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
               className={`w-full text-left rounded-xl border px-4 py-3 transition-colors ${
                 seleccionado?.id_administrador === admin.id_administrador
                   ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                  : "border-gray-200 hover:border-green-300 dark:border-gray-700 dark:hover:border-green-700"
+                  : "border-gray-200 hover:border-green-300 dark:border-[#2a4d34] dark:hover:border-green-700"
               }`}
             >
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -180,7 +180,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
       )}
 
       {seleccionado && (
-        <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
+        <div className="border-t border-gray-100 dark:border-[#2a4d34] pt-4">
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
             <Building2 className="w-4 h-4" />
             {t("desvinculacion.asignarAdicional.selectConjuntoLabel")}
@@ -201,7 +201,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
               <select
                 value={idConjuntoElegido}
                 onChange={(e) => setIdConjuntoElegido(e.target.value === "" ? "" : Number(e.target.value))}
-                className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-200"
               >
                 <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
                 {conjuntosDisponibles.map((c) => (

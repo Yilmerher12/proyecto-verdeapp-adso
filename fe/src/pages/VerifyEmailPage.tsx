@@ -55,9 +55,9 @@ export function VerifyEmailPage() {
         : t("verifyEmail.errorMessage");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#03130b] px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm text-center">
+        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-200 dark:border-[#2a4d34] p-8 shadow-sm text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {t("verifyEmail.title")}
           </h1>
@@ -114,7 +114,7 @@ export function VerifyEmailPage() {
               <div className="mt-6 flex justify-end gap-3">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#1f4029] border border-gray-300 dark:border-[#2a4d34] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
                 >
                   {t("verifyEmail.goToLogin")}
                 </Link>

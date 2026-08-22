@@ -147,7 +147,7 @@ export function AdminNovedadesPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("novedades.admin.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("novedades.admin.subtitle")}</p>
@@ -170,7 +170,7 @@ export function AdminNovedadesPage() {
       {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
 
       {!cargando && novedades.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-gray-800">
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
           <p className="text-sm text-gray-400">{t("novedades.admin.emptyState")}</p>
         </div>
@@ -180,8 +180,8 @@ export function AdminNovedadesPage() {
         {novedades.map((item) => (
           <div
             key={item.id_novedad}
-            className={`rounded-2xl border bg-white p-4 dark:bg-gray-900 ${
-              item.archivada ? "border-gray-100 opacity-60 dark:border-gray-800" : "border-gray-100 dark:border-gray-800"
+            className={`rounded-2xl border bg-white p-4 dark:bg-[#132a1c] ${
+              item.archivada ? "border-gray-100 opacity-60 dark:border-[#2a4d34]" : "border-gray-100 dark:border-[#2a4d34]"
             }`}
           >
             <div className="flex items-start justify-between gap-3">
@@ -191,7 +191,7 @@ export function AdminNovedadesPage() {
                     {t(`novedades.alcances.${item.alcance}`)}
                   </span>
                   {item.archivada && (
-                    <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#1f4029] dark:text-gray-300">
                       {t("novedades.archivedBadge")}
                     </span>
                   )}
@@ -219,14 +219,14 @@ export function AdminNovedadesPage() {
                 <div className="flex shrink-0 gap-2">
                   <button
                     onClick={() => abrirEditar(item)}
-                    className="rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    className="rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
                     aria-label={t("novedades.admin.editAria")}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => archivar(item)}
-                    className="rounded-lg border border-gray-200 p-2 text-amber-600 hover:bg-amber-50 dark:border-gray-700 dark:hover:bg-amber-900/20"
+                    className="rounded-lg border border-gray-200 p-2 text-amber-600 hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
                     aria-label={t("novedades.admin.archiveAria")}
                   >
                     <Archive className="h-4 w-4" />
@@ -269,7 +269,7 @@ export function AdminNovedadesPage() {
                       className={`rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                         form.alcance === a
                           ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                          : "border-gray-200 text-gray-600 hover:border-green-300 dark:border-gray-700 dark:text-gray-300"
+                          : "border-gray-200 text-gray-600 hover:border-green-300 dark:border-[#2a4d34] dark:text-gray-300"
                       }`}
                     >
                       {t(`novedades.alcances.${a}`)}
@@ -278,7 +278,7 @@ export function AdminNovedadesPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-gray-800/60">
+              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-[#1f4029]/60">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {t("novedades.admin.fields.alcance")}
                 </p>
@@ -297,7 +297,7 @@ export function AdminNovedadesPage() {
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -309,7 +309,7 @@ export function AdminNovedadesPage() {
                 value={form.url_adjunto}
                 onChange={(e) => setForm({ ...form, url_adjunto: e.target.value })}
                 placeholder={t("comunicados.admin.fields.urlAdjuntoPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -321,7 +321,7 @@ export function AdminNovedadesPage() {
                 type="date"
                 value={form.fecha_expiracion}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
               <p className="mt-1 text-[11px] text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
             </div>
@@ -329,7 +329,7 @@ export function AdminNovedadesPage() {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={cerrarFormulario}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
               >
                 {t("common.cancel")}
               </button>

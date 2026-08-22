@@ -19,9 +19,8 @@ export interface RoleTheme {
   dashboardHref: string;
   /** Ícono grande y tenue de fondo para el banner de bienvenida de cada dashboard. */
   WatermarkIcon: LucideIcon;
-  /** Color del texto/ícono de acento en el sidebar — trae su propio par claro/oscuro
-   *  porque el fondo del sidebar ahora cambia con el tema (blanco en modo claro,
-   *  verde oscuro en modo oscuro). */
+  /** Color del texto/ícono de acento en el sidebar — un solo valor, porque el
+   *  sidebar ahora es siempre verde de marca (no cambia entre modo claro/oscuro). */
   sidebarAccentText: string;
   /** Fondo + texto del ítem de menú activo en el sidebar. */
   sidebarActiveNav: string;
@@ -37,8 +36,8 @@ export const ROLE_THEME: Record<RoleId, RoleTheme> = {
     Icon: Shield,
     dashboardHref: "/dashboard/admin",
     WatermarkIcon: Shield,
-    sidebarAccentText: "text-slate-600 dark:text-slate-300",
-    sidebarActiveNav: "bg-slate-100 text-slate-800 dark:bg-slate-400/20 dark:text-slate-100 font-semibold",
+    sidebarAccentText: "text-slate-300",
+    sidebarActiveNav: "bg-slate-400/20 text-slate-100 font-semibold",
     badgeText: "text-slate-600 dark:text-slate-300",
     badgeBg: "bg-slate-100 dark:bg-slate-800/60",
   },
@@ -47,8 +46,8 @@ export const ROLE_THEME: Record<RoleId, RoleTheme> = {
     Icon: Home,
     dashboardHref: "/dashboard/residente",
     WatermarkIcon: KeyRound,
-    sidebarAccentText: "text-lime-700 dark:text-lime-400",
-    sidebarActiveNav: "bg-lime-100 text-lime-800 dark:bg-lime-400/20 dark:text-lime-100 font-semibold",
+    sidebarAccentText: "text-lime-400",
+    sidebarActiveNav: "bg-lime-400/20 text-lime-100 font-semibold",
     badgeText: "text-lime-700 dark:text-lime-400",
     badgeBg: "bg-lime-50 dark:bg-lime-900/30",
   },
@@ -57,8 +56,8 @@ export const ROLE_THEME: Record<RoleId, RoleTheme> = {
     Icon: Recycle,
     dashboardHref: "/dashboard/reciclador",
     WatermarkIcon: Recycle,
-    sidebarAccentText: "text-teal-700 dark:text-teal-300",
-    sidebarActiveNav: "bg-teal-100 text-teal-800 dark:bg-teal-400/20 dark:text-teal-100 font-semibold",
+    sidebarAccentText: "text-teal-300",
+    sidebarActiveNav: "bg-teal-400/20 text-teal-100 font-semibold",
     badgeText: "text-teal-700 dark:text-teal-400",
     badgeBg: "bg-teal-50 dark:bg-teal-900/30",
   },
@@ -67,8 +66,8 @@ export const ROLE_THEME: Record<RoleId, RoleTheme> = {
     Icon: Building2,
     dashboardHref: "/dashboard/admin-conjunto",
     WatermarkIcon: Briefcase,
-    sidebarAccentText: "text-amber-700 dark:text-amber-300",
-    sidebarActiveNav: "bg-amber-100 text-amber-800 dark:bg-amber-400/20 dark:text-amber-100 font-semibold",
+    sidebarAccentText: "text-amber-300",
+    sidebarActiveNav: "bg-amber-400/20 text-amber-100 font-semibold",
     badgeText: "text-amber-700 dark:text-amber-400",
     badgeBg: "bg-amber-50 dark:bg-amber-900/30",
   },
