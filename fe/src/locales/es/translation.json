@@ -459,6 +459,7 @@
     }
   },
   "landing": {
+    "backToTop": "Volver arriba",
     "nav": {
       "homeAriaLabel": "VerdeApp — inicio",
       "login": "Iniciar sesión",

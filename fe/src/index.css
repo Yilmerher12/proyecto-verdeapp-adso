@@ -101,6 +101,18 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* ¿Qué? Scroll suave para cualquier salto de posición (anclas, el botón
+     "volver arriba" del Landing).
+     ¿Para qué? RNF-005 (Accesibilidad) — se respeta si el usuario pidió
+     menos movimiento en su sistema operativo, no queda forzado siempre.
+     ¿Impacto? Sin el media query, alguien con foto-sensibilidad o mareo
+     por movimiento no tiene forma de apagar este efecto. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
   body {
     @apply bg-gray-50 text-gray-900 dark:bg-[#03130b] dark:text-gray-100;
     @apply min-h-screen antialiased;
@@ -112,5 +124,43 @@
   .dark *::before,
   .dark *::after {
     border-color: theme(--color-gray-700);
+  }
+}
+
+/* ¿Qué? Animación de entrada (fade + slide hacia arriba) para el Hero del
+   Landing.
+   ¿Para qué? Que el título/subtítulo/botones aparezcan con movimiento en
+   vez de aparecer de golpe al cargar la página.
+   ¿Impacto? .animate-hero-in arranca en opacity:0 SIEMPRE (evita el
+   "flash" del contenido final antes de que la animación corra); el
+   segundo media query es el que realmente dispara la animación — con
+   "prefers-reduced-motion: reduce" el elemento se queda simplemente en
+   opacity:1, sin movimiento (RNF-005, accesibilidad). */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  .animate-hero-in {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-hero-in {
+      animation: fade-in-up 0.8s ease-out forwards;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-hero-in {
+      opacity: 1;
+    }
   }
 }
