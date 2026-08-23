@@ -1,9 +1,11 @@
 ﻿import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, MapPin, Users, Recycle } from "lucide-react";
+import { ArrowRight, MapPin, Users, Recycle, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { BackToTopButton } from "@/components/ui/BackToTopButton";
 import { useRestoreScroll } from "@/hooks/useRestoreScroll";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 // ¿Qué? Solo la parte visual (imagen/ícono, número) queda fuera del
 //       componente — título y descripción se resuelven adentro con t(),
@@ -19,6 +21,93 @@ const PILARES_META = [
   { icon: Users, key: "pillar2" },
   { icon: Recycle, key: "pillar3" },
 ] as const;
+
+// ¿Qué? Tarjeta de "¿Cómo funciona?" con su propia animación de revelado.
+// ¿Para qué? useScrollReveal() es un hook — no puede llamarse dentro del
+//           .map() del componente padre (rompe las reglas de hooks). Cada
+//           tarjeta necesita su PROPIA instancia del hook, así que se
+//           extrae a un componente aparte.
+// ¿Impacto? El "delay" escalonado por índice hace que las 3 tarjetas no
+//           aparezcan todas de golpe, sino una tras otra.
+function PasoCard({
+  imgSrc,
+  titulo,
+  descripcion,
+  numero,
+  index,
+}: {
+  imgSrc: string;
+  titulo: string;
+  descripcion: string;
+  numero: number;
+  index: number;
+}) {
+  const { ref, visible } = useScrollReveal<HTMLElement>();
+
+  return (
+    <article
+      ref={ref}
+      style={{ transitionDelay: visible ? `${index * 120}ms` : "0ms" }}
+      className={`group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all duration-700 ease-out hover:-translate-y-1 hover:shadow-lg dark:border-green-800 dark:bg-green-900 ${
+        visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+      }`}
+    >
+      <span
+        className="absolute right-4 top-3 select-none text-7xl font-black leading-none text-green-50 dark:text-white/10"
+        aria-hidden="true"
+      >
+        {numero}
+      </span>
+      <div className="mb-5 h-14 w-14">
+        <img src={imgSrc} alt="" aria-hidden="true" className="h-full w-full object-contain drop-shadow-md" />
+      </div>
+      <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{titulo}</h3>
+      <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{descripcion}</p>
+    </article>
+  );
+}
+
+// ¿Qué? Bloque de "Nuestros pilares" — mismo motivo que PasoCard: cada
+//       instancia necesita su propio hook de revelado.
+function PilarCard({
+  Icon,
+  titulo,
+  descripcion,
+  numero,
+  index,
+}: {
+  Icon: LucideIcon;
+  titulo: string;
+  descripcion: string;
+  numero: string;
+  index: number;
+}) {
+  const { ref, visible } = useScrollReveal<HTMLDivElement>();
+
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: visible ? `${index * 120}ms` : "0ms" }}
+      className={`text-left transition-all duration-700 ease-out ${
+        visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+      }`}
+    >
+      <div className="mb-4 flex items-center gap-3">
+        <div
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+          style={{ background: "rgba(255,255,255,0.08)" }}
+        >
+          <Icon className="h-5 w-5 text-green-300" aria-hidden="true" />
+        </div>
+        <span className="text-[10px] font-bold tracking-widest text-green-500">{numero}</span>
+      </div>
+      <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
+      <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+        {descripcion}
+      </p>
+    </div>
+  );
+}
 
 export function LandingPage() {
   const { t } = useTranslation();
@@ -147,23 +236,29 @@ export function LandingPage() {
 
             <h1
               id="hero-heading"
-              className="mb-4 text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow sm:text-7xl"
+              className="animate-hero-in mb-4 text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow sm:text-7xl"
             >
               Verde<span className="text-green-400">App</span>
             </h1>
 
-            <p className="mb-3 text-lg font-semibold text-white/90 sm:text-xl">
+            <p
+              className="animate-hero-in mb-3 text-lg font-semibold text-white/90 sm:text-xl"
+              style={{ animationDelay: "120ms" }}
+            >
               {t("landing.hero.subtitle")}
             </p>
 
             <p
-              className="mx-auto mb-10 max-w-xl text-sm leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.55)" }}
+              className="animate-hero-in mx-auto mb-10 max-w-xl text-sm leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.55)", animationDelay: "240ms" }}
             >
               {t("landing.hero.description")}
             </p>
 
-            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div
+              className="animate-hero-in flex flex-col items-center justify-center gap-3 sm:flex-row"
+              style={{ animationDelay: "360ms" }}
+            >
               <Link
                 to="/login"
                 className="flex w-full items-center justify-center rounded-xl px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:w-auto"
@@ -220,22 +315,14 @@ export function LandingPage() {
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
               {pasos.map(({ imgSrc, key, titulo, descripcion }, i) => (
-                <article
+                <PasoCard
                   key={key}
-                  className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-green-800 dark:bg-green-900"
-                >
-                  <span
-                    className="absolute right-4 top-3 select-none text-7xl font-black leading-none text-green-50 dark:text-white/10"
-                    aria-hidden="true"
-                  >
-                    {i + 1}
-                  </span>
-                  <div className="mb-5 h-14 w-14">
-                    <img src={imgSrc} alt="" aria-hidden="true" className="h-full w-full object-contain drop-shadow-md" />
-                  </div>
-                  <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{titulo}</h3>
-                  <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{descripcion}</p>
-                </article>
+                  imgSrc={imgSrc}
+                  titulo={titulo}
+                  descripcion={descripcion}
+                  numero={i + 1}
+                  index={i}
+                />
               ))}
             </div>
           </div>
@@ -265,24 +352,15 @@ export function LandingPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
-              {pilares.map(({ icon: Icon, key, titulo, descripcion }, i) => (
-                <div key={key} className="text-left">
-                  <div className="mb-4 flex items-center gap-3">
-                    <div
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-                      style={{ background: "rgba(255,255,255,0.08)" }}
-                    >
-                      <Icon className="h-5 w-5 text-green-300" aria-hidden="true" />
-                    </div>
-                    <span className="text-[10px] font-bold tracking-widest text-green-500">
-                      0{i + 1}
-                    </span>
-                  </div>
-                  <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
-                    {descripcion}
-                  </p>
-                </div>
+              {pilares.map(({ icon, key, titulo, descripcion }, i) => (
+                <PilarCard
+                  key={key}
+                  Icon={icon}
+                  titulo={titulo}
+                  descripcion={descripcion}
+                  numero={`0${i + 1}`}
+                  index={i}
+                />
               ))}
             </div>
           </div>
@@ -324,6 +402,8 @@ export function LandingPage() {
           </nav>
         </div>
       </footer>
+
+      <BackToTopButton />
     </div>
   );
 }

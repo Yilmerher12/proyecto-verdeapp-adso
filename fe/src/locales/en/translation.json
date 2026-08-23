@@ -459,6 +459,7 @@
     }
   },
   "landing": {
+    "backToTop": "Back to top",
     "nav": { "homeAriaLabel": "VerdeApp — home", "login": "Sign in", "register": "Sign up" },
     "hero": {
       "subtitle": "Waste management for residential buildings in Bogotá",
