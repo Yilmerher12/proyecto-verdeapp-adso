@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class NotificacionEnviarBody(BaseModel):
-    tipo: str  # LLEGADA_RECICLADOR | SHUT_LLENO | SHUT_LIBRE
+    tipo: str  # LLEGADA_RECICLADOR | SHUT_LLENO | SHUT_LIBRE | FINALIZACION_RECICLADOR
     id_conjunto_residencial: Optional[int] = None  # required for reciclador, inferred for residente
 
 

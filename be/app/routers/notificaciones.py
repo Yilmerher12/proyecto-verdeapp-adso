@@ -26,12 +26,13 @@ from app.schemas.notificacion import (
 
 router = APIRouter(prefix="/api/v1/notificaciones", tags=["notificaciones"])
 
-TIPOS_VALIDOS = {"LLEGADA_RECICLADOR", "SHUT_LLENO", "SHUT_LIBRE"}
+TIPOS_VALIDOS = {"LLEGADA_RECICLADOR", "SHUT_LLENO", "SHUT_LIBRE", "FINALIZACION_RECICLADOR"}
 
 MENSAJES = {
     "LLEGADA_RECICLADOR": "El reciclador ha llegado al conjunto y está listo para recoger el material reciclable.",
     "SHUT_LLENO": "El SHUT está lleno. El reciclador ha sido notificado.",
     "SHUT_LIBRE": "El SHUT ya está disponible — pueden bajar el material reciclable.",
+    "FINALIZACION_RECICLADOR": "El reciclador finalizó la separación de residuos y ya se retiró del conjunto.",
 }
 MENSAJE_RESIDENTE_SHUT = "Un residente reportó que el SHUT está lleno."
 

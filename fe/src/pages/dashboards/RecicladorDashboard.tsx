@@ -11,6 +11,7 @@ import {
   Truck,
   AlertTriangle,
   PackageCheck,
+  DoorOpen,
   X,
 } from "lucide-react";
 import axios from "axios";
@@ -54,6 +55,12 @@ const ACCIONES_META = [
     key: "shutLibre",
     icon: PackageCheck,
     color: "bg-[#14532d] hover:bg-green-800 text-white",  // verde bosque — despejado, natural
+  },
+  {
+    tipo: "FINALIZACION_RECICLADOR",
+    key: "finalizacion",
+    icon: DoorOpen,
+    color: "bg-indigo-700 hover:bg-indigo-600 text-white",  // índigo — distinto de las otras 3, "ya me voy"
   },
 ] as const;
 
