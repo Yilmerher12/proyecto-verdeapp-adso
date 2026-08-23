@@ -662,7 +662,8 @@
       "acciones": {
         "llegada": "I arrived at the building",
         "shutLleno": "Waste room is full",
-        "shutLibre": "Waste room is now free"
+        "shutLibre": "Waste room is now free",
+        "finalizacion": "Finished sorting"
       },
       "feedbackSent": "Notification sent: \"{{label}}\"",
       "genericNotificationSent": "Notification sent",

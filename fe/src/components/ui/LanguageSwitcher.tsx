@@ -116,7 +116,7 @@ export function LanguageSwitcher() {
     // ¿Para qué? WCAG 1.3.1 — el propósito del grupo debe ser identificable por tecnologías asistivas.
     // ¿Impacto? Los lectores de pantalla anuncian "Selector de idioma" al entrar al grupo.
     <div
-      className="flex items-center gap-0.5 rounded-full bg-gray-100 p-0.5 dark:bg-gray-800"
+      className="flex items-center gap-0.5 rounded-full bg-gray-100 p-0.5 dark:bg-[#0d2116]"
       role="group"
       aria-label={t("language.selector")}
     >
@@ -146,7 +146,7 @@ export function LanguageSwitcher() {
             aria-pressed={isActive}
             className={`rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${
               isActive
-                ? "bg-white text-accent-700 shadow-sm dark:bg-gray-700 dark:text-accent-400"
+                ? "bg-white text-accent-700 shadow-sm dark:bg-[#2a4d34] dark:text-accent-400"
                 : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >

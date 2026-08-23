@@ -38,7 +38,7 @@ export function CatalogoEducativoPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("catalogoEducativo.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           {t("catalogoEducativo.subtitle")}
@@ -49,7 +49,7 @@ export function CatalogoEducativoPage() {
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       {!cargando && !error && categorias.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-gray-800">
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <BookOpen className="h-8 w-8 text-gray-300 dark:text-gray-600" />
           <p className="text-sm text-gray-400">{t("catalogoEducativo.emptyState")}</p>
         </div>
@@ -64,7 +64,7 @@ export function CatalogoEducativoPage() {
             <button
               key={categoria}
               onClick={() => navigate(`/catalogo-educativo/${encodeURIComponent(categoria)}`)}
-              className="group flex items-start gap-4 rounded-2xl border border-gray-100 bg-white p-5 text-left transition-colors hover:border-accent-200 hover:bg-accent-50/40 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-accent-800 dark:hover:bg-accent-900/10"
+              className="group flex items-start gap-4 rounded-2xl border border-gray-100 bg-white p-5 text-left transition-colors hover:border-accent-200 hover:bg-accent-50/40 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:hover:border-accent-800 dark:hover:bg-accent-900/10"
             >
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
                 <Icono className="h-5.5 w-5.5" />

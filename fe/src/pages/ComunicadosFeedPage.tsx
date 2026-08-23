@@ -37,7 +37,7 @@ export function ComunicadosFeedPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pt-6">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.feed.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.subtitle")}</p>
       </div>
@@ -45,7 +45,7 @@ export function ComunicadosFeedPage() {
       {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
 
       {!cargando && comunicados.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-gray-800">
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
           <p className="text-sm text-gray-400">{t("comunicados.feed.empty")}</p>
         </div>
@@ -55,10 +55,10 @@ export function ComunicadosFeedPage() {
         {comunicados.map((item) => (
           <article
             key={item.id_comunicado}
-            className={`rounded-2xl border bg-white p-5 dark:bg-gray-900 ${
+            className={`rounded-2xl border bg-white p-5 dark:bg-[#132a1c] ${
               item.tipo === "URGENTE"
                 ? "border-red-200 dark:border-red-800/40"
-                : "border-gray-100 dark:border-gray-800"
+                : "border-gray-100 dark:border-[#2a4d34]"
             }`}
           >
             <div className="flex flex-wrap items-center gap-2">
@@ -66,7 +66,7 @@ export function ComunicadosFeedPage() {
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIPO_ESTILO[item.tipo]}`}>
                 {t(`comunicados.tipos.${item.tipo}`)}
               </span>
-              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#0d2116] dark:text-gray-300">
                 {item.nombre_conjunto}
               </span>
               {item.editado && (

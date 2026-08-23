@@ -73,7 +73,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
+    <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <ClipboardList className="h-4 w-4 text-green-600" />
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">
@@ -124,7 +124,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
                     onChange={(e) => setMotivoRechazo(e.target.value)}
                     placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}
                     rows={2}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                   />
                   <div className="flex gap-2">
                     <button
@@ -140,7 +140,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
                         setRechazandoId(null);
                         setMotivoRechazo("");
                       }}
-                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800"
+                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:bg-transparent dark:text-gray-300 dark:hover:bg-[#2a4d34]"
                     >
                       {t("common.cancel")}
                     </button>

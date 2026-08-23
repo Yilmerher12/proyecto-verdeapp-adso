@@ -101,7 +101,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
       {/* Encabezado */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {soloAcopio ? t("appShell.nav.puntosAcopio") : t("appShell.nav.directorioGeneral")}
         </h1>
@@ -115,7 +115,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
       {/* Controles: tabs + filtro localidad */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {!soloAcopio && (
-          <div className="flex rounded-xl border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-900">
+          <div className="flex rounded-xl border border-gray-200 bg-white p-1 dark:border-[#2a4d34] dark:bg-[#132a1c]">
             {(
               [
                 { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <Users className="h-4 w-4" /> },
@@ -145,7 +145,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             onChange={(e) =>
               setLocalidadId(e.target.value === "" ? "" : Number(e.target.value))
             }
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
           >
             <option value="">{t("directorio.allLocalities")}</option>
             {localidades.map((l) => (
@@ -199,7 +199,7 @@ function TarjetaReciclador({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
       <div className="mb-4 flex items-center gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-700 text-base font-bold text-white select-none">
           {r.nombre.charAt(0)}
@@ -225,7 +225,7 @@ function TarjetaReciclador({
         <div className="flex gap-2">
           <a
             href={callLink(r.numero_telefonico)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
           >
             <Phone className="h-3.5 w-3.5" />
             {t("directorio.call")}
@@ -249,7 +249,7 @@ function TarjetaReciclador({
 
 function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
       <div className="mb-3 flex items-start gap-2">
         <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
         <div>
@@ -282,7 +282,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
 
 function EmptyState({ mensaje }: { mensaje: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-16 text-center dark:border-gray-700 dark:bg-gray-900/40">
+    <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-16 text-center dark:border-[#2a4d34] dark:bg-[#132a1c]/40">
       <MapPin className="mx-auto mb-3 h-8 w-8 text-gray-300 dark:text-gray-600" />
       <p className="text-sm text-gray-400 dark:text-gray-500">{mensaje}</p>
     </div>

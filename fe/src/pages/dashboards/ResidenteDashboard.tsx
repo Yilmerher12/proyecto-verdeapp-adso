@@ -94,7 +94,7 @@ export function ResidenteDashboard() {
       {/* Header — la llave de fondo es solo un detalle tenue, para que este
           panel se sienta del Residente (su casa, su unidad), sin estorbar la
           lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-green-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
@@ -134,7 +134,7 @@ export function ResidenteDashboard() {
       )}
 
       {/* Acción: reportar SHUT lleno */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -170,7 +170,7 @@ export function ResidenteDashboard() {
 
       {/* Actividad reciente (notificaciones recibidas) */}
       {cargando ? (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5">
+        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
           <p className="text-sm text-gray-400">{t("common.loading")}</p>
         </div>
       ) : (

@@ -63,20 +63,26 @@
   /* Fuentes — solo sans-serif, sin serifas nunca */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
-  /* ── Token de acento: FastAPI = emerald ──────────────────────────────── */
-  /* Para cambiar de stack: reemplazar var(--color-emerald-*) por la paleta  */
-  /* del nuevo stack. Solo estas 11 líneas. Nada más.                        */
-  --color-accent-50: var(--color-emerald-50);
-  --color-accent-100: var(--color-emerald-100);
-  --color-accent-200: var(--color-emerald-200);
-  --color-accent-300: var(--color-emerald-300);
-  --color-accent-400: var(--color-emerald-400);
-  --color-accent-500: var(--color-emerald-500);
-  --color-accent-600: var(--color-emerald-600);
-  --color-accent-700: var(--color-emerald-700);
-  --color-accent-800: var(--color-emerald-800);
-  --color-accent-900: var(--color-emerald-900);
-  --color-accent-950: var(--color-emerald-950);
+  /* ── Token de acento: VerdeApp = green (verde bosque de la marca) ────── */
+  /* ¿Qué? Antes apuntaba a emerald (verde azulado), el acento por defecto */
+  /* de esta plantilla educativa para el stack FastAPI. Se cambia a green  */
+  /* porque casi todos los botones/enlaces de la app ya estaban pintados a */
+  /* mano con green-600/700 (el mismo verde del logo y la barra lateral) — */
+  /* con emerald, el puñado de componentes que sí usan accent-* (Button    */
+  /* primario, pastilla activa del selector de idioma) se veían de un      */
+  /* verde distinto y desentonaban. Para volver a cambiar de stack:        */
+  /* reemplazar var(--color-green-*) por la paleta del nuevo stack.        */
+  --color-accent-50: var(--color-green-50);
+  --color-accent-100: var(--color-green-100);
+  --color-accent-200: var(--color-green-200);
+  --color-accent-300: var(--color-green-300);
+  --color-accent-400: var(--color-green-400);
+  --color-accent-500: var(--color-green-500);
+  --color-accent-600: var(--color-green-600);
+  --color-accent-700: var(--color-green-700);
+  --color-accent-800: var(--color-green-800);
+  --color-accent-900: var(--color-green-900);
+  --color-accent-950: var(--color-green-950);
 }
 
 /* ¿Qué? Estilos base aplicados al body y al root de la app. */
@@ -96,7 +102,7 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    @apply bg-gray-50 text-gray-900 dark:bg-[#03130b] dark:text-gray-100;
     @apply min-h-screen antialiased;
     @apply transition-colors duration-200;
     margin: 0;
