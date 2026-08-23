@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Bell, Building2, Clock, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
+import { AlertTriangle, Bell, Building2, Clock, DoorOpen, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import i18n from "@/i18n";
 
@@ -31,6 +31,7 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   LLEGADA_RECICLADOR: { Icon: Truck, color: "text-teal-700 dark:text-teal-400" },
   SHUT_LLENO: { Icon: AlertTriangle, color: "text-amber-700 dark:text-amber-500" },
   SHUT_LIBRE: { Icon: PackageCheck, color: "text-green-700 dark:text-green-500" },
+  FINALIZACION_RECICLADOR: { Icon: DoorOpen, color: "text-indigo-700 dark:text-indigo-400" },
   // RQF-016 (desvinculación y reasignación de conjuntos)
   DESVINCULACION_APROBADA: { Icon: Unlink, color: "text-gray-600 dark:text-gray-400" },
   DESVINCULACION_RECHAZADA: { Icon: XCircle, color: "text-red-600 dark:text-red-400" },

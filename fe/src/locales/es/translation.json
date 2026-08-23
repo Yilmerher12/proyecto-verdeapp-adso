@@ -666,7 +666,8 @@
       "acciones": {
         "llegada": "Llegué al conjunto",
         "shutLleno": "SHUT está lleno",
-        "shutLibre": "SHUT ya está libre"
+        "shutLibre": "SHUT ya está libre",
+        "finalizacion": "Finalicé separación"
       },
       "feedbackSent": "Notificación enviada: \"{{label}}\"",
       "genericNotificationSent": "Notificación enviada",
