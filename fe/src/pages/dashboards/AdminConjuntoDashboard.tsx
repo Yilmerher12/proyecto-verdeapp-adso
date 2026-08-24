@@ -137,9 +137,9 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
       )}
 
       {cargando ? (
-        <p className="text-xs text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
       ) : invitaciones.length === 0 ? (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {t("dashboards.adminConjunto.recyclersSection.empty")}
         </p>
       ) : (
@@ -153,7 +153,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
                   {inv.nombre_reciclador} {inv.apellidos_reciclador}
                 </p>
-                <p className="text-xs text-gray-400 truncate">{inv.correo_reciclador}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{inv.correo_reciclador}</p>
               </div>
               <BadgeEstado estado={inv.estado} />
             </div>
@@ -221,7 +221,7 @@ function SeccionDesvinculacion({
         <button
           type="button"
           onClick={() => setMostrarFormulario(true)}
-          className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
+          className="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
         >
           {t("desvinculacion.solicitarButton")}
         </button>
@@ -383,7 +383,7 @@ export function AdminConjuntoDashboard() {
             <p className="text-gray-600 dark:text-gray-300">
               {t("dashboards.common.welcomePrefix")} <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
             </p>
-            <p className="text-xs text-green-600 font-semibold mt-1 tracking-wide">
+            <p className="text-xs text-green-700 dark:text-green-400 font-semibold mt-1 tracking-wide">
               {user?.email}
             </p>
           </div>
@@ -403,9 +403,9 @@ export function AdminConjuntoDashboard() {
         </div>
 
         {cargando ? (
-          <p className="text-sm text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
         ) : conjuntos.length === 0 ? (
-          <p className="text-sm text-gray-400 py-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
             {t("dashboards.adminConjunto.myConjuntos.empty")}
           </p>
         ) : (
@@ -475,7 +475,7 @@ export function AdminConjuntoDashboard() {
                           <MapPin className="w-3.5 h-3.5" />
                           {c.direccion} — {c.nombre_localidad}
                         </p>
-                        {c.nit && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>}
+                        {c.nit && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>}
                       </div>
                       <button
                         type="button"
@@ -516,7 +516,7 @@ export function AdminConjuntoDashboard() {
       {/* Feed de notificaciones */}
       {cargandoNotifs ? (
         <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-400">{t("common.loading")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
         </div>
       ) : (
         <NotificationFeed

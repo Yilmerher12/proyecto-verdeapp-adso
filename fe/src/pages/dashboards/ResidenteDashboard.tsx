@@ -171,7 +171,7 @@ export function ResidenteDashboard() {
       {/* Actividad reciente (notificaciones recibidas) */}
       {cargando ? (
         <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-400">{t("common.loading")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
         </div>
       ) : (
         <NotificationFeed

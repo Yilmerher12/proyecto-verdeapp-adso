@@ -300,7 +300,7 @@ export function AppShell({ children }: AppShellProps) {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+                  className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
                 >
                   {t("appShell.confirmarLogout.confirmar")}
                 </button>
@@ -332,7 +332,7 @@ export function AppShell({ children }: AppShellProps) {
           >
             <Bell className="h-5 w-5" />
             {noLeidas > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-700 text-[9px] font-bold text-white">
                 {noLeidas > 9 ? "9+" : noLeidas}
               </span>
             )}

@@ -131,13 +131,13 @@ export function AdminDashboard() {
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
               {cargandoResidentes ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-400">
+                  <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                     {t("dashboards.admin.loadingData")}
                   </td>
                 </tr>
               ) : residentesData.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-400">
+                  <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                     {t("dashboards.admin.residentsTable.empty")}
                   </td>
                 </tr>
@@ -181,13 +181,13 @@ export function AdminDashboard() {
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
               {cargandoRecicladores ? (
                 <tr>
-                  <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-400">
+                  <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                     {t("dashboards.admin.loadingData")}
                   </td>
                 </tr>
               ) : recicladoresData.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-400">
+                  <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                     {t("dashboards.admin.recyclersTable.empty")}
                   </td>
                 </tr>

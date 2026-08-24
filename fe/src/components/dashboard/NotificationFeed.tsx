@@ -104,7 +104,7 @@ export function NotificationFeed({
             </button>
           )}
           {notifications.some((n) => n.leida) && (
-            <button onClick={onClearRead} className="text-xs font-medium text-gray-400 hover:text-red-400">
+            <button onClick={onClearRead} className="text-xs font-medium text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400">
               {t("notificationFeed.clearRead")}
             </button>
           )}
@@ -112,7 +112,7 @@ export function NotificationFeed({
       </div>
 
       {notifications.length === 0 ? (
-        <p className="px-5 pb-5 text-sm text-gray-400">{emptyMessage}</p>
+        <p className="px-5 pb-5 text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</p>
       ) : (
         <>
           <ul className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -131,7 +131,7 @@ export function NotificationFeed({
                     <p className={`text-sm ${!n.leida ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
                       {n.mensaje}
                     </p>
-                    <p className="mt-0.5 text-xs text-gray-400">
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                       {n.nombre_conjunto ?? t("notificationFeed.platformLabel")} · {tiempoRelativo(n.created_at)}
                     </p>
                   </div>
@@ -143,7 +143,7 @@ export function NotificationFeed({
           {notifications.length > 5 && (
             <button
               onClick={() => setExpandido((v) => !v)}
-              className="w-full py-2.5 text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 border-t border-gray-50 dark:border-[#2a4d34] transition-colors"
+              className="w-full py-2.5 text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 border-t border-gray-50 dark:border-[#2a4d34] transition-colors"
             >
               {expandido ? t("notificationFeed.showLess") : t("notificationFeed.showMore", { count: notifications.length - 5 })}
             </button>

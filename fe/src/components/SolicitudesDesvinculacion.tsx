@@ -93,9 +93,9 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
       )}
 
       {cargando ? (
-        <p className="text-sm text-gray-400">{t("common.loading")}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
       ) : solicitudes.length === 0 ? (
-        <p className="text-sm text-gray-400">{t("desvinculacion.adminSistema.empty")}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("desvinculacion.adminSistema.empty")}</p>
       ) : (
         <div className="space-y-3">
           {solicitudes.map((s) => (
