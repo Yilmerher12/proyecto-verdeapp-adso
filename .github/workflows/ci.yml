@@ -1,0 +1,132 @@
+# ============================================================================
+# CI — Integración Continua
+# ============================================================================
+# ¿Qué? Corre automáticamente los tests y el linter del backend y del
+#       frontend cada vez que se abre o actualiza un Pull Request hacia
+#       develop o main (y también si alguien hace push directo a esas ramas).
+# ¿Para qué? Antes, esto dependía de que alguien corriera pytest/ruff/tsc/
+#           eslint/vitest a mano antes de aprobar un PR. Con esto, GitHub lo
+#           hace solo, en un servidor temporal, y muestra ✅ o ❌ directo en
+#           el Pull Request — nadie tiene que acordarse de nada.
+# ¿Impacto? Un PR que rompe un test no debería poder mezclarse sin que se
+#           note, sin importar quién lo revise.
+# ============================================================================
+
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+# ¿Qué? Principio de mínimo privilegio (igual que en close-prs.yml) — este
+#       workflow solo necesita LEER el código, nunca escribir nada.
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (ruff + pytest)
+    runs-on: ubuntu-24.04
+
+    # ¿Qué? Un contenedor de Postgres temporal, solo para esta ejecución.
+    # ¿Para qué? Los tests del backend (be/app/tests/conftest.py) esperan
+    #           una base de datos real en localhost:5433 — igual que en tu
+    #           máquina, pero esta se crea y se destruye sola, no toca nada
+    #           tuyo. El nombre de la BD (verdeapp_test_db) es el mismo que
+    #           usan los tests, no el de desarrollo (verdeapp_db).
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: verde_user
+          POSTGRES_PASSWORD: verde_password
+          POSTGRES_DB: verdeapp_test_db
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U verde_user -d verdeapp_test_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # ¿Qué? Variables de entorno que be/app/config.py exige para arrancar
+    #       (SECRET_KEY, DATABASE_URL, etc.) — normalmente vienen de be/.env,
+    #       pero ese archivo nunca se sube al repo (está en .gitignore), así
+    #       que aquí no existe. Se declaran directo como variables del job.
+    # ¿Impacto? SECRET_KEY de aquí NO es secreta de verdad ni se usa en
+    #           producción — solo necesita tener los 32+ caracteres mínimos
+    #           que exige la validación en config.py para que la app arranque.
+    env:
+      DATABASE_URL: postgresql://verde_user:verde_password@localhost:5433/verdeapp_test_db
+      SECRET_KEY: solo-para-ci-nunca-se-usa-en-produccion-0000000000
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      REFRESH_TOKEN_EXPIRE_DAYS: "7"
+      FRONTEND_URL: http://localhost:3000
+      ENVIRONMENT: development
+
+    defaults:
+      run:
+        working-directory: be
+
+    steps:
+      - name: Descargar el código del repositorio
+        # actions/checkout@v7.0.1 — SHA pinado (mismo criterio de seguridad
+        # que ya usa close-prs.yml: una etiqueta como @v7 se puede mover a
+        # otro commit, un SHA no).
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Instalar uv
+        # astral-sh/setup-uv@v10.0.1
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+
+      - name: Instalar dependencias exactas (uv.lock)
+        # ¿Qué? --frozen falla si uv.lock no está sincronizado con
+        #       pyproject.toml, en vez de resolver versiones nuevas
+        #       silenciosamente — igual que en be/Dockerfile.
+        run: uv sync --frozen
+
+      - name: Revisar estilo (ruff)
+        run: uv run ruff check .
+
+      - name: Correr los tests (pytest)
+        run: uv run pytest
+
+  frontend:
+    name: Frontend (tsc + eslint + vitest)
+    runs-on: ubuntu-24.04
+
+    defaults:
+      run:
+        working-directory: fe
+
+    steps:
+      - name: Descargar el código del repositorio
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Activar pnpm (Corepack)
+        # ¿Qué? Mismo comando exacto que usa fe/Dockerfile — respeta la
+        #       versión fijada en el campo "packageManager" de package.json.
+        run: corepack enable && corepack prepare pnpm@11.0.9 --activate
+
+      - name: Instalar Node.js
+        # actions/setup-node@v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: fe/pnpm-lock.yaml
+
+      - name: Instalar dependencias exactas (pnpm-lock.yaml)
+        run: pnpm install --frozen-lockfile
+
+      - name: Revisar tipos (TypeScript)
+        run: pnpm exec tsc -b --noEmit
+
+      - name: Revisar estilo (eslint)
+        run: pnpm exec eslint .
+
+      - name: Correr los tests (vitest)
+        run: pnpm test
