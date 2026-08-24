@@ -216,7 +216,7 @@ export function RecicladorDashboard() {
           {t("dashboards.reciclador.sendSection.subtitle")}
         </p>
         {conjuntosAutorizados.length === 0 && !cargando ? (
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             {t("dashboards.reciclador.sendSection.noConjuntos")}
           </p>
         ) : (
@@ -254,7 +254,7 @@ export function RecicladorDashboard() {
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-white text-sm">{inv.nombre_conjunto}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{inv.direccion_conjunto}</p>
-                  <p className="mt-0.5 text-xs text-gray-400">{t("dashboards.reciclador.invitations.invitedBy", { nombre: inv.invitado_por_nombre })}</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t("dashboards.reciclador.invitations.invitedBy", { nombre: inv.invitado_por_nombre })}</p>
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <button
@@ -287,7 +287,7 @@ export function RecicladorDashboard() {
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
         </div>
         {cargando ? (
-          <p className="text-sm text-gray-400">{t("common.loading")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
         ) : conjuntosAutorizados.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {t("dashboards.reciclador.myConjuntos.empty")}
@@ -301,7 +301,7 @@ export function RecicladorDashboard() {
               >
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{c.nombre_conjunto}</p>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{c.direccion}</p>
-                <p className="mt-1 text-xs text-gray-400">{c.nombre_localidad}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{c.nombre_localidad}</p>
               </div>
             ))}
           </div>
@@ -311,7 +311,7 @@ export function RecicladorDashboard() {
       {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) */}
       {cargando ? (
         <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-400">{t("common.loading")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
         </div>
       ) : (
         <NotificationFeed
@@ -361,7 +361,7 @@ export function RecicladorDashboard() {
                   }`}
                 >
                   <p className="font-semibold text-gray-900 dark:text-white">{c.nombre_conjunto}</p>
-                  <p className="mt-0.5 text-xs text-gray-400">{c.nombre_localidad}</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{c.nombre_localidad}</p>
                 </button>
               ))}
             </div>

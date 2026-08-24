@@ -148,7 +148,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
       )}
 
       {busquedaHecha && resultados.length === 0 && (
-        <p className="text-sm text-gray-400">{t("desvinculacion.asignarAdicional.noResults")}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("desvinculacion.asignarAdicional.noResults")}</p>
       )}
 
       {resultados.length > 0 && (
@@ -167,7 +167,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {admin.nombre} {admin.apellidos}
               </p>
-              <p className="text-xs text-gray-400">{admin.correo_electronico}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{admin.correo_electronico}</p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {t("desvinculacion.asignarAdicional.currentConjuntos")}{" "}
                 {admin.conjuntos_actuales.length > 0
@@ -193,9 +193,9 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
           )}
 
           {cargandoConjuntos ? (
-            <p className="text-sm text-gray-400">{t("common.loading")}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
           ) : conjuntosDisponibles.length === 0 ? (
-            <p className="text-sm text-gray-400">{t("desvinculacion.asignarAdicional.noConjuntosDisponibles")}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t("desvinculacion.asignarAdicional.noConjuntosDisponibles")}</p>
           ) : (
             <div className="flex flex-col sm:flex-row gap-2">
               <select
