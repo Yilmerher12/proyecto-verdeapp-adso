@@ -135,7 +135,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
         <button
           type="submit"
           disabled={buscando}
-          className="rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50"
+          className="rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50"
         >
           {t("desvinculacion.asignarAdicional.searchButton")}
         </button>
@@ -214,7 +214,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
                 type="button"
                 onClick={asignar}
                 disabled={!idConjuntoElegido || asignando}
-                className="rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50"
+                className="rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50"
               >
                 {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
               </button>

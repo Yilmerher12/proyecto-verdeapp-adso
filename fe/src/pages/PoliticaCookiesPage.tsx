@@ -40,7 +40,7 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
 
   const S = <strong className="text-gray-700 dark:text-gray-300" />;
   const C = (
-    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1 text-xs text-accent-600 dark:text-accent-300" />
+    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1 text-xs text-accent-700 dark:text-accent-300" />
   );
   const privacyLink = (
     <a
@@ -131,7 +131,7 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
                   className="bg-white dark:bg-[#03130b] hover:bg-gray-50 dark:hover:bg-[#132a1c] transition-colors"
                 >
                   <td className="px-4 py-3">
-                    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1.5 py-0.5 text-xs text-accent-600 dark:text-accent-300">
+                    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1.5 py-0.5 text-xs text-accent-700 dark:text-accent-300">
                       {cookie.name}
                     </code>
                   </td>

@@ -352,7 +352,7 @@ export function ProfilePage() {
                 <button
                   onClick={guardarPerfil}
                   disabled={guardando}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60 transition-colors"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 transition-colors"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}

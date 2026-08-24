@@ -178,7 +178,7 @@ export function ResidenteDashboard() {
           title={t("dashboards.residente.notifications.title")}
           notifications={notificaciones}
           emptyMessage={t("dashboards.residente.notifications.empty")}
-          accentBg="bg-green-600"
+          accentBg="bg-green-700"
           accentHighlight="bg-green-50/60 hover:bg-green-50 dark:bg-green-900/10 dark:hover:bg-green-900/20"
           onMarkRead={marcarLeida}
           onMarkAllRead={marcarTodasLeidas}
