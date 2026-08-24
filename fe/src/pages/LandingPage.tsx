@@ -173,7 +173,7 @@ export function LandingPage() {
             <li>
               <Link
                 to="/register"
-                className="rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-400 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-green-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
               >
                 {t("landing.nav.register")}
               </Link>
@@ -268,7 +268,7 @@ export function LandingPage() {
               </Link>
               <Link
                 to="/register"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-green-400 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 sm:w-auto"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-8 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-green-600 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 sm:w-auto"
               >
                 {t("landing.hero.ctaRegister")} <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>

@@ -226,7 +226,7 @@ export function RegisterPage() {
                 t("auth.register.success.step3"),
               ].map((step, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-700 text-white text-xs font-bold">
                     {i + 1}
                   </span>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{step}</p>

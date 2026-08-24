@@ -154,7 +154,7 @@ export function AdminNovedadesPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex items-center gap-1.5 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-500 transition-colors"
+          className="flex items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("novedades.admin.newButton")}
@@ -336,7 +336,7 @@ export function AdminNovedadesPage() {
               <button
                 onClick={guardar}
                 disabled={guardando}
-                className="flex-1 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60 transition-colors"
+                className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 transition-colors"
               >
                 {guardando ? t("common.saving") : t("common.save")}
               </button>

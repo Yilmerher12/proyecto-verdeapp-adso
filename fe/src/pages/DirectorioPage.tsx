@@ -127,7 +127,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                 onClick={() => setTab(id)}
                 className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   tab === id
-                    ? "bg-green-600 text-white shadow-sm"
+                    ? "bg-green-700 text-white shadow-sm"
                     : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                 }`}
               >
@@ -234,7 +234,7 @@ function TarjetaReciclador({
             href={waLink(r.numero_telefonico)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-600 py-2 text-xs font-medium text-white transition-colors hover:bg-green-500"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-700 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600"
           >
             <MessageCircle className="h-3.5 w-3.5" />
             WhatsApp

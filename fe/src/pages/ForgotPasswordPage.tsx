@@ -85,7 +85,7 @@ export function ForgotPasswordPage() {
             <button
               type="button"
               onClick={confirmSend}
-              className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+              className="flex-1 rounded-xl bg-green-700 hover:bg-green-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
             >
               Sí, enviar
             </button>
@@ -131,7 +131,7 @@ export function ForgotPasswordPage() {
       <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
         <Link
           to="/login"
-          className="font-medium text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
+          className="font-medium text-accent-700 hover:text-accent-800 dark:text-accent-400 dark:hover:text-accent-300"
         >
           {t("auth.forgotPassword.backToLogin")}
         </Link>

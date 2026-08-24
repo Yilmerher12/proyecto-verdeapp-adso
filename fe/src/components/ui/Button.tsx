@@ -43,8 +43,12 @@ export function Button({
   // ¿Impacto? primary = acción principal (azul), secondary = acción secundaria (gris),
   //           danger = acción destructiva (rojo).
   const variantClasses = {
+    // ¿Qué? accent-700 en vez de accent-600 — con texto blanco, accent-600 solo
+    //       llega a 3.22:1 de contraste (falla el mínimo 4.5:1 de WCAG AA para
+    //       texto normal); accent-700 llega a 4.94:1. Verificado con la fórmula
+    //       oficial de contraste WCAG durante la auditoría RNF-003.
     primary:
-      "bg-accent-600 text-white hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600 focus:ring-accent-500/20",
+      "bg-accent-700 text-white hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800 focus:ring-accent-500/20",
     secondary:
       "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-[#0d2116] dark:text-gray-300 dark:border-[#2a4d34] dark:hover:bg-[#2a4d34] focus:ring-gray-500/20",
     danger:

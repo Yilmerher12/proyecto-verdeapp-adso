@@ -133,7 +133,7 @@ export function AceptarInvitacionPage() {
       <>
         <LandingPage />
         <Modal onClose={() => navigate("/")}>
-          <div className="p-10 text-center text-gray-500">{t("aceptarInvitacion.verifying")}</div>
+          <div className="p-10 text-center text-gray-500 dark:text-gray-400">{t("aceptarInvitacion.verifying")}</div>
         </Modal>
       </>
     );
@@ -146,11 +146,11 @@ export function AceptarInvitacionPage() {
         <LandingPage />
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4">
-            <div className="mx-auto w-16 h-16 bg-red-100 flex items-center justify-center rounded-full border border-red-200">
-              <XCircle className="w-8 h-8 text-red-600" />
+            <div className="mx-auto w-16 h-16 bg-red-100 flex items-center justify-center rounded-full border border-red-200 dark:bg-red-900/30 dark:border-red-800/40">
+              <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">{t("aceptarInvitacion.invalid.title")}</h2>
-            <p className="text-gray-600 text-sm">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.invalid.title")}</h2>
+            <p className="text-gray-600 text-sm dark:text-gray-400">
               {t("aceptarInvitacion.invalid.message")}
             </p>
             <Button onClick={() => navigate("/")} fullWidth>
@@ -169,11 +169,11 @@ export function AceptarInvitacionPage() {
         <LandingPage />
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4 animate-fade-in">
-            <div className="mx-auto w-20 h-20 bg-green-100 flex items-center justify-center rounded-full border border-green-200">
-              <ShieldCheck className="w-10 h-10 text-green-600" />
+            <div className="mx-auto w-20 h-20 bg-green-100 flex items-center justify-center rounded-full border border-green-200 dark:bg-green-900/30 dark:border-green-800/40">
+              <ShieldCheck className="w-10 h-10 text-green-600 dark:text-green-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">{t("aceptarInvitacion.success.title")}</h2>
-            <p className="text-gray-600 text-sm">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.success.title")}</h2>
+            <p className="text-gray-600 text-sm dark:text-gray-400">
               {t("aceptarInvitacion.success.message")}
             </p>
             <div className="pt-4">
@@ -194,20 +194,20 @@ export function AceptarInvitacionPage() {
       <Modal onClose={() => navigate("/")} wide>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-900">{t("aceptarInvitacion.form.title")}</h2>
-            <p className="text-gray-500 mt-1">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.form.title")}</h2>
+            <p className="text-gray-500 mt-1 dark:text-gray-400">
               {t("aceptarInvitacion.form.invitationFor")} <strong>{infoInvitacion.correo_electronico}</strong>
             </p>
           </div>
 
-          <div className="mb-6 p-4 bg-green-50/50 border border-green-100 rounded-xl">
+          <div className="mb-6 p-4 bg-green-50/50 border border-green-100 rounded-xl dark:bg-green-900/10 dark:border-green-800/30">
             <div className="flex items-center gap-2 mb-2">
-              <Building2 className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-bold text-gray-700">
+              <Building2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
                 {t("aceptarInvitacion.form.willAdminister")}
               </span>
             </div>
-            <ul className="text-sm text-gray-600 list-disc list-inside">
+            <ul className="text-sm text-gray-600 list-disc list-inside dark:text-gray-400">
               {infoInvitacion.nombres_conjuntos.map((nombre) => (
                 <li key={nombre}>{nombre}</li>
               ))}
@@ -221,7 +221,7 @@ export function AceptarInvitacionPage() {
               value={formData.nombre}
               onChange={handleChange}
             />
-            {fieldErrors.nombre && <p className="text-xs text-red-500">{fieldErrors.nombre}</p>}
+            {fieldErrors.nombre && <p className="text-xs text-red-500 dark:text-red-400">{fieldErrors.nombre}</p>}
 
             <InputField
               label={t("auth.register.fields.lastName")}
@@ -229,7 +229,7 @@ export function AceptarInvitacionPage() {
               value={formData.apellidos}
               onChange={handleChange}
             />
-            {fieldErrors.apellidos && <p className="text-xs text-red-500">{fieldErrors.apellidos}</p>}
+            {fieldErrors.apellidos && <p className="text-xs text-red-500 dark:text-red-400">{fieldErrors.apellidos}</p>}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
@@ -252,7 +252,7 @@ export function AceptarInvitacionPage() {
                 />
                 <PasswordStrengthIndicator password={formData.password} />
                 {fieldErrors.password && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.password}</p>
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-1 font-medium">{fieldErrors.password}</p>
                 )}
               </div>
               <div>
@@ -266,7 +266,7 @@ export function AceptarInvitacionPage() {
                   disablePaste
                 />
                 {fieldErrors.confirmPassword && (
-                  <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.confirmPassword}</p>
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-1 font-medium">{fieldErrors.confirmPassword}</p>
                 )}
               </div>
             </div>

@@ -41,7 +41,7 @@ export function YoutubeEmbed({ url, titulo }: YoutubeEmbedProps) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-accent-600 hover:underline dark:text-accent-500"
+        className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-accent-700 hover:underline dark:text-accent-500"
       >
         <ExternalLink className="h-4 w-4 shrink-0" />
         Ver video

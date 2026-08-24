@@ -124,7 +124,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
           <button
             type="submit"
             disabled={enviando || !correoNuevo.trim()}
-            className="flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
             {enviando ? t("dashboards.adminConjunto.recyclersSection.sending") : t("dashboards.adminConjunto.recyclersSection.inviteButton")}
@@ -453,7 +453,7 @@ export function AdminConjuntoDashboard() {
                         type="button"
                         onClick={() => guardarEdicion(c.id_conjunto_residencial)}
                         disabled={guardando}
-                        className="flex items-center gap-1 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl transition-colors disabled:opacity-60"
+                        className="flex items-center gap-1 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 px-4 py-2 rounded-xl transition-colors disabled:opacity-60"
                       >
                         <Check className="w-4 h-4" /> {t("common.save")}
                       </button>
@@ -523,7 +523,7 @@ export function AdminConjuntoDashboard() {
           title={t("dashboards.adminConjunto.notifications.title")}
           notifications={notificaciones}
           emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
-          accentBg="bg-amber-500"
+          accentBg="bg-amber-700"
           accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
           onMarkRead={marcarLeida}
           onMarkAllRead={marcarTodasLeidas}

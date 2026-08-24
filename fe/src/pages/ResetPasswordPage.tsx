@@ -121,7 +121,7 @@ export function ResetPasswordPage() {
         <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
           <Link
             to="/forgot-password"
-            className="font-medium text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300"
+            className="font-medium text-accent-700 hover:text-accent-800 dark:text-accent-400 dark:hover:text-accent-300"
           >
             {t("auth.resetPassword.requestNewLink")}
           </Link>

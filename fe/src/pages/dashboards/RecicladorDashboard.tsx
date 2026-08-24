@@ -260,7 +260,7 @@ export function RecicladorDashboard() {
                   <button
                     onClick={() => responderInvitacion(inv.id, true)}
                     disabled={procesandoId === inv.id}
-                    className="flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-500 disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t("dashboards.reciclador.invitations.accept")}
@@ -318,7 +318,7 @@ export function RecicladorDashboard() {
           title={t("dashboards.reciclador.notifications.title")}
           notifications={notificaciones}
           emptyMessage={t("dashboards.reciclador.notifications.empty")}
-          accentBg="bg-amber-500"
+          accentBg="bg-amber-700"
           accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
           onMarkRead={marcarLeida}
           onMarkAllRead={marcarTodasLeidas}
@@ -376,7 +376,7 @@ export function RecicladorDashboard() {
               <button
                 onClick={enviarNotificacion}
                 disabled={!conjuntoSeleccionado || enviandoNotif}
-                className="flex-1 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-500 disabled:opacity-50"
+                className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
               >
                 {enviandoNotif ? t("dashboards.reciclador.modal.sending") : t("dashboards.reciclador.modal.submit")}
               </button>

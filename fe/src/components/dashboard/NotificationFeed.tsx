@@ -99,7 +99,7 @@ export function NotificationFeed({
         </div>
         <div className="flex items-center gap-3">
           {noLeidas > 0 && (
-            <button onClick={onMarkAllRead} className="text-xs font-medium text-green-600 hover:text-green-500">
+            <button onClick={onMarkAllRead} className="text-xs font-medium text-green-700 hover:text-green-600 dark:text-green-500 dark:hover:text-green-400">
               {t("notificationFeed.markAllRead")}
             </button>
           )}
