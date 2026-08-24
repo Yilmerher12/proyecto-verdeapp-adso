@@ -1,4 +1,7 @@
 {
+  "serverError": {
+    "message": "No se pudo conectar con el servidor. Verifica tu conexión — reintentaremos automáticamente."
+  },
   "appShell": {
     "ariaLabel": "Navegación VerdeApp",
     "nav": {
