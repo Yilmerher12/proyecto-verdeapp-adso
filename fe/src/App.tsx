@@ -8,6 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleGuard } from "@/components/RoleGuard";
 import { AppShell } from "@/components/layout/AppShell";
+import { ServerErrorBanner } from "@/components/ui/ServerErrorBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { RoleId } from "@/types/auth";
 
@@ -65,6 +66,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ServerErrorBanner />
         <Routes>
           {/* 🔓 Rutas públicas base */}
           <Route path="/" element={<LandingPage />} />
