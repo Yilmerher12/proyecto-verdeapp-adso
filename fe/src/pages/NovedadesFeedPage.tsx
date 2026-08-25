@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Megaphone, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { verFeedNovedades, type Novedad } from "@/lib/novedadesApi";
+import { Alert } from "@/components/ui/Alert";
 
 /**
  * ¿Qué? Feed de novedades activas de la plataforma (RQF-015, HU-033) —
@@ -17,12 +18,17 @@ export function NovedadesFeedPage() {
   const { accessToken } = useAuth();
   const [novedades, setNovedades] = useState<Novedad[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!accessToken) return;
     verFeedNovedades(accessToken)
       .then(setNovedades)
-      .catch((err) => console.error("Error cargando novedades", err))
+      // ¿Qué? Antes solo se hacía console.error y la UI caía en el mismo
+      //       bloque de "no hay novedades" que un feed vacío de verdad.
+      // ¿Impacto? Un token vencido o el servidor caído se veían exactamente
+      //           igual que "no hay nada nuevo" — ahora hay un aviso propio.
+      .catch(() => setError(true))
       .finally(() => setCargando(false));
   }, [accessToken]);
 
@@ -35,7 +41,9 @@ export function NovedadesFeedPage() {
 
       {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
 
-      {!cargando && novedades.length === 0 && (
+      {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
+
+      {!cargando && !error && novedades.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("novedades.feed.empty")}</p>

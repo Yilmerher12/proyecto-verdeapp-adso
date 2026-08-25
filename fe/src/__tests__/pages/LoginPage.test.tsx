@@ -55,12 +55,13 @@ describe("LoginPage", () => {
     expect(passwordInput).toHaveValue("Password1");
   });
 
-  // ¿Qué? Verifica que al enviar el formulario se ejecuta login() con el
-  //       payload real: correo_electronico + username (ambos con el mismo
-  //       valor del campo email) + password.
-  // ¿Para qué? LoginPage.tsx construye loginPayload así porque el backend
-  //           acepta login por correo_electronico o por username — se
-  //           manda el mismo valor en ambos para máxima compatibilidad.
+  // ¿Qué? Verifica que al enviar el formulario se ejecuta login() con
+  //       exactamente el payload que declara el tipo LoginRequest.
+  // ¿Para qué? Antes se armaba { correo_electronico, username, password } y
+  //           se forzaba con "as any" porque no coincidía con LoginRequest —
+  //           funcionaba solo porque el backend tolera varios nombres de
+  //           campo, pero TypeScript no revisaba nada. Ahora se manda
+  //           { email, password } tal cual el tipo lo exige.
   it("ejecuta login con el payload correcto al enviar el formulario", async () => {
     const loginMock = vi.fn().mockResolvedValue({ role_id: 2 });
     const user = userEvent.setup();
@@ -75,8 +76,7 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: "Iniciar Sesión" }));
 
     expect(loginMock).toHaveBeenCalledWith({
-      correo_electronico: "test@example.com",
-      username: "test@example.com",
+      email: "test@example.com",
       password: "Password1",
     });
   });

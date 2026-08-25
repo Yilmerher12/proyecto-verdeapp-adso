@@ -4,6 +4,7 @@ Descripción: Lógica de negocio de autenticación adaptada a las tablas en espa
 ¿Para qué? Controlar el registro distribuido, inicio de sesión y emisión de tokens SMTP.
 """
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
@@ -34,6 +35,8 @@ from app.utils.security import (
     hash_password,
     verify_password,
 )
+
+logger = logging.getLogger(__name__)
 
 
 async def register_user(db: Session, user_data: UserCreate) -> Usuario:
@@ -143,8 +146,8 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
 
         try:
             await send_verification_email(email=nuevo_usuario.correo_electronico, token=token_verificacion)
-        except Exception as email_err:
-            print(f"Advertencia: Registro completado, pero el correo no se pudo despachar: {str(email_err)}")
+        except Exception:
+            logger.warning("Registro completado, pero el correo no se pudo despachar", exc_info=True)
 
         db.refresh(nuevo_usuario)
         return nuevo_usuario
@@ -152,11 +155,21 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
     except HTTPException:
         db.rollback()
         raise
-    except Exception as e:
+    except Exception:
+        # ¿Qué? Antes el detail del 500 incluía str(e) — el mensaje crudo de
+        #       la excepción (puede traer nombres de columnas, constraints o
+        #       hasta fragmentos de la consulta SQL de Postgres).
+        # ¿Para qué? Ese detalle interno no le sirve al usuario para nada, y
+        #           sí le sirve a alguien buscando cómo está armada la BD.
+        # ¿Impacto? El error real se guarda en el log del servidor
+        #           (logger.exception incluye el traceback completo) — quien
+        #           necesite diagnosticar el problema lo revisa ahí, no en la
+        #           respuesta HTTP.
         db.rollback()
+        logger.exception("Error al registrar usuario")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al guardar los datos: {str(e)}"
+            detail="Ocurrió un error al guardar los datos. Intenta de nuevo más tarde."
         )
 
 
@@ -331,8 +344,8 @@ async def request_password_reset(db: Session, email: str) -> bool:
 
     try:
         await send_password_reset_email(email=user.correo_electronico, token=token_str)
-    except Exception as email_err:
-        print(f"Advertencia: No se pudo despachar el correo SMTP: {str(email_err)}")
+    except Exception:
+        logger.warning("No se pudo despachar el correo SMTP de recuperación", exc_info=True)
     return True
 
 

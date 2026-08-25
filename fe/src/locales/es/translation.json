@@ -44,6 +44,7 @@
   },
   "common": {
     "loading": "Cargando...",
+    "loadError": "No se pudo cargar la información. Intenta de nuevo más tarde.",
     "email": "Correo electrónico",
     "emailPlaceholder": "correo@ejemplo.com",
     "password": "Contraseña",

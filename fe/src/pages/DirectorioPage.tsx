@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Phone, MapPin, Users, Building2, MessageCircle } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
+import { Alert } from "@/components/ui/Alert";
 
 interface Localidad {
   id_localidad: number;
@@ -46,6 +47,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const [recicladores, setRecicladores] = useState<Reciclador[]>([]);
   const [puntos, setPuntos] = useState<PuntoAcopio[]>([]);
   const [cargandoDirectorio, setCargandoDirectorio] = useState(false);
+  const [errorDirectorio, setErrorDirectorio] = useState(false);
 
   const headers = { Authorization: `Bearer ${accessToken}` };
 
@@ -76,20 +78,31 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   useEffect(() => {
     if (!accessToken || !localidadCargada) return;
     setCargandoDirectorio(true);
+    setErrorDirectorio(false);
 
     const params = localidadId ? { localidad_id: localidadId } : {};
 
+    // ¿Qué? Antes el catch ponía la lista en [] — se veía exactamente igual
+    //       que "no hay resultados para este filtro" (un caso real y válido).
+    // ¿Impacto? Ahora un fallo de red/servidor muestra su propio aviso en
+    //           vez de disfrazarse de búsqueda vacía.
     if (tab === "recicladores") {
       axios
         .get(`${API_BASE_URL}/api/v1/directorio/recicladores`, { headers, params })
         .then((res) => setRecicladores(res.data))
-        .catch(() => setRecicladores([]))
+        .catch(() => {
+          setRecicladores([]);
+          setErrorDirectorio(true);
+        })
         .finally(() => setCargandoDirectorio(false));
     } else {
       axios
         .get(`${API_BASE_URL}/api/v1/directorio/puntos-acopio`, { headers, params })
         .then((res) => setPuntos(res.data))
-        .catch(() => setPuntos([]))
+        .catch(() => {
+          setPuntos([]);
+          setErrorDirectorio(true);
+        })
         .finally(() => setCargandoDirectorio(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -160,6 +173,8 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
       {/* Contenido */}
       {cargandoDirectorio ? (
         <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</div>
+      ) : errorDirectorio ? (
+        <Alert type="error" message={t("common.loadError")} />
       ) : tab === "recicladores" && !soloAcopio ? (
         recicladores.length === 0 ? (
           <EmptyState mensaje={t("directorio.emptyRecyclers")} />
