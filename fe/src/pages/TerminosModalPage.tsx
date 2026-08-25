@@ -14,7 +14,7 @@ export function TerminosModalPage() {
 
 return (
     <>
-        <LandingPage />
+        <LandingPage asBackdrop />
         <Modal onClose={() => navigate("/")} wide aria-label="Términos de Uso">
         <TerminosDeUsoPage embedded />
         </Modal>

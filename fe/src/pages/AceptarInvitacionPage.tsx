@@ -131,7 +131,7 @@ export function AceptarInvitacionPage() {
   if (cargandoInfo) {
     return (
       <>
-        <LandingPage />
+        <LandingPage asBackdrop />
         <Modal onClose={() => navigate("/")}>
           <div className="p-10 text-center text-gray-500 dark:text-gray-400">{t("aceptarInvitacion.verifying")}</div>
         </Modal>
@@ -143,7 +143,7 @@ export function AceptarInvitacionPage() {
   if (!infoInvitacion?.valido) {
     return (
       <>
-        <LandingPage />
+        <LandingPage asBackdrop />
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4">
             <div className="mx-auto w-16 h-16 bg-red-100 flex items-center justify-center rounded-full border border-red-200 dark:bg-red-900/30 dark:border-red-800/40">
@@ -166,7 +166,7 @@ export function AceptarInvitacionPage() {
   if (exito) {
     return (
       <>
-        <LandingPage />
+        <LandingPage asBackdrop />
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4 animate-fade-in">
             <div className="mx-auto w-20 h-20 bg-green-100 flex items-center justify-center rounded-full border border-green-200 dark:bg-green-900/30 dark:border-green-800/40">
@@ -190,7 +190,7 @@ export function AceptarInvitacionPage() {
   // ─── Estado: formulario de aceptación ───
   return (
     <>
-      <LandingPage />
+      <LandingPage asBackdrop />
       <Modal onClose={() => navigate("/")} wide>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-6">

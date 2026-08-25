@@ -1,4 +1,5 @@
-﻿import { Link } from "react-router-dom";
+﻿import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, MapPin, Users, Recycle, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -35,14 +36,16 @@ function PasoCard({
   descripcion,
   numero,
   index,
+  sinAnimacion,
 }: {
   imgSrc: string;
   titulo: string;
   descripcion: string;
   numero: number;
   index: number;
+  sinAnimacion: boolean;
 }) {
-  const { ref, visible } = useScrollReveal<HTMLElement>();
+  const { ref, visible } = useScrollReveal<HTMLElement>(0.15, sinAnimacion);
 
   return (
     <article
@@ -75,14 +78,16 @@ function PilarCard({
   descripcion,
   numero,
   index,
+  sinAnimacion,
 }: {
   Icon: LucideIcon;
   titulo: string;
   descripcion: string;
   numero: string;
   index: number;
+  sinAnimacion: boolean;
 }) {
-  const { ref, visible } = useScrollReveal<HTMLDivElement>();
+  const { ref, visible } = useScrollReveal<HTMLDivElement>(0.15, sinAnimacion);
 
   return (
     <div
@@ -109,13 +114,64 @@ function PilarCard({
   );
 }
 
-export function LandingPage() {
+// ¿Qué? Bandera a nivel de módulo (no de estado de React) que recuerda si
+//       la animación del encabezado ya se mostró una vez durante esta
+//       carga de página (esta pestaña, desde el último F5).
+// ¿Para qué? React desmonta y vuelve a montar LandingPage por completo cada
+//           vez que se navega hacia/desde Login, Registro, Términos,
+//           Privacidad, Cookies, Contacto o Aceptar invitación (todas
+//           muestran esta misma Landing de fondo). Sin esta bandera, cada
+//           uno de esos montajes disparaba la animación otra vez — se veía
+//           como si la página se recargara cada vez que se hacía clic en
+//           cualquier lado. Al vivir FUERA del componente (variable de
+//           módulo), sobrevive a que el componente se desmonte y remonte;
+//           solo se reinicia si el usuario recarga el navegador de verdad.
+// ¿Impacto? La animación de entrada se ve una vez por carga de página, tal
+//           como se espera en la mayoría de sitios — no en cada clic.
+let animacionHeroYaSeMostro = false;
+
+interface LandingPageProps {
+  // ¿Qué? true cuando este Landing se usa solo como fondo detrás de un
+  //       modal (Login, Registro, Términos, Privacidad, Cookies, Contacto,
+  //       Aceptar invitación) — no como la página principal.
+  // ¿Para qué? En ese caso, esta misma Landing se vuelve a montar desde
+  //           cero cada vez, y sin este modo el scroll saltaría de golpe a
+  //           donde estaba la última vez que se vio la Landing real.
+  // ¿Impacto? Con asBackdrop=true no se restaura ningún scroll. La
+  //           animación del encabezado ya se controla aparte (ver
+  //           animacionHeroYaSeMostro arriba) y nunca se repite sin
+  //           importar el valor de asBackdrop.
+  asBackdrop?: boolean;
+}
+
+export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
   const { t } = useTranslation();
 
   // ¿Qué? Recuerda dónde estaba el usuario en el Landing y lo restaura al
   //       volver (ej: después de cerrar Términos/Privacidad/Cookies desde
   //       el footer, que remontan esta página desde cero).
-  useRestoreScroll("landing-scroll-y");
+  // ¿Impacto? Desactivado cuando asBackdrop=true (ver interfaz arriba).
+  useRestoreScroll("landing-scroll-y", !asBackdrop);
+
+  // ¿Qué? Decide UNA sola vez, al crear este componente, si le toca animar.
+  // ¿Para qué? useState(() => ...) solo corre esta función en el primer
+  //           render de ESTE montaje — perfecto para "consumir" la bandera
+  //           de módulo exactamente una vez por montaje real.
+  const [debeAnimar] = useState(() => {
+    // ¿Qué? De fondo NUNCA anima, sin importar el orden de montaje.
+    // ¿Para qué? Si el primer montaje de esta carga de página resultaba
+    //           ser justo uno "de fondo" (ej: se entra directo a /register
+    //           por URL), esta bandera se consumía ahí y la Landing real
+    //           se quedaba sin su única animación — o peor, el de fondo sí
+    //           animaba por ser el primero. Cortarlo aquí, antes de tocar
+    //           la bandera compartida, evita ambos casos.
+    if (asBackdrop) return false;
+    if (animacionHeroYaSeMostro) return false;
+    animacionHeroYaSeMostro = true;
+    return true;
+  });
+
+  const heroAnim = debeAnimar ? "animate-hero-in" : "";
 
   const pasos = PASOS_META.map(({ imgSrc, key }) => ({
     imgSrc,
@@ -236,27 +292,27 @@ export function LandingPage() {
 
             <h1
               id="hero-heading"
-              className="animate-hero-in mb-4 text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow sm:text-7xl"
+              className={`${heroAnim} mb-4 text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow sm:text-7xl`}
             >
               Verde<span className="text-green-400">App</span>
             </h1>
 
             <p
-              className="animate-hero-in mb-3 text-lg font-semibold text-white/90 sm:text-xl"
+              className={`${heroAnim} mb-3 text-lg font-semibold text-white/90 sm:text-xl`}
               style={{ animationDelay: "120ms" }}
             >
               {t("landing.hero.subtitle")}
             </p>
 
             <p
-              className="animate-hero-in mx-auto mb-10 max-w-xl text-sm leading-relaxed"
+              className={`${heroAnim} mx-auto mb-10 max-w-xl text-sm leading-relaxed`}
               style={{ color: "rgba(255,255,255,0.55)", animationDelay: "240ms" }}
             >
               {t("landing.hero.description")}
             </p>
 
             <div
-              className="animate-hero-in flex flex-col items-center justify-center gap-3 sm:flex-row"
+              className={`${heroAnim} flex flex-col items-center justify-center gap-3 sm:flex-row`}
               style={{ animationDelay: "360ms" }}
             >
               <Link
@@ -322,6 +378,7 @@ export function LandingPage() {
                   descripcion={descripcion}
                   numero={i + 1}
                   index={i}
+                  sinAnimacion={!debeAnimar}
                 />
               ))}
             </div>
@@ -360,6 +417,7 @@ export function LandingPage() {
                   descripcion={descripcion}
                   numero={`0${i + 1}`}
                   index={i}
+                  sinAnimacion={!debeAnimar}
                 />
               ))}
             </div>
