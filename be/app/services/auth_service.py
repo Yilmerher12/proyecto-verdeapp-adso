@@ -28,8 +28,6 @@ from app.schemas.user import (
 )
 
 from app.utils.email import send_password_reset_email, send_verification_email
-
-logger = logging.getLogger(__name__)
 from app.utils.security import (
     create_access_token,
     create_refresh_token,
@@ -37,6 +35,8 @@ from app.utils.security import (
     hash_password,
     verify_password,
 )
+
+logger = logging.getLogger(__name__)
 
 
 async def register_user(db: Session, user_data: UserCreate) -> Usuario:
