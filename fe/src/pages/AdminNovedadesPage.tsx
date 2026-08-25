@@ -167,12 +167,12 @@ export function AdminNovedadesPage() {
         </p>
       )}
 
-      {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
+      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
 
       {!cargando && novedades.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-400">{t("novedades.admin.emptyState")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("novedades.admin.emptyState")}</p>
         </div>
       )}
 
@@ -196,7 +196,7 @@ export function AdminNovedadesPage() {
                     </span>
                   )}
                   {item.editado && (
-                    <span className="text-xs italic text-gray-400">{t("comunicados.editedBadge")}</span>
+                    <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
                   )}
                 </div>
                 <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
@@ -211,7 +211,7 @@ export function AdminNovedadesPage() {
                     {t("comunicados.viewAttachment")}
                   </a>
                 )}
-                <p className="mt-2 text-xs text-gray-400">
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   {t("novedades.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
                 </p>
               </div>
@@ -285,7 +285,7 @@ export function AdminNovedadesPage() {
                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {t(`novedades.alcances.${editando.alcance}`)}
                 </p>
-                <p className="mt-1 text-[11px] text-gray-400">{t("novedades.admin.alcanceNoEditable")}</p>
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.alcanceNoEditable")}</p>
               </div>
             )}
 
@@ -323,7 +323,7 @@ export function AdminNovedadesPage() {
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
-              <p className="mt-1 text-[11px] text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
+              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
             <div className="flex gap-2 pt-2">

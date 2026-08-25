@@ -131,7 +131,7 @@ export function ProfilePage() {
     }
   };
 
-  if (cargando) return <p className="text-sm text-gray-400 px-2 pt-6">{t("profile.loading")}</p>;
+  if (cargando) return <p className="text-sm text-gray-500 dark:text-gray-400 px-2 pt-6">{t("profile.loading")}</p>;
   if (!perfil) return <p className="text-sm text-red-500 px-2 pt-6">{t("profile.loadError")}</p>;
 
   const role = ROLE_THEME[perfil.role_id] ?? ROLE_THEME[RoleId.RESIDENTE];
@@ -336,9 +336,9 @@ export function ProfilePage() {
                   {t("common.email")}
                 </label>
                 <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-[#2a4d34] dark:bg-[#0d2116]/60">
-                  <p className="text-sm text-gray-400 dark:text-gray-500">{perfil.email}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{perfil.email}</p>
                 </div>
-                <p className="mt-1 text-[11px] text-gray-400">{t("profile.emailNote")}</p>
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("profile.emailNote")}</p>
               </div>
 
               <div className="flex gap-2 pt-2">

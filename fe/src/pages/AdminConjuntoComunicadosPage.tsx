@@ -216,16 +216,16 @@ export function AdminConjuntoComunicadosPage() {
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
+      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
 
       {!cargando && conjuntos.length === 0 && (
-        <p className="text-sm text-gray-400">{t("comunicados.admin.noConjuntos")}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.noConjuntos")}</p>
       )}
 
       {!cargando && comunicados.length === 0 && conjuntos.length > 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-400">{t("comunicados.admin.emptyState")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.emptyState")}</p>
         </div>
       )}
 
@@ -244,11 +244,11 @@ export function AdminConjuntoComunicadosPage() {
                   <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#1f4029] dark:text-gray-300">
                     {item.nombre_conjunto}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     {t(`comunicados.destinatarios.${item.destinatarios}`)}
                   </span>
                   {item.editado && (
-                    <span className="text-xs italic text-gray-400">{t("comunicados.editedBadge")}</span>
+                    <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
                   )}
                 </div>
                 <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
@@ -263,7 +263,7 @@ export function AdminConjuntoComunicadosPage() {
                     {t("comunicados.viewAttachment")}
                   </a>
                 )}
-                <p className="mt-2 text-xs text-gray-400">
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   {t("comunicados.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
                 </p>
               </div>
@@ -356,7 +356,7 @@ export function AdminConjuntoComunicadosPage() {
                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {editando.nombre_conjunto} · {t(`comunicados.destinatarios.${editando.destinatarios}`)}
                 </p>
-                <p className="mt-1 text-[11px] text-gray-400">{t("comunicados.admin.destinatariosNoEditable")}</p>
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("comunicados.admin.destinatariosNoEditable")}</p>
               </div>
             )}
 
@@ -425,7 +425,7 @@ export function AdminConjuntoComunicadosPage() {
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
-              <p className="mt-1 text-[11px] text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
+              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
             <div className="flex gap-2 pt-2">

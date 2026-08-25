@@ -42,12 +42,12 @@ export function ComunicadosFeedPage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.subtitle")}</p>
       </div>
 
-      {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
+      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
 
       {!cargando && comunicados.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-400">{t("comunicados.feed.empty")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.empty")}</p>
         </div>
       )}
 
@@ -70,9 +70,9 @@ export function ComunicadosFeedPage() {
                 {item.nombre_conjunto}
               </span>
               {item.editado && (
-                <span className="text-xs italic text-gray-400">{t("comunicados.editedBadge")}</span>
+                <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
               )}
-              <span className="ml-auto text-xs text-gray-400">
+              <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
                 {new Date(item.created_at).toLocaleDateString()}
               </span>
             </div>

@@ -159,7 +159,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
 
       {/* Contenido */}
       {cargandoDirectorio ? (
-        <div className="py-12 text-center text-sm text-gray-400">{t("common.loading")}</div>
+        <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</div>
       ) : tab === "recicladores" && !soloAcopio ? (
         recicladores.length === 0 ? (
           <EmptyState mensaje={t("directorio.emptyRecyclers")} />
@@ -209,7 +209,7 @@ function TarjetaReciclador({
             {r.nombre} {r.apellidos}
           </p>
           {r.nombre_localidad && (
-            <p className="text-xs text-gray-400">{r.nombre_localidad}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{r.nombre_localidad}</p>
           )}
         </div>
       </div>
@@ -241,7 +241,7 @@ function TarjetaReciclador({
           </a>
         </div>
       ) : (
-        <p className="text-xs text-gray-400">{t("directorio.noPhone")}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{t("directorio.noPhone")}</p>
       )}
     </div>
   );
@@ -254,7 +254,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
         <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
         <div>
           <p className="font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
-          <p className="text-xs text-gray-400">{p.nombre_localidad}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{p.nombre_localidad}</p>
         </div>
       </div>
 
@@ -270,7 +270,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
           </p>
         )}
         {p.nombre_encargado && (
-          <p className="flex items-center gap-1.5 text-xs text-gray-400">
+          <p className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
             <Users className="h-3.5 w-3.5 shrink-0" />
             {p.nombre_encargado}
           </p>
@@ -284,7 +284,7 @@ function EmptyState({ mensaje }: { mensaje: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-16 text-center dark:border-[#2a4d34] dark:bg-[#132a1c]/40">
       <MapPin className="mx-auto mb-3 h-8 w-8 text-gray-300 dark:text-gray-600" />
-      <p className="text-sm text-gray-400 dark:text-gray-500">{mensaje}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">{mensaje}</p>
     </div>
   );
 }
