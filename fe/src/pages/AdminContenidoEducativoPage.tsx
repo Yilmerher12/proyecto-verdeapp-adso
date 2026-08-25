@@ -125,12 +125,12 @@ export function AdminContenidoEducativoPage() {
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
+      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
 
       {!cargando && contenido.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <BookOpen className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-400">{t("adminContenidoEducativo.emptyState")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("adminContenidoEducativo.emptyState")}</p>
         </div>
       )}
 
