@@ -5,7 +5,7 @@ Adaptado para VerdeApp: Recibe datos completos del formulario (Rol, Datos Person
 """
 
 import re
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, Field, EmailStr, field_validator
 
 
@@ -24,7 +24,16 @@ def _validate_password_strength(v: str) -> str:
 # Schemas de REQUEST (Registro y Login)
 
 class UserCreate(BaseModel):
-    rol: str
+    # ¿Qué? Antes era "rol: str" — cualquier texto pasaba la validación.
+    # ¿Para qué? auth_service.py solo sabe crear la fila de detalle (en
+    #           "recicladores") para "residente" o "reciclador" exactos; un
+    #           valor distinto (typo, mayúscula, u otro rol) no entraba en
+    #           ningún caso del if/elif y dejaba el Usuario creado pero sin
+    #           esa fila — un usuario "huérfano" que nunca puede operar.
+    # ¿Impacto? Con Literal, ese valor inválido ya ni siquiera llega a
+    #           auth_service: Pydantic lo rechaza en la validación del
+    #           request con un 422 claro, antes de tocar la base de datos.
+    rol: Literal["residente", "reciclador"]
     correo_electronico: EmailStr
     password: str
     nombre: str
@@ -51,6 +60,17 @@ class UserCreate(BaseModel):
         if not v or not v.strip():
             raise ValueError("Los apellidos son obligatorios")
         return v
+
+    # ¿Qué? Antes UserCreate era el único de los 3 schemas de contraseña
+    #       (registro, cambio, recuperación) sin este validador.
+    # ¿Impacto? Sin esto, alguien podía registrarse con una contraseña de 1
+    #           carácter, pero luego "cambiar contraseña" o "recuperar
+    #           contraseña" SÍ le exigían la contraseña fuerte — la puerta
+    #           de entrada era más débil que el resto de la app.
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        return _validate_password_strength(v)
 
 
 class UserLogin(BaseModel):
