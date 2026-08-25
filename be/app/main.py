@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings
 from app.routers import auth, users, geography, admin
 from app.routers import admin_conjunto
 from app.routers import conjunto_panel
@@ -20,7 +21,23 @@ from app.routers import novedades
 #           solo al iniciar el contenedor. En desarrollo local (sin Docker), hay que
 #           correr "alembic upgrade head" manualmente después de cada cambio en los
 #           modelos — ver docs/setup o preguntar antes de generar una migración nueva.
-app = FastAPI(title="VerdeApp API")
+# ¿Qué? Antes esta línea era "FastAPI(title=...)" sin más — /docs y /redoc
+#       quedaban siempre encendidos sin importar el entorno, pese a que el
+#       comentario de settings.ENVIRONMENT (app/config.py) ya decía que
+#       debían apagarse en producción.
+# ¿Para qué? OWASP A05 (Security Misconfiguration): la documentación
+#           interactiva expone todos los endpoints y schemas sin auth —
+#           útil en desarrollo, un riesgo real si queda pública en producción.
+# ¿Impacto? Con ENVIRONMENT=production, /docs y /redoc devuelven 404. En
+#           development/testing (el valor por defecto) siguen disponibles
+#           igual que antes.
+_es_produccion = settings.ENVIRONMENT == "production"
+app = FastAPI(
+    title="VerdeApp API",
+    docs_url=None if _es_produccion else "/docs",
+    redoc_url=None if _es_produccion else "/redoc",
+    openapi_url=None if _es_produccion else "/openapi.json",
+)
 
 # ¿Qué? Lista explícita de orígenes permitidos para hablarle al backend.
 # ¿Para qué? Antes se usaba allow_origins=["*"] ("cualquier sitio web del
