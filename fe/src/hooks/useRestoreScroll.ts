@@ -14,12 +14,21 @@ import { useEffect, useRef } from "react";
  *           Cookies desde el footer y vuelva, pierde su lugar en la página
  *           y tiene que buscar de nuevo dónde estaba.
  */
-export function useRestoreScroll(storageKey: string) {
+export function useRestoreScroll(storageKey: string, enabled = true) {
   // ¿Qué? Evita que el scroll-restore de abajo se guarde a sí mismo como si
   //       fuera un scroll real del usuario.
   const restaurando = useRef(false);
 
   useEffect(() => {
+    // ¿Qué? Cuando LandingPage se usa como fondo de un modal (Login,
+    //       Registro, Términos, etc.), este hook no debe hacer nada — si no,
+    //       cada vez que se monta de fondo salta de golpe al scroll que
+    //       tenía la última vez que se vio la Landing real, dando la
+    //       sensación de que la página "se recargó".
+    // ¿Para qué? enabled=false lo desactiva sin romper las reglas de hooks
+    //           (el hook siempre se llama, solo que no hace nada).
+    if (!enabled) return;
+
     const guardado = sessionStorage.getItem(storageKey);
     if (guardado) {
       // ¿Qué? Se restaura directo, de forma síncrona dentro del efecto.
@@ -51,5 +60,5 @@ export function useRestoreScroll(storageKey: string) {
       window.removeEventListener("scroll", handleScroll);
       if (timeoutId !== null) clearTimeout(timeoutId);
     };
-  }, [storageKey]);
+  }, [storageKey, enabled]);
 }

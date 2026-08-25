@@ -11,7 +11,7 @@ export function CookiesModalPage() {
 
   return (
     <>
-      <LandingPage />
+      <LandingPage asBackdrop />
       <Modal onClose={() => navigate("/")} wide aria-label="Política de Cookies">
         <PoliticaCookiesPage embedded />
       </Modal>

@@ -202,7 +202,7 @@ export function RegisterPage() {
   if (showSuccessModal) {
     return (
       <>
-        <LandingPage />
+        <LandingPage asBackdrop />
         <Modal onClose={() => navigate("/")}>
           <div className="p-6 sm:p-8 text-center max-w-sm mx-auto">
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 ring-8 ring-green-50 dark:bg-green-900/20 dark:ring-green-900/20">
@@ -245,7 +245,7 @@ export function RegisterPage() {
 
   return (
     <>
-      <LandingPage />
+      <LandingPage asBackdrop />
 
       {/*
         ¿Qué? layer="stacked" — garantiza que este modal se vea SIEMPRE

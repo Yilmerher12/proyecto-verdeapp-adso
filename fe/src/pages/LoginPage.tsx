@@ -72,7 +72,7 @@ export function LoginPage() {
 
   return (
     <>
-      <LandingPage />
+      <LandingPage asBackdrop />
       <Modal onClose={() => navigate("/")}>
         <div className="p-6 sm:p-8 max-w-md mx-auto">
           <div className="mb-6 text-center sm:text-left">

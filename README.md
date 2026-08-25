@@ -142,6 +142,8 @@ SMTP_HOST=localhost
 
 #### Paso 3 — Encender el backend (Terminal 1 — PowerShell)
 
+> ⚠️ **Importante:** el Paso 1 (encender `verde_db`) tiene que estar hecho y corriendo *antes* de este paso. Si el backend arranca sin la base de datos disponible, falla con un error de conexión rechazada en el puerto 5433.
+
 ```powershell
 cd be
 
@@ -149,14 +151,18 @@ cd be
 # entorno virtual solo, no hace falta crearlo ni activarlo a mano)
 uv sync
 
-# Aplicar las migraciones de Alembic
+# Aplicar las migraciones de Alembic (crea las tablas)
 uv run alembic upgrade head
+
+# Sembrar los datos de prueba (roles, usuarios de ejemplo, conjuntos, etc.)
+# Es seguro correrlo varias veces: si la base ya tiene datos, no hace nada.
+uv run python -m app.seed
 
 # Encender el servidor
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-> En ejecuciones siguientes solo necesitamos correr uvicorn (uv usa el entorno correcto solo):
+> En ejecuciones siguientes normalmente solo hace falta encender uvicorn (uv usa el entorno correcto solo). Repetir `uv run python -m app.seed` no hace daño, pero solo es necesario si empezaste con una base de datos nueva (ej: borraste el volumen de Docker):
 > ```powershell
 > uv run uvicorn app.main:app --reload --port 8000
 > ```

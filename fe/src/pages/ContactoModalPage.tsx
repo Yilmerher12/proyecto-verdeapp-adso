@@ -39,7 +39,7 @@ export function ContactoModalPage() {
 
   return (
     <>
-      <LandingPage />
+      <LandingPage asBackdrop />
       <Modal onClose={() => navigate("/")} wide aria-label="Contacto">
         <div className="max-h-[85vh] overflow-y-auto p-6 sm:p-8">
           <div className="mb-6 text-center">
