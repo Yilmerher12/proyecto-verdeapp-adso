@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   PackageCheck,
   DoorOpen,
-  X,
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
@@ -21,6 +20,7 @@ import { RoleId } from "@/types/auth";
 import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
+import { Modal } from "@/components/ui/Modal";
 
 interface InvitacionPendiente {
   id: string;
@@ -337,23 +337,19 @@ export function RecicladorDashboard() {
       )}
 
       {/* Modal: seleccionar conjunto para enviar notificación */}
+      {/* ¿Qué? Antes era un <div> armado a mano — no cerraba con Escape, no
+          movía el foco al abrirse ni lo devolvía al cerrar, y su botón de
+          cerrar no tenía aria-label (un lector de pantalla solo anunciaba
+          "botón", sin decir qué hacía).
+          ¿Impacto? Al reusar el <Modal> compartido, este diálogo se
+          comporta exactamente igual que el resto de la app (login, registro,
+          confirmación de logout) en vez de ser el único caso especial. */}
       {modalTipo && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-          onClick={(e) => e.target === e.currentTarget && setModalTipo(null)}
-        >
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-[#132a1c]">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                {t("dashboards.reciclador.modal.title")}
-              </h3>
-              <button
-                onClick={() => setModalTipo(null)}
-                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-[#2a4d34]"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+        <Modal onClose={() => setModalTipo(null)} aria-label={t("dashboards.reciclador.modal.title")}>
+          <div className="p-6">
+            <h3 className="mb-4 text-base font-bold text-gray-900 dark:text-white">
+              {t("dashboards.reciclador.modal.title")}
+            </h3>
 
             <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
               {t("dashboards.reciclador.modal.subtitle")}
@@ -392,7 +388,7 @@ export function RecicladorDashboard() {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
