@@ -42,7 +42,7 @@ El proyecto utiliza una estructura de arquitectura limpia y desacoplada, facilit
 | Gestor de Paquetes (Frontend) | pnpm (Corepack)         | 11.0.9                   | Resolución eficiente de dependencias mediante almacenamiento enlazado.            |
 | Infraestructura               | Docker & Docker Compose | 24+ / 2.20+              | Contenedores herméticos que aseguran el funcionamiento idéntico en cualquier PC.  |
 | Servidor Web FE               | Nginx                   | 1.27-alpine              | Servidor de alto rendimiento para la distribución de los estáticos del Frontend.  |
-| Servidor SMTP Dev             | Mailpit                 | latest (sin versión fija) | Captura local de correos (verificación, recuperación, invitaciones) en el puerto 8025. |
+| Servidor SMTP Dev             | Mailpit                 | v1.31.0 | Captura local de correos (verificación, recuperación, invitaciones) en el puerto 8025. |
 
 ---
 
@@ -222,7 +222,7 @@ La base de datos vive dentro de Docker pero se puede consultar desde tu máquina
 
 ### Opción 2: Extensión de VS Code (SQLTools)
 
-El proyecto ya incluye la conexión preconfigurada. Solo necesitas:
+El repositorio ya incluye la conexión preconfigurada en `.vscode/settings.json`. Solo necesitas:
 
 1. Instalar la extensión **SQLTools** y **SQLTools PostgreSQL Driver** en VS Code
 2. Abrir el panel de SQLTools (ícono de base de datos en la barra lateral)
