@@ -48,10 +48,48 @@ export function Modal({
 }: ModalProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const elementoConFocoPrevioRef = useRef<HTMLElement | null>(null);
+
+  // ¿Qué? Atrapa el Tab/Shift+Tab dentro del diálogo, y devuelve el foco a
+  //       lo que estaba enfocado antes de abrir el modal, al cerrarlo.
+  // ¿Para qué? Sin esto, con Tab se podía salir del modal hacia el contenido
+  //           de fondo (la landing page detrás) — un usuario de teclado o
+  //           lector de pantalla quedaba "perdido" fuera del diálogo activo.
+  // ¿Impacto? WCAG 2.4.3 (Focus Order) y 2.1.2 (No Keyboard Trap invertido:
+  //           el foco debe quedar contenido en el diálogo mientras esté
+  //           abierto, pero liberarse limpio al cerrarse).
+  useEffect(() => {
+    elementoConFocoPrevioRef.current = document.activeElement as HTMLElement | null;
+    return () => {
+      elementoConFocoPrevioRef.current?.focus?.();
+    };
+  }, []);
 
   useEffect(() => {
+    const SELECTOR_ENFOCABLE =
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      if (e.key === "Tab" && dialogRef.current) {
+        const enfocables = dialogRef.current.querySelectorAll<HTMLElement>(SELECTOR_ENFOCABLE);
+        if (enfocables.length === 0) return;
+
+        const primero = enfocables[0];
+        const ultimo = enfocables[enfocables.length - 1];
+
+        if (e.shiftKey && document.activeElement === primero) {
+          e.preventDefault();
+          ultimo.focus();
+        } else if (!e.shiftKey && document.activeElement === ultimo) {
+          e.preventDefault();
+          primero.focus();
+        }
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);

@@ -516,6 +516,29 @@
       "legalAriaLabel": "Legal notice"
     }
   },
+  "contactoModal": {
+    "title": "Contact Us",
+    "subtitle": "Have questions about VerdeApp, an issue with your account, or want to propose a partnership? Send us a message.",
+    "successMessage": "Message sent successfully! We'll get back to you at your email soon.",
+    "name": {
+      "label": "Full name",
+      "placeholder": "E.g. John Doe"
+    },
+    "email": {
+      "label": "Email address",
+      "placeholder": "john@example.com"
+    },
+    "subject": {
+      "label": "Subject",
+      "placeholder": "How can we help you?"
+    },
+    "message": {
+      "label": "Message",
+      "placeholder": "Write your message here..."
+    },
+    "incomplete": "Complete all fields",
+    "submit": "Send Message"
+  },
   "contact": {
     "nav": {
       "backToHome": "Back to home"

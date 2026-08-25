@@ -520,6 +520,29 @@
       "legalAriaLabel": "Aviso legal"
     }
   },
+  "contactoModal": {
+    "title": "Contáctanos",
+    "subtitle": "¿Tienes dudas sobre VerdeApp, problemas con tu cuenta o quieres proponer una alianza? Déjanos tu mensaje.",
+    "successMessage": "¡Mensaje enviado con éxito! Te responderemos pronto a tu correo electrónico.",
+    "name": {
+      "label": "Nombre completo",
+      "placeholder": "Ej. Juan Pérez"
+    },
+    "email": {
+      "label": "Correo electrónico",
+      "placeholder": "juan@ejemplo.com"
+    },
+    "subject": {
+      "label": "Asunto",
+      "placeholder": "¿En qué podemos ayudarte?"
+    },
+    "message": {
+      "label": "Mensaje",
+      "placeholder": "Escribe tu mensaje aquí..."
+    },
+    "incomplete": "Completa todos los campos",
+    "submit": "Enviar Mensaje"
+  },
   "contact": {
     "nav": {
       "backToHome": "Volver al inicio"
