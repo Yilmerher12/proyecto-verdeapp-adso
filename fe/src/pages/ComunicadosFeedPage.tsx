@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AlertTriangle, Megaphone, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { verFeedComunicados, type Comunicado, type TipoComunicado } from "@/lib/comunicadosApi";
+import { Alert } from "@/components/ui/Alert";
 
 // ¿Qué? Mismo criterio de color que en el panel del Admin de Conjunto —
 //       Urgente en rojo para que salte a la vista de inmediato (CA-028.2).
@@ -26,12 +27,13 @@ export function ComunicadosFeedPage() {
   const { accessToken } = useAuth();
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!accessToken) return;
     verFeedComunicados(accessToken)
       .then(setComunicados)
-      .catch((err) => console.error("Error cargando comunicados", err))
+      .catch(() => setError(true))
       .finally(() => setCargando(false));
   }, [accessToken]);
 
@@ -44,7 +46,9 @@ export function ComunicadosFeedPage() {
 
       {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
 
-      {!cargando && comunicados.length === 0 && (
+      {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
+
+      {!cargando && !error && comunicados.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.empty")}</p>

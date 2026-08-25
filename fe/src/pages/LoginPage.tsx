@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Archivo: pages/LoginPage.tsx
  * Descripción: Página de inicio de sesión — formulario de email y contraseña.
@@ -37,18 +36,16 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      const loginPayload = {
-        correo_electronico: formData.email, 
-        username: formData.email,          
-        password: formData.password
-      };
+      // ¿Qué? Antes se armaba { correo_electronico, username, password } y
+      //       se forzaba con "as any" porque no coincidía con LoginRequest
+      //       ({ email, password }) — funcionaba solo porque el backend
+      //       (UserLogin) tolera varios nombres de campo.
+      // ¿Para qué? Enviar exactamente lo que LoginRequest declara, para que
+      //           TypeScript sí revise este payload en vez de dejarlo pasar
+      //           sin chequeo.
+      const userData = await login({ email: formData.email, password: formData.password });
+      const roleId = userData.role_id;
 
-      // 🛠️ CORREGIDO: Forzamos el casteo directo sobre la función login para que TypeScript no chille
-      const response = await login(loginPayload as any);
-      const userData = response as Record<string, any> | null | undefined;
-      
-      const roleId = userData?.role_id || userData?.id_rol;
-      
       if (roleId === RoleId.ADMIN_SISTEMA) {
         navigate("/dashboard/admin", { replace: true });
       } else if (roleId === RoleId.RECICLADOR) {

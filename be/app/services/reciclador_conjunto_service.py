@@ -8,6 +8,7 @@ Descripción: Lógica de negocio para invitar Recicladores a Conjuntos Residenci
           nunca estuvo conectada a ningún flujo real hasta ahora.
 """
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
@@ -22,6 +23,8 @@ from app.models.rol import RolId
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjunto
 from app.utils.email import send_reciclador_conjunto_invitation_email
+
+logger = logging.getLogger(__name__)
 
 
 def _verificar_admin_administra_conjunto(db: Session, id_usuario_admin: int, id_conjunto: int) -> None:
@@ -112,8 +115,8 @@ async def invitar_reciclador(db: Session, id_usuario_admin: int, correo_reciclad
             email=usuario_reciclador.correo_electronico,
             nombre_conjunto=conjunto.nombre_conjunto if conjunto else "tu conjunto",
         )
-    except Exception as email_err:
-        print(f"Advertencia: invitación creada, pero el correo no se pudo despachar: {str(email_err)}")
+    except Exception:
+        logger.warning("Invitación creada, pero el correo no se pudo despachar", exc_info=True)
 
     return nueva_invitacion
 

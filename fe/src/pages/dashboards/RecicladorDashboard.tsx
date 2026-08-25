@@ -20,6 +20,7 @@ import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
+import { Alert } from "@/components/ui/Alert";
 
 interface InvitacionPendiente {
   id: string;
@@ -81,6 +82,7 @@ export function RecicladorDashboard() {
   const [conjuntosAutorizados, setConjuntosAutorizados] = useState<ConjuntoAutorizado[]>([]);
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(false);
   const [procesandoId, setProcesandoId] = useState<string | null>(null);
 
   // Modal de selección de conjunto
@@ -101,8 +103,14 @@ export function RecicladorDashboard() {
         setInvitaciones(resInv.data);
         setConjuntosAutorizados(resConj.data);
         setNotificaciones(resNotifs.data);
+        setErrorCarga(false);
       })
-      .catch(() => {})
+      // ¿Qué? Antes un .catch(() => {}) vacío no dejaba ningún rastro de que
+      //       algo falló — el dashboard se quedaba tal cual, sin avisar.
+      // ¿Impacto? Ahora se muestra un aviso; como cargarDatos() también
+      //           corre cada 20s (polling), el aviso desaparece solo en
+      //           cuanto una siguiente carga sí funcione.
+      .catch(() => setErrorCarga(true))
       .finally(() => setCargando(false));
   };
 
@@ -200,6 +208,8 @@ export function RecicladorDashboard() {
           </div>
         </div>
       </div>
+
+      {!cargando && errorCarga && <Alert type="error" message={t("common.loadError")} />}
 
       {/* Feedback de notificación enviada */}
       {feedbackOk && (
