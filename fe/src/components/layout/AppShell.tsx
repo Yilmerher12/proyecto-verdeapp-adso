@@ -8,6 +8,8 @@ import {
   LogOut,
   ChevronsLeft,
   ChevronsRight,
+  Menu,
+  X,
   BookOpen,
   MapPin,
   Megaphone,
@@ -186,8 +188,32 @@ export function AppShell({ children }: AppShellProps) {
             marca (en claro y oscuro), así que el logo siempre es la versión
             blanca — la de color quedaba pensada para un fondo claro que ya
             no existe aquí. */}
-        <div className={`flex min-w-0 shrink-0 items-center border-b border-white/10 h-16 ${collapsed ? "justify-center px-3" : "px-5"}`}>
+        <div
+          className={`flex min-w-0 shrink-0 items-center justify-between border-b border-white/10 h-16 px-5 ${
+            collapsed ? "sm:justify-center sm:px-3" : ""
+          }`}
+        >
           <img src="/logos/logo-white.png" alt="VerdeApp" className={`${collapsed ? "h-7" : "h-8"} w-auto object-contain`} />
+
+          {/* ¿Qué? Botón para colapsar/expandir la barra lateral, visible
+              solo en celular (el de más abajo, "Alternador de ancho", es
+              solo para escritorio).
+              ¿Para qué? En celular no existía NINGÚN botón para cerrar la
+              barra — el de escritorio está oculto ahí (hidden sm:flex), así
+              que la barra siempre se veía desplegada al 100%, empujando todo
+              el contenido hacia abajo sin forma de navegar cómodo.
+              ¿Impacto? Reutiliza el mismo estado "collapsed": en celular,
+              colapsado = la barra se encoge a solo esta franja del logo
+              (ya que el resto de bloques usan "hidden sm:block" cuando
+              collapsed es true), dejando ver el contenido de inmediato. */}
+          <button
+            type="button"
+            onClick={() => setCollapsed((prev) => !prev)}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-green-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
+            aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
+          >
+            {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+          </button>
         </div>
 
         {/* Tarjeta de perfil */}
