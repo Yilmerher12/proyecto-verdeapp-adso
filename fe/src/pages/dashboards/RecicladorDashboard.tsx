@@ -220,7 +220,7 @@ export function RecicladorDashboard() {
             {t("dashboards.reciclador.sendSection.noConjuntos")}
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
             {ACCIONES.map(({ tipo, label, icon: Icon, color }) => (
               <button
                 key={tipo}
