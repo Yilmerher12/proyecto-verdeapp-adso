@@ -945,6 +945,28 @@ def change_password(
 
 (\*) Requieren un token especial (refresh o verificación), pero no el access token estándar.
 
+### 14.3 Otros routers del dominio (resumen)
+
+Las tablas anteriores solo cubrían `auth.py` y `users.py` — el backend real
+tiene 10 routers más, todos del dominio de reciclaje. En vez de repetir el
+fragmento pedagógico completo para cada uno (ver directamente el código,
+cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
+
+| Router                     | Prefijo                        | Endpoints | Propósito                                                                          |
+| --------------------------- | ------------------------------- | :-------: | ----------------------------------------------------------------------------------- |
+| `geography.py`              | `/api/v1/geography`             |     6     | Localidades, conjuntos y unidades para llenar formularios dinámicos (registro, filtros) |
+| `admin.py`                  | `/api/v1/admin`                 |     2     | Panel exclusivo del Admin del Sistema — vista SQL y procedimiento almacenado (Criterios 6 y 7) |
+| `admin_conjunto.py`         | `/api/v1/admin-conjunto`        |     7     | Invitación, desvinculación y reasignación de Administradores de Conjunto (RQF-016) |
+| `conjunto_panel.py`         | `/api/v1/conjunto-panel`        |     3     | Panel propio del Admin de Conjunto — solo ve/edita SUS conjuntos, nunca los de otro |
+| `reciclador_conjunto.py`    | `/api/v1/reciclador-conjunto`   |     5     | Invitar, listar, aceptar/rechazar la relación Reciclador↔Conjunto                  |
+| `directorio.py`             | `/api/v1/directorio`            |     2     | Directorio público de recicladores y puntos de acopio                              |
+| `notificaciones.py`         | `/api/v1/notificaciones`        |     7     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, etc.)      |
+| `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     4     | Catálogo de contenido educativo — lectura para todos, gestión solo Admin Sistema (RQF-004/010) |
+| `comunicados.py`            | `/api/v1/comunicados`           |     5     | Comunicados del conjunto — publica Admin de Conjunto, ven Residente/Reciclador (RQF-014) |
+| `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
+
+Todos estos routers están cubiertos por tests en `app/tests/` (ver sección 17).
+
 ---
 
 ## 15. Utilidades adicionales (`utils/`)
