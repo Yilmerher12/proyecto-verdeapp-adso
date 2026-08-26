@@ -55,6 +55,8 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
         "nombre_localidad": None,
         # Lista de conjuntos que administra, solo aplica si es Administrador de Conjunto.
         "conjuntos_administrados": None,
+        # Solo aplica al rol Reciclador — ver RolId.RECICLADOR más abajo.
+        "mostrar_contacto_directorio": False,
     }
 
     # Consultas relacionales por estrategia de JOINs explícitos
@@ -89,6 +91,7 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
                 Reciclador.apellidos,
                 Reciclador.numero_telefonico,
                 Reciclador.asociacion,
+                Reciclador.mostrar_contacto_directorio,
                 Localidad.nombre_localidad
             )
             .join(Localidad, Reciclador.localidad_id == Localidad.id_localidad)
@@ -102,6 +105,7 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
             payload["numero_telefonico"] = res.numero_telefonico or "No registrado"
             payload["asociacion"] = res.asociacion or "INDEPENDIENTE"
             payload["nombre_localidad"] = res.nombre_localidad
+            payload["mostrar_contacto_directorio"] = res.mostrar_contacto_directorio
 
     elif current_user.id_rol == RolId.ADMIN_CONJUNTO:
         stmt = select(AdministradorConjunto).where(
@@ -153,6 +157,7 @@ def update_profile(
             row.numero_telefonico = telefono or "N/A"
             asociacion = (body.asociacion or "").strip()
             row.asociacion = asociacion or "INDEPENDIENTE"
+            row.mostrar_contacto_directorio = body.mostrar_contacto_directorio
     elif current_user.id_rol == RolId.ADMIN_CONJUNTO:
         row = db.execute(select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == current_user.id_usuario)).scalar_one_or_none()
         if row:

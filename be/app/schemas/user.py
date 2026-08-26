@@ -146,6 +146,10 @@ class UpdateProfileBody(BaseModel):
     #       ignora para Residente/Admin de Conjunto, cuyos modelos no
     #       tienen esta columna.
     asociacion: Optional[str] = None
+    # ¿Qué? Consentimiento del reciclador para mostrar su teléfono en el
+    #       Directorio general. Solo aplica al rol Reciclador, igual que
+    #       "asociacion" — el endpoint la ignora para los demás roles.
+    mostrar_contacto_directorio: bool = False
 
 
 class UpdateLocaleRequest(BaseModel):
