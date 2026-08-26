@@ -631,9 +631,21 @@
         "hide": "Ocultar"
       },
       "loadingData": "Cargando datos...",
+      "usersSection": {
+        "title": "Usuarios registrados",
+        "tabs": {
+          "residentes": "Residentes",
+          "recicladores": "Recicladores",
+          "administradores": "Admins. de Conjunto"
+        },
+        "searchPlaceholder": "Buscar por nombre o correo...",
+        "pagination": {
+          "showing": "Mostrando {{from}}–{{to}} de {{total}}",
+          "prev": "Página anterior",
+          "next": "Página siguiente"
+        }
+      },
       "residentsTable": {
-        "title": "Listado de Residentes",
-        "badge": "Vista SQL",
         "headers": {
           "email": "Correo",
           "name": "Nombre",
@@ -644,14 +656,21 @@
         "empty": "No hay residentes registrados todavía."
       },
       "recyclersTable": {
-        "title": "Listado de Recicladores",
-        "badge": "Procedimiento Almacenado",
         "headers": {
           "email": "Correo",
           "fullName": "Nombre completo",
           "association": "Asociación"
         },
         "empty": "No hay recicladores registrados todavía."
+      },
+      "adminsTable": {
+        "headers": {
+          "email": "Correo",
+          "name": "Nombre",
+          "phone": "Teléfono",
+          "conjuntos": "Conjuntos"
+        },
+        "empty": "No hay administradores de conjunto registrados todavía."
       }
     },
     "adminConjunto": {
