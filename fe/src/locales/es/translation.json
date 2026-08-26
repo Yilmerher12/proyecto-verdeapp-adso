@@ -770,7 +770,12 @@
       "baseLocality": "Localidad base",
       "association": "Asociación",
       "firstName": "Nombre",
-      "lastName": "Apellidos"
+      "lastName": "Apellidos",
+      "directoryVisibility": "Visibilidad del teléfono",
+      "directoryVisibilityOn": "Visible",
+      "directoryVisibilityOff": "No visible",
+      "directoryConsent": "Permitir que otros usuarios vean mi número",
+      "directoryConsentHint": "Residentes de toda la ciudad podrán llamarte o escribirte por WhatsApp directamente, no solo los de tu conjunto."
     },
     "managedConjuntoSingular": "Conjunto que administras",
     "managedConjuntoPlural": "Conjuntos que administras",

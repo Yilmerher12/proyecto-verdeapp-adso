@@ -766,7 +766,12 @@
       "baseLocality": "Base district",
       "association": "Association",
       "firstName": "First name",
-      "lastName": "Last name"
+      "lastName": "Last name",
+      "directoryVisibility": "Phone visibility",
+      "directoryVisibilityOn": "Visible",
+      "directoryVisibilityOff": "Not visible",
+      "directoryConsent": "Allow other users to see my number",
+      "directoryConsentHint": "Residents across the city will be able to call or WhatsApp you directly, not just the ones in your building."
     },
     "managedConjuntoSingular": "Building you administer",
     "managedConjuntoPlural": "Buildings you administer",
