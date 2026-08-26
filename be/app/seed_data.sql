@@ -258,69 +258,41 @@ ON CONFLICT DO NOTHING;
 -- ============================================================================
 
 -- ============================================================================
--- 📍 PUNTOS LIMPIOS / PUNTOS DE ACOPIO — Bogotá (fuente: UAESP)
+-- 📍 PUNTOS DE ACOPIO — Estaciones de Clasificación y Aprovechamiento (ECA)
 -- ============================================================================
+-- ¿Qué? Antes esta tabla tenía 40 puntos completamente inventados (2 por
+--       cada una de las 20 localidades, con teléfonos ficticios secuenciales
+--       "316555100X") pese a que el comentario decía "fuente: UAESP" — esa
+--       fuente nunca existió, era solo un dato de relleno.
+-- ¿Para qué? Estos 9 SÍ son reales: vienen del dataset "Aprovechamiento
+--           ECAS" de Datos Abiertos Bogotá (UAESP), la lista oficial de
+--           Estaciones de Clasificación y Aprovechamiento — el lugar donde
+--           los recicladores de oficio organizados pesan y clasifican lo
+--           que recogen en sus rutas. Fuente completa, con la fila cruda
+--           tal cual se descargó, en:
+--           docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md
+-- ¿Impacto? Bogotá solo tiene ECAs registradas en 6 de sus 20 localidades
+--           (Kennedy, Usaquén, Engativá, Fontibón, Mártires, Puente Aranda)
+--           — las otras 14 quedan sin ningún punto en el directorio. Es
+--           correcto que se vea así: es la realidad, no un dato faltante.
 DELETE FROM puntos_acopios;
 
-INSERT INTO puntos_acopios (id_localidad, nombre, direccion, telefono_contacto) VALUES
--- 1. Usaquén
-(1,  'Punto Limpio Usaquén Centro',         'Calle 119 # 6-22',               '3165551001'),
-(1,  'Punto Limpio Santa Bárbara',           'Carrera 15 # 127-40',            '3165551002'),
--- 2. Chapinero
-(2,  'Punto Limpio Chapinero Alto',          'Calle 67 # 9-38',                '3165551003'),
-(2,  'Punto Limpio El Lago',                 'Carrera 13 # 64-15',             '3165551004'),
--- 3. Santa Fe
-(3,  'Punto Limpio La Candelaria Sur',       'Calle 19 # 4-10',                '3165551005'),
-(3,  'Punto Limpio Las Cruces',              'Carrera 5 # 12B-20',             '3165551006'),
--- 4. San Cristóbal
-(4,  'Punto Limpio San Cristóbal Norte',     'Calle 26 Sur # 8-34',            '3165551007'),
-(4,  'Punto Limpio Los Alpes',               'Carrera 11 # 44 Sur-05',         '3165551008'),
--- 5. Usme
-(5,  'Punto Limpio Usme Centro',             'Calle 91 Sur # 14-23',           '3165551009'),
-(5,  'Punto Limpio Gran Yomasa',             'Carrera 13A # 97B Sur-10',       '3165551010'),
--- 6. Tunjuelito
-(6,  'Punto Limpio Abraham Lincoln',         'Calle 52 Sur # 22-45',           '3165551011'),
-(6,  'Punto Limpio Venecia',                 'Carrera 24 # 48B Sur-12',        '3165551012'),
--- 7. Bosa
-(7,  'Punto Limpio Bosa Centro',             'Calle 68F Sur # 80B-05',         '3165551013'),
-(7,  'Punto Limpio El Recreo',               'Carrera 95 # 75B Sur-20',        '3165551014'),
+INSERT INTO puntos_acopios (id_localidad, nombre, direccion) VALUES
 -- 8. Kennedy
-(8,  'Punto Limpio Kennedy Central',         'Calle 38A Sur # 74-15',          '3165551015'),
-(8,  'Punto Limpio Tintal',                  'Carrera 86 # 42B Sur-08',        '3165551016'),
--- 9. Fontibón
-(9,  'Punto Limpio Fontibón Centro',         'Carrera 99 # 17-30',             '3165551017'),
-(9,  'Punto Limpio Capellanía',              'Calle 19 # 107-50',              '3165551018'),
+(8,  'ECA Kennedy',                        'Carrera 84 # 11A-34'),
+-- 1. Usaquén
+(1,  'ECA Usaquén I',                      'Carrera 21 # 164-82'),
+(1,  'ECA Usaquén II',                     'Carrera 18 # 164-32'),
 -- 10. Engativá
-(10, 'Punto Limpio Engativá Centro',         'Carrera 112 # 80A-22',           '3165551019'),
-(10, 'Punto Limpio Álamos Norte',            'Calle 83 # 95-10',               '3165551020'),
--- 11. Suba
-(11, 'Punto Limpio Suba Centro',             'Carrera 91 # 148-14',            '3165551021'),
-(11, 'Punto Limpio Lisboa',                  'Calle 134 # 107-30',             '3165551022'),
--- 12. Barrios Unidos
-(12, 'Punto Limpio Los Andes',               'Calle 72 # 52-18',               '3165551023'),
-(12, 'Punto Limpio La Castellana',           'Carrera 50 # 80-40',             '3165551024'),
--- 13. Teusaquillo
-(13, 'Punto Limpio Palermo',                 'Calle 47 # 25-12',               '3165551025'),
-(13, 'Punto Limpio Galerías',                'Carrera 29 # 53-20',             '3165551026'),
+(10, 'ECA Engativá',                       'Calle 80C # 92-44'),
+(10, 'ECA Engativá 2 (Las Ferias)',        'Carrera 69K # 79-49'),
+-- 9. Fontibón
+(9,  'ECA Fontibón (Montevideo)',          'Calle 17A # 69F-26'),
 -- 14. Los Mártires
-(14, 'Punto Limpio La Favorita',             'Calle 9 # 20-35',                '3165551027'),
-(14, 'Punto Limpio Ricaurte',                'Carrera 22 # 13-15',             '3165551028'),
--- 15. Antonio Nariño
-(15, 'Punto Limpio Restrepo',                'Calle 16 Sur # 25-08',           '3165551029'),
-(15, 'Punto Limpio Ciudad Jardín Sur',       'Carrera 28 # 19B Sur-05',        '3165551030'),
+(14, 'ECA Mártires',                       'Calle 8 # 26-80'),
 -- 16. Puente Aranda
-(16, 'Punto Limpio Zona Industrial',         'Calle 13 # 52-40',               '3165551031'),
-(16, 'Punto Limpio San Rafael',              'Carrera 57 # 6-25',              '3165551032'),
--- 17. La Candelaria
-(17, 'Punto Limpio Centro Histórico',        'Calle 11 # 4-02',                '3165551033'),
--- 18. Rafael Uribe Uribe
-(18, 'Punto Limpio Quiroga',                 'Calle 27B Sur # 17-10',          '3165551034'),
-(18, 'Punto Limpio Marco Fidel Suárez',      'Carrera 15 # 35 Sur-22',         '3165551035'),
--- 19. Ciudad Bolívar
-(19, 'Punto Limpio Perdomo',                 'Calle 63 Sur # 20-45',           '3165551036'),
-(19, 'Punto Limpio Lucero',                  'Carrera 18A # 68B Sur-12',       '3165551037'),
--- 20. Sumapaz
-(20, 'Punto Limpio Nazareth',                'Vía Nazareth Km 2',              NULL)
+(16, 'ECA Puente Aranda 1',                'Carrera 36 # 19-53'),
+(16, 'ECA Puente Aranda 2',                'Carrera 65B # 17-80')
 ON CONFLICT DO NOTHING;
 
 -- ¿Qué? Contenido educativo real (RQF-004/RQF-010) — módulos de borrador,
