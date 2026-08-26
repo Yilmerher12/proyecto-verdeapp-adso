@@ -627,9 +627,21 @@
         "hide": "Hide"
       },
       "loadingData": "Loading data...",
+      "usersSection": {
+        "title": "Registered users",
+        "tabs": {
+          "residentes": "Residents",
+          "recicladores": "Recyclers",
+          "administradores": "Building Admins"
+        },
+        "searchPlaceholder": "Search by name or email...",
+        "pagination": {
+          "showing": "Showing {{from}}–{{to}} of {{total}}",
+          "prev": "Previous page",
+          "next": "Next page"
+        }
+      },
       "residentsTable": {
-        "title": "Residents List",
-        "badge": "SQL View",
         "headers": {
           "email": "Email",
           "name": "Name",
@@ -640,14 +652,21 @@
         "empty": "No residents registered yet."
       },
       "recyclersTable": {
-        "title": "Recyclers List",
-        "badge": "Stored Procedure",
         "headers": {
           "email": "Email",
           "fullName": "Full name",
           "association": "Association"
         },
         "empty": "No recyclers registered yet."
+      },
+      "adminsTable": {
+        "headers": {
+          "email": "Email",
+          "name": "Name",
+          "phone": "Phone",
+          "conjuntos": "Buildings"
+        },
+        "empty": "No building administrators registered yet."
       }
     },
     "adminConjunto": {
