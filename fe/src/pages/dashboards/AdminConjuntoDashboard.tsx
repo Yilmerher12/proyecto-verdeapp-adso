@@ -15,7 +15,9 @@ import {
 import {
   invitarReciclador,
   obtenerInvitacionesDeConjunto,
+  obtenerRecicladoresAutorizados,
   type InvitacionEnviada,
+  type RecicladorAutorizado,
 } from "@/lib/recicladorConjuntoApi";
 import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
@@ -52,12 +54,33 @@ function BadgeEstado({ estado }: { estado: string }) {
  */
 function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; accessToken: string }) {
   const { t } = useTranslation();
+  const [autorizados, setAutorizados] = useState<RecicladorAutorizado[]>([]);
+  const [cargandoAutorizados, setCargandoAutorizados] = useState(true);
   const [invitaciones, setInvitaciones] = useState<InvitacionEnviada[]>([]);
   const [cargando, setCargando] = useState(true);
   const [correoNuevo, setCorreoNuevo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [errorInvitar, setErrorInvitar] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+
+  // ¿Qué? Antes esta sección solo consultaba el historial de invitaciones
+  //       (obtenerInvitacionesDeConjunto) — un reciclador vinculado por
+  //       fuera de ese flujo (ej. seed_data.sql, que lo hace a propósito
+  //       "como si ya hubiera aceptado una invitación") nunca aparecía en
+  //       ningún lado, aunque sí estuviera autorizado de verdad. El admin
+  //       veía "no has invitado a nadie" y, al intentar invitarlo, el
+  //       backend le decía "ya está autorizado" — dos respuestas correctas
+  //       por separado, pero contradictorias entre sí.
+  // ¿Impacto? Ahora se consultan las dos fuentes por separado: la lista
+  //           real de autorizados (recicladores_conjuntos) y el historial
+  //           de invitaciones, cada una con su propio título honesto.
+  const cargarAutorizados = () => {
+    setCargandoAutorizados(true);
+    obtenerRecicladoresAutorizados(idConjunto, accessToken)
+      .then(setAutorizados)
+      .catch((err) => console.error("Error cargando recicladores autorizados", err))
+      .finally(() => setCargandoAutorizados(false));
+  };
 
   const cargarInvitaciones = () => {
     setCargando(true);
@@ -68,6 +91,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
   };
 
   useEffect(() => {
+    cargarAutorizados();
     cargarInvitaciones();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idConjunto]);
@@ -136,6 +160,46 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
         <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3 dark:bg-red-900/20 dark:text-red-400">{errorInvitar}</p>
       )}
 
+      {/* Recicladores YA autorizados — el dato real (recicladores_conjuntos) */}
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
+      </p>
+      {cargandoAutorizados ? (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          {t("dashboards.adminConjunto.recyclersSection.authorizedLoading")}
+        </p>
+      ) : autorizados.length === 0 ? (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          {t("dashboards.adminConjunto.recyclersSection.authorizedEmpty")}
+        </p>
+      ) : (
+        <div className="space-y-2 mb-4">
+          {autorizados.map((r) => (
+            <div
+              key={r.id_reciclador}
+              className="flex items-center justify-between gap-3 bg-green-50 dark:bg-green-900/10 rounded-lg px-3 py-2"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                  {r.nombre} {r.apellidos}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{r.correo_electronico}</p>
+              </div>
+              {r.asociacion && (
+                <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  {r.asociacion}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Historial de invitaciones enviadas — puede estar vacío aunque sí
+          haya recicladores autorizados arriba (ver comentario más arriba). */}
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
+      </p>
       {cargando ? (
         <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
       ) : invitaciones.length === 0 ? (
@@ -205,28 +269,40 @@ function SeccionDesvinculacion({
     }
   };
 
-  if (tieneSolicitudPendiente) {
-    return (
-      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-[#2a4d34]">
+  // ¿Qué? Antes este botón decía solo "Solicitar desvinculación", sin decir
+  //       DE QUÉ — y estaba pegado justo debajo de la sección de
+  //       Recicladores, lo que hacía parecer que ambas cosas estaban
+  //       relacionadas. Un usuario real lo probó pensando que iba a
+  //       desvincular a un reciclador, cuando en realidad desvincula al
+  //       ADMIN de la administración de este conjunto (RQF-016) — los
+  //       recicladores autorizados no se ven afectados en absoluto.
+  // ¿Impacto? Título propio + texto del botón explícito + aclaración corta
+  //           dejan claro, sin necesidad de leer el código, que esto es
+  //           sobre el rol del admin, no sobre los recicladores.
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2a4d34]">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        {t("desvinculacion.sectionTitle")}
+      </p>
+
+      {tieneSolicitudPendiente ? (
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 px-2.5 py-1 rounded-full">
           <Clock className="w-3.5 h-3.5" /> {t("desvinculacion.pendingBadge")}
         </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-[#2a4d34]">
-      {!mostrarFormulario ? (
-        <button
-          type="button"
-          onClick={() => setMostrarFormulario(true)}
-          className="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          {t("desvinculacion.solicitarButton")}
-        </button>
+      ) : !mostrarFormulario ? (
+        <div>
+          <button
+            type="button"
+            onClick={() => setMostrarFormulario(true)}
+            className="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            {t("desvinculacion.solicitarButton")}
+          </button>
+          <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">{t("desvinculacion.clarification")}</p>
+        </div>
       ) : (
         <div className="bg-gray-50 dark:bg-[#0d2116]/60 p-3 rounded-xl space-y-2">
+          <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("desvinculacion.motivoLabel")}
           </label>

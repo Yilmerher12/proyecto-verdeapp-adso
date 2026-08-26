@@ -88,8 +88,12 @@ describe("AdminConjuntoDashboard", () => {
     await waitFor(() => {
       expect(screen.getByText("Conjunto Los Alpes")).toBeInTheDocument();
     });
-    expect(screen.getByText("Recicladores Autorizados")).toBeInTheDocument();
-    expect(screen.getByText("Solicitar desvinculación")).toBeInTheDocument();
+    // ¿Qué? Antes había un solo título "Recicladores Autorizados" que en
+    //       realidad mostraba el historial de invitaciones, no la
+    //       autorización real — ahora son 2 secciones separadas y honestas.
+    expect(screen.getByText("Autorizados")).toBeInTheDocument();
+    expect(screen.getByText("Invitaciones enviadas")).toBeInTheDocument();
+    expect(screen.getByText("Dejar de administrar este conjunto")).toBeInTheDocument();
   });
 
   it("guarda los cambios al editar un conjunto", async () => {
@@ -155,7 +159,7 @@ describe("AdminConjuntoDashboard", () => {
     renderPage();
 
     await screen.findByText("Conjunto Los Alpes");
-    await user.click(screen.getByRole("button", { name: "Solicitar desvinculación" }));
+    await user.click(screen.getByRole("button", { name: "Dejar de administrar este conjunto" }));
     await user.click(screen.getByRole("button", { name: "Enviar solicitud" }));
 
     await waitFor(() => {

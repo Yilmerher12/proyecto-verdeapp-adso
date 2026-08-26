@@ -217,6 +217,39 @@ def responder_invitacion(db: Session, id_usuario_reciclador: int, id_invitacion:
     return True
 
 
+def listar_recicladores_autorizados_de_conjunto(db: Session, id_usuario_admin: int, id_conjunto: int) -> list[dict]:
+    """
+    ¿Qué? Lista los recicladores REALMENTE autorizados en un conjunto —
+          es decir, con fila en `recicladores_conjuntos`.
+    ¿Para qué? `listar_invitaciones_de_mi_conjunto` (arriba) solo muestra el
+              historial de invitaciones — un reciclador vinculado por fuera
+              de ese flujo (ej. semilla de datos, o cualquier vía distinta
+              a "invitar y aceptar") nunca aparecía en ningún lado para el
+              Admin de Conjunto, aunque sí estuviera autorizado de verdad.
+    ¿Impacto? Sin esto, un admin no tiene forma de confirmar quién trabaja
+              hoy con su conjunto — solo veía el historial de invitaciones,
+              que puede estar vacío aunque SÍ haya recicladores autorizados.
+    """
+    _verificar_admin_administra_conjunto(db, id_usuario_admin, id_conjunto)
+
+    stmt = text("""
+        SELECT
+            r.id_reciclador,
+            r.nombre,
+            r.apellidos,
+            u.correo_electronico,
+            r.numero_telefonico,
+            r.asociacion
+        FROM recicladores_conjuntos rc
+        JOIN recicladores r ON r.id_reciclador = rc.id_reciclador
+        JOIN usuarios u ON u.id_usuario = r.id_usuario
+        WHERE rc.id_conjunto_residencial = :cid
+        ORDER BY r.nombre, r.apellidos
+    """)
+    resultados = db.execute(stmt, {"cid": id_conjunto}).mappings().all()
+    return [dict(fila) for fila in resultados]
+
+
 def listar_conjuntos_autorizados(db: Session, id_usuario_reciclador: int) -> list[dict]:
     """Lista los conjuntos donde el Reciclador YA está autorizado a recoger material."""
     stmt_reciclador = select(Reciclador).where(Reciclador.id_usuario == id_usuario_reciclador)

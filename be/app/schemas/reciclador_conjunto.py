@@ -67,3 +67,19 @@ class ConjuntoAutorizadoResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class RecicladorAutorizadoResponse(BaseModel):
+    """¿Qué? Un reciclador ya autorizado en el conjunto, tal como lo ve el
+    Admin de Conjunto — distinto de InvitacionRecicladorResponse, que
+    muestra el HISTORIAL de invitaciones (pendiente/aceptada/rechazada),
+    no necesariamente quién está autorizado de verdad ahora mismo."""
+    id_reciclador: int
+    nombre: str
+    apellidos: str
+    correo_electronico: str
+    numero_telefonico: Optional[str] = None
+    asociacion: Optional[str] = None
+
+    class Config:
+        from_attributes = True

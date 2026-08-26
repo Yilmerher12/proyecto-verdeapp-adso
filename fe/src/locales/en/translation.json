@@ -658,14 +658,18 @@
         "rechazada": "Rejected"
       },
       "recyclersSection": {
-        "title": "Authorized Recyclers",
+        "title": "Recyclers",
         "invite": "+ Invite recycler",
         "emailPlaceholder": "recycler.email@example.com",
         "sending": "Sending...",
         "inviteButton": "Invite",
         "errorDefault": "The invitation could not be sent. Check the email address.",
-        "loading": "Loading recyclers...",
-        "empty": "You haven't invited any recycler to this building yet."
+        "authorizedTitle": "Authorized",
+        "authorizedLoading": "Loading authorized recyclers...",
+        "authorizedEmpty": "You don't have any authorized recycler in this building yet.",
+        "invitationsTitle": "Invitations sent",
+        "loading": "Loading invitations...",
+        "empty": "You haven't sent any invitation yet."
       },
       "myConjuntos": {
         "title": "Buildings you administer",
@@ -906,8 +910,10 @@
     "errorDefault": "The invitation could not be sent. Check the details and try again."
   },
   "desvinculacion": {
-    "solicitarButton": "Request unlink",
-    "pendingBadge": "Request pending",
+    "sectionTitle": "Your role as administrator",
+    "solicitarButton": "Stop administering this building",
+    "clarification": "This doesn't affect authorized recyclers or residents — it only transfers the administration of this building to someone else.",
+    "pendingBadge": "Unlink request pending",
     "motivoLabel": "Reason (optional)",
     "motivoPlaceholder": "E.g.: Contract ended",
     "submit": "Send request",

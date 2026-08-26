@@ -8,6 +8,8 @@ Descripción: Pruebas del flujo de invitación de un Administrador de Conjunto h
 """
 
 from fastapi.testclient import TestClient
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 
 class TestInvitar:
@@ -124,3 +126,68 @@ class TestFlujoDelReciclador:
         assert response.status_code == 200
         assert len(response.json()) == 1
         assert response.json()[0]["correo_reciclador"] == reciclador_test.correo_electronico
+
+
+class TestRecicladoresAutorizadosDelAdmin:
+    """¿Por qué? El Admin de Conjunto no tenía NINGÚN endpoint para ver
+    quién está realmente autorizado en su conjunto — solo veía el
+    historial de invitaciones (`.../invitaciones`), que es una tabla
+    distinta de la autorización real (`recicladores_conjuntos`). Un
+    reciclador vinculado por fuera del flujo de invitar/aceptar (como
+    hace `seed_data.sql` a propósito) quedaba invisible para el admin,
+    aunque sí estuviera autorizado — este bug fue reportado en vivo."""
+
+    def test_sin_autorizados_devuelve_lista_vacia(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        response = client.get(
+            f"/api/v1/reciclador-conjunto/mi-conjunto/{conjunto_verificado.id_conjunto_residencial}/autorizados",
+            headers=admin_conjunto_auth_headers,
+        )
+        assert response.status_code == 200
+        assert response.json() == []
+
+    def test_reciclador_vinculado_por_fuera_de_una_invitacion_si_aparece(
+        self,
+        client: TestClient,
+        admin_conjunto_auth_headers,
+        conjunto_verificado,
+        reciclador_test,
+        db: Session,
+    ):
+        """Reproduce exactamente el caso de seed_data.sql: un reciclador
+        vinculado directo en recicladores_conjuntos, SIN pasar por
+        /invitar ni /responder."""
+        db.execute(
+            text(
+                "INSERT INTO recicladores_conjuntos (id_reciclador, id_conjunto_residencial) "
+                "SELECT r.id_reciclador, :cid FROM recicladores r WHERE r.id_usuario = :uid"
+            ),
+            {"cid": conjunto_verificado.id_conjunto_residencial, "uid": reciclador_test.id_usuario},
+        )
+        db.commit()
+
+        # La lista de invitaciones se queda vacía a propósito — nunca hubo una.
+        invitaciones = client.get(
+            f"/api/v1/reciclador-conjunto/mi-conjunto/{conjunto_verificado.id_conjunto_residencial}/invitaciones",
+            headers=admin_conjunto_auth_headers,
+        )
+        assert invitaciones.json() == []
+
+        # Pero sí debe aparecer como autorizado — ese es el fix.
+        autorizados = client.get(
+            f"/api/v1/reciclador-conjunto/mi-conjunto/{conjunto_verificado.id_conjunto_residencial}/autorizados",
+            headers=admin_conjunto_auth_headers,
+        )
+        assert autorizados.status_code == 200
+        correos = [r["correo_electronico"] for r in autorizados.json()]
+        assert reciclador_test.correo_electronico in correos
+
+    def test_no_puede_ver_autorizados_de_un_conjunto_ajeno(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_no_verificado
+    ):
+        response = client.get(
+            f"/api/v1/reciclador-conjunto/mi-conjunto/{conjunto_no_verificado.id_conjunto_residencial}/autorizados",
+            headers=admin_conjunto_auth_headers,
+        )
+        assert response.status_code == 403
