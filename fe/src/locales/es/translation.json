@@ -797,7 +797,21 @@
     "emptyRecyclers": "No hay recicladores registrados en esta localidad.",
     "emptyPoints": "No hay puntos de acopio registrados en esta localidad.",
     "call": "Llamar",
-    "noPhone": "Sin teléfono registrado"
+    "noPhone": "Sin teléfono registrado",
+    "copyAddress": "Copiar dirección",
+    "infoRecicladores": {
+      "titulo": "¿Qué es este directorio?",
+      "descripcion": "Recicladores de oficio registrados en VerdeApp, organizados por localidad.",
+      "paraQueSirve": "Si tu conjunto todavía no tiene un reciclador asignado, aquí puedes conocer quién opera en tu zona — compártelo con tu administrador para invitarlo, o contáctalo directamente para coordinar una recolección puntual.",
+      "fuenteTexto": "Directorio propio de VerdeApp — no es un dato externo."
+    },
+    "infoPuntos": {
+      "titulo": "¿Qué es una ECA?",
+      "descripcion": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen en sus rutas.",
+      "paraQueSirve": "Si necesitas entregar materiales reciclables por tu cuenta, aquí puedes ubicar el punto más cercano a tu localidad.",
+      "fuenteTexto": "Fuente: Datos Abiertos Bogotá (UAESP), dataset \"Aprovechamiento ECAS\". Bogotá solo tiene ECA registrada en 6 de sus 20 localidades.",
+      "fuenteLink": "Ver fuente"
+    }
   },
   "catalogoEducativo": {
     "title": "Aprender a reciclar",
