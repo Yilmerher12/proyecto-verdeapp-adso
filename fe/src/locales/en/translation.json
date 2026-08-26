@@ -793,7 +793,21 @@
     "emptyRecyclers": "No recyclers registered in this district.",
     "emptyPoints": "No collection points registered in this district.",
     "call": "Call",
-    "noPhone": "No phone registered"
+    "noPhone": "No phone registered",
+    "copyAddress": "Copy address",
+    "infoRecicladores": {
+      "titulo": "What is this directory?",
+      "descripcion": "Professional recyclers registered in VerdeApp, organized by district.",
+      "paraQueSirve": "If your building doesn't have an assigned recycler yet, you can see who operates in your area here — share it with your admin to invite them, or reach out directly to arrange a one-off pickup.",
+      "fuenteTexto": "VerdeApp's own directory — not external data."
+    },
+    "infoPuntos": {
+      "titulo": "What is an ECA?",
+      "descripcion": "An Estación de Clasificación y Aprovechamiento (ECA) is the formal site, regulated by UAESP (Bogotá's public utilities authority), where organized professional recyclers weigh and sort what they collect on their routes.",
+      "paraQueSirve": "If you need to drop off recyclable materials on your own, you can find the nearest point here.",
+      "fuenteTexto": "Source: Bogotá Open Data (UAESP), \"Aprovechamiento ECAS\" dataset. Bogotá only has a registered ECA in 6 of its 20 districts.",
+      "fuenteLink": "View source"
+    }
   },
   "catalogoEducativo": {
     "title": "Learn to recycle",
