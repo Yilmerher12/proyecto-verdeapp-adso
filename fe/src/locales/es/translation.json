@@ -662,14 +662,18 @@
         "rechazada": "Rechazada"
       },
       "recyclersSection": {
-        "title": "Recicladores Autorizados",
+        "title": "Recicladores",
         "invite": "+ Invitar reciclador",
         "emailPlaceholder": "correo.del.reciclador@ejemplo.com",
         "sending": "Enviando...",
         "inviteButton": "Invitar",
         "errorDefault": "No se pudo enviar la invitación. Verifica el correo.",
-        "loading": "Cargando recicladores...",
-        "empty": "Todavía no has invitado a ningún reciclador a este conjunto."
+        "authorizedTitle": "Autorizados",
+        "authorizedLoading": "Cargando recicladores autorizados...",
+        "authorizedEmpty": "Todavía no tienes ningún reciclador autorizado en este conjunto.",
+        "invitationsTitle": "Invitaciones enviadas",
+        "loading": "Cargando invitaciones...",
+        "empty": "Todavía no has enviado ninguna invitación."
       },
       "myConjuntos": {
         "title": "Conjuntos que administras",
@@ -910,8 +914,10 @@
     "errorDefault": "No se pudo enviar la invitación. Verifica los datos e intenta de nuevo."
   },
   "desvinculacion": {
-    "solicitarButton": "Solicitar desvinculación",
-    "pendingBadge": "Solicitud pendiente",
+    "sectionTitle": "Tu rol como administrador",
+    "solicitarButton": "Dejar de administrar este conjunto",
+    "clarification": "Esto no afecta a los recicladores autorizados ni a los residentes — solo transfiere la administración de este conjunto a otra persona.",
+    "pendingBadge": "Solicitud de desvinculación pendiente",
     "motivoLabel": "Motivo (opcional)",
     "motivoPlaceholder": "Ej: Fin de contrato",
     "submit": "Enviar solicitud",
