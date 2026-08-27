@@ -7,8 +7,6 @@ from sqlalchemy import func as sqlfunc
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, get_current_user
-from app.models.administrador_conjunto import AdministradorConjunto
-from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
@@ -23,6 +21,7 @@ from app.schemas.notificacion import (
     NotificacionEnviarBody,
     NotificacionResponse,
 )
+from app.services.notificaciones_helpers import admins_del_conjunto, residentes_del_conjunto
 
 router = APIRouter(prefix="/api/v1/notificaciones", tags=["notificaciones"])
 
@@ -38,33 +37,10 @@ MENSAJE_RESIDENTE_SHUT = "Un residente reportó que el SHUT está lleno."
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
-
-def _residentes_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
-    stmt = (
-        select(Residente.id_usuario)
-        .join(Unidad, Residente.id_unidad == Unidad.id_unidad)
-        .where(Unidad.id_conjunto_residencial == id_conjunto)
-    )
-    return [r[0] for r in db.execute(stmt).all()]
-
-
-def _admins_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
-    stmt = (
-        select(AdministradorConjunto.id_usuario)
-        .join(
-            AdministradorConjuntoAsignacion,
-            AdministradorConjunto.id_administrador == AdministradorConjuntoAsignacion.id_administrador,
-        )
-        .where(
-            AdministradorConjuntoAsignacion.id_conjunto_residencial == id_conjunto,
-            # ¿Qué? Solo el vínculo activo — un admin ya desvinculado
-            #       (RQF-016) no debe seguir recibiendo notificaciones
-            #       del conjunto que dejó.
-            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
-        )
-    )
-    return [r[0] for r in db.execute(stmt).all()]
-
+# ¿Qué? residentes_del_conjunto / admins_del_conjunto se movieron a
+#       services/notificaciones_helpers.py — auditoria_conjunto_service.py
+#       también las necesita, y antes solo existían aquí como funciones
+#       privadas de este archivo.
 
 def _recicladores_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
     stmt = (
@@ -104,7 +80,7 @@ def enviar_notificacion(
         if not id_conjunto:
             raise HTTPException(status_code=404, detail="No se encontró el conjunto del residente.")
         mensaje = MENSAJE_RESIDENTE_SHUT
-        destinatarios = set(_recicladores_del_conjunto(db, id_conjunto) + _admins_del_conjunto(db, id_conjunto))
+        destinatarios = set(_recicladores_del_conjunto(db, id_conjunto) + admins_del_conjunto(db, id_conjunto))
 
     elif role_id == RolId.RECICLADOR:
         if not body.id_conjunto_residencial:
@@ -123,7 +99,7 @@ def enviar_notificacion(
             raise HTTPException(status_code=403, detail="No estás autorizado en este conjunto.")
 
         mensaje = MENSAJES[body.tipo]
-        destinatarios = set(_residentes_del_conjunto(db, id_conjunto) + _admins_del_conjunto(db, id_conjunto))
+        destinatarios = set(residentes_del_conjunto(db, id_conjunto) + admins_del_conjunto(db, id_conjunto))
 
     else:
         raise HTTPException(status_code=403, detail="Rol no permitido.")
@@ -156,6 +132,7 @@ def mis_notificaciones(
             Notificacion.id,
             Notificacion.tipo,
             Notificacion.mensaje,
+            Notificacion.id_referencia,
             Notificacion.created_at,
             ConjuntoResidencial.nombre_conjunto,
             NotificacionDestinatario.leida,
@@ -175,6 +152,7 @@ def mis_notificaciones(
             "id": r.id,
             "tipo": r.tipo,
             "mensaje": r.mensaje,
+            "id_referencia": r.id_referencia,
             "nombre_conjunto": r.nombre_conjunto,
             "leida": r.leida,
             "created_at": r.created_at,

@@ -102,4 +102,113 @@ describe("ResidenteDashboard", () => {
     });
     expect(await screen.findByText("Enviado")).toBeInTheDocument();
   });
+
+  it("muestra el aviso de auditoría publicada, aparte del feed normal, y su detalle al hacer clic en Ver", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });
+      if (url.includes("mis-notificaciones")) {
+        return Promise.resolve({
+          data: [
+            {
+              id: 5,
+              tipo: "AUDITORIA_PUBLICADA",
+              mensaje: "El reciclador auditó la separación de residuos de tu conjunto.",
+              id_referencia: 42,
+              nombre_conjunto: "Conjunto Los Alpes",
+              leida: false,
+              created_at: "2026-08-27T10:00:00Z",
+            },
+          ],
+        });
+      }
+      if (url.includes("/auditorias-conjunto/42")) {
+        return Promise.resolve({
+          data: {
+            id_auditoria: 42,
+            id_conjunto_residencial: 1,
+            nombre_conjunto: "Conjunto Los Alpes",
+            nivel_desempeno: "DEFICIENTE",
+            tema_educativo: "Separación en la fuente y código de colores",
+            descripcion: "El material llegó mezclado.",
+            ruta_evidencia: "/uploads/evidencias-auditoria/foto.jpg",
+            created_at: "2026-08-27T10:00:00Z",
+            nombre_reciclador: "Carlos Gómez",
+          },
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    // ¿Qué? El aviso debe verse aparte, no como una fila más del feed normal.
+    await screen.findByText("Nueva auditoría de tu conjunto");
+    expect(
+      screen.queryByText("El reciclador auditó la separación de residuos de tu conjunto.", { selector: "li p" })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Ver" }));
+
+    expect(await screen.findByText("Resultado de la auditoría")).toBeInTheDocument();
+    expect(screen.getByText("Deficiente")).toBeInTheDocument();
+    expect(screen.getByText("El material llegó mezclado.")).toBeInTheDocument();
+    expect(screen.getByText(/Auditado por Carlos Gómez/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cerrar" }));
+
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith(
+        expect.stringContaining("/notificaciones/5/leer"),
+        {},
+        expect.anything()
+      );
+    });
+  });
+
+  it("muestra el historial de auditorías y abre el detalle al hacer clic en una fila", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });
+      if (url.includes("/auditorias-conjunto/historial")) {
+        return Promise.resolve({
+          data: [
+            {
+              id_auditoria: 7,
+              id_conjunto_residencial: 1,
+              nombre_conjunto: "Conjunto Los Alpes",
+              nivel_desempeno: "EXCELENTE",
+              tema_educativo: "Economía circular y aprovechamiento",
+              descripcion: null,
+              ruta_evidencia: "/uploads/evidencias-auditoria/foto7.jpg",
+              created_at: "2026-08-20T10:00:00Z",
+              nombre_reciclador: "Carlos Gómez",
+            },
+          ],
+        });
+      }
+      if (url.includes("/auditorias-conjunto/7")) {
+        return Promise.resolve({
+          data: {
+            id_auditoria: 7,
+            id_conjunto_residencial: 1,
+            nombre_conjunto: "Conjunto Los Alpes",
+            nivel_desempeno: "EXCELENTE",
+            tema_educativo: "Economía circular y aprovechamiento",
+            descripcion: null,
+            ruta_evidencia: "/uploads/evidencias-auditoria/foto7.jpg",
+            created_at: "2026-08-20T10:00:00Z",
+            nombre_reciclador: "Carlos Gómez",
+          },
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Historial de auditorías");
+    await user.click(screen.getByText("Economía circular y aprovechamiento"));
+
+    expect(await screen.findByText("Resultado de la auditoría")).toBeInTheDocument();
+    expect(screen.getAllByText("Excelente").length).toBeGreaterThan(0);
+  });
 });

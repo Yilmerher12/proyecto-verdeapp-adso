@@ -24,6 +24,13 @@ class Notificacion(Base):
         nullable=True,
     )
     mensaje = Column(Text, nullable=False)
+    # ¿Qué? Puntero genérico opcional al registro relacionado (ej. el
+    #       id_auditoria de una notificación AUDITORIA_PUBLICADA).
+    # ¿Para qué? Sin esto, el frontend no tiene forma de saber QUÉ abrir
+    #           cuando el usuario hace clic en "Ver" — solo tendría el
+    #           texto del mensaje. No es una ForeignKey de verdad porque
+    #           apunta a tablas distintas según el tipo de notificación.
+    id_referencia = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     destinatarios = relationship(

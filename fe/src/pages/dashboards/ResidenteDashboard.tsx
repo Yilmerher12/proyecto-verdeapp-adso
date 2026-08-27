@@ -7,6 +7,8 @@ import { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed, tiempoRelativo, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
+import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -133,6 +135,15 @@ export function ResidenteDashboard() {
         </div>
       )}
 
+      {/* Resultado de auditoría del reciclador (RQF-009) — aparte del feed normal */}
+      {!cargando && (
+        <AuditoriaResultadoBanner
+          notificaciones={notificaciones}
+          token={accessToken ?? ""}
+          onMarcarLeida={marcarLeida}
+        />
+      )}
+
       {/* Acción: reportar SHUT lleno */}
       <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <div className="flex items-start justify-between gap-4">
@@ -176,7 +187,7 @@ export function ResidenteDashboard() {
       ) : (
         <NotificationFeed
           title={t("dashboards.residente.notifications.title")}
-          notifications={notificaciones}
+          notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
           emptyMessage={t("dashboards.residente.notifications.empty")}
           accentBg="bg-green-700"
           accentHighlight="bg-green-50/60 hover:bg-green-50 dark:bg-green-900/10 dark:hover:bg-green-900/20"
@@ -185,6 +196,8 @@ export function ResidenteDashboard() {
           onClearRead={limpiarLeidas}
         />
       )}
+
+      <HistorialAuditorias token={accessToken ?? ""} />
     </div>
   );
 }

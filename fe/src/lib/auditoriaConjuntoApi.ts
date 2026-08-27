@@ -50,3 +50,24 @@ export async function listarMisAuditorias(token: string): Promise<AuditoriaConju
   });
   return data;
 }
+
+// ¿Qué? Detalle completo de una auditoría — lo que abre el botón "Ver" de
+//       la notificación AUDITORIA_PUBLICADA (Residente o Admin de Conjunto).
+export async function obtenerAuditoria(idAuditoria: number, token: string): Promise<AuditoriaConjunto> {
+  const { data } = await axios.get(`${API_BASE}/${idAuditoria}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+// ¿Qué? Todas las auditorías de el/los conjunto(s) del usuario en sesión —
+//       a diferencia de la notificación (que se pierde al marcarla leída),
+//       esto queda siempre consultable. El backend resuelve solo a qué
+//       conjunto(s) pertenece: un Residente o Admin de Conjunto, sin pasar
+//       ningún id.
+export async function listarHistorial(token: string): Promise<AuditoriaConjunto[]> {
+  const { data } = await axios.get(`${API_BASE}/historial`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}

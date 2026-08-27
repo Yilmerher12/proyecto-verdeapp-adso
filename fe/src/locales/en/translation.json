@@ -809,6 +809,18 @@
       "daysAgo": "{{count}}d ago"
     }
   },
+  "auditoriaResultado": {
+    "bannerTitle": "New audit of your building",
+    "verButton": "View",
+    "modalTitle": "Audit result",
+    "temaLabel": "Related topic",
+    "descripcionLabel": "Description",
+    "auditadoPor": "Audited by {{nombre}}",
+    "evidenciaAlt": "Audit evidence photo",
+    "errorLoad": "Couldn't load the audit.",
+    "historialTitle": "Audit history",
+    "historialEmpty": "No audits recorded yet."
+  },
   "profile": {
     "title": "My profile",
     "subtitle": "Manage your personal information",
