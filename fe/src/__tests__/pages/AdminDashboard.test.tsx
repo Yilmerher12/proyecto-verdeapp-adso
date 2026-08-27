@@ -187,4 +187,82 @@ describe("AdminDashboard", () => {
     expect(screen.getByText("Invitar Administrador de Conjunto")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ocultar" })).toBeInTheDocument();
   });
+
+  it("busca conjuntos por nombre y permite elegir/quitar varios en el formulario de invitar", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes") || url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      if (url.includes("/geography/conjuntos/todos")) {
+        return Promise.resolve({
+          data: [{ id_conjunto_residencial: 1, nombre_conjunto: "TORRES DE ARANJUEZ", nombre_localidad: "Usaquén" }],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "+ Invitar administrador" }));
+    await user.type(screen.getByPlaceholderText("Escribe el nombre del conjunto..."), "TORRES");
+
+    const opcion = await screen.findByText("TORRES DE ARANJUEZ — Usaquén");
+    await user.click(opcion);
+
+    expect(await screen.findByText("1 conjunto(s) seleccionado(s)")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Quitar TORRES DE ARANJUEZ" }));
+
+    expect(screen.queryByText("1 conjunto(s) seleccionado(s)")).not.toBeInTheDocument();
+  });
+
+  it("busca un administrador, busca un conjunto sin administrador por nombre y lo asigna", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes") || url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      if (url.includes("/admin-conjunto/listar")) {
+        return Promise.resolve({
+          data: [
+            {
+              id_administrador: 7,
+              nombre: "Ana",
+              apellidos: "Ríos",
+              correo_electronico: "ana.rios@example.com",
+              conjuntos_actuales: [],
+            },
+          ],
+        });
+      }
+      if (url.includes("/geography/conjuntos/sin-administrador")) {
+        return Promise.resolve({
+          data: [{ id_conjunto_residencial: 9, nombre_conjunto: "RESERVA DE PRUEBA", nombre_localidad: "Usaquén" }],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.type(screen.getByPlaceholderText("Nombre, apellidos o correo"), "Ana");
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+
+    const tarjetaAdmin = await screen.findByText("Ana Ríos");
+    await user.click(tarjetaAdmin);
+
+    await user.type(screen.getByPlaceholderText("Escribe el nombre de tu conjunto..."), "RESERVA");
+    const opcionConjunto = await screen.findByText("RESERVA DE PRUEBA — Usaquén");
+    await user.click(opcionConjunto);
+
+    await user.click(screen.getByRole("button", { name: "Asignar" }));
+
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith(
+        expect.stringContaining("/admin-conjunto/asignar-conjunto-adicional"),
+        { id_administrador: 7, id_conjunto_residencial: 9 },
+        expect.anything(),
+      );
+    });
+    expect(await screen.findByText("Conjunto asignado correctamente.")).toBeInTheDocument();
+  });
 });
