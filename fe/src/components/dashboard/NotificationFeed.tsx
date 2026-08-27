@@ -20,6 +20,9 @@ export interface NotificacionItem {
   id: number;
   tipo: string;
   mensaje: string;
+  // ¿Qué? Puntero opcional al registro relacionado (ej. id_auditoria para
+  //       AUDITORIA_PUBLICADA) — la mayoría de tipos no lo usan.
+  id_referencia: number | null;
   // ¿Qué? Puede ser null — las novedades de plataforma (RQF-015) no
   //       pertenecen a ningún conjunto residencial.
   nombre_conjunto: string | null;

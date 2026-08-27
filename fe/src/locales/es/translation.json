@@ -813,6 +813,18 @@
       "daysAgo": "hace {{count}}d"
     }
   },
+  "auditoriaResultado": {
+    "bannerTitle": "Nueva auditoría de tu conjunto",
+    "verButton": "Ver",
+    "modalTitle": "Resultado de la auditoría",
+    "temaLabel": "Tema relacionado",
+    "descripcionLabel": "Descripción",
+    "auditadoPor": "Auditado por {{nombre}}",
+    "evidenciaAlt": "Foto de evidencia de la auditoría",
+    "errorLoad": "No se pudo cargar la auditoría.",
+    "historialTitle": "Historial de auditorías",
+    "historialEmpty": "Todavía no hay auditorías registradas."
+  },
   "profile": {
     "title": "Mi perfil",
     "subtitle": "Gestiona tu información personal",

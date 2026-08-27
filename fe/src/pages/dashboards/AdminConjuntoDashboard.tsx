@@ -20,6 +20,8 @@ import {
   type RecicladorAutorizado,
 } from "@/lib/recicladorConjuntoApi";
 import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
+import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 
 /**
@@ -589,6 +591,15 @@ export function AdminConjuntoDashboard() {
         )}
       </div>
 
+      {/* Resultado de auditoría del reciclador (RQF-009) — aparte del feed normal */}
+      {!cargandoNotifs && (
+        <AuditoriaResultadoBanner
+          notificaciones={notificaciones}
+          token={accessToken ?? ""}
+          onMarcarLeida={marcarLeida}
+        />
+      )}
+
       {/* Feed de notificaciones */}
       {cargandoNotifs ? (
         <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
@@ -597,7 +608,7 @@ export function AdminConjuntoDashboard() {
       ) : (
         <NotificationFeed
           title={t("dashboards.adminConjunto.notifications.title")}
-          notifications={notificaciones}
+          notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
           emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
           accentBg="bg-amber-700"
           accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
@@ -606,6 +617,8 @@ export function AdminConjuntoDashboard() {
           onClearRead={limpiarLeidas}
         />
       )}
+
+      <HistorialAuditorias token={accessToken ?? ""} />
     </div>
   );
 }

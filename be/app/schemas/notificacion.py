@@ -12,6 +12,9 @@ class NotificacionResponse(BaseModel):
     id: int
     tipo: str
     mensaje: str
+    # ¿Qué? Puntero opcional al registro relacionado (ej. id_auditoria para
+    #       AUDITORIA_PUBLICADA) — la mayoría de tipos no lo usan.
+    id_referencia: Optional[int] = None
     # ¿Qué? Opcional porque RQF-015 (novedades del Admin del Sistema) son
     #       de toda la plataforma, no de un conjunto — esas notificaciones
     #       no tienen id_conjunto_residencial.

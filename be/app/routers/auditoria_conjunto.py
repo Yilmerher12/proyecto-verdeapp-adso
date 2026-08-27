@@ -86,3 +86,35 @@ def listar_mias(
     _verificar_es_reciclador(current_user)
     auditorias = service.listar_mias(db, current_user.id_usuario)
     return [_a_response(a) for a in auditorias]
+
+
+@router.get(
+    "/historial",
+    response_model=list[AuditoriaConjuntoResponse],
+    summary="Residente o Admin de Conjunto ve el historial de auditorías de su(s) conjunto(s)",
+)
+def listar_historial(
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[AuditoriaConjuntoResponse]:
+    if current_user.id_rol not in (RolId.RESIDENTE, RolId.ADMIN_CONJUNTO):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo un Residente o Admin de Conjunto puede ver este historial.",
+        )
+    auditorias = service.listar_historial(db, current_user)
+    return [_a_response(a) for a in auditorias]
+
+
+@router.get(
+    "/{id_auditoria}",
+    response_model=AuditoriaConjuntoResponse,
+    summary="Residente o Admin de Conjunto ve el detalle de una auditoría de su conjunto",
+)
+def obtener_auditoria(
+    id_auditoria: int,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> AuditoriaConjuntoResponse:
+    auditoria = service.obtener_por_id(db, current_user, id_auditoria)
+    return _a_response(auditoria)
