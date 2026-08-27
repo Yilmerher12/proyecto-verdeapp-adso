@@ -29,6 +29,13 @@ services:
       - ./be/.env # 🛡️ Lee las variables de forma segura y oculta
     ports:
       - "8000:8000"
+    volumes:
+      # ¿Qué? Guarda las fotos de evidencia de auditorías fuera del contenedor.
+      # ¿Para qué? Sin esto, cada "docker compose up --build" crea un contenedor
+      #            nuevo desde cero y las fotos ya subidas se pierden para siempre.
+      # ¿Impacto? Las fotos ahora sobreviven a reconstrucciones del contenedor,
+      #           igual que "db_data" ya protege a la base de datos.
+      - be_uploads:/app/app/uploads
     depends_on:
       verde_db:
         condition: service_healthy
@@ -66,3 +73,4 @@ networks:
 
 volumes:
   db_data:
+  be_uploads:

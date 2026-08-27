@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Home, AlertTriangle, Bell, CheckCircle2 } from "lucide-react";
+import { Alert } from "@/components/ui/Alert";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
@@ -28,8 +29,11 @@ export function ResidenteDashboard() {
   const [estadoShut, setEstadoShut] = useState<EstadoShut>({ lleno: false, created_at: null });
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [feedbackOk, setFeedbackOk] = useState(false);
+  const [errorReporte, setErrorReporte] = useState(false);
+  const [errorAccion, setErrorAccion] = useState(false);
 
   const headers = { Authorization: `Bearer ${accessToken}` };
 
@@ -41,8 +45,13 @@ export function ResidenteDashboard() {
       ]);
       setEstadoShut(resEstado.data);
       setNotificaciones(resNotifs.data);
+      setErrorCarga(false);
     } catch {
-      // silent
+      // ¿Qué? Antes esto fallaba en silencio — el panel se quedaba con los
+      //       datos viejos sin ningún aviso de que algo salió mal.
+      // ¿Impacto? Como cargarDatos() también corre cada 20s (polling), el
+      //           aviso desaparece solo apenas una siguiente carga funcione.
+      setErrorCarga(true);
     } finally {
       setCargando(false);
     }
@@ -58,6 +67,7 @@ export function ResidenteDashboard() {
 
   const reportarShutLleno = async () => {
     setEnviando(true);
+    setErrorReporte(false);
     try {
       await axios.post(
         `${API_BASE_URL}/api/v1/notificaciones/enviar`,
@@ -68,27 +78,42 @@ export function ResidenteDashboard() {
       setTimeout(() => setFeedbackOk(false), 3500);
       cargarDatos();
     } catch {
-      // silent
+      // ¿Qué? Antes, si esto fallaba, el residente no se enteraba — creía
+      //       que había reportado el SHUT lleno y en realidad no pasó nada.
+      // ¿Impacto? Ahora se ve un aviso claro de que debe intentar de nuevo.
+      setErrorReporte(true);
     } finally {
       setEnviando(false);
     }
   };
 
   const marcarLeida = async (id: number) => {
-    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
-    setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
-    notificarNotificacionesActualizadas();
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
+      setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+      notificarNotificacionesActualizadas();
+    } catch {
+      setErrorAccion(true);
+    }
   };
 
   const marcarTodasLeidas = async () => {
-    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
-    setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
-    notificarNotificacionesActualizadas();
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
+      setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+      notificarNotificacionesActualizadas();
+    } catch {
+      setErrorAccion(true);
+    }
   };
 
   const limpiarLeidas = async () => {
-    await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers });
-    setNotificaciones((prev) => prev.filter((n) => !n.leida));
+    try {
+      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers });
+      setNotificaciones((prev) => prev.filter((n) => !n.leida));
+    } catch {
+      setErrorAccion(true);
+    }
   };
 
   return (
@@ -135,6 +160,8 @@ export function ResidenteDashboard() {
         </div>
       )}
 
+      {!cargando && errorCarga && <Alert type="error" message={t("common.loadError")} />}
+
       {/* Resultado de auditoría del reciclador (RQF-009) — aparte del feed normal */}
       {!cargando && (
         <AuditoriaResultadoBanner
@@ -154,6 +181,11 @@ export function ResidenteDashboard() {
             <p className="mt-1 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
               {t("dashboards.residente.reportSection.description")}
             </p>
+            {errorReporte && (
+              <div className="mt-2">
+                <Alert type="error" message={t("common.actionError")} onClose={() => setErrorReporte(false)} />
+              </div>
+            )}
           </div>
           <button
             onClick={reportarShutLleno}
@@ -185,16 +217,21 @@ export function ResidenteDashboard() {
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
         </div>
       ) : (
-        <NotificationFeed
-          title={t("dashboards.residente.notifications.title")}
-          notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
-          emptyMessage={t("dashboards.residente.notifications.empty")}
-          accentBg="bg-green-700"
-          accentHighlight="bg-green-50/60 hover:bg-green-50 dark:bg-green-900/10 dark:hover:bg-green-900/20"
-          onMarkRead={marcarLeida}
-          onMarkAllRead={marcarTodasLeidas}
-          onClearRead={limpiarLeidas}
-        />
+        <>
+          {errorAccion && (
+            <Alert type="error" message={t("common.actionError")} onClose={() => setErrorAccion(false)} />
+          )}
+          <NotificationFeed
+            title={t("dashboards.residente.notifications.title")}
+            notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
+            emptyMessage={t("dashboards.residente.notifications.empty")}
+            accentBg="bg-green-700"
+            accentHighlight="bg-green-50/60 hover:bg-green-50 dark:bg-green-900/10 dark:hover:bg-green-900/20"
+            onMarkRead={marcarLeida}
+            onMarkAllRead={marcarTodasLeidas}
+            onClearRead={limpiarLeidas}
+          />
+        </>
       )}
 
       <HistorialAuditorias token={accessToken ?? ""} />

@@ -3,10 +3,12 @@ Módulo: services/auditoria_conjunto_service.py
 Descripción: Lógica de negocio de la auditoría del Reciclador al conjunto
              (RQF-009) — validaciones y guardado de la foto de evidencia.
 """
+import io
 import uuid
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile, status
+from PIL import Image, UnidentifiedImageError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -82,6 +84,24 @@ async def _guardar_evidencia(archivo: UploadFile) -> str:
         )
     if len(contenido) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La imagen está vacía.")
+
+    # ¿Qué? El "Content-Type" de arriba lo escribe el navegador del cliente —
+    #       es solo una etiqueta, no una garantía de que el archivo sea de
+    #       verdad una imagen. Aquí se intenta abrir el archivo con Pillow,
+    #       que sí revisa el contenido real (la estructura interna del
+    #       archivo), no la etiqueta que lo acompaña.
+    # ¿Para qué? Sin este chequeo, alguien podía renombrar cualquier archivo
+    #           (ej. HTML con un script) a ".jpg" y declarar Content-Type
+    #           "image/jpeg" a mano, y el backend lo aceptaba igual.
+    # ¿Impacto? Un archivo que no es una imagen real (aunque tenga la
+    #           etiqueta correcta) se rechaza antes de guardarse en disco.
+    try:
+        Image.open(io.BytesIO(contenido)).verify()
+    except (UnidentifiedImageError, OSError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El archivo no es una imagen válida.",
+        )
 
     CARPETA_EVIDENCIAS.mkdir(parents=True, exist_ok=True)
     nombre_archivo = f"{uuid.uuid4()}{extension}"

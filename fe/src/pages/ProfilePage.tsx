@@ -308,10 +308,11 @@ export function ProfilePage() {
               )}
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                <label htmlFor="perfil-nombre" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("profile.fields.firstName")} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="perfil-nombre"
                   value={formNombre}
                   onChange={(e) => setFormNombre(e.target.value)}
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
@@ -319,10 +320,11 @@ export function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                <label htmlFor="perfil-apellidos" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("profile.fields.lastName")} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="perfil-apellidos"
                   value={formApellidos}
                   onChange={(e) => setFormApellidos(e.target.value)}
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
@@ -330,10 +332,11 @@ export function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                <label htmlFor="perfil-telefono" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("common.phone")}
                 </label>
                 <input
+                  id="perfil-telefono"
                   value={formTelefono}
                   onChange={(e) => setFormTelefono(e.target.value)}
                   placeholder={t("profile.phonePlaceholder")}
@@ -344,10 +347,11 @@ export function ProfilePage() {
               {perfil.role_id === RoleId.RECICLADOR && (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                    <label htmlFor="perfil-asociacion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                       {t("profile.fields.association")}
                     </label>
                     <input
+                      id="perfil-asociacion"
                       value={formAsociacion}
                       onChange={(e) => setFormAsociacion(e.target.value)}
                       placeholder={t("profile.associationPlaceholder")}
@@ -380,9 +384,15 @@ export function ProfilePage() {
               )}
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                {/* ¿Qué? No es un <label> real — no hay ningún campo editable
+                    que etiquetar, el correo se muestra como texto fijo.
+                    ¿Para qué? Un <label> sin htmlFor y sin envolver ningún
+                    control confunde a lectores de pantalla (anuncia "etiqueta"
+                    sin decir de qué campo); un <p> describe correctamente
+                    que esto es solo texto informativo. */}
+                <p className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("common.email")}
-                </label>
+                </p>
                 <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-[#2a4d34] dark:bg-[#0d2116]/60">
                   <p className="text-sm text-gray-500 dark:text-gray-400">{perfil.email}</p>
                 </div>

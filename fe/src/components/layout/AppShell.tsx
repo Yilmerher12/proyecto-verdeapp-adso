@@ -41,25 +41,27 @@ export function AppShell({ children }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [noLeidas, setNoLeidas] = useState(0);
-  const { user, logout, accessToken } = useAuth() as any;
+  const { user, accessToken } = useAuth() as any;
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const handleLogout = () => {
-    // ¿Qué? logout() limpia sessionStorage (síncrono), y luego una recarga
-    //       completa de página lleva a "/".
-    // ¿Para qué? Probé navigate("/") + logout() en varios órdenes (incluso
-    //           con delays) y siempre perdían contra ProtectedRoute: aunque
-    //           la URL cambiaba a "/" casi al instante, React todavía no
-    //           había terminado de reemplazar el árbol de componentes (el
-    //           ProtectedRoute de la ruta protegida seguía montado un
-    //           instante más), así que su propio <Navigate to="/login">
-    //           terminaba ganando la carrera sin importar el orden.
-    // ¿Impacto? Con una recarga completa, toda la app arranca de cero — no
-    //           queda ningún componente viejo montado que pueda competir.
-    //           Es la forma más simple de garantizar que esto no vuelva a
-    //           fallar por una condición de carrera similar en el futuro.
-    logout();
+    // ¿Qué? Antes esto llamaba a logout() (que además de borrar el token
+    //       actualiza el estado de React con setUser(null)) y LUEGO mandaba
+    //       la recarga completa hacia "/". Ese setUser(null) hacía que React
+    //       volviera a dibujar la pantalla actual (todavía montada sobre una
+    //       ruta protegida) ANTES de que la recarga real terminara — y como
+    //       ProtectedRoute ve la sesión ya vacía, redirigía un instante a
+    //       "/login" (visible como un parpadeo) antes de que la recarga
+    //       hacia el landing reemplazara todo.
+    // ¿Para qué? Como la página completa se va a recargar de inmediato, no
+    //           hace falta tocar el estado de React para nada — solo hay que
+    //           borrar lo mismo que borra clearAuth() en sessionStorage.
+    // ¿Impacto? Sin ningún cambio de estado de React de por medio, no hay
+    //           ningún re-render que alcance a mostrar "/login" de paso.
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("landing-scroll-y");
     window.location.href = "/";
   };
 
