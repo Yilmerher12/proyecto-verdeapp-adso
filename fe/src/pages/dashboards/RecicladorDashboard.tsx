@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   PackageCheck,
   DoorOpen,
+  ClipboardList,
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
@@ -21,6 +22,15 @@ import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { Modal } from "@/components/ui/Modal";
+import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
+import { listarMisAuditorias, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
+
+// ¿Qué? Cada cuántos días se le vuelve a sugerir al reciclador auditar el
+//       mismo conjunto. Ver issue #5: se decidió semanal porque no todos
+//       los recicladores visitan un conjunto la misma cantidad de veces
+//       por semana — 7 días es un punto medio razonable, no una regla del
+//       negocio grabada en piedra.
+const DIAS_ENTRE_AUDITORIAS = 7;
 
 interface InvitacionPendiente {
   id: string;
@@ -81,6 +91,7 @@ export function RecicladorDashboard() {
   const [invitaciones, setInvitaciones] = useState<InvitacionPendiente[]>([]);
   const [conjuntosAutorizados, setConjuntosAutorizados] = useState<ConjuntoAutorizado[]>([]);
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
+  const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(false);
   const [procesandoId, setProcesandoId] = useState<string | null>(null);
@@ -91,6 +102,10 @@ export function RecicladorDashboard() {
   const [enviandoNotif, setEnviandoNotif] = useState(false);
   const [feedbackOk, setFeedbackOk] = useState<string | null>(null);
 
+  // Formulario de auditoría (RQF-009)
+  const [conjuntoParaAuditar, setConjuntoParaAuditar] = useState<number | null>(null);
+  const [feedbackAuditoria, setFeedbackAuditoria] = useState<string | null>(null);
+
   const headers = { Authorization: `Bearer ${accessToken}` };
 
   const cargarDatos = () => {
@@ -98,11 +113,13 @@ export function RecicladorDashboard() {
       axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-invitaciones`, { headers }),
       axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-conjuntos-autorizados`, { headers }),
       axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers }),
+      listarMisAuditorias(accessToken ?? ""),
     ])
-      .then(([resInv, resConj, resNotifs]) => {
+      .then(([resInv, resConj, resNotifs, misAuditorias]) => {
         setInvitaciones(resInv.data);
         setConjuntosAutorizados(resConj.data);
         setNotificaciones(resNotifs.data);
+        setAuditorias(misAuditorias);
         setErrorCarga(false);
       })
       // ¿Qué? Antes un .catch(() => {}) vacío no dejaba ningún rastro de que
@@ -185,6 +202,30 @@ export function RecicladorDashboard() {
     setNotificaciones((prev) => prev.filter((n) => !n.leida));
   };
 
+  // ¿Qué? Un conjunto "necesita auditoría" si nunca se ha auditado, o si la
+  //       última auditoría ya tiene 7 días o más (ver DIAS_ENTRE_AUDITORIAS).
+  // ¿Para qué? En vez de un recordatorio programado (que requeriría un job
+  //           corriendo en segundo plano), se calcula al cargar el panel —
+  //           mismo resultado para el usuario, sin infraestructura nueva.
+  const necesitaAuditoria = (idConjunto: number): boolean => {
+    const delConjunto = auditorias.filter((a) => a.id_conjunto_residencial === idConjunto);
+    if (delConjunto.length === 0) return true;
+    const masReciente = delConjunto[0].created_at; // el backend ya las ordena más reciente primero
+    const dias = (Date.now() - new Date(masReciente).getTime()) / (1000 * 60 * 60 * 24);
+    return dias >= DIAS_ENTRE_AUDITORIAS;
+  };
+
+  const conjuntosPendientesAuditoria = conjuntosAutorizados.filter((c) =>
+    necesitaAuditoria(c.id_conjunto_residencial)
+  );
+
+  const alEnviarAuditoria = () => {
+    setConjuntoParaAuditar(null);
+    setFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
+    setTimeout(() => setFeedbackAuditoria(null), 3500);
+    cargarDatos();
+  };
+
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-5">
       {/* Header — el símbolo de reciclaje de fondo es solo un detalle tenue,
@@ -216,6 +257,44 @@ export function RecicladorDashboard() {
         <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
+        </div>
+      )}
+
+      {feedbackAuditoria && (
+        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          {feedbackAuditoria}
+        </div>
+      )}
+
+      {/* Aviso de auditoría pendiente (RQF-009) — solo aparece cuando aplica,
+          no ocupa espacio permanente en la barra lateral. */}
+      {!cargando && conjuntosPendientesAuditoria.length > 0 && (
+        <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-800/30 dark:bg-teal-900/10">
+          <div className="mb-3 flex items-center gap-2">
+            <ClipboardList className="h-4 w-4 text-teal-700 dark:text-teal-400" />
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">
+              {t("dashboards.reciclador.auditoria.bannerTitle")}
+            </h2>
+          </div>
+          <div className="space-y-2">
+            {conjuntosPendientesAuditoria.map((c) => (
+              <div
+                key={c.id_conjunto_residencial}
+                className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-[#132a1c] sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  {t("dashboards.reciclador.auditoria.bannerSubtitle", { conjunto: c.nombre_conjunto })}
+                </p>
+                <button
+                  onClick={() => setConjuntoParaAuditar(c.id_conjunto_residencial)}
+                  className="shrink-0 rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
+                >
+                  {t("dashboards.reciclador.auditoria.bannerAction")}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -389,6 +468,17 @@ export function RecicladorDashboard() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Formulario de auditoría (RQF-009) */}
+      {conjuntoParaAuditar && (
+        <AuditoriaConjuntoForm
+          conjuntos={conjuntosAutorizados}
+          conjuntoPreseleccionado={conjuntoParaAuditar}
+          token={accessToken ?? ""}
+          onClose={() => setConjuntoParaAuditar(null)}
+          onSuccess={alEnviarAuditoria}
+        />
       )}
     </div>
   );

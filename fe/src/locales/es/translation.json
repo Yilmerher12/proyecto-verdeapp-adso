@@ -748,6 +748,37 @@
         "subtitle": "Selecciona el conjunto al que llegaste o sobre el que quieres avisar.",
         "sending": "Enviando...",
         "submit": "Enviar aviso"
+      },
+      "auditoria": {
+        "bannerTitle": "Auditoría semanal pendiente",
+        "bannerSubtitle": "Ya puedes calificar la separación de residuos de {{conjunto}}.",
+        "bannerAction": "Auditar ahora",
+        "modalTitle": "Auditar conjunto",
+        "modalSubtitle": "Califica cómo está separando el material reciclable este conjunto — la calificación queda respaldada con una foto.",
+        "conjuntoLabel": "Conjunto",
+        "nivelLabel": "Nivel de desempeño",
+        "niveles": {
+          "excelente": "Excelente",
+          "buena": "Buena",
+          "regular": "Regular",
+          "deficiente": "Deficiente"
+        },
+        "temaLabel": "Tema relacionado",
+        "temaPlaceholder": "Selecciona un tema...",
+        "descripcionLabel": "Descripción (opcional)",
+        "descripcionPlaceholder": "Cuéntanos qué encontraste...",
+        "evidenciaLabel": "Foto de evidencia",
+        "evidenciaHint": "JPG, PNG o WEBP — máximo 5 MB.",
+        "submit": "Enviar auditoría",
+        "sending": "Enviando...",
+        "successMessage": "Auditoría enviada.",
+        "errorDefault": "No se pudo enviar la auditoría.",
+        "validation": {
+          "conjunto": "Selecciona un conjunto.",
+          "nivel": "Selecciona un nivel de desempeño.",
+          "tema": "Selecciona un tema.",
+          "evidencia": "Sube una foto de evidencia."
+        }
       }
     },
     "residente": {
