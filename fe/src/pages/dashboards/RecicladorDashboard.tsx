@@ -94,6 +94,7 @@ export function RecicladorDashboard() {
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(false);
+  const [errorAccion, setErrorAccion] = useState(false);
   const [procesandoId, setProcesandoId] = useState<string | null>(null);
 
   // Modal de selección de conjunto
@@ -142,6 +143,7 @@ export function RecicladorDashboard() {
 
   const responderInvitacion = async (id: string, aceptar: boolean) => {
     setProcesandoId(id);
+    setErrorAccion(false);
     try {
       await axios.post(
         `${API_BASE_URL}/api/v1/reciclador-conjunto/invitaciones/${id}/responder`,
@@ -150,7 +152,9 @@ export function RecicladorDashboard() {
       );
       cargarDatos();
     } catch {
-      // silent
+      // ¿Qué? Antes, si esto fallaba, el botón simplemente dejaba de girar
+      //       sin decir si la invitación se aceptó/rechazó de verdad o no.
+      setErrorAccion(true);
     } finally {
       setProcesandoId(null);
     }
@@ -179,27 +183,41 @@ export function RecicladorDashboard() {
       setModalTipo(null);
       cargarDatos();
     } catch {
-      // silent
+      // ¿Qué? Antes, si el envío fallaba, el modal se cerraba igual sin
+      //       avisar — el reciclador creía que el aviso salió y no fue así.
+      setErrorAccion(true);
     } finally {
       setEnviandoNotif(false);
     }
   };
 
   const marcarLeida = async (id: number) => {
-    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
-    setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
-    notificarNotificacionesActualizadas();
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
+      setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+      notificarNotificacionesActualizadas();
+    } catch {
+      setErrorAccion(true);
+    }
   };
 
   const marcarTodasLeidas = async () => {
-    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
-    setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
-    notificarNotificacionesActualizadas();
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
+      setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+      notificarNotificacionesActualizadas();
+    } catch {
+      setErrorAccion(true);
+    }
   };
 
   const limpiarLeidas = async () => {
-    await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers });
-    setNotificaciones((prev) => prev.filter((n) => !n.leida));
+    try {
+      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers });
+      setNotificaciones((prev) => prev.filter((n) => !n.leida));
+    } catch {
+      setErrorAccion(true);
+    }
   };
 
   // ¿Qué? Un conjunto "necesita auditoría" si nunca se ha auditado, o si la
@@ -251,6 +269,9 @@ export function RecicladorDashboard() {
       </div>
 
       {!cargando && errorCarga && <Alert type="error" message={t("common.loadError")} />}
+      {errorAccion && (
+        <Alert type="error" message={t("common.actionError")} onClose={() => setErrorAccion(false)} />
+      )}
 
       {/* Feedback de notificación enviada */}
       {feedbackOk && (

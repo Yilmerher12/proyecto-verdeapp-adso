@@ -182,10 +182,11 @@ export function AdminContenidoEducativoPage() {
             )}
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="contenido-categoria" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("adminContenidoEducativo.fields.category")} <span className="text-red-500">*</span>
               </label>
               <input
+                id="contenido-categoria"
                 value={form.modulo_categoria}
                 onChange={(e) => setForm({ ...form, modulo_categoria: e.target.value })}
                 placeholder={t("adminContenidoEducativo.fields.categoryPlaceholder")}
@@ -194,10 +195,11 @@ export function AdminContenidoEducativoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="contenido-titulo" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("adminContenidoEducativo.fields.titleField")} <span className="text-red-500">*</span>
               </label>
               <input
+                id="contenido-titulo"
                 value={form.titulo_tema}
                 onChange={(e) => setForm({ ...form, titulo_tema: e.target.value })}
                 placeholder={t("adminContenidoEducativo.fields.titlePlaceholder")}
@@ -206,10 +208,11 @@ export function AdminContenidoEducativoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="contenido-cuerpo" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("adminContenidoEducativo.fields.content")} <span className="text-red-500">*</span>
               </label>
               <textarea
+                id="contenido-cuerpo"
                 value={form.cuerpo_texto}
                 onChange={(e) => setForm({ ...form, cuerpo_texto: e.target.value })}
                 rows={4}
@@ -218,10 +221,11 @@ export function AdminContenidoEducativoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="contenido-url-video" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("adminContenidoEducativo.fields.videoLink")}
               </label>
               <input
+                id="contenido-url-video"
                 value={form.url_video ?? ""}
                 onChange={(e) => setForm({ ...form, url_video: e.target.value })}
                 placeholder="https://www.youtube.com/watch?v=..."
@@ -230,10 +234,11 @@ export function AdminContenidoEducativoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="contenido-url-guia" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("adminContenidoEducativo.fields.guideLink")}
               </label>
               <input
+                id="contenido-url-guia"
                 value={form.url_guia ?? ""}
                 onChange={(e) => setForm({ ...form, url_guia: e.target.value })}
                 placeholder="https://..."

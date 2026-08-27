@@ -257,10 +257,13 @@ export function AdminNovedadesPage() {
 
             {!editando ? (
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                {/* Grupo de botones, no un control único — role="group" +
+                    aria-labelledby es la asociación correcta (ver el mismo
+                    patrón en AdminConjuntoComunicadosPage.tsx). */}
+                <span id="novedad-alcance-label" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("novedades.admin.fields.alcance")} <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-2 gap-2">
+                </span>
+                <div role="group" aria-labelledby="novedad-alcance-label" className="grid grid-cols-2 gap-2">
                   {ALCANCES.map((a) => (
                     <button
                       key={a}
@@ -290,10 +293,11 @@ export function AdminNovedadesPage() {
             )}
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="novedad-texto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("novedades.admin.fields.texto")} <span className="text-red-500">*</span>
               </label>
               <textarea
+                id="novedad-texto"
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 rows={5}
@@ -302,10 +306,11 @@ export function AdminNovedadesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="novedad-url-adjunto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("novedades.admin.fields.urlAdjunto")}
               </label>
               <input
+                id="novedad-url-adjunto"
                 value={form.url_adjunto}
                 onChange={(e) => setForm({ ...form, url_adjunto: e.target.value })}
                 placeholder={t("comunicados.admin.fields.urlAdjuntoPlaceholder")}
@@ -314,10 +319,11 @@ export function AdminNovedadesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="novedad-fecha-expiracion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("novedades.admin.fields.fechaExpiracion")}
               </label>
               <input
+                id="novedad-fecha-expiracion"
                 type="date"
                 value={form.fecha_expiracion}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}

@@ -45,6 +45,7 @@
   "common": {
     "loading": "Loading...",
     "loadError": "We couldn't load this information. Please try again later.",
+    "actionError": "The action couldn't be completed. Please try again.",
     "email": "Email address",
     "emailPlaceholder": "email@example.com",
     "password": "Password",
@@ -69,7 +70,8 @@
       "noAccount": "Don't have an account yet?",
       "createAccountLink": "Sign up here",
       "submit": "Log In",
-      "errorDefault": "Incorrect credentials. Check your email and password."
+      "errorDefault": "Incorrect credentials. Check your email and password.",
+      "sessionExpired": "Your session expired. Please log in again."
     },
     "register": {
       "title": "Create your account",

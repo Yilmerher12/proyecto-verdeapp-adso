@@ -10,6 +10,7 @@ import io
 
 import pytest
 from fastapi.testclient import TestClient
+from PIL import Image
 from sqlalchemy.orm import Session
 
 from app.models.conjunto_residencial import ConjuntoResidencial
@@ -22,7 +23,19 @@ from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.utils.security import create_access_token, hash_password
 
-IMAGEN_FALSA = b"contenido-de-prueba-no-es-una-imagen-real"
+
+def _generar_imagen_real() -> bytes:
+    """¿Qué? Una imagen PNG real y mínima (2x2 píxeles), no solo bytes con
+    una etiqueta de imagen. ¿Para qué? Desde que auditoria_conjunto_service
+    valida el contenido real del archivo con Pillow (no solo el Content-Type
+    que manda el cliente), un archivo de prueba con bytes de texto plano ya
+    no pasa como "evidencia válida" — hace falta una imagen real."""
+    buffer = io.BytesIO()
+    Image.new("RGB", (2, 2), color="green").save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+IMAGEN_VALIDA = _generar_imagen_real()
 
 
 @pytest.fixture()
@@ -48,7 +61,7 @@ def _payload_valido(id_conjunto: int) -> dict:
 
 
 def _archivo_valido() -> dict:
-    return {"evidencia": ("foto.jpg", io.BytesIO(IMAGEN_FALSA), "image/jpeg")}
+    return {"evidencia": ("foto.jpg", io.BytesIO(IMAGEN_VALIDA), "image/jpeg")}
 
 
 class TestCrearAuditoria:
@@ -103,6 +116,20 @@ class TestCrearAuditoria:
             headers=reciclador_auth_headers,
             data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
             files={"evidencia": ("nota.txt", io.BytesIO(b"no soy una imagen"), "text/plain")},
+        )
+        assert response.status_code == 400
+
+    def test_evidencia_con_content_type_falso_devuelve_400(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        """¿Qué? El cliente declara Content-Type "image/jpeg" (pasa el primer
+        filtro), pero el contenido real es texto plano, no una imagen — debe
+        rechazarse igual, porque ahora también se valida el contenido real."""
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files={"evidencia": ("foto.jpg", io.BytesIO(b"esto no es una imagen de verdad"), "image/jpeg")},
         )
         assert response.status_code == 400
 
