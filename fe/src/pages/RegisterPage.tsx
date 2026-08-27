@@ -18,6 +18,7 @@ import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
 import { PoliticaPrivacidadPage } from "@/pages/PoliticaPrivacidadPage";
+import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 
 type DocumentoLegal = "terminos" | "privacidad" | null;
 
@@ -55,7 +56,7 @@ export function RegisterPage() {
   const [documentoAbierto, setDocumentoAbierto] = useState<DocumentoLegal>(null);
 
   const [localidades, setLocalidades] = useState<any[]>([]);
-  const [conjuntos, setConjuntos] = useState<any[]>([]);
+  const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<ConjuntoOption | null>(null);
 
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
@@ -84,16 +85,44 @@ export function RegisterPage() {
       .catch(err => console.error("Error cargando localidades", err));
   }, []);
 
+  // ¿Qué? Al cambiar de localidad, se descarta el conjunto ya elegido —
+  //       puede que ni siquiera exista en la nueva localidad.
+  // ¿Para qué? El ConjuntoCombobox ya busca sus propias opciones en el
+  //           backend (ver fetchConjuntos más abajo), así que aquí solo
+  //           queda limpiar la selección anterior.
   useEffect(() => {
-    if (formData.localidad_id) {
-      axios.get(`${API_BASE_URL}/api/v1/geography/conjuntos/${formData.localidad_id}`)
-        .then(res => setConjuntos(res.data))
-        .catch(err => console.error("Error cargando conjuntos", err));
-    } else {
-      setConjuntos([]);
-    }
+    setConjuntoSeleccionado(null);
     setFormData(prev => ({ ...prev, id_conjunto_residencial: "" }));
   }, [formData.localidad_id]);
+
+  // ¿Qué? Busca conjuntos de la localidad elegida que coincidan con `query`.
+  // ¿Para qué? Localidades como Usaquén tienen miles de conjuntos reales
+  //           registrados — el ConjuntoCombobox solo pide coincidencias
+  //           acotadas (ver geography.py), nunca el catálogo completo.
+  const fetchConjuntos = (query: string): Promise<ConjuntoOption[]> => {
+    if (!formData.localidad_id) return Promise.resolve([]);
+    return axios
+      .get(`${API_BASE_URL}/api/v1/geography/conjuntos/${formData.localidad_id}`, {
+        params: { search: query || undefined, limit: 20 },
+      })
+      .then(res => res.data)
+      .catch(() => []);
+  };
+
+  const handleConjuntoChange = (conjunto: ConjuntoOption | null) => {
+    setConjuntoSeleccionado(conjunto);
+    setFormData(prev => ({
+      ...prev,
+      id_conjunto_residencial: conjunto ? String(conjunto.id_conjunto_residencial) : "",
+    }));
+    if (fieldErrors.id_conjunto_residencial) {
+      setFieldErrors(prev => {
+        const copy = { ...prev };
+        delete copy.id_conjunto_residencial;
+        return copy;
+      });
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -348,12 +377,15 @@ export function RegisterPage() {
 
                   <div>
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.conjunto")}</label>
-                    <select name="id_conjunto_residencial" value={formData.id_conjunto_residencial} onChange={handleChange} disabled={!formData.localidad_id} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] disabled:text-gray-400">
-                      <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
-                      {conjuntos.map(conj => (
-                        <option key={conj.id_conjunto_residencial} value={conj.id_conjunto_residencial}>{conj.nombre_conjunto}</option>
-                      ))}
-                    </select>
+                    <ConjuntoCombobox
+                      value={conjuntoSeleccionado}
+                      onChange={handleConjuntoChange}
+                      fetchOptions={fetchConjuntos}
+                      disabled={!formData.localidad_id}
+                      placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
+                      emptyLabel={t("auth.register.fields.conjuntoNoResults")}
+                      loadingLabel={t("common.loading")}
+                    />
                   </div>
                 </div>
 

@@ -214,6 +214,18 @@ class TestConjuntosSinAdministrador:
         assert conjunto_verificado_sin_admin.nombre_conjunto in nombres
         assert conjunto_verificado.nombre_conjunto not in nombres
 
+    def test_busqueda_filtra_por_nombre(
+        self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_test, conjunto_verificado, conjunto_verificado_sin_admin
+    ):
+        response = client.get(
+            "/api/v1/geography/conjuntos/sin-administrador",
+            headers=admin_sistema_auth_headers,
+            params={"search": "RESERVA"},
+        )
+        assert response.status_code == 200
+        nombres = [c["nombre_conjunto"] for c in response.json()]
+        assert conjunto_verificado_sin_admin.nombre_conjunto in nombres
+
 
 class TestListarAdministradores:
     def test_admin_sistema_encuentra_administrador_existente(

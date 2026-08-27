@@ -80,6 +80,21 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
+// ¿Qué? Mock de ResizeObserver — no disponible en jsdom.
+// ¿Para qué? El Combobox de Headless UI (ConjuntoCombobox/ConjuntoComboboxMultiple)
+//           lo usa internamente para posicionar el menú de opciones flotante.
+// ¿Impacto? Sin este mock, cualquier test que abra un Combobox lanza
+//           "ResizeObserver is not defined" al montarlo.
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+Object.defineProperty(window, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverMock,
+});
+
 // ¿Qué? Mock de sessionStorage para tests.
 // ¿Para qué? AuthContext usa sessionStorage para persistir tokens.
 // ¿Impacto? jsdom implementa sessionStorage, pero lo limpiamos para asegurar aislamiento.

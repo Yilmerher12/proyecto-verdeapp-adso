@@ -112,6 +112,8 @@
         "locality": "Localidad",
         "selectPlaceholder": "Selecciona...",
         "conjunto": "Conjunto Residencial",
+        "conjuntoSearchPlaceholder": "Escribe el nombre de tu conjunto...",
+        "conjuntoNoResults": "No se encontró ningún conjunto con ese nombre.",
         "unitType": "Tipo Unidad",
         "unitTypeTower": "Torre",
         "unitTypeInterior": "Interior",
@@ -923,7 +925,8 @@
     "description": "Solo necesitas su correo. La persona invitada definirá su propia contraseña y completará sus datos al aceptar la invitación.",
     "emailLabel": "Correo del administrador a invitar *",
     "conjuntosLabel": "Conjuntos a asignar *",
-    "loadingConjuntos": "Cargando conjuntos...",
+    "conjuntoSearchPlaceholder": "Escribe el nombre del conjunto...",
+    "conjuntoNoResults": "No se encontró ningún conjunto con ese nombre.",
     "selectedCount": "{{count}} conjunto(s) seleccionado(s)",
     "submit": "Enviar invitación",
     "validation": {

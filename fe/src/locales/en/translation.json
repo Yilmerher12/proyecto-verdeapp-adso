@@ -112,6 +112,8 @@
         "locality": "District",
         "selectPlaceholder": "Select...",
         "conjunto": "Residential Building",
+        "conjuntoSearchPlaceholder": "Type your building's name...",
+        "conjuntoNoResults": "No building found with that name.",
         "unitType": "Unit Type",
         "unitTypeTower": "Tower",
         "unitTypeInterior": "Interior",
@@ -919,7 +921,8 @@
     "description": "You only need their email. The invited person will set their own password and complete their details when accepting the invitation.",
     "emailLabel": "Email of the administrator to invite *",
     "conjuntosLabel": "Buildings to assign *",
-    "loadingConjuntos": "Loading buildings...",
+    "conjuntoSearchPlaceholder": "Type the building's name...",
+    "conjuntoNoResults": "No building found with that name.",
     "selectedCount": "{{count}} building(s) selected",
     "submit": "Send invitation",
     "validation": {
