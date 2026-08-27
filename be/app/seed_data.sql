@@ -46,109 +46,22 @@ INSERT INTO localidades (id_localidad, nombre_localidad) VALUES
 (20, 'Sumapaz')
 ON CONFLICT DO NOTHING;
 
--- Limpiar inserciones previas de infraestructura para pruebas limpias
-DELETE FROM unidades;
-DELETE FROM conjuntos_residenciales;
-
--- 1. Usaquén
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(1, 'TORRES DE ARANJUEZ', '900123456-1', 'Calle 165 # 7-30', TRUE),
-(1, 'ALAMEDA DE SANTA BÁRBARA', '900123456-2', 'Carrera 15 # 119-45', TRUE);
-
--- 2. Chapinero
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(2, 'CONJUNTO RESIDENCIAL EL CASTILLO', '900123456-3', 'Calle 72 # 4-15', TRUE),
-(2, 'RESERVA DE CHAPINERO', '900123456-4', 'Carrera 13 # 58-20', TRUE);
-
--- 3. Santa Fe
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(3, 'TORRES DE SAN JUAN', '900123456-5', 'Calle 22 # 3-45', TRUE),
-(3, 'BALCONES DE SANTA FE', '900123456-6', 'Carrera 6 # 14-10', TRUE);
-
--- 4. San Cristóbal
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(4, 'PORTAL DE SAN CRISTÓBAL', '900123456-7', 'Calle 11 Sur # 11-25', TRUE),
-(4, 'MIRADOR DE LOS ALPES', '900123456-8', 'Carrera 8 Altas # 34-12S', TRUE);
-
--- 5. Usme
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(5, 'QUINTAS DE SOTAVENTO', '900123456-9', 'Calle 81S # 1-40', TRUE),
-(5, 'VALLES DE USME II', '900123456-10', 'Carrera 14 # 93S-15', TRUE);
-
--- 6. Tunjuelito
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(6, 'CIUDAD TUNAL - CLUSTER 4', '900123456-11', 'Calle 48B Sur # 24-50', TRUE),
-(6, 'PORTAL DE TUNJUELITO', '900123456-12', 'Carrera 25 # 52S-05', TRUE);
-
--- 7. Bosa
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(7, 'PARQUES DE BOGOTÁ - CIPRÉS', '900123456-13', 'Carrera 95A # 73S-10', TRUE),
-(7, 'RECREO DE LOS ALMENDROS', '900123456-14', 'Calle 71S # 92-05', TRUE);
-
--- 8. Kennedy
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(8, 'TINTAL PLAZA CONJUNTO 1', '900123456-15', 'Carrera 86 # 6C-10', TRUE),
-(8, 'PORTAL DE LAS AMÉRICAS', '900123456-16', 'Calle 42S # 80-55', TRUE);
-
--- 9. Fontibón
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(9, 'ALAMEDA DE FONTIBÓN', '900123456-17', 'Calle 17 # 103-45', TRUE),
-(9, 'RESERVA DEL TINTAL', '900123456-18', 'Carrera 98 # 22I-10', TRUE);
-
--- 10. Engativá
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(10, 'CIUDAD BACHUÉ ETAPA II', '900123456-19', 'Calle 90 # 95-20', TRUE),
-(10, 'ALMENDROS DE ENTRERÍOS', '900123456-20', 'Carrera 110 # 80-45', TRUE);
-
--- 11. Suba
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(11, 'CEREZOS DE SUBA', '900123456-21', 'Calle 145 # 91-34', TRUE),
-(11, 'ALTOS DE CHALETS', '900123456-22', 'Carrera 111A # 130-22', TRUE);
-
--- 12. Barrios Unidos
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(12, 'TORRES DE LA ESTRADA', '900123456-23', 'Calle 76 # 49-20', TRUE),
-(12, 'RESIDENCIAS LOS ALCÁZARES', '900123456-24', 'Carrera 53 # 68-15', TRUE);
-
--- 13. Teusaquillo
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(13, 'CONJUNTO PARQUE SIMÓN BOLÍVAR', '900123456-25', 'Calle 45 # 22-30', TRUE),
-(13, 'TORRES DE LA SOLEDAD', '900123456-26', 'Carrera 24 # 39-50', TRUE);
-
--- 14. Los Mártires
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(14, 'RESIDENCIAS SAN FACÓN', '900123456-27', 'Calle 10 # 22-40', TRUE),
-(14, 'TORRES DE LA FAVORITA', '900123456-28', 'Carrera 18 # 8-15', TRUE);
-
--- 15. Antonio Nariño
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(15, 'CONJUNTO RESTREPO REAL', '900123456-29', 'Calle 17 Sur # 24-10', TRUE),
-(15, 'TORRES DEL TRABAJADOR', '900123456-30', 'Carrera 27 # 18-35S', TRUE);
-
--- 16. Puente Aranda
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(16, 'RESIDENCIAS ZONA INDUSTRIAL', '900123456-31', 'Calle 13 # 50-20', TRUE),
-(16, 'TORRES DE LA ALQUERÍA', '900123456-32', 'Carrera 56 # 8-45', TRUE);
-
--- 17. La Candelaria
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(17, 'CONJUNTO CENTRO HISTÓRICO', '900123456-33', 'Calle 12 # 3-25', TRUE),
-(17, 'RESIDENCIAS LA CONCORDIA', '900123456-34', 'Carrera 2 # 9-40', TRUE);
-
--- 18. Rafael Uribe Uribe
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(18, 'CONJUNTO QUIROGA CENTRAL', '900123456-35', 'Calle 27 Sur # 16-20', TRUE),
-(18, 'TORRES DEL SAN JOSÉ SUR', '900123456-36', 'Carrera 14A # 32S-15', TRUE);
-
--- 19. Ciudad Bolívar
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(19, 'CONJUNTO ARBORIZADORA ALTA', '900123456-37', 'Calle 70 Sur # 18-30', TRUE),
-(19, 'TORRES DE SAN FRANCISCO', '900123456-38', 'Carrera 19 # 71S-10', TRUE);
-
--- 20. Sumapaz
-INSERT INTO conjuntos_residenciales (id_localidad, nombre_conjunto, nit, direccion, verificado) VALUES
-(20, 'CONJUNTO VEREDA SAN JUAN', '900123456-39', 'Vía San Juan Km 3', TRUE),
-(20, 'RESIDENCIAS ALTO SUMAPAZ', '900123456-40', 'Vía Nazareth Km 1', TRUE);
+-- ============================================================================
+-- 🏘️ CONJUNTOS RESIDENCIALES — sembrados desde Python, no desde este archivo
+-- ============================================================================
+-- ¿Qué? Antes había 40 conjuntos inventados aquí mismo (2 por localidad,
+--       NITs secuenciales de relleno "900123456-X"). Ahora vienen del
+--       dataset real "Conjuntos Residenciales y Cerrados de Bogotá"
+--       (Secretaría Distrital de Gobierno) — ver
+--       docs/gestion-proyecto/fuente-datos-conjuntos-reales.md.
+-- ¿Para qué? Son más de 10,000 filas reales — ya no caben razonablemente
+--           como INSERT escritos a mano en un .sql. `seed.py` las lee
+--           directamente del CSV en app/data/ y las siembra por código
+--           (ver `importar_conjuntos_reales` en seed.py), justo después de
+--           que este archivo cree roles y localidades.
+-- ¿Impacto? Si buscas los conjuntos aquí y no los encuentras, es porque
+--           ahora viven en app/data/conjuntos_residenciales_bogota.csv,
+--           no en este .sql.
 
 -- ¿Qué? Superadministrador oficial compartido para el equipo de desarrollo.
 -- Contraseña hasheada: AdminVerde2026*
@@ -158,104 +71,16 @@ ON CONFLICT DO NOTHING;
 
 
 -- ============================================================================
--- 🧪 USUARIOS SEMILLA DE PRUEBA — BORRAR ESTA SECCIÓN COMPLETA CUANDO YA NO
---    SE NECESITEN MÁS PRUEBAS MANUALES (busca el final marcado más abajo).
+-- 🧪 USUARIOS SEMILLA DE PRUEBA (Admin de Conjunto, Reciclador, Residente)
 -- ============================================================================
---
--- ¿Qué? 2 usuarios listos para probar el flujo Reciclador-Conjunto sin tener
---       que registrarse manualmente cada vez que se reinicia la base de datos.
--- ¿Para qué? Evitar repetir registro + verificación de correo + invitación +
---           aceptación a mano en cada prueba durante el desarrollo.
--- ¿Impacto? Ambos usan la MISMA contraseña que el superadmin para simplificar:
---           AdminVerde2026*
---           Ya quedan ACTIVOS (is_active=TRUE) — no hace falta verificar correo.
---           El reciclador YA queda ACEPTADO en el conjunto del admin — no hace
---           falta repetir el flujo de invitar/aceptar para probar el resto
---           de la app (aunque el flujo de invitar SIGUE funcionando igual
---           para probarlo con otros usuarios si se quiere).
---
--- Usuario 1 — Admin de Conjunto de prueba
---   Correo:      admin.conjunto.prueba@verdeapp.com
---   Contraseña:  AdminVerde2026*
---   Administra:  TORRES DE ARANJUEZ (Usaquén, conjunto #1)
---
--- Usuario 2 — Reciclador de prueba
---   Correo:      reciclador.prueba@verdeapp.com
---   Contraseña:  AdminVerde2026*
---   Ya autorizado en: TORRES DE ARANJUEZ (Usaquén, conjunto #1)
---
-INSERT INTO usuarios (id_rol, correo_electronico, password, is_active) VALUES
-(4, 'admin.conjunto.prueba@verdeapp.com', '$2b$12$xSluyevTDoPhwiydwB3OhetVHh1miUiGivw99ChVJxBGl.zaC6EMW', true),
-(3, 'reciclador.prueba@verdeapp.com', '$2b$12$xSluyevTDoPhwiydwB3OhetVHh1miUiGivw99ChVJxBGl.zaC6EMW', true)
-ON CONFLICT DO NOTHING;
-
-INSERT INTO administradores_conjunto (id_usuario, nombre, apellidos, numero_telefonico)
-SELECT id_usuario, 'ADMIN', 'DE PRUEBA', '3000000000'
-FROM usuarios WHERE correo_electronico = 'admin.conjunto.prueba@verdeapp.com'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO recicladores (id_usuario, localidad_id, nombre, apellidos, numero_telefonico, asociacion)
-SELECT id_usuario, 1, 'RECICLADOR', 'DE PRUEBA', '3000000001', 'INDEPENDIENTE'
-FROM usuarios WHERE correo_electronico = 'reciclador.prueba@verdeapp.com'
-ON CONFLICT DO NOTHING;
-
--- ¿Qué? Vincula al Admin de Conjunto de prueba con el conjunto #1
---       (TORRES DE ARANJUEZ, el primero insertado en Usaquén).
-INSERT INTO administradores_conjuntos (id_administrador, id_conjunto_residencial)
-SELECT ac.id_administrador, 1
-FROM administradores_conjunto ac
-JOIN usuarios u ON u.id_usuario = ac.id_usuario
-WHERE u.correo_electronico = 'admin.conjunto.prueba@verdeapp.com'
-ON CONFLICT DO NOTHING;
-
--- ¿Qué? Vincula directamente al Reciclador de prueba con el conjunto #1,
---       como si ya hubiera aceptado una invitación — listo para probar
---       el resto de la app sin repetir el flujo de invitación cada vez.
-INSERT INTO recicladores_conjuntos (id_reciclador, id_conjunto_residencial)
-SELECT r.id_reciclador, 1
-FROM recicladores r
-JOIN usuarios u ON u.id_usuario = r.id_usuario
-WHERE u.correo_electronico = 'reciclador.prueba@verdeapp.com'
-ON CONFLICT DO NOTHING;
--- Usuario 3 — Residente de prueba
---   Correo:      residente.prueba@verdeapp.com
---   Contraseña:  AdminVerde2026*
---   Conjunto:    TORRES DE ARANJUEZ (mismo que el reciclador de prueba → pueden notificarse)
-INSERT INTO usuarios (id_rol, correo_electronico, password, is_active) VALUES
-(2, 'residente.prueba@verdeapp.com', '$2b$12$xSluyevTDoPhwiydwB3OhetVHh1miUiGivw99ChVJxBGl.zaC6EMW', true)
-ON CONFLICT DO NOTHING;
-
--- Unidad para el residente de prueba en Torres de Aranjuez
-INSERT INTO unidades (id_conjunto_residencial, torre, apto)
-SELECT id_conjunto_residencial, 'Torre A', '101'
-FROM conjuntos_residenciales
-WHERE nombre_conjunto = 'TORRES DE ARANJUEZ'
-LIMIT 1
-ON CONFLICT DO NOTHING;
-
--- Perfil del residente de prueba
-INSERT INTO residentes (id_usuario, id_unidad, nombre, apellidos, numero_telefonico)
-SELECT
-    u.id_usuario,
-    un.id_unidad,
-    'RESIDENTE',
-    'DE PRUEBA',
-    '3000000002'
-FROM usuarios u
-CROSS JOIN (
-    SELECT un2.id_unidad
-    FROM unidades un2
-    JOIN conjuntos_residenciales c ON c.id_conjunto_residencial = un2.id_conjunto_residencial
-    WHERE c.nombre_conjunto = 'TORRES DE ARANJUEZ'
-      AND un2.torre = 'Torre A' AND un2.apto = '101'
-    LIMIT 1
-) un
-WHERE u.correo_electronico = 'residente.prueba@verdeapp.com'
-ON CONFLICT DO NOTHING;
-
--- ============================================================================
--- 🧪 FIN DE LA SECCIÓN DE USUARIOS SEMILLA DE PRUEBA — borrar hasta aquí.
--- ============================================================================
+-- ¿Qué? Se movieron a Python (`sembrar_usuarios_prueba` en seed.py).
+-- ¿Para qué? Ahora que los conjuntos vienen del CSV real, estos 3 usuarios
+--           necesitan buscar el id del conjunto de prueba (CONJUNTO_DE_PRUEBA
+--           en seed.py) DESPUÉS de importarlo — algo que un .sql estático
+--           ejecutado de una sola vez ya no puede hacer con un nombre real
+--           que solo se conoce en tiempo de ejecución.
+-- ¿Impacto? Misma contraseña de siempre (AdminVerde2026*) y mismo
+--           comportamiento — solo cambió DÓNDE vive el código, no qué hace.
 
 -- ============================================================================
 -- 📍 PUNTOS DE ACOPIO — Estaciones de Clasificación y Aprovechamiento (ECA)
