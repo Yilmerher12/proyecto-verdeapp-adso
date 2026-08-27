@@ -274,6 +274,7 @@ verde-app/
 ├── scripts/                 # Utilidades Bash (start.sh, stop.sh) para automatizar contenedores
 ├── be/                      # Backend (Python + FastAPI)
 │   ├── app/                 # Código fuente principal de la API
+│   │   ├── data/            # Datos abiertos usados por el seed (ver seed.py)
 │   │   ├── models/          # Entidades e imperativos relacionales de SQLAlchemy
 │   │   ├── routers/         # Controladores de endpoints divididos por recursos
 │   │   ├── schemas/         # Modelos de validación estricta de Pydantic (DTOs)
