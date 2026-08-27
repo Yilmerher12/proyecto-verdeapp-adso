@@ -145,4 +145,50 @@ describe("RecicladorDashboard", () => {
       );
     });
   });
+
+  it("muestra el aviso de auditoría pendiente y envía la auditoría con evidencia", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
+      if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+      if (url.includes("/auditorias-conjunto/mias")) return Promise.resolve({ data: [] });
+      if (url.includes("/contenido-educativo")) {
+        return Promise.resolve({
+          data: [{ id_contenido: 1, modulo_categoria: "Separación en la fuente y código de colores" }],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    mockPost.mockResolvedValue({ data: { id_auditoria: 1 } });
+    const user = userEvent.setup();
+    renderPage();
+
+    // ¿Qué? Nunca se ha auditado este conjunto, así que el aviso debe verse.
+    await screen.findByText("Ya puedes calificar la separación de residuos de Conjunto Los Alpes.");
+    await user.click(screen.getByRole("button", { name: "Auditar ahora" }));
+
+    expect(screen.getByText("Auditar conjunto")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Buena" }));
+
+    const selectTema = await screen.findByRole("combobox");
+    await user.selectOptions(selectTema, "Separación en la fuente y código de colores");
+
+    const archivo = new File(["contenido"], "evidencia.jpg", { type: "image/jpeg" });
+    const inputArchivo = screen.getByLabelText(/JPG, PNG o WEBP/);
+    await user.upload(inputArchivo, archivo);
+
+    await user.click(screen.getByRole("button", { name: "Enviar auditoría" }));
+
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith(
+        expect.stringContaining("/auditorias-conjunto"),
+        expect.any(FormData),
+        expect.anything()
+      );
+    });
+    const formData = mockPost.mock.calls.find(([url]) => url.includes("/auditorias-conjunto"))?.[1] as FormData;
+    expect(formData.get("id_conjunto_residencial")).toBe("1");
+    expect(formData.get("nivel_desempeno")).toBe("BUENA");
+    expect(formData.get("tema_educativo")).toBe("Separación en la fuente y código de colores");
+    expect(formData.get("evidencia")).toBeInstanceOf(File);
+  });
 });

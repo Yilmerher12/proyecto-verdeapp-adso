@@ -744,6 +744,37 @@
         "subtitle": "Select the building you arrived at or want to notify about.",
         "sending": "Sending...",
         "submit": "Send notice"
+      },
+      "auditoria": {
+        "bannerTitle": "Weekly audit pending",
+        "bannerSubtitle": "You can now rate the recycling sorting of {{conjunto}}.",
+        "bannerAction": "Audit now",
+        "modalTitle": "Audit building",
+        "modalSubtitle": "Rate how well this building is sorting its recyclable material — the rating is backed by a photo.",
+        "conjuntoLabel": "Building",
+        "nivelLabel": "Performance level",
+        "niveles": {
+          "excelente": "Excellent",
+          "buena": "Good",
+          "regular": "Fair",
+          "deficiente": "Poor"
+        },
+        "temaLabel": "Related topic",
+        "temaPlaceholder": "Select a topic...",
+        "descripcionLabel": "Description (optional)",
+        "descripcionPlaceholder": "Tell us what you found...",
+        "evidenciaLabel": "Evidence photo",
+        "evidenciaHint": "JPG, PNG, or WEBP — 5 MB max.",
+        "submit": "Submit audit",
+        "sending": "Sending...",
+        "successMessage": "Audit submitted.",
+        "errorDefault": "Couldn't submit the audit.",
+        "validation": {
+          "conjunto": "Select a building.",
+          "nivel": "Select a performance level.",
+          "tema": "Select a topic.",
+          "evidencia": "Upload an evidence photo."
+        }
       }
     },
     "residente": {

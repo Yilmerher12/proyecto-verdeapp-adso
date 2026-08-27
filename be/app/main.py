@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.routers import auth, users, geography, admin
 from app.routers import admin_conjunto
@@ -10,6 +13,7 @@ from app.routers import notificaciones
 from app.routers import contenido_educativo
 from app.routers import comunicados
 from app.routers import novedades
+from app.routers import auditoria_conjunto
 
 # ¿Qué? El esquema de la base de datos ya NO se crea aquí en tiempo de ejecución.
 # ¿Para qué? Antes esta sección llamaba a Base.metadata.create_all(bind=engine), que
@@ -76,6 +80,19 @@ app.include_router(notificaciones.router)
 app.include_router(contenido_educativo.router)
 app.include_router(comunicados.router)
 app.include_router(novedades.router)
+app.include_router(auditoria_conjunto.router)
+
+# ¿Qué? Sirve las fotos de evidencia de las auditorías como archivos
+#       estáticos, bajo /uploads — es la primera vez que el backend guarda
+#       y sirve archivos subidos por un usuario (antes todo el contenido
+#       educativo usaba solo links externos).
+# ¿Para qué? El frontend necesita una URL real para poner en un <img src>.
+# ¿Impacto? La carpeta se crea sola en el primer POST si no existe (ver
+#           auditoria_conjunto_service.py); si nunca se ha subido nada,
+#           StaticFiles la crea aquí para no fallar al arrancar.
+_CARPETA_UPLOADS = Path(__file__).parent / "uploads"
+_CARPETA_UPLOADS.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=_CARPETA_UPLOADS), name="uploads")
 
 
 @app.get("/api/v1/health")
