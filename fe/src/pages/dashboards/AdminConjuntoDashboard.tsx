@@ -23,6 +23,7 @@ import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
+import { Alert } from "@/components/ui/Alert";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -361,6 +362,8 @@ export function AdminConjuntoDashboard() {
 
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [cargandoNotifs, setCargandoNotifs] = useState(true);
+  const [errorNotifs, setErrorNotifs] = useState(false);
+  const [errorAccionNotif, setErrorAccionNotif] = useState(false);
 
   const authHeaders = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 
@@ -377,26 +380,45 @@ export function AdminConjuntoDashboard() {
     if (!accessToken) return;
     axios
       .get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers: authHeaders })
-      .then((res) => setNotificaciones(res.data))
-      .catch(() => {})
+      .then((res) => {
+        setNotificaciones(res.data);
+        setErrorNotifs(false);
+      })
+      // ¿Qué? Antes esto fallaba en silencio — el panel se quedaba con
+      //       notificaciones viejas sin ningún aviso de que algo salió mal.
+      // ¿Impacto? Como esto también corre cada 20s (polling), el aviso
+      //           desaparece solo apenas una siguiente carga funcione.
+      .catch(() => setErrorNotifs(true))
       .finally(() => setCargandoNotifs(false));
   };
 
   const marcarLeida = async (id: number) => {
-    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers: authHeaders });
-    setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
-    notificarNotificacionesActualizadas();
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers: authHeaders });
+      setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+      notificarNotificacionesActualizadas();
+    } catch {
+      setErrorAccionNotif(true);
+    }
   };
 
   const marcarTodasLeidas = async () => {
-    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers: authHeaders });
-    setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
-    notificarNotificacionesActualizadas();
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers: authHeaders });
+      setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+      notificarNotificacionesActualizadas();
+    } catch {
+      setErrorAccionNotif(true);
+    }
   };
 
   const limpiarLeidas = async () => {
-    await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers: authHeaders });
-    setNotificaciones((prev) => prev.filter((n) => !n.leida));
+    try {
+      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers: authHeaders });
+      setNotificaciones((prev) => prev.filter((n) => !n.leida));
+    } catch {
+      setErrorAccionNotif(true);
+    }
   };
 
   useEffect(() => {
@@ -606,16 +628,26 @@ export function AdminConjuntoDashboard() {
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
         </div>
       ) : (
-        <NotificationFeed
-          title={t("dashboards.adminConjunto.notifications.title")}
-          notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
-          emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
-          accentBg="bg-amber-700"
-          accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
-          onMarkRead={marcarLeida}
-          onMarkAllRead={marcarTodasLeidas}
-          onClearRead={limpiarLeidas}
-        />
+        <>
+          {errorNotifs && <Alert type="error" message={t("common.loadError")} />}
+          {errorAccionNotif && (
+            <Alert
+              type="error"
+              message={t("common.actionError")}
+              onClose={() => setErrorAccionNotif(false)}
+            />
+          )}
+          <NotificationFeed
+            title={t("dashboards.adminConjunto.notifications.title")}
+            notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
+            emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
+            accentBg="bg-amber-700"
+            accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
+            onMarkRead={marcarLeida}
+            onMarkAllRead={marcarTodasLeidas}
+            onClearRead={limpiarLeidas}
+          />
+        </>
       )}
 
       <HistorialAuditorias token={accessToken ?? ""} />

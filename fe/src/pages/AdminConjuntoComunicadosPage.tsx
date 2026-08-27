@@ -308,10 +308,11 @@ export function AdminConjuntoComunicadosPage() {
             {!editando && (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                  <label htmlFor="comunicado-conjunto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                     {t("comunicados.admin.fields.conjunto")} <span className="text-red-500">*</span>
                   </label>
                   <select
+                    id="comunicado-conjunto"
                     value={form.id_conjunto_residencial}
                     onChange={(e) => setForm({ ...form, id_conjunto_residencial: Number(e.target.value) })}
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
@@ -325,10 +326,16 @@ export function AdminConjuntoComunicadosPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                  {/* ¿Qué? "Destinatarios" no es un <select>/<input> único, es un
+                      grupo de botones — un <label htmlFor> no aplica aquí.
+                      ¿Para qué? role="group" + aria-labelledby es la forma
+                                correcta de asociar un texto descriptivo a un
+                                grupo de controles (WAI-ARIA), en vez de un
+                                <label> huérfano que no apunta a nada. */}
+                  <span id="comunicado-destinatarios-label" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                     {t("comunicados.admin.fields.destinatarios")} <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-2">
+                  </span>
+                  <div role="group" aria-labelledby="comunicado-destinatarios-label" className="flex gap-2">
                     {DESTINATARIOS.map((d) => (
                       <button
                         key={d}
@@ -361,10 +368,11 @@ export function AdminConjuntoComunicadosPage() {
             )}
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="comunicado-tipo" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("comunicados.admin.fields.tipo")} <span className="text-red-500">*</span>
               </label>
               <select
+                id="comunicado-tipo"
                 value={form.tipo}
                 onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoComunicado })}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
@@ -379,10 +387,11 @@ export function AdminConjuntoComunicadosPage() {
 
             {form.tipo === "CONVOCATORIA" && (
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                <label htmlFor="comunicado-fecha-evento" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("comunicados.admin.fields.fechaEvento")} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="comunicado-fecha-evento"
                   type="date"
                   value={form.fecha_evento}
                   onChange={(e) => setForm({ ...form, fecha_evento: e.target.value })}
@@ -392,10 +401,11 @@ export function AdminConjuntoComunicadosPage() {
             )}
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="comunicado-texto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("comunicados.admin.fields.texto")} <span className="text-red-500">*</span>
               </label>
               <textarea
+                id="comunicado-texto"
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 rows={5}
@@ -404,10 +414,11 @@ export function AdminConjuntoComunicadosPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="comunicado-url-adjunto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("comunicados.admin.fields.urlAdjunto")}
               </label>
               <input
+                id="comunicado-url-adjunto"
                 value={form.url_adjunto}
                 onChange={(e) => setForm({ ...form, url_adjunto: e.target.value })}
                 placeholder={t("comunicados.admin.fields.urlAdjuntoPlaceholder")}
@@ -416,10 +427,11 @@ export function AdminConjuntoComunicadosPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="comunicado-fecha-expiracion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("comunicados.admin.fields.fechaExpiracion")}
               </label>
               <input
+                id="comunicado-fecha-expiracion"
                 type="date"
                 value={form.fecha_expiracion}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}

@@ -45,6 +45,7 @@
   "common": {
     "loading": "Cargando...",
     "loadError": "No se pudo cargar la información. Intenta de nuevo más tarde.",
+    "actionError": "No se pudo completar la acción. Inténtalo de nuevo.",
     "email": "Correo electrónico",
     "emailPlaceholder": "correo@ejemplo.com",
     "password": "Contraseña",
@@ -69,7 +70,8 @@
       "noAccount": "¿No tienes cuenta aún?",
       "createAccountLink": "Regístrate aquí",
       "submit": "Iniciar Sesión",
-      "errorDefault": "Credenciales incorrectas. Verifica tu correo y contraseña."
+      "errorDefault": "Credenciales incorrectas. Verifica tu correo y contraseña.",
+      "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión."
     },
     "register": {
       "title": "Crea tu cuenta",

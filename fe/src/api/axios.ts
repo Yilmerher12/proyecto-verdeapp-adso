@@ -69,12 +69,40 @@ function manejarRespuestaExitosa(response: import("axios").AxiosResponse) {
   return response;
 }
 
+// ¿Qué? Evita disparar el redireccionamiento de sesión vencida más de una vez
+//       si varias peticiones fallan casi al mismo tiempo con 401.
+// ¿Para qué? Sin este candado, 3-4 peticiones en paralelo (algo común al
+//           cargar un dashboard) dispararían 3-4 redirecciones seguidas.
+// ¿Impacto? Solo la primera detecta la sesión vencida y redirige; las demás
+//           se ignoran porque para entonces la redirección ya está en curso.
+let sesionExpiradaEnProceso = false;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function manejarErrorDeRespuesta(error: any) {
   if (error.response) {
     // ¿Qué? Error HTTP del servidor (4xx, 5xx).
     // ¿Para qué? Extraer el mensaje de error del body de la respuesta.
     const data = error.response.data;
+
+    // ¿Qué? Un 401 mientras había un token guardado significa que la sesión
+    //       venció DURANTE el uso activo de la app (no es un login con
+    //       contraseña incorrecta — ese caso no tiene token guardado todavía).
+    // ¿Para qué? Antes, cuando el token expiraba (a los 15-60 minutos), la
+    //           app simplemente dejaba de actualizar datos en silencio: cada
+    //           petición fallaba con 401 y quedaba atrapada en los `catch`
+    //           de cada pantalla, sin ningún aviso — parecía que la app se
+    //           había "congelado", no que la sesión había muerto.
+    // ¿Impacto? Ahora se limpia la sesión y se manda a login con un aviso
+    //           claro, en vez de dejar que las peticiones sigan fallando
+    //           sin explicación.
+    const haySesionGuardada = !!sessionStorage.getItem("access_token");
+    if (error.response.status === 401 && haySesionGuardada && !sesionExpiradaEnProceso) {
+      sesionExpiradaEnProceso = true;
+      sessionStorage.removeItem("access_token");
+      sessionStorage.removeItem("refresh_token");
+      sessionStorage.setItem("verdeapp:session-expired", "1");
+      window.location.href = "/login";
+    }
 
     // ¿Qué? Manejo especial para errores de validación Pydantic (422).
     // ¿Para qué? Los errores 422 tienen estructura { detail: [{loc, msg, type}] }.

@@ -4,7 +4,7 @@
  * ¿Para qué? Permitir que usuarios registrados se autentiquen en el sistema.
  * ¿Impacto? Es la puerta de entrada a la app — sin login, no se puede acceder a nada protegido.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Mail, Lock, Leaf } from "lucide-react";
@@ -24,6 +24,19 @@ export function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // ¿Qué? Si axios.ts detectó una sesión vencida (401 con token guardado),
+  //       dejó esta marca antes de redirigir aquí con recarga completa.
+  // ¿Para qué? Explicarle al usuario por qué terminó en esta pantalla, en vez
+  //           de dejarlo pensando que la app falló o que cerró sesión él mismo.
+  // ¿Impacto? La marca se borra al leerla, así que solo se muestra una vez.
+  useEffect(() => {
+    if (sessionStorage.getItem("verdeapp:session-expired")) {
+      sessionStorage.removeItem("verdeapp:session-expired");
+      setError(t("auth.login.sessionExpired"));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
