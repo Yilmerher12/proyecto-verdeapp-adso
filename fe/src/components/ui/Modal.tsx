@@ -31,6 +31,17 @@ interface ModalProps {
    * Default: "base".
    */
   layer?: "base" | "stacked";
+  /**
+   * ¿Qué? Si el clic en el fondo (backdrop) cierra el modal. Default: true.
+   * ¿Para qué? En formularios con datos ya escritos (login, registro, crear
+   *           auditoría, etc.) un clic accidental afuera borraba todo lo
+   *           que la persona ya había llenado — muy frustrante. En modales
+   *           simples (confirmaciones, ver un detalle) sigue siendo cómodo
+   *           poder cerrar con un clic afuera.
+   * ¿Impacto? Con `false`, solo se cierra con el botón X, un botón
+   *           "Cancelar" del propio formulario, o la tecla Esc.
+   */
+  closeOnBackdrop?: boolean;
 }
 
 /**
@@ -45,6 +56,7 @@ export function Modal({
   wide = false,
   "aria-label": ariaLabel,
   layer = "base",
+  closeOnBackdrop = true,
 }: ModalProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -115,7 +127,7 @@ export function Modal({
   return (
     <div
       className={`fixed inset-0 ${backdropZIndex} flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm sm:items-center sm:p-6`}
-      onClick={onClose}
+      onClick={closeOnBackdrop ? onClose : undefined}
       aria-hidden="false"
     >
       <div

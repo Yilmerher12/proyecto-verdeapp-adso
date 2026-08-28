@@ -150,7 +150,7 @@ describe("ResidenteDashboard", () => {
     await user.click(screen.getByRole("button", { name: "Ver" }));
 
     expect(await screen.findByText("Resultado de la auditoría")).toBeInTheDocument();
-    expect(screen.getByText("Deficiente")).toBeInTheDocument();
+    expect(screen.getByText("Malo")).toBeInTheDocument();
     expect(screen.getByText("El material llegó mezclado.")).toBeInTheDocument();
     expect(screen.getByText(/Auditado por Carlos Gómez/)).toBeInTheDocument();
 
@@ -209,6 +209,6 @@ describe("ResidenteDashboard", () => {
     await user.click(screen.getByText("Economía circular y aprovechamiento"));
 
     expect(await screen.findByText("Resultado de la auditoría")).toBeInTheDocument();
-    expect(screen.getAllByText("Excelente").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Bueno").length).toBeGreaterThan(0);
   });
 });

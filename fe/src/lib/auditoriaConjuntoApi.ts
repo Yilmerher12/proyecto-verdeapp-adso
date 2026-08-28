@@ -16,6 +16,8 @@ export interface AuditoriaConjunto {
   tema_educativo: string;
   descripcion: string | null;
   ruta_evidencia: string;
+  ruta_evidencia_2: string | null;
+  ruta_evidencia_3: string | null;
   created_at: string;
   nombre_reciclador: string;
 }
@@ -25,18 +27,18 @@ export interface NuevaAuditoria {
   nivel_desempeno: NivelDesempeno;
   tema_educativo: string;
   descripcion?: string;
-  evidencia: File;
+  evidencias: File[];
 }
 
 // ¿Qué? Envía la auditoría como multipart/form-data (no JSON) porque incluye
-//       un archivo — es el primer endpoint de VerdeApp que sube una imagen.
+//       archivos — es el primer endpoint de VerdeApp que sube imágenes.
 export async function crearAuditoria(datos: NuevaAuditoria, token: string): Promise<AuditoriaConjunto> {
   const formData = new FormData();
   formData.append("id_conjunto_residencial", String(datos.id_conjunto_residencial));
   formData.append("nivel_desempeno", datos.nivel_desempeno);
   formData.append("tema_educativo", datos.tema_educativo);
   if (datos.descripcion) formData.append("descripcion", datos.descripcion);
-  formData.append("evidencia", datos.evidencia);
+  for (const archivo of datos.evidencias) formData.append("evidencias", archivo);
 
   const { data } = await axios.post(API_BASE, formData, {
     headers: { Authorization: `Bearer ${token}` },

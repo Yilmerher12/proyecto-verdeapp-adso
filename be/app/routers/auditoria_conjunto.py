@@ -38,6 +38,8 @@ def _a_response(auditoria: AuditoriaConjunto) -> AuditoriaConjuntoResponse:
         tema_educativo=auditoria.tema_educativo,
         descripcion=auditoria.descripcion,
         ruta_evidencia=auditoria.ruta_evidencia,
+        ruta_evidencia_2=auditoria.ruta_evidencia_2,
+        ruta_evidencia_3=auditoria.ruta_evidencia_3,
         created_at=auditoria.created_at,
         nombre_reciclador=f"{auditoria.reciclador.nombre} {auditoria.reciclador.apellidos}".strip(),
     )
@@ -54,7 +56,7 @@ async def crear_auditoria(
     nivel_desempeno: NivelDesempeno = Form(...),
     tema_educativo: str = Form(...),
     descripcion: Optional[str] = Form(None),
-    evidencia: UploadFile = File(...),
+    evidencias: list[UploadFile] = File(...),
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> AuditoriaConjuntoResponse:
@@ -70,7 +72,7 @@ async def crear_auditoria(
         nivel_desempeno=nivel_desempeno,
         tema_educativo=tema_educativo,
         descripcion=descripcion,
-        evidencia=evidencia,
+        evidencias=evidencias,
     )
     return _a_response(auditoria)
 
@@ -110,7 +112,7 @@ def listar_historial(
 @router.get(
     "/{id_auditoria}",
     response_model=AuditoriaConjuntoResponse,
-    summary="Residente o Admin de Conjunto ve el detalle de una auditoría de su conjunto",
+    summary="Residente/Admin de Conjunto ve el detalle de una auditoría de su conjunto, o Reciclador ve una que él mismo envió",
 )
 def obtener_auditoria(
     id_auditoria: UUID,

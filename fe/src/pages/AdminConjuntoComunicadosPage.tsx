@@ -292,6 +292,7 @@ export function AdminConjuntoComunicadosPage() {
         <Modal
           onClose={cerrarFormulario}
           wide
+          closeOnBackdrop={false}
           aria-label={editando ? t("comunicados.admin.editTitle") : t("comunicados.admin.newButton")}
         >
           <div className="p-6 sm:p-8 space-y-4">

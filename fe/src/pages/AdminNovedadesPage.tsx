@@ -242,6 +242,7 @@ export function AdminNovedadesPage() {
         <Modal
           onClose={cerrarFormulario}
           wide
+          closeOnBackdrop={false}
           aria-label={editando ? t("novedades.admin.editTitle") : t("novedades.admin.newButton")}
         >
           <div className="p-6 sm:p-8 space-y-4">

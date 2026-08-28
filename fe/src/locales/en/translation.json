@@ -756,7 +756,7 @@
         "conjuntoLabel": "Building",
         "nivelLabel": "Performance level",
         "niveles": {
-          "excelente": "Excellent",
+          "excelente": "Good",
           "buena": "Good",
           "regular": "Fair",
           "deficiente": "Poor"
@@ -765,8 +765,11 @@
         "temaPlaceholder": "Select a topic...",
         "descripcionLabel": "Description (optional)",
         "descripcionPlaceholder": "Tell us what you found...",
-        "evidenciaLabel": "Evidence photo",
-        "evidenciaHint": "JPG, PNG, or WEBP — 5 MB max.",
+        "evidenciaLabel": "Evidence photos",
+        "evidenciaHint": "JPG, PNG, or WEBP — 5 MB max each.",
+        "evidenciaAgregarOtra": "Add another photo",
+        "evidenciaMaximoAlcanzado": "You've already attached the maximum of 3 photos.",
+        "evidenciaQuitar": "Remove this photo",
         "submit": "Submit audit",
         "sending": "Sending...",
         "successMessage": "Audit submitted.",
@@ -775,7 +778,7 @@
           "conjunto": "Select a building.",
           "nivel": "Select a performance level.",
           "tema": "Select a topic.",
-          "evidencia": "Upload an evidence photo."
+          "evidencia": "Upload at least one evidence photo."
         }
       }
     },
@@ -819,6 +822,7 @@
     "descripcionLabel": "Description",
     "auditadoPor": "Audited by {{nombre}}",
     "evidenciaAlt": "Audit evidence photo",
+    "evidenciaAmpliar": "View photo full size",
     "errorLoad": "Couldn't load the audit.",
     "historialTitle": "Audit history",
     "historialEmpty": "No audits recorded yet."

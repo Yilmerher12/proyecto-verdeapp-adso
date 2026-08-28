@@ -13,17 +13,20 @@ import {
   PackageCheck,
   DoorOpen,
   ClipboardList,
+  History,
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { Modal } from "@/components/ui/Modal";
 import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
 import { listarMisAuditorias, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
+import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 
 // ¿Qué? Cada cuántos días se le vuelve a sugerir al reciclador auditar el
 //       mismo conjunto. Ver issue #5: se decidió semanal porque no todos
@@ -106,6 +109,7 @@ export function RecicladorDashboard() {
   // Formulario de auditoría (RQF-009)
   const [conjuntoParaAuditar, setConjuntoParaAuditar] = useState<string | null>(null);
   const [feedbackAuditoria, setFeedbackAuditoria] = useState<string | null>(null);
+  const [auditoriaAbierta, setAuditoriaAbierta] = useState<string | null>(null);
 
   const headers = { Authorization: `Bearer ${accessToken}` };
 
@@ -415,6 +419,63 @@ export function RecicladorDashboard() {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* ¿Qué? Historial de las auditorías que YO envié — antes el
+             reciclador no tenía forma de volver a ver una auditoría
+             pasada, a diferencia de Residente/Admin de Conjunto que sí
+             tienen esta misma sección para las de su conjunto.
+          ¿Para qué? Reutiliza los datos que ya se cargan para calcular el
+                    aviso de "auditoría pendiente" (auditorias, arriba) —
+                    no dispara una petición nueva. */}
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <History className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
+        </div>
+
+        {cargando ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        ) : auditorias.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("auditoriaResultado.historialEmpty")}</p>
+        ) : (
+          <ul className="divide-y divide-gray-50 dark:divide-gray-800">
+            {auditorias.map((a) => {
+              const nivel = NIVELES_DESEMPENO[a.nivel_desempeno];
+              return (
+                <li key={a.id_auditoria}>
+                  <button
+                    onClick={() => setAuditoriaAbierta(a.id_auditoria)}
+                    className="flex w-full items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-800 dark:text-gray-200">
+                        {a.nombre_conjunto} — {a.tema_educativo}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(a.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold ${nivel.claseBadge}`}
+                    >
+                      <nivel.icon className="h-3.5 w-3.5" />
+                      {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        {auditoriaAbierta && (
+          <AuditoriaResultadoModal
+            idAuditoria={auditoriaAbierta}
+            token={accessToken ?? ""}
+            onClose={() => setAuditoriaAbierta(null)}
+          />
         )}
       </div>
 

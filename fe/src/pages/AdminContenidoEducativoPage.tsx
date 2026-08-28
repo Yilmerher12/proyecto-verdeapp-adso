@@ -169,7 +169,7 @@ export function AdminContenidoEducativoPage() {
       </div>
 
       {(creando || editando) && (
-        <Modal onClose={cerrarFormulario} wide aria-label={editando ? t("adminContenidoEducativo.modal.editTitle") : t("adminContenidoEducativo.newModule")}>
+        <Modal onClose={cerrarFormulario} wide closeOnBackdrop={false} aria-label={editando ? t("adminContenidoEducativo.modal.editTitle") : t("adminContenidoEducativo.newModule")}>
           <div className="p-6 sm:p-8 space-y-4">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               {editando ? t("adminContenidoEducativo.modal.editTitle") : t("adminContenidoEducativo.newModule")}

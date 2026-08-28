@@ -46,3 +46,14 @@ export const NIVELES_DESEMPENO: Record<NivelDesempeno, NivelDesempenoConfig> = {
 };
 
 export const ORDEN_NIVELES: NivelDesempeno[] = ["EXCELENTE", "BUENA", "REGULAR", "DEFICIENTE"];
+
+/**
+ * ¿Qué? Los 3 niveles que puede ELEGIR el reciclador al crear una nueva
+ *       auditoría (Bueno/Regular/Malo, ver traducciones en niveles.*).
+ * ¿Para qué? "Excelente" y "Buena" ya no son dos opciones distintas para
+ *           calificar — se unificaron en un solo "Bueno" (decisión del
+ *           2026-08-27). Las auditorías viejas con nivel EXCELENTE se
+ *           siguen mostrando igual que las BUENA en historiales/detalles,
+ *           simplemente ya no se ofrece como opción nueva al calificar.
+ */
+export const ORDEN_NIVELES_SELECCIONABLES: NivelDesempeno[] = ["BUENA", "REGULAR", "DEFICIENTE"];

@@ -23,6 +23,8 @@ class AuditoriaConjuntoResponse(BaseModel):
     tema_educativo: str
     descripcion: Optional[str] = None
     ruta_evidencia: str
+    ruta_evidencia_2: Optional[str] = None
+    ruta_evidencia_3: Optional[str] = None
     created_at: datetime
     # ¿Qué? Nombre del reciclador que hizo la auditoría.
     # ¿Para qué? Se muestra a los residentes — se decidió explícitamente

@@ -62,7 +62,14 @@ def _payload_valido(id_conjunto: int) -> dict:
 
 
 def _archivo_valido() -> dict:
-    return {"evidencia": ("foto.jpg", io.BytesIO(IMAGEN_VALIDA), "image/jpeg")}
+    return {"evidencias": ("foto.jpg", io.BytesIO(IMAGEN_VALIDA), "image/jpeg")}
+
+
+def _archivos_multiples(cantidad: int) -> list[tuple[str, tuple[str, io.BytesIO, str]]]:
+    """¿Qué? Varios archivos bajo el mismo campo "evidencias" — así es como
+    se manda un `list[UploadFile]` de FastAPI desde un cliente HTTP real
+    (varias partes multipart con el mismo nombre de campo)."""
+    return [("evidencias", (f"foto{i}.jpg", io.BytesIO(IMAGEN_VALIDA), "image/jpeg")) for i in range(cantidad)]
 
 
 class TestCrearAuditoria:
@@ -116,7 +123,7 @@ class TestCrearAuditoria:
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
             data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
-            files={"evidencia": ("nota.txt", io.BytesIO(b"no soy una imagen"), "text/plain")},
+            files={"evidencias": ("nota.txt", io.BytesIO(b"no soy una imagen"), "text/plain")},
         )
         assert response.status_code == 400
 
@@ -130,7 +137,7 @@ class TestCrearAuditoria:
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
             data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
-            files={"evidencia": ("foto.jpg", io.BytesIO(b"esto no es una imagen de verdad"), "image/jpeg")},
+            files={"evidencias": ("foto.jpg", io.BytesIO(b"esto no es una imagen de verdad"), "image/jpeg")},
         )
         assert response.status_code == 400
 
@@ -164,6 +171,32 @@ class TestCrearAuditoria:
         )
         assert response.status_code == 201
         assert response.json()["descripcion"] == "El material orgánico llegó mezclado."
+
+    def test_admite_hasta_3_fotos_de_evidencia(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files=_archivos_multiples(3),
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["ruta_evidencia"].startswith("/uploads/evidencias-auditoria/")
+        assert data["ruta_evidencia_2"].startswith("/uploads/evidencias-auditoria/")
+        assert data["ruta_evidencia_3"].startswith("/uploads/evidencias-auditoria/")
+
+    def test_mas_de_3_fotos_devuelve_400(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files=_archivos_multiples(4),
+        )
+        assert response.status_code == 400
 
 
 class TestListarMisAuditorias:
@@ -328,6 +361,49 @@ class TestObtenerAuditoriaPorId:
         db.add(otra_unidad)
         db.flush()
         db.add(Residente(id_usuario=otro_usuario.id_usuario, id_unidad=otra_unidad.id_unidad, nombre="OTRO", apellidos="RESIDENTE"))
+        db.commit()
+
+        token = create_access_token(data={"sub": otro_usuario.correo_electronico, "role_id": otro_usuario.id_rol})
+        headers = {"Authorization": f"Bearer {token}"}
+
+        response = client.get(f"/api/v1/auditorias-conjunto/{creada['id_auditoria']}", headers=headers)
+        assert response.status_code == 403
+
+    def test_reciclador_que_la_envio_puede_verla(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        creada = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files=_archivo_valido(),
+        ).json()
+
+        response = client.get(f"/api/v1/auditorias-conjunto/{creada['id_auditoria']}", headers=reciclador_auth_headers)
+        assert response.status_code == 200
+
+    def test_otro_reciclador_no_puede_verla(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        """¿Qué? Un Reciclador solo puede ver el detalle de las auditorías
+        que ÉL mismo envió — ni siquiera las de otro reciclador autorizado
+        en el mismo conjunto."""
+        creada = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files=_archivo_valido(),
+        ).json()
+
+        otro_usuario = Usuario(
+            correo_electronico="otro.reciclador@verdeapp.com",
+            id_rol=RolId.RECICLADOR,
+            password=hash_password("Password1"),
+            is_active=True,
+        )
+        db.add(otro_usuario)
+        db.flush()
+        db.add(Reciclador(id_usuario=otro_usuario.id_usuario, nombre="OTRO", apellidos="RECICLADOR", numero_telefonico="3000000099"))
         db.commit()
 
         token = create_access_token(data={"sub": otro_usuario.correo_electronico, "role_id": otro_usuario.id_rol})
