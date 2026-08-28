@@ -111,6 +111,11 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
+class LogoutRequest(BaseModel):
+    """HU-008/RQF-007: el refresh token también se revoca al cerrar sesión."""
+    refresh_token: str
+
+
 class VerifyEmailRequest(BaseModel):
     token: str = Field(min_length=1)
 

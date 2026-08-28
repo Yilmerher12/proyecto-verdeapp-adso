@@ -18,6 +18,7 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import * as authApi from "@/api/auth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { Modal } from "@/components/ui/Modal";
@@ -45,7 +46,7 @@ export function AppShell({ children }: AppShellProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // ¿Qué? Antes esto llamaba a logout() (que además de borrar el token
     //       actualiza el estado de React con setUser(null)) y LUEGO mandaba
     //       la recarga completa hacia "/". Ese setUser(null) hacía que React
@@ -59,6 +60,26 @@ export function AppShell({ children }: AppShellProps) {
     //           borrar lo mismo que borra clearAuth() en sessionStorage.
     // ¿Impacto? Sin ningún cambio de estado de React de por medio, no hay
     //           ningún re-render que alcance a mostrar "/login" de paso.
+
+    // ¿Qué? HU-008/RQF-007 (RN-001): antes de borrar los tokens del
+    //       navegador, se le avisa al servidor que los revoque de verdad.
+    // ¿Para qué? Sin esto, "cerrar sesión" solo borraba los tokens de ESTE
+    //           navegador — el mismo access/refresh token, si alguien los
+    //           hubiera copiado antes, seguía funcionando contra el backend
+    //           hasta que expiraran solos (15 min / 7 días).
+    // ¿Impacto? Se envuelve en try/catch a propósito: si el servidor no
+    //           responde (sin red, caído), el usuario igual debe poder
+    //           salir de su sesión en este navegador — no tiene sentido
+    //           bloquear el logout local por un problema de red.
+    const refreshTokenGuardado = sessionStorage.getItem("refresh_token");
+    if (refreshTokenGuardado) {
+      try {
+        await authApi.logoutUser({ refresh_token: refreshTokenGuardado });
+      } catch {
+        // Falla silenciosa a propósito — ver comentario de arriba.
+      }
+    }
+
     sessionStorage.removeItem("access_token");
     sessionStorage.removeItem("refresh_token");
     sessionStorage.removeItem("landing-scroll-y");

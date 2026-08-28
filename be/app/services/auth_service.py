@@ -19,6 +19,7 @@ from app.models.unidad import Unidad
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.password_reset_token import PasswordResetToken
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.token_revocado import TokenRevocado
 
 from app.schemas.user import (
     ResetPasswordRequest,
@@ -299,6 +300,19 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
             detail="El token proporcionado no es un token de renovación válido.",
         )
 
+    # ¿Qué? HU-008/RQF-007: si este refresh token ya fue revocado por un
+    #       logout previo, no debe poder usarse para generar access tokens
+    #       nuevos, aunque su firma y expiración sigan siendo válidas.
+    # ¿Impacto? Sin esto, alguien que hubiera copiado el refresh token ANTES
+    #           del logout podría seguir renovando su sesión indefinidamente
+    #           — el logout no cerraría nada de verdad.
+    jti = payload.get("jti")
+    if jti and db.get(TokenRevocado, uuid.UUID(jti)):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="El token de sesión ha sido invalidado. Inicia sesión de nuevo.",
+        )
+
     correo = payload.get("sub")
     if not correo:
         raise HTTPException(
@@ -431,6 +445,51 @@ def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
     db_token.used = True
     db.commit()
     return True
+
+
+def logout_user(db: Session, access_token: str, refresh_token: str | None) -> None:
+    """Invalida (revoca) el access token y el refresh token en uso.
+
+    ¿Qué? HU-008/RQF-007 (RN-001): guarda el "jti" de cada token recibido en
+          la lista negra (tokens_revocados) para que ningún request futuro
+          vuelva a aceptarlos, aunque no hayan expirado todavía.
+    ¿Para qué? Antes, "cerrar sesión" solo borraba los tokens del navegador
+              (sessionStorage) — el token en sí seguía siendo 100% válido
+              para el servidor durante toda su vida (15 min access, 7 días
+              refresh) si alguien lo hubiera copiado antes.
+    ¿Impacto? Un token ya expirado, o sin "jti" (no debería pasar con los
+              tokens que emite este sistema), simplemente se ignora — no
+              hay nada que revocar en ese caso.
+
+    Args:
+        db: Sesión de base de datos.
+        access_token: Access token JWT que estaba en uso (obligatorio).
+        refresh_token: Refresh token JWT asociado a la misma sesión, si el
+                       cliente lo envía.
+    """
+    for token in (access_token, refresh_token):
+        if not token:
+            continue
+
+        payload = decode_token(token)
+        if not payload:
+            continue
+
+        jti = payload.get("jti")
+        exp = payload.get("exp")
+        if not jti or not exp:
+            continue
+
+        jti_uuid = uuid.UUID(jti)
+        if db.get(TokenRevocado, jti_uuid):
+            continue
+
+        db.add(TokenRevocado(
+            jti=jti_uuid,
+            expira_en=datetime.fromtimestamp(exp, tz=timezone.utc),
+        ))
+
+    db.commit()
 
 
 def update_user_locale(db: Session, user: Usuario, locale: str) -> Usuario:

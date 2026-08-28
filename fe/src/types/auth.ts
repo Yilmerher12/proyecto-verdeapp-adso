@@ -114,6 +114,11 @@ export interface RefreshTokenRequest {
   refresh_token: string;
 }
 
+// HU-008/RQF-007: el refresh token también se revoca al cerrar sesión.
+export interface LogoutRequest {
+  refresh_token: string;
+}
+
 export interface TokenResponse {
   access_token: string;
   refresh_token: string;
