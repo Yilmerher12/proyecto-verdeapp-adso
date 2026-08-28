@@ -111,6 +111,9 @@ async def _guardar_evidencia(archivo: UploadFile) -> str:
     return f"/uploads/evidencias-auditoria/{nombre_archivo}"
 
 
+MAXIMO_FOTOS_EVIDENCIA = 3
+
+
 async def crear_auditoria(
     db: Session,
     id_usuario_reciclador: UUID,
@@ -118,12 +121,18 @@ async def crear_auditoria(
     nivel_desempeno: NivelDesempeno,
     tema_educativo: str,
     descripcion: str | None,
-    evidencia: UploadFile,
+    evidencias: list[UploadFile],
 ) -> AuditoriaConjunto:
     reciclador = _obtener_reciclador(db, id_usuario_reciclador)
     _verificar_autorizado(db, reciclador.id_reciclador, id_conjunto_residencial)
 
-    ruta_evidencia = await _guardar_evidencia(evidencia)
+    if not (1 <= len(evidencias) <= MAXIMO_FOTOS_EVIDENCIA):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Debes adjuntar entre 1 y {MAXIMO_FOTOS_EVIDENCIA} fotos de evidencia.",
+        )
+
+    rutas = [await _guardar_evidencia(archivo) for archivo in evidencias]
 
     auditoria = AuditoriaConjunto(
         id_reciclador=reciclador.id_reciclador,
@@ -131,7 +140,9 @@ async def crear_auditoria(
         nivel_desempeno=nivel_desempeno,
         tema_educativo=tema_educativo.strip(),
         descripcion=descripcion.strip() if descripcion else None,
-        ruta_evidencia=ruta_evidencia,
+        ruta_evidencia=rutas[0],
+        ruta_evidencia_2=rutas[1] if len(rutas) > 1 else None,
+        ruta_evidencia_3=rutas[2] if len(rutas) > 2 else None,
     )
     db.add(auditoria)
     db.flush()  # ¿Para qué? Necesitamos auditoria.id_auditoria antes de crear la notificación.
@@ -206,16 +217,25 @@ def _pertenece_al_conjunto(db: Session, current_user: Usuario, id_conjunto: UUID
 def obtener_por_id(db: Session, current_user: Usuario, id_auditoria: UUID) -> AuditoriaConjunto:
     """
     ¿Qué? El detalle completo de UNA auditoría — lo que abre el botón
-          "Ver" de la notificación AUDITORIA_PUBLICADA.
-    ¿Impacto? Solo puede verla un Residente o Admin de Conjunto que de
-             verdad pertenezca a ese conjunto — sin esto, cualquiera con
-             sesión podría ver auditorías de conjuntos ajenos adivinando ids.
+          "Ver" de la notificación AUDITORIA_PUBLICADA, o una fila del
+          historial (Residente/Admin de Conjunto/Reciclador).
+    ¿Impacto? Un Residente o Admin de Conjunto solo puede ver auditorías de
+             un conjunto al que de verdad pertenecen. Un Reciclador solo
+             puede ver las que ÉL mismo envió — no las de otros
+             recicladores autorizados en el mismo conjunto. Sin esto,
+             cualquiera con sesión podría ver auditorías ajenas adivinando ids.
     """
     auditoria = db.execute(
         select(AuditoriaConjunto).where(AuditoriaConjunto.id_auditoria == id_auditoria)
     ).scalar_one_or_none()
     if auditoria is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Auditoría no encontrada.")
+
+    if current_user.id_rol == RolId.RECICLADOR:
+        reciclador = _obtener_reciclador(db, current_user.id_usuario)
+        if auditoria.id_reciclador != reciclador.id_reciclador:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No es una auditoría tuya.")
+        return auditoria
 
     if not _pertenece_al_conjunto(db, current_user, auditoria.id_conjunto_residencial):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No perteneces a ese conjunto.")

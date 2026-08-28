@@ -167,7 +167,7 @@ describe("RecicladorDashboard", () => {
     await user.click(screen.getByRole("button", { name: "Auditar ahora" }));
 
     expect(screen.getByText("Auditar conjunto")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Buena" }));
+    await user.click(screen.getByRole("button", { name: "Bueno" }));
 
     const selectTema = await screen.findByRole("combobox");
     await user.selectOptions(selectTema, "Separación en la fuente y código de colores");
@@ -189,6 +189,6 @@ describe("RecicladorDashboard", () => {
     expect(formData.get("id_conjunto_residencial")).toBe("1");
     expect(formData.get("nivel_desempeno")).toBe("BUENA");
     expect(formData.get("tema_educativo")).toBe("Separación en la fuente y código de colores");
-    expect(formData.get("evidencia")).toBeInstanceOf(File);
+    expect(formData.get("evidencias")).toBeInstanceOf(File);
   });
 });

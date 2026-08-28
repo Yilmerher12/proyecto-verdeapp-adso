@@ -191,7 +191,7 @@ export function AceptarInvitacionPage() {
   return (
     <>
       <LandingPage asBackdrop />
-      <Modal onClose={() => navigate("/")} wide>
+      <Modal onClose={() => navigate("/")} wide closeOnBackdrop={false}>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.form.title")}</h2>

@@ -305,7 +305,7 @@ export function RegisterPage() {
         </Modal>
       )}
 
-      <Modal onClose={() => navigate("/")} wide>
+      <Modal onClose={() => navigate("/")} wide closeOnBackdrop={false}>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("auth.register.title")}</h2>

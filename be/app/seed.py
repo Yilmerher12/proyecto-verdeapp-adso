@@ -47,6 +47,28 @@ def ya_esta_sembrada(connection: Connection) -> bool:
     return resultado.scalar() > 0
 
 
+def conjuntos_ya_importados(connection: Connection) -> bool:
+    """
+    ¿Qué? Revisión INDEPENDIENTE de `ya_esta_sembrada` — esta solo mira si
+          ya hay conjuntos residenciales importados del CSV real.
+    ¿Para qué? Bug real encontrado (2026-08-27): antes `main()` solo
+              revisaba `ya_esta_sembrada` (tabla `roles`) para decidir si
+              sembrar TODO, incluyendo `importar_conjuntos_reales()`. Quien
+              ya tenía una base de datos local sembrada ANTES de que se
+              agregara el CSV real de conjuntos (feat/conjuntos-reales-bogota)
+              nunca recibía los conjuntos nuevos al hacer `git pull` y
+              volver a correr `seed.py` — `roles` ya tenía filas, así que
+              `main()` se salía de inmediato sin llegar a
+              `importar_conjuntos_reales()`.
+    ¿Impacto? Con esta revisión aparte, si en el futuro se agrega otra
+              sección nueva a la siembra, cada una puede revisar su propia
+              condición en vez de depender de un único flag "ya sembrada"
+              que solo es cierto para lo que existía en ese momento.
+    """
+    resultado = connection.execute(text("SELECT COUNT(*) FROM conjuntos_residenciales"))
+    return resultado.scalar() > 0
+
+
 def importar_conjuntos_reales(connection: Connection) -> None:
     """
     ¿Qué? Reemplaza los conjuntos de prueba por los conjuntos residenciales
@@ -350,24 +372,30 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
 
 def main() -> None:
     with engine.connect() as connection:
-        if ya_esta_sembrada(connection):
-            print("[seed] La base de datos ya tiene datos, no se siembra de nuevo.")
-            return
+        nucleo_ya_sembrado = ya_esta_sembrada(connection)
 
-        sql = SEED_FILE.read_text(encoding="utf-8")
-        connection.exec_driver_sql(sql)
-        connection.commit()
+        if not nucleo_ya_sembrado:
+            sql = SEED_FILE.read_text(encoding="utf-8")
+            connection.exec_driver_sql(sql)
+            connection.commit()
 
-        sembrar_datos_con_uuid_generado(connection)
-        connection.commit()
+            sembrar_datos_con_uuid_generado(connection)
+            connection.commit()
+        else:
+            print("[seed] Los datos base (roles, localidades, superadmin, etc.) ya existen, no se siembran de nuevo.")
 
-        importar_conjuntos_reales(connection)
-        connection.commit()
+        # ¿Qué? Revisión aparte de la del núcleo — ver conjuntos_ya_importados().
+        if not conjuntos_ya_importados(connection):
+            importar_conjuntos_reales(connection)
+            connection.commit()
+        else:
+            print("[seed] Los conjuntos residenciales reales ya están importados, no se vuelven a traer del CSV.")
 
-        sembrar_usuarios_prueba(connection)
-        connection.commit()
+        if not nucleo_ya_sembrado:
+            sembrar_usuarios_prueba(connection)
+            connection.commit()
 
-        print("[seed] Datos de prueba sembrados correctamente.")
+        print("[seed] Siembra verificada/completada.")
 
 
 if __name__ == "__main__":

@@ -43,6 +43,12 @@ class AuditoriaConjunto(Base):
     # ¿Qué? Ruta pública (ej. "/uploads/evidencias-auditoria/<uuid>.jpg"),
     #       no la ruta absoluta en disco del servidor.
     ruta_evidencia = Column(String(500), nullable=False)
+    # ¿Qué? Hasta 2 fotos adicionales, opcionales — el reciclador puede
+    #       documentar hasta 3 fotos en total (decisión 2026-08-27). Se
+    #       usan columnas fijas en vez de una tabla aparte porque el máximo
+    #       es un número fijo y pequeño, no una lista de tamaño libre.
+    ruta_evidencia_2 = Column(String(500), nullable=True)
+    ruta_evidencia_3 = Column(String(500), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     reciclador = relationship("Reciclador")

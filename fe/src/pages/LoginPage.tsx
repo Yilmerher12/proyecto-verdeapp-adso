@@ -83,7 +83,7 @@ export function LoginPage() {
   return (
     <>
       <LandingPage asBackdrop />
-      <Modal onClose={() => navigate("/")}>
+      <Modal onClose={() => navigate("/")} closeOnBackdrop={false}>
         <div className="p-6 sm:p-8 max-w-md mx-auto">
           <div className="mb-6 text-center sm:text-left">
             <div className="h-12 w-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mb-3 mx-auto sm:mx-0 shadow-sm border border-green-200">

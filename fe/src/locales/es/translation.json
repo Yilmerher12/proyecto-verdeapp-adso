@@ -760,17 +760,20 @@
         "conjuntoLabel": "Conjunto",
         "nivelLabel": "Nivel de desempeño",
         "niveles": {
-          "excelente": "Excelente",
-          "buena": "Buena",
+          "excelente": "Bueno",
+          "buena": "Bueno",
           "regular": "Regular",
-          "deficiente": "Deficiente"
+          "deficiente": "Malo"
         },
         "temaLabel": "Tema relacionado",
         "temaPlaceholder": "Selecciona un tema...",
         "descripcionLabel": "Descripción (opcional)",
         "descripcionPlaceholder": "Cuéntanos qué encontraste...",
-        "evidenciaLabel": "Foto de evidencia",
-        "evidenciaHint": "JPG, PNG o WEBP — máximo 5 MB.",
+        "evidenciaLabel": "Fotos de evidencia",
+        "evidenciaHint": "JPG, PNG o WEBP — máximo 5 MB cada una.",
+        "evidenciaAgregarOtra": "Agregar otra foto",
+        "evidenciaMaximoAlcanzado": "Ya adjuntaste el máximo de 3 fotos.",
+        "evidenciaQuitar": "Quitar esta foto",
         "submit": "Enviar auditoría",
         "sending": "Enviando...",
         "successMessage": "Auditoría enviada.",
@@ -779,7 +782,7 @@
           "conjunto": "Selecciona un conjunto.",
           "nivel": "Selecciona un nivel de desempeño.",
           "tema": "Selecciona un tema.",
-          "evidencia": "Sube una foto de evidencia."
+          "evidencia": "Sube al menos una foto de evidencia."
         }
       }
     },
@@ -823,6 +826,7 @@
     "descripcionLabel": "Descripción",
     "auditadoPor": "Auditado por {{nombre}}",
     "evidenciaAlt": "Foto de evidencia de la auditoría",
+    "evidenciaAmpliar": "Ver foto en tamaño completo",
     "errorLoad": "No se pudo cargar la auditoría.",
     "historialTitle": "Historial de auditorías",
     "historialEmpty": "Todavía no hay auditorías registradas."
