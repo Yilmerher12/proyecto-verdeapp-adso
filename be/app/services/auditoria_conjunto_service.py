@@ -5,6 +5,7 @@ Descripción: Lógica de negocio de la auditoría del Reciclador al conjunto
 """
 import io
 import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import UUID
 
@@ -112,6 +113,21 @@ async def _guardar_evidencia(archivo: UploadFile) -> str:
 
 
 MAXIMO_FOTOS_EVIDENCIA = 3
+HORAS_ENTRE_AUDITORIAS = 24
+
+
+def _ya_audito_recientemente(db: Session, id_reciclador: UUID, id_conjunto: UUID) -> bool:
+    """¿Qué? CA-010.3 / RN-002 de RQF-009: un reciclador no puede calificar el
+    mismo conjunto dos veces en menos de 24 horas.
+    ¿Para qué? Antes de esto, un reciclador podía enviar auditorías
+    repetidas del mismo conjunto sin ninguna restricción de tiempo."""
+    limite = datetime.now(timezone.utc) - timedelta(hours=HORAS_ENTRE_AUDITORIAS)
+    stmt = select(AuditoriaConjunto.id_auditoria).where(
+        AuditoriaConjunto.id_reciclador == id_reciclador,
+        AuditoriaConjunto.id_conjunto_residencial == id_conjunto,
+        AuditoriaConjunto.created_at > limite,
+    )
+    return db.execute(stmt).first() is not None
 
 
 async def crear_auditoria(
@@ -125,6 +141,12 @@ async def crear_auditoria(
 ) -> AuditoriaConjunto:
     reciclador = _obtener_reciclador(db, id_usuario_reciclador)
     _verificar_autorizado(db, reciclador.id_reciclador, id_conjunto_residencial)
+
+    if _ya_audito_recientemente(db, reciclador.id_reciclador, id_conjunto_residencial):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Ya auditaste este conjunto hace menos de {HORAS_ENTRE_AUDITORIAS} horas.",
+        )
 
     if not (1 <= len(evidencias) <= MAXIMO_FOTOS_EVIDENCIA):
         raise HTTPException(

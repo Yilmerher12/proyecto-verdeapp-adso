@@ -16,7 +16,7 @@
 | **Título**         | Reciclador notifica su llegada al conjunto    |
 | **Módulo**         | Notificaciones / Operación                    |
 | **Prioridad**      | Alta                                           |
-| **Estado**         | Parcial                                        |
+| **Estado**         | Implementada                                   |
 | **RF asociados**   | RQF-006                                       |
 
 ---
@@ -55,4 +55,4 @@
 - **cuando** intento reportarla de nuevo,
 - **entonces** el sistema no debe permitir un segundo aviso tan seguido, para evitar notificaciones repetidas.
 
-> **Nota (2026-08-28)**: este límite de 2 horas **no está implementado** — el backend acepta un aviso de "llegada" nuevo del mismo reciclador para el mismo conjunto sin ninguna restricción de tiempo. CA-007.1, CA-007.2 y CA-007.3 sí funcionan correctamente.
+> **Nota (2026-08-29)**: implementado y probado — el backend rechaza con 400 un segundo aviso de "llegada" del mismo reciclador al mismo conjunto antes de que pasen 2 horas.

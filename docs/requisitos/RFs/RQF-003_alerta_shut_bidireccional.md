@@ -16,7 +16,7 @@
 | **Nombre** | Alerta SHUT Bidireccional|
 | **Módulo** | Notificaciones          |
 | **Prioridad** | Alta                    |
-| **Estado** | Parcial                 |
+| **Estado** | Implementado            |
 | **Usuarios** | reciclador, residente   |
 
 ---
@@ -73,5 +73,5 @@ El sistema debe permitir al 'Residente' notificar que el SHUT está lleno y al '
 
 ## Reglas de negocio
 
-- RN-001: Un residente no puede enviar la alerta "SHUT Lleno" si el estado actual del SHUT ya es "lleno". **No implementado** — `POST /api/v1/notificaciones/enviar` no revisa el estado actual antes de crear la notificación; un residente puede reportarlo repetidamente sin ninguna restricción.
+- RN-001: Un residente no puede enviar la alerta "SHUT Lleno" si el estado actual del SHUT ya es "lleno". **Implementado (2026-08-29).**
 - RN-002: Las notificaciones solo deben llegar a los usuarios del rol opuesto que pertenezcan estrictamente al mismo conjunto residencial. **Implementado.**

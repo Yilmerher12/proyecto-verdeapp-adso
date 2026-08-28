@@ -10,7 +10,7 @@
 | **Nombre** | Semáforo de Gestión de Residuos            |
 | **Módulo** | Auditoría / Calificaciones                 |
 | **Prioridad** | Baja (Opcional)                            |
-| **Estado** | Parcial                                    |
+| **Estado** | Implementado                               |
 | **Usuarios** | reciclador, residente                      |
 
 ---
@@ -68,4 +68,4 @@ El sistema debe implementar un panel de auditoría cualitativa donde el 'Recicla
 ## Reglas de negocio
 
 - RN-001: Exclusividad de escritura. Solo el rol `reciclador` tiene permisos para crear una auditoría. El rol `residente` (y el Admin de Conjunto) tienen acceso estricto de solo lectura. **Implementado y verificado.**
-- RN-002: Límite de frecuencia. Para evitar spam, un reciclador solo puede emitir una calificación por conjunto cada 24 horas. **No implementado como restricción dura** — hoy solo existe un recordatorio visual en el panel del reciclador ("ya puedes volver a auditar") que aparece a los 7 días, pero el backend acepta una auditoría nueva del mismo reciclador para el mismo conjunto en cualquier momento, sin bloquear el envío. Esta es la razón por la que el Estado de este requisito es "Parcial" y no "Implementado" — el resto del flujo (calificar, ver evidencia ampliada, historial, notificación) está completo y probado.
+- RN-002: Límite de frecuencia. Para evitar spam, un reciclador solo puede emitir una calificación por conjunto cada 24 horas. **Implementado (2026-08-29)** — `crear_auditoria` rechaza con 400 una segunda auditoría del mismo reciclador al mismo conjunto antes de que pasen 24 horas. El recordatorio visual de 7 días sigue existiendo aparte, como sugerencia de cuándo conviene volver.
