@@ -311,7 +311,7 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
             "Cómo preparar cada material antes de entregarlo para reciclaje",
             "No basta con poner el material en la bolsa correcta: cómo se prepara cada residuo también afecta si de verdad se puede aprovechar.\n\nPapel y cartón: deben estar secos y sin residuos de comida o grasa (por ejemplo, una caja de pizza grasosa no sirve). Es buena práctica aplanar las cajas para que ocupen menos espacio.\n\nPlástico: enjuagar brevemente los envases para quitar restos de líquido o comida, y aplanar las botellas. No es necesario quitar las etiquetas.\n\nVidrio: enjuagar los frascos y envases. Hay que manejarlo con cuidado para evitar que se rompa y se vuelva un riesgo para quien recoge el material.\n\nMetal y latas: enjuagar y, si es posible, aplastar las latas para ahorrar espacio en la bolsa.\n\nUn residuo mal preparado (sucio, mojado o mezclado con orgánicos) puede contaminar todo el contenido de la bolsa blanca y hacer que el material que sí estaba bien separado termine descartado como basura ordinaria.",
             "2026-08-16",
-            None,
+            "https://youtu.be/gYOwmj3-XqQ",
             "https://bogota.gov.co/mi-ciudad/ambiente/como-hacer-separacion-de-residuos-y-reciclar-desde-casa",
         ),
         (
@@ -319,7 +319,7 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
             "Ecopuntos: qué son y cómo usarlos para muebles, colchones y escombros",
             "Los Ecopuntos son cajas o puntos fijos que dispone la UAESP en distintos barrios de la ciudad, de forma rotativa semana a semana, para que los residentes entreguen de manera gratuita elementos voluminosos que NO caben en la recolección normal de basuras.\n\nQué se puede llevar: muebles viejos, colchones, tejas y escombros o material de obra en pequeñas cantidades.\n\nQué NO se puede llevar: llantas ni electrodomésticos — estos tienen puntos de recolección aparte, especializados en residuos eléctricos y electrónicos (RAEE).\n\nUsar los Ecopuntos evita que estos elementos terminen abandonados en andenes, parques o rondas de quebradas, que es uno de los problemas más visibles de la gestión de residuos en la ciudad. La ubicación de los Ecopuntos cambia cada semana según la localidad, así que conviene revisar el cronograma vigente antes de sacar el material.",
             "2026-08-17",
-            None,
+            "https://youtu.be/9X2m2E6OEgc",
             "https://bogota.gov.co/mi-ciudad/habitat/como-funcionan-los-ecopunto-en-bogota-y-para-que-sirven",
         ),
         (
@@ -327,7 +327,7 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
             "Economía circular en Bogotá: el papel del reciclador de oficio",
             "La economía circular busca que un material se mantenga en uso el mayor tiempo posible, en lugar de terminar en un relleno sanitario después de un solo uso. En Bogotá, esa cadena depende directamente del trabajo del reciclador de oficio.\n\nLos recicladores de oficio son quienes recogen, transportan y comercializan el material aprovechable que los hogares separan. Desde 2016 (Decreto Nacional 596), su actividad está reconocida y remunerada como un servicio público — no es informalidad, es parte formal del sistema de aseo de la ciudad.\n\nBogotá cuenta con miles de recicladores de oficio organizados, y buena parte del material aprovechable de la ciudad se recupera gracias a su trabajo directo con los hogares. Por eso VerdeApp conecta a cada conjunto residencial con un reciclador autorizado: entregarle el material limpio y bien separado, en el horario acordado, es la forma más directa de que ese material sí vuelva a la economía en lugar de convertirse en basura.",
             "2026-08-18",
-            None,
+            "https://youtu.be/QoJdWPcZQS8",
             "https://www.uaesp.gov.co/aprovechamiento-residuos-solidos-bogota",
         ),
         (
@@ -335,7 +335,7 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
             "Manejo adecuado de escombros y residuos de construcción (RCD)",
             "Los Residuos de Construcción y Demolición (RCD) son el material que sobra de obras, remodelaciones o reparaciones dentro del conjunto: escombros, restos de baldosa, cemento, ladrillo, tejas rotas, entre otros.\n\nEstos residuos NO se deben mezclar con las bolsas blanca, negra o verde de la recolección domiciliaria normal, ni acumularse en zonas comunes, andenes o antejardines — además del riesgo de accidentes, es una infracción que puede generar comparendos ambientales.\n\nPara volúmenes pequeños, la ciudad dispone de los Ecopuntos (ver el módulo correspondiente). Para volúmenes más grandes, propios de una obra, se debe contratar a un gestor autorizado de RCD, que se encarga de transportarlos hasta una escombrera legal.\n\nComo Administrador de Conjunto, vale la pena informar a los residentes con anticipación cuando se planee una obra o remodelación, para coordinar dónde y cómo se va a disponer el material sobrante antes de que se convierta en un problema para todo el conjunto.",
             "2026-08-19",
-            None,
+            "https://youtu.be/ZXaiQaUQp24",
             "https://www.ambientebogota.gov.co/preguntas-frecuentes-rcd",
         ),
         (
@@ -343,7 +343,7 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
             "Consumo responsable: reducir antes de reciclar",
             "Reciclar bien es importante, pero el primer paso de una buena gestión de residuos es generar menos basura desde el principio. Bogotá produce miles de toneladas de residuos cada día, y solo una parte relativamente pequeña se recupera — reducir el consumo innecesario tiene tanto impacto como separar correctamente.\n\nAlgunas prácticas de consumo responsable que promueve la Alcaldía de Bogotá:\n\nReducir antes que reciclar: preferir productos con menos empaque, evitar los desechables de un solo uso y comprar solo lo necesario.\n\nReutilizar lo que ya se tiene: usar termos y botellas recargables en lugar de comprar agua embotellada, dar una segunda vida a envases y recipientes antes de descartarlos.\n\nConocer al reciclador del sector: entregarle directamente el material aprovechable, en el día y horario en que pasa, es más eficiente que dejarlo mezclado con la basura ordinaria.\n\nEstos hábitos, multiplicados por todos los hogares de un conjunto residencial, hacen una diferencia real en cuánto material termina en un relleno sanitario en lugar de volver a ser útil.",
             "2026-08-19",
-            None,
+            "https://youtu.be/uyoFR5m7_3E",
             "https://bogota.gov.co/mi-ciudad/ambiente/10-mandamientos-para-una-bogota-con-cero-desechos",
         ),
     ]
