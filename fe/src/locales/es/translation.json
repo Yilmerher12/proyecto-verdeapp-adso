@@ -921,7 +921,9 @@
       "deleteAriaLabel": "Confirmar eliminación"
     },
     "validation": {
-      "required": "Categoría, título y contenido son obligatorios."
+      "required": "Categoría, título y contenido son obligatorios.",
+      "titleTooShort": "El título debe tener al menos 5 caracteres.",
+      "bodyTooShort": "El contenido debe tener al menos 20 caracteres."
     },
     "deleteError": "No se pudo eliminar. Intenta de nuevo.",
     "fields": {

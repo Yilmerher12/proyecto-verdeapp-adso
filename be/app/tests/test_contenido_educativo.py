@@ -77,6 +77,24 @@ class TestCrear:
         )
         assert response.status_code == 422
 
+    def test_titulo_muy_corto_devuelve_422(
+        self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
+    ):
+        """CA-012.1/CA-012.3 — el título necesita al menos 5 caracteres."""
+        response = client.post(
+            URL, json=_payload(titulo_tema="Hola"), headers=admin_sistema_auth_headers
+        )
+        assert response.status_code == 422
+
+    def test_cuerpo_muy_corto_devuelve_422(
+        self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
+    ):
+        """CA-012.1/CA-012.3 — el cuerpo de texto necesita al menos 20 caracteres."""
+        response = client.post(
+            URL, json=_payload(cuerpo_texto="Muy corto"), headers=admin_sistema_auth_headers
+        )
+        assert response.status_code == 422
+
     def test_video_y_guia_son_opcionales(
         self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
     ):

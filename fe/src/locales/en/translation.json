@@ -917,7 +917,9 @@
       "deleteAriaLabel": "Confirm deletion"
     },
     "validation": {
-      "required": "Category, title, and content are required."
+      "required": "Category, title, and content are required.",
+      "titleTooShort": "Title must be at least 5 characters long.",
+      "bodyTooShort": "Content must be at least 20 characters long."
     },
     "deleteError": "Could not delete. Please try again.",
     "fields": {

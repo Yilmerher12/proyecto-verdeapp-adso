@@ -74,6 +74,17 @@ export function AdminContenidoEducativoPage() {
       setErrorMsg(t("adminContenidoEducativo.validation.required"));
       return;
     }
+    // ¿Qué? HU-012/HU-013 (CA-012.1, CA-012.3, CA-013.3): mínimo 5 caracteres
+    //       en el título, 20 en el contenido — el backend ya lo valida, pero
+    //       revisarlo aquí evita el viaje de ida y vuelta al servidor.
+    if (form.titulo_tema.trim().length < 5) {
+      setErrorMsg(t("adminContenidoEducativo.validation.titleTooShort"));
+      return;
+    }
+    if (form.cuerpo_texto.trim().length < 20) {
+      setErrorMsg(t("adminContenidoEducativo.validation.bodyTooShort"));
+      return;
+    }
     setGuardando(true);
     setErrorMsg(null);
     const payload: ContenidoEducativoPayload = {
