@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 # ¿Qué? Los 4 niveles de desempeño acordados (issue #5) — escala simple,
 #       cada uno con su propio color/ícono en el frontend, pero siempre
@@ -33,5 +33,4 @@ class AuditoriaConjuntoResponse(BaseModel):
     #           dato de contacto personal.
     nombre_reciclador: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

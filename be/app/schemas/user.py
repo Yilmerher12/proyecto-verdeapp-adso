@@ -8,7 +8,7 @@ import re
 from typing import Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_validator
 
 
 def _validate_password_strength(v: str) -> str:
@@ -134,8 +134,7 @@ class UserResponse(BaseModel):
     last_name: str
     locale: Optional[str] = "es"
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TokenResponse(BaseModel):

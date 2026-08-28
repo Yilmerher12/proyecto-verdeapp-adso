@@ -186,7 +186,7 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
 
     if not correo:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="El campo de correo electrónico es obligatorio."
         )
 

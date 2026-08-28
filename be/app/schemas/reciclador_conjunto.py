@@ -4,7 +4,7 @@ Descripción: Esquemas de validación para el flujo de invitación Reciclador-Co
 ¿Para qué? Validar los datos que entran y salen de los endpoints de este flujo.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -37,8 +37,7 @@ class InvitacionRecicladorResponse(BaseModel):
     #             None, simplemente se muestra como None en vez de fallar.
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InvitacionPendienteRecicladorResponse(BaseModel):
@@ -50,8 +49,7 @@ class InvitacionPendienteRecicladorResponse(BaseModel):
     estado: str
     expires_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResponderInvitacionRequest(BaseModel):
@@ -66,8 +64,7 @@ class ConjuntoAutorizadoResponse(BaseModel):
     direccion: str
     nombre_localidad: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RecicladorAutorizadoResponse(BaseModel):
@@ -82,5 +79,4 @@ class RecicladorAutorizadoResponse(BaseModel):
     numero_telefonico: Optional[str] = None
     asociacion: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
