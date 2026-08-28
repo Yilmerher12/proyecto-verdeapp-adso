@@ -102,7 +102,7 @@ async def crear_auditoria(db, id_usuario_reciclador, ..., evidencias) -> Auditor
 
 ### Ventaja
 
-Un cambio en cómo se guarda una auditoría en la base de datos no afecta al router. Un cambio en el formato del request no afecta la lógica de negocio. Cada capa se puede probar por separado (por eso el backend tiene 231 tests sin necesitar un servidor HTTP real corriendo).
+Un cambio en cómo se guarda una auditoría en la base de datos no afecta al router. Un cambio en el formato del request no afecta la lógica de negocio. Cada capa se puede probar por separado (por eso el backend tiene 245 tests sin necesitar un servidor HTTP real corriendo).
 
 ---
 
@@ -163,11 +163,11 @@ def get_db() -> Generator[Session, None, None]:
     finally:
         db.close()
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),   # DI: extrae el token del header
-    db: Session = Depends(get_db),         # DI: inyecta la sesión de BD
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),  # DI: extrae el token del header
+    db: Session = Depends(get_db),                                     # DI: inyecta la sesión de BD
 ) -> Usuario:
-    """Valida el JWT (debe ser type=access) y devuelve el usuario autenticado."""
+    """Valida el JWT (debe ser type=access, y no estar revocado) y devuelve el usuario autenticado."""
     ...
 ```
 
@@ -182,7 +182,7 @@ async def crear_auditoria(
 
 ### Ventaja
 
-Para los 231 tests del backend, `get_db` se reemplaza por una base de datos de prueba sin tocar ni un router — FastAPI resuelve el cambio automáticamente vía `app.dependency_overrides`.
+Para los 245 tests del backend, `get_db` se reemplaza por una base de datos de prueba sin tocar ni un router — FastAPI resuelve el cambio automáticamente vía `app.dependency_overrides`.
 
 ---
 
@@ -217,6 +217,10 @@ def decode_token(token: str) -> dict | None:
 ### Ventaja
 
 El backend puede escalar a varias instancias sin compartir ninguna tabla de sesiones — toda la información necesaria viaja dentro del propio token.
+
+### La excepción honesta: logout (HU-008/RQF-007)
+
+"Stateless de verdad" significaría que el servidor no puede invalidar un token antes de su expiración natural — y ese era justo el problema: cerrar sesión no revocaba nada en el servidor. Se agregó la única pieza de estado que rompe la pureza del patrón a propósito: la tabla `tokens_revocados` (`jti` + fecha de expiración). Cada token lleva un `jti` único desde que se crea; al cerrar sesión, su `jti` se guarda ahí, y `get_current_user`/`refresh_access_token` lo consultan en cada request. Es un compromiso deliberado: se sacrifica un poco de "pureza stateless" (una tabla más para consultar) a cambio de que "cerrar sesión" invalide el token de verdad, no solo en el navegador.
 
 ---
 
@@ -529,5 +533,5 @@ Juntos, estos 14 patrones hacen que VerdeApp sea:
 - **Seguro** — DTO + JWT + guardas de rol (ver `owasp-top-10.md`)
 - **Mantenible** — Capas + Service Layer + DI + Custom Hooks
 - **Escalable** — Stateless + REST + Monorepo
-- **Testeable** — DI con overrides + 231 tests backend + 162 tests frontend
+- **Testeable** — DI con overrides + 245 tests backend + 167 tests frontend
 - **Evolutivo sin perder datos** — Expand/Contract + siembra con guardas independientes
