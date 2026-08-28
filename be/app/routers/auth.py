@@ -2,9 +2,10 @@
 Módulo: routers/auth.py
 """
 from fastapi import APIRouter, Depends, Request, status, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_current_user, get_db, http_bearer
 from app.utils.limiter import limiter
 from app.utils.security import hash_password, verify_password
 from app.utils.audit_log import log_password_cambiada
@@ -12,6 +13,7 @@ from app.models.usuario import Usuario
 from app.schemas.user import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
+    LogoutRequest,
     MessageResponse,
     RefreshTokenRequest,
     ResetPasswordRequest,
@@ -42,6 +44,29 @@ def login(request: Request, login_data: UserLogin, db: Session = Depends(get_db)
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_token(token_data: RefreshTokenRequest, db: Session = Depends(get_db)):
     return auth_service.refresh_access_token(db=db, refresh_token=token_data.refresh_token)
+
+@router.post("/logout", response_model=MessageResponse)
+def logout(
+    logout_data: LogoutRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # ¿Qué? HU-008/RQF-007 (RN-001): logout real en el servidor, no solo en
+    #       el navegador — revoca el access token (credentials.credentials)
+    #       y el refresh token de la misma sesión.
+    # ¿Para qué? Depends(get_current_user) ya exige un access token válido
+    #           y activo para poder llegar aquí — no tendría sentido dejar
+    #           "cerrar sesión" a alguien que ni siquiera tiene una sesión
+    #           vigente.
+    # ¿Impacto? current_user no se usa directamente, pero su Depends es lo
+    #           que obliga a que el token sea válido antes de revocarlo.
+    auth_service.logout_user(
+        db=db,
+        access_token=credentials.credentials,
+        refresh_token=logout_data.refresh_token,
+    )
+    return MessageResponse(message="Sesión cerrada correctamente")
 
 @router.post("/change-password", response_model=MessageResponse)
 def change_password(

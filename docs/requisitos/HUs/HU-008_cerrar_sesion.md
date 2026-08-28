@@ -16,7 +16,7 @@
 | **Título**         | Cerrar sesión     |
 | **Módulo**         | Autenticación     |
 | **Prioridad**      | Alta              |
-| **Estado**         | Parcial           |
+| **Estado**         | Implementada      |
 | **RF asociados**   | RQF-007           |
 
 ---
@@ -61,4 +61,4 @@
 - **cuando** cualquier intento intenta reusar el mismo token anterior,
 - **entonces** el sistema debe rechazarlo.
 
-> **Nota (2026-08-28)**: este criterio **no está implementado**. Cerrar sesión hoy es 100% del lado del cliente (`AuthContext.tsx` borra el token del navegador y redirige) — no existe ningún endpoint de logout en el backend, así que un token JWT robado (o guardado antes de cerrar sesión) sigue siendo válido hasta que expire naturalmente (15 minutos para el `access_token`). CA-008.1 a CA-008.4 sí funcionan correctamente. Cerrarlo del todo requiere una lista de tokens invalidados (o acortar aún más la expiración) — no implementado todavía.
+> **Nota (2026-08-28)**: implementado y verificado contra el servidor real. Ahora existe `POST /api/v1/auth/logout`, que el frontend llama justo antes de borrar los tokens del navegador. El backend guarda el "jti" (identificador único) del access token y del refresh token en una lista negra (tabla `tokens_revocados`) — cualquier request posterior con ese MISMO token, aunque su firma y expiración sigan siendo válidas, se rechaza con 401. Se probó con curl reutilizando el token exacto que la sesión del navegador acababa de cerrar: `GET /api/v1/users/me` devolvió 401, y `POST /api/v1/auth/refresh` con el refresh token también. Solo se invalida el o los tokens de ESA sesión puntual — cerrar sesión en un dispositivo no afecta otras sesiones activas del mismo usuario en otros dispositivos (comportamiento esperado, verificado con un test dedicado).

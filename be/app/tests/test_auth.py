@@ -291,6 +291,69 @@ class TestRefresh:
         assert response.status_code == 403
 
 
+class TestLogout:
+    """Tests para el endpoint de cierre de sesión real en el servidor (HU-008/RQF-007)."""
+
+    URL = "/api/v1/auth/logout"
+
+    def _login(self, client: TestClient) -> dict[str, str]:
+        respuesta = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        return respuesta.json()
+
+    def test_logout_invalida_el_access_token(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """CA-008.x / RN-001 de RQF-007: tras el logout, el MISMO access token
+        ya no debe servir para acceder a un endpoint protegido."""
+        tokens = self._login(client)
+        headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+
+        logout_response = client.post(
+            self.URL, json={"refresh_token": tokens["refresh_token"]}, headers=headers
+        )
+        assert logout_response.status_code == 200
+
+        me_response = client.get("/api/v1/users/me", headers=headers)
+        assert me_response.status_code == 401
+
+    def test_logout_invalida_el_refresh_token(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """El refresh token de la misma sesión también queda inservible."""
+        tokens = self._login(client)
+        headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+
+        client.post(self.URL, json={"refresh_token": tokens["refresh_token"]}, headers=headers)
+
+        refresh_response = client.post(
+            "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
+        )
+        assert refresh_response.status_code == 401
+
+    def test_logout_no_auth(self, client: TestClient) -> None:
+        response = client.post(self.URL, json={"refresh_token": "token.invalido.falso"})
+        assert response.status_code == 401
+
+    def test_logout_no_afecta_otra_sesion_del_mismo_usuario(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Cerrar sesión en un dispositivo NO cierra sesión en otro — cada
+        token tiene su propio "jti" (ver app/models/token_revocado.py)."""
+        sesion_1 = self._login(client)
+        sesion_2 = self._login(client)
+
+        headers_1 = {"Authorization": f"Bearer {sesion_1['access_token']}"}
+        headers_2 = {"Authorization": f"Bearer {sesion_2['access_token']}"}
+
+        client.post(self.URL, json={"refresh_token": sesion_1["refresh_token"]}, headers=headers_1)
+
+        assert client.get("/api/v1/users/me", headers=headers_1).status_code == 401
+        assert client.get("/api/v1/users/me", headers=headers_2).status_code == 200
+
+
 class TestChangePassword:
     """Tests para el endpoint de cambio de contraseña (usuario autenticado)."""
 
