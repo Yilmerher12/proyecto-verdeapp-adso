@@ -1,9 +1,12 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from app.config import settings
+from app.utils.limiter import limiter
 from app.routers import auth, users, geography, admin
 from app.routers import admin_conjunto
 from app.routers import conjunto_panel
@@ -66,6 +69,42 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"]
 )
+
+# ¿Qué? Conecta la instancia de Limiter (app/utils/limiter.py) con esta app.
+# ¿Para qué? Los decoradores @limiter.limit(...) en auth.py ya lanzaban
+#           RateLimitExceeded al superar el límite, pero sin estas dos líneas
+#           FastAPI nunca la registraba como una excepción manejada — nadie
+#           la convertía en la respuesta 429 limpia que se espera, se
+#           propagaba como un error 500 sin manejar.
+# ¿Impacto? OWASP A04 (Insecure Design): ahora superar el límite responde
+#           siempre con 429 y un mensaje claro, en vez de un error genérico.
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ¿Qué? Cabeceras HTTP de seguridad aplicadas a TODA respuesta del backend.
+# ¿Para qué? OWASP A05 (Security Misconfiguration): sin esto, el navegador
+#           no tiene ninguna instrucción explícita sobre cómo tratar la
+#           respuesta de forma segura.
+# ¿Impacto?
+#   - X-Content-Type-Options: evita que el navegador "adivine" el tipo de
+#     un archivo distinto al declarado (protege contra archivos subidos
+#     maliciosos, como las evidencias de auditoría, siendo interpretados
+#     como algo que no son).
+#   - X-Frame-Options: evita que esta API se embeba en un <iframe> de otro
+#     sitio (clickjacking) — aunque VerdeApp es una API JSON, el frontend
+#     que la consume sí podría ser blanco de esto.
+#   - Referrer-Policy: no envía la URL completa (que podría incluir tokens
+#     en el futuro) a sitios externos al seguir un link.
+#   - Permissions-Policy: esta API no necesita cámara, micrófono ni
+#     ubicación — se le niega el acceso explícitamente al navegador.
+@app.middleware("http")
+async def agregar_cabeceras_seguridad(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
 
 # Registro ordenado de rutas
 app.include_router(auth.router)

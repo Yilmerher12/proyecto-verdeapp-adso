@@ -168,7 +168,12 @@ export function AuditoriaConjuntoForm({
                  un error de color en vez de un estado "sin elegir". El
                  elegido se distingue con un anillo, no con ser el único
                  con color. */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* ¿Qué? role="radiogroup" + role="radio"/aria-checked en cada botón:
+                 son 3 opciones mutuamente excluyentes (como los botones de
+                 radio de un formulario), pero antes el "elegido" solo se
+                 distinguía por una clase CSS — invisible para quien usa un
+                 lector de pantalla. */}
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("dashboards.reciclador.auditoria.nivelLabel")}>
             {ORDEN_NIVELES_SELECCIONABLES.map((n) => {
               const { icon: Icon, claseBadge, claseSeleccionado } = NIVELES_DESEMPENO[n];
               const seleccionado = nivel === n;
@@ -176,12 +181,14 @@ export function AuditoriaConjuntoForm({
                 <button
                   key={n}
                   type="button"
+                  role="radio"
+                  aria-checked={seleccionado}
                   onClick={() => setNivel(n)}
                   className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-xs font-semibold transition-all ${
                     seleccionado ? claseSeleccionado : `border-transparent opacity-70 hover:opacity-100 ${claseBadge}`
                   }`}
                 >
-                  <Icon className="h-6 w-6" />
+                  <Icon className="h-6 w-6" aria-hidden="true" />
                   {t(`dashboards.reciclador.auditoria.niveles.${n.toLowerCase()}`)}
                 </button>
               );

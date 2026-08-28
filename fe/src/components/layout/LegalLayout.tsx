@@ -75,7 +75,7 @@ export function LegalLayout({
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-[#03130b] dark:text-gray-100 flex flex-col selection:bg-green-200 selection:text-green-900">
       <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 dark:border-[#2a4d34] dark:bg-[#03130b]/80 backdrop-blur-md shadow-sm">
-        <nav className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+        <nav aria-label={t("legal.navAriaLabel")} className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link
             to="/"
             className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-green-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 rounded-md"

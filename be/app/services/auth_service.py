@@ -28,7 +28,9 @@ from app.schemas.user import (
 )
 
 from app.utils.email import send_password_reset_email, send_verification_email
+from app.utils.audit_log import log_login_exitoso, log_login_fallido
 from app.utils.security import (
+    DUMMY_PASSWORD_HASH,
     create_access_token,
     create_refresh_token,
     decode_token,
@@ -186,15 +188,23 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     stmt = select(Usuario).where(Usuario.correo_electronico == correo)
     user = db.execute(stmt).scalar_one_or_none()
 
-    if not user or not verify_password(login_data.password, user.password):
+    # ¿Qué? Se corre verify_password() SIEMPRE, incluso si el usuario no
+    #       existe — contra el hash real si existe, o contra DUMMY_PASSWORD_HASH
+    #       si no. Mitiga un ataque de temporización (OWASP A07): ver el
+    #       comentario de DUMMY_PASSWORD_HASH en app/utils/security.py.
+    password_hash = user.password if user else DUMMY_PASSWORD_HASH
+    if not user or not verify_password(login_data.password, password_hash):
+        log_login_fallido(correo, "credenciales_invalidas")
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
     if not user.is_active:
+        log_login_fallido(correo, "cuenta_no_verificada")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Tu cuenta no ha sido verificada aún. Por favor, revisa tu buzón en Mailpit."
         )
 
+    log_login_exitoso(correo)
     real_first_name, real_last_name = _obtener_nombre_real(db, user)
 
     access_token = create_access_token(data={

@@ -153,9 +153,9 @@ def disable_rate_limiter_for_tests() -> Generator[None, None, None]:
           falsos negativos (429) que no reflejan ningún problema real
           del código.
     ¿Para qué? La instancia real del limiter vive en app/utils/limiter.py
-              como la variable "limiter" (no en app.state.limiter, que
-              nunca se registra en main.py). Se importa esa instancia
-              directamente y se apaga su bandera "enabled".
+              como la variable "limiter", y esa MISMA instancia es la que
+              main.py registra en app.state.limiter. Se importa directamente
+              y se apaga su bandera "enabled" para toda la sesión de tests.
     ¿Impacto? Esto NO afecta el comportamiento de la app en producción
               — solo aplica durante pytest. El rate limiting real sigue
               intacto y protegiendo /login, /register, /forgot-password

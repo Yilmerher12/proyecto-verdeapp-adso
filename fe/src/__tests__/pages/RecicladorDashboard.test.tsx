@@ -167,7 +167,7 @@ describe("RecicladorDashboard", () => {
     await user.click(screen.getByRole("button", { name: "Auditar ahora" }));
 
     expect(screen.getByText("Auditar conjunto")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Bueno" }));
+    await user.click(screen.getByRole("radio", { name: "Bueno" }));
 
     const selectTema = await screen.findByRole("combobox");
     await user.selectOptions(selectTema, "Separación en la fuente y código de colores");
