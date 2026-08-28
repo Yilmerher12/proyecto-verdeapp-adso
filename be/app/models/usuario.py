@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, DateTime, Integer, String, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -31,6 +31,17 @@ class Usuario(Base):
     # ¿Impacto? Sin esta columna, el idioma se perdería al iniciar sesión desde
     #           un dispositivo distinto al que lo configuró.
     locale = Column(String(10), nullable=False, default="es", server_default="es")
+
+    # ¿Qué? HU-001/RQF-001 (CA-001.5, RN-003): bloqueo temporal por intentos
+    #       fallidos de login — 5 intentos seguidos bloquean la cuenta 15 min.
+    # ¿Para qué? Antes de esto, un atacante podía probar contraseñas contra
+    #           un correo específico sin ningún límite por cuenta (el
+    #           rate limit de slowapi es por IP, no por correo — ver
+    #           docs/requisitos/RFs/RF-001_validar_usuario.md).
+    # ¿Impacto? intentos_fallidos se resetea a 0 en cada login exitoso;
+    #           bloqueado_hasta queda NULL mientras no haya bloqueo activo.
+    intentos_fallidos = Column(Integer, nullable=False, default=0, server_default="0")
+    bloqueado_hasta = Column(DateTime(timezone=True), nullable=True)
 
     # Puentes del Usuario
     rol = relationship("Role", back_populates="usuarios")

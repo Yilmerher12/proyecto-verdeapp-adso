@@ -3,10 +3,14 @@ Módulo: tests/test_auth.py
 Descripción: Tests de integración para los endpoints de autenticación y usuario de VerdeApp.
 """
 
+from datetime import datetime, timedelta, timezone
+
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.main import app as fastapi_app
 from app.models.conjunto_residencial import ConjuntoResidencial
+from app.models.usuario import Usuario
 from app.tests.conftest import (
     TEST_USER_EMAIL,
     TEST_USER_NOMBRE,
@@ -164,6 +168,52 @@ class TestLogin:
     def test_login_missing_correo(self, client: TestClient) -> None:
         response = client.post(self.URL, json={"password": "TestPass123"})
         assert response.status_code == 422
+
+    def test_bloqueo_tras_5_intentos_fallidos_devuelve_403(
+        self, client: TestClient, db: Session, test_user: Usuario
+    ) -> None:
+        """CA-001.5 / RN-003 de RQF-001 — 5 fallos seguidos bloquean la cuenta 15 min."""
+        payload_malo = {"correo_electronico": TEST_USER_EMAIL, "password": "ContraseñaIncorrecta1"}
+        for _ in range(5):
+            respuesta = client.post(self.URL, json=payload_malo)
+            assert respuesta.status_code == 401
+
+        # Ni siquiera con la contraseña CORRECTA debería entrar ahora.
+        payload_bueno = {"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
+        bloqueado = client.post(self.URL, json=payload_bueno)
+        assert bloqueado.status_code == 403
+        assert "intentos" in bloqueado.json()["detail"].lower()
+
+        db.refresh(test_user)
+        assert test_user.bloqueado_hasta is not None
+
+    def test_login_correcto_resetea_contador_de_intentos_fallidos(
+        self, client: TestClient, db: Session, test_user: Usuario
+    ) -> None:
+        payload_malo = {"correo_electronico": TEST_USER_EMAIL, "password": "ContraseñaIncorrecta1"}
+        for _ in range(3):
+            client.post(self.URL, json=payload_malo)
+
+        payload_bueno = {"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
+        respuesta = client.post(self.URL, json=payload_bueno)
+        assert respuesta.status_code == 200
+
+        db.refresh(test_user)
+        assert test_user.intentos_fallidos == 0
+        assert test_user.bloqueado_hasta is None
+
+    def test_bloqueo_ya_vencido_permite_iniciar_sesion(
+        self, client: TestClient, db: Session, test_user: Usuario
+    ) -> None:
+        """Un bloqueo de hace más de 15 minutos ya no debe impedir el login."""
+        test_user.intentos_fallidos = 5
+        test_user.bloqueado_hasta = datetime.now(timezone.utc) - timedelta(minutes=1)
+        db.commit()
+
+        respuesta = client.post(
+            self.URL, json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
+        )
+        assert respuesta.status_code == 200
 
     def test_supera_el_limite_de_intentos_devuelve_429_limpio(self, client: TestClient) -> None:
         """OWASP A04 — antes, app.state.limiter nunca se registraba en main.py,

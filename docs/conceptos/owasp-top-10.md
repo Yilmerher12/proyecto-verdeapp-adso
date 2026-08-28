@@ -225,6 +225,10 @@ uvx pip-audit --requirement <(uv export --no-hashes --no-dev) -s osv
 - Tokens de un solo uso (`used: bool`) y con expiración, para reset de contraseña y verificación de email — una vez usados, se marcan y no vuelven a servir.
 - Mensaje de error genérico en login (`"Credenciales incorrectas"`) sin importar si falla el correo o la contraseña — evita que alguien pueda usar el mensaje de error para averiguar qué correos están registrados.
 
+### Agregado después (2026-08-29): bloqueo de cuenta tras intentos fallidos
+
+El rate limit de `slowapi` (10 intentos/minuto) protege por **dirección IP** — no distingue si esos 10 intentos son contra la misma cuenta o contra 10 cuentas distintas. `usuarios.intentos_fallidos`/`bloqueado_hasta` agregan un segundo control, por **cuenta específica**: 5 fallos seguidos contra el mismo correo bloquean esa cuenta 15 minutos, sin importar desde cuántas IPs distintas vengan los intentos. Son controles complementarios, no redundantes — uno frena un ataque masivo desde una sola máquina, el otro frena un ataque dirigido a una cuenta específica desde varias.
+
 ### El hueco real encontrado: ataque de temporización
 
 El mensaje genérico de arriba no es suficiente por sí solo. El código original solo llamaba a `verify_password()` (una comparación bcrypt, deliberadamente lenta) **cuando el usuario existía**:
