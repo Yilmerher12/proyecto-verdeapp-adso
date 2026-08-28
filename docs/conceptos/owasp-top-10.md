@@ -254,6 +254,10 @@ if not user or not verify_password(login_data.password, password_hash):
 
 Las dos ramas ahora tardan lo mismo — no queda ninguna señal de temporización que un atacante pueda medir.
 
+### Agregado después (2026-08-28): logout que invalida el token de verdad (HU-008/RQF-007)
+
+Otro hueco de sesión encontrado: "cerrar sesión" solo borraba el token del navegador (`sessionStorage`) — el servidor nunca se enteraba, así que ese mismo `access_token`, si alguien lo hubiera copiado antes, seguía siendo válido hasta expirar solo (15 minutos). Se agregó un `jti` único a cada token y una tabla `tokens_revocados`: al cerrar sesión (`POST /api/v1/auth/logout`), el `jti` del access y del refresh token se guarda ahí, y `get_current_user`/`refresh_access_token` los rechazan con 401 aunque no hayan expirado. Verificado con curl reutilizando el token exacto de una sesión recién cerrada.
+
 ---
 
 ## A08 — Software and Data Integrity Failures
