@@ -16,11 +16,19 @@ import { Trans, useTranslation } from "react-i18next";
 
 import { LegalLayout, LegalSection } from "@/components/layout/LegalLayout";
 
+// ¿Qué? Antes existía un campo "email" con una dirección inventada
+//       (contacto@verdeapp.edu.co) que no existe — un dominio que nadie
+//       registró, así que cualquier correo enviado ahí rebotaría, o peor,
+//       podría terminar en manos de quien sea que registre ese dominio en
+//       el futuro.
+// ¿Para qué? El profesor pidió explícitamente que ningún link, ni siquiera
+//           el de contacto, muestre un correo — por seguridad.
+// ¿Impacto? Todo lo que antes mostraba ese correo ahora enlaza a /contacto,
+//           el formulario de contacto real de la app, que no expone nada.
 const RESPONSABLE = {
   nombre: "VerdeApp — Proyecto ADSO SENA",
   nit: "Proyecto educativo, sin NIT comercial",
   domicilio: "Bogotá D.C., Colombia",
-  email: "contacto@verdeapp.edu.co",
 } as const;
 
 interface TerminosDeUsoPageProps {
@@ -35,6 +43,12 @@ export function TerminosDeUsoPage({ embedded = false }: TerminosDeUsoPageProps) 
   const privacyLink = (
     <a
       href="/privacidad"
+      className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+    />
+  );
+  const contactoLink = (
+    <a
+      href="/contacto"
       className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
@@ -71,7 +85,9 @@ export function TerminosDeUsoPage({ embedded = false }: TerminosDeUsoPageProps) 
 
       <LegalSection id="registro" number="2" heading={t("legal.terms.s2.heading")}>
         <p>{t("legal.terms.s2.p1")}</p>
-        <p>{t("legal.terms.s2.p2", { email: RESPONSABLE.email })}</p>
+        <p>
+          <Trans i18nKey="legal.terms.s2.p2" components={{ contactoLink }} />
+        </p>
         <p>{t("legal.terms.s2.p3")}</p>
       </LegalSection>
 
@@ -126,7 +142,9 @@ export function TerminosDeUsoPage({ embedded = false }: TerminosDeUsoPageProps) 
       </LegalSection>
 
       <LegalSection id="contacto" number="9" heading={t("legal.terms.s9.heading")}>
-        <p>{t("legal.terms.s9.intro")}</p>
+        <p>
+          <Trans i18nKey="legal.terms.s9.intro" components={{ contactoLink }} />
+        </p>
         <address className="not-italic">
           <ul className="mt-2 space-y-1">
             <li>
@@ -134,17 +152,6 @@ export function TerminosDeUsoPage({ embedded = false }: TerminosDeUsoPageProps) 
                 {t("legal.terms.s9.companyLabel")}
               </strong>{" "}
               {RESPONSABLE.nombre}
-            </li>
-            <li>
-              <strong className="text-gray-700 dark:text-gray-300">
-                {t("legal.terms.s9.emailLabel")}
-              </strong>{" "}
-              <a
-                href={`mailto:${RESPONSABLE.email}`}
-                className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
-              >
-                {RESPONSABLE.email}
-              </a>
             </li>
             <li>
               <strong className="text-gray-700 dark:text-gray-300">
