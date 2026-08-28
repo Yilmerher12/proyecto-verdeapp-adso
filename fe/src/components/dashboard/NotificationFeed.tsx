@@ -125,11 +125,20 @@ export function NotificationFeed({
                 <li
                   key={n.id}
                   onClick={() => !n.leida && onMarkRead(n.id)}
+                  onKeyDown={(e) => {
+                    if (!n.leida && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      onMarkRead(n.id);
+                    }
+                  }}
+                  role={!n.leida ? "button" : undefined}
+                  tabIndex={!n.leida ? 0 : undefined}
+                  aria-label={!n.leida ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}` : undefined}
                   className={`flex cursor-pointer items-start gap-3 px-5 py-3.5 transition-colors ${
                     !n.leida ? accentHighlight : "hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
                   }`}
                 >
-                  <meta.Icon className={`mt-0.5 h-4 w-4 shrink-0 ${meta.color}`} />
+                  <meta.Icon className={`mt-0.5 h-4 w-4 shrink-0 ${meta.color}`} aria-hidden="true" />
                   <div className="min-w-0 flex-1">
                     <p className={`text-sm ${!n.leida ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
                       {n.mensaje}
@@ -138,7 +147,7 @@ export function NotificationFeed({
                       {n.nombre_conjunto ?? t("notificationFeed.platformLabel")} · {tiempoRelativo(n.created_at)}
                     </p>
                   </div>
-                  {!n.leida && <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${accentBg}`} />}
+                  {!n.leida && <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${accentBg}`} aria-hidden="true" />}
                 </li>
               );
             })}

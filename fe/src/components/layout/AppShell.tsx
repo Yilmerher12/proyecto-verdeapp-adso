@@ -356,11 +356,15 @@ export function AppShell({ children }: AppShellProps) {
           <button
             onClick={() => navigate(roleMeta.dashboardHref)}
             className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-[#2a4d34] dark:hover:text-gray-200"
-            aria-label={t("appShell.notificaciones")}
+            aria-label={
+              noLeidas > 0
+                ? t("appShell.notificacionesConNoLeidas", { count: noLeidas })
+                : t("appShell.notificaciones")
+            }
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-5 w-5" aria-hidden="true" />
             {noLeidas > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-700 text-[9px] font-bold text-white">
+              <span aria-hidden="true" className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-700 text-[9px] font-bold text-white">
                 {noLeidas > 9 ? "9+" : noLeidas}
               </span>
             )}

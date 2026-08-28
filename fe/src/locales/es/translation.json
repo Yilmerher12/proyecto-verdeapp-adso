@@ -19,6 +19,7 @@
     },
     "proximamente": "Pronto",
     "notificaciones": "Notificaciones",
+    "notificacionesConNoLeidas": "Notificaciones, {{count}} sin leer",
     "expandirMenu": "Expandir menú",
     "colapsarMenu": "Colapsar menú",
     "cerrarSesion": "Cerrar sesión",
@@ -229,6 +230,7 @@
     "en": "English"
   },
   "legal": {
+    "navAriaLabel": "Navegación de páginas legales",
     "backToHome": "Volver al inicio",
     "footerCredit": "Proyecto educativo SENA",
     "terms": {
@@ -807,6 +809,7 @@
   },
   "notificationFeed": {
     "platformLabel": "VerdeApp",
+    "markReadHint": "Presiona para marcar como leída",
     "markAllRead": "Marcar leídas",
     "clearRead": "Limpiar leídas",
     "showLess": "Ver menos",

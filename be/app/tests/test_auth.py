@@ -165,6 +165,25 @@ class TestLogin:
         response = client.post(self.URL, json={"password": "TestPass123"})
         assert response.status_code == 422
 
+    def test_supera_el_limite_de_intentos_devuelve_429_limpio(self, client: TestClient) -> None:
+        """OWASP A04 — antes, app.state.limiter nunca se registraba en main.py,
+        así que RateLimitExceeded no tenía un exception_handler asociado y se
+        propagaba como un error sin manejar en vez de un 429 limpio. La fixture
+        `disable_rate_limiter_for_tests` apaga el limiter para el resto de la
+        suite — aquí se reactiva solo para esta prueba puntual."""
+        from app.utils.limiter import limiter as real_limiter
+
+        real_limiter.enabled = True
+        try:
+            payload = {"correo_electronico": "fantasma@verdeapp.com", "password": "x"}
+            for _ in range(10):
+                client.post(self.URL, json=payload)
+            respuesta_extra = client.post(self.URL, json=payload)
+            assert respuesta_extra.status_code == 429
+            assert "rate limit" in respuesta_extra.json()["error"].lower()
+        finally:
+            real_limiter.enabled = False
+
 
 class TestRefresh:
     """Tests para el endpoint de renovación de tokens."""
@@ -474,6 +493,14 @@ class TestHealthCheck:
         response = client.get(self.URL)
         assert response.status_code == 200
         assert response.json()["status"] == "ok"
+
+    def test_respuesta_incluye_cabeceras_de_seguridad(self, client: TestClient) -> None:
+        """OWASP A05 — toda respuesta debe traer estas cabeceras, sin importar el endpoint."""
+        response = client.get(self.URL)
+        assert response.headers["X-Content-Type-Options"] == "nosniff"
+        assert response.headers["X-Frame-Options"] == "DENY"
+        assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+        assert "camera=()" in response.headers["Permissions-Policy"]
 
 
 class TestEmailVerification:

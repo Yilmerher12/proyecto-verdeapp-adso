@@ -19,6 +19,7 @@
     },
     "proximamente": "Coming soon",
     "notificaciones": "Notifications",
+    "notificacionesConNoLeidas": "Notifications, {{count}} unread",
     "expandirMenu": "Expand menu",
     "colapsarMenu": "Collapse menu",
     "cerrarSesion": "Sign out",
@@ -229,6 +230,7 @@
     "en": "English"
   },
   "legal": {
+    "navAriaLabel": "Legal pages navigation",
     "backToHome": "Back to home",
     "footerCredit": "SENA educational project",
     "terms": {
@@ -803,6 +805,7 @@
   },
   "notificationFeed": {
     "platformLabel": "VerdeApp",
+    "markReadHint": "Press to mark as read",
     "markAllRead": "Mark all read",
     "clearRead": "Clear read",
     "showLess": "Show less",

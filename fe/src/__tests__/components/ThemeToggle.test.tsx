@@ -34,6 +34,20 @@ describe("ThemeToggle", () => {
     ).toBe(true);
   });
 
+  // ¿Qué? WCAG 4.1.2 — un botón de dos estados debe comunicar cuál está
+  //       activo con aria-pressed, no solo con su ícono/aria-label.
+  it("comunica el estado activo con aria-pressed", async () => {
+    const user = userEvent.setup();
+    render(<ThemeToggle />);
+    const button = screen.getByRole("button");
+
+    expect(button.getAttribute("aria-pressed")).toBe("false");
+    await user.click(button);
+    expect(button.getAttribute("aria-pressed")).toBe("true");
+    await user.click(button);
+    expect(button.getAttribute("aria-pressed")).toBe("false");
+  });
+
   // ¿Qué? Verifica que al hacer clic se alterna el tema.
   it("alterna la clase 'dark' en html al hacer clic", async () => {
     const user = userEvent.setup();

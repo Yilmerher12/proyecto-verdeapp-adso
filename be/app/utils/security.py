@@ -23,6 +23,19 @@ from app.config import settings
 #           los hashes antiguos seguirán siendo verificables (migración gradual).
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# ¿Qué? Un hash bcrypt válido de una contraseña que nadie usa — no corresponde
+#       a ninguna cuenta real.
+# ¿Para qué? OWASP A07 — mitigar un ataque de temporización (timing attack)
+#           en el login. Si el código solo llama a verify_password() cuando
+#           el usuario SÍ existe, la rama "usuario no existe" responde casi
+#           al instante, mientras que "contraseña incorrecta" tarda lo que
+#           tarda bcrypt (decenas de milisegundos). Un atacante puede medir
+#           esa diferencia y así descubrir qué correos SÍ están registrados,
+#           aunque el mensaje de error sea idéntico en ambos casos.
+# ¿Impacto? auth_service.login_user() compara siempre contra un hash real
+#           (este, si el usuario no existe) — las dos ramas tardan lo mismo.
+DUMMY_PASSWORD_HASH = pwd_context.hash("no-corresponde-a-ninguna-cuenta-real")
+
 
 def hash_password(password: str) -> str:
     """Hashea una contraseña en texto plano usando bcrypt.
