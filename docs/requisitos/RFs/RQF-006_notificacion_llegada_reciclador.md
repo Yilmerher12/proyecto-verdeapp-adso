@@ -16,7 +16,7 @@
 | **Nombre** | Notificación llegada del reciclador al conjunto|
 | **Módulo** | Notificaciones / Operación                     |
 | **Prioridad** | Alta                                           |
-| **Estado** | Implementado                                   |
+| **Estado** | Parcial                                        |
 | **Usuarios** | reciclador, residente                          |
 
 ---
@@ -58,14 +58,16 @@ El sistema debe enviar una notificación de 'Llegada al conjunto' a los Resident
 
 ## Endpoints asociados
 
+> **Nota (2026-08-28)**: en la implementación real no hay una ruta dedicada a "llegada" — se reutiliza el endpoint genérico de notificaciones, con `tipo=LLEGADA_RECICLADOR` en el cuerpo del request.
+
 | Método | Ruta                              | Auth requerida | Descripción                                      |
 | ------ | --------------------------------- | -------------- | ------------------------------------------------ |
-| POST   | `/api/v1/notificaciones/llegada`  | Sí (Reciclador)| Dispara la notificación de llegada               |
+| POST   | `/api/v1/notificaciones/enviar`   | Sí (Reciclador)| Dispara la notificación (`tipo=LLEGADA_RECICLADOR`) |
 
 ---
 
 ## Reglas de negocio
 
-- RN-001: La acción de 'Llegada al conjunto' está restringida exclusivamente a usuarios con el rol `reciclador`.
-- RN-002: Las notificaciones solo se envían a los residentes que pertenecen exactamente al mismo `conjunto_id` desde donde el reciclador detona la alerta.
-- RN-003: Debe existir un bloqueo temporal (cooldown) para evitar que un reciclador envíe múltiples notificaciones de llegada repetidas en un lapso corto (ej. máximo 1 notificación por conjunto cada 2 horas).
+- RN-001: La acción de 'Llegada al conjunto' está restringida exclusivamente a usuarios con el rol `reciclador`. **Implementado.**
+- RN-002: Las notificaciones solo se envían a los residentes que pertenecen exactamente al mismo `conjunto_id` desde donde el reciclador detona la alerta. **Implementado.**
+- RN-003: Debe existir un bloqueo temporal (cooldown) para evitar que un reciclador envíe múltiples notificaciones de llegada repetidas en un lapso corto (ej. máximo 1 notificación por conjunto cada 2 horas). **No implementado** — el backend no impone ningún cooldown; el reciclador puede enviar el mismo aviso las veces que quiera.

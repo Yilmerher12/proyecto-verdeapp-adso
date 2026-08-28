@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema edita un módulo de contenido educativo        |
 | **Módulo**         | Educación / Administración                                |
 | **Prioridad**      | Media                                                       |
-| **Estado**         | Implementada                                                |
+| **Estado**         | Parcial                                                     |
 | **RF asociados**   | RQF-010                                                    |
 
 ---
@@ -48,6 +48,8 @@
 - **Dado que** dejo el título o el cuerpo por debajo de la longitud mínima al editar,
 - **cuando** intento guardar,
 - **entonces** debo ver un mensaje de error.
+
+> **Nota (2026-08-28)**: mismo caso que HU-012 — el schema de validación se comparte, así que la longitud mínima tampoco se aplica al editar. Editar, ver el cambio reflejado de inmediato, y el acceso exclusivo de admin sí funcionan.
 
 ### CA-013.4 — Acceso exclusivo de administrador
 

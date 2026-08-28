@@ -10,7 +10,7 @@
 | **Nombre** | Disponibilidad del Sistema                             |
 | **Categoría** | Infraestructura / Rendimiento                          |
 | **Prioridad** | Alta                                                   |
-| **Estado** | Por implementar                                        |
+| **Estado** | Parcial                                                |
 
 ---
 
@@ -27,3 +27,5 @@ Se deben configurar copias de seguridad (backups) automáticas de la base de dat
 
 ### RNF-002.4 — Manejo de errores de red
 El frontend en React debe implementar un manejo de estado adecuado que informe al usuario si el servidor no está disponible temporalmente (ej. "Error de conexión con el servidor"), evitando que la aplicación se congele o muestre pantallas en blanco.
+
+> **Estado real (2026-08-28)**: **Implementado.** `fe/src/components/ui/ServerErrorBanner.tsx` + `fe/src/lib/serverStatusEvents.ts` + los interceptores de `fe/src/api/axios.ts` cubren exactamente esto. Los otros 3 sub-requisitos (002.1 SLA medido, 002.2 despliegue en la nube, 002.3 backups automáticos) siguen sin implementar — el proyecto hoy solo corre localmente con `docker-compose.yml` (con healthcheck de Postgres y `restart: unless-stopped`, pero sin monitoreo de uptime, sin nube, y sin backups programados). Por eso el Estado general de este RNF es "Parcial", no "Por implementar" ni "Implementado".

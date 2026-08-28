@@ -16,7 +16,7 @@
 | **Título**         | Inicio de sesión  |
 | **Módulo**         | Autenticación     |
 | **Prioridad**      | Alta              |
-| **Estado**         | Implementada      |
+| **Estado**         | Parcial           |
 | **RF asociados**   | RQF-001           |
 
 ---

@@ -10,7 +10,7 @@
 | **Nombre** | Semáforo de Gestión de Residuos            |
 | **Módulo** | Auditoría / Calificaciones                 |
 | **Prioridad** | Baja (Opcional)                            |
-| **Estado** | En discusión                               |
+| **Estado** | Parcial                                    |
 | **Usuarios** | reciclador, residente                      |
 
 ---
@@ -54,14 +54,18 @@ El sistema debe implementar un panel de auditoría cualitativa donde el 'Recicla
 
 ## Endpoints asociados
 
+> **Nota (2026-08-28)**: los endpoints y el nombre de la calificación cambiaron durante la implementación real — se documentan aquí actualizados. La tabla ya no se llama `historial_semaforo`, es `auditorias_conjunto`; la calificación no es un enum `ROJO/AMARILLO/VERDE` sino `EXCELENTE/BUENA/REGULAR/DEFICIENTE` en la base de datos (el reciclador solo puede elegir entre 3 al calificar: Bueno/Regular/Malo — ver `docs/conceptos/patrones-arquitectonicos.md` y `fe/src/config/nivelesDesempeno.ts`).
+
 | Método | Ruta                                      | Auth requerida | Descripción                                      |
 | ------ | ----------------------------------------- | -------------- | ------------------------------------------------ |
-| POST   | `/api/v1/auditorias/semaforo`             | Sí (Reciclador)| Registra una nueva calificación para el conjunto |
-| GET    | `/api/v1/auditorias/semaforo/{id}`        | Sí (Residente) | Obtiene el historial del semáforo de un conjunto |
+| POST   | `/api/v1/auditorias-conjunto`             | Sí (Reciclador)| Registra una nueva auditoría para el conjunto, con 1 a 3 fotos de evidencia |
+| GET    | `/api/v1/auditorias-conjunto/historial`   | Sí (Residente, Admin de Conjunto) | Obtiene el historial de auditorías del conjunto |
+| GET    | `/api/v1/auditorias-conjunto/mias`        | Sí (Reciclador) | Historial de las auditorías que el reciclador mismo envió |
+| GET    | `/api/v1/auditorias-conjunto/{id}`        | Sí (Residente, Admin de Conjunto, o el Reciclador que la envió) | Detalle de una auditoría puntual |
 
 ---
 
 ## Reglas de negocio
 
-- RN-001: Exclusividad de escritura. Solo el rol `reciclador` tiene permisos para crear una calificación en el semáforo. El rol `residente` tiene acceso estricto de solo lectura.
-- RN-002: Límite de frecuencia. Para evitar spam, un reciclador solo puede emitir una calificación por conjunto cada 24 horas.
+- RN-001: Exclusividad de escritura. Solo el rol `reciclador` tiene permisos para crear una auditoría. El rol `residente` (y el Admin de Conjunto) tienen acceso estricto de solo lectura. **Implementado y verificado.**
+- RN-002: Límite de frecuencia. Para evitar spam, un reciclador solo puede emitir una calificación por conjunto cada 24 horas. **No implementado como restricción dura** — hoy solo existe un recordatorio visual en el panel del reciclador ("ya puedes volver a auditar") que aparece a los 7 días, pero el backend acepta una auditoría nueva del mismo reciclador para el mismo conjunto en cualquier momento, sin bloquear el envío. Esta es la razón por la que el Estado de este requisito es "Parcial" y no "Implementado" — el resto del flujo (calificar, ver evidencia ampliada, historial, notificación) está completo y probado.
