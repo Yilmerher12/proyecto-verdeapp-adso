@@ -16,7 +16,7 @@
 | **Título**         | Residente consulta el historial del semáforo         |
 | **Módulo**         | Auditoría / Calificaciones                           |
 | **Prioridad**      | Baja (opcional)                                       |
-| **Estado**         | En discusión                                          |
+| **Estado**         | Implementada                                          |
 | **RF asociados**   | RQF-009                                             |
 
 ---

@@ -16,7 +16,7 @@
 | **Título**         | Cerrar sesión     |
 | **Módulo**         | Autenticación     |
 | **Prioridad**      | Alta              |
-| **Estado**         | Implementada      |
+| **Estado**         | Parcial           |
 | **RF asociados**   | RQF-007           |
 
 ---
@@ -60,3 +60,5 @@
 - **Dado que** ya cerré sesión,
 - **cuando** cualquier intento intenta reusar el mismo token anterior,
 - **entonces** el sistema debe rechazarlo.
+
+> **Nota (2026-08-28)**: este criterio **no está implementado**. Cerrar sesión hoy es 100% del lado del cliente (`AuthContext.tsx` borra el token del navegador y redirige) — no existe ningún endpoint de logout en el backend, así que un token JWT robado (o guardado antes de cerrar sesión) sigue siendo válido hasta que expire naturalmente (15 minutos para el `access_token`). CA-008.1 a CA-008.4 sí funcionan correctamente. Cerrarlo del todo requiere una lista de tokens invalidados (o acortar aún más la expiración) — no implementado todavía.

@@ -16,7 +16,7 @@
 | **Nombre** | Validar Usuario     |
 | **Módulo** | Autenticación       |
 | **Prioridad** | Alta                |
-| **Estado** | Implementado        |
+| **Estado** | Parcial             |
 | **Usuarios** | residente, reciclador, administrador, admin_conjunto |
 
 ---
@@ -71,3 +71,5 @@ El sistema debe bloquear el acceso y mostrar un mensaje de error genérico ('Cre
 - RN-001: Bajo ninguna circunstancia el sistema debe revelar si un correo electrónico está o no registrado durante un intento fallido.
 - RN-002: El mensaje de error debe ser estrictamente "Credenciales incorrectas".
 - RN-003: Tras 5 intentos fallidos consecutivos, el sistema debe bloquear temporalmente el inicio de sesión para ese correo durante 15 minutos (mitigación de fuerza bruta).
+
+> **Nota (2026-08-28)**: RN-001 y RN-002 están implementados y verificados (incluye mitigación de un ataque de temporización — ver `docs/conceptos/owasp-top-10.md`). RN-003 **no está implementado tal como se describe**: sí existe un límite de 10 intentos por minuto por dirección IP (`slowapi`, ver `be/app/utils/limiter.py`), pero es un mecanismo distinto — no bloquea por correo específico ni dura 15 minutos. Por eso el Estado es "Parcial".

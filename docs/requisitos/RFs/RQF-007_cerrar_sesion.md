@@ -16,7 +16,7 @@
 | **Nombre** | Cerrar sesión       |
 | **Módulo** | Autenticación       |
 | **Prioridad** | Alta                |
-| **Estado** | Implementado        |
+| **Estado** | Parcial             |
 | **Usuarios** | reciclador, residente, administrador, admin_conjunto |
 
 ---
@@ -47,22 +47,17 @@ El sistema debe mostrar un modal de confirmación antes de cerrar la sesión. Al
 
 ## Salidas
 
-| Escenario           | Código HTTP | Respuesta                                                                                                    |
-| ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Cierre exitoso      | 200         | `{"message": "Sesión cerrada correctamente."}`                                                               |
-| Token inválido      | 401         | `{"detail": "Token no provisto o expirado."}`                                                                |
+> **Nota (2026-08-28)**: no hay una llamada al backend en el cierre de sesión real — por eso no hay una fila de "salida HTTP" que documentar aquí. El cierre de sesión es 100% del lado del cliente (ver Proceso arriba, que ya describe esto correctamente).
 
 ---
 
 ## Endpoints asociados
 
-| Método | Ruta                  | Auth requerida | Descripción                                  |
-| ------ | --------------------- | -------------- | -------------------------------------------- |
-| POST   | `/api/v1/auth/logout` | Sí             | Invalida el token JWT activo                 |
+**No existe ningún endpoint de logout en el backend** — confirmado revisando `be/app/routers/auth.py` completo. El cierre de sesión hoy es enteramente del lado del cliente (`AuthContext.tsx` borra `access_token`/`refresh_token` de `sessionStorage` y limpia el estado de React). La tabla original de este documento (`POST /api/v1/auth/logout`) describía un endpoint planeado que nunca se construyó.
 
 ---
 
 ## Reglas de negocio
 
-- RN-001: Una vez cerrada la sesión, cualquier intento de usar el mismo token JWT debe ser rechazado con error 401.
-- RN-002: El frontend debe asegurar la eliminación de los datos de la sesión local incluso si el backend falla en responder.
+- RN-001: Una vez cerrada la sesión, cualquier intento de usar el mismo token JWT debe ser rechazado con error 401. **No implementado** — sin un endpoint de logout que invalide el token en el servidor, un `access_token` sigue siendo válido hasta que expira naturalmente (15 minutos), aunque el usuario ya haya "cerrado sesión" en su navegador.
+- RN-002: El frontend debe asegurar la eliminación de los datos de la sesión local incluso si el backend falla en responder. **Implementado** (y trivialmente cierto hoy, ya que no hay ninguna llamada al backend que pueda fallar).

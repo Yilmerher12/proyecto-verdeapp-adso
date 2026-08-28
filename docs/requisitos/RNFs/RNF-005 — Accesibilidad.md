@@ -25,7 +25,7 @@
 | **Nombre**    | Accesibilidad               |
 | **Categoría** | Accesibilidad               |
 | **Prioridad** | Media                        |
-| **Estado**    | Parcialmente implementado     |
+| **Estado**    | Implementado                  |
 
 ---
 
@@ -49,4 +49,6 @@ Todo componente nuevo debe mantener un contraste de texto legible tanto en modo 
 
 ### RNF-005.5 — Navegación por teclado
 
-**Pendiente de verificación formal.** Los formularios y modales deben poder usarse completamente sin mouse (tab, enter, escape). No se ha hecho todavía una auditoría dedicada de esto — queda como tarea pendiente en el tablero.
+Los formularios y modales deben poder usarse completamente sin mouse (tab, enter, escape).
+
+> **Estado real (2026-08-28)**: **Verificado.** La auditoría dedicada ya se hizo — `docs/conceptos/accesibilidad-aria-wcag.md`. `Modal.tsx` ya tenía trampa de foco completa (Tab/Shift+Tab), cierre con Esc y restauración del foco al cerrar. La auditoría encontró y corrigió el único hueco real: las filas de notificación no leída solo respondían al clic del mouse — se les agregó `role="button"`, `tabIndex` y manejo de `Enter`/Espacio.
