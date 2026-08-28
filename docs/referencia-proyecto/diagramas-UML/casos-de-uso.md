@@ -4,6 +4,8 @@
 
 Este documento describe los casos de uso identificados para la plataforma **VerdeApp**, orientada a la gestión de reciclaje en conjuntos residenciales.
 
+> **Nota (2026-08-29)**: este documento tenía dos problemas reales. Primero, **RQF012 describía por error el flujo de desvinculación/reasignación** — ese flujo en realidad vive en un requisito aparte, RQF-016 (`docs/requisitos/RFs/RQF-016_desvinculacion_reasignacion_conjuntos.md`), que nunca se había agregado aquí. Segundo, faltaban **RQF-016** y **RQF-017** (cambio de idioma) por completo — el catálogo real de requisitos funcionales llega hasta RQF-017, no hasta RQF-015. Corregido.
+
 ---
 
 # Actores
@@ -17,6 +19,7 @@ Usuario principal de la plataforma encargado de:
 * Consultar recicladores y puntos de acopio (directorio).
 * Reportar niveles de capacidad SHUT (notificación).
 * Gestionar su perfil(editarlo).
+* Cambiar el idioma de la interfaz (español/inglés).
 
 ---
 
@@ -29,6 +32,7 @@ Usuario encargado de:
 * Actualizar información de perfil.
 * Comunicar llegada al conjunto.
 * Reportar niveles de capacidad SHUT (notificación).
+* Cambiar el idioma de la interfaz (español/inglés).
 
 ---
 
@@ -39,6 +43,8 @@ Usuario responsable de:
 * Administrar el contenido educativo.
 * Gestionar directorios de recicladores y puntos de acopio.
 * Supervisar el funcionamiento general del sistema.
+* Aprobar o rechazar solicitudes de desvinculación de un Admin_conjunto, y asignarle conjuntos adicionales.
+* Cambiar el idioma de la interfaz (español/inglés).
 
 ---
 
@@ -49,7 +55,9 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 * Registrarse en el sistema.
 * Consultar y administrar los conjuntos que gestiona.
 * Invitar recicladores autorizados a sus conjuntos.
+* Solicitar su desvinculación de un conjunto que ya no administra.
 * Gestionar su perfil.
+* Cambiar el idioma de la interfaz (español/inglés).
 * Cerrar sesión.
 
 ---
@@ -69,10 +77,12 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 | RQF009 | Visualizar gestión de residuos del conjunto              | Residente, Reciclador                |
 | RQF010 | Gestionar contenido educativo                            | Admin_sistema                        |
 | RQF011 | Gestionar directorio de puntos de acopio y recicladores  | Admin_sistema                        |
-| RQF012 | Gestionar vinculación de conjuntos                       | Admin_conjunto, Admin_sistema         |
-| RQF013 | Recomendar contenido educativo por auditoría             | Reciclador (dispara), Residente (recibe) |
+| RQF012 | Invitación y vinculación inicial (admin de conjunto, reciclador) | Admin_sistema, Admin_conjunto, Reciclador |
+| RQF013 | Recomendar contenido educativo por auditoría (Por implementar) | Reciclador (dispara), Residente (recibe) |
 | RQF014 | Gestionar comunicados del conjunto                       | Admin_conjunto, Residente, Reciclador |
 | RQF015 | Publicar novedades generales                             | Admin_sistema, Residente, Reciclador, Admin_conjunto |
+| RQF016 | Desvinculación y reasignación de conjuntos               | Admin_conjunto, Admin_sistema         |
+| RQF017 | Cambiar idioma de la interfaz                            | Residente, Reciclador, Admin_sistema, Admin_conjunto |
 
 ---
 
@@ -97,10 +107,12 @@ flowchart TB
     RQF009([RQF009\nVisualizar Gestión de Residuos])
     RQF010([RQF010\nGestionar Contenido Educativo])
     RQF011([RQF011\nGestionar Directorio])
-    RQF012([RQF012\nGestionar Vinculación de Conjuntos])
-    RQF013([RQF013\nRecomendar Contenido por Auditoría])
+    RQF012([RQF012\nInvitación y Vinculación Inicial])
+    RQF013([RQF013\nRecomendar Contenido por Auditoría\nPor implementar])
     RQF014([RQF014\nGestionar Comunicados del Conjunto])
     RQF015([RQF015\nPublicar Novedades Generales])
+    RQF016([RQF016\nDesvinculación y Reasignación])
+    RQF017([RQF017\nCambiar Idioma de la Interfaz])
 
     Residente --> RQF001
     Residente --> RQF002
@@ -113,6 +125,7 @@ flowchart TB
     Residente --> RQF013
     Residente --> RQF014
     Residente --> RQF015
+    Residente --> RQF017
 
     Reciclador --> RQF001
     Reciclador --> RQF002
@@ -124,6 +137,7 @@ flowchart TB
     Reciclador --> RQF013
     Reciclador --> RQF014
     Reciclador --> RQF015
+    Reciclador --> RQF017
 
     Admin --> RQF001
     Admin --> RQF007
@@ -131,6 +145,8 @@ flowchart TB
     Admin --> RQF011
     Admin --> RQF012
     Admin --> RQF015
+    Admin --> RQF016
+    Admin --> RQF017
 
     AdminConjunto --> RQF001
     AdminConjunto --> RQF002
@@ -139,6 +155,8 @@ flowchart TB
     AdminConjunto --> RQF012
     AdminConjunto --> RQF014
     AdminConjunto --> RQF015
+    AdminConjunto --> RQF016
+    AdminConjunto --> RQF017
 ```
 
 ---
@@ -325,27 +343,35 @@ Permite administrar el directorio de recicladores y puntos de acopio registrados
 
 ---
 
-## RQF012 - Gestionar Vinculación de Conjuntos
+## RQF012 - Invitación y Vinculación Inicial de Administradores de Conjunto y Recicladores
 
 ### Actores
 
-* Admin_conjunto
 * Admin_sistema
+* Admin_conjunto
+* Reciclador
 
 ### Descripción
 
-Permite que un Admin_conjunto solicite desvincularse de un conjunto que ya no administra, y que el Admin_sistema gestione esas solicitudes (aprobar/rechazar) y asigne nuevos conjuntos a administradores existentes. El proceso requiere aprobación humana para evitar que un conjunto quede sin administrador sin aviso previo.
+Cubre cómo alguien se convierte en Admin_conjunto por primera vez, y cómo un Admin_conjunto autoriza a un Reciclador ya existente a trabajar en su conjunto. Un Admin_conjunto **nunca** se crea por registro público — solo por invitación.
 
-### Flujo Principal
+### Flujo Principal (invitación a Admin_conjunto)
 
-1. El Admin_conjunto selecciona uno de sus conjuntos y envía una solicitud de desvinculación con motivo opcional.
-2. La solicitud queda pendiente hasta que el Admin_sistema la gestione.
-3. El Admin_sistema aprueba o rechaza la solicitud, o asigna un nuevo conjunto al administrador.
-4. El Admin_conjunto recibe notificación del resultado.
+1. El Admin_sistema envía una invitación por correo a una persona, indicando qué conjunto(s) administrará.
+2. La persona invitada abre el enlace (con un token de un solo uso, antes de que expire) y define su propia contraseña.
+3. El sistema crea la cuenta de Admin_conjunto y la vincula a los conjuntos indicados.
+
+### Flujo Alternativo (autorización de Reciclador)
+
+1. El Admin_conjunto invita a un Reciclador ya registrado a trabajar en uno de sus conjuntos.
+2. El Reciclador acepta o rechaza la invitación desde su panel.
+3. Si acepta, queda autorizado a operar en ese conjunto (visible en el directorio y habilitado para auditarlo).
 
 ---
 
 ## RQF013 - Recomendar Contenido Educativo por Auditoría
+
+> **Estado: Por implementar.** Este caso de uso describe el diseño previsto, no una funcionalidad ya construida — ver `docs/requisitos/RFs/RQF-013_recomendacion_contenido_educativo.md`. Se documenta la especificación completa para cuando se retome, no para dar a entender que ya existe.
 
 ### Actores
 
@@ -418,4 +444,52 @@ Permite que el Admin_sistema publique novedades de alcance general (no ligadas a
 ### Flujo Alternativo
 
 * El Admin_sistema puede editar la novedad o archivarla manualmente antes de que expire.
+
+---
+
+## RQF016 - Desvinculación y Reasignación de Conjuntos
+
+### Actores
+
+* Admin_conjunto
+* Admin_sistema
+
+### Descripción
+
+Permite que un Admin_conjunto solicite desvincularse de un conjunto que ya no administra, que el Admin_sistema apruebe o rechace esa solicitud, y que el Admin_sistema asigne un conjunto adicional a un Admin_conjunto ya existente (sin invitarlo de nuevo). Es manual y requiere aprobación humana, para evitar que un conjunto quede sin administrador sin aviso previo.
+
+### Flujo Principal — Solicitar desvinculación
+
+1. El Admin_conjunto ve la lista de conjuntos que administra en su perfil.
+2. Selecciona uno y envía una solicitud de desvinculación, con motivo opcional.
+3. La solicitud queda `PENDIENTE` hasta que el Admin_sistema la gestione.
+4. El Admin_sistema aprueba o rechaza la solicitud (con motivo de rechazo opcional).
+5. El Admin_conjunto recibe el resultado.
+
+### Flujo Alternativo — Asignar conjunto adicional
+
+1. El Admin_sistema selecciona un Admin_conjunto ya existente y un conjunto disponible (sin administrador activo).
+2. El sistema crea la asignación directamente, sin pasar por invitación ni token.
+
+---
+
+## RQF017 - Cambiar Idioma de la Interfaz (i18n)
+
+### Actores
+
+* Residente
+* Reciclador
+* Admin_sistema
+* Admin_conjunto
+
+### Descripción
+
+Permite a cualquier usuario cambiar el idioma de la interfaz entre español e inglés desde un selector en la barra de navegación, sin recargar la página.
+
+### Flujo Principal
+
+1. El usuario hace clic en el selector de idioma (ES/EN).
+2. El sistema cambia el idioma visible de inmediato y lo guarda en el navegador.
+3. Si el usuario tiene sesión activa, el sistema también guarda la preferencia en su cuenta.
+4. Al iniciar sesión desde otro dispositivo, el sistema aplica automáticamente el idioma guardado en la cuenta.
 
