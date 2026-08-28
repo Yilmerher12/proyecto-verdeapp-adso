@@ -12,6 +12,7 @@ Descripción: Lógica de negocio de comunicados del conjunto (RQF-014).
 
 from datetime import date, datetime, time, timedelta, timezone
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -59,7 +60,7 @@ def _calcular_expiracion_sugerida(tipo: TipoComunicado, fecha_evento: Optional[d
     return ahora + _EXPIRACION_POR_TIPO[tipo]
 
 
-def _verificar_administra_conjunto(db: Session, administrador: AdministradorConjunto, id_conjunto: int) -> None:
+def _verificar_administra_conjunto(db: Session, administrador: AdministradorConjunto, id_conjunto: UUID) -> None:
     """RN-005 / CA-027.6 / CA-029.4 / CA-030.4: solo se puede operar sobre conjuntos propios."""
     vinculo_activo = db.execute(
         select(AdministradorConjuntoAsignacion).where(
@@ -75,7 +76,7 @@ def _verificar_administra_conjunto(db: Session, administrador: AdministradorConj
         )
 
 
-def _obtener_comunicado_propio(db: Session, administrador: AdministradorConjunto, id_comunicado: int) -> Comunicado:
+def _obtener_comunicado_propio(db: Session, administrador: AdministradorConjunto, id_comunicado: UUID) -> Comunicado:
     comunicado = db.get(Comunicado, id_comunicado)
     if not comunicado:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El comunicado no existe.")
@@ -99,7 +100,7 @@ def _a_response(comunicado: Comunicado, nombre_conjunto: str) -> ComunicadoRespo
     )
 
 
-def _residentes_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
+def _residentes_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
     stmt = (
         select(Residente.id_usuario)
         .join(Unidad, Residente.id_unidad == Unidad.id_unidad)
@@ -108,7 +109,7 @@ def _residentes_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
     return [r[0] for r in db.execute(stmt).all()]
 
 
-def _recicladores_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
+def _recicladores_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
     stmt = (
         select(Reciclador.id_usuario)
         .join(recicladores_conjuntos, Reciclador.id_reciclador == recicladores_conjuntos.c.id_reciclador)
@@ -199,7 +200,7 @@ def listar_mis_comunicados(db: Session, administrador: AdministradorConjunto) ->
 
 
 def editar_comunicado(
-    db: Session, administrador: AdministradorConjunto, id_comunicado: int, datos: EditarComunicadoRequest
+    db: Session, administrador: AdministradorConjunto, id_comunicado: UUID, datos: EditarComunicadoRequest
 ) -> ComunicadoResponse:
     comunicado = _obtener_comunicado_propio(db, administrador, id_comunicado)
 
@@ -225,7 +226,7 @@ def editar_comunicado(
     return _a_response(comunicado, conjunto.nombre_conjunto)
 
 
-def eliminar_comunicado(db: Session, administrador: AdministradorConjunto, id_comunicado: int) -> None:
+def eliminar_comunicado(db: Session, administrador: AdministradorConjunto, id_comunicado: UUID) -> None:
     comunicado = _obtener_comunicado_propio(db, administrador, id_comunicado)
     db.delete(comunicado)
     db.commit()

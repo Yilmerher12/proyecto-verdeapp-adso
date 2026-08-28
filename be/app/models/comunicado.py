@@ -1,9 +1,11 @@
 from enum import StrEnum
 
-from sqlalchemy import Column, Integer, String, Text, Date, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, String, Text, Date, TIMESTAMP, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.utils.ids import generar_uuid7
 
 
 class TipoComunicado(StrEnum):
@@ -43,15 +45,15 @@ class Comunicado(Base):
     """
     __tablename__ = "comunicados"
 
-    id_comunicado = Column(Integer, primary_key=True, index=True)
+    id_comunicado = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
 
     id_conjunto_residencial = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("conjuntos_residenciales.id_conjunto_residencial", ondelete="CASCADE"),
         nullable=False,
     )
     id_administrador = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("administradores_conjunto.id_administrador", ondelete="CASCADE"),
         nullable=False,
     )

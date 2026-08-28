@@ -87,7 +87,7 @@ export function ResidenteDashboard() {
     }
   };
 
-  const marcarLeida = async (id: number) => {
+  const marcarLeida = async (id: string) => {
     try {
       await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
       setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));

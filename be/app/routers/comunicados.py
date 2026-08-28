@@ -7,6 +7,7 @@ Descripción: Endpoints de comunicados del conjunto (RQF-014).
 """
 
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -60,7 +61,7 @@ def listar_mis_comunicados(
 
 @router.patch("/{id_comunicado}", response_model=ComunicadoResponse)
 def editar_comunicado(
-    id_comunicado: int,
+    id_comunicado: UUID,
     datos: EditarComunicadoRequest,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -72,7 +73,7 @@ def editar_comunicado(
 
 @router.delete("/{id_comunicado}", response_model=MessageResponse)
 def eliminar_comunicado(
-    id_comunicado: int,
+    id_comunicado: UUID,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

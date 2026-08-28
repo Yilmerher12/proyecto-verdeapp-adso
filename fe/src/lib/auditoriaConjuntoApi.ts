@@ -9,8 +9,8 @@ const API_BASE = `${API_BASE_URL}/api/v1/auditorias-conjunto`;
 export type NivelDesempeno = "EXCELENTE" | "BUENA" | "REGULAR" | "DEFICIENTE";
 
 export interface AuditoriaConjunto {
-  id_auditoria: number;
-  id_conjunto_residencial: number;
+  id_auditoria: string;
+  id_conjunto_residencial: string;
   nombre_conjunto: string;
   nivel_desempeno: NivelDesempeno;
   tema_educativo: string;
@@ -21,7 +21,7 @@ export interface AuditoriaConjunto {
 }
 
 export interface NuevaAuditoria {
-  id_conjunto_residencial: number;
+  id_conjunto_residencial: string;
   nivel_desempeno: NivelDesempeno;
   tema_educativo: string;
   descripcion?: string;
@@ -53,7 +53,7 @@ export async function listarMisAuditorias(token: string): Promise<AuditoriaConju
 
 // ¿Qué? Detalle completo de una auditoría — lo que abre el botón "Ver" de
 //       la notificación AUDITORIA_PUBLICADA (Residente o Admin de Conjunto).
-export async function obtenerAuditoria(idAuditoria: number, token: string): Promise<AuditoriaConjunto> {
+export async function obtenerAuditoria(idAuditoria: string, token: string): Promise<AuditoriaConjunto> {
   const { data } = await axios.get(`${API_BASE}/${idAuditoria}`, {
     headers: { Authorization: `Bearer ${token}` },
   });

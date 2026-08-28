@@ -19,12 +19,12 @@ import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResulta
 interface AuditoriaResultadoBannerProps {
   notificaciones: NotificacionItem[];
   token: string;
-  onMarcarLeida: (id: number) => void;
+  onMarcarLeida: (id: string) => void;
 }
 
 export function AuditoriaResultadoBanner({ notificaciones, token, onMarcarLeida }: AuditoriaResultadoBannerProps) {
   const { t } = useTranslation();
-  const [abierta, setAbierta] = useState<{ idNotificacion: number; idAuditoria: number } | null>(null);
+  const [abierta, setAbierta] = useState<{ idNotificacion: string; idAuditoria: string } | null>(null);
 
   const pendientes = notificaciones.filter((n) => n.tipo === "AUDITORIA_PUBLICADA" && !n.leida && n.id_referencia);
 
@@ -49,7 +49,7 @@ export function AuditoriaResultadoBanner({ notificaciones, token, onMarcarLeida 
           >
             <p className="text-sm text-gray-700 dark:text-gray-300">{n.mensaje}</p>
             <button
-              onClick={() => setAbierta({ idNotificacion: n.id, idAuditoria: n.id_referencia as number })}
+              onClick={() => setAbierta({ idNotificacion: n.id, idAuditoria: n.id_referencia as string })}
               className="shrink-0 rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
             >
               {t("auditoriaResultado.verButton")}

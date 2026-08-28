@@ -76,7 +76,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
                 )
 
             stmt_conjunto = select(ConjuntoResidencial).where(
-                ConjuntoResidencial.id_conjunto_residencial == int(id_conjunto),
+                ConjuntoResidencial.id_conjunto_residencial == id_conjunto,
                 ConjuntoResidencial.verificado.is_(True),
             )
             conjunto_existente = db.execute(stmt_conjunto).scalar_one_or_none()
@@ -91,7 +91,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
                 )
 
             stmt_unidad = select(Unidad).where(
-                Unidad.id_conjunto_residencial == int(id_conjunto),
+                Unidad.id_conjunto_residencial == id_conjunto,
                 Unidad.torre == torre_texto,
                 Unidad.apto == apto_texto
             )
@@ -101,7 +101,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
                 id_unidad_final = unidad_existente.id_unidad
             else:
                 nueva_unidad = Unidad(
-                    id_conjunto_residencial=int(id_conjunto),
+                    id_conjunto_residencial=id_conjunto,
                     torre=torre_texto,
                     apto=apto_texto
                 )
@@ -135,7 +135,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
         expiration_verif = datetime.now(timezone.utc) + timedelta(days=1)
 
         db_token_verif = EmailVerificationToken(
-            id=str(uuid.uuid4()),
+            # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
             id_usuario=nuevo_usuario.id_usuario,
             token=token_verificacion,
             expires_at=expiration_verif,
@@ -333,7 +333,7 @@ async def request_password_reset(db: Session, email: str) -> bool:
     expiration = datetime.now(timezone.utc) + timedelta(hours=1)
 
     db_token = PasswordResetToken(
-        id=str(uuid.uuid4()),
+        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
         id_usuario=user.id_usuario,
         token=token_str,
         expires_at=expiration,

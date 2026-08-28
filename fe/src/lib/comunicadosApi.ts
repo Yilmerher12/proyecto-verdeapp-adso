@@ -8,8 +8,8 @@ export type TipoComunicado = "INFORMATIVO" | "URGENTE" | "CONVOCATORIA" | "MANTE
 export type DestinatariosComunicado = "RESIDENTES" | "RECICLADORES" | "AMBOS";
 
 export interface Comunicado {
-  id_comunicado: number;
-  id_conjunto_residencial: number;
+  id_comunicado: string;
+  id_conjunto_residencial: string;
   nombre_conjunto: string;
   destinatarios: DestinatariosComunicado;
   tipo: TipoComunicado;
@@ -22,7 +22,7 @@ export interface Comunicado {
 }
 
 export interface CrearComunicadoPayload {
-  id_conjunto_residencial: number;
+  id_conjunto_residencial: string;
   destinatarios: DestinatariosComunicado;
   tipo: TipoComunicado;
   texto: string;
@@ -57,7 +57,7 @@ export async function listarMisComunicados(token: string): Promise<Comunicado[]>
 
 // ¿Qué? Admin Conjunto — HU-029.
 export async function editarComunicado(
-  idComunicado: number,
+  idComunicado: string,
   datos: EditarComunicadoPayload,
   token: string
 ): Promise<Comunicado> {
@@ -66,7 +66,7 @@ export async function editarComunicado(
 }
 
 // ¿Qué? Admin Conjunto — HU-030.
-export async function eliminarComunicado(idComunicado: number, token: string) {
+export async function eliminarComunicado(idComunicado: string, token: string) {
   const { data } = await axios.delete(`${API_BASE}/${idComunicado}`, authHeaders(token));
   return data;
 }

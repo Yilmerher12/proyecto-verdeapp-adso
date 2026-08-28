@@ -7,6 +7,7 @@ Descripción: Pruebas de la auditoría del Reciclador al conjunto (RQF-009).
            archivo de evidencia, y el caso exitoso completo.
 """
 import io
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
@@ -183,7 +184,7 @@ class TestListarMisAuditorias:
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
-        assert data[0]["id_conjunto_residencial"] == conjunto_verificado.id_conjunto_residencial
+        assert data[0]["id_conjunto_residencial"] == str(conjunto_verificado.id_conjunto_residencial)
 
     def test_reciclador_sin_auditorias_ve_lista_vacia(self, client: TestClient, reciclador_auth_headers):
         response = client.get("/api/v1/auditorias-conjunto/mias", headers=reciclador_auth_headers)
@@ -248,11 +249,11 @@ class TestNotificacionAlPublicar:
 
 class TestObtenerAuditoriaPorId:
     def test_sin_login_devuelve_401(self, client: TestClient):
-        response = client.get("/api/v1/auditorias-conjunto/999999")
+        response = client.get(f"/api/v1/auditorias-conjunto/{uuid.uuid4()}")
         assert response.status_code == 401
 
     def test_id_inexistente_devuelve_404(self, client: TestClient, auth_headers):
-        response = client.get("/api/v1/auditorias-conjunto/999999", headers=auth_headers)
+        response = client.get(f"/api/v1/auditorias-conjunto/{uuid.uuid4()}", headers=auth_headers)
         assert response.status_code == 404
 
     def test_residente_del_conjunto_puede_verla(

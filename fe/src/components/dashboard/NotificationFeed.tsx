@@ -17,12 +17,12 @@ import type { LucideIcon } from "lucide-react";
 import i18n from "@/i18n";
 
 export interface NotificacionItem {
-  id: number;
+  id: string;
   tipo: string;
   mensaje: string;
   // ¿Qué? Puntero opcional al registro relacionado (ej. id_auditoria para
   //       AUDITORIA_PUBLICADA) — la mayoría de tipos no lo usan.
-  id_referencia: number | null;
+  id_referencia: string | null;
   // ¿Qué? Puede ser null — las novedades de plataforma (RQF-015) no
   //       pertenecen a ningún conjunto residencial.
   nombre_conjunto: string | null;
@@ -69,7 +69,7 @@ interface NotificationFeedProps {
   accentBg: string;
   /** Fondo de la fila cuando está sin leer (claro + oscuro), a tono con el mismo acento. */
   accentHighlight: string;
-  onMarkRead: (id: number) => void;
+  onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   onClearRead: () => void;
 }

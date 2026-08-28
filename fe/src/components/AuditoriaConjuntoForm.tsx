@@ -19,13 +19,13 @@ import { listarContenido } from "@/lib/contenidoEducativoApi";
 import { NIVELES_DESEMPENO, ORDEN_NIVELES } from "@/config/nivelesDesempeno";
 
 interface ConjuntoOption {
-  id_conjunto_residencial: number;
+  id_conjunto_residencial: string;
   nombre_conjunto: string;
 }
 
 interface AuditoriaConjuntoFormProps {
   conjuntos: ConjuntoOption[];
-  conjuntoPreseleccionado?: number;
+  conjuntoPreseleccionado?: string;
   token: string;
   onClose: () => void;
   onSuccess: (auditoria: AuditoriaConjunto) => void;
@@ -40,7 +40,7 @@ export function AuditoriaConjuntoForm({
 }: AuditoriaConjuntoFormProps) {
   const { t } = useTranslation();
 
-  const [idConjunto, setIdConjunto] = useState<number | "">(
+  const [idConjunto, setIdConjunto] = useState<string | "">(
     conjuntoPreseleccionado ?? (conjuntos.length === 1 ? conjuntos[0].id_conjunto_residencial : "")
   );
   const [nivel, setNivel] = useState<NivelDesempeno | null>(null);
@@ -116,7 +116,7 @@ export function AuditoriaConjuntoForm({
             </label>
             <select
               value={idConjunto}
-              onChange={(e) => setIdConjunto(e.target.value ? Number(e.target.value) : "")}
+              onChange={(e) => setIdConjunto(e.target.value)}
               className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
             >
               <option value="">{t("auth.register.fields.selectPlaceholder")}</option>

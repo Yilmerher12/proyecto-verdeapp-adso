@@ -7,17 +7,18 @@ Descripción: Modelo ORM que representa la tabla `password_reset_tokens` en Post
           ya que no habría forma de verificar que el enlace de reset es legítimo y vigente.
 """
 
-import uuid
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, func
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.utils.ids import generar_uuid7
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    
-    # Apunta a usuarios.id_usuario (Integer)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=generar_uuid7)
+
+    # Apunta a usuarios.id_usuario (ahora UUID)
+    id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
     
     token = Column(String(255), unique=True, index=True, nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)

@@ -7,6 +7,8 @@ Descripción: Consultas de "quién debe recibir una notificación de este
              (ej. auditoría del reciclador) las reutilice en vez de
              duplicar la misma consulta SQL.
 """
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,7 +18,7 @@ from app.models.residente import Residente
 from app.models.unidad import Unidad
 
 
-def residentes_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
+def residentes_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
     stmt = (
         select(Residente.id_usuario)
         .join(Unidad, Residente.id_unidad == Unidad.id_unidad)
@@ -25,7 +27,7 @@ def residentes_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
     return [r[0] for r in db.execute(stmt).all()]
 
 
-def admins_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
+def admins_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
     stmt = (
         select(AdministradorConjunto.id_usuario)
         .join(

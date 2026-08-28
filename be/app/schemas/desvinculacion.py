@@ -8,6 +8,7 @@ Descripción: Schemas del flujo de desvinculación y reasignación de conjuntos 
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, model_validator
 
@@ -19,10 +20,10 @@ class SolicitarDesvinculacionRequest(BaseModel):
 
 class SolicitudDesvinculacionResponse(BaseModel):
     """¿Qué? Una solicitud de desvinculación, con los datos que el Admin Sistema necesita para resolverla (CA-023.1)."""
-    id: int
-    id_conjunto_residencial: int
+    id: UUID
+    id_conjunto_residencial: UUID
     nombre_conjunto: str
-    id_administrador: int
+    id_administrador: UUID
     nombre_administrador: str
     apellidos_administrador: str
     motivo: Optional[str] = None
@@ -53,14 +54,14 @@ class ResolverSolicitudDesvinculacionRequest(BaseModel):
 
 class ConjuntoSinAdministradorResponse(BaseModel):
     """¿Qué? Un conjunto verificado que hoy no tiene ningún administrador activo (CA-024.2)."""
-    id_conjunto_residencial: int
+    id_conjunto_residencial: UUID
     nombre_conjunto: str
     nombre_localidad: str
 
 
 class AdministradorConjuntoResumenResponse(BaseModel):
     """¿Qué? Resumen de un Admin de Conjunto existente, para buscarlo al asignarle un conjunto adicional (CA-024.1)."""
-    id_administrador: int
+    id_administrador: UUID
     nombre: str
     apellidos: str
     correo_electronico: str
@@ -69,5 +70,5 @@ class AdministradorConjuntoResumenResponse(BaseModel):
 
 class AsignarConjuntoAdicionalRequest(BaseModel):
     """¿Qué? Lo que el Admin Sistema envía para vincular un conjunto adicional a un admin existente."""
-    id_administrador: int
-    id_conjunto_residencial: int
+    id_administrador: UUID
+    id_conjunto_residencial: UUID

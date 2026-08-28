@@ -24,7 +24,7 @@ vi.mock("@/lib/contenidoEducativoApi", () => ({
 }));
 
 const moduloExistente: ContenidoEducativo = {
-  id_contenido: 1,
+  id_contenido: "00000000-0000-7000-8000-000000000001",
   modulo_categoria: "Separación en la fuente",
   titulo_tema: "Código de colores",
   cuerpo_texto: "Blanco, negro y verde.",
@@ -61,7 +61,7 @@ describe("AdminContenidoEducativoPage", () => {
   });
 
   it("crea un módulo nuevo con datos válidos", async () => {
-    mockCrear.mockResolvedValue({ ...moduloExistente, id_contenido: 2 });
+    mockCrear.mockResolvedValue({ ...moduloExistente, id_contenido: "00000000-0000-7000-8000-000000000002" });
     const user = userEvent.setup();
     renderPage();
 
@@ -114,7 +114,7 @@ describe("AdminContenidoEducativoPage", () => {
 
     await waitFor(() => {
       expect(mockEditar).toHaveBeenCalledWith(
-        1,
+        "00000000-0000-7000-8000-000000000001",
         expect.objectContaining({ titulo_tema: "Código de colores actualizado" }),
         "token"
       );
@@ -134,7 +134,7 @@ describe("AdminContenidoEducativoPage", () => {
     await user.click(within(dialog).getByRole("button", { name: "Sí, eliminar" }));
 
     await waitFor(() => {
-      expect(mockEliminar).toHaveBeenCalledWith(1, "token");
+      expect(mockEliminar).toHaveBeenCalledWith("00000000-0000-7000-8000-000000000001", "token");
     });
   });
 });

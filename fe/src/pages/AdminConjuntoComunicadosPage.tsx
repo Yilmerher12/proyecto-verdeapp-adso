@@ -15,7 +15,7 @@ import {
 } from "@/lib/comunicadosApi";
 
 interface FormState {
-  id_conjunto_residencial: number | "";
+  id_conjunto_residencial: string | "";
   destinatarios: DestinatariosComunicado;
   tipo: TipoComunicado;
   texto: string;
@@ -167,7 +167,7 @@ export function AdminConjuntoComunicadosPage() {
       } else {
         await crearComunicado(
           {
-            id_conjunto_residencial: Number(form.id_conjunto_residencial),
+            id_conjunto_residencial: form.id_conjunto_residencial as string,
             destinatarios: form.destinatarios,
             tipo: form.tipo,
             texto: form.texto.trim(),
@@ -314,7 +314,7 @@ export function AdminConjuntoComunicadosPage() {
                   <select
                     id="comunicado-conjunto"
                     value={form.id_conjunto_residencial}
-                    onChange={(e) => setForm({ ...form, id_conjunto_residencial: Number(e.target.value) })}
+                    onChange={(e) => setForm({ ...form, id_conjunto_residencial: e.target.value })}
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                   >
                     {conjuntos.map((c) => (

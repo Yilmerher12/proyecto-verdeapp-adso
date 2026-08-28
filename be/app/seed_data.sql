@@ -63,11 +63,12 @@ ON CONFLICT DO NOTHING;
 --           ahora viven en app/data/conjuntos_residenciales_bogota.csv,
 --           no en este .sql.
 
--- ¿Qué? Superadministrador oficial compartido para el equipo de desarrollo.
+-- ¿Qué? Superadministrador oficial — sembrado desde Python (sembrar_datos_uuid en seed.py).
+-- ¿Para qué? usuarios.id_usuario ahora es UUIDv7, generado en Python — un
+--           INSERT estático en este .sql no puede generarlo (Postgres 17 no
+--           tiene una función uuidv7() nativa), así que este INSERT se movió
+--           junto con los demás que necesitan un UUID nuevo por fila.
 -- Contraseña hasheada: AdminVerde2026*
-INSERT INTO usuarios (id_rol, correo_electronico, password, is_active)
-VALUES (1, 'admin@verdeapp.com', '$2b$12$xSluyevTDoPhwiydwB3OhetVHh1miUiGivw99ChVJxBGl.zaC6EMW', true)
-ON CONFLICT DO NOTHING;
 
 
 -- ============================================================================
@@ -100,128 +101,11 @@ ON CONFLICT DO NOTHING;
 --           (Kennedy, Usaquén, Engativá, Fontibón, Mártires, Puente Aranda)
 --           — las otras 14 quedan sin ningún punto en el directorio. Es
 --           correcto que se vea así: es la realidad, no un dato faltante.
+-- ¿Qué? Los 9 puntos de acopio reales se siembran desde Python (mismo
+--       motivo que el superadmin: puntos_acopios.id_punto_acopio ahora es
+--       UUIDv7, generado en Python, no en este .sql estático).
 DELETE FROM puntos_acopios;
 
-INSERT INTO puntos_acopios (id_localidad, nombre, direccion) VALUES
--- 8. Kennedy
-(8,  'ECA Kennedy',                        'Carrera 84 # 11A-34'),
--- 1. Usaquén
-(1,  'ECA Usaquén I',                      'Carrera 21 # 164-82'),
-(1,  'ECA Usaquén II',                     'Carrera 18 # 164-32'),
--- 10. Engativá
-(10, 'ECA Engativá',                       'Calle 80C # 92-44'),
-(10, 'ECA Engativá 2 (Las Ferias)',        'Carrera 69K # 79-49'),
--- 9. Fontibón
-(9,  'ECA Fontibón (Montevideo)',          'Calle 17A # 69F-26'),
--- 14. Los Mártires
-(14, 'ECA Mártires',                       'Calle 8 # 26-80'),
--- 16. Puente Aranda
-(16, 'ECA Puente Aranda 1',                'Carrera 36 # 19-53'),
-(16, 'ECA Puente Aranda 2',                'Carrera 65B # 17-80')
-ON CONFLICT DO NOTHING;
-
--- ¿Qué? Contenido educativo real (RQF-004/RQF-010) — módulos de borrador,
---       uno por cada categoría ya definida en fe/src/config/categoriasEducativas.ts,
---       con datos verificados contra fuentes oficiales (Alcaldía de Bogotá,
---       UAESP, Secretaría Distrital de Ambiente).
--- ¿Para qué? Sin esto, cualquier clon nuevo del proyecto (ej. para la
---           sustentación) arranca con el catálogo educativo vacío, porque
---           antes ese contenido solo se había creado a mano desde el panel
---           de administración, sin quedar guardado en ningún lado.
--- ¿Impacto? Son borradores de buena calidad, no la versión final — cualquier
---           Administrador del Sistema puede editarlos o reemplazarlos desde
---           el panel de Contenido Educativo cuando se tenga contenido propio.
-INSERT INTO contenido_educativo (modulo_categoria, titulo_tema, cuerpo_texto, fecha_publicacion, url_video, url_guia) VALUES
-(
-    'Separación en la fuente y código de colores',
-    'Código de colores para la separación en la fuente',
-    'En Bogotá la separación de residuos en la fuente se hace con tres colores de bolsa, unificados a nivel nacional por el Ministerio de Ambiente y Desarrollo Sostenible y aplicados en la ciudad por la UAESP.
-
-Bolsa blanca: material aprovechable, limpio y seco. Aquí van el papel, el cartón, el plástico, el vidrio, el metal y las latas de aluminio.
-
-Bolsa negra: residuos ordinarios que ya no se pueden aprovechar, como residuos de comida muy contaminados, papel higiénico, pañales, servilletas usadas y barrido de la casa.
-
-Bolsa verde: residuos orgánicos aprovechables, como cáscaras, restos de comida, semillas y huesos.
-
-La regla de oro es simple: si el material está limpio y seco, casi siempre es aprovechable y va en la bolsa blanca. Si está mojado, sucio o mezclado con comida, ya no sirve para reciclar. Separar bien en el hogar es el primer paso de toda la cadena de reciclaje: si las bolsas llegan mezcladas, el reciclador de oficio tiene que volver a separar el material a mano, perdiendo tiempo y calidad en el proceso.',
-    '2026-08-15',
-    'https://www.youtube.com/watch?v=Jxzw1xyxE2s',
-    'https://bogota.gov.co/mi-ciudad/habitat/asi-puedes-separar-residuos-segun-el-color-de-las-bolsas-en-bogota'
-),
-(
-    'Tipos de residuos y su preparación',
-    'Cómo preparar cada material antes de entregarlo para reciclaje',
-    'No basta con poner el material en la bolsa correcta: cómo se prepara cada residuo también afecta si de verdad se puede aprovechar.
-
-Papel y cartón: deben estar secos y sin residuos de comida o grasa (por ejemplo, una caja de pizza grasosa no sirve). Es buena práctica aplanar las cajas para que ocupen menos espacio.
-
-Plástico: enjuagar brevemente los envases para quitar restos de líquido o comida, y aplanar las botellas. No es necesario quitar las etiquetas.
-
-Vidrio: enjuagar los frascos y envases. Hay que manejarlo con cuidado para evitar que se rompa y se vuelva un riesgo para quien recoge el material.
-
-Metal y latas: enjuagar y, si es posible, aplastar las latas para ahorrar espacio en la bolsa.
-
-Un residuo mal preparado (sucio, mojado o mezclado con orgánicos) puede contaminar todo el contenido de la bolsa blanca y hacer que el material que sí estaba bien separado termine descartado como basura ordinaria.',
-    '2026-08-16',
-    NULL,
-    'https://bogota.gov.co/mi-ciudad/ambiente/como-hacer-separacion-de-residuos-y-reciclar-desde-casa'
-),
-(
-    'Puntos limpios y Ecopuntos',
-    'Ecopuntos: qué son y cómo usarlos para muebles, colchones y escombros',
-    'Los Ecopuntos son cajas o puntos fijos que dispone la UAESP en distintos barrios de la ciudad, de forma rotativa semana a semana, para que los residentes entreguen de manera gratuita elementos voluminosos que NO caben en la recolección normal de basuras.
-
-Qué se puede llevar: muebles viejos, colchones, tejas y escombros o material de obra en pequeñas cantidades.
-
-Qué NO se puede llevar: llantas ni electrodomésticos — estos tienen puntos de recolección aparte, especializados en residuos eléctricos y electrónicos (RAEE).
-
-Usar los Ecopuntos evita que estos elementos terminen abandonados en andenes, parques o rondas de quebradas, que es uno de los problemas más visibles de la gestión de residuos en la ciudad. La ubicación de los Ecopuntos cambia cada semana según la localidad, así que conviene revisar el cronograma vigente antes de sacar el material.',
-    '2026-08-17',
-    NULL,
-    'https://bogota.gov.co/mi-ciudad/habitat/como-funcionan-los-ecopunto-en-bogota-y-para-que-sirven'
-),
-(
-    'Economía circular y aprovechamiento',
-    'Economía circular en Bogotá: el papel del reciclador de oficio',
-    'La economía circular busca que un material se mantenga en uso el mayor tiempo posible, en lugar de terminar en un relleno sanitario después de un solo uso. En Bogotá, esa cadena depende directamente del trabajo del reciclador de oficio.
-
-Los recicladores de oficio son quienes recogen, transportan y comercializan el material aprovechable que los hogares separan. Desde 2016 (Decreto Nacional 596), su actividad está reconocida y remunerada como un servicio público — no es informalidad, es parte formal del sistema de aseo de la ciudad.
-
-Bogotá cuenta con miles de recicladores de oficio organizados, y buena parte del material aprovechable de la ciudad se recupera gracias a su trabajo directo con los hogares. Por eso VerdeApp conecta a cada conjunto residencial con un reciclador autorizado: entregarle el material limpio y bien separado, en el horario acordado, es la forma más directa de que ese material sí vuelva a la economía en lugar de convertirse en basura.',
-    '2026-08-18',
-    NULL,
-    'https://www.uaesp.gov.co/aprovechamiento-residuos-solidos-bogota'
-),
-(
-    'Residuos de construcción y demolición',
-    'Manejo adecuado de escombros y residuos de construcción (RCD)',
-    'Los Residuos de Construcción y Demolición (RCD) son el material que sobra de obras, remodelaciones o reparaciones dentro del conjunto: escombros, restos de baldosa, cemento, ladrillo, tejas rotas, entre otros.
-
-Estos residuos NO se deben mezclar con las bolsas blanca, negra o verde de la recolección domiciliaria normal, ni acumularse en zonas comunes, andenes o antejardines — además del riesgo de accidentes, es una infracción que puede generar comparendos ambientales.
-
-Para volúmenes pequeños, la ciudad dispone de los Ecopuntos (ver el módulo correspondiente). Para volúmenes más grandes, propios de una obra, se debe contratar a un gestor autorizado de RCD, que se encarga de transportarlos hasta una escombrera legal.
-
-Como Administrador de Conjunto, vale la pena informar a los residentes con anticipación cuando se planee una obra o remodelación, para coordinar dónde y cómo se va a disponer el material sobrante antes de que se convierta en un problema para todo el conjunto.',
-    '2026-08-19',
-    NULL,
-    'https://www.ambientebogota.gov.co/preguntas-frecuentes-rcd'
-),
-(
-    'Marco distrital y consumo responsable',
-    'Consumo responsable: reducir antes de reciclar',
-    'Reciclar bien es importante, pero el primer paso de una buena gestión de residuos es generar menos basura desde el principio. Bogotá produce miles de toneladas de residuos cada día, y solo una parte relativamente pequeña se recupera — reducir el consumo innecesario tiene tanto impacto como separar correctamente.
-
-Algunas prácticas de consumo responsable que promueve la Alcaldía de Bogotá:
-
-Reducir antes que reciclar: preferir productos con menos empaque, evitar los desechables de un solo uso y comprar solo lo necesario.
-
-Reutilizar lo que ya se tiene: usar termos y botellas recargables en lugar de comprar agua embotellada, dar una segunda vida a envases y recipientes antes de descartarlos.
-
-Conocer al reciclador del sector: entregarle directamente el material aprovechable, en el día y horario en que pasa, es más eficiente que dejarlo mezclado con la basura ordinaria.
-
-Estos hábitos, multiplicados por todos los hogares de un conjunto residencial, hacen una diferencia real en cuánto material termina en un relleno sanitario en lugar de volver a ser útil.',
-    '2026-08-19',
-    NULL,
-    'https://bogota.gov.co/mi-ciudad/ambiente/10-mandamientos-para-una-bogota-con-cero-desechos'
-)
-ON CONFLICT DO NOTHING;
+-- ¿Qué? Los 6 módulos de contenido educativo real se siembran desde Python
+--       (mismo motivo: contenido_educativo.id_contenido ahora es UUIDv7,
+--       generado en Python, no en este .sql estático).

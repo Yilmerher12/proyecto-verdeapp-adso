@@ -33,7 +33,7 @@ vi.mock("@/api/auth", () => ({
 }));
 
 const usuarioConIngles: UserResponse = {
-  id: 1,
+  id: "00000000-0000-7000-8000-000000000002",
   email: "test@example.com",
   first_name: "Test",
   last_name: "User",

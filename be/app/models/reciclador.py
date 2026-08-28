@@ -1,14 +1,17 @@
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.utils.ids import generar_uuid7
 
 
 class Reciclador(Base):
     __tablename__ = "recicladores"
 
-    id_reciclador = Column(Integer, primary_key=True, index=True)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), unique=True, nullable=False)
+    id_reciclador = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
+    id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"), unique=True, nullable=False)
 
+    # localidad_id se queda como Integer — ver comentario en conjunto_residencial.py
     localidad_id = Column(Integer, ForeignKey("localidades.id_localidad"), nullable=True)
 
     nombre = Column(String(100), nullable=False)

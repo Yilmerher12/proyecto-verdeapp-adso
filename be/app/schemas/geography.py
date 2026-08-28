@@ -5,6 +5,7 @@ Descripción: Modelos de validación Pydantic para datos geográficos.
 
 from pydantic import BaseModel
 from typing import Optional
+from uuid import UUID
 
 class LocalidadResponse(BaseModel):
     id_localidad: int
@@ -14,7 +15,7 @@ class LocalidadResponse(BaseModel):
         from_attributes = True
 
 class ConjuntoResponse(BaseModel):
-    id_conjunto_residencial: int
+    id_conjunto_residencial: UUID
     id_localidad: int
     nombre_conjunto: str
     nit: Optional[str] = None
@@ -22,10 +23,10 @@ class ConjuntoResponse(BaseModel):
 
     class Config:
         from_attributes = True
-        
+
 class UnidadResponse(BaseModel):
-    id_unidad: int
-    id_conjunto_residencial: int
+    id_unidad: UUID
+    id_conjunto_residencial: UUID
     torre: str
     apto: str
 

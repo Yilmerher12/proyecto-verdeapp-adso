@@ -8,7 +8,7 @@ import { API_BASE_URL } from "@/api/axios";
 const API_BASE = `${API_BASE_URL}/api/v1/admin-conjunto`;
 
 export interface ConjuntoOption {
-    id_conjunto_residencial: number;
+    id_conjunto_residencial: string;
     nombre_conjunto: string;
     nombre_localidad?: string;
 }
@@ -20,10 +20,10 @@ export interface InvitacionInfo {
 }
 
 export interface SolicitudDesvinculacion {
-    id: number;
-    id_conjunto_residencial: number;
+    id: string;
+    id_conjunto_residencial: string;
     nombre_conjunto: string;
-    id_administrador: number;
+    id_administrador: string;
     nombre_administrador: string;
     apellidos_administrador: string;
     motivo: string | null;
@@ -32,13 +32,13 @@ export interface SolicitudDesvinculacion {
 }
 
 export interface ConjuntoSinAdministrador {
-    id_conjunto_residencial: number;
+    id_conjunto_residencial: string;
     nombre_conjunto: string;
     nombre_localidad: string;
 }
 
 export interface AdministradorConjuntoResumen {
-    id_administrador: number;
+    id_administrador: string;
     nombre: string;
     apellidos: string;
     correo_electronico: string;
@@ -54,7 +54,7 @@ export interface AdministradorConjuntoResumen {
  */
 export async function invitarAdministradorConjunto(
     correo_electronico: string,
-    ids_conjuntos: number[],
+    ids_conjuntos: string[],
     token: string
 ) {
 const { data } = await axios.post(
@@ -105,7 +105,7 @@ export async function listarSolicitudesDesvinculacion(token: string): Promise<So
  * ¿Para qué? motivoRechazo es obligatorio cuando aprobar=false (el backend lo valida igual).
  */
 export async function resolverSolicitudDesvinculacion(
-    idSolicitud: number,
+    idSolicitud: string,
     aprobar: boolean,
     motivoRechazo: string | undefined,
     token: string
@@ -147,8 +147,8 @@ export async function buscarAdministradoresConjunto(
 
 // ¿Qué? RQF-016 (HU-024, CA-024.3): vincula un conjunto sin administrador a un Admin Conjunto existente.
 export async function asignarConjuntoAdicional(
-    idAdministrador: number,
-    idConjuntoResidencial: number,
+    idAdministrador: string,
+    idConjuntoResidencial: string,
     token: string
 ) {
     const { data } = await axios.post(

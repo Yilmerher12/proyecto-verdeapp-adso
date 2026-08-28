@@ -26,7 +26,7 @@ vi.mock("react-router-dom", async () => {
 
 const modulos: ContenidoEducativo[] = [
   {
-    id_contenido: 1,
+    id_contenido: "00000000-0000-7000-8000-000000000001",
     modulo_categoria: "Separación en la fuente y código de colores",
     titulo_tema: "Código de colores",
     cuerpo_texto: "Blanco, negro y verde.",
@@ -35,7 +35,7 @@ const modulos: ContenidoEducativo[] = [
     fecha_publicacion: "2026-08-18",
   },
   {
-    id_contenido: 2,
+    id_contenido: "00000000-0000-7000-8000-000000000002",
     modulo_categoria: "Separación en la fuente y código de colores",
     titulo_tema: "Cómo preparar el material",
     cuerpo_texto: "Aplanar botellas, escurrir líquidos.",
@@ -44,7 +44,7 @@ const modulos: ContenidoEducativo[] = [
     fecha_publicacion: "2026-08-18",
   },
   {
-    id_contenido: 3,
+    id_contenido: "00000000-0000-7000-8000-000000000003",
     modulo_categoria: "Puntos limpios y Ecopuntos",
     titulo_tema: "Dónde llevar escombros",
     cuerpo_texto: "Los Ecopuntos reciben...",

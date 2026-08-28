@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -42,7 +43,7 @@ MENSAJE_RESIDENTE_SHUT = "Un residente reportó que el SHUT está lleno."
 #       también las necesita, y antes solo existían aquí como funciones
 #       privadas de este archivo.
 
-def _recicladores_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
+def _recicladores_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
     stmt = (
         select(Reciclador.id_usuario)
         .join(recicladores_conjuntos, Reciclador.id_reciclador == recicladores_conjuntos.c.id_reciclador)
@@ -51,7 +52,7 @@ def _recicladores_del_conjunto(db: Session, id_conjunto: int) -> list[int]:
     return [r[0] for r in db.execute(stmt).all()]
 
 
-def _conjunto_del_residente(db: Session, id_usuario: int) -> int | None:
+def _conjunto_del_residente(db: Session, id_usuario: UUID) -> UUID | None:
     stmt = (
         select(Unidad.id_conjunto_residencial)
         .join(Residente, Unidad.id_unidad == Residente.id_unidad)
@@ -180,7 +181,7 @@ def no_leidas_count(
 
 @router.post("/{id_notificacion}/leer", status_code=status.HTTP_200_OK)
 def marcar_leida(
-    id_notificacion: int,
+    id_notificacion: UUID,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):

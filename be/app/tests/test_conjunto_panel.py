@@ -26,7 +26,7 @@ class TestMisConjuntos:
         response = client.get("/api/v1/conjunto-panel/mis-conjuntos", headers=admin_conjunto_auth_headers)
         assert response.status_code == 200
         ids = [c["id_conjunto_residencial"] for c in response.json()]
-        assert ids == [conjunto_verificado.id_conjunto_residencial]
+        assert ids == [str(conjunto_verificado.id_conjunto_residencial)]
 
     def test_marca_tiene_solicitud_pendiente(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado

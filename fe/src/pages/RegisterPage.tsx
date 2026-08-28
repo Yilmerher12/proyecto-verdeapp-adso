@@ -204,7 +204,7 @@ export function RegisterPage() {
         nombre: formData.nombre,
         apellidos: formData.apellidos,
         numero_telefonico: formData.numero_telefonico || "N/A",
-        id_conjunto_residencial: formData.rol === "residente" ? parseInt(formData.id_conjunto_residencial) : undefined,
+        id_conjunto_residencial: formData.rol === "residente" ? formData.id_conjunto_residencial : undefined,
         torre: formData.rol === "residente" ? torreCompleta : undefined,
         apto: formData.rol === "residente" ? formData.apto.trim().toUpperCase() : undefined,
         asociacion: formData.rol === "reciclador" ? formData.asociacion : undefined,

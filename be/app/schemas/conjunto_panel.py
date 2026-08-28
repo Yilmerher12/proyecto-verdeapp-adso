@@ -6,12 +6,14 @@ Descripción: Schemas para el panel propio del Administrador de Conjunto.
 """
 
 from typing import Optional
+from uuid import UUID
+
 from pydantic import BaseModel, field_validator
 
 
 class ConjuntoAdministradoResponse(BaseModel):
     """¿Qué? Un conjunto que el Administrador de Conjunto en sesión administra."""
-    id_conjunto_residencial: int
+    id_conjunto_residencial: UUID
     nombre_conjunto: str
     nit: Optional[str] = None
     direccion: str

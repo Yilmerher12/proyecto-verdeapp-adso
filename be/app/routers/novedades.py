@@ -7,6 +7,7 @@ Descripción: Endpoints de novedades generales de la plataforma (RQF-015).
 """
 
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -52,7 +53,7 @@ def listar_todas(
 
 @router.patch("/{id_novedad}", response_model=NovedadResponse)
 def editar_novedad(
-    id_novedad: int,
+    id_novedad: UUID,
     datos: EditarNovedadRequest,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -64,7 +65,7 @@ def editar_novedad(
 
 @router.post("/{id_novedad}/archivar", response_model=MessageResponse)
 def archivar_novedad(
-    id_novedad: int,
+    id_novedad: UUID,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

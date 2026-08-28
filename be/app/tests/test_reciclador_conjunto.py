@@ -21,7 +21,7 @@ class TestInvitar:
             headers=admin_conjunto_auth_headers,
             json={
                 "correo_reciclador": reciclador_test.correo_electronico,
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
             },
         )
         assert response.status_code == 201
@@ -36,7 +36,7 @@ class TestInvitar:
             headers=admin_conjunto_auth_headers,
             json={
                 "correo_reciclador": reciclador_test.correo_electronico,
-                "id_conjunto_residencial": conjunto_no_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_no_verificado.id_conjunto_residencial),
             },
         )
         assert response.status_code == 403
@@ -50,7 +50,7 @@ class TestInvitar:
             headers=admin_conjunto_auth_headers,
             json={
                 "correo_reciclador": test_user.correo_electronico,
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
             },
         )
         assert response.status_code == 404
@@ -63,7 +63,7 @@ class TestFlujoDelReciclador:
             headers=admin_conjunto_auth_headers,
             json={
                 "correo_reciclador": reciclador_test.correo_electronico,
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
             },
         )
         return response.json()["id"]
@@ -95,7 +95,7 @@ class TestFlujoDelReciclador:
         )
         assert autorizados.status_code == 200
         ids = [c["id_conjunto_residencial"] for c in autorizados.json()]
-        assert conjunto_verificado.id_conjunto_residencial in ids
+        assert str(conjunto_verificado.id_conjunto_residencial) in ids
 
     def test_reciclador_rechaza_y_no_queda_autorizado(
         self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test

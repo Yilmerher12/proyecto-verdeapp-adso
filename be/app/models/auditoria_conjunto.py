@@ -13,22 +13,24 @@ Descripción: Auditoría que el Reciclador hace del desempeño de separación
           auditoría con el catálogo educativo (RQF-013) sin inventar una
           tabla de categorías que hoy no existe.
 """
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.database import Base
+from app.utils.ids import generar_uuid7
 
 
 class AuditoriaConjunto(Base):
     __tablename__ = "auditorias_conjunto"
 
-    id_auditoria = Column(Integer, primary_key=True, index=True)
+    id_auditoria = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
     id_reciclador = Column(
-        Integer, ForeignKey("recicladores.id_reciclador", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("recicladores.id_reciclador", ondelete="CASCADE"), nullable=False
     )
     id_conjunto_residencial = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("conjuntos_residenciales.id_conjunto_residencial", ondelete="CASCADE"),
         nullable=False,
     )

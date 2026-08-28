@@ -7,6 +7,8 @@ Descripción: Pruebas del catálogo de contenido educativo (RQF-004/RQF-010).
            reciban 403.
 """
 
+import uuid
+
 from fastapi.testclient import TestClient
 
 URL = "/api/v1/contenido-educativo"
@@ -105,7 +107,7 @@ class TestEditarYEliminar:
         self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
     ):
         response = client.put(
-            f"{URL}/999999", json=_payload(), headers=admin_sistema_auth_headers
+            f"{URL}/{uuid.uuid4()}", json=_payload(), headers=admin_sistema_auth_headers
         )
         assert response.status_code == 404
 
@@ -141,5 +143,5 @@ class TestEditarYEliminar:
     def test_eliminar_uno_inexistente_devuelve_404(
         self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
     ):
-        response = client.delete(f"{URL}/999999", headers=admin_sistema_auth_headers)
+        response = client.delete(f"{URL}/{uuid.uuid4()}", headers=admin_sistema_auth_headers)
         assert response.status_code == 404

@@ -1,7 +1,9 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, and_
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
+from app.utils.ids import generar_uuid7
 
 
 def _secondaryjoin_administradores_activos():
@@ -27,7 +29,13 @@ def _secondaryjoin_administradores_activos():
 class ConjuntoResidencial(Base):
     __tablename__ = "conjuntos_residenciales"
 
-    id_conjunto_residencial = Column(Integer, primary_key=True, index=True)
+    id_conjunto_residencial = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
+    # ¿Qué? id_localidad sigue siendo Integer a propósito — `localidades`
+    #       es un catálogo fijo de 20 filas (las localidades de Bogotá),
+    #       acoplado además al dataset externo del gobierno distrital que
+    #       trae esos mismos números 1-20 de fábrica en el CSV de conjuntos
+    #       reales. Migrarlo exigiría un mapeo manual para 14,515 filas sin
+    #       ningún beneficio real de seguridad (esos números ya son públicos).
     id_localidad = Column(Integer, ForeignKey("localidades.id_localidad"), nullable=False)
     nombre_conjunto = Column(String(255), nullable=False)
     nit = Column(String(50), nullable=True)
@@ -35,7 +43,7 @@ class ConjuntoResidencial(Base):
 
     verificado = Column(Boolean, nullable=False, default=False)
 
-    verificado_por_id = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=True)
+    verificado_por_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"), nullable=True)
 
     # Puentes
     localidad = relationship("Localidad", back_populates="conjuntos")

@@ -7,6 +7,7 @@ Descripción: Esquemas de validación para el flujo de invitación Reciclador-Co
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 
 class InvitarRecicladorRequest(BaseModel):
@@ -16,12 +17,12 @@ class InvitarRecicladorRequest(BaseModel):
               cuál de sus conjuntos administrados quiere invitarlo.
     """
     correo_reciclador: str
-    id_conjunto_residencial: int
+    id_conjunto_residencial: UUID
 
 
 class InvitacionRecicladorResponse(BaseModel):
     """¿Qué? Una invitación tal como se muestra en la lista del Admin de Conjunto."""
-    id: str
+    id: UUID
     nombre_reciclador: str
     apellidos_reciclador: str
     correo_reciclador: str
@@ -42,7 +43,7 @@ class InvitacionRecicladorResponse(BaseModel):
 
 class InvitacionPendienteRecicladorResponse(BaseModel):
     """¿Qué? Una invitación pendiente tal como la ve el propio Reciclador."""
-    id: str
+    id: UUID
     nombre_conjunto: str
     direccion_conjunto: str
     invitado_por_nombre: str
@@ -60,7 +61,7 @@ class ResponderInvitacionRequest(BaseModel):
 
 class ConjuntoAutorizadoResponse(BaseModel):
     """¿Qué? Un conjunto donde el Reciclador ya está autorizado a trabajar."""
-    id_conjunto_residencial: int
+    id_conjunto_residencial: UUID
     nombre_conjunto: str
     direccion: str
     nombre_localidad: str
@@ -74,7 +75,7 @@ class RecicladorAutorizadoResponse(BaseModel):
     Admin de Conjunto — distinto de InvitacionRecicladorResponse, que
     muestra el HISTORIAL de invitaciones (pendiente/aceptada/rechazada),
     no necesariamente quién está autorizado de verdad ahora mismo."""
-    id_reciclador: int
+    id_reciclador: UUID
     nombre: str
     apellidos: str
     correo_electronico: str

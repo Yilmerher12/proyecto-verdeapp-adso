@@ -8,6 +8,7 @@ Descripción: Schemas de novedades generales de la plataforma (RQF-015).
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
@@ -53,7 +54,7 @@ class EditarNovedadRequest(BaseModel):
 
 class NovedadResponse(BaseModel):
     """¿Qué? Una novedad, tal como la ve el Admin Sistema en su panel o un destinatario en su feed."""
-    id_novedad: int
+    id_novedad: UUID
     alcance: str
     texto: str
     url_adjunto: Optional[str] = None
