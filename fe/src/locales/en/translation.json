@@ -246,7 +246,7 @@
       "s2": {
         "heading": "Registration and User Account",
         "p1": "To access the Service's features, the user must create an account by providing: full name, email address, and password. The user declares that the information provided is truthful, complete, and up to date.",
-        "p2": "The user is responsible for maintaining the confidentiality of their credentials. Any use of the account with the user's credentials is their sole responsibility. In case of unauthorized use, the user must notify immediately at {{email}}.",
+        "p2": "The user is responsible for maintaining the confidentiality of their credentials. Any use of the account with the user's credentials is their sole responsibility. In case of unauthorized use, the user must notify immediately through our <contactoLink>contact form</contactoLink>.",
         "p3": "Registration requires email verification via a link sent to the registered address. Until verified, access to protected features will be restricted."
       },
       "s3": {
@@ -285,9 +285,8 @@
       },
       "s9": {
         "heading": "Contact",
-        "intro": "For any inquiry, complaint, or exercise of rights related to these Terms, you may contact the operator through:",
+        "intro": "For any inquiry, complaint, or exercise of rights related to these Terms, you may contact the operator through our <contactoLink>contact form</contactoLink>. The operator's identification details are:",
         "companyLabel": "Company:",
-        "emailLabel": "Email:",
         "domicilioLabel": "Address:"
       }
     },
@@ -302,6 +301,7 @@
         "nitLabel": "Tax ID:",
         "domicilioLabel": "Address:",
         "contactLabel": "Personal data contact channel:",
+        "contactValue": "Contact form",
         "phoneLabel": "Phone:"
       },
       "s2": {
@@ -339,7 +339,7 @@
         "li4": "<strong>Revoke authorization</strong> for data processing, pursuant to Article 9 of Law 1581/2012.",
         "li5": "<strong>Free access</strong> to personal data that has been processed (at least once per calendar month, or whenever substantial modifications are made).",
         "li6": "<strong>File complaints</strong> with the SIC for violations of Law 1581/2012 (after first filing a query/claim directly with the Controller).",
-        "procedure": "To exercise these rights, the data subject must send a written request to <emailLink>{{email}}</emailLink> including: full name, ID number, clear description of the request, and supporting documents if applicable.",
+        "procedure": "To exercise these rights, the data subject must send their request through our <emailLink>contact form</emailLink> including: full name, ID number, clear description of the request, and supporting documents if applicable.",
         "timeframe": "The Controller will respond within a maximum of <strong>10 business days</strong> (queries, Art. 14 Law 1581/2012) or <strong>15 business days</strong> (claims, Art. 15 Law 1581/2012), extendable by an equal period in justified cases."
       },
       "s6": {
@@ -383,7 +383,7 @@
         "heading": "Effective Date and Modifications",
         "p1": "This policy enters into force on <strong>February 1, 2026</strong>. The Controller reserves the right to update it when necessary to adapt to regulatory or Service changes.",
         "p2": "All modifications will be published on this page and communicated to the data subject by email with at least <strong>10 business days' notice</strong>. Continued use of the Service after publication implies acceptance of the changes.",
-        "p3": "For inquiries about this Policy, contact us at: <emailLink>{{email}}</emailLink>."
+        "p3": "For inquiries about this Policy, contact us through our <emailLink>contact form</emailLink>."
       }
     },
     "cookies": {
@@ -464,7 +464,7 @@
       "s8": {
         "heading": "Updates to This Policy",
         "p1": "This policy may be updated to reflect technical changes to the Service or regulatory adaptations. The \"last updated\" date at the top of the document indicates the current version.",
-        "p2": "For inquiries about cookie use in the Service, contact us at: <emailLink>legal@verdeapp.edu.co</emailLink>."
+        "p2": "For inquiries about cookie use in the Service, contact us through our <emailLink>contact form</emailLink>."
       }
     }
   },

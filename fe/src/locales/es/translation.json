@@ -246,7 +246,7 @@
       "s2": {
         "heading": "Registro y Cuenta de Usuario",
         "p1": "Para acceder a las funcionalidades del Servicio, el usuario debe crear una cuenta proporcionando los siguientes datos: nombre completo, dirección de correo electrónico y contraseña. El usuario declara que los datos suministrados son verídicos, completos y actualizados.",
-        "p2": "El usuario es responsable de mantener la confidencialidad de sus credenciales de acceso. Cualquier uso de la cuenta con las credenciales del usuario es de su exclusiva responsabilidad. En caso de uso no autorizado, el usuario debe notificarlo inmediatamente a {{email}}.",
+        "p2": "El usuario es responsable de mantener la confidencialidad de sus credenciales de acceso. Cualquier uso de la cuenta con las credenciales del usuario es de su exclusiva responsabilidad. En caso de uso no autorizado, el usuario debe notificarlo inmediatamente a través de nuestro <contactoLink>formulario de contacto</contactoLink>.",
         "p3": "El registro implica la verificación del correo electrónico mediante un enlace enviado al correo registrado. Mientras la cuenta no sea verificada, el acceso a funcionalidades protegidas estará restringido."
       },
       "s3": {
@@ -285,9 +285,8 @@
       },
       "s9": {
         "heading": "Contacto",
-        "intro": "Para cualquier consulta, reclamación o ejercicio de derechos relacionados con estos Términos, puede comunicarse con el operador a través de:",
+        "intro": "Para cualquier consulta, reclamación o ejercicio de derechos relacionados con estos Términos, puede comunicarse con el operador a través de nuestro <contactoLink>formulario de contacto</contactoLink>. Los datos de identificación del operador son:",
         "companyLabel": "VerdeApp — Proyecto ADSO SENA:",
-        "emailLabel": "Correo electrónico:",
         "domicilioLabel": "Domicilio:"
       }
     },
@@ -302,6 +301,7 @@
         "nitLabel": "NIT:",
         "domicilioLabel": "Domicilio:",
         "contactLabel": "Canal de atención — datos personales:",
+        "contactValue": "Formulario de contacto",
         "phoneLabel": "Teléfono:"
       },
       "s2": {
@@ -339,7 +339,7 @@
         "li4": "<strong>Revocar la autorización</strong> para el tratamiento de sus datos, en los términos del artículo 9 de la Ley 1581/2012.",
         "li5": "<strong>Acceder gratuitamente</strong> a sus datos personales que hayan sido objeto de tratamiento (al menos una vez por mes calendario, o cada vez que existan modificaciones sustanciales).",
         "li6": "<strong>Presentar quejas</strong> ante la SIC por infracción a la Ley 1581/2012 y las normas concordantes (previa presentación de consulta/reclamo al Responsable).",
-        "procedure": "Para ejercer estos derechos, el titular debe remitir solicitud escrita al correo <emailLink>{{email}}</emailLink> indicando: nombre completo, documento de identidad, descripción clara de la solicitud y, en su caso, documentos que la acrediten.",
+        "procedure": "Para ejercer estos derechos, el titular debe remitir su solicitud a través de nuestro <emailLink>formulario de contacto</emailLink> indicando: nombre completo, documento de identidad, descripción clara de la solicitud y, en su caso, documentos que la acrediten.",
         "timeframe": "El Responsable atenderá la solicitud en un plazo máximo de <strong>10 días hábiles</strong> (consultas, Art. 14 Ley 1581/2012) o <strong>15 días hábiles</strong> (reclamos, Art. 15 Ley 1581/2012), prorrogables por igual término en casos justificados."
       },
       "s6": {
@@ -383,7 +383,7 @@
         "heading": "Vigencia y Modificaciones",
         "p1": "Esta política entra en vigencia el <strong>1 de febrero de 2026</strong>. El Responsable se reserva el derecho de actualizarla cuando sea necesario para adaptarse a cambios normativos o en el Servicio.",
         "p2": "Toda modificación será publicada en esta misma página y comunicada al titular mediante correo electrónico con al menos <strong>10 días hábiles de antelación</strong>. El uso continuado del Servicio tras la publicación implica la aceptación de los cambios.",
-        "p3": "Para consultas sobre esta Política, contáctenos en: <emailLink>{{email}}</emailLink>."
+        "p3": "Para consultas sobre esta Política, contáctenos a través de nuestro <emailLink>formulario de contacto</emailLink>."
       }
     },
     "cookies": {
@@ -464,7 +464,7 @@
       "s8": {
         "heading": "Actualización de esta Política",
         "p1": "Esta política puede ser actualizada para reflejar cambios técnicos en el Servicio o adaptaciones normativas. La fecha de «última actualización» al inicio del documento indica la versión vigente.",
-        "p2": "Para consultas sobre el uso de cookies en el Servicio, puede contactarnos en: <emailLink>legal@verdeapp.edu.co</emailLink>."
+        "p2": "Para consultas sobre el uso de cookies en el Servicio, puede contactarnos a través de nuestro <emailLink>formulario de contacto</emailLink>."
       }
     }
   },

@@ -28,8 +28,6 @@ const SERVICE_COOKIES: readonly CookieEntry[] = [
   { name: "theme_preference" },
 ] as const;
 
-const CONTACTO_EMAIL = "datos@verdeapp.edu.co";
-
 interface PoliticaCookiesPageProps {
   /** ¿Qué? Ver LegalLayout — true cuando se muestra dentro de un Modal. */
   embedded?: boolean;
@@ -48,9 +46,15 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
       className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
+  // ¿Qué? Antes esto era un mailto: hacia un correo inventado
+  //       (legal@verdeapp.edu.co, que ni siquiera coincidía con el correo
+  //       que definía la constante CONTACTO_EMAIL — un dominio que no
+  //       existe, en ningún caso). Ahora enlaza al formulario de contacto
+  //       real de la app — el profesor pidió que ningún link muestre un
+  //       correo, por seguridad.
   const emailLink = (
     <a
-      href={`mailto:${CONTACTO_EMAIL}`}
+      href="/contacto"
       className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
