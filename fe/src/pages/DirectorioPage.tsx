@@ -52,7 +52,14 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const [localidadCargada, setLocalidadCargada] = useState(false);
   const [recicladores, setRecicladores] = useState<Reciclador[]>([]);
   const [puntos, setPuntos] = useState<PuntoAcopio[]>([]);
-  const [cargandoDirectorio, setCargandoDirectorio] = useState(false);
+  // ¿Qué? Antes empezaba en "false". Mientras se resuelve la localidad del
+  //       usuario (primer useEffect, antes de siquiera pedir el directorio),
+  //       "cargandoDirectorio" se quedaba en false — el contenido caía en la
+  //       rama de "sin resultados" un instante, antes de que el segundo
+  //       useEffect empezara a cargar de verdad (RNF-004.3).
+  // ¿Impacto? Ahora el indicador de carga se ve desde el primer render,
+  //           hasta que el segundo useEffect lo apaga en su "finally".
+  const [cargandoDirectorio, setCargandoDirectorio] = useState(true);
   const [errorDirectorio, setErrorDirectorio] = useState(false);
 
   const headers = { Authorization: `Bearer ${accessToken}` };
