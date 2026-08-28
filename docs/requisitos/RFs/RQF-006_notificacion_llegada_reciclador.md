@@ -16,7 +16,7 @@
 | **Nombre** | Notificación llegada del reciclador al conjunto|
 | **Módulo** | Notificaciones / Operación                     |
 | **Prioridad** | Alta                                           |
-| **Estado** | Parcial                                        |
+| **Estado** | Implementado                                   |
 | **Usuarios** | reciclador, residente                          |
 
 ---
@@ -70,4 +70,4 @@ El sistema debe enviar una notificación de 'Llegada al conjunto' a los Resident
 
 - RN-001: La acción de 'Llegada al conjunto' está restringida exclusivamente a usuarios con el rol `reciclador`. **Implementado.**
 - RN-002: Las notificaciones solo se envían a los residentes que pertenecen exactamente al mismo `conjunto_id` desde donde el reciclador detona la alerta. **Implementado.**
-- RN-003: Debe existir un bloqueo temporal (cooldown) para evitar que un reciclador envíe múltiples notificaciones de llegada repetidas en un lapso corto (ej. máximo 1 notificación por conjunto cada 2 horas). **No implementado** — el backend no impone ningún cooldown; el reciclador puede enviar el mismo aviso las veces que quiera.
+- RN-003: Debe existir un bloqueo temporal (cooldown) para evitar que un reciclador envíe múltiples notificaciones de llegada repetidas en un lapso corto (ej. máximo 1 notificación por conjunto cada 2 horas). **Implementado (2026-08-29).**

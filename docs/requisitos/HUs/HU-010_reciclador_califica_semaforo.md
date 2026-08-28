@@ -16,7 +16,7 @@
 | **Título**         | Reciclador califica la gestión de residuos (semáforo)  |
 | **Módulo**         | Auditoría / Calificaciones                             |
 | **Prioridad**      | Baja (opcional)                                         |
-| **Estado**         | Parcial                                                 |
+| **Estado**         | Implementada                                            |
 | **RF asociados**   | RQF-009                                               |
 
 ---
@@ -51,7 +51,7 @@
 - **cuando** intento calificarlo de nuevo,
 - **entonces** el sistema no debe permitir un segundo registro tan seguido.
 
-> **Nota (2026-08-28)**: este criterio **no está implementado** — el backend acepta una auditoría nueva del mismo reciclador para el mismo conjunto sin ninguna restricción de tiempo. Solo existe un recordatorio visual (no un bloqueo) en el panel del reciclador que sugiere volver a auditar a los 7 días. Es la razón por la que esta HU está marcada "Parcial" — CA-010.1, CA-010.2 y CA-010.4 sí están implementados y probados.
+> **Nota (2026-08-29)**: implementado y probado — el backend rechaza con 400 una segunda auditoría del mismo reciclador al mismo conjunto antes de que pasen 24 horas. El recordatorio visual de 7 días sigue existiendo aparte, como sugerencia de cuándo conviene volver, no como el único mecanismo de control.
 
 ### CA-010.4 — Solo el reciclador puede calificar
 

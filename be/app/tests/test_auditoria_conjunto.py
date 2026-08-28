@@ -198,6 +198,26 @@ class TestCrearAuditoria:
         )
         assert response.status_code == 400
 
+    def test_auditar_el_mismo_conjunto_antes_de_24h_devuelve_400(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        """CA-010.3 / RN-002 de RQF-009 — cooldown de 24 horas."""
+        primera = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files=_archivo_valido(),
+        )
+        assert primera.status_code == 201
+
+        segunda = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files=_archivo_valido(),
+        )
+        assert segunda.status_code == 400
+
 
 class TestListarMisAuditorias:
     def test_sin_login_devuelve_401(self, client: TestClient):
@@ -431,17 +451,54 @@ class TestListarHistorial:
         assert response.json() == []
 
     def test_residente_ve_las_auditorias_de_su_conjunto_mas_recientes_primero(
-        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado, auth_headers
+        self,
+        client: TestClient,
+        db: Session,
+        reciclador_auth_headers,
+        reciclador_autorizado,
+        conjunto_verificado,
+        auth_headers,
     ):
-        for nivel in ("DEFICIENTE", "EXCELENTE"):
-            payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
-            payload["nivel_desempeno"] = nivel
-            client.post(
-                "/api/v1/auditorias-conjunto",
-                headers=reciclador_auth_headers,
-                data=payload,
-                files=_archivo_valido(),
+        """¿Qué? Dos auditorías del mismo conjunto, de dos recicladores
+        distintos — no del mismo reciclador dos veces, porque desde que
+        existe el cooldown de 24h (RN-002/RQF-009) el mismo reciclador no
+        puede volver a auditar el mismo conjunto tan seguido."""
+        client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data={**_payload_valido(conjunto_verificado.id_conjunto_residencial), "nivel_desempeno": "DEFICIENTE"},
+            files=_archivo_valido(),
+        )
+
+        otro_usuario = Usuario(
+            correo_electronico="segundo.reciclador@verdeapp.com",
+            id_rol=RolId.RECICLADOR,
+            password=hash_password("Password1"),
+            is_active=True,
+        )
+        db.add(otro_usuario)
+        db.flush()
+        otro_reciclador = Reciclador(
+            id_usuario=otro_usuario.id_usuario, nombre="SEGUNDO", apellidos="RECICLADOR", numero_telefonico="3000000098"
+        )
+        db.add(otro_reciclador)
+        db.flush()
+        db.execute(
+            recicladores_conjuntos.insert().values(
+                id_reciclador=otro_reciclador.id_reciclador,
+                id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
             )
+        )
+        db.commit()
+        token_otro = create_access_token(data={"sub": otro_usuario.correo_electronico, "role_id": otro_usuario.id_rol})
+        headers_otro = {"Authorization": f"Bearer {token_otro}"}
+
+        client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=headers_otro,
+            data={**_payload_valido(conjunto_verificado.id_conjunto_residencial), "nivel_desempeno": "EXCELENTE"},
+            files=_archivo_valido(),
+        )
 
         response = client.get("/api/v1/auditorias-conjunto/historial", headers=auth_headers)
         assert response.status_code == 200

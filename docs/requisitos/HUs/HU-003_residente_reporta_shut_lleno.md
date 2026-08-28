@@ -16,7 +16,7 @@
 | **Título**         | Residente reporta SHUT lleno    |
 | **Módulo**         | Notificaciones                  |
 | **Prioridad**      | Alta                            |
-| **Estado**         | Parcial                         |
+| **Estado**         | Implementada                    |
 | **RF asociados**   | RQF-003                         |
 
 ---
@@ -43,7 +43,7 @@
 - **cuando** intento reportarlo lleno otra vez,
 - **entonces** el sistema no debe permitir un segundo reporte duplicado.
 
-> **Nota (2026-08-28)**: **no implementado** — `POST /api/v1/notificaciones/enviar` no revisa si el SHUT del conjunto ya está marcado como lleno antes de crear una notificación nueva; un residente puede reportarlo las veces que quiera seguidas. CA-003.1, CA-003.3, CA-003.4 y CA-003.5 sí funcionan correctamente.
+> **Nota (2026-08-29)**: implementado y probado — `POST /api/v1/notificaciones/enviar` ahora revisa el estado actual del SHUT antes de crear una notificación nueva, y rechaza el reporte con 400 si ya está marcado como lleno.
 
 ### CA-003.3 — Notificación a los recicladores del conjunto
 
