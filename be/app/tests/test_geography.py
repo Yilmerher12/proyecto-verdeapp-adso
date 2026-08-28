@@ -54,8 +54,8 @@ class TestConjuntosPorLocalidad:
         response = client.get(f"/api/v1/geography/conjuntos/{localidad_test.id_localidad}")
         assert response.status_code == 200
         ids = [c["id_conjunto_residencial"] for c in response.json()]
-        assert conjunto_verificado.id_conjunto_residencial in ids
-        assert conjunto_no_verificado.id_conjunto_residencial not in ids
+        assert str(conjunto_verificado.id_conjunto_residencial) in ids
+        assert str(conjunto_no_verificado.id_conjunto_residencial) not in ids
 
     def test_localidad_sin_conjuntos_devuelve_lista_vacia(self, client: TestClient):
         response = client.get("/api/v1/geography/conjuntos/999999")
@@ -90,8 +90,8 @@ class TestConjuntosGlobal:
         response = client.get("/api/v1/geography/conjuntos")
         assert response.status_code == 200
         ids = [c["id_conjunto_residencial"] for c in response.json()]
-        assert conjunto_verificado.id_conjunto_residencial in ids
-        assert conjunto_no_verificado.id_conjunto_residencial not in ids
+        assert str(conjunto_verificado.id_conjunto_residencial) in ids
+        assert str(conjunto_no_verificado.id_conjunto_residencial) not in ids
 
 
 class TestUnidades:

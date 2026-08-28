@@ -1,5 +1,6 @@
 from datetime import date
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
@@ -29,7 +30,7 @@ class ContenidoEducativoUpdate(ContenidoEducativoBase):
 
 
 class ContenidoEducativoResponse(ContenidoEducativoBase):
-    id_contenido: int
+    id_contenido: UUID
     fecha_publicacion: date
 
     model_config = {"from_attributes": True}

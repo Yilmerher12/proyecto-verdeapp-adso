@@ -17,7 +17,7 @@ import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import { tiempoRelativo } from "@/components/dashboard/NotificationFeed";
 
 interface AuditoriaResultadoModalProps {
-  idAuditoria: number;
+  idAuditoria: string;
   token: string;
   onClose: () => void;
 }

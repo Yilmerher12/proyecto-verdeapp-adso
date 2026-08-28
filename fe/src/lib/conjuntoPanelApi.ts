@@ -4,7 +4,7 @@ import { API_BASE_URL } from "@/api/axios";
 const API_BASE = `${API_BASE_URL}/api/v1/conjunto-panel`;
 
 export interface ConjuntoAdministrado {
-  id_conjunto_residencial: number;
+  id_conjunto_residencial: string;
   nombre_conjunto: string;
   nit: string | null;
   direccion: string;
@@ -20,7 +20,7 @@ export async function obtenerMisConjuntos(token: string): Promise<ConjuntoAdmini
 }
 
 export async function editarMiConjunto(
-  idConjunto: number,
+  idConjunto: string,
   datos: { nombre_conjunto: string; nit: string | null; direccion: string },
   token: string
 ) {
@@ -35,7 +35,7 @@ export async function editarMiConjunto(
 // ¿Qué? RQF-016 (HU-022): pide dejar de administrar un conjunto que hoy administro.
 // ¿Para qué? El motivo es opcional — queda pendiente hasta que el Admin Sistema la resuelva.
 export async function solicitarDesvinculacion(
-  idConjunto: number,
+  idConjunto: string,
   motivo: string | undefined,
   token: string
 ) {

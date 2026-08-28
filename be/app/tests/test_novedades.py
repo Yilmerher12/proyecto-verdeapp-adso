@@ -7,6 +7,7 @@ Descripción: Pruebas de novedades generales de la plataforma (RQF-015).
            alcance filtra correctamente y que lo archivado no reaparece.
 """
 
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
@@ -163,7 +164,7 @@ class TestEditarNovedad:
 
     def test_novedad_inexistente_devuelve_404(self, client: TestClient, admin_sistema_auth_headers):
         response = client.patch(
-            "/api/v1/novedades/999999",
+            f"/api/v1/novedades/{uuid.uuid4()}",
             headers=admin_sistema_auth_headers,
             json={"texto": "No debería aplicar."},
         )

@@ -25,7 +25,7 @@ export interface InvitacionEnviada {
 //       estar vacío aunque sí haya recicladores autorizados (ej. vinculados
 //       directo en la base de datos, sin pasar por el flujo de invitar).
 export interface RecicladorAutorizado {
-  id_reciclador: number;
+  id_reciclador: string;
   nombre: string;
   apellidos: string;
   correo_electronico: string;
@@ -38,7 +38,7 @@ export interface RecicladorAutorizado {
  */
 export async function invitarReciclador(
   correoReciclador: string,
-  idConjuntoResidencial: number,
+  idConjuntoResidencial: string,
   accessToken: string
 ): Promise<void> {
   await axios.post(
@@ -53,7 +53,7 @@ export async function invitarReciclador(
  *       Conjunto ha enviado para un conjunto específico.
  */
 export async function obtenerInvitacionesDeConjunto(
-  idConjuntoResidencial: number,
+  idConjuntoResidencial: string,
   accessToken: string
 ): Promise<InvitacionEnviada[]> {
   const response = await axios.get(
@@ -68,7 +68,7 @@ export async function obtenerInvitacionesDeConjunto(
  *       tabla recicladores_conjuntos) — no el historial de invitaciones.
  */
 export async function obtenerRecicladoresAutorizados(
-  idConjuntoResidencial: number,
+  idConjuntoResidencial: string,
   accessToken: string
 ): Promise<RecicladorAutorizado[]> {
   const response = await axios.get(

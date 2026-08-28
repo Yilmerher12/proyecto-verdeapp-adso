@@ -3,6 +3,8 @@ Módulo: routers/geography.py
 Descripción: Endpoints optimizados para el llenado dinámico de formularios geográficos.
 """
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -214,7 +216,7 @@ def get_todos_los_conjuntos(db: Session = Depends(get_db)):
     status_code=status.HTTP_200_OK,
     summary="[Placeholder] Siempre devuelve una lista vacía",
 )
-def get_unidades_por_conjunto(id_conjunto_residencial: int, db: Session = Depends(get_db)):
+def get_unidades_por_conjunto(id_conjunto_residencial: UUID, db: Session = Depends(get_db)):
     """
     Retorna un arreglo vacío a propósito. Las unidades habitacionales ahora
     se crean de forma dinámica durante el registro del residente — este

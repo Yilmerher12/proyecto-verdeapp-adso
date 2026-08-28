@@ -29,7 +29,7 @@ def _payload_residente(
         "nombre": "Nuevo",
         "apellidos": "Residente Prueba",
         "numero_telefonico": "3001112222",
-        "id_conjunto_residencial": conjunto.id_conjunto_residencial,
+        "id_conjunto_residencial": str(conjunto.id_conjunto_residencial),
         "torre": "TORRE 1",
         "apto": "303",
     }

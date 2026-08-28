@@ -6,6 +6,8 @@ Adaptado para VerdeApp: Recibe datos completos del formulario (Rol, Datos Person
 
 import re
 from typing import Literal, Optional
+from uuid import UUID
+
 from pydantic import BaseModel, Field, EmailStr, field_validator
 
 
@@ -49,7 +51,7 @@ class UserCreate(BaseModel):
     localidad_id: Optional[int] = None
 
     # Propiedades opcionales para persistencia flexible de roles
-    id_conjunto_residencial: Optional[int] = None
+    id_conjunto_residencial: Optional[UUID] = None
     torre: Optional[str] = None
     apto: Optional[str] = None
     asociacion: Optional[str] = None
@@ -116,8 +118,11 @@ class VerifyEmailRequest(BaseModel):
 # Schemas de RESPONSE
 
 class UserResponse(BaseModel):
-    id: int
+    id: UUID
     email: EmailStr
+    # ¿Qué? role_id se queda como int a propósito — `roles` es un
+    #       catálogo fijo de 4 valores públicamente conocidos, excluido
+    #       de la migración a UUID (ver RolId en app/models/rol.py).
     role_id: int
     is_active: bool
     first_name: str

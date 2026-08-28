@@ -5,6 +5,7 @@ Descripción: Esquemas de validación para la auditoría del Reciclador al
 """
 from datetime import datetime
 from typing import Literal, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -15,8 +16,8 @@ NivelDesempeno = Literal["EXCELENTE", "BUENA", "REGULAR", "DEFICIENTE"]
 
 
 class AuditoriaConjuntoResponse(BaseModel):
-    id_auditoria: int
-    id_conjunto_residencial: int
+    id_auditoria: UUID
+    id_conjunto_residencial: UUID
     nombre_conjunto: str
     nivel_desempeno: NivelDesempeno
     tema_educativo: str

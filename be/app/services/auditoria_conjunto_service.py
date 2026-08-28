@@ -6,6 +6,7 @@ Descripción: Lógica de negocio de la auditoría del Reciclador al conjunto
 import io
 import uuid
 from pathlib import Path
+from uuid import UUID
 
 from fastapi import HTTPException, UploadFile, status
 from PIL import Image, UnidentifiedImageError
@@ -40,14 +41,14 @@ TIPOS_IMAGEN_PERMITIDOS = {
 TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
-def _obtener_reciclador(db: Session, id_usuario: int) -> Reciclador:
+def _obtener_reciclador(db: Session, id_usuario: UUID) -> Reciclador:
     reciclador = db.execute(select(Reciclador).where(Reciclador.id_usuario == id_usuario)).scalar_one_or_none()
     if reciclador is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tienes un perfil de reciclador.")
     return reciclador
 
 
-def _verificar_autorizado(db: Session, id_reciclador: int, id_conjunto: int) -> None:
+def _verificar_autorizado(db: Session, id_reciclador: UUID, id_conjunto: UUID) -> None:
     autorizado = db.execute(
         select(recicladores_conjuntos).where(
             recicladores_conjuntos.c.id_reciclador == id_reciclador,
@@ -112,8 +113,8 @@ async def _guardar_evidencia(archivo: UploadFile) -> str:
 
 async def crear_auditoria(
     db: Session,
-    id_usuario_reciclador: int,
-    id_conjunto_residencial: int,
+    id_usuario_reciclador: UUID,
+    id_conjunto_residencial: UUID,
     nivel_desempeno: NivelDesempeno,
     tema_educativo: str,
     descripcion: str | None,
@@ -173,7 +174,7 @@ def _notificar_auditoria_publicada(db: Session, auditoria: AuditoriaConjunto) ->
         db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=id_usuario))
 
 
-def _pertenece_al_conjunto(db: Session, current_user: Usuario, id_conjunto: int) -> bool:
+def _pertenece_al_conjunto(db: Session, current_user: Usuario, id_conjunto: UUID) -> bool:
     """
     ¿Qué? Un Residente pertenece al conjunto si su unidad está ahí; un
           Admin de Conjunto pertenece si tiene una asignación ACTIVA a ese
@@ -202,7 +203,7 @@ def _pertenece_al_conjunto(db: Session, current_user: Usuario, id_conjunto: int)
     return False
 
 
-def obtener_por_id(db: Session, current_user: Usuario, id_auditoria: int) -> AuditoriaConjunto:
+def obtener_por_id(db: Session, current_user: Usuario, id_auditoria: UUID) -> AuditoriaConjunto:
     """
     ¿Qué? El detalle completo de UNA auditoría — lo que abre el botón
           "Ver" de la notificación AUDITORIA_PUBLICADA.
@@ -278,7 +279,7 @@ def listar_historial(db: Session, current_user: Usuario) -> list[AuditoriaConjun
     return list(db.execute(stmt).scalars().all())
 
 
-def listar_mias(db: Session, id_usuario_reciclador: int) -> list[AuditoriaConjunto]:
+def listar_mias(db: Session, id_usuario_reciclador: UUID) -> list[AuditoriaConjunto]:
     """¿Qué? Auditorías ya enviadas por este reciclador, más recientes primero.
     ¿Para qué? El frontend las usa para saber cuándo fue la última auditoría
               de cada conjunto y así mostrar (o no) el aviso de "ya puedes

@@ -12,6 +12,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import List
+from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -74,7 +75,8 @@ async def invitar_admin_conjunto(
     ids_como_texto = ",".join(str(i) for i in datos.ids_conjuntos)
 
     invitacion = InvitacionAdminConjunto(
-        id=str(uuid.uuid4()),
+        # ¿Qué? Sin "id=" aquí a propósito — el modelo ya genera un UUIDv7
+        #       por su cuenta (default=generar_uuid7 en el modelo).
         correo_electronico=datos.correo_electronico,
         token=token,
         conjuntos_asignados=ids_como_texto,
@@ -105,7 +107,7 @@ def consultar_invitacion(db: Session, token: str) -> InvitacionInfoResponse:
     if not invitacion:
         return InvitacionInfoResponse(correo_electronico="", nombres_conjuntos=[], valido=False)
 
-    ids_conjuntos = [int(i) for i in invitacion.conjuntos_asignados.split(",")]
+    ids_conjuntos = [UUID(i) for i in invitacion.conjuntos_asignados.split(",")]
     stmt = select(ConjuntoResidencial.nombre_conjunto).where(
         ConjuntoResidencial.id_conjunto_residencial.in_(ids_conjuntos)
     )
@@ -147,7 +149,7 @@ def aceptar_invitacion(db: Session, datos: AceptarInvitacionAdminConjuntoRequest
         db.add(nuevo_administrador)
         db.flush()
 
-        ids_conjuntos: List[int] = [int(i) for i in invitacion.conjuntos_asignados.split(",")]
+        ids_conjuntos: List[UUID] = [UUID(i) for i in invitacion.conjuntos_asignados.split(",")]
         for id_conjunto in ids_conjuntos:
             asignacion = AdministradorConjuntoAsignacion(
                 id_administrador=nuevo_administrador.id_administrador,

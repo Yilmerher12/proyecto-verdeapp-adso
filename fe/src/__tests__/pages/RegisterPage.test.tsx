@@ -48,7 +48,7 @@ const LOCALIDADES_MOCK = [
 ];
 
 const CONJUNTOS_MOCK = [
-  { id_conjunto_residencial: 1, nombre_conjunto: "TORRES DE ARANJUEZ" },
+  { id_conjunto_residencial: "00000000-0000-7000-8000-000000000001", nombre_conjunto: "TORRES DE ARANJUEZ" },
 ];
 
 beforeEach(() => {
@@ -319,7 +319,7 @@ describe("RegisterPage", () => {
         expect.objectContaining({
           rol: "residente",
           correo_electronico: "ana@correo.com",
-          id_conjunto_residencial: 1,
+          id_conjunto_residencial: "00000000-0000-7000-8000-000000000001",
         }),
       );
     });

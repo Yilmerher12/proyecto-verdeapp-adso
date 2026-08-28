@@ -12,6 +12,7 @@ Descripción: Lógica de negocio de novedades generales de la plataforma (RQF-01
 
 from datetime import datetime, timedelta, timezone
 from typing import List
+from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -109,14 +110,14 @@ def listar_todas(db: Session) -> List[NovedadResponse]:
     return [_a_response(n) for n in db.execute(stmt).scalars().all()]
 
 
-def _obtener_o_404(db: Session, id_novedad: int) -> Novedad:
+def _obtener_o_404(db: Session, id_novedad: UUID) -> Novedad:
     novedad = db.get(Novedad, id_novedad)
     if not novedad:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La novedad no existe.")
     return novedad
 
 
-def editar_novedad(db: Session, id_novedad: int, datos: EditarNovedadRequest) -> NovedadResponse:
+def editar_novedad(db: Session, id_novedad: UUID, datos: EditarNovedadRequest) -> NovedadResponse:
     novedad = _obtener_o_404(db, id_novedad)
 
     novedad.texto = datos.texto
@@ -136,7 +137,7 @@ def editar_novedad(db: Session, id_novedad: int, datos: EditarNovedadRequest) ->
     return _a_response(novedad)
 
 
-def archivar_novedad(db: Session, id_novedad: int) -> None:
+def archivar_novedad(db: Session, id_novedad: UUID) -> None:
     """HU-035 (CA-035.1): archivado manual — no se puede reactivar (CA-035.3), así que no hay "desarchivar"."""
     novedad = _obtener_o_404(db, id_novedad)
     if novedad.fecha_archivado is not None:

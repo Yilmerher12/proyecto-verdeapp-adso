@@ -16,7 +16,7 @@ import type { ReactNode } from "react";
 // ¿Para qué? Simular un usuario autenticado sin llamar al backend.
 // ¿Impacto? Se adaptaron las propiedades para que coincidan con el UserResponse de VerdeApp.
 export const mockUser: UserResponse = {
-  id: 1,
+  id: "00000000-0000-7000-8000-000000000001",
   email: "test@example.com",
   first_name: "Test",
   last_name: "User",

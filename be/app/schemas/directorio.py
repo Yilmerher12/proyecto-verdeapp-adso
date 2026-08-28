@@ -1,9 +1,10 @@
 from pydantic import BaseModel
 from typing import Optional
+from uuid import UUID
 
 
 class RecicladorDirectorioResponse(BaseModel):
-    id_reciclador: int
+    id_reciclador: UUID
     nombre: str
     apellidos: str
     numero_telefonico: Optional[str] = None
@@ -14,7 +15,7 @@ class RecicladorDirectorioResponse(BaseModel):
 
 
 class PuntoAcopioDirectorioResponse(BaseModel):
-    id_punto_acopio: int
+    id_punto_acopio: UUID
     nombre: str
     direccion: str
     telefono_contacto: Optional[str] = None

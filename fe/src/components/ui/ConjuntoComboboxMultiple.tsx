@@ -34,7 +34,7 @@ export function ConjuntoComboboxMultiple({
 }: ConjuntoComboboxMultipleProps) {
   const { setQuery, options, loading } = useConjuntoBusqueda(fetchOptions);
 
-  const quitar = (id: number) => {
+  const quitar = (id: string) => {
     onChange(value.filter((c) => c.id_conjunto_residencial !== id));
   };
 

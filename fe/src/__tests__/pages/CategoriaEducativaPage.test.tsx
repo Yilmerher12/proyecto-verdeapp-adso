@@ -20,7 +20,7 @@ vi.mock("@/lib/contenidoEducativoApi", () => ({
 
 const modulos: ContenidoEducativo[] = [
   {
-    id_contenido: 1,
+    id_contenido: "00000000-0000-7000-8000-000000000001",
     modulo_categoria: "Puntos limpios y Ecopuntos",
     titulo_tema: "Dónde llevar escombros",
     cuerpo_texto: "Los Ecopuntos reciben residuos voluminosos.",
@@ -29,7 +29,7 @@ const modulos: ContenidoEducativo[] = [
     fecha_publicacion: "2026-08-18",
   },
   {
-    id_contenido: 2,
+    id_contenido: "00000000-0000-7000-8000-000000000002",
     modulo_categoria: "Otra categoría",
     titulo_tema: "No debería aparecer",
     cuerpo_texto: "...",

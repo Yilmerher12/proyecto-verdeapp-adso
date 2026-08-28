@@ -23,8 +23,8 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
   const { t } = useTranslation();
   const [solicitudes, setSolicitudes] = useState<SolicitudDesvinculacion[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [procesandoId, setProcesandoId] = useState<number | null>(null);
-  const [rechazandoId, setRechazandoId] = useState<number | null>(null);
+  const [procesandoId, setProcesandoId] = useState<string | null>(null);
+  const [rechazandoId, setRechazandoId] = useState<string | null>(null);
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const aprobar = async (id: number) => {
+  const aprobar = async (id: string) => {
     setProcesandoId(id);
     setError(null);
     try {
@@ -55,7 +55,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
     }
   };
 
-  const confirmarRechazo = async (id: number) => {
+  const confirmarRechazo = async (id: string) => {
     if (!motivoRechazo.trim()) return;
     setProcesandoId(id);
     setError(null);

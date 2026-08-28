@@ -8,20 +8,22 @@ Descripción: Modelo de invitación de un Admin de Conjunto hacia un Reciclador.
           recicladores_conjuntos, vinculando ambos.
 """
 
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
+from sqlalchemy import Column, String, ForeignKey, DateTime
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.utils.ids import generar_uuid7
 
 
 class InvitacionRecicladorConjunto(Base):
     __tablename__ = "invitaciones_reciclador_conjunto"
 
-    id = Column(String(36), primary_key=True)
-    id_reciclador = Column(Integer, ForeignKey("recicladores.id_reciclador", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=generar_uuid7)
+    id_reciclador = Column(UUID(as_uuid=True), ForeignKey("recicladores.id_reciclador", ondelete="CASCADE"), nullable=False)
     id_conjunto_residencial = Column(
-        Integer, ForeignKey("conjuntos_residenciales.id_conjunto_residencial", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("conjuntos_residenciales.id_conjunto_residencial", ondelete="CASCADE"), nullable=False
     )
-    invitado_por_id = Column(Integer, ForeignKey("usuarios.id_usuario"), nullable=False)
+    invitado_por_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"), nullable=False)
 
     # ¿Qué? Estado de la invitación: PENDIENTE, ACEPTADA o RECHAZADA.
     # ¿Para qué? A diferencia de un booleano "used", el Reciclador puede

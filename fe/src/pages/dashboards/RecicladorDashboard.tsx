@@ -42,7 +42,7 @@ interface InvitacionPendiente {
 }
 
 interface ConjuntoAutorizado {
-  id_conjunto_residencial: number;
+  id_conjunto_residencial: string;
   nombre_conjunto: string;
   direccion: string;
   nombre_localidad: string;
@@ -99,12 +99,12 @@ export function RecicladorDashboard() {
 
   // Modal de selección de conjunto
   const [modalTipo, setModalTipo] = useState<string | null>(null);
-  const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<number | null>(null);
+  const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<string | null>(null);
   const [enviandoNotif, setEnviandoNotif] = useState(false);
   const [feedbackOk, setFeedbackOk] = useState<string | null>(null);
 
   // Formulario de auditoría (RQF-009)
-  const [conjuntoParaAuditar, setConjuntoParaAuditar] = useState<number | null>(null);
+  const [conjuntoParaAuditar, setConjuntoParaAuditar] = useState<string | null>(null);
   const [feedbackAuditoria, setFeedbackAuditoria] = useState<string | null>(null);
 
   const headers = { Authorization: `Bearer ${accessToken}` };
@@ -191,7 +191,7 @@ export function RecicladorDashboard() {
     }
   };
 
-  const marcarLeida = async (id: number) => {
+  const marcarLeida = async (id: string) => {
     try {
       await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
       setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
@@ -225,7 +225,7 @@ export function RecicladorDashboard() {
   // ¿Para qué? En vez de un recordatorio programado (que requeriría un job
   //           corriendo en segundo plano), se calcula al cargar el panel —
   //           mismo resultado para el usuario, sin infraestructura nueva.
-  const necesitaAuditoria = (idConjunto: number): boolean => {
+  const necesitaAuditoria = (idConjunto: string): boolean => {
     const delConjunto = auditorias.filter((a) => a.id_conjunto_residencial === idConjunto);
     if (delConjunto.length === 0) return true;
     const masReciente = delConjunto[0].created_at; // el backend ya las ordena más reciente primero

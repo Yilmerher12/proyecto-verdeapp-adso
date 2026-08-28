@@ -8,12 +8,13 @@ Para que? SQLAlchemy necesita un objeto Table() real en sus metadatos
           se consultan directamente -- solo sirven de puente.
 """
  
-from sqlalchemy import Table, Column, Integer, ForeignKey
+from sqlalchemy import Table, Column, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
- 
+
 recicladores_conjuntos = Table(
     "recicladores_conjuntos",
     Base.metadata,
-    Column("id_reciclador", Integer, ForeignKey("recicladores.id_reciclador"), primary_key=True),
-    Column("id_conjunto_residencial", Integer, ForeignKey("conjuntos_residenciales.id_conjunto_residencial"), primary_key=True),
+    Column("id_reciclador", UUID(as_uuid=True), ForeignKey("recicladores.id_reciclador"), primary_key=True),
+    Column("id_conjunto_residencial", UUID(as_uuid=True), ForeignKey("conjuntos_residenciales.id_conjunto_residencial"), primary_key=True),
 )

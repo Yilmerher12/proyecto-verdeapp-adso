@@ -6,6 +6,7 @@ Descripción: Pruebas de comunicados del conjunto (RQF-014).
            destinatarios (CA-031.2) y el orden urgente-primero (CA-028.2).
 """
 
+import uuid
 from datetime import date, datetime, timedelta, timezone
 
 import pytest
@@ -34,7 +35,7 @@ class TestCrearComunicado:
         response = client.post(
             "/api/v1/comunicados",
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "AMBOS",
                 "tipo": "INFORMATIVO",
                 "texto": "Aviso de prueba",
@@ -48,7 +49,7 @@ class TestCrearComunicado:
             "/api/v1/comunicados",
             headers=auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "AMBOS",
                 "tipo": "INFORMATIVO",
                 "texto": "Aviso de prueba",
@@ -63,7 +64,7 @@ class TestCrearComunicado:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado_sin_admin.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado_sin_admin.id_conjunto_residencial),
                 "destinatarios": "AMBOS",
                 "tipo": "INFORMATIVO",
                 "texto": "Aviso de prueba",
@@ -76,7 +77,7 @@ class TestCrearComunicado:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "AMBOS",
                 "tipo": "INFORMATIVO",
                 "texto": "   ",
@@ -91,7 +92,7 @@ class TestCrearComunicado:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RESIDENTES",
                 "tipo": "INFORMATIVO",
                 "texto": "Se ajustó el horario del portón peatonal.",
@@ -110,7 +111,7 @@ class TestCrearComunicado:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "AMBOS",
                 "tipo": "URGENTE",
                 "texto": "Fuga de agua en el sótano — evitar el parqueadero.",
@@ -130,7 +131,7 @@ class TestCrearComunicado:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RESIDENTES",
                 "tipo": "CONVOCATORIA",
                 "texto": "Asamblea general de propietarios.",
@@ -146,7 +147,7 @@ class TestCrearComunicado:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RESIDENTES",
                 "tipo": "CONVOCATORIA",
                 "texto": "Asamblea general de propietarios.",
@@ -173,7 +174,7 @@ class TestCrearComunicado:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RESIDENTES",
                 "tipo": "INFORMATIVO",
                 "texto": "Solo para residentes.",
@@ -198,7 +199,7 @@ class TestListarMisComunicados:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "AMBOS",
                 "tipo": "MANTENIMIENTO",
                 "texto": "Corte de agua programado el sábado.",
@@ -215,7 +216,7 @@ class TestEditarComunicado:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RESIDENTES",
                 "tipo": "RECICLAJE",
                 "texto": "El reciclador pasa los martes.",
@@ -243,7 +244,7 @@ class TestEditarComunicado:
 
     def test_comunicado_inexistente_devuelve_404(self, client: TestClient, admin_conjunto_auth_headers):
         response = client.patch(
-            "/api/v1/comunicados/999999",
+            f"/api/v1/comunicados/{uuid.uuid4()}",
             headers=admin_conjunto_auth_headers,
             json={"tipo": "INFORMATIVO", "texto": "No debería aplicar."},
         )
@@ -272,7 +273,7 @@ class TestEliminarComunicado:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "AMBOS",
                 "tipo": "INFORMATIVO",
                 "texto": "Comunicado a eliminar.",
@@ -303,7 +304,7 @@ class TestFeed:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RESIDENTES",
                 "tipo": "INFORMATIVO",
                 "texto": "Aviso para residentes.",
@@ -320,7 +321,7 @@ class TestFeed:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RECICLADORES",
                 "tipo": "INFORMATIVO",
                 "texto": "Aviso solo para recicladores.",
@@ -342,7 +343,7 @@ class TestFeed:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RECICLADORES",
                 "tipo": "INFORMATIVO",
                 "texto": "Aviso para recicladores.",
@@ -359,7 +360,7 @@ class TestFeed:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RESIDENTES",
                 "tipo": "URGENTE",
                 "texto": "Este ya debería estar vencido.",
@@ -384,7 +385,7 @@ class TestFeed:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RESIDENTES",
                 "tipo": "INFORMATIVO",
                 "texto": "Aviso informativo normal.",
@@ -394,7 +395,7 @@ class TestFeed:
             "/api/v1/comunicados",
             headers=admin_conjunto_auth_headers,
             json={
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
                 "destinatarios": "RESIDENTES",
                 "tipo": "URGENTE",
                 "texto": "Aviso urgente publicado después.",

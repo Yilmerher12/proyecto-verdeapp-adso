@@ -6,6 +6,8 @@ Descripción: Pruebas de desvinculación y reasignación de conjuntos (RQF-016).
            adicional a un Admin de Conjunto existente (HU-024).
 """
 
+import uuid
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -185,7 +187,7 @@ class TestResolverSolicitud:
 
     def test_solicitud_inexistente_devuelve_404(self, client: TestClient, admin_sistema_auth_headers):
         response = client.post(
-            "/api/v1/admin-conjunto/solicitudes-desvinculacion/999999/resolver",
+            f"/api/v1/admin-conjunto/solicitudes-desvinculacion/{uuid.uuid4()}/resolver",
             headers=admin_sistema_auth_headers,
             json={"aprobar": True},
         )
@@ -272,8 +274,8 @@ class TestAsignarConjuntoAdicional:
             "/api/v1/admin-conjunto/asignar-conjunto-adicional",
             headers=admin_sistema_auth_headers,
             json={
-                "id_administrador": admin_conjunto_test.id_administrador,
-                "id_conjunto_residencial": conjunto_verificado_sin_admin.id_conjunto_residencial,
+                "id_administrador": str(admin_conjunto_test.id_administrador),
+                "id_conjunto_residencial": str(conjunto_verificado_sin_admin.id_conjunto_residencial),
             },
         )
         assert response.status_code == 201
@@ -292,8 +294,8 @@ class TestAsignarConjuntoAdicional:
             "/api/v1/admin-conjunto/asignar-conjunto-adicional",
             headers=admin_sistema_auth_headers,
             json={
-                "id_administrador": admin_conjunto_test.id_administrador,
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_administrador": str(admin_conjunto_test.id_administrador),
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
             },
         )
         assert response.status_code == 400
@@ -305,8 +307,8 @@ class TestAsignarConjuntoAdicional:
             "/api/v1/admin-conjunto/asignar-conjunto-adicional",
             headers=admin_sistema_auth_headers,
             json={
-                "id_administrador": 999999,
-                "id_conjunto_residencial": conjunto_verificado_sin_admin.id_conjunto_residencial,
+                "id_administrador": str(uuid.uuid4()),
+                "id_conjunto_residencial": str(conjunto_verificado_sin_admin.id_conjunto_residencial),
             },
         )
         assert response.status_code == 404
@@ -318,8 +320,8 @@ class TestAsignarConjuntoAdicional:
             "/api/v1/admin-conjunto/asignar-conjunto-adicional",
             headers=admin_sistema_auth_headers,
             json={
-                "id_administrador": admin_conjunto_test.id_administrador,
-                "id_conjunto_residencial": 999999,
+                "id_administrador": str(admin_conjunto_test.id_administrador),
+                "id_conjunto_residencial": str(uuid.uuid4()),
             },
         )
         assert response.status_code == 404

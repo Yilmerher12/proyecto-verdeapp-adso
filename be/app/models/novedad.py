@@ -1,9 +1,11 @@
 from enum import StrEnum
 
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, String, Text, TIMESTAMP, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.utils.ids import generar_uuid7
 
 
 class AlcanceNovedad(StrEnum):
@@ -29,10 +31,10 @@ class Novedad(Base):
     """
     __tablename__ = "novedades"
 
-    id_novedad = Column(Integer, primary_key=True, index=True)
+    id_novedad = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
 
     id_admin_sistema = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),
         nullable=False,
     )

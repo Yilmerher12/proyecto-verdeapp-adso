@@ -5,6 +5,8 @@ Descripción: Endpoints del panel propio del Administrador de Conjunto.
           nunca los de otro administrador, ni los de todo el sistema.
 """
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -82,7 +84,7 @@ def listar_mis_conjuntos(
 
 @router.patch("/mis-conjuntos/{id_conjunto_residencial}", response_model=MessageResponse)
 def editar_mi_conjunto(
-    id_conjunto_residencial: int,
+    id_conjunto_residencial: UUID,
     datos: EditarConjuntoRequest,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -130,7 +132,7 @@ def editar_mi_conjunto(
     status_code=status.HTTP_201_CREATED,
 )
 def solicitar_desvinculacion(
-    id_conjunto_residencial: int,
+    id_conjunto_residencial: UUID,
     datos: SolicitarDesvinculacionRequest,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),

@@ -6,6 +6,7 @@ Descripción: Endpoints de la auditoría del Reciclador al conjunto (RQF-009).
            que pueda ver el historial de las que ya envió.
 """
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -49,7 +50,7 @@ def _a_response(auditoria: AuditoriaConjunto) -> AuditoriaConjuntoResponse:
     summary="Reciclador audita el desempeño de separación de un conjunto",
 )
 async def crear_auditoria(
-    id_conjunto_residencial: int = Form(...),
+    id_conjunto_residencial: UUID = Form(...),
     nivel_desempeno: NivelDesempeno = Form(...),
     tema_educativo: str = Form(...),
     descripcion: Optional[str] = Form(None),
@@ -112,7 +113,7 @@ def listar_historial(
     summary="Residente o Admin de Conjunto ve el detalle de una auditoría de su conjunto",
 )
 def obtener_auditoria(
-    id_auditoria: int,
+    id_auditoria: UUID,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> AuditoriaConjuntoResponse:

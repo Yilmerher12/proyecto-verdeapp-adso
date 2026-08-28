@@ -1,12 +1,23 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.utils.ids import generar_uuid7
 
 
 class Usuario(Base):
     __tablename__ = "usuarios"
 
-    id_usuario = Column(Integer, primary_key=True, index=True)
+    # ¿Qué? UUIDv7 en vez de un entero autoincremental (1, 2, 3...).
+    # ¿Para qué? El profesor señaló que un ID adivinable es una mala
+    #           práctica de seguridad (permite enumerar registros).
+    # ¿Impacto? id_rol NO se toca — sigue siendo Integer a propósito:
+    #           `roles` es un catálogo fijo de 4 valores públicamente
+    #           conocidos (ver RolId en app/models/rol.py), no hay nada
+    #           que "adivinar" ahí, y migrarlo obligaría a rehacer el
+    #           enum de roles y el contenido del JWT sin ningún beneficio
+    #           real de seguridad.
+    id_usuario = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
     id_rol = Column(Integer, ForeignKey("roles.id_rol"), nullable=False)
     correo_electronico = Column(String(255), unique=True, index=True, nullable=False)
     password = Column(String(255), nullable=False)

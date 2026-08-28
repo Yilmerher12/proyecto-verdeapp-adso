@@ -7,6 +7,8 @@ Descripción: Pruebas del flujo de invitación de Administradores de Conjunto.
            protegida por el token en vez de una sesión).
 """
 
+import uuid
+
 from fastapi.testclient import TestClient
 
 
@@ -14,7 +16,7 @@ class TestInvitar:
     def test_sin_login_devuelve_401(self, client: TestClient, conjunto_verificado):
         response = client.post(
             "/api/v1/admin-conjunto/invitar",
-            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [conjunto_verificado.id_conjunto_residencial]},
+            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)]},
         )
         assert response.status_code == 401
 
@@ -23,7 +25,7 @@ class TestInvitar:
         response = client.post(
             "/api/v1/admin-conjunto/invitar",
             headers=auth_headers,
-            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [conjunto_verificado.id_conjunto_residencial]},
+            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)]},
         )
         assert response.status_code == 403
 
@@ -33,7 +35,7 @@ class TestInvitar:
         response = client.post(
             "/api/v1/admin-conjunto/invitar",
             headers=admin_sistema_auth_headers,
-            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [conjunto_verificado.id_conjunto_residencial]},
+            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)]},
         )
         assert response.status_code == 201
         assert "nuevo@verdeapp.com" in response.json()["message"]
@@ -42,7 +44,7 @@ class TestInvitar:
         response = client.post(
             "/api/v1/admin-conjunto/invitar",
             headers=admin_sistema_auth_headers,
-            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [999999]},
+            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [str(uuid.uuid4())]},
         )
         assert response.status_code == 400
 
@@ -52,7 +54,7 @@ class TestInvitar:
         response = client.post(
             "/api/v1/admin-conjunto/invitar",
             headers=admin_sistema_auth_headers,
-            json={"correo_electronico": test_user.correo_electronico, "ids_conjuntos": [conjunto_verificado.id_conjunto_residencial]},
+            json={"correo_electronico": test_user.correo_electronico, "ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)]},
         )
         assert response.status_code == 400
 
@@ -70,7 +72,7 @@ class TestConsultarYAceptar:
         client.post(
             "/api/v1/admin-conjunto/invitar",
             headers=admin_sistema_auth_headers,
-            json={"correo_electronico": correo, "ids_conjuntos": [conjunto_verificado.id_conjunto_residencial]},
+            json={"correo_electronico": correo, "ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)]},
         )
 
         from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto

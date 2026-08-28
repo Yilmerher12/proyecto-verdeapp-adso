@@ -1,20 +1,21 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 
 class NotificacionEnviarBody(BaseModel):
     tipo: str  # LLEGADA_RECICLADOR | SHUT_LLENO | SHUT_LIBRE | FINALIZACION_RECICLADOR
-    id_conjunto_residencial: Optional[int] = None  # required for reciclador, inferred for residente
+    id_conjunto_residencial: Optional[UUID] = None  # required for reciclador, inferred for residente
 
 
 class NotificacionResponse(BaseModel):
-    id: int
+    id: UUID
     tipo: str
     mensaje: str
     # ¿Qué? Puntero opcional al registro relacionado (ej. id_auditoria para
     #       AUDITORIA_PUBLICADA) — la mayoría de tipos no lo usan.
-    id_referencia: Optional[int] = None
+    id_referencia: Optional[UUID] = None
     # ¿Qué? Opcional porque RQF-015 (novedades del Admin del Sistema) son
     #       de toda la plataforma, no de un conjunto — esas notificaciones
     #       no tienen id_conjunto_residencial.

@@ -55,7 +55,7 @@ function BadgeEstado({ estado }: { estado: string }) {
  *           principal — cada conjunto administrado tiene su propia
  *           lista de invitaciones, así que esto vive por tarjeta.
  */
-function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; accessToken: string }) {
+function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; accessToken: string }) {
   const { t } = useTranslation();
   const [autorizados, setAutorizados] = useState<RecicladorAutorizado[]>([]);
   const [cargandoAutorizados, setCargandoAutorizados] = useState(true);
@@ -244,7 +244,7 @@ function SeccionDesvinculacion({
   accessToken,
   onSolicitudEnviada,
 }: {
-  idConjunto: number;
+  idConjunto: string;
   tieneSolicitudPendiente: boolean;
   accessToken: string;
   onSolicitudEnviada: () => void;
@@ -355,7 +355,7 @@ export function AdminConjuntoDashboard() {
   const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_CONJUNTO];
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [formEdicion, setFormEdicion] = useState({ nombre_conjunto: "", nit: "", direccion: "" });
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
@@ -392,7 +392,7 @@ export function AdminConjuntoDashboard() {
       .finally(() => setCargandoNotifs(false));
   };
 
-  const marcarLeida = async (id: number) => {
+  const marcarLeida = async (id: string) => {
     try {
       await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers: authHeaders });
       setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
@@ -443,7 +443,7 @@ export function AdminConjuntoDashboard() {
     setEditandoId(null);
   };
 
-  const guardarEdicion = async (id: number) => {
+  const guardarEdicion = async (id: string) => {
     if (!accessToken) return;
     setGuardando(true);
     try {

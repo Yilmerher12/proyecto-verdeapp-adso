@@ -25,7 +25,7 @@ export function HistorialAuditorias({ token }: HistorialAuditoriasProps) {
   const { t } = useTranslation();
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [idAbierta, setIdAbierta] = useState<number | null>(null);
+  const [idAbierta, setIdAbierta] = useState<string | null>(null);
 
   useEffect(() => {
     listarHistorial(token)

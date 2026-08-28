@@ -7,7 +7,7 @@ import { API_BASE_URL } from "@/api/axios";
 const API_BASE = `${API_BASE_URL}/api/v1/contenido-educativo`;
 
 export interface ContenidoEducativo {
-  id_contenido: number;
+  id_contenido: string;
   modulo_categoria: string;
   titulo_tema: string;
   cuerpo_texto: string;
@@ -39,7 +39,7 @@ export async function crearContenido(
 }
 
 export async function editarContenido(
-  id: number,
+  id: string,
   payload: ContenidoEducativoPayload,
   token: string
 ): Promise<ContenidoEducativo> {
@@ -47,6 +47,6 @@ export async function editarContenido(
   return data;
 }
 
-export async function eliminarContenido(id: number, token: string): Promise<void> {
+export async function eliminarContenido(id: string, token: string): Promise<void> {
   await axios.delete(`${API_BASE}/${id}`, authHeaders(token));
 }

@@ -21,7 +21,7 @@ import { Search } from "lucide-react";
 import { useConjuntoBusqueda } from "@/hooks/useConjuntoBusqueda";
 
 export interface ConjuntoOption {
-  id_conjunto_residencial: number;
+  id_conjunto_residencial: string;
   nombre_conjunto: string;
   nombre_localidad?: string;
 }
