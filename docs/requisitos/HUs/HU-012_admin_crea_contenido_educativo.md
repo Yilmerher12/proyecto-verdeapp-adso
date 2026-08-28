@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema crea un módulo de contenido educativo         |
 | **Módulo**         | Educación / Administración                                 |
 | **Prioridad**      | Media                                                        |
-| **Estado**         | Parcial                                                      |
+| **Estado**         | Implementada                                                 |
 | **RF asociados**   | RQF-010                                                     |
 
 ---
@@ -49,7 +49,7 @@
 - **cuando** intento guardar,
 - **entonces** debo ver un mensaje de error indicando el problema.
 
-> **Nota (2026-08-28)**: los mínimos de longitud (5 y 20 caracteres, CA-012.1/CA-012.3) **no están validados** — ni en el backend (`ContenidoEducativoBase` solo revisa que el campo no esté vacío, sin mínimo de caracteres) ni en el formulario del frontend. Hoy se puede guardar un título de 2 letras. El resto (crear, publicar de inmediato, acceso solo admin) funciona bien.
+> **Nota (2026-08-29)**: implementado y verificado — `ContenidoEducativoBase` valida ahora el mínimo de 5/20 caracteres (backend), con el mismo chequeo replicado en el formulario del frontend antes de enviar. Probado en navegador con título corto, contenido corto, y guardado exitoso.
 
 ### CA-012.4 — Acceso exclusivo de administrador
 

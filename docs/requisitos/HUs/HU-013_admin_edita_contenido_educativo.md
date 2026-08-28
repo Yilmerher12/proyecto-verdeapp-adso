@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema edita un módulo de contenido educativo        |
 | **Módulo**         | Educación / Administración                                |
 | **Prioridad**      | Media                                                       |
-| **Estado**         | Parcial                                                     |
+| **Estado**         | Implementada                                                |
 | **RF asociados**   | RQF-010                                                    |
 
 ---
@@ -49,7 +49,7 @@
 - **cuando** intento guardar,
 - **entonces** debo ver un mensaje de error.
 
-> **Nota (2026-08-28)**: mismo caso que HU-012 — el schema de validación se comparte, así que la longitud mínima tampoco se aplica al editar. Editar, ver el cambio reflejado de inmediato, y el acceso exclusivo de admin sí funcionan.
+> **Nota (2026-08-29)**: implementado — mismo schema compartido con HU-012, ya valida el mínimo también al editar.
 
 ### CA-013.4 — Acceso exclusivo de administrador
 
