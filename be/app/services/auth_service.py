@@ -40,6 +40,10 @@ from app.utils.security import (
 
 logger = logging.getLogger(__name__)
 
+# ¿Qué? RN-003 de RQF-001 / CA-001.5.
+MAXIMO_INTENTOS_FALLIDOS = 5
+MINUTOS_DE_BLOQUEO = 15
+
 
 async def register_user(db: Session, user_data: UserCreate) -> Usuario:
     """Registra un usuario en estado INACTIVO, gestiona su perfil y emite el correo de activación."""
@@ -188,12 +192,35 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     stmt = select(Usuario).where(Usuario.correo_electronico == correo)
     user = db.execute(stmt).scalar_one_or_none()
 
+    # ¿Qué? RN-003 de RQF-001 / CA-001.5: si la cuenta ya está bloqueada por
+    #       demasiados intentos fallidos recientes, se rechaza antes de
+    #       siquiera revisar la contraseña.
+    # ¿Para qué? Antes de esto, un atacante podía probar contraseñas contra
+    #           un correo específico sin ningún límite por cuenta — el
+    #           rate limit de slowapi es por dirección IP, no por correo.
+    # ¿Impacto? Esta respuesta SÍ revela que la cuenta existe (una cuenta
+    #           inexistente nunca llega aquí, porque `user` sería None) —
+    #           es un trade-off conocido e inevitable de cualquier bloqueo
+    #           por cuenta, y es exactamente el comportamiento que pide
+    #           RQF-001.
+    if user and user.bloqueado_hasta and user.bloqueado_hasta > datetime.now(timezone.utc):
+        log_login_fallido(correo, "cuenta_bloqueada")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Demasiados intentos fallidos. Intenta de nuevo en {MINUTOS_DE_BLOQUEO} minutos.",
+        )
+
     # ¿Qué? Se corre verify_password() SIEMPRE, incluso si el usuario no
     #       existe — contra el hash real si existe, o contra DUMMY_PASSWORD_HASH
     #       si no. Mitiga un ataque de temporización (OWASP A07): ver el
     #       comentario de DUMMY_PASSWORD_HASH en app/utils/security.py.
     password_hash = user.password if user else DUMMY_PASSWORD_HASH
     if not user or not verify_password(login_data.password, password_hash):
+        if user:
+            user.intentos_fallidos += 1
+            if user.intentos_fallidos >= MAXIMO_INTENTOS_FALLIDOS:
+                user.bloqueado_hasta = datetime.now(timezone.utc) + timedelta(minutes=MINUTOS_DE_BLOQUEO)
+            db.commit()
         log_login_fallido(correo, "credenciales_invalidas")
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
@@ -203,6 +230,14 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Tu cuenta no ha sido verificada aún. Por favor, revisa tu buzón en Mailpit."
         )
+
+    # ¿Qué? Un login exitoso limpia cualquier rastro de intentos fallidos
+    #       previos — no tendría sentido seguir "contando" contra alguien
+    #       que ya demostró que sí es el dueño de la cuenta.
+    if user.intentos_fallidos or user.bloqueado_hasta:
+        user.intentos_fallidos = 0
+        user.bloqueado_hasta = None
+        db.commit()
 
     log_login_exitoso(correo)
     real_first_name, real_last_name = _obtener_nombre_real(db, user)
