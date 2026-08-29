@@ -6,8 +6,8 @@ import {
   listarConjuntosSinAdministrador,
   asignarConjuntoAdicional,
   type AdministradorConjuntoResumen,
-  type ConjuntoSinAdministrador,
 } from "@/lib/adminConjuntoApi";
+import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 
 interface AsignarConjuntoAdicionalFormProps {
   // ¿Qué? El token de sesión del Administrador del Sistema.
@@ -34,9 +34,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
   const [busquedaHecha, setBusquedaHecha] = useState(false);
 
   const [seleccionado, setSeleccionado] = useState<AdministradorConjuntoResumen | null>(null);
-  const [conjuntosDisponibles, setConjuntosDisponibles] = useState<ConjuntoSinAdministrador[]>([]);
-  const [cargandoConjuntos, setCargandoConjuntos] = useState(false);
-  const [idConjuntoElegido, setIdConjuntoElegido] = useState<number | "">("");
+  const [conjuntoElegido, setConjuntoElegido] = useState<ConjuntoOption | null>(null);
 
   const [asignando, setAsignando] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
@@ -58,52 +56,46 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
     }
   };
 
-  const cargarConjuntosDisponibles = () => {
-    setCargandoConjuntos(true);
-    listarConjuntosSinAdministrador(token)
-      .then(setConjuntosDisponibles)
-      .catch((err) => console.error("Error cargando conjuntos sin administrador", err))
-      .finally(() => setCargandoConjuntos(false));
-  };
+  // ¿Qué? Busca conjuntos sin administrador que coincidan con `query`.
+  // ¿Para qué? Antes se cargaba la lista completa de conjuntos sin
+  //           administrador una sola vez por administrador seleccionado —
+  //           con miles de conjuntos reales registrados eso ya no escala
+  //           (ver ConjuntoCombobox).
+  const fetchConjuntosDisponibles = (query: string): Promise<ConjuntoOption[]> =>
+    listarConjuntosSinAdministrador(token, query, 20).catch(() => []);
 
   const seleccionarAdministrador = (admin: AdministradorConjuntoResumen) => {
     setSeleccionado(admin);
-    setIdConjuntoElegido("");
+    setConjuntoElegido(null);
     setMensajeExito(null);
     setError(null);
-    cargarConjuntosDisponibles();
   };
 
   const asignar = async () => {
-    if (!seleccionado || !idConjuntoElegido) return;
+    if (!seleccionado || !conjuntoElegido) return;
     setAsignando(true);
     setError(null);
     try {
-      await asignarConjuntoAdicional(seleccionado.id_administrador, Number(idConjuntoElegido), token);
+      await asignarConjuntoAdicional(seleccionado.id_administrador, conjuntoElegido.id_conjunto_residencial, token);
       setMensajeExito(t("desvinculacion.asignarAdicional.successMessage"));
 
-      const nombreNuevoConjunto = conjuntosDisponibles.find(
-        (c) => c.id_conjunto_residencial === Number(idConjuntoElegido)
-      )?.nombre_conjunto;
-      setIdConjuntoElegido("");
-      cargarConjuntosDisponibles();
+      const nombreNuevoConjunto = conjuntoElegido.nombre_conjunto;
+      setConjuntoElegido(null);
 
       // ¿Qué? Se actualizan TANTO "resultados" (de donde sale el texto
       //       "Administra:" que se ve en cada tarjeta de la búsqueda) COMO
       //       "seleccionado" — son dos copias separadas del mismo admin,
       //       y solo actualizar una de las dos deja la otra desactualizada.
-      if (nombreNuevoConjunto) {
-        setResultados((prev) =>
-          prev.map((a) =>
-            a.id_administrador === seleccionado.id_administrador
-              ? { ...a, conjuntos_actuales: [...a.conjuntos_actuales, nombreNuevoConjunto] }
-              : a
-          )
-        );
-        setSeleccionado((prev) =>
-          prev ? { ...prev, conjuntos_actuales: [...prev.conjuntos_actuales, nombreNuevoConjunto] } : prev
-        );
-      }
+      setResultados((prev) =>
+        prev.map((a) =>
+          a.id_administrador === seleccionado.id_administrador
+            ? { ...a, conjuntos_actuales: [...a.conjuntos_actuales, nombreNuevoConjunto] }
+            : a
+        )
+      );
+      setSeleccionado((prev) =>
+        prev ? { ...prev, conjuntos_actuales: [...prev.conjuntos_actuales, nombreNuevoConjunto] } : prev
+      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err?.response?.data?.detail || t("desvinculacion.asignarAdicional.errorDefault"));
@@ -135,7 +127,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
         <button
           type="submit"
           disabled={buscando}
-          className="rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50"
+          className="rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50"
         >
           {t("desvinculacion.asignarAdicional.searchButton")}
         </button>
@@ -148,7 +140,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
       )}
 
       {busquedaHecha && resultados.length === 0 && (
-        <p className="text-sm text-gray-400">{t("desvinculacion.asignarAdicional.noResults")}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("desvinculacion.asignarAdicional.noResults")}</p>
       )}
 
       {resultados.length > 0 && (
@@ -167,7 +159,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
                 {admin.nombre} {admin.apellidos}
               </p>
-              <p className="text-xs text-gray-400">{admin.correo_electronico}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{admin.correo_electronico}</p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {t("desvinculacion.asignarAdicional.currentConjuntos")}{" "}
                 {admin.conjuntos_actuales.length > 0
@@ -192,34 +184,26 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
             </p>
           )}
 
-          {cargandoConjuntos ? (
-            <p className="text-sm text-gray-400">{t("common.loading")}</p>
-          ) : conjuntosDisponibles.length === 0 ? (
-            <p className="text-sm text-gray-400">{t("desvinculacion.asignarAdicional.noConjuntosDisponibles")}</p>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={idConjuntoElegido}
-                onChange={(e) => setIdConjuntoElegido(e.target.value === "" ? "" : Number(e.target.value))}
-                className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-200"
-              >
-                <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
-                {conjuntosDisponibles.map((c) => (
-                  <option key={c.id_conjunto_residencial} value={c.id_conjunto_residencial}>
-                    {c.nombre_conjunto} — {c.nombre_localidad}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={asignar}
-                disabled={!idConjuntoElegido || asignando}
-                className="rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50"
-              >
-                {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
-              </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex-1">
+              <ConjuntoCombobox
+                value={conjuntoElegido}
+                onChange={setConjuntoElegido}
+                fetchOptions={fetchConjuntosDisponibles}
+                placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
+                emptyLabel={t("desvinculacion.asignarAdicional.noConjuntosDisponibles")}
+                loadingLabel={t("common.loading")}
+              />
             </div>
-          )}
+            <button
+              type="button"
+              onClick={asignar}
+              disabled={!conjuntoElegido || asignando}
+              className="rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50 h-fit mt-1"
+            >
+              {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
+            </button>
+          </div>
         </div>
       )}
     </div>

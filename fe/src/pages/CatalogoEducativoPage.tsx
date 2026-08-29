@@ -45,13 +45,13 @@ export function CatalogoEducativoPage() {
         </p>
       </div>
 
-      {cargando && <p className="text-sm text-gray-400">{t("catalogoEducativo.loading")}</p>}
+      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("catalogoEducativo.loading")}</p>}
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       {!cargando && !error && categorias.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <BookOpen className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-400">{t("catalogoEducativo.emptyState")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("catalogoEducativo.emptyState")}</p>
         </div>
       )}
 
@@ -73,7 +73,7 @@ export function CatalogoEducativoPage() {
                 <span className="block text-sm font-bold text-gray-900 dark:text-white">
                   {categoria}
                 </span>
-                <span className="mt-0.5 block text-xs text-gray-400 dark:text-gray-500">
+                <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
                   {temas} {temas === 1 ? t("catalogoEducativo.tema") : t("catalogoEducativo.temas")}
                 </span>
               </span>

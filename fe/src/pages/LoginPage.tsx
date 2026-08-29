@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Archivo: pages/LoginPage.tsx
  * Descripción: Página de inicio de sesión — formulario de email y contraseña.
  * ¿Para qué? Permitir que usuarios registrados se autentiquen en el sistema.
  * ¿Impacto? Es la puerta de entrada a la app — sin login, no se puede acceder a nada protegido.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Mail, Lock, Leaf } from "lucide-react";
@@ -26,6 +25,19 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // ¿Qué? Si axios.ts detectó una sesión vencida (401 con token guardado),
+  //       dejó esta marca antes de redirigir aquí con recarga completa.
+  // ¿Para qué? Explicarle al usuario por qué terminó en esta pantalla, en vez
+  //           de dejarlo pensando que la app falló o que cerró sesión él mismo.
+  // ¿Impacto? La marca se borra al leerla, así que solo se muestra una vez.
+  useEffect(() => {
+    if (sessionStorage.getItem("verdeapp:session-expired")) {
+      sessionStorage.removeItem("verdeapp:session-expired");
+      setError(t("auth.login.sessionExpired"));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError(null);
@@ -37,18 +49,16 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      const loginPayload = {
-        correo_electronico: formData.email, 
-        username: formData.email,          
-        password: formData.password
-      };
+      // ¿Qué? Antes se armaba { correo_electronico, username, password } y
+      //       se forzaba con "as any" porque no coincidía con LoginRequest
+      //       ({ email, password }) — funcionaba solo porque el backend
+      //       (UserLogin) tolera varios nombres de campo.
+      // ¿Para qué? Enviar exactamente lo que LoginRequest declara, para que
+      //           TypeScript sí revise este payload en vez de dejarlo pasar
+      //           sin chequeo.
+      const userData = await login({ email: formData.email, password: formData.password });
+      const roleId = userData.role_id;
 
-      // 🛠️ CORREGIDO: Forzamos el casteo directo sobre la función login para que TypeScript no chille
-      const response = await login(loginPayload as any);
-      const userData = response as Record<string, any> | null | undefined;
-      
-      const roleId = userData?.role_id || userData?.id_rol;
-      
       if (roleId === RoleId.ADMIN_SISTEMA) {
         navigate("/dashboard/admin", { replace: true });
       } else if (roleId === RoleId.RECICLADOR) {
@@ -72,8 +82,8 @@ export function LoginPage() {
 
   return (
     <>
-      <LandingPage />
-      <Modal onClose={() => navigate("/")}>
+      <LandingPage asBackdrop />
+      <Modal onClose={() => navigate("/")} closeOnBackdrop={false}>
         <div className="p-6 sm:p-8 max-w-md mx-auto">
           <div className="mb-6 text-center sm:text-left">
             <div className="h-12 w-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mb-3 mx-auto sm:mx-0 shadow-sm border border-green-200">

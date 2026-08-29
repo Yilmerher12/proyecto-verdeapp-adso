@@ -10,6 +10,7 @@ Descripción: Lógica de negocio de la desvinculación y reasignación de conjun
 
 from datetime import datetime, timezone
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
@@ -28,7 +29,7 @@ from app.schemas.desvinculacion import (
 
 
 def _crear_notificacion(
-    db: Session, id_conjunto: int, id_usuario_destino: int, tipo: str, mensaje: str
+    db: Session, id_conjunto: UUID, id_usuario_destino: UUID, tipo: str, mensaje: str
 ) -> None:
     """
     ¿Qué? Crea una notificación de una sola persona, reutilizando el mismo
@@ -49,7 +50,7 @@ def _crear_notificacion(
 
 
 def solicitar_desvinculacion(
-    db: Session, administrador: AdministradorConjunto, id_conjunto: int, motivo: Optional[str]
+    db: Session, administrador: AdministradorConjunto, id_conjunto: UUID, motivo: Optional[str]
 ) -> SolicitudDesvinculacion:
     """HU-022: el Admin Conjunto pide desvincularse de un conjunto que administra."""
     vinculo_activo = db.execute(
@@ -124,7 +125,7 @@ def listar_solicitudes_pendientes(db: Session) -> List[SolicitudDesvinculacionRe
 
 
 def resolver_solicitud(
-    db: Session, id_solicitud: int, aprobar: bool, motivo_rechazo: Optional[str], resuelta_por: Usuario
+    db: Session, id_solicitud: UUID, aprobar: bool, motivo_rechazo: Optional[str], resuelta_por: Usuario
 ) -> None:
     """HU-023: el Admin Sistema aprueba (desvincula de verdad) o rechaza (el admin sigue a cargo) una solicitud."""
     solicitud = db.execute(
@@ -214,7 +215,7 @@ def buscar_administradores(db: Session, query: Optional[str]) -> List[Administra
     ]
 
 
-def asignar_conjunto_adicional(db: Session, id_administrador: int, id_conjunto: int) -> None:
+def asignar_conjunto_adicional(db: Session, id_administrador: UUID, id_conjunto: UUID) -> None:
     """HU-024: el Admin Sistema vincula directamente un conjunto sin administrador a un Admin Conjunto existente."""
     administrador = db.get(AdministradorConjunto, id_administrador)
     if not administrador:

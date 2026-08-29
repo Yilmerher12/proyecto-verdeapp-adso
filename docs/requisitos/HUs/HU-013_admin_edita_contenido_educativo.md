@@ -49,6 +49,8 @@
 - **cuando** intento guardar,
 - **entonces** debo ver un mensaje de error.
 
+> **Nota (2026-08-29)**: implementado — mismo schema compartido con HU-012, ya valida el mínimo también al editar.
+
 ### CA-013.4 — Acceso exclusivo de administrador
 
 - **Dado que** no tengo el rol admin_sistema,

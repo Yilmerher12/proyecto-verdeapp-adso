@@ -88,7 +88,7 @@ export function VerifyEmailPage() {
               <div className="mt-6 flex justify-end">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600 rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-white bg-accent-700 hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800 rounded-lg transition-colors"
                 >
                   {t("landing.nav.login")}
                 </Link>
@@ -120,7 +120,7 @@ export function VerifyEmailPage() {
                 </Link>
                 <Link
                   to="/register"
-                  className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 dark:bg-accent-500 dark:hover:bg-accent-600 rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-white bg-accent-700 hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800 rounded-lg transition-colors"
                 >
                   {t("auth.register.submit")}
                 </Link>

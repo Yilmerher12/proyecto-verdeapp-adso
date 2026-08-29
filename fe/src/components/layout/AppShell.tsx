@@ -8,6 +8,8 @@ import {
   LogOut,
   ChevronsLeft,
   ChevronsRight,
+  Menu,
+  X,
   BookOpen,
   MapPin,
   Megaphone,
@@ -16,6 +18,7 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import * as authApi from "@/api/auth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { Modal } from "@/components/ui/Modal";
@@ -39,25 +42,47 @@ export function AppShell({ children }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [noLeidas, setNoLeidas] = useState(0);
-  const { user, logout, accessToken } = useAuth() as any;
+  const { user, accessToken } = useAuth() as any;
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const handleLogout = () => {
-    // ¿Qué? logout() limpia sessionStorage (síncrono), y luego una recarga
-    //       completa de página lleva a "/".
-    // ¿Para qué? Probé navigate("/") + logout() en varios órdenes (incluso
-    //           con delays) y siempre perdían contra ProtectedRoute: aunque
-    //           la URL cambiaba a "/" casi al instante, React todavía no
-    //           había terminado de reemplazar el árbol de componentes (el
-    //           ProtectedRoute de la ruta protegida seguía montado un
-    //           instante más), así que su propio <Navigate to="/login">
-    //           terminaba ganando la carrera sin importar el orden.
-    // ¿Impacto? Con una recarga completa, toda la app arranca de cero — no
-    //           queda ningún componente viejo montado que pueda competir.
-    //           Es la forma más simple de garantizar que esto no vuelva a
-    //           fallar por una condición de carrera similar en el futuro.
-    logout();
+  const handleLogout = async () => {
+    // ¿Qué? Antes esto llamaba a logout() (que además de borrar el token
+    //       actualiza el estado de React con setUser(null)) y LUEGO mandaba
+    //       la recarga completa hacia "/". Ese setUser(null) hacía que React
+    //       volviera a dibujar la pantalla actual (todavía montada sobre una
+    //       ruta protegida) ANTES de que la recarga real terminara — y como
+    //       ProtectedRoute ve la sesión ya vacía, redirigía un instante a
+    //       "/login" (visible como un parpadeo) antes de que la recarga
+    //       hacia el landing reemplazara todo.
+    // ¿Para qué? Como la página completa se va a recargar de inmediato, no
+    //           hace falta tocar el estado de React para nada — solo hay que
+    //           borrar lo mismo que borra clearAuth() en sessionStorage.
+    // ¿Impacto? Sin ningún cambio de estado de React de por medio, no hay
+    //           ningún re-render que alcance a mostrar "/login" de paso.
+
+    // ¿Qué? HU-008/RQF-007 (RN-001): antes de borrar los tokens del
+    //       navegador, se le avisa al servidor que los revoque de verdad.
+    // ¿Para qué? Sin esto, "cerrar sesión" solo borraba los tokens de ESTE
+    //           navegador — el mismo access/refresh token, si alguien los
+    //           hubiera copiado antes, seguía funcionando contra el backend
+    //           hasta que expiraran solos (15 min / 7 días).
+    // ¿Impacto? Se envuelve en try/catch a propósito: si el servidor no
+    //           responde (sin red, caído), el usuario igual debe poder
+    //           salir de su sesión en este navegador — no tiene sentido
+    //           bloquear el logout local por un problema de red.
+    const refreshTokenGuardado = sessionStorage.getItem("refresh_token");
+    if (refreshTokenGuardado) {
+      try {
+        await authApi.logoutUser({ refresh_token: refreshTokenGuardado });
+      } catch {
+        // Falla silenciosa a propósito — ver comentario de arriba.
+      }
+    }
+
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("landing-scroll-y");
     window.location.href = "/";
   };
 
@@ -186,8 +211,32 @@ export function AppShell({ children }: AppShellProps) {
             marca (en claro y oscuro), así que el logo siempre es la versión
             blanca — la de color quedaba pensada para un fondo claro que ya
             no existe aquí. */}
-        <div className={`flex min-w-0 shrink-0 items-center border-b border-white/10 h-16 ${collapsed ? "justify-center px-3" : "px-5"}`}>
+        <div
+          className={`flex min-w-0 shrink-0 items-center justify-between border-b border-white/10 h-16 px-5 ${
+            collapsed ? "sm:justify-center sm:px-3" : ""
+          }`}
+        >
           <img src="/logos/logo-white.png" alt="VerdeApp" className={`${collapsed ? "h-7" : "h-8"} w-auto object-contain`} />
+
+          {/* ¿Qué? Botón para colapsar/expandir la barra lateral, visible
+              solo en celular (el de más abajo, "Alternador de ancho", es
+              solo para escritorio).
+              ¿Para qué? En celular no existía NINGÚN botón para cerrar la
+              barra — el de escritorio está oculto ahí (hidden sm:flex), así
+              que la barra siempre se veía desplegada al 100%, empujando todo
+              el contenido hacia abajo sin forma de navegar cómodo.
+              ¿Impacto? Reutiliza el mismo estado "collapsed": en celular,
+              colapsado = la barra se encoge a solo esta franja del logo
+              (ya que el resto de bloques usan "hidden sm:block" cuando
+              collapsed es true), dejando ver el contenido de inmediato. */}
+          <button
+            type="button"
+            onClick={() => setCollapsed((prev) => !prev)}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-green-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
+            aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
+          >
+            {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+          </button>
         </div>
 
         {/* Tarjeta de perfil */}
@@ -300,7 +349,7 @@ export function AppShell({ children }: AppShellProps) {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+                  className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
                 >
                   {t("appShell.confirmarLogout.confirmar")}
                 </button>
@@ -328,11 +377,15 @@ export function AppShell({ children }: AppShellProps) {
           <button
             onClick={() => navigate(roleMeta.dashboardHref)}
             className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-[#2a4d34] dark:hover:text-gray-200"
-            aria-label={t("appShell.notificaciones")}
+            aria-label={
+              noLeidas > 0
+                ? t("appShell.notificacionesConNoLeidas", { count: noLeidas })
+                : t("appShell.notificaciones")
+            }
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-5 w-5" aria-hidden="true" />
             {noLeidas > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+              <span aria-hidden="true" className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-700 text-[9px] font-bold text-white">
                 {noLeidas > 9 ? "9+" : noLeidas}
               </span>
             )}

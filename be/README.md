@@ -379,70 +379,69 @@ class Base(DeclarativeBase):
 Los modelos ORM son clases Python que representan tablas en la base de datos.
 SQLAlchemy traduce operaciones sobre esas clases a SQL automáticamente.
 
-### 8.1 Tabla `users`
+### 8.1 Tabla `usuarios`
 
 ```python
-# Fragmento pedagógico — app/models/user.py
-class User(Base):
-    __tablename__ = "users"
+# app/models/usuario.py — VerdeApp usa el estilo clásico Column(), no Mapped[]/mapped_column()
+class Usuario(Base):
+    __tablename__ = "usuarios"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    id_usuario = Column(
+        UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7
+        # UUIDv7 (no autoincremental) — un atacante no puede adivinar que existe
+        # otro usuario solo porque vio un id consecutivo en la URL.
     )
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, nullable=False, index=True
-        # unique=True  → no pueden existir dos usuarios con el mismo email
-        # index=True   → búsquedas por email son O(log n) en vez de O(n)
-    )
-    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    id_rol = Column(Integer, ForeignKey("roles.id_rol"), nullable=False)
+    correo_electronico = Column(String(255), unique=True, index=True, nullable=False)
+    password = Column(String(255), nullable=False)
     # ↑ NUNCA almacenamos la contraseña real, solo su hash bcrypt
 
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_active = Column(Boolean, default=True)
+    locale = Column(String(10), nullable=False, default="es", server_default="es")
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-        # onupdate=func.now() → se actualiza automáticamente al modificar el registro
-    )
+    # RN-003/RQF-001 — bloqueo temporal tras intentos fallidos de login
+    intentos_fallidos = Column(Integer, nullable=False, default=0, server_default="0")
+    bloqueado_hasta = Column(DateTime(timezone=True), nullable=True)
 
-    # Relaciones — SQLAlchemy entiende el FK y hace los JOINs automáticamente
-    password_reset_tokens: Mapped[list["PasswordResetToken"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan", lazy="selectin"
-        # cascade="all, delete-orphan" → eliminar usuario elimina sus tokens también
-        # lazy="selectin" → carga los tokens con una query separada pero automática
-    )
+    # Relaciones — Usuario solo guarda credenciales y rol; el nombre, apellidos
+    # y demás datos de perfil viven en la tabla del rol correspondiente
+    rol = relationship("Role", back_populates="usuarios")
+    residente = relationship("Residente", back_populates="usuario", uselist=False)
+    reciclador = relationship("Reciclador", back_populates="usuario", uselist=False)
+    administrador_conjunto = relationship("AdministradorConjunto", back_populates="usuario", uselist=False)
 ```
+
+> **¿Por qué `Usuario` no tiene `nombre`/`apellidos` propios?** Los 4 roles de VerdeApp necesitan
+> campos de perfil distintos (un Reciclador tiene `asociacion`, un Residente tiene `id_unidad`) —
+> en vez de una tabla `usuarios` con columnas que no aplican a todos los roles, cada rol tiene su
+> propia tabla (`residentes`, `recicladores`, `administradores_conjunto`) enlazada 1-a-1 por `id_usuario`.
 
 ### 8.2 Tabla `password_reset_tokens`
 
 ```python
-# Fragmento pedagógico — app/models/password_reset_token.py
+# app/models/password_reset_token.py
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),  # si se elimina el usuario, se elimina el token
-        nullable=False
+    id = Column(UUID(as_uuid=True), primary_key=True, default=generar_uuid7)
+    id_usuario = Column(
+        UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False
+        # ondelete="CASCADE" → si se elimina el usuario, se elimina el token
     )
-    token: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    token = Column(String(255), unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used = Column(Boolean, default=False, nullable=False)
     # used=True → token de un solo uso, no puede volver a usarse
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    user: Mapped["User"] = relationship(back_populates="password_reset_tokens", lazy="selectin")
+    usuario = relationship("Usuario", backref="password_reset_tokens")
 ```
 
 ### 8.3 Tabla `email_verification_tokens`
 
-Estructura idéntica a `password_reset_tokens` pero con `expires_at` de **24 horas** en lugar de 1 hora,
-y ligada al campo `is_email_verified` del usuario.
+Estructura idéntica a `password_reset_tokens` (mismos campos, mismo patrón de un solo uso) pero con
+`expires_at` de **24 horas** en lugar de 1 hora — verificar el correo apura menos que restablecer
+una contraseña olvidada. Al usarse, activa `Usuario.is_active` (ver flujo de registro más abajo).
 
 > **¿Por qué usar UUID como primary key en lugar de INTEGER autoincremental?**
 > Los UUIDs son globalmente únicos — puedes crear registros en múltiples servidores sin
@@ -472,7 +471,7 @@ ORM y con la base de datos:
 ```python
 # Fragmento pedagógico del env.py real
 from app.database import Base
-from app.models import User, PasswordResetToken, EmailVerificationToken  # ← importa modelos
+from app.models import Usuario, PasswordResetToken, EmailVerificationToken  # ← importa modelos
 from app.config import settings
 
 # Sobreescribe la URL de BD con el valor del .env (nunca hardcodeada)
@@ -530,55 +529,62 @@ Datos que ENTRAN (REQUEST)   →  schemas de entrada  →  validan y limpian dat
 Datos que SALEN  (RESPONSE)  →  schemas de salida   →  controlan qué campos se devuelven
 ```
 
-Esta separación es crucial por seguridad: aunque el modelo `User` tiene `hashed_password`,
+Esta separación es crucial por seguridad: aunque el modelo `Usuario` tiene `password` (el hash bcrypt),
 el schema `UserResponse` NO incluye ese campo, por lo que nunca se expone en ninguna respuesta.
 
 ### 10.2 Ejemplo comentado
 
 ```python
-# app/schemas/user.py — Fragmento pedagógico
+# app/schemas/user.py
 
 # Función auxiliar reutilizable para validar fortaleza de contraseña (DRY)
 def _validate_password_strength(v: str) -> str:
     if len(v) < 8:
         raise ValueError("La contraseña debe tener al menos 8 caracteres")
-    if not any(c.isupper() for c in v):
-        raise ValueError("La contraseña debe tener al menos una mayúscula")
-    if not any(c.islower() for c in v):
-        raise ValueError("La contraseña debe tener al menos una minúscula")
-    if not any(c.isdigit() for c in v):
-        raise ValueError("La contraseña debe tener al menos un número")
+    if not re.search(r"[A-Z]", v):
+        raise ValueError("La contraseña debe contener al menos una mayúscula")
+    if not re.search(r"[a-z]", v):
+        raise ValueError("La contraseña debe contener al menos una minúscula")
+    if not re.search(r"\d", v):
+        raise ValueError("La contraseña debe contener al menos un número")
     return v
 
 class UserCreate(BaseModel):
     """Schema de REQUEST para registrar un usuario nuevo."""
-    email: EmailStr         # Pydantic valida el formato de email automáticamente
-    full_name: str
+    rol: Literal["residente", "reciclador"]   # Pydantic rechaza cualquier otro valor con 422
+    correo_electronico: EmailStr              # valida el formato de email automáticamente
     password: str
+    nombre: str
+    apellidos: str
+    numero_telefonico: Optional[str] = "N/A"
+    localidad_id: Optional[int] = None              # solo aplica a reciclador
+    id_conjunto_residencial: Optional[UUID] = None  # solo aplica a residente
+    torre: Optional[str] = None
+    apto: Optional[str] = None
+    asociacion: Optional[str] = None
+
+    @field_validator("apellidos")
+    @classmethod
+    def validate_apellidos_no_vacio(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Los apellidos son obligatorios")
+        return v
 
     @field_validator("password")
     @classmethod
-    def validate_password(cls, v: str) -> str:
+    def validate_password_strength(cls, v: str) -> str:
         return _validate_password_strength(v)
-
-    @field_validator("full_name")
-    @classmethod
-    def validate_full_name(cls, v: str) -> str:
-        v = v.strip()  # elimina espacios al inicio y al final
-        if len(v) < 2:
-            raise ValueError("El nombre completo debe tener al menos 2 caracteres")
-        return v
 
 class UserResponse(BaseModel):
     """Schema de RESPONSE — define qué campos se devuelven al cliente."""
-    id: uuid.UUID
-    email: str
-    full_name: str
+    id: UUID
+    email: EmailStr
+    role_id: int
     is_active: bool
-    is_email_verified: bool
-    created_at: datetime
-    updated_at: datetime
-    # ← hashed_password NO aparece aquí → nunca se expone
+    first_name: str
+    last_name: str
+    locale: Optional[str] = "es"
+    # ← password (el hash) NO aparece aquí → nunca se expone
 
     model_config = ConfigDict(from_attributes=True)
     # from_attributes=True → permite crear este schema desde un objeto SQLAlchemy
@@ -586,18 +592,19 @@ class UserResponse(BaseModel):
 
 ### 10.3 Todos los schemas del proyecto
 
-| Schema                  | Tipo     | Campos principales                                                         |
-| ----------------------- | -------- | -------------------------------------------------------------------------- |
-| `UserCreate`            | Request  | email, full_name, password                                                 |
-| `UserLogin`             | Request  | email, password                                                            |
-| `ChangePasswordRequest` | Request  | current_password, new_password                                             |
-| `ForgotPasswordRequest` | Request  | email                                                                      |
-| `ResetPasswordRequest`  | Request  | token, new_password                                                        |
-| `RefreshTokenRequest`   | Request  | refresh_token                                                              |
-| `VerifyEmailRequest`    | Request  | token                                                                      |
-| `UserResponse`          | Response | id, email, full_name, is_active, is_email_verified, created_at, updated_at |
-| `TokenResponse`         | Response | access_token, refresh_token, token_type                                    |
-| `MessageResponse`       | Response | message                                                                    |
+| Schema                  | Tipo     | Campos principales                                                                |
+| ----------------------- | -------- | ---------------------------------------------------------------------------------- |
+| `UserCreate`            | Request  | rol, correo_electronico, password, nombre, apellidos, ...datos según el rol        |
+| `UserLogin`             | Request  | correo_electronico (o email/username), password                                   |
+| `ChangePasswordRequest` | Request  | current_password, new_password                                                    |
+| `ForgotPasswordRequest` | Request  | email                                                                              |
+| `ResetPasswordRequest`  | Request  | token, new_password                                                                |
+| `RefreshTokenRequest`   | Request  | refresh_token                                                                      |
+| `LogoutRequest`         | Request  | refresh_token (HU-008/RQF-007 — revoca también el refresh token al cerrar sesión)   |
+| `VerifyEmailRequest`    | Request  | token                                                                              |
+| `UserResponse`          | Response | id, email, role_id, is_active, first_name, last_name, locale                       |
+| `TokenResponse`         | Response | access_token, refresh_token, token_type                                           |
+| `MessageResponse`       | Response | message                                                                            |
 
 ---
 
@@ -692,12 +699,15 @@ FastAPI tiene un sistema de **inyección de dependencias** que permite reutiliza
 ```python
 # app/dependencies.py
 
+import uuid
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
+from app.models.token_revocado import TokenRevocado
+from app.models.usuario import Usuario
 from app.utils.security import decode_token
-from app.models.user import User
 
 def get_db():
     """
@@ -710,22 +720,26 @@ def get_db():
     finally:
         db.close()      # siempre se ejecuta, incluso si hay una excepción
 
-# OAuth2PasswordBearer extrae el token del header "Authorization: Bearer <token>"
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+# HTTPBearer extrae el token del header "Authorization: Bearer <token>".
+# Se usa HTTPBearer (no OAuth2PasswordBearer) porque el login de VerdeApp
+# recibe JSON, no form-data — con HTTPBearer, Swagger UI muestra un campo
+# simple para pegar el token directamente.
+http_bearer = HTTPBearer()
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),  # extrae el token del header
-    db: Session = Depends(get_db)         # inyecta la sesión de BD
-) -> User:
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),  # extrae el token del header
+    db: Session = Depends(get_db),                                    # inyecta la sesión de BD
+) -> Usuario:
     """
     Verifica el token JWT y retorna el usuario autenticado.
     Se usa como dependencia en endpoints que requieren autenticación.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Las credenciales no son válidas",
+        detail="No se pudieron validar las credenciales",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    token = credentials.credentials
     payload = decode_token(token)
     if payload is None:
         raise credentials_exception
@@ -734,25 +748,33 @@ def get_current_user(
     if payload.get("type") != "access":
         raise credentials_exception
 
+    # HU-008/RQF-007: rechazar un token cuyo "jti" fue revocado por un
+    # logout previo, aunque su firma y expiración sigan siendo válidas
+    # (ver app/models/token_revocado.py).
+    jti = payload.get("jti")
+    if jti and db.get(TokenRevocado, uuid.UUID(jti)):
+        raise credentials_exception
+
     email: str | None = payload.get("sub")
     if email is None:
         raise credentials_exception
 
-    user = db.query(User).filter(User.email == email).first()
+    stmt = select(Usuario).where(Usuario.correo_electronico == email)
+    user = db.execute(stmt).scalar_one_or_none()
     if user is None:
         raise credentials_exception
 
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Cuenta desactivada")
 
-    return user  # este objeto User llega directo al endpoint como parámetro
+    return user  # este objeto Usuario llega directo al endpoint como parámetro
 ```
 
 **Cómo se usa en un endpoint:**
 
 ```python
 @router.get("/me")
-def get_me(current_user: User = Depends(get_current_user)):
+def get_me(current_user: Usuario = Depends(get_current_user)):
     # FastAPI ejecuta get_current_user() automáticamente antes de llamar esta función
     # Si el token es inválido, FastAPI retorna 401 sin siquiera entrar aquí
     return current_user
@@ -787,102 +809,126 @@ reutilizar funciones entre endpoints, y cambiar el framework web sin tocar la l�
 ### 13.2 Flujo de registro
 
 ```python
-async def register_user(db: Session, user_data: UserCreate) -> User:
-    # Paso 1: Verificar email duplicado
-    existing = db.query(User).filter(User.email == user_data.email).first()
-    if existing:
-        raise HTTPException(400, "El email ya está registrado")
+# Versión simplificada del flujo real (be/app/services/auth_service.py).
+# El código real también crea la fila de perfil (Residente o Reciclador)
+# según user_data.rol — Usuario solo guarda los campos de autenticación
+# (correo, contraseña, rol); nombre/apellidos viven en esas tablas aparte.
+async def register_user(db: Session, user_data: UserCreate) -> Usuario:
+    # Paso 1: Verificar correo duplicado
+    stmt = select(Usuario).where(Usuario.correo_electronico == user_data.correo_electronico)
+    existing_user = db.execute(stmt).scalar_one_or_none()
+    if existing_user:
+        raise HTTPException(400, "El correo ya está registrado.")
 
-    # Paso 2: Crear usuario con contraseña hasheada
-    user = User(
-        email=user_data.email,
-        full_name=user_data.full_name,
-        hashed_password=hash_password(user_data.password)  # ← NUNCA texto plano
+    # Paso 2: Crear usuario INACTIVO con contraseña hasheada
+    nuevo_usuario = Usuario(
+        correo_electronico=user_data.correo_electronico,
+        id_rol=role_id_mapped,                              # RESIDENTE o RECICLADOR
+        password=hash_password(user_data.password),         # ← NUNCA texto plano
+        is_active=False,                                    # se activa al verificar el correo
     )
-    db.add(user)
+    db.add(nuevo_usuario)
     db.flush()  # asigna el id sin hacer commit (aún dentro de la transacción)
 
+    # (aquí el código real crea la fila de Residente o Reciclador correspondiente)
+
+    db.commit()
+
     # Paso 3: Generar token de verificación de email
-    verification_token = EmailVerificationToken(
-        user_id=user.id,
-        token=str(uuid.uuid4()),
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=24)
+    token_verificacion = str(uuid.uuid4())
+    db_token_verif = EmailVerificationToken(
+        id_usuario=nuevo_usuario.id_usuario,
+        token=token_verificacion,
+        expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+        used=False,
     )
-    db.add(verification_token)
+    db.add(db_token_verif)
     db.commit()
 
     # Paso 4: Enviar email de verificación (no bloqueante — si falla, el usuario igual se crea)
-    await send_verification_email(user.email, verification_token.token)
+    try:
+        await send_verification_email(email=nuevo_usuario.correo_electronico, token=token_verificacion)
+    except Exception:
+        logger.warning("Registro completado, pero el correo no se pudo despachar", exc_info=True)
 
-    return user
+    return nuevo_usuario
 ```
 
 ### 13.3 Flujo de login
 
 ```python
+# Versión simplificada del flujo real (be/app/services/auth_service.py).
+# El código real, además, bloquea la cuenta 15 min tras 5 fallos seguidos
+# (RN-003/RQF-001) y siempre corre verify_password() — incluso si el
+# usuario no existe, contra un hash señuelo — para que ambas ramas
+# tarden lo mismo y no revelen por temporización qué correos existen.
 def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
-    # Busca el usuario por email
-    user = db.query(User).filter(User.email == login_data.email).first()
+    stmt = select(Usuario).where(Usuario.correo_electronico == login_data.correo_electronico)
+    user = db.execute(stmt).scalar_one_or_none()
 
-    # SEGURIDAD: mensaje genérico — no revela si el email existe o no (anti-enumeración)
-    if not user or not verify_password(login_data.password, user.hashed_password):
-        log_login_failed(login_data.email, "invalid_credentials")
-        raise HTTPException(401, "Las credenciales no son correctas")
+    # SEGURIDAD: mensaje genérico — no revela si el correo existe o no (anti-enumeración)
+    password_hash = user.password if user else DUMMY_PASSWORD_HASH
+    if not user or not verify_password(login_data.password, password_hash):
+        log_login_fallido(login_data.correo_electronico, "credenciales_invalidas")
+        raise HTTPException(401, "Credenciales incorrectas")
 
     if not user.is_active:
-        log_login_failed(login_data.email, "account_inactive")
-        raise HTTPException(403, "Cuenta desactivada")
+        log_login_fallido(login_data.correo_electronico, "cuenta_no_verificada")
+        raise HTTPException(403, "Tu cuenta no ha sido verificada aún.")
 
-    if not user.is_email_verified:
-        raise HTTPException(403, "Debes verificar tu email antes de iniciar sesión")
+    log_login_exitoso(login_data.correo_electronico)
 
-    log_login_success(user.email)
-
-    return TokenResponse(
-        access_token=create_access_token({"sub": user.email}),
-        refresh_token=create_refresh_token({"sub": user.email}),
-        token_type="bearer"
-    )
+    access_token = create_access_token({"sub": user.correo_electronico, "role_id": user.id_rol})
+    refresh_token = create_refresh_token({"sub": user.correo_electronico, "role_id": user.id_rol})
+    return TokenResponse(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 ```
 
 ### 13.4 Flujo de recuperación de contraseña
 
 ```python
+# Versión simplificada del flujo real (be/app/services/auth_service.py).
+
 # PASO 1 — Solicitar recuperación
-async def request_password_reset(db: Session, email: str) -> None:
-    user = db.query(User).filter(User.email == email).first()
+async def request_password_reset(db: Session, email: str) -> bool:
+    user = db.query(Usuario).filter(Usuario.correo_electronico == email).first()
 
-    # SEGURIDAD: retorna silenciosamente aunque el email no exista
-    # Así el atacante no puede saber qué emails están registrados en el sistema
+    # SEGURIDAD: retorna silenciosamente aunque el correo no exista
+    # Así el atacante no puede saber qué correos están registrados en el sistema
     if not user:
-        return
+        return True
 
-    reset_token = PasswordResetToken(
-        user_id=user.id,
+    db_token = PasswordResetToken(
+        id_usuario=user.id_usuario,
         token=str(uuid.uuid4()),              # 122 bits de entropía — imposible de adivinar
-        expires_at=datetime.now(timezone.utc) + timedelta(hours=1)
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        used=False,
     )
-    db.add(reset_token)
+    db.add(db_token)
     db.commit()
-    await send_password_reset_email(user.email, reset_token.token)
+    await send_password_reset_email(email=user.correo_electronico, token=db_token.token)
+    return True
 
 # PASO 2 — Restablecer contraseña con el token
-def reset_password(db: Session, reset_data: ResetPasswordRequest) -> None:
-    token_record = db.query(PasswordResetToken).filter(
-        PasswordResetToken.token == reset_data.token
+def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
+    # El filtro "used.is_(False)" ya excluye tokens usados — por eso un
+    # token inválido Y uno ya usado comparten el mismo mensaje de error:
+    # el atacante no gana información distinguiendo un caso del otro.
+    db_token = db.query(PasswordResetToken).filter(
+        PasswordResetToken.token == reset_data.token,
+        PasswordResetToken.used.is_(False),
     ).first()
+    if not db_token:
+        raise HTTPException(400, "El token es inválido o ya fue utilizado anteriormente.")
+    if db_token.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(400, "El token de recuperación ha expirado.")
 
-    if not token_record:
-        raise HTTPException(400, "Token inválido o no encontrado")
-    if token_record.used:
-        raise HTTPException(400, "Este token ya fue utilizado")
-    if token_record.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(400, "El token ha expirado")
+    user = db.query(Usuario).filter(Usuario.id_usuario == db_token.id_usuario).first()
 
     # Actualizar contraseña y marcar token como usado
-    token_record.user.hashed_password = hash_password(reset_data.new_password)
-    token_record.used = True
+    user.password = hash_password(reset_data.new_password)
+    db_token.used = True
     db.commit()
+    return True
 ```
 
 ---
@@ -921,12 +967,20 @@ def login(request: Request, login_data: UserLogin, db: Session = Depends(get_db)
 @router.post("/change-password", response_model=MessageResponse)
 def change_password(
     password_data: ChangePasswordRequest,
+    current_user: Usuario = Depends(get_current_user),  # ← requiere JWT válido
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # ← requiere JWT válido
 ):
-    """Cambia la contraseña (usuario debe estar autenticado)."""
-    auth_service.change_password(db, current_user, password_data)
-    return {"message": "Contraseña actualizada correctamente"}
+    """Cambia la contraseña (usuario debe estar autenticado). A diferencia de
+    register/login/refresh, esta lógica vive en el propio router — es corta
+    y no la reutiliza ningún otro endpoint, así que no ameritaba un service."""
+    if not verify_password(password_data.current_password, current_user.password):
+        raise HTTPException(400, "La contraseña actual ingresada es incorrecta.")
+
+    current_user.password = hash_password(password_data.new_password)
+    db.commit()
+
+    log_password_cambiada(current_user.correo_electronico)
+    return MessageResponse(message="Contraseña actualizada exitosamente")
 ```
 
 ### 14.2 Tabla completa de endpoints
@@ -937,6 +991,7 @@ def change_password(
 | POST   | `/api/v1/auth/login`           | No   | 10/min     | Iniciar sesión                 |
 | POST   | `/api/v1/auth/refresh`         | No\* | —          | Renovar access token           |
 | POST   | `/api/v1/auth/change-password` | Sí   | —          | Cambiar contraseña             |
+| POST   | `/api/v1/auth/logout`          | Sí   | —          | Cerrar sesión — revoca access y refresh token (HU-008/RQF-007) |
 | POST   | `/api/v1/auth/forgot-password` | No   | 5/min      | Solicitar recuperación         |
 | POST   | `/api/v1/auth/reset-password`  | No\* | —          | Restablecer contraseña         |
 | POST   | `/api/v1/auth/verify-email`    | No\* | —          | Verificar email                |
@@ -944,6 +999,28 @@ def change_password(
 | GET    | `/api/v1/health`               | No   | —          | Verificar que la API está viva |
 
 (\*) Requieren un token especial (refresh o verificación), pero no el access token estándar.
+
+### 14.3 Otros routers del dominio (resumen)
+
+Las tablas anteriores solo cubrían `auth.py` y `users.py` — el backend real
+tiene 10 routers más, todos del dominio de reciclaje. En vez de repetir el
+fragmento pedagógico completo para cada uno (ver directamente el código,
+cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
+
+| Router                     | Prefijo                        | Endpoints | Propósito                                                                          |
+| --------------------------- | ------------------------------- | :-------: | ----------------------------------------------------------------------------------- |
+| `geography.py`              | `/api/v1/geography`             |     6     | Localidades, conjuntos y unidades para llenar formularios dinámicos (registro, filtros) |
+| `admin.py`                  | `/api/v1/admin`                 |     2     | Panel exclusivo del Admin del Sistema — vista SQL y procedimiento almacenado (Criterios 6 y 7) |
+| `admin_conjunto.py`         | `/api/v1/admin-conjunto`        |     7     | Invitación, desvinculación y reasignación de Administradores de Conjunto (RQF-016) |
+| `conjunto_panel.py`         | `/api/v1/conjunto-panel`        |     3     | Panel propio del Admin de Conjunto — solo ve/edita SUS conjuntos, nunca los de otro |
+| `reciclador_conjunto.py`    | `/api/v1/reciclador-conjunto`   |     5     | Invitar, listar, aceptar/rechazar la relación Reciclador↔Conjunto                  |
+| `directorio.py`             | `/api/v1/directorio`            |     2     | Directorio público de recicladores y puntos de acopio                              |
+| `notificaciones.py`         | `/api/v1/notificaciones`        |     7     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, etc.)      |
+| `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     4     | Catálogo de contenido educativo — lectura para todos, gestión solo Admin Sistema (RQF-004/010) |
+| `comunicados.py`            | `/api/v1/comunicados`           |     5     | Comunicados del conjunto — publica Admin de Conjunto, ven Residente/Reciclador (RQF-014) |
+| `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
+
+Todos estos routers están cubiertos por tests en `app/tests/` (ver sección 17).
 
 ---
 
@@ -1035,84 +1112,99 @@ async def login(request: Request, ...):
 ### 15.3 `audit_log.py` — Registro de eventos de seguridad
 
 ```python
-# app/utils/audit_log.py — Fragmento pedagógico
+# app/utils/audit_log.py
 import logging
 import json
+from datetime import datetime, timezone
 
-# Logger dedicado solo para eventos de seguridad
 audit_logger = logging.getLogger("security.audit")
 
-def log_login_failed(email: str, reason: str, ip: str | None = None) -> None:
-    # Solo logueamos el dominio del email (no el usuario) para proteger privacidad
-    domain = email.split("@")[-1] if "@" in email else "unknown"
+def _redactar_correo(correo: str) -> str:
+    # "residente@correo.com" → "re***@correo.com" — deja lo suficiente para
+    # diagnosticar sin exponer el correo completo si el log se filtra
+    usuario, _, dominio = correo.partition("@")
+    return f"{usuario[:2]}***@{dominio}" if dominio else "***"
+
+def log_login_fallido(correo: str, motivo: str) -> None:
     audit_logger.warning(json.dumps({
-        "event": "LOGIN_FAILED",
-        "email_domain": domain,    # ← no el email completo
-        "reason": reason,          # "invalid_credentials" o "account_inactive"
-        "ip": ip,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event": "login_failed",
+        "email": _redactar_correo(correo),
+        "reason": motivo,   # "credenciales_invalidas", "cuenta_no_verificada" o "cuenta_bloqueada"
     }))
-    # NEVER: reason="email_not_found" vs "wrong_password" ← permite enumeración de usuarios
+    # NUNCA un "reason" distinto para "correo no existe" vs "contraseña incorrecta"
+    # — el mensaje HTTP ya es genérico (RN-002 de RQF-001); el log tampoco debe distinguirlos.
+
+def log_login_exitoso(correo: str) -> None: ...
+def log_password_cambiada(correo: str) -> None: ...
+def log_acceso_denegado(correo: str, endpoint: str, motivo: str) -> None: ...
 ```
 
-> **¿Por qué no loguear el email completo?**
+> **¿Por qué redactar el correo en vez de omitirlo del todo?**
 > Los logs suelen almacenarse en servicios de terceros (Datadog, Splunk). Si un atacante
-> accede a los logs, obtendría una lista de todos los emails que intentaron hacer login.
-> Loguear solo el dominio (`@gmail.com`) es suficiente para detectar patrones de ataque
-> sin exponer datos personales. Esto implementa **OWASP A09 — Security Logging Failures**.
+> accede a los logs, no debe poder leer el correo completo de nadie — pero un correo del
+> todo irreconocible tampoco sirve para diagnosticar un ataque dirigido a una cuenta
+> específica. La redacción parcial (`re***@correo.com`) es el punto medio: suficiente
+> para correlacionar eventos, insuficiente para identificar a la persona con certeza.
+> Esto implementa **OWASP A09 — Security Logging Failures** (ver `docs/conceptos/owasp-top-10.md`).
 
 ---
 
 ## 16. Punto de entrada (`main.py`)
 
 ```python
-# app/main.py — Fragmento pedagógico
+# app/main.py — versión condensada (el real registra 12 routers + sirve /uploads)
 
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from app.config import settings
 from app.utils.limiter import limiter
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Se ejecuta al arrancar y al apagar la aplicación."""
-    print("✅ VerdeApp iniciando...")
-    yield  # ← aquí corre la app
-    print("🛑 VerdeApp cerrando...")
-
-# En producción, desactiva Swagger UI (/docs) y ReDoc (/redoc)
-# Un atacante no debería ver la documentación de tu API en producción (OWASP A05)
+# En producción, desactiva Swagger UI (/docs), ReDoc (/redoc) y el propio
+# /openapi.json — un atacante no debería ver la documentación de la API
+# en producción (OWASP A05).
+_es_produccion = settings.ENVIRONMENT == "production"
 app = FastAPI(
-    title="VerdeApp",
-    docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
-    redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None,
-    lifespan=lifespan,
+    title="VerdeApp API",
+    docs_url=None if _es_produccion else "/docs",
+    redoc_url=None if _es_produccion else "/redoc",
+    openapi_url=None if _es_produccion else "/openapi.json",
 )
 
-# Rate limiter global
+# CORS — lista explícita de orígenes permitidos, NUNCA ["*"]. Mientras el
+# proyecto corre 100% local basta con los puertos de Vite; al desplegar a
+# un servidor real, se agrega ahí la URL real del frontend.
+ALLOWED_ORIGINS = [
+    "http://localhost:5173", "http://127.0.0.1:5173",
+    "http://localhost:3000", "http://127.0.0.1:3000",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Rate limiter global — sin estas 2 líneas, superar el límite de un router
+# se propagaba como un 500 sin manejar en vez de un 429 limpio (OWASP A04).
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS — solo permite peticiones desde el frontend (no desde cualquier origen)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],    # ← NUNCA ["*"] en producción
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],            # solo los métodos que usamos
-    allow_headers=["Content-Type", "Authorization"],
-)
-
-# Headers de seguridad HTTP (middleware personalizado)
+# Cabeceras de seguridad HTTP en TODA respuesta (OWASP A05)
 @app.middleware("http")
-async def add_security_headers(request, call_next):
+async def agregar_cabeceras_seguridad(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    del response.headers["server"]  # no revelar qué tecnología usamos (fingerprinting)
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     return response
+
+app.include_router(auth.router)
+# ...9 routers más — cada uno del dominio de reciclaje (ver sección 14.3)
 ```
 
 ---

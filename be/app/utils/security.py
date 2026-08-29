@@ -14,6 +14,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.config import settings
+from app.utils.ids import generar_uuid7
 
 # ¿Qué? Contexto de hashing de contraseñas usando bcrypt.
 # ¿Para qué? Proveer una interfaz unificada para hashear y verificar contraseñas.
@@ -22,6 +23,19 @@ from app.config import settings
 # ¿Impacto? deprecated="auto" indica que si en el futuro se cambia el algoritmo,
 #           los hashes antiguos seguirán siendo verificables (migración gradual).
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# ¿Qué? Un hash bcrypt válido de una contraseña que nadie usa — no corresponde
+#       a ninguna cuenta real.
+# ¿Para qué? OWASP A07 — mitigar un ataque de temporización (timing attack)
+#           en el login. Si el código solo llama a verify_password() cuando
+#           el usuario SÍ existe, la rama "usuario no existe" responde casi
+#           al instante, mientras que "contraseña incorrecta" tarda lo que
+#           tarda bcrypt (decenas de milisegundos). Un atacante puede medir
+#           esa diferencia y así descubrir qué correos SÍ están registrados,
+#           aunque el mensaje de error sea idéntico en ambos casos.
+# ¿Impacto? auth_service.login_user() compara siempre contra un hash real
+#           (este, si el usuario no existe) — las dos ramas tardan lo mismo.
+DUMMY_PASSWORD_HASH = pwd_context.hash("no-corresponde-a-ninguna-cuenta-real")
 
 
 def hash_password(password: str) -> str:
@@ -86,7 +100,14 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     # ¿Qué? "exp" es un claim estándar de JWT que indica cuándo expira el token.
     # ¿Para qué? El servidor rechaza automáticamente tokens expirados al decodificar.
     # ¿Impacto? Sin expiración, un token robado sería válido para siempre.
-    to_encode.update({"exp": expire, "type": "access"})
+    # ¿Qué? "jti" (JWT ID) es un identificador único para ESTE token puntual.
+    # ¿Para qué? HU-008/RQF-007: al cerrar sesión, el servidor necesita poder
+    #           señalar "este token específico ya no sirve" sin afectar otros
+    #           tokens del mismo usuario (ver app/models/token_revocado.py).
+    # ¿Impacto? Sin un identificador propio, no habría forma de invalidar un
+    #           JWT antes de su expiración natural — es información que no
+    #           existe en ningún otro campo del payload.
+    to_encode.update({"exp": expire, "type": "access", "jti": str(generar_uuid7())})
     encoded_jwt = jwt.encode(
         to_encode,
         settings.SECRET_KEY,
@@ -124,7 +145,11 @@ def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> 
     # ¿Para qué? Evitar que un refresh token sea usado como access token y viceversa.
     # ¿Impacto? Sin esta distinción, un refresh token podría usarse para acceder a endpoints
     #           protegidos, anulando el propósito de tener tokens de corta duración.
-    to_encode.update({"exp": expire, "type": "refresh"})
+    # ¿Qué? "jti" propio, igual que en create_access_token.
+    # ¿Para qué? Al cerrar sesión también se revoca el refresh token — sin su
+    #           propio jti, alguien con el refresh token viejo podría seguir
+    #           pidiendo access tokens nuevos después del logout.
+    to_encode.update({"exp": expire, "type": "refresh", "jti": str(generar_uuid7())})
     encoded_jwt = jwt.encode(
         to_encode,
         settings.SECRET_KEY,

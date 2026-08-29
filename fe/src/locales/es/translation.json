@@ -1,4 +1,7 @@
 {
+  "serverError": {
+    "message": "No se pudo conectar con el servidor. Verifica tu conexión — reintentaremos automáticamente."
+  },
   "appShell": {
     "ariaLabel": "Navegación VerdeApp",
     "nav": {
@@ -16,6 +19,7 @@
     },
     "proximamente": "Pronto",
     "notificaciones": "Notificaciones",
+    "notificacionesConNoLeidas": "Notificaciones, {{count}} sin leer",
     "expandirMenu": "Expandir menú",
     "colapsarMenu": "Colapsar menú",
     "cerrarSesion": "Cerrar sesión",
@@ -41,6 +45,8 @@
   },
   "common": {
     "loading": "Cargando...",
+    "loadError": "No se pudo cargar la información. Intenta de nuevo más tarde.",
+    "actionError": "No se pudo completar la acción. Inténtalo de nuevo.",
     "email": "Correo electrónico",
     "emailPlaceholder": "correo@ejemplo.com",
     "password": "Contraseña",
@@ -65,7 +71,8 @@
       "noAccount": "¿No tienes cuenta aún?",
       "createAccountLink": "Regístrate aquí",
       "submit": "Iniciar Sesión",
-      "errorDefault": "Credenciales incorrectas. Verifica tu correo y contraseña."
+      "errorDefault": "Credenciales incorrectas. Verifica tu correo y contraseña.",
+      "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión."
     },
     "register": {
       "title": "Crea tu cuenta",
@@ -108,6 +115,8 @@
         "locality": "Localidad",
         "selectPlaceholder": "Selecciona...",
         "conjunto": "Conjunto Residencial",
+        "conjuntoSearchPlaceholder": "Escribe el nombre de tu conjunto...",
+        "conjuntoNoResults": "No se encontró ningún conjunto con ese nombre.",
         "unitType": "Tipo Unidad",
         "unitTypeTower": "Torre",
         "unitTypeInterior": "Interior",
@@ -221,6 +230,7 @@
     "en": "English"
   },
   "legal": {
+    "navAriaLabel": "Navegación de páginas legales",
     "backToHome": "Volver al inicio",
     "footerCredit": "Proyecto educativo SENA",
     "terms": {
@@ -236,7 +246,7 @@
       "s2": {
         "heading": "Registro y Cuenta de Usuario",
         "p1": "Para acceder a las funcionalidades del Servicio, el usuario debe crear una cuenta proporcionando los siguientes datos: nombre completo, dirección de correo electrónico y contraseña. El usuario declara que los datos suministrados son verídicos, completos y actualizados.",
-        "p2": "El usuario es responsable de mantener la confidencialidad de sus credenciales de acceso. Cualquier uso de la cuenta con las credenciales del usuario es de su exclusiva responsabilidad. En caso de uso no autorizado, el usuario debe notificarlo inmediatamente a {{email}}.",
+        "p2": "El usuario es responsable de mantener la confidencialidad de sus credenciales de acceso. Cualquier uso de la cuenta con las credenciales del usuario es de su exclusiva responsabilidad. En caso de uso no autorizado, el usuario debe notificarlo inmediatamente a través de nuestro <contactoLink>formulario de contacto</contactoLink>.",
         "p3": "El registro implica la verificación del correo electrónico mediante un enlace enviado al correo registrado. Mientras la cuenta no sea verificada, el acceso a funcionalidades protegidas estará restringido."
       },
       "s3": {
@@ -275,9 +285,8 @@
       },
       "s9": {
         "heading": "Contacto",
-        "intro": "Para cualquier consulta, reclamación o ejercicio de derechos relacionados con estos Términos, puede comunicarse con el operador a través de:",
+        "intro": "Para cualquier consulta, reclamación o ejercicio de derechos relacionados con estos Términos, puede comunicarse con el operador a través de nuestro <contactoLink>formulario de contacto</contactoLink>. Los datos de identificación del operador son:",
         "companyLabel": "VerdeApp — Proyecto ADSO SENA:",
-        "emailLabel": "Correo electrónico:",
         "domicilioLabel": "Domicilio:"
       }
     },
@@ -292,6 +301,7 @@
         "nitLabel": "NIT:",
         "domicilioLabel": "Domicilio:",
         "contactLabel": "Canal de atención — datos personales:",
+        "contactValue": "Formulario de contacto",
         "phoneLabel": "Teléfono:"
       },
       "s2": {
@@ -329,7 +339,7 @@
         "li4": "<strong>Revocar la autorización</strong> para el tratamiento de sus datos, en los términos del artículo 9 de la Ley 1581/2012.",
         "li5": "<strong>Acceder gratuitamente</strong> a sus datos personales que hayan sido objeto de tratamiento (al menos una vez por mes calendario, o cada vez que existan modificaciones sustanciales).",
         "li6": "<strong>Presentar quejas</strong> ante la SIC por infracción a la Ley 1581/2012 y las normas concordantes (previa presentación de consulta/reclamo al Responsable).",
-        "procedure": "Para ejercer estos derechos, el titular debe remitir solicitud escrita al correo <emailLink>{{email}}</emailLink> indicando: nombre completo, documento de identidad, descripción clara de la solicitud y, en su caso, documentos que la acrediten.",
+        "procedure": "Para ejercer estos derechos, el titular debe remitir su solicitud a través de nuestro <emailLink>formulario de contacto</emailLink> indicando: nombre completo, documento de identidad, descripción clara de la solicitud y, en su caso, documentos que la acrediten.",
         "timeframe": "El Responsable atenderá la solicitud en un plazo máximo de <strong>10 días hábiles</strong> (consultas, Art. 14 Ley 1581/2012) o <strong>15 días hábiles</strong> (reclamos, Art. 15 Ley 1581/2012), prorrogables por igual término en casos justificados."
       },
       "s6": {
@@ -373,7 +383,7 @@
         "heading": "Vigencia y Modificaciones",
         "p1": "Esta política entra en vigencia el <strong>1 de febrero de 2026</strong>. El Responsable se reserva el derecho de actualizarla cuando sea necesario para adaptarse a cambios normativos o en el Servicio.",
         "p2": "Toda modificación será publicada en esta misma página y comunicada al titular mediante correo electrónico con al menos <strong>10 días hábiles de antelación</strong>. El uso continuado del Servicio tras la publicación implica la aceptación de los cambios.",
-        "p3": "Para consultas sobre esta Política, contáctenos en: <emailLink>{{email}}</emailLink>."
+        "p3": "Para consultas sobre esta Política, contáctenos a través de nuestro <emailLink>formulario de contacto</emailLink>."
       }
     },
     "cookies": {
@@ -454,11 +464,12 @@
       "s8": {
         "heading": "Actualización de esta Política",
         "p1": "Esta política puede ser actualizada para reflejar cambios técnicos en el Servicio o adaptaciones normativas. La fecha de «última actualización» al inicio del documento indica la versión vigente.",
-        "p2": "Para consultas sobre el uso de cookies en el Servicio, puede contactarnos en: <emailLink>legal@verdeapp.edu.co</emailLink>."
+        "p2": "Para consultas sobre el uso de cookies en el Servicio, puede contactarnos a través de nuestro <emailLink>formulario de contacto</emailLink>."
       }
     }
   },
   "landing": {
+    "backToTop": "Volver arriba",
     "nav": {
       "homeAriaLabel": "VerdeApp — inicio",
       "login": "Iniciar sesión",
@@ -514,6 +525,29 @@
       "rights": "© {{year}} VerdeApp. Todos los derechos reservados.",
       "legalAriaLabel": "Aviso legal"
     }
+  },
+  "contactoModal": {
+    "title": "Contáctanos",
+    "subtitle": "¿Tienes dudas sobre VerdeApp, problemas con tu cuenta o quieres proponer una alianza? Déjanos tu mensaje.",
+    "successMessage": "¡Mensaje enviado con éxito! Te responderemos pronto a tu correo electrónico.",
+    "name": {
+      "label": "Nombre completo",
+      "placeholder": "Ej. Juan Pérez"
+    },
+    "email": {
+      "label": "Correo electrónico",
+      "placeholder": "juan@ejemplo.com"
+    },
+    "subject": {
+      "label": "Asunto",
+      "placeholder": "¿En qué podemos ayudarte?"
+    },
+    "message": {
+      "label": "Mensaje",
+      "placeholder": "Escribe tu mensaje aquí..."
+    },
+    "incomplete": "Completa todos los campos",
+    "submit": "Enviar Mensaje"
   },
   "contact": {
     "nav": {
@@ -603,9 +637,21 @@
         "hide": "Ocultar"
       },
       "loadingData": "Cargando datos...",
+      "usersSection": {
+        "title": "Usuarios registrados",
+        "tabs": {
+          "residentes": "Residentes",
+          "recicladores": "Recicladores",
+          "administradores": "Admins. de Conjunto"
+        },
+        "searchPlaceholder": "Buscar por nombre o correo...",
+        "pagination": {
+          "showing": "Mostrando {{from}}–{{to}} de {{total}}",
+          "prev": "Página anterior",
+          "next": "Página siguiente"
+        }
+      },
       "residentsTable": {
-        "title": "Listado de Residentes",
-        "badge": "Vista SQL",
         "headers": {
           "email": "Correo",
           "name": "Nombre",
@@ -616,14 +662,21 @@
         "empty": "No hay residentes registrados todavía."
       },
       "recyclersTable": {
-        "title": "Listado de Recicladores",
-        "badge": "Procedimiento Almacenado",
         "headers": {
           "email": "Correo",
           "fullName": "Nombre completo",
           "association": "Asociación"
         },
         "empty": "No hay recicladores registrados todavía."
+      },
+      "adminsTable": {
+        "headers": {
+          "email": "Correo",
+          "name": "Nombre",
+          "phone": "Teléfono",
+          "conjuntos": "Conjuntos"
+        },
+        "empty": "No hay administradores de conjunto registrados todavía."
       }
     },
     "adminConjunto": {
@@ -634,14 +687,18 @@
         "rechazada": "Rechazada"
       },
       "recyclersSection": {
-        "title": "Recicladores Autorizados",
+        "title": "Recicladores",
         "invite": "+ Invitar reciclador",
         "emailPlaceholder": "correo.del.reciclador@ejemplo.com",
         "sending": "Enviando...",
         "inviteButton": "Invitar",
         "errorDefault": "No se pudo enviar la invitación. Verifica el correo.",
-        "loading": "Cargando recicladores...",
-        "empty": "Todavía no has invitado a ningún reciclador a este conjunto."
+        "authorizedTitle": "Autorizados",
+        "authorizedLoading": "Cargando recicladores autorizados...",
+        "authorizedEmpty": "Todavía no tienes ningún reciclador autorizado en este conjunto.",
+        "invitationsTitle": "Invitaciones enviadas",
+        "loading": "Cargando invitaciones...",
+        "empty": "Todavía no has enviado ninguna invitación."
       },
       "myConjuntos": {
         "title": "Conjuntos que administras",
@@ -695,6 +752,40 @@
         "subtitle": "Selecciona el conjunto al que llegaste o sobre el que quieres avisar.",
         "sending": "Enviando...",
         "submit": "Enviar aviso"
+      },
+      "auditoria": {
+        "bannerTitle": "Auditoría semanal pendiente",
+        "bannerSubtitle": "Ya puedes calificar la separación de residuos de {{conjunto}}.",
+        "bannerAction": "Auditar ahora",
+        "modalTitle": "Auditar conjunto",
+        "modalSubtitle": "Califica cómo está separando el material reciclable este conjunto — la calificación queda respaldada con una foto.",
+        "conjuntoLabel": "Conjunto",
+        "nivelLabel": "Nivel de desempeño",
+        "niveles": {
+          "excelente": "Bueno",
+          "buena": "Bueno",
+          "regular": "Regular",
+          "deficiente": "Malo"
+        },
+        "temaLabel": "Tema relacionado",
+        "temaPlaceholder": "Selecciona un tema...",
+        "descripcionLabel": "Descripción (opcional)",
+        "descripcionPlaceholder": "Cuéntanos qué encontraste...",
+        "evidenciaLabel": "Fotos de evidencia",
+        "evidenciaHint": "JPG, PNG o WEBP — máximo 5 MB cada una.",
+        "evidenciaAgregarOtra": "Agregar otra foto",
+        "evidenciaMaximoAlcanzado": "Ya adjuntaste el máximo de 3 fotos.",
+        "evidenciaQuitar": "Quitar esta foto",
+        "submit": "Enviar auditoría",
+        "sending": "Enviando...",
+        "successMessage": "Auditoría enviada.",
+        "errorDefault": "No se pudo enviar la auditoría.",
+        "validation": {
+          "conjunto": "Selecciona un conjunto.",
+          "nivel": "Selecciona un nivel de desempeño.",
+          "tema": "Selecciona un tema.",
+          "evidencia": "Sube al menos una foto de evidencia."
+        }
       }
     },
     "residente": {
@@ -718,6 +809,7 @@
   },
   "notificationFeed": {
     "platformLabel": "VerdeApp",
+    "markReadHint": "Presiona para marcar como leída",
     "markAllRead": "Marcar leídas",
     "clearRead": "Limpiar leídas",
     "showLess": "Ver menos",
@@ -728,6 +820,19 @@
       "hoursAgo": "hace {{count}}h",
       "daysAgo": "hace {{count}}d"
     }
+  },
+  "auditoriaResultado": {
+    "bannerTitle": "Nueva auditoría de tu conjunto",
+    "verButton": "Ver",
+    "modalTitle": "Resultado de la auditoría",
+    "temaLabel": "Tema relacionado",
+    "descripcionLabel": "Descripción",
+    "auditadoPor": "Auditado por {{nombre}}",
+    "evidenciaAlt": "Foto de evidencia de la auditoría",
+    "evidenciaAmpliar": "Ver foto en tamaño completo",
+    "errorLoad": "No se pudo cargar la auditoría.",
+    "historialTitle": "Historial de auditorías",
+    "historialEmpty": "Todavía no hay auditorías registradas."
   },
   "profile": {
     "title": "Mi perfil",
@@ -742,7 +847,12 @@
       "baseLocality": "Localidad base",
       "association": "Asociación",
       "firstName": "Nombre",
-      "lastName": "Apellidos"
+      "lastName": "Apellidos",
+      "directoryVisibility": "Visibilidad del teléfono",
+      "directoryVisibilityOn": "Visible",
+      "directoryVisibilityOff": "No visible",
+      "directoryConsent": "Permitir que otros usuarios vean mi número",
+      "directoryConsentHint": "Residentes de toda la ciudad podrán llamarte o escribirte por WhatsApp directamente, no solo los de tu conjunto."
     },
     "managedConjuntoSingular": "Conjunto que administras",
     "managedConjuntoPlural": "Conjuntos que administras",
@@ -769,7 +879,21 @@
     "emptyRecyclers": "No hay recicladores registrados en esta localidad.",
     "emptyPoints": "No hay puntos de acopio registrados en esta localidad.",
     "call": "Llamar",
-    "noPhone": "Sin teléfono registrado"
+    "noPhone": "Sin teléfono registrado",
+    "copyAddress": "Copiar dirección",
+    "infoRecicladores": {
+      "titulo": "¿Qué es este directorio?",
+      "descripcion": "Recicladores de oficio registrados en VerdeApp, organizados por localidad.",
+      "paraQueSirve": "Si tu conjunto todavía no tiene un reciclador asignado, aquí puedes conocer quién opera en tu zona — compártelo con tu administrador para invitarlo, o contáctalo directamente para coordinar una recolección puntual.",
+      "fuenteTexto": "Directorio propio de VerdeApp — no es un dato externo."
+    },
+    "infoPuntos": {
+      "titulo": "¿Qué es una ECA?",
+      "descripcion": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen en sus rutas.",
+      "paraQueSirve": "Si necesitas entregar materiales reciclables por tu cuenta, aquí puedes ubicar el punto más cercano a tu localidad.",
+      "fuenteTexto": "Fuente: Datos Abiertos Bogotá (UAESP), dataset \"Aprovechamiento ECAS\". Bogotá solo tiene ECA registrada en 6 de sus 20 localidades.",
+      "fuenteLink": "Ver fuente"
+    }
   },
   "catalogoEducativo": {
     "title": "Aprender a reciclar",
@@ -797,7 +921,9 @@
       "deleteAriaLabel": "Confirmar eliminación"
     },
     "validation": {
-      "required": "Categoría, título y contenido son obligatorios."
+      "required": "Categoría, título y contenido son obligatorios.",
+      "titleTooShort": "El título debe tener al menos 5 caracteres.",
+      "bodyTooShort": "El contenido debe tener al menos 20 caracteres."
     },
     "deleteError": "No se pudo eliminar. Intenta de nuevo.",
     "fields": {
@@ -853,7 +979,8 @@
     "description": "Solo necesitas su correo. La persona invitada definirá su propia contraseña y completará sus datos al aceptar la invitación.",
     "emailLabel": "Correo del administrador a invitar *",
     "conjuntosLabel": "Conjuntos a asignar *",
-    "loadingConjuntos": "Cargando conjuntos...",
+    "conjuntoSearchPlaceholder": "Escribe el nombre del conjunto...",
+    "conjuntoNoResults": "No se encontró ningún conjunto con ese nombre.",
     "selectedCount": "{{count}} conjunto(s) seleccionado(s)",
     "submit": "Enviar invitación",
     "validation": {
@@ -863,8 +990,10 @@
     "errorDefault": "No se pudo enviar la invitación. Verifica los datos e intenta de nuevo."
   },
   "desvinculacion": {
-    "solicitarButton": "Solicitar desvinculación",
-    "pendingBadge": "Solicitud pendiente",
+    "sectionTitle": "Tu rol como administrador",
+    "solicitarButton": "Dejar de administrar este conjunto",
+    "clarification": "Esto no afecta a los recicladores autorizados ni a los residentes — solo transfiere la administración de este conjunto a otra persona.",
+    "pendingBadge": "Solicitud de desvinculación pendiente",
     "motivoLabel": "Motivo (opcional)",
     "motivoPlaceholder": "Ej: Fin de contrato",
     "submit": "Enviar solicitud",

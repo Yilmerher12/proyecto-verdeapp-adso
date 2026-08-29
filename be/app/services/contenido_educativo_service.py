@@ -8,6 +8,7 @@ Descripción: Lógica de negocio del catálogo de contenido educativo (RQF-004/R
 """
 
 from datetime import date
+from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -26,7 +27,7 @@ def listar_contenido(db: Session) -> list[ContenidoEducativo]:
     return list(db.execute(stmt).scalars().all())
 
 
-def obtener_contenido_o_404(db: Session, id_contenido: int) -> ContenidoEducativo:
+def obtener_contenido_o_404(db: Session, id_contenido: UUID) -> ContenidoEducativo:
     contenido = db.get(ContenidoEducativo, id_contenido)
     if not contenido:
         raise HTTPException(
@@ -52,7 +53,7 @@ def crear_contenido(db: Session, data: ContenidoEducativoCreate) -> ContenidoEdu
 
 
 def editar_contenido(
-    db: Session, id_contenido: int, data: ContenidoEducativoUpdate
+    db: Session, id_contenido: UUID, data: ContenidoEducativoUpdate
 ) -> ContenidoEducativo:
     contenido = obtener_contenido_o_404(db, id_contenido)
     contenido.modulo_categoria = data.modulo_categoria
@@ -65,7 +66,7 @@ def editar_contenido(
     return contenido
 
 
-def eliminar_contenido(db: Session, id_contenido: int) -> None:
+def eliminar_contenido(db: Session, id_contenido: UUID) -> None:
     contenido = obtener_contenido_o_404(db, id_contenido)
     db.delete(contenido)
     db.commit()

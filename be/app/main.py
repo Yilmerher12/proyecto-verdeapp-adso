@@ -1,5 +1,12 @@
-from fastapi import FastAPI
+from pathlib import Path
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.config import settings
+from app.utils.limiter import limiter
 from app.routers import auth, users, geography, admin
 from app.routers import admin_conjunto
 from app.routers import conjunto_panel
@@ -9,6 +16,7 @@ from app.routers import notificaciones
 from app.routers import contenido_educativo
 from app.routers import comunicados
 from app.routers import novedades
+from app.routers import auditoria_conjunto
 
 # ¿Qué? El esquema de la base de datos ya NO se crea aquí en tiempo de ejecución.
 # ¿Para qué? Antes esta sección llamaba a Base.metadata.create_all(bind=engine), que
@@ -20,7 +28,23 @@ from app.routers import novedades
 #           solo al iniciar el contenedor. En desarrollo local (sin Docker), hay que
 #           correr "alembic upgrade head" manualmente después de cada cambio en los
 #           modelos — ver docs/setup o preguntar antes de generar una migración nueva.
-app = FastAPI(title="VerdeApp API")
+# ¿Qué? Antes esta línea era "FastAPI(title=...)" sin más — /docs y /redoc
+#       quedaban siempre encendidos sin importar el entorno, pese a que el
+#       comentario de settings.ENVIRONMENT (app/config.py) ya decía que
+#       debían apagarse en producción.
+# ¿Para qué? OWASP A05 (Security Misconfiguration): la documentación
+#           interactiva expone todos los endpoints y schemas sin auth —
+#           útil en desarrollo, un riesgo real si queda pública en producción.
+# ¿Impacto? Con ENVIRONMENT=production, /docs y /redoc devuelven 404. En
+#           development/testing (el valor por defecto) siguen disponibles
+#           igual que antes.
+_es_produccion = settings.ENVIRONMENT == "production"
+app = FastAPI(
+    title="VerdeApp API",
+    docs_url=None if _es_produccion else "/docs",
+    redoc_url=None if _es_produccion else "/redoc",
+    openapi_url=None if _es_produccion else "/openapi.json",
+)
 
 # ¿Qué? Lista explícita de orígenes permitidos para hablarle al backend.
 # ¿Para qué? Antes se usaba allow_origins=["*"] ("cualquier sitio web del
@@ -46,6 +70,42 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
+# ¿Qué? Conecta la instancia de Limiter (app/utils/limiter.py) con esta app.
+# ¿Para qué? Los decoradores @limiter.limit(...) en auth.py ya lanzaban
+#           RateLimitExceeded al superar el límite, pero sin estas dos líneas
+#           FastAPI nunca la registraba como una excepción manejada — nadie
+#           la convertía en la respuesta 429 limpia que se espera, se
+#           propagaba como un error 500 sin manejar.
+# ¿Impacto? OWASP A04 (Insecure Design): ahora superar el límite responde
+#           siempre con 429 y un mensaje claro, en vez de un error genérico.
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ¿Qué? Cabeceras HTTP de seguridad aplicadas a TODA respuesta del backend.
+# ¿Para qué? OWASP A05 (Security Misconfiguration): sin esto, el navegador
+#           no tiene ninguna instrucción explícita sobre cómo tratar la
+#           respuesta de forma segura.
+# ¿Impacto?
+#   - X-Content-Type-Options: evita que el navegador "adivine" el tipo de
+#     un archivo distinto al declarado (protege contra archivos subidos
+#     maliciosos, como las evidencias de auditoría, siendo interpretados
+#     como algo que no son).
+#   - X-Frame-Options: evita que esta API se embeba en un <iframe> de otro
+#     sitio (clickjacking) — aunque VerdeApp es una API JSON, el frontend
+#     que la consume sí podría ser blanco de esto.
+#   - Referrer-Policy: no envía la URL completa (que podría incluir tokens
+#     en el futuro) a sitios externos al seguir un link.
+#   - Permissions-Policy: esta API no necesita cámara, micrófono ni
+#     ubicación — se le niega el acceso explícitamente al navegador.
+@app.middleware("http")
+async def agregar_cabeceras_seguridad(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
+
 # Registro ordenado de rutas
 app.include_router(auth.router)
 app.include_router(geography.router)
@@ -59,6 +119,19 @@ app.include_router(notificaciones.router)
 app.include_router(contenido_educativo.router)
 app.include_router(comunicados.router)
 app.include_router(novedades.router)
+app.include_router(auditoria_conjunto.router)
+
+# ¿Qué? Sirve las fotos de evidencia de las auditorías como archivos
+#       estáticos, bajo /uploads — es la primera vez que el backend guarda
+#       y sirve archivos subidos por un usuario (antes todo el contenido
+#       educativo usaba solo links externos).
+# ¿Para qué? El frontend necesita una URL real para poner en un <img src>.
+# ¿Impacto? La carpeta se crea sola en el primer POST si no existe (ver
+#           auditoria_conjunto_service.py); si nunca se ha subido nada,
+#           StaticFiles la crea aquí para no fallar al arrancar.
+_CARPETA_UPLOADS = Path(__file__).parent / "uploads"
+_CARPETA_UPLOADS.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=_CARPETA_UPLOADS), name="uploads")
 
 
 @app.get("/api/v1/health")

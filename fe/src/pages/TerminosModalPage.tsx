@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
@@ -11,11 +12,12 @@ import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
  */
 export function TerminosModalPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
 return (
     <>
-        <LandingPage />
-        <Modal onClose={() => navigate("/")} wide aria-label="Términos de Uso">
+        <LandingPage asBackdrop />
+        <Modal onClose={() => navigate("/")} wide aria-label={t("legal.terms.title")}>
         <TerminosDeUsoPage embedded />
         </Modal>
     </>

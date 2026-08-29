@@ -12,6 +12,7 @@ import type {
   ChangePasswordRequest,
   ForgotPasswordRequest,
   LoginRequest,
+  LogoutRequest,
   MessageResponse,
   RefreshTokenRequest,
   RegisterRequest,
@@ -53,6 +54,20 @@ export async function loginUser(data: LoginRequest): Promise<TokenResponse> {
  */
 export async function refreshToken(data: RefreshTokenRequest): Promise<TokenResponse> {
   const response = await api.post<TokenResponse>(`${AUTH_PREFIX}/refresh`, data);
+  return response.data;
+}
+
+/**
+ * ¿Qué? Cierra la sesión de verdad en el servidor (HU-008/RQF-007).
+ * ¿Para qué? Enviar POST /api/v1/auth/logout — el access token viaja solo en
+ *           el header Authorization (lo agrega el interceptor de axios.ts a
+ *           partir de sessionStorage), y el refresh_token va en el body.
+ * ¿Impacto? El backend revoca ambos tokens: aunque alguien los hubiera
+ *           copiado antes del logout, dejan de funcionar de inmediato, en
+ *           vez de seguir siendo válidos hasta que expiren solos.
+ */
+export async function logoutUser(data: LogoutRequest): Promise<MessageResponse> {
+  const response = await api.post<MessageResponse>(`${AUTH_PREFIX}/logout`, data);
   return response.data;
 }
 

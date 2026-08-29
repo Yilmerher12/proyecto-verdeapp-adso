@@ -5,6 +5,8 @@ Descripción: Endpoints del flujo de invitación Reciclador-Conjunto.
            conjuntos autorizados, vía HTTP, protegidos por rol.
 """
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -17,6 +19,7 @@ from app.schemas.reciclador_conjunto import (
     InvitacionPendienteRecicladorResponse,
     ResponderInvitacionRequest,
     ConjuntoAutorizadoResponse,
+    RecicladorAutorizadoResponse,
 )
 from app.services import reciclador_conjunto_service
 
@@ -49,11 +52,27 @@ async def invitar_reciclador(
     summary="Admin de Conjunto ve las invitaciones que ha enviado",
 )
 def listar_invitaciones_de_mi_conjunto(
-    id_conjunto: int,
+    id_conjunto: UUID,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     resultados = reciclador_conjunto_service.listar_invitaciones_de_mi_conjunto(
+        db=db, id_usuario_admin=current_user.id_usuario, id_conjunto=id_conjunto
+    )
+    return resultados
+
+
+@router.get(
+    "/mi-conjunto/{id_conjunto}/autorizados",
+    response_model=List[RecicladorAutorizadoResponse],
+    summary="Admin de Conjunto ve los recicladores YA autorizados en su conjunto",
+)
+def listar_recicladores_autorizados(
+    id_conjunto: UUID,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    resultados = reciclador_conjunto_service.listar_recicladores_autorizados_de_conjunto(
         db=db, id_usuario_admin=current_user.id_usuario, id_conjunto=id_conjunto
     )
     return resultados
@@ -76,7 +95,7 @@ def listar_mis_invitaciones(
 
 @router.post("/invitaciones/{id_invitacion}/responder", summary="Reciclador acepta o rechaza una invitación")
 def responder_invitacion(
-    id_invitacion: str,
+    id_invitacion: UUID,
     data: ResponderInvitacionRequest,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),

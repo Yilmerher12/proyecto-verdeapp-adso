@@ -54,3 +54,5 @@
 - **Dado que** ya reporté mi llegada a un conjunto hace menos de 2 horas,
 - **cuando** intento reportarla de nuevo,
 - **entonces** el sistema no debe permitir un segundo aviso tan seguido, para evitar notificaciones repetidas.
+
+> **Nota (2026-08-29)**: implementado y probado — el backend rechaza con 400 un segundo aviso de "llegada" del mismo reciclador al mismo conjunto antes de que pasen 2 horas.

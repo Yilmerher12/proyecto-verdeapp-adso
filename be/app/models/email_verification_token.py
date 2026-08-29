@@ -1,16 +1,17 @@
-import uuid
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, func
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.utils.ids import generar_uuid7
 
 class EmailVerificationToken(Base):
     __tablename__ = "email_verification_tokens"
 
-    # Usamos String(36) para guardar el UUID generado
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    
-    # IMPORTANTE: Ahora apunta correctamente a usuarios.id_usuario que es un Integer
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
+    # UUID nativo de Postgres (antes era String(36) con uuid.uuid4())
+    id = Column(UUID(as_uuid=True), primary_key=True, default=generar_uuid7)
+
+    # Apunta a usuarios.id_usuario (ahora UUID)
+    id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)
     
     token = Column(String(255), unique=True, index=True, nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)

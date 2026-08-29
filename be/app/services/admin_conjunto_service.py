@@ -8,9 +8,11 @@ Descripción: Lógica de negocio del flujo de invitación de Administradores de 
               su propia contraseña y completa sus datos. Aquí se crea su cuenta.
 """
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import List
+from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -32,6 +34,7 @@ from app.schemas.admin_conjunto import (
 from app.utils.email import send_admin_conjunto_invitation_email
 from app.utils.security import hash_password
 
+logger = logging.getLogger(__name__)
 
 # ¿Qué? Las invitaciones son válidas por 48 horas.
 HORAS_VALIDEZ_INVITACION = 48
@@ -72,7 +75,8 @@ async def invitar_admin_conjunto(
     ids_como_texto = ",".join(str(i) for i in datos.ids_conjuntos)
 
     invitacion = InvitacionAdminConjunto(
-        id=str(uuid.uuid4()),
+        # ¿Qué? Sin "id=" aquí a propósito — el modelo ya genera un UUIDv7
+        #       por su cuenta (default=generar_uuid7 en el modelo).
         correo_electronico=datos.correo_electronico,
         token=token,
         conjuntos_asignados=ids_como_texto,
@@ -85,11 +89,11 @@ async def invitar_admin_conjunto(
 
     try:
         await send_admin_conjunto_invitation_email(email=datos.correo_electronico, token=token)
-    except Exception as email_err:
+    except Exception:
         # ¿Qué? Si el correo falla, la invitación ya quedó guardada en la BD.
         # ¿Para qué? El Admin del Sistema puede reenviarla o copiar el enlace
         #           manualmente desde los logs (igual que en register_user).
-        print(f"Advertencia: invitación creada, pero el correo no se pudo despachar: {str(email_err)}")
+        logger.warning("Invitación creada, pero el correo no se pudo despachar", exc_info=True)
 
 
 def consultar_invitacion(db: Session, token: str) -> InvitacionInfoResponse:
@@ -103,7 +107,7 @@ def consultar_invitacion(db: Session, token: str) -> InvitacionInfoResponse:
     if not invitacion:
         return InvitacionInfoResponse(correo_electronico="", nombres_conjuntos=[], valido=False)
 
-    ids_conjuntos = [int(i) for i in invitacion.conjuntos_asignados.split(",")]
+    ids_conjuntos = [UUID(i) for i in invitacion.conjuntos_asignados.split(",")]
     stmt = select(ConjuntoResidencial.nombre_conjunto).where(
         ConjuntoResidencial.id_conjunto_residencial.in_(ids_conjuntos)
     )
@@ -145,7 +149,7 @@ def aceptar_invitacion(db: Session, datos: AceptarInvitacionAdminConjuntoRequest
         db.add(nuevo_administrador)
         db.flush()
 
-        ids_conjuntos: List[int] = [int(i) for i in invitacion.conjuntos_asignados.split(",")]
+        ids_conjuntos: List[UUID] = [UUID(i) for i in invitacion.conjuntos_asignados.split(",")]
         for id_conjunto in ids_conjuntos:
             asignacion = AdministradorConjuntoAsignacion(
                 id_administrador=nuevo_administrador.id_administrador,
@@ -158,11 +162,12 @@ def aceptar_invitacion(db: Session, datos: AceptarInvitacionAdminConjuntoRequest
         db.refresh(nuevo_usuario)
         return nuevo_usuario
 
-    except Exception as e:
+    except Exception:
         db.rollback()
+        logger.exception("Error al crear la cuenta de administrador de conjunto")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al crear la cuenta de administrador: {str(e)}",
+            detail="Ocurrió un error al crear la cuenta. Intenta de nuevo más tarde.",
         )
 
 

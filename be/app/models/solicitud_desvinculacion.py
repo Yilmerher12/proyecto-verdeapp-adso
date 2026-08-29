@@ -1,9 +1,11 @@
 from enum import StrEnum
 
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, TIMESTAMP, Index
+from sqlalchemy import Column, String, Text, ForeignKey, TIMESTAMP, Index
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.utils.ids import generar_uuid7
 
 
 class EstadoSolicitudDesvinculacion(StrEnum):
@@ -33,15 +35,15 @@ class SolicitudDesvinculacion(Base):
     """
     __tablename__ = "solicitudes_desvinculacion"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
 
     id_administrador = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("administradores_conjunto.id_administrador", ondelete="CASCADE"),
         nullable=False,
     )
     id_conjunto_residencial = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("conjuntos_residenciales.id_conjunto_residencial", ondelete="CASCADE"),
         nullable=False,
     )
@@ -53,7 +55,7 @@ class SolicitudDesvinculacion(Base):
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     resuelta_at = Column(TIMESTAMP, nullable=True)
     resuelta_por_id = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("usuarios.id_usuario", ondelete="SET NULL"),
         nullable=True,
     )

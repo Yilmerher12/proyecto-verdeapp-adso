@@ -48,7 +48,7 @@ const LOCALIDADES_MOCK = [
 ];
 
 const CONJUNTOS_MOCK = [
-  { id_conjunto_residencial: 1, nombre_conjunto: "TORRES DE ARANJUEZ" },
+  { id_conjunto_residencial: "00000000-0000-7000-8000-000000000001", nombre_conjunto: "TORRES DE ARANJUEZ" },
 ];
 
 beforeEach(() => {
@@ -279,5 +279,49 @@ describe("RegisterPage", () => {
     expect(
       screen.getByRole("button", { name: "Completa los campos y acepta los términos" }),
     ).toBeDisabled();
+  });
+
+  it("busca el conjunto por nombre en el combobox y ejecuta register con el payload correcto (Residente)", async () => {
+    const registerMock = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+
+    renderWithProviders(<RegisterPage />, {
+      initialRoute: "/register",
+      authContext: { register: registerMock },
+    });
+
+    await llenarCamposComunes(user, {
+      nombre: "Ana",
+      apellidos: "Torres",
+      email: "ana@correo.com",
+      confirmEmail: "ana@correo.com",
+    });
+
+    // ¿Qué? El rol Residente es el que viene por defecto — no hace falta
+    //       hacer clic en nada para verlo. El primer combobox es la
+    //       Localidad (<select> nativo); el segundo es el ConjuntoCombobox.
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.selectOptions(comboboxes[0], "1");
+
+    const buscadorConjunto = screen.getByPlaceholderText("Escribe el nombre de tu conjunto...");
+    await user.type(buscadorConjunto, "TORRES");
+
+    const opcionConjunto = await screen.findByText("TORRES DE ARANJUEZ");
+    await user.click(opcionConjunto);
+
+    await user.type(screen.getByPlaceholderText("Ej: 3, B"), "A");
+    await user.type(screen.getByPlaceholderText("Ej: 402"), "101");
+
+    await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
+
+    await waitFor(() => {
+      expect(registerMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rol: "residente",
+          correo_electronico: "ana@correo.com",
+          id_conjunto_residencial: "00000000-0000-7000-8000-000000000001",
+        }),
+      );
+    });
   });
 });

@@ -19,11 +19,19 @@ import { Trans, useTranslation } from "react-i18next";
 
 import { LegalLayout, LegalSection } from "@/components/layout/LegalLayout";
 
+// ¿Qué? Antes existía un campo "email" con una dirección inventada
+//       (datos@verdeapp.edu.co) que no existe — un dominio que nadie
+//       registró, así que cualquier correo enviado ahí rebotaría, o peor,
+//       podría terminar en manos de quien sea que registre ese dominio en
+//       el futuro.
+// ¿Para qué? El profesor pidió explícitamente que ningún link, ni siquiera
+//           el de contacto, muestre un correo — por seguridad.
+// ¿Impacto? Todo lo que antes mostraba ese correo ahora enlaza a /contacto,
+//           el formulario de contacto real de la app, que no expone nada.
 const RESPONSABLE = {
   nombre: "VerdeApp — Proyecto ADSO SENA",
   nit: "Proyecto educativo, sin NIT comercial",
   domicilio: "Bogotá D.C., Colombia",
-  email: "datos@verdeapp.edu.co",
   telefono: "Proyecto educativo — sin línea de atención comercial",
 } as const;
 
@@ -44,7 +52,7 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
   );
   const emailLink = (
     <a
-      href={`mailto:${RESPONSABLE.email}`}
+      href="/contacto"
       className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
@@ -102,10 +110,10 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
                 {t("legal.privacy.s1.contactLabel")}
               </strong>{" "}
               <a
-                href={`mailto:${RESPONSABLE.email}`}
+                href="/contacto"
                 className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
               >
-                {RESPONSABLE.email}
+                {t("legal.privacy.s1.contactValue")}
               </a>
             </li>
             <li>
@@ -205,11 +213,7 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
           </li>
         </ul>
         <p>
-          <Trans
-            i18nKey="legal.privacy.s5.procedure"
-            values={{ email: RESPONSABLE.email }}
-            components={{ emailLink }}
-          />
+          <Trans i18nKey="legal.privacy.s5.procedure" components={{ emailLink }} />
         </p>
         <p>
           <Trans i18nKey="legal.privacy.s5.timeframe" components={{ strong: S }} />
@@ -315,11 +319,7 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
           <Trans i18nKey="legal.privacy.s11.p2" components={{ strong: S }} />
         </p>
         <p>
-          <Trans
-            i18nKey="legal.privacy.s11.p3"
-            values={{ email: RESPONSABLE.email }}
-            components={{ emailLink }}
-          />
+          <Trans i18nKey="legal.privacy.s11.p3" components={{ emailLink }} />
         </p>
       </LegalSection>
     </LegalLayout>

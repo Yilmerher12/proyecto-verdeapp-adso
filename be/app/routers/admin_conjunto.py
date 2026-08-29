@@ -9,6 +9,7 @@ Descripción: Endpoints del flujo de invitación, desvinculación y reasignació
 """
 
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -106,7 +107,7 @@ def listar_solicitudes_desvinculacion(
 
 @router.post("/solicitudes-desvinculacion/{id_solicitud}/resolver", response_model=MessageResponse)
 def resolver_solicitud_desvinculacion(
-    id_solicitud: int,
+    id_solicitud: UUID,
     datos: ResolverSolicitudDesvinculacionRequest,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),

@@ -31,6 +31,17 @@ interface ModalProps {
    * Default: "base".
    */
   layer?: "base" | "stacked";
+  /**
+   * ¿Qué? Si el clic en el fondo (backdrop) cierra el modal. Default: true.
+   * ¿Para qué? En formularios con datos ya escritos (login, registro, crear
+   *           auditoría, etc.) un clic accidental afuera borraba todo lo
+   *           que la persona ya había llenado — muy frustrante. En modales
+   *           simples (confirmaciones, ver un detalle) sigue siendo cómodo
+   *           poder cerrar con un clic afuera.
+   * ¿Impacto? Con `false`, solo se cierra con el botón X, un botón
+   *           "Cancelar" del propio formulario, o la tecla Esc.
+   */
+  closeOnBackdrop?: boolean;
 }
 
 /**
@@ -45,13 +56,52 @@ export function Modal({
   wide = false,
   "aria-label": ariaLabel,
   layer = "base",
+  closeOnBackdrop = true,
 }: ModalProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const elementoConFocoPrevioRef = useRef<HTMLElement | null>(null);
+
+  // ¿Qué? Atrapa el Tab/Shift+Tab dentro del diálogo, y devuelve el foco a
+  //       lo que estaba enfocado antes de abrir el modal, al cerrarlo.
+  // ¿Para qué? Sin esto, con Tab se podía salir del modal hacia el contenido
+  //           de fondo (la landing page detrás) — un usuario de teclado o
+  //           lector de pantalla quedaba "perdido" fuera del diálogo activo.
+  // ¿Impacto? WCAG 2.4.3 (Focus Order) y 2.1.2 (No Keyboard Trap invertido:
+  //           el foco debe quedar contenido en el diálogo mientras esté
+  //           abierto, pero liberarse limpio al cerrarse).
+  useEffect(() => {
+    elementoConFocoPrevioRef.current = document.activeElement as HTMLElement | null;
+    return () => {
+      elementoConFocoPrevioRef.current?.focus?.();
+    };
+  }, []);
 
   useEffect(() => {
+    const SELECTOR_ENFOCABLE =
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      if (e.key === "Tab" && dialogRef.current) {
+        const enfocables = dialogRef.current.querySelectorAll<HTMLElement>(SELECTOR_ENFOCABLE);
+        if (enfocables.length === 0) return;
+
+        const primero = enfocables[0];
+        const ultimo = enfocables[enfocables.length - 1];
+
+        if (e.shiftKey && document.activeElement === primero) {
+          e.preventDefault();
+          ultimo.focus();
+        } else if (!e.shiftKey && document.activeElement === ultimo) {
+          e.preventDefault();
+          primero.focus();
+        }
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -77,7 +127,7 @@ export function Modal({
   return (
     <div
       className={`fixed inset-0 ${backdropZIndex} flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm sm:items-center sm:p-6`}
-      onClick={onClose}
+      onClick={closeOnBackdrop ? onClose : undefined}
       aria-hidden="false"
     >
       <div

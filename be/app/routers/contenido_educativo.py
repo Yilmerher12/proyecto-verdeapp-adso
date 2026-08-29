@@ -8,6 +8,8 @@ Descripción: Endpoints del catálogo de contenido educativo (RQF-004/RQF-010).
           vacía en la base de datos, sin forma de leerla ni administrarla.
 """
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -64,7 +66,7 @@ def crear(
     summary="Editar un módulo (HU-013)",
 )
 def editar(
-    id_contenido: int,
+    id_contenido: UUID,
     data: ContenidoEducativoUpdate,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -79,7 +81,7 @@ def editar(
     summary="Eliminar un módulo (HU-014)",
 )
 def eliminar(
-    id_contenido: int,
+    id_contenido: UUID,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> None:

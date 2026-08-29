@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
 import { PoliticaCookiesPage } from "@/pages/PoliticaCookiesPage";
@@ -8,11 +9,12 @@ import { PoliticaCookiesPage } from "@/pages/PoliticaCookiesPage";
  */
 export function CookiesModalPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <>
-      <LandingPage />
-      <Modal onClose={() => navigate("/")} wide aria-label="Política de Cookies">
+      <LandingPage asBackdrop />
+      <Modal onClose={() => navigate("/")} wide aria-label={t("legal.cookies.title")}>
         <PoliticaCookiesPage embedded />
       </Modal>
     </>

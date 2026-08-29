@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Index, Integer, ForeignKey, TIMESTAMP
+from sqlalchemy import Column, Index, ForeignKey, TIMESTAMP
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.database import Base
+from app.utils.ids import generar_uuid7
 
 
 class AdministradorConjuntoAsignacion(Base):
@@ -22,14 +24,14 @@ class AdministradorConjuntoAsignacion(Base):
     """
     __tablename__ = "administradores_conjuntos"
 
-    id_administrador_conjunto = Column(Integer, primary_key=True, index=True)
+    id_administrador_conjunto = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
     id_administrador = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("administradores_conjunto.id_administrador", ondelete="CASCADE"),
         nullable=False,
     )
     id_conjunto_residencial = Column(
-        Integer,
+        UUID(as_uuid=True),
         ForeignKey("conjuntos_residenciales.id_conjunto_residencial", ondelete="CASCADE"),
         nullable=False,
     )

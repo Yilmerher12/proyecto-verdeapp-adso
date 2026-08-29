@@ -23,8 +23,8 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
   const { t } = useTranslation();
   const [solicitudes, setSolicitudes] = useState<SolicitudDesvinculacion[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [procesandoId, setProcesandoId] = useState<number | null>(null);
-  const [rechazandoId, setRechazandoId] = useState<number | null>(null);
+  const [procesandoId, setProcesandoId] = useState<string | null>(null);
+  const [rechazandoId, setRechazandoId] = useState<string | null>(null);
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const aprobar = async (id: number) => {
+  const aprobar = async (id: string) => {
     setProcesandoId(id);
     setError(null);
     try {
@@ -55,7 +55,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
     }
   };
 
-  const confirmarRechazo = async (id: number) => {
+  const confirmarRechazo = async (id: string) => {
     if (!motivoRechazo.trim()) return;
     setProcesandoId(id);
     setError(null);
@@ -93,9 +93,9 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
       )}
 
       {cargando ? (
-        <p className="text-sm text-gray-400">{t("common.loading")}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
       ) : solicitudes.length === 0 ? (
-        <p className="text-sm text-gray-400">{t("desvinculacion.adminSistema.empty")}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("desvinculacion.adminSistema.empty")}</p>
       ) : (
         <div className="space-y-3">
           {solicitudes.map((s) => (
@@ -151,7 +151,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
                   <button
                     onClick={() => aprobar(s.id)}
                     disabled={procesandoId === s.id}
-                    className="flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-500 disabled:opacity-50"
+                    className="flex items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t("desvinculacion.adminSistema.approve")}

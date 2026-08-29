@@ -71,3 +71,5 @@ El sistema debe bloquear el acceso y mostrar un mensaje de error genérico ('Cre
 - RN-001: Bajo ninguna circunstancia el sistema debe revelar si un correo electrónico está o no registrado durante un intento fallido.
 - RN-002: El mensaje de error debe ser estrictamente "Credenciales incorrectas".
 - RN-003: Tras 5 intentos fallidos consecutivos, el sistema debe bloquear temporalmente el inicio de sesión para ese correo durante 15 minutos (mitigación de fuerza bruta).
+
+> **Nota (2026-08-29)**: RN-001, RN-002 y RN-003 implementados y verificados. RN-003 se agregó como un mecanismo aparte del rate limit por IP (`slowapi`) que ya existía — dos controles distintos y complementarios: uno por dirección IP (10/min, protege contra fuerza bruta masiva), otro por cuenta específica (5 fallos → 15 min de bloqueo, columnas `intentos_fallidos`/`bloqueado_hasta` en `usuarios`).

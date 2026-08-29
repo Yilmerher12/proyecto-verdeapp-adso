@@ -61,6 +61,8 @@
 - **cuando** intento una vez más,
 - **entonces** el sistema debe bloquear temporalmente los intentos para ese correo durante 15 minutos.
 
+> **Nota (2026-08-29)**: implementado y probado contra el servidor real — 5 intentos fallidos seguidos bloquean la cuenta 15 minutos, y ni siquiera la contraseña correcta funciona mientras dura el bloqueo. Un login exitoso (antes de llegar a 5 fallos) resetea el contador.
+
 ### CA-001.6 — Redirección según el rol
 
 - **Dado que** inicié sesión exitosamente,

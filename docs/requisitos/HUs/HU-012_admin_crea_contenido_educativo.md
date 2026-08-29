@@ -49,6 +49,8 @@
 - **cuando** intento guardar,
 - **entonces** debo ver un mensaje de error indicando el problema.
 
+> **Nota (2026-08-29)**: implementado y verificado — `ContenidoEducativoBase` valida ahora el mínimo de 5/20 caracteres (backend), con el mismo chequeo replicado en el formulario del frontend antes de enviar. Probado en navegador con título corto, contenido corto, y guardado exitoso.
+
 ### CA-012.4 — Acceso exclusivo de administrador
 
 - **Dado que** no tengo el rol admin_sistema,

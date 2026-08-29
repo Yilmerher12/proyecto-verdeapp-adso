@@ -11,8 +11,37 @@
   // ────────────────────────────
   // 🐍 Python — Intérprete y entorno virtual
   // ────────────────────────────
-  "python.defaultInterpreterPath": "${workspaceFolder}/be/.venv/bin/python",
+  // ¿Qué? Antes era "be/.venv/bin/python" (ruta estilo Linux/macOS).
+  // ¿Para qué? "uv sync" en Windows crea el venv con "Scripts/python.exe",
+  //           no con "bin/python" — y todo el equipo usa Windows (ver
+  //           requisito de Git Bash en este mismo README).
+  // ¿Impacto? Sin este cambio, VS Code no encontraba el intérprete solo —
+  //           había que seleccionarlo a mano cada vez.
+  "python.defaultInterpreterPath": "${workspaceFolder}/be/.venv/Scripts/python.exe",
   "python.terminal.activateEnvironment": false,
+
+  // ────────────────────────────
+  // 🗄️ SQLTools — Conexión preconfigurada a la base de datos de Docker
+  // ────────────────────────────
+  // ¿Qué? Mismos datos de conexión documentados en el README raíz (sección
+  //       "Conectarse a la base de datos").
+  // ¿Para qué? El README decía "el proyecto ya incluye la conexión
+  //           preconfigurada" pero esta configuración no existía — nadie
+  //           veía ninguna conexión "VerdeApp" lista al abrir el panel.
+  // ¿Impacto? Requiere el contenedor `verde_db` corriendo (docker compose
+  //           up). Credenciales de una base de datos 100% local de
+  //           desarrollo — las mismas que ya son públicas en el README.
+  "sqltools.connections": [
+    {
+      "name": "VerdeApp",
+      "driver": "PostgreSQL",
+      "server": "localhost",
+      "port": 5433,
+      "database": "verdeapp_db",
+      "username": "verde_user",
+      "password": "verde_password"
+    }
+  ],
 
   // ────────────────────────────
   // 🔍 Python — Linting y formateo con ruff

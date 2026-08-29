@@ -50,7 +50,7 @@ export interface RegisterRequest {
   apellidos: string;
   numero_telefonico?: string;
   localidad_id?: number; // solo aplica para reciclador
-  id_conjunto_residencial?: number; // solo aplica para residente
+  id_conjunto_residencial?: string; // solo aplica para residente — UUID
   torre?: string;
   apto?: string;
   asociacion?: string;
@@ -75,7 +75,7 @@ export interface ResetPasswordRequest {
 // ════════════════════════════════════════
 
 export interface UserResponse {
-  id: number; // Sincronizado como número para coincidir con la BD relacional
+  id: string; // UUID — antes era number, la BD ya no usa enteros autoincrementales
   email: string;
   role_id: RoleId;
   is_active: boolean;
@@ -86,7 +86,7 @@ export interface UserResponse {
     tipo: "administrador" | "residente" | "reciclador";
     nombre_completo: string;
     telefono?: string;
-    unidad_id?: number;
+    unidad_id?: string;
     asociacion?: string;
   };
 }
@@ -111,6 +111,11 @@ export interface MessageResponse {
 }
 
 export interface RefreshTokenRequest {
+  refresh_token: string;
+}
+
+// HU-008/RQF-007: el refresh token también se revoca al cerrar sesión.
+export interface LogoutRequest {
   refresh_token: string;
 }
 

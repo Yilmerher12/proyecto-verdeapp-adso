@@ -16,7 +16,7 @@
 | **Título**         | Reciclador califica la gestión de residuos (semáforo)  |
 | **Módulo**         | Auditoría / Calificaciones                             |
 | **Prioridad**      | Baja (opcional)                                         |
-| **Estado**         | En discusión                                            |
+| **Estado**         | Implementada                                            |
 | **RF asociados**   | RQF-009                                               |
 
 ---
@@ -43,11 +43,15 @@
 - **cuando** completo el formulario,
 - **entonces** debo poder agregar una observación de texto opcional (máximo 255 caracteres).
 
+> **Nota (2026-08-28)**: la observación opcional sí existe y funciona, pero el backend no impone el límite de 255 caracteres (acepta texto de cualquier longitud). No bloquea la funcionalidad, solo difiere del criterio exacto escrito aquí.
+
 ### CA-010.3 — Un registro por conjunto cada 24 horas
 
 - **Dado que** ya califiqué un conjunto en las últimas 24 horas,
 - **cuando** intento calificarlo de nuevo,
 - **entonces** el sistema no debe permitir un segundo registro tan seguido.
+
+> **Nota (2026-08-29)**: implementado y probado — el backend rechaza con 400 una segunda auditoría del mismo reciclador al mismo conjunto antes de que pasen 24 horas. El recordatorio visual de 7 días sigue existiendo aparte, como sugerencia de cuándo conviene volver, no como el único mecanismo de control.
 
 ### CA-010.4 — Solo el reciclador puede calificar
 

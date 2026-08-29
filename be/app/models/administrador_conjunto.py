@@ -1,8 +1,10 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, and_
+from sqlalchemy import Column, String, ForeignKey, and_
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.conjunto_residencial import ConjuntoResidencial
+from app.utils.ids import generar_uuid7
 
 
 class AdministradorConjunto(Base):
@@ -20,8 +22,8 @@ class AdministradorConjunto(Base):
     """
     __tablename__ = "administradores_conjunto"
 
-    id_administrador = Column(Integer, primary_key=True, index=True)
-    id_usuario = Column(Integer, ForeignKey("usuarios.id_usuario"), unique=True, nullable=False)
+    id_administrador = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
+    id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"), unique=True, nullable=False)
 
     nombre = Column(String(100), nullable=False)
     apellidos = Column(String(150), nullable=False)

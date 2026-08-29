@@ -7,7 +7,7 @@ const API_BASE = `${API_BASE_URL}/api/v1/novedades`;
 export type AlcanceNovedad = "TODOS" | "RESIDENTES" | "RECICLADORES" | "ADMIN_CONJUNTO";
 
 export interface Novedad {
-  id_novedad: number;
+  id_novedad: string;
   alcance: AlcanceNovedad;
   texto: string;
   url_adjunto: string | null;
@@ -47,13 +47,13 @@ export async function listarTodasLasNovedades(token: string): Promise<Novedad[]>
 }
 
 // ¿Qué? Admin Sistema — HU-034.
-export async function editarNovedad(idNovedad: number, datos: EditarNovedadPayload, token: string): Promise<Novedad> {
+export async function editarNovedad(idNovedad: string, datos: EditarNovedadPayload, token: string): Promise<Novedad> {
   const { data } = await axios.patch(`${API_BASE}/${idNovedad}`, datos, authHeaders(token));
   return data;
 }
 
 // ¿Qué? Admin Sistema — HU-035. No existe "desarchivar" (CA-035.3).
-export async function archivarNovedad(idNovedad: number, token: string) {
+export async function archivarNovedad(idNovedad: string, token: string) {
   const { data } = await axios.post(`${API_BASE}/${idNovedad}/archivar`, {}, authHeaders(token));
   return data;
 }

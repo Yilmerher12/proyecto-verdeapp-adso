@@ -8,6 +8,7 @@ Descripción: Dependencias inyectables de FastAPI — funciones reutilizables qu
           y validar el token JWT manualmente, causando código repetido y propenso a errores.
 """
 
+import uuid
 from collections.abc import Generator
 
 from fastapi import Depends, HTTPException, status
@@ -16,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
+from app.models.token_revocado import TokenRevocado
 from app.models.usuario import Usuario
 from app.utils.security import decode_token
 
@@ -92,6 +94,19 @@ def get_current_user(
     # ¿Impacto? Sin esto, el refresh token (de larga duración) podría usarse como access token,
     #           anulando la seguridad de tener tokens de corta duración.
     if payload.get("type") != "access":
+        raise credentials_exception
+
+    # ¿Qué? HU-008/RQF-007 (RN-001): revisar si este token puntual fue
+    #       revocado por un logout previo (ver app/models/token_revocado.py).
+    # ¿Para qué? Un JWT firmado y sin expirar sigue siendo "válido" para
+    #           decode_token — esta es la única forma de que el servidor
+    #           rechace un token específico ANTES de su expiración natural.
+    # ¿Impacto? Sin esto, cerrar sesión no tendría ningún efecto real en el
+    #           servidor: el mismo token seguiría funcionando hasta sus
+    #           15 minutos de vida, sin importar que el usuario haya
+    #           cerrado sesión.
+    jti = payload.get("jti")
+    if jti and db.get(TokenRevocado, uuid.UUID(jti)):
         raise credentials_exception
 
     email: str | None = payload.get("sub")

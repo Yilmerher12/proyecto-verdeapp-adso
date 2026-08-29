@@ -60,3 +60,5 @@
 - **Dado que** ya cerré sesión,
 - **cuando** cualquier intento intenta reusar el mismo token anterior,
 - **entonces** el sistema debe rechazarlo.
+
+> **Nota (2026-08-28)**: implementado y verificado contra el servidor real. Ahora existe `POST /api/v1/auth/logout`, que el frontend llama justo antes de borrar los tokens del navegador. El backend guarda el "jti" (identificador único) del access token y del refresh token en una lista negra (tabla `tokens_revocados`) — cualquier request posterior con ese MISMO token, aunque su firma y expiración sigan siendo válidas, se rechaza con 401. Se probó con curl reutilizando el token exacto que la sesión del navegador acababa de cerrar: `GET /api/v1/users/me` devolvió 401, y `POST /api/v1/auth/refresh` con el refresh token también. Solo se invalida el o los tokens de ESA sesión puntual — cerrar sesión en un dispositivo no afecta otras sesiones activas del mismo usuario en otros dispositivos (comportamiento esperado, verificado con un test dedicado).

@@ -8,6 +8,7 @@ Descripción: Schemas de comunicados del conjunto (RQF-014).
 
 from datetime import date, datetime
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
@@ -16,7 +17,7 @@ from app.models.comunicado import DestinatariosComunicado, TipoComunicado
 
 class CrearComunicadoRequest(BaseModel):
     """¿Qué? Lo que envía el Admin Conjunto al publicar un comunicado nuevo (HU-027)."""
-    id_conjunto_residencial: int
+    id_conjunto_residencial: UUID
     destinatarios: DestinatariosComunicado
     tipo: TipoComunicado
     texto: str
@@ -61,8 +62,8 @@ class EditarComunicadoRequest(BaseModel):
 
 class ComunicadoResponse(BaseModel):
     """¿Qué? Un comunicado, tal como lo ve el Admin Conjunto en su panel o un destinatario en su feed."""
-    id_comunicado: int
-    id_conjunto_residencial: int
+    id_comunicado: UUID
+    id_conjunto_residencial: UUID
     nombre_conjunto: str
     destinatarios: str
     tipo: str

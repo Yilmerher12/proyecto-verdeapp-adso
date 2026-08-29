@@ -3,10 +3,14 @@ Módulo: tests/test_auth.py
 Descripción: Tests de integración para los endpoints de autenticación y usuario de VerdeApp.
 """
 
+from datetime import datetime, timedelta, timezone
+
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from app.main import app as fastapi_app
 from app.models.conjunto_residencial import ConjuntoResidencial
+from app.models.usuario import Usuario
 from app.tests.conftest import (
     TEST_USER_EMAIL,
     TEST_USER_NOMBRE,
@@ -29,7 +33,7 @@ def _payload_residente(
         "nombre": "Nuevo",
         "apellidos": "Residente Prueba",
         "numero_telefonico": "3001112222",
-        "id_conjunto_residencial": conjunto.id_conjunto_residencial,
+        "id_conjunto_residencial": str(conjunto.id_conjunto_residencial),
         "torre": "TORRE 1",
         "apto": "303",
     }
@@ -165,6 +169,71 @@ class TestLogin:
         response = client.post(self.URL, json={"password": "TestPass123"})
         assert response.status_code == 422
 
+    def test_bloqueo_tras_5_intentos_fallidos_devuelve_403(
+        self, client: TestClient, db: Session, test_user: Usuario
+    ) -> None:
+        """CA-001.5 / RN-003 de RQF-001 — 5 fallos seguidos bloquean la cuenta 15 min."""
+        payload_malo = {"correo_electronico": TEST_USER_EMAIL, "password": "ContraseñaIncorrecta1"}
+        for _ in range(5):
+            respuesta = client.post(self.URL, json=payload_malo)
+            assert respuesta.status_code == 401
+
+        # Ni siquiera con la contraseña CORRECTA debería entrar ahora.
+        payload_bueno = {"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
+        bloqueado = client.post(self.URL, json=payload_bueno)
+        assert bloqueado.status_code == 403
+        assert "intentos" in bloqueado.json()["detail"].lower()
+
+        db.refresh(test_user)
+        assert test_user.bloqueado_hasta is not None
+
+    def test_login_correcto_resetea_contador_de_intentos_fallidos(
+        self, client: TestClient, db: Session, test_user: Usuario
+    ) -> None:
+        payload_malo = {"correo_electronico": TEST_USER_EMAIL, "password": "ContraseñaIncorrecta1"}
+        for _ in range(3):
+            client.post(self.URL, json=payload_malo)
+
+        payload_bueno = {"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
+        respuesta = client.post(self.URL, json=payload_bueno)
+        assert respuesta.status_code == 200
+
+        db.refresh(test_user)
+        assert test_user.intentos_fallidos == 0
+        assert test_user.bloqueado_hasta is None
+
+    def test_bloqueo_ya_vencido_permite_iniciar_sesion(
+        self, client: TestClient, db: Session, test_user: Usuario
+    ) -> None:
+        """Un bloqueo de hace más de 15 minutos ya no debe impedir el login."""
+        test_user.intentos_fallidos = 5
+        test_user.bloqueado_hasta = datetime.now(timezone.utc) - timedelta(minutes=1)
+        db.commit()
+
+        respuesta = client.post(
+            self.URL, json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
+        )
+        assert respuesta.status_code == 200
+
+    def test_supera_el_limite_de_intentos_devuelve_429_limpio(self, client: TestClient) -> None:
+        """OWASP A04 — antes, app.state.limiter nunca se registraba en main.py,
+        así que RateLimitExceeded no tenía un exception_handler asociado y se
+        propagaba como un error sin manejar en vez de un 429 limpio. La fixture
+        `disable_rate_limiter_for_tests` apaga el limiter para el resto de la
+        suite — aquí se reactiva solo para esta prueba puntual."""
+        from app.utils.limiter import limiter as real_limiter
+
+        real_limiter.enabled = True
+        try:
+            payload = {"correo_electronico": "fantasma@verdeapp.com", "password": "x"}
+            for _ in range(10):
+                client.post(self.URL, json=payload)
+            respuesta_extra = client.post(self.URL, json=payload)
+            assert respuesta_extra.status_code == 429
+            assert "rate limit" in respuesta_extra.json()["error"].lower()
+        finally:
+            real_limiter.enabled = False
+
 
 class TestRefresh:
     """Tests para el endpoint de renovación de tokens."""
@@ -220,6 +289,69 @@ class TestRefresh:
         db.commit()
         response = client.post(self.URL, json={"refresh_token": refresh_token})
         assert response.status_code == 403
+
+
+class TestLogout:
+    """Tests para el endpoint de cierre de sesión real en el servidor (HU-008/RQF-007)."""
+
+    URL = "/api/v1/auth/logout"
+
+    def _login(self, client: TestClient) -> dict[str, str]:
+        respuesta = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        return respuesta.json()
+
+    def test_logout_invalida_el_access_token(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """CA-008.x / RN-001 de RQF-007: tras el logout, el MISMO access token
+        ya no debe servir para acceder a un endpoint protegido."""
+        tokens = self._login(client)
+        headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+
+        logout_response = client.post(
+            self.URL, json={"refresh_token": tokens["refresh_token"]}, headers=headers
+        )
+        assert logout_response.status_code == 200
+
+        me_response = client.get("/api/v1/users/me", headers=headers)
+        assert me_response.status_code == 401
+
+    def test_logout_invalida_el_refresh_token(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """El refresh token de la misma sesión también queda inservible."""
+        tokens = self._login(client)
+        headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+
+        client.post(self.URL, json={"refresh_token": tokens["refresh_token"]}, headers=headers)
+
+        refresh_response = client.post(
+            "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
+        )
+        assert refresh_response.status_code == 401
+
+    def test_logout_no_auth(self, client: TestClient) -> None:
+        response = client.post(self.URL, json={"refresh_token": "token.invalido.falso"})
+        assert response.status_code == 401
+
+    def test_logout_no_afecta_otra_sesion_del_mismo_usuario(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Cerrar sesión en un dispositivo NO cierra sesión en otro — cada
+        token tiene su propio "jti" (ver app/models/token_revocado.py)."""
+        sesion_1 = self._login(client)
+        sesion_2 = self._login(client)
+
+        headers_1 = {"Authorization": f"Bearer {sesion_1['access_token']}"}
+        headers_2 = {"Authorization": f"Bearer {sesion_2['access_token']}"}
+
+        client.post(self.URL, json={"refresh_token": sesion_1["refresh_token"]}, headers=headers_1)
+
+        assert client.get("/api/v1/users/me", headers=headers_1).status_code == 401
+        assert client.get("/api/v1/users/me", headers=headers_2).status_code == 200
 
 
 class TestChangePassword:
@@ -474,6 +606,14 @@ class TestHealthCheck:
         response = client.get(self.URL)
         assert response.status_code == 200
         assert response.json()["status"] == "ok"
+
+    def test_respuesta_incluye_cabeceras_de_seguridad(self, client: TestClient) -> None:
+        """OWASP A05 — toda respuesta debe traer estas cabeceras, sin importar el endpoint."""
+        response = client.get(self.URL)
+        assert response.headers["X-Content-Type-Options"] == "nosniff"
+        assert response.headers["X-Frame-Options"] == "DENY"
+        assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+        assert "camera=()" in response.headers["Permissions-Policy"]
 
 
 class TestEmailVerification:

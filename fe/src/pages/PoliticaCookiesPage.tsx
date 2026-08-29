@@ -28,8 +28,6 @@ const SERVICE_COOKIES: readonly CookieEntry[] = [
   { name: "theme_preference" },
 ] as const;
 
-const CONTACTO_EMAIL = "datos@verdeapp.edu.co";
-
 interface PoliticaCookiesPageProps {
   /** ¿Qué? Ver LegalLayout — true cuando se muestra dentro de un Modal. */
   embedded?: boolean;
@@ -40,7 +38,7 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
 
   const S = <strong className="text-gray-700 dark:text-gray-300" />;
   const C = (
-    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1 text-xs text-accent-600 dark:text-accent-300" />
+    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1 text-xs text-accent-700 dark:text-accent-300" />
   );
   const privacyLink = (
     <a
@@ -48,9 +46,15 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
       className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
+  // ¿Qué? Antes esto era un mailto: hacia un correo inventado
+  //       (legal@verdeapp.edu.co, que ni siquiera coincidía con el correo
+  //       que definía la constante CONTACTO_EMAIL — un dominio que no
+  //       existe, en ningún caso). Ahora enlaza al formulario de contacto
+  //       real de la app — el profesor pidió que ningún link muestre un
+  //       correo, por seguridad.
   const emailLink = (
     <a
-      href={`mailto:${CONTACTO_EMAIL}`}
+      href="/contacto"
       className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
@@ -131,7 +135,7 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
                   className="bg-white dark:bg-[#03130b] hover:bg-gray-50 dark:hover:bg-[#132a1c] transition-colors"
                 >
                   <td className="px-4 py-3">
-                    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1.5 py-0.5 text-xs text-accent-600 dark:text-accent-300">
+                    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1.5 py-0.5 text-xs text-accent-700 dark:text-accent-300">
                       {cookie.name}
                     </code>
                   </td>

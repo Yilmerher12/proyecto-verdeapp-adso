@@ -1,4 +1,7 @@
 {
+  "serverError": {
+    "message": "Couldn't connect to the server. Check your connection — we'll retry automatically."
+  },
   "appShell": {
     "ariaLabel": "VerdeApp navigation",
     "nav": {
@@ -16,6 +19,7 @@
     },
     "proximamente": "Coming soon",
     "notificaciones": "Notifications",
+    "notificacionesConNoLeidas": "Notifications, {{count}} unread",
     "expandirMenu": "Expand menu",
     "colapsarMenu": "Collapse menu",
     "cerrarSesion": "Sign out",
@@ -41,6 +45,8 @@
   },
   "common": {
     "loading": "Loading...",
+    "loadError": "We couldn't load this information. Please try again later.",
+    "actionError": "The action couldn't be completed. Please try again.",
     "email": "Email address",
     "emailPlaceholder": "email@example.com",
     "password": "Password",
@@ -65,7 +71,8 @@
       "noAccount": "Don't have an account yet?",
       "createAccountLink": "Sign up here",
       "submit": "Log In",
-      "errorDefault": "Incorrect credentials. Check your email and password."
+      "errorDefault": "Incorrect credentials. Check your email and password.",
+      "sessionExpired": "Your session expired. Please log in again."
     },
     "register": {
       "title": "Create your account",
@@ -108,6 +115,8 @@
         "locality": "District",
         "selectPlaceholder": "Select...",
         "conjunto": "Residential Building",
+        "conjuntoSearchPlaceholder": "Type your building's name...",
+        "conjuntoNoResults": "No building found with that name.",
         "unitType": "Unit Type",
         "unitTypeTower": "Tower",
         "unitTypeInterior": "Interior",
@@ -221,6 +230,7 @@
     "en": "English"
   },
   "legal": {
+    "navAriaLabel": "Legal pages navigation",
     "backToHome": "Back to home",
     "footerCredit": "SENA educational project",
     "terms": {
@@ -236,7 +246,7 @@
       "s2": {
         "heading": "Registration and User Account",
         "p1": "To access the Service's features, the user must create an account by providing: full name, email address, and password. The user declares that the information provided is truthful, complete, and up to date.",
-        "p2": "The user is responsible for maintaining the confidentiality of their credentials. Any use of the account with the user's credentials is their sole responsibility. In case of unauthorized use, the user must notify immediately at {{email}}.",
+        "p2": "The user is responsible for maintaining the confidentiality of their credentials. Any use of the account with the user's credentials is their sole responsibility. In case of unauthorized use, the user must notify immediately through our <contactoLink>contact form</contactoLink>.",
         "p3": "Registration requires email verification via a link sent to the registered address. Until verified, access to protected features will be restricted."
       },
       "s3": {
@@ -275,9 +285,8 @@
       },
       "s9": {
         "heading": "Contact",
-        "intro": "For any inquiry, complaint, or exercise of rights related to these Terms, you may contact the operator through:",
+        "intro": "For any inquiry, complaint, or exercise of rights related to these Terms, you may contact the operator through our <contactoLink>contact form</contactoLink>. The operator's identification details are:",
         "companyLabel": "Company:",
-        "emailLabel": "Email:",
         "domicilioLabel": "Address:"
       }
     },
@@ -292,6 +301,7 @@
         "nitLabel": "Tax ID:",
         "domicilioLabel": "Address:",
         "contactLabel": "Personal data contact channel:",
+        "contactValue": "Contact form",
         "phoneLabel": "Phone:"
       },
       "s2": {
@@ -329,7 +339,7 @@
         "li4": "<strong>Revoke authorization</strong> for data processing, pursuant to Article 9 of Law 1581/2012.",
         "li5": "<strong>Free access</strong> to personal data that has been processed (at least once per calendar month, or whenever substantial modifications are made).",
         "li6": "<strong>File complaints</strong> with the SIC for violations of Law 1581/2012 (after first filing a query/claim directly with the Controller).",
-        "procedure": "To exercise these rights, the data subject must send a written request to <emailLink>{{email}}</emailLink> including: full name, ID number, clear description of the request, and supporting documents if applicable.",
+        "procedure": "To exercise these rights, the data subject must send their request through our <emailLink>contact form</emailLink> including: full name, ID number, clear description of the request, and supporting documents if applicable.",
         "timeframe": "The Controller will respond within a maximum of <strong>10 business days</strong> (queries, Art. 14 Law 1581/2012) or <strong>15 business days</strong> (claims, Art. 15 Law 1581/2012), extendable by an equal period in justified cases."
       },
       "s6": {
@@ -373,7 +383,7 @@
         "heading": "Effective Date and Modifications",
         "p1": "This policy enters into force on <strong>February 1, 2026</strong>. The Controller reserves the right to update it when necessary to adapt to regulatory or Service changes.",
         "p2": "All modifications will be published on this page and communicated to the data subject by email with at least <strong>10 business days' notice</strong>. Continued use of the Service after publication implies acceptance of the changes.",
-        "p3": "For inquiries about this Policy, contact us at: <emailLink>{{email}}</emailLink>."
+        "p3": "For inquiries about this Policy, contact us through our <emailLink>contact form</emailLink>."
       }
     },
     "cookies": {
@@ -454,11 +464,12 @@
       "s8": {
         "heading": "Updates to This Policy",
         "p1": "This policy may be updated to reflect technical changes to the Service or regulatory adaptations. The \"last updated\" date at the top of the document indicates the current version.",
-        "p2": "For inquiries about cookie use in the Service, contact us at: <emailLink>legal@verdeapp.edu.co</emailLink>."
+        "p2": "For inquiries about cookie use in the Service, contact us through our <emailLink>contact form</emailLink>."
       }
     }
   },
   "landing": {
+    "backToTop": "Back to top",
     "nav": { "homeAriaLabel": "VerdeApp — home", "login": "Sign in", "register": "Sign up" },
     "hero": {
       "subtitle": "Waste management for residential buildings in Bogotá",
@@ -510,6 +521,29 @@
       "rights": "© {{year}} VerdeApp. All rights reserved.",
       "legalAriaLabel": "Legal notice"
     }
+  },
+  "contactoModal": {
+    "title": "Contact Us",
+    "subtitle": "Have questions about VerdeApp, an issue with your account, or want to propose a partnership? Send us a message.",
+    "successMessage": "Message sent successfully! We'll get back to you at your email soon.",
+    "name": {
+      "label": "Full name",
+      "placeholder": "E.g. John Doe"
+    },
+    "email": {
+      "label": "Email address",
+      "placeholder": "john@example.com"
+    },
+    "subject": {
+      "label": "Subject",
+      "placeholder": "How can we help you?"
+    },
+    "message": {
+      "label": "Message",
+      "placeholder": "Write your message here..."
+    },
+    "incomplete": "Complete all fields",
+    "submit": "Send Message"
   },
   "contact": {
     "nav": {
@@ -599,9 +633,21 @@
         "hide": "Hide"
       },
       "loadingData": "Loading data...",
+      "usersSection": {
+        "title": "Registered users",
+        "tabs": {
+          "residentes": "Residents",
+          "recicladores": "Recyclers",
+          "administradores": "Building Admins"
+        },
+        "searchPlaceholder": "Search by name or email...",
+        "pagination": {
+          "showing": "Showing {{from}}–{{to}} of {{total}}",
+          "prev": "Previous page",
+          "next": "Next page"
+        }
+      },
       "residentsTable": {
-        "title": "Residents List",
-        "badge": "SQL View",
         "headers": {
           "email": "Email",
           "name": "Name",
@@ -612,14 +658,21 @@
         "empty": "No residents registered yet."
       },
       "recyclersTable": {
-        "title": "Recyclers List",
-        "badge": "Stored Procedure",
         "headers": {
           "email": "Email",
           "fullName": "Full name",
           "association": "Association"
         },
         "empty": "No recyclers registered yet."
+      },
+      "adminsTable": {
+        "headers": {
+          "email": "Email",
+          "name": "Name",
+          "phone": "Phone",
+          "conjuntos": "Buildings"
+        },
+        "empty": "No building administrators registered yet."
       }
     },
     "adminConjunto": {
@@ -630,14 +683,18 @@
         "rechazada": "Rejected"
       },
       "recyclersSection": {
-        "title": "Authorized Recyclers",
+        "title": "Recyclers",
         "invite": "+ Invite recycler",
         "emailPlaceholder": "recycler.email@example.com",
         "sending": "Sending...",
         "inviteButton": "Invite",
         "errorDefault": "The invitation could not be sent. Check the email address.",
-        "loading": "Loading recyclers...",
-        "empty": "You haven't invited any recycler to this building yet."
+        "authorizedTitle": "Authorized",
+        "authorizedLoading": "Loading authorized recyclers...",
+        "authorizedEmpty": "You don't have any authorized recycler in this building yet.",
+        "invitationsTitle": "Invitations sent",
+        "loading": "Loading invitations...",
+        "empty": "You haven't sent any invitation yet."
       },
       "myConjuntos": {
         "title": "Buildings you administer",
@@ -691,6 +748,40 @@
         "subtitle": "Select the building you arrived at or want to notify about.",
         "sending": "Sending...",
         "submit": "Send notice"
+      },
+      "auditoria": {
+        "bannerTitle": "Weekly audit pending",
+        "bannerSubtitle": "You can now rate the recycling sorting of {{conjunto}}.",
+        "bannerAction": "Audit now",
+        "modalTitle": "Audit building",
+        "modalSubtitle": "Rate how well this building is sorting its recyclable material — the rating is backed by a photo.",
+        "conjuntoLabel": "Building",
+        "nivelLabel": "Performance level",
+        "niveles": {
+          "excelente": "Good",
+          "buena": "Good",
+          "regular": "Fair",
+          "deficiente": "Poor"
+        },
+        "temaLabel": "Related topic",
+        "temaPlaceholder": "Select a topic...",
+        "descripcionLabel": "Description (optional)",
+        "descripcionPlaceholder": "Tell us what you found...",
+        "evidenciaLabel": "Evidence photos",
+        "evidenciaHint": "JPG, PNG, or WEBP — 5 MB max each.",
+        "evidenciaAgregarOtra": "Add another photo",
+        "evidenciaMaximoAlcanzado": "You've already attached the maximum of 3 photos.",
+        "evidenciaQuitar": "Remove this photo",
+        "submit": "Submit audit",
+        "sending": "Sending...",
+        "successMessage": "Audit submitted.",
+        "errorDefault": "Couldn't submit the audit.",
+        "validation": {
+          "conjunto": "Select a building.",
+          "nivel": "Select a performance level.",
+          "tema": "Select a topic.",
+          "evidencia": "Upload at least one evidence photo."
+        }
       }
     },
     "residente": {
@@ -714,6 +805,7 @@
   },
   "notificationFeed": {
     "platformLabel": "VerdeApp",
+    "markReadHint": "Press to mark as read",
     "markAllRead": "Mark all read",
     "clearRead": "Clear read",
     "showLess": "Show less",
@@ -724,6 +816,19 @@
       "hoursAgo": "{{count}}h ago",
       "daysAgo": "{{count}}d ago"
     }
+  },
+  "auditoriaResultado": {
+    "bannerTitle": "New audit of your building",
+    "verButton": "View",
+    "modalTitle": "Audit result",
+    "temaLabel": "Related topic",
+    "descripcionLabel": "Description",
+    "auditadoPor": "Audited by {{nombre}}",
+    "evidenciaAlt": "Audit evidence photo",
+    "evidenciaAmpliar": "View photo full size",
+    "errorLoad": "Couldn't load the audit.",
+    "historialTitle": "Audit history",
+    "historialEmpty": "No audits recorded yet."
   },
   "profile": {
     "title": "My profile",
@@ -738,7 +843,12 @@
       "baseLocality": "Base district",
       "association": "Association",
       "firstName": "First name",
-      "lastName": "Last name"
+      "lastName": "Last name",
+      "directoryVisibility": "Phone visibility",
+      "directoryVisibilityOn": "Visible",
+      "directoryVisibilityOff": "Not visible",
+      "directoryConsent": "Allow other users to see my number",
+      "directoryConsentHint": "Residents across the city will be able to call or WhatsApp you directly, not just the ones in your building."
     },
     "managedConjuntoSingular": "Building you administer",
     "managedConjuntoPlural": "Buildings you administer",
@@ -765,7 +875,21 @@
     "emptyRecyclers": "No recyclers registered in this district.",
     "emptyPoints": "No collection points registered in this district.",
     "call": "Call",
-    "noPhone": "No phone registered"
+    "noPhone": "No phone registered",
+    "copyAddress": "Copy address",
+    "infoRecicladores": {
+      "titulo": "What is this directory?",
+      "descripcion": "Professional recyclers registered in VerdeApp, organized by district.",
+      "paraQueSirve": "If your building doesn't have an assigned recycler yet, you can see who operates in your area here — share it with your admin to invite them, or reach out directly to arrange a one-off pickup.",
+      "fuenteTexto": "VerdeApp's own directory — not external data."
+    },
+    "infoPuntos": {
+      "titulo": "What is an ECA?",
+      "descripcion": "An Estación de Clasificación y Aprovechamiento (ECA) is the formal site, regulated by UAESP (Bogotá's public utilities authority), where organized professional recyclers weigh and sort what they collect on their routes.",
+      "paraQueSirve": "If you need to drop off recyclable materials on your own, you can find the nearest point here.",
+      "fuenteTexto": "Source: Bogotá Open Data (UAESP), \"Aprovechamiento ECAS\" dataset. Bogotá only has a registered ECA in 6 of its 20 districts.",
+      "fuenteLink": "View source"
+    }
   },
   "catalogoEducativo": {
     "title": "Learn to recycle",
@@ -793,7 +917,9 @@
       "deleteAriaLabel": "Confirm deletion"
     },
     "validation": {
-      "required": "Category, title, and content are required."
+      "required": "Category, title, and content are required.",
+      "titleTooShort": "Title must be at least 5 characters long.",
+      "bodyTooShort": "Content must be at least 20 characters long."
     },
     "deleteError": "Could not delete. Please try again.",
     "fields": {
@@ -849,7 +975,8 @@
     "description": "You only need their email. The invited person will set their own password and complete their details when accepting the invitation.",
     "emailLabel": "Email of the administrator to invite *",
     "conjuntosLabel": "Buildings to assign *",
-    "loadingConjuntos": "Loading buildings...",
+    "conjuntoSearchPlaceholder": "Type the building's name...",
+    "conjuntoNoResults": "No building found with that name.",
     "selectedCount": "{{count}} building(s) selected",
     "submit": "Send invitation",
     "validation": {
@@ -859,8 +986,10 @@
     "errorDefault": "The invitation could not be sent. Check the details and try again."
   },
   "desvinculacion": {
-    "solicitarButton": "Request unlink",
-    "pendingBadge": "Request pending",
+    "sectionTitle": "Your role as administrator",
+    "solicitarButton": "Stop administering this building",
+    "clarification": "This doesn't affect authorized recyclers or residents — it only transfers the administration of this building to someone else.",
+    "pendingBadge": "Unlink request pending",
     "motivoLabel": "Reason (optional)",
     "motivoPlaceholder": "E.g.: Contract ended",
     "submit": "Send request",

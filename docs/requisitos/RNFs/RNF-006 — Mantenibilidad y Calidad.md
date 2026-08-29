@@ -37,11 +37,13 @@ El código del backend debe documentar sus decisiones con comentarios que expliq
 
 El backend usa `ruff` (lint + formato) y el frontend usa `eslint` + `prettier`. Todo código nuevo debe pasar estas herramientas sin errores antes de mezclarse a `develop`.
 
+> **Nota (2026-08-28)**: ahora esto se verifica automáticamente — `.github/workflows/ci.yml` corre `ruff`/`pytest` (backend) y `tsc`/`eslint`/`vitest` (frontend) en cada Pull Request. Antes solo existía `close-prs.yml` (que ni siquiera corre estas herramientas, solo cierra PRs externos).
+
 ### RNF-006.3 — Cobertura de pruebas automatizadas
 
-Cada router del backend con lógica de negocio real (permisos, invitaciones, notificaciones) debe tener sus propias pruebas. Verificado: 10 archivos de test cubren autenticación, administración, geografía, directorio, notificaciones, vinculación de conjuntos y recicladores. El frontend tiene 13 archivos de test, cubriendo formularios de autenticación y componentes compartidos.
+Cada router del backend con lógica de negocio real (permisos, invitaciones, notificaciones) debe tener sus propias pruebas.
 
-**Pendiente:** los 4 dashboards por rol (Residente, Reciclador, Admin Sistema, Admin Conjunto) todavía no tienen pruebas automatizadas en el frontend — queda como tarea pendiente en el tablero.
+> **Estado real (2026-08-28)**: backend con 233 tests en 13 archivos (creció de los 10 archivos originales), frontend con 167 tests en 24 archivos — **incluyendo ya los 4 dashboards por rol** (`ResidenteDashboard.test.tsx`, `RecicladorDashboard.test.tsx`, `AdminDashboard.test.tsx`, `AdminConjuntoDashboard.test.tsx`), que antes faltaban. Lo que decía "Pendiente" aquí ya no aplica.
 
 ### RNF-006.4 — Control de versiones del esquema de base de datos
 
@@ -50,6 +52,8 @@ Todo cambio a las tablas de la base de datos debe pasar por una migración versi
 ### RNF-006.5 — Dependencias con versión exacta
 
 Todas las dependencias (backend con `uv`/`pyproject.toml`, frontend con `pnpm`/`package.json`) deben fijarse con una versión exacta, nunca con rangos abiertos — así toda persona del equipo instala exactamente lo mismo.
+
+> **Nota (2026-08-28)**: casi se cumple al 100% — la única excepción encontrada es `fe/package.json`: `"@headlessui/react": "^2.2.10"` usa un rango abierto (`^`), no una versión exacta. Es la razón por la que el Estado general de este RNF sigue en "Parcial" y no "Implementado", pese a que 006.1 a 006.4 y 006.6 ya cumplen del todo.
 
 ### RNF-006.6 — Historial de cambios trazable
 

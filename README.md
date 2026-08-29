@@ -42,7 +42,7 @@ El proyecto utiliza una estructura de arquitectura limpia y desacoplada, facilit
 | Gestor de Paquetes (Frontend) | pnpm (Corepack)         | 11.0.9                   | Resolución eficiente de dependencias mediante almacenamiento enlazado.            |
 | Infraestructura               | Docker & Docker Compose | 24+ / 2.20+              | Contenedores herméticos que aseguran el funcionamiento idéntico en cualquier PC.  |
 | Servidor Web FE               | Nginx                   | 1.27-alpine              | Servidor de alto rendimiento para la distribución de los estáticos del Frontend.  |
-| Servidor SMTP Dev             | Mailpit                 | latest (sin versión fija) | Captura local de correos (verificación, recuperación, invitaciones) en el puerto 8025. |
+| Servidor SMTP Dev             | Mailpit                 | v1.31.0 | Captura local de correos (verificación, recuperación, invitaciones) en el puerto 8025. |
 
 ---
 
@@ -142,6 +142,8 @@ SMTP_HOST=localhost
 
 #### Paso 3 — Encender el backend (Terminal 1 — PowerShell)
 
+> ⚠️ **Importante:** el Paso 1 (encender `verde_db`) tiene que estar hecho y corriendo *antes* de este paso. Si el backend arranca sin la base de datos disponible, falla con un error de conexión rechazada en el puerto 5433.
+
 ```powershell
 cd be
 
@@ -149,14 +151,18 @@ cd be
 # entorno virtual solo, no hace falta crearlo ni activarlo a mano)
 uv sync
 
-# Aplicar las migraciones de Alembic
+# Aplicar las migraciones de Alembic (crea las tablas)
 uv run alembic upgrade head
+
+# Sembrar los datos de prueba (roles, usuarios de ejemplo, conjuntos, etc.)
+# Es seguro correrlo varias veces: si la base ya tiene datos, no hace nada.
+uv run python -m app.seed
 
 # Encender el servidor
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-> En ejecuciones siguientes solo necesitamos correr uvicorn (uv usa el entorno correcto solo):
+> En ejecuciones siguientes normalmente solo hace falta encender uvicorn (uv usa el entorno correcto solo). Repetir `uv run python -m app.seed` no hace daño, pero solo es necesario si empezaste con una base de datos nueva (ej: borraste el volumen de Docker):
 > ```powershell
 > uv run uvicorn app.main:app --reload --port 8000
 > ```
@@ -216,7 +222,7 @@ La base de datos vive dentro de Docker pero se puede consultar desde tu máquina
 
 ### Opción 2: Extensión de VS Code (SQLTools)
 
-El proyecto ya incluye la conexión preconfigurada. Solo necesitas:
+El repositorio ya incluye la conexión preconfigurada en `.vscode/settings.json`. Solo necesitas:
 
 1. Instalar la extensión **SQLTools** y **SQLTools PostgreSQL Driver** en VS Code
 2. Abrir el panel de SQLTools (ícono de base de datos en la barra lateral)
@@ -239,6 +245,23 @@ SELECT * FROM roles;      -- ver roles disponibles
 \q                        -- salir
 ```
 
+## 🔑 Usuarios de Prueba Precargados
+
+Cada vez que se siembra la base de datos (`uv run python -m app.seed`, o automáticamente al levantar con Docker), quedan creadas estas 4 cuentas de prueba. Todas comparten la misma contraseña.
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Administrador del Sistema | `admin@verdeapp.com` | `AdminVerde2026*` |
+| Administrador de Conjunto | `admin.conjunto.prueba@verdeapp.com` | `AdminVerde2026*` |
+| Reciclador | `reciclador.prueba@verdeapp.com` | `AdminVerde2026*` |
+| Residente | `residente.prueba@verdeapp.com` | `AdminVerde2026*` |
+
+> ⚠️ **Importante:** Administrador del Sistema y Administrador de Conjunto **no tienen registro público** — solo existen estas cuentas sembradas (el Admin de Conjunto se crea normalmente por invitación del Admin del Sistema, ver [HU-018](docs/requisitos/HUs/HU-018_admin_sistema_invita_admin_conjunto.md)). Si olvidas estas credenciales en un equipo nuevo (p. ej. en el SENA), no hay forma de crear otra cuenta de esos dos roles desde la interfaz — hay que volver a esta tabla.
+>
+> Residente y Reciclador sí tienen registro público (`/register`), así que para esos dos roles siempre puedes crear una cuenta nueva si lo necesitas.
+
+---
+
 ## 📁 Estructura Detallada del Proyecto
 
 A continuación se detalla la organización exacta del monorepositorio alojado en GitHub. Cabe destacar que, por seguridad y rendimiento, los archivos de entorno (`.env`), módulos de Node (`node_modules`) y entornos virtuales de Python (`.venv`) están excluidos mediante el `.gitignore`.
@@ -251,6 +274,7 @@ verde-app/
 ├── scripts/                 # Utilidades Bash (start.sh, stop.sh) para automatizar contenedores
 ├── be/                      # Backend (Python + FastAPI)
 │   ├── app/                 # Código fuente principal de la API
+│   │   ├── data/            # Datos abiertos usados por el seed (ver seed.py)
 │   │   ├── models/          # Entidades e imperativos relacionales de SQLAlchemy
 │   │   ├── routers/         # Controladores de endpoints divididos por recursos
 │   │   ├── schemas/         # Modelos de validación estricta de Pydantic (DTOs)

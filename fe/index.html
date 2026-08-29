@@ -8,7 +8,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="VerdeApp — Plataforma de reciclaje inteligente para Bogotá" />
     <title>VerdeApp | Login</title>
-    
+
+    <script>
+      // ¿Qué? Decide el tema (claro/oscuro) y lo aplica al <html> ANTES de
+      //       que cargue React — de forma síncrona, bloqueando el pintado.
+      // ¿Para qué? ThemeToggle.tsx solo agrega la clase "dark" dentro de un
+      //           useEffect, que corre DESPUÉS de que el navegador ya pintó
+      //           la página una vez — eso causaba un "flash": se veía en
+      //           claro por una fracción de segundo y luego saltaba a oscuro.
+      // ¿Impacto? Mismo criterio que useTheme() en ThemeToggle.tsx (primero
+      //           localStorage, si no hay nada, la preferencia del sistema
+      //           operativo) — evaluado antes del primer pintado, así el
+      //           <html> ya nace con la clase correcta y no hay salto visual.
+      (function () {
+        var stored = localStorage.getItem("theme");
+        var isDark = stored
+          ? stored === "dark"
+          : window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (isDark) document.documentElement.classList.add("dark");
+      })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

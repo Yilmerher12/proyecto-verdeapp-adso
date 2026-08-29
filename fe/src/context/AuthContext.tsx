@@ -75,8 +75,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (userData.locale) {
           await i18n.changeLanguage(userData.locale);
         }
-      } catch {
-        clearAuth();
+      } catch (err) {
+        // ¿Qué? Antes CUALQUIER error de /users/me (401, 500, timeout, sin
+        //       red) borraba los tokens guardados.
+        // ¿Para qué? Solo un 401/403 significa que el token realmente ya no
+        //           sirve (expiró, o la cuenta se desactivó). Un error de
+        //           red o una caída puntual del servidor no dice nada sobre
+        //           si el token sigue siendo válido.
+        // ¿Impacto? Si el backend responde lento o hay un corte de red justo
+        //           al abrir la app, el usuario ya no pierde una sesión que
+        //           seguía siendo válida — solo se cierra sesión de verdad
+        //           cuando el servidor confirma que el token no sirve.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const status = (err as any)?.response?.status;
+        if (status === 401 || status === 403) {
+          clearAuth();
+        }
       } finally {
         setIsLoading(false);
       }

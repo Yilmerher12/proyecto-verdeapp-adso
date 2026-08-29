@@ -7,6 +7,7 @@
  */
 
 import axios from "axios";
+import { notificarServidorInalcanzable, notificarServidorRecuperado } from "@/lib/serverStatusEvents";
 
 // La URL de la API sale de esta única variable de entorno de Vite. Antes había
 // varias pantallas (dashboards, formularios, DirectorioPage) que se escribían
@@ -57,31 +58,92 @@ api.interceptors.request.use(
  * ¿Para qué? Extraer mensajes de error del backend y formatearlos para el frontend.
  * ¿Impacto? Sin esto, cada componente tendría que parsear el error de Axios por separado.
  */
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response) {
-      // ¿Qué? Error HTTP del servidor (4xx, 5xx).
-      // ¿Para qué? Extraer el mensaje de error del body de la respuesta.
-      const data = error.response.data;
+function manejarRespuestaExitosa(response: import("axios").AxiosResponse) {
+  // ¿Qué? Cualquier respuesta exitosa confirma que el servidor SÍ está
+  //       respondiendo de nuevo.
+  // ¿Para qué? Si el banner de "servidor no disponible" (RNF-002.4) estaba
+  //           visible, esto le avisa que ya se puede ocultar — sin esto, el
+  //           aviso se quedaría pegado en pantalla para siempre después de
+  //           que el servidor se recupera.
+  notificarServidorRecuperado();
+  return response;
+}
 
-      // ¿Qué? Manejo especial para errores de validación Pydantic (422).
-      // ¿Para qué? Los errores 422 tienen estructura { detail: [{loc, msg, type}] }.
-      if (error.response.status === 422 && Array.isArray(data.detail)) {
-        const messages = data.detail.map(
-          (err: { msg: string }) => err.msg,
-        );
-        error.message = messages.join(". ");
-      } else if (typeof data.detail === "string") {
-        error.message = data.detail;
-      }
-    } else if (error.request) {
-      // ¿Qué? La petición se envió pero no hubo respuesta.
-      // ¿Para qué? Informar al usuario que el servidor no respondió.
-      error.message = "No se pudo conectar con el servidor";
+// ¿Qué? Evita disparar el redireccionamiento de sesión vencida más de una vez
+//       si varias peticiones fallan casi al mismo tiempo con 401.
+// ¿Para qué? Sin este candado, 3-4 peticiones en paralelo (algo común al
+//           cargar un dashboard) dispararían 3-4 redirecciones seguidas.
+// ¿Impacto? Solo la primera detecta la sesión vencida y redirige; las demás
+//           se ignoran porque para entonces la redirección ya está en curso.
+let sesionExpiradaEnProceso = false;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function manejarErrorDeRespuesta(error: any) {
+  if (error.response) {
+    // ¿Qué? Error HTTP del servidor (4xx, 5xx).
+    // ¿Para qué? Extraer el mensaje de error del body de la respuesta.
+    const data = error.response.data;
+
+    // ¿Qué? Un 401 mientras había un token guardado significa que la sesión
+    //       venció DURANTE el uso activo de la app (no es un login con
+    //       contraseña incorrecta — ese caso no tiene token guardado todavía).
+    // ¿Para qué? Antes, cuando el token expiraba (a los 15-60 minutos), la
+    //           app simplemente dejaba de actualizar datos en silencio: cada
+    //           petición fallaba con 401 y quedaba atrapada en los `catch`
+    //           de cada pantalla, sin ningún aviso — parecía que la app se
+    //           había "congelado", no que la sesión había muerto.
+    // ¿Impacto? Ahora se limpia la sesión y se manda a login con un aviso
+    //           claro, en vez de dejar que las peticiones sigan fallando
+    //           sin explicación.
+    const haySesionGuardada = !!sessionStorage.getItem("access_token");
+    if (error.response.status === 401 && haySesionGuardada && !sesionExpiradaEnProceso) {
+      sesionExpiradaEnProceso = true;
+      sessionStorage.removeItem("access_token");
+      sessionStorage.removeItem("refresh_token");
+      sessionStorage.setItem("verdeapp:session-expired", "1");
+      window.location.href = "/login";
     }
-    return Promise.reject(error);
-  },
-);
+
+    // ¿Qué? Manejo especial para errores de validación Pydantic (422).
+    // ¿Para qué? Los errores 422 tienen estructura { detail: [{loc, msg, type}] }.
+    if (error.response.status === 422 && Array.isArray(data.detail)) {
+      const messages = data.detail.map(
+        (err: { msg: string }) => err.msg,
+      );
+      error.message = messages.join(". ");
+    } else if (typeof data.detail === "string") {
+      error.message = data.detail;
+    }
+    // ¿Qué? Sí hubo respuesta (aunque sea un error 4xx/5xx) — el servidor
+    //       está vivo y contestando, así que también cuenta como "se
+    //       recuperó" si el banner estaba visible por una caída anterior.
+    notificarServidorRecuperado();
+  } else if (error.request) {
+    // ¿Qué? La petición se envió pero NUNCA llegó ninguna respuesta — ni
+    //       siquiera un error. Esto es "servidor no disponible" de verdad
+    //       (apagado, caído, sin red), no un error de negocio.
+    // ¿Para qué? Informar al usuario que el servidor no respondió
+    //           (RNF-002.4) — tanto en el mensaje del error puntual como
+    //           con el aviso global para el banner de toda la app.
+    error.message = "No se pudo conectar con el servidor";
+    notificarServidorInalcanzable();
+  }
+  return Promise.reject(error);
+}
+
+api.interceptors.response.use(manejarRespuestaExitosa, manejarErrorDeRespuesta);
+
+// ¿Qué? Este MISMO interceptor también se registra en el módulo "axios" base
+//       (no solo en la instancia "api" de arriba).
+// ¿Para qué? Varias pantallas (los 4 dashboards, ProfilePage, DirectorioPage,
+//           RegisterPage, y varios de fe/src/lib/*Api.ts) hacen sus peticiones
+//           con `import axios from "axios"` directo, no con esta instancia
+//           "api" — una instancia creada con axios.create() NO comparte
+//           interceptores con el módulo base, así que sin esto el aviso de
+//           "servidor no disponible" nunca se dispararía para esas pantallas.
+// ¿Impacto? Idealmente esas pantallas migrarían a usar "api" (quedaría más
+//           limpio), pero mientras tanto esto garantiza que RNF-002.4 se
+//           cumpla para TODA la app, no solo para lo que ya usa "api".
+axios.interceptors.response.use(manejarRespuestaExitosa, manejarErrorDeRespuesta);
 
 export default api;

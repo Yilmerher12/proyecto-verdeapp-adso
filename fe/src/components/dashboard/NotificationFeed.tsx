@@ -17,9 +17,12 @@ import type { LucideIcon } from "lucide-react";
 import i18n from "@/i18n";
 
 export interface NotificacionItem {
-  id: number;
+  id: string;
   tipo: string;
   mensaje: string;
+  // ¿Qué? Puntero opcional al registro relacionado (ej. id_auditoria para
+  //       AUDITORIA_PUBLICADA) — la mayoría de tipos no lo usan.
+  id_referencia: string | null;
   // ¿Qué? Puede ser null — las novedades de plataforma (RQF-015) no
   //       pertenecen a ningún conjunto residencial.
   nombre_conjunto: string | null;
@@ -66,7 +69,7 @@ interface NotificationFeedProps {
   accentBg: string;
   /** Fondo de la fila cuando está sin leer (claro + oscuro), a tono con el mismo acento. */
   accentHighlight: string;
-  onMarkRead: (id: number) => void;
+  onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   onClearRead: () => void;
 }
@@ -99,12 +102,12 @@ export function NotificationFeed({
         </div>
         <div className="flex items-center gap-3">
           {noLeidas > 0 && (
-            <button onClick={onMarkAllRead} className="text-xs font-medium text-green-600 hover:text-green-500">
+            <button onClick={onMarkAllRead} className="text-xs font-medium text-green-700 hover:text-green-600 dark:text-green-500 dark:hover:text-green-400">
               {t("notificationFeed.markAllRead")}
             </button>
           )}
           {notifications.some((n) => n.leida) && (
-            <button onClick={onClearRead} className="text-xs font-medium text-gray-400 hover:text-red-400">
+            <button onClick={onClearRead} className="text-xs font-medium text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400">
               {t("notificationFeed.clearRead")}
             </button>
           )}
@@ -112,7 +115,7 @@ export function NotificationFeed({
       </div>
 
       {notifications.length === 0 ? (
-        <p className="px-5 pb-5 text-sm text-gray-400">{emptyMessage}</p>
+        <p className="px-5 pb-5 text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</p>
       ) : (
         <>
           <ul className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -122,20 +125,29 @@ export function NotificationFeed({
                 <li
                   key={n.id}
                   onClick={() => !n.leida && onMarkRead(n.id)}
+                  onKeyDown={(e) => {
+                    if (!n.leida && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      onMarkRead(n.id);
+                    }
+                  }}
+                  role={!n.leida ? "button" : undefined}
+                  tabIndex={!n.leida ? 0 : undefined}
+                  aria-label={!n.leida ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}` : undefined}
                   className={`flex cursor-pointer items-start gap-3 px-5 py-3.5 transition-colors ${
                     !n.leida ? accentHighlight : "hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
                   }`}
                 >
-                  <meta.Icon className={`mt-0.5 h-4 w-4 shrink-0 ${meta.color}`} />
+                  <meta.Icon className={`mt-0.5 h-4 w-4 shrink-0 ${meta.color}`} aria-hidden="true" />
                   <div className="min-w-0 flex-1">
                     <p className={`text-sm ${!n.leida ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
                       {n.mensaje}
                     </p>
-                    <p className="mt-0.5 text-xs text-gray-400">
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                       {n.nombre_conjunto ?? t("notificationFeed.platformLabel")} · {tiempoRelativo(n.created_at)}
                     </p>
                   </div>
-                  {!n.leida && <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${accentBg}`} />}
+                  {!n.leida && <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${accentBg}`} aria-hidden="true" />}
                 </li>
               );
             })}
@@ -143,7 +155,7 @@ export function NotificationFeed({
           {notifications.length > 5 && (
             <button
               onClick={() => setExpandido((v) => !v)}
-              className="w-full py-2.5 text-xs font-medium text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 border-t border-gray-50 dark:border-[#2a4d34] transition-colors"
+              className="w-full py-2.5 text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 border-t border-gray-50 dark:border-[#2a4d34] transition-colors"
             >
               {expandido ? t("notificationFeed.showLess") : t("notificationFeed.showMore", { count: notifications.length - 5 })}
             </button>

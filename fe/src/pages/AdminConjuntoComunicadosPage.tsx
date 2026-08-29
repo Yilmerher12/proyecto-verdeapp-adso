@@ -15,7 +15,7 @@ import {
 } from "@/lib/comunicadosApi";
 
 interface FormState {
-  id_conjunto_residencial: number | "";
+  id_conjunto_residencial: string | "";
   destinatarios: DestinatariosComunicado;
   tipo: TipoComunicado;
   texto: string;
@@ -167,7 +167,7 @@ export function AdminConjuntoComunicadosPage() {
       } else {
         await crearComunicado(
           {
-            id_conjunto_residencial: Number(form.id_conjunto_residencial),
+            id_conjunto_residencial: form.id_conjunto_residencial as string,
             destinatarios: form.destinatarios,
             tipo: form.tipo,
             texto: form.texto.trim(),
@@ -209,23 +209,23 @@ export function AdminConjuntoComunicadosPage() {
         <button
           onClick={abrirCrear}
           disabled={conjuntos.length === 0}
-          className="flex items-center gap-1.5 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-500 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
           {t("comunicados.admin.newButton")}
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
+      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
 
       {!cargando && conjuntos.length === 0 && (
-        <p className="text-sm text-gray-400">{t("comunicados.admin.noConjuntos")}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.noConjuntos")}</p>
       )}
 
       {!cargando && comunicados.length === 0 && conjuntos.length > 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-400">{t("comunicados.admin.emptyState")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.emptyState")}</p>
         </div>
       )}
 
@@ -244,11 +244,11 @@ export function AdminConjuntoComunicadosPage() {
                   <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#1f4029] dark:text-gray-300">
                     {item.nombre_conjunto}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     {t(`comunicados.destinatarios.${item.destinatarios}`)}
                   </span>
                   {item.editado && (
-                    <span className="text-xs italic text-gray-400">{t("comunicados.editedBadge")}</span>
+                    <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
                   )}
                 </div>
                 <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
@@ -263,7 +263,7 @@ export function AdminConjuntoComunicadosPage() {
                     {t("comunicados.viewAttachment")}
                   </a>
                 )}
-                <p className="mt-2 text-xs text-gray-400">
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   {t("comunicados.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
                 </p>
               </div>
@@ -292,6 +292,7 @@ export function AdminConjuntoComunicadosPage() {
         <Modal
           onClose={cerrarFormulario}
           wide
+          closeOnBackdrop={false}
           aria-label={editando ? t("comunicados.admin.editTitle") : t("comunicados.admin.newButton")}
         >
           <div className="p-6 sm:p-8 space-y-4">
@@ -308,12 +309,13 @@ export function AdminConjuntoComunicadosPage() {
             {!editando && (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                  <label htmlFor="comunicado-conjunto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                     {t("comunicados.admin.fields.conjunto")} <span className="text-red-500">*</span>
                   </label>
                   <select
+                    id="comunicado-conjunto"
                     value={form.id_conjunto_residencial}
-                    onChange={(e) => setForm({ ...form, id_conjunto_residencial: Number(e.target.value) })}
+                    onChange={(e) => setForm({ ...form, id_conjunto_residencial: e.target.value })}
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                   >
                     {conjuntos.map((c) => (
@@ -325,10 +327,16 @@ export function AdminConjuntoComunicadosPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                  {/* ¿Qué? "Destinatarios" no es un <select>/<input> único, es un
+                      grupo de botones — un <label htmlFor> no aplica aquí.
+                      ¿Para qué? role="group" + aria-labelledby es la forma
+                                correcta de asociar un texto descriptivo a un
+                                grupo de controles (WAI-ARIA), en vez de un
+                                <label> huérfano que no apunta a nada. */}
+                  <span id="comunicado-destinatarios-label" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                     {t("comunicados.admin.fields.destinatarios")} <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-2">
+                  </span>
+                  <div role="group" aria-labelledby="comunicado-destinatarios-label" className="flex gap-2">
                     {DESTINATARIOS.map((d) => (
                       <button
                         key={d}
@@ -356,15 +364,16 @@ export function AdminConjuntoComunicadosPage() {
                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {editando.nombre_conjunto} · {t(`comunicados.destinatarios.${editando.destinatarios}`)}
                 </p>
-                <p className="mt-1 text-[11px] text-gray-400">{t("comunicados.admin.destinatariosNoEditable")}</p>
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("comunicados.admin.destinatariosNoEditable")}</p>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="comunicado-tipo" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("comunicados.admin.fields.tipo")} <span className="text-red-500">*</span>
               </label>
               <select
+                id="comunicado-tipo"
                 value={form.tipo}
                 onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoComunicado })}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
@@ -379,10 +388,11 @@ export function AdminConjuntoComunicadosPage() {
 
             {form.tipo === "CONVOCATORIA" && (
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                <label htmlFor="comunicado-fecha-evento" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("comunicados.admin.fields.fechaEvento")} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="comunicado-fecha-evento"
                   type="date"
                   value={form.fecha_evento}
                   onChange={(e) => setForm({ ...form, fecha_evento: e.target.value })}
@@ -392,10 +402,11 @@ export function AdminConjuntoComunicadosPage() {
             )}
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="comunicado-texto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("comunicados.admin.fields.texto")} <span className="text-red-500">*</span>
               </label>
               <textarea
+                id="comunicado-texto"
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 rows={5}
@@ -404,10 +415,11 @@ export function AdminConjuntoComunicadosPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="comunicado-url-adjunto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("comunicados.admin.fields.urlAdjunto")}
               </label>
               <input
+                id="comunicado-url-adjunto"
                 value={form.url_adjunto}
                 onChange={(e) => setForm({ ...form, url_adjunto: e.target.value })}
                 placeholder={t("comunicados.admin.fields.urlAdjuntoPlaceholder")}
@@ -416,16 +428,17 @@ export function AdminConjuntoComunicadosPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="comunicado-fecha-expiracion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("comunicados.admin.fields.fechaExpiracion")}
               </label>
               <input
+                id="comunicado-fecha-expiracion"
                 type="date"
                 value={form.fecha_expiracion}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
-              <p className="mt-1 text-[11px] text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
+              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
             <div className="flex gap-2 pt-2">
@@ -438,7 +451,7 @@ export function AdminConjuntoComunicadosPage() {
               <button
                 onClick={guardar}
                 disabled={guardando}
-                className="flex-1 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60 transition-colors"
+                className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 transition-colors"
               >
                 {guardando ? t("common.saving") : t("common.save")}
               </button>

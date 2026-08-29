@@ -44,6 +44,12 @@ from app.models.email_verification_token import EmailVerificationToken
 # Notificaciones
 from app.models.notificacion import Notificacion, NotificacionDestinatario
 
+# Auditoría del reciclador al conjunto (RQF-009)
+from app.models.auditoria_conjunto import AuditoriaConjunto
+
+# Lista negra de tokens JWT invalidados por logout (RQF-007)
+from app.models.token_revocado import TokenRevocado
+
 # ¿Qué? Declara explícitamente qué exporta este paquete.
 # ¿Para qué? Todos los imports de arriba son a propósito (ver docstring del
 #           archivo) aunque este módulo no los use directamente — sin __all__,
@@ -75,4 +81,6 @@ __all__ = [
     "EmailVerificationToken",
     "Notificacion",
     "NotificacionDestinatario",
+    "AuditoriaConjunto",
+    "TokenRevocado",
 ]

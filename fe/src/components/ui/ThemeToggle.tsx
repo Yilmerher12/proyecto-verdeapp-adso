@@ -54,6 +54,7 @@ export function ThemeToggle() {
       onClick={toggle}
       className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-[#2a4d34]"
       aria-label={isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+      aria-pressed={isDark}
       title={isDark ? "Tema claro" : "Tema oscuro"}
     >
       {isDark ? (

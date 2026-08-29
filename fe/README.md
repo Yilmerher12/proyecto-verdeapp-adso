@@ -3,6 +3,18 @@
 > Documentación técnica del frontend de VerdeApp.
 > Cada sección explica **qué se implementó**, **por qué se tomó esa decisión** y **qué impacto tiene**.
 
+> ⚠️ **Nota (2026-08-25):** este documento viene de la plantilla educativa
+> base y varias secciones (8, 16, y los fragmentos de código de ejemplo)
+> enseñan el patrón de enrutamiento de React Router usando nombres
+> genéricos, `DashboardPage.tsx` y `components/layout/AppLayout.tsx`, que
+> **no existen** en el código real. En VerdeApp el layout autenticado es
+> [`components/layout/AppShell.tsx`](src/components/layout/AppShell.tsx), y
+> en vez de un único `DashboardPage.tsx` hay 4 dashboards por rol en
+> [`pages/dashboards/`](src/pages/dashboards/) (`ResidenteDashboard.tsx`,
+> `RecicladorDashboard.tsx`, `AdminDashboard.tsx`, `AdminConjuntoDashboard.tsx`).
+> El *concepto* que enseñan esas secciones (Layout Route de React Router)
+> sigue siendo correcto — solo cambian los nombres de archivo.
+
 ---
 
 ## Tabla de Contenidos

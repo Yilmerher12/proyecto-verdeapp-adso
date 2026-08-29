@@ -43,6 +43,8 @@
 - **cuando** intento reportarlo lleno otra vez,
 - **entonces** el sistema no debe permitir un segundo reporte duplicado.
 
+> **Nota (2026-08-29)**: implementado y probado — `POST /api/v1/notificaciones/enviar` ahora revisa el estado actual del SHUT antes de crear una notificación nueva, y rechaza el reporte con 400 si ya está marcado como lleno.
+
 ### CA-003.3 — Notificación a los recicladores del conjunto
 
 - **Dado que** reporté el SHUT lleno,

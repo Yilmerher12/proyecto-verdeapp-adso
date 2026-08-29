@@ -15,10 +15,15 @@ import {
 import {
   invitarReciclador,
   obtenerInvitacionesDeConjunto,
+  obtenerRecicladoresAutorizados,
   type InvitacionEnviada,
+  type RecicladorAutorizado,
 } from "@/lib/recicladorConjuntoApi";
 import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
+import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
+import { Alert } from "@/components/ui/Alert";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -50,14 +55,35 @@ function BadgeEstado({ estado }: { estado: string }) {
  *           principal — cada conjunto administrado tiene su propia
  *           lista de invitaciones, así que esto vive por tarjeta.
  */
-function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; accessToken: string }) {
+function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; accessToken: string }) {
   const { t } = useTranslation();
+  const [autorizados, setAutorizados] = useState<RecicladorAutorizado[]>([]);
+  const [cargandoAutorizados, setCargandoAutorizados] = useState(true);
   const [invitaciones, setInvitaciones] = useState<InvitacionEnviada[]>([]);
   const [cargando, setCargando] = useState(true);
   const [correoNuevo, setCorreoNuevo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [errorInvitar, setErrorInvitar] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+
+  // ¿Qué? Antes esta sección solo consultaba el historial de invitaciones
+  //       (obtenerInvitacionesDeConjunto) — un reciclador vinculado por
+  //       fuera de ese flujo (ej. seed_data.sql, que lo hace a propósito
+  //       "como si ya hubiera aceptado una invitación") nunca aparecía en
+  //       ningún lado, aunque sí estuviera autorizado de verdad. El admin
+  //       veía "no has invitado a nadie" y, al intentar invitarlo, el
+  //       backend le decía "ya está autorizado" — dos respuestas correctas
+  //       por separado, pero contradictorias entre sí.
+  // ¿Impacto? Ahora se consultan las dos fuentes por separado: la lista
+  //           real de autorizados (recicladores_conjuntos) y el historial
+  //           de invitaciones, cada una con su propio título honesto.
+  const cargarAutorizados = () => {
+    setCargandoAutorizados(true);
+    obtenerRecicladoresAutorizados(idConjunto, accessToken)
+      .then(setAutorizados)
+      .catch((err) => console.error("Error cargando recicladores autorizados", err))
+      .finally(() => setCargandoAutorizados(false));
+  };
 
   const cargarInvitaciones = () => {
     setCargando(true);
@@ -68,6 +94,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
   };
 
   useEffect(() => {
+    cargarAutorizados();
     cargarInvitaciones();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idConjunto]);
@@ -124,7 +151,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
           <button
             type="submit"
             disabled={enviando || !correoNuevo.trim()}
-            className="flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
             {enviando ? t("dashboards.adminConjunto.recyclersSection.sending") : t("dashboards.adminConjunto.recyclersSection.inviteButton")}
@@ -136,10 +163,50 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
         <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3 dark:bg-red-900/20 dark:text-red-400">{errorInvitar}</p>
       )}
 
+      {/* Recicladores YA autorizados — el dato real (recicladores_conjuntos) */}
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
+      </p>
+      {cargandoAutorizados ? (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          {t("dashboards.adminConjunto.recyclersSection.authorizedLoading")}
+        </p>
+      ) : autorizados.length === 0 ? (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          {t("dashboards.adminConjunto.recyclersSection.authorizedEmpty")}
+        </p>
+      ) : (
+        <div className="space-y-2 mb-4">
+          {autorizados.map((r) => (
+            <div
+              key={r.id_reciclador}
+              className="flex items-center justify-between gap-3 bg-green-50 dark:bg-green-900/10 rounded-lg px-3 py-2"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                  {r.nombre} {r.apellidos}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{r.correo_electronico}</p>
+              </div>
+              {r.asociacion && (
+                <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  {r.asociacion}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Historial de invitaciones enviadas — puede estar vacío aunque sí
+          haya recicladores autorizados arriba (ver comentario más arriba). */}
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
+      </p>
       {cargando ? (
-        <p className="text-xs text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
       ) : invitaciones.length === 0 ? (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {t("dashboards.adminConjunto.recyclersSection.empty")}
         </p>
       ) : (
@@ -153,7 +220,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: number; 
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
                   {inv.nombre_reciclador} {inv.apellidos_reciclador}
                 </p>
-                <p className="text-xs text-gray-400 truncate">{inv.correo_reciclador}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{inv.correo_reciclador}</p>
               </div>
               <BadgeEstado estado={inv.estado} />
             </div>
@@ -177,7 +244,7 @@ function SeccionDesvinculacion({
   accessToken,
   onSolicitudEnviada,
 }: {
-  idConjunto: number;
+  idConjunto: string;
   tieneSolicitudPendiente: boolean;
   accessToken: string;
   onSolicitudEnviada: () => void;
@@ -205,28 +272,40 @@ function SeccionDesvinculacion({
     }
   };
 
-  if (tieneSolicitudPendiente) {
-    return (
-      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-[#2a4d34]">
+  // ¿Qué? Antes este botón decía solo "Solicitar desvinculación", sin decir
+  //       DE QUÉ — y estaba pegado justo debajo de la sección de
+  //       Recicladores, lo que hacía parecer que ambas cosas estaban
+  //       relacionadas. Un usuario real lo probó pensando que iba a
+  //       desvincular a un reciclador, cuando en realidad desvincula al
+  //       ADMIN de la administración de este conjunto (RQF-016) — los
+  //       recicladores autorizados no se ven afectados en absoluto.
+  // ¿Impacto? Título propio + texto del botón explícito + aclaración corta
+  //           dejan claro, sin necesidad de leer el código, que esto es
+  //           sobre el rol del admin, no sobre los recicladores.
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2a4d34]">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        {t("desvinculacion.sectionTitle")}
+      </p>
+
+      {tieneSolicitudPendiente ? (
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 px-2.5 py-1 rounded-full">
           <Clock className="w-3.5 h-3.5" /> {t("desvinculacion.pendingBadge")}
         </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-[#2a4d34]">
-      {!mostrarFormulario ? (
-        <button
-          type="button"
-          onClick={() => setMostrarFormulario(true)}
-          className="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
-        >
-          {t("desvinculacion.solicitarButton")}
-        </button>
+      ) : !mostrarFormulario ? (
+        <div>
+          <button
+            type="button"
+            onClick={() => setMostrarFormulario(true)}
+            className="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            {t("desvinculacion.solicitarButton")}
+          </button>
+          <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">{t("desvinculacion.clarification")}</p>
+        </div>
       ) : (
         <div className="bg-gray-50 dark:bg-[#0d2116]/60 p-3 rounded-xl space-y-2">
+          <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("desvinculacion.motivoLabel")}
           </label>
@@ -276,13 +355,15 @@ export function AdminConjuntoDashboard() {
   const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_CONJUNTO];
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
   const [formEdicion, setFormEdicion] = useState({ nombre_conjunto: "", nit: "", direccion: "" });
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
 
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [cargandoNotifs, setCargandoNotifs] = useState(true);
+  const [errorNotifs, setErrorNotifs] = useState(false);
+  const [errorAccionNotif, setErrorAccionNotif] = useState(false);
 
   const authHeaders = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 
@@ -299,26 +380,45 @@ export function AdminConjuntoDashboard() {
     if (!accessToken) return;
     axios
       .get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers: authHeaders })
-      .then((res) => setNotificaciones(res.data))
-      .catch(() => {})
+      .then((res) => {
+        setNotificaciones(res.data);
+        setErrorNotifs(false);
+      })
+      // ¿Qué? Antes esto fallaba en silencio — el panel se quedaba con
+      //       notificaciones viejas sin ningún aviso de que algo salió mal.
+      // ¿Impacto? Como esto también corre cada 20s (polling), el aviso
+      //           desaparece solo apenas una siguiente carga funcione.
+      .catch(() => setErrorNotifs(true))
       .finally(() => setCargandoNotifs(false));
   };
 
-  const marcarLeida = async (id: number) => {
-    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers: authHeaders });
-    setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
-    notificarNotificacionesActualizadas();
+  const marcarLeida = async (id: string) => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers: authHeaders });
+      setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+      notificarNotificacionesActualizadas();
+    } catch {
+      setErrorAccionNotif(true);
+    }
   };
 
   const marcarTodasLeidas = async () => {
-    await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers: authHeaders });
-    setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
-    notificarNotificacionesActualizadas();
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers: authHeaders });
+      setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+      notificarNotificacionesActualizadas();
+    } catch {
+      setErrorAccionNotif(true);
+    }
   };
 
   const limpiarLeidas = async () => {
-    await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers: authHeaders });
-    setNotificaciones((prev) => prev.filter((n) => !n.leida));
+    try {
+      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers: authHeaders });
+      setNotificaciones((prev) => prev.filter((n) => !n.leida));
+    } catch {
+      setErrorAccionNotif(true);
+    }
   };
 
   useEffect(() => {
@@ -343,7 +443,7 @@ export function AdminConjuntoDashboard() {
     setEditandoId(null);
   };
 
-  const guardarEdicion = async (id: number) => {
+  const guardarEdicion = async (id: string) => {
     if (!accessToken) return;
     setGuardando(true);
     try {
@@ -383,7 +483,7 @@ export function AdminConjuntoDashboard() {
             <p className="text-gray-600 dark:text-gray-300">
               {t("dashboards.common.welcomePrefix")} <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
             </p>
-            <p className="text-xs text-green-600 font-semibold mt-1 tracking-wide">
+            <p className="text-xs text-green-700 dark:text-green-400 font-semibold mt-1 tracking-wide">
               {user?.email}
             </p>
           </div>
@@ -403,9 +503,9 @@ export function AdminConjuntoDashboard() {
         </div>
 
         {cargando ? (
-          <p className="text-sm text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
         ) : conjuntos.length === 0 ? (
-          <p className="text-sm text-gray-400 py-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
             {t("dashboards.adminConjunto.myConjuntos.empty")}
           </p>
         ) : (
@@ -453,7 +553,7 @@ export function AdminConjuntoDashboard() {
                         type="button"
                         onClick={() => guardarEdicion(c.id_conjunto_residencial)}
                         disabled={guardando}
-                        className="flex items-center gap-1 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl transition-colors disabled:opacity-60"
+                        className="flex items-center gap-1 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 px-4 py-2 rounded-xl transition-colors disabled:opacity-60"
                       >
                         <Check className="w-4 h-4" /> {t("common.save")}
                       </button>
@@ -475,7 +575,7 @@ export function AdminConjuntoDashboard() {
                           <MapPin className="w-3.5 h-3.5" />
                           {c.direccion} — {c.nombre_localidad}
                         </p>
-                        {c.nit && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>}
+                        {c.nit && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>}
                       </div>
                       <button
                         type="button"
@@ -513,23 +613,44 @@ export function AdminConjuntoDashboard() {
         )}
       </div>
 
+      {/* Resultado de auditoría del reciclador (RQF-009) — aparte del feed normal */}
+      {!cargandoNotifs && (
+        <AuditoriaResultadoBanner
+          notificaciones={notificaciones}
+          token={accessToken ?? ""}
+          onMarcarLeida={marcarLeida}
+        />
+      )}
+
       {/* Feed de notificaciones */}
       {cargandoNotifs ? (
         <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-400">{t("common.loading")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
         </div>
       ) : (
-        <NotificationFeed
-          title={t("dashboards.adminConjunto.notifications.title")}
-          notifications={notificaciones}
-          emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
-          accentBg="bg-amber-500"
-          accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
-          onMarkRead={marcarLeida}
-          onMarkAllRead={marcarTodasLeidas}
-          onClearRead={limpiarLeidas}
-        />
+        <>
+          {errorNotifs && <Alert type="error" message={t("common.loadError")} />}
+          {errorAccionNotif && (
+            <Alert
+              type="error"
+              message={t("common.actionError")}
+              onClose={() => setErrorAccionNotif(false)}
+            />
+          )}
+          <NotificationFeed
+            title={t("dashboards.adminConjunto.notifications.title")}
+            notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
+            emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
+            accentBg="bg-amber-700"
+            accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
+            onMarkRead={marcarLeida}
+            onMarkAllRead={marcarTodasLeidas}
+            onClearRead={limpiarLeidas}
+          />
+        </>
       )}
+
+      <HistorialAuditorias token={accessToken ?? ""} />
     </div>
   );
 }

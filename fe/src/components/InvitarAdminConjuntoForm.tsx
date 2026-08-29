@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
@@ -8,11 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { UserPlus, Building2 } from "lucide-react";
 import { invitarAdministradorConjunto } from "@/lib/adminConjuntoApi";
-
-interface ConjuntoOption {
-  id_conjunto_residencial: number;
-  nombre_conjunto: string;
-}
+import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
+import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 
 interface InvitarAdminConjuntoFormProps {
   // ¿Qué? El token de sesión del Administrador del Sistema, para autorizar
@@ -30,44 +27,40 @@ interface InvitarAdminConjuntoFormProps {
 export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProps) {
   const { t } = useTranslation();
   const [correo, setCorreo] = useState("");
-  const [conjuntos, setConjuntos] = useState<ConjuntoOption[]>([]);
-  const [idsSeleccionados, setIdsSeleccionados] = useState<number[]>([]);
+  const [conjuntosSeleccionados, setConjuntosSeleccionados] = useState<ConjuntoOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // ¿Qué? Carga TODOS los conjuntos verificados, sin filtrar por
-    //       localidad, porque aquí el Administrador del Sistema necesita
-    //       ver el listado completo para elegir a cuáles asignar.
+  // ¿Qué? Busca conjuntos verificados por nombre, sin filtrar por localidad.
+  // ¿Para qué? Antes se cargaban TODOS los conjuntos de una sola vez para
+  //           esta lista de casillas — con miles de conjuntos reales
+  //           registrados eso ya no es viable (ver ConjuntoComboboxMultiple).
+  const fetchConjuntos = (query: string): Promise<ConjuntoOption[]> =>
     axios
-      .get(`${API_BASE_URL}/api/v1/geography/conjuntos/todos`)
-      .then((res) => setConjuntos(res.data))
-      .catch((err) => console.error("Error cargando conjuntos", err));
-  }, []);
-
-  const toggleConjunto = (id: number) => {
-    setIdsSeleccionados((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
+      .get(`${API_BASE_URL}/api/v1/geography/conjuntos/todos`, {
+        params: { search: query || undefined, limit: 20 },
+      })
+      .then((res) => res.data)
+      .catch(() => []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setMensajeExito(null);
 
-    if (idsSeleccionados.length === 0) {
+    if (conjuntosSeleccionados.length === 0) {
       setError(t("invitarAdminConjunto.validation.noConjuntoSelected"));
       return;
     }
 
     setIsLoading(true);
     try {
-      await invitarAdministradorConjunto(correo, idsSeleccionados, token);
+      const ids = conjuntosSeleccionados.map((c) => c.id_conjunto_residencial);
+      await invitarAdministradorConjunto(correo, ids, token);
       setMensajeExito(t("invitarAdminConjunto.successMessage", { correo }));
       setCorreo("");
-      setIdsSeleccionados([]);
+      setConjuntosSeleccionados([]);
     } catch (err: any) {
       setError(
         err.response?.data?.detail ||
@@ -79,12 +72,12 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
   };
 
   return (
-    <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-xl">
+    <div className="p-6 bg-white dark:bg-[#0d2116] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm max-w-xl">
       <div className="flex items-center gap-2 mb-4">
         <UserPlus className="w-5 h-5 text-green-600" />
-        <h3 className="font-bold text-gray-800 text-lg">{t("invitarAdminConjunto.title")}</h3>
+        <h3 className="font-bold text-gray-800 dark:text-white text-lg">{t("invitarAdminConjunto.title")}</h3>
       </div>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
         {t("invitarAdminConjunto.description")}
       </p>
 
@@ -98,32 +91,21 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
         />
 
         <div>
-          <label className="text-xs font-bold text-gray-600 flex items-center gap-1 mb-2">
+          <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
             <Building2 className="w-4 h-4" />
             {t("invitarAdminConjunto.conjuntosLabel")}
           </label>
-          <div className="max-h-56 overflow-y-auto border border-gray-200 rounded-xl p-3 space-y-2">
-            {conjuntos.length === 0 && (
-              <p className="text-sm text-gray-400">{t("invitarAdminConjunto.loadingConjuntos")}</p>
-            )}
-            {conjuntos.map((c) => (
-              <label
-                key={c.id_conjunto_residencial}
-                className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none"
-              >
-                <input
-                  type="checkbox"
-                  checked={idsSeleccionados.includes(c.id_conjunto_residencial)}
-                  onChange={() => toggleConjunto(c.id_conjunto_residencial)}
-                  className="h-4 w-4 rounded border-gray-300 text-green-600 accent-green-600"
-                />
-                {c.nombre_conjunto}
-              </label>
-            ))}
-          </div>
-          {idsSeleccionados.length > 0 && (
-            <p className="text-xs text-gray-500 mt-1">
-              {t("invitarAdminConjunto.selectedCount", { count: idsSeleccionados.length })}
+          <ConjuntoComboboxMultiple
+            value={conjuntosSeleccionados}
+            onChange={setConjuntosSeleccionados}
+            fetchOptions={fetchConjuntos}
+            placeholder={t("invitarAdminConjunto.conjuntoSearchPlaceholder")}
+            emptyLabel={t("invitarAdminConjunto.conjuntoNoResults")}
+            loadingLabel={t("common.loading")}
+          />
+          {conjuntosSeleccionados.length > 0 && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {t("invitarAdminConjunto.selectedCount", { count: conjuntosSeleccionados.length })}
             </p>
           )}
         </div>

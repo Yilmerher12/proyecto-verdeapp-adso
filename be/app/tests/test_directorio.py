@@ -7,6 +7,10 @@ Descripción: Pruebas del router de directorio (recicladores y puntos de acopio)
 """
 
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from app.models.reciclador import Reciclador
+from app.models.usuario import Usuario
 
 
 class TestRecicladores:
@@ -17,8 +21,33 @@ class TestRecicladores:
     def test_con_login_devuelve_el_reciclador(self, client: TestClient, auth_headers, reciclador_test):
         response = client.get("/api/v1/directorio/recicladores", headers=auth_headers)
         assert response.status_code == 200
-        correos = [r["numero_telefonico"] for r in response.json()]
-        assert "3000000002" in correos
+        nombres = [r["nombre"] for r in response.json()]
+        assert nombres  # el reciclador de prueba sí aparece en la lista
+
+    def test_sin_consentimiento_no_expone_telefono(
+        self, client: TestClient, auth_headers, reciclador_test: Usuario
+    ):
+        """¿Por qué? mostrar_contacto_directorio queda en False por defecto
+        (privacidad primero) — el teléfono no debe salir del backend hasta
+        que el propio reciclador lo active desde su Perfil."""
+        response = client.get("/api/v1/directorio/recicladores", headers=auth_headers)
+        assert response.status_code == 200
+        telefonos = [r["numero_telefonico"] for r in response.json()]
+        assert telefonos == [None]
+
+    def test_con_consentimiento_si_expone_telefono(
+        self, client: TestClient, auth_headers, reciclador_test: Usuario, db: Session
+    ):
+        reciclador = db.query(Reciclador).filter(
+            Reciclador.id_usuario == reciclador_test.id_usuario
+        ).one()
+        reciclador.mostrar_contacto_directorio = True
+        db.commit()
+
+        response = client.get("/api/v1/directorio/recicladores", headers=auth_headers)
+        assert response.status_code == 200
+        telefonos = [r["numero_telefonico"] for r in response.json()]
+        assert "3000000002" in telefonos
 
     def test_filtro_por_localidad_sin_resultados(self, client: TestClient, auth_headers, reciclador_test):
         response = client.get(

@@ -8,8 +8,10 @@ Descripción: Lógica de negocio para invitar Recicladores a Conjuntos Residenci
           nunca estuvo conectada a ningún flujo real hasta ahora.
 """
 
-import uuid
+import logging
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
+
 from fastapi import HTTPException, status
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
@@ -23,8 +25,10 @@ from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjunto
 from app.utils.email import send_reciclador_conjunto_invitation_email
 
+logger = logging.getLogger(__name__)
 
-def _verificar_admin_administra_conjunto(db: Session, id_usuario_admin: int, id_conjunto: int) -> None:
+
+def _verificar_admin_administra_conjunto(db: Session, id_usuario_admin: UUID, id_conjunto: UUID) -> None:
     """
     ¿Qué? Confirma que el usuario que hace la invitación SÍ administra
           ese conjunto específico — un Admin de Conjunto no puede invitar
@@ -56,7 +60,7 @@ def _verificar_admin_administra_conjunto(db: Session, id_usuario_admin: int, id_
         )
 
 
-async def invitar_reciclador(db: Session, id_usuario_admin: int, correo_reciclador: str, id_conjunto: int) -> InvitacionRecicladorConjunto:
+async def invitar_reciclador(db: Session, id_usuario_admin: UUID, correo_reciclador: str, id_conjunto: UUID) -> InvitacionRecicladorConjunto:
     """Crea la invitación y envía el correo al Reciclador."""
     _verificar_admin_administra_conjunto(db, id_usuario_admin, id_conjunto)
 
@@ -93,7 +97,7 @@ async def invitar_reciclador(db: Session, id_usuario_admin: int, correo_reciclad
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe una invitación pendiente para este reciclador.")
 
     nueva_invitacion = InvitacionRecicladorConjunto(
-        id=str(uuid.uuid4()),
+        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
         id_reciclador=reciclador.id_reciclador,
         id_conjunto_residencial=id_conjunto,
         invitado_por_id=id_usuario_admin,
@@ -112,13 +116,13 @@ async def invitar_reciclador(db: Session, id_usuario_admin: int, correo_reciclad
             email=usuario_reciclador.correo_electronico,
             nombre_conjunto=conjunto.nombre_conjunto if conjunto else "tu conjunto",
         )
-    except Exception as email_err:
-        print(f"Advertencia: invitación creada, pero el correo no se pudo despachar: {str(email_err)}")
+    except Exception:
+        logger.warning("Invitación creada, pero el correo no se pudo despachar", exc_info=True)
 
     return nueva_invitacion
 
 
-def listar_invitaciones_de_mi_conjunto(db: Session, id_usuario_admin: int, id_conjunto: int) -> list[dict]:
+def listar_invitaciones_de_mi_conjunto(db: Session, id_usuario_admin: UUID, id_conjunto: UUID) -> list[dict]:
     """Lista todas las invitaciones (de cualquier estado) que un Admin de Conjunto envió a SU conjunto."""
     _verificar_admin_administra_conjunto(db, id_usuario_admin, id_conjunto)
 
@@ -142,7 +146,7 @@ def listar_invitaciones_de_mi_conjunto(db: Session, id_usuario_admin: int, id_co
     return [dict(fila) for fila in resultados]
 
 
-def listar_invitaciones_pendientes_del_reciclador(db: Session, id_usuario_reciclador: int) -> list[dict]:
+def listar_invitaciones_pendientes_del_reciclador(db: Session, id_usuario_reciclador: UUID) -> list[dict]:
     """Lista las invitaciones PENDIENTES que recibió un Reciclador, para que las acepte o rechace."""
     stmt_reciclador = select(Reciclador).where(Reciclador.id_usuario == id_usuario_reciclador)
     reciclador = db.execute(stmt_reciclador).scalar_one_or_none()
@@ -168,7 +172,7 @@ def listar_invitaciones_pendientes_del_reciclador(db: Session, id_usuario_recicl
     return [dict(fila) for fila in resultados]
 
 
-def responder_invitacion(db: Session, id_usuario_reciclador: int, id_invitacion: str, aceptar: bool) -> bool:
+def responder_invitacion(db: Session, id_usuario_reciclador: UUID, id_invitacion: UUID, aceptar: bool) -> bool:
     """
     ¿Qué? El Reciclador acepta o rechaza una invitación pendiente.
     ¿Para qué? Si acepta, se crea la fila real en recicladores_conjuntos
@@ -214,7 +218,40 @@ def responder_invitacion(db: Session, id_usuario_reciclador: int, id_invitacion:
     return True
 
 
-def listar_conjuntos_autorizados(db: Session, id_usuario_reciclador: int) -> list[dict]:
+def listar_recicladores_autorizados_de_conjunto(db: Session, id_usuario_admin: UUID, id_conjunto: UUID) -> list[dict]:
+    """
+    ¿Qué? Lista los recicladores REALMENTE autorizados en un conjunto —
+          es decir, con fila en `recicladores_conjuntos`.
+    ¿Para qué? `listar_invitaciones_de_mi_conjunto` (arriba) solo muestra el
+              historial de invitaciones — un reciclador vinculado por fuera
+              de ese flujo (ej. semilla de datos, o cualquier vía distinta
+              a "invitar y aceptar") nunca aparecía en ningún lado para el
+              Admin de Conjunto, aunque sí estuviera autorizado de verdad.
+    ¿Impacto? Sin esto, un admin no tiene forma de confirmar quién trabaja
+              hoy con su conjunto — solo veía el historial de invitaciones,
+              que puede estar vacío aunque SÍ haya recicladores autorizados.
+    """
+    _verificar_admin_administra_conjunto(db, id_usuario_admin, id_conjunto)
+
+    stmt = text("""
+        SELECT
+            r.id_reciclador,
+            r.nombre,
+            r.apellidos,
+            u.correo_electronico,
+            r.numero_telefonico,
+            r.asociacion
+        FROM recicladores_conjuntos rc
+        JOIN recicladores r ON r.id_reciclador = rc.id_reciclador
+        JOIN usuarios u ON u.id_usuario = r.id_usuario
+        WHERE rc.id_conjunto_residencial = :cid
+        ORDER BY r.nombre, r.apellidos
+    """)
+    resultados = db.execute(stmt, {"cid": id_conjunto}).mappings().all()
+    return [dict(fila) for fila in resultados]
+
+
+def listar_conjuntos_autorizados(db: Session, id_usuario_reciclador: UUID) -> list[dict]:
     """Lista los conjuntos donde el Reciclador YA está autorizado a recoger material."""
     stmt_reciclador = select(Reciclador).where(Reciclador.id_usuario == id_usuario_reciclador)
     reciclador = db.execute(stmt_reciclador).scalar_one_or_none()

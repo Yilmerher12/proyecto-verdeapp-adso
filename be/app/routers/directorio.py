@@ -29,6 +29,7 @@ def listar_recicladores(
             Reciclador.apellidos,
             Reciclador.numero_telefonico,
             Reciclador.asociacion,
+            Reciclador.mostrar_contacto_directorio,
             Localidad.nombre_localidad,
         )
         .outerjoin(Localidad, Reciclador.localidad_id == Localidad.id_localidad)
@@ -39,12 +40,18 @@ def listar_recicladores(
     stmt = stmt.order_by(Reciclador.nombre, Reciclador.apellidos)
     rows = db.execute(stmt).all()
 
+    # ¿Qué? El teléfono solo se incluye si el reciclador activó
+    #       "mostrar_contacto_directorio" desde su Perfil.
+    # ¿Para qué? Antes se enviaba siempre — el frontend lo ocultaba en
+    #           algunos casos, pero un dato personal que no debe exponerse
+    #           no debería ni siquiera SALIR del backend. Que la decisión
+    #           de privacidad se aplique en la fuente, no en la vista.
     return [
         {
             "id_reciclador": r.id_reciclador,
             "nombre": r.nombre,
             "apellidos": r.apellidos,
-            "numero_telefonico": r.numero_telefonico,
+            "numero_telefonico": r.numero_telefonico if r.mostrar_contacto_directorio else None,
             "asociacion": r.asociacion,
             "nombre_localidad": r.nombre_localidad,
         }

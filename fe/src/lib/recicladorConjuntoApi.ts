@@ -20,12 +20,25 @@ export interface InvitacionEnviada {
   created_at: string;
 }
 
+// ¿Qué? Un reciclador YA autorizado en el conjunto — distinto de
+//       InvitacionEnviada, que es el historial de invitaciones y puede
+//       estar vacío aunque sí haya recicladores autorizados (ej. vinculados
+//       directo en la base de datos, sin pasar por el flujo de invitar).
+export interface RecicladorAutorizado {
+  id_reciclador: string;
+  nombre: string;
+  apellidos: string;
+  correo_electronico: string;
+  numero_telefonico: string | null;
+  asociacion: string | null;
+}
+
 /**
  * ¿Qué? El Admin de Conjunto invita a un Reciclador (ya registrado) por correo.
  */
 export async function invitarReciclador(
   correoReciclador: string,
-  idConjuntoResidencial: number,
+  idConjuntoResidencial: string,
   accessToken: string
 ): Promise<void> {
   await axios.post(
@@ -40,11 +53,26 @@ export async function invitarReciclador(
  *       Conjunto ha enviado para un conjunto específico.
  */
 export async function obtenerInvitacionesDeConjunto(
-  idConjuntoResidencial: number,
+  idConjuntoResidencial: string,
   accessToken: string
 ): Promise<InvitacionEnviada[]> {
   const response = await axios.get(
     `${API_BASE}/mi-conjunto/${idConjuntoResidencial}/invitaciones`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  return response.data;
+}
+
+/**
+ * ¿Qué? Lista los recicladores YA autorizados en un conjunto (dato real,
+ *       tabla recicladores_conjuntos) — no el historial de invitaciones.
+ */
+export async function obtenerRecicladoresAutorizados(
+  idConjuntoResidencial: string,
+  accessToken: string
+): Promise<RecicladorAutorizado[]> {
+  const response = await axios.get(
+    `${API_BASE}/mi-conjunto/${idConjuntoResidencial}/autorizados`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   return response.data;

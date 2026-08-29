@@ -1,10 +1,12 @@
-from sqlalchemy import Column, Integer, String, Text, Date
+from sqlalchemy import Column, String, Text, Date
+from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
+from app.utils.ids import generar_uuid7
 
 class ContenidoEducativo(Base):
     __tablename__ = "contenido_educativo"
 
-    id_contenido = Column(Integer, primary_key=True, index=True)
+    id_contenido = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
     modulo_categoria = Column(String(255), nullable=False)
     titulo_tema = Column(String(255), nullable=False)
     cuerpo_texto = Column(Text, nullable=False)

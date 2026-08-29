@@ -18,6 +18,7 @@ import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
 import { PoliticaPrivacidadPage } from "@/pages/PoliticaPrivacidadPage";
+import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 
 type DocumentoLegal = "terminos" | "privacidad" | null;
 
@@ -55,7 +56,7 @@ export function RegisterPage() {
   const [documentoAbierto, setDocumentoAbierto] = useState<DocumentoLegal>(null);
 
   const [localidades, setLocalidades] = useState<any[]>([]);
-  const [conjuntos, setConjuntos] = useState<any[]>([]);
+  const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<ConjuntoOption | null>(null);
 
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
@@ -84,16 +85,44 @@ export function RegisterPage() {
       .catch(err => console.error("Error cargando localidades", err));
   }, []);
 
+  // ¿Qué? Al cambiar de localidad, se descarta el conjunto ya elegido —
+  //       puede que ni siquiera exista en la nueva localidad.
+  // ¿Para qué? El ConjuntoCombobox ya busca sus propias opciones en el
+  //           backend (ver fetchConjuntos más abajo), así que aquí solo
+  //           queda limpiar la selección anterior.
   useEffect(() => {
-    if (formData.localidad_id) {
-      axios.get(`${API_BASE_URL}/api/v1/geography/conjuntos/${formData.localidad_id}`)
-        .then(res => setConjuntos(res.data))
-        .catch(err => console.error("Error cargando conjuntos", err));
-    } else {
-      setConjuntos([]);
-    }
+    setConjuntoSeleccionado(null);
     setFormData(prev => ({ ...prev, id_conjunto_residencial: "" }));
   }, [formData.localidad_id]);
+
+  // ¿Qué? Busca conjuntos de la localidad elegida que coincidan con `query`.
+  // ¿Para qué? Localidades como Usaquén tienen miles de conjuntos reales
+  //           registrados — el ConjuntoCombobox solo pide coincidencias
+  //           acotadas (ver geography.py), nunca el catálogo completo.
+  const fetchConjuntos = (query: string): Promise<ConjuntoOption[]> => {
+    if (!formData.localidad_id) return Promise.resolve([]);
+    return axios
+      .get(`${API_BASE_URL}/api/v1/geography/conjuntos/${formData.localidad_id}`, {
+        params: { search: query || undefined, limit: 20 },
+      })
+      .then(res => res.data)
+      .catch(() => []);
+  };
+
+  const handleConjuntoChange = (conjunto: ConjuntoOption | null) => {
+    setConjuntoSeleccionado(conjunto);
+    setFormData(prev => ({
+      ...prev,
+      id_conjunto_residencial: conjunto ? String(conjunto.id_conjunto_residencial) : "",
+    }));
+    if (fieldErrors.id_conjunto_residencial) {
+      setFieldErrors(prev => {
+        const copy = { ...prev };
+        delete copy.id_conjunto_residencial;
+        return copy;
+      });
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -175,7 +204,7 @@ export function RegisterPage() {
         nombre: formData.nombre,
         apellidos: formData.apellidos,
         numero_telefonico: formData.numero_telefonico || "N/A",
-        id_conjunto_residencial: formData.rol === "residente" ? parseInt(formData.id_conjunto_residencial) : undefined,
+        id_conjunto_residencial: formData.rol === "residente" ? formData.id_conjunto_residencial : undefined,
         torre: formData.rol === "residente" ? torreCompleta : undefined,
         apto: formData.rol === "residente" ? formData.apto.trim().toUpperCase() : undefined,
         asociacion: formData.rol === "reciclador" ? formData.asociacion : undefined,
@@ -184,13 +213,24 @@ export function RegisterPage() {
 
       setShowSuccessModal(true);
     } catch (err: any) {
-      const errorText = JSON.stringify(err) + " " + (err.response?.data?.detail || err.message || "");
-
-      if (errorText.includes("verificada") || errorText.includes("Mailpit") || errorText.includes("403") || errorText.includes("registrado")) {
+      // ¿Qué? register() en AuthContext SIEMPRE intenta hacer login automático
+      //       justo después de crear la cuenta — y ese login falla a propósito
+      //       porque la cuenta recién creada todavía no está verificada. Por
+      //       eso marca el error con `requiresEmailVerification = true`: es la
+      //       señal exacta de "sí se registró, solo falta que confirmes el
+      //       correo", sin necesidad de adivinar por el texto del error.
+      // ¿Para qué? Antes se buscaba texto tipo "registrado" dentro del error
+      //           para decidir si mostrar éxito — pero el error real de
+      //           "correo ya registrado" (cuenta que NUNCA se creó) también
+      //           contiene esa palabra, así que se mostraba éxito por error.
+      // ¿Impacto? Ahora solo se muestra éxito cuando la cuenta sí se creó;
+      //           cualquier otro fallo (correo duplicado, datos inválidos,
+      //           etc.) muestra el mensaje real del backend.
+      if (err?.requiresEmailVerification) {
         setGeneralError(null);
         setShowSuccessModal(true);
       } else {
-        setGeneralError(t("auth.register.genericError"));
+        setGeneralError(err instanceof Error ? err.message : t("auth.register.genericError"));
       }
     } finally {
       setIsLoading(false);
@@ -202,7 +242,7 @@ export function RegisterPage() {
   if (showSuccessModal) {
     return (
       <>
-        <LandingPage />
+        <LandingPage asBackdrop />
         <Modal onClose={() => navigate("/")}>
           <div className="p-6 sm:p-8 text-center max-w-sm mx-auto">
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 ring-8 ring-green-50 dark:bg-green-900/20 dark:ring-green-900/20">
@@ -226,7 +266,7 @@ export function RegisterPage() {
                 t("auth.register.success.step3"),
               ].map((step, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-700 text-white text-xs font-bold">
                     {i + 1}
                   </span>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{step}</p>
@@ -245,7 +285,7 @@ export function RegisterPage() {
 
   return (
     <>
-      <LandingPage />
+      <LandingPage asBackdrop />
 
       {/*
         ¿Qué? layer="stacked" — garantiza que este modal se vea SIEMPRE
@@ -265,7 +305,7 @@ export function RegisterPage() {
         </Modal>
       )}
 
-      <Modal onClose={() => navigate("/")} wide>
+      <Modal onClose={() => navigate("/")} wide closeOnBackdrop={false}>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("auth.register.title")}</h2>
@@ -337,12 +377,15 @@ export function RegisterPage() {
 
                   <div>
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.conjunto")}</label>
-                    <select name="id_conjunto_residencial" value={formData.id_conjunto_residencial} onChange={handleChange} disabled={!formData.localidad_id} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] disabled:text-gray-400">
-                      <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
-                      {conjuntos.map(conj => (
-                        <option key={conj.id_conjunto_residencial} value={conj.id_conjunto_residencial}>{conj.nombre_conjunto}</option>
-                      ))}
-                    </select>
+                    <ConjuntoCombobox
+                      value={conjuntoSeleccionado}
+                      onChange={handleConjuntoChange}
+                      fetchOptions={fetchConjuntos}
+                      disabled={!formData.localidad_id}
+                      placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
+                      emptyLabel={t("auth.register.fields.conjuntoNoResults")}
+                      loadingLabel={t("common.loading")}
+                    />
                   </div>
                 </div>
 

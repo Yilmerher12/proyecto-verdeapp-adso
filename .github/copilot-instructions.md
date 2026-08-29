@@ -8,6 +8,14 @@
   Este archivo es la "ley" del proyecto — todo lo que se haga debe alinearse con estas reglas.
 -->
 
+> ⚠️ **Nota (2026-08-25):** este archivo viene de la plantilla educativa base
+> (`ergrato-dev/proyecto-be_fastapi-fe_react`) y las secciones 10-12 (endpoints,
+> esquema de BD, flujos) todavía describen la app genérica de autenticación de
+> la plantilla, no el dominio real de reciclaje de VerdeApp (4 roles, 11
+> routers, conjuntos residenciales, etc.). Las convenciones de código,
+> lenguaje, commits, calidad y seguridad (secciones 1-9, 13-17) sí aplican tal
+> cual. Para el dominio real, ver `docs/requisitos/` y `docs/gestion-proyecto/`.
+
 ---
 
 ## 1. Identidad del Proyecto
@@ -16,7 +24,7 @@
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | **Nombre**          | VerdeApp                                                                                                          |
 | **Tipo**            | Proyecto educativo — SENA                                                                                               |
-| **Propósito**       | Sistema de autenticación completo (registro, login, cambio y recuperación de contraseña) para una empresa genérica "NN" |
+| **Propósito**       | Plataforma de coordinación de reciclaje para conjuntos residenciales en Bogotá (ver `docs/requisitos/` para el alcance real) |
 | **Enfoque**         | Aprendizaje guiado: cada línea de código y documentación debe enseñar                                                   |
 | **Fecha de inicio** | Febrero 2026                                                                                                            |
 
@@ -49,9 +57,9 @@
 | Tecnología                       | Versión | Propósito                                    |
 | -------------------------------- | ------- | -------------------------------------------- |
 | Node.js                          | 20 LTS+ | Runtime de JavaScript                        |
-| React                            | 18+     | Biblioteca para interfaces de usuario        |
-| Vite                             | 6+      | Bundler y dev server ultrarrápido            |
-| TypeScript                       | 5.0+    | Superset tipado de JavaScript                |
+| React                            | 19.2+   | Biblioteca para interfaces de usuario        |
+| Vite                             | 7.3+    | Bundler y dev server ultrarrápido            |
+| TypeScript                       | 5.9+    | Superset tipado de JavaScript                |
 | TailwindCSS                      | 4+      | Framework CSS utility-first                  |
 | React Router                     | 7+      | Enrutamiento del lado del cliente            |
 | Axios                            | latest  | Cliente HTTP para comunicación con la API    |

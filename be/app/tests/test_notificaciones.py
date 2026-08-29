@@ -8,6 +8,8 @@ Descripción: Pruebas del sistema de notificaciones (SHUT lleno/vaciado y llegad
            esas reglas, además del ciclo completo de leer/marcar como leída.
 """
 
+import uuid
+
 from fastapi.testclient import TestClient
 
 
@@ -37,6 +39,18 @@ class TestEnviarComoResidente:
         )
         assert response.status_code == 400
 
+    def test_no_puede_reportar_shut_lleno_si_ya_esta_lleno(self, client: TestClient, auth_headers):
+        """CA-003.2 / RN-001 de RQF-003 — no se puede reportar dos veces seguidas."""
+        primero = client.post(
+            "/api/v1/notificaciones/enviar", headers=auth_headers, json={"tipo": "SHUT_LLENO"}
+        )
+        assert primero.status_code == 201
+
+        segundo = client.post(
+            "/api/v1/notificaciones/enviar", headers=auth_headers, json={"tipo": "SHUT_LLENO"}
+        )
+        assert segundo.status_code == 400
+
 
 class TestEnviarComoReciclador:
     def test_requiere_id_conjunto_residencial(self, client: TestClient, reciclador_auth_headers):
@@ -54,7 +68,7 @@ class TestEnviarComoReciclador:
         response = client.post(
             "/api/v1/notificaciones/enviar",
             headers=reciclador_auth_headers,
-            json={"tipo": "LLEGADA_RECICLADOR", "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial},
+            json={"tipo": "LLEGADA_RECICLADOR", "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial)},
         )
         assert response.status_code == 403
 
@@ -69,7 +83,7 @@ class TestEnviarComoReciclador:
             headers=admin_conjunto_auth_headers,
             json={
                 "correo_reciclador": reciclador_test.correo_electronico,
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
             },
         )
         id_invitacion = invitar.json()["id"]
@@ -82,7 +96,7 @@ class TestEnviarComoReciclador:
         response = client.post(
             "/api/v1/notificaciones/enviar",
             headers=reciclador_auth_headers,
-            json={"tipo": "LLEGADA_RECICLADOR", "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial},
+            json={"tipo": "LLEGADA_RECICLADOR", "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial)},
         )
         assert response.status_code == 201
 
@@ -94,7 +108,7 @@ class TestEnviarComoReciclador:
             headers=admin_conjunto_auth_headers,
             json={
                 "correo_reciclador": reciclador_test.correo_electronico,
-                "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
             },
         )
         id_invitacion = invitar.json()["id"]
@@ -107,7 +121,7 @@ class TestEnviarComoReciclador:
         response = client.post(
             "/api/v1/notificaciones/enviar",
             headers=reciclador_auth_headers,
-            json={"tipo": "FINALIZACION_RECICLADOR", "id_conjunto_residencial": conjunto_verificado.id_conjunto_residencial},
+            json={"tipo": "FINALIZACION_RECICLADOR", "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial)},
         )
         assert response.status_code == 201
         # ¿Qué? La regla de negocio dice que esta notificación debe llegar
@@ -117,6 +131,32 @@ class TestEnviarComoReciclador:
         #           ya que el Admin de Conjunto también quiere saber si el
         #           reciclador sigue en el conjunto o ya se fue.
         assert response.json()["destinatarios"] >= 1
+
+    def test_no_puede_avisar_llegada_dos_veces_en_menos_de_2_horas(
+        self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        """CA-007.4 / RN-003 de RQF-006 — cooldown de 2 horas."""
+        invitar = client.post(
+            "/api/v1/reciclador-conjunto/invitar",
+            headers=admin_conjunto_auth_headers,
+            json={
+                "correo_reciclador": reciclador_test.correo_electronico,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
+            },
+        )
+        id_invitacion = invitar.json()["id"]
+        client.post(
+            f"/api/v1/reciclador-conjunto/invitaciones/{id_invitacion}/responder",
+            headers=reciclador_auth_headers,
+            json={"aceptar": True},
+        )
+
+        payload = {"tipo": "LLEGADA_RECICLADOR", "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial)}
+        primera = client.post("/api/v1/notificaciones/enviar", headers=reciclador_auth_headers, json=payload)
+        assert primera.status_code == 201
+
+        segunda = client.post("/api/v1/notificaciones/enviar", headers=reciclador_auth_headers, json=payload)
+        assert segunda.status_code == 400
 
 
 class TestConsultarYMarcarLeidas:
@@ -144,7 +184,7 @@ class TestConsultarYMarcarLeidas:
         assert limpiar.status_code == 200
 
     def test_marcar_leida_notificacion_inexistente_devuelve_404(self, client: TestClient, auth_headers):
-        response = client.post("/api/v1/notificaciones/999999/leer", headers=auth_headers)
+        response = client.post(f"/api/v1/notificaciones/{uuid.uuid4()}/leer", headers=auth_headers)
         assert response.status_code == 404
 
 

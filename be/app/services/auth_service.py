@@ -4,6 +4,7 @@ Descripción: Lógica de negocio de autenticación adaptada a las tablas en espa
 ¿Para qué? Controlar el registro distribuido, inicio de sesión y emisión de tokens SMTP.
 """
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
@@ -18,6 +19,7 @@ from app.models.unidad import Unidad
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.password_reset_token import PasswordResetToken
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.token_revocado import TokenRevocado
 
 from app.schemas.user import (
     ResetPasswordRequest,
@@ -27,13 +29,21 @@ from app.schemas.user import (
 )
 
 from app.utils.email import send_password_reset_email, send_verification_email
+from app.utils.audit_log import log_login_exitoso, log_login_fallido
 from app.utils.security import (
+    DUMMY_PASSWORD_HASH,
     create_access_token,
     create_refresh_token,
     decode_token,
     hash_password,
     verify_password,
 )
+
+logger = logging.getLogger(__name__)
+
+# ¿Qué? RN-003 de RQF-001 / CA-001.5.
+MAXIMO_INTENTOS_FALLIDOS = 5
+MINUTOS_DE_BLOQUEO = 15
 
 
 async def register_user(db: Session, user_data: UserCreate) -> Usuario:
@@ -73,7 +83,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
                 )
 
             stmt_conjunto = select(ConjuntoResidencial).where(
-                ConjuntoResidencial.id_conjunto_residencial == int(id_conjunto),
+                ConjuntoResidencial.id_conjunto_residencial == id_conjunto,
                 ConjuntoResidencial.verificado.is_(True),
             )
             conjunto_existente = db.execute(stmt_conjunto).scalar_one_or_none()
@@ -88,7 +98,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
                 )
 
             stmt_unidad = select(Unidad).where(
-                Unidad.id_conjunto_residencial == int(id_conjunto),
+                Unidad.id_conjunto_residencial == id_conjunto,
                 Unidad.torre == torre_texto,
                 Unidad.apto == apto_texto
             )
@@ -98,7 +108,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
                 id_unidad_final = unidad_existente.id_unidad
             else:
                 nueva_unidad = Unidad(
-                    id_conjunto_residencial=int(id_conjunto),
+                    id_conjunto_residencial=id_conjunto,
                     torre=torre_texto,
                     apto=apto_texto
                 )
@@ -132,7 +142,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
         expiration_verif = datetime.now(timezone.utc) + timedelta(days=1)
 
         db_token_verif = EmailVerificationToken(
-            id=str(uuid.uuid4()),
+            # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
             id_usuario=nuevo_usuario.id_usuario,
             token=token_verificacion,
             expires_at=expiration_verif,
@@ -143,8 +153,8 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
 
         try:
             await send_verification_email(email=nuevo_usuario.correo_electronico, token=token_verificacion)
-        except Exception as email_err:
-            print(f"Advertencia: Registro completado, pero el correo no se pudo despachar: {str(email_err)}")
+        except Exception:
+            logger.warning("Registro completado, pero el correo no se pudo despachar", exc_info=True)
 
         db.refresh(nuevo_usuario)
         return nuevo_usuario
@@ -152,11 +162,21 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
     except HTTPException:
         db.rollback()
         raise
-    except Exception as e:
+    except Exception:
+        # ¿Qué? Antes el detail del 500 incluía str(e) — el mensaje crudo de
+        #       la excepción (puede traer nombres de columnas, constraints o
+        #       hasta fragmentos de la consulta SQL de Postgres).
+        # ¿Para qué? Ese detalle interno no le sirve al usuario para nada, y
+        #           sí le sirve a alguien buscando cómo está armada la BD.
+        # ¿Impacto? El error real se guarda en el log del servidor
+        #           (logger.exception incluye el traceback completo) — quien
+        #           necesite diagnosticar el problema lo revisa ahí, no en la
+        #           respuesta HTTP.
         db.rollback()
+        logger.exception("Error al registrar usuario")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al guardar los datos: {str(e)}"
+            detail="Ocurrió un error al guardar los datos. Intenta de nuevo más tarde."
         )
 
 
@@ -166,22 +186,61 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
 
     if not correo:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="El campo de correo electrónico es obligatorio."
         )
 
     stmt = select(Usuario).where(Usuario.correo_electronico == correo)
     user = db.execute(stmt).scalar_one_or_none()
 
-    if not user or not verify_password(login_data.password, user.password):
+    # ¿Qué? RN-003 de RQF-001 / CA-001.5: si la cuenta ya está bloqueada por
+    #       demasiados intentos fallidos recientes, se rechaza antes de
+    #       siquiera revisar la contraseña.
+    # ¿Para qué? Antes de esto, un atacante podía probar contraseñas contra
+    #           un correo específico sin ningún límite por cuenta — el
+    #           rate limit de slowapi es por dirección IP, no por correo.
+    # ¿Impacto? Esta respuesta SÍ revela que la cuenta existe (una cuenta
+    #           inexistente nunca llega aquí, porque `user` sería None) —
+    #           es un trade-off conocido e inevitable de cualquier bloqueo
+    #           por cuenta, y es exactamente el comportamiento que pide
+    #           RQF-001.
+    if user and user.bloqueado_hasta and user.bloqueado_hasta > datetime.now(timezone.utc):
+        log_login_fallido(correo, "cuenta_bloqueada")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Demasiados intentos fallidos. Intenta de nuevo en {MINUTOS_DE_BLOQUEO} minutos.",
+        )
+
+    # ¿Qué? Se corre verify_password() SIEMPRE, incluso si el usuario no
+    #       existe — contra el hash real si existe, o contra DUMMY_PASSWORD_HASH
+    #       si no. Mitiga un ataque de temporización (OWASP A07): ver el
+    #       comentario de DUMMY_PASSWORD_HASH en app/utils/security.py.
+    password_hash = user.password if user else DUMMY_PASSWORD_HASH
+    if not user or not verify_password(login_data.password, password_hash):
+        if user:
+            user.intentos_fallidos += 1
+            if user.intentos_fallidos >= MAXIMO_INTENTOS_FALLIDOS:
+                user.bloqueado_hasta = datetime.now(timezone.utc) + timedelta(minutes=MINUTOS_DE_BLOQUEO)
+            db.commit()
+        log_login_fallido(correo, "credenciales_invalidas")
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
     if not user.is_active:
+        log_login_fallido(correo, "cuenta_no_verificada")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Tu cuenta no ha sido verificada aún. Por favor, revisa tu buzón en Mailpit."
         )
 
+    # ¿Qué? Un login exitoso limpia cualquier rastro de intentos fallidos
+    #       previos — no tendría sentido seguir "contando" contra alguien
+    #       que ya demostró que sí es el dueño de la cuenta.
+    if user.intentos_fallidos or user.bloqueado_hasta:
+        user.intentos_fallidos = 0
+        user.bloqueado_hasta = None
+        db.commit()
+
+    log_login_exitoso(correo)
     real_first_name, real_last_name = _obtener_nombre_real(db, user)
 
     access_token = create_access_token(data={
@@ -239,6 +298,19 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="El token proporcionado no es un token de renovación válido.",
+        )
+
+    # ¿Qué? HU-008/RQF-007: si este refresh token ya fue revocado por un
+    #       logout previo, no debe poder usarse para generar access tokens
+    #       nuevos, aunque su firma y expiración sigan siendo válidas.
+    # ¿Impacto? Sin esto, alguien que hubiera copiado el refresh token ANTES
+    #           del logout podría seguir renovando su sesión indefinidamente
+    #           — el logout no cerraría nada de verdad.
+    jti = payload.get("jti")
+    if jti and db.get(TokenRevocado, uuid.UUID(jti)):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="El token de sesión ha sido invalidado. Inicia sesión de nuevo.",
         )
 
     correo = payload.get("sub")
@@ -320,7 +392,7 @@ async def request_password_reset(db: Session, email: str) -> bool:
     expiration = datetime.now(timezone.utc) + timedelta(hours=1)
 
     db_token = PasswordResetToken(
-        id=str(uuid.uuid4()),
+        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
         id_usuario=user.id_usuario,
         token=token_str,
         expires_at=expiration,
@@ -331,8 +403,8 @@ async def request_password_reset(db: Session, email: str) -> bool:
 
     try:
         await send_password_reset_email(email=user.correo_electronico, token=token_str)
-    except Exception as email_err:
-        print(f"Advertencia: No se pudo despachar el correo SMTP: {str(email_err)}")
+    except Exception:
+        logger.warning("No se pudo despachar el correo SMTP de recuperación", exc_info=True)
     return True
 
 
@@ -373,6 +445,51 @@ def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
     db_token.used = True
     db.commit()
     return True
+
+
+def logout_user(db: Session, access_token: str, refresh_token: str | None) -> None:
+    """Invalida (revoca) el access token y el refresh token en uso.
+
+    ¿Qué? HU-008/RQF-007 (RN-001): guarda el "jti" de cada token recibido en
+          la lista negra (tokens_revocados) para que ningún request futuro
+          vuelva a aceptarlos, aunque no hayan expirado todavía.
+    ¿Para qué? Antes, "cerrar sesión" solo borraba los tokens del navegador
+              (sessionStorage) — el token en sí seguía siendo 100% válido
+              para el servidor durante toda su vida (15 min access, 7 días
+              refresh) si alguien lo hubiera copiado antes.
+    ¿Impacto? Un token ya expirado, o sin "jti" (no debería pasar con los
+              tokens que emite este sistema), simplemente se ignora — no
+              hay nada que revocar en ese caso.
+
+    Args:
+        db: Sesión de base de datos.
+        access_token: Access token JWT que estaba en uso (obligatorio).
+        refresh_token: Refresh token JWT asociado a la misma sesión, si el
+                       cliente lo envía.
+    """
+    for token in (access_token, refresh_token):
+        if not token:
+            continue
+
+        payload = decode_token(token)
+        if not payload:
+            continue
+
+        jti = payload.get("jti")
+        exp = payload.get("exp")
+        if not jti or not exp:
+            continue
+
+        jti_uuid = uuid.UUID(jti)
+        if db.get(TokenRevocado, jti_uuid):
+            continue
+
+        db.add(TokenRevocado(
+            jti=jti_uuid,
+            expira_en=datetime.fromtimestamp(exp, tz=timezone.utc),
+        ))
+
+    db.commit()
 
 
 def update_user_locale(db: Session, user: Usuario, locale: str) -> Usuario:

@@ -12,6 +12,8 @@ import {
   Users as UsersIcon,
   Pencil,
   CheckCircle2,
+  Eye,
+  EyeOff,
   X,
 } from "lucide-react";
 import { RoleId } from "@/types/auth";
@@ -30,6 +32,8 @@ interface PerfilData {
   asociacion: string | null;
   nombre_localidad: string | null;
   conjuntos_administrados: string[] | null;
+  // ¿Qué? Solo aplica al rol Reciclador — ver ProfilePage/DirectorioPage.
+  mostrar_contacto_directorio: boolean;
 }
 
 function InfoField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
@@ -55,6 +59,7 @@ export function ProfilePage() {
   const [formApellidos, setFormApellidos] = useState("");
   const [formTelefono, setFormTelefono] = useState("");
   const [formAsociacion, setFormAsociacion] = useState("");
+  const [formMostrarContacto, setFormMostrarContacto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [exito, setExito] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -84,6 +89,7 @@ export function ProfilePage() {
     setFormTelefono(tel && tel !== "No registrado" && tel !== "N/A" ? tel : "");
     const asoc = perfil.asociacion;
     setFormAsociacion(asoc && asoc !== "INDEPENDIENTE" ? asoc : "");
+    setFormMostrarContacto(perfil.mostrar_contacto_directorio);
     setEditando(true);
     setExito(false);
     setErrorMsg(null);
@@ -114,6 +120,7 @@ export function ProfilePage() {
           apellidos: formApellidos.trim(),
           numero_telefonico: telefono || null,
           asociacion: formAsociacion.trim() || null,
+          mostrar_contacto_directorio: formMostrarContacto,
         },
         { headers }
       );
@@ -131,7 +138,7 @@ export function ProfilePage() {
     }
   };
 
-  if (cargando) return <p className="text-sm text-gray-400 px-2 pt-6">{t("profile.loading")}</p>;
+  if (cargando) return <p className="text-sm text-gray-500 dark:text-gray-400 px-2 pt-6">{t("profile.loading")}</p>;
   if (!perfil) return <p className="text-sm text-red-500 px-2 pt-6">{t("profile.loadError")}</p>;
 
   const role = ROLE_THEME[perfil.role_id] ?? ROLE_THEME[RoleId.RESIDENTE];
@@ -268,6 +275,23 @@ export function ProfilePage() {
                 }
                 icon={<Phone className="h-3 w-3" />}
               />
+              {perfil.role_id === RoleId.RECICLADOR && (
+                <InfoField
+                  label={t("profile.fields.directoryVisibility")}
+                  value={
+                    perfil.mostrar_contacto_directorio
+                      ? t("profile.fields.directoryVisibilityOn")
+                      : t("profile.fields.directoryVisibilityOff")
+                  }
+                  icon={
+                    perfil.mostrar_contacto_directorio ? (
+                      <Eye className="h-3 w-3" />
+                    ) : (
+                      <EyeOff className="h-3 w-3" />
+                    )
+                  }
+                />
+              )}
               <InfoField
                 label={t("common.email")}
                 value={perfil.email}
@@ -284,10 +308,11 @@ export function ProfilePage() {
               )}
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                <label htmlFor="perfil-nombre" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("profile.fields.firstName")} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="perfil-nombre"
                   value={formNombre}
                   onChange={(e) => setFormNombre(e.target.value)}
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
@@ -295,10 +320,11 @@ export function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                <label htmlFor="perfil-apellidos" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("profile.fields.lastName")} <span className="text-red-500">*</span>
                 </label>
                 <input
+                  id="perfil-apellidos"
                   value={formApellidos}
                   onChange={(e) => setFormApellidos(e.target.value)}
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
@@ -306,10 +332,11 @@ export function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                <label htmlFor="perfil-telefono" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("common.phone")}
                 </label>
                 <input
+                  id="perfil-telefono"
                   value={formTelefono}
                   onChange={(e) => setFormTelefono(e.target.value)}
                   placeholder={t("profile.phonePlaceholder")}
@@ -318,27 +345,58 @@ export function ProfilePage() {
               </div>
 
               {perfil.role_id === RoleId.RECICLADOR && (
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                    {t("profile.fields.association")}
+                <>
+                  <div>
+                    <label htmlFor="perfil-asociacion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                      {t("profile.fields.association")}
+                    </label>
+                    <input
+                      id="perfil-asociacion"
+                      value={formAsociacion}
+                      onChange={(e) => setFormAsociacion(e.target.value)}
+                      placeholder={t("profile.associationPlaceholder")}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                    />
+                  </div>
+
+                  {/* ¿Qué? Interruptor de consentimiento — apagado por
+                      defecto. Sin esto, no había forma de que el reciclador
+                      controlara si su teléfono aparece en el Directorio
+                      general (visible a cualquier usuario autenticado de
+                      la ciudad, no solo a su propio conjunto). */}
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-[#2a4d34] dark:bg-[#1f4029]">
+                    <input
+                      type="checkbox"
+                      checked={formMostrarContacto}
+                      onChange={(e) => setFormMostrarContacto(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-[#2a4d34]"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+                        {t("profile.fields.directoryConsent")}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
+                        {t("profile.fields.directoryConsentHint")}
+                      </span>
+                    </span>
                   </label>
-                  <input
-                    value={formAsociacion}
-                    onChange={(e) => setFormAsociacion(e.target.value)}
-                    placeholder={t("profile.associationPlaceholder")}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                  />
-                </div>
+                </>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                {/* ¿Qué? No es un <label> real — no hay ningún campo editable
+                    que etiquetar, el correo se muestra como texto fijo.
+                    ¿Para qué? Un <label> sin htmlFor y sin envolver ningún
+                    control confunde a lectores de pantalla (anuncia "etiqueta"
+                    sin decir de qué campo); un <p> describe correctamente
+                    que esto es solo texto informativo. */}
+                <p className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("common.email")}
-                </label>
+                </p>
                 <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-[#2a4d34] dark:bg-[#0d2116]/60">
-                  <p className="text-sm text-gray-400 dark:text-gray-500">{perfil.email}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{perfil.email}</p>
                 </div>
-                <p className="mt-1 text-[11px] text-gray-400">{t("profile.emailNote")}</p>
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("profile.emailNote")}</p>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -352,7 +410,7 @@ export function ProfilePage() {
                 <button
                   onClick={guardarPerfil}
                   disabled={guardando}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60 transition-colors"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 transition-colors"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}

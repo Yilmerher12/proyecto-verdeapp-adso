@@ -154,7 +154,7 @@ export function AdminNovedadesPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex items-center gap-1.5 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-500 transition-colors"
+          className="flex items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("novedades.admin.newButton")}
@@ -167,12 +167,12 @@ export function AdminNovedadesPage() {
         </p>
       )}
 
-      {cargando && <p className="text-sm text-gray-400">{t("common.loading")}</p>}
+      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
 
       {!cargando && novedades.length === 0 && (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
           <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-400">{t("novedades.admin.emptyState")}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("novedades.admin.emptyState")}</p>
         </div>
       )}
 
@@ -196,7 +196,7 @@ export function AdminNovedadesPage() {
                     </span>
                   )}
                   {item.editado && (
-                    <span className="text-xs italic text-gray-400">{t("comunicados.editedBadge")}</span>
+                    <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
                   )}
                 </div>
                 <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
@@ -211,7 +211,7 @@ export function AdminNovedadesPage() {
                     {t("comunicados.viewAttachment")}
                   </a>
                 )}
-                <p className="mt-2 text-xs text-gray-400">
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   {t("novedades.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
                 </p>
               </div>
@@ -242,6 +242,7 @@ export function AdminNovedadesPage() {
         <Modal
           onClose={cerrarFormulario}
           wide
+          closeOnBackdrop={false}
           aria-label={editando ? t("novedades.admin.editTitle") : t("novedades.admin.newButton")}
         >
           <div className="p-6 sm:p-8 space-y-4">
@@ -257,10 +258,13 @@ export function AdminNovedadesPage() {
 
             {!editando ? (
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                {/* Grupo de botones, no un control único — role="group" +
+                    aria-labelledby es la asociación correcta (ver el mismo
+                    patrón en AdminConjuntoComunicadosPage.tsx). */}
+                <span id="novedad-alcance-label" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("novedades.admin.fields.alcance")} <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-2 gap-2">
+                </span>
+                <div role="group" aria-labelledby="novedad-alcance-label" className="grid grid-cols-2 gap-2">
                   {ALCANCES.map((a) => (
                     <button
                       key={a}
@@ -285,15 +289,16 @@ export function AdminNovedadesPage() {
                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {t(`novedades.alcances.${editando.alcance}`)}
                 </p>
-                <p className="mt-1 text-[11px] text-gray-400">{t("novedades.admin.alcanceNoEditable")}</p>
+                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.alcanceNoEditable")}</p>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="novedad-texto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("novedades.admin.fields.texto")} <span className="text-red-500">*</span>
               </label>
               <textarea
+                id="novedad-texto"
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 rows={5}
@@ -302,10 +307,11 @@ export function AdminNovedadesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="novedad-url-adjunto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("novedades.admin.fields.urlAdjunto")}
               </label>
               <input
+                id="novedad-url-adjunto"
                 value={form.url_adjunto}
                 onChange={(e) => setForm({ ...form, url_adjunto: e.target.value })}
                 placeholder={t("comunicados.admin.fields.urlAdjuntoPlaceholder")}
@@ -314,16 +320,17 @@ export function AdminNovedadesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label htmlFor="novedad-fecha-expiracion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                 {t("novedades.admin.fields.fechaExpiracion")}
               </label>
               <input
+                id="novedad-fecha-expiracion"
                 type="date"
                 value={form.fecha_expiracion}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
-              <p className="mt-1 text-[11px] text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
+              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
             <div className="flex gap-2 pt-2">
@@ -336,7 +343,7 @@ export function AdminNovedadesPage() {
               <button
                 onClick={guardar}
                 disabled={guardando}
-                className="flex-1 rounded-xl bg-green-600 py-2.5 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60 transition-colors"
+                className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 transition-colors"
               >
                 {guardando ? t("common.saving") : t("common.save")}
               </button>

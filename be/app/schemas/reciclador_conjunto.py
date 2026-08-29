@@ -4,9 +4,10 @@ Descripción: Esquemas de validación para el flujo de invitación Reciclador-Co
 ¿Para qué? Validar los datos que entran y salen de los endpoints de este flujo.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 
 class InvitarRecicladorRequest(BaseModel):
@@ -16,12 +17,12 @@ class InvitarRecicladorRequest(BaseModel):
               cuál de sus conjuntos administrados quiere invitarlo.
     """
     correo_reciclador: str
-    id_conjunto_residencial: int
+    id_conjunto_residencial: UUID
 
 
 class InvitacionRecicladorResponse(BaseModel):
     """¿Qué? Una invitación tal como se muestra en la lista del Admin de Conjunto."""
-    id: str
+    id: UUID
     nombre_reciclador: str
     apellidos_reciclador: str
     correo_reciclador: str
@@ -36,21 +37,19 @@ class InvitacionRecicladorResponse(BaseModel):
     #             None, simplemente se muestra como None en vez de fallar.
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InvitacionPendienteRecicladorResponse(BaseModel):
     """¿Qué? Una invitación pendiente tal como la ve el propio Reciclador."""
-    id: str
+    id: UUID
     nombre_conjunto: str
     direccion_conjunto: str
     invitado_por_nombre: str
     estado: str
     expires_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResponderInvitacionRequest(BaseModel):
@@ -60,10 +59,24 @@ class ResponderInvitacionRequest(BaseModel):
 
 class ConjuntoAutorizadoResponse(BaseModel):
     """¿Qué? Un conjunto donde el Reciclador ya está autorizado a trabajar."""
-    id_conjunto_residencial: int
+    id_conjunto_residencial: UUID
     nombre_conjunto: str
     direccion: str
     nombre_localidad: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RecicladorAutorizadoResponse(BaseModel):
+    """¿Qué? Un reciclador ya autorizado en el conjunto, tal como lo ve el
+    Admin de Conjunto — distinto de InvitacionRecicladorResponse, que
+    muestra el HISTORIAL de invitaciones (pendiente/aceptada/rechazada),
+    no necesariamente quién está autorizado de verdad ahora mismo."""
+    id_reciclador: UUID
+    nombre: str
+    apellidos: str
+    correo_electronico: str
+    numero_telefonico: Optional[str] = None
+    asociacion: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
