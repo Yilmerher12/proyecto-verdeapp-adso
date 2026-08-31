@@ -53,6 +53,7 @@ export function AuditoriaConjuntoForm({
   const [evidencias, setEvidencias] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
+  const [progreso, setProgreso] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // ¿Qué? URLs de vista previa (blob:) para las fotos ya elegidas.
@@ -105,6 +106,7 @@ export function AuditoriaConjuntoForm({
     }
 
     setEnviando(true);
+    setProgreso(0);
     try {
       const auditoria = await crearAuditoria(
         {
@@ -114,13 +116,25 @@ export function AuditoriaConjuntoForm({
           descripcion: descripcion.trim() || undefined,
           evidencias,
         },
-        token
+        token,
+        setProgreso
       );
       onSuccess(auditoria);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("dashboards.reciclador.auditoria.errorDefault"));
+      // ¿Qué? Antes de esto, un timeout (subida colgada) llegaba aquí sin
+      //       "err?.response" (axios no recibe respuesta del servidor si
+      //       nunca llegó a responder) — caía siempre en el mensaje
+      //       genérico, sin decirle al reciclador que fue justo un
+      //       problema de conexión/tiempo, no del contenido del formulario.
+      const esTimeout = err?.code === "ECONNABORTED";
+      setError(
+        esTimeout
+          ? t("dashboards.reciclador.auditoria.errorTimeout")
+          : err?.response?.data?.detail || t("dashboards.reciclador.auditoria.errorDefault")
+      );
     } finally {
       setEnviando(false);
+      setProgreso(0);
     }
   };
 
@@ -294,7 +308,16 @@ export function AuditoriaConjuntoForm({
             className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
           >
             {enviando && <Loader2 className="h-4 w-4 animate-spin" />}
-            {enviando ? t("dashboards.reciclador.auditoria.sending") : t("dashboards.reciclador.auditoria.submit")}
+            {enviando
+              ? // ¿Qué? Antes solo decía "Enviando..." sin ningún número.
+                // ¿Para qué? Una subida que de verdad avanza (pero lento, por
+                //           una mala conexión) se veía IGUAL que una que ya
+                //           se había colgado — nada distinguía "está
+                //           funcionando" de "no va a terminar nunca".
+                // ¿Impacto? Con el porcentaje real (onUploadProgress de
+                //           axios), el reciclador ve que sí está avanzando.
+                t("dashboards.reciclador.auditoria.sendingProgress", { porcentaje: progreso })
+              : t("dashboards.reciclador.auditoria.submit")}
           </button>
         </div>
       </div>

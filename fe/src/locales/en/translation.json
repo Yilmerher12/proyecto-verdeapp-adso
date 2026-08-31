@@ -774,8 +774,10 @@
         "evidenciaQuitar": "Remove this photo",
         "submit": "Submit audit",
         "sending": "Sending...",
+        "sendingProgress": "Sending... {{porcentaje}}%",
         "successMessage": "Audit submitted.",
         "errorDefault": "Couldn't submit the audit.",
+        "errorTimeout": "The upload is taking too long — check your connection and try again.",
         "validation": {
           "conjunto": "Select a building.",
           "nivel": "Select a performance level.",

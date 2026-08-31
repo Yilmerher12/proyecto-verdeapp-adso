@@ -778,8 +778,10 @@
         "evidenciaQuitar": "Quitar esta foto",
         "submit": "Enviar auditoría",
         "sending": "Enviando...",
+        "sendingProgress": "Enviando... {{porcentaje}}%",
         "successMessage": "Auditoría enviada.",
         "errorDefault": "No se pudo enviar la auditoría.",
+        "errorTimeout": "La subida está tardando demasiado — revisa tu conexión e intenta de nuevo.",
         "validation": {
           "conjunto": "Selecciona un conjunto.",
           "nivel": "Selecciona un nivel de desempeño.",

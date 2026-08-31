@@ -16,7 +16,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@headlessui/react": "^2.2.10",
+    "@headlessui/react": "2.2.10",
     "axios": "1.19.0",
     "i18next": "26.4.0",
     "i18next-browser-languagedetector": "8.2.1",

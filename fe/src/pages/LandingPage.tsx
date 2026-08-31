@@ -304,9 +304,20 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
               {t("landing.hero.subtitle")}
             </p>
 
+            {/* ¿Qué? Antes este texto usaba blanco al 55% de opacidad.
+                ¿Para qué? Contra partes más claras de la foto de fondo (o si
+                          el degradado oscuro queda más débil ahí), un blanco
+                          tan tenue se volvía casi ilegible — no cumplía el
+                          contraste mínimo de WCAG para texto sobre imagen.
+                ¿Impacto? Subido a 80% de opacidad + una sombra de texto sutil,
+                          para que se lea igual sin importar qué haya detrás. */}
             <p
               className={`${heroAnim} mx-auto mb-10 max-w-xl text-sm leading-relaxed`}
-              style={{ color: "rgba(255,255,255,0.55)", animationDelay: "240ms" }}
+              style={{
+                color: "rgba(255,255,255,0.85)",
+                textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+                animationDelay: "240ms",
+              }}
             >
               {t("landing.hero.description")}
             </p>
@@ -315,10 +326,21 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
               className={`${heroAnim} flex flex-col items-center justify-center gap-3 sm:flex-row`}
               style={{ animationDelay: "360ms" }}
             >
+              {/* ¿Qué? Antes este botón solo se distinguía por un borde
+                  blanco al 28% de opacidad, sin ningún relleno en reposo.
+                  ¿Para qué? Sobre una parte más clara de la foto de fondo (o
+                            un degradado más débil ahí), ese borde tan sutil
+                            prácticamente desaparecía — dejaba de leerse como
+                            un botón, causando la confusión real reportada
+                            (no era que "el verde" significara otra cosa,
+                            era que el botón de al lado casi no se veía).
+                  ¿Impacto? Ahora tiene un fondo propio (bg-black/20) desde el
+                            reposo, no solo al pasar el mouse — se ve como un
+                            botón sin importar qué haya detrás. */}
               <Link
                 to="/login"
-                className="flex w-full items-center justify-center rounded-xl px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:w-auto"
-                style={{ border: "1px solid rgba(255,255,255,0.28)" }}
+                className="flex w-full items-center justify-center rounded-xl bg-black/20 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:w-auto"
+                style={{ border: "1px solid rgba(255,255,255,0.45)" }}
               >
                 {t("landing.hero.ctaLogin")}
               </Link>
