@@ -67,10 +67,35 @@ COPY --from=builder /app/.venv /app/.venv
 # ¿Impacto? Los archivos en .dockerignore NO se copian (ej: .env, .venv local, __pycache__).
 COPY . .
 
+# ¿Qué? Usuario del sistema sin privilegios para correr la aplicación — antes el
+#       proceso completo de uvicorn corría como root dentro del contenedor.
+# ¿Para qué? Si alguien lograra ejecutar código a través de una falla (por ejemplo,
+#           en la subida de fotos de evidencia de auditorías), quedaría limitado a
+#           los permisos de este usuario, no a control total del contenedor.
+# ¿Impacto? "mkdir -p .../uploads" crea de antemano la carpeta donde se guardan las
+#           evidencias, ANTES de que docker-compose monte el volumen "be_uploads"
+#           ahí encima — así el volumen nace con el dueño correcto la primera vez
+#           que se usa, en vez de quedar de root.
+RUN groupadd --system appuser \
+    && useradd --system --gid appuser --home /app --shell /usr/sbin/nologin appuser \
+    && mkdir -p /app/app/uploads \
+    && chown -R appuser:appuser /app
+
+USER appuser
+
 # ¿Qué? Documenta que el contenedor escucha en el puerto 8000.
 # ¿Para qué? Convención Docker que informa a herramientas y operadores qué puerto usar.
 # ¿Impacto? No abre el puerto por sí solo — docker-compose.yml define el mapeo real.
 EXPOSE 8000
+
+# ¿Qué? Revisión automática de salud del contenedor.
+# ¿Para qué? Antes no existía ninguna — Docker no tenía forma de saber si el backend
+#           seguía respondiendo o se había quedado colgado tras arrancar.
+# ¿Impacto? Usa el mismo endpoint /api/v1/health que ya expone la app. Con urllib de
+#           la librería estándar de Python, en vez de curl/wget, no hace falta
+#           instalar ningún paquete adicional en la imagen.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')" || exit 1
 
 # ¿Qué? Comando de inicio del contenedor.
 # ¿Para qué? Primero ejecuta las migraciones pendientes de Alembic (crea/ajusta las

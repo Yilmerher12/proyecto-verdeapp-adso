@@ -27,6 +27,20 @@ services:
     restart: unless-stopped
     env_file:
       - ./be/.env # 🛡️ Lee las variables de forma segura y oculta
+    environment:
+      # ¿Qué? Sobreescribe el DATABASE_URL de be/.env solo dentro de este contenedor.
+      # ¿Para qué? be/.env usa "localhost:5433" a propósito, para que comandos
+      #           corridos directo en la máquina (uv run pytest, uv run alembic)
+      #           lleguen a Postgres por el puerto que docker-compose expone al
+      #           host. Pero "localhost" DENTRO de este contenedor apunta al
+      #           propio contenedor del backend, no al de la base de datos — con
+      #           ese valor, verde_be nunca lograba conectarse y se reiniciaba
+      #           en bucle apenas arrancaba.
+      # ¿Impacto? "verde_db" es el nombre del servicio de Postgres — Docker lo
+      #           resuelve automáticamente dentro de la red "verde_network", y
+      #           "5432" es el puerto interno real (5433 solo existe para fuera).
+      #           No afecta be/.env ni los comandos que corres en tu máquina.
+      DATABASE_URL: postgresql://verde_user:verde_password@verde_db:5432/verdeapp_db
     ports:
       - "8000:8000"
     volumes:
