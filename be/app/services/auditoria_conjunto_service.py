@@ -3,6 +3,7 @@ Módulo: services/auditoria_conjunto_service.py
 Descripción: Lógica de negocio de la auditoría del Reciclador al conjunto
              (RQF-009) — validaciones y guardado de la foto de evidencia.
 """
+import asyncio
 import io
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -97,6 +98,32 @@ async def _guardar_evidencia(archivo: UploadFile) -> str:
     #           "image/jpeg" a mano, y el backend lo aceptaba igual.
     # ¿Impacto? Un archivo que no es una imagen real (aunque tenga la
     #           etiqueta correcta) se rechaza antes de guardarse en disco.
+    #
+    # ¿Qué? Esta verificación y la escritura a disco de abajo corren con
+    #       "asyncio.to_thread" — antes eran código síncrono normal dentro
+    #       de una función "async def".
+    # ¿Para qué? FastAPI corre en un solo hilo por worker (event loop).
+    #           Código síncrono que tarda (Pillow abriendo/verificando la
+    #           imagen entera, escribir varios MB a disco) BLOQUEA ese hilo
+    #           completo mientras corre — ninguna otra petición al backend
+    #           se atiende hasta que termina, así sea de otro usuario.
+    #           "asyncio.to_thread" mueve ese trabajo a un hilo aparte,
+    #           dejando el hilo principal libre para seguir atendiendo.
+    # ¿Impacto? Esto explica por qué subir varias fotos de evidencia se
+    #           sentía lento e intermitente — cada foto congelaba el
+    #           servidor entero mientras se procesaba, así fueran fotos de
+    #           otro reciclador en otra petición al mismo tiempo.
+    await asyncio.to_thread(_validar_contenido_imagen, contenido)
+
+    nombre_archivo = f"{uuid.uuid4()}{extension}"
+    ruta = CARPETA_EVIDENCIAS / nombre_archivo
+    await asyncio.to_thread(_escribir_evidencia, ruta, contenido)
+
+    return f"/uploads/evidencias-auditoria/{nombre_archivo}"
+
+
+def _validar_contenido_imagen(contenido: bytes) -> None:
+    """Parte bloqueante de _guardar_evidencia — corre en un hilo aparte."""
     try:
         Image.open(io.BytesIO(contenido)).verify()
     except (UnidentifiedImageError, OSError):
@@ -105,11 +132,11 @@ async def _guardar_evidencia(archivo: UploadFile) -> str:
             detail="El archivo no es una imagen válida.",
         )
 
-    CARPETA_EVIDENCIAS.mkdir(parents=True, exist_ok=True)
-    nombre_archivo = f"{uuid.uuid4()}{extension}"
-    (CARPETA_EVIDENCIAS / nombre_archivo).write_bytes(contenido)
 
-    return f"/uploads/evidencias-auditoria/{nombre_archivo}"
+def _escribir_evidencia(ruta: Path, contenido: bytes) -> None:
+    """La otra parte bloqueante — escribir el archivo en disco."""
+    CARPETA_EVIDENCIAS.mkdir(parents=True, exist_ok=True)
+    ruta.write_bytes(contenido)
 
 
 MAXIMO_FOTOS_EVIDENCIA = 3
@@ -154,7 +181,16 @@ async def crear_auditoria(
             detail=f"Debes adjuntar entre 1 y {MAXIMO_FOTOS_EVIDENCIA} fotos de evidencia.",
         )
 
-    rutas = [await _guardar_evidencia(archivo) for archivo in evidencias]
+    # ¿Qué? Antes se procesaba una foto a la vez, esperando a que cada una
+    #       terminara antes de empezar la siguiente ("for archivo in
+    #       evidencias: await ...").
+    # ¿Para qué? Con hasta 3 fotos por auditoría, esperar una por una
+    #           multiplica por 3 el tiempo total. Con asyncio.gather, las 3
+    #           se procesan al mismo tiempo — el tiempo total es el de la
+    #           foto más lenta, no la suma de las 3.
+    # ¿Impacto? Si CUALQUIER foto falla la validación, se cancela toda la
+    #           auditoría igual que antes (ninguna se guarda a medias).
+    rutas = await asyncio.gather(*[_guardar_evidencia(archivo) for archivo in evidencias])
 
     auditoria = AuditoriaConjunto(
         id_reciclador=reciclador.id_reciclador,
