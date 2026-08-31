@@ -80,14 +80,32 @@ describe("useRestoreScroll", () => {
     expect(sessionStorage.getItem("otra-clave")).toBe("999");
   });
 
+  it("guarda la posición actual al desmontarse, sin esperar el debounce", () => {
+    // ¿Qué? Antes, si el usuario se iba (ej: clic en un link del footer)
+    //       antes de que pasaran los 150ms del debounce, la posición se
+    //       perdía por completo — el cleanup solo cancelaba el guardado
+    //       pendiente, nunca lo llegaba a escribir.
+    // ¿Impacto? Ahora desmontar guarda la posición de inmediato, sin
+    //           importar el debounce.
+    Object.defineProperty(window, "scrollY", { value: 642, configurable: true });
+    const { unmount } = renderHook(() => useRestoreScroll(KEY));
+
+    unmount();
+
+    expect(sessionStorage.getItem(KEY)).toBe("642");
+  });
+
   it("deja de escuchar scroll después de desmontarse", () => {
+    Object.defineProperty(window, "scrollY", { value: 300, configurable: true });
     const { unmount } = renderHook(() => useRestoreScroll(KEY));
     unmount();
 
+    // El desmontaje ya guardó "300" — un scroll disparado DESPUÉS de
+    // desmontar no debe cambiar nada, porque el listener ya se quitó.
     Object.defineProperty(window, "scrollY", { value: 777, configurable: true });
     window.dispatchEvent(new Event("scroll"));
     vi.advanceTimersByTime(150);
 
-    expect(sessionStorage.getItem(KEY)).toBeNull();
+    expect(sessionStorage.getItem(KEY)).toBe("300");
   });
 });

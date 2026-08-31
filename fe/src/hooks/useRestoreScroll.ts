@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 /**
  * Archivo: hooks/useRestoreScroll.ts
@@ -19,7 +19,14 @@ export function useRestoreScroll(storageKey: string, enabled = true) {
   //       fuera un scroll real del usuario.
   const restaurando = useRef(false);
 
-  useEffect(() => {
+  // ¿Qué? Antes esta restauración vivía en un useEffect normal.
+  // ¿Para qué? useEffect corre DESPUÉS de que el navegador ya pintó el
+  //           componente recién montado (arrancando en scroll 0) — eso se
+  //           veía como un salto visible: sube arriba y luego "cae" a la
+  //           posición guardada. useLayoutEffect corre ANTES de que el
+  //           navegador pinte, así que la posición correcta ya está puesta
+  //           desde el primer frame visible, sin salto.
+  useLayoutEffect(() => {
     // ¿Qué? Cuando LandingPage se usa como fondo de un modal (Login,
     //       Registro, Términos, etc.), este hook no debe hacer nada — si no,
     //       cada vez que se monta de fondo salta de golpe al scroll que
@@ -31,16 +38,14 @@ export function useRestoreScroll(storageKey: string, enabled = true) {
 
     const guardado = sessionStorage.getItem(storageKey);
     if (guardado) {
-      // ¿Qué? Se restaura directo, de forma síncrona dentro del efecto.
-      // ¿Para qué? Para cuando useEffect corre, React ya terminó de montar
-      //           y pintar el DOM — no hace falta esperar un frame extra
-      //           (requestAnimationFrame se descartó: en pestañas en
-      //           segundo plano el navegador lo pausa indefinidamente,
-      //           dejando la restauración sin ejecutarse nunca).
       restaurando.current = true;
       window.scrollTo(0, Number(guardado));
       restaurando.current = false;
     }
+  }, [storageKey, enabled]);
+
+  useEffect(() => {
+    if (!enabled) return;
 
     // ¿Qué? Debounce simple con setTimeout — solo se guarda 150ms después
     //       de que el usuario deja de hacer scroll.
@@ -59,6 +64,13 @@ export function useRestoreScroll(storageKey: string, enabled = true) {
     return () => {
       window.removeEventListener("scroll", handleScroll);
       if (timeoutId !== null) clearTimeout(timeoutId);
+      // ¿Qué? Antes, al desmontar (ej: clic en un link legal del footer),
+      //       si habían pasado menos de 150ms desde el último scroll, el
+      //       "clearTimeout" de arriba cancelaba el guardado pendiente sin
+      //       llegar a escribirlo nunca — se perdía la posición más reciente.
+      // ¿Impacto? Ahora se guarda la posición actual de inmediato al salir
+      //           de la página, sin esperar el debounce — nunca se pierde.
+      sessionStorage.setItem(storageKey, String(window.scrollY));
     };
   }, [storageKey, enabled]);
 }
