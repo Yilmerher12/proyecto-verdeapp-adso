@@ -1,5 +1,19 @@
 name: Auto-close PRs
 
+# ¿Qué? "pull_request_target" corre con los permisos y secretos de ESTE
+#       repositorio (no los del fork que abrió el PR) — por eso este workflow
+#       puede comentar y cerrar el PR con permiso de escritura.
+# ¿Para qué? Documentar la regla permanente: este archivo es seguro HOY porque
+#           nunca descarga ni ejecuta el código del Pull Request — solo escribe
+#           un comentario fijo y cambia el estado del PR.
+# ¿Impacto? REGLA QUE NUNCA SE DEBE ROMPER: jamás agregar aquí un paso
+#           "actions/checkout" con "ref: github.event.pull_request.head.sha",
+#           ni ningún "run:" que ejecute contenido del PR. Si eso pasara, el
+#           código de un desconocido correría con el token de escritura de
+#           este repositorio — un atacante externo solo necesitaría abrir un
+#           PR para explotarlo. Cualquier trabajo que sí necesite el código
+#           del PR (tests, build) debe ir en ci.yml, que usa "pull_request"
+#           (no "pull_request_target") con permiso de solo lectura.
 on:
   pull_request_target:
     types: [opened, reopened]
