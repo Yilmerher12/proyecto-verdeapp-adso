@@ -315,7 +315,7 @@ verde-app/
 
 ### Código Limpio e Idioma Homogéneo
 
-Toda la lógica de persistencia, nombres de variables, funciones, rutas de endpoints y nombres de tablas en PostgreSQL se escriben estrictamente en inglés, manteniendo consistencia con los estándares internacionales de desarrollo de software **(actualmente este proceso de estandarización aún se encuentra en implementación y parte del proyecto conserva nomenclatura provisional mientras avanza el desarrollo).**
+El código (variables, funciones, nombres de archivo, rutas de API) se escribe en inglés. Los comentarios, la documentación y los mensajes de commit descriptivos se escriben en español — regla documentada en [`docs/requisitos/restricciones.md`](docs/requisitos/restricciones.md) y aplicada de forma consistente en todo el proyecto.
 
 ### Documentación Estructural Obligatoria
 
@@ -325,11 +325,66 @@ Los bloques funcionales y métodos de negocio del backend y frontend deben incor
 * **¿Para qué sirve?**: Justificación de su existencia en la regla de negocio.
 * **¿Impacto técnico?**: Comportamiento en memoria, base de datos o UI.
 
-NOTA: **(actualmente este proceso de documentacion aún se encuentra en implementación y parte del proyecto no esta 100% documentado).**
-
 ### Gobernanza del Gestor de Paquetes
 
 Queda estrictamente restringido el uso de npm o yarn en el directorio frontend. Toda adición de bibliotecas debe ejecutarse a través de pnpm para salvaguardar la integridad estructural del archivo `pnpm-lock.yaml`.
+
+---
+
+## 🌿 Modelo de Ramas y Commits
+
+El proyecto usa dos ramas permanentes y ramas de trabajo temporales:
+
+* **`main`** — versión estable, la que se etiqueta para cada entrega (ej. `v1.0.0`). Nunca se trabaja directo aquí.
+* **`develop`** — rama de integración. Todo el trabajo en curso se fusiona aquí primero.
+* **Ramas de trabajo** — una por cada tarjeta/tarea, siempre creada a partir de `develop`, nunca directo sobre `develop` o `main`. El prefijo indica el tipo de cambio:
+
+| Prefijo | Se usa para |
+|---|---|
+| `feat/` | Una funcionalidad nueva |
+| `fix/` | Corregir un error o comportamiento incorrecto |
+| `docs/` | Solo documentación, sin cambios de código |
+| `chore/` | Mantenimiento (dependencias, configuración) sin efecto funcional |
+| `content/` | Cambios de contenido (textos, datos de ejemplo) sin lógica nueva |
+
+**Flujo normal:** crear la rama desde `develop` → hacer el cambio → abrir un Pull Request hacia `develop` → esperar a que el CI (pruebas automáticas) pase en verde → fusionar. `main` solo recibe código a través de `develop`, cuando se prepara una entrega.
+
+**Mensajes de commit:** siguen [Conventional Commits](https://www.conventionalcommits.org/) — `tipo: descripción en español`, por ejemplo `fix: bloquear reportes repetidos sin espera` o `docs: actualizar diagramas UML`. El tipo (`feat`, `fix`, `docs`, `chore`) coincide con el prefijo de la rama.
+
+---
+
+## 📚 Índice de Documentación
+
+Toda la documentación vive en `docs/`, en Markdown, versionada junto con el código:
+
+| Carpeta | Contenido |
+|---|---|
+| [`docs/requisitos/HUs/`](docs/requisitos/HUs/) | Historias de Usuario — una por funcionalidad concreta desde la perspectiva del usuario |
+| [`docs/requisitos/RFs/`](docs/requisitos/RFs/) | Requisitos Funcionales (RQF) — qué debe hacer el sistema, con reglas de negocio y endpoints asociados |
+| [`docs/requisitos/RNFs/`](docs/requisitos/RNFs/) | Requisitos No Funcionales — seguridad, disponibilidad, rendimiento, usabilidad, accesibilidad, mantenibilidad |
+| [`docs/requisitos/restricciones.md`](docs/requisitos/restricciones.md) | Reglas transversales del proyecto (idioma del código, convención de ramas/commits, versionado de dependencias) |
+| [`docs/conceptos/`](docs/conceptos/) | Explicación pedagógica de OWASP Top 10, accesibilidad (ARIA/WCAG) y patrones de arquitectura, con evidencia real de archivo y línea |
+| [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Diagrama de clases y catálogo de casos de uso |
+| [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance |
+
+Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implementar`) que se actualiza cada vez que su funcionalidad cambia de verdad — es la fuente de verdad más confiable sobre qué tan avanzado está el proyecto, más que cualquier resumen (incluido este README).
+
+---
+
+## 📊 Estado del Proyecto
+
+| Métrica | Avance |
+|---|---|
+| Historias de Usuario | 33 / 38 implementadas |
+| Requisitos Funcionales | 15 / 17 implementados |
+| Requisitos No Funcionales | 3 / 6 completos (3 parciales — de naturaleza continua: se miden, no se "terminan") |
+| Pruebas backend (pytest) | 245 |
+| Pruebas frontend (vitest) | 167 |
+
+Pendiente por implementar, ambos documentados con su alcance completo antes de programarlos:
+
+* **RQF-011 — Gestión de Directorio de Acopio** ([issue #8](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/8)): hoy solo existe la lectura pública; falta el panel de administración para registrar, actualizar y dar de baja puntos de acopio.
+* **RQF-013 — Recomendación de contenido educativo por auditoría** ([issue #4](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/4)): al publicarse una auditoría con resultado negativo, recomendar automáticamente módulos educativos relacionados a los residentes del conjunto.
 
 ---
 
