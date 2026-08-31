@@ -79,6 +79,24 @@ Todas las vulnerabilidades restantes son de este tipo:
 
 ---
 
+## Actualización — 2026-08-31
+
+Se repitió la auditoría contra lo que está instalado hoy (recomendación explícita de una revisión técnica externa del proyecto, hecha el 2026-08-29). Nada nuevo que corregir — se deja constancia igual, para que quede claro que sí se repitió y qué se encontró.
+
+| | 2026-08-24 | 2026-08-31 |
+| --- | --- | --- |
+| Backend — vulnerabilidades | 21 (1 paquete, sin corrección) | 21 (mismo 1 paquete, sin corrección) |
+| Frontend — vulnerabilidades | 44 (0 críticas, 16 altas, 20 moderadas, 8 bajas) | 19 (0 críticas, 11 altas, 6 moderadas, 2 bajas) |
+| Frontend — solo producción (`pnpm audit --prod`) | — | 0 |
+
+**Backend:** sigue siendo únicamente `ecdsa` 0.19.2 (ataque de temporización Minerva) — mismo riesgo aceptado y documentado arriba, sin cambios. El identificador con el que lo reporta la base de datos de vulnerabilidades cambió de `CVE-2024-23342` a `PYSEC-2026-1325`, pero es el mismo problema subyacente, no uno nuevo.
+
+**Frontend:** el número bajó de 44 a 19 sin que se hiciera ningún cambio a propósito para esto — mejoró solo, probablemente por la eliminación de `jspdf`/`jspdf-autotable` (issue #113, ya cerrado) que arrastraba buena parte de la cadena de `dompurify`, y por actualizaciones normales de `pnpm-lock.yaml` en el camino. Las 19 restantes siguen siendo exclusivamente herramientas de desarrollo (`brace-expansion`, `postcss`, `nanoid`, `@babel/core`, todas vía la cadena de ESLint/Vite/TypeScript-ESLint) — ninguna se empaqueta en el build de producción, confirmado con `pnpm audit --prod` (0 resultados).
+
+Se verificó además que `uv.lock` y `pnpm-lock.yaml` siguen sincronizados con sus manifiestos (`uv sync --frozen` y `pnpm install --frozen-lockfile`, ambos sin cambios).
+
+---
+
 ## Cómo repetir esta auditoría
 
 ```bash
