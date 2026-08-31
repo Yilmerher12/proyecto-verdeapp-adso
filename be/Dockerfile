@@ -99,9 +99,9 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
 
 # ¿Qué? Comando de inicio del contenedor.
 # ¿Para qué? Primero ejecuta las migraciones pendientes de Alembic (crea/ajusta las
-#            tablas), luego siembra los datos de prueba con app/seed.py (solo si la
-#            base está vacía), y por último arranca Uvicorn en todas las interfaces
-#            (0.0.0.0) en el puerto 8000.
+#            tablas), luego siembra los datos de prueba con app/seed.py — pero SOLO
+#            si ENVIRONMENT=development (ver siguiente bloque) — y por último arranca
+#            Uvicorn en todas las interfaces (0.0.0.0) en el puerto 8000.
 # ¿Impacto? Sin `alembic upgrade head`, el backend podría arrancar con un esquema de
 #           BD desactualizado, causando errores en las primeras operaciones. El orden
 #           importa: la siembra necesita que las tablas ya existan, por eso corre
@@ -109,4 +109,15 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
 #           de "relation ... already exists" que causaba init_db.sql al competir con
 #           Alembic por crear las mismas tablas). Sin `--host 0.0.0.0`, Uvicorn
 #           escucharía solo en localhost y el contenedor no sería accesible desde fuera.
-CMD ["sh", "-c", "alembic upgrade head && python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+#
+# ¿Qué? "python -m app.seed" ahora solo corre si ENVIRONMENT=development.
+# ¿Para qué? Antes se ejecutaba SIEMPRE, sin importar el entorno — creando 4 cuentas
+#           de prueba (incluida la de Administrador del Sistema) con contraseñas que
+#           están escritas en texto plano en el README.md, que es público. Si este
+#           proyecto se desplegara alguna vez en un servidor real, esas mismas
+#           cuentas se hubieran creado igual, con las mismas contraseñas conocidas.
+# ¿Impacto? be/.env.example ya trae ENVIRONMENT=development por defecto — en
+#           desarrollo local (y para la sustentación) nada cambia, las 4 cuentas
+#           se siguen creando exactamente igual. Solo un despliegue con
+#           ENVIRONMENT=production se salta la siembra.
+CMD ["sh", "-c", "alembic upgrade head && if [ \"$ENVIRONMENT\" = \"development\" ]; then python -m app.seed; fi && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
