@@ -32,7 +32,22 @@ export interface NuevaAuditoria {
 
 // ¿Qué? Envía la auditoría como multipart/form-data (no JSON) porque incluye
 //       archivos — es el primer endpoint de VerdeApp que sube imágenes.
-export async function crearAuditoria(datos: NuevaAuditoria, token: string): Promise<AuditoriaConjunto> {
+//
+// ¿Qué? Antes esta petición no tenía ningún límite de tiempo de espera
+//       (timeout) ni forma de saber si de verdad estaba avanzando.
+// ¿Para qué? Sin timeout, si la subida se colgaba (mala conexión, hasta 3
+//           fotos de 5MB cada una), se quedaba esperando para siempre, sin
+//           avisar nada — el reciclador no sabía si seguía intentando o ya
+//           había fallado. onUploadProgress reporta el porcentaje real
+//           transferido, para mostrarlo en vez de solo un ícono girando.
+// ¿Impacto? 30 segundos es generoso para ~15MB en una conexión mala, pero
+//           ya no es infinito — si de verdad se cuelga, ahora sí falla con
+//           un error claro en vez de quedarse esperando sin fin.
+export async function crearAuditoria(
+  datos: NuevaAuditoria,
+  token: string,
+  onProgress?: (porcentaje: number) => void
+): Promise<AuditoriaConjunto> {
   const formData = new FormData();
   formData.append("id_conjunto_residencial", String(datos.id_conjunto_residencial));
   formData.append("nivel_desempeno", datos.nivel_desempeno);
@@ -42,6 +57,11 @@ export async function crearAuditoria(datos: NuevaAuditoria, token: string): Prom
 
   const { data } = await axios.post(API_BASE, formData, {
     headers: { Authorization: `Bearer ${token}` },
+    timeout: 30000,
+    onUploadProgress: (evento) => {
+      if (!onProgress || !evento.total) return;
+      onProgress(Math.round((evento.loaded / evento.total) * 100));
+    },
   });
   return data;
 }
