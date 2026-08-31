@@ -131,10 +131,16 @@ export function InputField({
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
           >
+            {/* ¿Qué? Antes el ícono mostraba "lo que pasará si haces clic"
+                (ojo abierto cuando estaba oculta, tachado cuando ya estaba
+                visible) — al revés de lo que la mayoría espera.
+                ¿Impacto? Ahora el ícono muestra el ESTADO actual del campo:
+                ojo abierto = la contraseña SÍ se ve ahora mismo; ojo
+                tachado = está oculta. */}
             {showPassword ? (
-              <EyeOff className="h-5 w-5" aria-hidden="true" />
-            ) : (
               <Eye className="h-5 w-5" aria-hidden="true" />
+            ) : (
+              <EyeOff className="h-5 w-5" aria-hidden="true" />
             )}
           </button>
         )}
