@@ -336,7 +336,7 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
             "Los Residuos de Construcción y Demolición (RCD) son el material que sobra de obras, remodelaciones o reparaciones dentro del conjunto: escombros, restos de baldosa, cemento, ladrillo, tejas rotas, entre otros.\n\nEstos residuos NO se deben mezclar con las bolsas blanca, negra o verde de la recolección domiciliaria normal, ni acumularse en zonas comunes, andenes o antejardines — además del riesgo de accidentes, es una infracción que puede generar comparendos ambientales.\n\nPara volúmenes pequeños, la ciudad dispone de los Ecopuntos (ver el módulo correspondiente). Para volúmenes más grandes, propios de una obra, se debe contratar a un gestor autorizado de RCD, que se encarga de transportarlos hasta una escombrera legal.\n\nComo Administrador de Conjunto, vale la pena informar a los residentes con anticipación cuando se planee una obra o remodelación, para coordinar dónde y cómo se va a disponer el material sobrante antes de que se convierta en un problema para todo el conjunto.",
             "2026-08-19",
             "https://youtu.be/ZXaiQaUQp24",
-            "https://www.ambientebogota.gov.co/preguntas-frecuentes-rcd",
+            "https://bogota.gov.co/mi-ciudad/movilidad/gestion-residuos-de-construccion-y-demolicion-del-idu-en-bogota-2026",
         ),
         (
             "Marco distrital y consumo responsable",
