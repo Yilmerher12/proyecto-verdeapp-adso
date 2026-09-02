@@ -87,14 +87,16 @@ describe("AdminContenidoEducativoPage", () => {
     });
   });
 
+  // ¿Qué? El botón permanece deshabilitado (y dice "Completa el
+  //       formulario") mientras falten campos obligatorios — antes se
+  //       podía pulsar "Guardar" vacío y el aviso llegaba después.
   it("no envía el formulario si faltan campos obligatorios", async () => {
     const user = userEvent.setup();
     renderPage();
 
     await user.click(screen.getByRole("button", { name: /nuevo módulo/i }));
-    await user.click(screen.getByRole("button", { name: "Guardar" }));
 
-    expect(screen.getByText("Categoría, título y contenido son obligatorios.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeDisabled();
     expect(mockCrear).not.toHaveBeenCalled();
   });
 

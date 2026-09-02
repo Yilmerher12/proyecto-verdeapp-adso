@@ -17,7 +17,7 @@ describe("ForgotPasswordPage", () => {
 
     expect(screen.getByText("Recuperar contraseña")).toBeInTheDocument();
     expect(screen.getByLabelText("Correo electrónico")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Enviar enlace" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeInTheDocument();
   });
 
   // ¿Qué? Verifica enlace para volver al login.
@@ -26,14 +26,13 @@ describe("ForgotPasswordPage", () => {
     expect(screen.getByText("Volver al inicio de sesión")).toBeInTheDocument();
   });
 
-  // ¿Qué? Verifica validación de email vacío.
-  it("muestra error si el email está vacío", async () => {
-    const user = userEvent.setup();
+  // ¿Qué? El botón permanece deshabilitado mientras el correo esté vacío
+  //       — antes se podía pulsar "Enviar enlace" y el aviso llegaba
+  //       después, como mensaje de error.
+  it("mantiene el botón deshabilitado si el email está vacío", () => {
     renderWithProviders(<ForgotPasswordPage />, { initialRoute: "/forgot-password" });
 
-    await user.click(screen.getByRole("button", { name: "Enviar enlace" }));
-
-    expect(screen.getByText("El correo es obligatorio")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeDisabled();
   });
 
   // ¿Qué? Verifica que forgotPassword() se ejecuta correctamente.

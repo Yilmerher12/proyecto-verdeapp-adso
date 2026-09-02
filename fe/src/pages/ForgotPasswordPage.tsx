@@ -32,6 +32,8 @@ export function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const formularioIncompleto = !email.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -122,8 +124,8 @@ export function ForgotPasswordPage() {
         />
 
         <div className="mt-2 flex justify-end">
-          <Button type="submit" fullWidth isLoading={isLoading}>
-            {t("auth.forgotPassword.submit")}
+          <Button type="submit" fullWidth isLoading={isLoading} disabled={formularioIncompleto}>
+            {formularioIncompleto ? t("common.formIncomplete") : t("auth.forgotPassword.submit")}
           </Button>
         </div>
       </form>
