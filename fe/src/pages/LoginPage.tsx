@@ -23,6 +23,7 @@ export function LoginPage() {
 
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   // ¿Qué? Si axios.ts detectó una sesión vencida (401 con token guardado),
@@ -39,13 +40,43 @@ export function LoginPage() {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
     setError(null);
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[name];
+        return copy;
+      });
+    }
   };
+
+  // ¿Qué? El botón ya no se puede pulsar sin haber escrito algo en los dos
+  //       campos — antes se podía enviar el formulario vacío y el único
+  //       aviso llegaba después, como respuesta del servidor.
+  // ¿Para qué? Coincide con el mismo patrón que ya usa RegisterPage
+  //           (checkFormIncomplete + botón deshabilitado).
+  const isButtonDisabled = !formData.email.trim() || !formData.password.trim();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const errors: Record<string, string> = {};
+    if (!formData.email.trim()) {
+      errors.email = t("auth.login.validation.emailRequired");
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = t("auth.login.validation.emailInvalid");
+    }
+    if (!formData.password.trim()) {
+      errors.password = t("auth.login.validation.passwordRequired");
+    }
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -109,6 +140,7 @@ export function LoginPage() {
               name="email"
               type="email"
               value={formData.email}
+              error={fieldErrors.email}
               placeholder={t("common.emailPlaceholder")}
               autoComplete="email"
               autoFocus
@@ -121,6 +153,7 @@ export function LoginPage() {
               name="password"
               type="password"
               value={formData.password}
+              error={fieldErrors.password}
               placeholder={t("common.passwordPlaceholder")}
               autoComplete="current-password"
               icon={<Lock className="h-5 w-5 text-gray-400" />}
@@ -137,8 +170,8 @@ export function LoginPage() {
             </div>
 
             <div className="pt-2">
-              <Button type="submit" fullWidth isLoading={isLoading}>
-                {t("auth.login.submit")}
+              <Button type="submit" fullWidth isLoading={isLoading} disabled={isButtonDisabled}>
+                {isButtonDisabled ? t("auth.login.submitIncomplete") : t("auth.login.submit")}
               </Button>
             </div>
           </form>

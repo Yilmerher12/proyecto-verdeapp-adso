@@ -61,7 +61,8 @@
     "edit": "Editar",
     "phone": "Teléfono",
     "saving": "Guardando...",
-    "saveError": "No se pudo guardar. Intenta de nuevo."
+    "saveError": "No se pudo guardar. Intenta de nuevo.",
+    "formIncomplete": "Completa el formulario"
   },
   "auth": {
     "login": {
@@ -71,8 +72,14 @@
       "noAccount": "¿No tienes cuenta aún?",
       "createAccountLink": "Regístrate aquí",
       "submit": "Iniciar Sesión",
+      "submitIncomplete": "Completa tu correo y contraseña",
       "errorDefault": "Credenciales incorrectas. Verifica tu correo y contraseña.",
-      "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión."
+      "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión.",
+      "validation": {
+        "emailRequired": "El correo es obligatorio",
+        "emailInvalid": "El formato del correo no es válido.",
+        "passwordRequired": "La contraseña es obligatoria"
+      }
     },
     "register": {
       "title": "Crea tu cuenta",
@@ -777,6 +784,7 @@
         "evidenciaMaximoAlcanzado": "Ya adjuntaste el máximo de 3 fotos.",
         "evidenciaQuitar": "Quitar esta foto",
         "submit": "Enviar auditoría",
+        "submitIncomplete": "Completa el formulario",
         "sending": "Enviando...",
         "sendingProgress": "Enviando... {{porcentaje}}%",
         "successMessage": "Auditoría enviada.",

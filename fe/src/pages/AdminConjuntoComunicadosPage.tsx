@@ -132,6 +132,14 @@ export function AdminConjuntoComunicadosPage() {
     setErrorMsg(null);
   };
 
+  // ¿Qué? Mismas condiciones que ya revisaba "guardar" al hacer clic, pero
+  //       calculadas ANTES, para deshabilitar el botón en vez de dejar que
+  //       el Admin de Conjunto se entere del campo que falta después.
+  const formularioIncompleto =
+    !form.texto.trim() ||
+    (creando && !form.id_conjunto_residencial) ||
+    (form.tipo === "CONVOCATORIA" && !form.fecha_evento);
+
   const guardar = async () => {
     if (!accessToken) return;
     if (!form.texto.trim()) {
@@ -450,10 +458,14 @@ export function AdminConjuntoComunicadosPage() {
               </button>
               <button
                 onClick={guardar}
-                disabled={guardando}
+                disabled={guardando || formularioIncompleto}
                 className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 transition-colors"
               >
-                {guardando ? t("common.saving") : t("common.save")}
+                {guardando
+                  ? t("common.saving")
+                  : formularioIncompleto
+                    ? t("common.formIncomplete")
+                    : t("common.save")}
               </button>
             </div>
           </div>
