@@ -998,6 +998,15 @@
     "errorMessage": "El enlace de verificación no es válido o ya fue utilizado. Por favor, solicita un nuevo enlace.",
     "goToLogin": "Ir al login"
   },
+  "imagenAdjunta": {
+    "seleccionar": "Seleccionar imagen",
+    "subiendo": "Subiendo...",
+    "quitar": "Quitar imagen",
+    "vistaPrevia": "Vista previa de la imagen adjunta",
+    "tipoInvalido": "La imagen debe ser JPG, PNG o WEBP.",
+    "demasiadoGrande": "La imagen no puede superar 5 MB.",
+    "errorSubida": "No se pudo subir la imagen. Intenta de nuevo."
+  },
   "invitarAdminConjunto": {
     "title": "Invitar Administrador de Conjunto",
     "description": "Solo necesitas su correo. La persona invitada definirá su propia contraseña y completará sus datos al aceptar la invitación.",
@@ -1099,8 +1108,7 @@
         "tipo": "Tipo de comunicado",
         "fechaEvento": "Fecha del evento",
         "texto": "Mensaje",
-        "urlAdjunto": "Link de adjunto (imagen, video, PDF, etc.) — opcional",
-        "urlAdjuntoPlaceholder": "https://...",
+        "urlAdjunto": "Imagen adjunta (opcional)",
         "fechaExpiracion": "Fecha de expiración (opcional)",
         "fechaExpiracionHint": "Si la dejas vacía, se usa la sugerida según el tipo de comunicado."
       },
@@ -1123,7 +1131,7 @@
       "TODOS": "Todos",
       "RESIDENTES": "Residentes",
       "RECICLADORES": "Recicladores",
-      "ADMIN_CONJUNTO": "Admins. de Conjunto"
+      "ADMIN_CONJUNTO": "Administradores de Conjunto"
     },
     "admin": {
       "title": "Novedades",
@@ -1142,7 +1150,7 @@
       "fields": {
         "alcance": "Alcance",
         "texto": "Mensaje",
-        "urlAdjunto": "Link de adjunto (imagen, PDF, link externo, etc.) — opcional",
+        "urlAdjunto": "Imagen adjunta (opcional)",
         "fechaExpiracion": "Fecha de expiración (opcional)",
         "fechaExpiracionHint": "Si la dejas vacía, se usa una fecha sugerida por el sistema."
       }

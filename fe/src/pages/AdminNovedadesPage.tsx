@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Archive, Megaphone, Paperclip, Pencil, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
+import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import {
   archivarNovedad,
   crearNovedad,
@@ -311,18 +312,12 @@ export function AdminNovedadesPage() {
               />
             </div>
 
-            <div>
-              <label htmlFor="novedad-url-adjunto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("novedades.admin.fields.urlAdjunto")}
-              </label>
-              <input
-                id="novedad-url-adjunto"
-                value={form.url_adjunto}
-                onChange={(e) => setForm({ ...form, url_adjunto: e.target.value })}
-                placeholder={t("comunicados.admin.fields.urlAdjuntoPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-              />
-            </div>
+            <ImagenAdjuntaField
+              label={t("novedades.admin.fields.urlAdjunto")}
+              value={form.url_adjunto}
+              onChange={(url) => setForm({ ...form, url_adjunto: url })}
+              token={accessToken || ""}
+            />
 
             <div>
               <label htmlFor="novedad-fecha-expiracion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
