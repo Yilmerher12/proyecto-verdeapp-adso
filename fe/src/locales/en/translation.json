@@ -61,7 +61,8 @@
     "edit": "Edit",
     "phone": "Phone",
     "saving": "Saving...",
-    "saveError": "Could not save. Please try again."
+    "saveError": "Could not save. Please try again.",
+    "formIncomplete": "Complete the form"
   },
   "auth": {
     "login": {
@@ -71,8 +72,14 @@
       "noAccount": "Don't have an account yet?",
       "createAccountLink": "Sign up here",
       "submit": "Log In",
+      "submitIncomplete": "Fill in your email and password",
       "errorDefault": "Incorrect credentials. Check your email and password.",
-      "sessionExpired": "Your session expired. Please log in again."
+      "sessionExpired": "Your session expired. Please log in again.",
+      "validation": {
+        "emailRequired": "Email is required",
+        "emailInvalid": "The email format is not valid.",
+        "passwordRequired": "Password is required"
+      }
     },
     "register": {
       "title": "Create your account",
@@ -773,6 +780,7 @@
         "evidenciaMaximoAlcanzado": "You've already attached the maximum of 3 photos.",
         "evidenciaQuitar": "Remove this photo",
         "submit": "Submit audit",
+        "submitIncomplete": "Complete the form",
         "sending": "Sending...",
         "sendingProgress": "Sending... {{porcentaje}}%",
         "successMessage": "Audit submitted.",

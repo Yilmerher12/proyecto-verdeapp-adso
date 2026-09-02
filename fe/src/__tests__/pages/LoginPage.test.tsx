@@ -18,13 +18,36 @@ import { renderWithProviders } from "../helpers";
 
 describe("LoginPage", () => {
   // ¿Qué? Verifica que el formulario se renderiza con todos los campos.
+  // ¿Para qué? Con el formulario vacío, el botón todavía no dice "Iniciar
+  //           Sesión" — muestra el texto de formulario incompleto (ver
+  //           siguiente test para el detalle de esa validación).
   it("renderiza el formulario de login completo", () => {
     renderWithProviders(<LoginPage />, { initialRoute: "/login" });
 
     expect(screen.getByRole("heading", { name: "Ingresa a VerdeApp" })).toBeInTheDocument();
     expect(screen.getByLabelText("Correo electrónico")).toBeInTheDocument();
     expect(screen.getByLabelText("Contraseña")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Iniciar Sesión" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa tu correo y contraseña" })).toBeInTheDocument();
+  });
+
+  // ¿Qué? El botón de enviar arranca deshabilitado y solo se habilita
+  //       cuando AMBOS campos tienen algo escrito.
+  // ¿Para qué? Antes se podía hacer clic en "Iniciar Sesión" con el
+  //           formulario vacío, y el único aviso llegaba como respuesta
+  //           del servidor — el profesor de la sustentación señaló que
+  //           esto no debería permitirse.
+  it("deshabilita el botón hasta completar correo y contraseña", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<LoginPage />, { initialRoute: "/login" });
+
+    const boton = screen.getByRole("button", { name: "Completa tu correo y contraseña" });
+    expect(boton).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Correo electrónico"), "test@example.com");
+    expect(screen.getByRole("button", { name: "Completa tu correo y contraseña" })).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Contraseña"), "Password1");
+    expect(screen.getByRole("button", { name: "Iniciar Sesión" })).not.toBeDisabled();
   });
 
   // ¿Qué? Verifica que el enlace a "¿Olvidaste tu contraseña?" existe.

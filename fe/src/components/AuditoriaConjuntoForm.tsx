@@ -86,6 +86,11 @@ export function AuditoriaConjuntoForm({
       .catch(() => setTemas([]));
   }, [token]);
 
+  // ¿Qué? Mismas condiciones que ya revisaba "enviar" al hacer clic, pero
+  //       calculadas ANTES, para deshabilitar el botón en vez de dejar que
+  //       el reciclador se entere del campo que falta después de intentar.
+  const formularioIncompleto = !idConjunto || !nivel || !tema || evidencias.length === 0;
+
   const enviar = async () => {
     setError(null);
     if (!idConjunto) {
@@ -304,7 +309,7 @@ export function AuditoriaConjuntoForm({
           <button
             type="button"
             onClick={enviar}
-            disabled={enviando}
+            disabled={enviando || formularioIncompleto}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
           >
             {enviando && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -317,7 +322,9 @@ export function AuditoriaConjuntoForm({
                 // ¿Impacto? Con el porcentaje real (onUploadProgress de
                 //           axios), el reciclador ve que sí está avanzando.
                 t("dashboards.reciclador.auditoria.sendingProgress", { porcentaje: progreso })
-              : t("dashboards.reciclador.auditoria.submit")}
+              : formularioIncompleto
+                ? t("dashboards.reciclador.auditoria.submitIncomplete")
+                : t("dashboards.reciclador.auditoria.submit")}
           </button>
         </div>
       </div>
