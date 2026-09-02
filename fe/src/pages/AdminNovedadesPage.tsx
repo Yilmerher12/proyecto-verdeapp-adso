@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Archive, Megaphone, Paperclip, Pencil, Plus } from "lucide-react";
+import { Archive, CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
@@ -34,6 +34,13 @@ const ALCANCES: AlcanceNovedad[] = ["TODOS", "RESIDENTES", "RECICLADORES", "ADMI
 //       retroceda un día en zonas detrás de UTC (ej. Bogotá, UTC-5).
 function formatearFechaUTC(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { timeZone: "UTC" });
+}
+
+// ¿Qué? Mismo criterio que en Comunicados: "created_at" es un instante real,
+//       se muestra en la hora local del navegador, sin el truco de UTC de
+//       "fecha_expiracion" (ver el mismo comentario en AdminConjuntoComunicadosPage.tsx).
+function formatearFechaCreacion(iso: string): string {
+  return new Date(iso).toLocaleDateString();
 }
 
 function isoToDateInputUTC(iso: string): string {
@@ -217,9 +224,16 @@ export function AdminNovedadesPage() {
                     {t("comunicados.viewAttachment")}
                   </a>
                 )}
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  {t("novedades.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
-                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-[#2a4d34] dark:text-gray-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" />
+                    {t("novedades.admin.creadoEl", { fecha: formatearFechaCreacion(item.created_at) })}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarClock className="h-3.5 w-3.5" />
+                    {t("novedades.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
+                  </span>
+                </div>
               </div>
               {!item.archivada && (
                 <div className="flex shrink-0 gap-2">
