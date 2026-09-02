@@ -171,3 +171,91 @@ class TestAdministradoresConjunto:
         )
         assert response.status_code == 200
         assert response.json()["items"] == []
+
+
+class TestCambiarHabilitado:
+    """¿Por qué? El profesor pidió, en la sustentación, que la vista de
+    usuarios del Admin del Sistema permitiera HACER algo, no solo
+    consultar — esta es esa primera acción."""
+
+    def _url(self, correo: str) -> str:
+        return f"/api/v1/admin/usuarios/{correo}/habilitado"
+
+    def test_sin_login_devuelve_401(self, client: TestClient, test_user):
+        response = client.patch(self._url(test_user.correo_electronico), json={"habilitado": False})
+        assert response.status_code == 401
+
+    def test_con_rol_incorrecto_devuelve_403(self, client: TestClient, auth_headers, test_user):
+        response = client.patch(
+            self._url(test_user.correo_electronico),
+            headers=auth_headers,
+            json={"habilitado": False},
+        )
+        assert response.status_code == 403
+
+    def test_admin_sistema_desactiva_una_cuenta(
+        self, client: TestClient, admin_sistema_auth_headers, test_user, db
+    ):
+        response = client.patch(
+            self._url(test_user.correo_electronico),
+            headers=admin_sistema_auth_headers,
+            json={"habilitado": False},
+        )
+        assert response.status_code == 200
+        assert response.json()["habilitado"] is False
+
+        db.refresh(test_user)
+        assert test_user.habilitado is False
+
+    def test_admin_sistema_reactiva_una_cuenta(
+        self, client: TestClient, admin_sistema_auth_headers, test_user, db
+    ):
+        test_user.habilitado = False
+        db.commit()
+
+        response = client.patch(
+            self._url(test_user.correo_electronico),
+            headers=admin_sistema_auth_headers,
+            json={"habilitado": True},
+        )
+        assert response.status_code == 200
+
+        db.refresh(test_user)
+        assert test_user.habilitado is True
+
+    def test_no_puede_desactivar_su_propia_cuenta(
+        self, client: TestClient, admin_sistema_auth_headers, admin_sistema_test
+    ):
+        response = client.patch(
+            self._url(admin_sistema_test.correo_electronico),
+            headers=admin_sistema_auth_headers,
+            json={"habilitado": False},
+        )
+        assert response.status_code == 400
+
+    def test_usuario_inexistente_devuelve_404(self, client: TestClient, admin_sistema_auth_headers):
+        response = client.patch(
+            self._url("nadie-existe@verdeapp.com"),
+            headers=admin_sistema_auth_headers,
+            json={"habilitado": False},
+        )
+        assert response.status_code == 404
+
+    def test_cuenta_desactivada_no_puede_iniciar_sesion(
+        self, client: TestClient, admin_sistema_auth_headers, test_user
+    ):
+        """Verifica el efecto de punta a punta: desactivar por este
+        endpoint de verdad bloquea el login, no solo cambia un dato."""
+        from app.tests.conftest import TEST_USER_EMAIL, TEST_USER_PASSWORD
+
+        client.patch(
+            self._url(test_user.correo_electronico),
+            headers=admin_sistema_auth_headers,
+            json={"habilitado": False},
+        )
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        assert response.status_code == 403
+        assert "desactivada" in response.json()["detail"].lower()

@@ -25,6 +25,20 @@ class Usuario(Base):
     # Mantener este campo por control de estado en la aplicación
     is_active = Column(Boolean, default=True)
 
+    # ¿Qué? Columna NUEVA y separada de is_active a propósito — is_active
+    #       ya significa "correo verificado" (queda en False justo después
+    #       de registrarse, hasta que se confirma el correo). Si se
+    #       reutilizara is_active para esto, a un usuario desactivado por
+    #       un Administrador del Sistema le aparecería el mensaje de
+    #       "verifica tu correo", que no tiene ningún sentido para una
+    #       cuenta que ya estaba verificada.
+    # ¿Para qué? RQF nuevo: el Admin del Sistema puede desactivar una
+    #           cuenta (ver be/app/routers/admin.py) sin tocar el estado
+    #           de verificación de correo.
+    # ¿Impacto? default=True: ninguna cuenta existente queda desactivada
+    #           por accidente al agregar esta columna.
+    habilitado = Column(Boolean, nullable=False, default=True, server_default="true")
+
     # ¿Qué? Idioma preferido de la interfaz para este usuario ("es" o "en").
     # ¿Para qué? Que la preferencia de idioma siga a la persona entre dispositivos,
     #           no solo al navegador donde la eligió (eso lo cubre localStorage).
