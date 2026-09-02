@@ -45,18 +45,21 @@ def get_localidades(db: Session = Depends(get_db)):
 @router.get("/conjuntos/todos")
 def listar_todos_los_conjuntos_verificados(
     search: Optional[str] = Query(None, description="Filtra por nombre de conjunto (contiene, sin distinguir mayúsculas)"),
+    id_localidad: Optional[int] = Query(None, description="Filtra por localidad, antes de buscar por nombre"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT_CONJUNTOS),
     db: Session = Depends(get_db),
 ):
     """
-    Devuelve conjuntos marcados como verificado=True, sin filtrar por
-    localidad — opcionalmente filtrados por nombre y siempre acotados a
-    `limit` resultados.
+    Devuelve conjuntos marcados como verificado=True, opcionalmente
+    filtrados por localidad y/o por nombre, siempre acotados a `limit`
+    resultados.
 
-    ¿Qué cambió? Antes devolvía la lista completa sin límite. Con miles de
-    conjuntos reales, este endpoint alimenta un combobox de búsqueda
-    (InvitarAdminConjuntoForm) que necesita coincidencias acotadas, no todo
-    el catálogo de una sola vez.
+    ¿Qué cambió? Antes solo se podía buscar por nombre — con miles de
+    conjuntos reales en localidades como Usaquén, el Admin del Sistema
+    tenía que escribir el nombre exacto de memoria para encontrar el
+    conjunto que quería invitar. Ahora el formulario
+    (InvitarAdminConjuntoForm) puede acotar primero por localidad, igual
+    que ya hace el formulario público de registro.
     """
     stmt = (
         select(
@@ -67,6 +70,8 @@ def listar_todos_los_conjuntos_verificados(
         .join(Localidad, ConjuntoResidencial.id_localidad == Localidad.id_localidad)
         .where(ConjuntoResidencial.verificado.is_(True))
     )
+    if id_localidad:
+        stmt = stmt.where(ConjuntoResidencial.id_localidad == id_localidad)
     if search:
         stmt = stmt.where(ConjuntoResidencial.nombre_conjunto.ilike(f"%{search}%"))
     stmt = stmt.order_by(Localidad.nombre_localidad, ConjuntoResidencial.nombre_conjunto).limit(limit)
