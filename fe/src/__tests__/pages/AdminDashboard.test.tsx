@@ -15,13 +15,14 @@ import { renderWithProviders, mockUser } from "../helpers";
 
 const mockGet = vi.fn();
 const mockPost = vi.fn();
+const mockPatch = vi.fn();
 
 vi.mock("axios", () => {
   const instance = {
     get: (...args: unknown[]) => mockGet(...args),
     post: (...args: unknown[]) => mockPost(...args),
+    patch: (...args: unknown[]) => mockPatch(...args),
     delete: vi.fn(),
-    patch: vi.fn(),
     interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
   };
   return { default: { ...instance, create: () => instance } };
@@ -36,12 +37,14 @@ const residente = {
   Conjunto: "Conjunto Los Alpes",
   Bloque: "A",
   Apartamento: "101",
+  Habilitado: true,
 };
 
 const reciclador = {
   Correo: "reciclador@example.com",
   Nombre_Completo: "Carlos Gómez",
   Asociacion: "Asociación Verde",
+  Habilitado: true,
 };
 
 const administrador = {
@@ -50,6 +53,7 @@ const administrador = {
   Apellido: "Ríos",
   Teléfono: "3000000000",
   Conjuntos: "Conjunto Los Alpes",
+  Habilitado: true,
 };
 
 // ¿Qué? Las 3 pestañas de usuarios devuelven { items, total } — todo lo
@@ -133,7 +137,7 @@ describe("AdminDashboard", () => {
     });
   });
 
-  it("cambia a la pestaña de Admins. de Conjunto y consulta ese endpoint", async () => {
+  it("cambia a la pestaña de Administradores de Conjunto y consulta ese endpoint", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("/admin/administradores-conjunto")) {
         return Promise.resolve({ data: { items: [administrador], total: 1 } });
@@ -146,11 +150,62 @@ describe("AdminDashboard", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: "Admins. de Conjunto" }));
+    await user.click(screen.getByRole("button", { name: "Administradores de Conjunto" }));
 
     await waitFor(() => {
       expect(screen.getByText("Ana Ríos")).toBeInTheDocument();
     });
+  });
+
+  // ¿Qué? El profesor pidió, en la sustentación, que esta vista permitiera
+  //       HACER algo con los usuarios, no solo consultarlos.
+  it("desactiva una cuenta desde la tabla, con confirmación", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes")) {
+        return Promise.resolve({ data: { items: [residente], total: 1 } });
+      }
+      if (url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    mockPatch.mockResolvedValue({ data: { correo_electronico: residente.Correo, habilitado: false } });
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: /Desactivar/i }));
+    expect(screen.getByText("¿Desactivar esta cuenta?")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Sí, continuar" }));
+
+    await waitFor(() => {
+      expect(mockPatch).toHaveBeenCalledWith(
+        expect.stringContaining(`/admin/usuarios/${encodeURIComponent(residente.Correo)}/habilitado`),
+        { habilitado: false },
+        expect.objectContaining({ headers: { Authorization: "Bearer token" } })
+      );
+    });
+    await waitFor(() => expect(screen.getByText("Inactivo")).toBeInTheDocument());
+  });
+
+  it("no muestra el botón de desactivar en la propia cuenta del Admin del Sistema", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes")) {
+        return Promise.resolve({
+          data: { items: [{ ...residente, Correo: adminUser.email }], total: 1 },
+        });
+      }
+      if (url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: /Desactivar/i })).not.toBeInTheDocument();
   });
 
   it("busca en tiempo real (con debounce) y se lo manda al backend como parámetro", async () => {

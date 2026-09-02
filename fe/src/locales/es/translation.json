@@ -649,13 +649,27 @@
         "tabs": {
           "residentes": "Residentes",
           "recicladores": "Recicladores",
-          "administradores": "Admins. de Conjunto"
+          "administradores": "Administradores de Conjunto"
         },
         "searchPlaceholder": "Buscar por nombre o correo...",
         "pagination": {
           "showing": "Mostrando {{from}}–{{to}} de {{total}}",
           "prev": "Página anterior",
           "next": "Página siguiente"
+        },
+        "status": {
+          "header": "Estado",
+          "actionsHeader": "Acciones",
+          "active": "Activo",
+          "inactive": "Inactivo",
+          "disable": "Desactivar",
+          "enable": "Activar",
+          "confirmDisableTitle": "¿Desactivar esta cuenta?",
+          "confirmDisableBody": "{{correo}} no podrá iniciar sesión hasta que la vuelvas a activar.",
+          "confirmEnableTitle": "¿Activar esta cuenta?",
+          "confirmEnableBody": "{{correo}} podrá volver a iniciar sesión con normalidad.",
+          "confirmButton": "Sí, continuar",
+          "updateError": "No se pudo actualizar el estado de la cuenta."
         }
       },
       "residentsTable": {

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Shield, Users, Database, UserPlus, Search, MapPin, ChevronLeft, ChevronRight, Building2 } from "lucide-react";
+import { Shield, Users, Database, UserPlus, Search, MapPin, ChevronLeft, ChevronRight, Building2, Ban, CircleCheck } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
 import { SolicitudesDesvinculacion } from "@/components/SolicitudesDesvinculacion";
 import { AsignarConjuntoAdicionalForm } from "@/components/AsignarConjuntoAdicionalForm";
@@ -18,12 +20,14 @@ interface ResidenteRow {
   Conjunto: string;
   Bloque: string;
   Apartamento: string;
+  Habilitado: boolean;
 }
 
 interface RecicladorRow {
   Correo: string;
   Nombre_Completo: string;
   Asociacion: string;
+  Habilitado: boolean;
 }
 
 interface AdminConjuntoRow {
@@ -32,6 +36,7 @@ interface AdminConjuntoRow {
   Apellido: string;
   Teléfono: string;
   Conjuntos: string;
+  Habilitado: boolean;
 }
 
 interface Localidad {
@@ -167,6 +172,88 @@ export function AdminDashboard() {
     setPagina(0);
   };
 
+  // ¿Qué? El profesor pidió, en la sustentación, que esta vista permitiera
+  //       HACER algo con los usuarios, no solo consultarlos — esta es esa
+  //       primera acción: activar/desactivar una cuenta.
+  // ¿Para qué? "confirmando" guarda el correo y el estado nuevo mientras se
+  //           confirma en el modal, para no desactivar a nadie con un solo
+  //           clic accidental.
+  const [confirmando, setConfirmando] = useState<{ correo: string; nuevoEstado: boolean } | null>(null);
+  const [actualizando, setActualizando] = useState(false);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
+
+  const ejecutarCambioHabilitado = async () => {
+    if (!confirmando || !accessToken) return;
+    setActualizando(true);
+    setErrorAccion(null);
+    try {
+      await axios.patch(
+        `${API_BASE_URL}/api/v1/admin/usuarios/${encodeURIComponent(confirmando.correo)}/habilitado`,
+        { habilitado: confirmando.nuevoEstado },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      // ¿Qué? Actualiza la fila en el arreglo correspondiente a la pestaña
+      //       activa, sin tener que recargar toda la página desde el
+      //       servidor otra vez.
+      const actualizarFila = <T extends { Correo: string; Habilitado: boolean }>(filas: T[]): T[] =>
+        filas.map((fila) =>
+          fila.Correo === confirmando.correo ? { ...fila, Habilitado: confirmando.nuevoEstado } : fila
+        );
+      setResidentesData(actualizarFila);
+      setRecicladoresData(actualizarFila);
+      setAdministradoresData(actualizarFila);
+      setConfirmando(null);
+    } catch {
+      setErrorAccion(t("dashboards.admin.usersSection.status.updateError"));
+    } finally {
+      setActualizando(false);
+    }
+  };
+
+  // ¿Qué? Celda compartida por las 3 tablas: muestra el estado y, si no es
+  //       la propia cuenta del Admin del Sistema (el backend rechaza
+  //       desactivarse a sí mismo), el botón para cambiarlo.
+  // ¿Qué? Estado (insignia, solo lectura) y Acciones (botón real) van en
+  //       columnas SEPARADAS a propósito — antes compartían una celda y el
+  //       botón, con solo texto de color, se confundía visualmente con la
+  //       insignia de al lado (ambos eran "una etiqueta de color"). El
+  //       componente Button ya reutilizado en el resto de la app (relleno
+  //       sólido o borde marcado) deja mucho más claro que uno es estado y
+  //       el otro es una acción para pulsar.
+  const celdaBadgeEstado = (habilitado: boolean) => (
+    <td className="px-5 py-3">
+      <span
+        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+          habilitado
+            ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+            : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+        }`}
+      >
+        {habilitado
+          ? t("dashboards.admin.usersSection.status.active")
+          : t("dashboards.admin.usersSection.status.inactive")}
+      </span>
+    </td>
+  );
+
+  const celdaAcciones = (correo: string, habilitado: boolean) => (
+    <td className="px-5 py-3">
+      {correo !== user?.email && (
+        <Button
+          type="button"
+          size="sm"
+          variant={habilitado ? "danger" : "secondary"}
+          onClick={() => setConfirmando({ correo, nuevoEstado: !habilitado })}
+        >
+          {habilitado ? <Ban className="mr-1 h-3.5 w-3.5" /> : <CircleCheck className="mr-1 h-3.5 w-3.5" />}
+          {habilitado
+            ? t("dashboards.admin.usersSection.status.disable")
+            : t("dashboards.admin.usersSection.status.enable")}
+        </Button>
+      )}
+    </td>
+  );
+
   const fullName = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || t("roles.adminSistema");
   const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_SISTEMA];
 
@@ -174,7 +261,8 @@ export function AdminDashboard() {
   const desde = total === 0 ? 0 : pagina * TAMANO_PAGINA + 1;
   const hasta = Math.min(total, (pagina + 1) * TAMANO_PAGINA);
 
-  const colSpanActivo = tab === "recicladores" ? 3 : tab === "administradores" ? 4 : 4;
+  // ¿Qué? +2 en cada caso por las columnas nuevas de Estado y Acciones.
+  const colSpanActivo = tab === "recicladores" ? 5 : tab === "administradores" ? 6 : 6;
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
@@ -302,6 +390,8 @@ export function AdminDashboard() {
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.name")}</th>
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.conjunto")}</th>
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.unit")}</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.header")}</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
                   </>
                 )}
                 {tab === "recicladores" && (
@@ -309,6 +399,8 @@ export function AdminDashboard() {
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.email")}</th>
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.fullName")}</th>
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.association")}</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.header")}</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
                   </>
                 )}
                 {tab === "administradores" && (
@@ -317,6 +409,8 @@ export function AdminDashboard() {
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.name")}</th>
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.phone")}</th>
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.conjuntos")}</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.header")}</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
                   </>
                 )}
               </tr>
@@ -337,7 +431,7 @@ export function AdminDashboard() {
               ) : tab === "residentes" ? (
                 residentesData.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td colSpan={6} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                       {t("dashboards.admin.residentsTable.empty")}
                     </td>
                   </tr>
@@ -350,13 +444,15 @@ export function AdminDashboard() {
                       <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">
                         {t("dashboards.admin.residentsTable.unitFormat", { bloque: r.Bloque, apto: r.Apartamento })}
                       </td>
+                      {celdaBadgeEstado(r.Habilitado)}
+                      {celdaAcciones(r.Correo, r.Habilitado)}
                     </tr>
                   ))
                 )
               ) : tab === "recicladores" ? (
                 recicladoresData.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td colSpan={5} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                       {t("dashboards.admin.recyclersTable.empty")}
                     </td>
                   </tr>
@@ -370,12 +466,14 @@ export function AdminDashboard() {
                           {r.Asociacion}
                         </span>
                       </td>
+                      {celdaBadgeEstado(r.Habilitado)}
+                      {celdaAcciones(r.Correo, r.Habilitado)}
                     </tr>
                   ))
                 )
               ) : administradoresData.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td colSpan={6} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                     {t("dashboards.admin.adminsTable.empty")}
                   </td>
                 </tr>
@@ -386,6 +484,8 @@ export function AdminDashboard() {
                     <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">{a.Nombre} {a.Apellido}</td>
                     <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">{a.Teléfono || "—"}</td>
                     <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{a.Conjuntos}</td>
+                    {celdaBadgeEstado(a.Habilitado)}
+                    {celdaAcciones(a.Correo, a.Habilitado)}
                   </tr>
                 ))
               )}
@@ -425,6 +525,48 @@ export function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {confirmando && (
+        <Modal onClose={() => setConfirmando(null)} aria-label={t("dashboards.admin.usersSection.status.confirmButton")}>
+          <div className="p-6">
+            <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">
+              {confirmando.nuevoEstado
+                ? t("dashboards.admin.usersSection.status.confirmEnableTitle")
+                : t("dashboards.admin.usersSection.status.confirmDisableTitle")}
+            </h3>
+            <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+              {confirmando.nuevoEstado
+                ? t("dashboards.admin.usersSection.status.confirmEnableBody", { correo: confirmando.correo })
+                : t("dashboards.admin.usersSection.status.confirmDisableBody", { correo: confirmando.correo })}
+            </p>
+            {errorAccion && (
+              <div className="mb-4">
+                <Alert type="error" message={errorAccion} onClose={() => setErrorAccion(null)} />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmando(null)}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+              >
+                {t("common.cancel")}
+              </button>
+              <div className="flex-1">
+                <Button
+                  type="button"
+                  fullWidth
+                  variant={confirmando.nuevoEstado ? "primary" : "danger"}
+                  isLoading={actualizando}
+                  onClick={ejecutarCambioHabilitado}
+                >
+                  {t("dashboards.admin.usersSection.status.confirmButton")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

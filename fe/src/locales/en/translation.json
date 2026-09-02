@@ -645,13 +645,27 @@
         "tabs": {
           "residentes": "Residents",
           "recicladores": "Recyclers",
-          "administradores": "Building Admins"
+          "administradores": "Building Administrators"
         },
         "searchPlaceholder": "Search by name or email...",
         "pagination": {
           "showing": "Showing {{from}}–{{to}} of {{total}}",
           "prev": "Previous page",
           "next": "Next page"
+        },
+        "status": {
+          "header": "Status",
+          "actionsHeader": "Actions",
+          "active": "Active",
+          "inactive": "Inactive",
+          "disable": "Disable",
+          "enable": "Enable",
+          "confirmDisableTitle": "Disable this account?",
+          "confirmDisableBody": "{{correo}} won't be able to log in until you enable it again.",
+          "confirmEnableTitle": "Enable this account?",
+          "confirmEnableBody": "{{correo}} will be able to log in normally again.",
+          "confirmButton": "Yes, continue",
+          "updateError": "Could not update the account's status."
         }
       },
       "residentsTable": {

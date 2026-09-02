@@ -165,6 +165,19 @@ class TestLogin:
         assert response.status_code == 403
         assert "verificada" in response.json()["detail"].lower()
 
+    def test_login_disabled_user(self, client: TestClient, test_user, db) -> None:
+        """habilitado es distinto de is_active — una cuenta YA verificada
+        pero desactivada por un Admin del Sistema no debe poder iniciar
+        sesión, y el mensaje no debe confundirse con "correo no verificado"."""
+        test_user.habilitado = False
+        db.commit()
+        response = client.post(
+            self.URL,
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        assert response.status_code == 403
+        assert "desactivada" in response.json()["detail"].lower()
+
     def test_login_missing_correo(self, client: TestClient) -> None:
         response = client.post(self.URL, json={"password": "TestPass123"})
         assert response.status_code == 422
@@ -286,6 +299,17 @@ class TestRefresh:
         )
         refresh_token = login_response.json()["refresh_token"]
         test_user.is_active = False
+        db.commit()
+        response = client.post(self.URL, json={"refresh_token": refresh_token})
+        assert response.status_code == 403
+
+    def test_refresh_for_disabled_user(self, client: TestClient, test_user, db) -> None:
+        login_response = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        refresh_token = login_response.json()["refresh_token"]
+        test_user.habilitado = False
         db.commit()
         response = client.post(self.URL, json={"refresh_token": refresh_token})
         assert response.status_code == 403

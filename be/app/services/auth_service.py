@@ -232,6 +232,18 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
             detail="Tu cuenta no ha sido verificada aún. Por favor, revisa tu buzón en Mailpit."
         )
 
+    # ¿Qué? "habilitado" es distinto de "is_active" (esa es solo verificación
+    #       de correo) — revisa si un Administrador del Sistema desactivó
+    #       esta cuenta después de ya estar verificada.
+    # ¿Para qué? Sin este chequeo, una cuenta desactivada por un admin
+    #           podría seguir iniciando sesión con total normalidad.
+    if not user.habilitado:
+        log_login_fallido(correo, "cuenta_desactivada")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta fue desactivada por un administrador.",
+        )
+
     # ¿Qué? Un login exitoso limpia cualquier rastro de intentos fallidos
     #       previos — no tendría sentido seguir "contando" contra alguien
     #       que ya demostró que sí es el dueño de la cuenta.
@@ -333,6 +345,14 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Tu cuenta no está activa. Verifica tu correo o contacta soporte.",
+        )
+
+    # ¿Qué? Mismo chequeo que en login() — evita renovar el access token de
+    #       una cuenta que un Administrador del Sistema ya desactivó.
+    if not user.habilitado:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta fue desactivada por un administrador.",
         )
 
     real_first_name, real_last_name = _obtener_nombre_real(db, user)

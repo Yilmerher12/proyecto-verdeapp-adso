@@ -8,10 +8,11 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import select, text
 from app.dependencies import get_current_user, get_db
 from app.models.usuario import Usuario
 from app.models.rol import RolId
+from app.schemas.admin import CambiarHabilitadoRequest
 
 router = APIRouter(
     prefix="/api/v1/admin",
@@ -34,6 +35,45 @@ def _verificar_es_admin_sistema(current_user: Usuario) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo un Administrador del Sistema puede acceder a este recurso.",
         )
+
+
+@router.patch("/usuarios/{correo_electronico}/habilitado", summary="Activar o desactivar la cuenta de un usuario")
+def cambiar_habilitado(
+    correo_electronico: str,
+    body: CambiarHabilitadoRequest,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    ¿Qué? El profesor pidió que la vista de usuarios del Admin del Sistema
+          permita HACER algo, no solo consultar. Esta es esa primera
+          acción: activar/desactivar una cuenta.
+    ¿Para qué? Usa el correo (no el id_usuario) como identificador porque
+              las 3 vistas de usuarios (vista-residentes, sp-recicladores,
+              administradores-conjunto) muestran el correo a propósito y
+              nunca el id — así no hace falta cambiar ese diseño.
+    ¿Impacto? Una cuenta desactivada pierde acceso de inmediato en la
+              siguiente petición (ver dependencies.get_current_user), y no
+              puede volver a iniciar sesión ni renovar su token mientras
+              siga desactivada.
+    """
+    _verificar_es_admin_sistema(current_user)
+
+    if correo_electronico == current_user.correo_electronico:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No puedes desactivar tu propia cuenta.",
+        )
+
+    usuario_objetivo = db.execute(
+        select(Usuario).where(Usuario.correo_electronico == correo_electronico)
+    ).scalar_one_or_none()
+    if not usuario_objetivo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado.")
+
+    usuario_objetivo.habilitado = body.habilitado
+    db.commit()
+    return {"correo_electronico": correo_electronico, "habilitado": body.habilitado}
 
 
 @router.get("/vista-residentes", summary="Criterio 6: Listado mediante Vista SQL")
@@ -62,7 +102,8 @@ def obtener_vista_residentes(
         uni.torre AS "Bloque",
         uni.apto AS "Apartamento",
         l.id_localidad AS "id_localidad",
-        l.nombre_localidad AS "Localidad"
+        l.nombre_localidad AS "Localidad",
+        u.habilitado AS "Habilitado"
     FROM residentes r
     JOIN usuarios u ON r.id_usuario = u.id_usuario
     JOIN unidades uni ON r.id_unidad = uni.id_unidad
@@ -108,6 +149,22 @@ def obtener_sp_recicladores(
     """Crea y ejecuta un Procedimiento Almacenado (Función) de Recicladores sin IDs."""
     _verificar_es_admin_sistema(current_user)
 
+    # ¿Qué? Postgres NO permite que CREATE OR REPLACE FUNCTION cambie las
+    #       columnas de salida (RETURNS TABLE) de una función que ya existe
+    #       con otra forma — falla con "cannot change return type of
+    #       existing function". Como esta función se recrea en cada
+    #       petición y le acabamos de agregar la columna "Habilitado", hay
+    #       que borrar la versión vieja primero.
+    # ¿Para qué? Sin este DROP, cualquiera que ya tuviera la función vieja
+    #           creada en su base (cualquier entorno que ya hubiera usado
+    #           este endpoint antes de agregar "Habilitado") se quedaría
+    #           con un error 500 permanente en este endpoint.
+    # ¿Impacto? DROP FUNCTION IF EXISTS no falla si la función no existe
+    #           todavía (primera vez que corre este endpoint).
+    db.execute(text(
+        "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, INT, INT)"
+    ))
+
     # 1. Crear el Procedimiento Almacenado / Función
     # ¿Qué? Ahora la función SÍ recibe parámetros (búsqueda, localidad,
     #       límite, desplazamiento) — antes no aceptaba ninguno, así que
@@ -127,7 +184,8 @@ def obtener_sp_recicladores(
         "Nombre_Completo" VARCHAR,
         "Asociacion" VARCHAR,
         "id_localidad" INT,
-        "Localidad" VARCHAR
+        "Localidad" VARCHAR,
+        "Habilitado" BOOLEAN
     ) AS $$
     BEGIN
         RETURN QUERY
@@ -136,7 +194,8 @@ def obtener_sp_recicladores(
             (rec.nombre || ' ' || rec.apellidos)::VARCHAR,
             rec.asociacion::VARCHAR,
             l.id_localidad,
-            l.nombre_localidad::VARCHAR
+            l.nombre_localidad::VARCHAR,
+            u.habilitado
         FROM recicladores rec
         JOIN usuarios u ON rec.id_usuario = u.id_usuario
         LEFT JOIN localidades l ON rec.localidad_id = l.id_localidad
@@ -239,6 +298,7 @@ def obtener_administradores_conjunto(
                 ac.nombre AS "Nombre",
                 ac.apellidos AS "Apellido",
                 ac.numero_telefonico AS "Teléfono",
+                u.habilitado AS "Habilitado",
                 COALESCE(STRING_AGG(DISTINCT cr.nombre_conjunto, ', '), '—') AS "Conjuntos"
             FROM administradores_conjunto ac
             JOIN usuarios u ON u.id_usuario = ac.id_usuario
@@ -247,7 +307,7 @@ def obtener_administradores_conjunto(
             LEFT JOIN conjuntos_residenciales cr
                 ON cr.id_conjunto_residencial = aca.id_conjunto_residencial
             WHERE 1=1 {filtro_search} {filtro_localidad}
-            GROUP BY u.correo_electronico, ac.nombre, ac.apellidos, ac.numero_telefonico
+            GROUP BY u.correo_electronico, ac.nombre, ac.apellidos, ac.numero_telefonico, u.habilitado
             ORDER BY ac.nombre
             LIMIT :limit OFFSET :offset
         """),

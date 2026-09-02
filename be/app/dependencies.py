@@ -131,5 +131,18 @@ def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cuenta desactivada",
         )
+    # ¿Qué? "habilitado" es una columna distinta de "is_active" — esa ya
+    #       significa "correo verificado". Esta revisa si un Administrador
+    #       del Sistema desactivó la cuenta después de que ya estaba
+    #       verificada.
+    # ¿Para qué? Que un token vigente deje de servir de inmediato si el
+    #           admin desactiva la cuenta mientras el usuario ya tenía
+    #           sesión iniciada — sin esto, seguiría teniendo acceso hasta
+    #           que el token expirara solo.
+    if not user.habilitado:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta fue desactivada por un administrador.",
+        )
 
     return user
