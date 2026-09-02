@@ -21,7 +21,7 @@ describe("ChangePasswordPage", () => {
     expect(screen.getByLabelText("Contraseña actual")).toBeInTheDocument();
     expect(screen.getByLabelText("Nueva contraseña")).toBeInTheDocument();
     expect(screen.getByLabelText("Confirmar nueva contraseña")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Guardar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeInTheDocument();
   });
 
   // ¿Qué? Verifica que existe botón para cancelar (volver al dashboard).
@@ -33,8 +33,10 @@ describe("ChangePasswordPage", () => {
     expect(screen.getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
   });
 
-  // ¿Qué? Verifica validación de contraseña actual vacía.
-  it("muestra error si la contraseña actual está vacía", async () => {
+  // ¿Qué? El botón permanece deshabilitado mientras falte la contraseña
+  //       actual — antes se podía pulsar "Guardar" y el aviso llegaba
+  //       después, como mensaje de error.
+  it("mantiene el botón deshabilitado si la contraseña actual está vacía", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ChangePasswordPage />, {
       authContext: { user: mockUser, isAuthenticated: true },
@@ -42,9 +44,8 @@ describe("ChangePasswordPage", () => {
 
     await user.type(screen.getByLabelText("Nueva contraseña"), "NewPass1!");
     await user.type(screen.getByLabelText("Confirmar nueva contraseña"), "NewPass1!");
-    await user.click(screen.getByRole("button", { name: "Guardar" }));
 
-    expect(screen.getByText("La contraseña actual es obligatoria")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeDisabled();
   });
 
   // ¿Qué? Verifica validación de contraseña nueva débil.

@@ -243,10 +243,43 @@ describe("AdminDashboard", () => {
     expect(screen.getByRole("button", { name: "Ocultar" })).toBeInTheDocument();
   });
 
-  it("busca conjuntos por nombre y permite elegir/quitar varios en el formulario de invitar", async () => {
+  it("no muestra el buscador de conjuntos hasta elegir una localidad", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("/admin/vista-residentes") || url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
         return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      if (url.includes("/geography/localidades")) {
+        return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "+ Invitar administrador" }));
+
+    expect(screen.getByText("Selecciona una localidad para poder buscar el conjunto.")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Escribe el nombre del conjunto...")).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Localidad" }), "1");
+
+    expect(screen.getByPlaceholderText("Escribe el nombre del conjunto...")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Selecciona una localidad para poder buscar el conjunto.")
+    ).not.toBeInTheDocument();
+  });
+
+  // ¿Qué? El usuario reportó que el botón "Enviar invitación" quedaba
+  //       habilitado con el correo vacío, aunque ya hubiera localidad y
+  //       conjunto elegidos — el profesor insiste en que esto no debe
+  //       pasar en ningún formulario de la app.
+  it("mantiene deshabilitado el botón de invitar mientras falte el correo", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes") || url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      if (url.includes("/geography/localidades")) {
+        return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
       }
       if (url.includes("/geography/conjuntos/todos")) {
         return Promise.resolve({
@@ -259,6 +292,51 @@ describe("AdminDashboard", () => {
     renderPage();
 
     await user.click(screen.getByRole("button", { name: "+ Invitar administrador" }));
+    expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeDisabled();
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Localidad" }), "1");
+    await user.type(screen.getByPlaceholderText("Escribe el nombre del conjunto..."), "TORRES");
+    await user.click(await screen.findByText("TORRES DE ARANJUEZ — Usaquén"));
+
+    // ¿Qué? Justo después de elegir una opción, HeadlessUI deja el botón
+    //       con aria-hidden="true" mientras termina de cerrar el menú del
+    //       combobox — eso lo saca por completo del árbol de
+    //       accesibilidad (no es un tema de CSS que "hidden: true" de
+    //       Testing Library pueda resolver), así que aquí se verifica
+    //       contra el DOM directo en vez de por rol accesible.
+    const botonInvitar = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(botonInvitar.textContent).toContain("Completa el formulario");
+    expect(botonInvitar).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Correo del administrador a invitar *"), "nuevo@admin.com");
+    expect(botonInvitar.textContent).toContain("Enviar invitación");
+    expect(botonInvitar).not.toBeDisabled();
+  });
+
+  it("busca conjuntos por nombre y permite elegir/quitar varios en el formulario de invitar", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes") || url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      if (url.includes("/geography/conjuntos/todos")) {
+        return Promise.resolve({
+          data: [{ id_conjunto_residencial: 1, nombre_conjunto: "TORRES DE ARANJUEZ", nombre_localidad: "Usaquén" }],
+        });
+      }
+      if (url.includes("/geography/localidades")) {
+        return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "+ Invitar administrador" }));
+
+    // ¿Qué? El buscador de conjuntos solo aparece después de elegir una
+    //       localidad (ver InvitarAdminConjuntoForm) — antes se podía
+    //       buscar sin acotar por localidad.
+    await user.selectOptions(screen.getByRole("combobox", { name: "Localidad" }), "1");
     await user.type(screen.getByPlaceholderText("Escribe el nombre del conjunto..."), "TORRES");
 
     const opcion = await screen.findByText("TORRES DE ARANJUEZ — Usaquén");

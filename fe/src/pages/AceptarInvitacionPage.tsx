@@ -87,6 +87,15 @@ export function AceptarInvitacionPage() {
     }
   };
 
+  // ¿Qué? Solo revisa presencia — la fortaleza de la contraseña y la
+  //       coincidencia entre password/confirmPassword las sigue revisando
+  //       handleSubmit al enviar.
+  const formularioIncompleto =
+    !formData.nombre.trim() ||
+    !formData.apellidos.trim() ||
+    !formData.password.trim() ||
+    !formData.confirmPassword.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
@@ -272,8 +281,8 @@ export function AceptarInvitacionPage() {
             </div>
 
             <div className="w-full pt-4">
-              <Button type="submit" fullWidth isLoading={isLoading}>
-                {t("aceptarInvitacion.form.submit")}
+              <Button type="submit" fullWidth isLoading={isLoading} disabled={formularioIncompleto}>
+                {formularioIncompleto ? t("common.formIncomplete") : t("aceptarInvitacion.form.submit")}
               </Button>
             </div>
           </form>

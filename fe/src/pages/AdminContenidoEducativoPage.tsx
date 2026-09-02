@@ -68,6 +68,11 @@ export function AdminContenidoEducativoPage() {
     setErrorMsg(null);
   };
 
+  // ¿Qué? Solo revisa presencia — el largo mínimo de título/cuerpo lo
+  //       sigue revisando guardar() al enviar.
+  const formularioIncompleto =
+    !form.modulo_categoria.trim() || !form.titulo_tema.trim() || !form.cuerpo_texto.trim();
+
   const guardar = async () => {
     if (!accessToken) return;
     if (!form.modulo_categoria.trim() || !form.titulo_tema.trim() || !form.cuerpo_texto.trim()) {
@@ -266,10 +271,14 @@ export function AdminContenidoEducativoPage() {
               </button>
               <button
                 onClick={guardar}
-                disabled={guardando}
+                disabled={guardando || formularioIncompleto}
                 className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 transition-colors"
               >
-                {guardando ? t("common.saving") : t("common.save")}
+                {guardando
+                  ? t("common.saving")
+                  : formularioIncompleto
+                    ? t("common.formIncomplete")
+                    : t("common.save")}
               </button>
             </div>
           </div>

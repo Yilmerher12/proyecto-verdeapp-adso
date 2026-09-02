@@ -83,6 +83,13 @@ export function ChangePasswordPage() {
    * ¿Impacto? Si la contraseña actual es incorrecta, el backend retorna 400.
    *           Si el cambio es exitoso, el formulario se limpia y se muestra un mensaje de éxito.
    */
+  // ¿Qué? Solo revisa que los 3 campos tengan algo escrito — la fortaleza
+  //       y la coincidencia de contraseñas las sigue revisando validate()
+  //       al enviar, igual que antes.
+  // ¿Para qué? Antes se podía pulsar "Guardar" con el formulario vacío.
+  const formularioIncompleto =
+    !formData.current_password.trim() || !formData.new_password.trim() || !formData.confirmPassword.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
@@ -179,8 +186,8 @@ export function ChangePasswordPage() {
             <Link to="/dashboard">
               <Button variant="secondary">{t("common.cancel")}</Button>
             </Link>
-            <Button type="submit" isLoading={isLoading}>
-              {t("common.save")}
+            <Button type="submit" isLoading={isLoading} disabled={formularioIncompleto}>
+              {formularioIncompleto ? t("common.formIncomplete") : t("common.save")}
             </Button>
           </div>
         </form>

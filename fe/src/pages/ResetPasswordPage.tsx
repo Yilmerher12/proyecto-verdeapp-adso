@@ -90,6 +90,10 @@ export function ResetPasswordPage() {
    * ¿Impacto? Si el token es inválido, expirado o ya fue usado, el backend retorna error.
    *           Si el reset es exitoso, el formulario se limpia y el usuario puede hacer login.
    */
+  // ¿Qué? Solo revisa que ambos campos tengan algo escrito — la fortaleza
+  //       y la coincidencia las sigue revisando validate() al enviar.
+  const formularioIncompleto = !formData.new_password.trim() || !formData.confirmPassword.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
@@ -172,8 +176,8 @@ export function ResetPasswordPage() {
           />
 
           <div className="mt-2 flex justify-end">
-            <Button type="submit" fullWidth isLoading={isLoading}>
-              {t("auth.resetPassword.submit")}
+            <Button type="submit" fullWidth isLoading={isLoading} disabled={formularioIncompleto}>
+              {formularioIncompleto ? t("common.formIncomplete") : t("auth.resetPassword.submit")}
             </Button>
           </div>
         </form>
