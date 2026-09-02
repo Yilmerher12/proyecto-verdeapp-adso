@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Megaphone, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
@@ -46,6 +46,14 @@ const DESTINATARIOS: DestinatariosComunicado[] = ["RESIDENTES", "RECICLADORES", 
 //           un día respecto a la que el admin realmente eligió.
 function formatearFechaUTC(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { timeZone: "UTC" });
+}
+
+// ¿Qué? "created_at" es un instante real (con hora), no una fecha elegida a
+//       mano como "fecha_expiracion" — aquí SÍ se muestra en la zona horaria
+//       del navegador (igual que en el feed que ven los residentes), porque
+//       no aplica el mismo truco de "medianoche UTC" de arriba.
+function formatearFechaCreacion(iso: string): string {
+  return new Date(iso).toLocaleDateString();
 }
 
 // ¿Qué? Igual que formatearFechaUTC, pero en formato YYYY-MM-DD (lo que
@@ -272,9 +280,16 @@ export function AdminConjuntoComunicadosPage() {
                     {t("comunicados.viewAttachment")}
                   </a>
                 )}
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  {t("comunicados.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
-                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-[#2a4d34] dark:text-gray-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" />
+                    {t("comunicados.admin.creadoEl", { fecha: formatearFechaCreacion(item.created_at) })}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarClock className="h-3.5 w-3.5" />
+                    {t("comunicados.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
+                  </span>
+                </div>
               </div>
               <div className="flex shrink-0 gap-2">
                 <button
