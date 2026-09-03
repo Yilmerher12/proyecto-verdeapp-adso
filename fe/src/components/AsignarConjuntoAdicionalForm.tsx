@@ -105,7 +105,10 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
   };
 
   return (
-    <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+    // ¿Qué? Igual que InvitarAdminConjuntoForm — vive dentro de un <Modal>
+    //       que ya trae su propia tarjeta (fondo, borde, sombra), así que
+    //       aquí no se repite esa decoración.
+    <div>
       <div className="flex items-center gap-2 mb-4">
         <UserCog className="h-4 w-4 text-green-600" />
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">

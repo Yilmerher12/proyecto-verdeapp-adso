@@ -65,6 +65,13 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
   const [enviando, setEnviando] = useState(false);
   const [errorInvitar, setErrorInvitar] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  // ¿Qué? Esta sección (autorizados + invitaciones) es la que más espacio
+  //       ocupa dentro de la tarjeta de cada conjunto — con un admin que
+  //       administra varios conjuntos, esto por sí solo empujaba el resto
+  //       del dashboard fuera de la vista inicial (issue #166). Colapsada
+  //       por defecto, igual que ya hace "Invitar Administradores" en el
+  //       panel del Admin del Sistema.
+  const [mostrarDetalle, setMostrarDetalle] = useState(false);
 
   // ¿Qué? Antes esta sección solo consultaba el historial de invitaciones
   //       (obtenerInvitacionesDeConjunto) — un reciclador vinculado por
@@ -121,23 +128,44 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
   };
 
   return (
-    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2a4d34]">
-      <div className="flex items-center justify-between mb-3">
+    // ¿Qué? Fondo tenue propio (en vez de solo el borde superior de antes)
+    //       para que esta sección se lea como un bloque aparte del resto de
+    //       la tarjeta del conjunto — antes todo compartía el mismo blanco y
+    //       solo una línea delgada las separaba (issue #166, "se ve todo
+    //       pegado").
+    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/40">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-green-600" />
           <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.recyclersSection.title")}</h5>
+          {!cargandoAutorizados && (
+            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-bold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+              {autorizados.length}
+            </span>
+          )}
         </div>
-        <button
-          type="button"
-          onClick={() => setMostrarFormulario((v) => !v)}
-          className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
-        >
-          {t("dashboards.adminConjunto.recyclersSection.invite")}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setMostrarDetalle((v) => !v)}
+            className="text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-[#132a1c] dark:text-gray-300 dark:border-[#2a4d34] dark:hover:bg-[#1f4029]"
+          >
+            {mostrarDetalle
+              ? t("dashboards.adminConjunto.recyclersSection.hideDetail")
+              : t("dashboards.adminConjunto.recyclersSection.showDetail")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMostrarFormulario((v) => !v)}
+            className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+          >
+            {t("dashboards.adminConjunto.recyclersSection.invite")}
+          </button>
+        </div>
       </div>
 
       {mostrarFormulario && (
-        <form onSubmit={handleInvitar} className="flex flex-col sm:flex-row gap-2 mb-4 bg-gray-50 dark:bg-[#0d2116]/60 p-3 rounded-xl">
+        <form onSubmit={handleInvitar} className="flex flex-col sm:flex-row gap-2 mb-4 bg-white dark:bg-[#132a1c] p-3 rounded-xl">
           <div className="flex-1 relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -163,68 +191,72 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
         <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3 dark:bg-red-900/20 dark:text-red-400">{errorInvitar}</p>
       )}
 
-      {/* Recicladores YA autorizados — el dato real (recicladores_conjuntos) */}
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-        {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
-      </p>
-      {cargandoAutorizados ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          {t("dashboards.adminConjunto.recyclersSection.authorizedLoading")}
-        </p>
-      ) : autorizados.length === 0 ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          {t("dashboards.adminConjunto.recyclersSection.authorizedEmpty")}
-        </p>
-      ) : (
-        <div className="space-y-2 mb-4">
-          {autorizados.map((r) => (
-            <div
-              key={r.id_reciclador}
-              className="flex items-center justify-between gap-3 bg-green-50 dark:bg-green-900/10 rounded-lg px-3 py-2"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                  {r.nombre} {r.apellidos}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{r.correo_electronico}</p>
-              </div>
-              {r.asociacion && (
-                <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  {r.asociacion}
-                </span>
-              )}
+      {mostrarDetalle && (
+        <div className="mt-1">
+          {/* Recicladores YA autorizados — el dato real (recicladores_conjuntos) */}
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
+          </p>
+          {cargandoAutorizados ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              {t("dashboards.adminConjunto.recyclersSection.authorizedLoading")}
+            </p>
+          ) : autorizados.length === 0 ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              {t("dashboards.adminConjunto.recyclersSection.authorizedEmpty")}
+            </p>
+          ) : (
+            <div className="space-y-2 mb-4">
+              {autorizados.map((r) => (
+                <div
+                  key={r.id_reciclador}
+                  className="flex items-center justify-between gap-3 bg-green-50 dark:bg-green-900/10 rounded-lg px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                      {r.nombre} {r.apellidos}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{r.correo_electronico}</p>
+                  </div>
+                  {r.asociacion && (
+                    <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                      {r.asociacion}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* Historial de invitaciones enviadas — puede estar vacío aunque sí
-          haya recicladores autorizados arriba (ver comentario más arriba). */}
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-        {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
-      </p>
-      {cargando ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
-      ) : invitaciones.length === 0 ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {t("dashboards.adminConjunto.recyclersSection.empty")}
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {invitaciones.map((inv) => (
-            <div
-              key={inv.id}
-              className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-[#0d2116]/60 rounded-lg px-3 py-2"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                  {inv.nombre_reciclador} {inv.apellidos_reciclador}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{inv.correo_reciclador}</p>
-              </div>
-              <BadgeEstado estado={inv.estado} />
+          {/* Historial de invitaciones enviadas — puede estar vacío aunque sí
+              haya recicladores autorizados arriba (ver comentario más arriba). */}
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
+          </p>
+          {cargando ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
+          ) : invitaciones.length === 0 ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {t("dashboards.adminConjunto.recyclersSection.empty")}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {invitaciones.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="flex items-center justify-between gap-3 bg-white dark:bg-[#132a1c] rounded-lg px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                      {inv.nombre_reciclador} {inv.apellidos_reciclador}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{inv.correo_reciclador}</p>
+                  </div>
+                  <BadgeEstado estado={inv.estado} />
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>
@@ -283,7 +315,10 @@ function SeccionDesvinculacion({
   //           dejan claro, sin necesidad de leer el código, que esto es
   //           sobre el rol del admin, no sobre los recicladores.
   return (
-    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2a4d34]">
+    // ¿Qué? Mismo criterio que en SeccionRecicladores — fondo propio en vez
+    //       de solo un borde arriba, para que se vea como un bloque aparte
+    //       (issue #166).
+    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/40">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
         {t("desvinculacion.sectionTitle")}
       </p>
@@ -304,7 +339,7 @@ function SeccionDesvinculacion({
           <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">{t("desvinculacion.clarification")}</p>
         </div>
       ) : (
-        <div className="bg-gray-50 dark:bg-[#0d2116]/60 p-3 rounded-xl space-y-2">
+        <div className="bg-white dark:bg-[#132a1c] p-3 rounded-xl space-y-2">
           <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("desvinculacion.motivoLabel")}
@@ -490,6 +525,46 @@ export function AdminConjuntoDashboard() {
         </div>
       </div>
 
+      {/* Actividad reciente (resultado de auditoría + notificaciones) — es
+          la información más urgente de este panel (avisos que requieren
+          reacción), así que va primero, justo después del encabezado. Antes
+          vivía al final, debajo de "Mis conjuntos", que por sí sola ya podía
+          medir más que una pantalla completa (issue #166). */}
+      {!cargandoNotifs && (
+        <AuditoriaResultadoBanner
+          notificaciones={notificaciones}
+          token={accessToken ?? ""}
+          onMarcarLeida={marcarLeida}
+        />
+      )}
+
+      {cargandoNotifs ? (
+        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        </div>
+      ) : (
+        <>
+          {errorNotifs && <Alert type="error" message={t("common.loadError")} />}
+          {errorAccionNotif && (
+            <Alert
+              type="error"
+              message={t("common.actionError")}
+              onClose={() => setErrorAccionNotif(false)}
+            />
+          )}
+          <NotificationFeed
+            title={t("dashboards.adminConjunto.notifications.title")}
+            notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
+            emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
+            accentBg="bg-amber-700"
+            accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
+            onMarkRead={marcarLeida}
+            onMarkAllRead={marcarTodasLeidas}
+            onClearRead={limpiarLeidas}
+          />
+        </>
+      )}
+
       {mensaje && (
         <div className="bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-3 rounded-xl dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
           {mensaje}
@@ -613,43 +688,7 @@ export function AdminConjuntoDashboard() {
         )}
       </div>
 
-      {/* Resultado de auditoría del reciclador (RQF-009) — aparte del feed normal */}
-      {!cargandoNotifs && (
-        <AuditoriaResultadoBanner
-          notificaciones={notificaciones}
-          token={accessToken ?? ""}
-          onMarcarLeida={marcarLeida}
-        />
-      )}
-
-      {/* Feed de notificaciones */}
-      {cargandoNotifs ? (
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
-        </div>
-      ) : (
-        <>
-          {errorNotifs && <Alert type="error" message={t("common.loadError")} />}
-          {errorAccionNotif && (
-            <Alert
-              type="error"
-              message={t("common.actionError")}
-              onClose={() => setErrorAccionNotif(false)}
-            />
-          )}
-          <NotificationFeed
-            title={t("dashboards.adminConjunto.notifications.title")}
-            notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
-            emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
-            accentBg="bg-amber-700"
-            accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
-            onMarkRead={marcarLeida}
-            onMarkAllRead={marcarTodasLeidas}
-            onClearRead={limpiarLeidas}
-          />
-        </>
-      )}
-
+      {/* Historial de auditorías — log histórico, sin urgencia, va al final. */}
       <HistorialAuditorias token={accessToken ?? ""} />
     </div>
   );
