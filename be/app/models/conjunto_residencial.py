@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
-from app.utils.ids import generar_uuid7
+from app.utils.ids import generar_uuid4
 
 
 def _secondaryjoin_administradores_activos():
@@ -29,7 +29,7 @@ def _secondaryjoin_administradores_activos():
 class ConjuntoResidencial(Base):
     __tablename__ = "conjuntos_residenciales"
 
-    id_conjunto_residencial = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
+    id_conjunto_residencial = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid4)
     # ¿Qué? id_localidad sigue siendo Integer a propósito — `localidades`
     #       es un catálogo fijo de 20 filas (las localidades de Bogotá),
     #       acoplado además al dataset externo del gobierno distrital que

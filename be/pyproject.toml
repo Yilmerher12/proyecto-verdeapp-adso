@@ -22,6 +22,14 @@ dependencies = [
     "resend==2.25.0",
     "slowapi==0.1.9",
     "sqlalchemy==2.0.48",
+    # ¿Qué? Ya nada en app/ la usa (ver app/utils/ids.py, generar_uuid4 usa
+    #       solo la librería estándar) — pero sigue siendo obligatoria: la
+    #       migración histórica 00e3bf999d33 (ya aplicada, no se toca) hace
+    #       "import uuid_utils" a nivel de módulo, y Alembic necesita poder
+    #       IMPORTAR todas las migraciones del historial para construir su
+    #       grafo de revisiones, aunque ya estén aplicadas. Sin esta
+    #       dependencia, "alembic upgrade/downgrade" falla siempre,
+    #       aunque el destino sea una revisión mucho más reciente.
     "uuid-utils==0.17.0",
     "uvicorn[standard]==0.42.0",
 ]

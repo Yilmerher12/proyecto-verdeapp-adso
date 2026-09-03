@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
-from app.utils.ids import generar_uuid7
+from app.utils.ids import generar_uuid4
 
 
 class TipoComunicado(StrEnum):
@@ -45,7 +45,7 @@ class Comunicado(Base):
     """
     __tablename__ = "comunicados"
 
-    id_comunicado = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
+    id_comunicado = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid4)
 
     id_conjunto_residencial = Column(
         UUID(as_uuid=True),

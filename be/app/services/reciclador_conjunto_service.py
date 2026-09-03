@@ -97,7 +97,7 @@ async def invitar_reciclador(db: Session, id_usuario_admin: UUID, correo_recicla
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe una invitación pendiente para este reciclador.")
 
     nueva_invitacion = InvitacionRecicladorConjunto(
-        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
+        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv4 por su cuenta.
         id_reciclador=reciclador.id_reciclador,
         id_conjunto_residencial=id_conjunto,
         invitado_por_id=id_usuario_admin,

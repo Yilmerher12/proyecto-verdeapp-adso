@@ -142,7 +142,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
         expiration_verif = datetime.now(timezone.utc) + timedelta(days=1)
 
         db_token_verif = EmailVerificationToken(
-            # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
+            # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv4 por su cuenta.
             id_usuario=nuevo_usuario.id_usuario,
             token=token_verificacion,
             expires_at=expiration_verif,
@@ -412,7 +412,7 @@ async def request_password_reset(db: Session, email: str) -> bool:
     expiration = datetime.now(timezone.utc) + timedelta(hours=1)
 
     db_token = PasswordResetToken(
-        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
+        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv4 por su cuenta.
         id_usuario=user.id_usuario,
         token=token_str,
         expires_at=expiration,

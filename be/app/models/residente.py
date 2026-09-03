@@ -2,13 +2,13 @@ from sqlalchemy import Column, String, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
-from app.utils.ids import generar_uuid7
+from app.utils.ids import generar_uuid4
 
 
 class Residente(Base):
     __tablename__ = "residentes"
 
-    id_residente = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
+    id_residente = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid4)
     id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"), unique=True, nullable=False)
     id_unidad = Column(UUID(as_uuid=True), ForeignKey("unidades.id_unidad"), nullable=False)
 

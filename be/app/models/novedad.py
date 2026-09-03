@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
-from app.utils.ids import generar_uuid7
+from app.utils.ids import generar_uuid4
 
 
 class AlcanceNovedad(StrEnum):
@@ -31,7 +31,7 @@ class Novedad(Base):
     """
     __tablename__ = "novedades"
 
-    id_novedad = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
+    id_novedad = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid4)
 
     id_admin_sistema = Column(
         UUID(as_uuid=True),

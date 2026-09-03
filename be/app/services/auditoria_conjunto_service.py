@@ -270,11 +270,16 @@ def listar_historial(db: Session, current_user: Usuario) -> list[AuditoriaConjun
     stmt = (
         select(AuditoriaConjunto)
         .where(AuditoriaConjunto.id_conjunto_residencial.in_(ids_conjuntos))
-        # ¿Qué? Se desempata por id_auditoria (siempre creciente) además de
-        #       created_at — dentro de una misma transacción, NOW() de
-        #       Postgres devuelve el mismo valor para varias inserciones
-        #       seguidas, así que created_at solo no basta para el orden.
-        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.id_auditoria.desc())
+        # ¿Qué? Se desempata por orden_interno (contador interno siempre
+        #       creciente, nunca expuesto en la API) además de created_at
+        #       — dentro de una misma transacción, NOW() de Postgres
+        #       devuelve el mismo valor para varias inserciones seguidas,
+        #       así que created_at solo no basta para el orden. Antes se
+        #       usaba id_auditoria para esto (funcionaba porque UUIDv7
+        #       ordena cronológicamente), pero con UUIDv4 (issue #167) el
+        #       ID ya no sirve como desempate — ver orden_interno en el
+        #       modelo.
+        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
         .limit(50)
     )
     return list(db.execute(stmt).scalars().all())
@@ -289,6 +294,6 @@ def listar_mias(db: Session, id_usuario_reciclador: UUID) -> list[AuditoriaConju
     stmt = (
         select(AuditoriaConjunto)
         .where(AuditoriaConjunto.id_reciclador == reciclador.id_reciclador)
-        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.id_auditoria.desc())
+        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
     )
     return list(db.execute(stmt).scalars().all())

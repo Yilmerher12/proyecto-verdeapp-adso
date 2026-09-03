@@ -24,7 +24,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.database import engine
-from app.utils.ids import generar_uuid7
+from app.utils.ids import generar_uuid4
 
 SEED_FILE = Path(__file__).parent / "seed_data.sql"
 CONJUNTOS_CSV = Path(__file__).parent / "data" / "conjuntos_residenciales_bogota.csv"
@@ -113,13 +113,13 @@ def importar_conjuntos_reales(connection: Connection) -> None:
 
             # ¿Qué? id_conjunto_residencial se genera aquí, en Python.
             # ¿Para qué? Esta inserción usa SQL crudo (text()), no el ORM —
-            #           el "default=generar_uuid7" que vive en el modelo
+            #           el "default=generar_uuid4" que vive en el modelo
             #           SQLAlchemy NUNCA se ejecuta en este camino. Sin
             #           generarlo a mano aquí, Postgres intentaría insertar
             #           la fila sin valor para su llave primaria y fallaría.
             filas_a_insertar.append(
                 {
-                    "id_conjunto_residencial": generar_uuid7(),
+                    "id_conjunto_residencial": generar_uuid4(),
                     "id_localidad": id_localidad,
                     "nombre_conjunto": nombre,
                     "direccion": direccion,
@@ -152,7 +152,7 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
     # ¿Qué? id_usuario/id_administrador/id_reciclador/id_administrador_conjunto
     #       se generan aquí, en Python — mismo motivo que en
     #       importar_conjuntos_reales(): este INSERT es SQL crudo, no pasa
-    #       por el ORM, así que el "default=generar_uuid7" del modelo nunca
+    #       por el ORM, así que el "default=generar_uuid4" del modelo nunca
     #       se ejecuta en este camino.
     connection.execute(
         text(
@@ -163,9 +163,9 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
             "ON CONFLICT DO NOTHING"
         ),
         {
-            "id_admin_conjunto": generar_uuid7(),
-            "id_reciclador_usuario": generar_uuid7(),
-            "id_residente_usuario": generar_uuid7(),
+            "id_admin_conjunto": generar_uuid4(),
+            "id_reciclador_usuario": generar_uuid4(),
+            "id_residente_usuario": generar_uuid4(),
             "pw": PASSWORD_HASH_PRUEBA,
         },
     )
@@ -176,7 +176,7 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
             "SELECT :id_administrador, id_usuario, 'ADMIN', 'DE PRUEBA', '3000000000' FROM usuarios "
             "WHERE correo_electronico = 'admin.conjunto.prueba@verdeapp.com' ON CONFLICT DO NOTHING"
         ),
-        {"id_administrador": generar_uuid7()},
+        {"id_administrador": generar_uuid4()},
     )
 
     connection.execute(
@@ -185,7 +185,7 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
             "SELECT :id_reciclador, id_usuario, 1, 'RECICLADOR', 'DE PRUEBA', '3000000001', 'INDEPENDIENTE' FROM usuarios "
             "WHERE correo_electronico = 'reciclador.prueba@verdeapp.com' ON CONFLICT DO NOTHING"
         ),
-        {"id_reciclador": generar_uuid7()},
+        {"id_reciclador": generar_uuid4()},
     )
 
     # ¿Qué? Vincula al Admin de Conjunto de prueba con CONJUNTO_DE_PRUEBA.
@@ -200,7 +200,7 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
             "WHERE u.correo_electronico = 'admin.conjunto.prueba@verdeapp.com' "
             "ON CONFLICT DO NOTHING"
         ),
-        {"nombre": CONJUNTO_DE_PRUEBA, "id_asignacion": generar_uuid7()},
+        {"nombre": CONJUNTO_DE_PRUEBA, "id_asignacion": generar_uuid4()},
     )
 
     # ¿Qué? Vincula directamente al Reciclador de prueba con CONJUNTO_DE_PRUEBA,
@@ -225,7 +225,7 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
             "SELECT :id_unidad, id_conjunto_residencial, 'Torre A', '101' FROM conjuntos_residenciales "
             "WHERE nombre_conjunto = :nombre LIMIT 1 ON CONFLICT DO NOTHING"
         ),
-        {"nombre": CONJUNTO_DE_PRUEBA, "id_unidad": generar_uuid7()},
+        {"nombre": CONJUNTO_DE_PRUEBA, "id_unidad": generar_uuid4()},
     )
 
     connection.execute(
@@ -240,7 +240,7 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
             "WHERE u.correo_electronico = 'residente.prueba@verdeapp.com' "
             "ON CONFLICT DO NOTHING"
         ),
-        {"nombre": CONJUNTO_DE_PRUEBA, "id_residente": generar_uuid7()},
+        {"nombre": CONJUNTO_DE_PRUEBA, "id_residente": generar_uuid4()},
     )
     print("[seed] Usuarios de prueba sembrados (Admin de Conjunto, Reciclador, Residente).")
 
@@ -250,11 +250,11 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
     ¿Qué? Siembra el superadministrador, los 9 puntos de acopio reales y los
           6 módulos de contenido educativo — datos que antes vivían como
           INSERT estáticos en seed_data.sql.
-    ¿Para qué? Sus llaves primarias ahora son UUIDv7, generado en Python
-              (Postgres 17 no tiene una función uuidv7() nativa) — un
-              INSERT de SQL puro y estático ya no puede generarlas, así que
-              se movieron aquí junto con conjuntos_residenciales y los
-              usuarios de prueba, que ya tenían este mismo tratamiento.
+    ¿Para qué? Sus llaves primarias ahora son UUID (generar_uuid4, ver
+              app/utils/ids.py) — un INSERT de SQL puro y estático ya no
+              puede generarlas, así que se movieron aquí junto con
+              conjuntos_residenciales y los usuarios de prueba, que ya
+              tenían este mismo tratamiento.
     ¿Impacto? Mismos datos exactos que antes, solo cambia dónde se generan
               sus IDs.
     """
@@ -267,7 +267,7 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
             "'$2b$12$xSluyevTDoPhwiydwB3OhetVHh1miUiGivw99ChVJxBGl.zaC6EMW', true) "
             "ON CONFLICT DO NOTHING"
         ),
-        {"id_usuario": generar_uuid7()},
+        {"id_usuario": generar_uuid4()},
     )
 
     puntos_acopio = [
@@ -288,7 +288,7 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
         ),
         [
             {
-                "id_punto_acopio": generar_uuid7(),
+                "id_punto_acopio": generar_uuid4(),
                 "id_localidad": id_localidad,
                 "nombre": nombre,
                 "direccion": direccion,
@@ -356,7 +356,7 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
         ),
         [
             {
-                "id_contenido": generar_uuid7(),
+                "id_contenido": generar_uuid4(),
                 "modulo_categoria": modulo_categoria,
                 "titulo_tema": titulo_tema,
                 "cuerpo_texto": cuerpo_texto,
