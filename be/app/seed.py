@@ -24,6 +24,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from app.database import engine
+from app.utils.codigo_acceso import generar_codigo_acceso
 from app.utils.ids import generar_uuid4
 
 SEED_FILE = Path(__file__).parent / "seed_data.sql"
@@ -95,7 +96,19 @@ def importar_conjuntos_reales(connection: Connection) -> None:
     connection.execute(text("DELETE FROM conjuntos_residenciales"))
 
     vistos: set[tuple[int, str, str]] = set()
+    # ¿Qué? Códigos de acceso ya usados en ESTE lote — evita que dos filas
+    #       de la misma importación choquen entre sí (la restricción
+    #       UNIQUE de la columna solo protege contra choques al momento
+    #       de insertar, no evita generarlos de entrada).
+    codigos_usados: set[str] = set()
     filas_a_insertar: list[dict] = []
+
+    def _codigo_acceso_unico() -> str:
+        codigo = generar_codigo_acceso()
+        while codigo in codigos_usados:
+            codigo = generar_codigo_acceso()
+        codigos_usados.add(codigo)
+        return codigo
 
     with CONJUNTOS_CSV.open(encoding="utf-8", newline="") as archivo:
         for fila in csv.DictReader(archivo, delimiter=";"):
@@ -111,18 +124,20 @@ def importar_conjuntos_reales(connection: Connection) -> None:
                 continue
             vistos.add(clave)
 
-            # ¿Qué? id_conjunto_residencial se genera aquí, en Python.
+            # ¿Qué? id_conjunto_residencial y codigo_acceso se generan
+            #       aquí, en Python.
             # ¿Para qué? Esta inserción usa SQL crudo (text()), no el ORM —
-            #           el "default=generar_uuid4" que vive en el modelo
-            #           SQLAlchemy NUNCA se ejecuta en este camino. Sin
-            #           generarlo a mano aquí, Postgres intentaría insertar
-            #           la fila sin valor para su llave primaria y fallaría.
+            #           los "default=" que viven en el modelo SQLAlchemy
+            #           NUNCA se ejecutan en este camino. Sin generarlos a
+            #           mano aquí, Postgres intentaría insertar la fila sin
+            #           valor para columnas NOT NULL y fallaría.
             filas_a_insertar.append(
                 {
                     "id_conjunto_residencial": generar_uuid4(),
                     "id_localidad": id_localidad,
                     "nombre_conjunto": nombre,
                     "direccion": direccion,
+                    "codigo_acceso": _codigo_acceso_unico(),
                 }
             )
 
@@ -130,8 +145,8 @@ def importar_conjuntos_reales(connection: Connection) -> None:
         connection.execute(
             text(
                 "INSERT INTO conjuntos_residenciales "
-                "(id_conjunto_residencial, id_localidad, nombre_conjunto, direccion, verificado) "
-                "VALUES (:id_conjunto_residencial, :id_localidad, :nombre_conjunto, :direccion, TRUE)"
+                "(id_conjunto_residencial, id_localidad, nombre_conjunto, direccion, verificado, codigo_acceso) "
+                "VALUES (:id_conjunto_residencial, :id_localidad, :nombre_conjunto, :direccion, TRUE, :codigo_acceso)"
             ),
             filas_a_insertar,
         )

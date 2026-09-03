@@ -133,6 +133,9 @@
         "unitNumberPlaceholder": "E.g.: 3, B",
         "apto": "Apartment",
         "aptoPlaceholder": "E.g.: 402",
+        "codigoAcceso": "Building access code",
+        "codigoAccesoPlaceholder": "E.g.: AB3K9Q",
+        "codigoAccesoHint": "Ask your building administrator for it (bulletin board, building group chat).",
         "operativeProfileHeading": "Operating Profile *",
         "workLocality": "Work District *",
         "selectYourLocality": "Select your district...",
@@ -723,6 +726,18 @@
         "title": "Buildings you administer",
         "loading": "Loading your buildings...",
         "empty": "You don't have any building assigned yet. Contact the VerdeApp team."
+      },
+      "codigoAcceso": {
+        "title": "Access code",
+        "description": "Share it with your residents (bulletin board, building group chat) — they need it to register.",
+        "copyAria": "Copy access code",
+        "copiedAria": "Code copied",
+        "regenerateButton": "Regenerate",
+        "regenerating": "Regenerating...",
+        "confirmTitle": "Regenerate the access code?",
+        "confirmWarning": "The current code will stop working immediately. Any resident who hasn't registered yet will need the new code.",
+        "confirmButton": "Yes, regenerate",
+        "errorDefault": "Could not regenerate the code. Please try again."
       },
       "editForm": {
         "name": "Building name",

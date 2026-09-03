@@ -36,6 +36,7 @@ def _payload_residente(
         "id_conjunto_residencial": str(conjunto.id_conjunto_residencial),
         "torre": "TORRE 1",
         "apto": "303",
+        "codigo_acceso": conjunto.codigo_acceso,
     }
 
 
@@ -52,6 +53,35 @@ class TestRegister:
         data = response.json()
         assert data["email"] == "nuevo.residente@verdeapp.com"
         assert data["is_active"] is False
+
+    def test_register_residente_sin_codigo_acceso(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #168: el código de acceso es obligatorio para Residente."""
+        payload = _payload_residente(conjunto_verificado, email="sin.codigo@verdeapp.com")
+        del payload["codigo_acceso"]
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "código de acceso" in response.json()["detail"].lower()
+
+    def test_register_residente_codigo_acceso_incorrecto(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #168: un código que no coincide con el del conjunto se rechaza."""
+        payload = _payload_residente(conjunto_verificado, email="codigo.malo@verdeapp.com")
+        payload["codigo_acceso"] = "ZZZZZZ"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "no es válido" in response.json()["detail"].lower()
+
+    def test_register_residente_codigo_acceso_insensible_a_mayusculas(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #168: da igual si el código se escribe en minúsculas."""
+        payload = _payload_residente(conjunto_verificado, email="codigo.minusculas@verdeapp.com")
+        payload["codigo_acceso"] = conjunto_verificado.codigo_acceso.lower()
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 201
 
     def test_register_residente_conjunto_no_verificado(
         self, client: TestClient, conjunto_no_verificado: ConjuntoResidencial

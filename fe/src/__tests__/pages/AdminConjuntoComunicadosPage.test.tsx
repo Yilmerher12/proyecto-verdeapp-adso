@@ -33,6 +33,7 @@ const CONJUNTO: ConjuntoAdministrado = {
   direccion: "Calle Falsa 123",
   nombre_localidad: "Usaquén",
   tiene_solicitud_pendiente: false,
+  codigo_acceso: "AB3K9Q",
 };
 
 // ¿Qué? Se usan fechas alejadas entre sí (creación en enero, expiración en

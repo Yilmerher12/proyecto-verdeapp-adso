@@ -23,6 +23,16 @@ class ConjuntoAdministradoResponse(BaseModel):
     #       "solicitar desvinculación" en vez de dejar que el usuario
     #       choque con el error de solicitud duplicada (RN-002).
     tiene_solicitud_pendiente: bool = False
+    # ¿Qué? Issue #168 — el código que el admin reparte fuera de la app
+    #       para que un Residente demuestre que vive en este conjunto al
+    #       registrarse. Todo conjunto ya tiene uno desde que se creó
+    #       (ver default en el modelo), nunca es None.
+    codigo_acceso: str
+
+
+class CodigoAccesoResponse(BaseModel):
+    """¿Qué? Respuesta al (re)generar el código de acceso de un conjunto."""
+    codigo_acceso: str
 
 
 class EditarConjuntoRequest(BaseModel):

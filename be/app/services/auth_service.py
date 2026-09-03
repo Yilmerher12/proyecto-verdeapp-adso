@@ -97,6 +97,27 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
                     ),
                 )
 
+            # ¿Qué? Issue #168 — antes cualquiera podía declarar pertenecer a
+            #       cualquier conjunto verificado, sin ninguna prueba real de
+            #       que vive ahí. Ahora se exige el código de acceso que el
+            #       Admin de Conjunto reparte fuera de la app.
+            # ¿Para qué? Todo conjunto ya tiene un código desde que se creó
+            #           (ver default en el modelo) — nunca hay excepción de
+            #           "este conjunto todavía no tiene código".
+            # ¿Impacto? Comparación insensible a mayúsculas/espacios, mismo
+            #           criterio que el resto de la app usa para nombres.
+            codigo_ingresado = (user_data.codigo_acceso or "").strip().upper()
+            if not codigo_ingresado:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Debes ingresar el código de acceso de tu conjunto.",
+                )
+            if codigo_ingresado != conjunto_existente.codigo_acceso:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El código de acceso no es válido para este conjunto. Pídeselo a tu administrador.",
+                )
+
             stmt_unidad = select(Unidad).where(
                 Unidad.id_conjunto_residencial == id_conjunto,
                 Unidad.torre == torre_texto,

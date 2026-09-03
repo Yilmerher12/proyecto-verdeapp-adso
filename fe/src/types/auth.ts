@@ -53,6 +53,9 @@ export interface RegisterRequest {
   id_conjunto_residencial?: string; // solo aplica para residente — UUID
   torre?: string;
   apto?: string;
+  // ¿Qué? Issue #168 — código que el Admin de Conjunto reparte fuera de
+  //       la app; solo aplica (y se exige) para residente.
+  codigo_acceso?: string;
   asociacion?: string;
 }
 
