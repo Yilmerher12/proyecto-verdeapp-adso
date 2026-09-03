@@ -3,13 +3,13 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
-from app.utils.ids import generar_uuid7
+from app.utils.ids import generar_uuid4
 
 
 class Notificacion(Base):
     __tablename__ = "notificaciones"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid4)
     tipo = Column(String(50), nullable=False)  # LLEGADA_RECICLADOR | SHUT_LLENO | SHUT_LIBRE | ...
     # ¿Qué? NULL para notificaciones de toda la plataforma (RQF-015,
     #       novedades del Admin del Sistema) — esas no pertenecen a un

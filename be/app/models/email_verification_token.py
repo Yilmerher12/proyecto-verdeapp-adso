@@ -2,13 +2,13 @@ from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
-from app.utils.ids import generar_uuid7
+from app.utils.ids import generar_uuid4
 
 class EmailVerificationToken(Base):
     __tablename__ = "email_verification_tokens"
 
     # UUID nativo de Postgres (antes era String(36) con uuid.uuid4())
-    id = Column(UUID(as_uuid=True), primary_key=True, default=generar_uuid7)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=generar_uuid4)
 
     # Apunta a usuarios.id_usuario (ahora UUID)
     id_usuario = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False)

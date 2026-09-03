@@ -12,13 +12,13 @@ from sqlalchemy import Column, String, ForeignKey, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
-from app.utils.ids import generar_uuid7
+from app.utils.ids import generar_uuid4
 
 
 class InvitacionRecicladorConjunto(Base):
     __tablename__ = "invitaciones_reciclador_conjunto"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=generar_uuid7)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=generar_uuid4)
     id_reciclador = Column(UUID(as_uuid=True), ForeignKey("recicladores.id_reciclador", ondelete="CASCADE"), nullable=False)
     id_conjunto_residencial = Column(
         UUID(as_uuid=True), ForeignKey("conjuntos_residenciales.id_conjunto_residencial", ondelete="CASCADE"), nullable=False
