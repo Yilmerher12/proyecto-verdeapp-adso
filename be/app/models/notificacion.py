@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, Text, ForeignKey, DateTime
+from sqlalchemy import Column, String, Boolean, Text, ForeignKey, DateTime, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -38,6 +38,23 @@ class Notificacion(Base):
     #           auditorias_conjunto (hoy es la única tabla a la que apunta).
     id_referencia = Column(UUID(as_uuid=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # ¿Qué? Issue #169 — índice compuesto para las consultas que revisan
+    #       "la última notificación de tipo X de este conjunto"
+    #       (_shut_esta_lleno, GET /estado-shut y _aviso_reciente en
+    #       routers/notificaciones.py) — todas filtran exactamente por
+    #       estas dos columnas.
+    # ¿Para qué? Sin este índice, Postgres tiene que revisar la tabla
+    #           completa fila por fila (un "Seq Scan") para encontrar las
+    #           notificaciones de un conjunto y tipo dados — con pocos
+    #           datos no se nota, pero se degrada a medida que la tabla
+    #           crece.
+    # ¿Impacto? No toca ningún dato existente — solo agrega la estructura
+    #           de búsqueda. Ver migración
+    #           be/alembic/versions/..._agregar_indice_notificaciones.py.
+    __table_args__ = (
+        Index("ix_notificaciones_conjunto_tipo", "id_conjunto_residencial", "tipo"),
+    )
 
     destinatarios = relationship(
         "NotificacionDestinatario",
