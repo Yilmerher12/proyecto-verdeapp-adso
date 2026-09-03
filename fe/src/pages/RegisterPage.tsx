@@ -70,6 +70,7 @@ export function RegisterPage() {
     prefijo_unidad: "TORRE",
     numero_bloque: "",
     apto: "",
+    codigo_acceso: "",
     asociacion: "",
     email: "",
     confirmEmail: "",
@@ -155,7 +156,8 @@ export function RegisterPage() {
         !formData.localidad_id ||
         !formData.id_conjunto_residencial ||
         !formData.numero_bloque.trim() ||
-        !formData.apto.trim()
+        !formData.apto.trim() ||
+        !formData.codigo_acceso.trim()
       );
     }
 
@@ -207,6 +209,7 @@ export function RegisterPage() {
         id_conjunto_residencial: formData.rol === "residente" ? formData.id_conjunto_residencial : undefined,
         torre: formData.rol === "residente" ? torreCompleta : undefined,
         apto: formData.rol === "residente" ? formData.apto.trim().toUpperCase() : undefined,
+        codigo_acceso: formData.rol === "residente" ? formData.codigo_acceso.trim().toUpperCase() : undefined,
         asociacion: formData.rol === "reciclador" ? formData.asociacion : undefined,
         localidad_id: formData.rol === "reciclador" ? parseInt(formData.localidad_id) : undefined
       });
@@ -409,6 +412,29 @@ export function RegisterPage() {
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
                     <input type="text" name="apto" placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange as any} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] uppercase" />
                   </div>
+                </div>
+
+                {/*
+                  ¿Qué? Issue #168 — el código que el Admin de Conjunto
+                        reparte fuera de la app (cartelera, grupo del
+                        conjunto) para demostrar que de verdad vives ahí.
+                  ¿Para qué? Va en su propia fila, no en el grid de 3
+                            columnas de arriba — es un campo distinto en
+                            naturaleza (una prueba, no un dato del domicilio)
+                            y merece su propia aclaración debajo.
+                */}
+                <div className="pt-3 border-t border-gray-200 dark:border-[#2a4d34]">
+                  <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.codigoAcceso")}</label>
+                  <input
+                    type="text"
+                    name="codigo_acceso"
+                    placeholder={t("auth.register.fields.codigoAccesoPlaceholder")}
+                    value={formData.codigo_acceso}
+                    onChange={handleChange as any}
+                    disabled={!formData.id_conjunto_residencial}
+                    className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] uppercase tracking-widest font-mono"
+                  />
+                  <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("auth.register.fields.codigoAccesoHint")}</p>
                 </div>
               </div>
             )}

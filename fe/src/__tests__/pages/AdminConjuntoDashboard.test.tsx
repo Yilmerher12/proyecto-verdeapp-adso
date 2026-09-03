@@ -37,6 +37,7 @@ const conjunto = {
   direccion: "Cra 10 # 20-30",
   nombre_localidad: "Suba",
   tiene_solicitud_pendiente: false,
+  codigo_acceso: "AB3K9Q",
 };
 
 function mockRespuestasVacias() {

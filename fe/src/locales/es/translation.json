@@ -133,6 +133,9 @@
         "unitNumberPlaceholder": "Ej: 3, B",
         "apto": "Apartamento",
         "aptoPlaceholder": "Ej: 402",
+        "codigoAcceso": "Código de acceso del conjunto",
+        "codigoAccesoPlaceholder": "Ej: AB3K9Q",
+        "codigoAccesoHint": "Pídeselo al administrador de tu conjunto (cartelera, grupo del conjunto).",
         "operativeProfileHeading": "Perfil Operativo *",
         "workLocality": "Localidad de Trabajo *",
         "selectYourLocality": "Selecciona tu localidad...",
@@ -727,6 +730,18 @@
         "title": "Conjuntos que administras",
         "loading": "Cargando tus conjuntos...",
         "empty": "Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp."
+      },
+      "codigoAcceso": {
+        "title": "Código de acceso",
+        "description": "Compártelo con tus residentes (cartelera, grupo del conjunto) — lo necesitan para registrarse.",
+        "copyAria": "Copiar código de acceso",
+        "copiedAria": "Código copiado",
+        "regenerateButton": "Regenerar",
+        "regenerating": "Regenerando...",
+        "confirmTitle": "¿Regenerar el código de acceso?",
+        "confirmWarning": "El código actual dejará de funcionar de inmediato. Cualquier residente que todavía no se haya registrado necesitará el código nuevo.",
+        "confirmButton": "Sí, regenerar",
+        "errorDefault": "No se pudo regenerar el código. Intenta de nuevo."
       },
       "editForm": {
         "name": "Nombre del conjunto",

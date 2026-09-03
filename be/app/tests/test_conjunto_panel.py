@@ -28,6 +28,13 @@ class TestMisConjuntos:
         ids = [c["id_conjunto_residencial"] for c in response.json()]
         assert ids == [str(conjunto_verificado.id_conjunto_residencial)]
 
+    def test_incluye_el_codigo_acceso(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Issue #168: el admin debe poder ver el código para repartirlo."""
+        response = client.get("/api/v1/conjunto-panel/mis-conjuntos", headers=admin_conjunto_auth_headers)
+        assert response.json()[0]["codigo_acceso"] == conjunto_verificado.codigo_acceso
+
     def test_marca_tiene_solicitud_pendiente(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
     ):
@@ -73,3 +80,34 @@ class TestEditarConjunto:
             json={"nombre_conjunto": "X", "direccion": "Y"},
         )
         assert response.status_code == 401
+
+
+class TestRegenerarCodigoAcceso:
+    """Issue #168 — el Admin de Conjunto puede rotar el código de su propio conjunto."""
+
+    def _url(self, conjunto) -> str:
+        return f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto.id_conjunto_residencial}/regenerar-codigo-acceso"
+
+    def test_sin_login_devuelve_401(self, client: TestClient, conjunto_verificado):
+        response = client.post(self._url(conjunto_verificado))
+        assert response.status_code == 401
+
+    def test_no_puede_regenerar_un_conjunto_ajeno(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_no_verificado
+    ):
+        response = client.post(self._url(conjunto_no_verificado), headers=admin_conjunto_auth_headers)
+        assert response.status_code == 403
+
+    def test_genera_un_codigo_distinto_al_anterior(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        codigo_original = conjunto_verificado.codigo_acceso
+        response = client.post(self._url(conjunto_verificado), headers=admin_conjunto_auth_headers)
+        assert response.status_code == 200
+        codigo_nuevo = response.json()["codigo_acceso"]
+        assert codigo_nuevo != codigo_original
+        assert len(codigo_nuevo) == 6
+
+        # ¿Qué? El código viejo debe dejar de servir para registrarse.
+        listado = client.get("/api/v1/conjunto-panel/mis-conjuntos", headers=admin_conjunto_auth_headers)
+        assert listado.json()[0]["codigo_acceso"] == codigo_nuevo

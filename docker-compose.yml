@@ -41,6 +41,16 @@ services:
       #           "5432" es el puerto interno real (5433 solo existe para fuera).
       #           No afecta be/.env ni los comandos que corres en tu máquina.
       DATABASE_URL: postgresql://verde_user:verde_password@verde_db:5432/verdeapp_db
+      # ¿Qué? Mismo motivo que DATABASE_URL arriba — be/.env trae
+      #       SMTP_HOST=localhost a propósito para cuando el backend corre
+      #       directo en la máquina (uv run uvicorn), pero "localhost"
+      #       DENTRO de este contenedor apunta al propio backend, no al de
+      #       Mailpit. Sin este override, cualquier envío de correo desde
+      #       el backend en Docker fallaba en silencio (intentaba conectar
+      #       SMTP contra sí mismo, donde no hay nada escuchando).
+      # ¿Impacto? "verde_mailpit" es el nombre del servicio — Docker lo
+      #           resuelve dentro de "verde_network", igual que "verde_db".
+      SMTP_HOST: verde_mailpit
     ports:
       - "8000:8000"
     volumes:

@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
+from app.utils.codigo_acceso import generar_codigo_acceso
 from app.utils.ids import generar_uuid4
 
 
@@ -44,6 +45,22 @@ class ConjuntoResidencial(Base):
     verificado = Column(Boolean, nullable=False, default=False)
 
     verificado_por_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"), nullable=True)
+
+    # ¿Qué? Código de acceso (issue #168) que el Admin de Conjunto reparte
+    #       fuera de la app (cartelera, grupo del conjunto) para que un
+    #       Residente demuestre que de verdad vive ahí al registrarse —
+    #       hoy cualquiera podía declarar pertenecer a cualquier conjunto
+    #       sin ninguna verificación.
+    # ¿Para qué? unique=True: aunque la probabilidad de choque es de
+    #           ~0.01% (ver utils/codigo_acceso.py), se prefiere que la
+    #           base de datos lo garantice en vez de confiar solo en la
+    #           suerte.
+    # ¿Impacto? default=generar_codigo_acceso solo se ejecuta por el
+    #           camino del ORM — la importación real de los 14,515
+    #           conjuntos (seed.py) usa SQL crudo, así que ese código
+    #           genera el valor a mano, igual que ya hace con
+    #           id_conjunto_residencial.
+    codigo_acceso = Column(String(10), unique=True, nullable=False, default=generar_codigo_acceso)
 
     # Puentes
     localidad = relationship("Localidad", back_populates="conjuntos")
