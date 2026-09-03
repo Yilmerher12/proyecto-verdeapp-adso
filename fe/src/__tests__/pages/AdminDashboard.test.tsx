@@ -232,15 +232,21 @@ describe("AdminDashboard", () => {
     });
   });
 
-  it("despliega el formulario de invitar administrador de conjunto al hacer clic", async () => {
+  it("abre el modal de invitar administrador de conjunto al hacer clic", async () => {
     const user = userEvent.setup();
     renderPage();
 
     expect(screen.queryByText("Invitar Administrador de Conjunto")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "+ Invitar administrador" }));
 
+    // ¿Qué? Antes el formulario se expandía dentro de la misma tarjeta; con
+    //       el rediseño (issue #166) vive en su propio modal — se verifica
+    //       el diálogo accesible en vez de solo el texto del formulario.
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("Invitar Administrador de Conjunto")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ocultar" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cerrar" }));
+    expect(screen.queryByText("Invitar Administrador de Conjunto")).not.toBeInTheDocument();
   });
 
   it("no muestra el buscador de conjuntos hasta elegir una localidad", async () => {
@@ -376,6 +382,10 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
+
+    // ¿Qué? El formulario ahora vive en su propio modal (issue #166) — hay
+    //       que abrirlo antes de poder interactuar con sus campos.
+    await user.click(screen.getByRole("button", { name: "+ Asignar conjunto" }));
 
     await user.type(screen.getByPlaceholderText("Nombre, apellidos o correo"), "Ana");
     await user.click(screen.getByRole("button", { name: "Buscar" }));

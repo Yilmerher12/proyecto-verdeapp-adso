@@ -83,17 +83,23 @@ describe("AdminConjuntoDashboard", () => {
       if (url.includes("/invitaciones")) return Promise.resolve({ data: [] });
       return Promise.resolve({ data: [] });
     });
+    const user = userEvent.setup();
     renderPage();
 
     await waitFor(() => {
       expect(screen.getByText("Conjunto Los Alpes")).toBeInTheDocument();
     });
+    expect(screen.getByText("Dejar de administrar este conjunto")).toBeInTheDocument();
+
     // ¿Qué? Antes había un solo título "Recicladores Autorizados" que en
     //       realidad mostraba el historial de invitaciones, no la
     //       autorización real — ahora son 2 secciones separadas y honestas.
+    // ¿Impacto? Con el rediseño (issue #166) esta sección queda colapsada
+    //           por defecto para no empujar el resto del panel fuera de la
+    //           vista inicial — hay que expandirla primero.
+    await user.click(screen.getByRole("button", { name: "Ver detalle" }));
     expect(screen.getByText("Autorizados")).toBeInTheDocument();
     expect(screen.getByText("Invitaciones enviadas")).toBeInTheDocument();
-    expect(screen.getByText("Dejar de administrar este conjunto")).toBeInTheDocument();
   });
 
   it("guarda los cambios al editar un conjunto", async () => {

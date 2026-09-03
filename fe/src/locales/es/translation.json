@@ -640,8 +640,8 @@
       "title": "Panel de Administración",
       "inviteSection": {
         "title": "Administradores de Conjunto",
-        "show": "+ Invitar administrador",
-        "hide": "Ocultar"
+        "description": "Invita por correo a alguien para que administre uno de tus conjuntos.",
+        "show": "+ Invitar administrador"
       },
       "loadingData": "Cargando datos...",
       "usersSection": {
@@ -709,6 +709,8 @@
       },
       "recyclersSection": {
         "title": "Recicladores",
+        "showDetail": "Ver detalle",
+        "hideDetail": "Ocultar detalle",
         "invite": "+ Invitar reciclador",
         "emailPlaceholder": "correo.del.reciclador@ejemplo.com",
         "sending": "Enviando...",
@@ -1056,6 +1058,8 @@
     },
     "asignarAdicional": {
       "sectionTitle": "Asignar conjunto adicional",
+      "description": "Vincula un conjunto sin administrador a alguien que ya es Administrador de Conjunto.",
+      "openButton": "+ Asignar conjunto",
       "searchLabel": "Buscar administrador",
       "searchPlaceholder": "Nombre, apellidos o correo",
       "searchButton": "Buscar",

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Shield, Users, Database, UserPlus, Search, MapPin, ChevronLeft, ChevronRight, Building2, Ban, CircleCheck } from "lucide-react";
+import { Shield, Users, Database, UserPlus, UserCog, Search, MapPin, ChevronLeft, ChevronRight, Building2, Ban, CircleCheck } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
@@ -59,7 +59,15 @@ const ENDPOINT_POR_TAB: Record<TabUsuarios, string> = {
 export function AdminDashboard() {
   const { t } = useTranslation();
   const { user, accessToken } = useAuth();
-  const [mostrarInvitar, setMostrarInvitar] = useState(false);
+  // ¿Qué? "Invitar administrador" y "Asignar conjunto adicional" abren cada
+  //       una su propio <Modal> en vez de expandirse dentro de la tarjeta.
+  //       Antes, al expandir el formulario inline, esa tarjeta crecía mucho
+  //       más que la de al lado (que no cambia de tamaño) y quedaba un
+  //       hueco enorme junto al formulario largo — con un modal, las dos
+  //       tarjetas de la fila SIEMPRE se ven igual de compactas, sin
+  //       importar si el admin está usando una, la otra, ninguna o ambas.
+  const [mostrarModalInvitar, setMostrarModalInvitar] = useState(false);
+  const [mostrarModalAsignar, setMostrarModalAsignar] = useState(false);
 
   // ¿Qué? Antes había 3 tablas potencialmente pidiendo miles de filas cada
   //       una, sin buscador ni paginación. Ahora solo se pide la pestaña
@@ -287,37 +295,12 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* Invitar Administradores de Conjunto */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4 text-green-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
-          </div>
-          <button
-            type="button"
-            onClick={() => setMostrarInvitar((prev) => !prev)}
-            className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 px-3 py-1.5 rounded-xl transition-colors"
-          >
-            {mostrarInvitar ? t("dashboards.admin.inviteSection.hide") : t("dashboards.admin.inviteSection.show")}
-          </button>
-        </div>
-        {mostrarInvitar && (
-          <div className="mt-4">
-            <InvitarAdminConjuntoForm token={accessToken || ""} />
-          </div>
-        )}
-      </div>
-
-      {/* Desvinculación y reasignación de conjuntos (RQF-016) */}
-      {accessToken && (
-        <>
-          <SolicitudesDesvinculacion token={accessToken} />
-          <AsignarConjuntoAdicionalForm token={accessToken} />
-        </>
-      )}
-
-      {/* Usuarios registrados — pestañas por rol + búsqueda + localidad + paginación */}
+      {/* Usuarios registrados — pestañas por rol + búsqueda + localidad + paginación.
+          ¿Qué? Es la información PRIORITARIA de este panel (así lo señaló el
+                profesor) — va primero, justo después del encabezado, para
+                que se vea sin necesidad de scroll. Antes vivía al final,
+                debajo de 3 secciones administrativas que la empujaban fuera
+                de la vista inicial (issue #166). */}
       <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-[#2a4d34] space-y-3">
           <div className="flex items-center gap-2">
@@ -525,6 +508,68 @@ export function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Acciones administrativas secundarias — antes iban primero y
+          empujaban la tabla de usuarios (arriba) fuera de la vista inicial;
+          ahora van después. "Invitar administrador" y "Asignar conjunto
+          adicional" van en la misma fila, con el mismo tamaño exacto —
+          antes cada una se apilaba a todo el ancho del panel para pedir un
+          solo campo, con mucho espacio vacío alrededor (retroalimentación
+          del profesor, issue #166).
+          ¿Qué? Ninguna de las dos tarjetas cambia de tamaño al usarse — el
+          formulario de cada una vive en su propio <Modal>, no expandido
+          dentro de la tarjeta. Así, si el admin solo usa una de las dos, la
+          otra se queda exactamente del mismo tamaño de siempre, en vez de
+          quedar un hueco al lado de un formulario largo que sí creció. */}
+      <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2">
+        <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+          <div className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4 text-green-600" />
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
+          </div>
+          <p className="flex-1 text-xs text-gray-500 dark:text-gray-400">{t("dashboards.admin.inviteSection.description")}</p>
+          <button
+            type="button"
+            onClick={() => setMostrarModalInvitar(true)}
+            className="self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+          >
+            {t("dashboards.admin.inviteSection.show")}
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+          <div className="flex items-center gap-2">
+            <UserCog className="h-4 w-4 text-green-600" />
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("desvinculacion.asignarAdicional.sectionTitle")}</h3>
+          </div>
+          <p className="flex-1 text-xs text-gray-500 dark:text-gray-400">{t("desvinculacion.asignarAdicional.description")}</p>
+          <button
+            type="button"
+            onClick={() => setMostrarModalAsignar(true)}
+            className="self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+          >
+            {t("desvinculacion.asignarAdicional.openButton")}
+          </button>
+        </div>
+      </div>
+
+      {mostrarModalInvitar && (
+        <Modal onClose={() => setMostrarModalInvitar(false)} wide aria-label={t("invitarAdminConjunto.title")}>
+          <div className="p-6 sm:p-8">
+            <InvitarAdminConjuntoForm token={accessToken || ""} />
+          </div>
+        </Modal>
+      )}
+
+      {mostrarModalAsignar && accessToken && (
+        <Modal onClose={() => setMostrarModalAsignar(false)} wide aria-label={t("desvinculacion.asignarAdicional.sectionTitle")}>
+          <div className="p-6 sm:p-8">
+            <AsignarConjuntoAdicionalForm token={accessToken} />
+          </div>
+        </Modal>
+      )}
+
+      {accessToken && <SolicitudesDesvinculacion token={accessToken} />}
 
       {confirmando && (
         <Modal onClose={() => setConfirmando(null)} aria-label={t("dashboards.admin.usersSection.status.confirmButton")}>

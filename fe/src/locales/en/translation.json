@@ -636,8 +636,8 @@
       "title": "Administration Panel",
       "inviteSection": {
         "title": "Building Administrators",
-        "show": "+ Invite administrator",
-        "hide": "Hide"
+        "description": "Invite someone by email to administer one of your buildings.",
+        "show": "+ Invite administrator"
       },
       "loadingData": "Loading data...",
       "usersSection": {
@@ -705,6 +705,8 @@
       },
       "recyclersSection": {
         "title": "Recyclers",
+        "showDetail": "Show detail",
+        "hideDetail": "Hide detail",
         "invite": "+ Invite recycler",
         "emailPlaceholder": "recycler.email@example.com",
         "sending": "Sending...",
@@ -1052,6 +1054,8 @@
     },
     "asignarAdicional": {
       "sectionTitle": "Assign additional building",
+      "description": "Link a building with no administrator to someone who is already a Building Administrator.",
+      "openButton": "+ Assign building",
       "searchLabel": "Search administrator",
       "searchPlaceholder": "Name, last name, or email",
       "searchButton": "Search",

@@ -97,7 +97,11 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
   };
 
   return (
-    <div className="p-6 bg-white dark:bg-[#0d2116] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm max-w-xl">
+    // ¿Qué? Antes esta tarjeta tenía su propio fondo/borde/sombra — ahora
+    //       vive DENTRO de un <Modal> (que ya trae esa misma decoración),
+    //       así que aquí solo queda el contenido, sin envoltorio propio,
+    //       para no terminar con una tarjeta blanca dentro de otra.
+    <div>
       <div className="flex items-center gap-2 mb-4">
         <UserPlus className="w-5 h-5 text-green-600" />
         <h3 className="font-bold text-gray-800 dark:text-white text-lg">{t("invitarAdminConjunto.title")}</h3>
