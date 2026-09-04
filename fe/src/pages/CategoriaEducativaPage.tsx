@@ -37,7 +37,7 @@ export function CategoriaEducativaPage() {
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
       <button
         onClick={() => navigate("/catalogo-educativo")}
-        className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+        className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" />
         {t("categoriaEducativa.back")}

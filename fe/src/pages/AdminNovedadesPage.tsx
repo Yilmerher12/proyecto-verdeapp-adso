@@ -167,7 +167,7 @@ export function AdminNovedadesPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("novedades.admin.newButton")}
@@ -239,14 +239,14 @@ export function AdminNovedadesPage() {
                 <div className="flex shrink-0 gap-2">
                   <button
                     onClick={() => abrirEditar(item)}
-                    className="rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
                     aria-label={t("novedades.admin.editAria")}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => archivar(item)}
-                    className="rounded-lg border border-gray-200 p-2 text-amber-600 hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
                     aria-label={t("novedades.admin.archiveAria")}
                   >
                     <Archive className="h-4 w-4" />
@@ -290,7 +290,7 @@ export function AdminNovedadesPage() {
                       key={a}
                       type="button"
                       onClick={() => setForm({ ...form, alcance: a })}
-                      className={`rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
+                      className={`cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                         form.alcance === a
                           ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
                           : "border-gray-200 text-gray-600 hover:border-green-300 dark:border-[#2a4d34] dark:text-gray-300"
@@ -350,14 +350,14 @@ export function AdminNovedadesPage() {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={cerrarFormulario}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")

@@ -151,7 +151,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
               <button
                 key={id}
                 onClick={() => setTab(id)}
-                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   tab === id
                     ? "bg-green-700 text-white shadow-sm"
                     : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
@@ -171,7 +171,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             onChange={(e) =>
               setLocalidadId(e.target.value === "" ? "" : Number(e.target.value))
             }
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
+            className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
           >
             <option value="">{t("directorio.allLocalities")}</option>
             {localidades.map((l) => (
@@ -401,7 +401,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
           <button
             type="button"
             onClick={copiarDireccion}
-            className="shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-[#2a4d34] dark:hover:text-gray-300"
+            className="shrink-0 cursor-pointer rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-[#2a4d34] dark:hover:text-gray-300"
             aria-label={t("directorio.copyAddress")}
             title={t("directorio.copyAddress")}
           >

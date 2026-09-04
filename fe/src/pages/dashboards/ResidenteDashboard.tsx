@@ -200,7 +200,7 @@ export function ResidenteDashboard() {
             //           estado "ya reportado" — sin esperar a un error del
             //           servidor para algo que la pantalla ya sabía.
             disabled={enviando || feedbackOk || estadoShut.lleno}
-            className={`shrink-0 flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all disabled:opacity-60 ${
+            className={`shrink-0 flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
               feedbackOk || estadoShut.lleno
                 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                 : "bg-amber-700 text-white hover:bg-amber-600"

@@ -372,7 +372,7 @@ export function RecicladorDashboard() {
                 </p>
                 <button
                   onClick={() => setConjuntoParaAuditar(c.id_conjunto_residencial)}
-                  className="shrink-0 rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
+                  className="shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
                 >
                   {t("dashboards.reciclador.auditoria.bannerAction")}
                 </button>
@@ -427,7 +427,7 @@ export function RecicladorDashboard() {
                   aria-describedby={motivo ? `notif-motivo-${tipo}` : undefined}
                   title={motivo ?? undefined}
                   className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${color} ${
-                    motivo ? "cursor-not-allowed opacity-40" : ""
+                    motivo ? "cursor-not-allowed opacity-40" : "cursor-pointer"
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
@@ -482,7 +482,7 @@ export function RecicladorDashboard() {
                   <button
                     onClick={() => responderInvitacion(inv.id, true)}
                     disabled={procesandoId === inv.id}
-                    className="flex items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t("dashboards.reciclador.invitations.accept")}
@@ -490,7 +490,7 @@ export function RecicladorDashboard() {
                   <button
                     onClick={() => responderInvitacion(inv.id, false)}
                     disabled={procesandoId === inv.id}
-                    className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
                   >
                     <XCircle className="h-3.5 w-3.5" />
                     {t("dashboards.reciclador.invitations.reject")}
@@ -555,7 +555,7 @@ export function RecicladorDashboard() {
                 <li key={a.id_auditoria}>
                   <button
                     onClick={() => setAuditoriaAbierta(a.id_auditoria)}
-                    className="flex w-full items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
+                    className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
                   >
                     <div className="min-w-0">
                       <p className="text-sm text-gray-800 dark:text-gray-200">
@@ -629,7 +629,7 @@ export function RecicladorDashboard() {
                 <button
                   key={c.id_conjunto_residencial}
                   onClick={() => setConjuntoSeleccionado(c.id_conjunto_residencial)}
-                  className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
+                  className={`w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                     conjuntoSeleccionado === c.id_conjunto_residencial
                       ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                       : "border-gray-200 hover:border-green-300 dark:border-[#2a4d34] dark:hover:border-green-700"
@@ -655,14 +655,14 @@ export function RecicladorDashboard() {
             <div className="flex gap-2">
               <button
                 onClick={() => setModalTipo(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={enviarNotificacion}
                 disabled={!conjuntoSeleccionado || enviandoNotif || !!motivoModal}
-                className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
+                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {enviandoNotif ? t("dashboards.reciclador.modal.sending") : t("dashboards.reciclador.modal.submit")}
               </button>

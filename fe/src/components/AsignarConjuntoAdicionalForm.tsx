@@ -152,7 +152,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
         <button
           type="submit"
           disabled={buscando}
-          className="rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50"
+          className="cursor-pointer rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           {t("desvinculacion.asignarAdicional.searchButton")}
         </button>
@@ -175,7 +175,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
               key={admin.id_administrador}
               type="button"
               onClick={() => seleccionarAdministrador(admin)}
-              className={`w-full text-left rounded-xl border px-4 py-3 transition-colors ${
+              className={`w-full cursor-pointer text-left rounded-xl border px-4 py-3 transition-colors ${
                 seleccionado?.id_administrador === admin.id_administrador
                   ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                   : "border-gray-200 hover:border-green-300 dark:border-[#2a4d34] dark:hover:border-green-700"
@@ -216,7 +216,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
                 setLocalidadId(e.target.value === "" ? "" : Number(e.target.value));
                 setConjuntoElegido(null);
               }}
-              className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
             >
               <option value="">{t("desvinculacion.asignarAdicional.localitySelectPlaceholder")}</option>
               {localidades.map((l) => (
@@ -252,7 +252,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
                 type="button"
                 onClick={asignar}
                 disabled={!conjuntoElegido || asignando}
-                className="rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50 h-fit mt-1"
+                className="cursor-pointer rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 h-fit mt-1"
               >
                 {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
               </button>

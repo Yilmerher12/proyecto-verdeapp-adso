@@ -50,7 +50,7 @@ export function AuditoriaResultadoBanner({ notificaciones, token, onMarcarLeida 
             <p className="text-sm text-gray-700 dark:text-gray-300">{n.mensaje}</p>
             <button
               onClick={() => setAbierta({ idNotificacion: n.id, idAuditoria: n.id_referencia as string })}
-              className="shrink-0 rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
+              className="shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
             >
               {t("auditoriaResultado.verButton")}
             </button>

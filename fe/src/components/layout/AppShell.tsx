@@ -255,7 +255,7 @@ export function AppShell({ children }: AppShellProps) {
           <button
             type="button"
             onClick={() => setCollapsed((prev) => !prev)}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-green-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
+            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-green-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
             aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
           >
             {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
@@ -347,7 +347,7 @@ export function AppShell({ children }: AppShellProps) {
             type="button"
             onClick={() => setShowLogoutConfirm(true)}
             className={`
-              flex w-full min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
+              flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
               text-green-50/70 hover:bg-red-900/30 hover:text-red-200
               ${collapsed ? "justify-center" : ""}
             `}
@@ -373,14 +373,14 @@ export function AppShell({ children }: AppShellProps) {
                 <button
                   type="button"
                   onClick={() => setShowLogoutConfirm(false)}
-                  className="flex-1 rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
+                  className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
                 >
                   {t("common.cancel")}
                 </button>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+                  className="flex-1 cursor-pointer rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
                 >
                   {t("appShell.confirmarLogout.confirmar")}
                 </button>
@@ -393,7 +393,7 @@ export function AppShell({ children }: AppShellProps) {
         <button
           type="button"
           onClick={() => setCollapsed((prev) => !prev)}
-          className="hidden sm:flex h-9 w-full shrink-0 items-center justify-center border-t border-white/10
+          className="hidden sm:flex h-9 w-full shrink-0 cursor-pointer items-center justify-center border-t border-white/10
             text-green-100/50 hover:bg-white/5 hover:text-white transition-colors"
           aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
         >
@@ -407,7 +407,7 @@ export function AppShell({ children }: AppShellProps) {
           {/* Campana de notificaciones */}
           <button
             onClick={() => navigate(roleMeta.dashboardHref)}
-            className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-[#2a4d34] dark:hover:text-gray-200"
+            className="relative cursor-pointer rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-[#2a4d34] dark:hover:text-gray-200"
             aria-label={
               noLeidas > 0
                 ? t("appShell.notificacionesConNoLeidas", { count: noLeidas })

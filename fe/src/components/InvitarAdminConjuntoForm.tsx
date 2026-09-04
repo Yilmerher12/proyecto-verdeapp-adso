@@ -128,7 +128,7 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
             aria-label={t("invitarAdminConjunto.localityLabel")}
             value={localidadId}
             onChange={(e) => setLocalidadId(e.target.value === "" ? "" : Number(e.target.value))}
-            className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+            className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
           >
             <option value="">{t("invitarAdminConjunto.localitySelectPlaceholder")}</option>
             {localidades.map((l) => (

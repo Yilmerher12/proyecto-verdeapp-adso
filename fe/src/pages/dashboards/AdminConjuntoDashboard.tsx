@@ -129,7 +129,7 @@ function SeccionCodigoAcceso({
           <button
             type="button"
             onClick={copiarCodigo}
-            className="rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-white dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#1f4029]"
+            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-white dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#1f4029]"
             aria-label={t(
               copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
             )}
@@ -139,7 +139,7 @@ function SeccionCodigoAcceso({
           <button
             type="button"
             onClick={() => setConfirmando(true)}
-            className="text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("dashboards.adminConjunto.codigoAcceso.regenerateButton")}
           </button>
@@ -169,14 +169,14 @@ function SeccionCodigoAcceso({
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmando(false)}
-                className="flex-1 rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={regenerar}
                 disabled={regenerando}
-                className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-60"
+                className="flex-1 cursor-pointer rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {regenerando
                   ? t("dashboards.adminConjunto.codigoAcceso.regenerating")
@@ -289,7 +289,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
           <button
             type="button"
             onClick={() => setMostrarDetalle((v) => !v)}
-            className="text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-[#132a1c] dark:text-gray-300 dark:border-[#2a4d34] dark:hover:bg-[#1f4029]"
+            className="cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-[#132a1c] dark:text-gray-300 dark:border-[#2a4d34] dark:hover:bg-[#1f4029]"
           >
             {mostrarDetalle
               ? t("dashboards.adminConjunto.recyclersSection.hideDetail")
@@ -298,7 +298,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
           <button
             type="button"
             onClick={() => setMostrarFormulario((v) => !v)}
-            className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+            className="cursor-pointer text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
           >
             {t("dashboards.adminConjunto.recyclersSection.invite")}
           </button>
@@ -320,7 +320,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
           <button
             type="submit"
             disabled={enviando || !correoNuevo.trim()}
-            className="flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+            className="flex cursor-pointer items-center justify-center gap-1.5 bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
             {enviando ? t("dashboards.adminConjunto.recyclersSection.sending") : t("dashboards.adminConjunto.recyclersSection.inviteButton")}
@@ -473,7 +473,7 @@ function SeccionDesvinculacion({
           <button
             type="button"
             onClick={() => setMostrarFormulario(true)}
-            className="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("desvinculacion.solicitarButton")}
           </button>
@@ -498,7 +498,7 @@ function SeccionDesvinculacion({
               type="button"
               onClick={handleSolicitar}
               disabled={enviando}
-              className="text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+              className="cursor-pointer text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               {enviando ? t("desvinculacion.sending") : t("desvinculacion.submit")}
             </button>
@@ -508,7 +508,7 @@ function SeccionDesvinculacion({
                 setMostrarFormulario(false);
                 setError(null);
               }}
-              className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-[#1f4029] dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+              className="cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-[#1f4029] dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
             >
               {t("common.cancel")}
             </button>
@@ -769,14 +769,14 @@ export function AdminConjuntoDashboard() {
                         type="button"
                         onClick={() => guardarEdicion(c.id_conjunto_residencial)}
                         disabled={guardando}
-                        className="flex items-center gap-1 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 px-4 py-2 rounded-xl transition-colors disabled:opacity-60"
+                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 px-4 py-2 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Check className="w-4 h-4" /> {t("common.save")}
                       </button>
                       <button
                         type="button"
                         onClick={cancelarEdicion}
-                        className="flex items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-[#1f4029] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-[#1f4029] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
                       >
                         <X className="w-4 h-4" /> {t("common.cancel")}
                       </button>
@@ -796,7 +796,7 @@ export function AdminConjuntoDashboard() {
                       <button
                         type="button"
                         onClick={() => iniciarEdicion(c)}
-                        className="flex items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
                       >
                         <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
                       </button>
