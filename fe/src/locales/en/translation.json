@@ -785,7 +785,12 @@
         "title": "Which building are you notifying?",
         "subtitle": "Select the building you arrived at or want to notify about.",
         "sending": "Sending...",
-        "submit": "Send notice"
+        "submit": "Send notice",
+        "yaPresente": "You already checked in at this building — check out before checking in again.",
+        "avisoLlegadaReciente": "You already checked in at this building less than 2 hours ago.",
+        "debesLlegarPrimero": "You must check in at this building before using this notification.",
+        "yaEstaLleno": "This building's SHUT is already reported as full.",
+        "yaEstaLibre": "This building's SHUT is already reported as free."
       },
       "auditoria": {
         "bannerTitle": "Weekly audit pending",
