@@ -33,3 +33,26 @@ class EstadoShutResponse(BaseModel):
 
 class ContadorNoLeidasResponse(BaseModel):
     count: int
+
+
+class EstadoRecicladorConjuntoResponse(BaseModel):
+    """
+    ¿Qué? El estado de UN conjunto autorizado, desde el punto de vista del
+          reciclador en sesión — para que el frontend sepa, ANTES de que
+          intente enviar una notificación, cuáles botones tienen sentido
+          usar en ese conjunto puntual.
+    """
+    id_conjunto_residencial: UUID
+    # ¿Qué? True si el reciclador ya avisó su llegada a este conjunto y
+    #       todavía no ha avisado que se fue.
+    presente: bool
+    # ¿Qué? True si el último aviso de SHUT_LLENO/SHUT_LIBRE de este
+    #       conjunto (de cualquier reciclador o residente) fue un lleno.
+    shut_lleno: bool
+    # ¿Qué? True si el reciclador SÍ podría enviar LLEGADA_RECICLADOR ahora
+    #       mismo — es decir, no está presente Y no avisó llegada a este
+    #       conjunto hace menos de 2 horas.
+    # ¿Para qué? El candado de 2 horas ya existía antes del control de
+    #           presencia, pero el frontend no tenía forma de saber si
+    #           estaba activo — solo se enteraba al recibir el 400.
+    puede_avisar_llegada: bool

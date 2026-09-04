@@ -789,7 +789,12 @@
         "title": "¿A qué conjunto notificas?",
         "subtitle": "Selecciona el conjunto al que llegaste o sobre el que quieres avisar.",
         "sending": "Enviando...",
-        "submit": "Enviar aviso"
+        "submit": "Enviar aviso",
+        "yaPresente": "Ya avisaste tu llegada a este conjunto — avisa que ya te vas antes de volver a llegar.",
+        "avisoLlegadaReciente": "Ya reportaste tu llegada a este conjunto hace menos de 2 horas.",
+        "debesLlegarPrimero": "Debes avisar tu llegada a este conjunto antes de usar esta notificación.",
+        "yaEstaLleno": "El SHUT de este conjunto ya está reportado como lleno.",
+        "yaEstaLibre": "El SHUT de este conjunto ya está reportado como libre."
       },
       "auditoria": {
         "bannerTitle": "Auditoría semanal pendiente",

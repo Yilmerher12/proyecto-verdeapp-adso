@@ -18,11 +18,12 @@ from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.schemas.notificacion import (
     ContadorNoLeidasResponse,
+    EstadoRecicladorConjuntoResponse,
     EstadoShutResponse,
     NotificacionEnviarBody,
     NotificacionResponse,
 )
-from app.services.notificaciones_helpers import admins_del_conjunto, residentes_del_conjunto
+from app.services.notificaciones_helpers import admins_del_conjunto, reciclador_esta_presente, residentes_del_conjunto
 
 router = APIRouter(prefix="/api/v1/notificaciones", tags=["notificaciones"])
 
@@ -136,13 +137,43 @@ def enviar_notificacion(
         if not autorizado:
             raise HTTPException(status_code=403, detail="No estás autorizado en este conjunto.")
 
-        if body.tipo == "LLEGADA_RECICLADOR" and _aviso_reciente(
-            db, id_conjunto, current_user.id_usuario, "LLEGADA_RECICLADOR", minutos=120
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="Ya reportaste tu llegada a este conjunto hace menos de 2 horas.",
-            )
+        # ¿Qué? Control de presencia: SHUT_LLENO, SHUT_LIBRE y
+        #       FINALIZACION_RECICLADOR solo tienen sentido con el
+        #       reciclador físicamente en el conjunto — exigen haber
+        #       avisado LLEGADA_RECICLADOR antes (y no haber avisado
+        #       FINALIZACION_RECICLADOR después de esa llegada). A
+        #       LLEGADA_RECICLADOR le pasa lo contrario: no se puede volver
+        #       a avisar si ya está presente.
+        # ¿Para qué? Antes de esto, un reciclador podía enviar cualquiera
+        #           de las 4 notificaciones en cualquier momento, incluso
+        #           sin haber llegado — nada sabía si de verdad estaba ahí.
+        presente = reciclador_esta_presente(db, id_conjunto, current_user.id_usuario)
+
+        if body.tipo == "LLEGADA_RECICLADOR":
+            if presente:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Ya avisaste tu llegada a este conjunto — avisa que ya te vas antes de volver a llegar.",
+                )
+            if _aviso_reciente(db, id_conjunto, current_user.id_usuario, "LLEGADA_RECICLADOR", minutos=120):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Ya reportaste tu llegada a este conjunto hace menos de 2 horas.",
+                )
+        else:
+            if not presente:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Debes avisar tu llegada a este conjunto antes de usar esta notificación.",
+                )
+            # ¿Qué? Mismo candado que ya protegía a SHUT_LLENO del lado del
+            #       residente (_shut_esta_lleno) — ahora también aplica del
+            #       lado del reciclador, y se agrega el simétrico para
+            #       SHUT_LIBRE, que antes no tenía ningún candado.
+            if body.tipo == "SHUT_LLENO" and _shut_esta_lleno(db, id_conjunto):
+                raise HTTPException(status_code=400, detail="El SHUT de este conjunto ya está reportado como lleno.")
+            if body.tipo == "SHUT_LIBRE" and not _shut_esta_lleno(db, id_conjunto):
+                raise HTTPException(status_code=400, detail="El SHUT de este conjunto ya está reportado como libre.")
 
         mensaje = MENSAJES[body.tipo]
         destinatarios = set(residentes_del_conjunto(db, id_conjunto) + admins_del_conjunto(db, id_conjunto))
@@ -312,3 +343,44 @@ def estado_shut(
     if last is None or last.tipo == "SHUT_LIBRE":
         return EstadoShutResponse(lleno=False)
     return EstadoShutResponse(lleno=True, created_at=last.created_at)
+
+
+@router.get("/mi-estado-reciclador", response_model=List[EstadoRecicladorConjuntoResponse])
+def mi_estado_reciclador(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """
+    ¿Qué? Para cada conjunto donde el reciclador en sesión está
+          autorizado, indica si está presente ahí y si el SHUT de ese
+          conjunto está lleno.
+    ¿Para qué? El frontend usa esto para deshabilitar el botón de
+              confirmar dentro del modal de "enviar notificación" ANTES
+              de que el reciclador intente usarlo, con una explicación
+              clara, en vez de que se entere del rechazo recién después
+              de hacer clic (ver POST /enviar para las reglas reales que
+              esto refleja).
+    """
+    if current_user.id_rol != RolId.RECICLADOR:
+        return []
+
+    reciclador_id_stmt = select(Reciclador.id_reciclador).where(Reciclador.id_usuario == current_user.id_usuario)
+    ids_conjuntos = db.execute(
+        select(recicladores_conjuntos.c.id_conjunto_residencial).where(
+            recicladores_conjuntos.c.id_reciclador == reciclador_id_stmt.scalar_subquery()
+        )
+    ).scalars().all()
+
+    resultado = []
+    for id_conjunto in ids_conjuntos:
+        presente = reciclador_esta_presente(db, id_conjunto, current_user.id_usuario)
+        resultado.append(
+            EstadoRecicladorConjuntoResponse(
+                id_conjunto_residencial=id_conjunto,
+                presente=presente,
+                shut_lleno=_shut_esta_lleno(db, id_conjunto),
+                puede_avisar_llegada=not presente
+                and not _aviso_reciente(db, id_conjunto, current_user.id_usuario, "LLEGADA_RECICLADOR", minutos=120),
+            )
+        )
+    return resultado

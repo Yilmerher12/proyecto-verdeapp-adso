@@ -23,7 +23,7 @@ from app.models.tablas_asociacion import recicladores_conjuntos
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.schemas.auditoria_conjunto import NivelDesempeno
-from app.services.notificaciones_helpers import admins_del_conjunto, residentes_del_conjunto
+from app.services.notificaciones_helpers import admins_del_conjunto, reciclador_esta_presente, residentes_del_conjunto
 from app.utils.imagenes import guardar_imagen_subida
 
 # ¿Qué? Carpeta donde quedan las fotos de evidencia, servida luego como
@@ -91,6 +91,19 @@ async def crear_auditoria(
 ) -> AuditoriaConjunto:
     reciclador = _obtener_reciclador(db, id_usuario_reciclador)
     _verificar_autorizado(db, reciclador.id_reciclador, id_conjunto_residencial)
+
+    # ¿Qué? Control de presencia (mismo concepto que ya se aplica a las
+    #       notificaciones del reciclador, ver notificaciones_helpers.py) —
+    #       auditar solo tiene sentido con el reciclador físicamente en el
+    #       conjunto, no en cualquier momento.
+    # ¿Para qué? Antes de esto, un reciclador podía auditar un conjunto sin
+    #           haber avisado su llegada — el único candado era el de 24h
+    #           de abajo, sin relación con si de verdad estaba ahí.
+    if not reciclador_esta_presente(db, id_conjunto_residencial, id_usuario_reciclador):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debes avisar tu llegada a este conjunto antes de poder auditarlo.",
+        )
 
     if _ya_audito_recientemente(db, reciclador.id_reciclador, id_conjunto_residencial):
         raise HTTPException(

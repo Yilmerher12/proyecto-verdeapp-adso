@@ -13,6 +13,30 @@ import uuid
 from fastapi.testclient import TestClient
 
 
+def _autorizar_reciclador(client: TestClient, admin_headers: dict, reciclador_headers: dict, correo_reciclador: str, id_conjunto) -> None:
+    """¿Qué? Invita y acepta — mismo flujo real que seguiría un reciclador
+    de verdad, en vez de insertar la fila de autorización a mano."""
+    invitar = client.post(
+        "/api/v1/reciclador-conjunto/invitar",
+        headers=admin_headers,
+        json={"correo_reciclador": correo_reciclador, "id_conjunto_residencial": str(id_conjunto)},
+    )
+    id_invitacion = invitar.json()["id"]
+    client.post(
+        f"/api/v1/reciclador-conjunto/invitaciones/{id_invitacion}/responder",
+        headers=reciclador_headers,
+        json={"aceptar": True},
+    )
+
+
+def _enviar(client: TestClient, headers: dict, tipo: str, id_conjunto):
+    return client.post(
+        "/api/v1/notificaciones/enviar",
+        headers=headers,
+        json={"tipo": tipo, "id_conjunto_residencial": str(id_conjunto)},
+    )
+
+
 class TestEnviarComoResidente:
     def test_sin_login_devuelve_401(self, client: TestClient):
         response = client.post("/api/v1/notificaciones/enviar", json={"tipo": "SHUT_LLENO"})
@@ -118,6 +142,14 @@ class TestEnviarComoReciclador:
             json={"aceptar": True},
         )
 
+        # ¿Qué? Control de presencia: FINALIZACION_RECICLADOR ahora exige
+        #       haber avisado la llegada antes (ver TestControlDePresencia).
+        client.post(
+            "/api/v1/notificaciones/enviar",
+            headers=reciclador_auth_headers,
+            json={"tipo": "LLEGADA_RECICLADOR", "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial)},
+        )
+
         response = client.post(
             "/api/v1/notificaciones/enviar",
             headers=reciclador_auth_headers,
@@ -203,3 +235,144 @@ class TestEstadoShut:
         response = client.get("/api/v1/notificaciones/estado-shut", headers=reciclador_auth_headers)
         assert response.status_code == 200
         assert response.json()["lleno"] is False
+
+
+class TestControlDePresencia:
+    """
+    ¿Qué? El reciclador solo puede usar SHUT_LLENO/SHUT_LIBRE/
+    FINALIZACION_RECICLADOR mientras está "presente" en el conjunto (avisó
+    su llegada y todavía no avisó que se fue) — y no puede volver a avisar
+    llegada si ya está presente.
+    """
+
+    def test_shut_lleno_rechazado_si_no_ha_avisado_llegada(
+        self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        _autorizar_reciclador(
+            client, admin_conjunto_auth_headers, reciclador_auth_headers,
+            reciclador_test.correo_electronico, conjunto_verificado.id_conjunto_residencial,
+        )
+        response = _enviar(client, reciclador_auth_headers, "SHUT_LLENO", conjunto_verificado.id_conjunto_residencial)
+        assert response.status_code == 400
+        assert "llegada" in response.json()["detail"].lower()
+
+    def test_shut_libre_rechazado_si_no_ha_avisado_llegada(
+        self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        _autorizar_reciclador(
+            client, admin_conjunto_auth_headers, reciclador_auth_headers,
+            reciclador_test.correo_electronico, conjunto_verificado.id_conjunto_residencial,
+        )
+        response = _enviar(client, reciclador_auth_headers, "SHUT_LIBRE", conjunto_verificado.id_conjunto_residencial)
+        assert response.status_code == 400
+
+    def test_finalizacion_rechazada_si_no_ha_avisado_llegada(
+        self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        _autorizar_reciclador(
+            client, admin_conjunto_auth_headers, reciclador_auth_headers,
+            reciclador_test.correo_electronico, conjunto_verificado.id_conjunto_residencial,
+        )
+        response = _enviar(client, reciclador_auth_headers, "FINALIZACION_RECICLADOR", conjunto_verificado.id_conjunto_residencial)
+        assert response.status_code == 400
+
+    def test_no_puede_avisar_llegada_si_ya_esta_presente(
+        self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        _autorizar_reciclador(
+            client, admin_conjunto_auth_headers, reciclador_auth_headers,
+            reciclador_test.correo_electronico, conjunto_verificado.id_conjunto_residencial,
+        )
+        primera = _enviar(client, reciclador_auth_headers, "LLEGADA_RECICLADOR", conjunto_verificado.id_conjunto_residencial)
+        assert primera.status_code == 201
+
+        segunda = _enviar(client, reciclador_auth_headers, "LLEGADA_RECICLADOR", conjunto_verificado.id_conjunto_residencial)
+        assert segunda.status_code == 400
+        assert "presente" in segunda.json()["detail"].lower() or "llegada" in segunda.json()["detail"].lower()
+
+    def test_shut_libre_rechazado_si_ya_esta_libre(
+        self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        """¿Qué? Candado simétrico nuevo — antes SHUT_LIBRE no tenía ningún
+        candado. Sin haber reportado SHUT_LLENO todavía, el estado por
+        defecto ya cuenta como "libre" (mismo criterio que _shut_esta_lleno)."""
+        _autorizar_reciclador(
+            client, admin_conjunto_auth_headers, reciclador_auth_headers,
+            reciclador_test.correo_electronico, conjunto_verificado.id_conjunto_residencial,
+        )
+        _enviar(client, reciclador_auth_headers, "LLEGADA_RECICLADOR", conjunto_verificado.id_conjunto_residencial)
+
+        response = _enviar(client, reciclador_auth_headers, "SHUT_LIBRE", conjunto_verificado.id_conjunto_residencial)
+        assert response.status_code == 400
+        assert "libre" in response.json()["detail"].lower()
+
+    def test_ciclo_completo_llegada_lleno_libre_finalizacion(
+        self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        """¿Qué? El camino feliz completo: llegar, reportar lleno, reportar
+        libre, y finalizar — cada paso debe aceptarse en su momento."""
+        _autorizar_reciclador(
+            client, admin_conjunto_auth_headers, reciclador_auth_headers,
+            reciclador_test.correo_electronico, conjunto_verificado.id_conjunto_residencial,
+        )
+        id_conjunto = conjunto_verificado.id_conjunto_residencial
+
+        assert _enviar(client, reciclador_auth_headers, "LLEGADA_RECICLADOR", id_conjunto).status_code == 201
+        assert _enviar(client, reciclador_auth_headers, "SHUT_LLENO", id_conjunto).status_code == 201
+        assert _enviar(client, reciclador_auth_headers, "SHUT_LIBRE", id_conjunto).status_code == 201
+        assert _enviar(client, reciclador_auth_headers, "FINALIZACION_RECICLADOR", id_conjunto).status_code == 201
+
+        # ¿Qué? Después de finalizar, vuelve a quedar "no presente" — SHUT_LLENO
+        #       ya no debería servir hasta la próxima llegada.
+        despues = _enviar(client, reciclador_auth_headers, "SHUT_LLENO", id_conjunto)
+        assert despues.status_code == 400
+
+    def test_mi_estado_reciclador_refleja_presencia_y_shut(
+        self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        _autorizar_reciclador(
+            client, admin_conjunto_auth_headers, reciclador_auth_headers,
+            reciclador_test.correo_electronico, conjunto_verificado.id_conjunto_residencial,
+        )
+        id_conjunto = str(conjunto_verificado.id_conjunto_residencial)
+
+        antes = client.get("/api/v1/notificaciones/mi-estado-reciclador", headers=reciclador_auth_headers)
+        assert antes.status_code == 200
+        estado_antes = next(e for e in antes.json() if e["id_conjunto_residencial"] == id_conjunto)
+        assert estado_antes["presente"] is False
+        assert estado_antes["shut_lleno"] is False
+        assert estado_antes["puede_avisar_llegada"] is True
+
+        _enviar(client, reciclador_auth_headers, "LLEGADA_RECICLADOR", conjunto_verificado.id_conjunto_residencial)
+        _enviar(client, reciclador_auth_headers, "SHUT_LLENO", conjunto_verificado.id_conjunto_residencial)
+
+        despues = client.get("/api/v1/notificaciones/mi-estado-reciclador", headers=reciclador_auth_headers)
+        estado_despues = next(e for e in despues.json() if e["id_conjunto_residencial"] == id_conjunto)
+        assert estado_despues["presente"] is True
+        assert estado_despues["shut_lleno"] is True
+        # ¿Qué? Estando presente, "Llegué al conjunto" ya no tiene sentido —
+        #       independientemente del candado de 2 horas.
+        assert estado_despues["puede_avisar_llegada"] is False
+
+    def test_puede_avisar_llegada_sigue_en_false_por_el_candado_de_2h_tras_finalizar(
+        self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        """
+        ¿Qué? Aunque el reciclador ya avise que se fue (deja de estar
+              presente), el candado viejo de "no avisar llegada 2 veces en
+              menos de 2 horas" sigue activo — mi-estado-reciclador debe
+              reflejar eso, no solo la presencia.
+        """
+        _autorizar_reciclador(
+            client, admin_conjunto_auth_headers, reciclador_auth_headers,
+            reciclador_test.correo_electronico, conjunto_verificado.id_conjunto_residencial,
+        )
+        id_conjunto = str(conjunto_verificado.id_conjunto_residencial)
+
+        _enviar(client, reciclador_auth_headers, "LLEGADA_RECICLADOR", conjunto_verificado.id_conjunto_residencial)
+        _enviar(client, reciclador_auth_headers, "FINALIZACION_RECICLADOR", conjunto_verificado.id_conjunto_residencial)
+
+        estado = client.get("/api/v1/notificaciones/mi-estado-reciclador", headers=reciclador_auth_headers)
+        estado_conjunto = next(e for e in estado.json() if e["id_conjunto_residencial"] == id_conjunto)
+        assert estado_conjunto["presente"] is False
+        assert estado_conjunto["puede_avisar_llegada"] is False
