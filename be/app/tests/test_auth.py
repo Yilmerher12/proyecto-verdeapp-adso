@@ -3,9 +3,12 @@ Módulo: tests/test_auth.py
 Descripción: Tests de integración para los endpoints de autenticación y usuario de VerdeApp.
 """
 
+import io
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from fastapi.testclient import TestClient
+from PIL import Image
 from sqlalchemy.orm import Session
 
 from app.main import app as fastapi_app
@@ -18,6 +21,17 @@ from app.tests.conftest import (
     TEST_USER_PASSWORD,
     UNVERIFIED_USER_EMAIL,
 )
+
+
+def _generar_imagen_real_perfil() -> bytes:
+    """Imagen PNG real y mínima — guardar_imagen_subida valida el contenido
+    real con Pillow, no solo el Content-Type que manda el cliente."""
+    buffer = io.BytesIO()
+    Image.new("RGB", (2, 2), color="purple").save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+IMAGEN_VALIDA_PERFIL = _generar_imagen_real_perfil()
 
 
 def _payload_residente(
@@ -649,6 +663,80 @@ class TestUpdateProfile:
 
         get_response = client.get(self.URL, headers=reciclador_auth_headers)
         assert get_response.json()["asociacion"] == "INDEPENDIENTE"
+
+
+class TestSubirFotoPerfil:
+    """Tests para POST /api/v1/users/me/foto-perfil (issue #170)."""
+
+    URL = "/api/v1/users/me/foto-perfil"
+
+    def test_sin_login_devuelve_401(self, client: TestClient) -> None:
+        response = client.post(
+            self.URL, files={"archivo": ("foto.png", io.BytesIO(IMAGEN_VALIDA_PERFIL), "image/png")}
+        )
+        assert response.status_code == 401
+
+    def test_residente_sube_foto_y_aparece_en_el_perfil(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        response = client.post(
+            self.URL,
+            headers=auth_headers,
+            files={"archivo": ("foto.png", io.BytesIO(IMAGEN_VALIDA_PERFIL), "image/png")},
+        )
+        assert response.status_code == 201
+        url = response.json()["url"]
+        assert url.startswith("/uploads/perfiles/")
+
+        perfil = client.get("/api/v1/users/me", headers=auth_headers)
+        assert perfil.json()["foto_perfil_url"] == url
+
+    def test_admin_sistema_tambien_puede_subir_foto(
+        self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
+    ) -> None:
+        """A diferencia de PUT /me (403 para este rol), la foto de perfil
+        aplica por igual a los 4 roles."""
+        response = client.post(
+            self.URL,
+            headers=admin_sistema_auth_headers,
+            files={"archivo": ("foto.jpg", io.BytesIO(IMAGEN_VALIDA_PERFIL), "image/jpeg")},
+        )
+        assert response.status_code == 201
+
+    def test_subir_una_segunda_foto_reemplaza_y_borra_la_anterior(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        primera = client.post(
+            self.URL,
+            headers=auth_headers,
+            files={"archivo": ("foto1.png", io.BytesIO(IMAGEN_VALIDA_PERFIL), "image/png")},
+        )
+        url_anterior = primera.json()["url"]
+        ruta_anterior = Path(__file__).parent.parent / "uploads" / "perfiles" / Path(url_anterior).name
+        assert ruta_anterior.exists()
+
+        segunda = client.post(
+            self.URL,
+            headers=auth_headers,
+            files={"archivo": ("foto2.png", io.BytesIO(IMAGEN_VALIDA_PERFIL), "image/png")},
+        )
+        assert segunda.status_code == 201
+        url_nueva = segunda.json()["url"]
+        assert url_nueva != url_anterior
+        assert not ruta_anterior.exists()
+
+        perfil = client.get("/api/v1/users/me", headers=auth_headers)
+        assert perfil.json()["foto_perfil_url"] == url_nueva
+
+    def test_archivo_que_no_es_imagen_devuelve_400(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        response = client.post(
+            self.URL,
+            headers=auth_headers,
+            files={"archivo": ("nota.jpg", io.BytesIO(b"esto no es una imagen"), "image/jpeg")},
+        )
+        assert response.status_code == 400
 
 
 class TestHealthCheck:

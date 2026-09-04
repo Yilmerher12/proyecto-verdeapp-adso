@@ -7,8 +7,9 @@ y preferencias de la aplicación (idioma, etc.).
 (nombre, email, fecha de registro, etc.) ni persistir preferencias como el idioma.
 """
 import re
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.dependencies import get_current_user, get_db
@@ -22,11 +23,17 @@ from app.models.unidad import Unidad
 from app.models.rol import RolId
 from app.schemas.user import UpdateLocaleRequest, UpdateProfileBody, UserResponse
 from app.services.auth_service import update_user_locale
+from app.utils.imagenes import guardar_imagen_subida
 
 router = APIRouter(
     prefix="/api/v1/users",
     tags=["users"],
 )
+
+# ¿Qué? Misma carpeta base que ya usan las evidencias de auditoría y los
+#       adjuntos de comunicados/novedades (be/app/uploads/), cada feature
+#       en su propia subcarpeta.
+CARPETA_FOTOS_PERFIL = Path(__file__).parent.parent / "uploads" / "perfiles"
 
 # ¿Qué? Formato válido de teléfono local (RQF-008): solo dígitos, entre 7
 #       (fijo con indicativo corto) y 10 (celular colombiano) caracteres.
@@ -57,6 +64,9 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
         "conjuntos_administrados": None,
         # Solo aplica al rol Reciclador — ver RolId.RECICLADOR más abajo.
         "mostrar_contacto_directorio": False,
+        # ¿Qué? Vive en Usuario (no en las tablas por rol) — por eso se lee
+        #       directo de current_user, igual para los 4 roles.
+        "foto_perfil_url": current_user.foto_perfil_url,
     }
 
     # Consultas relacionales por estrategia de JOINs explícitos
@@ -169,6 +179,38 @@ def update_profile(
 
     db.commit()
     return {"ok": True}
+
+
+@router.post("/me/foto-perfil", status_code=201, summary="Subir o reemplazar la foto de perfil del usuario en sesión")
+async def subir_foto_perfil(
+    archivo: UploadFile,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    ¿Qué? A diferencia de PUT /me, este endpoint NO revisa el rol — la foto
+          de perfil aplica por igual a los 4 roles, incluyendo el
+          Administrador del Sistema (issue #170).
+    ¿Para qué? Reutiliza guardar_imagen_subida (misma validación real de
+              contenido que ya usan las evidencias de auditoría), en vez de
+              aceptar un link externo que se puede romper solo.
+    ¿Impacto? Si el usuario ya tenía una foto, se borra el archivo viejo del
+              disco DESPUÉS de guardar el commit — para no ir acumulando
+              fotos huérfanas cada vez que alguien cambia la suya. Si el
+              borrado falla (ej. el archivo ya no existe), no se revierte
+              nada — la foto nueva ya quedó guardada, que es lo que importa.
+    """
+    foto_anterior = current_user.foto_perfil_url
+
+    url = await guardar_imagen_subida(archivo, CARPETA_FOTOS_PERFIL, "/uploads/perfiles")
+    current_user.foto_perfil_url = url
+    db.commit()
+
+    if foto_anterior:
+        ruta_anterior = CARPETA_FOTOS_PERFIL / Path(foto_anterior).name
+        ruta_anterior.unlink(missing_ok=True)
+
+    return {"url": url}
 
 
 @router.patch(

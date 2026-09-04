@@ -26,6 +26,7 @@ import { RoleId } from "@/types/auth";
 import { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { onNotificacionesActualizadas } from "@/lib/notificationEvents";
+import { onFotoPerfilActualizada } from "@/lib/profileEvents";
 
 interface AppShellProps {
   children: ReactNode;
@@ -42,6 +43,7 @@ export function AppShell({ children }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [noLeidas, setNoLeidas] = useState(0);
+  const [fotoPerfilUrl, setFotoPerfilUrl] = useState<string | null>(null);
   const { user, accessToken } = useAuth() as any;
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -108,6 +110,27 @@ export function AppShell({ children }: AppShellProps) {
       clearInterval(interval);
       unsubscribe();
     };
+  }, [accessToken]);
+
+  // ¿Qué? Trae la foto de perfil para el círculo de esta tarjeta lateral.
+  // ¿Para qué? Este círculo lee su nombre/rol del token de sesión (JWT,
+  //           `user` de arriba), pero el JWT no lleva la foto — se pide
+  //           aparte a /users/me, igual que ya hace ProfilePage. Sin el
+  //           evento de abajo, subir una foto nueva ahí solo se vería
+  //           reflejado aquí después de recargar la página.
+  useEffect(() => {
+    if (!accessToken) return;
+    const cargarFotoPerfil = () => {
+      fetch(`${API_BASE_URL}/api/v1/users/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+        .then((r) => r.json())
+        .then((d) => setFotoPerfilUrl(d.foto_perfil_url ?? null))
+        .catch(() => {});
+    };
+    cargarFotoPerfil();
+    const unsubscribe = onFotoPerfilActualizada(cargarFotoPerfil);
+    return unsubscribe;
   }, [accessToken]);
 
   const userData = user as any;
@@ -243,9 +266,17 @@ export function AppShell({ children }: AppShellProps) {
         {!collapsed && user && (
           <div className="min-w-0 px-5 py-5 border-b border-white/10">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-white font-bold text-sm select-none">
-                {displayName.charAt(0)}
-              </div>
+              {fotoPerfilUrl ? (
+                <img
+                  src={`${API_BASE_URL}${fotoPerfilUrl}`}
+                  alt={displayName}
+                  className="h-10 w-10 shrink-0 rounded-full object-cover select-none"
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-white font-bold text-sm select-none">
+                  {displayName.charAt(0)}
+                </div>
+              )}
               <div className="min-w-0 flex-1 overflow-hidden">
                 <p className="truncate text-sm font-bold text-white">
                   {displayName}

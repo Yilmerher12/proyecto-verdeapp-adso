@@ -60,6 +60,16 @@ class Usuario(Base):
     intentos_fallidos = Column(Integer, nullable=False, default=0, server_default="0")
     bloqueado_hasta = Column(DateTime(timezone=True), nullable=True)
 
+    # ¿Qué? URL pública de la foto de perfil (ej. "/uploads/perfiles/<archivo>"),
+    #       igual que url_adjunto en comunicados/novedades — no la foto en sí.
+    # ¿Para qué? Vive en Usuario y no en Residente/Reciclador/AdministradorConjunto
+    #           porque es lo único común a los 4 roles, incluyendo el
+    #           Administrador del Sistema (cuyo perfil, aparte de esto, no
+    #           es editable — ver routers/users.py).
+    # ¿Impacto? Nullable: un usuario sin foto sigue mostrando el círculo con
+    #           su inicial en el frontend, como hasta ahora.
+    foto_perfil_url = Column(String(255), nullable=True)
+
     # Puentes del Usuario
     rol = relationship("Role", back_populates="usuarios")
     residente = relationship("Residente", back_populates="usuario", uselist=False)

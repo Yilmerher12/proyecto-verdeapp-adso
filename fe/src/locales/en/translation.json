@@ -901,6 +901,12 @@
     "personalInfoSection": {
       "title": "Personal information"
     },
+    "photo": {
+      "change": "Change profile photo",
+      "invalidType": "The photo must be JPG, PNG, or WEBP.",
+      "tooLarge": "The photo can't be larger than 5 MB.",
+      "uploadError": "Could not upload the photo. Please try again."
+    },
     "notRegistered": "Not registered",
     "emailNote": "Your email can't be changed from here.",
     "validation": {
