@@ -11,6 +11,9 @@ import uuid
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.models.conjunto_residencial import ConjuntoResidencial
+from app.models.localidad import Localidad
+
 
 class TestSolicitarDesvinculacion:
     def test_sin_login_devuelve_401(self, client: TestClient, conjunto_verificado):
@@ -227,6 +230,38 @@ class TestConjuntosSinAdministrador:
         assert response.status_code == 200
         nombres = [c["nombre_conjunto"] for c in response.json()]
         assert conjunto_verificado_sin_admin.nombre_conjunto in nombres
+
+    def test_filtra_por_localidad_antes_de_buscar_por_nombre(
+        self, client: TestClient, db, admin_sistema_auth_headers, conjunto_verificado_sin_admin, localidad_test
+    ):
+        """conjunto_verificado_sin_admin vive en localidad_test (Usaquén). Se
+        crea un segundo conjunto sin administrador en OTRA localidad, para
+        probar que el filtro de verdad distingue entre las dos, no solo que
+        el parámetro existe."""
+        otra_localidad = Localidad(nombre_localidad="Chapinero")
+        db.add(otra_localidad)
+        db.commit()
+        db.refresh(otra_localidad)
+
+        conjunto_en_otra_localidad = ConjuntoResidencial(
+            id_localidad=otra_localidad.id_localidad,
+            nombre_conjunto="CONJUNTO SIN ADMIN EN CHAPINERO",
+            nit="900000000-3",
+            direccion="Calle 63 # 5-5",
+            verificado=True,
+        )
+        db.add(conjunto_en_otra_localidad)
+        db.commit()
+
+        response = client.get(
+            "/api/v1/geography/conjuntos/sin-administrador",
+            headers=admin_sistema_auth_headers,
+            params={"id_localidad": localidad_test.id_localidad},
+        )
+        assert response.status_code == 200
+        nombres = [c["nombre_conjunto"] for c in response.json()]
+        assert conjunto_verificado_sin_admin.nombre_conjunto in nombres
+        assert conjunto_en_otra_localidad.nombre_conjunto not in nombres
 
 
 class TestListarAdministradores:

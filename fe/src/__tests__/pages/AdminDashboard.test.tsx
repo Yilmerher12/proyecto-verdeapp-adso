@@ -378,6 +378,9 @@ describe("AdminDashboard", () => {
           data: [{ id_conjunto_residencial: 9, nombre_conjunto: "RESERVA DE PRUEBA", nombre_localidad: "Usaquén" }],
         });
       }
+      if (url.includes("/geography/localidades")) {
+        return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
+      }
       return Promise.resolve({ data: [] });
     });
     const user = userEvent.setup();
@@ -393,6 +396,9 @@ describe("AdminDashboard", () => {
     const tarjetaAdmin = await screen.findByText("Ana Ríos");
     await user.click(tarjetaAdmin);
 
+    // ¿Qué? El buscador de conjuntos solo aparece después de elegir una
+    //       localidad (issue de hoy) — antes se podía buscar sin acotar.
+    await user.selectOptions(screen.getByRole("combobox", { name: "Localidad" }), "1");
     await user.type(screen.getByPlaceholderText("Escribe el nombre de tu conjunto..."), "RESERVA");
     const opcionConjunto = await screen.findByText("RESERVA DE PRUEBA — Usaquén");
     await user.click(opcionConjunto);

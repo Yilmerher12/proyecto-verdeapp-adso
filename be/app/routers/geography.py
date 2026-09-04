@@ -94,6 +94,7 @@ def listar_todos_los_conjuntos_verificados(
 )
 def listar_conjuntos_sin_administrador(
     search: Optional[str] = Query(None, description="Filtra por nombre de conjunto (contiene, sin distinguir mayúsculas)"),
+    id_localidad: Optional[int] = Query(None, description="Filtra por localidad, antes de buscar por nombre"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT_CONJUNTOS),
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -105,7 +106,10 @@ def listar_conjuntos_sin_administrador(
     ¿Para qué? Solo debe poder elegir conjuntos que no tengan ya un
               administrador activo (RN-003). `search` + `limit` acotan el
               resultado para que el combobox de AsignarConjuntoAdicionalForm
-              no reciba miles de conjuntos de una sola vez.
+              no reciba miles de conjuntos de una sola vez. `id_localidad`
+              es el mismo filtro que ya tiene /conjuntos/todos — antes este
+              endpoint no lo tenía, así que había que buscar a mano entre
+              miles de conjuntos reales sin poder acotar por localidad.
     """
     if current_user.id_rol != RolId.ADMIN_SISTEMA:
         raise HTTPException(
@@ -129,6 +133,8 @@ def listar_conjuntos_sin_administrador(
             ConjuntoResidencial.id_conjunto_residencial.not_in(ids_con_administrador_activo),
         )
     )
+    if id_localidad:
+        stmt = stmt.where(ConjuntoResidencial.id_localidad == id_localidad)
     if search:
         stmt = stmt.where(ConjuntoResidencial.nombre_conjunto.ilike(f"%{search}%"))
     stmt = stmt.order_by(Localidad.nombre_localidad, ConjuntoResidencial.nombre_conjunto).limit(limit)
