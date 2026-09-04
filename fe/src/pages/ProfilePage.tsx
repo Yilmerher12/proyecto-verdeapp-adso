@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
@@ -12,12 +12,15 @@ import {
   Users as UsersIcon,
   Pencil,
   CheckCircle2,
+  Camera,
+  Loader2,
   Eye,
   EyeOff,
   X,
 } from "lucide-react";
 import { RoleId } from "@/types/auth";
 import { ROLE_THEME } from "@/config/roleTheme";
+import { notificarFotoPerfilActualizada } from "@/lib/profileEvents";
 
 interface PerfilData {
   id: number;
@@ -34,7 +37,17 @@ interface PerfilData {
   conjuntos_administrados: string[] | null;
   // ¿Qué? Solo aplica al rol Reciclador — ver ProfilePage/DirectorioPage.
   mostrar_contacto_directorio: boolean;
+  // ¿Qué? Ruta relativa (/uploads/perfiles/...) o null si nunca ha subido
+  //       una — en ese caso se sigue mostrando el círculo con la inicial.
+  foto_perfil_url: string | null;
 }
+
+// ¿Qué? Misma lista y mismo tope que ya valida el backend
+//       (be/app/utils/imagenes.py) — se revisa aquí también para avisar al
+//       instante, sin esperar el viaje de ida y vuelta con un archivo que
+//       de todas formas se va a rechazar.
+const TIPOS_IMAGEN_PERMITIDOS = ["image/jpeg", "image/png", "image/webp"];
+const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024;
 
 function InfoField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
@@ -64,6 +77,10 @@ export function ProfilePage() {
   const [exito, setExito] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [errorFoto, setErrorFoto] = useState<string | null>(null);
+  const inputFotoRef = useRef<HTMLInputElement>(null);
+
   // ¿Qué? Mismo formato que valida el backend (RQF-008): solo dígitos,
   //       entre 7 (fijo) y 10 (celular) caracteres.
   const TELEFONO_REGEX = /^\d{7,10}$/;
@@ -80,6 +97,41 @@ export function ProfilePage() {
   };
 
   useEffect(() => { cargarPerfil(); }, [accessToken]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ¿Qué? Sube la foto de perfil — disponible para los 4 roles (a
+  //       diferencia de nombre/teléfono, que el Admin del Sistema no puede
+  //       editar, ver `canEdit` más abajo).
+  // ¿Para qué? Valida tipo/tamaño en el navegador ANTES de subir, igual que
+  //           ya hace ImagenAdjuntaField para comunicados/novedades — evita
+  //           el viaje de ida y vuelta con un archivo que el backend de
+  //           todas formas va a rechazar.
+  const subirFoto = async (archivo: File | undefined) => {
+    if (!archivo) return;
+    setErrorFoto(null);
+
+    if (!TIPOS_IMAGEN_PERMITIDOS.includes(archivo.type)) {
+      setErrorFoto(t("profile.photo.invalidType"));
+      return;
+    }
+    if (archivo.size > TAMANO_MAXIMO_BYTES) {
+      setErrorFoto(t("profile.photo.tooLarge"));
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    setSubiendoFoto(true);
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/users/me/foto-perfil`, formData, { headers });
+      cargarPerfil();
+      notificarFotoPerfilActualizada();
+    } catch {
+      setErrorFoto(t("profile.photo.uploadError"));
+    } finally {
+      setSubiendoFoto(false);
+      if (inputFotoRef.current) inputFotoRef.current.value = "";
+    }
+  };
 
   const iniciarEdicion = () => {
     if (!perfil) return;
@@ -153,6 +205,7 @@ export function ProfilePage() {
   const nombreCompleto = `${perfil.first_name} ${perfil.last_name}`.trim();
   const inicial = perfil.first_name?.charAt(0)?.toUpperCase() || "U";
   const canEdit = perfil.role_id !== 1;
+  const urlFotoPerfil = perfil.foto_perfil_url ? `${API_BASE_URL}${perfil.foto_perfil_url}` : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
@@ -173,10 +226,41 @@ export function ProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* LEFT — Avatar + rol + datos de contexto (2/5) */}
         <div className="lg:col-span-2 lg:self-start bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8 flex flex-col items-center text-center">
-          {/* Avatar */}
-          <div className="h-20 w-20 rounded-full bg-green-700 flex items-center justify-center text-white text-3xl font-bold mb-4 select-none">
-            {inicial}
+          {/* Avatar — foto real si existe, si no el círculo con la inicial de siempre. */}
+          <div className="relative mb-4">
+            {urlFotoPerfil ? (
+              <img
+                src={urlFotoPerfil}
+                alt={nombreCompleto}
+                className="h-20 w-20 rounded-full object-cover select-none"
+              />
+            ) : (
+              <div className="h-20 w-20 rounded-full bg-green-700 flex items-center justify-center text-white text-3xl font-bold select-none">
+                {inicial}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => inputFotoRef.current?.click()}
+              disabled={subiendoFoto}
+              aria-label={t("profile.photo.change")}
+              title={t("profile.photo.change")}
+              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#132a1c]"
+            >
+              {subiendoFoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+            </button>
+            <input
+              ref={inputFotoRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              disabled={subiendoFoto}
+              onChange={(e) => subirFoto(e.target.files?.[0])}
+            />
           </div>
+          {errorFoto && (
+            <p className="-mt-2 mb-4 max-w-[16rem] text-xs text-red-600 dark:text-red-400">{errorFoto}</p>
+          )}
 
           {/* Nombre completo */}
           <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-snug">
