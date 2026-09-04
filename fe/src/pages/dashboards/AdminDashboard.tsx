@@ -321,7 +321,7 @@ export function AdminDashboard() {
                   key={id}
                   type="button"
                   onClick={() => cambiarTab(id)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     tab === id
                       ? "bg-green-700 text-white shadow-sm"
                       : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
@@ -349,7 +349,7 @@ export function AdminDashboard() {
                 <select
                   value={localidadId}
                   onChange={(e) => cambiarLocalidad(e.target.value === "" ? "" : Number(e.target.value))}
-                  className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
+                  className="cursor-pointer rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
                 >
                   <option value="">{t("directorio.allLocalities")}</option>
                   {localidades.map((l) => (
@@ -487,7 +487,7 @@ export function AdminDashboard() {
                 type="button"
                 onClick={() => setPagina((p) => Math.max(0, p - 1))}
                 disabled={pagina === 0}
-                className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+                className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
                 aria-label={t("dashboards.admin.usersSection.pagination.prev")}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -499,7 +499,7 @@ export function AdminDashboard() {
                 type="button"
                 onClick={() => setPagina((p) => (p + 1 < totalPaginas ? p + 1 : p))}
                 disabled={pagina + 1 >= totalPaginas}
-                className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+                className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
                 aria-label={t("dashboards.admin.usersSection.pagination.next")}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -531,7 +531,7 @@ export function AdminDashboard() {
           <button
             type="button"
             onClick={() => setMostrarModalInvitar(true)}
-            className="self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+            className="cursor-pointer self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
           >
             {t("dashboards.admin.inviteSection.show")}
           </button>
@@ -546,7 +546,7 @@ export function AdminDashboard() {
           <button
             type="button"
             onClick={() => setMostrarModalAsignar(true)}
-            className="self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+            className="cursor-pointer self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
           >
             {t("desvinculacion.asignarAdicional.openButton")}
           </button>
@@ -593,7 +593,7 @@ export function AdminDashboard() {
               <button
                 type="button"
                 onClick={() => setConfirmando(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
               >
                 {t("common.cancel")}
               </button>

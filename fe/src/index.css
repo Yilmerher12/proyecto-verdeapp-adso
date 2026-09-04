@@ -125,6 +125,17 @@
   .dark *::after {
     border-color: theme(--color-gray-700);
   }
+
+  /* ¿Qué? El ícono de calendario dentro de <input type="date"> no muestra
+     cursor de mano por defecto en navegadores basados en Chromium.
+     ¿Para qué? Regla global — arregla todos los campos de fecha del
+     proyecto de una sola vez (comunicados, novedades, y cualquiera que se
+     agregue después), sin repetir esto por cada formulario.
+     ¿Impacto? Firefox no expone este pseudo-elemento — ahí simplemente no
+     aplica, sin romper nada. */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+  }
 }
 
 /* ¿Qué? Animación de entrada (fade + slide hacia arriba) para el Hero del

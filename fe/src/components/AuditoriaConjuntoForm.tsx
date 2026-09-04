@@ -165,7 +165,7 @@ export function AuditoriaConjuntoForm({
             <select
               value={idConjunto}
               onChange={(e) => setIdConjunto(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
             >
               <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
               {conjuntos.map((c) => (
@@ -203,7 +203,7 @@ export function AuditoriaConjuntoForm({
                   role="radio"
                   aria-checked={seleccionado}
                   onClick={() => setNivel(n)}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-xs font-semibold transition-all ${
+                  className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-xs font-semibold transition-all ${
                     seleccionado ? claseSeleccionado : `border-transparent opacity-70 hover:opacity-100 ${claseBadge}`
                   }`}
                 >
@@ -260,7 +260,7 @@ export function AuditoriaConjuntoForm({
                     type="button"
                     onClick={() => quitarFoto(i)}
                     aria-label={t("dashboards.reciclador.auditoria.evidenciaQuitar")}
-                    className="absolute right-1 top-1 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80"
+                    className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -302,7 +302,7 @@ export function AuditoriaConjuntoForm({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+            className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
           >
             {t("common.cancel")}
           </button>
@@ -310,7 +310,7 @@ export function AuditoriaConjuntoForm({
             type="button"
             onClick={enviar}
             disabled={enviando || formularioIncompleto}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
+            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {enviando && <Loader2 className="h-4 w-4 animate-spin" />}
             {enviando

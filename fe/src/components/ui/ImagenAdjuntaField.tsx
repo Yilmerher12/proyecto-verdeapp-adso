@@ -90,7 +90,7 @@ export function ImagenAdjuntaField({ label, value, onChange, token }: ImagenAdju
           <button
             type="button"
             onClick={quitar}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
           >
             <X className="h-3.5 w-3.5" />
             {t("imagenAdjunta.quitar")}

@@ -370,7 +370,7 @@ export function RegisterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.locality")}</label>
-                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none">
+                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none">
                       <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
                       {localidades.map(loc => (
                         <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
@@ -395,7 +395,7 @@ export function RegisterPage() {
                 <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-[#2a4d34]">
                   <div>
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitType")}</label>
-                    <select name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116]">
+                    <select name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-[#0d2116]">
                       <option value="TORRE">{t("auth.register.fields.unitTypeTower")}</option>
                       <option value="INTERIOR">{t("auth.register.fields.unitTypeInterior")}</option>
                       <option value="BLOQUE">{t("auth.register.fields.unitTypeBlock")}</option>
@@ -449,7 +449,7 @@ export function RegisterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.workLocality")}</label>
-                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none">
+                    <select name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 outline-none">
                       <option value="">{t("auth.register.fields.selectYourLocality")}</option>
                       {localidades.map(loc => (
                         <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
@@ -539,7 +539,7 @@ export function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setDocumentoAbierto("terminos")}
-                  className="text-green-600 hover:underline font-semibold"
+                  className="cursor-pointer text-green-600 hover:underline font-semibold"
                 >
                   {t("auth.register.termsLinkLabel")}
                 </button>
@@ -547,7 +547,7 @@ export function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setDocumentoAbierto("privacidad")}
-                  className="text-green-600 hover:underline font-semibold"
+                  className="cursor-pointer text-green-600 hover:underline font-semibold"
                 >
                   {t("auth.register.privacyLinkLabel")}
                 </button>

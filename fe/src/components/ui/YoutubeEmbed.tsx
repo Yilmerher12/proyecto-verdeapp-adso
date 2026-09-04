@@ -64,7 +64,7 @@ export function YoutubeEmbed({ url, titulo }: YoutubeEmbedProps) {
           <button
             type="button"
             onClick={() => setReproduciendo(true)}
-            className="group relative h-full w-full"
+            className="group relative h-full w-full cursor-pointer"
             aria-label={`Reproducir video: ${titulo}`}
           >
             <img

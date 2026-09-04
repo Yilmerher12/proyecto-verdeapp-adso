@@ -102,7 +102,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
       {onClose && (
         <button
           onClick={onClose}
-          className={`shrink-0 transition-colors ${closeClasses[type]}`}
+          className={`shrink-0 cursor-pointer transition-colors ${closeClasses[type]}`}
           aria-label="Cerrar alerta"
         >
           {/* ¿Qué? Ícono X decorativo — la acción ya está descrita por aria-label del botón. */}

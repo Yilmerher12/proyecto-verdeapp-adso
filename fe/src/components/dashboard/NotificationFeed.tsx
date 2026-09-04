@@ -102,12 +102,12 @@ export function NotificationFeed({
         </div>
         <div className="flex items-center gap-3">
           {noLeidas > 0 && (
-            <button onClick={onMarkAllRead} className="text-xs font-medium text-green-700 hover:text-green-600 dark:text-green-500 dark:hover:text-green-400">
+            <button onClick={onMarkAllRead} className="cursor-pointer text-xs font-medium text-green-700 hover:text-green-600 dark:text-green-500 dark:hover:text-green-400">
               {t("notificationFeed.markAllRead")}
             </button>
           )}
           {notifications.some((n) => n.leida) && (
-            <button onClick={onClearRead} className="text-xs font-medium text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400">
+            <button onClick={onClearRead} className="cursor-pointer text-xs font-medium text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400">
               {t("notificationFeed.clearRead")}
             </button>
           )}
@@ -155,7 +155,7 @@ export function NotificationFeed({
           {notifications.length > 5 && (
             <button
               onClick={() => setExpandido((v) => !v)}
-              className="w-full py-2.5 text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 border-t border-gray-50 dark:border-[#2a4d34] transition-colors"
+              className="w-full cursor-pointer py-2.5 text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 border-t border-gray-50 dark:border-[#2a4d34] transition-colors"
             >
               {expandido ? t("notificationFeed.showLess") : t("notificationFeed.showMore", { count: notifications.length - 5 })}
             </button>

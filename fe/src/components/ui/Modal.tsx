@@ -126,7 +126,7 @@ export function Modal({
 
   return (
     <div
-      className={`fixed inset-0 ${backdropZIndex} flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm sm:items-center sm:p-6`}
+      className={`fixed inset-0 ${backdropZIndex} flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm sm:items-center sm:p-6 ${closeOnBackdrop ? "cursor-pointer" : ""}`}
       onClick={closeOnBackdrop ? onClose : undefined}
       aria-hidden="false"
     >
@@ -142,7 +142,7 @@ export function Modal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 rounded-lg p-1.5 text-gray-400 transition-colors
+          className="absolute right-4 top-4 z-10 cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors
             hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-[#2a4d34] dark:hover:text-gray-300
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
           aria-label={t("common.close")}

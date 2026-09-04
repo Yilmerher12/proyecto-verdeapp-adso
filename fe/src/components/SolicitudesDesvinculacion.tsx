@@ -130,7 +130,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
                     <button
                       onClick={() => confirmarRechazo(s.id)}
                       disabled={procesandoId === s.id || !motivoRechazo.trim()}
-                      className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-500 disabled:opacity-50"
+                      className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <XCircle className="h-3.5 w-3.5" />
                       {t("desvinculacion.adminSistema.rejectModal.confirm")}
@@ -140,7 +140,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
                         setRechazandoId(null);
                         setMotivoRechazo("");
                       }}
-                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:bg-transparent dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                      className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:bg-transparent dark:text-gray-300 dark:hover:bg-[#2a4d34]"
                     >
                       {t("common.cancel")}
                     </button>
@@ -151,7 +151,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
                   <button
                     onClick={() => aprobar(s.id)}
                     disabled={procesandoId === s.id}
-                    className="flex items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t("desvinculacion.adminSistema.approve")}
@@ -159,7 +159,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
                   <button
                     onClick={() => setRechazandoId(s.id)}
                     disabled={procesandoId === s.id}
-                    className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
                   >
                     <XCircle className="h-3.5 w-3.5" />
                     {t("desvinculacion.adminSistema.reject")}

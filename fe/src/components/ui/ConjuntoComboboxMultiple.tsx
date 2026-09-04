@@ -51,7 +51,7 @@ export function ConjuntoComboboxMultiple({
               <button
                 type="button"
                 onClick={() => quitar(c.id_conjunto_residencial)}
-                className="rounded-full hover:bg-green-100 dark:hover:bg-green-900/50"
+                className="cursor-pointer rounded-full hover:bg-green-100 dark:hover:bg-green-900/50"
                 aria-label={`Quitar ${c.nombre_conjunto}`}
               >
                 <X className="h-3 w-3" aria-hidden="true" />
