@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Building2, Search, UserCog } from "lucide-react";
+import axios from "axios";
+import { Building2, MapPin, Search, UserCog } from "lucide-react";
+import { API_BASE_URL } from "@/api/axios";
 import {
   buscarAdministradoresConjunto,
   listarConjuntosSinAdministrador,
@@ -8,6 +10,11 @@ import {
   type AdministradorConjuntoResumen,
 } from "@/lib/adminConjuntoApi";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
+
+interface Localidad {
+  id_localidad: number;
+  nombre_localidad: string;
+}
 
 interface AsignarConjuntoAdicionalFormProps {
   // ¿Qué? El token de sesión del Administrador del Sistema.
@@ -35,10 +42,21 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
 
   const [seleccionado, setSeleccionado] = useState<AdministradorConjuntoResumen | null>(null);
   const [conjuntoElegido, setConjuntoElegido] = useState<ConjuntoOption | null>(null);
+  const [localidades, setLocalidades] = useState<Localidad[]>([]);
+  const [localidadId, setLocalidadId] = useState<number | "">("");
 
   const [asignando, setAsignando] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // ¿Qué? Localidades para el selector — mismo endpoint y mismo patrón que
+  //       ya usa InvitarAdminConjuntoForm.
+  useEffect(() => {
+    axios
+      .get(`${API_BASE_URL}/api/v1/geography/localidades`)
+      .then((res) => setLocalidades(res.data))
+      .catch(() => {});
+  }, []);
 
   const buscar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,17 +74,21 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
     }
   };
 
-  // ¿Qué? Busca conjuntos sin administrador que coincidan con `query`.
+  // ¿Qué? Busca conjuntos sin administrador que coincidan con `query`,
+  //       ACOTADOS a la localidad ya elegida.
   // ¿Para qué? Antes se cargaba la lista completa de conjuntos sin
   //           administrador una sola vez por administrador seleccionado —
   //           con miles de conjuntos reales registrados eso ya no escala
-  //           (ver ConjuntoCombobox).
+  //           (ver ConjuntoCombobox). Elegir la localidad primero acota la
+  //           búsqueda a un puñado de opciones, igual que ya hace
+  //           InvitarAdminConjuntoForm.
   const fetchConjuntosDisponibles = (query: string): Promise<ConjuntoOption[]> =>
-    listarConjuntosSinAdministrador(token, query, 20).catch(() => []);
+    listarConjuntosSinAdministrador(token, query, 20, localidadId || undefined).catch(() => []);
 
   const seleccionarAdministrador = (admin: AdministradorConjuntoResumen) => {
     setSeleccionado(admin);
     setConjuntoElegido(null);
+    setLocalidadId("");
     setMensajeExito(null);
     setError(null);
   };
@@ -176,37 +198,66 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
 
       {seleccionado && (
         <div className="border-t border-gray-100 dark:border-[#2a4d34] pt-4">
-          <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-            <Building2 className="w-4 h-4" />
-            {t("desvinculacion.asignarAdicional.selectConjuntoLabel")}
-          </label>
-
           {mensajeExito && (
             <p className="mb-3 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg dark:bg-green-900/20 dark:text-green-400">
               {mensajeExito}
             </p>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="flex-1">
-              <ConjuntoCombobox
-                value={conjuntoElegido}
-                onChange={setConjuntoElegido}
-                fetchOptions={fetchConjuntosDisponibles}
-                placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
-                emptyLabel={t("desvinculacion.asignarAdicional.noConjuntosDisponibles")}
-                loadingLabel={t("common.loading")}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={asignar}
-              disabled={!conjuntoElegido || asignando}
-              className="rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50 h-fit mt-1"
+          <div className="mb-3">
+            <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+              <MapPin className="w-4 h-4" />
+              {t("desvinculacion.asignarAdicional.localityLabel")}
+            </label>
+            <select
+              aria-label={t("desvinculacion.asignarAdicional.localityLabel")}
+              value={localidadId}
+              onChange={(e) => {
+                setLocalidadId(e.target.value === "" ? "" : Number(e.target.value));
+                setConjuntoElegido(null);
+              }}
+              className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
             >
-              {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
-            </button>
+              <option value="">{t("desvinculacion.asignarAdicional.localitySelectPlaceholder")}</option>
+              {localidades.map((l) => (
+                <option key={l.id_localidad} value={l.id_localidad}>
+                  {l.nombre_localidad}
+                </option>
+              ))}
+            </select>
           </div>
+
+          <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+            <Building2 className="w-4 h-4" />
+            {t("desvinculacion.asignarAdicional.selectConjuntoLabel")}
+          </label>
+
+          {localidadId === "" ? (
+            <p className="rounded-xl border border-dashed border-gray-300 px-3 py-2.5 text-xs text-gray-500 dark:border-[#2a4d34] dark:text-gray-400">
+              {t("desvinculacion.asignarAdicional.selectLocalityFirst")}
+            </p>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1">
+                <ConjuntoCombobox
+                  value={conjuntoElegido}
+                  onChange={setConjuntoElegido}
+                  fetchOptions={fetchConjuntosDisponibles}
+                  placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
+                  emptyLabel={t("desvinculacion.asignarAdicional.noConjuntosDisponibles")}
+                  loadingLabel={t("common.loading")}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={asignar}
+                disabled={!conjuntoElegido || asignando}
+                className="rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:opacity-50 h-fit mt-1"
+              >
+                {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

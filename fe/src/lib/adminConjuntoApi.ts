@@ -121,13 +121,16 @@ export async function resolverSolicitudDesvinculacion(
 // ¿Qué? RQF-016 (HU-024, CA-024.2): conjuntos verificados sin ningún administrador activo hoy.
 // ¿Para qué? `search` + `limit` acotan el resultado — con miles de conjuntos
 //           reales registrados, este endpoint ya no devuelve todo de una vez.
+//           `idLocalidad` acota primero por localidad, igual que ya hace
+//           el endpoint hermano /conjuntos/todos (InvitarAdminConjuntoForm).
 export async function listarConjuntosSinAdministrador(
     token: string,
     search: string = "",
-    limit: number = 20
+    limit: number = 20,
+    idLocalidad?: number
 ): Promise<ConjuntoSinAdministrador[]> {
     const { data } = await axios.get(`${API_BASE_URL}/api/v1/geography/conjuntos/sin-administrador`, {
-        params: { search: search || undefined, limit },
+        params: { search: search || undefined, limit, id_localidad: idLocalidad || undefined },
         headers: { Authorization: `Bearer ${token}` },
     });
     return data;
