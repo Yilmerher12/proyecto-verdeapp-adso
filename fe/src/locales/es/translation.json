@@ -932,6 +932,8 @@
       "recyclers": "Recicladores"
     },
     "allLocalities": "Todas las localidades",
+    "ownLocality": "Tu localidad: {{localidad}}",
+    "ownLocalityUnknown": "No se pudo detectar tu localidad",
     "emptyRecyclers": "No hay recicladores registrados en esta localidad.",
     "emptyPoints": "No hay puntos de acopio registrados en esta localidad.",
     "call": "Llamar",

@@ -48,7 +48,14 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
 
   const [tab, setTab] = useState<TabId>(soloAcopio ? "puntos" : "recicladores");
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
-  const [localidadId, setLocalidadId] = useState<number | "">("");
+  // ¿Qué? La pestaña Recicladores queda fija a la localidad del residente
+  //       (HU-006/CA-006.6) — por eso tiene su propio estado, separado del
+  //       de Puntos de Acopio, que sigue siendo un filtro libre.
+  // ¿Impacto? Cambiar de pestaña no se pisa entre sí: elegir otra localidad
+  //           en Puntos de Acopio no afecta lo que se ve en Recicladores.
+  const [localidadPropiaId, setLocalidadPropiaId] = useState<number | "">("");
+  const [localidadPropiaNombre, setLocalidadPropiaNombre] = useState<string | null>(null);
+  const [localidadPuntosId, setLocalidadPuntosId] = useState<number | "">("");
   const [localidadCargada, setLocalidadCargada] = useState(false);
   const [recicladores, setRecicladores] = useState<Reciclador[]>([]);
   const [puntos, setPuntos] = useState<PuntoAcopio[]>([]);
@@ -79,7 +86,14 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
         const nombreLocalidad: string | null = resPerfil.data.nombre_localidad;
         if (nombreLocalidad) {
           const match = lista.find((l) => l.nombre_localidad === nombreLocalidad);
-          if (match) setLocalidadId(match.id_localidad);
+          if (match) {
+            setLocalidadPropiaId(match.id_localidad);
+            setLocalidadPropiaNombre(match.nombre_localidad);
+            // ¿Qué? Puntos de Acopio arranca preseleccionado en la misma
+            //       localidad por conveniencia, pero a diferencia de
+            //       Recicladores, aquí sí se puede cambiar libremente.
+            setLocalidadPuntosId(match.id_localidad);
+          }
         }
       })
       .catch(() => {})
@@ -93,7 +107,8 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
     setCargandoDirectorio(true);
     setErrorDirectorio(false);
 
-    const params = localidadId ? { localidad_id: localidadId } : {};
+    const localidadActiva = tab === "recicladores" ? localidadPropiaId : localidadPuntosId;
+    const params = localidadActiva ? { localidad_id: localidadActiva } : {};
 
     // ¿Qué? Antes el catch ponía la lista en [] — se veía exactamente igual
     //       que "no hay resultados para este filtro" (un caso real y válido).
@@ -119,7 +134,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
         .finally(() => setCargandoDirectorio(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, localidadId, localidadCargada, accessToken]);
+  }, [tab, localidadPropiaId, localidadPuntosId, localidadCargada, accessToken]);
 
   const waLink = (tel: string) => `https://wa.me/57${tel.replace(/\D/g, "")}`;
   const callLink = (tel: string) => `tel:+57${tel.replace(/\D/g, "")}`;
@@ -164,23 +179,36 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           </div>
         )}
 
-        <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 shrink-0 text-green-600" />
-          <select
-            value={localidadId}
-            onChange={(e) =>
-              setLocalidadId(e.target.value === "" ? "" : Number(e.target.value))
-            }
-            className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
-          >
-            <option value="">{t("directorio.allLocalities")}</option>
-            {localidades.map((l) => (
-              <option key={l.id_localidad} value={l.id_localidad}>
-                {l.nombre_localidad}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* ¿Qué? La pestaña Recicladores no deja elegir localidad — queda
+            fija a la del residente (HU-006/CA-006.6), así que en vez de un
+            <select> (que sugeriría que sí se puede cambiar) se muestra un
+            indicador fijo. Puntos de Acopio sigue con el filtro libre. */}
+        {tab === "recicladores" && !soloAcopio ? (
+          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200">
+            <MapPin className="h-4 w-4 shrink-0 text-green-600" />
+            {localidadPropiaNombre
+              ? t("directorio.ownLocality", { localidad: localidadPropiaNombre })
+              : t("directorio.ownLocalityUnknown")}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 shrink-0 text-green-600" />
+            <select
+              value={localidadPuntosId}
+              onChange={(e) =>
+                setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value))
+              }
+              className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
+            >
+              <option value="">{t("directorio.allLocalities")}</option>
+              {localidades.map((l) => (
+                <option key={l.id_localidad} value={l.id_localidad}>
+                  {l.nombre_localidad}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* ¿Qué? Aviso informativo, distinto según la pestaña activa.

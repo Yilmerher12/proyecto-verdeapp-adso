@@ -564,6 +564,18 @@ class TestGetMe:
         assert data["role_id"] == 2
         assert "password" not in data
 
+    # ¿Qué? Antes esta consulta no cruzaba con Localidad para el Residente —
+    #       nombre_localidad quedaba siempre en None, y el Directorio nunca
+    #       lograba preseleccionar su localidad (issue del filtro de
+    #       Recicladores). test_user vive en un conjunto de "Usaquén"
+    #       (ver fixture localidad_test).
+    def test_get_me_incluye_localidad_del_conjunto(
+        self, client: TestClient, auth_headers: dict[str, str], test_user: object
+    ) -> None:
+        response = client.get(self.URL, headers=auth_headers)
+        assert response.status_code == 200
+        assert response.json()["nombre_localidad"] == "Usaquén"
+
     def test_get_me_no_auth(self, client: TestClient) -> None:
         response = client.get(self.URL)
         assert response.status_code == 401

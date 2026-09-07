@@ -5,9 +5,13 @@ from typing import List, Optional
 
 from app.dependencies import get_db, get_current_user
 from app.models.usuario import Usuario
+from app.models.residente import Residente
+from app.models.unidad import Unidad
+from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.reciclador import Reciclador
 from app.models.punto_acopio import PuntoAcopio
 from app.models.localidad import Localidad
+from app.models.rol import RolId
 from app.schemas.directorio import RecicladorDirectorioResponse, PuntoAcopioDirectorioResponse
 
 router = APIRouter(
@@ -16,12 +20,32 @@ router = APIRouter(
 )
 
 
+def _localidad_del_residente(db: Session, id_usuario) -> Optional[int]:
+    """
+    ¿Qué? Localidad del conjunto donde vive el Residente autenticado.
+    ¿Para qué? El filtro de localidad en la pestaña de Recicladores queda
+              fijo a la propia (HU-006/CA-006.6) — no basta con que el
+              frontend lo bloquee, si alguien llamara este endpoint
+              directamente con otra localidad igual quedaría restringido aquí.
+    """
+    stmt = (
+        select(ConjuntoResidencial.id_localidad)
+        .join(Unidad, Unidad.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial)
+        .join(Residente, Residente.id_unidad == Unidad.id_unidad)
+        .where(Residente.id_usuario == id_usuario)
+    )
+    return db.execute(stmt).scalar_one_or_none()
+
+
 @router.get("/recicladores", response_model=List[RecicladorDirectorioResponse])
 def listar_recicladores(
     localidad_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
-    _: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(get_current_user),
 ):
+    if current_user.id_rol == RolId.RESIDENTE:
+        localidad_id = _localidad_del_residente(db, current_user.id_usuario)
+
     stmt = (
         select(
             Reciclador.id_reciclador,

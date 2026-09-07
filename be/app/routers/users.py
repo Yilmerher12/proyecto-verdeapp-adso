@@ -71,6 +71,12 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
 
     # Consultas relacionales por estrategia de JOINs explícitos
     if current_user.id_rol == RolId.RESIDENTE:
+        # ¿Qué? Antes esta consulta no cruzaba con Localidad — nombre_localidad
+        #       quedaba siempre en None para el Residente (sí funcionaba para
+        #       Reciclador, más abajo). Como resultado, el Directorio nunca
+        #       lograba preseleccionar la localidad del residente.
+        # ¿Impacto? Necesario para poder restringir el filtro de la pestaña
+        #           Recicladores a la localidad propia (issue del Directorio).
         stmt = (
             select(
                 Residente.nombre,
@@ -78,10 +84,12 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
                 Residente.numero_telefonico,
                 Unidad.torre,
                 Unidad.apto,
-                ConjuntoResidencial.nombre_conjunto
+                ConjuntoResidencial.nombre_conjunto,
+                Localidad.nombre_localidad,
             )
             .join(Unidad, Residente.id_unidad == Unidad.id_unidad)
             .join(ConjuntoResidencial, Unidad.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial)
+            .join(Localidad, ConjuntoResidencial.id_localidad == Localidad.id_localidad)
             .where(Residente.id_usuario == current_user.id_usuario)
         )
         res = db.execute(stmt).first()
@@ -93,6 +101,7 @@ def read_users_me(current_user: Usuario = Depends(get_current_user), db: Session
             payload["nombre_conjunto"] = res.nombre_conjunto
             payload["torre"] = res.torre
             payload["apto"] = res.apto
+            payload["nombre_localidad"] = res.nombre_localidad
 
     elif current_user.id_rol == RolId.RECICLADOR:
         stmt = (
