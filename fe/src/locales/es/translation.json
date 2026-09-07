@@ -744,9 +744,7 @@
         "errorDefault": "No se pudo regenerar el código. Intenta de nuevo."
       },
       "editForm": {
-        "name": "Nombre del conjunto",
         "nit": "NIT (opcional)",
-        "address": "Dirección",
         "successMessage": "Conjunto actualizado correctamente.",
         "errorMessage": "No se pudo guardar el cambio. Intenta de nuevo."
       },

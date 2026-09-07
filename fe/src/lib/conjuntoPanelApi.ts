@@ -22,9 +22,13 @@ export async function obtenerMisConjuntos(token: string): Promise<ConjuntoAdmini
   return data;
 }
 
+// ¿Qué? Solo el NIT es editable por el Admin de Conjunto (issue #180).
+// ¿Para qué? Nombre y dirección vienen ya verificados desde el dataset
+//           oficial de Bogotá — solo se corrigen re-importando ese dataset
+//           (seed.py), nunca a mano desde el panel del Admin de Conjunto.
 export async function editarMiConjunto(
   idConjunto: string,
-  datos: { nombre_conjunto: string; nit: string | null; direccion: string },
+  datos: { nit: string | null },
   token: string
 ) {
   const { data } = await axios.patch(

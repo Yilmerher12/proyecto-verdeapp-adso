@@ -532,7 +532,7 @@ export function AdminConjuntoDashboard() {
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [cargando, setCargando] = useState(true);
   const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [formEdicion, setFormEdicion] = useState({ nombre_conjunto: "", nit: "", direccion: "" });
+  const [formEdicion, setFormEdicion] = useState({ nit: "" });
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
 
@@ -607,11 +607,7 @@ export function AdminConjuntoDashboard() {
 
   const iniciarEdicion = (c: ConjuntoAdministrado) => {
     setEditandoId(c.id_conjunto_residencial);
-    setFormEdicion({
-      nombre_conjunto: c.nombre_conjunto,
-      nit: c.nit || "",
-      direccion: c.direccion,
-    });
+    setFormEdicion({ nit: c.nit || "" });
     setMensaje(null);
   };
 
@@ -623,15 +619,7 @@ export function AdminConjuntoDashboard() {
     if (!accessToken) return;
     setGuardando(true);
     try {
-      await editarMiConjunto(
-        id,
-        {
-          nombre_conjunto: formEdicion.nombre_conjunto,
-          nit: formEdicion.nit || null,
-          direccion: formEdicion.direccion,
-        },
-        accessToken
-      );
+      await editarMiConjunto(id, { nit: formEdicion.nit || null }, accessToken);
       setMensaje(t("dashboards.adminConjunto.editForm.successMessage"));
       setEditandoId(null);
       cargarConjuntos();
@@ -733,34 +721,25 @@ export function AdminConjuntoDashboard() {
               >
                 {editandoId === c.id_conjunto_residencial ? (
                   <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.name")}</label>
-                      <input
-                        type="text"
-                        value={formEdicion.nombre_conjunto}
-                        onChange={(e) =>
-                          setFormEdicion((p) => ({ ...p, nombre_conjunto: e.target.value }))
-                        }
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                      />
-                    </div>
+                    {/*
+                      ¿Qué? Antes este formulario también dejaba editar
+                            nombre_conjunto y direccion.
+                      ¿Para qué? Issue #180: esos dos datos vienen ya
+                                verificados desde el dataset oficial de
+                                Bogotá — un Admin de Conjunto no debería
+                                poder sobreescribirlos sin control ni
+                                rastro. Solo se corrigen re-importando ese
+                                dataset (seed.py), nunca a mano desde aquí.
+                      ¿Impacto? El NIT sigue editable porque el dataset
+                                oficial no lo trae — es el único dato que
+                                de verdad falta completar.
+                    */}
                     <div>
                       <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
                       <input
                         type="text"
                         value={formEdicion.nit}
                         onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.address")}</label>
-                      <input
-                        type="text"
-                        value={formEdicion.direccion}
-                        onChange={(e) =>
-                          setFormEdicion((p) => ({ ...p, direccion: e.target.value }))
-                        }
                         className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                       />
                     </div>

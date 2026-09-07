@@ -103,7 +103,10 @@ describe("AdminConjuntoDashboard", () => {
     expect(screen.getByText("Invitaciones enviadas")).toBeInTheDocument();
   });
 
-  it("guarda los cambios al editar un conjunto", async () => {
+  // ¿Qué? Issue #180: nombre y dirección se quitaron del formulario de
+  //       edición (vienen ya verificados desde el dataset oficial de
+  //       Bogotá) — solo el NIT sigue editable.
+  it("guarda el NIT al editar un conjunto", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
       if (url.includes("/invitaciones")) return Promise.resolve({ data: [] });
@@ -115,15 +118,15 @@ describe("AdminConjuntoDashboard", () => {
     await screen.findByText("Conjunto Los Alpes");
     await user.click(screen.getByRole("button", { name: "Editar" }));
 
-    const inputNombre = screen.getByDisplayValue("Conjunto Los Alpes");
-    await user.clear(inputNombre);
-    await user.type(inputNombre, "Conjunto Los Alpes Renovado");
+    const inputNit = screen.getByDisplayValue("900123456");
+    await user.clear(inputNit);
+    await user.type(inputNit, "900111222-1");
     await user.click(screen.getByRole("button", { name: "Guardar" }));
 
     await waitFor(() => {
       expect(mockPatch).toHaveBeenCalledWith(
         expect.stringContaining("/conjunto-panel/mis-conjuntos/1"),
-        expect.objectContaining({ nombre_conjunto: "Conjunto Los Alpes Renovado" }),
+        { nit: "900111222-1" },
         expect.anything()
       );
     });
