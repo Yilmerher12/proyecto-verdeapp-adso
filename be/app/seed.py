@@ -220,10 +220,15 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
 
     # ¿Qué? Vincula directamente al Reciclador de prueba con CONJUNTO_DE_PRUEBA,
     #       como si ya hubiera aceptado una invitación.
+    # ¿Impacto? Desde que recicladores_conjuntos pasó a ser un modelo con
+    #           historial (fecha_autorizacion/fecha_revocacion), "id" y
+    #           "fecha_autorizacion" son obligatorias — sin darles valor
+    #           aquí, este INSERT tumbaba el seed completo en cualquier
+    #           base de datos nueva.
     connection.execute(
         text(
-            "INSERT INTO recicladores_conjuntos (id_reciclador, id_conjunto_residencial) "
-            "SELECT r.id_reciclador, c.id_conjunto_residencial "
+            "INSERT INTO recicladores_conjuntos (id, id_reciclador, id_conjunto_residencial, fecha_autorizacion) "
+            "SELECT :id_vinculo, r.id_reciclador, c.id_conjunto_residencial, now() "
             "FROM recicladores r "
             "JOIN usuarios u ON u.id_usuario = r.id_usuario "
             "CROSS JOIN (SELECT id_conjunto_residencial FROM conjuntos_residenciales "
@@ -231,7 +236,7 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
             "WHERE u.correo_electronico = 'reciclador.prueba@verdeapp.com' "
             "ON CONFLICT DO NOTHING"
         ),
-        {"nombre": CONJUNTO_DE_PRUEBA},
+        {"nombre": CONJUNTO_DE_PRUEBA, "id_vinculo": generar_uuid4()},
     )
 
     connection.execute(
