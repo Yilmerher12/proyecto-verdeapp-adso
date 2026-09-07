@@ -722,6 +722,12 @@
         "authorizedTitle": "Autorizados",
         "authorizedLoading": "Cargando recicladores autorizados...",
         "authorizedEmpty": "Todavía no tienes ningún reciclador autorizado en este conjunto.",
+        "revokeAria": "Revocar acceso de {{nombre}}",
+        "revokeErrorDefault": "No se pudo revocar el acceso. Intenta de nuevo.",
+        "revokeModalAriaLabel": "Confirmar revocación de acceso",
+        "revokeConfirmTitle": "¿Revocar el acceso de {{nombre}}?",
+        "revokeConfirmWarning": "Ya no podrá recoger material ni auditar este conjunto. Se le notificará. Puedes volver a invitarlo más adelante si es necesario.",
+        "revokeConfirmButton": "Sí, revocar",
         "invitationsTitle": "Invitaciones enviadas",
         "loading": "Cargando invitaciones...",
         "empty": "Todavía no has enviado ninguna invitación."

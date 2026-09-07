@@ -110,6 +110,25 @@ def responder_invitacion(
     return {"message": mensaje}
 
 
+@router.delete(
+    "/mi-conjunto/{id_conjunto}/autorizados/{id_reciclador}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Admin de Conjunto revoca el acceso de un Reciclador ya autorizado",
+)
+def revocar_reciclador(
+    id_conjunto: UUID,
+    id_reciclador: UUID,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    reciclador_conjunto_service.revocar_reciclador(
+        db=db,
+        id_usuario_admin=current_user.id_usuario,
+        id_conjunto=id_conjunto,
+        id_reciclador=id_reciclador,
+    )
+
+
 @router.get(
     "/mis-conjuntos-autorizados",
     response_model=List[ConjuntoAutorizadoResponse],

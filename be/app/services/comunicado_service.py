@@ -24,9 +24,9 @@ from app.models.comunicado import Comunicado, DestinatariosComunicado, TipoComun
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
+from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.residente import Residente
 from app.models.rol import RolId
-from app.models.tablas_asociacion import recicladores_conjuntos
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.schemas.comunicado import ComunicadoResponse, CrearComunicadoRequest, EditarComunicadoRequest
@@ -112,8 +112,11 @@ def _residentes_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
 def _recicladores_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
     stmt = (
         select(Reciclador.id_usuario)
-        .join(recicladores_conjuntos, Reciclador.id_reciclador == recicladores_conjuntos.c.id_reciclador)
-        .where(recicladores_conjuntos.c.id_conjunto_residencial == id_conjunto)
+        .join(RecicladorConjunto, Reciclador.id_reciclador == RecicladorConjunto.id_reciclador)
+        .where(
+            RecicladorConjunto.id_conjunto_residencial == id_conjunto,
+            RecicladorConjunto.fecha_revocacion.is_(None),
+        )
     )
     return [r[0] for r in db.execute(stmt).all()]
 
@@ -256,9 +259,12 @@ def listar_feed(db: Session, current_user: Usuario) -> List[ComunicadoResponse]:
         destinatarios_validos = (DestinatariosComunicado.RESIDENTES, DestinatariosComunicado.AMBOS)
     elif current_user.id_rol == RolId.RECICLADOR:
         stmt_conjuntos = (
-            select(recicladores_conjuntos.c.id_conjunto_residencial)
-            .join(Reciclador, Reciclador.id_reciclador == recicladores_conjuntos.c.id_reciclador)
-            .where(Reciclador.id_usuario == current_user.id_usuario)
+            select(RecicladorConjunto.id_conjunto_residencial)
+            .join(Reciclador, Reciclador.id_reciclador == RecicladorConjunto.id_reciclador)
+            .where(
+                Reciclador.id_usuario == current_user.id_usuario,
+                RecicladorConjunto.fecha_revocacion.is_(None),
+            )
         )
         ids_conjuntos = list(db.execute(stmt_conjuntos).scalars().all())
         destinatarios_validos = (DestinatariosComunicado.RECICLADORES, DestinatariosComunicado.AMBOS)

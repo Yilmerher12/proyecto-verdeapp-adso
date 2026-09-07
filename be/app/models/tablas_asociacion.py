@@ -6,15 +6,10 @@ Para que? SQLAlchemy necesita un objeto Table() real en sus metadatos
           para poder resolver secondary="nombre_tabla" en relationship().
           Estas tablas no necesitan su propia clase Python porque no
           se consultan directamente -- solo sirven de puente.
+¿Impacto? recicladores_conjuntos ya NO vive aquí — pasó a ser un modelo
+          propio (app/models/reciclador_conjunto.py) porque ahora necesita
+          historial (fecha_autorizacion/fecha_revocacion), igual que
+          administradores_conjuntos. Este archivo queda vacío por ahora,
+          listo para la próxima tabla puente que de verdad no necesite
+          columnas propias.
 """
- 
-from sqlalchemy import Table, Column, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
-from app.database import Base
-
-recicladores_conjuntos = Table(
-    "recicladores_conjuntos",
-    Base.metadata,
-    Column("id_reciclador", UUID(as_uuid=True), ForeignKey("recicladores.id_reciclador"), primary_key=True),
-    Column("id_conjunto_residencial", UUID(as_uuid=True), ForeignKey("conjuntos_residenciales.id_conjunto_residencial"), primary_key=True),
-)

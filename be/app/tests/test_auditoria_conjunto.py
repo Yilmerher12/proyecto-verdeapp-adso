@@ -12,6 +12,7 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.models.conjunto_residencial import ConjuntoResidencial
@@ -19,7 +20,7 @@ from app.models.localidad import Localidad
 from app.models.reciclador import Reciclador
 from app.models.residente import Residente
 from app.models.rol import RolId
-from app.models.tablas_asociacion import recicladores_conjuntos
+from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.utils.security import create_access_token, hash_password
@@ -43,12 +44,10 @@ IMAGEN_VALIDA = _generar_imagen_real()
 def reciclador_autorizado(db: Session, reciclador_test: Usuario, conjunto_verificado: ConjuntoResidencial) -> Reciclador:
     """Autoriza al reciclador de prueba en conjunto_verificado (RQF-016 ya aceptado)."""
     reciclador = db.query(Reciclador).filter(Reciclador.id_usuario == reciclador_test.id_usuario).one()
-    db.execute(
-        recicladores_conjuntos.insert().values(
-            id_reciclador=reciclador.id_reciclador,
-            id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
-        )
-    )
+    db.add(RecicladorConjunto(
+        id_reciclador=reciclador.id_reciclador,
+        id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
+    ))
     db.commit()
     return reciclador
 
@@ -108,6 +107,28 @@ class TestCrearAuditoria:
         self, client: TestClient, reciclador_auth_headers, conjunto_verificado
     ):
         """El reciclador de prueba existe, pero NO está autorizado en este conjunto."""
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files=_archivo_valido(),
+        )
+        assert response.status_code == 403
+
+    def test_reciclador_revocado_no_puede_auditar(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        """¿Qué? Confirma que revocar el acceso (issue reciclador-revocar-acceso)
+        de verdad le quita la autorización — no solo la oculta en el listado."""
+        db.execute(
+            text(
+                "UPDATE recicladores_conjuntos SET fecha_revocacion = now() "
+                "WHERE id_reciclador = :rid AND id_conjunto_residencial = :cid"
+            ),
+            {"rid": reciclador_autorizado.id_reciclador, "cid": conjunto_verificado.id_conjunto_residencial},
+        )
+        db.commit()
+
         response = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -526,12 +547,10 @@ class TestListarHistorial:
         )
         db.add(otro_reciclador)
         db.flush()
-        db.execute(
-            recicladores_conjuntos.insert().values(
-                id_reciclador=otro_reciclador.id_reciclador,
-                id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
-            )
-        )
+        db.add(RecicladorConjunto(
+            id_reciclador=otro_reciclador.id_reciclador,
+            id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
+        ))
         db.commit()
         token_otro = create_access_token(data={"sub": otro_usuario.correo_electronico, "role_id": otro_usuario.id_rol})
         headers_otro = {"Authorization": f"Bearer {token_otro}"}

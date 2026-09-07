@@ -718,6 +718,12 @@
         "authorizedTitle": "Authorized",
         "authorizedLoading": "Loading authorized recyclers...",
         "authorizedEmpty": "You don't have any authorized recycler in this building yet.",
+        "revokeAria": "Revoke access for {{nombre}}",
+        "revokeErrorDefault": "Could not revoke access. Please try again.",
+        "revokeModalAriaLabel": "Confirm access revocation",
+        "revokeConfirmTitle": "Revoke access for {{nombre}}?",
+        "revokeConfirmWarning": "They will no longer be able to collect material or audit this building. They will be notified. You can invite them again later if needed.",
+        "revokeConfirmButton": "Yes, revoke",
         "invitationsTitle": "Invitations sent",
         "loading": "Loading invitations...",
         "empty": "You haven't sent any invitation yet."

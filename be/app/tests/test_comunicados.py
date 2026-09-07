@@ -14,19 +14,17 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models.reciclador import Reciclador
-from app.models.tablas_asociacion import recicladores_conjuntos
+from app.models.reciclador_conjunto import RecicladorConjunto
 
 
 @pytest.fixture()
 def reciclador_autorizado(db: Session, reciclador_test, conjunto_verificado) -> None:
     """Autoriza al reciclador de prueba en conjunto_verificado (necesario para el feed)."""
     reciclador = db.query(Reciclador).filter(Reciclador.id_usuario == reciclador_test.id_usuario).one()
-    db.execute(
-        recicladores_conjuntos.insert().values(
-            id_reciclador=reciclador.id_reciclador,
-            id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
-        )
-    )
+    db.add(RecicladorConjunto(
+        id_reciclador=reciclador.id_reciclador,
+        id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
+    ))
     db.commit()
 
 

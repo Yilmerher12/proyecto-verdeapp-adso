@@ -159,6 +159,43 @@ describe("AdminConjuntoDashboard", () => {
     });
   });
 
+  // ¿Qué? El Admin de Conjunto revoca directo el acceso de un reciclador
+  //       ya autorizado — sin que el reciclador tenga que pedir nada.
+  it("revoca el acceso de un reciclador autorizado, tras confirmar", async () => {
+    const recicladorAutorizado = {
+      id_reciclador: "r1",
+      nombre: "Reciclador",
+      apellidos: "De Prueba",
+      correo_electronico: "reciclador@example.com",
+      numero_telefonico: null,
+      asociacion: null,
+    };
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+      if (url.includes("/autorizados")) return Promise.resolve({ data: [recicladorAutorizado] });
+      if (url.includes("/invitaciones")) return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: [] });
+    });
+    mockDelete.mockResolvedValue({ data: {} });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Conjunto Los Alpes");
+    await user.click(screen.getByRole("button", { name: "Ver detalle" }));
+    await screen.findByText("Reciclador De Prueba");
+
+    await user.click(screen.getByRole("button", { name: "Revocar acceso de Reciclador De Prueba" }));
+    expect(screen.getByText("¿Revocar el acceso de Reciclador De Prueba?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Sí, revocar" }));
+
+    await waitFor(() => {
+      expect(mockDelete).toHaveBeenCalledWith(
+        expect.stringContaining("/reciclador-conjunto/mi-conjunto/1/autorizados/r1"),
+        expect.anything()
+      );
+    });
+  });
+
   it("envía una solicitud de desvinculación", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
