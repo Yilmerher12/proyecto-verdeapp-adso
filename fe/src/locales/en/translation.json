@@ -928,6 +928,8 @@
       "recyclers": "Recyclers"
     },
     "allLocalities": "All districts",
+    "ownLocality": "Your district: {{localidad}}",
+    "ownLocalityUnknown": "We couldn't detect your district",
     "emptyRecyclers": "No recyclers registered in this district.",
     "emptyPoints": "No collection points registered in this district.",
     "call": "Call",

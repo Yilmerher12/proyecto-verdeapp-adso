@@ -24,7 +24,7 @@
 ## Historia
 
 **Como** residente,
-**quiero** ver un directorio de puntos de acopio y recicladores disponibles, filtrable por mi localidad o conjunto,
+**quiero** ver un directorio de puntos de acopio y recicladores disponibles, filtrable por mi localidad,
 **para** encontrar dónde y con quién entregar material reciclable directamente.
 
 ---
@@ -37,10 +37,10 @@
 - **cuando** la página carga,
 - **entonces** debo ver los puntos de acopio y los recicladores activos.
 
-### CA-006.2 — Filtro por localidad o conjunto
+### CA-006.2 — Filtro por localidad
 
 - **Dado que** estoy en el directorio,
-- **cuando** aplico un filtro por localidad o conjunto,
+- **cuando** aplico un filtro por localidad,
 - **entonces** la lista debe mostrar solo los resultados que coinciden con ese filtro.
 
 ### CA-006.3 — Datos de contacto visibles
@@ -53,10 +53,16 @@
 
 - **Dado que** aplico un filtro que no coincide con ningún registro,
 - **cuando** la búsqueda termina,
-- **entonces** debo ver el mensaje "No se encontraron resultados para este filtro" en vez de una lista vacía sin explicación.
+- **entonces** debo ver un mensaje explicando que no hay resultados para esa localidad, en vez de una lista vacía sin explicación.
 
-### CA-006.5 — Prioridad al conjunto propio
+### CA-006.5 — En Recicladores, el filtro queda fijo a mi localidad
 
-- **Dado que** consulto el directorio de recicladores,
-- **cuando** veo los resultados,
-- **entonces** los recicladores vinculados directamente a mi conjunto deben aparecer primero.
+- **Dado que** entro a la pestaña de Recicladores,
+- **cuando** el sistema detecta mi localidad (a partir del conjunto donde vivo),
+- **entonces** el filtro queda fijo en esa localidad — no puedo cambiarlo a otra, ni siquiera pidiéndola directamente por parámetro en la petición al backend.
+
+### CA-006.6 — En Puntos de Acopio, el filtro sigue siendo libre
+
+- **Dado que** entro a la pestaña de Puntos de Acopio,
+- **cuando** reviso el filtro de localidad,
+- **entonces** viene preseleccionado en la mía por conveniencia, pero puedo cambiarlo a cualquier otra localidad sin restricción.

@@ -9,8 +9,11 @@ Descripción: Pruebas del router de directorio (recicladores y puntos de acopio)
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from app.models.localidad import Localidad
 from app.models.reciclador import Reciclador
 from app.models.usuario import Usuario
+from app.models.rol import RolId
+from app.utils.security import hash_password
 
 
 class TestRecicladores:
@@ -49,12 +52,60 @@ class TestRecicladores:
         telefonos = [r["numero_telefonico"] for r in response.json()]
         assert "3000000002" in telefonos
 
-    def test_filtro_por_localidad_sin_resultados(self, client: TestClient, auth_headers, reciclador_test):
+    # ¿Qué? Usa admin_sistema, no auth_headers (Residente) — desde que un
+    #       Residente ignora el localidad_id que llegue por query (queda fijo
+    #       a su propia localidad, ver el test de abajo), este caso genérico
+    #       de "filtro sin resultados" solo aplica tal cual a un rol libre.
+    def test_filtro_por_localidad_sin_resultados(
+        self, client: TestClient, admin_sistema_auth_headers, reciclador_test
+    ):
         response = client.get(
-            "/api/v1/directorio/recicladores", headers=auth_headers, params={"localidad_id": 999999}
+            "/api/v1/directorio/recicladores",
+            headers=admin_sistema_auth_headers,
+            params={"localidad_id": 999999},
         )
         assert response.status_code == 200
         assert response.json() == []
+
+    # ¿Qué? auth_headers/test_user viven en la localidad de la fixture
+    #       localidad_test ("Usaquén"); reciclador_test también. Aquí se crea
+    #       un segundo reciclador en OTRA localidad para probar que un
+    #       Residente no lo ve ni pidiéndolo explícitamente por query param.
+    def test_residente_no_ve_recicladores_de_otra_localidad_aunque_lo_pida(
+        self, client: TestClient, auth_headers, reciclador_test, db: Session
+    ):
+        otra_localidad = Localidad(nombre_localidad="Kennedy")
+        db.add(otra_localidad)
+        db.flush()
+
+        usuario_otro = Usuario(
+            correo_electronico="reciclador.kennedy@verdeapp.com",
+            id_rol=RolId.RECICLADOR,
+            password=hash_password("TestPass123"),
+            is_active=True,
+        )
+        db.add(usuario_otro)
+        db.flush()
+
+        db.add(
+            Reciclador(
+                id_usuario=usuario_otro.id_usuario,
+                localidad_id=otra_localidad.id_localidad,
+                nombre="RECICLADOR",
+                apellidos="DE KENNEDY",
+            )
+        )
+        db.commit()
+
+        response = client.get(
+            "/api/v1/directorio/recicladores",
+            headers=auth_headers,
+            params={"localidad_id": otra_localidad.id_localidad},
+        )
+        assert response.status_code == 200
+        nombres = [r["nombre"] for r in response.json()]
+        assert "RECICLADOR" not in nombres  # se ignoró el localidad_id pedido
+        assert response.json() != []  # sigue viendo los de su propia localidad
 
 
 class TestPuntosAcopio:
