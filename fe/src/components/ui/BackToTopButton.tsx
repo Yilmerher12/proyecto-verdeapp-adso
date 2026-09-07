@@ -10,7 +10,16 @@ import { useTranslation } from "react-i18next";
  */
 export function BackToTopButton() {
   const { t } = useTranslation();
-  const [visible, setVisible] = useState(false);
+  // ¿Qué? Antes arrancaba siempre en `false`, sin importar el scroll actual.
+  // ¿Para qué? Este botón vive dentro del Landing, que se re-monta cada vez
+  //           que se navega entre modales (Privacidad, Contacto, etc.) —
+  //           con `false` fijo, cada re-montaje nacía invisible y luego
+  //           aparecía con la transición, aunque el scroll ya estuviera
+  //           bien abajo. Se veía como si la animación "se repitiera".
+  // ¿Impacto? Al leer `window.scrollY` en el primer render, el botón nace
+  //           ya visible si corresponde, sin repetir la animación de
+  //           entrada en cada re-montaje.
+  const [visible, setVisible] = useState(() => window.scrollY > 500);
 
   useEffect(() => {
     const handleScroll = () => setVisible(window.scrollY > 500);
