@@ -75,6 +75,9 @@ def listar_puntos_acopio(
             Localidad.nombre_localidad,
         )
         .join(Localidad, PuntoAcopio.id_localidad == Localidad.id_localidad)
+        # ¿Qué? RQF-011/HU-017: un punto dado de baja por el Admin Sistema
+        #       no debe seguir apareciendo en el directorio público.
+        .where(PuntoAcopio.activo.is_(True))
     )
     if localidad_id:
         stmt = stmt.where(PuntoAcopio.id_localidad == localidad_id)

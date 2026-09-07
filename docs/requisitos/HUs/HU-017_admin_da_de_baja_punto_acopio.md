@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema da de baja un punto de acopio           |
 | **Módulo**         | Directorio / Administración                           |
 | **Prioridad**      | Alta                                                   |
-| **Estado**         | Por implementar                                        |
+| **Estado**         | Implementado                                            |
 | **RF asociados**   | RQF-011                                              |
 
 ---

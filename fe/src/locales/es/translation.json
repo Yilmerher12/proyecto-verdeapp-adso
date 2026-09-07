@@ -991,6 +991,49 @@
       "confirm": "Sí, eliminar"
     }
   },
+  "adminPuntosAcopio": {
+    "title": "Puntos de acopio",
+    "subtitle": "Registra, edita y da de baja los puntos de acopio oficiales del directorio.",
+    "newPoint": "Nuevo punto de acopio",
+    "emptyState": "Todavía no hay puntos de acopio registrados.",
+    "inactiveBadge": "Inactivo",
+    "editAria": "Editar {{nombre}}",
+    "deactivateAria": "Dar de baja {{nombre}}",
+    "reactivateAria": "Reactivar {{nombre}}",
+    "deleteAria": "Eliminar {{nombre}}",
+    "modal": {
+      "editTitle": "Editar punto de acopio",
+      "deactivateAriaLabel": "Confirmar baja",
+      "deleteAriaLabel": "Confirmar eliminación"
+    },
+    "validation": {
+      "required": "Nombre, dirección y localidad son obligatorios."
+    },
+    "loadError": "No se pudo cargar la lista de puntos de acopio.",
+    "deactivateError": "No se pudo dar de baja. Intenta de nuevo.",
+    "reactivateError": "No se pudo reactivar. Intenta de nuevo.",
+    "deleteError": "No se pudo eliminar. Intenta de nuevo.",
+    "fields": {
+      "name": "Nombre",
+      "namePlaceholder": "Ej: ECA Kennedy",
+      "address": "Dirección",
+      "addressPlaceholder": "Ej: Carrera 84 # 11A-34",
+      "locality": "Localidad",
+      "localitySelect": "Selecciona una localidad",
+      "contactName": "Nombre del encargado",
+      "phone": "Teléfono de contacto"
+    },
+    "deactivateConfirm": {
+      "title": "¿Dar de baja \"{{nombre}}\"?",
+      "warning": "Dejará de aparecer en el directorio de residentes y recicladores. El registro no se borra.",
+      "confirm": "Sí, dar de baja"
+    },
+    "deleteConfirm": {
+      "title": "¿Eliminar \"{{nombre}}\" definitivamente?",
+      "warning": "Esta acción no se puede deshacer — el registro se borra por completo, ya no lo verás ni en este panel.",
+      "confirm": "Sí, eliminar"
+    }
+  },
   "aceptarInvitacion": {
     "verifying": "Verificando tu invitación...",
     "invalid": {

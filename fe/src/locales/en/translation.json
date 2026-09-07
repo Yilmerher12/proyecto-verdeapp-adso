@@ -987,6 +987,49 @@
       "confirm": "Yes, delete"
     }
   },
+  "adminPuntosAcopio": {
+    "title": "Collection points",
+    "subtitle": "Register, edit, and deactivate the official collection points in the directory.",
+    "newPoint": "New collection point",
+    "emptyState": "No collection points registered yet.",
+    "inactiveBadge": "Inactive",
+    "editAria": "Edit {{nombre}}",
+    "deactivateAria": "Deactivate {{nombre}}",
+    "reactivateAria": "Reactivate {{nombre}}",
+    "deleteAria": "Delete {{nombre}}",
+    "modal": {
+      "editTitle": "Edit collection point",
+      "deactivateAriaLabel": "Confirm deactivation",
+      "deleteAriaLabel": "Confirm deletion"
+    },
+    "validation": {
+      "required": "Name, address, and locality are required."
+    },
+    "loadError": "Could not load the list of collection points.",
+    "deactivateError": "Could not deactivate. Please try again.",
+    "reactivateError": "Could not reactivate. Please try again.",
+    "deleteError": "Could not delete. Please try again.",
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "E.g.: ECA Kennedy",
+      "address": "Address",
+      "addressPlaceholder": "E.g.: Carrera 84 # 11A-34",
+      "locality": "Locality",
+      "localitySelect": "Select a locality",
+      "contactName": "Contact person's name",
+      "phone": "Contact phone"
+    },
+    "deactivateConfirm": {
+      "title": "Deactivate \"{{nombre}}\"?",
+      "warning": "It will stop appearing in the residents' and recyclers' directory. The record is not deleted.",
+      "confirm": "Yes, deactivate"
+    },
+    "deleteConfirm": {
+      "title": "Permanently delete \"{{nombre}}\"?",
+      "warning": "This action cannot be undone — the record is fully erased, you won't see it even in this panel anymore.",
+      "confirm": "Yes, delete"
+    }
+  },
   "aceptarInvitacion": {
     "verifying": "Verifying your invitation...",
     "invalid": {
