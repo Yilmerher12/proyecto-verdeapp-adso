@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Archive, CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import {
@@ -215,7 +216,7 @@ export function AdminNovedadesPage() {
                 <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
                 {item.url_adjunto && (
                   <a
-                    href={item.url_adjunto}
+                    href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 hover:text-green-800 dark:text-green-400"

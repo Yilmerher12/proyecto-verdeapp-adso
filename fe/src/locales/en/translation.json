@@ -1066,10 +1066,12 @@
   },
   "imagenAdjunta": {
     "seleccionar": "Select image",
+    "seleccionarDocumento": "Select file (image, PDF, Word, or Excel)",
     "subiendo": "Uploading...",
     "quitar": "Remove image",
     "vistaPrevia": "Preview of the attached image",
     "tipoInvalido": "The image must be JPG, PNG, or WEBP.",
+    "tipoInvalidoDocumentos": "The file must be JPG, PNG, WEBP, PDF, Word (.docx), or Excel (.xlsx).",
     "demasiadoGrande": "The image can't be larger than 5 MB.",
     "errorSubida": "Couldn't upload the image. Please try again."
   },

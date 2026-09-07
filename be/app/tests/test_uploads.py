@@ -1,12 +1,15 @@
 """
 Módulo: tests/test_uploads.py
-Descripción: Pruebas del endpoint genérico de subida de imágenes adjuntas
-             (comunicados/novedades) — POST /api/v1/uploads/adjunto.
-¿Para qué? Reemplaza el link externo de imagen por un archivo real,
-          reutilizando la misma validación (Pillow) que ya protege las
-          fotos de evidencia de auditorías.
+Descripción: Pruebas del endpoint genérico de subida de adjuntos
+             (comunicados/novedades/contenido educativo) —
+             POST /api/v1/uploads/adjunto.
+¿Para qué? Reemplaza el link externo por un archivo real, reutilizando la
+          misma validación (Pillow para imagen, firmas de bytes para
+          PDF/Word/Excel) que ya protege las fotos de evidencia de
+          auditorías.
 """
 import io
+import zipfile
 
 from fastapi.testclient import TestClient
 from PIL import Image
@@ -18,7 +21,20 @@ def _generar_imagen_real() -> bytes:
     return buffer.getvalue()
 
 
+def _generar_zip_real() -> bytes:
+    """
+    ¿Qué? Word (.docx) y Excel (.xlsx) modernos son un ZIP por dentro —
+          esto genera un ZIP real y chiquito, suficiente para pasar la
+          validación de firma (ver app/utils/imagenes.py).
+    """
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as zf:
+        zf.writestr("contenido.txt", "simulacion de docx/xlsx")
+    return buffer.getvalue()
+
+
 IMAGEN_VALIDA = _generar_imagen_real()
+ZIP_VALIDO = _generar_zip_real()
 
 URL = "/api/v1/uploads/adjunto"
 
@@ -88,7 +104,7 @@ class TestSubirAdjunto:
         """¿Qué? Solo quien pide explícitamente permitir_pdf=true (la guía
         de apoyo del contenido educativo) puede subir un PDF."""
         response = client.post(
-            f"{URL}?permitir_pdf=true",
+            f"{URL}?permitir_documentos=true",
             headers=admin_sistema_auth_headers,
             files={"archivo": ("guia.pdf", io.BytesIO(b"%PDF-1.4\n%mock pdf content"), "application/pdf")},
         )
@@ -100,9 +116,69 @@ class TestSubirAdjunto:
     def test_pdf_falso_con_permitir_pdf_devuelve_400(self, client: TestClient, admin_sistema_auth_headers):
         """Content-Type dice PDF, pero el contenido real no empieza con la firma "%PDF-"."""
         response = client.post(
-            f"{URL}?permitir_pdf=true",
+            f"{URL}?permitir_documentos=true",
             headers=admin_sistema_auth_headers,
             files={"archivo": ("falso.pdf", io.BytesIO(b"esto no es un pdf"), "application/pdf")},
+        )
+        assert response.status_code == 400
+
+    def test_docx_con_permitir_documentos_se_acepta(self, client: TestClient, admin_conjunto_auth_headers):
+        response = client.post(
+            f"{URL}?permitir_documentos=true",
+            headers=admin_conjunto_auth_headers,
+            files={
+                "archivo": (
+                    "circular.docx",
+                    io.BytesIO(ZIP_VALIDO),
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+            },
+        )
+        assert response.status_code == 201
+        assert response.json()["url"].endswith(".docx")
+
+    def test_xlsx_con_permitir_documentos_se_acepta(self, client: TestClient, admin_conjunto_auth_headers):
+        response = client.post(
+            f"{URL}?permitir_documentos=true",
+            headers=admin_conjunto_auth_headers,
+            files={
+                "archivo": (
+                    "cuotas.xlsx",
+                    io.BytesIO(ZIP_VALIDO),
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            },
+        )
+        assert response.status_code == 201
+        assert response.json()["url"].endswith(".xlsx")
+
+    def test_docx_falso_devuelve_400(self, client: TestClient, admin_conjunto_auth_headers):
+        """Content-Type dice Word, pero el contenido real no es un ZIP."""
+        response = client.post(
+            f"{URL}?permitir_documentos=true",
+            headers=admin_conjunto_auth_headers,
+            files={
+                "archivo": (
+                    "falso.docx",
+                    io.BytesIO(b"esto no es un zip"),
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+            },
+        )
+        assert response.status_code == 400
+
+    def test_docx_sin_permitir_documentos_devuelve_400(self, client: TestClient, admin_conjunto_auth_headers):
+        """Sin el flag, Word/Excel se rechazan igual que un PDF sin permiso."""
+        response = client.post(
+            URL,
+            headers=admin_conjunto_auth_headers,
+            files={
+                "archivo": (
+                    "circular.docx",
+                    io.BytesIO(ZIP_VALIDO),
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+            },
         )
         assert response.status_code == 400
 

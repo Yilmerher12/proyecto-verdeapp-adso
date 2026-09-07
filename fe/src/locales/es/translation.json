@@ -1070,10 +1070,12 @@
   },
   "imagenAdjunta": {
     "seleccionar": "Seleccionar imagen",
+    "seleccionarDocumento": "Seleccionar archivo (imagen, PDF, Word o Excel)",
     "subiendo": "Subiendo...",
     "quitar": "Quitar imagen",
     "vistaPrevia": "Vista previa de la imagen adjunta",
     "tipoInvalido": "La imagen debe ser JPG, PNG o WEBP.",
+    "tipoInvalidoDocumentos": "El archivo debe ser JPG, PNG, WEBP, PDF, Word (.docx) o Excel (.xlsx).",
     "demasiadoGrande": "La imagen no puede superar 5 MB.",
     "errorSubida": "No se pudo subir la imagen. Intenta de nuevo."
   },

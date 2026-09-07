@@ -34,9 +34,9 @@ ROLES_PERMITIDOS = {RolId.ADMIN_CONJUNTO, RolId.ADMIN_SISTEMA}
 @router.post("/adjunto", status_code=status.HTTP_201_CREATED)
 async def subir_adjunto(
     archivo: UploadFile,
-    permitir_pdf: bool = Query(
+    permitir_documentos: bool = Query(
         False,
-        description="La guía de apoyo del contenido educativo admite PDF además de imagen; comunicados/novedades no lo piden y siguen aceptando solo imagen.",
+        description="La guía de apoyo del contenido educativo y los adjuntos de comunicados admiten PDF/Word/Excel además de imagen; novedades no lo pide y sigue aceptando solo imagen.",
     ),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -54,5 +54,7 @@ async def subir_adjunto(
             detail="No tienes permiso para subir archivos adjuntos.",
         )
 
-    url = await guardar_imagen_subida(archivo, CARPETA_ADJUNTOS, "/uploads/adjuntos", permitir_pdf=permitir_pdf)
+    url = await guardar_imagen_subida(
+        archivo, CARPETA_ADJUNTOS, "/uploads/adjuntos", permitir_documentos=permitir_documentos
+    )
     return {"url": url}

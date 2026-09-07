@@ -48,7 +48,7 @@ export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoField
 
     setSubiendo(true);
     try {
-      const url = await subirAdjunto(archivo, token, { permitirPdf: true });
+      const url = await subirAdjunto(archivo, token, { permitirDocumentos: true });
       onChange(url);
     } catch {
       setError(t("guiaApoyo.errorSubida"));
