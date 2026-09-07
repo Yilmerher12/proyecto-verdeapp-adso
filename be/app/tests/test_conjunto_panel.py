@@ -53,13 +53,18 @@ class TestMisConjuntos:
 
 
 class TestEditarConjunto:
-    def test_puede_editar_un_conjunto_propio(
+    """
+    ¿Qué? Issue #180: nombre y dirección se quitaron de este endpoint —
+          solo el NIT sigue editable (ver conjunto_panel.py).
+    """
+
+    def test_puede_editar_el_nit_de_un_conjunto_propio(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
     ):
         response = client.patch(
             f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}",
             headers=admin_conjunto_auth_headers,
-            json={"nombre_conjunto": "TORRES RENOMBRADAS", "nit": "900111222-1", "direccion": "Nueva Dirección 1"},
+            json={"nit": "900111222-1"},
         )
         assert response.status_code == 200
 
@@ -70,14 +75,14 @@ class TestEditarConjunto:
         response = client.patch(
             f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_no_verificado.id_conjunto_residencial}",
             headers=admin_conjunto_auth_headers,
-            json={"nombre_conjunto": "INTENTO AJENO", "direccion": "No debería aplicar"},
+            json={"nit": "900000000-9"},
         )
         assert response.status_code == 403
 
     def test_sin_login_devuelve_401(self, client: TestClient, conjunto_verificado):
         response = client.patch(
             f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}",
-            json={"nombre_conjunto": "X", "direccion": "Y"},
+            json={"nit": "900000000-9"},
         )
         assert response.status_code == 401
 

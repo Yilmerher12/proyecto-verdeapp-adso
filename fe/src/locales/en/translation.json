@@ -740,9 +740,7 @@
         "errorDefault": "Could not regenerate the code. Please try again."
       },
       "editForm": {
-        "name": "Building name",
         "nit": "Tax ID (optional)",
-        "address": "Address",
         "successMessage": "Building updated successfully.",
         "errorMessage": "The change could not be saved. Please try again."
       },

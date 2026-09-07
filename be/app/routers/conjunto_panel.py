@@ -123,10 +123,14 @@ def editar_mi_conjunto(
     db: Session = Depends(get_db),
 ):
     """
-    ¿Qué? Edita nombre, NIT o dirección de UN conjunto, solo si el usuario
-          en sesión es uno de sus administradores asignados.
-    ¿Para qué? Que el propio administrador pueda corregir datos sin
-              depender del Administrador del Sistema para cada cambio menor.
+    ¿Qué? Edita el NIT de UN conjunto, solo si el usuario en sesión es uno
+          de sus administradores asignados.
+    ¿Para qué? Issue #180: nombre y dirección se quitaron de este endpoint
+              porque vienen ya verificados desde el dataset oficial de
+              Bogotá (ver seed.py) — dejarlos editables permitía que un
+              Admin de Conjunto sobreescribiera ese dato institucional sin
+              ningún control ni rastro. El NIT sigue editable porque el
+              dataset oficial no lo trae.
     ¿Impacto? Si el conjunto solicitado no está entre los suyos, se rechaza
               con 403 — esto evita que un administrador edite conjuntos
               que no le pertenecen, aunque conozca su id.
@@ -134,9 +138,7 @@ def editar_mi_conjunto(
     administrador = _obtener_administrador_o_rechazar(db, current_user)
     conjunto = _obtener_conjunto_propio_o_rechazar(db, administrador, id_conjunto_residencial)
 
-    conjunto.nombre_conjunto = datos.nombre_conjunto.strip().upper()
     conjunto.nit = datos.nit.strip() if datos.nit else None
-    conjunto.direccion = datos.direccion.strip()
     db.commit()
 
     return MessageResponse(message="Conjunto actualizado correctamente.")
