@@ -56,11 +56,20 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' crear, modificar y e
 
 ## Endpoints asociados
 
-| Método | Ruta                     | Auth requerida | Descripción                                  |
-| ------ | ------------------------ | -------------- | -------------------------------------------- |
-| POST   | `/api/v1/educacion`      | Sí (Admin)     | Crea un nuevo módulo educativo               |
-| PUT    | `/api/v1/educacion/{id}` | Sí (Admin)     | Actualiza un módulo existente                |
-| DELETE | `/api/v1/educacion/{id}` | Sí (Admin)     | Elimina un módulo del catálogo               |
+| Método | Ruta                                | Auth requerida | Descripción                                          |
+| ------ | ------------------------------------ | -------------- | ----------------------------------------------------- |
+| GET    | `/api/v1/contenido-educativo`        | Sí (cualquiera)| Lista todo el catálogo                                |
+| POST   | `/api/v1/contenido-educativo`        | Sí (Admin)     | Crea un nuevo módulo educativo                        |
+| PUT    | `/api/v1/contenido-educativo/{id}`   | Sí (Admin)     | Actualiza un módulo existente                         |
+| DELETE | `/api/v1/contenido-educativo/{id}`   | Sí (Admin)     | Elimina un módulo del catálogo                        |
+| POST   | `/api/v1/uploads/adjunto?permitir_pdf=true` | Sí (Admin) | Sube el archivo real de la guía de apoyo (imagen o PDF) |
+
+<!-- ¿Qué? La ruta original de esta tabla (/api/v1/educacion) nunca existió
+     así en código — se corrigió a la real. Además, `cuerpo_texto` ahora
+     admite sintaxis Markdown simple (##, listas, negrita) para que el
+     admin pueda estructurar el contenido, y `url_guia` puede venir de un
+     archivo subido (vía el endpoint de uploads) o de un link externo
+     escrito a mano — ambos casos se guardan igual, como texto. -->
 
 ---
 

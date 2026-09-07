@@ -10,15 +10,23 @@ function authHeaders(token: string) {
 }
 
 /**
- * ¿Qué? Sube un archivo de imagen y devuelve la URL pública ya servida
- *       por el backend (/uploads/adjuntos/...).
+ * ¿Qué? Sube un archivo (imagen, o también PDF si se pide) y devuelve la
+ *       URL pública ya servida por el backend (/uploads/adjuntos/...).
  * ¿Para qué? Reemplaza el link externo que antes había que escribir a
- *           mano en comunicados/novedades — la URL que devuelve esta
- *           función se guarda tal cual en el campo url_adjunto.
+ *           mano en comunicados/novedades/contenido educativo — la URL
+ *           que devuelve esta función se guarda tal cual en el campo
+ *           url_adjunto/url_guia. `permitirPdf` es false por defecto:
+ *           solo la guía de apoyo del contenido educativo lo necesita en
+ *           true — comunicados y novedades siguen aceptando solo imagen.
  */
-export async function subirAdjunto(archivo: File, token: string): Promise<string> {
+export async function subirAdjunto(
+  archivo: File,
+  token: string,
+  opciones?: { permitirPdf?: boolean }
+): Promise<string> {
   const formData = new FormData();
   formData.append("archivo", archivo);
-  const response = await axios.post<{ url: string }>(`${API_BASE}/adjunto`, formData, authHeaders(token));
+  const url = opciones?.permitirPdf ? `${API_BASE}/adjunto?permitir_pdf=true` : `${API_BASE}/adjunto`;
+  const response = await axios.post<{ url: string }>(url, formData, authHeaders(token));
   return response.data.url;
 }
