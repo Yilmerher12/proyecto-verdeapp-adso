@@ -170,6 +170,7 @@ export function AppShell({ children }: AppShellProps) {
         ...commonStart,
         { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: "/admin/novedades", enabled: true },
         { icon: BookOpen, label: t("appShell.nav.contenidoEducativo"), href: "/admin/contenido-educativo", enabled: true },
+        { icon: MapPin, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true },
         ...commonEnd,
       ];
     }

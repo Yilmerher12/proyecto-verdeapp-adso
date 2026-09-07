@@ -18,6 +18,7 @@ from app.routers import comunicados
 from app.routers import novedades
 from app.routers import auditoria_conjunto
 from app.routers import uploads
+from app.routers import puntos_acopio
 
 # ¿Qué? El esquema de la base de datos ya NO se crea aquí en tiempo de ejecución.
 # ¿Para qué? Antes esta sección llamaba a Base.metadata.create_all(bind=engine), que
@@ -122,6 +123,7 @@ app.include_router(comunicados.router)
 app.include_router(novedades.router)
 app.include_router(auditoria_conjunto.router)
 app.include_router(uploads.router)
+app.include_router(puntos_acopio.router)
 
 # ¿Qué? Sirve las fotos de evidencia de las auditorías como archivos
 #       estáticos, bajo /uploads — es la primera vez que el backend guarda

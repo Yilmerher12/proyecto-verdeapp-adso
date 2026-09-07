@@ -39,6 +39,7 @@ import { DirectorioPage } from "@/pages/DirectorioPage";
 import { CatalogoEducativoPage } from "@/pages/CatalogoEducativoPage";
 import { CategoriaEducativaPage } from "@/pages/CategoriaEducativaPage";
 import { AdminContenidoEducativoPage } from "@/pages/AdminContenidoEducativoPage";
+import { AdminPuntosAcopioPage } from "@/pages/AdminPuntosAcopioPage";
 import { AdminConjuntoComunicadosPage } from "@/pages/AdminConjuntoComunicadosPage";
 import { ComunicadosFeedPage } from "@/pages/ComunicadosFeedPage";
 import { AdminNovedadesPage } from "@/pages/AdminNovedadesPage";
@@ -221,6 +222,20 @@ function App() {
                 <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
                   <AppShell>
                     <AdminContenidoEducativoPage />
+                  </AppShell>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Gestión de puntos de acopio — Admin Sistema (RQF-011) */}
+          <Route
+            path="/admin/puntos-acopio"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
+                  <AppShell>
+                    <AdminPuntosAcopioPage />
                   </AppShell>
                 </RoleGuard>
               </ProtectedRoute>
