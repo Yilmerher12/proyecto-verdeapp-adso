@@ -43,7 +43,7 @@ describe("ImagenAdjuntaField", () => {
     await user.upload(input, crearArchivoImagen());
 
     await waitFor(() => {
-      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), "token-123");
+      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), "token-123", { permitirDocumentos: false });
       expect(onChange).toHaveBeenCalledWith("/uploads/adjuntos/abc123.png");
     });
   });
@@ -114,5 +114,52 @@ describe("ImagenAdjuntaField", () => {
 
     await user.click(screen.getByRole("button", { name: "Quitar imagen" }));
     expect(onChange).toHaveBeenCalledWith("");
+  });
+
+  // ¿Qué? Issue #194: con permitirDocumentos, Comunicados también acepta
+  //       PDF/Word/Excel — Novedades no pasa este prop y se queda igual.
+  it("con permitirDocumentos, sube un PDF pidiendo permitirDocumentos al backend", async () => {
+    mockSubirAdjunto.mockResolvedValue("/uploads/adjuntos/circular.pdf");
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+
+    const { container } = render(
+      <ImagenAdjuntaField label="Adjunto" value="" onChange={onChange} token="token" permitirDocumentos />
+    );
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, crearArchivoImagen("circular.pdf", "application/pdf"));
+
+    await waitFor(() => {
+      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), "token", { permitirDocumentos: true });
+      expect(onChange).toHaveBeenCalledWith("/uploads/adjuntos/circular.pdf");
+    });
+  });
+
+  it("sin permitirDocumentos, sigue rechazando un PDF (Novedades no cambia)", async () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <ImagenAdjuntaField label="Adjunto" value="" onChange={onChange} token="token" />
+    );
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const archivo = crearArchivoImagen("documento.pdf", "application/pdf");
+    Object.defineProperty(input, "files", { value: [archivo] });
+    fireEvent.change(input);
+
+    expect(await screen.findByText("La imagen debe ser JPG, PNG o WEBP.")).toBeInTheDocument();
+    expect(mockSubirAdjunto).not.toHaveBeenCalled();
+  });
+
+  it("con permitirDocumentos, muestra el nombre del archivo (no una miniatura) para un PDF ya guardado", () => {
+    render(
+      <ImagenAdjuntaField
+        label="Adjunto"
+        value="/uploads/adjuntos/circular.pdf"
+        onChange={vi.fn()}
+        token="token"
+        permitirDocumentos
+      />
+    );
+    expect(screen.getByText("circular.pdf")).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 });

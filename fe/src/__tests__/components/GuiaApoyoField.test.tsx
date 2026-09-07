@@ -51,7 +51,7 @@ describe("GuiaApoyoField", () => {
     await user.upload(input, crearArchivo());
 
     await waitFor(() => {
-      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), "token-123", { permitirPdf: true });
+      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), "token-123", { permitirDocumentos: true });
       expect(onChange).toHaveBeenCalledWith("/uploads/adjuntos/guia123.pdf");
     });
   });

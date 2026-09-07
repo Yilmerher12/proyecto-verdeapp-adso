@@ -1,8 +1,9 @@
 """
 Módulo: utils/imagenes.py
-Descripción: Validación y guardado de imágenes subidas por el usuario,
-             compartido entre cualquier feature que reciba una foto
-             (evidencia de auditorías, adjuntos de comunicados/novedades).
+Descripción: Validación y guardado de imágenes/documentos subidos por el
+             usuario, compartido entre cualquier feature que reciba un
+             archivo (evidencia de auditorías, adjuntos de comunicados/
+             novedades, guía de apoyo del contenido educativo).
 ¿Para qué? Antes esta lógica vivía duplicada solo en
           auditoria_conjunto_service.py — al agregar la subida de imagen
           para comunicados/novedades, se extrajo aquí para que ambas
@@ -22,13 +23,33 @@ TIPOS_IMAGEN_PERMITIDOS = {
     "image/png": ".png",
     "image/webp": ".webp",
 }
-# ¿Qué? PDF queda aparte de TIPOS_IMAGEN_PERMITIDOS, no mezclado ahí.
-# ¿Para qué? Solo lo acepta quien lo pida explícitamente (permitir_pdf=True
-#           en guardar_imagen_subida) — evidencias de auditoría, por
-#           ejemplo, deben seguir siendo solo imágenes reales, nunca PDF.
+
+# ¿Qué? PDF/Word/Excel quedan aparte de TIPOS_IMAGEN_PERMITIDOS, no
+#       mezclados ahí.
+# ¿Para qué? Solo los acepta quien lo pida explícitamente
+#           (permitir_documentos=True en guardar_imagen_subida) —
+#           evidencias de auditoría, por ejemplo, deben seguir siendo
+#           solo imágenes reales, nunca un documento.
+# ¿Impacto? Word (.docx) y Excel (.xlsx) modernos son, por dentro, un ZIP
+#           — mismo formato de compresión que cualquier carpeta
+#           comprimida, con archivos XML adentro. Por eso comparten la
+#           misma firma de bytes (FIRMA_ZIP) y por eso NO se distinguen
+#           entre sí ni de un ZIP cualquiera con solo mirar el inicio del
+#           archivo — abrir el ZIP y revisar su contenido interno sí lo
+#           permitiría, pero es mucho más código para un beneficio chico
+#           en un proyecto de este tamaño. Lo que sí se logra: que sea un
+#           ZIP real, no un .txt renombrado (la misma amenaza que ya
+#           cubren las imágenes). No se soportan los formatos viejos
+#           (.doc, .xls) — usan otra firma binaria distinta (OLE), y hoy
+#           nadie los pidió.
+TIPOS_DOCUMENTO_PERMITIDOS = {
+    "application/pdf": ".pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+}
 TIPO_PDF = "application/pdf"
-EXTENSION_PDF = ".pdf"
 FIRMA_PDF = b"%PDF-"
+FIRMA_ZIP = b"PK\x03\x04"
 TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
@@ -65,6 +86,20 @@ def _validar_contenido_pdf(contenido: bytes) -> None:
         )
 
 
+def _validar_contenido_zip(contenido: bytes) -> None:
+    """
+    ¿Qué? Word (.docx) y Excel (.xlsx) modernos son un ZIP por dentro —
+          ver el comentario de TIPOS_DOCUMENTO_PERMITIDOS arriba. Esto
+          solo confirma que el archivo es un ZIP real, no que sea
+          específicamente un Word o un Excel.
+    """
+    if not contenido.startswith(FIRMA_ZIP):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El archivo no es un documento de Word/Excel válido.",
+        )
+
+
 def _escribir_imagen(carpeta: Path, ruta: Path, contenido: bytes) -> None:
     """La otra parte bloqueante — crear la carpeta si hace falta y escribir el archivo."""
     carpeta.mkdir(parents=True, exist_ok=True)
@@ -75,31 +110,31 @@ async def guardar_imagen_subida(
     archivo: UploadFile,
     carpeta_destino: Path,
     ruta_publica_base: str,
-    permitir_pdf: bool = False,
+    permitir_documentos: bool = False,
 ) -> str:
     """
     ¿Qué? Valida tipo/tamaño/contenido real del archivo y lo guarda en
           disco con un nombre aleatorio (evita que dos personas pisen el
           archivo de la otra si ambas suben algo llamado "foto.jpg").
     ¿Para qué? "carpeta_destino" y "ruta_publica_base" los define quien
-              llama, para que auditorías y adjuntos de comunicados/
-              novedades/contenido educativo guarden cada uno en su propia
-              carpeta, sin mezclarse, reutilizando la misma validación.
-              "permitir_pdf" es False por defecto a propósito — evidencias
-              de auditoría, por ejemplo, deben seguir aceptando solo
-              imágenes reales; solo quien de verdad lo necesita (la guía
-              de apoyo del contenido educativo) lo pide en True.
+              llama, para que auditorías, comunicados/novedades y
+              contenido educativo guarden cada uno en su propia carpeta,
+              sin mezclarse, reutilizando la misma validación.
+              "permitir_documentos" es False por defecto a propósito —
+              evidencias de auditoría, por ejemplo, deben seguir
+              aceptando solo imágenes reales; solo quien de verdad lo
+              necesita (comunicados, guía de apoyo) lo pide en True.
     ¿Impacto? Devuelve la ruta PÚBLICA (para guardar en la BD y servir al
              frontend vía /uploads, ver main.py), no la ruta absoluta del
              servidor.
     """
     tipos_permitidos = dict(TIPOS_IMAGEN_PERMITIDOS)
-    if permitir_pdf:
-        tipos_permitidos[TIPO_PDF] = EXTENSION_PDF
+    if permitir_documentos:
+        tipos_permitidos.update(TIPOS_DOCUMENTO_PERMITIDOS)
 
     extension = tipos_permitidos.get(archivo.content_type or "")
     if extension is None:
-        formatos = "JPG, PNG, WEBP o PDF" if permitir_pdf else "JPG, PNG o WEBP"
+        formatos = "JPG, PNG, WEBP, PDF, Word (.docx) o Excel (.xlsx)" if permitir_documentos else "JPG, PNG o WEBP"
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"El archivo debe ser {formatos}.",
@@ -116,8 +151,9 @@ async def guardar_imagen_subida(
 
     # ¿Qué? El "Content-Type" de arriba lo escribe el navegador del
     #       cliente — es solo una etiqueta, no una garantía de que el
-    #       archivo sea de verdad lo que dice ser. Pillow (imágenes) o la
-    #       firma "%PDF-" (PDF) revisan el contenido real.
+    #       archivo sea de verdad lo que dice ser. Pillow (imágenes), la
+    #       firma "%PDF-" (PDF), o la firma de ZIP (Word/Excel) revisan
+    #       el contenido real.
     # ¿Para qué? Sin este chequeo, alguien podía renombrar cualquier
     #           archivo a ".jpg" y declarar Content-Type "image/jpeg" a
     #           mano, y el backend lo aceptaba igual.
@@ -128,6 +164,8 @@ async def guardar_imagen_subida(
     #           usuarios mientras corre, no solo para quien sube el archivo.
     if archivo.content_type == TIPO_PDF:
         await asyncio.to_thread(_validar_contenido_pdf, contenido)
+    elif archivo.content_type in TIPOS_DOCUMENTO_PERMITIDOS:
+        await asyncio.to_thread(_validar_contenido_zip, contenido)
     else:
         await asyncio.to_thread(_validar_contenido_imagen, contenido)
 

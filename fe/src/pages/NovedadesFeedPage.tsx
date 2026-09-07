@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Megaphone, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { API_BASE_URL } from "@/api/axios";
 import { verFeedNovedades, type Novedad } from "@/lib/novedadesApi";
 import { Alert } from "@/components/ui/Alert";
 
@@ -72,7 +73,10 @@ export function NovedadesFeedPage() {
 
             {item.url_adjunto && (
               <a
-                href={item.url_adjunto}
+                // ¿Qué? Igual que en ComunicadosFeedPage.tsx: un adjunto
+                //       subido como archivo devuelve una ruta relativa que
+                //       hay que completar con la URL del backend.
+                href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 hover:text-green-800 dark:text-green-400"

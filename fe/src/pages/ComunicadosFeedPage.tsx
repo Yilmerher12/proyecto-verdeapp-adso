@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, Megaphone, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { API_BASE_URL } from "@/api/axios";
 import { verFeedComunicados, type Comunicado, type TipoComunicado } from "@/lib/comunicadosApi";
 import { Alert } from "@/components/ui/Alert";
 
@@ -85,7 +86,12 @@ export function ComunicadosFeedPage() {
 
             {item.url_adjunto && (
               <a
-                href={item.url_adjunto}
+                // ¿Qué? Si el adjunto viene de un archivo subido a VerdeApp,
+                //       el backend devuelve una ruta relativa
+                //       (/uploads/adjuntos/...) que hay que completar con la
+                //       URL del backend — si viene de un link externo viejo,
+                //       ya trae http(s) y se usa tal cual.
+                href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 hover:text-green-800 dark:text-green-400"
