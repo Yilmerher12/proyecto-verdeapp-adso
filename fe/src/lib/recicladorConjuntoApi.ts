@@ -77,3 +77,20 @@ export async function obtenerRecicladoresAutorizados(
   );
   return response.data;
 }
+
+/**
+ * ¿Qué? El Admin de Conjunto revoca directo el acceso de un Reciclador ya
+ *       autorizado — espejo de cómo ya invita (por correo, sin que el
+ *       reciclador tenga que pedir nada). No borra el historial: el
+ *       backend lo marca como revocado (fecha_revocacion), no lo elimina.
+ */
+export async function revocarReciclador(
+  idConjuntoResidencial: string,
+  idReciclador: string,
+  accessToken: string
+): Promise<void> {
+  await axios.delete(
+    `${API_BASE}/mi-conjunto/${idConjuntoResidencial}/autorizados/${idReciclador}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+}

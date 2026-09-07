@@ -17,9 +17,9 @@ from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAs
 from app.models.auditoria_conjunto import AuditoriaConjunto
 from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
+from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.residente import Residente
 from app.models.rol import RolId
-from app.models.tablas_asociacion import recicladores_conjuntos
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.schemas.auditoria_conjunto import NivelDesempeno
@@ -42,10 +42,14 @@ def _obtener_reciclador(db: Session, id_usuario: UUID) -> Reciclador:
 
 
 def _verificar_autorizado(db: Session, id_reciclador: UUID, id_conjunto: UUID) -> None:
+    # ¿Qué? fecha_revocacion IS NULL — un reciclador al que ya le
+    #       revocaron el acceso no debe poder seguir auditando ese
+    #       conjunto, aunque alguna vez sí haya estado autorizado.
     autorizado = db.execute(
-        select(recicladores_conjuntos).where(
-            recicladores_conjuntos.c.id_reciclador == id_reciclador,
-            recicladores_conjuntos.c.id_conjunto_residencial == id_conjunto,
+        select(RecicladorConjunto).where(
+            RecicladorConjunto.id_reciclador == id_reciclador,
+            RecicladorConjunto.id_conjunto_residencial == id_conjunto,
+            RecicladorConjunto.fecha_revocacion.is_(None),
         )
     ).first()
     if autorizado is None:

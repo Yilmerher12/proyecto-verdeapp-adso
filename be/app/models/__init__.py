@@ -7,14 +7,6 @@ Descripción: Paquete de modelos ORM — exporta todos los modelos para facilita
           generadas estarían vacías (uno de los errores más comunes al configurar Alembic).
 """
 
-# ¿Qué? Tabla puente (muchos-a-muchos) sin clase ORM propia.
-# ¿Para qué? secondary="recicladores_conjuntos" en Reciclador y en
-#           ConjuntoResidencial necesita que esta tabla ya esté
-#           registrada como objeto Table() en Base.metadata ANTES de
-#           que esos modelos intenten resolver su relación. Por eso
-#           se importa aquí, antes de Reciclador/ConjuntoResidencial.
-from app.models.tablas_asociacion import recicladores_conjuntos
-
 # Tablas Base
 from app.models.rol import Role
 from app.models.localidad import Localidad
@@ -29,6 +21,7 @@ from app.models.punto_acopio import PuntoAcopio
 from app.models.unidad import Unidad
 from app.models.residente import Residente
 from app.models.reciclador import Reciclador
+from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto
@@ -56,7 +49,6 @@ from app.models.token_revocado import TokenRevocado
 #           herramientas de lint como ruff los marca como "no usados" y podría
 #           llevar a alguien a borrarlos por error, rompiendo Alembic.
 __all__ = [
-    "recicladores_conjuntos",
     "Role",
     "Localidad",
     "ContenidoEducativo",
@@ -66,6 +58,7 @@ __all__ = [
     "Unidad",
     "Residente",
     "Reciclador",
+    "RecicladorConjunto",
     "AdministradorConjunto",
     "AdministradorConjuntoAsignacion",
     "InvitacionAdminConjunto",

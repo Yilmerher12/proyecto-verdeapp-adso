@@ -97,4 +97,11 @@ Estas son reglas de colaboración construidas en sesiones anteriores con el equi
 - **Al cerrar una tarjeta**: dar los comandos de `git add`/`commit`/`push` (solo los archivos relevantes, nunca `git add -A`), más el título del PR en **inglés** y la descripción del PR en **español**, ambos como texto plano para copiar — nunca crear el PR con `gh pr create` directamente.
 - **Nunca agregar "Co-Authored-By: Claude"** en commits ni PRs de este proyecto.
 - Si un patrón de UX/validación se pide "en todos lados" (ej. un estilo de cursor, un mensaje de error, un formato de fecha), hacer un barrido completo del repo antes de dar la tarjeta por cerrada — no solo arreglar los casos obvios que aparecen primero.
+- **Si una tarjeta agrega o modifica una migración de Alembic**, dar siempre el comando exacto para que el usuario actualice su propia base de datos (`uv run alembic upgrade head`, desde `be/`), igual que se dan los comandos de git — no asumir que su BD ya quedó al día solo porque la migración existe en el código. Además, si durante la implementación o la verificación se corrió esa migración (u otro cambio manual, como aplicar `alembic upgrade head`, sembrar datos sueltos, o insertar/editar filas a mano) directamente contra la base de datos de desarrollo, decirlo explícitamente y dar los comandos para reiniciar el volumen de Docker de la BD antes de que el usuario siga usando el proyecto:
+  ```bash
+  docker compose down verde_db
+  docker volume rm proyecto-verdeapp-adso_db_data
+  docker compose up -d verde_db
+  ```
+  y luego aplicar migraciones + seed desde cero (`uv run alembic upgrade head` y `uv run python -m app.seed`). El objetivo es que el estado final de la BD sea siempre el que resultaría de que cualquier integrante del equipo clone el repo y siga los pasos del README — nunca un estado que solo existe porque Claude lo dejó así en su propia sesión de pruebas.
 - **Si una tarjeta corrige, arregla o cambia algo que ya está documentado** (`README.md` raíz/`be/`/`fe/`, `docs/requisitos/` con su campo Estado, `docs/conceptos/`, diagramas UML, etc.), actualizar esa documentación como parte de la misma rama — no dejarla desactualizada para "después". Si al investigar no queda claro si algo debe documentarse, preguntar antes de asumir que no aplica.

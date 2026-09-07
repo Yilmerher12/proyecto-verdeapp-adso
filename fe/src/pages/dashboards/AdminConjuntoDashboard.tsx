@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, AlertTriangle } from "lucide-react";
+import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, AlertTriangle, UserX } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -17,6 +17,7 @@ import {
   invitarReciclador,
   obtenerInvitacionesDeConjunto,
   obtenerRecicladoresAutorizados,
+  revocarReciclador,
   type InvitacionEnviada,
   type RecicladorAutorizado,
 } from "@/lib/recicladorConjuntoApi";
@@ -213,6 +214,9 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
   //       por defecto, igual que ya hace "Invitar Administradores" en el
   //       panel del Admin del Sistema.
   const [mostrarDetalle, setMostrarDetalle] = useState(false);
+  const [aRevocar, setARevocar] = useState<RecicladorAutorizado | null>(null);
+  const [revocando, setRevocando] = useState(false);
+  const [errorRevocar, setErrorRevocar] = useState<string | null>(null);
 
   // ¿Qué? Antes esta sección solo consultaba el historial de invitaciones
   //       (obtenerInvitacionesDeConjunto) — un reciclador vinculado por
@@ -265,6 +269,23 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
       setErrorInvitar(detalle || t("dashboards.adminConjunto.recyclersSection.errorDefault"));
     } finally {
       setEnviando(false);
+    }
+  };
+
+  const confirmarRevocar = async () => {
+    if (!aRevocar) return;
+    setRevocando(true);
+    setErrorRevocar(null);
+    try {
+      await revocarReciclador(idConjunto, aRevocar.id_reciclador, accessToken);
+      setARevocar(null);
+      cargarAutorizados();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      const detalle = err?.response?.data?.detail;
+      setErrorRevocar(detalle || t("dashboards.adminConjunto.recyclersSection.revokeErrorDefault"));
+    } finally {
+      setRevocando(false);
     }
   };
 
@@ -359,11 +380,21 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{r.correo_electronico}</p>
                   </div>
-                  {r.asociacion && (
-                    <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                      {r.asociacion}
-                    </span>
-                  )}
+                  <div className="flex shrink-0 items-center gap-2">
+                    {r.asociacion && (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        {r.asociacion}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setARevocar(r)}
+                      className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
+                      aria-label={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
+                    >
+                      <UserX className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -399,6 +430,42 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
             </div>
           )}
         </div>
+      )}
+
+      {aRevocar && (
+        <Modal onClose={() => setARevocar(null)} aria-label={t("dashboards.adminConjunto.recyclersSection.revokeModalAriaLabel")}>
+          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
+              <UserX className="h-6 w-6 text-red-500 dark:text-red-400" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+              {t("dashboards.adminConjunto.recyclersSection.revokeConfirmTitle", { nombre: `${aRevocar.nombre} ${aRevocar.apellidos}` })}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              {t("dashboards.adminConjunto.recyclersSection.revokeConfirmWarning")}
+            </p>
+            {errorRevocar && (
+              <p className="mb-4 text-xs font-medium text-red-600 dark:text-red-400">{errorRevocar}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setARevocar(null)}
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={confirmarRevocar}
+                disabled={revocando}
+                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {revocando ? t("common.saving") : t("dashboards.adminConjunto.recyclersSection.revokeConfirmButton")}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

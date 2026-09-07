@@ -160,8 +160,10 @@ class TestRecicladoresAutorizadosDelAdmin:
         /invitar ni /responder."""
         db.execute(
             text(
-                "INSERT INTO recicladores_conjuntos (id_reciclador, id_conjunto_residencial) "
-                "SELECT r.id_reciclador, :cid FROM recicladores r WHERE r.id_usuario = :uid"
+                "INSERT INTO recicladores_conjuntos "
+                "(id, id_reciclador, id_conjunto_residencial, fecha_autorizacion) "
+                "SELECT gen_random_uuid(), r.id_reciclador, :cid, now() "
+                "FROM recicladores r WHERE r.id_usuario = :uid"
             ),
             {"cid": conjunto_verificado.id_conjunto_residencial, "uid": reciclador_test.id_usuario},
         )
@@ -190,4 +192,124 @@ class TestRecicladoresAutorizadosDelAdmin:
             f"/api/v1/reciclador-conjunto/mi-conjunto/{conjunto_no_verificado.id_conjunto_residencial}/autorizados",
             headers=admin_conjunto_auth_headers,
         )
+        assert response.status_code == 403
+
+
+class TestRevocarReciclador:
+    """
+    ¿Por qué? El Admin de Conjunto no tenía ninguna forma de terminar la
+    relación con un reciclador ya autorizado — solo invitar/aceptar/listar.
+    Revocar es un soft-delete (fecha_revocacion), no borra el historial.
+    """
+
+    def _url(self, conjunto, reciclador_usuario) -> str:
+        # ¿Qué? reciclador_usuario es un Usuario (fixture reciclador_test) —
+        #       el endpoint necesita el id_reciclador de su perfil, no el id_usuario.
+        return (
+            f"/api/v1/reciclador-conjunto/mi-conjunto/{conjunto.id_conjunto_residencial}"
+            f"/autorizados/{reciclador_usuario.reciclador.id_reciclador}"
+        )
+
+    def _autorizar(self, client, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test):
+        id_invitacion = self._invitar(client, admin_conjunto_auth_headers, conjunto_verificado, reciclador_test)
+        client.post(
+            f"/api/v1/reciclador-conjunto/invitaciones/{id_invitacion}/responder",
+            headers=reciclador_auth_headers,
+            json={"aceptar": True},
+        )
+
+    def _invitar(self, client, admin_conjunto_auth_headers, conjunto_verificado, reciclador_test):
+        response = client.post(
+            "/api/v1/reciclador-conjunto/invitar",
+            headers=admin_conjunto_auth_headers,
+            json={
+                "correo_reciclador": reciclador_test.correo_electronico,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
+            },
+        )
+        return response.json()["id"]
+
+    def test_revoca_y_desaparece_de_autorizados(
+        self,
+        client: TestClient,
+        admin_conjunto_auth_headers,
+        reciclador_auth_headers,
+        conjunto_verificado,
+        reciclador_test,
+    ):
+        self._autorizar(client, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test)
+
+        response = client.delete(
+            self._url(conjunto_verificado, reciclador_test), headers=admin_conjunto_auth_headers
+        )
+        assert response.status_code == 204
+
+        autorizados = client.get(
+            f"/api/v1/reciclador-conjunto/mi-conjunto/{conjunto_verificado.id_conjunto_residencial}/autorizados",
+            headers=admin_conjunto_auth_headers,
+        )
+        assert autorizados.json() == []
+
+    def test_reciclador_recibe_notificacion(
+        self,
+        client: TestClient,
+        admin_conjunto_auth_headers,
+        reciclador_auth_headers,
+        conjunto_verificado,
+        reciclador_test,
+    ):
+        self._autorizar(client, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test)
+        client.delete(self._url(conjunto_verificado, reciclador_test), headers=admin_conjunto_auth_headers)
+
+        notifs = client.get("/api/v1/notificaciones/mis-notificaciones", headers=reciclador_auth_headers)
+        assert any(n["tipo"] == "RECICLADOR_REVOCADO" for n in notifs.json())
+
+    def test_se_puede_volver_a_invitar_tras_revocar(
+        self,
+        client: TestClient,
+        admin_conjunto_auth_headers,
+        reciclador_auth_headers,
+        conjunto_verificado,
+        reciclador_test,
+    ):
+        """El historial se conserva (queda como fila revocada), pero no bloquea una nueva invitación."""
+        self._autorizar(client, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test)
+        client.delete(self._url(conjunto_verificado, reciclador_test), headers=admin_conjunto_auth_headers)
+
+        response = client.post(
+            "/api/v1/reciclador-conjunto/invitar",
+            headers=admin_conjunto_auth_headers,
+            json={
+                "correo_reciclador": reciclador_test.correo_electronico,
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
+            },
+        )
+        assert response.status_code == 201
+
+    def test_reciclador_no_autorizado_devuelve_404(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        """Nunca se invitó/aceptó — no hay nada que revocar."""
+        response = client.delete(
+            self._url(conjunto_verificado, reciclador_test), headers=admin_conjunto_auth_headers
+        )
+        assert response.status_code == 404
+
+    def test_no_puede_revocar_en_un_conjunto_ajeno(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_no_verificado, reciclador_test
+    ):
+        response = client.delete(
+            self._url(conjunto_no_verificado, reciclador_test), headers=admin_conjunto_auth_headers
+        )
+        assert response.status_code == 403
+
+    def test_sin_login_devuelve_401(self, client: TestClient, conjunto_verificado, reciclador_test):
+        response = client.delete(self._url(conjunto_verificado, reciclador_test))
+        assert response.status_code == 401
+
+    def test_reciclador_no_puede_revocar_devuelve_403(
+        self, client: TestClient, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        """Un Reciclador no tiene perfil de Administrador de Conjunto."""
+        response = client.delete(self._url(conjunto_verificado, reciclador_test), headers=reciclador_auth_headers)
         assert response.status_code == 403

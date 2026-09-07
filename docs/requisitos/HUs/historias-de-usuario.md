@@ -49,3 +49,4 @@
 | HU-035 | [Admin Sistema archiva una novedad](HU-035_admin_sistema_archiva_novedad.md) | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)     |
 | HU-036 | [Usuario cambia el idioma de la interfaz](HU-036_usuario_cambia_idioma_interfaz.md) | [RQF-017](../RFs/RQF-017_cambio_de_idioma.md)     |
 | HU-037 | [Sistema restaura el idioma guardado al iniciar sesión](HU-037_sistema_restaura_idioma_al_iniciar_sesion.md) | [RQF-017](../RFs/RQF-017_cambio_de_idioma.md)     |
+| HU-038 | [Admin de Conjunto revoca el acceso de un reciclador](HU-038_admin_conjunto_revoca_reciclador.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
