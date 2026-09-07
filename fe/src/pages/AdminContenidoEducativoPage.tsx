@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
+import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import {
   crearContenido,
   editarContenido,
@@ -231,9 +232,12 @@ export function AdminContenidoEducativoPage() {
                 id="contenido-cuerpo"
                 value={form.cuerpo_texto}
                 onChange={(e) => setForm({ ...form, cuerpo_texto: e.target.value })}
-                rows={4}
+                rows={6}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                {t("adminContenidoEducativo.fields.contentMarkdownHint")}
+              </p>
             </div>
 
             <div>
@@ -249,18 +253,12 @@ export function AdminContenidoEducativoPage() {
               />
             </div>
 
-            <div>
-              <label htmlFor="contenido-url-guia" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminContenidoEducativo.fields.guideLink")}
-              </label>
-              <input
-                id="contenido-url-guia"
-                value={form.url_guia ?? ""}
-                onChange={(e) => setForm({ ...form, url_guia: e.target.value })}
-                placeholder="https://..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-              />
-            </div>
+            <GuiaApoyoField
+              label={t("adminContenidoEducativo.fields.guideLink")}
+              value={form.url_guia ?? ""}
+              onChange={(url) => setForm({ ...form, url_guia: url })}
+              token={accessToken ?? ""}
+            />
 
             <div className="flex gap-2 pt-2">
               <button

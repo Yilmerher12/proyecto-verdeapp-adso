@@ -84,6 +84,28 @@ class TestSubirAdjunto:
         )
         assert response.status_code == 400
 
+    def test_pdf_con_permitir_pdf_se_acepta(self, client: TestClient, admin_sistema_auth_headers):
+        """¿Qué? Solo quien pide explícitamente permitir_pdf=true (la guía
+        de apoyo del contenido educativo) puede subir un PDF."""
+        response = client.post(
+            f"{URL}?permitir_pdf=true",
+            headers=admin_sistema_auth_headers,
+            files={"archivo": ("guia.pdf", io.BytesIO(b"%PDF-1.4\n%mock pdf content"), "application/pdf")},
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["url"].startswith("/uploads/adjuntos/")
+        assert data["url"].endswith(".pdf")
+
+    def test_pdf_falso_con_permitir_pdf_devuelve_400(self, client: TestClient, admin_sistema_auth_headers):
+        """Content-Type dice PDF, pero el contenido real no empieza con la firma "%PDF-"."""
+        response = client.post(
+            f"{URL}?permitir_pdf=true",
+            headers=admin_sistema_auth_headers,
+            files={"archivo": ("falso.pdf", io.BytesIO(b"esto no es un pdf"), "application/pdf")},
+        )
+        assert response.status_code == 400
+
     def test_png_con_chunk_corrupto_devuelve_400_no_500(self, client: TestClient, admin_conjunto_auth_headers):
         """¿Qué? Encontrado probando esto en vivo: un PNG con el checksum de
         un chunk corrupto hace que Pillow lance SyntaxError en vez de

@@ -83,6 +83,34 @@ describe("CategoriaEducativaPage", () => {
     });
   });
 
+  // ¿Qué? Si la guía viene de un archivo subido a VerdeApp (ruta relativa,
+  //       no un link externo con http), el href debe completarse con la
+  //       URL del backend — si no, el navegador la resuelve contra el
+  //       frontend y el archivo nunca se encuentra.
+  it("completa con la URL del backend cuando la guía es un archivo subido", async () => {
+    mockListarContenido.mockResolvedValue([
+      { ...modulos[0], url_guia: "/uploads/adjuntos/guia123.pdf" },
+    ]);
+    renderConRuta("Puntos limpios y Ecopuntos");
+
+    await waitFor(() => {
+      const link = screen.getByRole("link", { name: /ver guía de apoyo/i });
+      expect(link.getAttribute("href")).toMatch(/\/uploads\/adjuntos\/guia123\.pdf$/);
+      expect(link.getAttribute("href")).not.toBe("/uploads/adjuntos/guia123.pdf");
+    });
+  });
+
+  it("renderiza subtítulos en Markdown del cuerpo del texto", async () => {
+    mockListarContenido.mockResolvedValue([
+      { ...modulos[0], cuerpo_texto: "## Antes de reciclar\n\nTexto de ejemplo." },
+    ]);
+    renderConRuta("Puntos limpios y Ecopuntos");
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Antes de reciclar" })).toBeInTheDocument();
+    });
+  });
+
   it("muestra un mensaje si la categoría no tiene contenido", async () => {
     renderConRuta("Categoría inexistente");
 

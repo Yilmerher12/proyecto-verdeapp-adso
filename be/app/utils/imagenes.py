@@ -22,6 +22,13 @@ TIPOS_IMAGEN_PERMITIDOS = {
     "image/png": ".png",
     "image/webp": ".webp",
 }
+# ¿Qué? PDF queda aparte de TIPOS_IMAGEN_PERMITIDOS, no mezclado ahí.
+# ¿Para qué? Solo lo acepta quien lo pida explícitamente (permitir_pdf=True
+#           en guardar_imagen_subida) — evidencias de auditoría, por
+#           ejemplo, deben seguir siendo solo imágenes reales, nunca PDF.
+TIPO_PDF = "application/pdf"
+EXTENSION_PDF = ".pdf"
+FIRMA_PDF = b"%PDF-"
 TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
@@ -44,45 +51,73 @@ def _validar_contenido_imagen(contenido: bytes) -> None:
         )
 
 
+def _validar_contenido_pdf(contenido: bytes) -> None:
+    """
+    ¿Qué? El "Content-Type" lo declara el navegador — no es garantía. Un
+          PDF de verdad siempre empieza con la firma "%PDF-" en sus
+          primeros bytes; Pillow no sirve aquí porque un PDF no es una
+          imagen.
+    """
+    if not contenido.startswith(FIRMA_PDF):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El archivo no es un PDF válido.",
+        )
+
+
 def _escribir_imagen(carpeta: Path, ruta: Path, contenido: bytes) -> None:
     """La otra parte bloqueante — crear la carpeta si hace falta y escribir el archivo."""
     carpeta.mkdir(parents=True, exist_ok=True)
     ruta.write_bytes(contenido)
 
 
-async def guardar_imagen_subida(archivo: UploadFile, carpeta_destino: Path, ruta_publica_base: str) -> str:
+async def guardar_imagen_subida(
+    archivo: UploadFile,
+    carpeta_destino: Path,
+    ruta_publica_base: str,
+    permitir_pdf: bool = False,
+) -> str:
     """
-    ¿Qué? Valida tipo/tamaño/contenido real de la imagen y la guarda en
+    ¿Qué? Valida tipo/tamaño/contenido real del archivo y lo guarda en
           disco con un nombre aleatorio (evita que dos personas pisen el
           archivo de la otra si ambas suben algo llamado "foto.jpg").
     ¿Para qué? "carpeta_destino" y "ruta_publica_base" los define quien
               llama, para que auditorías y adjuntos de comunicados/
-              novedades guarden cada uno en su propia carpeta, sin
-              mezclarse, reutilizando la misma validación.
+              novedades/contenido educativo guarden cada uno en su propia
+              carpeta, sin mezclarse, reutilizando la misma validación.
+              "permitir_pdf" es False por defecto a propósito — evidencias
+              de auditoría, por ejemplo, deben seguir aceptando solo
+              imágenes reales; solo quien de verdad lo necesita (la guía
+              de apoyo del contenido educativo) lo pide en True.
     ¿Impacto? Devuelve la ruta PÚBLICA (para guardar en la BD y servir al
              frontend vía /uploads, ver main.py), no la ruta absoluta del
              servidor.
     """
-    extension = TIPOS_IMAGEN_PERMITIDOS.get(archivo.content_type or "")
+    tipos_permitidos = dict(TIPOS_IMAGEN_PERMITIDOS)
+    if permitir_pdf:
+        tipos_permitidos[TIPO_PDF] = EXTENSION_PDF
+
+    extension = tipos_permitidos.get(archivo.content_type or "")
     if extension is None:
+        formatos = "JPG, PNG, WEBP o PDF" if permitir_pdf else "JPG, PNG o WEBP"
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El archivo debe ser una imagen JPG, PNG o WEBP.",
+            detail=f"El archivo debe ser {formatos}.",
         )
 
     contenido = await archivo.read()
     if len(contenido) > TAMANO_MAXIMO_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="La imagen no puede superar 5 MB.",
+            detail="El archivo no puede superar 5 MB.",
         )
     if len(contenido) == 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La imagen está vacía.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El archivo está vacío.")
 
     # ¿Qué? El "Content-Type" de arriba lo escribe el navegador del
     #       cliente — es solo una etiqueta, no una garantía de que el
-    #       archivo sea de verdad una imagen. Pillow revisa el contenido
-    #       real (la estructura interna del archivo).
+    #       archivo sea de verdad lo que dice ser. Pillow (imágenes) o la
+    #       firma "%PDF-" (PDF) revisan el contenido real.
     # ¿Para qué? Sin este chequeo, alguien podía renombrar cualquier
     #           archivo a ".jpg" y declarar Content-Type "image/jpeg" a
     #           mano, y el backend lo aceptaba igual.
@@ -90,8 +125,11 @@ async def guardar_imagen_subida(archivo: UploadFile, carpeta_destino: Path, ruta
     #           disco de abajo) porque FastAPI corre en un solo hilo por
     #           worker — código síncrono que tarda (Pillow, disco) bloquea
     #           ese hilo completo y congela el servidor para TODOS los
-    #           usuarios mientras corre, no solo para quien sube la foto.
-    await asyncio.to_thread(_validar_contenido_imagen, contenido)
+    #           usuarios mientras corre, no solo para quien sube el archivo.
+    if archivo.content_type == TIPO_PDF:
+        await asyncio.to_thread(_validar_contenido_pdf, contenido)
+    else:
+        await asyncio.to_thread(_validar_contenido_imagen, contenido)
 
     nombre_archivo = f"{uuid.uuid4()}{extension}"
     ruta = carpeta_destino / nombre_archivo

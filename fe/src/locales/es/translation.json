@@ -982,8 +982,9 @@
       "titleField": "Título",
       "titlePlaceholder": "Ej: Código de colores de bolsas",
       "content": "Contenido",
+      "contentMarkdownHint": "Puedes usar ## para subtítulos, **negrita** y - para listas.",
       "videoLink": "Link de video (YouTube)",
-      "guideLink": "Link de guía de apoyo (PDF, Drive, etc.)"
+      "guideLink": "Guía de apoyo"
     },
     "deleteConfirm": {
       "title": "¿Eliminar \"{{titulo}}\"?",
@@ -1075,6 +1076,16 @@
     "tipoInvalido": "La imagen debe ser JPG, PNG o WEBP.",
     "demasiadoGrande": "La imagen no puede superar 5 MB.",
     "errorSubida": "No se pudo subir la imagen. Intenta de nuevo."
+  },
+  "guiaApoyo": {
+    "tabUpload": "Subir archivo",
+    "tabLink": "Pegar link",
+    "seleccionar": "Seleccionar imagen o PDF",
+    "subiendo": "Subiendo...",
+    "quitar": "Quitar",
+    "tipoInvalido": "El archivo debe ser JPG, PNG, WEBP o PDF.",
+    "demasiadoGrande": "El archivo no puede superar 5 MB.",
+    "errorSubida": "No se pudo subir el archivo. Intenta de nuevo."
   },
   "invitarAdminConjunto": {
     "title": "Invitar Administrador de Conjunto",

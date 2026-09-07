@@ -978,8 +978,9 @@
       "titleField": "Title",
       "titlePlaceholder": "E.g.: Color-coding for bags",
       "content": "Content",
+      "contentMarkdownHint": "You can use ## for subheadings, **bold**, and - for lists.",
       "videoLink": "Video link (YouTube)",
-      "guideLink": "Support guide link (PDF, Drive, etc.)"
+      "guideLink": "Support guide"
     },
     "deleteConfirm": {
       "title": "Delete \"{{titulo}}\"?",
@@ -1071,6 +1072,16 @@
     "tipoInvalido": "The image must be JPG, PNG, or WEBP.",
     "demasiadoGrande": "The image can't be larger than 5 MB.",
     "errorSubida": "Couldn't upload the image. Please try again."
+  },
+  "guiaApoyo": {
+    "tabUpload": "Upload file",
+    "tabLink": "Paste link",
+    "seleccionar": "Select image or PDF",
+    "subiendo": "Uploading...",
+    "quitar": "Remove",
+    "tipoInvalido": "The file must be JPG, PNG, WEBP, or PDF.",
+    "demasiadoGrande": "The file can't be larger than 5 MB.",
+    "errorSubida": "Couldn't upload the file. Please try again."
   },
   "invitarAdminConjunto": {
     "title": "Invite Building Administrator",
