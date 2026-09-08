@@ -146,7 +146,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("desvinculacion.asignarAdicional.searchPlaceholder")}
-            className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+            className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
           />
         </div>
         <button

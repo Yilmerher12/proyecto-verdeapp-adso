@@ -52,3 +52,9 @@ Todo componente nuevo debe mantener un contraste de texto legible tanto en modo 
 Los formularios y modales deben poder usarse completamente sin mouse (tab, enter, escape).
 
 > **Estado real (2026-08-28)**: **Verificado.** La auditoría dedicada ya se hizo — `docs/conceptos/accesibilidad-aria-wcag.md`. `Modal.tsx` ya tenía trampa de foco completa (Tab/Shift+Tab), cierre con Esc y restauración del foco al cerrar. La auditoría encontró y corrigió el único hueco real: las filas de notificación no leída solo respondían al clic del mouse — se les agregó `role="button"`, `tabIndex` y manejo de `Enter`/Espacio.
+
+### RNF-005.6 — Respetar "reducir movimiento" en toda animación
+
+Ninguna transición o animación de la interfaz (aparición de un Modal, una Alert, un mensaje de error, o cualquier otra que se agregue después) debe forzar movimiento a quien configuró `prefers-reduced-motion: reduce` en su sistema operativo — el contenido debe seguir apareciendo, solo que sin el movimiento/fundido, nunca invisible ni retrasado (WCAG 2.3.3).
+
+> **Estado real (2026-09-08, issue #197)**: **Verificado.** Antes esto solo estaba implementado para el Hero del Landing (`.animate-hero-in`) y el `useScrollReveal` de sus tarjetas. Al agregar transiciones de entrada a `Modal.tsx`, `Alert.tsx` y el mensaje de error de `InputField.tsx` (que antes aparecían de golpe, sin ninguna transición), se generalizó el mismo patrón con 2 utilidades CSS nuevas y reutilizables — `.animate-fade-in` y `.animate-scale-in` (`fe/src/index.css`) — en vez de repetir la lógica de `prefers-reduced-motion` en cada componente por separado.

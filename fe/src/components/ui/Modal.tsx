@@ -126,7 +126,7 @@ export function Modal({
 
   return (
     <div
-      className={`fixed inset-0 ${backdropZIndex} flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm sm:items-center sm:p-6 ${closeOnBackdrop ? "cursor-pointer" : ""}`}
+      className={`animate-fade-in fixed inset-0 ${backdropZIndex} flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm sm:items-center sm:p-6 ${closeOnBackdrop ? "cursor-pointer" : ""}`}
       onClick={closeOnBackdrop ? onClose : undefined}
       aria-hidden="false"
     >
@@ -136,7 +136,7 @@ export function Modal({
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
-        className={`relative my-auto w-full ${wide ? "max-w-xl" : "max-w-md"} rounded-2xl bg-white shadow-2xl outline-none dark:bg-[#132a1c]`}
+        className={`animate-scale-in relative my-auto w-full ${wide ? "max-w-xl" : "max-w-md"} rounded-2xl bg-white shadow-2xl outline-none dark:bg-[#132a1c]`}
         onClick={(e) => e.stopPropagation()}
       >
         <button

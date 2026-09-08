@@ -539,7 +539,7 @@ export function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setDocumentoAbierto("terminos")}
-                  className="cursor-pointer text-green-600 hover:underline font-semibold"
+                  className="cursor-pointer text-green-600 transition-colors hover:underline font-semibold"
                 >
                   {t("auth.register.termsLinkLabel")}
                 </button>
@@ -547,7 +547,7 @@ export function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setDocumentoAbierto("privacidad")}
-                  className="cursor-pointer text-green-600 hover:underline font-semibold"
+                  className="cursor-pointer text-green-600 transition-colors hover:underline font-semibold"
                 >
                   {t("auth.register.privacyLinkLabel")}
                 </button>
