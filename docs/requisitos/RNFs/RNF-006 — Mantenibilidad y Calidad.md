@@ -23,7 +23,7 @@
 | **Nombre**    | Mantenibilidad y Calidad       |
 | **Categoría** | Mantenibilidad y Calidad        |
 | **Prioridad** | Alta                             |
-| **Estado**    | Parcialmente implementado         |
+| **Estado**    | Implementado         |
 
 ---
 
@@ -44,6 +44,8 @@ El backend usa `ruff` (lint + formato) y el frontend usa `eslint` + `prettier`. 
 Cada router del backend con lógica de negocio real (permisos, invitaciones, notificaciones) debe tener sus propias pruebas.
 
 > **Estado real (2026-08-28)**: backend con 233 tests en 13 archivos (creció de los 10 archivos originales), frontend con 167 tests en 24 archivos — **incluyendo ya los 4 dashboards por rol** (`ResidenteDashboard.test.tsx`, `RecicladorDashboard.test.tsx`, `AdminDashboard.test.tsx`, `AdminConjuntoDashboard.test.tsx`), que antes faltaban. Lo que decía "Pendiente" aquí ya no aplica.
+>
+> **Actualización (2026-09-08)**: backend con 327 tests en 15 archivos, frontend con 210 tests en 30 archivos — sigue creciendo con cada tarjeta nueva, como debe ser.
 
 ### RNF-006.4 — Control de versiones del esquema de base de datos
 
@@ -54,6 +56,8 @@ Todo cambio a las tablas de la base de datos debe pasar por una migración versi
 Todas las dependencias (backend con `uv`/`pyproject.toml`, frontend con `pnpm`/`package.json`) deben fijarse con una versión exacta, nunca con rangos abiertos — así toda persona del equipo instala exactamente lo mismo.
 
 > **Nota (2026-08-28)**: casi se cumple al 100% — la única excepción encontrada es `fe/package.json`: `"@headlessui/react": "^2.2.10"` usa un rango abierto (`^`), no una versión exacta. Es la razón por la que el Estado general de este RNF sigue en "Parcial" y no "Implementado", pese a que 006.1 a 006.4 y 006.6 ya cumplen del todo.
+>
+> **Actualización (2026-09-08)**: esa excepción ya no existe — `fe/package.json` fija `"@headlessui/react": "2.2.10"` sin rango abierto. Revisado de nuevo todo `fe/package.json` y `be/pyproject.toml`: ninguna dependencia usa `^`, `~` ni rangos (`>=`) sin fijar. RNF-006.5 se cumple al 100%, y con esto el Estado general de RNF-006 pasa a **Implementado** (era el único punto pendiente).
 
 ### RNF-006.6 — Historial de cambios trazable
 

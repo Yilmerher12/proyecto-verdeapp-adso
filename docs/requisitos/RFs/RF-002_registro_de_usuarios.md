@@ -17,13 +17,15 @@
 | **Módulo** | Autenticación       |
 | **Prioridad** | Alta                |
 | **Estado** | Implementado        |
-| **Usuarios** | residente, reciclador, admin_conjunto |
+| **Usuarios** | residente, reciclador |
+
+> **Nota (2026-09-08)**: el campo "Usuarios" antes incluía `admin_conjunto` por error — ese rol **nunca** se crea por registro público (RN-001 de este mismo documento ya lo dejaba claro, sin que el campo de arriba fuera consistente con eso). Un Admin de Conjunto solo se origina por invitación del Admin Sistema, ver RQF-012.
 
 ---
 
 ## Descripción
 
-El sistema debe registrar los datos del usuario (nombre, correo, contraseña, rol) y enviar un correo electrónico con un enlace de verificación para activar la cuenta en la base de datos.
+El sistema debe registrar los datos del usuario (nombre, correo, contraseña, rol) y enviar un correo electrónico con un enlace de verificación para activar la cuenta en la base de datos. Adicionalmente, un Residente debe aportar el `código de acceso` real de su conjunto (issue #168) — sin eso, cualquiera podía declarar pertenecer a cualquier conjunto sin ninguna verificación.
 
 ---
 
@@ -34,7 +36,8 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 | `nombre`    | Texto         | Sí          | Mínimo 2 caracteres, máximo 255                                              |
 | `correo`    | Texto (email) | Sí          | Formato válido, máximo 255 caracteres, único en BD                           |
 | `contraseña`| Texto         | Sí          | Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 carácter especial (`!@#$%^&*...`) |
-| `rol`       | Enum          | Sí          | Valores permitidos: `residente`, `reciclador`, `admin_conjunto`               |
+| `rol`       | Enum          | Sí          | Valores permitidos: `residente`, `reciclador`                                |
+| `codigo_acceso` | Texto     | Sí, solo si `rol = residente` | Debe coincidir con el código de acceso vigente del conjunto indicado |
 
 ---
 
@@ -74,3 +77,4 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 - RN-001: Todo nuevo usuario debe ser asignado obligatoriamente a un rol válido (`residente` o `reciclador`).
 - RN-002: La cuenta no podrá iniciar sesión (RQF-001) hasta que el enlace de verificación del correo sea visitado.
 - RN-003: El token del correo de verificación tiene una validez de 24 horas.
+- RN-004: Un Residente solo puede registrarse aportando el `código de acceso` real y vigente de su conjunto (issue #168) — el Admin de Conjunto lo reparte fuera de la app (cartelera, grupo del conjunto). Si el Admin de Conjunto lo regenera (RQF-012/HU-044), el código anterior deja de servir de inmediato.
