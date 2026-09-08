@@ -254,23 +254,40 @@ export function AdminDashboard() {
   //           cada una de las columnas de las 3 tablas.
   const thOrdenable = (columna: string, label: string) => {
     const activo = orderBy === columna;
+    // ¿Qué? aria-sort en el <th> (patrón WCAG para encabezados ordenables
+    //       de tabla) + un aria-label del botón que anuncia el ESTADO
+    //       actual (ordenado ascendente/descendente), no solo la acción
+    //       "ordenar por X" — antes un lector de pantalla nunca se enteraba
+    //       de si esa columna ya estaba ordenada ni en qué dirección.
+    const ariaSort = activo ? (orderDir === "asc" ? "ascending" : "descending") : "none";
+    const ariaLabel = activo
+      ? t(
+          orderDir === "asc"
+            ? "dashboards.admin.usersSection.sortAriaAscending"
+            : "dashboards.admin.usersSection.sortAriaDescending",
+          { columna: label }
+        )
+      : t("dashboards.admin.usersSection.sortAria", { columna: label });
     return (
-      <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+      <th
+        className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+        aria-sort={ariaSort}
+      >
         <button
           type="button"
           onClick={() => ordenarPor(columna)}
           className="flex cursor-pointer items-center gap-1 transition-colors hover:text-gray-800 dark:hover:text-gray-200"
-          aria-label={t("dashboards.admin.usersSection.sortAria", { columna: label })}
+          aria-label={ariaLabel}
         >
           {label}
           {activo ? (
             orderDir === "asc" ? (
-              <ArrowUp className="h-3 w-3" />
+              <ArrowUp className="h-3 w-3" aria-hidden="true" />
             ) : (
-              <ArrowDown className="h-3 w-3" />
+              <ArrowDown className="h-3 w-3" aria-hidden="true" />
             )
           ) : (
-            <ArrowUpDown className="h-3 w-3 opacity-40" />
+            <ArrowUpDown className="h-3 w-3 opacity-40" aria-hidden="true" />
           )}
         </button>
       </th>

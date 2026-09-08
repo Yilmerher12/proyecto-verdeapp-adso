@@ -67,6 +67,10 @@ VerdeApp sigue esta regla en casi todo el código: usa `<button>` (nunca `<div o
 | `components/ui/ThemeToggle.tsx` | ✅ AA (corregido) | `aria-pressed` agregado, ver corrección #4 abajo |
 | `components/AuditoriaConjuntoForm.tsx` | ✅ AA (corregido) | `role="radiogroup"`, ver corrección #5 abajo |
 | `components/layout/LegalLayout.tsx` | ✅ AA (corregido) | `<nav>` sin `aria-label`, ver corrección #6 abajo |
+| `pages/dashboards/AdminDashboard.tsx` | ✅ AA (corregido, 2026-09-08) | `aria-sort` en columnas ordenables, ver corrección #7 |
+| `components/ui/GuiaApoyoField.tsx` | ✅ AA (corregido, 2026-09-08) | `role="radiogroup"`, ver corrección #8 |
+| `pages/AdminConjuntoComunicadosPage.tsx` / `AdminNovedadesPage.tsx` | ✅ AA (corregido, 2026-09-08) | `aria-checked` en selectores, ver corrección #9 |
+| `pages/dashboards/AdminConjuntoDashboard.tsx` | ✅ AA (corregido, 2026-09-08) | `aria-expanded`, ver corrección #10 |
 
 ---
 
@@ -172,6 +176,58 @@ Un lector de pantalla ahora anuncia *"Bueno, botón de radio, seleccionado, 1 de
 ### 6. `<nav>` sin `aria-label` — `LegalLayout.tsx`
 
 Era el único `<nav>` de la app sin etiquetar — `AppShell.tsx`, `AuthLayout.tsx` y `LandingPage.tsx` ya lo hacían bien. Se agregó `aria-label={t("legal.navAriaLabel")}` por consistencia.
+
+---
+
+## Re-auditoría (2026-09-08) — pantallas construidas después de esta auditoría
+
+Entre esta auditoría (28 de agosto) y esta fecha se fusionaron más de 50 PRs, varios con
+pantallas o componentes nuevos que nunca se revisaron contra el checklist de abajo. Se
+repitió el mismo tipo de revisión manual sobre esas pantallas — 4 huecos reales
+encontrados y corregidos, mismo criterio que la auditoría original (patrones ya
+correctos en un componente, no aplicados en otro casi idéntico).
+
+### 7. Encabezados ordenables sin `aria-sort` — `AdminDashboard.tsx`
+
+**Antes**: las 3 tablas del panel de Admin del Sistema ganaron columnas ordenables
+(clic para ordenar), pero el `<th>` no llevaba `aria-sort`, y el `aria-label` del botón
+siempre decía "Ordenar por X" — nunca anunciaba si esa columna YA estaba ordenada ni en
+qué dirección.
+
+**Ahora**: `aria-sort="ascending"|"descending"|"none"` en el `<th>` (patrón WCAG estándar
+para tablas ordenables), y el `aria-label` cambia según el estado: `"Correo, ordenado
+ascendente"` en vez de un genérico `"Ordenar por Correo"` una vez que esa columna es la
+activa.
+
+### 8. Selector de modo sin semántica de grupo — `GuiaApoyoField.tsx`
+
+**Antes**: "Subir archivo" / "Pegar link" eran 2 botones mutuamente excluyentes sin
+`role="radiogroup"`/`role="radio"`/`aria-checked` — el mismo hueco que la corrección #5
+de la auditoría original, pero en un componente que no existía todavía en agosto.
+
+**Ahora**: mismo patrón `role="radiogroup"` + `role="radio"` + `aria-checked` de
+`AuditoriaConjuntoForm.tsx`.
+
+### 9. Selectores de "Destinatarios"/"Alcance" sin `aria-checked` — `AdminConjuntoComunicadosPage.tsx` y `AdminNovedadesPage.tsx`
+
+**Antes**: ambos ya usaban `role="group"` + `aria-labelledby` (la asociación correcta
+del texto descriptivo al grupo), pero cada botón individual no tenía `aria-checked` —
+cuál estaba elegido solo se comunicaba con una clase CSS (borde verde). El comentario
+del código en `AdminNovedadesPage.tsx` incluso decía "ver el mismo patrón en
+AdminConjuntoComunicadosPage.tsx" — el hueco se copió de un archivo al otro.
+
+**Ahora**: `role="radiogroup"` (en vez de `role="group"`) + `role="radio"` +
+`aria-checked` en cada botón, en los 2 archivos.
+
+### 10. Botones de colapsar/expandir sin `aria-expanded` — `AdminConjuntoDashboard.tsx`
+
+**Antes**: "Ver detalle"/"Ocultar detalle" (recicladores autorizados) y
+"+ Invitar reciclador" muestran/ocultan una sección entera al hacer clic, pero el botón
+no tenía `aria-expanded` — un lector de pantalla no tenía forma de saber si esa sección
+ya estaba desplegada.
+
+**Ahora**: `aria-expanded={estado}` + `aria-controls` apuntando al `id` de la sección
+que se revela, en ambos botones.
 
 ---
 

@@ -279,17 +279,22 @@ export function AdminNovedadesPage() {
 
             {!editando ? (
               <div>
-                {/* Grupo de botones, no un control único — role="group" +
-                    aria-labelledby es la asociación correcta (ver el mismo
-                    patrón en AdminConjuntoComunicadosPage.tsx). */}
+                {/* Grupo de botones mutuamente excluyentes, no un control
+                    único — role="radiogroup" + aria-labelledby asocia el
+                    texto descriptivo, role="radio" + aria-checked en cada
+                    botón comunica cuál está elegido (antes solo con una
+                    clase CSS; mismo patrón corregido en
+                    AdminConjuntoComunicadosPage.tsx). */}
                 <span id="novedad-alcance-label" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("novedades.admin.fields.alcance")} <span className="text-red-500">*</span>
                 </span>
-                <div role="group" aria-labelledby="novedad-alcance-label" className="grid grid-cols-2 gap-2">
+                <div role="radiogroup" aria-labelledby="novedad-alcance-label" className="grid grid-cols-2 gap-2">
                   {ALCANCES.map((a) => (
                     <button
                       key={a}
                       type="button"
+                      role="radio"
+                      aria-checked={form.alcance === a}
                       onClick={() => setForm({ ...form, alcance: a })}
                       className={`cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                         form.alcance === a

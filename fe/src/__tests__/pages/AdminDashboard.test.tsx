@@ -249,6 +249,12 @@ describe("AdminDashboard", () => {
     renderPage();
 
     await screen.findByText("Juan Pérez");
+    // ¿Qué? aria-sort en el <th> es el patrón WCAG para encabezados
+    //       ordenables — antes no existía ninguno (re-auditoría de
+    //       accesibilidad post-#16).
+    const thCorreo = screen.getByRole("columnheader", { name: /Correo/ });
+    expect(thCorreo).toHaveAttribute("aria-sort", "none");
+
     await user.click(screen.getByRole("button", { name: "Ordenar por Correo" }));
 
     await waitFor(() => {
@@ -259,8 +265,9 @@ describe("AdminDashboard", () => {
         })
       );
     });
+    expect(thCorreo).toHaveAttribute("aria-sort", "ascending");
 
-    await user.click(screen.getByRole("button", { name: "Ordenar por Correo" }));
+    await user.click(screen.getByRole("button", { name: "Correo, ordenado ascendente" }));
 
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalledWith(
@@ -270,6 +277,7 @@ describe("AdminDashboard", () => {
         })
       );
     });
+    expect(thCorreo).toHaveAttribute("aria-sort", "descending");
   });
 
   it("cambiar de pestaña reinicia el orden elegido", async () => {

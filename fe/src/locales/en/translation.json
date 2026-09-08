@@ -652,6 +652,8 @@
         },
         "searchPlaceholder": "Search by name or email...",
         "sortAria": "Sort by {{columna}}",
+        "sortAriaAscending": "{{columna}}, sorted ascending",
+        "sortAriaDescending": "{{columna}}, sorted descending",
         "pagination": {
           "showing": "Showing {{from}}–{{to}} of {{total}}",
           "prev": "Previous page",
@@ -1085,6 +1087,7 @@
     "errorSubida": "Couldn't upload the image. Please try again."
   },
   "guiaApoyo": {
+    "modeGroupAria": "How to add the support guide",
     "tabUpload": "Upload file",
     "tabLink": "Paste link",
     "seleccionar": "Select image or PDF",

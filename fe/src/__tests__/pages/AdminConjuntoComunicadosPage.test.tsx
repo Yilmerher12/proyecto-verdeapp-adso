@@ -6,6 +6,7 @@
  *           aparecen en cada tarjeta del listado, con el formato correcto.
  */
 import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { vi, beforeEach, describe, it, expect } from "vitest";
 import { AdminConjuntoComunicadosPage } from "@/pages/AdminConjuntoComunicadosPage";
 import { renderWithProviders, mockUser } from "../helpers";
@@ -90,5 +91,25 @@ describe("AdminConjuntoComunicadosPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Todavía no has publicado ningún comunicado.")).toBeInTheDocument();
     });
+  });
+
+  // ¿Qué? El selector de "Destinatarios" es un grupo de botones mutuamente
+  //       excluyentes — debe exponer role="radiogroup"/"radio" y
+  //       aria-checked, no solo distinguir la opción elegida con una clase
+  //       CSS (re-auditoría de accesibilidad post-#16).
+  it("el selector de destinatarios usa semántica de radiogroup", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Nuevo comunicado" }));
+
+    const residentes = await screen.findByRole("radio", { name: "Residentes" });
+    const ambos = screen.getByRole("radio", { name: "Ambos" });
+    expect(residentes).toHaveAttribute("aria-checked", "false");
+    expect(ambos).toHaveAttribute("aria-checked", "true");
+
+    await user.click(residentes);
+    expect(residentes).toHaveAttribute("aria-checked", "true");
+    expect(ambos).toHaveAttribute("aria-checked", "false");
   });
 });

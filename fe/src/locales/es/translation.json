@@ -656,6 +656,8 @@
         },
         "searchPlaceholder": "Buscar por nombre o correo...",
         "sortAria": "Ordenar por {{columna}}",
+        "sortAriaAscending": "{{columna}}, ordenado ascendente",
+        "sortAriaDescending": "{{columna}}, ordenado descendente",
         "pagination": {
           "showing": "Mostrando {{from}}–{{to}} de {{total}}",
           "prev": "Página anterior",
@@ -1089,6 +1091,7 @@
     "errorSubida": "No se pudo subir la imagen. Intenta de nuevo."
   },
   "guiaApoyo": {
+    "modeGroupAria": "Cómo agregar la guía de apoyo",
     "tabUpload": "Subir archivo",
     "tabLink": "Pegar link",
     "seleccionar": "Seleccionar imagen o PDF",

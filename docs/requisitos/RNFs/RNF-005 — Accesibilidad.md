@@ -35,6 +35,8 @@
 
 Los componentes de formulario e interactivos deben incluir atributos ARIA correctos (`aria-invalid`, `aria-describedby`, `aria-hidden`, `aria-label`, `role`) para que la información de estado (errores, carga, iconos decorativos) sea comprensible para lectores de pantalla. Verificado: 25 archivos del frontend ya usan atributos `aria-*` (formularios de autenticación, indicador de fortaleza de contraseña, menú de navegación).
 
+> **Re-auditoría (2026-09-08)**: la auditoría original (28 de agosto) cubrió el estado de la app hasta esa fecha — desde entonces se agregaron pantallas nuevas nunca revisadas contra este requisito. Se repitió la revisión manual y se encontraron/corrigieron 4 huecos reales: `aria-sort` faltante en columnas ordenables, un selector de modo sin `role="radiogroup"`, dos selectores de opción única sin `aria-checked`, y botones de colapsar/expandir sin `aria-expanded`. Detalle completo en `docs/conceptos/accesibilidad-aria-wcag.md` (sección "Re-auditoría").
+
 ### RNF-005.2 — No depender solo del color para transmitir información
 
 Ningún estado del sistema (error, éxito, fortaleza de una contraseña) debe comunicarse únicamente mediante color. Debe acompañarse siempre de texto o un ícono (WCAG 1.4.1). Verificado en el indicador de fortaleza de contraseña, que combina color con una etiqueta de texto.

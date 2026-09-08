@@ -6,6 +6,7 @@
  *           tarjeta del listado.
  */
 import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { vi, beforeEach, describe, it, expect } from "vitest";
 import { AdminNovedadesPage } from "@/pages/AdminNovedadesPage";
 import { renderWithProviders, mockUser } from "../helpers";
@@ -67,5 +68,24 @@ describe("AdminNovedadesPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Todavía no has publicado ninguna novedad.")).toBeInTheDocument();
     });
+  });
+
+  // ¿Qué? El selector de "Alcance" es un grupo de botones mutuamente
+  //       excluyentes — debe exponer role="radiogroup"/"radio" y
+  //       aria-checked (re-auditoría de accesibilidad post-#16).
+  it("el selector de alcance usa semántica de radiogroup", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Nueva novedad" }));
+
+    const todos = await screen.findByRole("radio", { name: "Todos" });
+    const residentes = screen.getByRole("radio", { name: "Residentes" });
+    expect(todos).toHaveAttribute("aria-checked", "true");
+    expect(residentes).toHaveAttribute("aria-checked", "false");
+
+    await user.click(residentes);
+    expect(residentes).toHaveAttribute("aria-checked", "true");
+    expect(todos).toHaveAttribute("aria-checked", "false");
   });
 });
