@@ -651,6 +651,7 @@
           "administradores": "Building Administrators"
         },
         "searchPlaceholder": "Search by name or email...",
+        "sortAria": "Sort by {{columna}}",
         "pagination": {
           "showing": "Showing {{from}}–{{to}} of {{total}}",
           "prev": "Previous page",
