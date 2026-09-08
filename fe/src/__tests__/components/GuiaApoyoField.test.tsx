@@ -75,7 +75,7 @@ describe("GuiaApoyoField", () => {
     const user = userEvent.setup();
 
     render(<GuiaApoyoFieldControlado token="token" />);
-    await user.click(screen.getByRole("button", { name: "Pegar link" }));
+    await user.click(screen.getByRole("radio", { name: "Pegar link" }));
 
     const input = screen.getByPlaceholderText("https://...");
     await user.type(input, "https://bogota.gov.co/guia");

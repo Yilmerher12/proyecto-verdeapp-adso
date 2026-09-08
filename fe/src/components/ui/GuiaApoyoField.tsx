@@ -71,9 +71,15 @@ export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoField
         {label}
       </label>
 
-      <div className="mb-2 flex gap-1.5">
+      {/* ¿Qué? "Subir archivo" / "Pegar link" son mutuamente excluyentes —
+          mismo patrón role="radiogroup" + role="radio" + aria-checked que
+          ya usa el selector de nivel en AuditoriaConjuntoForm.tsx, en vez
+          de comunicar cuál está elegido solo con una clase CSS. */}
+      <div className="mb-2 flex gap-1.5" role="radiogroup" aria-label={t("guiaApoyo.modeGroupAria")}>
         <button
           type="button"
+          role="radio"
+          aria-checked={modo === "archivo"}
           onClick={() => cambiarModo("archivo")}
           className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "archivo"
@@ -85,6 +91,8 @@ export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoField
         </button>
         <button
           type="button"
+          role="radio"
+          aria-checked={modo === "link"}
           onClick={() => cambiarModo("link")}
           className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "link"

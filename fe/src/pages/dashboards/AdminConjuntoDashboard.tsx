@@ -310,6 +310,8 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
           <button
             type="button"
             onClick={() => setMostrarDetalle((v) => !v)}
+            aria-expanded={mostrarDetalle}
+            aria-controls={`recicladores-detalle-${idConjunto}`}
             className="cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-[#132a1c] dark:text-gray-300 dark:border-[#2a4d34] dark:hover:bg-[#1f4029]"
           >
             {mostrarDetalle
@@ -319,6 +321,8 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
           <button
             type="button"
             onClick={() => setMostrarFormulario((v) => !v)}
+            aria-expanded={mostrarFormulario}
+            aria-controls={`recicladores-invitar-${idConjunto}`}
             className="cursor-pointer text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
           >
             {t("dashboards.adminConjunto.recyclersSection.invite")}
@@ -327,7 +331,11 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
       </div>
 
       {mostrarFormulario && (
-        <form onSubmit={handleInvitar} className="flex flex-col sm:flex-row gap-2 mb-4 bg-white dark:bg-[#132a1c] p-3 rounded-xl">
+        <form
+          id={`recicladores-invitar-${idConjunto}`}
+          onSubmit={handleInvitar}
+          className="flex flex-col sm:flex-row gap-2 mb-4 bg-white dark:bg-[#132a1c] p-3 rounded-xl"
+        >
           <div className="flex-1 relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -354,7 +362,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
       )}
 
       {mostrarDetalle && (
-        <div className="mt-1">
+        <div id={`recicladores-detalle-${idConjunto}`} className="mt-1">
           {/* Recicladores YA autorizados — el dato real (recicladores_conjuntos) */}
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
             {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}

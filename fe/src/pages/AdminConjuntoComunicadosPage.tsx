@@ -353,19 +353,24 @@ export function AdminConjuntoComunicadosPage() {
 
                 <div>
                   {/* ¿Qué? "Destinatarios" no es un <select>/<input> único, es un
-                      grupo de botones — un <label htmlFor> no aplica aquí.
-                      ¿Para qué? role="group" + aria-labelledby es la forma
-                                correcta de asociar un texto descriptivo a un
-                                grupo de controles (WAI-ARIA), en vez de un
-                                <label> huérfano que no apunta a nada. */}
+                      grupo de botones mutuamente excluyentes — un
+                      <label htmlFor> no aplica aquí.
+                      ¿Para qué? role="radiogroup" + aria-labelledby asocia el
+                                texto descriptivo al grupo (WAI-ARIA), y
+                                role="radio" + aria-checked en cada botón
+                                comunica cuál está elegido — antes solo se
+                                sabía por una clase CSS (mismo patrón que ya
+                                usa AuditoriaConjuntoForm.tsx). */}
                   <span id="comunicado-destinatarios-label" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                     {t("comunicados.admin.fields.destinatarios")} <span className="text-red-500">*</span>
                   </span>
-                  <div role="group" aria-labelledby="comunicado-destinatarios-label" className="flex gap-2">
+                  <div role="radiogroup" aria-labelledby="comunicado-destinatarios-label" className="flex gap-2">
                     {DESTINATARIOS.map((d) => (
                       <button
                         key={d}
                         type="button"
+                        role="radio"
+                        aria-checked={form.destinatarios === d}
                         onClick={() => setForm({ ...form, destinatarios: d })}
                         className={`flex-1 cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                           form.destinatarios === d

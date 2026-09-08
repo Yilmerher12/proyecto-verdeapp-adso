@@ -98,9 +98,16 @@ describe("AdminConjuntoDashboard", () => {
     // ¿Impacto? Con el rediseño (issue #166) esta sección queda colapsada
     //           por defecto para no empujar el resto del panel fuera de la
     //           vista inicial — hay que expandirla primero.
-    await user.click(screen.getByRole("button", { name: "Ver detalle" }));
+    // ¿Qué? aria-expanded comunica el estado de un botón que muestra/oculta
+    //       una sección — antes solo cambiaba el texto visible, sin nada
+    //       que un lector de pantalla pudiera anunciar (re-auditoría de
+    //       accesibilidad post-#16).
+    const botonDetalle = screen.getByRole("button", { name: "Ver detalle" });
+    expect(botonDetalle).toHaveAttribute("aria-expanded", "false");
+    await user.click(botonDetalle);
     expect(screen.getByText("Autorizados")).toBeInTheDocument();
     expect(screen.getByText("Invitaciones enviadas")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ocultar detalle" })).toHaveAttribute("aria-expanded", "true");
   });
 
   // ¿Qué? Issue #180: nombre y dirección se quitaron del formulario de
@@ -143,7 +150,10 @@ describe("AdminConjuntoDashboard", () => {
     renderPage();
 
     await screen.findByText("Conjunto Los Alpes");
-    await user.click(screen.getByRole("button", { name: "+ Invitar reciclador" }));
+    const botonInvitar = screen.getByRole("button", { name: "+ Invitar reciclador" });
+    expect(botonInvitar).toHaveAttribute("aria-expanded", "false");
+    await user.click(botonInvitar);
+    expect(botonInvitar).toHaveAttribute("aria-expanded", "true");
     await user.type(
       screen.getByPlaceholderText("correo.del.reciclador@ejemplo.com"),
       "reciclador@example.com"
