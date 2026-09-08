@@ -232,6 +232,84 @@ describe("AdminDashboard", () => {
     });
   });
 
+  it("ordena al hacer clic en una columna, e invierte la dirección en el segundo clic", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes")) {
+        return Promise.resolve({ data: { items: [residente], total: 1 } });
+      }
+      if (
+        url.includes("/admin/sp-recicladores") ||
+        url.includes("/admin/administradores-conjunto")
+      ) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Juan Pérez");
+    await user.click(screen.getByRole("button", { name: "Ordenar por Correo" }));
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/vista-residentes"),
+        expect.objectContaining({
+          params: expect.objectContaining({ order_by: "correo", order_dir: "asc" }),
+        })
+      );
+    });
+
+    await user.click(screen.getByRole("button", { name: "Ordenar por Correo" }));
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/vista-residentes"),
+        expect.objectContaining({
+          params: expect.objectContaining({ order_by: "correo", order_dir: "desc" }),
+        })
+      );
+    });
+  });
+
+  it("cambiar de pestaña reinicia el orden elegido", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes")) {
+        return Promise.resolve({ data: { items: [residente], total: 1 } });
+      }
+      if (
+        url.includes("/admin/sp-recicladores") ||
+        url.includes("/admin/administradores-conjunto")
+      ) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Juan Pérez");
+    await user.click(screen.getByRole("button", { name: "Ordenar por Correo" }));
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/vista-residentes"),
+        expect.objectContaining({ params: expect.objectContaining({ order_by: "correo" }) })
+      );
+    });
+
+    mockGet.mockClear();
+    await user.click(screen.getByRole("button", { name: "Recicladores" }));
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/sp-recicladores"),
+        expect.objectContaining({
+          params: expect.not.objectContaining({ order_by: expect.anything() }),
+        })
+      );
+    });
+  });
+
   it("abre el modal de invitar administrador de conjunto al hacer clic", async () => {
     const user = userEvent.setup();
     renderPage();

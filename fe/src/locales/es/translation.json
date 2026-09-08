@@ -655,6 +655,7 @@
           "administradores": "Administradores de Conjunto"
         },
         "searchPlaceholder": "Buscar por nombre o correo...",
+        "sortAria": "Ordenar por {{columna}}",
         "pagination": {
           "showing": "Mostrando {{from}}–{{to}} de {{total}}",
           "prev": "Página anterior",

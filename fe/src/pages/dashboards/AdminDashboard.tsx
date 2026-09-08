@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Shield, Users, Database, UserPlus, UserCog, Search, MapPin, ChevronLeft, ChevronRight, Building2, Ban, CircleCheck } from "lucide-react";
+import { Shield, Users, Database, UserPlus, UserCog, Search, MapPin, ChevronLeft, ChevronRight, Building2, Ban, CircleCheck, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
@@ -45,6 +45,7 @@ interface Localidad {
 }
 
 type TabUsuarios = "residentes" | "recicladores" | "administradores";
+type OrderDir = "asc" | "desc";
 
 // ¿Qué? Filas por página — el mismo número que ya se manda como límite al
 //       backend en cada endpoint.
@@ -80,6 +81,12 @@ export function AdminDashboard() {
   const [localidadId, setLocalidadId] = useState<number | "">("");
   const [pagina, setPagina] = useState(0);
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
+  // ¿Qué? Cada pestaña tiene sus propias columnas ordenables, así que
+  //       cambiar de pestaña reinicia el orden (ver cambiarTab) — sin
+  //       columna elegida (orderBy null), el backend usa su propio orden
+  //       por defecto (por nombre, ascendente).
+  const [orderBy, setOrderBy] = useState<string | null>(null);
+  const [orderDir, setOrderDir] = useState<OrderDir>("asc");
 
   const [residentesData, setResidentesData] = useState<ResidenteRow[]>([]);
   const [recicladoresData, setRecicladoresData] = useState<RecicladorRow[]>([]);
@@ -146,6 +153,10 @@ export function AdminDashboard() {
     };
     if (search.trim()) params.search = search.trim();
     if (localidadId) params.localidad_id = localidadId;
+    if (orderBy) {
+      params.order_by = orderBy;
+      params.order_dir = orderDir;
+    }
 
     axios
       .get(`${API_BASE_URL}/api/v1/admin/${ENDPOINT_POR_TAB[tab]}`, {
@@ -164,14 +175,31 @@ export function AdminDashboard() {
         setError(true);
       })
       .finally(() => setCargando(false));
-  }, [accessToken, tab, search, localidadId, pagina]);
+  }, [accessToken, tab, search, localidadId, orderBy, orderDir, pagina]);
 
-  // ¿Qué? Cada uno de estos 3 manejadores cambia un filtro Y reinicia la
+  // ¿Qué? Cada uno de estos manejadores cambia un filtro Y reinicia la
   //       página a la primera — evita quedar "varado" en una página que ya
   //       no tiene resultados con el filtro nuevo (antes esto vivía en un
   //       useEffect aparte, solo para llamar setPagina).
   const cambiarTab = (nuevaTab: TabUsuarios) => {
     setTab(nuevaTab);
+    // ¿Qué? Cada pestaña tiene sus propias columnas — el orden de una no
+    //       tiene sentido en la otra.
+    setOrderBy(null);
+    setOrderDir("asc");
+    setPagina(0);
+  };
+
+  // ¿Qué? Clic en una columna nueva ordena ascendente; clic de nuevo sobre
+  //       la misma invierte la dirección — sin un tercer estado "sin
+  //       orden", que agregaría un ciclo más sin necesidad real.
+  const ordenarPor = (columna: string) => {
+    if (orderBy === columna) {
+      setOrderDir((dir) => (dir === "asc" ? "desc" : "asc"));
+    } else {
+      setOrderBy(columna);
+      setOrderDir("asc");
+    }
     setPagina(0);
   };
 
@@ -216,6 +244,37 @@ export function AdminDashboard() {
     } finally {
       setActualizando(false);
     }
+  };
+
+  // ¿Qué? Encabezado ordenable compartido por las 3 tablas — clic para
+  //       ordenar por esa columna, con una flecha que indica el estado:
+  //       doble flecha tenue si no es la columna activa, flecha simple
+  //       (▲/▼) si sí lo es.
+  // ¿Para qué? Reutilizado en vez de repetir el mismo <button> + ícono en
+  //           cada una de las columnas de las 3 tablas.
+  const thOrdenable = (columna: string, label: string) => {
+    const activo = orderBy === columna;
+    return (
+      <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        <button
+          type="button"
+          onClick={() => ordenarPor(columna)}
+          className="flex cursor-pointer items-center gap-1 hover:text-gray-800 dark:hover:text-gray-200"
+          aria-label={t("dashboards.admin.usersSection.sortAria", { columna: label })}
+        >
+          {label}
+          {activo ? (
+            orderDir === "asc" ? (
+              <ArrowUp className="h-3 w-3" />
+            ) : (
+              <ArrowDown className="h-3 w-3" />
+            )
+          ) : (
+            <ArrowUpDown className="h-3 w-3 opacity-40" />
+          )}
+        </button>
+      </th>
+    );
   };
 
   // ¿Qué? Celda compartida por las 3 tablas: muestra el estado y, si no es
@@ -369,30 +428,30 @@ export function AdminDashboard() {
               <tr className="border-b border-gray-100 dark:border-[#2a4d34] bg-gray-50 dark:bg-[#0d2116]/60">
                 {tab === "residentes" && (
                   <>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.email")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.name")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.conjunto")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.unit")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.header")}</th>
+                    {thOrdenable("correo", t("dashboards.admin.residentsTable.headers.email"))}
+                    {thOrdenable("nombre", t("dashboards.admin.residentsTable.headers.name"))}
+                    {thOrdenable("conjunto", t("dashboards.admin.residentsTable.headers.conjunto"))}
+                    {thOrdenable("unidad", t("dashboards.admin.residentsTable.headers.unit"))}
+                    {thOrdenable("estado", t("dashboards.admin.usersSection.status.header"))}
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
                   </>
                 )}
                 {tab === "recicladores" && (
                   <>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.email")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.fullName")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.association")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.header")}</th>
+                    {thOrdenable("correo", t("dashboards.admin.recyclersTable.headers.email"))}
+                    {thOrdenable("nombre", t("dashboards.admin.recyclersTable.headers.fullName"))}
+                    {thOrdenable("asociacion", t("dashboards.admin.recyclersTable.headers.association"))}
+                    {thOrdenable("estado", t("dashboards.admin.usersSection.status.header"))}
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
                   </>
                 )}
                 {tab === "administradores" && (
                   <>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.email")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.name")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.phone")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.conjuntos")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.header")}</th>
+                    {thOrdenable("correo", t("dashboards.admin.adminsTable.headers.email"))}
+                    {thOrdenable("nombre", t("dashboards.admin.adminsTable.headers.name"))}
+                    {thOrdenable("telefono", t("dashboards.admin.adminsTable.headers.phone"))}
+                    {thOrdenable("conjuntos", t("dashboards.admin.adminsTable.headers.conjuntos"))}
+                    {thOrdenable("estado", t("dashboards.admin.usersSection.status.header"))}
                     <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
                   </>
                 )}

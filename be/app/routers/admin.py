@@ -37,6 +37,29 @@ def _verificar_es_admin_sistema(current_user: Usuario) -> None:
         )
 
 
+def _resolver_orden(
+    order_by: Optional[str],
+    order_dir: Optional[str],
+    columnas_permitidas: dict[str, str],
+    columna_por_defecto: str,
+) -> tuple[str, str]:
+    """
+    ¿Qué? Valida order_by/order_dir contra una lista blanca de columnas antes
+          de interpolarlos en el SQL.
+    ¿Para qué? Postgres no permite pasar el nombre de una columna como
+              parámetro ligado (:col) — solo valores. Armar el ORDER BY con
+              f-string exige entonces controlar de antemano qué puede llegar
+              ahí; cualquier order_by que no esté en la lista blanca se
+              ignora y cae al orden por defecto, en vez de dejarlo pasar tal
+              cual al SQL.
+    ¿Impacto? Reutilizado por los 3 listados del panel de Admin del Sistema
+              (Residentes, Recicladores, Administradores de Conjunto).
+    """
+    columna_sql = columnas_permitidas.get(order_by or "", columnas_permitidas[columna_por_defecto])
+    direccion_sql = "DESC" if order_dir == "desc" else "ASC"
+    return columna_sql, direccion_sql
+
+
 @router.patch("/usuarios/{correo_electronico}/habilitado", summary="Activar o desactivar la cuenta de un usuario")
 def cambiar_habilitado(
     correo_electronico: str,
@@ -76,10 +99,24 @@ def cambiar_habilitado(
     return {"correo_electronico": correo_electronico, "habilitado": body.habilitado}
 
 
+# ¿Qué? Columnas por las que se puede ordenar el listado de Residentes,
+#       mapeadas al nombre real (entre comillas, tal como quedó definido en
+#       la Vista SQL) — ver _resolver_orden.
+COLUMNAS_ORDENABLES_RESIDENTES = {
+    "correo": '"Correo"',
+    "nombre": '"Nombre"',
+    "conjunto": '"Conjunto"',
+    "unidad": '"Bloque"',
+    "estado": '"Habilitado"',
+}
+
+
 @router.get("/vista-residentes", summary="Criterio 6: Listado mediante Vista SQL")
 def obtener_vista_residentes(
     search: Optional[str] = Query(None, description="Busca por nombre, apellido o correo"),
     localidad_id: Optional[int] = Query(None),
+    order_by: Optional[str] = Query(None, description="correo, nombre, conjunto, unidad o estado"),
+    order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
     offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(get_current_user),
@@ -130,17 +167,31 @@ def obtener_vista_residentes(
         text(f'SELECT COUNT(*) FROM vista_directorio_residentes {where_sql}'), params
     ).scalar_one()
 
+    columna_sql, direccion_sql = _resolver_orden(order_by, order_dir, COLUMNAS_ORDENABLES_RESIDENTES, "nombre")
     result = db.execute(
-        text(f'SELECT * FROM vista_directorio_residentes {where_sql} ORDER BY "Nombre" LIMIT :limit OFFSET :offset'),
+        text(
+            f'SELECT * FROM vista_directorio_residentes {where_sql} '
+            f'ORDER BY {columna_sql} {direccion_sql} LIMIT :limit OFFSET :offset'
+        ),
         params,
     )
     return {"items": [dict(row._mapping) for row in result], "total": total}
+
+
+# ¿Qué? A diferencia de las otras 2 listas (columnas_permitidas → columna
+#       SQL real), aquí solo se valida que el valor esté en el conjunto —
+#       el mapeo a la columna real vive DENTRO de la función (ver el CASE
+#       del CREATE FUNCTION más abajo), porque el orden tiene que aplicarse
+#       ahí, antes del LIMIT/OFFSET.
+COLUMNAS_ORDENABLES_RECICLADORES = {"correo", "nombre", "asociacion", "estado"}
 
 
 @router.get("/sp-recicladores", summary="Criterio 7: Listado mediante Procedimiento Almacenado")
 def obtener_sp_recicladores(
     search: Optional[str] = Query(None, description="Busca por nombre, apellido o correo"),
     localidad_id: Optional[int] = Query(None),
+    order_by: Optional[str] = Query(None, description="correo, nombre, asociacion o estado"),
+    order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
     offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(get_current_user),
@@ -150,32 +201,41 @@ def obtener_sp_recicladores(
     _verificar_es_admin_sistema(current_user)
 
     # ¿Qué? Postgres NO permite que CREATE OR REPLACE FUNCTION cambie las
-    #       columnas de salida (RETURNS TABLE) de una función que ya existe
-    #       con otra forma — falla con "cannot change return type of
-    #       existing function". Como esta función se recrea en cada
-    #       petición y le acabamos de agregar la columna "Habilitado", hay
-    #       que borrar la versión vieja primero.
-    # ¿Para qué? Sin este DROP, cualquiera que ya tuviera la función vieja
-    #           creada en su base (cualquier entorno que ya hubiera usado
-    #           este endpoint antes de agregar "Habilitado") se quedaría
+    #       columnas de salida (RETURNS TABLE) ni la firma de parámetros de
+    #       una función que ya existe con otra forma — falla con "cannot
+    #       change return type/parameter of existing function". Como esta
+    #       función se recrea en cada petición y le acabamos de agregar
+    #       p_order_by/p_order_dir, hay que borrar la versión vieja primero.
+    # ¿Para qué? Sin este DROP, cualquier entorno que ya tuviera creada la
+    #           función con la firma anterior (4 parámetros) se quedaría
     #           con un error 500 permanente en este endpoint.
     # ¿Impacto? DROP FUNCTION IF EXISTS no falla si la función no existe
     #           todavía (primera vez que corre este endpoint).
     db.execute(text(
         "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, INT, INT)"
     ))
+    db.execute(text(
+        "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, TEXT, TEXT, INT, INT)"
+    ))
 
     # 1. Crear el Procedimiento Almacenado / Función
     # ¿Qué? Ahora la función SÍ recibe parámetros (búsqueda, localidad,
-    #       límite, desplazamiento) — antes no aceptaba ninguno, así que
-    #       siempre devolvía la tabla completa sin filtrar.
+    #       orden, límite, desplazamiento) — antes no aceptaba ninguno, así
+    #       que siempre devolvía la tabla completa sin filtrar.
     # ¿Para qué? Un Procedimiento Almacenado parametrizado es, de hecho,
     #           una demostración más completa del Criterio 7 que una
     #           función sin argumentos.
+    # ¿Impacto? p_order_by/p_order_dir ya llegan validados contra
+    #           COLUMNAS_ORDENABLES_RECICLADORES desde Python (nunca el
+    #           texto crudo del query param) — el CASE de abajo solo
+    #           reconoce esos 4 valores exactos, cualquier otra cosa cae en
+    #           el ELSE (orden por nombre, el de siempre).
     db.execute(text("""
     CREATE OR REPLACE FUNCTION sp_obtener_recicladores(
         p_search TEXT DEFAULT NULL,
         p_localidad_id INT DEFAULT NULL,
+        p_order_by TEXT DEFAULT 'nombre',
+        p_order_dir TEXT DEFAULT 'asc',
         p_limit INT DEFAULT 20,
         p_offset INT DEFAULT 0
     )
@@ -203,16 +263,37 @@ def obtener_sp_recicladores(
                OR rec.apellidos ILIKE '%' || p_search || '%'
                OR u.correo_electronico ILIKE '%' || p_search || '%')
           AND (p_localidad_id IS NULL OR rec.localidad_id = p_localidad_id)
-        ORDER BY rec.nombre
+        ORDER BY
+            CASE WHEN p_order_dir = 'asc' THEN
+                CASE p_order_by
+                    WHEN 'correo' THEN u.correo_electronico
+                    WHEN 'asociacion' THEN rec.asociacion
+                    WHEN 'estado' THEN u.habilitado::TEXT
+                    ELSE rec.nombre
+                END
+            END ASC,
+            CASE WHEN p_order_dir = 'desc' THEN
+                CASE p_order_by
+                    WHEN 'correo' THEN u.correo_electronico
+                    WHEN 'asociacion' THEN rec.asociacion
+                    WHEN 'estado' THEN u.habilitado::TEXT
+                    ELSE rec.nombre
+                END
+            END DESC
         LIMIT p_limit OFFSET p_offset;
     END;
     $$ LANGUAGE plpgsql;
     """))
     db.commit()
 
+    order_by_validado = order_by if order_by in COLUMNAS_ORDENABLES_RECICLADORES else "nombre"
+    order_dir_validado = "desc" if order_dir == "desc" else "asc"
+
     params = {
         "search": search,
         "localidad_id": localidad_id,
+        "order_by": order_by_validado,
+        "order_dir": order_dir_validado,
         "limit": min(limit, MAX_LIMIT),
         "offset": offset,
     }
@@ -231,17 +312,39 @@ def obtener_sp_recicladores(
         params,
     ).scalar_one()
 
+    # ¿Qué? Llamada con parámetros nombrados (p_x => :x) en vez de
+    #       posicionales — con 6 parámetros ahora, uno posicional mal
+    #       ordenado pasaría desapercibido (todos son TEXT/INT).
     result = db.execute(
-        text("SELECT * FROM sp_obtener_recicladores(:search, :localidad_id, :limit, :offset)"),
+        text(
+            "SELECT * FROM sp_obtener_recicladores("
+            "p_search => :search, p_localidad_id => :localidad_id, "
+            "p_order_by => :order_by, p_order_dir => :order_dir, "
+            "p_limit => :limit, p_offset => :offset)"
+        ),
         params,
     )
     return {"items": [dict(row._mapping) for row in result], "total": total}
+
+
+# ¿Qué? "Conjuntos" apunta al alias del SELECT (columna agregada con
+#       STRING_AGG), no a una columna de tabla — Postgres permite usar el
+#       alias en el ORDER BY porque este se resuelve después del SELECT.
+COLUMNAS_ORDENABLES_ADMINS = {
+    "correo": "u.correo_electronico",
+    "nombre": "ac.nombre",
+    "telefono": "ac.numero_telefonico",
+    "conjuntos": '"Conjuntos"',
+    "estado": "u.habilitado",
+}
 
 
 @router.get("/administradores-conjunto", summary="Listado de Administradores de Conjunto")
 def obtener_administradores_conjunto(
     search: Optional[str] = Query(None, description="Busca por nombre, apellido o correo"),
     localidad_id: Optional[int] = Query(None, description="Filtra por localidad de alguno de sus conjuntos"),
+    order_by: Optional[str] = Query(None, description="correo, nombre, telefono, conjuntos o estado"),
+    order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
     offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(get_current_user),
@@ -282,6 +385,8 @@ def obtener_administradores_conjunto(
              OR u.correo_electronico ILIKE :search)
     """
 
+    columna_sql, direccion_sql = _resolver_orden(order_by, order_dir, COLUMNAS_ORDENABLES_ADMINS, "nombre")
+
     total = db.execute(
         text(f"""
             SELECT COUNT(*) FROM administradores_conjunto ac
@@ -308,7 +413,7 @@ def obtener_administradores_conjunto(
                 ON cr.id_conjunto_residencial = aca.id_conjunto_residencial
             WHERE 1=1 {filtro_search} {filtro_localidad}
             GROUP BY u.correo_electronico, ac.nombre, ac.apellidos, ac.numero_telefonico, u.habilitado
-            ORDER BY ac.nombre
+            ORDER BY {columna_sql} {direccion_sql}
             LIMIT :limit OFFSET :offset
         """),
         params,
