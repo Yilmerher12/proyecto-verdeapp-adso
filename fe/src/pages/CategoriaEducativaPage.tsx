@@ -39,7 +39,7 @@ const COMPONENTES_MARKDOWN = {
     <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300" {...props} />
   ),
   a: (props: React.ComponentPropsWithoutRef<"a">) => (
-    <a className="text-accent-400 underline-offset-4 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
+    <a className="text-accent-400 underline-offset-4 transition-colors hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
   ),
 };
 
@@ -70,7 +70,7 @@ export function CategoriaEducativaPage() {
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
       <button
         onClick={() => navigate("/catalogo-educativo")}
-        className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+        className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" />
         {t("categoriaEducativa.back")}
@@ -109,7 +109,7 @@ export function CategoriaEducativaPage() {
                 href={item.url_guia.startsWith("http") ? item.url_guia : `${API_BASE_URL}${item.url_guia}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-200 dark:hover:bg-[#2a4d34]"
+                className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-200 dark:hover:bg-[#2a4d34]"
               >
                 <FileText className="h-4 w-4 shrink-0" />
                 {t("categoriaEducativa.viewGuide")}

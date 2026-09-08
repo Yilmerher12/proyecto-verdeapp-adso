@@ -94,7 +94,7 @@ export function ComunicadosFeedPage() {
                 href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 hover:text-green-800 dark:text-green-400"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 transition-colors hover:text-green-800 dark:text-green-400"
               >
                 <Paperclip className="h-3.5 w-3.5" />
                 {t("comunicados.viewAttachment")}

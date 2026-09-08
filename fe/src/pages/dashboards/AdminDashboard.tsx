@@ -259,7 +259,7 @@ export function AdminDashboard() {
         <button
           type="button"
           onClick={() => ordenarPor(columna)}
-          className="flex cursor-pointer items-center gap-1 hover:text-gray-800 dark:hover:text-gray-200"
+          className="flex cursor-pointer items-center gap-1 transition-colors hover:text-gray-800 dark:hover:text-gray-200"
           aria-label={t("dashboards.admin.usersSection.sortAria", { columna: label })}
         >
           {label}

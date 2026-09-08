@@ -124,7 +124,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
                     onChange={(e) => setMotivoRechazo(e.target.value)}
                     placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}
                     rows={2}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                   />
                   <div className="flex gap-2">
                     <button

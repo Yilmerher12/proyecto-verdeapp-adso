@@ -163,7 +163,7 @@ export function LoginPage() {
             <div className="flex justify-end pt-1">
               <Link
                 to="/forgot-password"
-                className="text-xs font-semibold text-green-600 hover:text-green-700 dark:text-green-400"
+                className="text-xs font-semibold text-green-600 transition-colors hover:text-green-700 dark:text-green-400"
               >
                 {t("auth.login.forgotPassword")}
               </Link>
@@ -180,7 +180,7 @@ export function LoginPage() {
             {t("auth.login.noAccount")}{" "}
             <Link
               to="/register"
-              className="font-bold text-green-600 hover:text-green-700 dark:text-green-400"
+              className="font-bold text-green-600 transition-colors hover:text-green-700 dark:text-green-400"
             >
               {t("auth.login.createAccountLink")}
             </Link>

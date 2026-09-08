@@ -219,7 +219,7 @@ export function AdminNovedadesPage() {
                     href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 hover:text-green-800 dark:text-green-400"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 transition-colors hover:text-green-800 dark:text-green-400"
                   >
                     <Paperclip className="h-3.5 w-3.5" />
                     {t("comunicados.viewAttachment")}
@@ -240,14 +240,14 @@ export function AdminNovedadesPage() {
                 <div className="flex shrink-0 gap-2">
                   <button
                     onClick={() => abrirEditar(item)}
-                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
                     aria-label={t("novedades.admin.editAria")}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => archivar(item)}
-                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
                     aria-label={t("novedades.admin.archiveAria")}
                   >
                     <Archive className="h-4 w-4" />

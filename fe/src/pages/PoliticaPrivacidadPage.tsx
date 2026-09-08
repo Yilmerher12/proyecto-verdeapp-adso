@@ -48,7 +48,7 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
   const rightsLink = (
     <a
       href="#derechos"
-      className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
   // ¿Qué? Antes era un <a href="..."> plano.
@@ -62,7 +62,7 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
   const emailLink = (
     <Link
       to="/contacto"
-      className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
   const sicLink = (
@@ -70,7 +70,7 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
       href="https://www.sic.gov.co"
       target="_blank"
       rel="noopener noreferrer"
-      className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
 
@@ -120,7 +120,7 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
               </strong>{" "}
               <Link
                 to="/contacto"
-                className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+                className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
               >
                 {t("legal.privacy.s1.contactValue")}
               </Link>
@@ -300,7 +300,7 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
               href="https://www.sic.gov.co"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+              className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
             >
               www.sic.gov.co
             </a>

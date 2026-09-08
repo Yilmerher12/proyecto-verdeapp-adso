@@ -245,6 +245,47 @@ SELECT * FROM roles;      -- ver roles disponibles
 \q                        -- salir
 ```
 
+## 🔄 Actualizar Migraciones de Alembic (proyecto ya clonado)
+
+Esta sección es para cuando **ya tienes el proyecto funcionando localmente** y necesitas ponerlo al día después de traer cambios nuevos con `git pull` (o al cambiar de rama a una que agregó/modificó una migración) — no es parte del primer arranque, ver [🚀 Cómo ejecutar el proyecto](#-cómo-ejecutar-el-proyecto) para eso.
+
+### Caso normal — aplicar migraciones nuevas
+
+El caso de todos los días: alguien agregó una migración nueva (una tabla, una columna) y la trajiste con `git pull`. Tu base de datos actual **no se borra ni se toca** — solo se le aplican los cambios pendientes:
+
+```bash
+cd be
+uv run alembic upgrade head
+```
+
+Es seguro correrlo aunque no haya nada nuevo — si ya estás al día, no hace nada.
+
+> Para ver en qué migración está tu base de datos ahora mismo (útil si algo no cuadra): `uv run alembic current`. Para ver el historial completo de migraciones del proyecto: `uv run alembic history`.
+
+### Caso especial — reiniciar la base de datos desde cero
+
+Solo hace falta si tu base de datos quedó en un estado raro (por ejemplo, después de haber probado algo manual directamente sobre ella, o un conflicto de migraciones que no se resuelve con `upgrade head`). Esto **borra todos los datos** — conjuntos, usuarios, todo — y vuelve a dejar la base exactamente como quedaría si acabaras de clonar el repo:
+
+```bash
+# 1. Apagar y borrar el contenedor + volumen de la base de datos (con Docker corriendo)
+docker compose down verde_db
+docker volume rm proyecto-verdeapp-adso_db_data
+
+# 2. Volver a levantar el contenedor, ya vacío
+docker compose up -d verde_db
+
+# 3. Aplicar todas las migraciones desde cero
+cd be
+uv run alembic upgrade head
+
+# 4. Sembrar los datos base (roles, localidades, usuarios de prueba, conjuntos reales)
+uv run python -m app.seed
+```
+
+> El nombre del volumen (`proyecto-verdeapp-adso_db_data`) depende del nombre de la carpeta donde clonaste el repo — Docker Compose lo arma como `<carpeta>_db_data`. Si tu carpeta se llama distinto, verifica el nombre real con `docker volume ls` antes de borrarlo.
+
+---
+
 ## 🔑 Usuarios de Prueba Precargados
 
 Cada vez que se siembra la base de datos (`uv run python -m app.seed`, o automáticamente al levantar con Docker), quedan creadas estas 4 cuentas de prueba. Todas comparten la misma contraseña.

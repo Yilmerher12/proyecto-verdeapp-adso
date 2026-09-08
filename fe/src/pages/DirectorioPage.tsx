@@ -311,7 +311,7 @@ function InfoBanner({
                   href={fuenteHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold underline underline-offset-2 hover:text-accent-900 dark:hover:text-accent-200"
+                  className="font-semibold underline underline-offset-2 transition-colors hover:text-accent-900 dark:hover:text-accent-200"
                 >
                   {fuenteLinkLabel} ↗
                 </a>

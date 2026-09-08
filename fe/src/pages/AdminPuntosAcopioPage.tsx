@@ -199,7 +199,7 @@ export function AdminPuntosAcopioPage() {
             <div className="flex shrink-0 gap-2">
               <button
                 onClick={() => abrirEditar(item)}
-                className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
                 aria-label={t("adminPuntosAcopio.editAria", { nombre: item.nombre })}
               >
                 <Pencil className="h-4 w-4" />
@@ -207,7 +207,7 @@ export function AdminPuntosAcopioPage() {
               {item.activo ? (
                 <button
                   onClick={() => setADarDeBaja(item)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
+                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
                   aria-label={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
                 >
                   <PowerOff className="h-4 w-4" />
@@ -216,14 +216,14 @@ export function AdminPuntosAcopioPage() {
                 <>
                   <button
                     onClick={() => reactivar(item)}
-                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-green-600 hover:bg-green-50 dark:border-[#2a4d34] dark:text-green-400 dark:hover:bg-green-900/20"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-green-600 transition-colors hover:bg-green-50 dark:border-[#2a4d34] dark:text-green-400 dark:hover:bg-green-900/20"
                     aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
                   >
                     <Power className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setAEliminar(item)}
-                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
                     aria-label={t("adminPuntosAcopio.deleteAria", { nombre: item.nombre })}
                   >
                     <Trash2 className="h-4 w-4" />

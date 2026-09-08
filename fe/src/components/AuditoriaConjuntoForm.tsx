@@ -260,7 +260,7 @@ export function AuditoriaConjuntoForm({
                     type="button"
                     onClick={() => quitarFoto(i)}
                     aria-label={t("dashboards.reciclador.auditoria.evidenciaQuitar")}
-                    className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80"
+                    className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 p-0.5 text-white transition-colors hover:bg-black/80"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -270,7 +270,7 @@ export function AuditoriaConjuntoForm({
           )}
 
           {evidencias.length < MAXIMO_FOTOS ? (
-            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 hover:border-green-400 dark:border-[#2a4d34] dark:text-gray-300">
+            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition-colors hover:border-green-400 dark:border-[#2a4d34] dark:text-gray-300">
               {evidencias.length === 0 ? <Camera className="h-4 w-4 shrink-0" /> : <Plus className="h-4 w-4 shrink-0" />}
               {evidencias.length === 0
                 ? t("dashboards.reciclador.auditoria.evidenciaHint")
@@ -302,7 +302,7 @@ export function AuditoriaConjuntoForm({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+            className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
           >
             {t("common.cancel")}
           </button>

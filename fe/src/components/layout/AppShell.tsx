@@ -349,7 +349,7 @@ export function AppShell({ children }: AppShellProps) {
             onClick={() => setShowLogoutConfirm(true)}
             className={`
               flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
-              text-green-50/70 hover:bg-red-900/30 hover:text-red-200
+              text-green-50/70 transition-colors hover:bg-red-900/30 hover:text-red-200
               ${collapsed ? "justify-center" : ""}
             `}
           >

@@ -46,7 +46,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
 
   return (
     <div
-      className={`flex items-start gap-3 rounded-lg border p-4 text-sm ${typeClasses[type]}`}
+      className={`animate-fade-in flex items-start gap-3 rounded-lg border p-4 text-sm ${typeClasses[type]}`}
       role="alert"
     >
       {/*
