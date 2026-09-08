@@ -416,15 +416,14 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 | Métrica | Avance |
 |---|---|
-| Historias de Usuario | 33 / 38 implementadas |
-| Requisitos Funcionales | 15 / 17 implementados |
-| Requisitos No Funcionales | 3 / 6 completos (3 parciales — de naturaleza continua: se miden, no se "terminan") |
-| Pruebas backend (pytest) | 245 |
-| Pruebas frontend (vitest) | 167 |
+| Historias de Usuario | 42 / 44 implementadas |
+| Requisitos Funcionales | 18 / 19 implementados |
+| Requisitos No Funcionales | 4 / 6 completos (2 parciales — de naturaleza continua: se miden, no se "terminan") |
+| Pruebas backend (pytest) | 327 |
+| Pruebas frontend (vitest) | 210 |
 
-Pendiente por implementar, ambos documentados con su alcance completo antes de programarlos:
+Pendiente por implementar, documentado con su alcance completo antes de programarlo:
 
-* **RQF-011 — Gestión de Directorio de Acopio** ([issue #8](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/8)): hoy solo existe la lectura pública; falta el panel de administración para registrar, actualizar y dar de baja puntos de acopio.
 * **RQF-013 — Recomendación de contenido educativo por auditoría** ([issue #4](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/4)): al publicarse una auditoría con resultado negativo, recomendar automáticamente módulos educativos relacionados a los residentes del conjunto.
 
 ---

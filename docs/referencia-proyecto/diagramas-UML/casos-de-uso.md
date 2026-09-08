@@ -5,6 +5,8 @@
 Este documento describe los casos de uso identificados para la plataforma **VerdeApp**, orientada a la gestión de reciclaje en conjuntos residenciales.
 
 > **Nota (2026-08-29)**: este documento tenía dos problemas reales. Primero, **RQF012 describía por error el flujo de desvinculación/reasignación** — ese flujo en realidad vive en un requisito aparte, RQF-016 (`docs/requisitos/RFs/RQF-016_desvinculacion_reasignacion_conjuntos.md`), que nunca se había agregado aquí. Segundo, faltaban **RQF-016** y **RQF-017** (cambio de idioma) por completo — el catálogo real de requisitos funcionales llega hasta RQF-017, no hasta RQF-015. Corregido.
+>
+> **Nota (2026-09-08)**: RQF012 le agregó un tercer flujo — el Admin_conjunto ahora puede revocar el acceso de un reciclador que ya autorizó (HU-038), no solo invitarlo. Se documenta abajo como "Flujo C" de ese mismo caso de uso.
 
 ---
 
@@ -20,6 +22,7 @@ Usuario principal de la plataforma encargado de:
 * Reportar niveles de capacidad SHUT (notificación).
 * Gestionar su perfil(editarlo).
 * Cambiar el idioma de la interfaz (español/inglés).
+* Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
 
 ---
 
@@ -33,6 +36,7 @@ Usuario encargado de:
 * Comunicar llegada al conjunto.
 * Reportar niveles de capacidad SHUT (notificación).
 * Cambiar el idioma de la interfaz (español/inglés).
+* Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
 
 ---
 
@@ -42,9 +46,11 @@ Usuario responsable de:
 
 * Administrar el contenido educativo.
 * Gestionar directorios de recicladores y puntos de acopio.
+* Consultar, buscar, filtrar y ordenar los usuarios registrados de cada rol, y activar o desactivar cualquier cuenta.
 * Supervisar el funcionamiento general del sistema.
 * Aprobar o rechazar solicitudes de desvinculación de un Admin_conjunto, y asignarle conjuntos adicionales.
 * Cambiar el idioma de la interfaz (español/inglés).
+* Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
 
 ---
 
@@ -54,10 +60,12 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 
 * Registrarse en el sistema.
 * Consultar y administrar los conjuntos que gestiona.
-* Invitar recicladores autorizados a sus conjuntos.
+* Invitar recicladores autorizados a sus conjuntos, y revocarles el acceso si ya no trabajan ahí.
 * Solicitar su desvinculación de un conjunto que ya no administra.
 * Gestionar su perfil.
+* Editar el NIT y regenerar el código de acceso de los conjuntos que administra.
 * Cambiar el idioma de la interfaz (español/inglés).
+* Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
 * Cerrar sesión.
 
 ---
@@ -77,12 +85,14 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 | RQF009 | Visualizar gestión de residuos del conjunto              | Residente, Reciclador                |
 | RQF010 | Gestionar contenido educativo                            | Admin_sistema                        |
 | RQF011 | Gestionar directorio de puntos de acopio y recicladores  | Admin_sistema                        |
-| RQF012 | Invitación y vinculación inicial (admin de conjunto, reciclador) | Admin_sistema, Admin_conjunto, Reciclador |
+| RQF012 | Invitación, vinculación y revocación (admin de conjunto, reciclador) | Admin_sistema, Admin_conjunto, Reciclador |
 | RQF013 | Recomendar contenido educativo por auditoría (Por implementar) | Reciclador (dispara), Residente (recibe) |
 | RQF014 | Gestionar comunicados del conjunto                       | Admin_conjunto, Residente, Reciclador |
 | RQF015 | Publicar novedades generales                             | Admin_sistema, Residente, Reciclador, Admin_conjunto |
 | RQF016 | Desvinculación y reasignación de conjuntos               | Admin_conjunto, Admin_sistema         |
 | RQF017 | Cambiar idioma de la interfaz                            | Residente, Reciclador, Admin_sistema, Admin_conjunto |
+| RQF018 | Gestión de usuarios (Admin Sistema)                      | Admin_sistema |
+| RQF019 | Recuperación y cambio de contraseña                      | Residente, Reciclador, Admin_sistema, Admin_conjunto |
 
 ---
 
@@ -107,12 +117,14 @@ flowchart TB
     RQF009([RQF009\nVisualizar Gestión de Residuos])
     RQF010([RQF010\nGestionar Contenido Educativo])
     RQF011([RQF011\nGestionar Directorio])
-    RQF012([RQF012\nInvitación y Vinculación Inicial])
+    RQF012([RQF012\nInvitación, Vinculación y Revocación])
     RQF013([RQF013\nRecomendar Contenido por Auditoría\nPor implementar])
     RQF014([RQF014\nGestionar Comunicados del Conjunto])
     RQF015([RQF015\nPublicar Novedades Generales])
     RQF016([RQF016\nDesvinculación y Reasignación])
     RQF017([RQF017\nCambiar Idioma de la Interfaz])
+    RQF018([RQF018\nGestión de Usuarios - Admin Sistema])
+    RQF019([RQF019\nRecuperación y Cambio de Contraseña])
 
     Residente --> RQF001
     Residente --> RQF002
@@ -126,6 +138,7 @@ flowchart TB
     Residente --> RQF014
     Residente --> RQF015
     Residente --> RQF017
+    Residente --> RQF019
 
     Reciclador --> RQF001
     Reciclador --> RQF002
@@ -138,6 +151,7 @@ flowchart TB
     Reciclador --> RQF014
     Reciclador --> RQF015
     Reciclador --> RQF017
+    Reciclador --> RQF019
 
     Admin --> RQF001
     Admin --> RQF007
@@ -147,6 +161,8 @@ flowchart TB
     Admin --> RQF015
     Admin --> RQF016
     Admin --> RQF017
+    Admin --> RQF018
+    Admin --> RQF019
 
     AdminConjunto --> RQF001
     AdminConjunto --> RQF002
@@ -157,6 +173,7 @@ flowchart TB
     AdminConjunto --> RQF015
     AdminConjunto --> RQF016
     AdminConjunto --> RQF017
+    AdminConjunto --> RQF019
 ```
 
 ---
@@ -353,7 +370,7 @@ Permite administrar el directorio de recicladores y puntos de acopio registrados
 
 ### Descripción
 
-Cubre cómo alguien se convierte en Admin_conjunto por primera vez, y cómo un Admin_conjunto autoriza a un Reciclador ya existente a trabajar en su conjunto. Un Admin_conjunto **nunca** se crea por registro público — solo por invitación.
+Cubre cómo alguien se convierte en Admin_conjunto por primera vez, cómo un Admin_conjunto autoriza a un Reciclador ya existente a trabajar en su conjunto, y cómo puede revocarle esa autorización más adelante. Un Admin_conjunto **nunca** se crea por registro público — solo por invitación.
 
 ### Flujo Principal (invitación a Admin_conjunto)
 
@@ -366,6 +383,14 @@ Cubre cómo alguien se convierte en Admin_conjunto por primera vez, y cómo un A
 1. El Admin_conjunto invita a un Reciclador ya registrado a trabajar en uno de sus conjuntos.
 2. El Reciclador acepta o rechaza la invitación desde su panel.
 3. Si acepta, queda autorizado a operar en ese conjunto (visible en el directorio y habilitado para auditarlo).
+
+### Flujo C (revocación de acceso, HU-038)
+
+1. El Admin_conjunto selecciona, entre los recicladores ya autorizados en su conjunto, a cuál quitarle el acceso.
+2. El sistema pide confirmación antes de aplicar el cambio.
+3. Al confirmar, el reciclador deja de estar autorizado de inmediato — a diferencia del RQF-016 (desvinculación de Admin_conjunto), esto no pasa por una solicitud/aprobación aparte.
+4. El vínculo no se borra — queda marcado como revocado (con fecha y quién lo hizo), y el reciclador recibe una notificación.
+5. El Admin_conjunto puede volver a invitar al mismo reciclador más adelante; el historial de la revocación anterior no lo impide.
 
 ---
 
@@ -492,4 +517,49 @@ Permite a cualquier usuario cambiar el idioma de la interfaz entre español e in
 2. El sistema cambia el idioma visible de inmediato y lo guarda en el navegador.
 3. Si el usuario tiene sesión activa, el sistema también guarda la preferencia en su cuenta.
 4. Al iniciar sesión desde otro dispositivo, el sistema aplica automáticamente el idioma guardado en la cuenta.
+
+---
+
+## RQF018 - Gestión de Usuarios (Admin Sistema)
+
+### Actor
+
+* Admin_sistema
+
+### Descripción
+
+Permite al Admin_sistema consultar, buscar, filtrar y ordenar los usuarios registrados de cada rol (Residentes, Recicladores, Administradores de Conjunto), y activar o desactivar cualquier cuenta. El listado de Residentes se obtiene mediante una Vista SQL y el de Recicladores mediante un Procedimiento Almacenado (criterios técnicos pedidos por el profesor).
+
+### Funciones
+
+* Consultar los 3 listados (Residentes, Recicladores, Administradores de Conjunto), con búsqueda, filtro por localidad y paginación.
+* Ordenar cualquier listado por cualquiera de sus columnas.
+* Activar o desactivar la cuenta de cualquier usuario (excepto la propia).
+
+---
+
+## RQF019 - Recuperación y Cambio de Contraseña
+
+### Actores
+
+* Residente
+* Reciclador
+* Admin_sistema
+* Admin_conjunto
+
+### Descripción
+
+Permite a cualquier usuario recuperar el acceso a su cuenta si olvidó su contraseña (sin estar autenticado, vía correo electrónico), y cambiar su contraseña estando autenticado (sabiendo la actual).
+
+### Flujo Principal (recuperación)
+
+1. El usuario, desde el login, pide "¿Olvidaste tu contraseña?" e ingresa su correo.
+2. El sistema envía un correo con un enlace de un solo uso, válido 1 hora — responde el mismo mensaje genérico exista o no una cuenta con ese correo.
+3. El usuario abre el enlace e ingresa su nueva contraseña.
+4. El sistema la actualiza y marca el token como usado.
+
+### Flujo Alternativo (cambio autenticado)
+
+1. El usuario, desde su perfil, ingresa su contraseña actual y la nueva.
+2. El sistema verifica la contraseña actual antes de aplicar el cambio.
 
