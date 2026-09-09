@@ -24,34 +24,26 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:80
  * ¿Impacto? Garantiza consistencia: todas las peticiones usan JSON, timeout de 10s,
  *           y la misma URL base.
  */
+// ¿Qué? RNF-001.9: el token de sesión ya no vive en sessionStorage — vive
+//       en una cookie httpOnly que el propio navegador adjunta solo en
+//       cada petición. "withCredentials: true" es lo que le dice a axios
+//       "sí, incluye las cookies de este origen en cada request" (por
+//       defecto NO lo hace, a diferencia de un <form> HTML normal).
+// ¿Para qué? Reemplaza al interceptor manual que antes leía el token de
+//           sessionStorage y lo pegaba en el header Authorization — ya no
+//           hace falta: el navegador hace ese trabajo solo, y el
+//           JavaScript de la app nunca llega a ver el valor del token.
+// ¿Impacto? Sin esto, ninguna petición llevaría la cookie de sesión y
+//           todo endpoint protegido respondería 401 aunque el usuario ya
+//           hubiera iniciado sesión.
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 10000, // 10 segundos máximo por petición
+  withCredentials: true,
 });
-
-/**
- * ¿Qué? Interceptor de request que agrega el token JWT automáticamente.
- * ¿Para qué? Cada petición a endpoints protegidos necesita el header Authorization.
- *           En vez de agregarlo manualmente en cada llamada, el interceptor lo hace.
- * ¿Impacto? Sin este interceptor, el frontend tendría que pasar el token en cada fetch,
- *           aumentando el riesgo de olvidarlo y recibir 401.
- */
-api.interceptors.request.use(
-  (config) => {
-    // ¿Qué? Lee el access token almacenado en memoria (sessionStorage).
-    // ¿Para qué? Adjuntarlo como Bearer token en el header Authorization.
-    // ¿Impacto? sessionStorage se borra al cerrar el navegador — más seguro que localStorage.
-    const token = sessionStorage.getItem("access_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
 
 /**
  * ¿Qué? Interceptor de response que maneja errores HTTP de forma centralizada.
@@ -95,11 +87,15 @@ function manejarErrorDeRespuesta(error: any) {
     // ¿Impacto? Ahora se limpia la sesión y se manda a login con un aviso
     //           claro, en vez de dejar que las peticiones sigan fallando
     //           sin explicación.
-    const haySesionGuardada = !!sessionStorage.getItem("access_token");
+    // ¿Qué? RNF-001.9: el token vive en una cookie httpOnly — JavaScript no
+    //       puede leerla para saber si "hay sesión guardada". En su lugar,
+    //       se revisa una banderita sin ningún valor secreto que
+    //       AuthContext.tsx pone en sessionStorage justo después de un
+    //       login/getMe exitoso, y borra al cerrar sesión.
+    const haySesionGuardada = sessionStorage.getItem("verdeapp:sesion-activa") === "1";
     if (error.response.status === 401 && haySesionGuardada && !sesionExpiradaEnProceso) {
       sesionExpiradaEnProceso = true;
-      sessionStorage.removeItem("access_token");
-      sessionStorage.removeItem("refresh_token");
+      sessionStorage.removeItem("verdeapp:sesion-activa");
       sessionStorage.setItem("verdeapp:session-expired", "1");
       window.location.href = "/login";
     }
@@ -145,5 +141,13 @@ api.interceptors.response.use(manejarRespuestaExitosa, manejarErrorDeRespuesta);
 //           limpio), pero mientras tanto esto garantiza que RNF-002.4 se
 //           cumpla para TODA la app, no solo para lo que ya usa "api".
 axios.interceptors.response.use(manejarRespuestaExitosa, manejarErrorDeRespuesta);
+
+// ¿Qué? Mismo motivo que el interceptor de arriba: "withCredentials" se
+//       configuró en la instancia "api" (vía axios.create()), pero eso no
+//       se hereda automáticamente al módulo base "axios" — las pantallas
+//       que hacen `import axios from "axios"` directo necesitan esta
+//       misma bandera activada aparte, o sus peticiones no llevarían la
+//       cookie de sesión.
+axios.defaults.withCredentials = true;
 
 export default api;

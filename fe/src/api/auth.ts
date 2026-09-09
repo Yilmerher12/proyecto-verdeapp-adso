@@ -12,12 +12,9 @@ import type {
   ChangePasswordRequest,
   ForgotPasswordRequest,
   LoginRequest,
-  LogoutRequest,
   MessageResponse,
-  RefreshTokenRequest,
   RegisterRequest,
   ResetPasswordRequest,
-  TokenResponse,
   UserResponse,
 } from "@/types/auth";
 
@@ -38,36 +35,40 @@ export async function registerUser(data: RegisterRequest): Promise<UserResponse>
 }
 
 /**
- * ¿Qué? Autentica un usuario y obtiene tokens JWT.
+ * ¿Qué? Autentica un usuario. El backend deja el access y el refresh token
+ *       guardados como cookies httpOnly (RNF-001.9) — esta función nunca
+ *       llega a ver su valor, solo confirma que el login salió bien.
  * ¿Para qué? Enviar POST /api/v1/auth/login con email y contraseña.
- * ¿Impacto? Retorna access_token + refresh_token que se usan para acceder a endpoints protegidos.
+ * ¿Impacto? Después de esto, AuthContext llama a getMe() para traer los
+ *           datos del usuario — la cookie ya viaja sola en esa petición.
  */
-export async function loginUser(data: LoginRequest): Promise<TokenResponse> {
-  const response = await api.post<TokenResponse>(`${AUTH_PREFIX}/login`, data);
+export async function loginUser(data: LoginRequest): Promise<MessageResponse> {
+  const response = await api.post<MessageResponse>(`${AUTH_PREFIX}/login`, data);
   return response.data;
 }
 
 /**
- * ¿Qué? Renueva el access token usando el refresh token.
+ * ¿Qué? Renueva la sesión usando el refresh token que ya vive en la cookie
+ *       httpOnly — no hace falta mandar nada en el cuerpo de la petición.
  * ¿Para qué? Mantener la sesión activa cuando el access token expira (cada 15 min).
  * ¿Impacto? Si el refresh token también expiró (7 días), el usuario debe hacer login de nuevo.
  */
-export async function refreshToken(data: RefreshTokenRequest): Promise<TokenResponse> {
-  const response = await api.post<TokenResponse>(`${AUTH_PREFIX}/refresh`, data);
+export async function refreshToken(): Promise<MessageResponse> {
+  const response = await api.post<MessageResponse>(`${AUTH_PREFIX}/refresh`);
   return response.data;
 }
 
 /**
  * ¿Qué? Cierra la sesión de verdad en el servidor (HU-008/RQF-007).
- * ¿Para qué? Enviar POST /api/v1/auth/logout — el access token viaja solo en
- *           el header Authorization (lo agrega el interceptor de axios.ts a
- *           partir de sessionStorage), y el refresh_token va en el body.
+ * ¿Para qué? Enviar POST /api/v1/auth/logout — el access y el refresh
+ *           token viajan solos en las cookies httpOnly, así que no hace
+ *           falta mandar ningún dato en el cuerpo de la petición.
  * ¿Impacto? El backend revoca ambos tokens: aunque alguien los hubiera
  *           copiado antes del logout, dejan de funcionar de inmediato, en
  *           vez de seguir siendo válidos hasta que expiren solos.
  */
-export async function logoutUser(data: LogoutRequest): Promise<MessageResponse> {
-  const response = await api.post<MessageResponse>(`${AUTH_PREFIX}/logout`, data);
+export async function logoutUser(): Promise<MessageResponse> {
+  const response = await api.post<MessageResponse>(`${AUTH_PREFIX}/logout`);
   return response.data;
 }
 

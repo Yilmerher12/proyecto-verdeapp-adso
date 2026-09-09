@@ -31,7 +31,7 @@ const FORM_VACIO: PuntoAcopioPayload = {
 
 export function AdminPuntosAcopioPage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const [puntos, setPuntos] = useState<PuntoAcopioAdmin[]>([]);
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -46,9 +46,9 @@ export function AdminPuntosAcopioPage() {
   const [aEliminar, setAEliminar] = useState<PuntoAcopioAdmin | null>(null);
 
   const cargar = () => {
-    if (!accessToken) return;
+    if (!user) return;
     setCargando(true);
-    listarPuntosAcopio(accessToken)
+    listarPuntosAcopio()
       .then(setPuntos)
       .catch(() => setErrorMsg(t("adminPuntosAcopio.loadError")))
       .finally(() => setCargando(false));
@@ -61,7 +61,7 @@ export function AdminPuntosAcopioPage() {
       .then((res) => setLocalidades(res.data))
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+  }, [user]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
@@ -89,7 +89,7 @@ export function AdminPuntosAcopioPage() {
     !form.nombre.trim() || !form.direccion.trim() || !form.id_localidad;
 
   const guardar = async () => {
-    if (!accessToken) return;
+    if (!user) return;
     if (formularioIncompleto) {
       setErrorMsg(t("adminPuntosAcopio.validation.required"));
       return;
@@ -103,9 +103,9 @@ export function AdminPuntosAcopioPage() {
     };
     try {
       if (editando) {
-        await editarPuntoAcopio(editando.id_punto_acopio, payload, accessToken);
+        await editarPuntoAcopio(editando.id_punto_acopio, payload);
       } else {
-        await crearPuntoAcopio(payload, accessToken);
+        await crearPuntoAcopio(payload);
       }
       cerrarFormulario();
       cargar();
@@ -117,9 +117,9 @@ export function AdminPuntosAcopioPage() {
   };
 
   const confirmarDarDeBaja = async () => {
-    if (!accessToken || !aDarDeBaja) return;
+    if (!user || !aDarDeBaja) return;
     try {
-      await darDeBajaPuntoAcopio(aDarDeBaja.id_punto_acopio, accessToken);
+      await darDeBajaPuntoAcopio(aDarDeBaja.id_punto_acopio);
       setADarDeBaja(null);
       cargar();
     } catch {
@@ -128,9 +128,9 @@ export function AdminPuntosAcopioPage() {
   };
 
   const reactivar = async (item: PuntoAcopioAdmin) => {
-    if (!accessToken) return;
+    if (!user) return;
     try {
-      await reactivarPuntoAcopio(item.id_punto_acopio, accessToken);
+      await reactivarPuntoAcopio(item.id_punto_acopio);
       cargar();
     } catch {
       setErrorMsg(t("adminPuntosAcopio.reactivateError"));
@@ -138,9 +138,9 @@ export function AdminPuntosAcopioPage() {
   };
 
   const confirmarEliminar = async () => {
-    if (!accessToken || !aEliminar) return;
+    if (!user || !aEliminar) return;
     try {
-      await eliminarPuntoAcopioDefinitivo(aEliminar.id_punto_acopio, accessToken);
+      await eliminarPuntoAcopioDefinitivo(aEliminar.id_punto_acopio);
       setAEliminar(null);
       cargar();
     } catch {

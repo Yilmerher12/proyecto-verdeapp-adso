@@ -23,6 +23,7 @@ vi.mock("axios", () => {
     put: (...args: unknown[]) => mockPut(...args),
     delete: (...args: unknown[]) => mockDelete(...args),
     interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+    defaults: {},
   };
   return { default: { ...instance, create: () => instance } };
 });
@@ -54,7 +55,7 @@ function mockRespuestas(puntos: unknown[]) {
 
 function renderPage() {
   return renderWithProviders(<AdminPuntosAcopioPage />, {
-    authContext: { user: adminUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: adminUser, isAuthenticated: true },
   });
 }
 
@@ -100,8 +101,7 @@ describe("AdminPuntosAcopioPage", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/admin/puntos-acopio"),
-        expect.objectContaining({ nombre: "ECA Nueva", direccion: "Calle 1 # 1-1", id_localidad: 1 }),
-        expect.anything()
+        expect.objectContaining({ nombre: "ECA Nueva", direccion: "Calle 1 # 1-1", id_localidad: 1 })
       );
     });
   });
@@ -122,8 +122,7 @@ describe("AdminPuntosAcopioPage", () => {
     await waitFor(() => {
       expect(mockPut).toHaveBeenCalledWith(
         expect.stringContaining("/admin/puntos-acopio/1"),
-        expect.objectContaining({ nombre: "ECA Kennedy Renovada" }),
-        expect.anything()
+        expect.objectContaining({ nombre: "ECA Kennedy Renovada" })
       );
     });
   });
@@ -140,10 +139,7 @@ describe("AdminPuntosAcopioPage", () => {
     await user.click(screen.getByRole("button", { name: "Sí, dar de baja" }));
 
     await waitFor(() => {
-      expect(mockDelete).toHaveBeenCalledWith(
-        expect.stringContaining("/admin/puntos-acopio/1"),
-        expect.anything()
-      );
+      expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining("/admin/puntos-acopio/1"));
     });
   });
 
@@ -159,8 +155,7 @@ describe("AdminPuntosAcopioPage", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/admin/puntos-acopio/2/reactivar"),
-        {},
-        expect.anything()
+        {}
       );
     });
   });
@@ -181,8 +176,7 @@ describe("AdminPuntosAcopioPage", () => {
 
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith(
-        expect.stringContaining("/admin/puntos-acopio/2/definitivo"),
-        expect.anything()
+        expect.stringContaining("/admin/puntos-acopio/2/definitivo")
       );
     });
   });

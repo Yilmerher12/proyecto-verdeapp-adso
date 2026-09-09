@@ -11,7 +11,7 @@ Descripción: Dependencias inyectables de FastAPI — funciones reutilizables qu
 import uuid
 from collections.abc import Generator
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -21,13 +21,42 @@ from app.models.token_revocado import TokenRevocado
 from app.models.usuario import Usuario
 from app.utils.security import decode_token
 
-# ¿Qué? Esquema HTTPBearer que extrae el token JWT del header "Authorization: Bearer <token>".
-# ¿Para qué? A diferencia de OAuth2PasswordBearer, HTTPBearer hace que Swagger UI muestre
-#            un campo simple de texto para pegar el token directamente — sin formulario
-#            de usuario/contraseña que enviaría form-data incompatible con nuestro login JSON.
-# ¿Impacto? El flujo en Swagger es: 1) POST /auth/login → copiar access_token,
-#           2) clic en Authorize → pegar el token → todos los endpoints protegidos funcionan.
-http_bearer = HTTPBearer()
+# ¿Qué? auto_error=False: si no llega header "Authorization", HTTPBearer
+#       devuelve None en vez de cortar la petición con un 403 antes de
+#       tiempo — la cookie httpOnly (ver más abajo) puede ser la única
+#       credencial presente, y eso es válido.
+# ¿Para qué? VerdeApp migró de guardar el token en sessionStorage (leído
+#           por JavaScript y pegado a mano en cada petición) a una cookie
+#           httpOnly que el navegador adjunta solo, sin que ningún script
+#           de la página la pueda leer — así, si algún día apareciera una
+#           vulnerabilidad XSS, no habría ningún token que robar desde
+#           JavaScript. El header Authorization se conserva como vía
+#           alterna: el frontend real de VerdeApp ya no lo usa, pero sigue
+#           sirviendo para pruebas automáticas y herramientas como
+#           Swagger/Postman (ver RNF-001.9, actualizado).
+# ¿Impacto? Swagger sigue funcionando exactamente igual con "Authorize" +
+#           pegar el token; además, como Swagger UI vive en el mismo
+#           origen que la API (localhost:8000), cualquier llamada hecha
+#           desde /docs justo después de un login manda la cookie sola.
+http_bearer = HTTPBearer(auto_error=False)
+
+
+def obtener_token_de_la_peticion(
+    request: Request, credentials: HTTPAuthorizationCredentials | None
+) -> str | None:
+    """Extrae el JWT de la petición, priorizando una credencial explícita sobre la cookie.
+
+    ¿Qué? Si llega un header "Authorization: Bearer <token>", se usa ese.
+          Si no, se busca en la cookie httpOnly "access_token" — la vía
+          real que usa el navegador con el frontend de VerdeApp.
+    ¿Para qué? Un header explícito solo lo manda una prueba automática o
+              una herramienta externa a propósito — dejarlo ganar sobre
+              la cookie evita ambigüedad cuando un mismo cliente de
+              pruebas termina con ambos presentes a la vez.
+    """
+    if credentials:
+        return credentials.credentials
+    return request.cookies.get("access_token")
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -48,7 +77,8 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(http_bearer),
     db: Session = Depends(get_db),
 ) -> Usuario:
     """Obtiene el usuario autenticado a partir del access token JWT.
@@ -84,7 +114,9 @@ def get_current_user(
     # ¿Para qué? Extraer el email del usuario del campo "sub" del payload.
     # ¿Impacto? Si el token expiró, fue manipulado, o tiene firma incorrecta, decode_token
     #           retorna None y se lanza la excepción 401.
-    token = credentials.credentials  # HTTPBearer entrega solo el token, sin el prefijo "Bearer "
+    token = obtener_token_de_la_peticion(request, credentials)
+    if not token:
+        raise credentials_exception
     payload = decode_token(token)
     if not payload:
         raise credentials_exception

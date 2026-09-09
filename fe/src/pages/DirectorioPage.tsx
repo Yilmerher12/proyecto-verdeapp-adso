@@ -43,8 +43,7 @@ const FUENTE_ECA_URL = "https://datosabiertos.bogota.gov.co/dataset/data_set_apr
 
 export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const { t } = useTranslation();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { accessToken } = useAuth() as any;
+  const { user } = useAuth();
 
   const [tab, setTab] = useState<TabId>(soloAcopio ? "puntos" : "recicladores");
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
@@ -69,15 +68,13 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const [cargandoDirectorio, setCargandoDirectorio] = useState(true);
   const [errorDirectorio, setErrorDirectorio] = useState(false);
 
-  const headers = { Authorization: `Bearer ${accessToken}` };
-
   // 1. Cargar localidades y detectar la del usuario en paralelo
   useEffect(() => {
-    if (!accessToken) return;
+    if (!user) return;
 
     Promise.all([
       axios.get<Localidad[]>(`${API_BASE_URL}/api/v1/geography/localidades`),
-      axios.get(`${API_BASE_URL}/api/v1/users/me`, { headers }),
+      axios.get(`${API_BASE_URL}/api/v1/users/me`),
     ])
       .then(([resLocalidades, resPerfil]) => {
         const lista: Localidad[] = resLocalidades.data;
@@ -98,12 +95,23 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
       })
       .catch(() => {})
       .finally(() => setLocalidadCargada(true));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+     
+  }, [user]);
 
   // 2. Cargar directorio cuando ya se resolvió la localidad y cambia tab/filtro
   useEffect(() => {
-    if (!accessToken || !localidadCargada) return;
+    if (!user || !localidadCargada) return;
+    // ¿Qué? Reinicia "cargando"/"error" antes de disparar la petición que
+    //       viene justo debajo, para que la pantalla muestre el estado de
+    //       carga real de este nuevo filtro/tab en vez del resultado (o
+    //       error) del anterior mientras la petición nueva está en vuelo.
+    // ¿Para qué? La regla react-hooks/set-state-in-effect avisa por el
+    //           patrón general de "setState sincrónico dentro de un
+    //           effect", pero aquí no dispara un re-render en cascada
+    //           real: es el mismo estado que ya se usa para pintar el
+    //           spinner de esta misma petición, no un efecto secundario
+    //           sobre otro estado no relacionado.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCargandoDirectorio(true);
     setErrorDirectorio(false);
 
@@ -116,7 +124,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
     //           vez de disfrazarse de búsqueda vacía.
     if (tab === "recicladores") {
       axios
-        .get(`${API_BASE_URL}/api/v1/directorio/recicladores`, { headers, params })
+        .get(`${API_BASE_URL}/api/v1/directorio/recicladores`, { params })
         .then((res) => setRecicladores(res.data))
         .catch(() => {
           setRecicladores([]);
@@ -125,7 +133,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
         .finally(() => setCargandoDirectorio(false));
     } else {
       axios
-        .get(`${API_BASE_URL}/api/v1/directorio/puntos-acopio`, { headers, params })
+        .get(`${API_BASE_URL}/api/v1/directorio/puntos-acopio`, { params })
         .then((res) => setPuntos(res.data))
         .catch(() => {
           setPuntos([]);
@@ -133,8 +141,8 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
         })
         .finally(() => setCargandoDirectorio(false));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, localidadPropiaId, localidadPuntosId, localidadCargada, accessToken]);
+     
+  }, [tab, localidadPropiaId, localidadPuntosId, localidadCargada, user]);
 
   const waLink = (tel: string) => `https://wa.me/57${tel.replace(/\D/g, "")}`;
   const callLink = (tel: string) => `tel:+57${tel.replace(/\D/g, "")}`;

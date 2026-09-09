@@ -24,6 +24,7 @@ vi.mock("axios", () => {
     patch: (...args: unknown[]) => mockPatch(...args),
     delete: (...args: unknown[]) => mockDelete(...args),
     interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+    defaults: {},
   };
   return { default: { ...instance, create: () => instance } };
 });
@@ -50,7 +51,7 @@ function mockRespuestasVacias() {
 
 function renderPage() {
   return renderWithProviders(<AdminConjuntoDashboard />, {
-    authContext: { user: adminConjuntoUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: adminConjuntoUser, isAuthenticated: true },
   });
 }
 
@@ -133,8 +134,7 @@ describe("AdminConjuntoDashboard", () => {
     await waitFor(() => {
       expect(mockPatch).toHaveBeenCalledWith(
         expect.stringContaining("/conjunto-panel/mis-conjuntos/1"),
-        { nit: "900111222-1" },
-        expect.anything()
+        { nit: "900111222-1" }
       );
     });
     expect(await screen.findByText("Conjunto actualizado correctamente.")).toBeInTheDocument();
@@ -163,8 +163,7 @@ describe("AdminConjuntoDashboard", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/reciclador-conjunto/invitar"),
-        { correo_reciclador: "reciclador@example.com", id_conjunto_residencial: 1 },
-        expect.anything()
+        { correo_reciclador: "reciclador@example.com", id_conjunto_residencial: 1 }
       );
     });
   });
@@ -200,8 +199,7 @@ describe("AdminConjuntoDashboard", () => {
 
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledWith(
-        expect.stringContaining("/reciclador-conjunto/mi-conjunto/1/autorizados/r1"),
-        expect.anything()
+        expect.stringContaining("/reciclador-conjunto/mi-conjunto/1/autorizados/r1")
       );
     });
   });
@@ -222,8 +220,7 @@ describe("AdminConjuntoDashboard", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/conjunto-panel/mis-conjuntos/1/solicitar-desvinculacion"),
-        { motivo: null },
-        expect.anything()
+        { motivo: null }
       );
     });
   });

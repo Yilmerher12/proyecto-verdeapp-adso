@@ -30,36 +30,32 @@ export interface EditarNovedadPayload {
   fecha_expiracion?: string | null;
 }
 
-function authHeaders(token: string) {
-  return { headers: { Authorization: `Bearer ${token}` } };
-}
-
 // ¿Qué? Admin Sistema — HU-032.
-export async function crearNovedad(datos: CrearNovedadPayload, token: string): Promise<Novedad> {
-  const { data } = await axios.post(API_BASE, datos, authHeaders(token));
+export async function crearNovedad(datos: CrearNovedadPayload): Promise<Novedad> {
+  const { data } = await axios.post(API_BASE, datos);
   return data;
 }
 
 // ¿Qué? Admin Sistema — historial completo, activas y archivadas (CA-035.4).
-export async function listarTodasLasNovedades(token: string): Promise<Novedad[]> {
-  const { data } = await axios.get(`${API_BASE}/todas`, authHeaders(token));
+export async function listarTodasLasNovedades(): Promise<Novedad[]> {
+  const { data } = await axios.get(`${API_BASE}/todas`);
   return data;
 }
 
 // ¿Qué? Admin Sistema — HU-034.
-export async function editarNovedad(idNovedad: string, datos: EditarNovedadPayload, token: string): Promise<Novedad> {
-  const { data } = await axios.patch(`${API_BASE}/${idNovedad}`, datos, authHeaders(token));
+export async function editarNovedad(idNovedad: string, datos: EditarNovedadPayload): Promise<Novedad> {
+  const { data } = await axios.patch(`${API_BASE}/${idNovedad}`, datos);
   return data;
 }
 
 // ¿Qué? Admin Sistema — HU-035. No existe "desarchivar" (CA-035.3).
-export async function archivarNovedad(idNovedad: string, token: string) {
-  const { data } = await axios.post(`${API_BASE}/${idNovedad}/archivar`, {}, authHeaders(token));
+export async function archivarNovedad(idNovedad: string) {
+  const { data } = await axios.post(`${API_BASE}/${idNovedad}/archivar`, {});
   return data;
 }
 
 // ¿Qué? Residente/Reciclador/Admin Conjunto — HU-033.
-export async function verFeedNovedades(token: string): Promise<Novedad[]> {
-  const { data } = await axios.get(`${API_BASE}/feed`, authHeaders(token));
+export async function verFeedNovedades(): Promise<Novedad[]> {
+  const { data } = await axios.get(`${API_BASE}/feed`);
   return data;
 }

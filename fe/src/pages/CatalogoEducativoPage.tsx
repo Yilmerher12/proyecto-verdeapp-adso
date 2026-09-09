@@ -19,20 +19,20 @@ import {
 //           el contenido en la base de datos, esto es solo cómo se navega.
 export function CatalogoEducativoPage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!accessToken) return;
-    listarContenido(accessToken)
+    if (!user) return;
+    listarContenido()
       .then(setContenido)
       .catch(() => setError(t("catalogoEducativo.loadError")))
       .finally(() => setCargando(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+  }, [user]);
 
   const categorias = Array.from(new Set(contenido.map((c) => c.modulo_categoria)));
 

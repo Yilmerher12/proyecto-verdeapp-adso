@@ -29,8 +29,6 @@ export const mockUser: UserResponse = {
 // ¿Para qué? Proveer un contexto de auth controlado por cada test.
 export const defaultAuthContext: AuthContextType = {
   user: null,
-  accessToken: null,
-  refreshToken: null,
   isAuthenticated: false,
   isLoading: false,
   login: vi.fn(),

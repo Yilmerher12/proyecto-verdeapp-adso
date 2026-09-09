@@ -21,6 +21,7 @@ vi.mock("axios", () => {
     delete: (...args: unknown[]) => mockDelete(...args),
     patch: vi.fn(),
     interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+    defaults: {},
   };
   return { default: { ...instance, create: () => instance } };
 });
@@ -42,7 +43,7 @@ function mockRespuestasVacias() {
 
 function renderPage() {
   return renderWithProviders(<RecicladorDashboard />, {
-    authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: mockUser, isAuthenticated: true },
   });
 }
 
@@ -63,18 +64,11 @@ describe("RecicladorDashboard", () => {
   it("carga invitaciones, conjuntos y notificaciones al montar", async () => {
     renderPage();
     await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/reciclador-conjunto/mis-invitaciones"));
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/reciclador-conjunto/mis-invitaciones"),
-        expect.anything()
+        expect.stringContaining("/reciclador-conjunto/mis-conjuntos-autorizados")
       );
-      expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/reciclador-conjunto/mis-conjuntos-autorizados"),
-        expect.anything()
-      );
-      expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/notificaciones/mis-notificaciones"),
-        expect.anything()
-      );
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/mis-notificaciones"));
     });
   });
 
@@ -116,8 +110,7 @@ describe("RecicladorDashboard", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/reciclador-conjunto/invitaciones/inv-1/responder"),
-        { aceptar: true },
-        expect.anything()
+        { aceptar: true }
       );
     });
   });
@@ -140,8 +133,7 @@ describe("RecicladorDashboard", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/notificaciones/enviar"),
-        { tipo: "LLEGADA_RECICLADOR", id_conjunto_residencial: 1 },
-        expect.anything()
+        { tipo: "LLEGADA_RECICLADOR", id_conjunto_residencial: 1 }
       );
     });
   });

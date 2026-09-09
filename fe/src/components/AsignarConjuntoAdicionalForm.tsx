@@ -16,11 +16,6 @@ interface Localidad {
   nombre_localidad: string;
 }
 
-interface AsignarConjuntoAdicionalFormProps {
-  // ¿Qué? El token de sesión del Administrador del Sistema.
-  token: string;
-}
-
 /**
  * ¿Qué? Panel del Administrador del Sistema para vincular directamente un
  *       conjunto sin administrador a un Admin de Conjunto que ya existe
@@ -33,7 +28,7 @@ interface AsignarConjuntoAdicionalFormProps {
  *           "a quién" ayuda a confirmar que es la persona correcta antes
  *           de decidir qué asignarle.
  */
-export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicionalFormProps) {
+export function AsignarConjuntoAdicionalForm() {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [buscando, setBuscando] = useState(false);
@@ -63,7 +58,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
     setBuscando(true);
     setError(null);
     try {
-      const data = await buscarAdministradoresConjunto(query.trim(), token);
+      const data = await buscarAdministradoresConjunto(query.trim());
       setResultados(data);
       setBusquedaHecha(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,7 +78,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
   //           búsqueda a un puñado de opciones, igual que ya hace
   //           InvitarAdminConjuntoForm.
   const fetchConjuntosDisponibles = (query: string): Promise<ConjuntoOption[]> =>
-    listarConjuntosSinAdministrador(token, query, 20, localidadId || undefined).catch(() => []);
+    listarConjuntosSinAdministrador(query, 20, localidadId || undefined).catch(() => []);
 
   const seleccionarAdministrador = (admin: AdministradorConjuntoResumen) => {
     setSeleccionado(admin);
@@ -98,7 +93,7 @@ export function AsignarConjuntoAdicionalForm({ token }: AsignarConjuntoAdicional
     setAsignando(true);
     setError(null);
     try {
-      await asignarConjuntoAdicional(seleccionado.id_administrador, conjuntoElegido.id_conjunto_residencial, token);
+      await asignarConjuntoAdicional(seleccionado.id_administrador, conjuntoElegido.id_conjunto_residencial);
       setMensajeExito(t("desvinculacion.asignarAdicional.successMessage"));
 
       const nombreNuevoConjunto = conjuntoElegido.nombre_conjunto;

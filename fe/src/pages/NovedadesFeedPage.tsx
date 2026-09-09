@@ -16,14 +16,14 @@ import { Alert } from "@/components/ui/Alert";
  */
 export function NovedadesFeedPage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const [novedades, setNovedades] = useState<Novedad[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!accessToken) return;
-    verFeedNovedades(accessToken)
+    if (!user) return;
+    verFeedNovedades()
       .then(setNovedades)
       // ¿Qué? Antes solo se hacía console.error y la UI caía en el mismo
       //       bloque de "no hay novedades" que un feed vacío de verdad.
@@ -31,7 +31,7 @@ export function NovedadesFeedPage() {
       //           igual que "no hay nada nuevo" — ahora hay un aviso propio.
       .catch(() => setError(true))
       .finally(() => setCargando(false));
-  }, [accessToken]);
+  }, [user]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pt-6">

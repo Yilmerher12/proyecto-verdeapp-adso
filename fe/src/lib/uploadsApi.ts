@@ -5,10 +5,6 @@ import { API_BASE_URL } from "@/api/axios";
 //       adjuntas (comunicados/novedades) — POST /api/v1/uploads/adjunto.
 const API_BASE = `${API_BASE_URL}/api/v1/uploads`;
 
-function authHeaders(token: string) {
-  return { headers: { Authorization: `Bearer ${token}` } };
-}
-
 /**
  * ¿Qué? Sube un archivo (imagen, o también PDF/Word/Excel si se pide) y
  *       devuelve la URL pública ya servida por el backend
@@ -23,7 +19,6 @@ function authHeaders(token: string) {
  */
 export async function subirAdjunto(
   archivo: File,
-  token: string,
   opciones?: { permitirDocumentos?: boolean }
 ): Promise<string> {
   const formData = new FormData();
@@ -31,6 +26,6 @@ export async function subirAdjunto(
   const url = opciones?.permitirDocumentos
     ? `${API_BASE}/adjunto?permitir_documentos=true`
     : `${API_BASE}/adjunto`;
-  const response = await axios.post<{ url: string }>(url, formData, authHeaders(token));
+  const response = await axios.post<{ url: string }>(url, formData);
   return response.data.url;
 }

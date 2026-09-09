@@ -88,7 +88,7 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
  */
 export function AdminConjuntoComunicadosPage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
 
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
@@ -103,9 +103,9 @@ export function AdminConjuntoComunicadosPage() {
   const [aEliminar, setAEliminar] = useState<Comunicado | null>(null);
 
   const cargar = () => {
-    if (!accessToken) return;
+    if (!user) return;
     setCargando(true);
-    Promise.all([obtenerMisConjuntos(accessToken), listarMisComunicados(accessToken)])
+    Promise.all([obtenerMisConjuntos(), listarMisComunicados()])
       .then(([listaConjuntos, listaComunicados]) => {
         setConjuntos(listaConjuntos);
         setComunicados(listaComunicados);
@@ -114,7 +114,7 @@ export function AdminConjuntoComunicadosPage() {
       .finally(() => setCargando(false));
   };
 
-  useEffect(cargar, [accessToken]);
+  useEffect(cargar, [user]);
 
   const abrirCrear = () => {
     setForm({ ...FORM_VACIO, id_conjunto_residencial: conjuntos[0]?.id_conjunto_residencial ?? "" });
@@ -151,7 +151,7 @@ export function AdminConjuntoComunicadosPage() {
     (form.tipo === "CONVOCATORIA" && !form.fecha_evento);
 
   const guardar = async () => {
-    if (!accessToken) return;
+    if (!user) return;
     if (!form.texto.trim()) {
       setErrorMsg(t("comunicados.admin.validation.textoRequerido"));
       return;
@@ -171,30 +171,23 @@ export function AdminConjuntoComunicadosPage() {
 
     try {
       if (editando) {
-        await editarComunicado(
-          editando.id_comunicado,
-          {
-            tipo: form.tipo,
-            texto: form.texto.trim(),
-            url_adjunto: form.url_adjunto.trim() || null,
-            fecha_evento: form.tipo === "CONVOCATORIA" ? form.fecha_evento : null,
-            fecha_expiracion: fechaExpiracion,
-          },
-          accessToken
-        );
+        await editarComunicado(editando.id_comunicado, {
+          tipo: form.tipo,
+          texto: form.texto.trim(),
+          url_adjunto: form.url_adjunto.trim() || null,
+          fecha_evento: form.tipo === "CONVOCATORIA" ? form.fecha_evento : null,
+          fecha_expiracion: fechaExpiracion,
+        });
       } else {
-        await crearComunicado(
-          {
-            id_conjunto_residencial: form.id_conjunto_residencial as string,
-            destinatarios: form.destinatarios,
-            tipo: form.tipo,
-            texto: form.texto.trim(),
-            url_adjunto: form.url_adjunto.trim() || null,
-            fecha_evento: form.tipo === "CONVOCATORIA" ? form.fecha_evento : null,
-            fecha_expiracion: fechaExpiracion,
-          },
-          accessToken
-        );
+        await crearComunicado({
+          id_conjunto_residencial: form.id_conjunto_residencial as string,
+          destinatarios: form.destinatarios,
+          tipo: form.tipo,
+          texto: form.texto.trim(),
+          url_adjunto: form.url_adjunto.trim() || null,
+          fecha_evento: form.tipo === "CONVOCATORIA" ? form.fecha_evento : null,
+          fecha_expiracion: fechaExpiracion,
+        });
       }
       cerrarFormulario();
       cargar();
@@ -207,9 +200,9 @@ export function AdminConjuntoComunicadosPage() {
   };
 
   const confirmarEliminar = async () => {
-    if (!accessToken || !aEliminar) return;
+    if (!user || !aEliminar) return;
     try {
-      await eliminarComunicado(aEliminar.id_comunicado, accessToken);
+      await eliminarComunicado(aEliminar.id_comunicado);
       setAEliminar(null);
       cargar();
     } catch {
@@ -448,7 +441,6 @@ export function AdminConjuntoComunicadosPage() {
               label={t("comunicados.admin.fields.urlAdjunto")}
               value={form.url_adjunto}
               onChange={(url) => setForm({ ...form, url_adjunto: url })}
-              token={accessToken || ""}
               permitirDocumentos
             />
 

@@ -60,7 +60,10 @@ describe("AuthProvider — restaurar idioma al iniciar sesión (HU-037)", () => 
   });
 
   it("aplica el idioma guardado del usuario al hacer login (CA-037.2)", async () => {
-    mockLoginUser.mockResolvedValue({ access_token: "a", refresh_token: "r" });
+    // ¿Qué? RNF-001.9: loginUser() ya no devuelve los tokens — el backend
+    //       los deja en cookies httpOnly. Lo único que le importa a
+    //       AuthContext es que la promesa se resuelva sin error.
+    mockLoginUser.mockResolvedValue({ message: "Sesión iniciada correctamente" });
     mockGetMe.mockResolvedValue(usuarioConIngles);
 
     const user = userEvent.setup();
@@ -78,10 +81,12 @@ describe("AuthProvider — restaurar idioma al iniciar sesión (HU-037)", () => 
   });
 
   it("restaura el idioma guardado al reabrir sesión existente (CA-037.2)", async () => {
-    // ¿Qué? Simula que ya había una sesión activa (token en sessionStorage)
-    //       antes de que el componente se montara — el mismo caso de "abrir
-    //       la app desde otro dispositivo/navegador con sesión guardada".
-    sessionStorage.setItem("access_token", "token-existente");
+    // ¿Qué? Simula que ya había una sesión activa (la cookie httpOnly del
+    //       backend, invisible para este test) antes de que el componente
+    //       se montara — el mismo caso de "recargar la página con sesión
+    //       ya iniciada". La banderita en sessionStorage es lo único que
+    //       AuthContext puede leer para saberlo (RNF-001.9).
+    sessionStorage.setItem("verdeapp:sesion-activa", "1");
     mockGetMe.mockResolvedValue(usuarioConIngles);
 
     await act(async () => {
@@ -98,7 +103,7 @@ describe("AuthProvider — restaurar idioma al iniciar sesión (HU-037)", () => 
   });
 
   it("no cambia el idioma si el usuario no tiene locale guardado", async () => {
-    mockLoginUser.mockResolvedValue({ access_token: "a", refresh_token: "r" });
+    mockLoginUser.mockResolvedValue({ message: "Sesión iniciada correctamente" });
     mockGetMe.mockResolvedValue({ ...usuarioConIngles, locale: undefined });
 
     const user = userEvent.setup();

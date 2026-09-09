@@ -49,7 +49,7 @@ VerdeApp sigue una **arquitectura Cliente–Servidor** de tres capas lógicas:
 2. **Backend (FastAPI)** — lógica de negocio, expone una API REST bajo `/api/v1/`.
 3. **Base de datos (PostgreSQL)** — persistencia, solo accedida desde el backend.
 
-La comunicación es exclusivamente **HTTP + JSON**. Los tokens JWT viajan en el header `Authorization: Bearer <token>`. No hay sesiones guardadas en el servidor.
+La comunicación es exclusivamente **HTTP + JSON**. Los tokens JWT viajan en una cookie `httpOnly` que el navegador adjunta solo (RNF-001.9) — antes viajaban en el header `Authorization: Bearer <token>`, manejado a mano por el frontend. No hay sesiones guardadas en el servidor más allá de la lista de tokens revocados (ver "La excepción honesta" más abajo).
 
 ---
 
@@ -238,7 +238,8 @@ React comparte estado global (la sesión del usuario) sin pasar props manualment
 // fe/src/context/AuthContext.tsx
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  // El token ya no vive aquí — es una cookie httpOnly que ni siquiera
+  // este componente puede leer (RNF-001.9).
   // ...login/register/logout/changePassword...
   return (
     <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -293,11 +294,9 @@ Middleware del lado del cliente HTTP que procesa toda petición o respuesta ante
 
 ```typescript
 // fe/src/api/axios.ts
-api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("access_token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+// RNF-001.9: ya no hace falta un interceptor de request que pegue el
+// token a mano — la cookie httpOnly viaja sola gracias a esto:
+const api = axios.create({ baseURL: API_BASE_URL, withCredentials: true });
 
 api.interceptors.response.use(
   (response) => response,

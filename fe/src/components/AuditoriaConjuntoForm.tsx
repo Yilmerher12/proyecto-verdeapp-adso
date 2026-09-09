@@ -29,7 +29,6 @@ interface ConjuntoOption {
 interface AuditoriaConjuntoFormProps {
   conjuntos: ConjuntoOption[];
   conjuntoPreseleccionado?: string;
-  token: string;
   onClose: () => void;
   onSuccess: (auditoria: AuditoriaConjunto) => void;
 }
@@ -37,7 +36,6 @@ interface AuditoriaConjuntoFormProps {
 export function AuditoriaConjuntoForm({
   conjuntos,
   conjuntoPreseleccionado,
-  token,
   onClose,
   onSuccess,
 }: AuditoriaConjuntoFormProps) {
@@ -81,10 +79,10 @@ export function AuditoriaConjuntoForm({
   //       del catálogo real en vez de mantener una lista aparte que se
   //       puede desactualizar.
   useEffect(() => {
-    listarContenido(token)
+    listarContenido()
       .then((contenido) => setTemas(Array.from(new Set(contenido.map((c) => c.modulo_categoria)))))
       .catch(() => setTemas([]));
-  }, [token]);
+  }, []);
 
   // ¿Qué? Mismas condiciones que ya revisaba "enviar" al hacer clic, pero
   //       calculadas ANTES, para deshabilitar el botón en vez de dejar que
@@ -121,7 +119,6 @@ export function AuditoriaConjuntoForm({
           descripcion: descripcion.trim() || undefined,
           evidencias,
         },
-        token,
         setProgreso
       );
       onSuccess(auditoria);

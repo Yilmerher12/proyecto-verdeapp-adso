@@ -125,7 +125,9 @@ def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> 
               obtener uno nuevo sin pedir email/password de nuevo.
     ¿Impacto? Duración larga (7 días por defecto). Si es robado, el atacante puede
               generar access tokens válidos hasta que el refresh expire.
-              Por eso es importante protegerlo (httpOnly cookies en producción).
+              Por eso se protege guardándolo en una cookie httpOnly, no en el cuerpo
+              de la respuesta ni en sessionStorage del navegador (RNF-001.9, ver
+              app/routers/auth.py:_fijar_cookies_de_sesion).
 
     Args:
         data: Diccionario con los datos a incluir (mínimo {"sub": email}).

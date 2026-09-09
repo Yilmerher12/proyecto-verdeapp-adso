@@ -24,6 +24,7 @@ vi.mock("axios", () => {
     patch: (...args: unknown[]) => mockPatch(...args),
     delete: vi.fn(),
     interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+    defaults: {},
   };
   return { default: { ...instance, create: () => instance } };
 });
@@ -76,7 +77,7 @@ function mockRespuestasVacias() {
 
 function renderPage() {
   return renderWithProviders(<AdminDashboard />, {
-    authContext: { user: adminUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: adminUser, isAuthenticated: true },
   });
 }
 
@@ -93,12 +94,12 @@ describe("AdminDashboard", () => {
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
   });
 
-  it("consulta la pestaña de Residentes al montar, con el token de sesión", async () => {
+  it("consulta la pestaña de Residentes al montar", async () => {
     renderPage();
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalledWith(
         expect.stringContaining("/admin/vista-residentes"),
-        expect.objectContaining({ headers: { Authorization: "Bearer token" } })
+        expect.objectContaining({ params: expect.anything() })
       );
     });
   });
@@ -183,8 +184,7 @@ describe("AdminDashboard", () => {
     await waitFor(() => {
       expect(mockPatch).toHaveBeenCalledWith(
         expect.stringContaining(`/admin/usuarios/${encodeURIComponent(residente.Correo)}/habilitado`),
-        { habilitado: false },
-        expect.objectContaining({ headers: { Authorization: "Bearer token" } })
+        { habilitado: false }
       );
     });
     await waitFor(() => expect(screen.getByText("Inactivo")).toBeInTheDocument());
@@ -494,8 +494,7 @@ describe("AdminDashboard", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/admin-conjunto/asignar-conjunto-adicional"),
-        { id_administrador: 7, id_conjunto_residencial: 9 },
-        expect.anything(),
+        { id_administrador: 7, id_conjunto_residencial: 9 }
       );
     });
     expect(await screen.findByText("Conjunto asignado correctamente.")).toBeInTheDocument();

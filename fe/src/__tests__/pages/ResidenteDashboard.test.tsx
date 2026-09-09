@@ -21,13 +21,14 @@ vi.mock("axios", () => {
     delete: (...args: unknown[]) => mockDelete(...args),
     patch: vi.fn(),
     interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+    defaults: {},
   };
   return { default: { ...instance, create: () => instance } };
 });
 
 function renderPage() {
   return renderWithProviders(<ResidenteDashboard />, {
-    authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: mockUser, isAuthenticated: true },
   });
 }
 
@@ -53,14 +54,8 @@ describe("ResidenteDashboard", () => {
   it("carga el estado del SHUT y las notificaciones al montar", async () => {
     renderPage();
     await waitFor(() => {
-      expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/notificaciones/estado-shut"),
-        expect.objectContaining({ headers: { Authorization: "Bearer token" } })
-      );
-      expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/notificaciones/mis-notificaciones"),
-        expect.anything()
-      );
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/estado-shut"));
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/mis-notificaciones"));
     });
   });
 
@@ -96,8 +91,7 @@ describe("ResidenteDashboard", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/notificaciones/enviar"),
-        { tipo: "SHUT_LLENO" },
-        expect.objectContaining({ headers: { Authorization: "Bearer token" } })
+        { tipo: "SHUT_LLENO" }
       );
     });
     expect(await screen.findByText("Enviado")).toBeInTheDocument();
@@ -157,11 +151,7 @@ describe("ResidenteDashboard", () => {
     await user.click(screen.getByRole("button", { name: "Cerrar" }));
 
     await waitFor(() => {
-      expect(mockPost).toHaveBeenCalledWith(
-        expect.stringContaining("/notificaciones/5/leer"),
-        {},
-        expect.anything()
-      );
+      expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/5/leer"), {});
     });
   });
 

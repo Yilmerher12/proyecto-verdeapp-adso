@@ -45,7 +45,7 @@ function renderConRuta(categoria: string) {
       <Route path="/catalogo-educativo/:categoria" element={<CategoriaEducativaPage />} />
     </Routes>,
     {
-      authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+      authContext: { user: mockUser, isAuthenticated: true },
       initialRoute: `/catalogo-educativo/${encodeURIComponent(categoria)}`,
     }
   );

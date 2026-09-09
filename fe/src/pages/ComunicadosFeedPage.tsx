@@ -25,18 +25,18 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
  */
 export function ComunicadosFeedPage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!accessToken) return;
-    verFeedComunicados(accessToken)
+    if (!user) return;
+    verFeedComunicados()
       .then(setComunicados)
       .catch(() => setError(true))
       .finally(() => setCargando(false));
-  }, [accessToken]);
+  }, [user]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pt-6">

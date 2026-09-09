@@ -59,7 +59,7 @@ const COMUNICADO: Comunicado = {
 
 function renderPage() {
   return renderWithProviders(<AdminConjuntoComunicadosPage />, {
-    authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: mockUser, isAuthenticated: true },
   });
 }
 

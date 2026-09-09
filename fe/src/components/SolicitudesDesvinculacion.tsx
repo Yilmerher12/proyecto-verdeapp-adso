@@ -7,11 +7,6 @@ import {
   type SolicitudDesvinculacion,
 } from "@/lib/adminConjuntoApi";
 
-interface SolicitudesDesvinculacionProps {
-  // ¿Qué? El token de sesión del Administrador del Sistema.
-  token: string;
-}
-
 /**
  * ¿Qué? Panel del Administrador del Sistema para resolver solicitudes de
  *       desvinculación de conjuntos (RQF-016, HU-023).
@@ -19,7 +14,7 @@ interface SolicitudesDesvinculacionProps {
  *           poder aprobar o rechazar cada una — rechazar exige un motivo
  *           (CA-023.3), así que se pide en un formulario aparte por fila.
  */
-export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionProps) {
+export function SolicitudesDesvinculacion() {
   const { t } = useTranslation();
   const [solicitudes, setSolicitudes] = useState<SolicitudDesvinculacion[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -30,7 +25,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
 
   const cargar = () => {
     setCargando(true);
-    listarSolicitudesDesvinculacion(token)
+    listarSolicitudesDesvinculacion()
       .then(setSolicitudes)
       .catch((err) => console.error("Error cargando solicitudes de desvinculación", err))
       .finally(() => setCargando(false));
@@ -38,14 +33,14 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
 
   useEffect(() => {
     cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+     
+  }, []);
 
   const aprobar = async (id: string) => {
     setProcesandoId(id);
     setError(null);
     try {
-      await resolverSolicitudDesvinculacion(id, true, undefined, token);
+      await resolverSolicitudDesvinculacion(id, true, undefined);
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -60,7 +55,7 @@ export function SolicitudesDesvinculacion({ token }: SolicitudesDesvinculacionPr
     setProcesandoId(id);
     setError(null);
     try {
-      await resolverSolicitudDesvinculacion(id, false, motivoRechazo.trim(), token);
+      await resolverSolicitudDesvinculacion(id, false, motivoRechazo.trim());
       setRechazandoId(null);
       setMotivoRechazo("");
       cargar();
