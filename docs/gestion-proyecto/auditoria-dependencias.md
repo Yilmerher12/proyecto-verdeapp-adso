@@ -110,3 +110,14 @@ pnpm audit
 ```
 
 Recomendación: correrlo cada vez que se actualicen dependencias mayores, o al menos una vez por trimestre.
+
+---
+
+## Actualización — automatizada en CI (2026-09-09)
+
+A partir de ahora, `.github/workflows/ci.yml` corre esta misma auditoría en **cada Pull Request**, no solo cuando alguien se acuerda de correrla a mano:
+
+- **Backend:** `pip-audit`, ignorando explícitamente `PYSEC-2026-1325` (`ecdsa`, el único riesgo ya evaluado y aceptado arriba) — así el paso falla ante una vulnerabilidad **nueva**, no ante la ya conocida.
+- **Frontend:** `pnpm audit --prod` — revisa solo las dependencias que de verdad llegan al navegador del usuario, sin bloquear el PR por las de desarrollo (ESLint, Vite, Vitest) ya documentadas arriba como riesgo aceptado.
+
+Ambos pasos son bloqueantes: si aparece una vulnerabilidad nueva en ese subconjunto, el Pull Request no se puede mezclar hasta resolverla. La auditoría manual completa (incluyendo dependencias de desarrollo) sigue siendo útil hacerla de vez en cuando, como se recomienda arriba, pero ya no es la única red de seguridad.

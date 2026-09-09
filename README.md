@@ -190,6 +190,44 @@ Una vez encendido, la aplicación está disponible en:
 
 ---
 
+## 🧯 Solución de Problemas Comunes
+
+<!--
+  ¿Qué? Antes el README solo cubría un caso puntual (encender la BD antes
+        que el backend) y el reinicio total de la base de datos — nada
+        general para alguien clonando el proyecto por primera vez.
+  ¿Para qué? Que un error al levantar el proyecto no deje a la persona sin
+             ninguna pista de por dónde empezar a buscar.
+  ¿Impacto? Reduce cuántas veces alguien del equipo tiene que preguntar
+            "¿a alguien más le pasó esto?" en el chat del grupo.
+-->
+
+**Un puerto ya está en uso** (`3000`, `5173`, `8000`, `5433` u `8025`)
+
+Suele pasar si dejaste corriendo una instancia anterior del proyecto, u otro programa en tu máquina ya usa ese puerto (por ejemplo, un PostgreSQL instalado localmente compite por el `5432`, por eso VerdeApp usa `5433`). Revisa qué proceso lo tiene ocupado y ciérralo, o apaga los contenedores anteriores con `docker compose down` antes de volver a encender.
+
+**`uv` o `pnpm` no se reconocen como comando**
+
+Significa que no están instalados, o que instalaste una versión distinta a la que espera el proyecto. Revisa la tabla de la sección "🛠️ Stack Tecnológico y Control de Versiones" más arriba para la versión exacta, e instálalos siguiendo la documentación oficial de cada herramienta.
+
+**El backend falla con "conexión rechazada" al arrancar**
+
+El backend necesita la base de datos (`verde_db`) corriendo *antes* de encenderse — ver la advertencia en el Paso 1 más arriba. Enciende primero `docker compose up -d verde_db` y espera unos segundos a que el contenedor esté listo, antes de correr `uvicorn`.
+
+**La app arranca pero falla con errores de configuración faltante**
+
+Casi siempre significa que falta el archivo `.env` (backend) o que le faltan variables. Copia `be/.env.example` a `be/.env` si no lo has hecho, y compara que tengas todas las variables que pide `be/app/config.py` — ninguna puede quedar vacía.
+
+**Docker no arranca, o los contenedores se quedan reiniciando en bucle**
+
+Confirma que Docker Desktop esté corriendo (no solo instalado) antes de cualquier comando `docker compose`. Si un contenedor sigue reiniciándose, revisa sus logs con `docker compose logs <nombre-del-servicio>` — casi siempre señala el problema real (una variable de entorno faltante, un puerto ocupado, etc.).
+
+**Nada de esto resolvió el problema**
+
+Antes de perder mucho tiempo solo, pregunta en el chat del grupo — es más probable que ya le haya pasado a alguien más de lo que parece.
+
+---
+
 ## 🗄️ Conexión a la Base de Datos
 
 La base de datos vive dentro de Docker pero se puede consultar desde tu máquina. Antes de conectarnos, asegurarse de que el contenedor `verde_db` esté corriendo.
