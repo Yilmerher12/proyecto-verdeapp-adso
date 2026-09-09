@@ -41,9 +41,10 @@ No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `pyproject.toml
 | ---------------- | --------------- |
 | React            | 19.2.4           |
 | TypeScript       | 5.9.3 (modo estricto)|
-| Vite             | 7.3.1             |
+| Vite             | 7.3.6             |
 | TailwindCSS      | 4.1.18            |
-| React Router     | 7.13.0            |
+| React Router     | 7.18.2            |
+| react-markdown   | 10.1.0            |
 
 ### Base de datos
 

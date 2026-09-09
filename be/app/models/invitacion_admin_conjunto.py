@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Boolean, TIMESTAMP, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.database import Base
-from app.utils.ids import generar_uuid7
+from app.utils.ids import generar_uuid4
 
 
 class InvitacionAdminConjunto(Base):
@@ -21,8 +21,8 @@ class InvitacionAdminConjunto(Base):
     __tablename__ = "invitaciones_admin_conjunto"
 
     # ¿Qué? Ya era un UUID guardado como texto (uuid.uuid4()); ahora pasa a
-    #       ser UUIDv7 nativo de Postgres, igual que el resto de las tablas.
-    id = Column(UUID(as_uuid=True), primary_key=True, default=generar_uuid7)
+    #       ser UUIDv4 nativo de Postgres, igual que el resto de las tablas.
+    id = Column(UUID(as_uuid=True), primary_key=True, default=generar_uuid4)
     correo_electronico = Column(String(255), nullable=False)
     token = Column(String(255), unique=True, nullable=False)
 

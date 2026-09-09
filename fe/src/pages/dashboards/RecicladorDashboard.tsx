@@ -51,6 +51,50 @@ interface ConjuntoAutorizado {
   nombre_localidad: string;
 }
 
+// ¿Qué? Estado de "control de presencia" (issue: control de notificaciones
+//       del reciclador según si está en el conjunto) — uno por cada
+//       conjunto autorizado, calculado por el backend en
+//       GET /notificaciones/mi-estado-reciclador.
+interface EstadoRecicladorConjunto {
+  id_conjunto_residencial: string;
+  presente: boolean;
+  shut_lleno: boolean;
+  puede_avisar_llegada: boolean;
+}
+
+// ¿Qué? Dado un tipo de notificación y el estado real de ESE conjunto,
+//       ¿por qué no se podría enviar ahora mismo? `null` = sí se puede.
+// ¿Para qué? Antes el reciclador solo se enteraba de estos rechazos
+//           DESPUÉS de hacer clic, por la respuesta del backend — con
+//           esto, el modal explica el motivo ANTES de intentar enviar.
+// ¿Impacto? Espeja EXACTAMENTE las mismas reglas que ya aplica
+//           be/app/routers/notificaciones.py — si el backend cambia
+//           estas reglas, hay que actualizar esta función también.
+function motivoBloqueo(
+  tipo: string | null,
+  estado: EstadoRecicladorConjunto | undefined,
+  t: (key: string) => string
+): string | null {
+  if (!tipo || !estado) return null;
+
+  if (tipo === "LLEGADA_RECICLADOR") {
+    if (estado.presente) return t("dashboards.reciclador.modal.yaPresente");
+    if (!estado.puede_avisar_llegada) return t("dashboards.reciclador.modal.avisoLlegadaReciente");
+    return null;
+  }
+
+  if (!estado.presente) {
+    return t("dashboards.reciclador.modal.debesLlegarPrimero");
+  }
+  if (tipo === "SHUT_LLENO" && estado.shut_lleno) {
+    return t("dashboards.reciclador.modal.yaEstaLleno");
+  }
+  if (tipo === "SHUT_LIBRE" && !estado.shut_lleno) {
+    return t("dashboards.reciclador.modal.yaEstaLibre");
+  }
+  return null;
+}
+
 const ACCIONES_META = [
   {
     tipo: "LLEGADA_RECICLADOR",
@@ -93,6 +137,10 @@ export function RecicladorDashboard() {
 
   const [invitaciones, setInvitaciones] = useState<InvitacionPendiente[]>([]);
   const [conjuntosAutorizados, setConjuntosAutorizados] = useState<ConjuntoAutorizado[]>([]);
+  const [estadoReciclador, setEstadoReciclador] = useState<EstadoRecicladorConjunto[]>([]);
+  // ¿Qué? Motivo a mostrar cuando el reciclador le da clic a un botón de
+  //       notificación que se ve apagado (bloqueado) en vez de abrir el modal.
+  const [avisoBoton, setAvisoBoton] = useState<string | null>(null);
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -119,12 +167,16 @@ export function RecicladorDashboard() {
       axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-conjuntos-autorizados`, { headers }),
       axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers }),
       listarMisAuditorias(accessToken ?? ""),
+      // ¿Qué? Estado de presencia por conjunto — issue de "control de
+      //       notificaciones del reciclador según si está en el conjunto".
+      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mi-estado-reciclador`, { headers }),
     ])
-      .then(([resInv, resConj, resNotifs, misAuditorias]) => {
+      .then(([resInv, resConj, resNotifs, misAuditorias, resEstado]) => {
         setInvitaciones(resInv.data);
         setConjuntosAutorizados(resConj.data);
         setNotificaciones(resNotifs.data);
         setAuditorias(misAuditorias);
+        setEstadoReciclador(resEstado.data);
         setErrorCarga(false);
       })
       // ¿Qué? Antes un .catch(() => {}) vacío no dejaba ningún rastro de que
@@ -172,8 +224,15 @@ export function RecicladorDashboard() {
     );
   };
 
+  const estadoDe = (idConjunto: string): EstadoRecicladorConjunto | undefined =>
+    estadoReciclador.find((e) => e.id_conjunto_residencial === idConjunto);
+
+  // ¿Qué? Motivo (si hay alguno) por el que el tipo/conjunto elegidos AHORA
+  //       MISMO en el modal no se podrían enviar — null si sí se puede.
+  const motivoModal = conjuntoSeleccionado ? motivoBloqueo(modalTipo, estadoDe(conjuntoSeleccionado), t) : null;
+
   const enviarNotificacion = async () => {
-    if (!modalTipo || !conjuntoSeleccionado) return;
+    if (!modalTipo || !conjuntoSeleccionado || motivoModal) return;
     setEnviandoNotif(true);
     try {
       await axios.post(
@@ -313,7 +372,7 @@ export function RecicladorDashboard() {
                 </p>
                 <button
                   onClick={() => setConjuntoParaAuditar(c.id_conjunto_residencial)}
-                  className="shrink-0 rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
+                  className="shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
                 >
                   {t("dashboards.reciclador.auditoria.bannerAction")}
                 </button>
@@ -335,17 +394,66 @@ export function RecicladorDashboard() {
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
-            {ACCIONES.map(({ tipo, label, icon: Icon, color }) => (
-              <button
-                key={tipo}
-                onClick={() => abrirModal(tipo)}
-                className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${color}`}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {label}
-              </button>
-            ))}
+            {/* ¿Qué? Cuando el reciclador solo tiene UN conjunto asignado ya
+                sabemos, sin abrir el modal, si ese botón se puede usar ahora
+                mismo (¿ya avisó llegada? ¿el SHUT ya está en ese estado?).
+                ¿Para qué? Se ve apagado para que no parezca la acción normal,
+                pero SÍ reacciona al clic — un botón con `disabled` de HTML
+                ignora el clic por completo, así que en vez de eso mostramos
+                el motivo (ver avisoBoton, debajo de la grilla). Esto también
+                funciona en celular, donde no existe el "pasar el mouse" que
+                haría falta para ver un `title`.
+                ¿Impacto? Con 2+ conjuntos no se puede saber cuál elegirá,
+                así que el botón queda habilitado y el aviso llega al abrir
+                el modal y elegir el conjunto (motivoModal, arriba). */}
+            {ACCIONES.map(({ tipo, label, icon: Icon, color }) => {
+              const motivo =
+                conjuntosAutorizados.length === 1
+                  ? motivoBloqueo(tipo, estadoDe(conjuntosAutorizados[0].id_conjunto_residencial), t)
+                  : null;
+              return (
+                <button
+                  key={tipo}
+                  onClick={() => {
+                    if (motivo) {
+                      setAvisoBoton(motivo);
+                      setTimeout(() => setAvisoBoton(null), 4000);
+                    } else {
+                      abrirModal(tipo);
+                    }
+                  }}
+                  aria-disabled={!!motivo}
+                  aria-label={label}
+                  aria-describedby={motivo ? `notif-motivo-${tipo}` : undefined}
+                  title={motivo ?? undefined}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${color} ${
+                    motivo ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {label}
+                  {/* ¿Qué? Texto oculto SOLO para lectores de pantalla, con
+                      el motivo del bloqueo. ¿Para qué? Antes, poner `title`
+                      en el botón hacía que el lector de pantalla anunciara
+                      el motivo EN VEZ del nombre del botón ("Llegué al
+                      conjunto") — con `aria-label` de vuelta y esto como
+                      descripción aparte, anuncia ambas cosas, en orden. */}
+                  {motivo && (
+                    <span id={`notif-motivo-${tipo}`} className="sr-only">
+                      {motivo}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
+        )}
+        {avisoBoton && (
+          <p
+            role="status"
+            className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+            {avisoBoton}
+          </p>
         )}
       </div>
 
@@ -374,7 +482,7 @@ export function RecicladorDashboard() {
                   <button
                     onClick={() => responderInvitacion(inv.id, true)}
                     disabled={procesandoId === inv.id}
-                    className="flex items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t("dashboards.reciclador.invitations.accept")}
@@ -382,7 +490,7 @@ export function RecicladorDashboard() {
                   <button
                     onClick={() => responderInvitacion(inv.id, false)}
                     disabled={procesandoId === inv.id}
-                    className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
                   >
                     <XCircle className="h-3.5 w-3.5" />
                     {t("dashboards.reciclador.invitations.reject")}
@@ -447,7 +555,7 @@ export function RecicladorDashboard() {
                 <li key={a.id_auditoria}>
                   <button
                     onClick={() => setAuditoriaAbierta(a.id_auditoria)}
-                    className="flex w-full items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
+                    className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
                   >
                     <div className="min-w-0">
                       <p className="text-sm text-gray-800 dark:text-gray-200">
@@ -521,7 +629,7 @@ export function RecicladorDashboard() {
                 <button
                   key={c.id_conjunto_residencial}
                   onClick={() => setConjuntoSeleccionado(c.id_conjunto_residencial)}
-                  className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
+                  className={`w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                     conjuntoSeleccionado === c.id_conjunto_residencial
                       ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                       : "border-gray-200 hover:border-green-300 dark:border-[#2a4d34] dark:hover:border-green-700"
@@ -533,17 +641,28 @@ export function RecicladorDashboard() {
               ))}
             </div>
 
+            {/* ¿Qué? Si el conjunto/tipo elegidos no se pueden enviar ahora
+                mismo (por presencia o por estado del SHUT), se lo explicamos
+                aquí ANTES de que intente enviar, en vez de dejarlo fallar.
+                ¿Para qué? Evita un clic para nada y un error genérico.
+                ¿Impacto? Solo lectura — no cambia el flujo de envío en sí. */}
+            {motivoModal && (
+              <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                {motivoModal}
+              </p>
+            )}
+
             <div className="flex gap-2">
               <button
                 onClick={() => setModalTipo(null)}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={enviarNotificacion}
-                disabled={!conjuntoSeleccionado || enviandoNotif}
-                className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
+                disabled={!conjuntoSeleccionado || enviandoNotif || !!motivoModal}
+                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {enviandoNotif ? t("dashboards.reciclador.modal.sending") : t("dashboards.reciclador.modal.submit")}
               </button>

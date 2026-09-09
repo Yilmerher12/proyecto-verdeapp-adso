@@ -3,7 +3,26 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
-from app.utils.ids import generar_uuid7
+from app.models.reciclador_conjunto import RecicladorConjunto
+from app.utils.codigo_acceso import generar_codigo_acceso
+from app.utils.ids import generar_uuid4
+
+
+def _secondaryjoin_recicladores_activos():
+    """
+    ¿Qué? Condición para unir recicladores_conjuntos con recicladores,
+          solo para vínculos activos (issue #reciclador-revocar-acceso).
+    ¿Para qué? El import de Reciclador va DENTRO de la función por la
+              misma razón que _secondaryjoin_administradores_activos:
+              evitar un ciclo de imports si en el futuro reciclador.py
+              llega a importar este archivo arriba.
+    """
+    from app.models.reciclador import Reciclador
+
+    return and_(
+        RecicladorConjunto.id_reciclador == Reciclador.id_reciclador,
+        RecicladorConjunto.fecha_revocacion.is_(None),
+    )
 
 
 def _secondaryjoin_administradores_activos():
@@ -29,7 +48,7 @@ def _secondaryjoin_administradores_activos():
 class ConjuntoResidencial(Base):
     __tablename__ = "conjuntos_residenciales"
 
-    id_conjunto_residencial = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
+    id_conjunto_residencial = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid4)
     # ¿Qué? id_localidad sigue siendo Integer a propósito — `localidades`
     #       es un catálogo fijo de 20 filas (las localidades de Bogotá),
     #       acoplado además al dataset externo del gobierno distrital que
@@ -45,13 +64,40 @@ class ConjuntoResidencial(Base):
 
     verificado_por_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"), nullable=True)
 
+    # ¿Qué? Código de acceso (issue #168) que el Admin de Conjunto reparte
+    #       fuera de la app (cartelera, grupo del conjunto) para que un
+    #       Residente demuestre que de verdad vive ahí al registrarse —
+    #       hoy cualquiera podía declarar pertenecer a cualquier conjunto
+    #       sin ninguna verificación.
+    # ¿Para qué? unique=True: aunque la probabilidad de choque es de
+    #           ~0.01% (ver utils/codigo_acceso.py), se prefiere que la
+    #           base de datos lo garantice en vez de confiar solo en la
+    #           suerte.
+    # ¿Impacto? default=generar_codigo_acceso solo se ejecuta por el
+    #           camino del ORM — la importación real de los 14,515
+    #           conjuntos (seed.py) usa SQL crudo, así que ese código
+    #           genera el valor a mano, igual que ya hace con
+    #           id_conjunto_residencial.
+    codigo_acceso = Column(String(10), unique=True, nullable=False, default=generar_codigo_acceso)
+
     # Puentes
     localidad = relationship("Localidad", back_populates="conjuntos")
     unidades = relationship("Unidad", back_populates="conjunto")
     verificado_por = relationship("Usuario", foreign_keys=[verificado_por_id])
 
-    # Puente de Muchos a Muchos con la tabla intermedia de recicladores
-    recicladores = relationship("Reciclador", secondary="recicladores_conjuntos", back_populates="conjuntos")
+    # ¿Qué? Puente a los recicladores ACTIVOS de este conjunto (excluye a
+    #       quien ya fue revocado) — simétrico a
+    #       ConjuntoResidencial.administradores, mismo mecanismo.
+    recicladores = relationship(
+        "Reciclador",
+        secondary=RecicladorConjunto.__table__,
+        primaryjoin=lambda: (
+            ConjuntoResidencial.id_conjunto_residencial == RecicladorConjunto.id_conjunto_residencial
+        ),
+        secondaryjoin=_secondaryjoin_recicladores_activos,
+        back_populates="conjuntos",
+        viewonly=True,
+    )
 
     # ¿Qué? Puente a los administradores ACTIVOS de este conjunto (excluye
     #       a quien ya se desvinculó — RQF-016), simétrico a

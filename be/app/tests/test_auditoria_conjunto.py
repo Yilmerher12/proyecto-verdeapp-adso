@@ -12,6 +12,7 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.models.conjunto_residencial import ConjuntoResidencial
@@ -19,7 +20,7 @@ from app.models.localidad import Localidad
 from app.models.reciclador import Reciclador
 from app.models.residente import Residente
 from app.models.rol import RolId
-from app.models.tablas_asociacion import recicladores_conjuntos
+from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.utils.security import create_access_token, hash_password
@@ -43,12 +44,10 @@ IMAGEN_VALIDA = _generar_imagen_real()
 def reciclador_autorizado(db: Session, reciclador_test: Usuario, conjunto_verificado: ConjuntoResidencial) -> Reciclador:
     """Autoriza al reciclador de prueba en conjunto_verificado (RQF-016 ya aceptado)."""
     reciclador = db.query(Reciclador).filter(Reciclador.id_usuario == reciclador_test.id_usuario).one()
-    db.execute(
-        recicladores_conjuntos.insert().values(
-            id_reciclador=reciclador.id_reciclador,
-            id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
-        )
-    )
+    db.add(RecicladorConjunto(
+        id_reciclador=reciclador.id_reciclador,
+        id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
+    ))
     db.commit()
     return reciclador
 
@@ -70,6 +69,19 @@ def _archivos_multiples(cantidad: int) -> list[tuple[str, tuple[str, io.BytesIO,
     se manda un `list[UploadFile]` de FastAPI desde un cliente HTTP real
     (varias partes multipart con el mismo nombre de campo)."""
     return [("evidencias", (f"foto{i}.jpg", io.BytesIO(IMAGEN_VALIDA), "image/jpeg")) for i in range(cantidad)]
+
+
+def _avisar_llegada(client: TestClient, headers: dict, id_conjunto) -> None:
+    """¿Qué? Marca a este reciclador como presente en el conjunto — ahora
+    es un requisito para poder auditar (control de presencia: un
+    reciclador debe avisar su llegada antes de usar SHUT lleno/libre,
+    finalización o auditar). Sin esto, crear_auditoria rechaza con 400."""
+    response = client.post(
+        "/api/v1/notificaciones/enviar",
+        headers=headers,
+        json={"tipo": "LLEGADA_RECICLADOR", "id_conjunto_residencial": str(id_conjunto)},
+    )
+    assert response.status_code == 201, response.json()
 
 
 class TestCrearAuditoria:
@@ -95,6 +107,28 @@ class TestCrearAuditoria:
         self, client: TestClient, reciclador_auth_headers, conjunto_verificado
     ):
         """El reciclador de prueba existe, pero NO está autorizado en este conjunto."""
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files=_archivo_valido(),
+        )
+        assert response.status_code == 403
+
+    def test_reciclador_revocado_no_puede_auditar(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        """¿Qué? Confirma que revocar el acceso (issue reciclador-revocar-acceso)
+        de verdad le quita la autorización — no solo la oculta en el listado."""
+        db.execute(
+            text(
+                "UPDATE recicladores_conjuntos SET fecha_revocacion = now() "
+                "WHERE id_reciclador = :rid AND id_conjunto_residencial = :cid"
+            ),
+            {"rid": reciclador_autorizado.id_reciclador, "cid": conjunto_verificado.id_conjunto_residencial},
+        )
+        db.commit()
+
         response = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -144,6 +178,7 @@ class TestCrearAuditoria:
     def test_envio_exitoso_crea_la_auditoria(
         self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
     ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         response = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -161,6 +196,7 @@ class TestCrearAuditoria:
     def test_descripcion_es_opcional_pero_se_guarda_si_llega(
         self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
     ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
         payload["descripcion"] = "El material orgánico llegó mezclado."
         response = client.post(
@@ -175,6 +211,7 @@ class TestCrearAuditoria:
     def test_admite_hasta_3_fotos_de_evidencia(
         self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
     ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         response = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -198,10 +235,26 @@ class TestCrearAuditoria:
         )
         assert response.status_code == 400
 
+    def test_no_puede_auditar_sin_haber_avisado_llegada(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        """¿Qué? Control de presencia (issue de presencia del reciclador):
+        auditar exige haber avisado la llegada primero, igual que
+        SHUT lleno/libre y finalización."""
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files=_archivo_valido(),
+        )
+        assert response.status_code == 400
+        assert "llegada" in response.json()["detail"].lower()
+
     def test_auditar_el_mismo_conjunto_antes_de_24h_devuelve_400(
         self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
     ):
         """CA-010.3 / RN-002 de RQF-009 — cooldown de 24 horas."""
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         primera = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -227,6 +280,7 @@ class TestListarMisAuditorias:
     def test_devuelve_las_auditorias_ya_enviadas(
         self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
     ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -254,6 +308,7 @@ class TestNotificacionAlPublicar:
         self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado, auth_headers
     ):
         """auth_headers pertenece a un Residente de conjunto_verificado (ver conftest)."""
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         creada = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -276,6 +331,7 @@ class TestNotificacionAlPublicar:
         admin_conjunto_test,
         admin_conjunto_auth_headers,
     ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -289,12 +345,14 @@ class TestNotificacionAlPublicar:
     def test_el_reciclador_que_la_envio_no_se_autonotifica(
         self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
     ):
-        client.post(
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
+        creada = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
             data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
             files=_archivo_valido(),
         )
+        assert creada.status_code == 201
         response = client.get("/api/v1/notificaciones/mis-notificaciones", headers=reciclador_auth_headers)
         assert response.status_code == 200
         assert not any(n["tipo"] == "AUDITORIA_PUBLICADA" for n in response.json())
@@ -312,6 +370,7 @@ class TestObtenerAuditoriaPorId:
     def test_residente_del_conjunto_puede_verla(
         self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado, auth_headers
     ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         creada = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -332,6 +391,7 @@ class TestObtenerAuditoriaPorId:
         admin_conjunto_test,
         admin_conjunto_auth_headers,
     ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         creada = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -353,6 +413,7 @@ class TestObtenerAuditoriaPorId:
         conjunto_verificado,
         localidad_test: Localidad,
     ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         creada = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -392,6 +453,7 @@ class TestObtenerAuditoriaPorId:
     def test_reciclador_que_la_envio_puede_verla(
         self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
     ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         creada = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -408,6 +470,7 @@ class TestObtenerAuditoriaPorId:
         """¿Qué? Un Reciclador solo puede ver el detalle de las auditorías
         que ÉL mismo envió — ni siquiera las de otro reciclador autorizado
         en el mismo conjunto."""
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         creada = client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -463,6 +526,7 @@ class TestListarHistorial:
         distintos — no del mismo reciclador dos veces, porque desde que
         existe el cooldown de 24h (RN-002/RQF-009) el mismo reciclador no
         puede volver a auditar el mismo conjunto tan seguido."""
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,
@@ -483,15 +547,14 @@ class TestListarHistorial:
         )
         db.add(otro_reciclador)
         db.flush()
-        db.execute(
-            recicladores_conjuntos.insert().values(
-                id_reciclador=otro_reciclador.id_reciclador,
-                id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
-            )
-        )
+        db.add(RecicladorConjunto(
+            id_reciclador=otro_reciclador.id_reciclador,
+            id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
+        ))
         db.commit()
         token_otro = create_access_token(data={"sub": otro_usuario.correo_electronico, "role_id": otro_usuario.id_rol})
         headers_otro = {"Authorization": f"Bearer {token_otro}"}
+        _avisar_llegada(client, headers_otro, conjunto_verificado.id_conjunto_residencial)
 
         client.post(
             "/api/v1/auditorias-conjunto",
@@ -517,6 +580,7 @@ class TestListarHistorial:
         admin_conjunto_test,
         admin_conjunto_auth_headers,
     ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
         client.post(
             "/api/v1/auditorias-conjunto",
             headers=reciclador_auth_headers,

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Shield, Users, Database, UserPlus, Search, MapPin, ChevronLeft, ChevronRight, Building2 } from "lucide-react";
+import { Shield, Users, Database, UserPlus, UserCog, Search, MapPin, ChevronLeft, ChevronRight, Building2, Ban, CircleCheck, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
 import { SolicitudesDesvinculacion } from "@/components/SolicitudesDesvinculacion";
 import { AsignarConjuntoAdicionalForm } from "@/components/AsignarConjuntoAdicionalForm";
@@ -18,12 +20,14 @@ interface ResidenteRow {
   Conjunto: string;
   Bloque: string;
   Apartamento: string;
+  Habilitado: boolean;
 }
 
 interface RecicladorRow {
   Correo: string;
   Nombre_Completo: string;
   Asociacion: string;
+  Habilitado: boolean;
 }
 
 interface AdminConjuntoRow {
@@ -32,6 +36,7 @@ interface AdminConjuntoRow {
   Apellido: string;
   Teléfono: string;
   Conjuntos: string;
+  Habilitado: boolean;
 }
 
 interface Localidad {
@@ -40,6 +45,7 @@ interface Localidad {
 }
 
 type TabUsuarios = "residentes" | "recicladores" | "administradores";
+type OrderDir = "asc" | "desc";
 
 // ¿Qué? Filas por página — el mismo número que ya se manda como límite al
 //       backend en cada endpoint.
@@ -54,7 +60,15 @@ const ENDPOINT_POR_TAB: Record<TabUsuarios, string> = {
 export function AdminDashboard() {
   const { t } = useTranslation();
   const { user, accessToken } = useAuth();
-  const [mostrarInvitar, setMostrarInvitar] = useState(false);
+  // ¿Qué? "Invitar administrador" y "Asignar conjunto adicional" abren cada
+  //       una su propio <Modal> en vez de expandirse dentro de la tarjeta.
+  //       Antes, al expandir el formulario inline, esa tarjeta crecía mucho
+  //       más que la de al lado (que no cambia de tamaño) y quedaba un
+  //       hueco enorme junto al formulario largo — con un modal, las dos
+  //       tarjetas de la fila SIEMPRE se ven igual de compactas, sin
+  //       importar si el admin está usando una, la otra, ninguna o ambas.
+  const [mostrarModalInvitar, setMostrarModalInvitar] = useState(false);
+  const [mostrarModalAsignar, setMostrarModalAsignar] = useState(false);
 
   // ¿Qué? Antes había 3 tablas potencialmente pidiendo miles de filas cada
   //       una, sin buscador ni paginación. Ahora solo se pide la pestaña
@@ -67,6 +81,12 @@ export function AdminDashboard() {
   const [localidadId, setLocalidadId] = useState<number | "">("");
   const [pagina, setPagina] = useState(0);
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
+  // ¿Qué? Cada pestaña tiene sus propias columnas ordenables, así que
+  //       cambiar de pestaña reinicia el orden (ver cambiarTab) — sin
+  //       columna elegida (orderBy null), el backend usa su propio orden
+  //       por defecto (por nombre, ascendente).
+  const [orderBy, setOrderBy] = useState<string | null>(null);
+  const [orderDir, setOrderDir] = useState<OrderDir>("asc");
 
   const [residentesData, setResidentesData] = useState<ResidenteRow[]>([]);
   const [recicladoresData, setRecicladoresData] = useState<RecicladorRow[]>([]);
@@ -133,6 +153,10 @@ export function AdminDashboard() {
     };
     if (search.trim()) params.search = search.trim();
     if (localidadId) params.localidad_id = localidadId;
+    if (orderBy) {
+      params.order_by = orderBy;
+      params.order_dir = orderDir;
+    }
 
     axios
       .get(`${API_BASE_URL}/api/v1/admin/${ENDPOINT_POR_TAB[tab]}`, {
@@ -151,14 +175,31 @@ export function AdminDashboard() {
         setError(true);
       })
       .finally(() => setCargando(false));
-  }, [accessToken, tab, search, localidadId, pagina]);
+  }, [accessToken, tab, search, localidadId, orderBy, orderDir, pagina]);
 
-  // ¿Qué? Cada uno de estos 3 manejadores cambia un filtro Y reinicia la
+  // ¿Qué? Cada uno de estos manejadores cambia un filtro Y reinicia la
   //       página a la primera — evita quedar "varado" en una página que ya
   //       no tiene resultados con el filtro nuevo (antes esto vivía en un
   //       useEffect aparte, solo para llamar setPagina).
   const cambiarTab = (nuevaTab: TabUsuarios) => {
     setTab(nuevaTab);
+    // ¿Qué? Cada pestaña tiene sus propias columnas — el orden de una no
+    //       tiene sentido en la otra.
+    setOrderBy(null);
+    setOrderDir("asc");
+    setPagina(0);
+  };
+
+  // ¿Qué? Clic en una columna nueva ordena ascendente; clic de nuevo sobre
+  //       la misma invierte la dirección — sin un tercer estado "sin
+  //       orden", que agregaría un ciclo más sin necesidad real.
+  const ordenarPor = (columna: string) => {
+    if (orderBy === columna) {
+      setOrderDir((dir) => (dir === "asc" ? "desc" : "asc"));
+    } else {
+      setOrderBy(columna);
+      setOrderDir("asc");
+    }
     setPagina(0);
   };
 
@@ -167,6 +208,136 @@ export function AdminDashboard() {
     setPagina(0);
   };
 
+  // ¿Qué? El profesor pidió, en la sustentación, que esta vista permitiera
+  //       HACER algo con los usuarios, no solo consultarlos — esta es esa
+  //       primera acción: activar/desactivar una cuenta.
+  // ¿Para qué? "confirmando" guarda el correo y el estado nuevo mientras se
+  //           confirma en el modal, para no desactivar a nadie con un solo
+  //           clic accidental.
+  const [confirmando, setConfirmando] = useState<{ correo: string; nuevoEstado: boolean } | null>(null);
+  const [actualizando, setActualizando] = useState(false);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
+
+  const ejecutarCambioHabilitado = async () => {
+    if (!confirmando || !accessToken) return;
+    setActualizando(true);
+    setErrorAccion(null);
+    try {
+      await axios.patch(
+        `${API_BASE_URL}/api/v1/admin/usuarios/${encodeURIComponent(confirmando.correo)}/habilitado`,
+        { habilitado: confirmando.nuevoEstado },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      // ¿Qué? Actualiza la fila en el arreglo correspondiente a la pestaña
+      //       activa, sin tener que recargar toda la página desde el
+      //       servidor otra vez.
+      const actualizarFila = <T extends { Correo: string; Habilitado: boolean }>(filas: T[]): T[] =>
+        filas.map((fila) =>
+          fila.Correo === confirmando.correo ? { ...fila, Habilitado: confirmando.nuevoEstado } : fila
+        );
+      setResidentesData(actualizarFila);
+      setRecicladoresData(actualizarFila);
+      setAdministradoresData(actualizarFila);
+      setConfirmando(null);
+    } catch {
+      setErrorAccion(t("dashboards.admin.usersSection.status.updateError"));
+    } finally {
+      setActualizando(false);
+    }
+  };
+
+  // ¿Qué? Encabezado ordenable compartido por las 3 tablas — clic para
+  //       ordenar por esa columna, con una flecha que indica el estado:
+  //       doble flecha tenue si no es la columna activa, flecha simple
+  //       (▲/▼) si sí lo es.
+  // ¿Para qué? Reutilizado en vez de repetir el mismo <button> + ícono en
+  //           cada una de las columnas de las 3 tablas.
+  const thOrdenable = (columna: string, label: string) => {
+    const activo = orderBy === columna;
+    // ¿Qué? aria-sort en el <th> (patrón WCAG para encabezados ordenables
+    //       de tabla) + un aria-label del botón que anuncia el ESTADO
+    //       actual (ordenado ascendente/descendente), no solo la acción
+    //       "ordenar por X" — antes un lector de pantalla nunca se enteraba
+    //       de si esa columna ya estaba ordenada ni en qué dirección.
+    const ariaSort = activo ? (orderDir === "asc" ? "ascending" : "descending") : "none";
+    const ariaLabel = activo
+      ? t(
+          orderDir === "asc"
+            ? "dashboards.admin.usersSection.sortAriaAscending"
+            : "dashboards.admin.usersSection.sortAriaDescending",
+          { columna: label }
+        )
+      : t("dashboards.admin.usersSection.sortAria", { columna: label });
+    return (
+      <th
+        className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+        aria-sort={ariaSort}
+      >
+        <button
+          type="button"
+          onClick={() => ordenarPor(columna)}
+          className="flex cursor-pointer items-center gap-1 transition-colors hover:text-gray-800 dark:hover:text-gray-200"
+          aria-label={ariaLabel}
+        >
+          {label}
+          {activo ? (
+            orderDir === "asc" ? (
+              <ArrowUp className="h-3 w-3" aria-hidden="true" />
+            ) : (
+              <ArrowDown className="h-3 w-3" aria-hidden="true" />
+            )
+          ) : (
+            <ArrowUpDown className="h-3 w-3 opacity-40" aria-hidden="true" />
+          )}
+        </button>
+      </th>
+    );
+  };
+
+  // ¿Qué? Celda compartida por las 3 tablas: muestra el estado y, si no es
+  //       la propia cuenta del Admin del Sistema (el backend rechaza
+  //       desactivarse a sí mismo), el botón para cambiarlo.
+  // ¿Qué? Estado (insignia, solo lectura) y Acciones (botón real) van en
+  //       columnas SEPARADAS a propósito — antes compartían una celda y el
+  //       botón, con solo texto de color, se confundía visualmente con la
+  //       insignia de al lado (ambos eran "una etiqueta de color"). El
+  //       componente Button ya reutilizado en el resto de la app (relleno
+  //       sólido o borde marcado) deja mucho más claro que uno es estado y
+  //       el otro es una acción para pulsar.
+  const celdaBadgeEstado = (habilitado: boolean) => (
+    <td className="px-5 py-3">
+      <span
+        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+          habilitado
+            ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+            : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+        }`}
+      >
+        {habilitado
+          ? t("dashboards.admin.usersSection.status.active")
+          : t("dashboards.admin.usersSection.status.inactive")}
+      </span>
+    </td>
+  );
+
+  const celdaAcciones = (correo: string, habilitado: boolean) => (
+    <td className="px-5 py-3">
+      {correo !== user?.email && (
+        <Button
+          type="button"
+          size="sm"
+          variant={habilitado ? "danger" : "secondary"}
+          onClick={() => setConfirmando({ correo, nuevoEstado: !habilitado })}
+        >
+          {habilitado ? <Ban className="mr-1 h-3.5 w-3.5" /> : <CircleCheck className="mr-1 h-3.5 w-3.5" />}
+          {habilitado
+            ? t("dashboards.admin.usersSection.status.disable")
+            : t("dashboards.admin.usersSection.status.enable")}
+        </Button>
+      )}
+    </td>
+  );
+
   const fullName = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || t("roles.adminSistema");
   const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_SISTEMA];
 
@@ -174,7 +345,8 @@ export function AdminDashboard() {
   const desde = total === 0 ? 0 : pagina * TAMANO_PAGINA + 1;
   const hasta = Math.min(total, (pagina + 1) * TAMANO_PAGINA);
 
-  const colSpanActivo = tab === "recicladores" ? 3 : tab === "administradores" ? 4 : 4;
+  // ¿Qué? +2 en cada caso por las columnas nuevas de Estado y Acciones.
+  const colSpanActivo = tab === "recicladores" ? 5 : tab === "administradores" ? 6 : 6;
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
@@ -199,37 +371,12 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* Invitar Administradores de Conjunto */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4 text-green-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
-          </div>
-          <button
-            type="button"
-            onClick={() => setMostrarInvitar((prev) => !prev)}
-            className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 px-3 py-1.5 rounded-xl transition-colors"
-          >
-            {mostrarInvitar ? t("dashboards.admin.inviteSection.hide") : t("dashboards.admin.inviteSection.show")}
-          </button>
-        </div>
-        {mostrarInvitar && (
-          <div className="mt-4">
-            <InvitarAdminConjuntoForm token={accessToken || ""} />
-          </div>
-        )}
-      </div>
-
-      {/* Desvinculación y reasignación de conjuntos (RQF-016) */}
-      {accessToken && (
-        <>
-          <SolicitudesDesvinculacion token={accessToken} />
-          <AsignarConjuntoAdicionalForm token={accessToken} />
-        </>
-      )}
-
-      {/* Usuarios registrados — pestañas por rol + búsqueda + localidad + paginación */}
+      {/* Usuarios registrados — pestañas por rol + búsqueda + localidad + paginación.
+          ¿Qué? Es la información PRIORITARIA de este panel (así lo señaló el
+                profesor) — va primero, justo después del encabezado, para
+                que se vea sin necesidad de scroll. Antes vivía al final,
+                debajo de 3 secciones administrativas que la empujaban fuera
+                de la vista inicial (issue #166). */}
       <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-[#2a4d34] space-y-3">
           <div className="flex items-center gap-2">
@@ -250,7 +397,7 @@ export function AdminDashboard() {
                   key={id}
                   type="button"
                   onClick={() => cambiarTab(id)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     tab === id
                       ? "bg-green-700 text-white shadow-sm"
                       : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
@@ -278,7 +425,7 @@ export function AdminDashboard() {
                 <select
                   value={localidadId}
                   onChange={(e) => cambiarLocalidad(e.target.value === "" ? "" : Number(e.target.value))}
-                  className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
+                  className="cursor-pointer rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
                 >
                   <option value="">{t("directorio.allLocalities")}</option>
                   {localidades.map((l) => (
@@ -298,25 +445,31 @@ export function AdminDashboard() {
               <tr className="border-b border-gray-100 dark:border-[#2a4d34] bg-gray-50 dark:bg-[#0d2116]/60">
                 {tab === "residentes" && (
                   <>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.email")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.name")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.conjunto")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.residentsTable.headers.unit")}</th>
+                    {thOrdenable("correo", t("dashboards.admin.residentsTable.headers.email"))}
+                    {thOrdenable("nombre", t("dashboards.admin.residentsTable.headers.name"))}
+                    {thOrdenable("conjunto", t("dashboards.admin.residentsTable.headers.conjunto"))}
+                    {thOrdenable("unidad", t("dashboards.admin.residentsTable.headers.unit"))}
+                    {thOrdenable("estado", t("dashboards.admin.usersSection.status.header"))}
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
                   </>
                 )}
                 {tab === "recicladores" && (
                   <>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.email")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.fullName")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.recyclersTable.headers.association")}</th>
+                    {thOrdenable("correo", t("dashboards.admin.recyclersTable.headers.email"))}
+                    {thOrdenable("nombre", t("dashboards.admin.recyclersTable.headers.fullName"))}
+                    {thOrdenable("asociacion", t("dashboards.admin.recyclersTable.headers.association"))}
+                    {thOrdenable("estado", t("dashboards.admin.usersSection.status.header"))}
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
                   </>
                 )}
                 {tab === "administradores" && (
                   <>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.email")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.name")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.phone")}</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.adminsTable.headers.conjuntos")}</th>
+                    {thOrdenable("correo", t("dashboards.admin.adminsTable.headers.email"))}
+                    {thOrdenable("nombre", t("dashboards.admin.adminsTable.headers.name"))}
+                    {thOrdenable("telefono", t("dashboards.admin.adminsTable.headers.phone"))}
+                    {thOrdenable("conjuntos", t("dashboards.admin.adminsTable.headers.conjuntos"))}
+                    {thOrdenable("estado", t("dashboards.admin.usersSection.status.header"))}
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
                   </>
                 )}
               </tr>
@@ -337,7 +490,7 @@ export function AdminDashboard() {
               ) : tab === "residentes" ? (
                 residentesData.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td colSpan={6} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                       {t("dashboards.admin.residentsTable.empty")}
                     </td>
                   </tr>
@@ -350,13 +503,15 @@ export function AdminDashboard() {
                       <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">
                         {t("dashboards.admin.residentsTable.unitFormat", { bloque: r.Bloque, apto: r.Apartamento })}
                       </td>
+                      {celdaBadgeEstado(r.Habilitado)}
+                      {celdaAcciones(r.Correo, r.Habilitado)}
                     </tr>
                   ))
                 )
               ) : tab === "recicladores" ? (
                 recicladoresData.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td colSpan={5} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                       {t("dashboards.admin.recyclersTable.empty")}
                     </td>
                   </tr>
@@ -370,12 +525,14 @@ export function AdminDashboard() {
                           {r.Asociacion}
                         </span>
                       </td>
+                      {celdaBadgeEstado(r.Habilitado)}
+                      {celdaAcciones(r.Correo, r.Habilitado)}
                     </tr>
                   ))
                 )
               ) : administradoresData.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td colSpan={6} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                     {t("dashboards.admin.adminsTable.empty")}
                   </td>
                 </tr>
@@ -386,6 +543,8 @@ export function AdminDashboard() {
                     <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">{a.Nombre} {a.Apellido}</td>
                     <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">{a.Teléfono || "—"}</td>
                     <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{a.Conjuntos}</td>
+                    {celdaBadgeEstado(a.Habilitado)}
+                    {celdaAcciones(a.Correo, a.Habilitado)}
                   </tr>
                 ))
               )}
@@ -404,7 +563,7 @@ export function AdminDashboard() {
                 type="button"
                 onClick={() => setPagina((p) => Math.max(0, p - 1))}
                 disabled={pagina === 0}
-                className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+                className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
                 aria-label={t("dashboards.admin.usersSection.pagination.prev")}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -416,7 +575,7 @@ export function AdminDashboard() {
                 type="button"
                 onClick={() => setPagina((p) => (p + 1 < totalPaginas ? p + 1 : p))}
                 disabled={pagina + 1 >= totalPaginas}
-                className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+                className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
                 aria-label={t("dashboards.admin.usersSection.pagination.next")}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -425,6 +584,110 @@ export function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Acciones administrativas secundarias — antes iban primero y
+          empujaban la tabla de usuarios (arriba) fuera de la vista inicial;
+          ahora van después. "Invitar administrador" y "Asignar conjunto
+          adicional" van en la misma fila, con el mismo tamaño exacto —
+          antes cada una se apilaba a todo el ancho del panel para pedir un
+          solo campo, con mucho espacio vacío alrededor (retroalimentación
+          del profesor, issue #166).
+          ¿Qué? Ninguna de las dos tarjetas cambia de tamaño al usarse — el
+          formulario de cada una vive en su propio <Modal>, no expandido
+          dentro de la tarjeta. Así, si el admin solo usa una de las dos, la
+          otra se queda exactamente del mismo tamaño de siempre, en vez de
+          quedar un hueco al lado de un formulario largo que sí creció. */}
+      <div className="grid grid-cols-1 items-stretch gap-5 md:grid-cols-2">
+        <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+          <div className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4 text-green-600" />
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
+          </div>
+          <p className="flex-1 text-xs text-gray-500 dark:text-gray-400">{t("dashboards.admin.inviteSection.description")}</p>
+          <button
+            type="button"
+            onClick={() => setMostrarModalInvitar(true)}
+            className="cursor-pointer self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+          >
+            {t("dashboards.admin.inviteSection.show")}
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+          <div className="flex items-center gap-2">
+            <UserCog className="h-4 w-4 text-green-600" />
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("desvinculacion.asignarAdicional.sectionTitle")}</h3>
+          </div>
+          <p className="flex-1 text-xs text-gray-500 dark:text-gray-400">{t("desvinculacion.asignarAdicional.description")}</p>
+          <button
+            type="button"
+            onClick={() => setMostrarModalAsignar(true)}
+            className="cursor-pointer self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+          >
+            {t("desvinculacion.asignarAdicional.openButton")}
+          </button>
+        </div>
+      </div>
+
+      {mostrarModalInvitar && (
+        <Modal onClose={() => setMostrarModalInvitar(false)} wide aria-label={t("invitarAdminConjunto.title")}>
+          <div className="p-6 sm:p-8">
+            <InvitarAdminConjuntoForm token={accessToken || ""} />
+          </div>
+        </Modal>
+      )}
+
+      {mostrarModalAsignar && accessToken && (
+        <Modal onClose={() => setMostrarModalAsignar(false)} wide aria-label={t("desvinculacion.asignarAdicional.sectionTitle")}>
+          <div className="p-6 sm:p-8">
+            <AsignarConjuntoAdicionalForm token={accessToken} />
+          </div>
+        </Modal>
+      )}
+
+      {accessToken && <SolicitudesDesvinculacion token={accessToken} />}
+
+      {confirmando && (
+        <Modal onClose={() => setConfirmando(null)} aria-label={t("dashboards.admin.usersSection.status.confirmButton")}>
+          <div className="p-6">
+            <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">
+              {confirmando.nuevoEstado
+                ? t("dashboards.admin.usersSection.status.confirmEnableTitle")
+                : t("dashboards.admin.usersSection.status.confirmDisableTitle")}
+            </h3>
+            <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+              {confirmando.nuevoEstado
+                ? t("dashboards.admin.usersSection.status.confirmEnableBody", { correo: confirmando.correo })
+                : t("dashboards.admin.usersSection.status.confirmDisableBody", { correo: confirmando.correo })}
+            </p>
+            {errorAccion && (
+              <div className="mb-4">
+                <Alert type="error" message={errorAccion} onClose={() => setErrorAccion(null)} />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmando(null)}
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+              >
+                {t("common.cancel")}
+              </button>
+              <div className="flex-1">
+                <Button
+                  type="button"
+                  fullWidth
+                  variant={confirmando.nuevoEstado ? "primary" : "danger"}
+                  isLoading={actualizando}
+                  onClick={ejecutarCambioHabilitado}
+                >
+                  {t("dashboards.admin.usersSection.status.confirmButton")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

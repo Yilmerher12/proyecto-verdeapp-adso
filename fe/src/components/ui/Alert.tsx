@@ -46,7 +46,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
 
   return (
     <div
-      className={`flex items-start gap-3 rounded-lg border p-4 text-sm ${typeClasses[type]}`}
+      className={`animate-fade-in flex items-start gap-3 rounded-lg border p-4 text-sm ${typeClasses[type]}`}
       role="alert"
     >
       {/*
@@ -102,7 +102,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
       {onClose && (
         <button
           onClick={onClose}
-          className={`shrink-0 transition-colors ${closeClasses[type]}`}
+          className={`shrink-0 cursor-pointer transition-colors ${closeClasses[type]}`}
           aria-label="Cerrar alerta"
         >
           {/* ¿Qué? Ícono X decorativo — la acción ya está descrita por aria-label del botón. */}

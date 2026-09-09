@@ -10,6 +10,9 @@ Descripción: Pruebas del router de geografía (localidades y conjuntos para for
 
 from fastapi.testclient import TestClient
 
+from app.models.conjunto_residencial import ConjuntoResidencial
+from app.models.localidad import Localidad
+
 
 class TestLocalidades:
     def test_listar_localidades_no_requiere_login(self, client: TestClient, localidad_test):
@@ -45,6 +48,36 @@ class TestConjuntosTodos:
         response = client.get("/api/v1/geography/conjuntos/todos", params={"limit": 1})
         assert response.status_code == 200
         assert len(response.json()) == 1
+
+    def test_filtra_por_localidad_antes_de_buscar_por_nombre(
+        self, client: TestClient, db, conjunto_verificado, localidad_test
+    ):
+        """conjunto_verificado vive en localidad_test (Usaquén). Se crea un
+        segundo conjunto verificado en OTRA localidad para probar que el
+        filtro de verdad distingue entre las dos, no solo que existe."""
+        otra_localidad = Localidad(nombre_localidad="Chapinero")
+        db.add(otra_localidad)
+        db.commit()
+        db.refresh(otra_localidad)
+
+        conjunto_en_otra_localidad = ConjuntoResidencial(
+            id_localidad=otra_localidad.id_localidad,
+            nombre_conjunto="CONJUNTO EN CHAPINERO",
+            nit="900000000-2",
+            direccion="Calle 63 # 5-5",
+            verificado=True,
+        )
+        db.add(conjunto_en_otra_localidad)
+        db.commit()
+
+        response = client.get(
+            "/api/v1/geography/conjuntos/todos",
+            params={"id_localidad": localidad_test.id_localidad},
+        )
+        assert response.status_code == 200
+        nombres = [c["nombre_conjunto"] for c in response.json()]
+        assert conjunto_verificado.nombre_conjunto in nombres
+        assert conjunto_en_otra_localidad.nombre_conjunto not in nombres
 
 
 class TestConjuntosPorLocalidad:

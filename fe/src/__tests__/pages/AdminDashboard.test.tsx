@@ -15,13 +15,14 @@ import { renderWithProviders, mockUser } from "../helpers";
 
 const mockGet = vi.fn();
 const mockPost = vi.fn();
+const mockPatch = vi.fn();
 
 vi.mock("axios", () => {
   const instance = {
     get: (...args: unknown[]) => mockGet(...args),
     post: (...args: unknown[]) => mockPost(...args),
+    patch: (...args: unknown[]) => mockPatch(...args),
     delete: vi.fn(),
-    patch: vi.fn(),
     interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
   };
   return { default: { ...instance, create: () => instance } };
@@ -36,12 +37,14 @@ const residente = {
   Conjunto: "Conjunto Los Alpes",
   Bloque: "A",
   Apartamento: "101",
+  Habilitado: true,
 };
 
 const reciclador = {
   Correo: "reciclador@example.com",
   Nombre_Completo: "Carlos Gómez",
   Asociacion: "Asociación Verde",
+  Habilitado: true,
 };
 
 const administrador = {
@@ -50,6 +53,7 @@ const administrador = {
   Apellido: "Ríos",
   Teléfono: "3000000000",
   Conjuntos: "Conjunto Los Alpes",
+  Habilitado: true,
 };
 
 // ¿Qué? Las 3 pestañas de usuarios devuelven { items, total } — todo lo
@@ -133,7 +137,7 @@ describe("AdminDashboard", () => {
     });
   });
 
-  it("cambia a la pestaña de Admins. de Conjunto y consulta ese endpoint", async () => {
+  it("cambia a la pestaña de Administradores de Conjunto y consulta ese endpoint", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("/admin/administradores-conjunto")) {
         return Promise.resolve({ data: { items: [administrador], total: 1 } });
@@ -146,11 +150,62 @@ describe("AdminDashboard", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: "Admins. de Conjunto" }));
+    await user.click(screen.getByRole("button", { name: "Administradores de Conjunto" }));
 
     await waitFor(() => {
       expect(screen.getByText("Ana Ríos")).toBeInTheDocument();
     });
+  });
+
+  // ¿Qué? El profesor pidió, en la sustentación, que esta vista permitiera
+  //       HACER algo con los usuarios, no solo consultarlos.
+  it("desactiva una cuenta desde la tabla, con confirmación", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes")) {
+        return Promise.resolve({ data: { items: [residente], total: 1 } });
+      }
+      if (url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    mockPatch.mockResolvedValue({ data: { correo_electronico: residente.Correo, habilitado: false } });
+    const user = userEvent.setup();
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: /Desactivar/i }));
+    expect(screen.getByText("¿Desactivar esta cuenta?")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Sí, continuar" }));
+
+    await waitFor(() => {
+      expect(mockPatch).toHaveBeenCalledWith(
+        expect.stringContaining(`/admin/usuarios/${encodeURIComponent(residente.Correo)}/habilitado`),
+        { habilitado: false },
+        expect.objectContaining({ headers: { Authorization: "Bearer token" } })
+      );
+    });
+    await waitFor(() => expect(screen.getByText("Inactivo")).toBeInTheDocument());
+  });
+
+  it("no muestra el botón de desactivar en la propia cuenta del Admin del Sistema", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes")) {
+        return Promise.resolve({
+          data: { items: [{ ...residente, Correo: adminUser.email }], total: 1 },
+        });
+      }
+      if (url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: /Desactivar/i })).not.toBeInTheDocument();
   });
 
   it("busca en tiempo real (con debounce) y se lo manda al backend como parámetro", async () => {
@@ -177,21 +232,146 @@ describe("AdminDashboard", () => {
     });
   });
 
-  it("despliega el formulario de invitar administrador de conjunto al hacer clic", async () => {
+  it("ordena al hacer clic en una columna, e invierte la dirección en el segundo clic", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes")) {
+        return Promise.resolve({ data: { items: [residente], total: 1 } });
+      }
+      if (
+        url.includes("/admin/sp-recicladores") ||
+        url.includes("/admin/administradores-conjunto")
+      ) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Juan Pérez");
+    // ¿Qué? aria-sort en el <th> es el patrón WCAG para encabezados
+    //       ordenables — antes no existía ninguno (re-auditoría de
+    //       accesibilidad post-#16).
+    const thCorreo = screen.getByRole("columnheader", { name: /Correo/ });
+    expect(thCorreo).toHaveAttribute("aria-sort", "none");
+
+    await user.click(screen.getByRole("button", { name: "Ordenar por Correo" }));
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/vista-residentes"),
+        expect.objectContaining({
+          params: expect.objectContaining({ order_by: "correo", order_dir: "asc" }),
+        })
+      );
+    });
+    expect(thCorreo).toHaveAttribute("aria-sort", "ascending");
+
+    await user.click(screen.getByRole("button", { name: "Correo, ordenado ascendente" }));
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/vista-residentes"),
+        expect.objectContaining({
+          params: expect.objectContaining({ order_by: "correo", order_dir: "desc" }),
+        })
+      );
+    });
+    expect(thCorreo).toHaveAttribute("aria-sort", "descending");
+  });
+
+  it("cambiar de pestaña reinicia el orden elegido", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes")) {
+        return Promise.resolve({ data: { items: [residente], total: 1 } });
+      }
+      if (
+        url.includes("/admin/sp-recicladores") ||
+        url.includes("/admin/administradores-conjunto")
+      ) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Juan Pérez");
+    await user.click(screen.getByRole("button", { name: "Ordenar por Correo" }));
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/vista-residentes"),
+        expect.objectContaining({ params: expect.objectContaining({ order_by: "correo" }) })
+      );
+    });
+
+    mockGet.mockClear();
+    await user.click(screen.getByRole("button", { name: "Recicladores" }));
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/sp-recicladores"),
+        expect.objectContaining({
+          params: expect.not.objectContaining({ order_by: expect.anything() }),
+        })
+      );
+    });
+  });
+
+  it("abre el modal de invitar administrador de conjunto al hacer clic", async () => {
     const user = userEvent.setup();
     renderPage();
 
     expect(screen.queryByText("Invitar Administrador de Conjunto")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "+ Invitar administrador" }));
 
+    // ¿Qué? Antes el formulario se expandía dentro de la misma tarjeta; con
+    //       el rediseño (issue #166) vive en su propio modal — se verifica
+    //       el diálogo accesible en vez de solo el texto del formulario.
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("Invitar Administrador de Conjunto")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ocultar" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cerrar" }));
+    expect(screen.queryByText("Invitar Administrador de Conjunto")).not.toBeInTheDocument();
   });
 
-  it("busca conjuntos por nombre y permite elegir/quitar varios en el formulario de invitar", async () => {
+  it("no muestra el buscador de conjuntos hasta elegir una localidad", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("/admin/vista-residentes") || url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
         return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      if (url.includes("/geography/localidades")) {
+        return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "+ Invitar administrador" }));
+
+    expect(screen.getByText("Selecciona una localidad para poder buscar el conjunto.")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Escribe el nombre del conjunto...")).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Localidad" }), "1");
+
+    expect(screen.getByPlaceholderText("Escribe el nombre del conjunto...")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Selecciona una localidad para poder buscar el conjunto.")
+    ).not.toBeInTheDocument();
+  });
+
+  // ¿Qué? El usuario reportó que el botón "Enviar invitación" quedaba
+  //       habilitado con el correo vacío, aunque ya hubiera localidad y
+  //       conjunto elegidos — el profesor insiste en que esto no debe
+  //       pasar en ningún formulario de la app.
+  it("mantiene deshabilitado el botón de invitar mientras falte el correo", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes") || url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      if (url.includes("/geography/localidades")) {
+        return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
       }
       if (url.includes("/geography/conjuntos/todos")) {
         return Promise.resolve({
@@ -204,6 +384,51 @@ describe("AdminDashboard", () => {
     renderPage();
 
     await user.click(screen.getByRole("button", { name: "+ Invitar administrador" }));
+    expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeDisabled();
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Localidad" }), "1");
+    await user.type(screen.getByPlaceholderText("Escribe el nombre del conjunto..."), "TORRES");
+    await user.click(await screen.findByText("TORRES DE ARANJUEZ — Usaquén"));
+
+    // ¿Qué? Justo después de elegir una opción, HeadlessUI deja el botón
+    //       con aria-hidden="true" mientras termina de cerrar el menú del
+    //       combobox — eso lo saca por completo del árbol de
+    //       accesibilidad (no es un tema de CSS que "hidden: true" de
+    //       Testing Library pueda resolver), así que aquí se verifica
+    //       contra el DOM directo en vez de por rol accesible.
+    const botonInvitar = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(botonInvitar.textContent).toContain("Completa el formulario");
+    expect(botonInvitar).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Correo del administrador a invitar *"), "nuevo@admin.com");
+    expect(botonInvitar.textContent).toContain("Enviar invitación");
+    expect(botonInvitar).not.toBeDisabled();
+  });
+
+  it("busca conjuntos por nombre y permite elegir/quitar varios en el formulario de invitar", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes") || url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      if (url.includes("/geography/conjuntos/todos")) {
+        return Promise.resolve({
+          data: [{ id_conjunto_residencial: 1, nombre_conjunto: "TORRES DE ARANJUEZ", nombre_localidad: "Usaquén" }],
+        });
+      }
+      if (url.includes("/geography/localidades")) {
+        return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: "+ Invitar administrador" }));
+
+    // ¿Qué? El buscador de conjuntos solo aparece después de elegir una
+    //       localidad (ver InvitarAdminConjuntoForm) — antes se podía
+    //       buscar sin acotar por localidad.
+    await user.selectOptions(screen.getByRole("combobox", { name: "Localidad" }), "1");
     await user.type(screen.getByPlaceholderText("Escribe el nombre del conjunto..."), "TORRES");
 
     const opcion = await screen.findByText("TORRES DE ARANJUEZ — Usaquén");
@@ -239,10 +464,17 @@ describe("AdminDashboard", () => {
           data: [{ id_conjunto_residencial: 9, nombre_conjunto: "RESERVA DE PRUEBA", nombre_localidad: "Usaquén" }],
         });
       }
+      if (url.includes("/geography/localidades")) {
+        return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
+      }
       return Promise.resolve({ data: [] });
     });
     const user = userEvent.setup();
     renderPage();
+
+    // ¿Qué? El formulario ahora vive en su propio modal (issue #166) — hay
+    //       que abrirlo antes de poder interactuar con sus campos.
+    await user.click(screen.getByRole("button", { name: "+ Asignar conjunto" }));
 
     await user.type(screen.getByPlaceholderText("Nombre, apellidos o correo"), "Ana");
     await user.click(screen.getByRole("button", { name: "Buscar" }));
@@ -250,6 +482,9 @@ describe("AdminDashboard", () => {
     const tarjetaAdmin = await screen.findByText("Ana Ríos");
     await user.click(tarjetaAdmin);
 
+    // ¿Qué? El buscador de conjuntos solo aparece después de elegir una
+    //       localidad (issue de hoy) — antes se podía buscar sin acotar.
+    await user.selectOptions(screen.getByRole("combobox", { name: "Localidad" }), "1");
     await user.type(screen.getByPlaceholderText("Escribe el nombre de tu conjunto..."), "RESERVA");
     const opcionConjunto = await screen.findByText("RESERVA DE PRUEBA — Usaquén");
     await user.click(opcionConjunto);

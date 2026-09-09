@@ -61,7 +61,8 @@
     "edit": "Editar",
     "phone": "Teléfono",
     "saving": "Guardando...",
-    "saveError": "No se pudo guardar. Intenta de nuevo."
+    "saveError": "No se pudo guardar. Intenta de nuevo.",
+    "formIncomplete": "Completa el formulario"
   },
   "auth": {
     "login": {
@@ -71,8 +72,14 @@
       "noAccount": "¿No tienes cuenta aún?",
       "createAccountLink": "Regístrate aquí",
       "submit": "Iniciar Sesión",
+      "submitIncomplete": "Completa tu correo y contraseña",
       "errorDefault": "Credenciales incorrectas. Verifica tu correo y contraseña.",
-      "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión."
+      "sessionExpired": "Tu sesión expiró. Vuelve a iniciar sesión.",
+      "validation": {
+        "emailRequired": "El correo es obligatorio",
+        "emailInvalid": "El formato del correo no es válido.",
+        "passwordRequired": "La contraseña es obligatoria"
+      }
     },
     "register": {
       "title": "Crea tu cuenta",
@@ -126,6 +133,9 @@
         "unitNumberPlaceholder": "Ej: 3, B",
         "apto": "Apartamento",
         "aptoPlaceholder": "Ej: 402",
+        "codigoAcceso": "Código de acceso del conjunto",
+        "codigoAccesoPlaceholder": "Ej: AB3K9Q",
+        "codigoAccesoHint": "Pídeselo al administrador de tu conjunto (cartelera, grupo del conjunto).",
         "operativeProfileHeading": "Perfil Operativo *",
         "workLocality": "Localidad de Trabajo *",
         "selectYourLocality": "Selecciona tu localidad...",
@@ -633,8 +643,8 @@
       "title": "Panel de Administración",
       "inviteSection": {
         "title": "Administradores de Conjunto",
-        "show": "+ Invitar administrador",
-        "hide": "Ocultar"
+        "description": "Invita por correo a alguien para que administre uno de tus conjuntos.",
+        "show": "+ Invitar administrador"
       },
       "loadingData": "Cargando datos...",
       "usersSection": {
@@ -642,13 +652,30 @@
         "tabs": {
           "residentes": "Residentes",
           "recicladores": "Recicladores",
-          "administradores": "Admins. de Conjunto"
+          "administradores": "Administradores de Conjunto"
         },
         "searchPlaceholder": "Buscar por nombre o correo...",
+        "sortAria": "Ordenar por {{columna}}",
+        "sortAriaAscending": "{{columna}}, ordenado ascendente",
+        "sortAriaDescending": "{{columna}}, ordenado descendente",
         "pagination": {
           "showing": "Mostrando {{from}}–{{to}} de {{total}}",
           "prev": "Página anterior",
           "next": "Página siguiente"
+        },
+        "status": {
+          "header": "Estado",
+          "actionsHeader": "Acciones",
+          "active": "Activo",
+          "inactive": "Inactivo",
+          "disable": "Desactivar",
+          "enable": "Activar",
+          "confirmDisableTitle": "¿Desactivar esta cuenta?",
+          "confirmDisableBody": "{{correo}} no podrá iniciar sesión hasta que la vuelvas a activar.",
+          "confirmEnableTitle": "¿Activar esta cuenta?",
+          "confirmEnableBody": "{{correo}} podrá volver a iniciar sesión con normalidad.",
+          "confirmButton": "Sí, continuar",
+          "updateError": "No se pudo actualizar el estado de la cuenta."
         }
       },
       "residentsTable": {
@@ -688,6 +715,8 @@
       },
       "recyclersSection": {
         "title": "Recicladores",
+        "showDetail": "Ver detalle",
+        "hideDetail": "Ocultar detalle",
         "invite": "+ Invitar reciclador",
         "emailPlaceholder": "correo.del.reciclador@ejemplo.com",
         "sending": "Enviando...",
@@ -696,6 +725,12 @@
         "authorizedTitle": "Autorizados",
         "authorizedLoading": "Cargando recicladores autorizados...",
         "authorizedEmpty": "Todavía no tienes ningún reciclador autorizado en este conjunto.",
+        "revokeAria": "Revocar acceso de {{nombre}}",
+        "revokeErrorDefault": "No se pudo revocar el acceso. Intenta de nuevo.",
+        "revokeModalAriaLabel": "Confirmar revocación de acceso",
+        "revokeConfirmTitle": "¿Revocar el acceso de {{nombre}}?",
+        "revokeConfirmWarning": "Ya no podrá recoger material ni auditar este conjunto. Se le notificará. Puedes volver a invitarlo más adelante si es necesario.",
+        "revokeConfirmButton": "Sí, revocar",
         "invitationsTitle": "Invitaciones enviadas",
         "loading": "Cargando invitaciones...",
         "empty": "Todavía no has enviado ninguna invitación."
@@ -705,10 +740,20 @@
         "loading": "Cargando tus conjuntos...",
         "empty": "Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp."
       },
+      "codigoAcceso": {
+        "title": "Código de acceso",
+        "description": "Compártelo con tus residentes (cartelera, grupo del conjunto) — lo necesitan para registrarse.",
+        "copyAria": "Copiar código de acceso",
+        "copiedAria": "Código copiado",
+        "regenerateButton": "Regenerar",
+        "regenerating": "Regenerando...",
+        "confirmTitle": "¿Regenerar el código de acceso?",
+        "confirmWarning": "El código actual dejará de funcionar de inmediato. Cualquier residente que todavía no se haya registrado necesitará el código nuevo.",
+        "confirmButton": "Sí, regenerar",
+        "errorDefault": "No se pudo regenerar el código. Intenta de nuevo."
+      },
       "editForm": {
-        "name": "Nombre del conjunto",
         "nit": "NIT (opcional)",
-        "address": "Dirección",
         "successMessage": "Conjunto actualizado correctamente.",
         "errorMessage": "No se pudo guardar el cambio. Intenta de nuevo."
       },
@@ -751,7 +796,12 @@
         "title": "¿A qué conjunto notificas?",
         "subtitle": "Selecciona el conjunto al que llegaste o sobre el que quieres avisar.",
         "sending": "Enviando...",
-        "submit": "Enviar aviso"
+        "submit": "Enviar aviso",
+        "yaPresente": "Ya avisaste tu llegada a este conjunto — avisa que ya te vas antes de volver a llegar.",
+        "avisoLlegadaReciente": "Ya reportaste tu llegada a este conjunto hace menos de 2 horas.",
+        "debesLlegarPrimero": "Debes avisar tu llegada a este conjunto antes de usar esta notificación.",
+        "yaEstaLleno": "El SHUT de este conjunto ya está reportado como lleno.",
+        "yaEstaLibre": "El SHUT de este conjunto ya está reportado como libre."
       },
       "auditoria": {
         "bannerTitle": "Auditoría semanal pendiente",
@@ -777,6 +827,7 @@
         "evidenciaMaximoAlcanzado": "Ya adjuntaste el máximo de 3 fotos.",
         "evidenciaQuitar": "Quitar esta foto",
         "submit": "Enviar auditoría",
+        "submitIncomplete": "Completa el formulario",
         "sending": "Enviando...",
         "sendingProgress": "Enviando... {{porcentaje}}%",
         "successMessage": "Auditoría enviada.",
@@ -861,6 +912,12 @@
     "personalInfoSection": {
       "title": "Información personal"
     },
+    "photo": {
+      "change": "Cambiar foto de perfil",
+      "invalidType": "La foto debe ser JPG, PNG o WEBP.",
+      "tooLarge": "La foto no puede superar 5 MB.",
+      "uploadError": "No se pudo subir la foto. Intenta de nuevo."
+    },
     "notRegistered": "No registrado",
     "emailNote": "El correo no se puede cambiar desde aquí.",
     "validation": {
@@ -878,6 +935,8 @@
       "recyclers": "Recicladores"
     },
     "allLocalities": "Todas las localidades",
+    "ownLocality": "Tu localidad: {{localidad}}",
+    "ownLocalityUnknown": "No se pudo detectar tu localidad",
     "emptyRecyclers": "No hay recicladores registrados en esta localidad.",
     "emptyPoints": "No hay puntos de acopio registrados en esta localidad.",
     "call": "Llamar",
@@ -934,12 +993,56 @@
       "titleField": "Título",
       "titlePlaceholder": "Ej: Código de colores de bolsas",
       "content": "Contenido",
+      "contentMarkdownHint": "Puedes usar ## para subtítulos, **negrita** y - para listas.",
       "videoLink": "Link de video (YouTube)",
-      "guideLink": "Link de guía de apoyo (PDF, Drive, etc.)"
+      "guideLink": "Guía de apoyo"
     },
     "deleteConfirm": {
       "title": "¿Eliminar \"{{titulo}}\"?",
       "warning": "Esta acción no se puede deshacer.",
+      "confirm": "Sí, eliminar"
+    }
+  },
+  "adminPuntosAcopio": {
+    "title": "Puntos de acopio",
+    "subtitle": "Registra, edita y da de baja los puntos de acopio oficiales del directorio.",
+    "newPoint": "Nuevo punto de acopio",
+    "emptyState": "Todavía no hay puntos de acopio registrados.",
+    "inactiveBadge": "Inactivo",
+    "editAria": "Editar {{nombre}}",
+    "deactivateAria": "Dar de baja {{nombre}}",
+    "reactivateAria": "Reactivar {{nombre}}",
+    "deleteAria": "Eliminar {{nombre}}",
+    "modal": {
+      "editTitle": "Editar punto de acopio",
+      "deactivateAriaLabel": "Confirmar baja",
+      "deleteAriaLabel": "Confirmar eliminación"
+    },
+    "validation": {
+      "required": "Nombre, dirección y localidad son obligatorios."
+    },
+    "loadError": "No se pudo cargar la lista de puntos de acopio.",
+    "deactivateError": "No se pudo dar de baja. Intenta de nuevo.",
+    "reactivateError": "No se pudo reactivar. Intenta de nuevo.",
+    "deleteError": "No se pudo eliminar. Intenta de nuevo.",
+    "fields": {
+      "name": "Nombre",
+      "namePlaceholder": "Ej: ECA Kennedy",
+      "address": "Dirección",
+      "addressPlaceholder": "Ej: Carrera 84 # 11A-34",
+      "locality": "Localidad",
+      "localitySelect": "Selecciona una localidad",
+      "contactName": "Nombre del encargado",
+      "phone": "Teléfono de contacto"
+    },
+    "deactivateConfirm": {
+      "title": "¿Dar de baja \"{{nombre}}\"?",
+      "warning": "Dejará de aparecer en el directorio de residentes y recicladores. El registro no se borra.",
+      "confirm": "Sí, dar de baja"
+    },
+    "deleteConfirm": {
+      "title": "¿Eliminar \"{{nombre}}\" definitivamente?",
+      "warning": "Esta acción no se puede deshacer — el registro se borra por completo, ya no lo verás ni en este panel.",
       "confirm": "Sí, eliminar"
     }
   },
@@ -976,10 +1079,35 @@
     "errorMessage": "El enlace de verificación no es válido o ya fue utilizado. Por favor, solicita un nuevo enlace.",
     "goToLogin": "Ir al login"
   },
+  "imagenAdjunta": {
+    "seleccionar": "Seleccionar imagen",
+    "seleccionarDocumento": "Seleccionar archivo (imagen, PDF, Word o Excel)",
+    "subiendo": "Subiendo...",
+    "quitar": "Quitar imagen",
+    "vistaPrevia": "Vista previa de la imagen adjunta",
+    "tipoInvalido": "La imagen debe ser JPG, PNG o WEBP.",
+    "tipoInvalidoDocumentos": "El archivo debe ser JPG, PNG, WEBP, PDF, Word (.docx) o Excel (.xlsx).",
+    "demasiadoGrande": "La imagen no puede superar 5 MB.",
+    "errorSubida": "No se pudo subir la imagen. Intenta de nuevo."
+  },
+  "guiaApoyo": {
+    "modeGroupAria": "Cómo agregar la guía de apoyo",
+    "tabUpload": "Subir archivo",
+    "tabLink": "Pegar link",
+    "seleccionar": "Seleccionar imagen o PDF",
+    "subiendo": "Subiendo...",
+    "quitar": "Quitar",
+    "tipoInvalido": "El archivo debe ser JPG, PNG, WEBP o PDF.",
+    "demasiadoGrande": "El archivo no puede superar 5 MB.",
+    "errorSubida": "No se pudo subir el archivo. Intenta de nuevo."
+  },
   "invitarAdminConjunto": {
     "title": "Invitar Administrador de Conjunto",
     "description": "Solo necesitas su correo. La persona invitada definirá su propia contraseña y completará sus datos al aceptar la invitación.",
     "emailLabel": "Correo del administrador a invitar *",
+    "localityLabel": "Localidad",
+    "localitySelectPlaceholder": "Selecciona una localidad...",
+    "selectLocalityFirst": "Selecciona una localidad para poder buscar el conjunto.",
     "conjuntosLabel": "Conjuntos a asignar *",
     "conjuntoSearchPlaceholder": "Escribe el nombre del conjunto...",
     "conjuntoNoResults": "No se encontró ningún conjunto con ese nombre.",
@@ -1022,12 +1150,17 @@
     },
     "asignarAdicional": {
       "sectionTitle": "Asignar conjunto adicional",
+      "description": "Vincula un conjunto sin administrador a alguien que ya es Administrador de Conjunto.",
+      "openButton": "+ Asignar conjunto",
       "searchLabel": "Buscar administrador",
       "searchPlaceholder": "Nombre, apellidos o correo",
       "searchButton": "Buscar",
       "noResults": "No se encontraron administradores.",
       "currentConjuntos": "Administra:",
       "noConjuntos": "Ningún conjunto todavía",
+      "localityLabel": "Localidad",
+      "localitySelectPlaceholder": "Selecciona una localidad...",
+      "selectLocalityFirst": "Selecciona una localidad para poder buscar el conjunto.",
       "selectConjuntoLabel": "Conjunto a asignar",
       "noConjuntosDisponibles": "No hay conjuntos sin administrador disponibles.",
       "assignButton": "Asignar",
@@ -1060,6 +1193,7 @@
       "editAria": "Editar comunicado",
       "deleteAria": "Eliminar comunicado",
       "editTitle": "Editar comunicado",
+      "creadoEl": "Creado el {{fecha}}",
       "expiraEl": "Expira el {{fecha}}",
       "destinatariosNoEditable": "El conjunto y los destinatarios no se pueden cambiar después de publicar. Si te equivocaste, elimina este comunicado y crea uno nuevo.",
       "deleteError": "No se pudo eliminar. Intenta de nuevo.",
@@ -1074,8 +1208,7 @@
         "tipo": "Tipo de comunicado",
         "fechaEvento": "Fecha del evento",
         "texto": "Mensaje",
-        "urlAdjunto": "Link de adjunto (imagen, video, PDF, etc.) — opcional",
-        "urlAdjuntoPlaceholder": "https://...",
+        "urlAdjunto": "Imagen adjunta (opcional)",
         "fechaExpiracion": "Fecha de expiración (opcional)",
         "fechaExpiracionHint": "Si la dejas vacía, se usa la sugerida según el tipo de comunicado."
       },
@@ -1098,7 +1231,7 @@
       "TODOS": "Todos",
       "RESIDENTES": "Residentes",
       "RECICLADORES": "Recicladores",
-      "ADMIN_CONJUNTO": "Admins. de Conjunto"
+      "ADMIN_CONJUNTO": "Administradores de Conjunto"
     },
     "admin": {
       "title": "Novedades",
@@ -1108,6 +1241,7 @@
       "editAria": "Editar novedad",
       "archiveAria": "Archivar novedad",
       "editTitle": "Editar novedad",
+      "creadoEl": "Creado el {{fecha}}",
       "expiraEl": "Expira el {{fecha}}",
       "archiveError": "No se pudo archivar. Intenta de nuevo.",
       "alcanceNoEditable": "El alcance no se puede cambiar después de publicar. Si te equivocaste, archívala y crea una nueva.",
@@ -1117,7 +1251,7 @@
       "fields": {
         "alcance": "Alcance",
         "texto": "Mensaje",
-        "urlAdjunto": "Link de adjunto (imagen, PDF, link externo, etc.) — opcional",
+        "urlAdjunto": "Imagen adjunta (opcional)",
         "fechaExpiracion": "Fecha de expiración (opcional)",
         "fechaExpiracionHint": "Si la dejas vacía, se usa una fecha sugerida por el sistema."
       }

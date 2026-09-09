@@ -25,6 +25,8 @@
 
 El sistema debe permitir a los usuarios con rol 'Reciclador' o 'Residente' modificar exclusivamente las filas de su información personal básica (nombre, apellidos, asociación y/o número telefónico). El sistema debe bloquear cualquier intento de modificación sobre las llaves foráneas (ID de unidad/conjunto) y las credenciales de acceso desde este módulo.
 
+> **Nota (2026-09-08)**: la foto de perfil (`POST /api/v1/users/me/foto-perfil`) también vive en este módulo, para **cualquiera de los 4 roles** (no solo Reciclador/Residente) — a diferencia del resto de este RF, que sí es exclusivo de esos 2. Reutiliza la misma validación compartida de subida de imágenes que usan las evidencias de auditoría y los adjuntos de comunicados/novedades (`guardar_imagen_subida`, ver `docs/requisitos/RFs/RQF-014_gestionar_comunicados_conjunto.md`).
+
 ---
 
 ## Entradas
@@ -64,6 +66,7 @@ El sistema debe permitir a los usuarios con rol 'Reciclador' o 'Residente' modif
 | Método | Ruta                     | Auth requerida | Descripción                                      |
 | ------ | ------------------------ | -------------- | ------------------------------------------------ |
 | PATCH  | `/api/v1/usuarios/me`    | Sí             | Actualiza parcialmente los datos del perfil      |
+| POST   | `/api/v1/users/me/foto-perfil` | Sí       | Sube o reemplaza la foto de perfil (los 4 roles) |
 
 ---
 

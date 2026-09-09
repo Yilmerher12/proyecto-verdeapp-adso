@@ -2,7 +2,7 @@
 
 > ⚠️ **Nota sobre la numeración**: esta tabla usa la numeración de la
 > planificación temprana del proyecto (HU01–HU11). Después se redactaron en
-> detalle como 37 historias independientes en `docs/requisitos/HUs/`, y
+> detalle como 44 historias independientes en `docs/requisitos/HUs/`, y
 > algunas filas de abajo hoy corresponden a varias historias reales a la
 > vez (ver columna "Corresponde hoy a"). Se conserva como referencia
 > histórica del análisis de prioridad — para el estado real, consultar

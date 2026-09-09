@@ -16,6 +16,7 @@
  */
 
 import { Trans, useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 import { LegalLayout, LegalSection } from "@/components/layout/LegalLayout";
 
@@ -47,13 +48,21 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
   const rightsLink = (
     <a
       href="#derechos"
-      className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
+  // ¿Qué? Antes era un <a href="..."> plano.
+  // ¿Para qué? Un <a> hacia una ruta interna hace una recarga completa de
+  //           página (no una navegación de React Router), lo que perdía el
+  //           scroll del Landing de fondo y se sentía como que la página
+  //           "se recargaba" al pasar de un modal legal a otro sin cerrar
+  //           antes (ej. Privacidad → clic en "formulario de contacto").
+  // ¿Impacto? <Link> navega del lado del cliente, sin recargar ni perder el
+  //           estado de scroll del Landing detrás de los modales.
   const emailLink = (
-    <a
-      href="/contacto"
-      className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+    <Link
+      to="/contacto"
+      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
   const sicLink = (
@@ -61,7 +70,7 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
       href="https://www.sic.gov.co"
       target="_blank"
       rel="noopener noreferrer"
-      className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
     />
   );
 
@@ -109,12 +118,12 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
               <strong className="text-gray-700 dark:text-gray-300">
                 {t("legal.privacy.s1.contactLabel")}
               </strong>{" "}
-              <a
-                href="/contacto"
-                className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+              <Link
+                to="/contacto"
+                className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
               >
                 {t("legal.privacy.s1.contactValue")}
-              </a>
+              </Link>
             </li>
             <li>
               <strong className="text-gray-700 dark:text-gray-300">
@@ -291,7 +300,7 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
               href="https://www.sic.gov.co"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-400 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+              className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
             >
               www.sic.gov.co
             </a>

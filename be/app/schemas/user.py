@@ -55,6 +55,12 @@ class UserCreate(BaseModel):
     torre: Optional[str] = None
     apto: Optional[str] = None
     asociacion: Optional[str] = None
+    # ¿Qué? Issue #168 — solo se usa (y se exige) cuando rol="residente";
+    #       Optional aquí por el mismo motivo que id_conjunto_residencial:
+    #       un reciclador nunca lo envía, y la validación real de
+    #       "obligatorio para residente" vive en auth_service.register_user,
+    #       no aquí (mismo patrón ya usado para id_conjunto_residencial).
+    codigo_acceso: Optional[str] = None
 
     @field_validator("apellidos")
     @classmethod

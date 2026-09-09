@@ -1,28 +1,21 @@
 """
 Módulo: utils/ids.py
-Descripción: Generador único de IDs UUIDv7 para las llaves primarias del proyecto.
+Descripción: Generador único de IDs UUIDv4 para las llaves primarias del proyecto.
 """
 import uuid
 
-import uuid_utils
 
-
-def generar_uuid7() -> uuid.UUID:
+def generar_uuid4() -> uuid.UUID:
     """
-    ¿Qué? Genera un UUID versión 7 (incluye la fecha de creación en los
-          primeros bits, más una parte aleatoria) y lo devuelve como
-          `uuid.UUID` de la librería estándar de Python.
-    ¿Para qué? Postgres 17 (la versión que usa este proyecto) todavía no
-              tiene una función nativa para generar UUIDv7 — eso llegó en
-              Postgres 18. Por eso se genera aquí, en Python, con la
-              librería `uuid_utils` (más rápida que hacerlo a mano).
-    ¿Impacto? `uuid_utils.uuid7()` devuelve su propia clase `uuid_utils.UUID`,
-              que NO es la misma clase que `uuid.UUID` de la librería
-              estándar (se confirmó con una prueba real contra Postgres).
-              SQLAlchemy, con `UUID(as_uuid=True)`, espera un `uuid.UUID`
-              estándar — sin esta conversión explícita, el driver de
-              Postgres no sabría cómo guardar el valor. Usar siempre esta
-              función (nunca `uuid_utils.uuid7()` directo) en el `default=`
-              de cada columna de llave primaria.
+    ¿Qué? Genera un UUID versión 4 (100% aleatorio, sin ninguna fecha ni
+          dato codificado adentro) con la librería estándar de Python.
+    ¿Para qué? El profesor evaluador pidió reemplazar UUIDv7 por UUIDv4
+              (issue #167) — v7 codifica la fecha/hora de creación en los
+              primeros bits del propio identificador, y v4 no filtra nada.
+    ¿Impacto? A diferencia de v7 (que necesitaba la librería externa
+              `uuid_utils` por su lógica de timestamp), v4 es puramente
+              aleatorio — `uuid.uuid4()` de la librería estándar ya devuelve
+              un `uuid.UUID` compatible con `UUID(as_uuid=True)` de
+              SQLAlchemy sin ninguna conversión adicional.
     """
-    return uuid.UUID(str(uuid_utils.uuid7()))
+    return uuid.uuid4()

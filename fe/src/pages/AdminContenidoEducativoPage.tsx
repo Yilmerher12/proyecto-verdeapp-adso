@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
+import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import {
   crearContenido,
   editarContenido,
@@ -68,6 +69,11 @@ export function AdminContenidoEducativoPage() {
     setErrorMsg(null);
   };
 
+  // ¿Qué? Solo revisa presencia — el largo mínimo de título/cuerpo lo
+  //       sigue revisando guardar() al enviar.
+  const formularioIncompleto =
+    !form.modulo_categoria.trim() || !form.titulo_tema.trim() || !form.cuerpo_texto.trim();
+
   const guardar = async () => {
     if (!accessToken) return;
     if (!form.modulo_categoria.trim() || !form.titulo_tema.trim() || !form.cuerpo_texto.trim()) {
@@ -129,7 +135,7 @@ export function AdminContenidoEducativoPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("adminContenidoEducativo.newModule")}
@@ -162,14 +168,14 @@ export function AdminContenidoEducativoPage() {
             <div className="flex shrink-0 gap-2">
               <button
                 onClick={() => abrirEditar(item)}
-                className="rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
                 aria-label={t("adminContenidoEducativo.editAria", { titulo: item.titulo_tema })}
               >
                 <Pencil className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setAEliminar(item)}
-                className="rounded-lg border border-gray-200 p-2 text-red-500 hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
+                className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
                 aria-label={t("adminContenidoEducativo.deleteAria", { titulo: item.titulo_tema })}
               >
                 <Trash2 className="h-4 w-4" />
@@ -226,9 +232,12 @@ export function AdminContenidoEducativoPage() {
                 id="contenido-cuerpo"
                 value={form.cuerpo_texto}
                 onChange={(e) => setForm({ ...form, cuerpo_texto: e.target.value })}
-                rows={4}
+                rows={6}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                {t("adminContenidoEducativo.fields.contentMarkdownHint")}
+              </p>
             </div>
 
             <div>
@@ -244,32 +253,30 @@ export function AdminContenidoEducativoPage() {
               />
             </div>
 
-            <div>
-              <label htmlFor="contenido-url-guia" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminContenidoEducativo.fields.guideLink")}
-              </label>
-              <input
-                id="contenido-url-guia"
-                value={form.url_guia ?? ""}
-                onChange={(e) => setForm({ ...form, url_guia: e.target.value })}
-                placeholder="https://..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-              />
-            </div>
+            <GuiaApoyoField
+              label={t("adminContenidoEducativo.fields.guideLink")}
+              value={form.url_guia ?? ""}
+              onChange={(url) => setForm({ ...form, url_guia: url })}
+              token={accessToken ?? ""}
+            />
 
             <div className="flex gap-2 pt-2">
               <button
                 onClick={cerrarFormulario}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={guardar}
-                disabled={guardando}
-                className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 transition-colors"
+                disabled={guardando || formularioIncompleto}
+                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
-                {guardando ? t("common.saving") : t("common.save")}
+                {guardando
+                  ? t("common.saving")
+                  : formularioIncompleto
+                    ? t("common.formIncomplete")
+                    : t("common.save")}
               </button>
             </div>
           </div>
@@ -291,13 +298,13 @@ export function AdminContenidoEducativoPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setAEliminar(null)}
-                className="flex-1 rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={confirmarEliminar}
-                className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
               >
                 {t("adminContenidoEducativo.deleteConfirm.confirm")}
               </button>

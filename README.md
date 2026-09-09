@@ -190,6 +190,44 @@ Una vez encendido, la aplicación está disponible en:
 
 ---
 
+## 🧯 Solución de Problemas Comunes
+
+<!--
+  ¿Qué? Antes el README solo cubría un caso puntual (encender la BD antes
+        que el backend) y el reinicio total de la base de datos — nada
+        general para alguien clonando el proyecto por primera vez.
+  ¿Para qué? Que un error al levantar el proyecto no deje a la persona sin
+             ninguna pista de por dónde empezar a buscar.
+  ¿Impacto? Reduce cuántas veces alguien del equipo tiene que preguntar
+            "¿a alguien más le pasó esto?" en el chat del grupo.
+-->
+
+**Un puerto ya está en uso** (`3000`, `5173`, `8000`, `5433` u `8025`)
+
+Suele pasar si dejaste corriendo una instancia anterior del proyecto, u otro programa en tu máquina ya usa ese puerto (por ejemplo, un PostgreSQL instalado localmente compite por el `5432`, por eso VerdeApp usa `5433`). Revisa qué proceso lo tiene ocupado y ciérralo, o apaga los contenedores anteriores con `docker compose down` antes de volver a encender.
+
+**`uv` o `pnpm` no se reconocen como comando**
+
+Significa que no están instalados, o que instalaste una versión distinta a la que espera el proyecto. Revisa la tabla de la sección "🛠️ Stack Tecnológico y Control de Versiones" más arriba para la versión exacta, e instálalos siguiendo la documentación oficial de cada herramienta.
+
+**El backend falla con "conexión rechazada" al arrancar**
+
+El backend necesita la base de datos (`verde_db`) corriendo *antes* de encenderse — ver la advertencia en el Paso 1 más arriba. Enciende primero `docker compose up -d verde_db` y espera unos segundos a que el contenedor esté listo, antes de correr `uvicorn`.
+
+**La app arranca pero falla con errores de configuración faltante**
+
+Casi siempre significa que falta el archivo `.env` (backend) o que le faltan variables. Copia `be/.env.example` a `be/.env` si no lo has hecho, y compara que tengas todas las variables que pide `be/app/config.py` — ninguna puede quedar vacía.
+
+**Docker no arranca, o los contenedores se quedan reiniciando en bucle**
+
+Confirma que Docker Desktop esté corriendo (no solo instalado) antes de cualquier comando `docker compose`. Si un contenedor sigue reiniciándose, revisa sus logs con `docker compose logs <nombre-del-servicio>` — casi siempre señala el problema real (una variable de entorno faltante, un puerto ocupado, etc.).
+
+**Nada de esto resolvió el problema**
+
+Antes de perder mucho tiempo solo, pregunta en el chat del grupo — es más probable que ya le haya pasado a alguien más de lo que parece.
+
+---
+
 ## 🗄️ Conexión a la Base de Datos
 
 La base de datos vive dentro de Docker pero se puede consultar desde tu máquina. Antes de conectarnos, asegurarse de que el contenedor `verde_db` esté corriendo.
@@ -244,6 +282,47 @@ SELECT * FROM usuarios;   -- ver usuarios registrados
 SELECT * FROM roles;      -- ver roles disponibles
 \q                        -- salir
 ```
+
+## 🔄 Actualizar Migraciones de Alembic (proyecto ya clonado)
+
+Esta sección es para cuando **ya tienes el proyecto funcionando localmente** y necesitas ponerlo al día después de traer cambios nuevos con `git pull` (o al cambiar de rama a una que agregó/modificó una migración) — no es parte del primer arranque, ver [🚀 Cómo ejecutar el proyecto](#-cómo-ejecutar-el-proyecto) para eso.
+
+### Caso normal — aplicar migraciones nuevas
+
+El caso de todos los días: alguien agregó una migración nueva (una tabla, una columna) y la trajiste con `git pull`. Tu base de datos actual **no se borra ni se toca** — solo se le aplican los cambios pendientes:
+
+```bash
+cd be
+uv run alembic upgrade head
+```
+
+Es seguro correrlo aunque no haya nada nuevo — si ya estás al día, no hace nada.
+
+> Para ver en qué migración está tu base de datos ahora mismo (útil si algo no cuadra): `uv run alembic current`. Para ver el historial completo de migraciones del proyecto: `uv run alembic history`.
+
+### Caso especial — reiniciar la base de datos desde cero
+
+Solo hace falta si tu base de datos quedó en un estado raro (por ejemplo, después de haber probado algo manual directamente sobre ella, o un conflicto de migraciones que no se resuelve con `upgrade head`). Esto **borra todos los datos** — conjuntos, usuarios, todo — y vuelve a dejar la base exactamente como quedaría si acabaras de clonar el repo:
+
+```bash
+# 1. Apagar y borrar el contenedor + volumen de la base de datos (con Docker corriendo)
+docker compose down verde_db
+docker volume rm proyecto-verdeapp-adso_db_data
+
+# 2. Volver a levantar el contenedor, ya vacío
+docker compose up -d verde_db
+
+# 3. Aplicar todas las migraciones desde cero
+cd be
+uv run alembic upgrade head
+
+# 4. Sembrar los datos base (roles, localidades, usuarios de prueba, conjuntos reales)
+uv run python -m app.seed
+```
+
+> El nombre del volumen (`proyecto-verdeapp-adso_db_data`) depende del nombre de la carpeta donde clonaste el repo — Docker Compose lo arma como `<carpeta>_db_data`. Si tu carpeta se llama distinto, verifica el nombre real con `docker volume ls` antes de borrarlo.
+
+---
 
 ## 🔑 Usuarios de Prueba Precargados
 
@@ -375,15 +454,14 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 | Métrica | Avance |
 |---|---|
-| Historias de Usuario | 33 / 38 implementadas |
-| Requisitos Funcionales | 15 / 17 implementados |
-| Requisitos No Funcionales | 3 / 6 completos (3 parciales — de naturaleza continua: se miden, no se "terminan") |
-| Pruebas backend (pytest) | 245 |
-| Pruebas frontend (vitest) | 167 |
+| Historias de Usuario | 42 / 44 implementadas |
+| Requisitos Funcionales | 18 / 19 implementados |
+| Requisitos No Funcionales | 4 / 6 completos (2 parciales — de naturaleza continua: se miden, no se "terminan") |
+| Pruebas backend (pytest) | 327 |
+| Pruebas frontend (vitest) | 210 |
 
-Pendiente por implementar, ambos documentados con su alcance completo antes de programarlos:
+Pendiente por implementar, documentado con su alcance completo antes de programarlo:
 
-* **RQF-011 — Gestión de Directorio de Acopio** ([issue #8](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/8)): hoy solo existe la lectura pública; falta el panel de administración para registrar, actualizar y dar de baja puntos de acopio.
 * **RQF-013 — Recomendación de contenido educativo por auditoría** ([issue #4](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/4)): al publicarse una auditoría con resultado negativo, recomendar automáticamente módulos educativos relacionados a los residentes del conjunto.
 
 ---

@@ -3,9 +3,12 @@ Módulo: tests/test_auth.py
 Descripción: Tests de integración para los endpoints de autenticación y usuario de VerdeApp.
 """
 
+import io
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from fastapi.testclient import TestClient
+from PIL import Image
 from sqlalchemy.orm import Session
 
 from app.main import app as fastapi_app
@@ -18,6 +21,17 @@ from app.tests.conftest import (
     TEST_USER_PASSWORD,
     UNVERIFIED_USER_EMAIL,
 )
+
+
+def _generar_imagen_real_perfil() -> bytes:
+    """Imagen PNG real y mínima — guardar_imagen_subida valida el contenido
+    real con Pillow, no solo el Content-Type que manda el cliente."""
+    buffer = io.BytesIO()
+    Image.new("RGB", (2, 2), color="purple").save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+IMAGEN_VALIDA_PERFIL = _generar_imagen_real_perfil()
 
 
 def _payload_residente(
@@ -36,6 +50,7 @@ def _payload_residente(
         "id_conjunto_residencial": str(conjunto.id_conjunto_residencial),
         "torre": "TORRE 1",
         "apto": "303",
+        "codigo_acceso": conjunto.codigo_acceso,
     }
 
 
@@ -52,6 +67,35 @@ class TestRegister:
         data = response.json()
         assert data["email"] == "nuevo.residente@verdeapp.com"
         assert data["is_active"] is False
+
+    def test_register_residente_sin_codigo_acceso(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #168: el código de acceso es obligatorio para Residente."""
+        payload = _payload_residente(conjunto_verificado, email="sin.codigo@verdeapp.com")
+        del payload["codigo_acceso"]
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "código de acceso" in response.json()["detail"].lower()
+
+    def test_register_residente_codigo_acceso_incorrecto(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #168: un código que no coincide con el del conjunto se rechaza."""
+        payload = _payload_residente(conjunto_verificado, email="codigo.malo@verdeapp.com")
+        payload["codigo_acceso"] = "ZZZZZZ"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "no es válido" in response.json()["detail"].lower()
+
+    def test_register_residente_codigo_acceso_insensible_a_mayusculas(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #168: da igual si el código se escribe en minúsculas."""
+        payload = _payload_residente(conjunto_verificado, email="codigo.minusculas@verdeapp.com")
+        payload["codigo_acceso"] = conjunto_verificado.codigo_acceso.lower()
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 201
 
     def test_register_residente_conjunto_no_verificado(
         self, client: TestClient, conjunto_no_verificado: ConjuntoResidencial
@@ -164,6 +208,19 @@ class TestLogin:
         )
         assert response.status_code == 403
         assert "verificada" in response.json()["detail"].lower()
+
+    def test_login_disabled_user(self, client: TestClient, test_user, db) -> None:
+        """habilitado es distinto de is_active — una cuenta YA verificada
+        pero desactivada por un Admin del Sistema no debe poder iniciar
+        sesión, y el mensaje no debe confundirse con "correo no verificado"."""
+        test_user.habilitado = False
+        db.commit()
+        response = client.post(
+            self.URL,
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        assert response.status_code == 403
+        assert "desactivada" in response.json()["detail"].lower()
 
     def test_login_missing_correo(self, client: TestClient) -> None:
         response = client.post(self.URL, json={"password": "TestPass123"})
@@ -286,6 +343,17 @@ class TestRefresh:
         )
         refresh_token = login_response.json()["refresh_token"]
         test_user.is_active = False
+        db.commit()
+        response = client.post(self.URL, json={"refresh_token": refresh_token})
+        assert response.status_code == 403
+
+    def test_refresh_for_disabled_user(self, client: TestClient, test_user, db) -> None:
+        login_response = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        refresh_token = login_response.json()["refresh_token"]
+        test_user.habilitado = False
         db.commit()
         response = client.post(self.URL, json={"refresh_token": refresh_token})
         assert response.status_code == 403
@@ -496,6 +564,18 @@ class TestGetMe:
         assert data["role_id"] == 2
         assert "password" not in data
 
+    # ¿Qué? Antes esta consulta no cruzaba con Localidad para el Residente —
+    #       nombre_localidad quedaba siempre en None, y el Directorio nunca
+    #       lograba preseleccionar su localidad (issue del filtro de
+    #       Recicladores). test_user vive en un conjunto de "Usaquén"
+    #       (ver fixture localidad_test).
+    def test_get_me_incluye_localidad_del_conjunto(
+        self, client: TestClient, auth_headers: dict[str, str], test_user: object
+    ) -> None:
+        response = client.get(self.URL, headers=auth_headers)
+        assert response.status_code == 200
+        assert response.json()["nombre_localidad"] == "Usaquén"
+
     def test_get_me_no_auth(self, client: TestClient) -> None:
         response = client.get(self.URL)
         assert response.status_code == 401
@@ -595,6 +675,80 @@ class TestUpdateProfile:
 
         get_response = client.get(self.URL, headers=reciclador_auth_headers)
         assert get_response.json()["asociacion"] == "INDEPENDIENTE"
+
+
+class TestSubirFotoPerfil:
+    """Tests para POST /api/v1/users/me/foto-perfil (issue #170)."""
+
+    URL = "/api/v1/users/me/foto-perfil"
+
+    def test_sin_login_devuelve_401(self, client: TestClient) -> None:
+        response = client.post(
+            self.URL, files={"archivo": ("foto.png", io.BytesIO(IMAGEN_VALIDA_PERFIL), "image/png")}
+        )
+        assert response.status_code == 401
+
+    def test_residente_sube_foto_y_aparece_en_el_perfil(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        response = client.post(
+            self.URL,
+            headers=auth_headers,
+            files={"archivo": ("foto.png", io.BytesIO(IMAGEN_VALIDA_PERFIL), "image/png")},
+        )
+        assert response.status_code == 201
+        url = response.json()["url"]
+        assert url.startswith("/uploads/perfiles/")
+
+        perfil = client.get("/api/v1/users/me", headers=auth_headers)
+        assert perfil.json()["foto_perfil_url"] == url
+
+    def test_admin_sistema_tambien_puede_subir_foto(
+        self, client: TestClient, admin_sistema_auth_headers: dict[str, str]
+    ) -> None:
+        """A diferencia de PUT /me (403 para este rol), la foto de perfil
+        aplica por igual a los 4 roles."""
+        response = client.post(
+            self.URL,
+            headers=admin_sistema_auth_headers,
+            files={"archivo": ("foto.jpg", io.BytesIO(IMAGEN_VALIDA_PERFIL), "image/jpeg")},
+        )
+        assert response.status_code == 201
+
+    def test_subir_una_segunda_foto_reemplaza_y_borra_la_anterior(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        primera = client.post(
+            self.URL,
+            headers=auth_headers,
+            files={"archivo": ("foto1.png", io.BytesIO(IMAGEN_VALIDA_PERFIL), "image/png")},
+        )
+        url_anterior = primera.json()["url"]
+        ruta_anterior = Path(__file__).parent.parent / "uploads" / "perfiles" / Path(url_anterior).name
+        assert ruta_anterior.exists()
+
+        segunda = client.post(
+            self.URL,
+            headers=auth_headers,
+            files={"archivo": ("foto2.png", io.BytesIO(IMAGEN_VALIDA_PERFIL), "image/png")},
+        )
+        assert segunda.status_code == 201
+        url_nueva = segunda.json()["url"]
+        assert url_nueva != url_anterior
+        assert not ruta_anterior.exists()
+
+        perfil = client.get("/api/v1/users/me", headers=auth_headers)
+        assert perfil.json()["foto_perfil_url"] == url_nueva
+
+    def test_archivo_que_no_es_imagen_devuelve_400(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        response = client.post(
+            self.URL,
+            headers=auth_headers,
+            files={"archivo": ("nota.jpg", io.BytesIO(b"esto no es una imagen"), "image/jpeg")},
+        )
+        assert response.status_code == 400
 
 
 class TestHealthCheck:

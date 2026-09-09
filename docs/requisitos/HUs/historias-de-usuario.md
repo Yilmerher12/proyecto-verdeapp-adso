@@ -49,3 +49,10 @@
 | HU-035 | [Admin Sistema archiva una novedad](HU-035_admin_sistema_archiva_novedad.md) | [RQF-015](../RFs/RQF-015_publicar_novedades_generales.md)     |
 | HU-036 | [Usuario cambia el idioma de la interfaz](HU-036_usuario_cambia_idioma_interfaz.md) | [RQF-017](../RFs/RQF-017_cambio_de_idioma.md)     |
 | HU-037 | [Sistema restaura el idioma guardado al iniciar sesión](HU-037_sistema_restaura_idioma_al_iniciar_sesion.md) | [RQF-017](../RFs/RQF-017_cambio_de_idioma.md)     |
+| HU-038 | [Admin de Conjunto revoca el acceso de un reciclador](HU-038_admin_conjunto_revoca_reciclador.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
+| HU-039 | [Admin Sistema consulta, busca y filtra los usuarios registrados](HU-039_admin_sistema_consulta_usuarios.md) | [RQF-018](../RFs/RQF-018_gestion_usuarios_admin_sistema.md) |
+| HU-040 | [Admin Sistema activa o desactiva una cuenta](HU-040_admin_sistema_activa_desactiva_cuenta.md) | [RQF-018](../RFs/RQF-018_gestion_usuarios_admin_sistema.md) |
+| HU-041 | [Admin Sistema ordena las columnas de cada listado](HU-041_admin_sistema_ordena_columnas.md) | [RQF-018](../RFs/RQF-018_gestion_usuarios_admin_sistema.md) |
+| HU-042 | [Usuario recupera su contraseña olvidada](HU-042_usuario_recupera_contrasena.md) | [RQF-019](../RFs/RQF-019_recuperacion_cambio_contrasena.md) |
+| HU-043 | [Usuario cambia su contraseña estando autenticado](HU-043_usuario_cambia_contrasena.md) | [RQF-019](../RFs/RQF-019_recuperacion_cambio_contrasena.md) |
+| HU-044 | [Admin de Conjunto edita el NIT y regenera el código de acceso de su conjunto](HU-044_admin_conjunto_gestiona_datos_propio_conjunto.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |

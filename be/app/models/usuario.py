@@ -2,28 +2,45 @@ from sqlalchemy import Column, DateTime, Integer, String, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database import Base
-from app.utils.ids import generar_uuid7
+from app.utils.ids import generar_uuid4
 
 
 class Usuario(Base):
     __tablename__ = "usuarios"
 
-    # ¿Qué? UUIDv7 en vez de un entero autoincremental (1, 2, 3...).
+    # ¿Qué? UUIDv4 en vez de un entero autoincremental (1, 2, 3...).
     # ¿Para qué? El profesor señaló que un ID adivinable es una mala
-    #           práctica de seguridad (permite enumerar registros).
+    #           práctica de seguridad (permite enumerar registros) — y
+    #           luego, ya con UUID, pidió específicamente la versión 4
+    #           (100% aleatoria) en vez de la 7 (que codifica la fecha de
+    #           creación en los primeros bits, issue #167).
     # ¿Impacto? id_rol NO se toca — sigue siendo Integer a propósito:
     #           `roles` es un catálogo fijo de 4 valores públicamente
     #           conocidos (ver RolId en app/models/rol.py), no hay nada
     #           que "adivinar" ahí, y migrarlo obligaría a rehacer el
     #           enum de roles y el contenido del JWT sin ningún beneficio
     #           real de seguridad.
-    id_usuario = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid7)
+    id_usuario = Column(UUID(as_uuid=True), primary_key=True, index=True, default=generar_uuid4)
     id_rol = Column(Integer, ForeignKey("roles.id_rol"), nullable=False)
     correo_electronico = Column(String(255), unique=True, index=True, nullable=False)
     password = Column(String(255), nullable=False)
 
     # Mantener este campo por control de estado en la aplicación
     is_active = Column(Boolean, default=True)
+
+    # ¿Qué? Columna NUEVA y separada de is_active a propósito — is_active
+    #       ya significa "correo verificado" (queda en False justo después
+    #       de registrarse, hasta que se confirma el correo). Si se
+    #       reutilizara is_active para esto, a un usuario desactivado por
+    #       un Administrador del Sistema le aparecería el mensaje de
+    #       "verifica tu correo", que no tiene ningún sentido para una
+    #       cuenta que ya estaba verificada.
+    # ¿Para qué? RQF nuevo: el Admin del Sistema puede desactivar una
+    #           cuenta (ver be/app/routers/admin.py) sin tocar el estado
+    #           de verificación de correo.
+    # ¿Impacto? default=True: ninguna cuenta existente queda desactivada
+    #           por accidente al agregar esta columna.
+    habilitado = Column(Boolean, nullable=False, default=True, server_default="true")
 
     # ¿Qué? Idioma preferido de la interfaz para este usuario ("es" o "en").
     # ¿Para qué? Que la preferencia de idioma siga a la persona entre dispositivos,
@@ -42,6 +59,16 @@ class Usuario(Base):
     #           bloqueado_hasta queda NULL mientras no haya bloqueo activo.
     intentos_fallidos = Column(Integer, nullable=False, default=0, server_default="0")
     bloqueado_hasta = Column(DateTime(timezone=True), nullable=True)
+
+    # ¿Qué? URL pública de la foto de perfil (ej. "/uploads/perfiles/<archivo>"),
+    #       igual que url_adjunto en comunicados/novedades — no la foto en sí.
+    # ¿Para qué? Vive en Usuario y no en Residente/Reciclador/AdministradorConjunto
+    #           porque es lo único común a los 4 roles, incluyendo el
+    #           Administrador del Sistema (cuyo perfil, aparte de esto, no
+    #           es editable — ver routers/users.py).
+    # ¿Impacto? Nullable: un usuario sin foto sigue mostrando el círculo con
+    #           su inicial en el frontend, como hasta ahora.
+    foto_perfil_url = Column(String(255), nullable=True)
 
     # Puentes del Usuario
     rol = relationship("Role", back_populates="usuarios")

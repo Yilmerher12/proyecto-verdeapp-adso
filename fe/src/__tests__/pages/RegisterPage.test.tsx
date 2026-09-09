@@ -311,6 +311,9 @@ describe("RegisterPage", () => {
 
     await user.type(screen.getByPlaceholderText("Ej: 3, B"), "A");
     await user.type(screen.getByPlaceholderText("Ej: 402"), "101");
+    // ¿Qué? Issue #168 — el código de acceso ahora es obligatorio para
+    //       Residente, igual que torre/apto.
+    await user.type(screen.getByPlaceholderText("Ej: AB3K9Q"), "ab3k9q");
 
     await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
 
@@ -320,8 +323,29 @@ describe("RegisterPage", () => {
           rol: "residente",
           correo_electronico: "ana@correo.com",
           id_conjunto_residencial: "00000000-0000-7000-8000-000000000001",
+          codigo_acceso: "AB3K9Q",
         }),
       );
     });
+  });
+
+  it("mantiene el botón deshabilitado para Residente si falta el código de acceso", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await llenarCamposComunes(user);
+
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.selectOptions(comboboxes[0], "1");
+
+    const buscadorConjunto = screen.getByPlaceholderText("Escribe el nombre de tu conjunto...");
+    await user.type(buscadorConjunto, "TORRES");
+    const opcionConjunto = await screen.findByText("TORRES DE ARANJUEZ");
+    await user.click(opcionConjunto);
+
+    await user.type(screen.getByPlaceholderText("Ej: 3, B"), "A");
+    await user.type(screen.getByPlaceholderText("Ej: 402"), "101");
+
+    expect(screen.getByRole("button", { name: "Completa los campos y acepta los términos" })).toBeDisabled();
   });
 });

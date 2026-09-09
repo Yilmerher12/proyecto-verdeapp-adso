@@ -94,6 +94,25 @@ jobs:
       - name: Correr los tests (pytest)
         run: uv run pytest
 
+      - name: Auditar dependencias (pip-audit)
+        # ¿Qué? Revisa si alguna dependencia (directa o transitiva) tiene una
+        #       vulnerabilidad conocida y reportada públicamente.
+        # ¿Para qué? Antes esto se corría a mano, de vez en cuando (ver
+        #           docs/gestion-proyecto/auditoria-dependencias.md) — una
+        #           dependencia nueva con un CVE podía colarse en un PR sin
+        #           que nadie se enterara hasta la próxima revisión manual.
+        # ¿Impacto? PYSEC-2026-1325 (antes CVE-2024-23342, paquete `ecdsa`)
+        #           es un riesgo ya evaluado y aceptado por el equipo: es un
+        #           ataque de temporización sobre firmas ECDSA, y VerdeApp
+        #           firma sus tokens con HS256 (HMAC simétrico), no con
+        #           curva elíptica — el código vulnerable nunca se ejecuta
+        #           en nuestros flujos reales. Se ignora explícitamente para
+        #           que este paso sí falle ante una vulnerabilidad NUEVA, en
+        #           vez de estar siempre en rojo por algo ya revisado.
+        run: |
+          uv export --no-hashes --no-dev > requirements-ci.txt
+          uvx pip-audit --requirement requirements-ci.txt -s osv --ignore-vuln PYSEC-2026-1325
+
   frontend:
     name: Frontend (tsc + eslint + vitest)
     runs-on: ubuntu-24.04
@@ -130,3 +149,23 @@ jobs:
 
       - name: Correr los tests (vitest)
         run: pnpm test
+
+      - name: Compilar el build de producción (vite build)
+        # ¿Qué? tsc y eslint revisan el código fuente, pero no arman el
+        #       paquete final tal como quedaría publicado de verdad.
+        # ¿Para qué? Hay errores que solo aparecen durante ese empaquetado
+        #           (un import roto, un asset faltante) y que en modo
+        #           desarrollo no se notan — sin este paso, podían llegar a
+        #           develop sin que el pipeline los detectara.
+        run: pnpm build
+
+      - name: Auditar dependencias de producción (pnpm audit)
+        # ¿Qué? Revisa solo las dependencias que de verdad llegan al
+        #       navegador del usuario (--prod excluye ESLint, Vite, Vitest,
+        #       etc., que nunca se despliegan).
+        # ¿Para qué? Ver docs/gestion-proyecto/auditoria-dependencias.md —
+        #           hoy este subconjunto está en 0 vulnerabilidades; este
+        #           paso existe para que una dependencia de producción
+        #           nueva con un CVE conocido bloquee el PR, en vez de
+        #           descubrirse en la próxima auditoría manual.
+        run: pnpm audit --prod

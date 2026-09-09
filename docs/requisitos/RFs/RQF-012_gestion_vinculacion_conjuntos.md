@@ -34,6 +34,8 @@ El sistema debe permitir que el Admin Sistema invite por correo electrónico a u
 
 Este RF reemplaza la versión anterior de RQF-012, que describía un flujo de desvinculación/reasignación nunca implementado. Esa necesidad sigue siendo válida y ahora vive documentada en [RQF-016](RQF-016_desvinculacion_reasignacion_conjuntos.md).
 
+El nombre del RF quedó como "Invitación y Vinculación Inicial" por su alcance original — hoy también cubre 2 acciones más pequeñas de gestión continua sobre esa misma vinculación (revocar el acceso de un reciclador, y que el Admin de Conjunto administre datos básicos de su propio conjunto), en vez de crear un RF nuevo solo para eso.
+
 ---
 
 ## Flujos
@@ -51,6 +53,17 @@ Este RF reemplaza la versión anterior de RQF-012, que describía un flujo de de
 3. El reciclador acepta o rechaza la invitación.
 4. Si acepta, queda autorizado para operar en ese conjunto (puede reportar llegadas y ver el SHUT, por ejemplo). Si rechaza, la invitación queda cerrada sin autorización.
 
+### Flujo C — Admin de Conjunto revoca el acceso de un reciclador (HU-038)
+1. El Admin de Conjunto selecciona, entre los recicladores ya autorizados en su conjunto, a cuál quitarle el acceso.
+2. El sistema pide confirmación antes de aplicar el cambio.
+3. Al confirmar, el reciclador deja de estar autorizado de inmediato — a diferencia de RQF-016, esto no pasa por una solicitud/aprobación aparte, el Admin de Conjunto lo revoca directo (espejo del Flujo B: mismo dueño de la decisión en ambos sentidos).
+4. El vínculo no se borra — queda marcado como revocado (con fecha y quién lo hizo), y el reciclador recibe una notificación.
+5. El Admin de Conjunto puede volver a invitar al mismo reciclador más adelante (Flujo B); el historial de la revocación anterior no lo impide.
+
+### Flujo D — Admin de Conjunto gestiona los datos de su propio conjunto (HU-044)
+1. El Admin de Conjunto edita el NIT de un conjunto que administra — nombre y dirección **no** son editables porque vienen ya verificados desde el dataset oficial de la Alcaldía de Bogotá (issue #180).
+2. El Admin de Conjunto puede regenerar el `código de acceso` de su conjunto — el código que reparte fuera de la app (cartelera, grupo del conjunto) para que un Residente demuestre que vive ahí al registrarse. Regenerarlo invalida el código anterior de inmediato.
+
 ---
 
 ## Reglas de negocio
@@ -59,6 +72,8 @@ Este RF reemplaza la versión anterior de RQF-012, que describía un flujo de de
 - RN-002: Solo un Admin de Conjunto puede invitar recicladores, y únicamente a los conjuntos que él mismo administra.
 - RN-003: El enlace de invitación para un nuevo Admin de Conjunto es de un solo uso y expira si no se acepta a tiempo.
 - RN-004: Un reciclador solo queda autorizado en un conjunto después de aceptar explícitamente la invitación — nunca de forma automática.
+- RN-005: Solo el Admin de Conjunto que administra ese conjunto puede revocar el acceso de un reciclador ahí — igual que RN-002 para invitar. La revocación es un soft-delete (se conserva el historial), nunca borra el vínculo.
+- RN-006: El Admin de Conjunto solo puede editar el NIT de un conjunto que administra — nombre y dirección son de solo lectura, verificados desde el dataset oficial. Solo puede regenerar el código de acceso de sus propios conjuntos.
 
 ---
 
@@ -70,3 +85,5 @@ Este RF reemplaza la versión anterior de RQF-012, que describía un flujo de de
 | [HU-019](../HUs/HU-019_persona_acepta_invitacion_admin_conjunto.md) | Persona invitada acepta y crea su cuenta de Admin de Conjunto |
 | [HU-020](../HUs/HU-020_admin_conjunto_invita_reciclador.md) | Admin de Conjunto invita a un reciclador a su conjunto |
 | [HU-021](../HUs/HU-021_reciclador_responde_invitacion.md) | Reciclador acepta o rechaza la invitación a un conjunto |
+| [HU-038](../HUs/HU-038_admin_conjunto_revoca_reciclador.md) | Admin de Conjunto revoca el acceso de un reciclador |
+| [HU-044](../HUs/HU-044_admin_conjunto_gestiona_datos_propio_conjunto.md) | Admin de Conjunto edita el NIT y regenera el código de acceso de su conjunto |

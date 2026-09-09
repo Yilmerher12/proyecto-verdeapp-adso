@@ -61,7 +61,8 @@
     "edit": "Edit",
     "phone": "Phone",
     "saving": "Saving...",
-    "saveError": "Could not save. Please try again."
+    "saveError": "Could not save. Please try again.",
+    "formIncomplete": "Complete the form"
   },
   "auth": {
     "login": {
@@ -71,8 +72,14 @@
       "noAccount": "Don't have an account yet?",
       "createAccountLink": "Sign up here",
       "submit": "Log In",
+      "submitIncomplete": "Fill in your email and password",
       "errorDefault": "Incorrect credentials. Check your email and password.",
-      "sessionExpired": "Your session expired. Please log in again."
+      "sessionExpired": "Your session expired. Please log in again.",
+      "validation": {
+        "emailRequired": "Email is required",
+        "emailInvalid": "The email format is not valid.",
+        "passwordRequired": "Password is required"
+      }
     },
     "register": {
       "title": "Create your account",
@@ -126,6 +133,9 @@
         "unitNumberPlaceholder": "E.g.: 3, B",
         "apto": "Apartment",
         "aptoPlaceholder": "E.g.: 402",
+        "codigoAcceso": "Building access code",
+        "codigoAccesoPlaceholder": "E.g.: AB3K9Q",
+        "codigoAccesoHint": "Ask your building administrator for it (bulletin board, building group chat).",
         "operativeProfileHeading": "Operating Profile *",
         "workLocality": "Work District *",
         "selectYourLocality": "Select your district...",
@@ -629,8 +639,8 @@
       "title": "Administration Panel",
       "inviteSection": {
         "title": "Building Administrators",
-        "show": "+ Invite administrator",
-        "hide": "Hide"
+        "description": "Invite someone by email to administer one of your buildings.",
+        "show": "+ Invite administrator"
       },
       "loadingData": "Loading data...",
       "usersSection": {
@@ -638,13 +648,30 @@
         "tabs": {
           "residentes": "Residents",
           "recicladores": "Recyclers",
-          "administradores": "Building Admins"
+          "administradores": "Building Administrators"
         },
         "searchPlaceholder": "Search by name or email...",
+        "sortAria": "Sort by {{columna}}",
+        "sortAriaAscending": "{{columna}}, sorted ascending",
+        "sortAriaDescending": "{{columna}}, sorted descending",
         "pagination": {
           "showing": "Showing {{from}}–{{to}} of {{total}}",
           "prev": "Previous page",
           "next": "Next page"
+        },
+        "status": {
+          "header": "Status",
+          "actionsHeader": "Actions",
+          "active": "Active",
+          "inactive": "Inactive",
+          "disable": "Disable",
+          "enable": "Enable",
+          "confirmDisableTitle": "Disable this account?",
+          "confirmDisableBody": "{{correo}} won't be able to log in until you enable it again.",
+          "confirmEnableTitle": "Enable this account?",
+          "confirmEnableBody": "{{correo}} will be able to log in normally again.",
+          "confirmButton": "Yes, continue",
+          "updateError": "Could not update the account's status."
         }
       },
       "residentsTable": {
@@ -684,6 +711,8 @@
       },
       "recyclersSection": {
         "title": "Recyclers",
+        "showDetail": "Show detail",
+        "hideDetail": "Hide detail",
         "invite": "+ Invite recycler",
         "emailPlaceholder": "recycler.email@example.com",
         "sending": "Sending...",
@@ -692,6 +721,12 @@
         "authorizedTitle": "Authorized",
         "authorizedLoading": "Loading authorized recyclers...",
         "authorizedEmpty": "You don't have any authorized recycler in this building yet.",
+        "revokeAria": "Revoke access for {{nombre}}",
+        "revokeErrorDefault": "Could not revoke access. Please try again.",
+        "revokeModalAriaLabel": "Confirm access revocation",
+        "revokeConfirmTitle": "Revoke access for {{nombre}}?",
+        "revokeConfirmWarning": "They will no longer be able to collect material or audit this building. They will be notified. You can invite them again later if needed.",
+        "revokeConfirmButton": "Yes, revoke",
         "invitationsTitle": "Invitations sent",
         "loading": "Loading invitations...",
         "empty": "You haven't sent any invitation yet."
@@ -701,10 +736,20 @@
         "loading": "Loading your buildings...",
         "empty": "You don't have any building assigned yet. Contact the VerdeApp team."
       },
+      "codigoAcceso": {
+        "title": "Access code",
+        "description": "Share it with your residents (bulletin board, building group chat) — they need it to register.",
+        "copyAria": "Copy access code",
+        "copiedAria": "Code copied",
+        "regenerateButton": "Regenerate",
+        "regenerating": "Regenerating...",
+        "confirmTitle": "Regenerate the access code?",
+        "confirmWarning": "The current code will stop working immediately. Any resident who hasn't registered yet will need the new code.",
+        "confirmButton": "Yes, regenerate",
+        "errorDefault": "Could not regenerate the code. Please try again."
+      },
       "editForm": {
-        "name": "Building name",
         "nit": "Tax ID (optional)",
-        "address": "Address",
         "successMessage": "Building updated successfully.",
         "errorMessage": "The change could not be saved. Please try again."
       },
@@ -747,7 +792,12 @@
         "title": "Which building are you notifying?",
         "subtitle": "Select the building you arrived at or want to notify about.",
         "sending": "Sending...",
-        "submit": "Send notice"
+        "submit": "Send notice",
+        "yaPresente": "You already checked in at this building — check out before checking in again.",
+        "avisoLlegadaReciente": "You already checked in at this building less than 2 hours ago.",
+        "debesLlegarPrimero": "You must check in at this building before using this notification.",
+        "yaEstaLleno": "This building's SHUT is already reported as full.",
+        "yaEstaLibre": "This building's SHUT is already reported as free."
       },
       "auditoria": {
         "bannerTitle": "Weekly audit pending",
@@ -773,6 +823,7 @@
         "evidenciaMaximoAlcanzado": "You've already attached the maximum of 3 photos.",
         "evidenciaQuitar": "Remove this photo",
         "submit": "Submit audit",
+        "submitIncomplete": "Complete the form",
         "sending": "Sending...",
         "sendingProgress": "Sending... {{porcentaje}}%",
         "successMessage": "Audit submitted.",
@@ -857,6 +908,12 @@
     "personalInfoSection": {
       "title": "Personal information"
     },
+    "photo": {
+      "change": "Change profile photo",
+      "invalidType": "The photo must be JPG, PNG, or WEBP.",
+      "tooLarge": "The photo can't be larger than 5 MB.",
+      "uploadError": "Could not upload the photo. Please try again."
+    },
     "notRegistered": "Not registered",
     "emailNote": "Your email can't be changed from here.",
     "validation": {
@@ -874,6 +931,8 @@
       "recyclers": "Recyclers"
     },
     "allLocalities": "All districts",
+    "ownLocality": "Your district: {{localidad}}",
+    "ownLocalityUnknown": "We couldn't detect your district",
     "emptyRecyclers": "No recyclers registered in this district.",
     "emptyPoints": "No collection points registered in this district.",
     "call": "Call",
@@ -930,12 +989,56 @@
       "titleField": "Title",
       "titlePlaceholder": "E.g.: Color-coding for bags",
       "content": "Content",
+      "contentMarkdownHint": "You can use ## for subheadings, **bold**, and - for lists.",
       "videoLink": "Video link (YouTube)",
-      "guideLink": "Support guide link (PDF, Drive, etc.)"
+      "guideLink": "Support guide"
     },
     "deleteConfirm": {
       "title": "Delete \"{{titulo}}\"?",
       "warning": "This action cannot be undone.",
+      "confirm": "Yes, delete"
+    }
+  },
+  "adminPuntosAcopio": {
+    "title": "Collection points",
+    "subtitle": "Register, edit, and deactivate the official collection points in the directory.",
+    "newPoint": "New collection point",
+    "emptyState": "No collection points registered yet.",
+    "inactiveBadge": "Inactive",
+    "editAria": "Edit {{nombre}}",
+    "deactivateAria": "Deactivate {{nombre}}",
+    "reactivateAria": "Reactivate {{nombre}}",
+    "deleteAria": "Delete {{nombre}}",
+    "modal": {
+      "editTitle": "Edit collection point",
+      "deactivateAriaLabel": "Confirm deactivation",
+      "deleteAriaLabel": "Confirm deletion"
+    },
+    "validation": {
+      "required": "Name, address, and locality are required."
+    },
+    "loadError": "Could not load the list of collection points.",
+    "deactivateError": "Could not deactivate. Please try again.",
+    "reactivateError": "Could not reactivate. Please try again.",
+    "deleteError": "Could not delete. Please try again.",
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "E.g.: ECA Kennedy",
+      "address": "Address",
+      "addressPlaceholder": "E.g.: Carrera 84 # 11A-34",
+      "locality": "Locality",
+      "localitySelect": "Select a locality",
+      "contactName": "Contact person's name",
+      "phone": "Contact phone"
+    },
+    "deactivateConfirm": {
+      "title": "Deactivate \"{{nombre}}\"?",
+      "warning": "It will stop appearing in the residents' and recyclers' directory. The record is not deleted.",
+      "confirm": "Yes, deactivate"
+    },
+    "deleteConfirm": {
+      "title": "Permanently delete \"{{nombre}}\"?",
+      "warning": "This action cannot be undone — the record is fully erased, you won't see it even in this panel anymore.",
       "confirm": "Yes, delete"
     }
   },
@@ -972,10 +1075,35 @@
     "errorMessage": "The verification link is not valid or has already been used. Please request a new link.",
     "goToLogin": "Go to login"
   },
+  "imagenAdjunta": {
+    "seleccionar": "Select image",
+    "seleccionarDocumento": "Select file (image, PDF, Word, or Excel)",
+    "subiendo": "Uploading...",
+    "quitar": "Remove image",
+    "vistaPrevia": "Preview of the attached image",
+    "tipoInvalido": "The image must be JPG, PNG, or WEBP.",
+    "tipoInvalidoDocumentos": "The file must be JPG, PNG, WEBP, PDF, Word (.docx), or Excel (.xlsx).",
+    "demasiadoGrande": "The image can't be larger than 5 MB.",
+    "errorSubida": "Couldn't upload the image. Please try again."
+  },
+  "guiaApoyo": {
+    "modeGroupAria": "How to add the support guide",
+    "tabUpload": "Upload file",
+    "tabLink": "Paste link",
+    "seleccionar": "Select image or PDF",
+    "subiendo": "Uploading...",
+    "quitar": "Remove",
+    "tipoInvalido": "The file must be JPG, PNG, WEBP, or PDF.",
+    "demasiadoGrande": "The file can't be larger than 5 MB.",
+    "errorSubida": "Couldn't upload the file. Please try again."
+  },
   "invitarAdminConjunto": {
     "title": "Invite Building Administrator",
     "description": "You only need their email. The invited person will set their own password and complete their details when accepting the invitation.",
     "emailLabel": "Email of the administrator to invite *",
+    "localityLabel": "District",
+    "localitySelectPlaceholder": "Select a district...",
+    "selectLocalityFirst": "Select a district first to search for the building.",
     "conjuntosLabel": "Buildings to assign *",
     "conjuntoSearchPlaceholder": "Type the building's name...",
     "conjuntoNoResults": "No building found with that name.",
@@ -1018,12 +1146,17 @@
     },
     "asignarAdicional": {
       "sectionTitle": "Assign additional building",
+      "description": "Link a building with no administrator to someone who is already a Building Administrator.",
+      "openButton": "+ Assign building",
       "searchLabel": "Search administrator",
       "searchPlaceholder": "Name, last name, or email",
       "searchButton": "Search",
       "noResults": "No administrators found.",
       "currentConjuntos": "Administers:",
       "noConjuntos": "No buildings yet",
+      "localityLabel": "District",
+      "localitySelectPlaceholder": "Select a district...",
+      "selectLocalityFirst": "Select a district first to search for the building.",
       "selectConjuntoLabel": "Building to assign",
       "noConjuntosDisponibles": "No unassigned buildings available.",
       "assignButton": "Assign",
@@ -1056,6 +1189,7 @@
       "editAria": "Edit announcement",
       "deleteAria": "Delete announcement",
       "editTitle": "Edit announcement",
+      "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
       "destinatariosNoEditable": "The building and recipients can't be changed after publishing. If you made a mistake, delete this announcement and create a new one.",
       "deleteError": "Could not delete. Please try again.",
@@ -1070,8 +1204,7 @@
         "tipo": "Announcement type",
         "fechaEvento": "Event date",
         "texto": "Message",
-        "urlAdjunto": "Attachment link (image, video, PDF, etc.) — optional",
-        "urlAdjuntoPlaceholder": "https://...",
+        "urlAdjunto": "Attached image (optional)",
         "fechaExpiracion": "Expiration date (optional)",
         "fechaExpiracionHint": "If left blank, the suggested date for this announcement type is used."
       },
@@ -1094,7 +1227,7 @@
       "TODOS": "Everyone",
       "RESIDENTES": "Residents",
       "RECICLADORES": "Recyclers",
-      "ADMIN_CONJUNTO": "Building Admins"
+      "ADMIN_CONJUNTO": "Building Administrators"
     },
     "admin": {
       "title": "News",
@@ -1104,6 +1237,7 @@
       "editAria": "Edit news item",
       "archiveAria": "Archive news item",
       "editTitle": "Edit news item",
+      "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
       "archiveError": "Could not archive. Please try again.",
       "alcanceNoEditable": "The scope can't be changed after publishing. If you made a mistake, archive it and create a new one.",
@@ -1113,7 +1247,7 @@
       "fields": {
         "alcance": "Scope",
         "texto": "Message",
-        "urlAdjunto": "Attachment link (image, PDF, external link, etc.) — optional",
+        "urlAdjunto": "Attached image (optional)",
         "fechaExpiracion": "Expiration date (optional)",
         "fechaExpiracionHint": "If left blank, a system-suggested date is used."
       }

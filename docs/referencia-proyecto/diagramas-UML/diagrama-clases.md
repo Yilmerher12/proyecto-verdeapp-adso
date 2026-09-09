@@ -5,6 +5,8 @@
 Este documento describe la estructura de clases del sistema **VerdeApp**, identificando atributos, métodos y relaciones entre las entidades principales del dominio.
 
 > **Nota (2026-08-29)**: este diagrama estaba muy desactualizado — le faltaban 7 entidades completas (`AuditoriaConjunto`, `Comunicado`, `Novedad`, `SolicitudDesvinculacion`, `PasswordResetToken`, `EmailVerificationToken`, `TokenRevocado`) y todos los IDs seguían marcados como `int`, cuando el proyecto migró 20 de sus 22 tablas a UUIDv7 (a pedido del profesor, para que las llaves primarias no sean adivinables). Se reconstruyó leyendo directamente `be/app/models/*.py`. También se dejó de listar un getter/setter por cada atributo (ruido que no aporta, y Python no los usa explícitamente) — ahora solo se muestran los métodos de negocio reales.
+>
+> **Nota (2026-09-08)**: 3 correcciones más, encontradas en una auditoría general de documentación. (1) El proyecto migró de UUIDv7 a UUIDv4 (issue #167) después de la nota de arriba — v7 seguía sin ser adivinable, pero codificaba la marca de tiempo de creación dentro del propio ID, algo que v4 no filtra. Todo el diagrama ya refleja `generar_uuid4()`. (2) `RecicladorConjunto` pasó de tabla puente plana a entidad completa con historial (`fecha_autorizacion`, `fecha_revocacion`, `revocado_por_id`) para poder revocar el acceso de un reciclador sin borrar el vínculo (HU-038) — ya se dibuja igual que `AdministradorConjuntoAsignacion`. (3) `PuntoAcopio` ganó un campo `activo` (soft-delete, HU-017).
 
 ---
 
@@ -29,9 +31,11 @@ class Usuario {
     +string correo_electronico
     +string password
     +bool is_active
+    +bool habilitado
     +string locale
     +int intentos_fallidos
     +datetime bloqueado_hasta
+    +string foto_perfil_url
 
     +registrarUsuario()
     +validarCredenciales()
@@ -84,6 +88,15 @@ class AdministradorConjuntoAsignacion {
     +UUID id_conjunto_residencial
     +datetime fecha_asignacion
     +datetime fecha_desvinculacion
+}
+
+class RecicladorConjunto {
+    +UUID id
+    +UUID id_reciclador
+    +UUID id_conjunto_residencial
+    +datetime fecha_autorizacion
+    +datetime fecha_revocacion
+    +UUID revocado_por_id
 }
 
 class InvitacionAdminConjunto {
@@ -195,6 +208,7 @@ class AuditoriaConjunto {
     +string ruta_evidencia_2
     +string ruta_evidencia_3
     +datetime created_at
+    +bigint orden_interno
 
     +registrarAuditoria()
 }
@@ -230,6 +244,7 @@ class ConjuntoResidencial {
     +string direccion
     +bool verificado
     +UUID verificado_por_id
+    +string codigo_acceso
 }
 
 class Unidad {
@@ -246,6 +261,7 @@ class PuntoAcopio {
     +string nombre_encargado
     +string direccion
     +string telefono_contacto
+    +bool activo
 }
 
 class ContenidoEducativo {
@@ -278,8 +294,12 @@ Localidad "1" --> "*" Reciclador
 ConjuntoResidencial "1" --> "*" Unidad
 Unidad "1" --> "*" Residente
 
-Reciclador "*" --> "*" ConjuntoResidencial : recicladores_conjuntos
 Reciclador "1" --> "*" AuditoriaConjunto
+
+note for RecicladorConjunto "Tabla puente CON atributos propios (fecha_autorizacion, fecha_revocacion, revocado_por_id) — no es un simple N:M (issue de revocación de acceso)"
+Reciclador "1" --> "*" RecicladorConjunto
+ConjuntoResidencial "1" --> "*" RecicladorConjunto
+Usuario "1" --> "*" RecicladorConjunto : revoca
 
 note for AdministradorConjuntoAsignacion "Tabla puente CON atributos propios (fecha_asignacion, fecha_desvinculacion) — no es un simple N:M"
 AdministradorConjunto "1" --> "*" AdministradorConjuntoAsignacion
@@ -317,6 +337,7 @@ Gestiona la autenticación y acceso a la plataforma — es la única tabla que g
 
 * Registro de usuarios, inicio y cierre de sesión, validación de credenciales.
 * Bloqueo temporal de la cuenta tras 5 intentos fallidos de login (`intentos_fallidos`/`bloqueado_hasta`).
+* Activación/desactivación manual de una cuenta por el Admin Sistema (`habilitado`) — distinto de `is_active` (verificación de correo al registrarse). Una cuenta con `habilitado = false` no puede iniciar sesión ni renovar su token, sin importar `is_active`.
 
 ---
 
@@ -347,6 +368,12 @@ Representa a la persona que gestiona uno o varios conjuntos residenciales por co
 ## AdministradorConjuntoAsignacion
 
 Tabla de asociación **con atributos propios** (`fecha_asignacion`, `fecha_desvinculacion`) entre `AdministradorConjunto` y `ConjuntoResidencial`: un administrador puede manejar varios conjuntos a la vez, y un conjunto puede tener más de un administrador asignado a lo largo del tiempo (uno activo, otros históricos). Un índice único parcial garantiza que solo exista **una** asignación activa por conjunto en un momento dado.
+
+---
+
+## RecicladorConjunto
+
+Tabla de asociación **con atributos propios** (`fecha_autorizacion`, `fecha_revocacion`, `revocado_por_id`) entre `Reciclador` y `ConjuntoResidencial` — mismo patrón que `AdministradorConjuntoAsignacion`. Antes era una tabla puente plana sin historial; se convirtió en esta entidad para que un Admin de Conjunto pueda revocar el acceso de un reciclador sin borrar el vínculo (HU-038): la fila queda marcada como revocada, con fecha y quién lo hizo, en vez de desaparecer. Un índice único parcial garantiza que solo exista **una** autorización activa por pareja reciclador/conjunto en un momento dado — el mismo reciclador puede ser invitado de nuevo después de una revocación, generando una fila nueva.
 
 ---
 
@@ -388,7 +415,7 @@ Representa los avisos automáticos del sistema (llegada del reciclador, SHUT lle
 
 ## AuditoriaConjunto
 
-Representa la calificación de desempeño que un Reciclador registra tras visitar un conjunto (RQF-009/RQF-013): un nivel (`EXCELENTE`, `BUENA`, `REGULAR`, `DEFICIENTE`), un tema educativo relacionado, y hasta 3 fotos de evidencia obligatorias.
+Representa la calificación de desempeño que un Reciclador registra tras visitar un conjunto (RQF-009/RQF-013): un nivel (`EXCELENTE`, `BUENA`, `REGULAR`, `DEFICIENTE`), un tema educativo relacionado, y hasta 3 fotos de evidencia (solo la primera es obligatoria). `orden_interno` es un contador autoincremental aparte de la UUID (que no es ordenable) — permite mostrar el historial de auditorías de un conjunto en el orden real en que ocurrieron.
 
 ---
 
@@ -400,13 +427,13 @@ Tokens de un solo uso (`used: bool`), con expiración, para los flujos de recupe
 
 ## TokenRevocado
 
-Lista negra de tokens JWT invalidados por un logout real en el servidor (HU-008/RQF-007). Guarda el `jti` (identificador único que cada token lleva desde que se emite) y su fecha de expiración original — es la única tabla del sistema sin ninguna relación hacia otra, y la única cuya llave primaria (`jti`) no se genera con `generar_uuid7()` propio: viene ya incluida dentro del JWT.
+Lista negra de tokens JWT invalidados por un logout real en el servidor (HU-008/RQF-007). Guarda el `jti` (identificador único que cada token lleva desde que se emite) y su fecha de expiración original — es la única tabla del sistema sin ninguna relación hacia otra, y la única cuya llave primaria (`jti`) no se genera con `generar_uuid4()` propio: viene ya incluida dentro del JWT.
 
 ---
 
 ## ConjuntoResidencial
 
-Representa los conjuntos registrados en la plataforma — 14.515 filas reales importadas de datos abiertos de la Alcaldía de Bogotá. `verificado` indica si el conjunto puede recibir residentes; solo un Admin_sistema puede verificarlo (`verificado_por_id`).
+Representa los conjuntos registrados en la plataforma — 14.515 filas reales importadas de datos abiertos de la Alcaldía de Bogotá. `verificado` indica si el conjunto puede recibir residentes; solo un Admin_sistema puede verificarlo (`verificado_por_id`). `codigo_acceso` es un código único que el Admin de Conjunto reparte fuera de la app (cartelera, grupo del conjunto) para que un Residente demuestre que de verdad vive ahí al registrarse.
 
 ---
 
@@ -418,7 +445,7 @@ Representa apartamentos o unidades habitacionales (torre + apto) dentro de un co
 
 ## PuntoAcopio
 
-Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — dato abierto de la UAESP, cubre 6 de 20 localidades de Bogotá.
+Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — dato abierto de la UAESP, cubre 6 de 20 localidades de Bogotá. `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive.
 
 ---
 
@@ -455,7 +482,9 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 | Localidad                   | Reciclador                        | 1 : N    |
 | ConjuntoResidencial         | Unidad                            | 1 : N    |
 | Unidad                      | Residente                         | 1 : N    |
-| Reciclador                  | ConjuntoResidencial               | N : M (vía `recicladores_conjuntos`) |
+| Reciclador                  | RecicladorConjunto                | 1 : N    |
+| ConjuntoResidencial         | RecicladorConjunto                | 1 : N    |
+| Usuario                     | RecicladorConjunto                | 1 : N (revoca) |
 | Reciclador                  | AuditoriaConjunto                 | 1 : N    |
 | AdministradorConjunto       | AdministradorConjuntoAsignacion   | 1 : N    |
 | ConjuntoResidencial         | AdministradorConjuntoAsignacion   | 1 : N    |
@@ -474,10 +503,10 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 # 📌 Observaciones
 
 * El modelo sigue una estructura orientada a objetos alineada con la base de datos del proyecto (`be/app/models/`).
-* Solo `Role` y `Localidad` usan llave primaria `Integer` — las demás 20 tablas usan `UUID` versión 7 (`generar_uuid7()`), a pedido explícito del profesor para que ningún ID sea adivinable/enumerable.
+* Solo `Role` y `Localidad` usan llave primaria `Integer` — las demás 20 tablas usan `UUID` versión 4 (`generar_uuid4()`). El proyecto migró de UUIDv7 a UUIDv4 (issue #167): v7 sigue sin ser adivinable, pero codifica la marca de tiempo de creación dentro del propio ID — v4 no filtra esa información.
 * Las clases `Residente`, `Reciclador` y `AdministradorConjunto` representan perfiles especializados asociados 1:1 a un `Usuario`, uno por cada rol (2, 3 y 4 respectivamente). El rol 1 (Admin_sistema) no tiene una clase de perfil propia: sus datos viven directamente en `Usuario`.
 * `AdministradorConjunto` nunca se crea por registro público — únicamente mediante `InvitacionAdminConjunto`, aceptada con un token de un solo uso.
-* Las relaciones N:M (`Reciclador`↔`ConjuntoResidencial`) se muestran aquí como asociación directa; `AdministradorConjuntoAsignacion`, en cambio, se dibuja como entidad completa porque tiene atributos propios (`fecha_asignacion`, `fecha_desvinculacion`) — no es una simple tabla puente.
+* Las relaciones N:M con historial propio (`AdministradorConjuntoAsignacion` entre `AdministradorConjunto`↔`ConjuntoResidencial`, y `RecicladorConjunto` entre `Reciclador`↔`ConjuntoResidencial`) se dibujan como entidad completa, no como asociación directa, porque ambas tienen atributos propios (fechas de asignación/revocación) — no son simples tablas puente.
 * `NotificacionDestinatario` tiene llave primaria **compuesta** (`id_notificacion` + `id_usuario`), no un `id` propio.
 * `TokenRevocado` es la única entidad sin ninguna relación — es una lista negra de propósito único (invalidar tokens al cerrar sesión), no forma parte del modelo de dominio de reciclaje.
 * Las relaciones mantienen coherencia con el modelo entidad-relación definido para VerdeApp.

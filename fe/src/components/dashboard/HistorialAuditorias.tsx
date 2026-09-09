@@ -58,7 +58,7 @@ export function HistorialAuditorias({ token }: HistorialAuditoriasProps) {
               <li key={a.id_auditoria}>
                 <button
                   onClick={() => setIdAbierta(a.id_auditoria)}
-                  className="flex w-full items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
                 >
                   <div className="min-w-0">
                     <p className="text-sm text-gray-800 dark:text-gray-200">

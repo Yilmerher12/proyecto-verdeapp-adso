@@ -35,6 +35,8 @@
 
 Los componentes de formulario e interactivos deben incluir atributos ARIA correctos (`aria-invalid`, `aria-describedby`, `aria-hidden`, `aria-label`, `role`) para que la información de estado (errores, carga, iconos decorativos) sea comprensible para lectores de pantalla. Verificado: 25 archivos del frontend ya usan atributos `aria-*` (formularios de autenticación, indicador de fortaleza de contraseña, menú de navegación).
 
+> **Re-auditoría (2026-09-08)**: la auditoría original (28 de agosto) cubrió el estado de la app hasta esa fecha — desde entonces se agregaron pantallas nuevas nunca revisadas contra este requisito. Se repitió la revisión manual y se encontraron/corrigieron 4 huecos reales: `aria-sort` faltante en columnas ordenables, un selector de modo sin `role="radiogroup"`, dos selectores de opción única sin `aria-checked`, y botones de colapsar/expandir sin `aria-expanded`. Detalle completo en `docs/conceptos/accesibilidad-aria-wcag.md` (sección "Re-auditoría").
+
 ### RNF-005.2 — No depender solo del color para transmitir información
 
 Ningún estado del sistema (error, éxito, fortaleza de una contraseña) debe comunicarse únicamente mediante color. Debe acompañarse siempre de texto o un ícono (WCAG 1.4.1). Verificado en el indicador de fortaleza de contraseña, que combina color con una etiqueta de texto.
@@ -52,3 +54,9 @@ Todo componente nuevo debe mantener un contraste de texto legible tanto en modo 
 Los formularios y modales deben poder usarse completamente sin mouse (tab, enter, escape).
 
 > **Estado real (2026-08-28)**: **Verificado.** La auditoría dedicada ya se hizo — `docs/conceptos/accesibilidad-aria-wcag.md`. `Modal.tsx` ya tenía trampa de foco completa (Tab/Shift+Tab), cierre con Esc y restauración del foco al cerrar. La auditoría encontró y corrigió el único hueco real: las filas de notificación no leída solo respondían al clic del mouse — se les agregó `role="button"`, `tabIndex` y manejo de `Enter`/Espacio.
+
+### RNF-005.6 — Respetar "reducir movimiento" en toda animación
+
+Ninguna transición o animación de la interfaz (aparición de un Modal, una Alert, un mensaje de error, o cualquier otra que se agregue después) debe forzar movimiento a quien configuró `prefers-reduced-motion: reduce` en su sistema operativo — el contenido debe seguir apareciendo, solo que sin el movimiento/fundido, nunca invisible ni retrasado (WCAG 2.3.3).
+
+> **Estado real (2026-09-08, issue #197)**: **Verificado.** Antes esto solo estaba implementado para el Hero del Landing (`.animate-hero-in`) y el `useScrollReveal` de sus tarjetas. Al agregar transiciones de entrada a `Modal.tsx`, `Alert.tsx` y el mensaje de error de `InputField.tsx` (que antes aparecían de golpe, sin ninguna transición), se generalizó el mismo patrón con 2 utilidades CSS nuevas y reutilizables — `.animate-fade-in` y `.animate-scale-in` (`fe/src/index.css`) — en vez de repetir la lógica de `prefers-reduced-motion` en cada componente por separado.

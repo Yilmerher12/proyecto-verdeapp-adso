@@ -8,7 +8,7 @@ Descripción: Schemas para el panel propio del Administrador de Conjunto.
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 
 class ConjuntoAdministradoResponse(BaseModel):
@@ -23,22 +23,26 @@ class ConjuntoAdministradoResponse(BaseModel):
     #       "solicitar desvinculación" en vez de dejar que el usuario
     #       choque con el error de solicitud duplicada (RN-002).
     tiene_solicitud_pendiente: bool = False
+    # ¿Qué? Issue #168 — el código que el admin reparte fuera de la app
+    #       para que un Residente demuestre que vive en este conjunto al
+    #       registrarse. Todo conjunto ya tiene uno desde que se creó
+    #       (ver default en el modelo), nunca es None.
+    codigo_acceso: str
+
+
+class CodigoAccesoResponse(BaseModel):
+    """¿Qué? Respuesta al (re)generar el código de acceso de un conjunto."""
+    codigo_acceso: str
 
 
 class EditarConjuntoRequest(BaseModel):
     """
-    ¿Qué? Datos editables de un conjunto por su propio administrador.
-    ¿Para qué? Permitir corregir nombre, NIT o dirección sin tocar el
-              id_localidad (eso requeriría mover el conjunto de localidad,
-              una operación más delicada que dejamos fuera por ahora).
+    ¿Qué? Único dato editable de un conjunto por su propio administrador: el NIT.
+    ¿Para qué? Issue #180: nombre y dirección vienen ya verificados desde el
+              dataset oficial de Bogotá (ver seed.py) — un Admin de Conjunto
+              no debería poder sobreescribir ese dato institucional sin
+              ningún control ni rastro. El NIT es distinto: el dataset
+              oficial no lo trae (queda NULL al importar), así que dejarlo
+              editable es la única forma de completarlo con el dato real.
     """
-    nombre_conjunto: str
     nit: Optional[str] = None
-    direccion: str
-
-    @field_validator("nombre_conjunto", "direccion")
-    @classmethod
-    def validar_no_vacio(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("Este campo es obligatorio.")
-        return v

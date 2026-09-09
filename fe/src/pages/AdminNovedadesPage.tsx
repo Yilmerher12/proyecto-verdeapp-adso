@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Archive, Megaphone, Paperclip, Pencil, Plus } from "lucide-react";
+import { Archive, CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import {
   archivarNovedad,
   crearNovedad,
@@ -33,6 +35,13 @@ const ALCANCES: AlcanceNovedad[] = ["TODOS", "RESIDENTES", "RECICLADORES", "ADMI
 //       retroceda un día en zonas detrás de UTC (ej. Bogotá, UTC-5).
 function formatearFechaUTC(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { timeZone: "UTC" });
+}
+
+// ¿Qué? Mismo criterio que en Comunicados: "created_at" es un instante real,
+//       se muestra en la hora local del navegador, sin el truco de UTC de
+//       "fecha_expiracion" (ver el mismo comentario en AdminConjuntoComunicadosPage.tsx).
+function formatearFechaCreacion(iso: string): string {
+  return new Date(iso).toLocaleDateString();
 }
 
 function isoToDateInputUTC(iso: string): string {
@@ -95,6 +104,11 @@ export function AdminNovedadesPage() {
     setErrorMsg(null);
   };
 
+  // ¿Qué? Misma condición que ya revisaba "guardar" al hacer clic, pero
+  //       calculada ANTES, para deshabilitar el botón en vez de dejar que
+  //       el Admin del Sistema se entere después de intentar enviar.
+  const formularioIncompleto = !form.texto.trim();
+
   const guardar = async () => {
     if (!accessToken) return;
     if (!form.texto.trim()) {
@@ -154,7 +168,7 @@ export function AdminNovedadesPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("novedades.admin.newButton")}
@@ -202,31 +216,38 @@ export function AdminNovedadesPage() {
                 <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
                 {item.url_adjunto && (
                   <a
-                    href={item.url_adjunto}
+                    href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 hover:text-green-800 dark:text-green-400"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 transition-colors hover:text-green-800 dark:text-green-400"
                   >
                     <Paperclip className="h-3.5 w-3.5" />
                     {t("comunicados.viewAttachment")}
                   </a>
                 )}
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  {t("novedades.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
-                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-[#2a4d34] dark:text-gray-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" />
+                    {t("novedades.admin.creadoEl", { fecha: formatearFechaCreacion(item.created_at) })}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarClock className="h-3.5 w-3.5" />
+                    {t("novedades.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
+                  </span>
+                </div>
               </div>
               {!item.archivada && (
                 <div className="flex shrink-0 gap-2">
                   <button
                     onClick={() => abrirEditar(item)}
-                    className="rounded-lg border border-gray-200 p-2 text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
                     aria-label={t("novedades.admin.editAria")}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => archivar(item)}
-                    className="rounded-lg border border-gray-200 p-2 text-amber-600 hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
                     aria-label={t("novedades.admin.archiveAria")}
                   >
                     <Archive className="h-4 w-4" />
@@ -258,19 +279,24 @@ export function AdminNovedadesPage() {
 
             {!editando ? (
               <div>
-                {/* Grupo de botones, no un control único — role="group" +
-                    aria-labelledby es la asociación correcta (ver el mismo
-                    patrón en AdminConjuntoComunicadosPage.tsx). */}
+                {/* Grupo de botones mutuamente excluyentes, no un control
+                    único — role="radiogroup" + aria-labelledby asocia el
+                    texto descriptivo, role="radio" + aria-checked en cada
+                    botón comunica cuál está elegido (antes solo con una
+                    clase CSS; mismo patrón corregido en
+                    AdminConjuntoComunicadosPage.tsx). */}
                 <span id="novedad-alcance-label" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("novedades.admin.fields.alcance")} <span className="text-red-500">*</span>
                 </span>
-                <div role="group" aria-labelledby="novedad-alcance-label" className="grid grid-cols-2 gap-2">
+                <div role="radiogroup" aria-labelledby="novedad-alcance-label" className="grid grid-cols-2 gap-2">
                   {ALCANCES.map((a) => (
                     <button
                       key={a}
                       type="button"
+                      role="radio"
+                      aria-checked={form.alcance === a}
                       onClick={() => setForm({ ...form, alcance: a })}
-                      className={`rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
+                      className={`cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                         form.alcance === a
                           ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
                           : "border-gray-200 text-gray-600 hover:border-green-300 dark:border-[#2a4d34] dark:text-gray-300"
@@ -306,18 +332,12 @@ export function AdminNovedadesPage() {
               />
             </div>
 
-            <div>
-              <label htmlFor="novedad-url-adjunto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("novedades.admin.fields.urlAdjunto")}
-              </label>
-              <input
-                id="novedad-url-adjunto"
-                value={form.url_adjunto}
-                onChange={(e) => setForm({ ...form, url_adjunto: e.target.value })}
-                placeholder={t("comunicados.admin.fields.urlAdjuntoPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-              />
-            </div>
+            <ImagenAdjuntaField
+              label={t("novedades.admin.fields.urlAdjunto")}
+              value={form.url_adjunto}
+              onChange={(url) => setForm({ ...form, url_adjunto: url })}
+              token={accessToken || ""}
+            />
 
             <div>
               <label htmlFor="novedad-fecha-expiracion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
@@ -336,16 +356,20 @@ export function AdminNovedadesPage() {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={cerrarFormulario}
-                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={guardar}
-                disabled={guardando}
-                className="flex-1 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:opacity-60 transition-colors"
+                disabled={guardando || formularioIncompleto}
+                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
-                {guardando ? t("common.saving") : t("common.save")}
+                {guardando
+                  ? t("common.saving")
+                  : formularioIncompleto
+                    ? t("common.formIncomplete")
+                    : t("common.save")}
               </button>
             </div>
           </div>

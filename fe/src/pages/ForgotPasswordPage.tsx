@@ -32,6 +32,8 @@ export function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const formularioIncompleto = !email.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -78,14 +80,14 @@ export function ForgotPasswordPage() {
             <button
               type="button"
               onClick={() => setShowConfirm(false)}
-              className="flex-1 rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
+              className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={confirmSend}
-              className="flex-1 rounded-xl bg-green-700 hover:bg-green-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+              className="flex-1 cursor-pointer rounded-xl bg-green-700 hover:bg-green-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
             >
               Sí, enviar
             </button>
@@ -122,8 +124,8 @@ export function ForgotPasswordPage() {
         />
 
         <div className="mt-2 flex justify-end">
-          <Button type="submit" fullWidth isLoading={isLoading}>
-            {t("auth.forgotPassword.submit")}
+          <Button type="submit" fullWidth isLoading={isLoading} disabled={formularioIncompleto}>
+            {formularioIncompleto ? t("common.formIncomplete") : t("auth.forgotPassword.submit")}
           </Button>
         </div>
       </form>

@@ -75,8 +75,8 @@ async def invitar_admin_conjunto(
     ids_como_texto = ",".join(str(i) for i in datos.ids_conjuntos)
 
     invitacion = InvitacionAdminConjunto(
-        # ¿Qué? Sin "id=" aquí a propósito — el modelo ya genera un UUIDv7
-        #       por su cuenta (default=generar_uuid7 en el modelo).
+        # ¿Qué? Sin "id=" aquí a propósito — el modelo ya genera un UUIDv4
+        #       por su cuenta (default=generar_uuid4 en el modelo).
         correo_electronico=datos.correo_electronico,
         token=token,
         conjuntos_asignados=ids_como_texto,

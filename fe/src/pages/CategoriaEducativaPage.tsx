@@ -1,14 +1,47 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import ReactMarkdown from "react-markdown";
 import { ArrowLeft, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { API_BASE_URL } from "@/api/axios";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
 import {
   listarContenido,
   type ContenidoEducativo,
 } from "@/lib/contenidoEducativoApi";
+
+// ¿Qué? Estilo de cada elemento que un admin puede escribir en Markdown
+//       (## subtítulo, listas, negrita) dentro del cuerpo del texto.
+// ¿Para qué? react-markdown no trae estilos propios — sin esto, un
+//           subtítulo se vería exactamente igual que un párrafo normal.
+// ¿Impacto? Mismos tokens de color que ya usa el resto de esta tarjeta
+//           (text-gray-600/300), para que no se sienta como un bloque
+//           aparte del resto de la página.
+const COMPONENTES_MARKDOWN = {
+  h1: (props: React.ComponentPropsWithoutRef<"h1">) => (
+    <h3 className="mt-4 text-base font-bold text-gray-900 first:mt-0 dark:text-white" {...props} />
+  ),
+  h2: (props: React.ComponentPropsWithoutRef<"h2">) => (
+    <h3 className="mt-4 text-base font-bold text-gray-900 first:mt-0 dark:text-white" {...props} />
+  ),
+  h3: (props: React.ComponentPropsWithoutRef<"h3">) => (
+    <h4 className="mt-3 text-sm font-bold text-gray-900 first:mt-0 dark:text-white" {...props} />
+  ),
+  p: (props: React.ComponentPropsWithoutRef<"p">) => (
+    <p className="mt-2 text-sm text-gray-600 first:mt-0 dark:text-gray-300" {...props} />
+  ),
+  ul: (props: React.ComponentPropsWithoutRef<"ul">) => (
+    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300" {...props} />
+  ),
+  ol: (props: React.ComponentPropsWithoutRef<"ol">) => (
+    <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300" {...props} />
+  ),
+  a: (props: React.ComponentPropsWithoutRef<"a">) => (
+    <a className="text-accent-400 underline-offset-4 transition-colors hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
+  ),
+};
 
 export function CategoriaEducativaPage() {
   const { t } = useTranslation();
@@ -37,7 +70,7 @@ export function CategoriaEducativaPage() {
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
       <button
         onClick={() => navigate("/catalogo-educativo")}
-        className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+        className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" />
         {t("categoriaEducativa.back")}
@@ -63,18 +96,20 @@ export function CategoriaEducativaPage() {
             className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#2a4d34] dark:bg-[#132a1c]"
           >
             <h2 className="text-base font-bold text-gray-900 dark:text-white">{item.titulo_tema}</h2>
-            <p className="mt-2 whitespace-pre-line text-sm text-gray-600 dark:text-gray-300">
-              {item.cuerpo_texto}
-            </p>
+            <ReactMarkdown components={COMPONENTES_MARKDOWN}>{item.cuerpo_texto}</ReactMarkdown>
 
             {item.url_video && <YoutubeEmbed url={item.url_video} titulo={item.titulo_tema} />}
 
             {item.url_guia && (
               <a
-                href={item.url_guia}
+                // ¿Qué? Si la guía viene de un archivo subido a VerdeApp, el
+                //       backend devuelve una ruta relativa (/uploads/adjuntos/...)
+                //       que hay que completar con la URL del backend — si viene
+                //       de un link externo, ya trae http(s) y se usa tal cual.
+                href={item.url_guia.startsWith("http") ? item.url_guia : `${API_BASE_URL}${item.url_guia}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-200 dark:hover:bg-[#2a4d34]"
+                className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-200 dark:hover:bg-[#2a4d34]"
               >
                 <FileText className="h-4 w-4 shrink-0" />
                 {t("categoriaEducativa.viewGuide")}

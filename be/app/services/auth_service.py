@@ -97,6 +97,27 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
                     ),
                 )
 
+            # ¿Qué? Issue #168 — antes cualquiera podía declarar pertenecer a
+            #       cualquier conjunto verificado, sin ninguna prueba real de
+            #       que vive ahí. Ahora se exige el código de acceso que el
+            #       Admin de Conjunto reparte fuera de la app.
+            # ¿Para qué? Todo conjunto ya tiene un código desde que se creó
+            #           (ver default en el modelo) — nunca hay excepción de
+            #           "este conjunto todavía no tiene código".
+            # ¿Impacto? Comparación insensible a mayúsculas/espacios, mismo
+            #           criterio que el resto de la app usa para nombres.
+            codigo_ingresado = (user_data.codigo_acceso or "").strip().upper()
+            if not codigo_ingresado:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Debes ingresar el código de acceso de tu conjunto.",
+                )
+            if codigo_ingresado != conjunto_existente.codigo_acceso:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="El código de acceso no es válido para este conjunto. Pídeselo a tu administrador.",
+                )
+
             stmt_unidad = select(Unidad).where(
                 Unidad.id_conjunto_residencial == id_conjunto,
                 Unidad.torre == torre_texto,
@@ -142,7 +163,7 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
         expiration_verif = datetime.now(timezone.utc) + timedelta(days=1)
 
         db_token_verif = EmailVerificationToken(
-            # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
+            # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv4 por su cuenta.
             id_usuario=nuevo_usuario.id_usuario,
             token=token_verificacion,
             expires_at=expiration_verif,
@@ -230,6 +251,18 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Tu cuenta no ha sido verificada aún. Por favor, revisa tu buzón en Mailpit."
+        )
+
+    # ¿Qué? "habilitado" es distinto de "is_active" (esa es solo verificación
+    #       de correo) — revisa si un Administrador del Sistema desactivó
+    #       esta cuenta después de ya estar verificada.
+    # ¿Para qué? Sin este chequeo, una cuenta desactivada por un admin
+    #           podría seguir iniciando sesión con total normalidad.
+    if not user.habilitado:
+        log_login_fallido(correo, "cuenta_desactivada")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta fue desactivada por un administrador.",
         )
 
     # ¿Qué? Un login exitoso limpia cualquier rastro de intentos fallidos
@@ -335,6 +368,14 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
             detail="Tu cuenta no está activa. Verifica tu correo o contacta soporte.",
         )
 
+    # ¿Qué? Mismo chequeo que en login() — evita renovar el access token de
+    #       una cuenta que un Administrador del Sistema ya desactivó.
+    if not user.habilitado:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tu cuenta fue desactivada por un administrador.",
+        )
+
     real_first_name, real_last_name = _obtener_nombre_real(db, user)
 
     nuevo_access_token = create_access_token(data={
@@ -392,7 +433,7 @@ async def request_password_reset(db: Session, email: str) -> bool:
     expiration = datetime.now(timezone.utc) + timedelta(hours=1)
 
     db_token = PasswordResetToken(
-        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
+        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv4 por su cuenta.
         id_usuario=user.id_usuario,
         token=token_str,
         expires_at=expiration,

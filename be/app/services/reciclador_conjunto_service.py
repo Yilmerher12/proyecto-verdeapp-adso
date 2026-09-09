@@ -20,6 +20,7 @@ from app.models.reciclador import Reciclador
 from app.models.usuario import Usuario
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
+from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.rol import RolId
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjunto
@@ -79,9 +80,11 @@ async def invitar_reciclador(db: Session, id_usuario_admin: UUID, correo_recicla
     if not reciclador:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Perfil de reciclador incompleto.")
 
-    # ¿Qué? Verifica que no exista ya una autorización activa o invitación pendiente.
+    # ¿Qué? Verifica que no exista ya una autorización ACTIVA (un vínculo
+    #       revocado no cuenta — se puede volver a invitar) o invitación pendiente.
     stmt_ya_autorizado = text(
-        "SELECT 1 FROM recicladores_conjuntos WHERE id_reciclador = :rid AND id_conjunto_residencial = :cid"
+        "SELECT 1 FROM recicladores_conjuntos "
+        "WHERE id_reciclador = :rid AND id_conjunto_residencial = :cid AND fecha_revocacion IS NULL"
     )
     ya_autorizado = db.execute(stmt_ya_autorizado, {"rid": reciclador.id_reciclador, "cid": id_conjunto}).first()
     if ya_autorizado:
@@ -97,7 +100,7 @@ async def invitar_reciclador(db: Session, id_usuario_admin: UUID, correo_recicla
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe una invitación pendiente para este reciclador.")
 
     nueva_invitacion = InvitacionRecicladorConjunto(
-        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv7 por su cuenta.
+        # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv4 por su cuenta.
         id_reciclador=reciclador.id_reciclador,
         id_conjunto_residencial=id_conjunto,
         invitado_por_id=id_usuario_admin,
@@ -206,9 +209,20 @@ def responder_invitacion(db: Session, id_usuario_reciclador: UUID, id_invitacion
 
     if aceptar:
         invitacion.estado = "ACEPTADA"
+        # ¿Qué? Inserta una fila NUEVA (no reutiliza una vieja ya
+        #       revocada) — igual que administradores_conjuntos, cada
+        #       período de autorización queda como su propia fila, para
+        #       no perder el historial de revocaciones anteriores.
+        # ¿Para qué? El "ON CONFLICT" ahora apunta específicamente al
+        #           índice único parcial (ux_reciclador_conjunto_activo)
+        #           — evita duplicar un vínculo ya activo si esto se
+        #           dispara dos veces, pero no choca con filas históricas
+        #           ya revocadas de la misma pareja reciclador-conjunto.
         stmt_insert = text(
-            "INSERT INTO recicladores_conjuntos (id_reciclador, id_conjunto_residencial) "
-            "VALUES (:rid, :cid) ON CONFLICT DO NOTHING"
+            "INSERT INTO recicladores_conjuntos "
+            "(id, id_reciclador, id_conjunto_residencial, fecha_autorizacion) "
+            "VALUES (gen_random_uuid(), :rid, :cid, now()) "
+            "ON CONFLICT (id_reciclador, id_conjunto_residencial) WHERE fecha_revocacion IS NULL DO NOTHING"
         )
         db.execute(stmt_insert, {"rid": reciclador.id_reciclador, "cid": invitacion.id_conjunto_residencial})
     else:
@@ -244,7 +258,7 @@ def listar_recicladores_autorizados_de_conjunto(db: Session, id_usuario_admin: U
         FROM recicladores_conjuntos rc
         JOIN recicladores r ON r.id_reciclador = rc.id_reciclador
         JOIN usuarios u ON u.id_usuario = r.id_usuario
-        WHERE rc.id_conjunto_residencial = :cid
+        WHERE rc.id_conjunto_residencial = :cid AND rc.fecha_revocacion IS NULL
         ORDER BY r.nombre, r.apellidos
     """)
     resultados = db.execute(stmt, {"cid": id_conjunto}).mappings().all()
@@ -268,8 +282,56 @@ def listar_conjuntos_autorizados(db: Session, id_usuario_reciclador: UUID) -> li
         FROM recicladores_conjuntos rc
         JOIN conjuntos_residenciales cr ON cr.id_conjunto_residencial = rc.id_conjunto_residencial
         JOIN localidades l ON l.id_localidad = cr.id_localidad
-        WHERE rc.id_reciclador = :rid
+        WHERE rc.id_reciclador = :rid AND rc.fecha_revocacion IS NULL
         ORDER BY cr.nombre_conjunto
     """)
     resultados = db.execute(stmt, {"rid": reciclador.id_reciclador}).mappings().all()
     return [dict(fila) for fila in resultados]
+
+
+def revocar_reciclador(db: Session, id_usuario_admin: UUID, id_conjunto: UUID, id_reciclador: UUID) -> None:
+    """
+    ¿Qué? El Admin de Conjunto revoca directo el acceso de un reciclador
+          ya autorizado — sin que el reciclador tenga que solicitar nada
+          (a diferencia de RQF-016, donde es el Admin de Conjunto quien
+          pide desvincularse y el Admin Sistema aprueba). Es el espejo de
+          cómo ya invita: por el correo de un reciclador que ya existe.
+    ¿Para qué? Refleja en la app lo que ya se acuerda fuera de ella cuando
+              un reciclador deja de trabajar con un conjunto de forma
+              informal.
+    ¿Impacto? No borra la fila — marca fecha_revocacion (soft-delete),
+              igual que la desvinculación de administradores. Si se
+              vuelve a invitar a este mismo reciclador más adelante, esto
+              queda como historial, no se pierde.
+    """
+    _verificar_admin_administra_conjunto(db, id_usuario_admin, id_conjunto)
+
+    stmt_reciclador = select(Reciclador).where(Reciclador.id_reciclador == id_reciclador)
+    reciclador = db.execute(stmt_reciclador).scalar_one_or_none()
+    if not reciclador:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reciclador no encontrado.")
+
+    stmt_revocar = text("""
+        UPDATE recicladores_conjuntos
+        SET fecha_revocacion = now(), revocado_por_id = :admin_id
+        WHERE id_reciclador = :rid AND id_conjunto_residencial = :cid AND fecha_revocacion IS NULL
+    """)
+    resultado = db.execute(stmt_revocar, {"admin_id": id_usuario_admin, "rid": id_reciclador, "cid": id_conjunto})
+
+    if resultado.rowcount == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Este reciclador no está autorizado en tu conjunto.",
+        )
+
+    conjunto = db.get(ConjuntoResidencial, id_conjunto)
+    notif = Notificacion(
+        tipo="RECICLADOR_REVOCADO",
+        id_conjunto_residencial=id_conjunto,
+        mensaje=f"Ya no estás autorizado para recoger material en {conjunto.nombre_conjunto}.",
+    )
+    db.add(notif)
+    db.flush()
+    db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=reciclador.id_usuario))
+
+    db.commit()

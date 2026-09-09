@@ -10,6 +10,9 @@ export interface ConjuntoAdministrado {
   direccion: string;
   nombre_localidad: string;
   tiene_solicitud_pendiente: boolean;
+  // ¿Qué? Issue #168 — código que se reparte fuera de la app para que un
+  //       Residente demuestre que vive en este conjunto al registrarse.
+  codigo_acceso: string;
 }
 
 export async function obtenerMisConjuntos(token: string): Promise<ConjuntoAdministrado[]> {
@@ -19,9 +22,13 @@ export async function obtenerMisConjuntos(token: string): Promise<ConjuntoAdmini
   return data;
 }
 
+// ¿Qué? Solo el NIT es editable por el Admin de Conjunto (issue #180).
+// ¿Para qué? Nombre y dirección vienen ya verificados desde el dataset
+//           oficial de Bogotá — solo se corrigen re-importando ese dataset
+//           (seed.py), nunca a mano desde el panel del Admin de Conjunto.
 export async function editarMiConjunto(
   idConjunto: string,
-  datos: { nombre_conjunto: string; nit: string | null; direccion: string },
+  datos: { nit: string | null },
   token: string
 ) {
   const { data } = await axios.patch(
@@ -30,6 +37,18 @@ export async function editarMiConjunto(
     { headers: { Authorization: `Bearer ${token}` } }
   );
   return data;
+}
+
+// ¿Qué? Issue #168 — genera un código de acceso NUEVO para un conjunto,
+//       reemplazando el anterior (por ejemplo, si se filtró a alguien
+//       que no vive ahí).
+export async function regenerarCodigoAcceso(idConjunto: string, token: string): Promise<string> {
+  const { data } = await axios.post<{ codigo_acceso: string }>(
+    `${API_BASE}/mis-conjuntos/${idConjunto}/regenerar-codigo-acceso`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return data.codigo_acceso;
 }
 
 // ¿Qué? RQF-016 (HU-022): pide dejar de administrar un conjunto que hoy administro.

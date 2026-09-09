@@ -14,6 +14,15 @@ Descripción: Pruebas del router de admin (vista SQL de residentes, procedimient
 
 from fastapi.testclient import TestClient
 
+from app.models.administrador_conjunto import AdministradorConjunto
+from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
+from app.models.reciclador import Reciclador
+from app.models.residente import Residente
+from app.models.unidad import Unidad
+from app.models.usuario import Usuario
+from app.models.rol import RolId
+from app.utils.security import hash_password
+
 
 class TestVistaResidentes:
     def test_sin_login_devuelve_401(self, client: TestClient):
@@ -70,6 +79,69 @@ class TestVistaResidentes:
         assert response.status_code == 200
         assert response.json()["items"] == []
 
+    def _crear_segundo_residente(self, db, conjunto_verificado) -> str:
+        """Nombre 'AAA...' ordena antes que TEST_USER_NOMBRE ('TEST') en ASC."""
+        usuario = Usuario(
+            correo_electronico="aaa.residente@verdeapp.com",
+            id_rol=RolId.RESIDENTE,
+            password=hash_password("TestPass123"),
+            is_active=True,
+        )
+        db.add(usuario)
+        db.flush()
+        unidad = Unidad(
+            id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
+            torre="TORRE 9",
+            apto="909",
+        )
+        db.add(unidad)
+        db.flush()
+        db.add(
+            Residente(
+                id_usuario=usuario.id_usuario,
+                id_unidad=unidad.id_unidad,
+                nombre="AAA_PRIMERO",
+                apellidos="ORDEN",
+            )
+        )
+        db.commit()
+        return usuario.correo_electronico
+
+    def test_orden_por_nombre_ascendente_y_descendente(
+        self, client: TestClient, admin_sistema_auth_headers, test_user, conjunto_verificado, db
+    ):
+        self._crear_segundo_residente(db, conjunto_verificado)
+
+        asc = client.get(
+            "/api/v1/admin/vista-residentes",
+            headers=admin_sistema_auth_headers,
+            params={"order_by": "nombre", "order_dir": "asc"},
+        ).json()["items"]
+        nombres_asc = [f["Nombre"] for f in asc]
+        assert nombres_asc.index("AAA_PRIMERO") < nombres_asc.index("TEST")
+
+        desc = client.get(
+            "/api/v1/admin/vista-residentes",
+            headers=admin_sistema_auth_headers,
+            params={"order_by": "nombre", "order_dir": "desc"},
+        ).json()["items"]
+        nombres_desc = [f["Nombre"] for f in desc]
+        assert nombres_desc.index("TEST") < nombres_desc.index("AAA_PRIMERO")
+
+    # ¿Qué? Un order_by fuera de la lista blanca (ni siquiera un intento de
+    #       inyección, cualquier valor no reconocido) no debe romper el
+    #       endpoint — debe ignorarse y caer al orden por defecto.
+    def test_order_by_invalido_no_rompe_cae_al_orden_por_defecto(
+        self, client: TestClient, admin_sistema_auth_headers, test_user
+    ):
+        response = client.get(
+            "/api/v1/admin/vista-residentes",
+            headers=admin_sistema_auth_headers,
+            params={"order_by": '"Correo"; DROP TABLE usuarios; --'},
+        )
+        assert response.status_code == 200
+        assert test_user.correo_electronico in [f["Correo"] for f in response.json()["items"]]
+
 
 class TestSpRecicladores:
     def test_sin_login_devuelve_401(self, client: TestClient):
@@ -113,6 +185,49 @@ class TestSpRecicladores:
         assert response.status_code == 200
         correos = [fila["Correo"] for fila in response.json()["items"]]
         assert reciclador_test.correo_electronico in correos
+
+    def test_orden_por_nombre_ascendente_y_descendente(
+        self, client: TestClient, admin_sistema_auth_headers, reciclador_test, db
+    ):
+        """reciclador_test tiene nombre 'RECI' (ver RECICLADOR_NOMBRE) —
+        'AAA_PRIMERO' ordena antes en ASC."""
+        usuario = Usuario(
+            correo_electronico="aaa.reciclador@verdeapp.com",
+            id_rol=RolId.RECICLADOR,
+            password=hash_password("TestPass123"),
+            is_active=True,
+        )
+        db.add(usuario)
+        db.flush()
+        db.add(Reciclador(id_usuario=usuario.id_usuario, nombre="AAA_PRIMERO", apellidos="ORDEN"))
+        db.commit()
+
+        asc = client.get(
+            "/api/v1/admin/sp-recicladores",
+            headers=admin_sistema_auth_headers,
+            params={"order_by": "nombre", "order_dir": "asc"},
+        ).json()["items"]
+        nombres_asc = [f["Nombre_Completo"] for f in asc]
+        assert nombres_asc.index("AAA_PRIMERO ORDEN") < nombres_asc.index("RECI CLADOR")
+
+        desc = client.get(
+            "/api/v1/admin/sp-recicladores",
+            headers=admin_sistema_auth_headers,
+            params={"order_by": "nombre", "order_dir": "desc"},
+        ).json()["items"]
+        nombres_desc = [f["Nombre_Completo"] for f in desc]
+        assert nombres_desc.index("RECI CLADOR") < nombres_desc.index("AAA_PRIMERO ORDEN")
+
+    def test_order_by_invalido_no_rompe_cae_al_orden_por_defecto(
+        self, client: TestClient, admin_sistema_auth_headers, reciclador_test
+    ):
+        response = client.get(
+            "/api/v1/admin/sp-recicladores",
+            headers=admin_sistema_auth_headers,
+            params={"order_by": '"Correo"; DROP FUNCTION sp_obtener_recicladores; --'},
+        )
+        assert response.status_code == 200
+        assert reciclador_test.correo_electronico in [f["Correo"] for f in response.json()["items"]]
 
 
 class TestAdministradoresConjunto:
@@ -171,3 +286,146 @@ class TestAdministradoresConjunto:
         )
         assert response.status_code == 200
         assert response.json()["items"] == []
+
+    def test_orden_por_nombre_ascendente_y_descendente(
+        self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_test, conjunto_verificado_sin_admin, db
+    ):
+        """admin_conjunto_test tiene nombre 'ADMIN' (ver ADMIN_CONJUNTO_NOMBRE)
+        y ya administra `conjunto_verificado` — el segundo admin va en
+        `conjunto_verificado_sin_admin` (mismo conjunto ya tiene dueño activo,
+        ver ux_admin_conjunto_activo). 'ZULU_ULTIMO' ordena después en ASC."""
+        usuario = Usuario(
+            correo_electronico="zulu.admin@verdeapp.com",
+            id_rol=RolId.ADMIN_CONJUNTO,
+            password=hash_password("TestPass123"),
+            is_active=True,
+        )
+        db.add(usuario)
+        db.flush()
+        administrador = AdministradorConjunto(id_usuario=usuario.id_usuario, nombre="ZULU_ULTIMO", apellidos="ORDEN")
+        db.add(administrador)
+        db.flush()
+        db.add(
+            AdministradorConjuntoAsignacion(
+                id_administrador=administrador.id_administrador,
+                id_conjunto_residencial=conjunto_verificado_sin_admin.id_conjunto_residencial,
+            )
+        )
+        db.commit()
+
+        asc = client.get(
+            "/api/v1/admin/administradores-conjunto",
+            headers=admin_sistema_auth_headers,
+            params={"order_by": "nombre", "order_dir": "asc"},
+        ).json()["items"]
+        nombres_asc = [f["Nombre"] for f in asc]
+        assert nombres_asc.index("ADMIN") < nombres_asc.index("ZULU_ULTIMO")
+
+        desc = client.get(
+            "/api/v1/admin/administradores-conjunto",
+            headers=admin_sistema_auth_headers,
+            params={"order_by": "nombre", "order_dir": "desc"},
+        ).json()["items"]
+        nombres_desc = [f["Nombre"] for f in desc]
+        assert nombres_desc.index("ZULU_ULTIMO") < nombres_desc.index("ADMIN")
+
+    def test_order_by_invalido_no_rompe_cae_al_orden_por_defecto(
+        self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_test
+    ):
+        response = client.get(
+            "/api/v1/admin/administradores-conjunto",
+            headers=admin_sistema_auth_headers,
+            params={"order_by": '"Correo"; DROP TABLE usuarios; --'},
+        )
+        assert response.status_code == 200
+        assert admin_conjunto_test.usuario.correo_electronico in [
+            f["Correo"] for f in response.json()["items"]
+        ]
+
+
+class TestCambiarHabilitado:
+    """¿Por qué? El profesor pidió, en la sustentación, que la vista de
+    usuarios del Admin del Sistema permitiera HACER algo, no solo
+    consultar — esta es esa primera acción."""
+
+    def _url(self, correo: str) -> str:
+        return f"/api/v1/admin/usuarios/{correo}/habilitado"
+
+    def test_sin_login_devuelve_401(self, client: TestClient, test_user):
+        response = client.patch(self._url(test_user.correo_electronico), json={"habilitado": False})
+        assert response.status_code == 401
+
+    def test_con_rol_incorrecto_devuelve_403(self, client: TestClient, auth_headers, test_user):
+        response = client.patch(
+            self._url(test_user.correo_electronico),
+            headers=auth_headers,
+            json={"habilitado": False},
+        )
+        assert response.status_code == 403
+
+    def test_admin_sistema_desactiva_una_cuenta(
+        self, client: TestClient, admin_sistema_auth_headers, test_user, db
+    ):
+        response = client.patch(
+            self._url(test_user.correo_electronico),
+            headers=admin_sistema_auth_headers,
+            json={"habilitado": False},
+        )
+        assert response.status_code == 200
+        assert response.json()["habilitado"] is False
+
+        db.refresh(test_user)
+        assert test_user.habilitado is False
+
+    def test_admin_sistema_reactiva_una_cuenta(
+        self, client: TestClient, admin_sistema_auth_headers, test_user, db
+    ):
+        test_user.habilitado = False
+        db.commit()
+
+        response = client.patch(
+            self._url(test_user.correo_electronico),
+            headers=admin_sistema_auth_headers,
+            json={"habilitado": True},
+        )
+        assert response.status_code == 200
+
+        db.refresh(test_user)
+        assert test_user.habilitado is True
+
+    def test_no_puede_desactivar_su_propia_cuenta(
+        self, client: TestClient, admin_sistema_auth_headers, admin_sistema_test
+    ):
+        response = client.patch(
+            self._url(admin_sistema_test.correo_electronico),
+            headers=admin_sistema_auth_headers,
+            json={"habilitado": False},
+        )
+        assert response.status_code == 400
+
+    def test_usuario_inexistente_devuelve_404(self, client: TestClient, admin_sistema_auth_headers):
+        response = client.patch(
+            self._url("nadie-existe@verdeapp.com"),
+            headers=admin_sistema_auth_headers,
+            json={"habilitado": False},
+        )
+        assert response.status_code == 404
+
+    def test_cuenta_desactivada_no_puede_iniciar_sesion(
+        self, client: TestClient, admin_sistema_auth_headers, test_user
+    ):
+        """Verifica el efecto de punta a punta: desactivar por este
+        endpoint de verdad bloquea el login, no solo cambia un dato."""
+        from app.tests.conftest import TEST_USER_EMAIL, TEST_USER_PASSWORD
+
+        client.patch(
+            self._url(test_user.correo_electronico),
+            headers=admin_sistema_auth_headers,
+            json={"habilitado": False},
+        )
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        assert response.status_code == 403
+        assert "desactivada" in response.json()["detail"].lower()

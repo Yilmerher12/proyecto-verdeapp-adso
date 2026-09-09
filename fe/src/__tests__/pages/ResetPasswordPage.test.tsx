@@ -32,7 +32,7 @@ describe("ResetPasswordPage", () => {
     expect(screen.getByRole("heading", { name: "Restablecer contraseña" })).toBeInTheDocument();
     expect(screen.getByLabelText("Nueva contraseña")).toBeInTheDocument();
     expect(screen.getByLabelText("Confirmar nueva contraseña")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Restablecer contraseña" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeInTheDocument();
   });
 
   // ¿Qué? Verifica validación de contraseña débil.

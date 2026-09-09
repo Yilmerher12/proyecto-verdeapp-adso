@@ -64,10 +64,10 @@ ON CONFLICT DO NOTHING;
 --           no en este .sql.
 
 -- ¿Qué? Superadministrador oficial — sembrado desde Python (sembrar_datos_uuid en seed.py).
--- ¿Para qué? usuarios.id_usuario ahora es UUIDv7, generado en Python — un
---           INSERT estático en este .sql no puede generarlo (Postgres 17 no
---           tiene una función uuidv7() nativa), así que este INSERT se movió
---           junto con los demás que necesitan un UUID nuevo por fila.
+-- ¿Para qué? usuarios.id_usuario ahora es UUIDv4, generado en Python — un
+--           INSERT estático en este .sql no puede generarlo, así que este
+--           INSERT se movió junto con los demás que necesitan un UUID nuevo
+--           por fila.
 -- Contraseña hasheada: AdminVerde2026*
 
 
@@ -103,9 +103,9 @@ ON CONFLICT DO NOTHING;
 --           correcto que se vea así: es la realidad, no un dato faltante.
 -- ¿Qué? Los 9 puntos de acopio reales se siembran desde Python (mismo
 --       motivo que el superadmin: puntos_acopios.id_punto_acopio ahora es
---       UUIDv7, generado en Python, no en este .sql estático).
+--       UUIDv4, generado en Python, no en este .sql estático).
 DELETE FROM puntos_acopios;
 
 -- ¿Qué? Los 6 módulos de contenido educativo real se siembran desde Python
---       (mismo motivo: contenido_educativo.id_contenido ahora es UUIDv7,
+--       (mismo motivo: contenido_educativo.id_contenido ahora es UUIDv4,
 --       generado en Python, no en este .sql estático).

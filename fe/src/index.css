@@ -113,6 +113,60 @@
     }
   }
 
+  /* ¿Qué? Barra de scroll con los colores de la marca (accent-*) en vez de
+     la barra gris por defecto del sistema operativo/navegador.
+     ¿Para qué? Un modal largo (formulario de registro, por ejemplo) o
+     cualquier panel con scroll propio mostraba la barra gris nativa —
+     desentonaba con la paleta oscura/verde del resto de la app.
+     ¿Impacto? scrollbar-color/scrollbar-width cubre Firefox; los
+     pseudo-elementos ::-webkit-scrollbar cubren Chrome/Edge/Safari. Aplica
+     a TODA la app (no solo a los modales) — es una regla global, no una
+     clase que haya que agregar componente por componente.
+     ¿Impacto? "html.dark" (sin espacio) para el scroll del documento —
+     la clase "dark" vive en el propio <html>, así que "html" NO puede ser
+     descendiente de sí mismo (".dark html" nunca coincide, es un error
+     fácil de cometer). ".dark ::-webkit-scrollbar-thumb" (con espacio)
+     sigue haciendo falta aparte para el scroll interno de un Modal u otro
+     panel con su propio scroll — ese sí es descendiente real de .dark. */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: theme(--color-accent-300) transparent;
+  }
+
+  html.dark {
+    scrollbar-color: theme(--color-accent-800) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: theme(--color-accent-300);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: theme(--color-accent-400);
+  }
+
+  html.dark::-webkit-scrollbar-thumb,
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: theme(--color-accent-800);
+  }
+
+  html.dark::-webkit-scrollbar-thumb:hover,
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: theme(--color-accent-700);
+  }
+
   body {
     @apply bg-gray-50 text-gray-900 dark:bg-[#03130b] dark:text-gray-100;
     @apply min-h-screen antialiased;
@@ -124,6 +178,17 @@
   .dark *::before,
   .dark *::after {
     border-color: theme(--color-gray-700);
+  }
+
+  /* ¿Qué? El ícono de calendario dentro de <input type="date"> no muestra
+     cursor de mano por defecto en navegadores basados en Chromium.
+     ¿Para qué? Regla global — arregla todos los campos de fecha del
+     proyecto de una sola vez (comunicados, novedades, y cualquiera que se
+     agregue después), sin repetir esto por cada formulario.
+     ¿Impacto? Firefox no expone este pseudo-elemento — ahí simplemente no
+     aplica, sin romper nada. */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
   }
 }
 
@@ -160,6 +225,60 @@
 
   @media (prefers-reduced-motion: reduce) {
     .animate-hero-in {
+      opacity: 1;
+    }
+  }
+}
+
+/* ¿Qué? Animaciones de entrada cortas y genéricas — a diferencia de
+   .animate-hero-in (una sola vez, en la carga del Landing), estas se usan
+   en elementos que aparecen y desaparecen todo el tiempo durante el uso
+   normal de la app: un Modal que se abre, una Alert que aparece tras un
+   error, el mensaje de error de un campo.
+   ¿Para qué? Antes esos 3 aparecían de golpe (issue #197) — mismo criterio
+   de accesibilidad que .animate-hero-in: sin movimiento si el sistema
+   operativo pidió "reducir movimiento" (RNF-005.6).
+   ¿Impacto? .animate-fade-in y .animate-scale-in arrancan en opacity:0
+   SIEMPRE, igual que .animate-hero-in, para evitar el "flash" del
+   contenido final antes de que la animación corra. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@layer utilities {
+  .animate-fade-in,
+  .animate-scale-in {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-fade-in {
+      animation: fade-in 0.2s ease-out forwards;
+    }
+    .animate-scale-in {
+      animation: scale-in 0.2s ease-out forwards;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-scale-in {
       opacity: 1;
     }
   }

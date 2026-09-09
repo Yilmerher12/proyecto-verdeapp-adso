@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send, Clock } from "lucide-react";
+import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, AlertTriangle, UserX } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -10,12 +10,14 @@ import {
   obtenerMisConjuntos,
   editarMiConjunto,
   solicitarDesvinculacion,
+  regenerarCodigoAcceso,
   type ConjuntoAdministrado,
 } from "@/lib/conjuntoPanelApi";
 import {
   invitarReciclador,
   obtenerInvitacionesDeConjunto,
   obtenerRecicladoresAutorizados,
+  revocarReciclador,
   type InvitacionEnviada,
   type RecicladorAutorizado,
 } from "@/lib/recicladorConjuntoApi";
@@ -24,6 +26,7 @@ import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResult
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
+import { Modal } from "@/components/ui/Modal";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -50,6 +53,145 @@ function BadgeEstado({ estado }: { estado: string }) {
 }
 
 /**
+ * ¿Qué? Código de acceso de UN conjunto específico (issue #168) — lo que
+ *       el Admin de Conjunto reparte fuera de la app (cartelera, grupo
+ *       del conjunto) para que un Residente demuestre que vive ahí al
+ *       registrarse.
+ * ¿Para qué? Componente aparte, mismo criterio que SeccionRecicladores/
+ *           SeccionDesvinculacion: cada conjunto administrado tiene su
+ *           propio código, y regenerarlo es una acción con su propia
+ *           llamada al backend, no solo un campo de texto que se guarda.
+ */
+function SeccionCodigoAcceso({
+  idConjunto,
+  codigoAcceso,
+  accessToken,
+  onRegenerado,
+}: {
+  idConjunto: string;
+  codigoAcceso: string;
+  accessToken: string;
+  onRegenerado: () => void;
+}) {
+  const { t } = useTranslation();
+  const [copiado, setCopiado] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
+  const [regenerando, setRegenerando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // ¿Qué? Mismo patrón de copiar-al-portapapeles ya usado en
+  //       DirectorioPage.tsx (copiarDireccion) — ícono de check breve
+  //       antes de volver al ícono de copiar.
+  const copiarCodigo = async () => {
+    try {
+      await navigator.clipboard.writeText(codigoAcceso);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 1500);
+    } catch {
+      // ¿Qué? Si el navegador niega el permiso del portapapeles (poco
+      //       común, pero posible), no hay nada más que hacer desde aquí.
+    }
+  };
+
+  const regenerar = async () => {
+    if (!accessToken) return;
+    setRegenerando(true);
+    setError(null);
+    try {
+      await regenerarCodigoAcceso(idConjunto, accessToken);
+      setConfirmando(false);
+      onRegenerado();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || t("dashboards.adminConjunto.codigoAcceso.errorDefault"));
+    } finally {
+      setRegenerando(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/40">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <KeyRound className="w-4 h-4 text-green-600" />
+            <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">
+              {t("dashboards.adminConjunto.codigoAcceso.title")}
+            </h5>
+          </div>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {t("dashboards.adminConjunto.codigoAcceso.description")}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-mono text-base font-bold tracking-widest text-gray-900 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-white">
+            {codigoAcceso}
+          </span>
+          <button
+            type="button"
+            onClick={copiarCodigo}
+            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-white dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#1f4029]"
+            aria-label={t(
+              copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
+            )}
+          >
+            {copiado ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmando(true)}
+            className="cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            {t("dashboards.adminConjunto.codigoAcceso.regenerateButton")}
+          </button>
+        </div>
+      </div>
+
+      {confirmando && (
+        <Modal
+          onClose={() => setConfirmando(false)}
+          aria-label={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
+        >
+          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20">
+              <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+              {t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              {t("dashboards.adminConjunto.codigoAcceso.confirmWarning")}
+            </p>
+            {error && (
+              <p className="mb-4 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg dark:bg-red-900/20 dark:text-red-400">
+                {error}
+              </p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmando(false)}
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={regenerar}
+                disabled={regenerando}
+                className="flex-1 cursor-pointer rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {regenerando
+                  ? t("dashboards.adminConjunto.codigoAcceso.regenerating")
+                  : t("dashboards.adminConjunto.codigoAcceso.confirmButton")}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+/**
  * ¿Qué? Sección de Recicladores Autorizados de UN conjunto específico.
  * ¿Para qué? Componente separado para mantener legible el dashboard
  *           principal — cada conjunto administrado tiene su propia
@@ -65,6 +207,16 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
   const [enviando, setEnviando] = useState(false);
   const [errorInvitar, setErrorInvitar] = useState<string | null>(null);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  // ¿Qué? Esta sección (autorizados + invitaciones) es la que más espacio
+  //       ocupa dentro de la tarjeta de cada conjunto — con un admin que
+  //       administra varios conjuntos, esto por sí solo empujaba el resto
+  //       del dashboard fuera de la vista inicial (issue #166). Colapsada
+  //       por defecto, igual que ya hace "Invitar Administradores" en el
+  //       panel del Admin del Sistema.
+  const [mostrarDetalle, setMostrarDetalle] = useState(false);
+  const [aRevocar, setARevocar] = useState<RecicladorAutorizado | null>(null);
+  const [revocando, setRevocando] = useState(false);
+  const [errorRevocar, setErrorRevocar] = useState<string | null>(null);
 
   // ¿Qué? Antes esta sección solo consultaba el historial de invitaciones
   //       (obtenerInvitacionesDeConjunto) — un reciclador vinculado por
@@ -120,24 +272,70 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
     }
   };
 
+  const confirmarRevocar = async () => {
+    if (!aRevocar) return;
+    setRevocando(true);
+    setErrorRevocar(null);
+    try {
+      await revocarReciclador(idConjunto, aRevocar.id_reciclador, accessToken);
+      setARevocar(null);
+      cargarAutorizados();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      const detalle = err?.response?.data?.detail;
+      setErrorRevocar(detalle || t("dashboards.adminConjunto.recyclersSection.revokeErrorDefault"));
+    } finally {
+      setRevocando(false);
+    }
+  };
+
   return (
-    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2a4d34]">
-      <div className="flex items-center justify-between mb-3">
+    // ¿Qué? Fondo tenue propio (en vez de solo el borde superior de antes)
+    //       para que esta sección se lea como un bloque aparte del resto de
+    //       la tarjeta del conjunto — antes todo compartía el mismo blanco y
+    //       solo una línea delgada las separaba (issue #166, "se ve todo
+    //       pegado").
+    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/40">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-green-600" />
           <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.recyclersSection.title")}</h5>
+          {!cargandoAutorizados && (
+            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-bold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+              {autorizados.length}
+            </span>
+          )}
         </div>
-        <button
-          type="button"
-          onClick={() => setMostrarFormulario((v) => !v)}
-          className="text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
-        >
-          {t("dashboards.adminConjunto.recyclersSection.invite")}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setMostrarDetalle((v) => !v)}
+            aria-expanded={mostrarDetalle}
+            aria-controls={`recicladores-detalle-${idConjunto}`}
+            className="cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-[#132a1c] dark:text-gray-300 dark:border-[#2a4d34] dark:hover:bg-[#1f4029]"
+          >
+            {mostrarDetalle
+              ? t("dashboards.adminConjunto.recyclersSection.hideDetail")
+              : t("dashboards.adminConjunto.recyclersSection.showDetail")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMostrarFormulario((v) => !v)}
+            aria-expanded={mostrarFormulario}
+            aria-controls={`recicladores-invitar-${idConjunto}`}
+            className="cursor-pointer text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+          >
+            {t("dashboards.adminConjunto.recyclersSection.invite")}
+          </button>
+        </div>
       </div>
 
       {mostrarFormulario && (
-        <form onSubmit={handleInvitar} className="flex flex-col sm:flex-row gap-2 mb-4 bg-gray-50 dark:bg-[#0d2116]/60 p-3 rounded-xl">
+        <form
+          id={`recicladores-invitar-${idConjunto}`}
+          onSubmit={handleInvitar}
+          className="flex flex-col sm:flex-row gap-2 mb-4 bg-white dark:bg-[#132a1c] p-3 rounded-xl"
+        >
           <div className="flex-1 relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -145,13 +343,13 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
               placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
               value={correoNuevo}
               onChange={(e) => setCorreoNuevo(e.target.value)}
-              className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+              className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
             />
           </div>
           <button
             type="submit"
             disabled={enviando || !correoNuevo.trim()}
-            className="flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50"
+            className="flex cursor-pointer items-center justify-center gap-1.5 bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
             {enviando ? t("dashboards.adminConjunto.recyclersSection.sending") : t("dashboards.adminConjunto.recyclersSection.inviteButton")}
@@ -163,69 +361,119 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
         <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3 dark:bg-red-900/20 dark:text-red-400">{errorInvitar}</p>
       )}
 
-      {/* Recicladores YA autorizados — el dato real (recicladores_conjuntos) */}
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-        {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
-      </p>
-      {cargandoAutorizados ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          {t("dashboards.adminConjunto.recyclersSection.authorizedLoading")}
-        </p>
-      ) : autorizados.length === 0 ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          {t("dashboards.adminConjunto.recyclersSection.authorizedEmpty")}
-        </p>
-      ) : (
-        <div className="space-y-2 mb-4">
-          {autorizados.map((r) => (
-            <div
-              key={r.id_reciclador}
-              className="flex items-center justify-between gap-3 bg-green-50 dark:bg-green-900/10 rounded-lg px-3 py-2"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                  {r.nombre} {r.apellidos}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{r.correo_electronico}</p>
-              </div>
-              {r.asociacion && (
-                <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  {r.asociacion}
-                </span>
-              )}
+      {mostrarDetalle && (
+        <div id={`recicladores-detalle-${idConjunto}`} className="mt-1">
+          {/* Recicladores YA autorizados — el dato real (recicladores_conjuntos) */}
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
+          </p>
+          {cargandoAutorizados ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              {t("dashboards.adminConjunto.recyclersSection.authorizedLoading")}
+            </p>
+          ) : autorizados.length === 0 ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              {t("dashboards.adminConjunto.recyclersSection.authorizedEmpty")}
+            </p>
+          ) : (
+            <div className="space-y-2 mb-4">
+              {autorizados.map((r) => (
+                <div
+                  key={r.id_reciclador}
+                  className="flex items-center justify-between gap-3 bg-green-50 dark:bg-green-900/10 rounded-lg px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                      {r.nombre} {r.apellidos}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{r.correo_electronico}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {r.asociacion && (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        {r.asociacion}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setARevocar(r)}
+                      className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
+                      aria-label={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
+                    >
+                      <UserX className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          {/* Historial de invitaciones enviadas — puede estar vacío aunque sí
+              haya recicladores autorizados arriba (ver comentario más arriba). */}
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
+          </p>
+          {cargando ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
+          ) : invitaciones.length === 0 ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {t("dashboards.adminConjunto.recyclersSection.empty")}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {invitaciones.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="flex items-center justify-between gap-3 bg-white dark:bg-[#132a1c] rounded-lg px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                      {inv.nombre_reciclador} {inv.apellidos_reciclador}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{inv.correo_reciclador}</p>
+                  </div>
+                  <BadgeEstado estado={inv.estado} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Historial de invitaciones enviadas — puede estar vacío aunque sí
-          haya recicladores autorizados arriba (ver comentario más arriba). */}
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-        {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
-      </p>
-      {cargando ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
-      ) : invitaciones.length === 0 ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {t("dashboards.adminConjunto.recyclersSection.empty")}
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {invitaciones.map((inv) => (
-            <div
-              key={inv.id}
-              className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-[#0d2116]/60 rounded-lg px-3 py-2"
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                  {inv.nombre_reciclador} {inv.apellidos_reciclador}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{inv.correo_reciclador}</p>
-              </div>
-              <BadgeEstado estado={inv.estado} />
+      {aRevocar && (
+        <Modal onClose={() => setARevocar(null)} aria-label={t("dashboards.adminConjunto.recyclersSection.revokeModalAriaLabel")}>
+          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
+              <UserX className="h-6 w-6 text-red-500 dark:text-red-400" />
             </div>
-          ))}
-        </div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+              {t("dashboards.adminConjunto.recyclersSection.revokeConfirmTitle", { nombre: `${aRevocar.nombre} ${aRevocar.apellidos}` })}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              {t("dashboards.adminConjunto.recyclersSection.revokeConfirmWarning")}
+            </p>
+            {errorRevocar && (
+              <p className="mb-4 text-xs font-medium text-red-600 dark:text-red-400">{errorRevocar}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setARevocar(null)}
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={confirmarRevocar}
+                disabled={revocando}
+                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {revocando ? t("common.saving") : t("dashboards.adminConjunto.recyclersSection.revokeConfirmButton")}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
@@ -283,7 +531,10 @@ function SeccionDesvinculacion({
   //           dejan claro, sin necesidad de leer el código, que esto es
   //           sobre el rol del admin, no sobre los recicladores.
   return (
-    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2a4d34]">
+    // ¿Qué? Mismo criterio que en SeccionRecicladores — fondo propio en vez
+    //       de solo un borde arriba, para que se vea como un bloque aparte
+    //       (issue #166).
+    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/40">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
         {t("desvinculacion.sectionTitle")}
       </p>
@@ -297,14 +548,14 @@ function SeccionDesvinculacion({
           <button
             type="button"
             onClick={() => setMostrarFormulario(true)}
-            className="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("desvinculacion.solicitarButton")}
           </button>
           <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">{t("desvinculacion.clarification")}</p>
         </div>
       ) : (
-        <div className="bg-gray-50 dark:bg-[#0d2116]/60 p-3 rounded-xl space-y-2">
+        <div className="bg-white dark:bg-[#132a1c] p-3 rounded-xl space-y-2">
           <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("desvinculacion.motivoLabel")}
@@ -322,7 +573,7 @@ function SeccionDesvinculacion({
               type="button"
               onClick={handleSolicitar}
               disabled={enviando}
-              className="text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+              className="cursor-pointer text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               {enviando ? t("desvinculacion.sending") : t("desvinculacion.submit")}
             </button>
@@ -332,7 +583,7 @@ function SeccionDesvinculacion({
                 setMostrarFormulario(false);
                 setError(null);
               }}
-              className="text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-[#1f4029] dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+              className="cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-[#1f4029] dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
             >
               {t("common.cancel")}
             </button>
@@ -356,7 +607,7 @@ export function AdminConjuntoDashboard() {
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [cargando, setCargando] = useState(true);
   const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [formEdicion, setFormEdicion] = useState({ nombre_conjunto: "", nit: "", direccion: "" });
+  const [formEdicion, setFormEdicion] = useState({ nit: "" });
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
 
@@ -431,11 +682,7 @@ export function AdminConjuntoDashboard() {
 
   const iniciarEdicion = (c: ConjuntoAdministrado) => {
     setEditandoId(c.id_conjunto_residencial);
-    setFormEdicion({
-      nombre_conjunto: c.nombre_conjunto,
-      nit: c.nit || "",
-      direccion: c.direccion,
-    });
+    setFormEdicion({ nit: c.nit || "" });
     setMensaje(null);
   };
 
@@ -447,15 +694,7 @@ export function AdminConjuntoDashboard() {
     if (!accessToken) return;
     setGuardando(true);
     try {
-      await editarMiConjunto(
-        id,
-        {
-          nombre_conjunto: formEdicion.nombre_conjunto,
-          nit: formEdicion.nit || null,
-          direccion: formEdicion.direccion,
-        },
-        accessToken
-      );
+      await editarMiConjunto(id, { nit: formEdicion.nit || null }, accessToken);
       setMensaje(t("dashboards.adminConjunto.editForm.successMessage"));
       setEditandoId(null);
       cargarConjuntos();
@@ -490,130 +729,11 @@ export function AdminConjuntoDashboard() {
         </div>
       </div>
 
-      {mensaje && (
-        <div className="bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-3 rounded-xl dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
-          {mensaje}
-        </div>
-      )}
-
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-[#2a4d34] pb-2">
-          <Building2 className="text-green-600 w-5 h-5" />
-          <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
-        </div>
-
-        {cargando ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
-        ) : conjuntos.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
-            {t("dashboards.adminConjunto.myConjuntos.empty")}
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {conjuntos.map((c) => (
-              <div
-                key={c.id_conjunto_residencial}
-                className="border border-gray-200 dark:border-[#2a4d34] rounded-xl p-4"
-              >
-                {editandoId === c.id_conjunto_residencial ? (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.name")}</label>
-                      <input
-                        type="text"
-                        value={formEdicion.nombre_conjunto}
-                        onChange={(e) =>
-                          setFormEdicion((p) => ({ ...p, nombre_conjunto: e.target.value }))
-                        }
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
-                      <input
-                        type="text"
-                        value={formEdicion.nit}
-                        onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.address")}</label>
-                      <input
-                        type="text"
-                        value={formEdicion.direccion}
-                        onChange={(e) =>
-                          setFormEdicion((p) => ({ ...p, direccion: e.target.value }))
-                        }
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                      />
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => guardarEdicion(c.id_conjunto_residencial)}
-                        disabled={guardando}
-                        className="flex items-center gap-1 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 px-4 py-2 rounded-xl transition-colors disabled:opacity-60"
-                      >
-                        <Check className="w-4 h-4" /> {t("common.save")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelarEdicion}
-                        className="flex items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-[#1f4029] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-                      >
-                        <X className="w-4 h-4" /> {t("common.cancel")}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-bold text-gray-800 dark:text-white">{c.nombre_conjunto}</h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {c.direccion} — {c.nombre_localidad}
-                        </p>
-                        {c.nit && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => iniciarEdicion(c)}
-                        className="flex items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
-                      >
-                        <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
-                      </button>
-                    </div>
-
-                    {/*
-                      ¿Qué? Sección nueva de Recicladores Autorizados,
-                            anidada DENTRO de cada conjunto — solo se
-                            muestra cuando NO se está editando ese conjunto.
-                      ¿Para qué? Cada conjunto tiene sus propios recicladores
-                                autorizados; tiene más sentido vivir aquí
-                                que en una sección global aparte.
-                    */}
-                    {accessToken && (
-                      <>
-                        <SeccionRecicladores idConjunto={c.id_conjunto_residencial} accessToken={accessToken} />
-                        <SeccionDesvinculacion
-                          idConjunto={c.id_conjunto_residencial}
-                          tieneSolicitudPendiente={c.tiene_solicitud_pendiente}
-                          accessToken={accessToken}
-                          onSolicitudEnviada={cargarConjuntos}
-                        />
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Resultado de auditoría del reciclador (RQF-009) — aparte del feed normal */}
+      {/* Actividad reciente (resultado de auditoría + notificaciones) — es
+          la información más urgente de este panel (avisos que requieren
+          reacción), así que va primero, justo después del encabezado. Antes
+          vivía al final, debajo de "Mis conjuntos", que por sí sola ya podía
+          medir más que una pantalla completa (issue #166). */}
       {!cargandoNotifs && (
         <AuditoriaResultadoBanner
           notificaciones={notificaciones}
@@ -622,7 +742,6 @@ export function AdminConjuntoDashboard() {
         />
       )}
 
-      {/* Feed de notificaciones */}
       {cargandoNotifs ? (
         <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
@@ -650,6 +769,127 @@ export function AdminConjuntoDashboard() {
         </>
       )}
 
+      {mensaje && (
+        <div className="bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-3 rounded-xl dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
+          {mensaje}
+        </div>
+      )}
+
+      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-[#2a4d34] pb-2">
+          <Building2 className="text-green-600 w-5 h-5" />
+          <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
+        </div>
+
+        {cargando ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
+        ) : conjuntos.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
+            {t("dashboards.adminConjunto.myConjuntos.empty")}
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {conjuntos.map((c) => (
+              <div
+                key={c.id_conjunto_residencial}
+                className="border border-gray-200 dark:border-[#2a4d34] rounded-xl p-4"
+              >
+                {editandoId === c.id_conjunto_residencial ? (
+                  <div className="space-y-3">
+                    {/*
+                      ¿Qué? Antes este formulario también dejaba editar
+                            nombre_conjunto y direccion.
+                      ¿Para qué? Issue #180: esos dos datos vienen ya
+                                verificados desde el dataset oficial de
+                                Bogotá — un Admin de Conjunto no debería
+                                poder sobreescribirlos sin control ni
+                                rastro. Solo se corrigen re-importando ese
+                                dataset (seed.py), nunca a mano desde aquí.
+                      ¿Impacto? El NIT sigue editable porque el dataset
+                                oficial no lo trae — es el único dato que
+                                de verdad falta completar.
+                    */}
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
+                      <input
+                        type="text"
+                        value={formEdicion.nit}
+                        onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
+                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => guardarEdicion(c.id_conjunto_residencial)}
+                        disabled={guardando}
+                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 px-4 py-2 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <Check className="w-4 h-4" /> {t("common.save")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelarEdicion}
+                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-[#1f4029] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                      >
+                        <X className="w-4 h-4" /> {t("common.cancel")}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-bold text-gray-800 dark:text-white">{c.nombre_conjunto}</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
+                          <MapPin className="w-3.5 h-3.5" />
+                          {c.direccion} — {c.nombre_localidad}
+                        </p>
+                        {c.nit && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => iniciarEdicion(c)}
+                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+                      >
+                        <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
+                      </button>
+                    </div>
+
+                    {/*
+                      ¿Qué? Sección nueva de Recicladores Autorizados,
+                            anidada DENTRO de cada conjunto — solo se
+                            muestra cuando NO se está editando ese conjunto.
+                      ¿Para qué? Cada conjunto tiene sus propios recicladores
+                                autorizados; tiene más sentido vivir aquí
+                                que en una sección global aparte.
+                    */}
+                    {accessToken && (
+                      <>
+                        <SeccionCodigoAcceso
+                          idConjunto={c.id_conjunto_residencial}
+                          codigoAcceso={c.codigo_acceso}
+                          accessToken={accessToken}
+                          onRegenerado={cargarConjuntos}
+                        />
+                        <SeccionRecicladores idConjunto={c.id_conjunto_residencial} accessToken={accessToken} />
+                        <SeccionDesvinculacion
+                          idConjunto={c.id_conjunto_residencial}
+                          tieneSolicitudPendiente={c.tiene_solicitud_pendiente}
+                          accessToken={accessToken}
+                          onSolicitudEnviada={cargarConjuntos}
+                        />
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Historial de auditorías — log histórico, sin urgencia, va al final. */}
       <HistorialAuditorias token={accessToken ?? ""} />
     </div>
   );

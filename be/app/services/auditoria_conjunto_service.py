@@ -4,14 +4,11 @@ Descripción: Lógica de negocio de la auditoría del Reciclador al conjunto
              (RQF-009) — validaciones y guardado de la foto de evidencia.
 """
 import asyncio
-import io
-import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import UUID
 
 from fastapi import HTTPException, UploadFile, status
-from PIL import Image, UnidentifiedImageError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -20,13 +17,14 @@ from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAs
 from app.models.auditoria_conjunto import AuditoriaConjunto
 from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
+from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.residente import Residente
 from app.models.rol import RolId
-from app.models.tablas_asociacion import recicladores_conjuntos
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.schemas.auditoria_conjunto import NivelDesempeno
-from app.services.notificaciones_helpers import admins_del_conjunto, residentes_del_conjunto
+from app.services.notificaciones_helpers import admins_del_conjunto, reciclador_esta_presente, residentes_del_conjunto
+from app.utils.imagenes import guardar_imagen_subida
 
 # ¿Qué? Carpeta donde quedan las fotos de evidencia, servida luego como
 #       archivos estáticos en /uploads (ver main.py).
@@ -34,13 +32,6 @@ from app.services.notificaciones_helpers import admins_del_conjunto, residentes_
 #           usuario — antes todo el contenido educativo usaba solo links
 #           externos (YouTube, PDFs), nunca un archivo propio.
 CARPETA_EVIDENCIAS = Path(__file__).parent.parent / "uploads" / "evidencias-auditoria"
-
-TIPOS_IMAGEN_PERMITIDOS = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/webp": ".webp",
-}
-TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
 def _obtener_reciclador(db: Session, id_usuario: UUID) -> Reciclador:
@@ -51,10 +42,14 @@ def _obtener_reciclador(db: Session, id_usuario: UUID) -> Reciclador:
 
 
 def _verificar_autorizado(db: Session, id_reciclador: UUID, id_conjunto: UUID) -> None:
+    # ¿Qué? fecha_revocacion IS NULL — un reciclador al que ya le
+    #       revocaron el acceso no debe poder seguir auditando ese
+    #       conjunto, aunque alguna vez sí haya estado autorizado.
     autorizado = db.execute(
-        select(recicladores_conjuntos).where(
-            recicladores_conjuntos.c.id_reciclador == id_reciclador,
-            recicladores_conjuntos.c.id_conjunto_residencial == id_conjunto,
+        select(RecicladorConjunto).where(
+            RecicladorConjunto.id_reciclador == id_reciclador,
+            RecicladorConjunto.id_conjunto_residencial == id_conjunto,
+            RecicladorConjunto.fecha_revocacion.is_(None),
         )
     ).first()
     if autorizado is None:
@@ -65,78 +60,10 @@ def _verificar_autorizado(db: Session, id_reciclador: UUID, id_conjunto: UUID) -
 
 
 async def _guardar_evidencia(archivo: UploadFile) -> str:
-    """
-    ¿Qué? Valida tipo/tamaño de la foto y la guarda en disco con un nombre
-          aleatorio (evita que dos recicladores pisen el archivo del otro
-          si ambos suben algo llamado "foto.jpg").
-    ¿Impacto? Devuelve la ruta PÚBLICA (para guardar en la BD y servir al
-             frontend), no la ruta absoluta del servidor.
-    """
-    extension = TIPOS_IMAGEN_PERMITIDOS.get(archivo.content_type or "")
-    if extension is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="La evidencia debe ser una imagen JPG, PNG o WEBP.",
-        )
-
-    contenido = await archivo.read()
-    if len(contenido) > TAMANO_MAXIMO_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="La imagen no puede superar 5 MB.",
-        )
-    if len(contenido) == 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La imagen está vacía.")
-
-    # ¿Qué? El "Content-Type" de arriba lo escribe el navegador del cliente —
-    #       es solo una etiqueta, no una garantía de que el archivo sea de
-    #       verdad una imagen. Aquí se intenta abrir el archivo con Pillow,
-    #       que sí revisa el contenido real (la estructura interna del
-    #       archivo), no la etiqueta que lo acompaña.
-    # ¿Para qué? Sin este chequeo, alguien podía renombrar cualquier archivo
-    #           (ej. HTML con un script) a ".jpg" y declarar Content-Type
-    #           "image/jpeg" a mano, y el backend lo aceptaba igual.
-    # ¿Impacto? Un archivo que no es una imagen real (aunque tenga la
-    #           etiqueta correcta) se rechaza antes de guardarse en disco.
-    #
-    # ¿Qué? Esta verificación y la escritura a disco de abajo corren con
-    #       "asyncio.to_thread" — antes eran código síncrono normal dentro
-    #       de una función "async def".
-    # ¿Para qué? FastAPI corre en un solo hilo por worker (event loop).
-    #           Código síncrono que tarda (Pillow abriendo/verificando la
-    #           imagen entera, escribir varios MB a disco) BLOQUEA ese hilo
-    #           completo mientras corre — ninguna otra petición al backend
-    #           se atiende hasta que termina, así sea de otro usuario.
-    #           "asyncio.to_thread" mueve ese trabajo a un hilo aparte,
-    #           dejando el hilo principal libre para seguir atendiendo.
-    # ¿Impacto? Esto explica por qué subir varias fotos de evidencia se
-    #           sentía lento e intermitente — cada foto congelaba el
-    #           servidor entero mientras se procesaba, así fueran fotos de
-    #           otro reciclador en otra petición al mismo tiempo.
-    await asyncio.to_thread(_validar_contenido_imagen, contenido)
-
-    nombre_archivo = f"{uuid.uuid4()}{extension}"
-    ruta = CARPETA_EVIDENCIAS / nombre_archivo
-    await asyncio.to_thread(_escribir_evidencia, ruta, contenido)
-
-    return f"/uploads/evidencias-auditoria/{nombre_archivo}"
-
-
-def _validar_contenido_imagen(contenido: bytes) -> None:
-    """Parte bloqueante de _guardar_evidencia — corre en un hilo aparte."""
-    try:
-        Image.open(io.BytesIO(contenido)).verify()
-    except (UnidentifiedImageError, OSError):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El archivo no es una imagen válida.",
-        )
-
-
-def _escribir_evidencia(ruta: Path, contenido: bytes) -> None:
-    """La otra parte bloqueante — escribir el archivo en disco."""
-    CARPETA_EVIDENCIAS.mkdir(parents=True, exist_ok=True)
-    ruta.write_bytes(contenido)
+    """Valida y guarda una foto de evidencia — ver utils/imagenes.py para
+    el detalle de la validación (reutilizada también por los adjuntos de
+    comunicados/novedades, ver routers/uploads.py)."""
+    return await guardar_imagen_subida(archivo, CARPETA_EVIDENCIAS, "/uploads/evidencias-auditoria")
 
 
 MAXIMO_FOTOS_EVIDENCIA = 3
@@ -168,6 +95,19 @@ async def crear_auditoria(
 ) -> AuditoriaConjunto:
     reciclador = _obtener_reciclador(db, id_usuario_reciclador)
     _verificar_autorizado(db, reciclador.id_reciclador, id_conjunto_residencial)
+
+    # ¿Qué? Control de presencia (mismo concepto que ya se aplica a las
+    #       notificaciones del reciclador, ver notificaciones_helpers.py) —
+    #       auditar solo tiene sentido con el reciclador físicamente en el
+    #       conjunto, no en cualquier momento.
+    # ¿Para qué? Antes de esto, un reciclador podía auditar un conjunto sin
+    #           haber avisado su llegada — el único candado era el de 24h
+    #           de abajo, sin relación con si de verdad estaba ahí.
+    if not reciclador_esta_presente(db, id_conjunto_residencial, id_usuario_reciclador):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debes avisar tu llegada a este conjunto antes de poder auditarlo.",
+        )
 
     if _ya_audito_recientemente(db, reciclador.id_reciclador, id_conjunto_residencial):
         raise HTTPException(
@@ -347,11 +287,16 @@ def listar_historial(db: Session, current_user: Usuario) -> list[AuditoriaConjun
     stmt = (
         select(AuditoriaConjunto)
         .where(AuditoriaConjunto.id_conjunto_residencial.in_(ids_conjuntos))
-        # ¿Qué? Se desempata por id_auditoria (siempre creciente) además de
-        #       created_at — dentro de una misma transacción, NOW() de
-        #       Postgres devuelve el mismo valor para varias inserciones
-        #       seguidas, así que created_at solo no basta para el orden.
-        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.id_auditoria.desc())
+        # ¿Qué? Se desempata por orden_interno (contador interno siempre
+        #       creciente, nunca expuesto en la API) además de created_at
+        #       — dentro de una misma transacción, NOW() de Postgres
+        #       devuelve el mismo valor para varias inserciones seguidas,
+        #       así que created_at solo no basta para el orden. Antes se
+        #       usaba id_auditoria para esto (funcionaba porque UUIDv7
+        #       ordena cronológicamente), pero con UUIDv4 (issue #167) el
+        #       ID ya no sirve como desempate — ver orden_interno en el
+        #       modelo.
+        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
         .limit(50)
     )
     return list(db.execute(stmt).scalars().all())
@@ -366,6 +311,6 @@ def listar_mias(db: Session, id_usuario_reciclador: UUID) -> list[AuditoriaConju
     stmt = (
         select(AuditoriaConjunto)
         .where(AuditoriaConjunto.id_reciclador == reciclador.id_reciclador)
-        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.id_auditoria.desc())
+        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
     )
     return list(db.execute(stmt).scalars().all())
