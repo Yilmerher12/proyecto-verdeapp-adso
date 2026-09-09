@@ -12,9 +12,6 @@ import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResult
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyRecord = Record<string, any>;
-
 interface EstadoShut {
   lleno: boolean;
   created_at: string | null;
@@ -22,7 +19,7 @@ interface EstadoShut {
 
 export function ResidenteDashboard() {
   const { t } = useTranslation();
-  const { user, accessToken } = useAuth() as AnyRecord;
+  const { user } = useAuth();
   const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || t("roles.residente");
   const { WatermarkIcon } = ROLE_THEME[RoleId.RESIDENTE];
 
@@ -35,13 +32,11 @@ export function ResidenteDashboard() {
   const [errorReporte, setErrorReporte] = useState(false);
   const [errorAccion, setErrorAccion] = useState(false);
 
-  const headers = { Authorization: `Bearer ${accessToken}` };
-
   const cargarDatos = async () => {
     try {
       const [resEstado, resNotifs] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/v1/notificaciones/estado-shut`, { headers }),
-        axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers }),
+        axios.get(`${API_BASE_URL}/api/v1/notificaciones/estado-shut`),
+        axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`),
       ]);
       setEstadoShut(resEstado.data);
       setNotificaciones(resNotifs.data);
@@ -58,22 +53,18 @@ export function ResidenteDashboard() {
   };
 
   useEffect(() => {
-    if (!accessToken) return;
+    if (!user) return;
     cargarDatos();
     const interval = setInterval(cargarDatos, 20000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+     
+  }, [user]);
 
   const reportarShutLleno = async () => {
     setEnviando(true);
     setErrorReporte(false);
     try {
-      await axios.post(
-        `${API_BASE_URL}/api/v1/notificaciones/enviar`,
-        { tipo: "SHUT_LLENO" },
-        { headers }
-      );
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/enviar`, { tipo: "SHUT_LLENO" });
       setFeedbackOk(true);
       setTimeout(() => setFeedbackOk(false), 3500);
       cargarDatos();
@@ -89,7 +80,7 @@ export function ResidenteDashboard() {
 
   const marcarLeida = async (id: string) => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {});
       setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
       notificarNotificacionesActualizadas();
     } catch {
@@ -99,7 +90,7 @@ export function ResidenteDashboard() {
 
   const marcarTodasLeidas = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {});
       setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
       notificarNotificacionesActualizadas();
     } catch {
@@ -109,7 +100,7 @@ export function ResidenteDashboard() {
 
   const limpiarLeidas = async () => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers });
+      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`);
       setNotificaciones((prev) => prev.filter((n) => !n.leida));
     } catch {
       setErrorAccion(true);
@@ -166,7 +157,6 @@ export function ResidenteDashboard() {
       {!cargando && (
         <AuditoriaResultadoBanner
           notificaciones={notificaciones}
-          token={accessToken ?? ""}
           onMarcarLeida={marcarLeida}
         />
       )}
@@ -244,7 +234,7 @@ export function ResidenteDashboard() {
         </>
       )}
 
-      <HistorialAuditorias token={accessToken ?? ""} />
+      <HistorialAuditorias />
     </div>
   );
 }

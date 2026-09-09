@@ -18,11 +18,10 @@ import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResulta
 
 interface AuditoriaResultadoBannerProps {
   notificaciones: NotificacionItem[];
-  token: string;
   onMarcarLeida: (id: string) => void;
 }
 
-export function AuditoriaResultadoBanner({ notificaciones, token, onMarcarLeida }: AuditoriaResultadoBannerProps) {
+export function AuditoriaResultadoBanner({ notificaciones, onMarcarLeida }: AuditoriaResultadoBannerProps) {
   const { t } = useTranslation();
   const [abierta, setAbierta] = useState<{ idNotificacion: string; idAuditoria: string } | null>(null);
 
@@ -59,7 +58,7 @@ export function AuditoriaResultadoBanner({ notificaciones, token, onMarcarLeida 
       </div>
 
       {abierta && (
-        <AuditoriaResultadoModal idAuditoria={abierta.idAuditoria} token={token} onClose={cerrarYMarcarLeida} />
+        <AuditoriaResultadoModal idAuditoria={abierta.idAuditoria} onClose={cerrarYMarcarLeida} />
       )}
     </div>
   );

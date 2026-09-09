@@ -16,13 +16,12 @@ interface GuiaApoyoFieldProps {
   label: string;
   value: string;
   onChange: (url: string) => void;
-  token: string;
 }
 
 const TIPOS_PERMITIDOS = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024;
 
-export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoFieldProps) {
+export function GuiaApoyoField({ label, value, onChange }: GuiaApoyoFieldProps) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(false);
@@ -48,7 +47,7 @@ export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoField
 
     setSubiendo(true);
     try {
-      const url = await subirAdjunto(archivo, token, { permitirDocumentos: true });
+      const url = await subirAdjunto(archivo, { permitirDocumentos: true });
       onChange(url);
     } catch {
       setError(t("guiaApoyo.errorSubida"));

@@ -22,11 +22,10 @@ import { tiempoRelativo } from "@/components/dashboard/NotificationFeed";
 
 interface AuditoriaResultadoModalProps {
   idAuditoria: string;
-  token: string;
   onClose: () => void;
 }
 
-export function AuditoriaResultadoModal({ idAuditoria, token, onClose }: AuditoriaResultadoModalProps) {
+export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResultadoModalProps) {
   const { t } = useTranslation();
   const [auditoria, setAuditoria] = useState<AuditoriaConjunto | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -34,11 +33,11 @@ export function AuditoriaResultadoModal({ idAuditoria, token, onClose }: Auditor
   const [imagenAmpliada, setImagenAmpliada] = useState<string | null>(null);
 
   useEffect(() => {
-    obtenerAuditoria(idAuditoria, token)
+    obtenerAuditoria(idAuditoria)
       .then(setAuditoria)
       .catch(() => setError(true))
       .finally(() => setCargando(false));
-  }, [idAuditoria, token]);
+  }, [idAuditoria]);
 
   const nivel = auditoria ? NIVELES_DESEMPENO[auditoria.nivel_desempeno] : null;
 

@@ -47,17 +47,17 @@ export function CategoriaEducativaPage() {
   const { t } = useTranslation();
   const { categoria } = useParams<{ categoria: string }>();
   const categoriaDecodificada = decodeURIComponent(categoria ?? "");
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    if (!accessToken) return;
-    listarContenido(accessToken)
+    if (!user) return;
+    listarContenido()
       .then(setContenido)
       .finally(() => setCargando(false));
-  }, [accessToken]);
+  }, [user]);
 
   const temas = contenido.filter((c) => c.modulo_categoria === categoriaDecodificada);
   // ¿Qué? Se desestructura del objeto (no se llama como función) a propósito

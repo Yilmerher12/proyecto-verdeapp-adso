@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -124,7 +124,7 @@ const ACCIONES_META = [
 
 export function RecicladorDashboard() {
   const { t } = useTranslation();
-  const { user, accessToken }: any = useAuth();
+  const { user } = useAuth();
   const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || t("roles.reciclador");
   const { WatermarkIcon } = ROLE_THEME[RoleId.RECICLADOR];
 
@@ -159,17 +159,15 @@ export function RecicladorDashboard() {
   const [feedbackAuditoria, setFeedbackAuditoria] = useState<string | null>(null);
   const [auditoriaAbierta, setAuditoriaAbierta] = useState<string | null>(null);
 
-  const headers = { Authorization: `Bearer ${accessToken}` };
-
   const cargarDatos = () => {
     Promise.all([
-      axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-invitaciones`, { headers }),
-      axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-conjuntos-autorizados`, { headers }),
-      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers }),
-      listarMisAuditorias(accessToken ?? ""),
+      axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-invitaciones`),
+      axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-conjuntos-autorizados`),
+      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`),
+      listarMisAuditorias(),
       // ¿Qué? Estado de presencia por conjunto — issue de "control de
       //       notificaciones del reciclador según si está en el conjunto".
-      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mi-estado-reciclador`, { headers }),
+      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mi-estado-reciclador`),
     ])
       .then(([resInv, resConj, resNotifs, misAuditorias, resEstado]) => {
         setInvitaciones(resInv.data);
@@ -189,13 +187,13 @@ export function RecicladorDashboard() {
   };
 
   useEffect(() => {
-    if (accessToken) {
+    if (user) {
       cargarDatos();
       const interval = setInterval(cargarDatos, 20000);
       return () => clearInterval(interval);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+     
+  }, [user]);
 
   const responderInvitacion = async (id: string, aceptar: boolean) => {
     setProcesandoId(id);
@@ -203,8 +201,7 @@ export function RecicladorDashboard() {
     try {
       await axios.post(
         `${API_BASE_URL}/api/v1/reciclador-conjunto/invitaciones/${id}/responder`,
-        { aceptar },
-        { headers }
+        { aceptar }
       );
       cargarDatos();
     } catch {
@@ -235,11 +232,10 @@ export function RecicladorDashboard() {
     if (!modalTipo || !conjuntoSeleccionado || motivoModal) return;
     setEnviandoNotif(true);
     try {
-      await axios.post(
-        `${API_BASE_URL}/api/v1/notificaciones/enviar`,
-        { tipo: modalTipo, id_conjunto_residencial: conjuntoSeleccionado },
-        { headers }
-      );
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/enviar`, {
+        tipo: modalTipo,
+        id_conjunto_residencial: conjuntoSeleccionado,
+      });
       const accion = ACCIONES.find((a) => a.tipo === modalTipo);
       setFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
       setTimeout(() => setFeedbackOk(null), 3500);
@@ -256,7 +252,7 @@ export function RecicladorDashboard() {
 
   const marcarLeida = async (id: string) => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {});
       setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
       notificarNotificacionesActualizadas();
     } catch {
@@ -266,7 +262,7 @@ export function RecicladorDashboard() {
 
   const marcarTodasLeidas = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {});
       setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
       notificarNotificacionesActualizadas();
     } catch {
@@ -276,7 +272,7 @@ export function RecicladorDashboard() {
 
   const limpiarLeidas = async () => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers });
+      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`);
       setNotificaciones((prev) => prev.filter((n) => !n.leida));
     } catch {
       setErrorAccion(true);
@@ -581,7 +577,6 @@ export function RecicladorDashboard() {
         {auditoriaAbierta && (
           <AuditoriaResultadoModal
             idAuditoria={auditoriaAbierta}
-            token={accessToken ?? ""}
             onClose={() => setAuditoriaAbierta(null)}
           />
         )}
@@ -676,7 +671,6 @@ export function RecicladorDashboard() {
         <AuditoriaConjuntoForm
           conjuntos={conjuntosAutorizados}
           conjuntoPreseleccionado={conjuntoParaAuditar}
-          token={accessToken ?? ""}
           onClose={() => setConjuntoParaAuditar(null)}
           onSuccess={alEnviarAuditoria}
         />

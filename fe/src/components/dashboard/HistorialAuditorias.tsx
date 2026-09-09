@@ -17,22 +17,18 @@ import { listarHistorial, type AuditoriaConjunto } from "@/lib/auditoriaConjunto
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 
-interface HistorialAuditoriasProps {
-  token: string;
-}
-
-export function HistorialAuditorias({ token }: HistorialAuditoriasProps) {
+export function HistorialAuditorias() {
   const { t } = useTranslation();
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAbierta, setIdAbierta] = useState<string | null>(null);
 
   useEffect(() => {
-    listarHistorial(token)
+    listarHistorial()
       .then(setAuditorias)
       .catch(() => setAuditorias([]))
       .finally(() => setCargando(false));
-  }, [token]);
+  }, []);
 
   // ¿Qué? El nombre del conjunto solo se muestra por fila si hay más de
   //       uno en la lista — un Admin puede administrar varios conjuntos,
@@ -83,7 +79,7 @@ export function HistorialAuditorias({ token }: HistorialAuditoriasProps) {
       )}
 
       {idAbierta && (
-        <AuditoriaResultadoModal idAuditoria={idAbierta} token={token} onClose={() => setIdAbierta(null)} />
+        <AuditoriaResultadoModal idAuditoria={idAbierta} onClose={() => setIdAbierta(null)} />
       )}
     </div>
   );

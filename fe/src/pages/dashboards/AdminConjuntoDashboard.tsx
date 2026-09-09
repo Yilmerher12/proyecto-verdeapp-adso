@@ -65,12 +65,10 @@ function BadgeEstado({ estado }: { estado: string }) {
 function SeccionCodigoAcceso({
   idConjunto,
   codigoAcceso,
-  accessToken,
   onRegenerado,
 }: {
   idConjunto: string;
   codigoAcceso: string;
-  accessToken: string;
   onRegenerado: () => void;
 }) {
   const { t } = useTranslation();
@@ -94,11 +92,10 @@ function SeccionCodigoAcceso({
   };
 
   const regenerar = async () => {
-    if (!accessToken) return;
     setRegenerando(true);
     setError(null);
     try {
-      await regenerarCodigoAcceso(idConjunto, accessToken);
+      await regenerarCodigoAcceso(idConjunto);
       setConfirmando(false);
       onRegenerado();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -197,7 +194,7 @@ function SeccionCodigoAcceso({
  *           principal — cada conjunto administrado tiene su propia
  *           lista de invitaciones, así que esto vive por tarjeta.
  */
-function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; accessToken: string }) {
+function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
   const { t } = useTranslation();
   const [autorizados, setAutorizados] = useState<RecicladorAutorizado[]>([]);
   const [cargandoAutorizados, setCargandoAutorizados] = useState(true);
@@ -231,7 +228,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
   //           de invitaciones, cada una con su propio título honesto.
   const cargarAutorizados = () => {
     setCargandoAutorizados(true);
-    obtenerRecicladoresAutorizados(idConjunto, accessToken)
+    obtenerRecicladoresAutorizados(idConjunto)
       .then(setAutorizados)
       .catch((err) => console.error("Error cargando recicladores autorizados", err))
       .finally(() => setCargandoAutorizados(false));
@@ -239,7 +236,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
 
   const cargarInvitaciones = () => {
     setCargando(true);
-    obtenerInvitacionesDeConjunto(idConjunto, accessToken)
+    obtenerInvitacionesDeConjunto(idConjunto)
       .then(setInvitaciones)
       .catch((err) => console.error("Error cargando invitaciones de reciclador", err))
       .finally(() => setCargando(false));
@@ -259,7 +256,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
 
     setEnviando(true);
     try {
-      await invitarReciclador(correoNuevo.trim(), idConjunto, accessToken);
+      await invitarReciclador(correoNuevo.trim(), idConjunto);
       setCorreoNuevo("");
       setMostrarFormulario(false);
       cargarInvitaciones();
@@ -277,7 +274,7 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
     setRevocando(true);
     setErrorRevocar(null);
     try {
-      await revocarReciclador(idConjunto, aRevocar.id_reciclador, accessToken);
+      await revocarReciclador(idConjunto, aRevocar.id_reciclador);
       setARevocar(null);
       cargarAutorizados();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -489,12 +486,10 @@ function SeccionRecicladores({ idConjunto, accessToken }: { idConjunto: string; 
 function SeccionDesvinculacion({
   idConjunto,
   tieneSolicitudPendiente,
-  accessToken,
   onSolicitudEnviada,
 }: {
   idConjunto: string;
   tieneSolicitudPendiente: boolean;
-  accessToken: string;
   onSolicitudEnviada: () => void;
 }) {
   const { t } = useTranslation();
@@ -507,7 +502,7 @@ function SeccionDesvinculacion({
     setEnviando(true);
     setError(null);
     try {
-      await solicitarDesvinculacion(idConjunto, motivo.trim() || undefined, accessToken);
+      await solicitarDesvinculacion(idConjunto, motivo.trim() || undefined);
       setMostrarFormulario(false);
       setMotivo("");
       onSolicitudEnviada();
@@ -602,7 +597,7 @@ function SeccionDesvinculacion({
  */
 export function AdminConjuntoDashboard() {
   const { t } = useTranslation();
-  const { user, accessToken } = useAuth();
+  const { user } = useAuth();
   const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_CONJUNTO];
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -616,21 +611,19 @@ export function AdminConjuntoDashboard() {
   const [errorNotifs, setErrorNotifs] = useState(false);
   const [errorAccionNotif, setErrorAccionNotif] = useState(false);
 
-  const authHeaders = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-
   const cargarConjuntos = () => {
-    if (!accessToken) return;
+    if (!user) return;
     setCargando(true);
-    obtenerMisConjuntos(accessToken)
+    obtenerMisConjuntos()
       .then(setConjuntos)
       .catch((err) => console.error("Error cargando mis conjuntos", err))
       .finally(() => setCargando(false));
   };
 
   const cargarNotificaciones = () => {
-    if (!accessToken) return;
+    if (!user) return;
     axios
-      .get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers: authHeaders })
+      .get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`)
       .then((res) => {
         setNotificaciones(res.data);
         setErrorNotifs(false);
@@ -645,7 +638,7 @@ export function AdminConjuntoDashboard() {
 
   const marcarLeida = async (id: string) => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers: authHeaders });
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {});
       setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
       notificarNotificacionesActualizadas();
     } catch {
@@ -655,7 +648,7 @@ export function AdminConjuntoDashboard() {
 
   const marcarTodasLeidas = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers: authHeaders });
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {});
       setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
       notificarNotificacionesActualizadas();
     } catch {
@@ -665,7 +658,7 @@ export function AdminConjuntoDashboard() {
 
   const limpiarLeidas = async () => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers: authHeaders });
+      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`);
       setNotificaciones((prev) => prev.filter((n) => !n.leida));
     } catch {
       setErrorAccionNotif(true);
@@ -678,7 +671,7 @@ export function AdminConjuntoDashboard() {
     const interval = setInterval(cargarNotificaciones, 20000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+  }, [user]);
 
   const iniciarEdicion = (c: ConjuntoAdministrado) => {
     setEditandoId(c.id_conjunto_residencial);
@@ -691,10 +684,10 @@ export function AdminConjuntoDashboard() {
   };
 
   const guardarEdicion = async (id: string) => {
-    if (!accessToken) return;
+    if (!user) return;
     setGuardando(true);
     try {
-      await editarMiConjunto(id, { nit: formEdicion.nit || null }, accessToken);
+      await editarMiConjunto(id, { nit: formEdicion.nit || null });
       setMensaje(t("dashboards.adminConjunto.editForm.successMessage"));
       setEditandoId(null);
       cargarConjuntos();
@@ -737,7 +730,6 @@ export function AdminConjuntoDashboard() {
       {!cargandoNotifs && (
         <AuditoriaResultadoBanner
           notificaciones={notificaciones}
-          token={accessToken ?? ""}
           onMarcarLeida={marcarLeida}
         />
       )}
@@ -864,19 +856,17 @@ export function AdminConjuntoDashboard() {
                                 autorizados; tiene más sentido vivir aquí
                                 que en una sección global aparte.
                     */}
-                    {accessToken && (
+                    {user && (
                       <>
                         <SeccionCodigoAcceso
                           idConjunto={c.id_conjunto_residencial}
                           codigoAcceso={c.codigo_acceso}
-                          accessToken={accessToken}
                           onRegenerado={cargarConjuntos}
                         />
-                        <SeccionRecicladores idConjunto={c.id_conjunto_residencial} accessToken={accessToken} />
+                        <SeccionRecicladores idConjunto={c.id_conjunto_residencial} />
                         <SeccionDesvinculacion
                           idConjunto={c.id_conjunto_residencial}
                           tieneSolicitudPendiente={c.tiene_solicitud_pendiente}
-                          accessToken={accessToken}
                           onSolicitudEnviada={cargarConjuntos}
                         />
                       </>
@@ -890,7 +880,7 @@ export function AdminConjuntoDashboard() {
       </div>
 
       {/* Historial de auditorías — log histórico, sin urgencia, va al final. */}
-      <HistorialAuditorias token={accessToken ?? ""} />
+      <HistorialAuditorias />
     </div>
   );
 }

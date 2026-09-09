@@ -174,16 +174,22 @@ class TestLogin:
     URL = "/api/v1/auth/login"
 
     def test_login_success(self, client: TestClient, test_user: object) -> None:
+        """RNF-001.9: los tokens ya no viajan en el cuerpo de la respuesta,
+        sino como cookies httpOnly — se revisan ahí, no en response.json()."""
         response = client.post(
             self.URL,
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
         assert response.status_code == 200
-        data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
-        assert data["token_type"] == "bearer"
-        assert len(data["access_token"]) > 0
+        assert len(response.cookies.get("access_token") or "") > 0
+        assert len(response.cookies.get("refresh_token") or "") > 0
+
+        # ¿Qué? httpx no expone los atributos de la cookie (HttpOnly,
+        #       SameSite) por separado — hay que revisar la cabecera cruda.
+        set_cookie_headers = response.headers.get_list("set-cookie")
+        access_cookie = next(h for h in set_cookie_headers if h.startswith("access_token="))
+        assert "httponly" in access_cookie.lower()
+        assert "samesite=strict" in access_cookie.lower()
 
     def test_login_wrong_password(self, client: TestClient, test_user: object) -> None:
         response = client.post(
@@ -298,64 +304,63 @@ class TestRefresh:
     URL = "/api/v1/auth/refresh"
 
     def test_refresh_success(self, client: TestClient, test_user: object) -> None:
-        """Refresh con token válido → 200 + nuevos tokens.
+        """Refresh con sesión válida (cookie) → 200 + nuevas cookies.
 
-        ¿Qué? No se compara que el nuevo refresh_token sea distinto al
-              anterior. create_refresh_token() genera el JWT a partir de
-              {sub, role_id, exp} — si login y refresh ocurren en el mismo
-              segundo (como pasa siempre en un test), "exp" calculado es
-              idéntico, y el JWT firmado también sale idéntico. No es un
-              fallo de seguridad: en un escenario real, login y refresh
-              nunca ocurren en el mismo segundo exacto.
+        ¿Qué? El mismo TestClient guarda la cookie que dejó el login y la
+              reenvía sola en la siguiente petición, igual que haría un
+              navegador real — no hace falta extraer ni reenviar nada a mano.
         """
-        login_response = client.post(
+        client.post(
             "/api/v1/auth/login",
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
-        refresh_token = login_response.json()["refresh_token"]
 
-        response = client.post(self.URL, json={"refresh_token": refresh_token})
+        response = client.post(self.URL)
 
         assert response.status_code == 200
-        data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
+        assert len(response.cookies.get("access_token") or "") > 0
+        assert len(response.cookies.get("refresh_token") or "") > 0
 
     def test_refresh_invalid_token(self, client: TestClient) -> None:
+        """Sin cookie de sesión, el refresh_token del cuerpo es la vía alterna."""
         response = client.post(self.URL, json={"refresh_token": "token.invalido.falso"})
+        assert response.status_code == 401
+
+    def test_refresh_sin_sesion_y_sin_body_rechaza_con_401(self, client: TestClient) -> None:
+        response = client.post(self.URL)
         assert response.status_code == 401
 
     def test_refresh_with_access_token_rejected(
         self, client: TestClient, test_user: object
     ) -> None:
+        """Un access_token explícito en el body (no la cookie) debe rechazarse
+        igual si se pasa como si fuera un refresh_token."""
         login_response = client.post(
             "/api/v1/auth/login",
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
-        access_token = login_response.json()["access_token"]
+        access_token = login_response.cookies.get("access_token")
         response = client.post(self.URL, json={"refresh_token": access_token})
         assert response.status_code == 401
 
     def test_refresh_for_inactive_user(self, client: TestClient, test_user, db) -> None:
-        login_response = client.post(
+        client.post(
             "/api/v1/auth/login",
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
-        refresh_token = login_response.json()["refresh_token"]
         test_user.is_active = False
         db.commit()
-        response = client.post(self.URL, json={"refresh_token": refresh_token})
+        response = client.post(self.URL)
         assert response.status_code == 403
 
     def test_refresh_for_disabled_user(self, client: TestClient, test_user, db) -> None:
-        login_response = client.post(
+        client.post(
             "/api/v1/auth/login",
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
-        refresh_token = login_response.json()["refresh_token"]
         test_user.habilitado = False
         db.commit()
-        response = client.post(self.URL, json={"refresh_token": refresh_token})
+        response = client.post(self.URL)
         assert response.status_code == 403
 
 
@@ -365,11 +370,16 @@ class TestLogout:
     URL = "/api/v1/auth/logout"
 
     def _login(self, client: TestClient) -> dict[str, str]:
+        """Inicia sesión y devuelve los valores de las cookies que dejó el
+        login — ya no vienen en el cuerpo de la respuesta (RNF-001.9)."""
         respuesta = client.post(
             "/api/v1/auth/login",
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
-        return respuesta.json()
+        return {
+            "access_token": respuesta.cookies.get("access_token"),
+            "refresh_token": respuesta.cookies.get("refresh_token"),
+        }
 
     def test_logout_invalida_el_access_token(
         self, client: TestClient, test_user: object
@@ -806,7 +816,7 @@ class TestEmailVerification:
         )
 
         assert login_response.status_code == 200
-        assert "access_token" in login_response.json()
+        assert login_response.cookies.get("access_token")
 
     def test_verify_email_invalid_token(self, client: TestClient) -> None:
         response = client.post(self.URL, json={"token": "token-falso-inexistente"})

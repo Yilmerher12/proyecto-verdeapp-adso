@@ -23,7 +23,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { Modal } from "@/components/ui/Modal";
 import { RoleId } from "@/types/auth";
-import { API_BASE_URL } from "@/api/axios";
+import api, { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { onNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { onFotoPerfilActualizada } from "@/lib/profileEvents";
@@ -44,7 +44,7 @@ export function AppShell({ children }: AppShellProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [noLeidas, setNoLeidas] = useState(0);
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState<string | null>(null);
-  const { user, accessToken } = useAuth() as any;
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -63,9 +63,11 @@ export function AppShell({ children }: AppShellProps) {
     // ¿Impacto? Sin ningún cambio de estado de React de por medio, no hay
     //           ningún re-render que alcance a mostrar "/login" de paso.
 
-    // ¿Qué? HU-008/RQF-007 (RN-001): antes de borrar los tokens del
-    //       navegador, se le avisa al servidor que los revoque de verdad.
-    // ¿Para qué? Sin esto, "cerrar sesión" solo borraba los tokens de ESTE
+    // ¿Qué? HU-008/RQF-007 (RN-001): antes de borrar la sesión del
+    //       navegador, se le avisa al servidor que revoque los tokens de
+    //       verdad. RNF-001.9: ambos tokens viajan solos en las cookies
+    //       httpOnly — ya no hace falta leer ni mandar nada a mano.
+    // ¿Para qué? Sin esto, "cerrar sesión" solo borraba la sesión de ESTE
     //           navegador — el mismo access/refresh token, si alguien los
     //           hubiera copiado antes, seguía funcionando contra el backend
     //           hasta que expiraran solos (15 min / 7 días).
@@ -73,30 +75,24 @@ export function AppShell({ children }: AppShellProps) {
     //           responde (sin red, caído), el usuario igual debe poder
     //           salir de su sesión en este navegador — no tiene sentido
     //           bloquear el logout local por un problema de red.
-    const refreshTokenGuardado = sessionStorage.getItem("refresh_token");
-    if (refreshTokenGuardado) {
-      try {
-        await authApi.logoutUser({ refresh_token: refreshTokenGuardado });
-      } catch {
-        // Falla silenciosa a propósito — ver comentario de arriba.
-      }
+    try {
+      await authApi.logoutUser();
+    } catch {
+      // Falla silenciosa a propósito — ver comentario de arriba.
     }
 
-    sessionStorage.removeItem("access_token");
-    sessionStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("verdeapp:sesion-activa");
     sessionStorage.removeItem("landing-scroll-y");
     window.location.href = "/";
   };
 
   // Polling de notificaciones no leídas cada 20s
   useEffect(() => {
-    if (!accessToken) return;
+    if (!user) return;
     const fetchCount = () => {
-      fetch(`${API_BASE_URL}/api/v1/notificaciones/no-leidas-count`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
-        .then((r) => r.json())
-        .then((d) => setNoLeidas(d.count ?? 0))
+      api
+        .get<{ count: number }>("/api/v1/notificaciones/no-leidas-count")
+        .then((r) => setNoLeidas(r.data.count ?? 0))
         .catch(() => {});
     };
     fetchCount();
@@ -110,7 +106,7 @@ export function AppShell({ children }: AppShellProps) {
       clearInterval(interval);
       unsubscribe();
     };
-  }, [accessToken]);
+  }, [user]);
 
   // ¿Qué? Trae la foto de perfil para el círculo de esta tarjeta lateral.
   // ¿Para qué? Este círculo lee su nombre/rol del token de sesión (JWT,
@@ -119,19 +115,17 @@ export function AppShell({ children }: AppShellProps) {
   //           evento de abajo, subir una foto nueva ahí solo se vería
   //           reflejado aquí después de recargar la página.
   useEffect(() => {
-    if (!accessToken) return;
+    if (!user) return;
     const cargarFotoPerfil = () => {
-      fetch(`${API_BASE_URL}/api/v1/users/me`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
-        .then((r) => r.json())
-        .then((d) => setFotoPerfilUrl(d.foto_perfil_url ?? null))
+      api
+        .get<{ foto_perfil_url: string | null }>("/api/v1/users/me")
+        .then((r) => setFotoPerfilUrl(r.data.foto_perfil_url ?? null))
         .catch(() => {});
     };
     cargarFotoPerfil();
     const unsubscribe = onFotoPerfilActualizada(cargarFotoPerfil);
     return unsubscribe;
-  }, [accessToken]);
+  }, [user]);
 
   const userData = user as any;
   const roleId = (userData?.role_id || userData?.id_rol || RoleId.RESIDENTE) as RoleId;

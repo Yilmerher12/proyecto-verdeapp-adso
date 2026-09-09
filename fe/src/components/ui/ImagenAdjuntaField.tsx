@@ -23,7 +23,6 @@ interface ImagenAdjuntaFieldProps {
   label: string;
   value: string;
   onChange: (url: string) => void;
-  token: string;
   /** ¿Qué? Además de imagen, acepta PDF/Word/Excel. Default: false (solo imagen). */
   permitirDocumentos?: boolean;
 }
@@ -51,7 +50,6 @@ export function ImagenAdjuntaField({
   label,
   value,
   onChange,
-  token,
   permitirDocumentos = false,
 }: ImagenAdjuntaFieldProps) {
   const { t } = useTranslation();
@@ -76,7 +74,7 @@ export function ImagenAdjuntaField({
 
     setSubiendo(true);
     try {
-      const url = await subirAdjunto(archivo, token, { permitirDocumentos });
+      const url = await subirAdjunto(archivo, { permitirDocumentos });
       onChange(url);
     } catch {
       setError(t("imagenAdjunta.errorSubida"));

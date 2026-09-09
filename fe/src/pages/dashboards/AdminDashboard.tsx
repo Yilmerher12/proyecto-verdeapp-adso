@@ -59,7 +59,7 @@ const ENDPOINT_POR_TAB: Record<TabUsuarios, string> = {
 
 export function AdminDashboard() {
   const { t } = useTranslation();
-  const { user, accessToken } = useAuth();
+  const { user } = useAuth();
   // ¿Qué? "Invitar administrador" y "Asignar conjunto adicional" abren cada
   //       una su propio <Modal> en vez de expandirse dentro de la tarjeta.
   //       Antes, al expandir el formulario inline, esa tarjeta crecía mucho
@@ -104,14 +104,12 @@ export function AdminDashboard() {
   // ¿Qué? Localidades para el filtro — mismo endpoint que ya usa el
   //       Directorio y el formulario de registro.
   useEffect(() => {
-    if (!accessToken) return;
+    if (!user) return;
     axios
-      .get(`${API_BASE_URL}/api/v1/geography/localidades`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
+      .get(`${API_BASE_URL}/api/v1/geography/localidades`)
       .then((res) => setLocalidades(res.data))
       .catch(() => {});
-  }, [accessToken]);
+  }, [user]);
 
   // ¿Qué? Búsqueda en tiempo real, con un pequeño "debounce" de 350ms.
   // ¿Para qué? Antes había que presionar Enter — funcional, pero incómodo.
@@ -138,12 +136,12 @@ export function AdminDashboard() {
   //           sesión y los filtros — escala a miles de usuarios sin
   //           traerlos todos de una vez.
   useEffect(() => {
-    if (!accessToken) return;
+    if (!user) return;
     // ¿Qué? Reiniciar "cargando"/"error" antes de disparar la petición —
     //       mismo patrón exacto que ya usa DirectorioPage.tsx sin que la
     //       regla lo marque ahí. No forma un ciclo: ninguno de los dos
     //       estados es dependencia de este efecto.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setCargando(true);
     setError(false);
 
@@ -159,10 +157,7 @@ export function AdminDashboard() {
     }
 
     axios
-      .get(`${API_BASE_URL}/api/v1/admin/${ENDPOINT_POR_TAB[tab]}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params,
-      })
+      .get(`${API_BASE_URL}/api/v1/admin/${ENDPOINT_POR_TAB[tab]}`, { params })
       .then((res) => {
         const { items, total: totalRes } = res.data as { items: unknown[]; total: number };
         if (tab === "residentes") setResidentesData(items as ResidenteRow[]);
@@ -175,7 +170,7 @@ export function AdminDashboard() {
         setError(true);
       })
       .finally(() => setCargando(false));
-  }, [accessToken, tab, search, localidadId, orderBy, orderDir, pagina]);
+  }, [user, tab, search, localidadId, orderBy, orderDir, pagina]);
 
   // ¿Qué? Cada uno de estos manejadores cambia un filtro Y reinicia la
   //       página a la primera — evita quedar "varado" en una página que ya
@@ -219,14 +214,13 @@ export function AdminDashboard() {
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
   const ejecutarCambioHabilitado = async () => {
-    if (!confirmando || !accessToken) return;
+    if (!confirmando || !user) return;
     setActualizando(true);
     setErrorAccion(null);
     try {
       await axios.patch(
         `${API_BASE_URL}/api/v1/admin/usuarios/${encodeURIComponent(confirmando.correo)}/habilitado`,
-        { habilitado: confirmando.nuevoEstado },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { habilitado: confirmando.nuevoEstado }
       );
       // ¿Qué? Actualiza la fila en el arreglo correspondiente a la pestaña
       //       activa, sin tener que recargar toda la página desde el
@@ -632,20 +626,20 @@ export function AdminDashboard() {
       {mostrarModalInvitar && (
         <Modal onClose={() => setMostrarModalInvitar(false)} wide aria-label={t("invitarAdminConjunto.title")}>
           <div className="p-6 sm:p-8">
-            <InvitarAdminConjuntoForm token={accessToken || ""} />
+            <InvitarAdminConjuntoForm />
           </div>
         </Modal>
       )}
 
-      {mostrarModalAsignar && accessToken && (
+      {mostrarModalAsignar && (
         <Modal onClose={() => setMostrarModalAsignar(false)} wide aria-label={t("desvinculacion.asignarAdicional.sectionTitle")}>
           <div className="p-6 sm:p-8">
-            <AsignarConjuntoAdicionalForm token={accessToken} />
+            <AsignarConjuntoAdicionalForm />
           </div>
         </Modal>
       )}
 
-      {accessToken && <SolicitudesDesvinculacion token={accessToken} />}
+      {user && <SolicitudesDesvinculacion />}
 
       {confirmando && (
         <Modal onClose={() => setConfirmando(null)} aria-label={t("dashboards.admin.usersSection.status.confirmButton")}>

@@ -61,7 +61,7 @@ function isoToDateInputUTC(iso: string): string {
  */
 export function AdminNovedadesPage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
 
   const [novedades, setNovedades] = useState<Novedad[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -73,15 +73,15 @@ export function AdminNovedadesPage() {
   const [guardando, setGuardando] = useState(false);
 
   const cargar = () => {
-    if (!accessToken) return;
+    if (!user) return;
     setCargando(true);
-    listarTodasLasNovedades(accessToken)
+    listarTodasLasNovedades()
       .then(setNovedades)
       .catch((err) => console.error("Error cargando novedades", err))
       .finally(() => setCargando(false));
   };
 
-  useEffect(cargar, [accessToken]);
+  useEffect(cargar, [user]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
@@ -110,7 +110,7 @@ export function AdminNovedadesPage() {
   const formularioIncompleto = !form.texto.trim();
 
   const guardar = async () => {
-    if (!accessToken) return;
+    if (!user) return;
     if (!form.texto.trim()) {
       setErrorMsg(t("novedades.admin.validation.textoRequerido"));
       return;
@@ -122,21 +122,18 @@ export function AdminNovedadesPage() {
 
     try {
       if (editando) {
-        await editarNovedad(
-          editando.id_novedad,
-          { texto: form.texto.trim(), url_adjunto: form.url_adjunto.trim() || null, fecha_expiracion: fechaExpiracion },
-          accessToken
-        );
+        await editarNovedad(editando.id_novedad, {
+          texto: form.texto.trim(),
+          url_adjunto: form.url_adjunto.trim() || null,
+          fecha_expiracion: fechaExpiracion,
+        });
       } else {
-        await crearNovedad(
-          {
-            alcance: form.alcance,
-            texto: form.texto.trim(),
-            url_adjunto: form.url_adjunto.trim() || null,
-            fecha_expiracion: fechaExpiracion,
-          },
-          accessToken
-        );
+        await crearNovedad({
+          alcance: form.alcance,
+          texto: form.texto.trim(),
+          url_adjunto: form.url_adjunto.trim() || null,
+          fecha_expiracion: fechaExpiracion,
+        });
       }
       cerrarFormulario();
       cargar();
@@ -149,9 +146,9 @@ export function AdminNovedadesPage() {
   };
 
   const archivar = async (item: Novedad) => {
-    if (!accessToken) return;
+    if (!user) return;
     try {
-      await archivarNovedad(item.id_novedad, accessToken);
+      await archivarNovedad(item.id_novedad);
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -336,7 +333,6 @@ export function AdminNovedadesPage() {
               label={t("novedades.admin.fields.urlAdjunto")}
               value={form.url_adjunto}
               onChange={(url) => setForm({ ...form, url_adjunto: url })}
-              token={accessToken || ""}
             />
 
             <div>

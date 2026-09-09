@@ -23,7 +23,7 @@ const FORM_VACIO: ContenidoEducativoPayload = {
 
 export function AdminContenidoEducativoPage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -36,16 +36,16 @@ export function AdminContenidoEducativoPage() {
   const [aEliminar, setAEliminar] = useState<ContenidoEducativo | null>(null);
 
   const cargar = () => {
-    if (!accessToken) return;
+    if (!user) return;
     setCargando(true);
-    listarContenido(accessToken)
+    listarContenido()
       .then(setContenido)
       .catch(() => setErrorMsg(t("catalogoEducativo.loadError")))
       .finally(() => setCargando(false));
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(cargar, [accessToken]);
+  useEffect(cargar, [user]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
@@ -75,7 +75,7 @@ export function AdminContenidoEducativoPage() {
     !form.modulo_categoria.trim() || !form.titulo_tema.trim() || !form.cuerpo_texto.trim();
 
   const guardar = async () => {
-    if (!accessToken) return;
+    if (!user) return;
     if (!form.modulo_categoria.trim() || !form.titulo_tema.trim() || !form.cuerpo_texto.trim()) {
       setErrorMsg(t("adminContenidoEducativo.validation.required"));
       return;
@@ -100,9 +100,9 @@ export function AdminContenidoEducativoPage() {
     };
     try {
       if (editando) {
-        await editarContenido(editando.id_contenido, payload, accessToken);
+        await editarContenido(editando.id_contenido, payload);
       } else {
-        await crearContenido(payload, accessToken);
+        await crearContenido(payload);
       }
       cerrarFormulario();
       cargar();
@@ -114,9 +114,9 @@ export function AdminContenidoEducativoPage() {
   };
 
   const confirmarEliminar = async () => {
-    if (!accessToken || !aEliminar) return;
+    if (!user || !aEliminar) return;
     try {
-      await eliminarContenido(aEliminar.id_contenido, accessToken);
+      await eliminarContenido(aEliminar.id_contenido);
       setAEliminar(null);
       cargar();
     } catch {
@@ -257,7 +257,6 @@ export function AdminContenidoEducativoPage() {
               label={t("adminContenidoEducativo.fields.guideLink")}
               value={form.url_guia ?? ""}
               onChange={(url) => setForm({ ...form, url_guia: url })}
-              token={accessToken ?? ""}
             />
 
             <div className="flex gap-2 pt-2">

@@ -40,7 +40,7 @@ const NOVEDAD: Novedad = {
 
 function renderPage() {
   return renderWithProviders(<AdminNovedadesPage />, {
-    authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: mockUser, isAuthenticated: true },
   });
 }
 

@@ -21,32 +21,24 @@ export type ContenidoEducativoPayload = Omit<
   "id_contenido" | "fecha_publicacion"
 >;
 
-function authHeaders(token: string) {
-  return { headers: { Authorization: `Bearer ${token}` } };
-}
-
-export async function listarContenido(token: string): Promise<ContenidoEducativo[]> {
-  const { data } = await axios.get(API_BASE, authHeaders(token));
+export async function listarContenido(): Promise<ContenidoEducativo[]> {
+  const { data } = await axios.get(API_BASE);
   return data;
 }
 
-export async function crearContenido(
-  payload: ContenidoEducativoPayload,
-  token: string
-): Promise<ContenidoEducativo> {
-  const { data } = await axios.post(API_BASE, payload, authHeaders(token));
+export async function crearContenido(payload: ContenidoEducativoPayload): Promise<ContenidoEducativo> {
+  const { data } = await axios.post(API_BASE, payload);
   return data;
 }
 
 export async function editarContenido(
   id: string,
-  payload: ContenidoEducativoPayload,
-  token: string
+  payload: ContenidoEducativoPayload
 ): Promise<ContenidoEducativo> {
-  const { data } = await axios.put(`${API_BASE}/${id}`, payload, authHeaders(token));
+  const { data } = await axios.put(`${API_BASE}/${id}`, payload);
   return data;
 }
 
-export async function eliminarContenido(id: string, token: string): Promise<void> {
-  await axios.delete(`${API_BASE}/${id}`, authHeaders(token));
+export async function eliminarContenido(id: string): Promise<void> {
+  await axios.delete(`${API_BASE}/${id}`);
 }

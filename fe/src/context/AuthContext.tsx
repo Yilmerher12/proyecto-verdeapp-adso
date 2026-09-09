@@ -24,29 +24,28 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// ¿Qué? RNF-001.9: el token de sesión vive en una cookie httpOnly — por
+//       diseño, JavaScript no puede leer su valor bajo ninguna
+//       circunstancia (esa es justo la protección contra XSS). Esta
+//       banderita en sessionStorage NO es una credencial ni un secreto:
+//       solo dice "la última vez que se supo, este navegador tenía una
+//       sesión iniciada", para poder decidir sin adivinar si vale la pena
+//       llamar a getMe() al abrir la app, y para que axios.ts distinga un
+//       401 de "la sesión venció" de un 401 de "nunca hubo sesión".
+// ¿Impacto? Aunque un script malicioso la leyera o la modificara, no
+//           obtiene ningún token ni gana ningún acceso — en el peor caso,
+//           la app llama a getMe() una vez de más o de menos.
+const CLAVE_SESION_ACTIVA = "verdeapp:sesion-activa";
+
 export function AuthProvider({ children }: AuthProviderProps) {
   // El estado ahora maneja directamente el tipo UserResponse corregido
   const [user, setUser] = useState<UserResponse | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(() =>
-    sessionStorage.getItem("access_token"),
-  );
-  const [refreshToken, setRefreshToken] = useState<string | null>(() =>
-    sessionStorage.getItem("refresh_token"),
-  );
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const isAuthenticated = !!user && !!accessToken;
-
-  const saveTokens = useCallback((access: string, refresh: string) => {
-    sessionStorage.setItem("access_token", access);
-    sessionStorage.setItem("refresh_token", refresh);
-    setAccessToken(access);
-    setRefreshToken(refresh);
-  }, []);
+  const isAuthenticated = !!user;
 
   const clearAuth = useCallback(() => {
-    sessionStorage.removeItem("access_token");
-    sessionStorage.removeItem("refresh_token");
+    sessionStorage.removeItem(CLAVE_SESION_ACTIVA);
     // ¿Qué? También se borra la posición de scroll guardada del Landing.
     // ¿Para qué? AppShell hace un recargue completo hacia "/" al cerrar
     //           sesión, y el Landing (useRestoreScroll) restaura esta clave
@@ -56,15 +55,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     //           recordar un scroll viejo que no tenía nada que ver con la
     //           sesión que se acaba de cerrar.
     sessionStorage.removeItem("landing-scroll-y");
-    setAccessToken(null);
-    setRefreshToken(null);
     setUser(null);
   }, []);
 
   useEffect(() => {
     const verifySession = async () => {
-      const storedToken = sessionStorage.getItem("access_token");
-      if (!storedToken) {
+      const huboSesion = sessionStorage.getItem(CLAVE_SESION_ACTIVA) === "1";
+      if (!huboSesion) {
         setIsLoading(false);
         return;
       }
@@ -103,21 +100,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Acción de Login adaptada
    * Sincroniza las credenciales y el estado expandido del perfil para el Dashboard.
    */
-  const login = useCallback(
-    async (data: LoginRequest) => {
-      const tokens = await authApi.loginUser(data);
-      saveTokens(tokens.access_token, tokens.refresh_token);
-      
-      const userData = await authApi.getMe();
-      setUser(userData);
-      
-      if (userData.locale) {
-        await i18n.changeLanguage(userData.locale);
-      }
-      return userData;
-    },
-    [saveTokens],
-  );
+  const login = useCallback(async (data: LoginRequest) => {
+    // ¿Qué? El backend ya deja el access y el refresh token guardados como
+    //       cookies httpOnly en esta misma respuesta — no hay nada que
+    //       leer ni guardar aquí (RNF-001.9).
+    await authApi.loginUser(data);
+    sessionStorage.setItem(CLAVE_SESION_ACTIVA, "1");
+
+    const userData = await authApi.getMe();
+    setUser(userData);
+
+    if (userData.locale) {
+      await i18n.changeLanguage(userData.locale);
+    }
+    return userData;
+  }, []);
 
   /**
    * Acción de Registro adaptada
@@ -156,8 +153,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value = useMemo<AuthContextType>(
     () => ({
       user,
-      accessToken,
-      refreshToken,
       isAuthenticated,
       isLoading,
       login,
@@ -169,8 +164,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }),
     [
       user,
-      accessToken,
-      refreshToken,
       isAuthenticated,
       isLoading,
       login,

@@ -35,7 +35,7 @@ const moduloExistente: ContenidoEducativo = {
 
 function renderPage() {
   return renderWithProviders(<AdminContenidoEducativoPage />, {
-    authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: mockUser, isAuthenticated: true },
   });
 }
 
@@ -81,8 +81,7 @@ describe("AdminContenidoEducativoPage", () => {
         expect.objectContaining({
           modulo_categoria: "Puntos limpios",
           titulo_tema: "Dónde llevar escombros",
-        }),
-        "token"
+        })
       );
     });
   });
@@ -117,8 +116,7 @@ describe("AdminContenidoEducativoPage", () => {
     await waitFor(() => {
       expect(mockEditar).toHaveBeenCalledWith(
         "00000000-0000-7000-8000-000000000001",
-        expect.objectContaining({ titulo_tema: "Código de colores actualizado" }),
-        "token"
+        expect.objectContaining({ titulo_tema: "Código de colores actualizado" })
       );
     });
   });
@@ -136,7 +134,7 @@ describe("AdminContenidoEducativoPage", () => {
     await user.click(within(dialog).getByRole("button", { name: "Sí, eliminar" }));
 
     await waitFor(() => {
-      expect(mockEliminar).toHaveBeenCalledWith("00000000-0000-7000-8000-000000000001", "token");
+      expect(mockEliminar).toHaveBeenCalledWith("00000000-0000-7000-8000-000000000001");
     });
   });
 });

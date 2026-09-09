@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -63,7 +63,7 @@ function InfoField({ label, value, icon }: { label: string; value: string; icon?
 
 export function ProfilePage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth() as any;
+  const { user } = useAuth();
   const [perfil, setPerfil] = useState<PerfilData | null>(null);
   const [cargando, setCargando] = useState(true);
 
@@ -85,18 +85,16 @@ export function ProfilePage() {
   //       entre 7 (fijo) y 10 (celular) caracteres.
   const TELEFONO_REGEX = /^\d{7,10}$/;
 
-  const headers = { Authorization: `Bearer ${accessToken}` };
-
   const cargarPerfil = () => {
-    if (!accessToken) return;
+    if (!user) return;
     axios
-      .get(`${API_BASE_URL}/api/v1/users/me`, { headers })
+      .get(`${API_BASE_URL}/api/v1/users/me`)
       .then((res) => setPerfil(res.data))
       .catch(() => {})
       .finally(() => setCargando(false));
   };
 
-  useEffect(() => { cargarPerfil(); }, [accessToken]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { cargarPerfil(); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ¿Qué? Sube la foto de perfil — disponible para los 4 roles (a
   //       diferencia de nombre/teléfono, que el Admin del Sistema no puede
@@ -122,7 +120,7 @@ export function ProfilePage() {
     formData.append("archivo", archivo);
     setSubiendoFoto(true);
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/users/me/foto-perfil`, formData, { headers });
+      await axios.post(`${API_BASE_URL}/api/v1/users/me/foto-perfil`, formData);
       cargarPerfil();
       notificarFotoPerfilActualizada();
     } catch {
@@ -165,17 +163,13 @@ export function ProfilePage() {
     setGuardando(true);
     setErrorMsg(null);
     try {
-      await axios.put(
-        `${API_BASE_URL}/api/v1/users/me`,
-        {
-          nombre: formNombre.trim(),
-          apellidos: formApellidos.trim(),
-          numero_telefonico: telefono || null,
-          asociacion: formAsociacion.trim() || null,
-          mostrar_contacto_directorio: formMostrarContacto,
-        },
-        { headers }
-      );
+      await axios.put(`${API_BASE_URL}/api/v1/users/me`, {
+        nombre: formNombre.trim(),
+        apellidos: formApellidos.trim(),
+        numero_telefonico: telefono || null,
+        asociacion: formAsociacion.trim() || null,
+        mostrar_contacto_directorio: formMostrarContacto,
+      });
       setEditando(false);
       setExito(true);
       setTimeout(() => setExito(false), 3000);

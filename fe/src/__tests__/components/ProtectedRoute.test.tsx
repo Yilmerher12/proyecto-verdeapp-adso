@@ -56,7 +56,6 @@ describe("ProtectedRoute", () => {
       isAuthenticated: true,
       isLoading: false,
       user: mockUser,
-      accessToken: "fake-token",
     });
     expect(screen.getByText("Contenido protegido")).toBeInTheDocument();
   });

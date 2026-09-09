@@ -16,12 +16,6 @@ interface Localidad {
   nombre_localidad: string;
 }
 
-interface InvitarAdminConjuntoFormProps {
-  // ¿Qué? El token de sesión del Administrador del Sistema, para autorizar
-  //       la llamada al backend (el backend igual revalida que sea rol=1).
-  token: string;
-}
-
 /**
  * ¿Qué? Formulario para que el Administrador del Sistema invite a una
  *       persona a convertirse en Administrador de Conjunto.
@@ -29,7 +23,7 @@ interface InvitarAdminConjuntoFormProps {
  *           ni datos personales del invitado (esos los completa la
  *           persona invitada por su cuenta, ver AceptarInvitacionPage).
  */
-export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProps) {
+export function InvitarAdminConjuntoForm() {
   const { t } = useTranslation();
   const [correo, setCorreo] = useState("");
   const [conjuntosSeleccionados, setConjuntosSeleccionados] = useState<ConjuntoOption[]>([]);
@@ -82,7 +76,7 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
     setIsLoading(true);
     try {
       const ids = conjuntosSeleccionados.map((c) => c.id_conjunto_residencial);
-      await invitarAdministradorConjunto(correo, ids, token);
+      await invitarAdministradorConjunto(correo, ids);
       setMensajeExito(t("invitarAdminConjunto.successMessage", { correo }));
       setCorreo("");
       setConjuntosSeleccionados([]);
