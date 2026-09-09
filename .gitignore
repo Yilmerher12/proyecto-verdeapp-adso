@@ -43,6 +43,10 @@ htmlcov/
 be/app/uploads/*
 !be/app/uploads/.gitkeep
 
+# Exportado temporal por el paso de auditoría de dependencias del CI
+# (uv export --no-hashes --no-dev) — nunca hace falta versionarlo.
+be/requirements-ci.txt
+
 # ────────────────────────────
 # ⚛️ Node.js / Frontend
 # ────────────────────────────
