@@ -646,9 +646,23 @@
         "description": "Invita por correo a alguien para que administre uno de tus conjuntos.",
         "show": "+ Invitar administrador"
       },
+      "pendingRequests": {
+        "title": "Solicitudes pendientes",
+        "withCount": "{{count}} solicitud pendiente por resolver.",
+        "withCount_other": "{{count}} solicitudes pendientes por resolver.",
+        "viewButton": "Ver solicitudes"
+      },
+      "totals": {
+        "title": "Totales del sistema",
+        "administradoresShort": "Admin. conjunto"
+      },
+      "conjuntoFilter": {
+        "placeholder": "Buscar conjunto..."
+      },
       "loadingData": "Cargando datos...",
       "usersSection": {
         "title": "Usuarios registrados",
+        "totalBadge": "{{count}} en total",
         "tabs": {
           "residentes": "Residentes",
           "recicladores": "Recicladores",

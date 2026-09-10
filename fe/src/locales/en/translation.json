@@ -642,9 +642,23 @@
         "description": "Invite someone by email to administer one of your buildings.",
         "show": "+ Invite administrator"
       },
+      "pendingRequests": {
+        "title": "Pending requests",
+        "withCount": "{{count}} pending request to resolve.",
+        "withCount_other": "{{count}} pending requests to resolve.",
+        "viewButton": "View requests"
+      },
+      "totals": {
+        "title": "System totals",
+        "administradoresShort": "Building admins"
+      },
+      "conjuntoFilter": {
+        "placeholder": "Search building..."
+      },
       "loadingData": "Loading data...",
       "usersSection": {
         "title": "Registered users",
+        "totalBadge": "{{count}} total",
         "tabs": {
           "residentes": "Residents",
           "recicladores": "Recyclers",

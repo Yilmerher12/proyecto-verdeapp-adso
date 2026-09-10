@@ -5,6 +5,7 @@ Cumple con los Criterios 6 (Vistas SQL) y 7 (Procedimientos Almacenados).
 """
 
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -115,6 +116,7 @@ COLUMNAS_ORDENABLES_RESIDENTES = {
 def obtener_vista_residentes(
     search: Optional[str] = Query(None, description="Busca por nombre, apellido o correo"),
     localidad_id: Optional[int] = Query(None),
+    conjunto_id: Optional[UUID] = Query(None),
     order_by: Optional[str] = Query(None, description="correo, nombre, conjunto, unidad o estado"),
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
@@ -126,8 +128,15 @@ def obtener_vista_residentes(
     _verificar_es_admin_sistema(current_user)
 
     # 1. Crear o reemplazar la Vista SQL
-    # ¿Qué? Se agregó "Localidad" (id y nombre) a la vista — antes no
-    #       existía ninguna forma de filtrar residentes por localidad.
+    # ¿Qué? Se agregó "id_conjunto_residencial" AL FINAL de la vista — antes
+    #       solo se podía filtrar por localidad completa, nunca por un
+    #       conjunto puntual dentro de ella.
+    # ¿Impacto? Postgres exige que un CREATE OR REPLACE VIEW mantenga el
+    #           mismo nombre y posición para cada columna que ya existía;
+    #           solo permite AGREGAR columnas nuevas al final de la lista
+    #           (si no, falla con "cannot change name of view column"). Por
+    #           eso esta columna nueva va después de "Habilitado", no cerca
+    #           de "Conjunto" donde estaría más ordenada a simple vista.
     db.execute(text("""
     CREATE OR REPLACE VIEW vista_directorio_residentes AS
     SELECT
@@ -140,7 +149,8 @@ def obtener_vista_residentes(
         uni.apto AS "Apartamento",
         l.id_localidad AS "id_localidad",
         l.nombre_localidad AS "Localidad",
-        u.habilitado AS "Habilitado"
+        u.habilitado AS "Habilitado",
+        c.id_conjunto_residencial AS "id_conjunto_residencial"
     FROM residentes r
     JOIN usuarios u ON r.id_usuario = u.id_usuario
     JOIN unidades uni ON r.id_unidad = uni.id_unidad
@@ -161,6 +171,9 @@ def obtener_vista_residentes(
     if localidad_id:
         condiciones.append('"id_localidad" = :localidad_id')
         params["localidad_id"] = localidad_id
+    if conjunto_id:
+        condiciones.append('"id_conjunto_residencial" = :conjunto_id')
+        params["conjunto_id"] = str(conjunto_id)
     where_sql = f"WHERE {' AND '.join(condiciones)}" if condiciones else ""
 
     total = db.execute(
@@ -190,6 +203,7 @@ COLUMNAS_ORDENABLES_RECICLADORES = {"correo", "nombre", "asociacion", "estado"}
 def obtener_sp_recicladores(
     search: Optional[str] = Query(None, description="Busca por nombre, apellido o correo"),
     localidad_id: Optional[int] = Query(None),
+    conjunto_id: Optional[UUID] = Query(None, description="Filtra por conjunto autorizado activo"),
     order_by: Optional[str] = Query(None, description="correo, nombre, asociacion o estado"),
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
@@ -217,6 +231,9 @@ def obtener_sp_recicladores(
     db.execute(text(
         "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, TEXT, TEXT, INT, INT)"
     ))
+    db.execute(text(
+        "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, UUID, TEXT, TEXT, INT, INT)"
+    ))
 
     # 1. Crear el Procedimiento Almacenado / Función
     # ¿Qué? Ahora la función SÍ recibe parámetros (búsqueda, localidad,
@@ -234,6 +251,7 @@ def obtener_sp_recicladores(
     CREATE OR REPLACE FUNCTION sp_obtener_recicladores(
         p_search TEXT DEFAULT NULL,
         p_localidad_id INT DEFAULT NULL,
+        p_conjunto_id UUID DEFAULT NULL,
         p_order_by TEXT DEFAULT 'nombre',
         p_order_dir TEXT DEFAULT 'asc',
         p_limit INT DEFAULT 20,
@@ -263,6 +281,12 @@ def obtener_sp_recicladores(
                OR rec.apellidos ILIKE '%' || p_search || '%'
                OR u.correo_electronico ILIKE '%' || p_search || '%')
           AND (p_localidad_id IS NULL OR rec.localidad_id = p_localidad_id)
+          AND (p_conjunto_id IS NULL OR EXISTS (
+                SELECT 1 FROM recicladores_conjuntos rc2
+                WHERE rc2.id_reciclador = rec.id_reciclador
+                  AND rc2.id_conjunto_residencial = p_conjunto_id
+                  AND rc2.fecha_revocacion IS NULL
+              ))
         ORDER BY
             CASE WHEN p_order_dir = 'asc' THEN
                 CASE p_order_by
@@ -292,6 +316,7 @@ def obtener_sp_recicladores(
     params = {
         "search": search,
         "localidad_id": localidad_id,
+        "conjunto_id": str(conjunto_id) if conjunto_id else None,
         "order_by": order_by_validado,
         "order_dir": order_dir_validado,
         "limit": min(limit, MAX_LIMIT),
@@ -308,17 +333,24 @@ def obtener_sp_recicladores(
                    OR rec.apellidos ILIKE '%' || :search || '%'
                    OR u.correo_electronico ILIKE '%' || :search || '%')
               AND (:localidad_id IS NULL OR rec.localidad_id = :localidad_id)
+              AND (:conjunto_id IS NULL OR EXISTS (
+                    SELECT 1 FROM recicladores_conjuntos rc2
+                    WHERE rc2.id_reciclador = rec.id_reciclador
+                      AND rc2.id_conjunto_residencial = CAST(:conjunto_id AS UUID)
+                      AND rc2.fecha_revocacion IS NULL
+                  ))
         """),
         params,
     ).scalar_one()
 
     # ¿Qué? Llamada con parámetros nombrados (p_x => :x) en vez de
-    #       posicionales — con 6 parámetros ahora, uno posicional mal
-    #       ordenado pasaría desapercibido (todos son TEXT/INT).
+    #       posicionales — con 7 parámetros ahora, uno posicional mal
+    #       ordenado pasaría desapercibido (todos son TEXT/INT/UUID).
     result = db.execute(
         text(
             "SELECT * FROM sp_obtener_recicladores("
             "p_search => :search, p_localidad_id => :localidad_id, "
+            "p_conjunto_id => CAST(:conjunto_id AS UUID), "
             "p_order_by => :order_by, p_order_dir => :order_dir, "
             "p_limit => :limit, p_offset => :offset)"
         ),
@@ -343,6 +375,7 @@ COLUMNAS_ORDENABLES_ADMINS = {
 def obtener_administradores_conjunto(
     search: Optional[str] = Query(None, description="Busca por nombre, apellido o correo"),
     localidad_id: Optional[int] = Query(None, description="Filtra por localidad de alguno de sus conjuntos"),
+    conjunto_id: Optional[UUID] = Query(None, description="Filtra por uno de sus conjuntos asignados"),
     order_by: Optional[str] = Query(None, description="correo, nombre, telefono, conjuntos o estado"),
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
@@ -367,6 +400,7 @@ def obtener_administradores_conjunto(
     params = {
         "search": f"%{search}%" if search else None,
         "localidad_id": localidad_id,
+        "conjunto_id": str(conjunto_id) if conjunto_id else None,
         "limit": min(limit, MAX_LIMIT),
         "offset": offset,
     }
@@ -380,6 +414,18 @@ def obtener_administradores_conjunto(
               AND cr2.id_localidad = :localidad_id
         ))
     """
+    # ¿Qué? A diferencia de filtro_localidad (que necesita el JOIN a
+    #       conjuntos_residenciales para llegar a la localidad), aquí
+    #       :conjunto_id ya es el id del conjunto — compara directo contra
+    #       administradores_conjuntos, sin unir nada más.
+    filtro_conjunto = """
+        AND (:conjunto_id IS NULL OR EXISTS (
+            SELECT 1 FROM administradores_conjuntos aca3
+            WHERE aca3.id_administrador = ac.id_administrador
+              AND aca3.fecha_desvinculacion IS NULL
+              AND aca3.id_conjunto_residencial = CAST(:conjunto_id AS UUID)
+        ))
+    """
     filtro_search = """
         AND (:search IS NULL OR ac.nombre ILIKE :search OR ac.apellidos ILIKE :search
              OR u.correo_electronico ILIKE :search)
@@ -391,7 +437,7 @@ def obtener_administradores_conjunto(
         text(f"""
             SELECT COUNT(*) FROM administradores_conjunto ac
             JOIN usuarios u ON u.id_usuario = ac.id_usuario
-            WHERE 1=1 {filtro_search} {filtro_localidad}
+            WHERE 1=1 {filtro_search} {filtro_localidad} {filtro_conjunto}
         """),
         params,
     ).scalar_one()
@@ -411,7 +457,7 @@ def obtener_administradores_conjunto(
                 ON aca.id_administrador = ac.id_administrador AND aca.fecha_desvinculacion IS NULL
             LEFT JOIN conjuntos_residenciales cr
                 ON cr.id_conjunto_residencial = aca.id_conjunto_residencial
-            WHERE 1=1 {filtro_search} {filtro_localidad}
+            WHERE 1=1 {filtro_search} {filtro_localidad} {filtro_conjunto}
             GROUP BY u.correo_electronico, ac.nombre, ac.apellidos, ac.numero_telefonico, u.habilitado
             ORDER BY {columna_sql} {direccion_sql}
             LIMIT :limit OFFSET :offset

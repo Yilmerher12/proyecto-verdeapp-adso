@@ -81,6 +81,15 @@ function renderPage() {
   });
 }
 
+// ¿Qué? "Usuarios registrados" ahora empieza plegado (acordeón) — evita el
+//       "reguero" de filas apenas se entra al panel. El nombre accesible del
+//       botón usa una expresión regular porque también incluye la insignia
+//       de total ("Usuarios registrados 3 en total"), que cambia según los
+//       datos mockeados de cada test.
+async function abrirUsuariosRegistrados(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: /Usuarios registrados/ }));
+}
+
 describe("AdminDashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -111,7 +120,9 @@ describe("AdminDashboard", () => {
       }
       return Promise.resolve({ data: [] });
     });
+    const user = userEvent.setup();
     renderPage();
+    await abrirUsuariosRegistrados(user);
 
     await waitFor(() => {
       expect(screen.getByText("Juan Pérez")).toBeInTheDocument();
@@ -130,6 +141,7 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
+    await abrirUsuariosRegistrados(user);
 
     await user.click(screen.getByRole("button", { name: "Recicladores" }));
 
@@ -150,6 +162,7 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
+    await abrirUsuariosRegistrados(user);
 
     await user.click(screen.getByRole("button", { name: "Administradores de Conjunto" }));
 
@@ -173,6 +186,7 @@ describe("AdminDashboard", () => {
     mockPatch.mockResolvedValue({ data: { correo_electronico: residente.Correo, habilitado: false } });
     const user = userEvent.setup();
     renderPage();
+    await abrirUsuariosRegistrados(user);
 
     await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
 
@@ -202,7 +216,9 @@ describe("AdminDashboard", () => {
       }
       return Promise.resolve({ data: [] });
     });
+    const user = userEvent.setup();
     renderPage();
+    await abrirUsuariosRegistrados(user);
 
     await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
     expect(screen.queryByRole("button", { name: /Desactivar/i })).not.toBeInTheDocument();
@@ -211,6 +227,7 @@ describe("AdminDashboard", () => {
   it("busca en tiempo real (con debounce) y se lo manda al backend como parámetro", async () => {
     const user = userEvent.setup();
     renderPage();
+    await abrirUsuariosRegistrados(user);
 
     const input = await screen.findByPlaceholderText("Buscar por nombre o correo...");
     await user.type(input, "juan");
@@ -226,7 +243,9 @@ describe("AdminDashboard", () => {
   });
 
   it("muestra los mensajes de tabla vacía cuando no hay datos", async () => {
+    const user = userEvent.setup();
     renderPage();
+    await abrirUsuariosRegistrados(user);
     await waitFor(() => {
       expect(screen.getByText("No hay residentes registrados todavía.")).toBeInTheDocument();
     });
@@ -247,6 +266,7 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
+    await abrirUsuariosRegistrados(user);
 
     await screen.findByText("Juan Pérez");
     // ¿Qué? aria-sort en el <th> es el patrón WCAG para encabezados
@@ -295,6 +315,7 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
+    await abrirUsuariosRegistrados(user);
 
     await screen.findByText("Juan Pérez");
     await user.click(screen.getByRole("button", { name: "Ordenar por Correo" }));
@@ -498,5 +519,92 @@ describe("AdminDashboard", () => {
       );
     });
     expect(await screen.findByText("Conjunto asignado correctamente.")).toBeInTheDocument();
+  });
+
+  it("el filtro de Conjunto se acota a la localidad elegida y manda conjunto_id al backend", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (
+        url.includes("/admin/vista-residentes") ||
+        url.includes("/admin/sp-recicladores") ||
+        url.includes("/admin/administradores-conjunto")
+      ) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      if (url.includes("/geography/localidades")) {
+        return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
+      }
+      if (url.includes("/geography/conjuntos/todos")) {
+        return Promise.resolve({
+          data: [{ id_conjunto_residencial: "c-1", nombre_conjunto: "RESERVA DE PRUEBA", nombre_localidad: "Usaquén" }],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await abrirUsuariosRegistrados(user);
+
+    // ¿Qué? El <select> de Localidad no tiene nombre accesible propio (ver
+    //       el mismo campo antes de este cambio) — se toma directo del DOM,
+    //       mismo recurso que ya usa este archivo para el botón de
+    //       HeadlessUI más abajo.
+    const selectLocalidad = document.querySelector("select") as HTMLSelectElement;
+    await user.selectOptions(selectLocalidad, "1");
+
+    await user.type(screen.getByPlaceholderText("Buscar conjunto..."), "RESERVA");
+    const opcionConjunto = await screen.findByText("RESERVA DE PRUEBA — Usaquén");
+    await user.click(opcionConjunto);
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/vista-residentes"),
+        expect.objectContaining({
+          params: expect.objectContaining({ conjunto_id: "c-1", localidad_id: 1 }),
+        })
+      );
+    });
+  });
+
+  it("Solicitudes pendientes empieza plegado y se despliega con 'Ver solicitudes'", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (
+        url.includes("/admin/vista-residentes") ||
+        url.includes("/admin/sp-recicladores") ||
+        url.includes("/admin/administradores-conjunto")
+      ) {
+        return Promise.resolve({ data: { items: [], total: 0 } });
+      }
+      if (url.includes("/admin-conjunto/solicitudes-desvinculacion")) {
+        return Promise.resolve({
+          data: [
+            {
+              id: "s-1",
+              id_conjunto_residencial: "c-1",
+              nombre_conjunto: "Conjunto Los Alpes",
+              id_administrador: "a-1",
+              nombre_administrador: "Pedro",
+              apellidos_administrador: "Gómez",
+              motivo: null,
+              estado: "pendiente",
+              created_at: new Date().toISOString(),
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    // ¿Qué? El número de pendientes llega apenas carga (SolicitudesDesvinculacion
+    //       avisa por onCountChange), aunque el acordeón siga plegado —
+    //       plegado usa "hidden" (CSS), no deja de renderizarse, así que la
+    //       solicitud sigue en el DOM pero no visible.
+    expect(await screen.findByText("1 solicitud pendiente por resolver.")).toBeInTheDocument();
+    expect(screen.getByText("Conjunto Los Alpes")).not.toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Ver solicitudes" }));
+
+    expect(await screen.findByText("Conjunto Los Alpes")).toBeVisible();
   });
 });

@@ -12,11 +12,14 @@ Descripción: Pruebas del router de admin (vista SQL de residentes, procedimient
            usuarios en vez de traerlos todos de un golpe.
 """
 
+import uuid
+
 from fastapi.testclient import TestClient
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.reciclador import Reciclador
+from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.residente import Residente
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
@@ -75,6 +78,29 @@ class TestVistaResidentes:
             "/api/v1/admin/vista-residentes",
             headers=admin_sistema_auth_headers,
             params={"localidad_id": 999999},
+        )
+        assert response.status_code == 200
+        assert response.json()["items"] == []
+
+    def test_filtro_por_conjunto(
+        self, client: TestClient, admin_sistema_auth_headers, test_user, conjunto_verificado
+    ):
+        response = client.get(
+            "/api/v1/admin/vista-residentes",
+            headers=admin_sistema_auth_headers,
+            params={"conjunto_id": str(conjunto_verificado.id_conjunto_residencial)},
+        )
+        assert response.status_code == 200
+        correos = [fila["Correo"] for fila in response.json()["items"]]
+        assert test_user.correo_electronico in correos
+
+    def test_filtro_por_conjunto_ajeno_no_devuelve_nada(
+        self, client: TestClient, admin_sistema_auth_headers, test_user
+    ):
+        response = client.get(
+            "/api/v1/admin/vista-residentes",
+            headers=admin_sistema_auth_headers,
+            params={"conjunto_id": str(uuid.uuid4())},
         )
         assert response.status_code == 200
         assert response.json()["items"] == []
@@ -186,6 +212,42 @@ class TestSpRecicladores:
         correos = [fila["Correo"] for fila in response.json()["items"]]
         assert reciclador_test.correo_electronico in correos
 
+    def test_filtro_por_conjunto(
+        self, client: TestClient, admin_sistema_auth_headers, reciclador_test, conjunto_verificado, db
+    ):
+        """¿Qué? A diferencia de la Localidad (columna directa en
+        `recicladores`), el Conjunto se autoriza aparte, en
+        `recicladores_conjuntos` — por eso esta prueba crea esa
+        autorización a mano en vez de usar solo los fixtures existentes."""
+        reciclador = db.query(Reciclador).filter_by(id_usuario=reciclador_test.id_usuario).one()
+        db.add(
+            RecicladorConjunto(
+                id_reciclador=reciclador.id_reciclador,
+                id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial,
+            )
+        )
+        db.commit()
+
+        response = client.get(
+            "/api/v1/admin/sp-recicladores",
+            headers=admin_sistema_auth_headers,
+            params={"conjunto_id": str(conjunto_verificado.id_conjunto_residencial)},
+        )
+        assert response.status_code == 200
+        correos = [fila["Correo"] for fila in response.json()["items"]]
+        assert reciclador_test.correo_electronico in correos
+
+    def test_filtro_por_conjunto_ajeno_no_devuelve_nada(
+        self, client: TestClient, admin_sistema_auth_headers, reciclador_test
+    ):
+        response = client.get(
+            "/api/v1/admin/sp-recicladores",
+            headers=admin_sistema_auth_headers,
+            params={"conjunto_id": str(uuid.uuid4())},
+        )
+        assert response.status_code == 200
+        assert reciclador_test.correo_electronico not in [f["Correo"] for f in response.json()["items"]]
+
     def test_orden_por_nombre_ascendente_y_descendente(
         self, client: TestClient, admin_sistema_auth_headers, reciclador_test, db
     ):
@@ -275,6 +337,30 @@ class TestAdministradoresConjunto:
         assert response.status_code == 200
         correos = [fila["Correo"] for fila in response.json()["items"]]
         assert admin_conjunto_test.usuario.correo_electronico in correos
+
+    def test_filtro_por_conjunto(
+        self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_test, conjunto_verificado
+    ):
+        response = client.get(
+            "/api/v1/admin/administradores-conjunto",
+            headers=admin_sistema_auth_headers,
+            params={"conjunto_id": str(conjunto_verificado.id_conjunto_residencial)},
+        )
+        assert response.status_code == 200
+        correos = [fila["Correo"] for fila in response.json()["items"]]
+        assert admin_conjunto_test.usuario.correo_electronico in correos
+
+    def test_filtro_por_conjunto_ajeno_no_devuelve_nada(
+        self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_test
+    ):
+        response = client.get(
+            "/api/v1/admin/administradores-conjunto",
+            headers=admin_sistema_auth_headers,
+            params={"conjunto_id": str(uuid.uuid4())},
+        )
+        assert response.status_code == 200
+        correos = [fila["Correo"] for fila in response.json()["items"]]
+        assert admin_conjunto_test.usuario.correo_electronico not in correos
 
     def test_filtro_por_localidad_ajena_no_devuelve_nada(
         self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_test
