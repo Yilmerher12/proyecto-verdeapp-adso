@@ -7,6 +7,20 @@ import {
   type SolicitudDesvinculacion,
 } from "@/lib/adminConjuntoApi";
 
+interface SolicitudesDesvinculacionProps {
+  /** ¿Para qué? El resumen de "Solicitudes pendientes" arriba del todo en
+   *  AdminDashboard necesita el número ANTES de que el usuario despliegue
+   *  esta lista — se avisa cada vez que cambia, en vez de duplicar la
+   *  petición al backend solo para contar. */
+  onCountChange?: (count: number) => void;
+  /** ¿Para qué? Cuando este componente vive dentro del acordeón de
+   *  "Solicitudes pendientes" de AdminDashboard, ese acordeón ya muestra su
+   *  propio título + contador — repetirlos aquí adentro se veía como un
+   *  encabezado duplicado. Por defecto se muestra (para no romper ningún
+   *  otro lugar que ya use este componente tal cual). */
+  mostrarEncabezado?: boolean;
+}
+
 /**
  * ¿Qué? Panel del Administrador del Sistema para resolver solicitudes de
  *       desvinculación de conjuntos (RQF-016, HU-023).
@@ -14,7 +28,10 @@ import {
  *           poder aprobar o rechazar cada una — rechazar exige un motivo
  *           (CA-023.3), así que se pide en un formulario aparte por fila.
  */
-export function SolicitudesDesvinculacion() {
+export function SolicitudesDesvinculacion({
+  onCountChange,
+  mostrarEncabezado = true,
+}: SolicitudesDesvinculacionProps = {}) {
   const { t } = useTranslation();
   const [solicitudes, setSolicitudes] = useState<SolicitudDesvinculacion[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -26,14 +43,17 @@ export function SolicitudesDesvinculacion() {
   const cargar = () => {
     setCargando(true);
     listarSolicitudesDesvinculacion()
-      .then(setSolicitudes)
+      .then((data) => {
+        setSolicitudes(data);
+        onCountChange?.(data.length);
+      })
       .catch((err) => console.error("Error cargando solicitudes de desvinculación", err))
       .finally(() => setCargando(false));
   };
 
   useEffect(() => {
     cargar();
-     
+
   }, []);
 
   const aprobar = async (id: string) => {
@@ -69,17 +89,19 @@ export function SolicitudesDesvinculacion() {
 
   return (
     <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
-        <ClipboardList className="h-4 w-4 text-green-600" />
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-          {t("desvinculacion.adminSistema.sectionTitle")}
-        </h3>
-        {solicitudes.length > 0 && (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-            {solicitudes.length}
-          </span>
-        )}
-      </div>
+      {mostrarEncabezado && (
+        <div className="flex items-center gap-2 mb-4">
+          <ClipboardList className="h-4 w-4 text-green-600" />
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+            {t("desvinculacion.adminSistema.sectionTitle")}
+          </h3>
+          {solicitudes.length > 0 && (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              {solicitudes.length}
+            </span>
+          )}
+        </div>
+      )}
 
       {error && (
         <p className="mb-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg dark:bg-red-900/20 dark:text-red-400">
