@@ -117,6 +117,43 @@ class TestRegister:
         assert response.status_code == 400
         assert "ya está registrado" in response.json()["detail"]
 
+    def test_register_duplicate_email_condicion_de_carrera(
+        self,
+        client: TestClient,
+        db: Session,
+        test_user: Usuario,
+        conjunto_verificado: ConjuntoResidencial,
+        monkeypatch,
+    ) -> None:
+        """Issue #215 (b9 del diagnóstico): el pre-chequeo de register_user()
+        revisa si el correo ya existe ANTES de insertar — pero entre ese
+        chequeo y el INSERT real se puede colar otra petición con el mismo
+        correo. test_register_duplicate_email de arriba solo prueba el
+        pre-chequeo normal; este test fuerza el choque real contra el
+        UNIQUE de correo_electronico, ocultándole al pre-chequeo que
+        test_user ya existe (así se ve exactamente lo que vería una
+        petición que llega en esa ventana de carrera)."""
+        ejecutar_de_verdad = db.execute
+
+        def ejecutar_ocultando_al_duplicado(statement, *args, **kwargs):
+            descripciones = getattr(statement, "column_descriptions", None)
+            if descripciones and descripciones[0].get("entity") is Usuario:
+                class _SinResultado:
+                    def scalar_one_or_none(self) -> None:
+                        return None
+
+                return _SinResultado()
+            return ejecutar_de_verdad(statement, *args, **kwargs)
+
+        monkeypatch.setattr(db, "execute", ejecutar_ocultando_al_duplicado)
+
+        response = client.post(
+            self.URL,
+            json=_payload_residente(conjunto_verificado, email=TEST_USER_EMAIL),
+        )
+        assert response.status_code == 400
+        assert "ya está registrado" in response.json()["detail"]
+
     def test_register_reciclador_success(self, client: TestClient, localidad_test) -> None:
         response = client.post(
             self.URL,
