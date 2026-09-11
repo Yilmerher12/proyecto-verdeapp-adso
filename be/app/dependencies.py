@@ -9,7 +9,7 @@ Descripción: Dependencias inyectables de FastAPI — funciones reutilizables qu
 """
 
 import uuid
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -17,6 +17,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
+from app.models.administrador_conjunto import AdministradorConjunto
+from app.models.rol import RolId
 from app.models.token_revocado import TokenRevocado
 from app.models.usuario import Usuario
 from app.utils.security import decode_token
@@ -178,3 +180,82 @@ def get_current_user(
         )
 
     return user
+
+
+def require_role(rol_requerido: RolId, mensaje: str | None = None) -> Callable[..., Usuario]:
+    """Crea una dependencia de FastAPI que exige un rol específico.
+
+    ¿Qué? Issue #216 — antes, la misma verificación ("¿current_user.id_rol
+          es el correcto?", si no 403) estaba copiada y pegada, casi igual,
+          en 6 archivos de routers/ (admin.py, admin_conjunto.py,
+          novedades.py, puntos_acopio.py, contenido_educativo.py,
+          auditoria_conjunto.py) — cada uno con su propia función local
+          `_verificar_es_admin_sistema` / `_verificar_es_reciclador`.
+    ¿Para qué? Si mañana hay que agregar una regla nueva a esa verificación
+              (ej. "y además la cuenta debe estar habilitada"), este es el
+              ÚNICO lugar que hay que cambiar — antes había que acordarse
+              de tocar los 6 archivos uno por uno, con el riesgo real de
+              olvidar alguno y dejar un hueco de seguridad silencioso.
+    ¿Impacto? Se usa como `Depends(require_role(RolId.ADMIN_SISTEMA, "..."))`
+              en vez de `Depends(get_current_user)` — sigue devolviendo el
+              mismo Usuario autenticado (usable en el cuerpo del endpoint
+              exactamente igual que antes), pero FastAPI corre el chequeo
+              de rol ANTES de que el endpoint reciba la petición, en vez de
+              como la primera línea manual de cada función.
+
+    Args:
+        rol_requerido: El único RolId permitido para el endpoint.
+        mensaje: Detalle del 403 si el rol no coincide. Por defecto, un
+                mensaje genérico que menciona el rol exigido.
+    """
+    def _verificar(current_user: Usuario = Depends(get_current_user)) -> Usuario:
+        if current_user.id_rol != rol_requerido:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=mensaje or f"Este recurso requiere el rol {rol_requerido.name}.",
+            )
+        return current_user
+
+    return _verificar
+
+
+def require_admin_conjunto(mensaje: str | None = None) -> Callable[..., AdministradorConjunto]:
+    """Crea una dependencia de FastAPI que exige rol Admin de Conjunto y
+    devuelve directamente su registro de AdministradorConjunto.
+
+    ¿Qué? Issue #216 — misma duplicación que require_role(), pero con una
+          variante: dos archivos (comunicados.py, conjunto_panel.py) no
+          solo revisaban el rol, sino que además buscaban la fila de
+          AdministradorConjunto asociada al usuario — ambos pasos copiados
+          igual en los dos archivos, cada uno con su propia función local
+          `_obtener_administrador_o_rechazar`.
+    ¿Para qué? Igual que require_role(): centraliza el chequeo Y la
+              búsqueda del perfil en un solo lugar reutilizable.
+    ¿Impacto? Los endpoints que la usan reciben directamente el
+              AdministradorConjunto ya resuelto (en vez del Usuario crudo)
+              como parámetro — se ahorran la línea manual que antes
+              llamaba a la función local.
+
+    Args:
+        mensaje: Detalle del 403 si el usuario no es Admin de Conjunto.
+    """
+    def _verificar(
+        current_user: Usuario = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> AdministradorConjunto:
+        if current_user.id_rol != RolId.ADMIN_CONJUNTO:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=mensaje or "Solo un Administrador de Conjunto puede acceder a este recurso.",
+            )
+        administrador = db.execute(
+            select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == current_user.id_usuario)
+        ).scalar_one_or_none()
+        if not administrador:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró tu perfil de administrador.",
+            )
+        return administrador
+
+    return _verificar

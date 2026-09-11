@@ -10,7 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select, text
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db, require_role
 from app.models.usuario import Usuario
 from app.models.rol import RolId
 from app.schemas.admin import CambiarHabilitadoRequest
@@ -30,12 +30,13 @@ MAX_LIMIT = 100
 
 # Estos endpoints muestran datos de todos los usuarios (correo, teléfono,
 # dirección), así que solo el Administrador del Sistema puede verlos.
-def _verificar_es_admin_sistema(current_user: Usuario) -> None:
-    if current_user.id_rol != RolId.ADMIN_SISTEMA:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Administrador del Sistema puede acceder a este recurso.",
-        )
+# ¿Qué? Issue #216 — antes esto era una función local que cada endpoint
+#       llamaba a mano como primera línea; ahora es una dependencia de
+#       FastAPI (ver require_role en app/dependencies.py), compartida con
+#       otros 4 routers que tenían la misma verificación copiada.
+_requiere_admin_sistema = require_role(
+    RolId.ADMIN_SISTEMA, "Solo un Administrador del Sistema puede acceder a este recurso."
+)
 
 
 def _resolver_orden(
@@ -65,7 +66,7 @@ def _resolver_orden(
 def cambiar_habilitado(
     correo_electronico: str,
     body: CambiarHabilitadoRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """
@@ -81,8 +82,6 @@ def cambiar_habilitado(
               puede volver a iniciar sesión ni renovar su token mientras
               siga desactivada.
     """
-    _verificar_es_admin_sistema(current_user)
-
     if correo_electronico == current_user.correo_electronico:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -121,12 +120,10 @@ def obtener_vista_residentes(
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
     offset: int = Query(0, ge=0),
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """Crea (si no existe) y consulta una Vista SQL de Residentes sin mostrar IDs."""
-    _verificar_es_admin_sistema(current_user)
-
     # 1. Crear o reemplazar la Vista SQL
     # ¿Qué? Se agregó "id_conjunto_residencial" AL FINAL de la vista — antes
     #       solo se podía filtrar por localidad completa, nunca por un
@@ -208,12 +205,10 @@ def obtener_sp_recicladores(
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
     offset: int = Query(0, ge=0),
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """Crea y ejecuta un Procedimiento Almacenado (Función) de Recicladores sin IDs."""
-    _verificar_es_admin_sistema(current_user)
-
     # ¿Qué? Postgres NO permite que CREATE OR REPLACE FUNCTION cambie las
     #       columnas de salida (RETURNS TABLE) ni la firma de parámetros de
     #       una función que ya existe con otra forma — falla con "cannot
@@ -380,7 +375,7 @@ def obtener_administradores_conjunto(
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
     offset: int = Query(0, ge=0),
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """
@@ -395,8 +390,6 @@ def obtener_administradores_conjunto(
               dos ya demuestran los Criterios 6 y 7 con Residente/Reciclador;
               repetir la misma técnica aquí no agrega nada nuevo.
     """
-    _verificar_es_admin_sistema(current_user)
-
     params = {
         "search": f"%{search}%" if search else None,
         "localidad_id": localidad_id,
