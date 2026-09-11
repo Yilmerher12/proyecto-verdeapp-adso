@@ -5,6 +5,7 @@ import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import {
   crearPuntoAcopio,
   darDeBajaPuntoAcopio,
@@ -347,63 +348,29 @@ export function AdminPuntosAcopioPage() {
       )}
 
       {aDarDeBaja && (
-        <Modal onClose={() => setADarDeBaja(null)} aria-label={t("adminPuntosAcopio.modal.deactivateAriaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <PowerOff className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("adminPuntosAcopio.deactivateConfirm.title", { nombre: aDarDeBaja.nombre })}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("adminPuntosAcopio.deactivateConfirm.warning")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setADarDeBaja(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={confirmarDarDeBaja}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                {t("adminPuntosAcopio.deactivateConfirm.confirm")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={PowerOff}
+          variant="danger"
+          ariaLabel={t("adminPuntosAcopio.modal.deactivateAriaLabel")}
+          title={t("adminPuntosAcopio.deactivateConfirm.title", { nombre: aDarDeBaja.nombre })}
+          description={t("adminPuntosAcopio.deactivateConfirm.warning")}
+          confirmLabel={t("adminPuntosAcopio.deactivateConfirm.confirm")}
+          onConfirm={confirmarDarDeBaja}
+          onClose={() => setADarDeBaja(null)}
+        />
       )}
 
       {aEliminar && (
-        <Modal onClose={() => setAEliminar(null)} aria-label={t("adminPuntosAcopio.modal.deleteAriaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <Trash2 className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("adminPuntosAcopio.deleteConfirm.title", { nombre: aEliminar.nombre })}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("adminPuntosAcopio.deleteConfirm.warning")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setAEliminar(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={confirmarEliminar}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                {t("adminPuntosAcopio.deleteConfirm.confirm")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={Trash2}
+          variant="danger"
+          ariaLabel={t("adminPuntosAcopio.modal.deleteAriaLabel")}
+          title={t("adminPuntosAcopio.deleteConfirm.title", { nombre: aEliminar.nombre })}
+          description={t("adminPuntosAcopio.deleteConfirm.warning")}
+          confirmLabel={t("adminPuntosAcopio.deleteConfirm.confirm")}
+          onConfirm={confirmarEliminar}
+          onClose={() => setAEliminar(null)}
+        />
       )}
     </div>
   );

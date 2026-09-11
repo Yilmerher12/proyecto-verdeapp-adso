@@ -1,7 +1,8 @@
  
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { usePolling } from "@/hooks/usePolling";
 import {
   Recycle,
   Mail,
@@ -186,14 +187,7 @@ export function RecicladorDashboard() {
       .finally(() => setCargando(false));
   };
 
-  useEffect(() => {
-    if (user) {
-      cargarDatos();
-      const interval = setInterval(cargarDatos, 20000);
-      return () => clearInterval(interval);
-    }
-     
-  }, [user]);
+  usePolling(cargarDatos, { enabled: !!user });
 
   const responderInvitacion = async (id: string, aceptar: boolean) => {
     setProcesandoId(id);

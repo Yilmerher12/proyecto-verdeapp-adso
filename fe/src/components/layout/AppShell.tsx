@@ -17,6 +17,7 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { usePolling } from "@/hooks/usePolling";
 import * as authApi from "@/api/auth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
@@ -86,26 +87,17 @@ export function AppShell({ children }: AppShellProps) {
   };
 
   // Polling de notificaciones no leídas cada 20s
-  useEffect(() => {
-    if (!user) return;
-    const fetchCount = () => {
-      api
-        .get<{ count: number }>("/api/v1/notificaciones/no-leidas-count")
-        .then((r) => setNoLeidas(r.data.count ?? 0))
-        .catch(() => {});
-    };
-    fetchCount();
-    const interval = setInterval(fetchCount, 20000);
-    // ¿Qué? Además del polling, escucha el evento que disparan los
-    //       dashboards al marcar notificaciones como leídas.
-    // ¿Para qué? Para que el número baje al instante en vez de esperar
-    //           hasta 20s al siguiente ciclo de polling.
-    const unsubscribe = onNotificacionesActualizadas(fetchCount);
-    return () => {
-      clearInterval(interval);
-      unsubscribe();
-    };
-  }, [user]);
+  const fetchCount = () => {
+    api
+      .get<{ count: number }>("/api/v1/notificaciones/no-leidas-count")
+      .then((r) => setNoLeidas(r.data.count ?? 0))
+      .catch(() => {});
+  };
+  // ¿Qué? Además del polling, escucha el evento que disparan los
+  //       dashboards al marcar notificaciones como leídas.
+  // ¿Para qué? Para que el número baje al instante en vez de esperar
+  //           hasta 20s al siguiente ciclo de polling.
+  usePolling(fetchCount, { enabled: !!user, onExternalTrigger: onNotificacionesActualizadas });
 
   // ¿Qué? Trae la foto de perfil para el círculo de esta tarjeta lateral.
   // ¿Para qué? Este círculo lee su nombre/rol del token de sesión (JWT,

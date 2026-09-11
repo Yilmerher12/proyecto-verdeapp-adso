@@ -7,6 +7,7 @@ import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
 import { SolicitudesDesvinculacion } from "@/components/SolicitudesDesvinculacion";
 import { AsignarConjuntoAdicionalForm } from "@/components/AsignarConjuntoAdicionalForm";
@@ -802,45 +803,27 @@ export function AdminDashboard() {
       )}
 
       {confirmando && (
-        <Modal onClose={() => setConfirmando(null)} aria-label={t("dashboards.admin.usersSection.status.confirmButton")}>
-          <div className="p-6">
-            <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">
-              {confirmando.nuevoEstado
-                ? t("dashboards.admin.usersSection.status.confirmEnableTitle")
-                : t("dashboards.admin.usersSection.status.confirmDisableTitle")}
-            </h3>
-            <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
-              {confirmando.nuevoEstado
-                ? t("dashboards.admin.usersSection.status.confirmEnableBody", { correo: confirmando.correo })
-                : t("dashboards.admin.usersSection.status.confirmDisableBody", { correo: confirmando.correo })}
-            </p>
-            {errorAccion && (
-              <div className="mb-4">
-                <Alert type="error" message={errorAccion} onClose={() => setErrorAccion(null)} />
-              </div>
-            )}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setConfirmando(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-              >
-                {t("common.cancel")}
-              </button>
-              <div className="flex-1">
-                <Button
-                  type="button"
-                  fullWidth
-                  variant={confirmando.nuevoEstado ? "primary" : "danger"}
-                  isLoading={actualizando}
-                  onClick={ejecutarCambioHabilitado}
-                >
-                  {t("dashboards.admin.usersSection.status.confirmButton")}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={confirmando.nuevoEstado ? CircleCheck : Ban}
+          variant={confirmando.nuevoEstado ? "primary" : "danger"}
+          ariaLabel={t("dashboards.admin.usersSection.status.confirmButton")}
+          title={
+            confirmando.nuevoEstado
+              ? t("dashboards.admin.usersSection.status.confirmEnableTitle")
+              : t("dashboards.admin.usersSection.status.confirmDisableTitle")
+          }
+          description={
+            confirmando.nuevoEstado
+              ? t("dashboards.admin.usersSection.status.confirmEnableBody", { correo: confirmando.correo })
+              : t("dashboards.admin.usersSection.status.confirmDisableBody", { correo: confirmando.correo })
+          }
+          error={errorAccion}
+          onDismissError={() => setErrorAccion(null)}
+          isConfirming={actualizando}
+          confirmLabel={t("dashboards.admin.usersSection.status.confirmButton")}
+          onConfirm={ejecutarCambioHabilitado}
+          onClose={() => setConfirmando(null)}
+        />
       )}
     </div>
   );
