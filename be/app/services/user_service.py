@@ -8,12 +8,12 @@ Descripción: Lógica de negocio del perfil del usuario autenticado.
            de acopio).
 ¿Impacto? read_users_me y update_profile necesitan un bloque de lógica
           distinto por cada uno de los 4 roles (cada uno guarda su nombre y
-          teléfono en su propia tabla) — ver _obtener_perfil_por_rol.
+          teléfono en su propia tabla) — ver obtener_registro_de_perfil.
 """
 import re
 from pathlib import Path
 
-from fastapi import HTTPException, UploadFile
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -36,6 +36,33 @@ CARPETA_FOTOS_PERFIL = Path(__file__).parent.parent / "uploads" / "perfiles"
 # ¿Qué? Formato válido de teléfono local (RQF-008): solo dígitos, entre 7
 #       (fijo con indicativo corto) y 10 (celular colombiano) caracteres.
 TELEFONO_REGEX = re.compile(r"^\d{7,10}$")
+
+
+def obtener_registro_de_perfil(db: Session, user: Usuario) -> Residente | Reciclador | AdministradorConjunto | None:
+    """Devuelve la fila de datos personales del usuario según su rol.
+
+    ¿Qué? Issue #220 (b13 del diagnóstico) — "¿en qué tabla vive el nombre
+          real de esta persona, según su rol?" se resolvía de 3 formas
+          parecidas pero distintas: aquí, en
+          auth_service._obtener_nombre_real, y en actualizar_perfil (más
+          abajo). Esta es ahora la única fuente de verdad para esa
+          pregunta — las otras dos la reutilizan.
+    ¿Para qué? Si se agrega un rol nuevo, o cambia qué tabla guarda el
+              perfil de un rol existente, solo hay que tocar esta función.
+    ¿Impacto? Devuelve None para Admin del Sistema (no tiene tabla de
+              perfil propia) o si el usuario todavía no tiene fila creada.
+              obtener_perfil (abajo) sigue con sus propias consultas por
+              JOIN — necesita datos adicionales (localidad, conjunto,
+              unidad) que esta función no trae, así que no es la misma
+              duplicación.
+    """
+    if user.id_rol == RolId.RESIDENTE:
+        return db.execute(select(Residente).where(Residente.id_usuario == user.id_usuario)).scalar_one_or_none()
+    if user.id_rol == RolId.RECICLADOR:
+        return db.execute(select(Reciclador).where(Reciclador.id_usuario == user.id_usuario)).scalar_one_or_none()
+    if user.id_rol == RolId.ADMIN_CONJUNTO:
+        return db.execute(select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == user.id_usuario)).scalar_one_or_none()
+    return None
 
 
 def obtener_perfil(db: Session, current_user: Usuario) -> dict:
@@ -144,38 +171,27 @@ def actualizar_perfil(db: Session, current_user: Usuario, body: UpdateProfileBod
     nombre = body.nombre.strip()
     apellidos = body.apellidos.strip()
     if not nombre or not apellidos:
-        raise HTTPException(status_code=422, detail="Nombre y apellidos son obligatorios.")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Nombre y apellidos son obligatorios.")
 
     telefono = (body.numero_telefonico or "").strip()
     if telefono and not TELEFONO_REGEX.match(telefono):
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="El número telefónico tiene un formato inválido.",
         )
 
-    if current_user.id_rol == RolId.RESIDENTE:
-        row = db.execute(select(Residente).where(Residente.id_usuario == current_user.id_usuario)).scalar_one_or_none()
-        if row:
-            row.nombre = nombre
-            row.apellidos = apellidos
-            row.numero_telefonico = telefono or "N/A"
-    elif current_user.id_rol == RolId.RECICLADOR:
-        row = db.execute(select(Reciclador).where(Reciclador.id_usuario == current_user.id_usuario)).scalar_one_or_none()
-        if row:
-            row.nombre = nombre
-            row.apellidos = apellidos
-            row.numero_telefonico = telefono or "N/A"
+    if current_user.id_rol == RolId.ADMIN_SISTEMA:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="El perfil del administrador del sistema no es editable.")
+
+    row = obtener_registro_de_perfil(db, current_user)
+    if row:
+        row.nombre = nombre
+        row.apellidos = apellidos
+        row.numero_telefonico = telefono or "N/A"
+        if current_user.id_rol == RolId.RECICLADOR:
             asociacion = (body.asociacion or "").strip()
             row.asociacion = asociacion or "INDEPENDIENTE"
             row.mostrar_contacto_directorio = body.mostrar_contacto_directorio
-    elif current_user.id_rol == RolId.ADMIN_CONJUNTO:
-        row = db.execute(select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == current_user.id_usuario)).scalar_one_or_none()
-        if row:
-            row.nombre = nombre
-            row.apellidos = apellidos
-            row.numero_telefonico = telefono or "N/A"
-    else:
-        raise HTTPException(status_code=403, detail="El perfil del administrador del sistema no es editable.")
 
     db.commit()
 

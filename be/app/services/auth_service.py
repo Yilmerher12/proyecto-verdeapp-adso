@@ -21,6 +21,7 @@ from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.password_reset_token import PasswordResetToken
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.token_revocado import TokenRevocado
+from app.services.user_service import obtener_registro_de_perfil
 
 from app.schemas.user import (
     ResetPasswordRequest,
@@ -330,33 +331,16 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
 
 
 def _obtener_nombre_real(db: Session, user: Usuario):
-    """Busca el nombre y apellidos reales del usuario según su rol."""
-    real_first_name = "Administrador"
-    real_last_name = "del Sistema"
+    """Busca el nombre y apellidos reales del usuario según su rol.
 
-    if user.id_rol == RolId.RESIDENTE:
-        stmt_res = select(Residente).where(Residente.id_usuario == user.id_usuario)
-        residente = db.execute(stmt_res).scalar_one_or_none()
-        if residente:
-            real_first_name = residente.nombre
-            real_last_name = residente.apellidos
-
-    elif user.id_rol == RolId.RECICLADOR:
-        stmt_rec = select(Reciclador).where(Reciclador.id_usuario == user.id_usuario)
-        reciclador = db.execute(stmt_rec).scalar_one_or_none()
-        if reciclador:
-            real_first_name = reciclador.nombre
-            real_last_name = reciclador.apellidos
-
-    elif user.id_rol == RolId.ADMIN_CONJUNTO:
-        from app.models.administrador_conjunto import AdministradorConjunto
-        stmt_admin = select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == user.id_usuario)
-        administrador = db.execute(stmt_admin).scalar_one_or_none()
-        if administrador:
-            real_first_name = administrador.nombre
-            real_last_name = administrador.apellidos
-
-    return real_first_name, real_last_name
+    ¿Qué? Issue #220 (b13 del diagnóstico) — reutiliza
+          user_service.obtener_registro_de_perfil en vez de repetir aquí
+          la misma búsqueda "¿en qué tabla vive el perfil de este rol?".
+    """
+    registro = obtener_registro_de_perfil(db, user)
+    if registro:
+        return registro.nombre, registro.apellidos
+    return "Administrador", "del Sistema"
 
 
 def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:

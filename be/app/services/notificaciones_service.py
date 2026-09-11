@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List
 from uuid import UUID
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import delete as sql_delete
 from sqlalchemy import func as sqlfunc
 from sqlalchemy import select
@@ -111,24 +111,24 @@ def _aviso_reciente(db: Session, id_conjunto: UUID, id_emisor: UUID, tipo: str, 
 
 def enviar_notificacion(db: Session, current_user: Usuario, body: NotificacionEnviarBody) -> dict:
     if body.tipo not in TIPOS_VALIDOS:
-        raise HTTPException(status_code=400, detail=f"Tipo inválido. Válidos: {sorted(TIPOS_VALIDOS)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Tipo inválido. Válidos: {sorted(TIPOS_VALIDOS)}")
 
     role_id = current_user.id_rol
 
     if role_id == RolId.RESIDENTE:
         if body.tipo != "SHUT_LLENO":
-            raise HTTPException(status_code=403, detail="El residente solo puede enviar SHUT_LLENO.")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="El residente solo puede enviar SHUT_LLENO.")
         id_conjunto = _conjunto_del_residente(db, current_user.id_usuario)
         if not id_conjunto:
-            raise HTTPException(status_code=404, detail="No se encontró el conjunto del residente.")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encontró el conjunto del residente.")
         if _shut_esta_lleno(db, id_conjunto):
-            raise HTTPException(status_code=400, detail="El SHUT de tu conjunto ya está reportado como lleno.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El SHUT de tu conjunto ya está reportado como lleno.")
         mensaje = MENSAJE_RESIDENTE_SHUT
         destinatarios = set(_recicladores_del_conjunto(db, id_conjunto) + admins_del_conjunto(db, id_conjunto))
 
     elif role_id == RolId.RECICLADOR:
         if not body.id_conjunto_residencial:
-            raise HTTPException(status_code=400, detail="Se requiere id_conjunto_residencial.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Se requiere id_conjunto_residencial.")
         id_conjunto = body.id_conjunto_residencial
 
         # Verificar que el reciclador está autorizado en ese conjunto
@@ -142,7 +142,7 @@ def enviar_notificacion(db: Session, current_user: Usuario, body: NotificacionEn
             )
         ).first()
         if not autorizado:
-            raise HTTPException(status_code=403, detail="No estás autorizado en este conjunto.")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No estás autorizado en este conjunto.")
 
         # ¿Qué? Control de presencia: SHUT_LLENO, SHUT_LIBRE y
         #       FINALIZACION_RECICLADOR solo tienen sentido con el
@@ -159,18 +159,18 @@ def enviar_notificacion(db: Session, current_user: Usuario, body: NotificacionEn
         if body.tipo == "LLEGADA_RECICLADOR":
             if presente:
                 raise HTTPException(
-                    status_code=400,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Ya avisaste tu llegada a este conjunto — avisa que ya te vas antes de volver a llegar.",
                 )
             if _aviso_reciente(db, id_conjunto, current_user.id_usuario, "LLEGADA_RECICLADOR", minutos=120):
                 raise HTTPException(
-                    status_code=400,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Ya reportaste tu llegada a este conjunto hace menos de 2 horas.",
                 )
         else:
             if not presente:
                 raise HTTPException(
-                    status_code=400,
+                    status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Debes avisar tu llegada a este conjunto antes de usar esta notificación.",
                 )
             # ¿Qué? Mismo candado que ya protegía a SHUT_LLENO del lado del
@@ -178,15 +178,15 @@ def enviar_notificacion(db: Session, current_user: Usuario, body: NotificacionEn
             #       lado del reciclador, y se agrega el simétrico para
             #       SHUT_LIBRE, que antes no tenía ningún candado.
             if body.tipo == "SHUT_LLENO" and _shut_esta_lleno(db, id_conjunto):
-                raise HTTPException(status_code=400, detail="El SHUT de este conjunto ya está reportado como lleno.")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El SHUT de este conjunto ya está reportado como lleno.")
             if body.tipo == "SHUT_LIBRE" and not _shut_esta_lleno(db, id_conjunto):
-                raise HTTPException(status_code=400, detail="El SHUT de este conjunto ya está reportado como libre.")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El SHUT de este conjunto ya está reportado como libre.")
 
         mensaje = MENSAJES[body.tipo]
         destinatarios = set(residentes_del_conjunto(db, id_conjunto) + admins_del_conjunto(db, id_conjunto))
 
     else:
-        raise HTTPException(status_code=403, detail="Rol no permitido.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Rol no permitido.")
 
     destinatarios.discard(current_user.id_usuario)
 
@@ -262,7 +262,7 @@ def marcar_leida(db: Session, current_user: Usuario, id_notificacion: UUID) -> N
     ).scalar_one_or_none()
 
     if not dest:
-        raise HTTPException(status_code=404, detail="Notificación no encontrada.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notificación no encontrada.")
 
     if not dest.leida:
         dest.leida = True
