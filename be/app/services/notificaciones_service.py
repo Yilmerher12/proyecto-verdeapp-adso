@@ -346,16 +346,70 @@ def obtener_mi_estado_reciclador(db: Session, current_user: Usuario) -> List[Est
         )
     ).scalars().all()
 
+    if not ids_conjuntos:
+        return []
+
+    # ¿Qué? Issue #219 (b6 del diagnóstico) — antes, por cada conjunto
+    #       autorizado se hacían hasta 3 consultas separadas
+    #       (reciclador_esta_presente, _shut_esta_lleno, _aviso_reciente):
+    #       con 10 conjuntos, hasta 30 consultas en una sola petición.
+    # ¿Para qué? Acá se traen TODAS las notificaciones relevantes de TODOS
+    #           los conjuntos autorizados en solo 2 consultas — presencia
+    #           y cooldown salen de la primera, SHUT lleno/libre de la
+    #           segunda — y el resto del cálculo (agrupar por conjunto,
+    #           quedarse con la más reciente) se hace en Python.
+    # ¿Impacto? Mismo resultado que antes: cada helper sigue existiendo tal
+    #           cual y se usa igual en los demás lugares que solo
+    #           necesitan consultar UN conjunto a la vez (ej.
+    #           enviar_notificacion), donde no hay ningún N+1 que resolver.
+    filas_presencia = db.execute(
+        select(Notificacion.id_conjunto_residencial, Notificacion.tipo, Notificacion.created_at)
+        .where(
+            Notificacion.id_conjunto_residencial.in_(ids_conjuntos),
+            Notificacion.id_emisor == current_user.id_usuario,
+            Notificacion.tipo.in_(["LLEGADA_RECICLADOR", "FINALIZACION_RECICLADOR"]),
+        )
+        .order_by(Notificacion.created_at.desc())
+    ).all()
+
+    filas_shut = db.execute(
+        select(Notificacion.id_conjunto_residencial, Notificacion.tipo)
+        .where(
+            Notificacion.id_conjunto_residencial.in_(ids_conjuntos),
+            Notificacion.tipo.in_(["SHUT_LLENO", "SHUT_LIBRE"]),
+        )
+        .order_by(Notificacion.created_at.desc())
+    ).all()
+
+    limite_cooldown = datetime.now(timezone.utc) - timedelta(minutes=120)
+
     resultado = []
     for id_conjunto in ids_conjuntos:
-        presente = reciclador_esta_presente(db, id_conjunto, current_user.id_usuario)
+        # ¿Qué? filas_presencia ya viene ordenada por created_at desc — la
+        #       primera fila de este conjunto es su acción más reciente
+        #       (llegada o finalización), sin importar el cooldown.
+        fila_mas_reciente = next((f for f in filas_presencia if f.id_conjunto_residencial == id_conjunto), None)
+        presente = fila_mas_reciente is not None and fila_mas_reciente.tipo == "LLEGADA_RECICLADOR"
+
+        # ¿Qué? Para el cooldown hace falta la ÚLTIMA llegada específicamente
+        #       (no la última acción cualquiera) — puede ser una fila más
+        #       vieja que fila_mas_reciente si la más reciente fue una
+        #       finalización.
+        ultima_llegada = next(
+            (f for f in filas_presencia if f.id_conjunto_residencial == id_conjunto and f.tipo == "LLEGADA_RECICLADOR"),
+            None,
+        )
+        aviso_reciente = ultima_llegada is not None and ultima_llegada.created_at > limite_cooldown
+
+        fila_shut = next((f for f in filas_shut if f.id_conjunto_residencial == id_conjunto), None)
+        shut_lleno = fila_shut is not None and fila_shut.tipo == "SHUT_LLENO"
+
         resultado.append(
             EstadoRecicladorConjuntoResponse(
                 id_conjunto_residencial=id_conjunto,
                 presente=presente,
-                shut_lleno=_shut_esta_lleno(db, id_conjunto),
-                puede_avisar_llegada=not presente
-                and not _aviso_reciente(db, id_conjunto, current_user.id_usuario, "LLEGADA_RECICLADOR", minutos=120),
+                shut_lleno=shut_lleno,
+                puede_avisar_llegada=not presente and not aviso_reciente,
             )
         )
     return resultado
