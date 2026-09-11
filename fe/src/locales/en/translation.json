@@ -413,10 +413,7 @@
           "p1": "These are <strong>strictly necessary</strong> for the Service to function. Without them, users cannot log in or maintain their session. They do not require additional consent pursuant to Law 1581/2012's necessity principle.",
           "p2": "They store JWT tokens (access and refresh) securely, with the <code>HttpOnly</code>, <code>Secure</code>, and <code>SameSite=Strict</code> attributes to prevent XSS and CSRF attacks, following <strong>OWASP Top 10</strong> recommendations."
         },
-        "prefCategory": {
-          "title": "Preference Cookies",
-          "p1": "These save user settings (such as the dark/light visual theme) to personalize the experience without reconfiguring on each visit. They do not include personally identifiable data."
-        }
+        "localStorageNote": "<strong>Note on the visual theme:</strong> the theme preference (light/dark) is not stored in a cookie, but in the browser's <strong>local storage</strong> (<code>localStorage</code>). It does not appear in your browser's site cookie list, and it does not expire: it stays saved on your device until you clear this site's data."
       },
       "s3": {
         "heading": "Detailed Cookie List",
@@ -437,11 +434,6 @@
             "purpose": "Stores the refresh token that allows obtaining a new access_token without the user having to log in again.",
             "duration": "7 days",
             "type": "Functional / Authentication"
-          },
-          "theme_preference": {
-            "purpose": "Saves the user's theme preference (dark/light) to maintain it between sessions.",
-            "duration": "1 year",
-            "type": "Preferences"
           }
         }
       },
