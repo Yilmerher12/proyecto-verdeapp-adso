@@ -79,6 +79,31 @@ describe("AdminConjuntoDashboard", () => {
     });
   });
 
+  it("muestra un aviso de error si falla la carga de mis conjuntos (issue #223, f2 y f9 del diagnóstico)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.reject(new Error("Network Error"));
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
+    expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
+  it("muestra un aviso de error si falla la carga de recicladores autorizados (issue #223, f2 y f9 del diagnóstico)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+      if (url.includes("/invitaciones")) return Promise.resolve({ data: [] });
+      if (url.includes("/autorizados")) return Promise.reject(new Error("Network Error"));
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    const botonDetalle = await screen.findByRole("button", { name: "Ver detalle" });
+    await user.click(botonDetalle);
+
+    expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
   it("lista los conjuntos administrados con su sección de recicladores", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });

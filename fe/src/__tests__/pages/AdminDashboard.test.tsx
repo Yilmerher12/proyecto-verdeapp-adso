@@ -94,6 +94,17 @@ describe("AdminDashboard", () => {
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
   });
 
+  it("muestra un aviso de error si falla la carga (issue #223, f9 del diagnóstico)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/admin/vista-residentes")) {
+        return Promise.reject(new Error("Network Error"));
+      }
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
+    expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
   it("consulta la pestaña de Residentes al montar", async () => {
     renderPage();
     await waitFor(() => {

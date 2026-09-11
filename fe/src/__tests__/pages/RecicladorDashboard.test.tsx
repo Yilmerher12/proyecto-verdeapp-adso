@@ -61,6 +61,12 @@ describe("RecicladorDashboard", () => {
     expect(screen.getByText("Test User")).toBeInTheDocument();
   });
 
+  it("muestra un aviso de error si falla la carga (issue #223, f9 del diagnóstico)", async () => {
+    mockGet.mockRejectedValue(new Error("Network Error"));
+    renderPage();
+    expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
   it("carga invitaciones, conjuntos y notificaciones al montar", async () => {
     renderPage();
     await waitFor(() => {

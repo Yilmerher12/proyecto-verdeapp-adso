@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, type ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -127,8 +126,14 @@ export function AppShell({ children }: AppShellProps) {
     return unsubscribe;
   }, [user]);
 
-  const userData = user as any;
-  const roleId = (userData?.role_id || userData?.id_rol || RoleId.RESIDENTE) as RoleId;
+  // ¿Qué? Issue #223 (f3 del diagnóstico) — antes esto era "user as any" y
+  //       leía cada dato de 2-3 formas distintas (role_id O id_rol;
+  //       correo_electronico O email O sub), restos de una versión vieja
+  //       del tipo de usuario que ya no existe. UserResponse (types/auth.ts)
+  //       ya es el único tipo real, con un solo nombre correcto por campo —
+  //       usarlo directo permite que TypeScript avise si algún campo deja
+  //       de existir, en vez de fallar en silencio en tiempo de ejecución.
+  const roleId = user?.role_id ?? RoleId.RESIDENTE;
   const roleMeta = ROLE_THEME[roleId] ?? ROLE_THEME[RoleId.RESIDENTE];
 
   // ¿Qué? ROLE_THEME (fe/src/config/roleTheme.ts) es un objeto de configuración
@@ -144,10 +149,10 @@ export function AppShell({ children }: AppShellProps) {
   };
   const roleLabel = t(ROLE_LABEL_KEY[roleId] ?? ROLE_LABEL_KEY[RoleId.RESIDENTE]);
 
-  const rawEmail = userData?.correo_electronico || userData?.email || userData?.sub || "usuario@verdeapp.com";
+  const rawEmail = user?.email || "usuario@verdeapp.com";
   const fallbackName = rawEmail.split("@")[0].toUpperCase();
-  const displayName = userData?.first_name && userData.first_name !== "Usuario"
-    ? `${userData.first_name} ${userData.last_name || ""}`.toUpperCase()
+  const displayName = user?.first_name && user.first_name !== "Usuario"
+    ? `${user.first_name} ${user.last_name || ""}`.toUpperCase()
     : fallbackName;
 
   const getNavItemsByRole = () => {
