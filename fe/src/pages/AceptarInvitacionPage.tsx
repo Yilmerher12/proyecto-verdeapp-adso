@@ -127,10 +127,7 @@ export function AceptarInvitacionPage() {
       });
       setExito(true);
     } catch (err: any) {
-      setGeneralError(
-        err.response?.data?.detail ||
-          t("aceptarInvitacion.genericError")
-      );
+      setGeneralError(err.message || t("aceptarInvitacion.genericError"));
     } finally {
       setIsLoading(false);
     }
