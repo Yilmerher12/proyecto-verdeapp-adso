@@ -130,7 +130,16 @@ def editar_mi_conjunto(
     """
     conjunto = _obtener_conjunto_propio_o_rechazar(db, administrador, id_conjunto_residencial)
 
-    conjunto.nit = datos.nit.strip() if datos.nit else None
+    # ¿Qué? Issue #220 (b14 del diagnóstico) — antes, "datos.nit.strip() if
+    #       datos.nit else None" solo revisaba que datos.nit no fuera
+    #       vacío/None ANTES de recortarlo — un NIT de puros espacios
+    #       ("   ") pasaba esa condición igual (no está vacío como string),
+    #       así que se guardaba como "" en vez de None.
+    # ¿Para qué? Mismo patrón que ya usa asociacion en user_service.py:
+    #           recortar primero, y que el vacío resultante sea "sin
+    #           valor" (None), no una cadena vacía.
+    nit_recortado = (datos.nit or "").strip()
+    conjunto.nit = nit_recortado or None
     db.commit()
 
     return MessageResponse(message="Conjunto actualizado correctamente.")
