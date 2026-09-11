@@ -9,11 +9,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from typing import List
 
 from app.dependencies import get_db, require_admin_conjunto
 from app.models.administrador_conjunto import AdministradorConjunto
+from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.solicitud_desvinculacion import EstadoSolicitudDesvinculacion, SolicitudDesvinculacion
 from app.schemas.conjunto_panel import CodigoAccesoResponse, ConjuntoAdministradoResponse, EditarConjuntoRequest
@@ -74,6 +75,25 @@ def listar_mis_conjuntos(
         ).scalars().all()
     )
 
+    # ¿Qué? Issue #219 (b7 del diagnóstico) — antes se recorría
+    #       administrador.conjuntos y se accedía a c.localidad por cada
+    #       uno, disparando una consulta aparte por conjunto (carga
+    #       perezosa de SQLAlchemy). selectinload trae TODAS las
+    #       localidades de estos conjuntos en una segunda consulta única,
+    #       sin importar cuántos conjuntos administre esta persona.
+    conjuntos = db.execute(
+        select(ConjuntoResidencial)
+        .join(
+            AdministradorConjuntoAsignacion,
+            AdministradorConjuntoAsignacion.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial,
+        )
+        .where(
+            AdministradorConjuntoAsignacion.id_administrador == administrador.id_administrador,
+            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
+        )
+        .options(selectinload(ConjuntoResidencial.localidad))
+    ).scalars().all()
+
     return [
         ConjuntoAdministradoResponse(
             id_conjunto_residencial=c.id_conjunto_residencial,
@@ -84,7 +104,7 @@ def listar_mis_conjuntos(
             tiene_solicitud_pendiente=c.id_conjunto_residencial in ids_con_solicitud_pendiente,
             codigo_acceso=c.codigo_acceso,
         )
-        for c in administrador.conjuntos
+        for c in conjuntos
     ]
 
 
