@@ -422,11 +422,16 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* ¿Qué? Fondo del área de contenido, más oscuro que el sidebar.
             ¿Para qué? Las tarjetas (bg-white dark:bg-[#132a1c]) se perdían
-            contra un fondo casi del mismo tono que el sidebar — #dfeadf
-            (claro) y #03130b (oscuro, notablemente más oscuro que el
+            contra un fondo casi del mismo tono que el sidebar. gray-100
+            (claro, el mismo tono neutro que ya usa el contenedor raíz más
+            arriba) y #03130b (oscuro, notablemente más oscuro que el
             #052e16 del sidebar) marcan mejor dónde termina la barra lateral
-            y dónde empieza el contenido. */}
-        <main className="flex-1 overflow-y-auto bg-[#dfeadf] dark:bg-[#03130b]">
+            y dónde empieza el contenido.
+            ¿Impacto? Antes era un verde pálido (#dfeadf) elegido a mano —
+            se veía raro/desentonado en modo claro (retroalimentación
+            directa). gray-100 es neutro y ya es parte de la paleta que este
+            mismo layout usa (ver el contenedor raíz, más arriba). */}
+        <main className="flex-1 overflow-y-auto bg-gray-100 dark:bg-[#03130b]">
           <div className="mx-auto max-w-7xl px-6 pb-6">{children}</div>
         </main>
       </div>
