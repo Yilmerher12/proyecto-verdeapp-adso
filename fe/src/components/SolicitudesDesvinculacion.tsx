@@ -19,6 +19,14 @@ interface SolicitudesDesvinculacionProps {
    *  encabezado duplicado. Por defecto se muestra (para no romper ningún
    *  otro lugar que ya use este componente tal cual). */
   mostrarEncabezado?: boolean;
+  /** ¿Para qué? Dentro de un <Modal>, el fondo blanco/borde redondeado/sombra
+   *  ya los pone el propio modal — repetirlos aquí adentro se veía como una
+   *  tarjeta dentro de otra tarjeta (doble borde, doble sombra), además de
+   *  que el contenido quedaba pegado al botón "cerrar" (X) del modal sin
+   *  nada de aire arriba. Con esto, el componente se monta como contenido
+   *  plano (sin su propia tarjeta). Default false para no romper el uso
+   *  normal, embebido directo en el panel. */
+  dentroDeModal?: boolean;
 }
 
 /**
@@ -31,6 +39,7 @@ interface SolicitudesDesvinculacionProps {
 export function SolicitudesDesvinculacion({
   onCountChange,
   mostrarEncabezado = true,
+  dentroDeModal = false,
 }: SolicitudesDesvinculacionProps = {}) {
   const { t } = useTranslation();
   const [solicitudes, setSolicitudes] = useState<SolicitudDesvinculacion[]>([]);
@@ -88,7 +97,13 @@ export function SolicitudesDesvinculacion({
   };
 
   return (
-    <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+    <div
+      className={
+        dentroDeModal
+          ? ""
+          : "bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm"
+      }
+    >
       {mostrarEncabezado && (
         <div className="flex items-center gap-2 mb-4">
           <ClipboardList className="h-4 w-4 text-green-600" />

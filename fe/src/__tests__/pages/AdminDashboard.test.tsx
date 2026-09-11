@@ -81,15 +81,6 @@ function renderPage() {
   });
 }
 
-// ¿Qué? "Usuarios registrados" ahora empieza plegado (acordeón) — evita el
-//       "reguero" de filas apenas se entra al panel. El nombre accesible del
-//       botón usa una expresión regular porque también incluye la insignia
-//       de total ("Usuarios registrados 3 en total"), que cambia según los
-//       datos mockeados de cada test.
-async function abrirUsuariosRegistrados(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: /Usuarios registrados/ }));
-}
-
 describe("AdminDashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -120,10 +111,7 @@ describe("AdminDashboard", () => {
       }
       return Promise.resolve({ data: [] });
     });
-    const user = userEvent.setup();
     renderPage();
-    await abrirUsuariosRegistrados(user);
-
     await waitFor(() => {
       expect(screen.getByText("Juan Pérez")).toBeInTheDocument();
     });
@@ -141,8 +129,6 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
-    await abrirUsuariosRegistrados(user);
-
     await user.click(screen.getByRole("button", { name: "Recicladores" }));
 
     await waitFor(() => {
@@ -162,8 +148,6 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
-    await abrirUsuariosRegistrados(user);
-
     await user.click(screen.getByRole("button", { name: "Administradores de Conjunto" }));
 
     await waitFor(() => {
@@ -186,8 +170,6 @@ describe("AdminDashboard", () => {
     mockPatch.mockResolvedValue({ data: { correo_electronico: residente.Correo, habilitado: false } });
     const user = userEvent.setup();
     renderPage();
-    await abrirUsuariosRegistrados(user);
-
     await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: /Desactivar/i }));
@@ -216,10 +198,7 @@ describe("AdminDashboard", () => {
       }
       return Promise.resolve({ data: [] });
     });
-    const user = userEvent.setup();
     renderPage();
-    await abrirUsuariosRegistrados(user);
-
     await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
     expect(screen.queryByRole("button", { name: /Desactivar/i })).not.toBeInTheDocument();
   });
@@ -227,8 +206,6 @@ describe("AdminDashboard", () => {
   it("busca en tiempo real (con debounce) y se lo manda al backend como parámetro", async () => {
     const user = userEvent.setup();
     renderPage();
-    await abrirUsuariosRegistrados(user);
-
     const input = await screen.findByPlaceholderText("Buscar por nombre o correo...");
     await user.type(input, "juan");
     // ¿Qué? No hace falta Enter — el debounce de 350ms dispara la
@@ -243,9 +220,7 @@ describe("AdminDashboard", () => {
   });
 
   it("muestra los mensajes de tabla vacía cuando no hay datos", async () => {
-    const user = userEvent.setup();
     renderPage();
-    await abrirUsuariosRegistrados(user);
     await waitFor(() => {
       expect(screen.getByText("No hay residentes registrados todavía.")).toBeInTheDocument();
     });
@@ -266,8 +241,6 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
-    await abrirUsuariosRegistrados(user);
-
     await screen.findByText("Juan Pérez");
     // ¿Qué? aria-sort en el <th> es el patrón WCAG para encabezados
     //       ordenables — antes no existía ninguno (re-auditoría de
@@ -315,8 +288,6 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
-    await abrirUsuariosRegistrados(user);
-
     await screen.findByText("Juan Pérez");
     await user.click(screen.getByRole("button", { name: "Ordenar por Correo" }));
     await waitFor(() => {
@@ -542,13 +513,17 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
-    await abrirUsuariosRegistrados(user);
-
     // ¿Qué? El <select> de Localidad no tiene nombre accesible propio (ver
     //       el mismo campo antes de este cambio) — se toma directo del DOM,
     //       mismo recurso que ya usa este archivo para el botón de
     //       HeadlessUI más abajo.
     const selectLocalidad = document.querySelector("select") as HTMLSelectElement;
+    // ¿Para qué? "Usuarios registrados" ya está abierta desde el montaje,
+    //           así que hay que esperar a que termine de llegar
+    //           /geography/localidades antes de elegir una opción — antes
+    //           ese tiempo ya se consumía esperando el clic que abría el
+    //           acordeón, que ahora no existe.
+    await waitFor(() => expect(selectLocalidad.options.length).toBeGreaterThan(1));
     await user.selectOptions(selectLocalidad, "1");
 
     await user.type(screen.getByPlaceholderText("Buscar conjunto..."), "RESERVA");
@@ -565,7 +540,7 @@ describe("AdminDashboard", () => {
     });
   });
 
-  it("Solicitudes pendientes empieza plegado y se despliega con 'Ver solicitudes'", async () => {
+  it("el conteo de solicitudes pendientes llega antes de abrir el modal, y 'Ver solicitudes' lo abre", async () => {
     mockGet.mockImplementation((url: string) => {
       if (
         url.includes("/admin/vista-residentes") ||
@@ -597,14 +572,15 @@ describe("AdminDashboard", () => {
     renderPage();
 
     // ¿Qué? El número de pendientes llega apenas carga (SolicitudesDesvinculacion
-    //       avisa por onCountChange), aunque el acordeón siga plegado —
-    //       plegado usa "hidden" (CSS), no deja de renderizarse, así que la
-    //       solicitud sigue en el DOM pero no visible.
+    //       avisa por onCountChange) gracias a la instancia oculta (con
+    //       "hidden", no deja de renderizarse) — antes de que el usuario
+    //       abra el modal, la solicitud ya está en el DOM pero no visible.
     expect(await screen.findByText("1 solicitud pendiente por resolver.")).toBeInTheDocument();
-    expect(screen.getByText("Conjunto Los Alpes")).not.toBeVisible();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Ver solicitudes" }));
 
-    expect(await screen.findByText("Conjunto Los Alpes")).toBeVisible();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(await screen.findAllByText("Conjunto Los Alpes")).not.toHaveLength(0);
   });
 });

@@ -51,7 +51,12 @@ type OrderDir = "asc" | "desc";
 
 // ¿Qué? Filas por página — el mismo número que ya se manda como límite al
 //       backend en cada endpoint.
-const TAMANO_PAGINA = 10;
+// ¿Para qué? 8 en vez de 10: con las 3 tarjetas de resumen nuevas arriba
+//           (Administradores / Solicitudes / Totales), la tabla ya arranca
+//           más abajo en la pantalla que antes — un ancho de página más
+//           chico ayuda a que quepa completa sin bajar tanto, sin perder
+//           el propósito real de la paginación (nunca traer todo de golpe).
+const TAMANO_PAGINA = 8;
 
 const ENDPOINT_POR_TAB: Record<TabUsuarios, string> = {
   residentes: "vista-residentes",
@@ -107,14 +112,20 @@ export function AdminDashboard() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
 
-  // ¿Qué? "Usuarios registrados" y "Solicitudes pendientes" empiezan
-  //       plegados — evita el "reguero" de filas apenas se entra al panel
-  //       (retroalimentación directa del Admin del Sistema sobre esta
-  //       pantalla). El número de pendientes lo reporta
-  //       SolicitudesDesvinculacion vía onCountChange, sin duplicar la
-  //       petición solo para contar.
-  const [usuariosAbierto, setUsuariosAbierto] = useState(false);
-  const [solicitudesAbierto, setSolicitudesAbierto] = useState(false);
+  // ¿Qué? "Usuarios registrados" empieza desplegada — el diseño anterior
+  //       (aprobado por el profesor) ya mostraba la tabla de una vez, sin
+  //       exigir un clic extra solo para ver los datos que se vino a ver.
+  // ¿Impacto? El "reguero" de filas que se quería evitar al plegarla por
+  //           defecto ya no aplica: con TAMANO_PAGINA más chico (8) la
+  //           tabla no se desborda ni obliga a bajar mucho la página.
+  const [usuariosAbierto, setUsuariosAbierto] = useState(true);
+  // ¿Qué? "Solicitudes pendientes" ahora vive en un modal (ver más abajo,
+  //       junto a mostrarModalInvitar/mostrarModalAsignar) en vez de un
+  //       segundo acordeón aparte — la tarjeta de resumen de arriba y ese
+  //       acordeón hacían exactamente lo mismo, mostrar la misma lista.
+  const [mostrarModalSolicitudes, setMostrarModalSolicitudes] = useState(false);
+  // ¿Para qué? El número de pendientes lo reporta SolicitudesDesvinculacion
+  //           vía onCountChange, sin duplicar la petición solo para contar.
   const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
 
   // ¿Qué? Los 3 totales de la tarjeta "Totales del sistema" — una petición
@@ -420,122 +431,34 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* Franja superior — Administradores de conjunto / Solicitudes
-          pendientes / Totales del sistema. Van primero, ANTES del filtro y
-          la tabla, para que estén siempre a la vista sin importar cuánto
-          crezca la base de usuarios (issue #166 original + retroalimentación
-          de que estas 3 cosas se perdían de vista al final de la pantalla). */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
-          <div className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4 text-green-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
-          </div>
-          <div className="flex flex-1 flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => setMostrarModalInvitar(true)}
-              className="cursor-pointer rounded-xl bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600"
-            >
-              {t("dashboards.admin.inviteSection.show")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMostrarModalAsignar(true)}
-              className="cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-            >
-              {t("desvinculacion.asignarAdicional.openButton")}
-            </button>
-          </div>
-        </div>
+      {/* ¿Qué? Instancia oculta de SolicitudesDesvinculacion — SIEMPRE
+          montada (con "hidden", no deja de renderizarse) solo para que
+          reporte su conteo a la tarjeta de arriba desde antes de que el
+          usuario abra el modal. El modal (más abajo, junto a
+          mostrarModalInvitar/mostrarModalAsignar) monta su propia
+          instancia cuando se abre.
+          ¿Para qué? Antes esto vivía en un segundo acordeón aparte, que
+          mostraba exactamente la misma lista que ya se veía al abrir el
+          modal desde la tarjeta de resumen — contenido duplicado en dos
+          partes distintas de la misma pantalla. */}
+      <div hidden>{user && <SolicitudesDesvinculacion onCountChange={setSolicitudesPendientes} mostrarEncabezado={false} />}</div>
 
-        <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-green-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.pendingRequests.title")}</h3>
-            {solicitudesPendientes > 0 && (
-              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                {solicitudesPendientes}
-              </span>
-            )}
-          </div>
-          <p className="flex-1 text-xs text-gray-500 dark:text-gray-400">
-            {solicitudesPendientes > 0
-              ? t("dashboards.admin.pendingRequests.withCount", { count: solicitudesPendientes })
-              : t("desvinculacion.adminSistema.empty")}
-          </p>
-          <button
-            type="button"
-            onClick={() => setSolicitudesAbierto(true)}
-            className="cursor-pointer self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
-          >
-            {t("dashboards.admin.pendingRequests.viewButton")}
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-green-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.totals.title")}</h3>
-          </div>
-          <div className="flex flex-1 items-center justify-between gap-2">
-            <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.residentes : "—"}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.admin.usersSection.tabs.residentes")}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.recicladores : "—"}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.admin.usersSection.tabs.recicladores")}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.administradores : "—"}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.admin.totals.administradoresShort")}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Solicitudes pendientes — plegado por defecto (acordeón). El
-          componente real (con aprobar/rechazar) queda SIEMPRE montado, para
-          que reporte su conteo a la tarjeta de arriba desde antes de
-          abrirse — solo su cuerpo se oculta visualmente mientras está
-          plegado (con "hidden", no dejando de renderizarse). */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setSolicitudesAbierto((v) => !v)}
-          className="flex w-full cursor-pointer items-center justify-between gap-2 px-5 py-4 text-left"
-          aria-expanded={solicitudesAbierto}
-          aria-controls="solicitudes-pendientes-body"
-        >
-          <span className="flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-green-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.pendingRequests.title")}</h3>
-          </span>
-          <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${solicitudesAbierto ? "rotate-180" : ""}`} aria-hidden="true" />
-        </button>
-        <div id="solicitudes-pendientes-body" className="border-t border-gray-100 px-5 py-4 dark:border-[#2a4d34]" hidden={!solicitudesAbierto}>
-          {user && <SolicitudesDesvinculacion onCountChange={setSolicitudesPendientes} mostrarEncabezado={false} />}
-        </div>
-      </div>
-
-      {/* Usuarios registrados — plegado por defecto (acordeón), mismo motivo
-          que "Solicitudes pendientes": evita el "reguero" de filas apenas se
-          entra al panel. Adentro va todo: pestañas, buscador, filtros de
-          Localidad/Conjunto, tabla y paginación. */}
+      {/* Usuarios registrados — ya no empieza plegada (ver estado
+          usuariosAbierto arriba). Adentro va todo: pestañas, buscador,
+          filtros de Localidad/Conjunto, tabla y paginación. */}
       <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
         <button
           type="button"
           onClick={() => setUsuariosAbierto((v) => !v)}
-          className="flex w-full cursor-pointer items-center justify-between gap-2 px-5 py-4 text-left"
+          className="flex w-full cursor-pointer flex-wrap items-center justify-between gap-2 px-5 py-4 text-left"
           aria-expanded={usuariosAbierto}
           aria-controls="usuarios-registrados-body"
         >
-          <span className="flex items-center gap-2">
-            <Database className="h-4 w-4 text-green-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.usersSection.title")}</h3>
+          <span className="flex min-w-0 items-center gap-2">
+            <Database className="h-4 w-4 shrink-0 text-green-600" />
+            <h3 className="truncate text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.usersSection.title")}</h3>
           </span>
-          <span className="flex items-center gap-2">
+          <span className="flex shrink-0 items-center gap-2">
             {totales && (
               <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#0d2116] dark:text-gray-300">
                 {t("dashboards.admin.usersSection.totalBadge", {
@@ -768,6 +691,90 @@ export function AdminDashboard() {
         )}
       </div>
 
+      {/* Franja inferior — Administradores de conjunto / Solicitudes
+          pendientes / Totales del sistema. Van DESPUÉS de la tabla de
+          usuarios (a pedido del profesor: la tabla es lo más importante de
+          este panel y debe verse de primeras, sin que el usuario tenga que
+          bajar a buscarla). */}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+          <div className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4 text-green-600" />
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
+          </div>
+          <div className="flex flex-1 flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setMostrarModalInvitar(true)}
+              className="cursor-pointer rounded-xl bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600"
+            >
+              {t("dashboards.admin.inviteSection.show")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMostrarModalAsignar(true)}
+              className="cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+            >
+              {t("desvinculacion.asignarAdicional.openButton")}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-4 w-4 text-green-600" />
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.pendingRequests.title")}</h3>
+            {solicitudesPendientes > 0 && (
+              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                {solicitudesPendientes}
+              </span>
+            )}
+          </div>
+          <p className="flex-1 text-xs text-gray-500 dark:text-gray-400">
+            {solicitudesPendientes > 0
+              ? t("dashboards.admin.pendingRequests.withCount", { count: solicitudesPendientes })
+              : t("desvinculacion.adminSistema.empty")}
+          </p>
+          <button
+            type="button"
+            onClick={() => setMostrarModalSolicitudes(true)}
+            className="cursor-pointer self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+          >
+            {t("dashboards.admin.pendingRequests.viewButton")}
+          </button>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-green-600" />
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.totals.title")}</h3>
+          </div>
+          {/* ¿Qué? grid-cols-3 en vez de un flex con justify-between — Tailwind
+              define sus columnas de grid como minmax(0, 1fr), así que cada
+              una se reparte exactamente un tercio del ancho SIN importar el
+              contenido (a diferencia de flex, donde un item nunca se encoge
+              más allá del ancho de su propio contenido por defecto). Antes,
+              en pantallas angostas, "Residentes" y "Recicladores" terminaban
+              superpuestos porque ninguno de los dos cedía espacio al otro.
+              break-words dentro de cada columna deja que la etiqueta pase a
+              una segunda línea en vez de desbordarse. */}
+          <div className="grid flex-1 grid-cols-3 items-center gap-2">
+            <div className="text-center">
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.residentes : "—"}</p>
+              <p className="break-words text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.admin.usersSection.tabs.residentes")}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.recicladores : "—"}</p>
+              <p className="break-words text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.admin.usersSection.tabs.recicladores")}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.administradores : "—"}</p>
+              <p className="break-words text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.admin.totals.administradoresShort")}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {mostrarModalInvitar && (
         <Modal onClose={() => setMostrarModalInvitar(false)} wide aria-label={t("invitarAdminConjunto.title")}>
           <div className="p-6 sm:p-8">
@@ -780,6 +787,16 @@ export function AdminDashboard() {
         <Modal onClose={() => setMostrarModalAsignar(false)} wide aria-label={t("desvinculacion.asignarAdicional.sectionTitle")}>
           <div className="p-6 sm:p-8">
             <AsignarConjuntoAdicionalForm />
+          </div>
+        </Modal>
+      )}
+
+      {mostrarModalSolicitudes && (
+        <Modal onClose={() => setMostrarModalSolicitudes(false)} wide aria-label={t("dashboards.admin.pendingRequests.title")}>
+          <div className="p-6 sm:p-8">
+            {user && (
+              <SolicitudesDesvinculacion onCountChange={setSolicitudesPendientes} mostrarEncabezado dentroDeModal />
+            )}
           </div>
         </Modal>
       )}
