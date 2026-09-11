@@ -73,7 +73,7 @@ export function SolicitudesDesvinculacion({
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("desvinculacion.adminSistema.errorDefault"));
+      setError(err.message || t("desvinculacion.adminSistema.errorDefault"));
     } finally {
       setProcesandoId(null);
     }
@@ -90,7 +90,7 @@ export function SolicitudesDesvinculacion({
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("desvinculacion.adminSistema.errorDefault"));
+      setError(err.message || t("desvinculacion.adminSistema.errorDefault"));
     } finally {
       setProcesandoId(null);
     }

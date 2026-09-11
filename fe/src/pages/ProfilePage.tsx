@@ -175,10 +175,7 @@ export function ProfilePage() {
       setTimeout(() => setExito(false), 3000);
       cargarPerfil();
     } catch (err) {
-      const backendMsg = axios.isAxiosError(err)
-        ? (err.response?.data as { detail?: string } | undefined)?.detail
-        : undefined;
-      setErrorMsg(backendMsg || t("common.saveError"));
+      setErrorMsg(err instanceof Error ? err.message : t("common.saveError"));
     } finally {
       setGuardando(false);
     }

@@ -139,7 +139,7 @@ export function AdminNovedadesPage() {
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.detail || t("common.saveError"));
+      setErrorMsg(err.message || t("common.saveError"));
     } finally {
       setGuardando(false);
     }
@@ -152,7 +152,7 @@ export function AdminNovedadesPage() {
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.detail || t("novedades.admin.archiveError"));
+      setErrorMsg(err.message || t("novedades.admin.archiveError"));
     }
   };
 

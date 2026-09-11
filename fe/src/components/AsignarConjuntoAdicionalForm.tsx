@@ -63,7 +63,7 @@ export function AsignarConjuntoAdicionalForm() {
       setBusquedaHecha(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("desvinculacion.asignarAdicional.errorDefault"));
+      setError(err.message || t("desvinculacion.asignarAdicional.errorDefault"));
     } finally {
       setBuscando(false);
     }
@@ -115,7 +115,7 @@ export function AsignarConjuntoAdicionalForm() {
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("desvinculacion.asignarAdicional.errorDefault"));
+      setError(err.message || t("desvinculacion.asignarAdicional.errorDefault"));
     } finally {
       setAsignando(false);
     }

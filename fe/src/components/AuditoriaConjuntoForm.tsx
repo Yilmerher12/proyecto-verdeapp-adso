@@ -132,7 +132,7 @@ export function AuditoriaConjuntoForm({
       setError(
         esTimeout
           ? t("dashboards.reciclador.auditoria.errorTimeout")
-          : err?.response?.data?.detail || t("dashboards.reciclador.auditoria.errorDefault")
+          : err.message || t("dashboards.reciclador.auditoria.errorDefault")
       );
     } finally {
       setEnviando(false);

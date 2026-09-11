@@ -100,7 +100,7 @@ function SeccionCodigoAcceso({
       onRegenerado();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("dashboards.adminConjunto.codigoAcceso.errorDefault"));
+      setError(err.message || t("dashboards.adminConjunto.codigoAcceso.errorDefault"));
     } finally {
       setRegenerando(false);
     }
@@ -262,8 +262,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
       cargarInvitaciones();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const detalle = err?.response?.data?.detail;
-      setErrorInvitar(detalle || t("dashboards.adminConjunto.recyclersSection.errorDefault"));
+      setErrorInvitar(err.message || t("dashboards.adminConjunto.recyclersSection.errorDefault"));
     } finally {
       setEnviando(false);
     }
@@ -279,8 +278,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
       cargarAutorizados();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const detalle = err?.response?.data?.detail;
-      setErrorRevocar(detalle || t("dashboards.adminConjunto.recyclersSection.revokeErrorDefault"));
+      setErrorRevocar(err.message || t("dashboards.adminConjunto.recyclersSection.revokeErrorDefault"));
     } finally {
       setRevocando(false);
     }
@@ -508,8 +506,7 @@ function SeccionDesvinculacion({
       onSolicitudEnviada();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const detalle = err?.response?.data?.detail;
-      setError(detalle || t("desvinculacion.errorDefault"));
+      setError(err.message || t("desvinculacion.errorDefault"));
     } finally {
       setEnviando(false);
     }

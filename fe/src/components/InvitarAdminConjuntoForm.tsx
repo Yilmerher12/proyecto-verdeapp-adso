@@ -81,10 +81,7 @@ export function InvitarAdminConjuntoForm() {
       setCorreo("");
       setConjuntosSeleccionados([]);
     } catch (err: any) {
-      setError(
-        err.response?.data?.detail ||
-          t("invitarAdminConjunto.errorDefault")
-      );
+      setError(err.message || t("invitarAdminConjunto.errorDefault"));
     } finally {
       setIsLoading(false);
     }
