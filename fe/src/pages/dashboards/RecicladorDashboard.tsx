@@ -112,7 +112,7 @@ const ACCIONES_META = [
     tipo: "SHUT_LIBRE",
     key: "shutLibre",
     icon: PackageCheck,
-    color: "bg-[#14532d] hover:bg-green-800 text-white",  // verde bosque — despejado, natural
+    color: "bg-[#14532d] hover:bg-accent-800 text-white",  // verde bosque — despejado, natural
   },
   {
     tipo: "FINALIZACION_RECICLADOR",
@@ -334,14 +334,14 @@ export function RecicladorDashboard() {
 
       {/* Feedback de notificación enviada */}
       {feedbackOk && (
-        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
         </div>
       )}
 
       {feedbackAuditoria && (
-        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           {feedbackAuditoria}
         </div>
@@ -478,7 +478,7 @@ export function RecicladorDashboard() {
                   <button
                     onClick={() => responderInvitacion(inv.id, true)}
                     disabled={procesandoId === inv.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t("dashboards.reciclador.invitations.accept")}
@@ -501,7 +501,7 @@ export function RecicladorDashboard() {
       {/* Mis conjuntos autorizados */}
       <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-green-600" />
+          <Building2 className="h-4 w-4 text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
         </div>
         {cargando ? (
@@ -626,8 +626,8 @@ export function RecicladorDashboard() {
                   onClick={() => setConjuntoSeleccionado(c.id_conjunto_residencial)}
                   className={`w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                     conjuntoSeleccionado === c.id_conjunto_residencial
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                      : "border-gray-200 hover:border-green-300 dark:border-[#2a4d34] dark:hover:border-green-700"
+                      ? "border-accent-500 bg-accent-50 dark:bg-accent-900/20"
+                      : "border-gray-200 hover:border-accent-300 dark:border-[#2a4d34] dark:hover:border-accent-700"
                   }`}
                 >
                   <p className="font-semibold text-gray-900 dark:text-white">{c.nombre_conjunto}</p>
@@ -657,7 +657,7 @@ export function RecicladorDashboard() {
               <button
                 onClick={enviarNotificacion}
                 disabled={!conjuntoSeleccionado || enviandoNotif || !!motivoModal}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {enviandoNotif ? t("dashboards.reciclador.modal.sending") : t("dashboards.reciclador.modal.submit")}
               </button>

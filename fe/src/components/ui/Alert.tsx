@@ -27,7 +27,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
   // ¿Impacto? Verde = éxito, rojo = error, azul = información.
   const typeClasses = {
     success:
-      "bg-green-50 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+      "bg-accent-50 text-accent-800 border-accent-200 dark:bg-accent-950 dark:text-accent-300 dark:border-accent-800",
     error:
       "bg-red-50 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
     info: "bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
@@ -37,7 +37,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
 
   // ¿Qué? Clases CSS para el botón de cierre según el tipo de alerta.
   const closeClasses = {
-    success: "text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200",
+    success: "text-accent-600 hover:text-accent-800 dark:text-accent-400 dark:hover:text-accent-200",
     error: "text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200",
     info: "text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200",
     warning:

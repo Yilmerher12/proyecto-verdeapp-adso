@@ -106,7 +106,7 @@ export function SolicitudesDesvinculacion({
     >
       {mostrarEncabezado && (
         <div className="flex items-center gap-2 mb-4">
-          <ClipboardList className="h-4 w-4 text-green-600" />
+          <ClipboardList className="h-4 w-4 text-accent-600" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">
             {t("desvinculacion.adminSistema.sectionTitle")}
           </h3>
@@ -156,7 +156,7 @@ export function SolicitudesDesvinculacion({
                     onChange={(e) => setMotivoRechazo(e.target.value)}
                     placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}
                     rows={2}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                   />
                   <div className="flex gap-2">
                     <button
@@ -183,7 +183,7 @@ export function SolicitudesDesvinculacion({
                   <button
                     onClick={() => aprobar(s.id)}
                     disabled={procesandoId === s.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t("desvinculacion.adminSistema.approve")}

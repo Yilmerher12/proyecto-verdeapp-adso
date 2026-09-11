@@ -113,10 +113,10 @@ export function ResidenteDashboard() {
           panel se sienta del Residente (su casa, su unidad), sin estorbar la
           lectura del texto encima. */}
       <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
-        <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-green-900/5 dark:text-white/5" aria-hidden="true" />
+        <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
-            <Home className="h-7 w-7 text-green-600 dark:text-green-400" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
+            <Home className="h-7 w-7 text-accent-600 dark:text-accent-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.residente.title")}</h1>
@@ -192,7 +192,7 @@ export function ResidenteDashboard() {
             disabled={enviando || feedbackOk || estadoShut.lleno}
             className={`shrink-0 flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
               feedbackOk || estadoShut.lleno
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                ? "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400"
                 : "bg-amber-700 text-white hover:bg-amber-600"
             }`}
           >
@@ -225,8 +225,8 @@ export function ResidenteDashboard() {
             title={t("dashboards.residente.notifications.title")}
             notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
             emptyMessage={t("dashboards.residente.notifications.empty")}
-            accentBg="bg-green-700"
-            accentHighlight="bg-green-50/60 hover:bg-green-50 dark:bg-green-900/10 dark:hover:bg-green-900/20"
+            accentBg="bg-accent-700"
+            accentHighlight="bg-accent-50/60 hover:bg-accent-50 dark:bg-accent-900/10 dark:hover:bg-accent-900/20"
             onMarkRead={marcarLeida}
             onMarkAllRead={marcarTodasLeidas}
             onClearRead={limpiarLeidas}

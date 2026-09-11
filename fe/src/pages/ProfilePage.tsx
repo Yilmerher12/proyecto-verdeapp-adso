@@ -211,7 +211,7 @@ export function ProfilePage() {
 
       {/* Success banner */}
       {exito && (
-        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           {t("profile.updateSuccess")}
         </div>
@@ -229,7 +229,7 @@ export function ProfilePage() {
                 className="h-20 w-20 rounded-full object-cover select-none"
               />
             ) : (
-              <div className="h-20 w-20 rounded-full bg-green-700 flex items-center justify-center text-white text-3xl font-bold select-none">
+              <div className="h-20 w-20 rounded-full bg-accent-700 flex items-center justify-center text-white text-3xl font-bold select-none">
                 {inicial}
               </div>
             )}
@@ -393,7 +393,7 @@ export function ProfilePage() {
                   id="perfil-nombre"
                   value={formNombre}
                   onChange={(e) => setFormNombre(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -405,7 +405,7 @@ export function ProfilePage() {
                   id="perfil-apellidos"
                   value={formApellidos}
                   onChange={(e) => setFormApellidos(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -418,7 +418,7 @@ export function ProfilePage() {
                   value={formTelefono}
                   onChange={(e) => setFormTelefono(e.target.value)}
                   placeholder={t("profile.phonePlaceholder")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -433,7 +433,7 @@ export function ProfilePage() {
                       value={formAsociacion}
                       onChange={(e) => setFormAsociacion(e.target.value)}
                       placeholder={t("profile.associationPlaceholder")}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                     />
                   </div>
 
@@ -447,7 +447,7 @@ export function ProfilePage() {
                       type="checkbox"
                       checked={formMostrarContacto}
                       onChange={(e) => setFormMostrarContacto(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-[#2a4d34]"
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-[#2a4d34]"
                     />
                     <span>
                       <span className="block text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -488,7 +488,7 @@ export function ProfilePage() {
                 <button
                   onClick={guardarPerfil}
                   disabled={guardando}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}

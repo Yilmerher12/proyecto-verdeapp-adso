@@ -159,7 +159,7 @@ export function AdminPuntosAcopioPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("adminPuntosAcopio.newPoint")}
@@ -216,7 +216,7 @@ export function AdminPuntosAcopioPage() {
                 <>
                   <button
                     onClick={() => reactivar(item)}
-                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-green-600 transition-colors hover:bg-green-50 dark:border-[#2a4d34] dark:text-green-400 dark:hover:bg-green-900/20"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-accent-600 transition-colors hover:bg-accent-50 dark:border-[#2a4d34] dark:text-accent-400 dark:hover:bg-accent-900/20"
                     aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
                   >
                     <Power className="h-4 w-4" />
@@ -258,7 +258,7 @@ export function AdminPuntosAcopioPage() {
                   value={form.nombre}
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                   placeholder={t("adminPuntosAcopio.fields.namePlaceholder")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -270,7 +270,7 @@ export function AdminPuntosAcopioPage() {
                   id="acopio-localidad"
                   value={form.id_localidad || ""}
                   onChange={(e) => setForm({ ...form, id_localidad: Number(e.target.value) })}
-                  className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 >
                   <option value="" disabled>
                     {t("adminPuntosAcopio.fields.localitySelect")}
@@ -293,7 +293,7 @@ export function AdminPuntosAcopioPage() {
                 value={form.direccion}
                 onChange={(e) => setForm({ ...form, direccion: e.target.value })}
                 placeholder={t("adminPuntosAcopio.fields.addressPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -306,7 +306,7 @@ export function AdminPuntosAcopioPage() {
                   id="acopio-encargado"
                   value={form.nombre_encargado ?? ""}
                   onChange={(e) => setForm({ ...form, nombre_encargado: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -318,7 +318,7 @@ export function AdminPuntosAcopioPage() {
                   id="acopio-telefono"
                   value={form.telefono_contacto ?? ""}
                   onChange={(e) => setForm({ ...form, telefono_contacto: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
             </div>
@@ -333,7 +333,7 @@ export function AdminPuntosAcopioPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")

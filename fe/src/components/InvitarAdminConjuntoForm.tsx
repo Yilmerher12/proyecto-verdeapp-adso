@@ -97,7 +97,7 @@ export function InvitarAdminConjuntoForm() {
     //       para no terminar con una tarjeta blanca dentro de otra.
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <UserPlus className="w-5 h-5 text-green-600" />
+        <UserPlus className="w-5 h-5 text-accent-600" />
         <h3 className="font-bold text-gray-800 dark:text-white text-lg">{t("invitarAdminConjunto.title")}</h3>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
@@ -122,7 +122,7 @@ export function InvitarAdminConjuntoForm() {
             aria-label={t("invitarAdminConjunto.localityLabel")}
             value={localidadId}
             onChange={(e) => setLocalidadId(e.target.value === "" ? "" : Number(e.target.value))}
-            className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+            className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
           >
             <option value="">{t("invitarAdminConjunto.localitySelectPlaceholder")}</option>
             {localidades.map((l) => (

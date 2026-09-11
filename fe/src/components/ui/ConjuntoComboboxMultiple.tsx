@@ -45,13 +45,13 @@ export function ConjuntoComboboxMultiple({
           {value.map((c) => (
             <span
               key={c.id_conjunto_residencial}
-              className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300"
+              className="inline-flex items-center gap-1 rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-800 dark:bg-accent-900/30 dark:text-accent-300"
             >
               {c.nombre_conjunto}
               <button
                 type="button"
                 onClick={() => quitar(c.id_conjunto_residencial)}
-                className="cursor-pointer rounded-full transition-colors hover:bg-green-100 dark:hover:bg-green-900/50"
+                className="cursor-pointer rounded-full transition-colors hover:bg-accent-100 dark:hover:bg-accent-900/50"
                 aria-label={`Quitar ${c.nombre_conjunto}`}
               >
                 <X className="h-3 w-3" aria-hidden="true" />
@@ -71,7 +71,7 @@ export function ConjuntoComboboxMultiple({
               aria-hidden="true"
             />
             <ComboboxInput
-              className="w-full rounded-xl border border-gray-300 bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+              className="w-full rounded-xl border border-gray-300 bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
               displayValue={() => ""}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
@@ -87,7 +87,7 @@ export function ConjuntoComboboxMultiple({
                 <ComboboxOption
                   key={c.id_conjunto_residencial}
                   value={c}
-                  className="cursor-pointer select-none px-4 py-2 text-sm text-gray-900 data-[focus]:bg-green-50 data-[selected]:font-semibold dark:text-gray-100 dark:data-[focus]:bg-green-900/30"
+                  className="cursor-pointer select-none px-4 py-2 text-sm text-gray-900 data-[focus]:bg-accent-50 data-[selected]:font-semibold dark:text-gray-100 dark:data-[focus]:bg-accent-900/30"
                 >
                   {c.nombre_conjunto}
                   {c.nombre_localidad ? ` — ${c.nombre_localidad}` : ""}

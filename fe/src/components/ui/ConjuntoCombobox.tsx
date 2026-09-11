@@ -56,7 +56,7 @@ export function ConjuntoCombobox({
             aria-hidden="true"
           />
           <ComboboxInput
-            className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100 dark:disabled:bg-[#0d2116]"
+            className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 disabled:bg-gray-100 disabled:text-gray-400 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100 dark:disabled:bg-[#0d2116]"
             displayValue={(c: ConjuntoOption | null) => c?.nombre_conjunto ?? ""}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
@@ -74,7 +74,7 @@ export function ConjuntoCombobox({
               <ComboboxOption
                 key={c.id_conjunto_residencial}
                 value={c}
-                className="cursor-pointer select-none px-4 py-2 text-sm text-gray-900 data-[focus]:bg-green-50 dark:text-gray-100 dark:data-[focus]:bg-green-900/30"
+                className="cursor-pointer select-none px-4 py-2 text-sm text-gray-900 data-[focus]:bg-accent-50 dark:text-gray-100 dark:data-[focus]:bg-accent-900/30"
               >
                 {c.nombre_conjunto}
                 {c.nombre_localidad ? ` — ${c.nombre_localidad}` : ""}

@@ -220,7 +220,7 @@ export function AppShell({ children }: AppShellProps) {
         className={`
           flex min-w-0 shrink-0 flex-col border-r border-white/10
           bg-[#052e16]
-          transition-[width] duration-200 ease-in-out text-green-50
+          transition-[width] duration-200 ease-in-out text-accent-50
           overflow-hidden
           ${collapsed ? "sm:w-16 h-16 sm:h-screen" : "sm:w-64 h-auto sm:h-screen"}
         `}
@@ -250,7 +250,7 @@ export function AppShell({ children }: AppShellProps) {
           <button
             type="button"
             onClick={() => setCollapsed((prev) => !prev)}
-            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-green-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
+            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-accent-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
             aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
           >
             {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
@@ -300,7 +300,7 @@ export function AppShell({ children }: AppShellProps) {
                         ${
                           isActive
                             ? roleMeta.sidebarActiveNav
-                            : "text-green-50/80 hover:bg-white/10 hover:text-white"
+                            : "text-accent-50/80 hover:bg-white/10 hover:text-white"
                         }`
                       }
                     >
@@ -316,7 +316,7 @@ export function AppShell({ children }: AppShellProps) {
                   <div
                     className={`
                       flex min-w-0 cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5
-                      text-sm font-medium text-green-100/40
+                      text-sm font-medium text-accent-100/40
                       ${collapsed ? "justify-center" : ""}
                     `}
                   >
@@ -324,7 +324,7 @@ export function AppShell({ children }: AppShellProps) {
                     {!collapsed && (
                       <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                         <span className="min-w-0 truncate">{label}</span>
-                        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-green-100/70">
+                        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-accent-100/70">
                           {t("appShell.proximamente")}
                         </span>
                       </span>
@@ -343,7 +343,7 @@ export function AppShell({ children }: AppShellProps) {
             onClick={() => setShowLogoutConfirm(true)}
             className={`
               flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
-              text-green-50/70 transition-colors hover:bg-red-900/30 hover:text-red-200
+              text-accent-50/70 transition-colors hover:bg-red-900/30 hover:text-red-200
               ${collapsed ? "justify-center" : ""}
             `}
           >
@@ -389,7 +389,7 @@ export function AppShell({ children }: AppShellProps) {
           type="button"
           onClick={() => setCollapsed((prev) => !prev)}
           className="hidden sm:flex h-9 w-full shrink-0 cursor-pointer items-center justify-center border-t border-white/10
-            text-green-100/50 hover:bg-white/5 hover:text-white transition-colors"
+            text-accent-100/50 hover:bg-white/5 hover:text-white transition-colors"
           aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}

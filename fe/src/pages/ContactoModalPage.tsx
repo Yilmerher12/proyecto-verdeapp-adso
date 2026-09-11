@@ -45,8 +45,8 @@ export function ContactoModalPage() {
       <Modal onClose={() => navigate("/")} wide aria-label={t("contactoModal.title")}>
         <div className="max-h-[85vh] overflow-y-auto p-6 sm:p-8">
           <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
-              <MessageSquare className="h-7 w-7 text-green-600 dark:text-green-400" />
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
+              <MessageSquare className="h-7 w-7 text-accent-600 dark:text-accent-400" />
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
               {t("contactoModal.title")}
@@ -100,7 +100,7 @@ export function ContactoModalPage() {
                   onChange={handleChange}
                   placeholder={t("contactoModal.message.placeholder")}
                   required
-                  className="block w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-green-400 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-500/10 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white dark:placeholder:text-gray-500 dark:hover:border-green-500"
+                  className="block w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-accent-400 focus:border-accent-500 focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white dark:placeholder:text-gray-500 dark:hover:border-accent-500"
                 />
               </div>
 
