@@ -162,7 +162,7 @@ export function AuditoriaConjuntoForm({
             <select
               value={idConjunto}
               onChange={(e) => setIdConjunto(e.target.value)}
-              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
             >
               <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
               {conjuntos.map((c) => (
@@ -219,7 +219,7 @@ export function AuditoriaConjuntoForm({
           <select
             value={tema}
             onChange={(e) => setTema(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+            className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
           >
             <option value="">{t("dashboards.reciclador.auditoria.temaPlaceholder")}</option>
             {temas.map((cat) => (
@@ -239,7 +239,7 @@ export function AuditoriaConjuntoForm({
             onChange={(e) => setDescripcion(e.target.value)}
             rows={2}
             placeholder={t("dashboards.reciclador.auditoria.descripcionPlaceholder")}
-            className="w-full resize-none rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+            className="w-full resize-none rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
           />
         </div>
 
@@ -267,7 +267,7 @@ export function AuditoriaConjuntoForm({
           )}
 
           {evidencias.length < MAXIMO_FOTOS ? (
-            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition-colors hover:border-green-400 dark:border-[#2a4d34] dark:text-gray-300">
+            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition-colors hover:border-accent-400 dark:border-[#2a4d34] dark:text-gray-300">
               {evidencias.length === 0 ? <Camera className="h-4 w-4 shrink-0" /> : <Plus className="h-4 w-4 shrink-0" />}
               {evidencias.length === 0
                 ? t("dashboards.reciclador.auditoria.evidenciaHint")
@@ -307,7 +307,7 @@ export function AuditoriaConjuntoForm({
             type="button"
             onClick={enviar}
             disabled={enviando || formularioIncompleto}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {enviando && <Loader2 className="h-4 w-4 animate-spin" />}
             {enviando

@@ -64,7 +64,7 @@ const STRENGTH_META: Record<
   2: { labelColor: "text-red-500 dark:text-red-400",     barColor: "bg-red-400" },
   3: { labelColor: "text-orange-500 dark:text-orange-400", barColor: "bg-orange-400" },
   4: { labelColor: "text-yellow-600 dark:text-yellow-400", barColor: "bg-yellow-400" },
-  5: { labelColor: "text-green-600 dark:text-green-500", barColor: "bg-green-500" },
+  5: { labelColor: "text-accent-600 dark:text-accent-500", barColor: "bg-accent-500" },
 };
 
 interface PasswordStrengthIndicatorProps {

@@ -178,8 +178,8 @@ export function AceptarInvitacionPage() {
         <LandingPage asBackdrop />
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4 animate-fade-in">
-            <div className="mx-auto w-20 h-20 bg-green-100 flex items-center justify-center rounded-full border border-green-200 dark:bg-green-900/30 dark:border-green-800/40">
-              <ShieldCheck className="w-10 h-10 text-green-600 dark:text-green-400" />
+            <div className="mx-auto w-20 h-20 bg-accent-100 flex items-center justify-center rounded-full border border-accent-200 dark:bg-accent-900/30 dark:border-accent-800/40">
+              <ShieldCheck className="w-10 h-10 text-accent-600 dark:text-accent-400" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.success.title")}</h2>
             <p className="text-gray-600 text-sm dark:text-gray-400">
@@ -209,9 +209,9 @@ export function AceptarInvitacionPage() {
             </p>
           </div>
 
-          <div className="mb-6 p-4 bg-green-50/50 border border-green-100 rounded-xl dark:bg-green-900/10 dark:border-green-800/30">
+          <div className="mb-6 p-4 bg-accent-50/50 border border-accent-100 rounded-xl dark:bg-accent-900/10 dark:border-accent-800/30">
             <div className="flex items-center gap-2 mb-2">
-              <Building2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <Building2 className="w-4 h-4 text-accent-600 dark:text-accent-400" />
               <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
                 {t("aceptarInvitacion.form.willAdminister")}
               </span>

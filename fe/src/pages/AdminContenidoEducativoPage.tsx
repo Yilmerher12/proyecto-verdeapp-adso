@@ -135,7 +135,7 @@ export function AdminContenidoEducativoPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("adminContenidoEducativo.newModule")}
@@ -207,7 +207,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.modulo_categoria}
                 onChange={(e) => setForm({ ...form, modulo_categoria: e.target.value })}
                 placeholder={t("adminContenidoEducativo.fields.categoryPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -220,7 +220,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.titulo_tema}
                 onChange={(e) => setForm({ ...form, titulo_tema: e.target.value })}
                 placeholder={t("adminContenidoEducativo.fields.titlePlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -233,7 +233,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.cuerpo_texto}
                 onChange={(e) => setForm({ ...form, cuerpo_texto: e.target.value })}
                 rows={6}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 {t("adminContenidoEducativo.fields.contentMarkdownHint")}
@@ -249,7 +249,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.url_video ?? ""}
                 onChange={(e) => setForm({ ...form, url_video: e.target.value })}
                 placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -269,7 +269,7 @@ export function AdminContenidoEducativoPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")

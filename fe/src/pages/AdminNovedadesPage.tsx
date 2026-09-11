@@ -165,7 +165,7 @@ export function AdminNovedadesPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("novedades.admin.newButton")}
@@ -216,7 +216,7 @@ export function AdminNovedadesPage() {
                     href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 transition-colors hover:text-green-800 dark:text-green-400"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
                   >
                     <Paperclip className="h-3.5 w-3.5" />
                     {t("comunicados.viewAttachment")}
@@ -295,8 +295,8 @@ export function AdminNovedadesPage() {
                       onClick={() => setForm({ ...form, alcance: a })}
                       className={`cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                         form.alcance === a
-                          ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                          : "border-gray-200 text-gray-600 hover:border-green-300 dark:border-[#2a4d34] dark:text-gray-300"
+                          ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                          : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-[#2a4d34] dark:text-gray-300"
                       }`}
                     >
                       {t(`novedades.alcances.${a}`)}
@@ -325,7 +325,7 @@ export function AdminNovedadesPage() {
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -344,7 +344,7 @@ export function AdminNovedadesPage() {
                 type="date"
                 value={form.fecha_expiracion}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
             </div>
@@ -359,7 +359,7 @@ export function AdminNovedadesPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")
