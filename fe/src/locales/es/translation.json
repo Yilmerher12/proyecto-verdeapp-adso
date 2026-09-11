@@ -413,10 +413,7 @@
           "p1": "Son <strong>estrictamente necesarias</strong> para que el servicio funcione. Sin ellas, el usuario no puede iniciar sesión ni mantener su sesión activa. No requieren consentimiento adicional conforme al principio de necesidad de la Ley 1581/2012.",
           "p2": "Almacenan los tokens JWT (access y refresh) de forma segura, con los atributos <code>HttpOnly</code>, <code>Secure</code> y <code>SameSite=Strict</code> para prevenir ataques XSS y CSRF, conforme a las recomendaciones del <strong>OWASP Top 10</strong>."
         },
-        "prefCategory": {
-          "title": "Cookies de Preferencias",
-          "p1": "Guardan configuraciones del usuario (como el tema visual dark/light) para personalizar la experiencia sin necesidad de reconfigurar en cada visita. No incluyen datos personales identificables."
-        }
+        "localStorageNote": "<strong>Nota sobre el tema visual:</strong> la preferencia de tema (claro/oscuro) no se guarda en una cookie, sino en el <strong>almacenamiento local del navegador</strong> (<code>localStorage</code>). No aparece en el listado de cookies del sitio que muestra tu navegador, y no tiene fecha de expiración: se mantiene guardada en tu dispositivo hasta que borres los datos de este sitio."
       },
       "s3": {
         "heading": "Listado Detallado de Cookies",
@@ -437,11 +434,6 @@
             "purpose": "Almacena el token de renovación que permite obtener un nuevo access_token sin que el usuario deba iniciar sesión nuevamente.",
             "duration": "7 días",
             "type": "Funcional / Autenticación"
-          },
-          "theme_preference": {
-            "purpose": "Guarda la preferencia de tema del usuario (dark/light) para mantenerla entre sesiones.",
-            "duration": "1 año",
-            "type": "Preferencias"
           }
         }
       },
