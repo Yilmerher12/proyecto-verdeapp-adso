@@ -198,6 +198,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
   const { t } = useTranslation();
   const [autorizados, setAutorizados] = useState<RecicladorAutorizado[]>([]);
   const [cargandoAutorizados, setCargandoAutorizados] = useState(true);
+  const [errorAutorizados, setErrorAutorizados] = useState(false);
   const [invitaciones, setInvitaciones] = useState<InvitacionEnviada[]>([]);
   const [cargando, setCargando] = useState(true);
   const [correoNuevo, setCorreoNuevo] = useState("");
@@ -229,8 +230,21 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
   const cargarAutorizados = () => {
     setCargandoAutorizados(true);
     obtenerRecicladoresAutorizados(idConjunto)
-      .then(setAutorizados)
-      .catch((err) => console.error("Error cargando recicladores autorizados", err))
+      .then((data) => {
+        setAutorizados(data);
+        setErrorAutorizados(false);
+      })
+      // ¿Qué? Issue #223 (f2 del diagnóstico) — antes esto fallaba en
+      //       silencio: solo un console.error, y la pantalla se veía
+      //       igual que si de verdad no hubiera ningún reciclador
+      //       autorizado en este conjunto.
+      // ¿Impacto? Ahora se distingue "no hay recicladores autorizados"
+      //           de "falló la carga" con un aviso real (ver el render
+      //           más abajo).
+      .catch((err) => {
+        console.error("Error cargando recicladores autorizados", err);
+        setErrorAutorizados(true);
+      })
       .finally(() => setCargandoAutorizados(false));
   };
 
@@ -366,6 +380,10 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
               {t("dashboards.adminConjunto.recyclersSection.authorizedLoading")}
             </p>
+          ) : errorAutorizados ? (
+            <div className="mb-4">
+              <Alert type="error" message={t("common.loadError")} />
+            </div>
           ) : autorizados.length === 0 ? (
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
               {t("dashboards.adminConjunto.recyclersSection.authorizedEmpty")}
@@ -598,6 +616,7 @@ export function AdminConjuntoDashboard() {
   const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_CONJUNTO];
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [errorConjuntos, setErrorConjuntos] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [formEdicion, setFormEdicion] = useState({ nit: "" });
   const [guardando, setGuardando] = useState(false);
@@ -612,8 +631,20 @@ export function AdminConjuntoDashboard() {
     if (!user) return;
     setCargando(true);
     obtenerMisConjuntos()
-      .then(setConjuntos)
-      .catch((err) => console.error("Error cargando mis conjuntos", err))
+      .then((data) => {
+        setConjuntos(data);
+        setErrorConjuntos(false);
+      })
+      // ¿Qué? Issue #223 (f2 del diagnóstico) — antes esto fallaba en
+      //       silencio: solo un console.error (que un usuario normal
+      //       nunca ve) y la pantalla quedaba igual que si el Admin no
+      //       administrara ningún conjunto.
+      // ¿Impacto? Ahora se distingue "no hay conjuntos" de "falló la
+      //           carga" con un aviso real (ver el render más abajo).
+      .catch((err) => {
+        console.error("Error cargando mis conjuntos", err);
+        setErrorConjuntos(true);
+      })
       .finally(() => setCargando(false));
   };
 
@@ -772,6 +803,8 @@ export function AdminConjuntoDashboard() {
 
         {cargando ? (
           <p className="text-sm text-gray-500 dark:text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
+        ) : errorConjuntos ? (
+          <Alert type="error" message={t("common.loadError")} />
         ) : conjuntos.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
             {t("dashboards.adminConjunto.myConjuntos.empty")}
