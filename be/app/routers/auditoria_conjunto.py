@@ -11,7 +11,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_current_user, get_db, require_role
 from app.models.auditoria_conjunto import AuditoriaConjunto
 from app.models.rol import RolId
 from app.models.usuario import Usuario
@@ -20,13 +20,10 @@ from app.services import auditoria_conjunto_service as service
 
 router = APIRouter(prefix="/api/v1/auditorias-conjunto", tags=["Auditoría de Conjunto"])
 
-
-def _verificar_es_reciclador(current_user: Usuario) -> None:
-    if current_user.id_rol != RolId.RECICLADOR:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Reciclador puede auditar un conjunto.",
-        )
+# ¿Qué? Issue #216 — ver el mismo comentario en admin.py. listar_historial()
+#       y obtener_auditoria() (abajo) NO usan esta dependencia a propósito:
+#       tienen su propio chequeo de rol distinto (o ninguno).
+_requiere_reciclador = require_role(RolId.RECICLADOR, "Solo un Reciclador puede auditar un conjunto.")
 
 
 def _a_response(auditoria: AuditoriaConjunto) -> AuditoriaConjuntoResponse:
@@ -57,11 +54,9 @@ async def crear_auditoria(
     tema_educativo: str = Form(...),
     descripcion: Optional[str] = Form(None),
     evidencias: list[UploadFile] = File(...),
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_reciclador),
     db: Session = Depends(get_db),
 ) -> AuditoriaConjuntoResponse:
-    _verificar_es_reciclador(current_user)
-
     if not tema_educativo.strip():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Selecciona un tema.")
 
@@ -83,10 +78,9 @@ async def crear_auditoria(
     summary="Reciclador ve las auditorías que ya envió",
 )
 def listar_mias(
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_reciclador),
     db: Session = Depends(get_db),
 ) -> list[AuditoriaConjuntoResponse]:
-    _verificar_es_reciclador(current_user)
     auditorias = service.listar_mias(db, current_user.id_usuario)
     return [_a_response(a) for a in auditorias]
 
