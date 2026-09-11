@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { usePolling } from "@/hooks/usePolling";
 import { Home, AlertTriangle, Bell, CheckCircle2 } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import axios from "axios";
@@ -52,13 +53,7 @@ export function ResidenteDashboard() {
     }
   };
 
-  useEffect(() => {
-    if (!user) return;
-    cargarDatos();
-    const interval = setInterval(cargarDatos, 20000);
-    return () => clearInterval(interval);
-     
-  }, [user]);
+  usePolling(cargarDatos, { enabled: !!user });
 
   const reportarShutLleno = async () => {
     setEnviando(true);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { usePolling } from "@/hooks/usePolling";
 import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, AlertTriangle, UserX } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
@@ -26,7 +27,7 @@ import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResult
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
-import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -145,44 +146,19 @@ function SeccionCodigoAcceso({
       </div>
 
       {confirmando && (
-        <Modal
+        <ConfirmModal
+          icon={AlertTriangle}
+          variant="warning"
+          ariaLabel={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
+          title={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
+          description={t("dashboards.adminConjunto.codigoAcceso.confirmWarning")}
+          error={error}
+          isConfirming={regenerando}
+          confirmLabel={t("dashboards.adminConjunto.codigoAcceso.confirmButton")}
+          confirmingLabel={t("dashboards.adminConjunto.codigoAcceso.regenerating")}
+          onConfirm={regenerar}
           onClose={() => setConfirmando(false)}
-          aria-label={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
-        >
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20">
-              <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("dashboards.adminConjunto.codigoAcceso.confirmWarning")}
-            </p>
-            {error && (
-              <p className="mb-4 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg dark:bg-red-900/20 dark:text-red-400">
-                {error}
-              </p>
-            )}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmando(false)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={regenerar}
-                disabled={regenerando}
-                className="flex-1 cursor-pointer rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {regenerando
-                  ? t("dashboards.adminConjunto.codigoAcceso.regenerating")
-                  : t("dashboards.adminConjunto.codigoAcceso.confirmButton")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        />
       )}
     </div>
   );
@@ -454,39 +430,19 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
       )}
 
       {aRevocar && (
-        <Modal onClose={() => setARevocar(null)} aria-label={t("dashboards.adminConjunto.recyclersSection.revokeModalAriaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <UserX className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("dashboards.adminConjunto.recyclersSection.revokeConfirmTitle", { nombre: `${aRevocar.nombre} ${aRevocar.apellidos}` })}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("dashboards.adminConjunto.recyclersSection.revokeConfirmWarning")}
-            </p>
-            {errorRevocar && (
-              <p className="mb-4 text-xs font-medium text-red-600 dark:text-red-400">{errorRevocar}</p>
-            )}
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setARevocar(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={confirmarRevocar}
-                disabled={revocando}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {revocando ? t("common.saving") : t("dashboards.adminConjunto.recyclersSection.revokeConfirmButton")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={UserX}
+          variant="danger"
+          ariaLabel={t("dashboards.adminConjunto.recyclersSection.revokeModalAriaLabel")}
+          title={t("dashboards.adminConjunto.recyclersSection.revokeConfirmTitle", { nombre: `${aRevocar.nombre} ${aRevocar.apellidos}` })}
+          description={t("dashboards.adminConjunto.recyclersSection.revokeConfirmWarning")}
+          error={errorRevocar}
+          isConfirming={revocando}
+          confirmLabel={t("dashboards.adminConjunto.recyclersSection.revokeConfirmButton")}
+          confirmingLabel={t("common.saving")}
+          onConfirm={confirmarRevocar}
+          onClose={() => setARevocar(null)}
+        />
       )}
     </div>
   );
@@ -695,11 +651,10 @@ export function AdminConjuntoDashboard() {
 
   useEffect(() => {
     cargarConjuntos();
-    cargarNotificaciones();
-    const interval = setInterval(cargarNotificaciones, 20000);
-    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  usePolling(cargarNotificaciones, { enabled: !!user });
 
   const iniciarEdicion = (c: ConjuntoAdministrado) => {
     setEditandoId(c.id_conjunto_residencial);
