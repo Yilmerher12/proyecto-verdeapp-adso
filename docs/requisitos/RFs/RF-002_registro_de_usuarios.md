@@ -34,6 +34,8 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 | Campo       | Tipo          | Obligatorio | Validaciones                                                                 |
 | ----------- | ------------- | ----------- | ---------------------------------------------------------------------------- |
 | `nombre`    | Texto         | Sí          | Mínimo 2 caracteres, máximo 255                                              |
+| `apellidos` | Texto         | Sí          | Mínimo 2 caracteres, máximo 255                                              |
+| `numero_telefonico` | Texto | No          | Solo números, entre 7 y 10 caracteres (si se indica)                         |
 | `correo`    | Texto (email) | Sí          | Formato válido, máximo 255 caracteres, único en BD                           |
 | `contraseña`| Texto         | Sí          | Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 carácter especial (`!@#$%^&*...`) |
 | `rol`       | Enum          | Sí          | Valores permitidos: `residente`, `reciclador`                                |

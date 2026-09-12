@@ -19,8 +19,21 @@ import { API_BASE_URL } from "@/api/axios";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
 import { PoliticaPrivacidadPage } from "@/pages/PoliticaPrivacidadPage";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
+import { NOMBRE_MIN_LENGTH, TELEFONO_REGEX } from "@/lib/validacion";
 
 type DocumentoLegal = "terminos" | "privacidad" | null;
+
+// ¿Qué? Campos que se revisan tanto en tiempo real (al salir del campo)
+//       como al enviar el formulario — una sola lista para no repetirla.
+const CAMPOS_A_VALIDAR = [
+  "nombre",
+  "apellidos",
+  "numero_telefonico",
+  "email",
+  "confirmEmail",
+  "password",
+  "confirmPassword",
+] as const;
 
 // ¿Qué? Traduce el código que devuelve getPasswordRequirementError() al
 //       mensaje correcto según el idioma activo.
@@ -125,16 +138,84 @@ export function RegisterPage() {
     }
   };
 
+  // ¿Qué? Calcula el error de UN campo específico contra el estado actual
+  //       del formulario. Antes esta lógica solo existía dentro de
+  //       handleSubmit — se repetía si además se quería validar "en vivo".
+  // ¿Para qué? Una sola función usada tanto por handleBlur (apenas el
+  //           usuario sale del campo) como por handleSubmit (al enviar) y
+  //           checkFormIncomplete (para decidir si el botón se habilita) —
+  //           así las tres coinciden siempre en qué es "válido".
+  const validarCampo = (campo: string, data: typeof formData): string | undefined => {
+    switch (campo) {
+      case "nombre":
+        return data.nombre.trim().length < NOMBRE_MIN_LENGTH
+          ? t("auth.register.validation.firstNameMin")
+          : undefined;
+      case "apellidos":
+        return data.apellidos.trim().length < NOMBRE_MIN_LENGTH
+          ? t("auth.register.validation.lastNameMin")
+          : undefined;
+      case "numero_telefonico":
+        return data.numero_telefonico.trim() && !TELEFONO_REGEX.test(data.numero_telefonico.trim())
+          ? t("auth.register.validation.phoneInvalid")
+          : undefined;
+      case "email":
+        return !/\S+@\S+\.\S+/.test(data.email) ? t("auth.register.validation.emailInvalid") : undefined;
+      case "confirmEmail":
+        if (!data.confirmEmail) return t("auth.register.validation.confirmEmailRequired");
+        if (data.email !== data.confirmEmail) return t("auth.register.validation.emailsMismatch");
+        return undefined;
+      case "password": {
+        const error = getPasswordRequirementError(data.password);
+        return error ? traducirErrorPassword(error, t) : undefined;
+      }
+      case "confirmPassword":
+        return data.password !== data.confirmPassword
+          ? t("auth.register.validation.passwordsMismatch")
+          : undefined;
+      default:
+        return undefined;
+    }
+  };
+
+  const limpiarError = (name: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const copy = { ...prev };
+      delete copy[name];
+      return copy;
+    });
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    limpiarError(name);
+  };
 
-    if (fieldErrors[name]) {
-      setFieldErrors((prev) => {
-        const copy = { ...prev };
-        delete copy[name];
-        return copy;
-      });
+  // ¿Qué? A diferencia de handleChange, este descarta cualquier caracter
+  //       que no sea un dígito ANTES de guardarlo en el estado.
+  // ¿Para qué? Antes el campo de teléfono era de texto libre: aceptaba
+  //           "abc123!!" sin ningún freno mientras se escribía, y solo se
+  //           avisaba del error después de enviar el formulario. Ahora es
+  //           imposible que una letra o símbolo llegue siquiera a
+  //           mostrarse en el campo.
+  // ¿Impacto? Tope de 10 caracteres (RQF-008: máximo un celular colombiano).
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const soloDigitos = e.target.value.replace(/\D/g, "").slice(0, 10);
+    setFormData((prev) => ({ ...prev, numero_telefonico: soloDigitos }));
+    limpiarError("numero_telefonico");
+  };
+
+  // ¿Qué? Al salir de un campo (blur), se muestra su error de inmediato si
+  //       lo tiene — no hay que esperar a hacer clic en "Registrar Cuenta".
+  // ¿Impacto? Antes ningún campo de este formulario avisaba nada hasta el
+  //           envío; ahora el usuario ve el problema apenas ocurre.
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name } = e.target;
+    const error = validarCampo(name, formData);
+    if (error) {
+      setFieldErrors((prev) => ({ ...prev, [name]: error }));
     }
   };
 
@@ -150,6 +231,15 @@ export function RegisterPage() {
       !formData.confirmPassword.trim();
 
     if (baseFields) return true;
+
+    // ¿Qué? Antes solo se revisaba que estos campos NO estuvieran vacíos —
+    //       el botón se habilitaba aunque el contenido fuera inválido (ej.
+    //       un teléfono de 3 dígitos, un nombre de una sola letra).
+    // ¿Impacto? Ahora el botón sigue deshabilitado mientras cualquiera de
+    //           estos campos tenga un formato inválido, no solo cuando
+    //           está vacío.
+    const hayFormatoInvalido = CAMPOS_A_VALIDAR.some((campo) => validarCampo(campo, formData));
+    if (hayFormatoInvalido) return true;
 
     if (formData.rol === "residente") {
       return (
@@ -171,22 +261,15 @@ export function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
-    const errors: Record<string, string> = {};
 
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors["email"] = t("auth.register.validation.emailInvalid");
-    }
-    if (!formData.confirmEmail) {
-      errors["confirmEmail"] = t("auth.register.validation.confirmEmailRequired");
-    } else if (formData.email !== formData.confirmEmail) {
-      errors["confirmEmail"] = t("auth.register.validation.emailsMismatch");
-    }
-    const passwordError = getPasswordRequirementError(formData.password);
-    if (passwordError) {
-      errors["password"] = traducirErrorPassword(passwordError, t);
-    }
-    if (formData.password !== formData.confirmPassword) {
-      errors["confirmPassword"] = t("auth.register.validation.passwordsMismatch");
+    // ¿Qué? Misma función validarCampo que ya se usa en vivo (handleBlur) y
+    //       para habilitar/deshabilitar el botón (checkFormIncomplete) —
+    //       aquí solo se vuelve a correr por si el usuario nunca llegó a
+    //       salir de algún campo (ej. pegó todo y dio clic directo).
+    const errors: Record<string, string> = {};
+    for (const campo of CAMPOS_A_VALIDAR) {
+      const error = validarCampo(campo, formData);
+      if (error) errors[campo] = error;
     }
 
     if (Object.keys(errors).length > 0) {
@@ -315,7 +398,16 @@ export function RegisterPage() {
             <p className="text-gray-500 dark:text-gray-400 mt-1">{t("auth.register.subtitle")}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {/*
+            ¿Qué? noValidate desactiva la validación nativa del navegador
+                  (los globos tipo "Please include an '@'..." de Chrome).
+            ¿Para qué? El resto de formularios de auth (Login, Cambiar
+                      contraseña, Recuperar contraseña) ya lo tienen — este
+                      era el único que se había quedado sin él, por eso
+                      Chrome mostraba sus propios avisos en vez de los
+                      mensajes en rojo consistentes con el diseño de la app.
+          */}
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div
                 onClick={() => setFormData(p => ({ ...p, rol: "residente" }))}
@@ -345,18 +437,25 @@ export function RegisterPage() {
                 name="nombre"
                 value={formData.nombre}
                 onChange={handleChange}
+                onBlur={handleBlur}
+                error={fieldErrors.nombre}
               />
               <InputField
                 label={t("auth.register.fields.lastName")}
                 name="apellidos"
                 value={formData.apellidos}
                 onChange={handleChange}
+                onBlur={handleBlur}
+                error={fieldErrors.apellidos}
               />
               <InputField
                 label={t("auth.register.fields.phone")}
                 name="numero_telefonico"
+                type="tel"
                 value={formData.numero_telefonico}
-                onChange={handleChange}
+                onChange={handlePhoneChange}
+                onBlur={handleBlur}
+                error={fieldErrors.numero_telefonico}
               />
             </div>
 
@@ -476,6 +575,7 @@ export function RegisterPage() {
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                 />
                 {fieldErrors.email && <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>}
               </div>
@@ -487,6 +587,7 @@ export function RegisterPage() {
                   type="email"
                   value={formData.confirmEmail}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   disablePaste
                 />
                 {fieldErrors.confirmEmail && (
@@ -501,6 +602,7 @@ export function RegisterPage() {
                   type="password"
                   value={formData.password}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   placeholder={t("auth.register.fields.passwordPlaceholder")}
                 />
                 <PasswordStrengthIndicator password={formData.password} />
@@ -514,6 +616,7 @@ export function RegisterPage() {
                   type="password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   placeholder={t("auth.register.fields.confirmPasswordPlaceholder")}
                   disablePaste
                 />

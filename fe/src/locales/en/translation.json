@@ -100,6 +100,7 @@
         "emailsMismatch": "Email addresses do not match",
         "firstNameMin": "First name must be at least 2 characters",
         "lastNameMin": "Last name must be at least 2 characters",
+        "phoneInvalid": "The phone number format is invalid.",
         "passwordMin": "Minimum 8 characters",
         "passwordUppercase": "Must include at least one uppercase letter",
         "passwordLowercase": "Must include at least one lowercase letter",

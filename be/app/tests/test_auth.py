@@ -204,6 +204,22 @@ class TestRegister:
         response = client.post(self.URL, json=payload)
         assert response.status_code == 422
 
+    def test_register_nombre_muy_corto(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email="nombrecorto@verdeapp.com")
+        payload["nombre"] = "A"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_telefono_invalido(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email="telefonoinvalido@verdeapp.com")
+        payload["numero_telefonico"] = "abc123!!"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
 
 class TestLogin:
     """Tests para el endpoint de inicio de sesión."""
@@ -673,8 +689,7 @@ class TestUpdateProfile:
             json={"nombre": "Nombre", "apellidos": "Apellido", "numero_telefonico": "abc123"},
             headers=auth_headers,
         )
-        assert response.status_code == 400
-        assert "formato inválido" in response.json()["detail"]
+        assert response.status_code == 422
 
     def test_update_profile_no_auth(self, client: TestClient) -> None:
         response = client.put(
