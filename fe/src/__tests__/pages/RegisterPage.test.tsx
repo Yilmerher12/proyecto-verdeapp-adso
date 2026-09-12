@@ -154,53 +154,105 @@ describe("RegisterPage", () => {
     ).toBeDisabled();
   });
 
-  it("muestra error si la contraseña es muy corta", async () => {
+  // ¿Qué? Antes estos 5 tests llenaban un dato inválido y recién veían el
+  //       error DESPUÉS de hacer clic en "Registrar Cuenta". Ahora el botón
+  //       ya no se habilita mientras un campo tenga formato inválido, así
+  //       que ese clic ya no es posible (el botón ni se llama "Registrar
+  //       Cuenta" en ese estado) — el aviso aparece solo con salir del
+  //       campo (blur), sin necesidad de intentar enviar el formulario.
+  it("muestra error si la contraseña es muy corta, apenas se sale del campo", async () => {
     const user = userEvent.setup();
     renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
 
+    // ¿Qué? Al escribir "Ab1" y luego pasar a Confirmar Contraseña, el
+    //       campo de contraseña pierde el foco (blur) y se valida solo.
     await llenarCamposComunes(user, { password: "Ab1", confirmPassword: "Ab1" });
-
-    await user.click(screen.getByText("Reciclador"));
-    await waitFor(() => screen.getByText("Localidad de Trabajo *"));
-    const selects = screen.getAllByRole("combobox");
-    await user.selectOptions(selects[0], "1");
-
-    await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
 
     // ¿Qué? Mismo texto que usan ChangePasswordPage/ResetPasswordPage — las
     //       4 pantallas que piden contraseña comparten a propósito las
     //       claves auth.register.validation.* (ver PasswordStrengthIndicator.tsx).
     expect(screen.getByText("Mínimo 8 caracteres")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Completa los campos y acepta los términos" }),
+    ).toBeDisabled();
   });
 
-  it("muestra error si las contraseñas no coinciden", async () => {
+  it("muestra error si las contraseñas no coinciden, apenas se sale del campo", async () => {
     const user = userEvent.setup();
     renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
 
     await llenarCamposComunes(user, { confirmPassword: "Password2" });
+    // ¿Qué? Confirmar Contraseña queda con el foco al terminar
+    //       llenarCamposComunes — hay que salir de él para que se valide.
     await user.click(screen.getByText("Reciclador"));
-    await waitFor(() => screen.getByText("Localidad de Trabajo *"));
-    const selects = screen.getAllByRole("combobox");
-    await user.selectOptions(selects[0], "1");
-
-    await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
 
     expect(screen.getByText("Las contraseñas no coinciden")).toBeInTheDocument();
   });
 
-  it("muestra error si los correos no coinciden", async () => {
+  it("muestra error si los correos no coinciden, apenas se sale del campo", async () => {
     const user = userEvent.setup();
     renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
 
     await llenarCamposComunes(user, { confirmEmail: "otro@correo.com" });
+
+    expect(screen.getByText("Los correos electrónicos no coinciden")).toBeInTheDocument();
+  });
+
+  it("muestra error si el nombre es muy corto, apenas se sale del campo", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await llenarCamposComunes(user, { nombre: "A" });
+
+    expect(screen.getByText("El nombre debe tener al menos 2 caracteres")).toBeInTheDocument();
+  });
+
+  it("no permite escribir letras ni símbolos en el campo de teléfono", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    const telefono = screen.getByLabelText("Teléfono");
+    await user.type(telefono, "abc123!!");
+
+    // ¿Qué? Cada tecla que no es un dígito se descarta antes de guardarse
+    //       en el estado — no basta con rechazar el valor después.
+    expect(telefono).toHaveValue("123");
+  });
+
+  it("muestra error de teléfono inválido apenas se sale del campo, aunque ya no se puedan teclear letras", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await llenarCamposComunes(user);
+    await user.type(screen.getByLabelText("Teléfono"), "abc123!!");
+    await user.click(screen.getByText("Reciclador"));
+
+    expect(screen.getByText("El número telefónico tiene un formato inválido.")).toBeInTheDocument();
+  });
+
+  it("mantiene el botón deshabilitado si algún campo tiene formato inválido, aunque ninguno esté vacío", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await llenarCamposComunes(user);
+    await user.type(screen.getByLabelText("Teléfono"), "123");
     await user.click(screen.getByText("Reciclador"));
     await waitFor(() => screen.getByText("Localidad de Trabajo *"));
     const selects = screen.getAllByRole("combobox");
     await user.selectOptions(selects[0], "1");
 
-    await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
+    expect(
+      screen.getByRole("button", { name: "Completa los campos y acepta los términos" }),
+    ).toBeDisabled();
+  });
 
-    expect(screen.getByText("Los correos electrónicos no coinciden")).toBeInTheDocument();
+  it("desactiva la validación nativa del navegador (noValidate)", () => {
+    const { container } = renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    // ¿Qué? Sin esto, Chrome mostraba sus propios globos de aviso (ej. en
+    //       los campos de correo) en vez de los mensajes en rojo del
+    //       formulario — inconsistentes con el diseño de la app.
+    expect(container.querySelector("form")).toHaveAttribute("novalidate");
   });
 
   it("bloquea el pegado en el campo Confirmar Correo Electrónico", () => {
