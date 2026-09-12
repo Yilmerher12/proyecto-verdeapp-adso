@@ -21,6 +21,7 @@ import {
 import { RoleId } from "@/types/auth";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { notificarFotoPerfilActualizada } from "@/lib/profileEvents";
+import { TELEFONO_REGEX } from "@/lib/validacion";
 
 interface PerfilData {
   id: number;
@@ -80,10 +81,6 @@ export function ProfilePage() {
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
   const inputFotoRef = useRef<HTMLInputElement>(null);
-
-  // ¿Qué? Mismo formato que valida el backend (RQF-008): solo dígitos,
-  //       entre 7 (fijo) y 10 (celular) caracteres.
-  const TELEFONO_REGEX = /^\d{7,10}$/;
 
   const cargarPerfil = () => {
     if (!user) return;

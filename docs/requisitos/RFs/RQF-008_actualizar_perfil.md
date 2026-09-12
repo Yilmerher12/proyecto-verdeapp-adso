@@ -57,7 +57,7 @@ El sistema debe permitir a los usuarios con rol 'Reciclador' o 'Residente' modif
 | Escenario           | Código HTTP | Respuesta                                                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
 | Actualización OK    | 200         | JSON con los datos actualizados del usuario: `{"nombre": "...", "apellidos": "..."}`                         |
-| Datos inválidos     | 400         | `{"detail": "El número telefónico tiene un formato inválido."}`                                              |
+| Datos inválidos     | 422         | `{"detail": [{"msg": "Value error, El número telefónico tiene un formato inválido.", ...}]}` (validado por Pydantic — mismas reglas que el registro, ver RQF-002) |
 
 ---
 
