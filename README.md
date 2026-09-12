@@ -4,7 +4,9 @@
 > **Versión:** `v1.0.0-dev` (Fase de Desarrollo)
 > **Estado de Acreditación Académica:** Sincronizado con los criterios de evaluación del trimestre.
 
-**Verde App** es una plataforma tecnológica e integral (Full Stack) diseñada para incentivar, coordinar y optimizar la separación de residuos en la fuente dentro de los conjuntos residenciales de Bogotá. El sistema actúa como un canal de comunicación directo y seguro entre los residentes locales y los recicladores de oficio oficiales de cada zona, permitiendo mitigar el impacto ambiental y formalizar los flujos de recolección selectiva en la ciudad.
+**Verde App** 
+
+
 
 ---
 
@@ -103,7 +105,7 @@ Una vez encendido, la aplicación está disponible en:
 |---|---|
 | Aplicación web | http://localhost:3000 |
 | API / documentación | http://localhost:8000/docs |
-| Bandeja de correos (Mailpit) | http://localhost:8025 |
+| Bandeja de correos (Mailpit) |     |
 | Base de datos | `localhost:5433` |
 
 Para apagar todo cuando termines:
