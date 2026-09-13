@@ -4,6 +4,8 @@ import { CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus, Trash2 } from
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
@@ -213,7 +215,7 @@ export function AdminConjuntoComunicadosPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.admin.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.subtitle")}</p>
@@ -228,24 +230,21 @@ export function AdminConjuntoComunicadosPage() {
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && conjuntos.length === 0 && (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.noConjuntos")}</p>
       )}
 
       {!cargando && comunicados.length === 0 && conjuntos.length > 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.emptyState")}</p>
-        </div>
+        <EmptyState icon={Megaphone} message={t("comunicados.admin.emptyState")} />
       )}
 
       <div className="space-y-3">
         {comunicados.map((item) => (
           <div
             key={item.id_comunicado}
-            className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+            className="rounded-2xl border border-gray-100 bg-[#f7f9f3] p-4 dark:border-[#2a4d34] dark:bg-[#1c341b]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, ClipboardList, XCircle } from "lucide-react";
+import { LoadingState } from "@/components/ui/LoadingState";
 import {
   listarSolicitudesDesvinculacion,
   resolverSolicitudDesvinculacion,
@@ -101,7 +102,7 @@ export function SolicitudesDesvinculacion({
       className={
         dentroDeModal
           ? ""
-          : "bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm"
+          : "bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm"
       }
     >
       {mostrarEncabezado && (
@@ -125,7 +126,7 @@ export function SolicitudesDesvinculacion({
       )}
 
       {cargando ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        <LoadingState message={t("common.loading")} />
       ) : solicitudes.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("desvinculacion.adminSistema.empty")}</p>
       ) : (

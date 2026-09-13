@@ -16,6 +16,7 @@ import { History } from "lucide-react";
 import { listarHistorial, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 export function HistorialAuditorias() {
   const { t } = useTranslation();
@@ -35,16 +36,16 @@ export function HistorialAuditorias() {
   //       un Residente siempre ve el mismo, así que repetirlo ahí sobra.
   const variosConjuntos = new Set(auditorias.map((a) => a.id_conjunto_residencial)).size > 1;
 
-  if (cargando) return null;
-
   return (
-    <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+    <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
       <div className="mb-4 flex items-center gap-2">
         <History className="h-4 w-4 text-gray-500 dark:text-gray-400" />
         <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
       </div>
 
-      {auditorias.length === 0 ? (
+      {cargando ? (
+        <LoadingState message={t("common.loading")} />
+      ) : auditorias.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("auditoriaResultado.historialEmpty")}</p>
       ) : (
         <ul className="divide-y divide-gray-50 dark:divide-gray-800">
