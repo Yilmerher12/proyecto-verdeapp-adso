@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 /**
  * Este bloque (el título, el contador de no leídas, la lista, el botón de
  * "ver más", marcar leídas / limpiar leídas) estaba copiado casi igual en
@@ -14,21 +13,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, Bell, Building2, Clock, DoorOpen, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import i18n from "@/i18n";
-
-export interface NotificacionItem {
-  id: string;
-  tipo: string;
-  mensaje: string;
-  // ¿Qué? Puntero opcional al registro relacionado (ej. id_auditoria para
-  //       AUDITORIA_PUBLICADA) — la mayoría de tipos no lo usan.
-  id_referencia: string | null;
-  // ¿Qué? Puede ser null — las novedades de plataforma (RQF-015) no
-  //       pertenecen a ningún conjunto residencial.
-  nombre_conjunto: string | null;
-  leida: boolean;
-  created_at: string;
-}
+import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 
 const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   LLEGADA_RECICLADOR: { Icon: Truck, color: "text-teal-700 dark:text-teal-400" },
@@ -46,20 +31,6 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   NOVEDAD_NUEVA: { Icon: Newspaper, color: "text-indigo-700 dark:text-indigo-400" },
   NOVEDAD_ACTUALIZADA: { Icon: Newspaper, color: "text-indigo-500 dark:text-indigo-300" },
 };
-
-// ¿Qué? Se usa i18n.t() directamente (no el hook useTranslation) porque esta
-//       es una función común, no un componente — pero como siempre se llama
-//       desde el render de un componente que sí usa el hook, el texto se
-//       actualiza igual al cambiar de idioma.
-export function tiempoRelativo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return i18n.t("notificationFeed.time.justNow");
-  if (mins < 60) return i18n.t("notificationFeed.time.minutesAgo", { count: mins });
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return i18n.t("notificationFeed.time.hoursAgo", { count: hrs });
-  return i18n.t("notificationFeed.time.daysAgo", { count: Math.floor(hrs / 24) });
-}
 
 interface NotificationFeedProps {
   title: string;

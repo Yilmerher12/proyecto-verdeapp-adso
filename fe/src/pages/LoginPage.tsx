@@ -36,8 +36,11 @@ export function LoginPage() {
       sessionStorage.removeItem("verdeapp:session-expired");
       setError(t("auth.login.sessionExpired"));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // ¿Qué? Issue #225 — "t" faltaba en las dependencias; se silenciaba la
+    //       advertencia en vez de agregarla. Es seguro incluirla: la marca
+    //       se borra apenas se lee, así que un cambio de idioma después no
+    //       vuelve a disparar nada (la condición ya no se cumple).
+  }, [t]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

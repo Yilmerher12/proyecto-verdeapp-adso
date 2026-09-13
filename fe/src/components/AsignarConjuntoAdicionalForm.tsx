@@ -201,12 +201,12 @@ export function AsignarConjuntoAdicionalForm() {
           )}
 
           <div className="mb-3">
-            <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+            <label htmlFor="asignar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
               <MapPin className="w-4 h-4" />
               {t("desvinculacion.asignarAdicional.localityLabel")}
             </label>
             <select
-              aria-label={t("desvinculacion.asignarAdicional.localityLabel")}
+              id="asignar-localidad"
               value={localidadId}
               onChange={(e) => {
                 setLocalidadId(e.target.value === "" ? "" : Number(e.target.value));
@@ -242,6 +242,7 @@ export function AsignarConjuntoAdicionalForm() {
                   placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
                   emptyLabel={t("desvinculacion.asignarAdicional.noConjuntosDisponibles")}
                   loadingLabel={t("common.loading")}
+                  ariaLabel={t("desvinculacion.asignarAdicional.selectConjuntoLabel")}
                 />
               </div>
               <button

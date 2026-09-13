@@ -157,10 +157,11 @@ export function AuditoriaConjuntoForm({
                un conjunto asignado, aunque ya se supiera la respuesta. */}
         {!conjuntoPreseleccionado && conjuntos.length > 1 && (
           <div className="mb-4">
-            <label className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
+            <label htmlFor="auditoria-conjunto" className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
               {t("dashboards.reciclador.auditoria.conjuntoLabel")}
             </label>
             <select
+              id="auditoria-conjunto"
               value={idConjunto}
               onChange={(e) => setIdConjunto(e.target.value)}
               className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
@@ -214,10 +215,11 @@ export function AuditoriaConjuntoForm({
         </div>
 
         <div className="mb-4">
-          <label className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
+          <label htmlFor="auditoria-tema" className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("dashboards.reciclador.auditoria.temaLabel")}
           </label>
           <select
+            id="auditoria-tema"
             value={tema}
             onChange={(e) => setTema(e.target.value)}
             className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
@@ -232,10 +234,11 @@ export function AuditoriaConjuntoForm({
         </div>
 
         <div className="mb-4">
-          <label className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
+          <label htmlFor="auditoria-descripcion" className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("dashboards.reciclador.auditoria.descripcionLabel")}
           </label>
           <textarea
+            id="auditoria-descripcion"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
             rows={2}
