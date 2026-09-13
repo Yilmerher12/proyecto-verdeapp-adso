@@ -34,6 +34,16 @@ def _validate_password_strength(v: str) -> str:
 NOMBRE_MIN_LENGTH = 2
 TELEFONO_REGEX = re.compile(r"^\d{7,10}$")
 
+# ¿Qué? Issue #255 — formato de Torre/Bloque y Apartamento: letras y
+#       números, con un solo espacio o guion como separador entre partes
+#       ("12-B", "TORRE 1", "BLOQUE 12-B"), nunca repetido ni suelto al
+#       principio o final ("1----B", "-3B", "3B-").
+# ¿Para qué? Las convenciones de nombres de torres/bloques varían demasiado
+#           entre conjuntos reales como para exigir un formato más estricto
+#           — esto solo descarta lo que claramente no es un dato real
+#           (puros símbolos, "3b..a.a.s").
+UNIDAD_REGEX = re.compile(r"^[A-Za-z0-9]+(?:[ -][A-Za-z0-9]+)*$")
+
 
 def _validar_nombre_obligatorio(v: str) -> str:
     """Exige contenido real (no solo espacios) y una longitud mínima razonable.
@@ -70,6 +80,23 @@ def _validar_telefono_opcional(v: Optional[str]) -> Optional[str]:
         return v
     if not TELEFONO_REGEX.match(texto):
         raise ValueError("El número telefónico tiene un formato inválido.")
+    return v
+
+
+def _validar_formato_unidad(v: Optional[str]) -> Optional[str]:
+    """Torre/Bloque y Apartamento siguen siendo opcionales aquí (la
+    obligatoriedad para Residente vive en auth_service.register_user) —
+    pero si se da un valor, no puede ser solo símbolos ni texto vacío con
+    espacios.
+
+    ¿Impacto? "TORRE 1", "12-B", "B2" pasan sin problema. "!!!", "   ",
+              "1----B", "3b..a.a.s" se rechazan.
+    """
+    if v is None:
+        return v
+    texto = v.strip()
+    if texto and not UNIDAD_REGEX.match(texto):
+        raise ValueError("Solo se permiten letras, números, y un espacio o guion como separador.")
     return v
 
 
@@ -126,6 +153,16 @@ class UserCreate(BaseModel):
     @classmethod
     def validate_numero_telefonico(cls, v: Optional[str]) -> Optional[str]:
         return _validar_telefono_opcional(v)
+
+    @field_validator("torre")
+    @classmethod
+    def validate_torre(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_formato_unidad(v)
+
+    @field_validator("apto")
+    @classmethod
+    def validate_apto(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_formato_unidad(v)
 
     # ¿Qué? Antes UserCreate era el único de los 3 schemas de contraseña
     #       (registro, cambio, recuperación) sin este validador.

@@ -99,6 +99,33 @@ class TestRegister:
         assert response.status_code == 400
         assert "apartamento" in response.json()["detail"].lower()
 
+    def test_register_residente_torre_solo_simbolos(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: "!!!" no es un nombre real de torre."""
+        payload = _payload_residente(conjunto_verificado, email="torre.simbolos@verdeapp.com")
+        payload["torre"] = "!!!"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_residente_torre_guiones_repetidos(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: guiones repetidos ("1----B") tampoco son un dato real."""
+        payload = _payload_residente(conjunto_verificado, email="torre.guiones@verdeapp.com")
+        payload["torre"] = "1----B"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_residente_apto_con_guion_valido(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: el guion sigue permitido como separador legítimo."""
+        payload = _payload_residente(conjunto_verificado, email="apto.guion@verdeapp.com")
+        payload["apto"] = "12-B"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 201
+
     def test_register_residente_codigo_acceso_incorrecto(
         self, client: TestClient, conjunto_verificado: ConjuntoResidencial
     ) -> None:

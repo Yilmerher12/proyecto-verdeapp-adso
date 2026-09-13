@@ -104,6 +104,7 @@
         "firstNameMin": "El nombre debe tener al menos 2 caracteres",
         "lastNameMin": "El apellido debe tener al menos 2 caracteres",
         "phoneInvalid": "El número telefónico tiene un formato inválido.",
+        "unitFormatInvalid": "Solo se permiten letras, números, y un espacio o guion como separador.",
         "passwordMin": "Mínimo 8 caracteres",
         "passwordUppercase": "Debe incluir al menos una mayúscula",
         "passwordLowercase": "Debe incluir al menos una minúscula",
