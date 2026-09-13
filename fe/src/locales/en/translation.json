@@ -194,6 +194,10 @@
       "backToLogin": "Back to sign in",
       "successMessage": "If your email is registered, you'll receive a link to reset your password.",
       "errorDefault": "Error sending the request",
+      "confirmTitle": "Send recovery link?",
+      "confirmDescription": "An email with the link will be sent to {{email}}.",
+      "confirmButton": "Yes, send it",
+      "confirmSending": "Sending...",
       "validation": {
         "emailRequired": "Email is required"
       }

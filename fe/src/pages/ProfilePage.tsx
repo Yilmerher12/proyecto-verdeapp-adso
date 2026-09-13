@@ -22,6 +22,7 @@ import { RoleId } from "@/types/auth";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { notificarFotoPerfilActualizada } from "@/lib/profileEvents";
 import { TELEFONO_REGEX } from "@/lib/validacion";
+import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 
 interface PerfilData {
   id: number;
@@ -75,7 +76,7 @@ export function ProfilePage() {
   const [formAsociacion, setFormAsociacion] = useState("");
   const [formMostrarContacto, setFormMostrarContacto] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [exito, setExito] = useState(false);
+  const [exito, mostrarExito] = useAvisoTemporal<boolean>();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [subiendoFoto, setSubiendoFoto] = useState(false);
@@ -138,7 +139,7 @@ export function ProfilePage() {
     setFormAsociacion(asoc && asoc !== "INDEPENDIENTE" ? asoc : "");
     setFormMostrarContacto(perfil.mostrar_contacto_directorio);
     setEditando(true);
-    setExito(false);
+    mostrarExito(false);
     setErrorMsg(null);
   };
 
@@ -168,8 +169,7 @@ export function ProfilePage() {
         mostrar_contacto_directorio: formMostrarContacto,
       });
       setEditando(false);
-      setExito(true);
-      setTimeout(() => setExito(false), 3000);
+      mostrarExito(true);
       cargarPerfil();
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : t("common.saveError"));

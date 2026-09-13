@@ -575,7 +575,11 @@ export function AdminConjuntoDashboard() {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [formEdicion, setFormEdicion] = useState({ nit: "" });
   const [guardando, setGuardando] = useState(false);
-  const [mensaje, setMensaje] = useState<string | null>(null);
+  // ¿Qué? Antes "mensaje" era un simple string, y el aviso siempre se
+  //       pintaba de verde (éxito) aunque el texto fuera el de error.
+  // ¿Impacto? Ahora guarda también el tipo ("success"/"error"), así el
+  //           color que se ve siempre corresponde a lo que pasó de verdad.
+  const [mensaje, setMensaje] = useState<{ tipo: "success" | "error"; texto: string } | null>(null);
 
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [cargandoNotifs, setCargandoNotifs] = useState(true);
@@ -670,12 +674,12 @@ export function AdminConjuntoDashboard() {
     setGuardando(true);
     try {
       await editarMiConjunto(id, { nit: formEdicion.nit || null });
-      setMensaje(t("dashboards.adminConjunto.editForm.successMessage"));
+      setMensaje({ tipo: "success", texto: t("dashboards.adminConjunto.editForm.successMessage") });
       setEditandoId(null);
       cargarConjuntos();
     } catch (err) {
       console.error("Error al editar conjunto", err);
-      setMensaje(t("dashboards.adminConjunto.editForm.errorMessage"));
+      setMensaje({ tipo: "error", texto: t("dashboards.adminConjunto.editForm.errorMessage") });
     } finally {
       setGuardando(false);
     }
@@ -744,9 +748,7 @@ export function AdminConjuntoDashboard() {
       )}
 
       {mensaje && (
-        <div className="bg-accent-50 border border-accent-200 text-accent-800 text-sm px-4 py-3 rounded-xl dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
-          {mensaje}
-        </div>
+        <Alert type={mensaje.tipo} message={mensaje.texto} onClose={() => setMensaje(null)} />
       )}
 
       <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
