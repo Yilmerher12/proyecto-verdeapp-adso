@@ -89,7 +89,7 @@ export function NotificationFeed({
   const noLeidas = notifications.filter((n) => !n.leida).length;
 
   return (
-    <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
+    <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-accent-600" />
