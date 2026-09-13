@@ -6,6 +6,8 @@ import { ArrowLeft, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
 import {
   listarContenido,
@@ -76,24 +78,24 @@ export function CategoriaEducativaPage() {
         {t("categoriaEducativa.back")}
       </button>
 
-      <div className="flex items-center gap-3 bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center gap-3 bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
           <Icono className="h-5.5 w-5.5" />
         </span>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{categoriaDecodificada}</h1>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && temas.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("categoriaEducativa.emptyForCategory")}</p>
+        <EmptyState icon={FileText} message={t("categoriaEducativa.emptyForCategory")} />
       )}
 
       <div className="space-y-4">
         {temas.map((item) => (
           <div
             key={item.id_contenido}
-            className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+            className="rounded-2xl border border-gray-100 bg-[#f7f9f3] p-6 dark:border-[#2a4d34] dark:bg-[#1c341b]"
           >
             <h2 className="text-base font-bold text-gray-900 dark:text-white">{item.titulo_tema}</h2>
             <ReactMarkdown components={COMPONENTES_MARKDOWN}>{item.cuerpo_texto}</ReactMarkdown>

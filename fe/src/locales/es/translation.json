@@ -15,7 +15,10 @@
       "gestionarComunicados": "Comunicados de mis Conjuntos",
       "comunicados": "Comunicados",
       "aprenderGuias": "Aprender (Guías)",
-      "directorioGeneral": "Directorio General"
+      "directorioGeneral": "Directorio General",
+      "groupComunidad": "Comunidad",
+      "groupRecursos": "Recursos",
+      "groupCuenta": "Cuenta"
     },
     "proximamente": "Pronto",
     "notificaciones": "Notificaciones",
@@ -479,6 +482,7 @@
       "register": "Registrarse"
     },
     "hero": {
+      "tagline": "Cambiando el mundo",
       "subtitle": "Gestión de residuos para conjuntos residenciales en Bogotá",
       "description": "Conectamos residentes, recicladores y administradores para transformar la gestión de residuos en tu comunidad.",
       "ctaLogin": "Ya tengo cuenta",

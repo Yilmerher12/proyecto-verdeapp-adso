@@ -36,10 +36,17 @@ export const ROLE_THEME: Record<RoleId, RoleTheme> = {
     Icon: Shield,
     dashboardHref: "/dashboard/admin",
     WatermarkIcon: Shield,
-    sidebarAccentText: "text-slate-300",
-    sidebarActiveNav: "bg-slate-400/20 text-slate-100 font-semibold",
-    badgeText: "text-slate-600 dark:text-slate-300",
-    badgeBg: "bg-slate-100 dark:bg-slate-800/60",
+    // ¿Qué? emerald (verde suave) en vez de slate (gris).
+    // ¿Para qué? Slate era el único de los 4 roles que no estaba en la
+    //           familia verde — desentonaba contra el resto de la app
+    //           (sidebar, fondo, tarjetas), sobre todo notorio en el
+    //           propio panel de Administrador (retroalimentación directa).
+    // ¿Impacto? emerald sigue siendo distinguible de los otros 3 roles
+    //           (lime, teal, amber) sin salirse de la paleta verde de marca.
+    sidebarAccentText: "text-emerald-300",
+    sidebarActiveNav: "bg-emerald-400/20 text-emerald-100 font-semibold",
+    badgeText: "text-emerald-700 dark:text-emerald-400",
+    badgeBg: "bg-emerald-50 dark:bg-emerald-900/30",
   },
   [RoleId.RESIDENTE]: {
     label: "Residente",
