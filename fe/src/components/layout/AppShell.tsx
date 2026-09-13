@@ -428,8 +428,20 @@ export function AppShell({ children }: AppShellProps) {
             se veía raro/desentonado en modo claro (retroalimentación
             directa). gray-100 es neutro y ya es parte de la paleta que este
             mismo layout usa (ver el contenedor raíz, más arriba). */}
-        <main className="flex-1 overflow-y-auto bg-gray-100 dark:bg-[#03130b]">
-          <div className="mx-auto max-w-7xl px-6 pb-6">{children}</div>
+        <main className="relative flex-1 overflow-y-auto bg-gray-100 dark:bg-[#03130b]">
+          {/* ¿Qué? Capa decorativa con la hoja del logo en mosaico, detrás
+              del contenido.
+              ¿Para qué? Textura sutil de cara a la feria (ver .bg-leaf-pattern
+              en index.css — el color de las hojas está fijo ahí, con su
+              propia variante para modo oscuro).
+              ¿Impacto? aria-hidden porque es puramente decorativa — un
+              lector de pantalla no gana nada anunciándola. pointer-events-none
+              para que nunca intercepte clics de las tarjetas de encima. */}
+          <div
+            aria-hidden="true"
+            className="bg-leaf-pattern animate-leaf-drift pointer-events-none absolute inset-0"
+          />
+          <div className="relative z-10 mx-auto max-w-7xl px-6 pb-6">{children}</div>
         </main>
       </div>
     </div>
