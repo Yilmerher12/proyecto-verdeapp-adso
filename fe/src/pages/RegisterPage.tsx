@@ -19,7 +19,7 @@ import { API_BASE_URL } from "@/api/axios";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
 import { PoliticaPrivacidadPage } from "@/pages/PoliticaPrivacidadPage";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
-import { NOMBRE_MIN_LENGTH, TELEFONO_REGEX } from "@/lib/validacion";
+import { NOMBRE_MIN_LENGTH, TELEFONO_REGEX, UNIDAD_REGEX } from "@/lib/validacion";
 
 type DocumentoLegal = "terminos" | "privacidad" | null;
 
@@ -29,6 +29,8 @@ const CAMPOS_A_VALIDAR = [
   "nombre",
   "apellidos",
   "numero_telefonico",
+  "numero_bloque",
+  "apto",
   "email",
   "confirmEmail",
   "password",
@@ -158,6 +160,14 @@ export function RegisterPage() {
       case "numero_telefonico":
         return data.numero_telefonico.trim() && !TELEFONO_REGEX.test(data.numero_telefonico.trim())
           ? t("auth.register.validation.phoneInvalid")
+          : undefined;
+      case "numero_bloque":
+        return data.numero_bloque.trim() && !UNIDAD_REGEX.test(data.numero_bloque.trim())
+          ? t("auth.register.validation.unitFormatInvalid")
+          : undefined;
+      case "apto":
+        return data.apto.trim() && !UNIDAD_REGEX.test(data.apto.trim())
+          ? t("auth.register.validation.unitFormatInvalid")
           : undefined;
       case "email":
         return !/\S+@\S+\.\S+/.test(data.email) ? t("auth.register.validation.emailInvalid") : undefined;
@@ -504,12 +514,14 @@ export function RegisterPage() {
 
                   <div>
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitNumber")}</label>
-                    <input type="text" name="numero_bloque" placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] uppercase" />
+                    <input type="text" name="numero_bloque" placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] uppercase" />
+                    {fieldErrors.numero_bloque && <p className="text-xs text-red-500 mt-1">{fieldErrors.numero_bloque}</p>}
                   </div>
 
                   <div>
                     <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
-                    <input type="text" name="apto" placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] uppercase" />
+                    <input type="text" name="apto" placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] uppercase" />
+                    {fieldErrors.apto && <p className="text-xs text-red-500 mt-1">{fieldErrors.apto}</p>}
                   </div>
                 </div>
 
