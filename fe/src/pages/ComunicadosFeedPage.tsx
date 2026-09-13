@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { verFeedComunicados, type Comunicado, type TipoComunicado } from "@/lib/comunicadosApi";
 import { Alert } from "@/components/ui/Alert";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 // ¿Qué? Mismo criterio de color que en el panel del Admin de Conjunto —
 //       Urgente en rojo para que salte a la vista de inmediato (CA-028.2).
@@ -40,27 +42,24 @@ export function ComunicadosFeedPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pt-6">
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.feed.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.subtitle")}</p>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
 
       {!cargando && !error && comunicados.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.empty")}</p>
-        </div>
+        <EmptyState icon={Megaphone} message={t("comunicados.feed.empty")} />
       )}
 
       <div className="space-y-4">
         {comunicados.map((item) => (
           <article
             key={item.id_comunicado}
-            className={`rounded-2xl border bg-white p-5 dark:bg-[#132a1c] ${
+            className={`rounded-2xl border bg-[#f7f9f3] p-5 dark:bg-[#1c341b] ${
               item.tipo === "URGENTE"
                 ? "border-red-200 dark:border-red-800/40"
                 : "border-gray-100 dark:border-[#2a4d34]"

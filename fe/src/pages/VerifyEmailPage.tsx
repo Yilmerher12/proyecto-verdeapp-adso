@@ -57,7 +57,7 @@ export function VerifyEmailPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#03130b] px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-200 dark:border-[#2a4d34] p-8 shadow-sm text-center">
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-200 dark:border-[#2a4d34] p-8 shadow-sm text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {t("verifyEmail.title")}
           </h1>

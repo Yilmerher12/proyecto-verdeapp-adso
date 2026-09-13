@@ -4,7 +4,10 @@ import { Archive, CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus } fro
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
+import { Alert } from "@/components/ui/Alert";
 import {
   archivarNovedad,
   crearNovedad,
@@ -158,7 +161,7 @@ export function AdminNovedadesPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("novedades.admin.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("novedades.admin.subtitle")}</p>
@@ -173,25 +176,20 @@ export function AdminNovedadesPage() {
       </div>
 
       {errorMsg && !creando && !editando && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-          {errorMsg}
-        </p>
+        <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />
       )}
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && novedades.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("novedades.admin.emptyState")}</p>
-        </div>
+        <EmptyState icon={Megaphone} message={t("novedades.admin.emptyState")} />
       )}
 
       <div className="space-y-3">
         {novedades.map((item) => (
           <div
             key={item.id_novedad}
-            className={`rounded-2xl border bg-white p-4 dark:bg-[#132a1c] ${
+            className={`rounded-2xl border bg-[#f7f9f3] p-4 dark:bg-[#1c341b] ${
               item.archivada ? "border-gray-100 opacity-60 dark:border-[#2a4d34]" : "border-gray-100 dark:border-[#2a4d34]"
             }`}
           >
@@ -268,11 +266,7 @@ export function AdminNovedadesPage() {
               {editando ? t("novedades.admin.editTitle") : t("novedades.admin.newButton")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             {!editando ? (
               <div>

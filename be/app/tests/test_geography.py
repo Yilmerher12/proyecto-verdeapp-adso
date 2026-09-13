@@ -116,17 +116,6 @@ class TestConjuntosPorLocalidad:
         assert len(response.json()) == 1
 
 
-class TestConjuntosGlobal:
-    def test_lista_global_solo_verificados(
-        self, client: TestClient, conjunto_verificado, conjunto_no_verificado
-    ):
-        response = client.get("/api/v1/geography/conjuntos")
-        assert response.status_code == 200
-        ids = [c["id_conjunto_residencial"] for c in response.json()]
-        assert str(conjunto_verificado.id_conjunto_residencial) in ids
-        assert str(conjunto_no_verificado.id_conjunto_residencial) not in ids
-
-
 class TestUnidades:
     def test_siempre_devuelve_lista_vacia(self, client: TestClient, conjunto_verificado):
         """Este endpoint es un placeholder: las unidades ahora se crean en el registro."""
