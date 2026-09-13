@@ -74,9 +74,27 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
         db.flush()
 
         if user_data.rol == "residente":
-            torre_texto = str(getattr(user_data, 'torre', 'TORRE UNICA')).strip().upper()
-            apto_texto = str(getattr(user_data, 'apto', 'APTO UNICO')).strip().upper()
-            id_conjunto = getattr(user_data, 'id_conjunto_residencial', None)
+            # ¿Qué? Antes, si "torre"/"apto" llegaban vacíos (posible al
+            #       llamar la API directo, sin pasar por el formulario de
+            #       registro), el código intentaba rellenar "TORRE UNICA"/
+            #       "APTO UNICO" — pero un error de programación hacía que
+            #       ese relleno nunca se activara, y quedaba guardado el
+            #       texto literal "None" como si fuera un dato real.
+            # ¿Para qué? En vez de inventar un dato de reemplazo, se rechaza
+            #           el registro por completo — mismo criterio que ya se
+            #           usa abajo para "conjunto residencial" y "código de
+            #           acceso": si falta un dato real de dónde vive la
+            #           persona, no hay registro.
+            torre_texto = (user_data.torre or "").strip().upper()
+            apto_texto = (user_data.apto or "").strip().upper()
+
+            if not torre_texto or not apto_texto:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Debes indicar la torre/bloque y el apartamento donde vives.",
+                )
+
+            id_conjunto = user_data.id_conjunto_residencial
 
             if not id_conjunto:
                 raise HTTPException(
