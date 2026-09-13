@@ -78,6 +78,27 @@ class TestRegister:
         assert response.status_code == 400
         assert "código de acceso" in response.json()["detail"].lower()
 
+    def test_register_residente_sin_torre(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #254: antes, sin torre, se guardaba el texto "None" en vez
+        de rechazar el registro."""
+        payload = _payload_residente(conjunto_verificado, email="sin.torre@verdeapp.com")
+        del payload["torre"]
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "torre" in response.json()["detail"].lower()
+
+    def test_register_residente_sin_apto(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #254: mismo caso que la torre, para el apartamento."""
+        payload = _payload_residente(conjunto_verificado, email="sin.apto@verdeapp.com")
+        del payload["apto"]
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "apartamento" in response.json()["detail"].lower()
+
     def test_register_residente_codigo_acceso_incorrecto(
         self, client: TestClient, conjunto_verificado: ConjuntoResidencial
     ) -> None:
@@ -191,6 +212,8 @@ class TestRegister:
                 "password": "TestPass123",
                 "nombre": "Sin",
                 "apellidos": "Conjunto",
+                "torre": "TORRE 1",
+                "apto": "101",
             },
         )
         assert response.status_code == 400
