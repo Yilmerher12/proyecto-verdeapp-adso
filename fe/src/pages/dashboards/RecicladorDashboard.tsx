@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
+import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import {
   Recycle,
   Mail,
@@ -142,7 +143,7 @@ export function RecicladorDashboard() {
   const [estadoReciclador, setEstadoReciclador] = useState<EstadoRecicladorConjunto[]>([]);
   // ¿Qué? Motivo a mostrar cuando el reciclador le da clic a un botón de
   //       notificación que se ve apagado (bloqueado) en vez de abrir el modal.
-  const [avisoBoton, setAvisoBoton] = useState<string | null>(null);
+  const [avisoBoton, mostrarAvisoBoton] = useAvisoTemporal<string>();
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -154,11 +155,11 @@ export function RecicladorDashboard() {
   const [modalTipo, setModalTipo] = useState<string | null>(null);
   const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<string | null>(null);
   const [enviandoNotif, setEnviandoNotif] = useState(false);
-  const [feedbackOk, setFeedbackOk] = useState<string | null>(null);
+  const [feedbackOk, mostrarFeedbackOk] = useAvisoTemporal<string>();
 
   // Formulario de auditoría (RQF-009)
   const [conjuntoParaAuditar, setConjuntoParaAuditar] = useState<string | null>(null);
-  const [feedbackAuditoria, setFeedbackAuditoria] = useState<string | null>(null);
+  const [feedbackAuditoria, mostrarFeedbackAuditoria] = useAvisoTemporal<string>();
   const [auditoriaAbierta, setAuditoriaAbierta] = useState<string | null>(null);
 
   const cargarDatos = () => {
@@ -232,8 +233,7 @@ export function RecicladorDashboard() {
         id_conjunto_residencial: conjuntoSeleccionado,
       });
       const accion = ACCIONES.find((a) => a.tipo === modalTipo);
-      setFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
-      setTimeout(() => setFeedbackOk(null), 3500);
+      mostrarFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
       setModalTipo(null);
       cargarDatos();
     } catch {
@@ -293,8 +293,7 @@ export function RecicladorDashboard() {
 
   const alEnviarAuditoria = () => {
     setConjuntoParaAuditar(null);
-    setFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
-    setTimeout(() => setFeedbackAuditoria(null), 3500);
+    mostrarFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
     cargarDatos();
   };
 
@@ -407,8 +406,7 @@ export function RecicladorDashboard() {
                   key={tipo}
                   onClick={() => {
                     if (motivo) {
-                      setAvisoBoton(motivo);
-                      setTimeout(() => setAvisoBoton(null), 4000);
+                      mostrarAvisoBoton(motivo);
                     } else {
                       abrirModal(tipo);
                     }

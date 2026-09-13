@@ -194,6 +194,10 @@
       "backToLogin": "Volver al inicio de sesión",
       "successMessage": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
       "errorDefault": "Error al enviar la solicitud",
+      "confirmTitle": "¿Enviar enlace de recuperación?",
+      "confirmDescription": "Se enviará un correo con el enlace a {{email}}.",
+      "confirmButton": "Sí, enviar",
+      "confirmSending": "Enviando...",
       "validation": {
         "emailRequired": "El correo es obligatorio"
       }

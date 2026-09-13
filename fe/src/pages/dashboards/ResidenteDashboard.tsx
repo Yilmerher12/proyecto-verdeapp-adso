@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
+import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import { Home, AlertTriangle, Bell, CheckCircle2 } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -30,7 +31,7 @@ export function ResidenteDashboard() {
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(false);
   const [enviando, setEnviando] = useState(false);
-  const [feedbackOk, setFeedbackOk] = useState(false);
+  const [feedbackOk, mostrarFeedbackOk] = useAvisoTemporal<boolean>();
   const [errorReporte, setErrorReporte] = useState(false);
   const [errorAccion, setErrorAccion] = useState(false);
 
@@ -61,8 +62,7 @@ export function ResidenteDashboard() {
     setErrorReporte(false);
     try {
       await axios.post(`${API_BASE_URL}/api/v1/notificaciones/enviar`, { tipo: "SHUT_LLENO" });
-      setFeedbackOk(true);
-      setTimeout(() => setFeedbackOk(false), 3500);
+      mostrarFeedbackOk(true);
       cargarDatos();
     } catch {
       // ¿Qué? Antes, si esto fallaba, el residente no se enteraba — creía
