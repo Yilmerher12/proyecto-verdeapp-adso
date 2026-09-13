@@ -27,6 +27,7 @@ import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResult
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 /**
@@ -319,7 +320,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
         <form
           id={`recicladores-invitar-${idConjunto}`}
           onSubmit={handleInvitar}
-          className="flex flex-col sm:flex-row gap-2 mb-4 bg-white dark:bg-[#132a1c] p-3 rounded-xl"
+          className="flex flex-col sm:flex-row gap-2 mb-4 bg-[#f7f9f3] dark:bg-[#1c341b] p-3 rounded-xl"
         >
           <div className="flex-1 relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -353,9 +354,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
           </p>
           {cargandoAutorizados ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              {t("dashboards.adminConjunto.recyclersSection.authorizedLoading")}
-            </p>
+            <LoadingState message={t("dashboards.adminConjunto.recyclersSection.authorizedLoading")} />
           ) : errorAutorizados ? (
             <div className="mb-4">
               <Alert type="error" message={t("common.loadError")} />
@@ -403,7 +402,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
           </p>
           {cargando ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
+            <LoadingState message={t("dashboards.adminConjunto.recyclersSection.loading")} />
           ) : invitaciones.length === 0 ? (
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {t("dashboards.adminConjunto.recyclersSection.empty")}
@@ -413,7 +412,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
               {invitaciones.map((inv) => (
                 <div
                   key={inv.id}
-                  className="flex items-center justify-between gap-3 bg-white dark:bg-[#132a1c] rounded-lg px-3 py-2"
+                  className="flex items-center justify-between gap-3 bg-[#f7f9f3] dark:bg-[#1c341b] rounded-lg px-3 py-2"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
@@ -521,7 +520,7 @@ function SeccionDesvinculacion({
           <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">{t("desvinculacion.clarification")}</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-[#132a1c] p-3 rounded-xl space-y-2">
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] p-3 rounded-xl space-y-2">
           <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("desvinculacion.motivoLabel")}
@@ -687,7 +686,7 @@ export function AdminConjuntoDashboard() {
       {/* TARJETA DE PERFIL — el maletín de fondo es solo un detalle tenue,
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-amber-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
@@ -718,8 +717,8 @@ export function AdminConjuntoDashboard() {
       )}
 
       {cargandoNotifs ? (
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+          <LoadingState message={t("common.loading")} />
         </div>
       ) : (
         <>
@@ -750,14 +749,14 @@ export function AdminConjuntoDashboard() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-[#2a4d34] pb-2">
           <Building2 className="text-accent-600 w-5 h-5" />
           <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
         </div>
 
         {cargando ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
+          <LoadingState message={t("dashboards.adminConjunto.myConjuntos.loading")} />
         ) : errorConjuntos ? (
           <Alert type="error" message={t("common.loadError")} />
         ) : conjuntos.length === 0 ? (

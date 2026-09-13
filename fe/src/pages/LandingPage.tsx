@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, MapPin, Users, Recycle, type LucideIcon } from "lucide-react";
@@ -173,6 +173,62 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
   const heroAnim = debeAnimar ? "animate-hero-in" : "";
 
+  // ¿Qué? Efecto de máquina de escribir para "VerdeApp" + el eslogan, letra
+  //       por letra.
+  // ¿Para qué? Mismo criterio de accesibilidad que el resto del Hero: si el
+  //           sistema operativo pidió "reducir movimiento", o si esta no es
+  //           la primera vez que se monta el Hero real (debeAnimar en false),
+  //           el texto aparece completo de una — nunca se queda "escribiendo"
+  //           en cada visita.
+  // ¿Impacto? aria-label en el <h1>/<p> lleva el texto final completo para
+  //           lectores de pantalla; los caracteres que se van revelando
+  //           quedan aria-hidden, así nadie escucha la palabra a medio
+  //           escribir.
+  const BRAND = "VerdeApp";
+  const BRAND_ACCENT_DESDE = 5; // "Verde" (blanco) | "App" (accent-400)
+  const eslogan = t("landing.hero.tagline");
+
+  const [prefiereMenosMovimiento] = useState(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  const debeEscribir = debeAnimar && !prefiereMenosMovimiento;
+
+  const [marcaEscrita, setMarcaEscrita] = useState(debeEscribir ? 0 : BRAND.length);
+  const [esloganEscrito, setEsloganEscrito] = useState(debeEscribir ? 0 : eslogan.length);
+
+  useEffect(() => {
+    if (!debeEscribir) return;
+
+    let cancelado = false;
+    const temporizadores: ReturnType<typeof setTimeout>[] = [];
+
+    const escribirEslogan = (i: number) => {
+      if (cancelado) return;
+      setEsloganEscrito(i);
+      if (i < eslogan.length) {
+        temporizadores.push(setTimeout(() => escribirEslogan(i + 1), 55));
+      }
+    };
+
+    const escribirMarca = (i: number) => {
+      if (cancelado) return;
+      setMarcaEscrita(i);
+      if (i < BRAND.length) {
+        temporizadores.push(setTimeout(() => escribirMarca(i + 1), 90));
+      } else {
+        temporizadores.push(setTimeout(() => escribirEslogan(1), 450));
+      }
+    };
+
+    temporizadores.push(setTimeout(() => escribirMarca(1), 300));
+
+    return () => {
+      cancelado = true;
+      temporizadores.forEach(clearTimeout);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const pasos = PASOS_META.map(({ imgSrc, key }) => ({
     imgSrc,
     key,
@@ -292,10 +348,32 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
             <h1
               id="hero-heading"
+              aria-label={BRAND}
               className={`${heroAnim} mb-4 text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow sm:text-7xl`}
             >
-              Verde<span className="text-accent-400">App</span>
+              <span aria-hidden="true">
+                {BRAND.slice(0, Math.min(marcaEscrita, BRAND_ACCENT_DESDE))}
+                <span className="text-accent-400">
+                  {BRAND.slice(BRAND_ACCENT_DESDE, marcaEscrita)}
+                </span>
+                {debeEscribir && marcaEscrita < BRAND.length && (
+                  <span className="ml-1 inline-block h-[0.9em] w-[3px] align-middle bg-white/80 animate-caret-blink" />
+                )}
+              </span>
             </h1>
+
+            <p
+              aria-label={eslogan}
+              className={`${heroAnim} mb-2 text-lg font-semibold text-accent-300 sm:text-xl`}
+              style={{ animationDelay: "80ms" }}
+            >
+              <span aria-hidden="true">
+                {eslogan.slice(0, esloganEscrito)}
+                {debeEscribir && marcaEscrita >= BRAND.length && esloganEscrito < eslogan.length && (
+                  <span className="ml-1 inline-block h-[1em] w-[2px] align-middle bg-accent-300/80 animate-caret-blink" />
+                )}
+              </span>
+            </p>
 
             <p
               className={`${heroAnim} mb-3 text-lg font-semibold text-white/90 sm:text-xl`}

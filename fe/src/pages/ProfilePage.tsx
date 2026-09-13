@@ -198,7 +198,7 @@ export function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
       {/* Header */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("profile.subtitle")}</p>
       </div>
@@ -213,7 +213,7 @@ export function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* LEFT — Avatar + rol + datos de contexto (2/5) */}
-        <div className="lg:col-span-2 lg:self-start bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8 flex flex-col items-center text-center">
+        <div className="lg:col-span-2 lg:self-start bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8 flex flex-col items-center text-center">
           {/* Avatar — foto real si existe, si no el círculo con la inicial de siempre. */}
           <div className="relative mb-4">
             {urlFotoPerfil ? (
@@ -233,7 +233,7 @@ export function ProfilePage() {
               disabled={subiendoFoto}
               aria-label={t("profile.photo.change")}
               title={t("profile.photo.change")}
-              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#132a1c]"
+              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-[#f7f9f3] bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#1c341b]"
             >
               {subiendoFoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
             </button>
@@ -317,7 +317,7 @@ export function ProfilePage() {
         </div>
 
         {/* RIGHT — Información personal editable (3/5) */}
-        <div className="lg:col-span-3 bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8">
+        <div className="lg:col-span-3 bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("profile.personalInfoSection.title")}</h3>
             {canEdit && !editando && (

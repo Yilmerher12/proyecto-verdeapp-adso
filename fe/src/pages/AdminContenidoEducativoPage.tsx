@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import {
@@ -127,7 +129,7 @@ export function AdminContenidoEducativoPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("adminContenidoEducativo.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -143,20 +145,17 @@ export function AdminContenidoEducativoPage() {
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && contenido.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <BookOpen className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("adminContenidoEducativo.emptyState")}</p>
-        </div>
+        <EmptyState icon={BookOpen} message={t("adminContenidoEducativo.emptyState")} />
       )}
 
       <div className="space-y-3">
         {contenido.map((item) => (
           <div
             key={item.id_contenido}
-            className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+            className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#f7f9f3] p-4 dark:border-[#2a4d34] dark:bg-[#1c341b]"
           >
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">
