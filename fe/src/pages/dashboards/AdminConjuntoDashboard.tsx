@@ -344,7 +344,9 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
       )}
 
       {errorInvitar && (
-        <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3 dark:bg-red-900/20 dark:text-red-400">{errorInvitar}</p>
+        <div className="mb-3">
+          <Alert type="error" message={errorInvitar} onClose={() => setErrorInvitar(null)} />
+        </div>
       )}
 
       {mostrarDetalle && (

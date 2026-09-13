@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Alert } from "@/components/ui/Alert";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import {
   crearContenido,
@@ -192,11 +193,7 @@ export function AdminContenidoEducativoPage() {
               {editando ? t("adminContenidoEducativo.modal.editTitle") : t("adminContenidoEducativo.newModule")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             <div>
               <label htmlFor="contenido-categoria" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">

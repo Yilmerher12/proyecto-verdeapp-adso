@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Alert } from "@/components/ui/Alert";
 import {
   crearPuntoAcopio,
   darDeBajaPuntoAcopio,
@@ -242,11 +243,7 @@ export function AdminPuntosAcopioPage() {
               {editando ? t("adminPuntosAcopio.modal.editTitle") : t("adminPuntosAcopio.newPoint")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
