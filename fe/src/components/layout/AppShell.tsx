@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, type ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -18,6 +17,7 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { usePolling } from "@/hooks/usePolling";
 import * as authApi from "@/api/auth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
@@ -87,26 +87,17 @@ export function AppShell({ children }: AppShellProps) {
   };
 
   // Polling de notificaciones no leídas cada 20s
-  useEffect(() => {
-    if (!user) return;
-    const fetchCount = () => {
-      api
-        .get<{ count: number }>("/api/v1/notificaciones/no-leidas-count")
-        .then((r) => setNoLeidas(r.data.count ?? 0))
-        .catch(() => {});
-    };
-    fetchCount();
-    const interval = setInterval(fetchCount, 20000);
-    // ¿Qué? Además del polling, escucha el evento que disparan los
-    //       dashboards al marcar notificaciones como leídas.
-    // ¿Para qué? Para que el número baje al instante en vez de esperar
-    //           hasta 20s al siguiente ciclo de polling.
-    const unsubscribe = onNotificacionesActualizadas(fetchCount);
-    return () => {
-      clearInterval(interval);
-      unsubscribe();
-    };
-  }, [user]);
+  const fetchCount = () => {
+    api
+      .get<{ count: number }>("/api/v1/notificaciones/no-leidas-count")
+      .then((r) => setNoLeidas(r.data.count ?? 0))
+      .catch(() => {});
+  };
+  // ¿Qué? Además del polling, escucha el evento que disparan los
+  //       dashboards al marcar notificaciones como leídas.
+  // ¿Para qué? Para que el número baje al instante en vez de esperar
+  //           hasta 20s al siguiente ciclo de polling.
+  usePolling(fetchCount, { enabled: !!user, onExternalTrigger: onNotificacionesActualizadas });
 
   // ¿Qué? Trae la foto de perfil para el círculo de esta tarjeta lateral.
   // ¿Para qué? Este círculo lee su nombre/rol del token de sesión (JWT,
@@ -127,8 +118,14 @@ export function AppShell({ children }: AppShellProps) {
     return unsubscribe;
   }, [user]);
 
-  const userData = user as any;
-  const roleId = (userData?.role_id || userData?.id_rol || RoleId.RESIDENTE) as RoleId;
+  // ¿Qué? Issue #223 (f3 del diagnóstico) — antes esto era "user as any" y
+  //       leía cada dato de 2-3 formas distintas (role_id O id_rol;
+  //       correo_electronico O email O sub), restos de una versión vieja
+  //       del tipo de usuario que ya no existe. UserResponse (types/auth.ts)
+  //       ya es el único tipo real, con un solo nombre correcto por campo —
+  //       usarlo directo permite que TypeScript avise si algún campo deja
+  //       de existir, en vez de fallar en silencio en tiempo de ejecución.
+  const roleId = user?.role_id ?? RoleId.RESIDENTE;
   const roleMeta = ROLE_THEME[roleId] ?? ROLE_THEME[RoleId.RESIDENTE];
 
   // ¿Qué? ROLE_THEME (fe/src/config/roleTheme.ts) es un objeto de configuración
@@ -144,10 +141,10 @@ export function AppShell({ children }: AppShellProps) {
   };
   const roleLabel = t(ROLE_LABEL_KEY[roleId] ?? ROLE_LABEL_KEY[RoleId.RESIDENTE]);
 
-  const rawEmail = userData?.correo_electronico || userData?.email || userData?.sub || "usuario@verdeapp.com";
+  const rawEmail = user?.email || "usuario@verdeapp.com";
   const fallbackName = rawEmail.split("@")[0].toUpperCase();
-  const displayName = userData?.first_name && userData.first_name !== "Usuario"
-    ? `${userData.first_name} ${userData.last_name || ""}`.toUpperCase()
+  const displayName = user?.first_name && user.first_name !== "Usuario"
+    ? `${user.first_name} ${user.last_name || ""}`.toUpperCase()
     : fallbackName;
 
   const getNavItemsByRole = () => {
@@ -220,7 +217,7 @@ export function AppShell({ children }: AppShellProps) {
         className={`
           flex min-w-0 shrink-0 flex-col border-r border-white/10
           bg-[#052e16]
-          transition-[width] duration-200 ease-in-out text-green-50
+          transition-[width] duration-200 ease-in-out text-accent-50
           overflow-hidden
           ${collapsed ? "sm:w-16 h-16 sm:h-screen" : "sm:w-64 h-auto sm:h-screen"}
         `}
@@ -250,7 +247,7 @@ export function AppShell({ children }: AppShellProps) {
           <button
             type="button"
             onClick={() => setCollapsed((prev) => !prev)}
-            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-green-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
+            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-accent-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
             aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
           >
             {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
@@ -300,7 +297,7 @@ export function AppShell({ children }: AppShellProps) {
                         ${
                           isActive
                             ? roleMeta.sidebarActiveNav
-                            : "text-green-50/80 hover:bg-white/10 hover:text-white"
+                            : "text-accent-50/80 hover:bg-white/10 hover:text-white"
                         }`
                       }
                     >
@@ -316,7 +313,7 @@ export function AppShell({ children }: AppShellProps) {
                   <div
                     className={`
                       flex min-w-0 cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5
-                      text-sm font-medium text-green-100/40
+                      text-sm font-medium text-accent-100/40
                       ${collapsed ? "justify-center" : ""}
                     `}
                   >
@@ -324,7 +321,7 @@ export function AppShell({ children }: AppShellProps) {
                     {!collapsed && (
                       <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                         <span className="min-w-0 truncate">{label}</span>
-                        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-green-100/70">
+                        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-accent-100/70">
                           {t("appShell.proximamente")}
                         </span>
                       </span>
@@ -343,7 +340,7 @@ export function AppShell({ children }: AppShellProps) {
             onClick={() => setShowLogoutConfirm(true)}
             className={`
               flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
-              text-green-50/70 transition-colors hover:bg-red-900/30 hover:text-red-200
+              text-accent-50/70 transition-colors hover:bg-red-900/30 hover:text-red-200
               ${collapsed ? "justify-center" : ""}
             `}
           >
@@ -389,7 +386,7 @@ export function AppShell({ children }: AppShellProps) {
           type="button"
           onClick={() => setCollapsed((prev) => !prev)}
           className="hidden sm:flex h-9 w-full shrink-0 cursor-pointer items-center justify-center border-t border-white/10
-            text-green-100/50 hover:bg-white/5 hover:text-white transition-colors"
+            text-accent-100/50 hover:bg-white/5 hover:text-white transition-colors"
           aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
@@ -422,11 +419,16 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* ¿Qué? Fondo del área de contenido, más oscuro que el sidebar.
             ¿Para qué? Las tarjetas (bg-white dark:bg-[#132a1c]) se perdían
-            contra un fondo casi del mismo tono que el sidebar — #dfeadf
-            (claro) y #03130b (oscuro, notablemente más oscuro que el
+            contra un fondo casi del mismo tono que el sidebar. gray-100
+            (claro, el mismo tono neutro que ya usa el contenedor raíz más
+            arriba) y #03130b (oscuro, notablemente más oscuro que el
             #052e16 del sidebar) marcan mejor dónde termina la barra lateral
-            y dónde empieza el contenido. */}
-        <main className="flex-1 overflow-y-auto bg-[#dfeadf] dark:bg-[#03130b]">
+            y dónde empieza el contenido.
+            ¿Impacto? Antes era un verde pálido (#dfeadf) elegido a mano —
+            se veía raro/desentonado en modo claro (retroalimentación
+            directa). gray-100 es neutro y ya es parte de la paleta que este
+            mismo layout usa (ver el contenedor raíz, más arriba). */}
+        <main className="flex-1 overflow-y-auto bg-gray-100 dark:bg-[#03130b]">
           <div className="mx-auto max-w-7xl px-6 pb-6">{children}</div>
         </main>
       </div>

@@ -10,10 +10,10 @@ Descripción: Endpoints del catálogo de contenido educativo (RQF-004/RQF-010).
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_current_user, get_db, require_role
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.contenido_educativo import (
@@ -28,13 +28,13 @@ router = APIRouter(
     tags=["contenido-educativo"],
 )
 
-
-def _verificar_es_admin_sistema(current_user: Usuario) -> None:
-    if current_user.id_rol != RolId.ADMIN_SISTEMA:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Administrador del Sistema puede gestionar el contenido educativo.",
-        )
+# ¿Qué? Issue #216 — ver el mismo comentario en admin.py. listar() (abajo)
+#       NO usa esta dependencia a propósito: cualquier usuario autenticado
+#       puede consultar el catálogo (RQF-004), solo crear/editar/eliminar
+#       es exclusivo del Admin del Sistema.
+_requiere_admin_sistema = require_role(
+    RolId.ADMIN_SISTEMA, "Solo un Administrador del Sistema puede gestionar el contenido educativo."
+)
 
 
 @router.get("", response_model=list[ContenidoEducativoResponse], summary="Listar el catálogo (HU-005)")
@@ -53,10 +53,9 @@ def listar(
 )
 def crear(
     data: ContenidoEducativoCreate,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> ContenidoEducativoResponse:
-    _verificar_es_admin_sistema(current_user)
     return service.crear_contenido(db, data)
 
 
@@ -68,10 +67,9 @@ def crear(
 def editar(
     id_contenido: UUID,
     data: ContenidoEducativoUpdate,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> ContenidoEducativoResponse:
-    _verificar_es_admin_sistema(current_user)
     return service.editar_contenido(db, id_contenido, data)
 
 
@@ -82,8 +80,7 @@ def editar(
 )
 def eliminar(
     id_contenido: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> None:
-    _verificar_es_admin_sistema(current_user)
     service.eliminar_contenido(db, id_contenido)

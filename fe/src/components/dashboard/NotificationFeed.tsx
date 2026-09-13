@@ -33,12 +33,12 @@ export interface NotificacionItem {
 const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   LLEGADA_RECICLADOR: { Icon: Truck, color: "text-teal-700 dark:text-teal-400" },
   SHUT_LLENO: { Icon: AlertTriangle, color: "text-amber-700 dark:text-amber-500" },
-  SHUT_LIBRE: { Icon: PackageCheck, color: "text-green-700 dark:text-green-500" },
+  SHUT_LIBRE: { Icon: PackageCheck, color: "text-accent-700 dark:text-accent-500" },
   FINALIZACION_RECICLADOR: { Icon: DoorOpen, color: "text-indigo-700 dark:text-indigo-400" },
   // RQF-016 (desvinculación y reasignación de conjuntos)
   DESVINCULACION_APROBADA: { Icon: Unlink, color: "text-gray-600 dark:text-gray-400" },
   DESVINCULACION_RECHAZADA: { Icon: XCircle, color: "text-red-600 dark:text-red-400" },
-  CONJUNTO_ASIGNADO: { Icon: Building2, color: "text-green-700 dark:text-green-500" },
+  CONJUNTO_ASIGNADO: { Icon: Building2, color: "text-accent-700 dark:text-accent-500" },
   // RQF-014 (comunicados del conjunto)
   COMUNICADO_NUEVO: { Icon: Megaphone, color: "text-purple-700 dark:text-purple-400" },
   COMUNICADO_ACTUALIZADO: { Icon: Megaphone, color: "text-purple-500 dark:text-purple-300" },
@@ -65,7 +65,7 @@ interface NotificationFeedProps {
   title: string;
   notifications: NotificacionItem[];
   emptyMessage: string;
-  /** Color del contador y el punto de "no leída" — el acento del rol (ej: "bg-green-600" / "bg-amber-500"). */
+  /** Color del contador y el punto de "no leída" — el acento del rol (ej: "bg-accent-600" / "bg-amber-500"). */
   accentBg: string;
   /** Fondo de la fila cuando está sin leer (claro + oscuro), a tono con el mismo acento. */
   accentHighlight: string;
@@ -92,7 +92,7 @@ export function NotificationFeed({
     <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-green-600" />
+          <Clock className="h-4 w-4 text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h2>
           {noLeidas > 0 && (
             <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white ${accentBg}`}>
@@ -102,7 +102,7 @@ export function NotificationFeed({
         </div>
         <div className="flex items-center gap-3">
           {noLeidas > 0 && (
-            <button onClick={onMarkAllRead} className="cursor-pointer text-xs font-medium text-green-700 transition-colors hover:text-green-600 dark:text-green-500 dark:hover:text-green-400">
+            <button onClick={onMarkAllRead} className="cursor-pointer text-xs font-medium text-accent-700 transition-colors hover:text-accent-600 dark:text-accent-500 dark:hover:text-accent-400">
               {t("notificationFeed.markAllRead")}
             </button>
           )}

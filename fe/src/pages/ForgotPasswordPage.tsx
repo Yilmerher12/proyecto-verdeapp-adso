@@ -64,8 +64,8 @@ export function ForgotPasswordPage() {
     {showConfirm && (
       <Modal onClose={() => setShowConfirm(false)}>
         <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50 dark:bg-green-900/20">
-            <Mail className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent-50 dark:bg-accent-900/20">
+            <Mail className="h-6 w-6 text-accent-600 dark:text-accent-400" />
           </div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
             ¿Enviar enlace de recuperación?
@@ -87,7 +87,7 @@ export function ForgotPasswordPage() {
             <button
               type="button"
               onClick={confirmSend}
-              className="flex-1 cursor-pointer rounded-xl bg-green-700 hover:bg-green-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+              className="flex-1 cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
             >
               Sí, enviar
             </button>

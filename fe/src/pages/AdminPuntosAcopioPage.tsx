@@ -5,6 +5,7 @@ import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import {
   crearPuntoAcopio,
   darDeBajaPuntoAcopio,
@@ -159,7 +160,7 @@ export function AdminPuntosAcopioPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("adminPuntosAcopio.newPoint")}
@@ -216,7 +217,7 @@ export function AdminPuntosAcopioPage() {
                 <>
                   <button
                     onClick={() => reactivar(item)}
-                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-green-600 transition-colors hover:bg-green-50 dark:border-[#2a4d34] dark:text-green-400 dark:hover:bg-green-900/20"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-accent-600 transition-colors hover:bg-accent-50 dark:border-[#2a4d34] dark:text-accent-400 dark:hover:bg-accent-900/20"
                     aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
                   >
                     <Power className="h-4 w-4" />
@@ -258,7 +259,7 @@ export function AdminPuntosAcopioPage() {
                   value={form.nombre}
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                   placeholder={t("adminPuntosAcopio.fields.namePlaceholder")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -270,7 +271,7 @@ export function AdminPuntosAcopioPage() {
                   id="acopio-localidad"
                   value={form.id_localidad || ""}
                   onChange={(e) => setForm({ ...form, id_localidad: Number(e.target.value) })}
-                  className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 >
                   <option value="" disabled>
                     {t("adminPuntosAcopio.fields.localitySelect")}
@@ -293,7 +294,7 @@ export function AdminPuntosAcopioPage() {
                 value={form.direccion}
                 onChange={(e) => setForm({ ...form, direccion: e.target.value })}
                 placeholder={t("adminPuntosAcopio.fields.addressPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -306,7 +307,7 @@ export function AdminPuntosAcopioPage() {
                   id="acopio-encargado"
                   value={form.nombre_encargado ?? ""}
                   onChange={(e) => setForm({ ...form, nombre_encargado: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -318,7 +319,7 @@ export function AdminPuntosAcopioPage() {
                   id="acopio-telefono"
                   value={form.telefono_contacto ?? ""}
                   onChange={(e) => setForm({ ...form, telefono_contacto: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
             </div>
@@ -333,7 +334,7 @@ export function AdminPuntosAcopioPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")
@@ -347,63 +348,29 @@ export function AdminPuntosAcopioPage() {
       )}
 
       {aDarDeBaja && (
-        <Modal onClose={() => setADarDeBaja(null)} aria-label={t("adminPuntosAcopio.modal.deactivateAriaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <PowerOff className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("adminPuntosAcopio.deactivateConfirm.title", { nombre: aDarDeBaja.nombre })}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("adminPuntosAcopio.deactivateConfirm.warning")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setADarDeBaja(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={confirmarDarDeBaja}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                {t("adminPuntosAcopio.deactivateConfirm.confirm")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={PowerOff}
+          variant="danger"
+          ariaLabel={t("adminPuntosAcopio.modal.deactivateAriaLabel")}
+          title={t("adminPuntosAcopio.deactivateConfirm.title", { nombre: aDarDeBaja.nombre })}
+          description={t("adminPuntosAcopio.deactivateConfirm.warning")}
+          confirmLabel={t("adminPuntosAcopio.deactivateConfirm.confirm")}
+          onConfirm={confirmarDarDeBaja}
+          onClose={() => setADarDeBaja(null)}
+        />
       )}
 
       {aEliminar && (
-        <Modal onClose={() => setAEliminar(null)} aria-label={t("adminPuntosAcopio.modal.deleteAriaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <Trash2 className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("adminPuntosAcopio.deleteConfirm.title", { nombre: aEliminar.nombre })}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("adminPuntosAcopio.deleteConfirm.warning")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setAEliminar(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={confirmarEliminar}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                {t("adminPuntosAcopio.deleteConfirm.confirm")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={Trash2}
+          variant="danger"
+          ariaLabel={t("adminPuntosAcopio.modal.deleteAriaLabel")}
+          title={t("adminPuntosAcopio.deleteConfirm.title", { nombre: aEliminar.nombre })}
+          description={t("adminPuntosAcopio.deleteConfirm.warning")}
+          confirmLabel={t("adminPuntosAcopio.deleteConfirm.confirm")}
+          onConfirm={confirmarEliminar}
+          onClose={() => setAEliminar(null)}
+        />
       )}
     </div>
   );

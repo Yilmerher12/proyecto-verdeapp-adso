@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import {
   crearContenido,
@@ -135,7 +136,7 @@ export function AdminContenidoEducativoPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("adminContenidoEducativo.newModule")}
@@ -207,7 +208,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.modulo_categoria}
                 onChange={(e) => setForm({ ...form, modulo_categoria: e.target.value })}
                 placeholder={t("adminContenidoEducativo.fields.categoryPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -220,7 +221,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.titulo_tema}
                 onChange={(e) => setForm({ ...form, titulo_tema: e.target.value })}
                 placeholder={t("adminContenidoEducativo.fields.titlePlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -233,7 +234,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.cuerpo_texto}
                 onChange={(e) => setForm({ ...form, cuerpo_texto: e.target.value })}
                 rows={6}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 {t("adminContenidoEducativo.fields.contentMarkdownHint")}
@@ -249,7 +250,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.url_video ?? ""}
                 onChange={(e) => setForm({ ...form, url_video: e.target.value })}
                 placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -269,7 +270,7 @@ export function AdminContenidoEducativoPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")
@@ -283,33 +284,16 @@ export function AdminContenidoEducativoPage() {
       )}
 
       {aEliminar && (
-        <Modal onClose={() => setAEliminar(null)} aria-label={t("adminContenidoEducativo.modal.deleteAriaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <Trash2 className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("adminContenidoEducativo.deleteConfirm.title", { titulo: aEliminar.titulo_tema })}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("adminContenidoEducativo.deleteConfirm.warning")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setAEliminar(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={confirmarEliminar}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                {t("adminContenidoEducativo.deleteConfirm.confirm")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={Trash2}
+          variant="danger"
+          ariaLabel={t("adminContenidoEducativo.modal.deleteAriaLabel")}
+          title={t("adminContenidoEducativo.deleteConfirm.title", { titulo: aEliminar.titulo_tema })}
+          description={t("adminContenidoEducativo.deleteConfirm.warning")}
+          confirmLabel={t("adminContenidoEducativo.deleteConfirm.confirm")}
+          onConfirm={confirmarEliminar}
+          onClose={() => setAEliminar(null)}
+        />
       )}
     </div>
   );

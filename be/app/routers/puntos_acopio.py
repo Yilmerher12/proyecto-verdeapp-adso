@@ -11,10 +11,10 @@ Descripción: Endpoints de gestión de puntos de acopio, exclusivos del Admin
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db, require_role
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.puntos_acopio import (
@@ -29,21 +29,17 @@ router = APIRouter(
     tags=["admin-puntos-acopio"],
 )
 
-
-def _verificar_es_admin_sistema(current_user: Usuario) -> None:
-    if current_user.id_rol != RolId.ADMIN_SISTEMA:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Administrador del Sistema puede gestionar los puntos de acopio.",
-        )
+# ¿Qué? Issue #216 — ver el mismo comentario en admin.py.
+_requiere_admin_sistema = require_role(
+    RolId.ADMIN_SISTEMA, "Solo un Administrador del Sistema puede gestionar los puntos de acopio."
+)
 
 
 @router.get("", response_model=list[PuntoAcopioAdminResponse], summary="Listar todos los puntos de acopio")
 def listar(
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> list[dict]:
-    _verificar_es_admin_sistema(current_user)
     return service.listar_todos(db)
 
 
@@ -55,10 +51,9 @@ def listar(
 )
 def crear(
     data: PuntoAcopioCreate,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> dict:
-    _verificar_es_admin_sistema(current_user)
     return service.crear(db, data)
 
 
@@ -70,10 +65,9 @@ def crear(
 def editar(
     id_punto_acopio: UUID,
     data: PuntoAcopioUpdate,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> dict:
-    _verificar_es_admin_sistema(current_user)
     return service.editar(db, id_punto_acopio, data)
 
 
@@ -84,10 +78,9 @@ def editar(
 )
 def dar_de_baja(
     id_punto_acopio: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> None:
-    _verificar_es_admin_sistema(current_user)
     service.dar_de_baja(db, id_punto_acopio)
 
 
@@ -98,10 +91,9 @@ def dar_de_baja(
 )
 def reactivar(
     id_punto_acopio: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> dict:
-    _verificar_es_admin_sistema(current_user)
     return service.reactivar(db, id_punto_acopio)
 
 
@@ -112,8 +104,7 @@ def reactivar(
 )
 def eliminar_definitivamente(
     id_punto_acopio: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> None:
-    _verificar_es_admin_sistema(current_user)
     service.eliminar_definitivamente(db, id_punto_acopio)

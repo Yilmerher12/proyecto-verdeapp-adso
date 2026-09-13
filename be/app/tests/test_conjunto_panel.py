@@ -68,6 +68,21 @@ class TestEditarConjunto:
         )
         assert response.status_code == 200
 
+    def test_nit_de_solo_espacios_se_guarda_como_sin_valor(
+        self, client: TestClient, db, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Issue #220 (b14): un NIT de puros espacios debe guardarse como
+        None ("sin valor"), no como una cadena de texto vacía."""
+        response = client.patch(
+            f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}",
+            headers=admin_conjunto_auth_headers,
+            json={"nit": "   "},
+        )
+        assert response.status_code == 200
+
+        db.refresh(conjunto_verificado)
+        assert conjunto_verificado.nit is None
+
     def test_no_puede_editar_un_conjunto_ajeno(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_no_verificado
     ):

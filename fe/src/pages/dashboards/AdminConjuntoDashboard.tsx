@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { usePolling } from "@/hooks/usePolling";
 import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, AlertTriangle, UserX } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
@@ -26,7 +27,7 @@ import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResult
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
-import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -37,7 +38,7 @@ function BadgeEstado({ estado }: { estado: string }) {
   const { t } = useTranslation();
   const estilos: Record<string, string> = {
     PENDIENTE: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    ACEPTADA: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    ACEPTADA: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
     RECHAZADA: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   };
   const etiquetas: Record<string, string> = {
@@ -100,7 +101,7 @@ function SeccionCodigoAcceso({
       onRegenerado();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("dashboards.adminConjunto.codigoAcceso.errorDefault"));
+      setError(err.message || t("dashboards.adminConjunto.codigoAcceso.errorDefault"));
     } finally {
       setRegenerando(false);
     }
@@ -111,7 +112,7 @@ function SeccionCodigoAcceso({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <KeyRound className="w-4 h-4 text-green-600" />
+            <KeyRound className="w-4 h-4 text-accent-600" />
             <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">
               {t("dashboards.adminConjunto.codigoAcceso.title")}
             </h5>
@@ -132,7 +133,7 @@ function SeccionCodigoAcceso({
               copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
             )}
           >
-            {copiado ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+            {copiado ? <Check className="h-4 w-4 text-accent-600" /> : <Copy className="h-4 w-4" />}
           </button>
           <button
             type="button"
@@ -145,44 +146,19 @@ function SeccionCodigoAcceso({
       </div>
 
       {confirmando && (
-        <Modal
+        <ConfirmModal
+          icon={AlertTriangle}
+          variant="warning"
+          ariaLabel={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
+          title={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
+          description={t("dashboards.adminConjunto.codigoAcceso.confirmWarning")}
+          error={error}
+          isConfirming={regenerando}
+          confirmLabel={t("dashboards.adminConjunto.codigoAcceso.confirmButton")}
+          confirmingLabel={t("dashboards.adminConjunto.codigoAcceso.regenerating")}
+          onConfirm={regenerar}
           onClose={() => setConfirmando(false)}
-          aria-label={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
-        >
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20">
-              <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("dashboards.adminConjunto.codigoAcceso.confirmWarning")}
-            </p>
-            {error && (
-              <p className="mb-4 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg dark:bg-red-900/20 dark:text-red-400">
-                {error}
-              </p>
-            )}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmando(false)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={regenerar}
-                disabled={regenerando}
-                className="flex-1 cursor-pointer rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {regenerando
-                  ? t("dashboards.adminConjunto.codigoAcceso.regenerating")
-                  : t("dashboards.adminConjunto.codigoAcceso.confirmButton")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        />
       )}
     </div>
   );
@@ -198,6 +174,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
   const { t } = useTranslation();
   const [autorizados, setAutorizados] = useState<RecicladorAutorizado[]>([]);
   const [cargandoAutorizados, setCargandoAutorizados] = useState(true);
+  const [errorAutorizados, setErrorAutorizados] = useState(false);
   const [invitaciones, setInvitaciones] = useState<InvitacionEnviada[]>([]);
   const [cargando, setCargando] = useState(true);
   const [correoNuevo, setCorreoNuevo] = useState("");
@@ -229,8 +206,21 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
   const cargarAutorizados = () => {
     setCargandoAutorizados(true);
     obtenerRecicladoresAutorizados(idConjunto)
-      .then(setAutorizados)
-      .catch((err) => console.error("Error cargando recicladores autorizados", err))
+      .then((data) => {
+        setAutorizados(data);
+        setErrorAutorizados(false);
+      })
+      // ¿Qué? Issue #223 (f2 del diagnóstico) — antes esto fallaba en
+      //       silencio: solo un console.error, y la pantalla se veía
+      //       igual que si de verdad no hubiera ningún reciclador
+      //       autorizado en este conjunto.
+      // ¿Impacto? Ahora se distingue "no hay recicladores autorizados"
+      //           de "falló la carga" con un aviso real (ver el render
+      //           más abajo).
+      .catch((err) => {
+        console.error("Error cargando recicladores autorizados", err);
+        setErrorAutorizados(true);
+      })
       .finally(() => setCargandoAutorizados(false));
   };
 
@@ -262,8 +252,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
       cargarInvitaciones();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const detalle = err?.response?.data?.detail;
-      setErrorInvitar(detalle || t("dashboards.adminConjunto.recyclersSection.errorDefault"));
+      setErrorInvitar(err.message || t("dashboards.adminConjunto.recyclersSection.errorDefault"));
     } finally {
       setEnviando(false);
     }
@@ -279,8 +268,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
       cargarAutorizados();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const detalle = err?.response?.data?.detail;
-      setErrorRevocar(detalle || t("dashboards.adminConjunto.recyclersSection.revokeErrorDefault"));
+      setErrorRevocar(err.message || t("dashboards.adminConjunto.recyclersSection.revokeErrorDefault"));
     } finally {
       setRevocando(false);
     }
@@ -295,10 +283,10 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
     <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/40">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-green-600" />
+          <Users className="w-4 h-4 text-accent-600" />
           <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.recyclersSection.title")}</h5>
           {!cargandoAutorizados && (
-            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-bold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
               {autorizados.length}
             </span>
           )}
@@ -320,7 +308,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             onClick={() => setMostrarFormulario((v) => !v)}
             aria-expanded={mostrarFormulario}
             aria-controls={`recicladores-invitar-${idConjunto}`}
-            className="cursor-pointer text-xs font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+            className="cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
           >
             {t("dashboards.adminConjunto.recyclersSection.invite")}
           </button>
@@ -340,13 +328,13 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
               placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
               value={correoNuevo}
               onChange={(e) => setCorreoNuevo(e.target.value)}
-              className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+              className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
             />
           </div>
           <button
             type="submit"
             disabled={enviando || !correoNuevo.trim()}
-            className="flex cursor-pointer items-center justify-center gap-1.5 bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex cursor-pointer items-center justify-center gap-1.5 bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
             {enviando ? t("dashboards.adminConjunto.recyclersSection.sending") : t("dashboards.adminConjunto.recyclersSection.inviteButton")}
@@ -368,6 +356,10 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
               {t("dashboards.adminConjunto.recyclersSection.authorizedLoading")}
             </p>
+          ) : errorAutorizados ? (
+            <div className="mb-4">
+              <Alert type="error" message={t("common.loadError")} />
+            </div>
           ) : autorizados.length === 0 ? (
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
               {t("dashboards.adminConjunto.recyclersSection.authorizedEmpty")}
@@ -377,7 +369,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
               {autorizados.map((r) => (
                 <div
                   key={r.id_reciclador}
-                  className="flex items-center justify-between gap-3 bg-green-50 dark:bg-green-900/10 rounded-lg px-3 py-2"
+                  className="flex items-center justify-between gap-3 bg-accent-50 dark:bg-accent-900/10 rounded-lg px-3 py-2"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
@@ -387,7 +379,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {r.asociacion && (
-                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                      <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-semibold text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
                         {r.asociacion}
                       </span>
                     )}
@@ -438,39 +430,19 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
       )}
 
       {aRevocar && (
-        <Modal onClose={() => setARevocar(null)} aria-label={t("dashboards.adminConjunto.recyclersSection.revokeModalAriaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <UserX className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("dashboards.adminConjunto.recyclersSection.revokeConfirmTitle", { nombre: `${aRevocar.nombre} ${aRevocar.apellidos}` })}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("dashboards.adminConjunto.recyclersSection.revokeConfirmWarning")}
-            </p>
-            {errorRevocar && (
-              <p className="mb-4 text-xs font-medium text-red-600 dark:text-red-400">{errorRevocar}</p>
-            )}
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setARevocar(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={confirmarRevocar}
-                disabled={revocando}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {revocando ? t("common.saving") : t("dashboards.adminConjunto.recyclersSection.revokeConfirmButton")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={UserX}
+          variant="danger"
+          ariaLabel={t("dashboards.adminConjunto.recyclersSection.revokeModalAriaLabel")}
+          title={t("dashboards.adminConjunto.recyclersSection.revokeConfirmTitle", { nombre: `${aRevocar.nombre} ${aRevocar.apellidos}` })}
+          description={t("dashboards.adminConjunto.recyclersSection.revokeConfirmWarning")}
+          error={errorRevocar}
+          isConfirming={revocando}
+          confirmLabel={t("dashboards.adminConjunto.recyclersSection.revokeConfirmButton")}
+          confirmingLabel={t("common.saving")}
+          onConfirm={confirmarRevocar}
+          onClose={() => setARevocar(null)}
+        />
       )}
     </div>
   );
@@ -508,8 +480,7 @@ function SeccionDesvinculacion({
       onSolicitudEnviada();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      const detalle = err?.response?.data?.detail;
-      setError(detalle || t("desvinculacion.errorDefault"));
+      setError(err.message || t("desvinculacion.errorDefault"));
     } finally {
       setEnviando(false);
     }
@@ -560,7 +531,7 @@ function SeccionDesvinculacion({
             onChange={(e) => setMotivo(e.target.value)}
             placeholder={t("desvinculacion.motivoPlaceholder")}
             rows={2}
-            className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+            className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
           />
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex gap-2">
@@ -601,6 +572,7 @@ export function AdminConjuntoDashboard() {
   const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_CONJUNTO];
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [errorConjuntos, setErrorConjuntos] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [formEdicion, setFormEdicion] = useState({ nit: "" });
   const [guardando, setGuardando] = useState(false);
@@ -615,8 +587,20 @@ export function AdminConjuntoDashboard() {
     if (!user) return;
     setCargando(true);
     obtenerMisConjuntos()
-      .then(setConjuntos)
-      .catch((err) => console.error("Error cargando mis conjuntos", err))
+      .then((data) => {
+        setConjuntos(data);
+        setErrorConjuntos(false);
+      })
+      // ¿Qué? Issue #223 (f2 del diagnóstico) — antes esto fallaba en
+      //       silencio: solo un console.error (que un usuario normal
+      //       nunca ve) y la pantalla quedaba igual que si el Admin no
+      //       administrara ningún conjunto.
+      // ¿Impacto? Ahora se distingue "no hay conjuntos" de "falló la
+      //           carga" con un aviso real (ver el render más abajo).
+      .catch((err) => {
+        console.error("Error cargando mis conjuntos", err);
+        setErrorConjuntos(true);
+      })
       .finally(() => setCargando(false));
   };
 
@@ -667,11 +651,10 @@ export function AdminConjuntoDashboard() {
 
   useEffect(() => {
     cargarConjuntos();
-    cargarNotificaciones();
-    const interval = setInterval(cargarNotificaciones, 20000);
-    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  usePolling(cargarNotificaciones, { enabled: !!user });
 
   const iniciarEdicion = (c: ConjuntoAdministrado) => {
     setEditandoId(c.id_conjunto_residencial);
@@ -715,7 +698,7 @@ export function AdminConjuntoDashboard() {
             <p className="text-gray-600 dark:text-gray-300">
               {t("dashboards.common.welcomePrefix")} <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
             </p>
-            <p className="text-xs text-green-700 dark:text-green-400 font-semibold mt-1 tracking-wide">
+            <p className="text-xs text-accent-700 dark:text-accent-400 font-semibold mt-1 tracking-wide">
               {user?.email}
             </p>
           </div>
@@ -762,19 +745,21 @@ export function AdminConjuntoDashboard() {
       )}
 
       {mensaje && (
-        <div className="bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-3 rounded-xl dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
+        <div className="bg-accent-50 border border-accent-200 text-accent-800 text-sm px-4 py-3 rounded-xl dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
           {mensaje}
         </div>
       )}
 
       <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-[#2a4d34] pb-2">
-          <Building2 className="text-green-600 w-5 h-5" />
+          <Building2 className="text-accent-600 w-5 h-5" />
           <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
         </div>
 
         {cargando ? (
           <p className="text-sm text-gray-500 dark:text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
+        ) : errorConjuntos ? (
+          <Alert type="error" message={t("common.loadError")} />
         ) : conjuntos.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
             {t("dashboards.adminConjunto.myConjuntos.empty")}
@@ -807,7 +792,7 @@ export function AdminConjuntoDashboard() {
                         type="text"
                         value={formEdicion.nit}
                         onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                       />
                     </div>
                     <div className="flex gap-2 pt-2">
@@ -815,7 +800,7 @@ export function AdminConjuntoDashboard() {
                         type="button"
                         onClick={() => guardarEdicion(c.id_conjunto_residencial)}
                         disabled={guardando}
-                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-white bg-green-700 hover:bg-green-800 px-4 py-2 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-white bg-accent-700 hover:bg-accent-800 px-4 py-2 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Check className="w-4 h-4" /> {t("common.save")}
                       </button>
@@ -842,7 +827,7 @@ export function AdminConjuntoDashboard() {
                       <button
                         type="button"
                         onClick={() => iniciarEdicion(c)}
-                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
                       >
                         <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
                       </button>

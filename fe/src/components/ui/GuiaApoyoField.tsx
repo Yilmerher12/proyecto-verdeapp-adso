@@ -82,7 +82,7 @@ export function GuiaApoyoField({ label, value, onChange }: GuiaApoyoFieldProps) 
           onClick={() => cambiarModo("archivo")}
           className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "archivo"
-              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+              ? "bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400"
               : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-[#1f4029] dark:text-gray-400 dark:hover:bg-[#2a4d34]"
           }`}
         >
@@ -95,7 +95,7 @@ export function GuiaApoyoField({ label, value, onChange }: GuiaApoyoFieldProps) 
           onClick={() => cambiarModo("link")}
           className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "link"
-              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+              ? "bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400"
               : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-[#1f4029] dark:text-gray-400 dark:hover:bg-[#2a4d34]"
           }`}
         >
@@ -109,7 +109,7 @@ export function GuiaApoyoField({ label, value, onChange }: GuiaApoyoFieldProps) 
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="https://..."
-          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
         />
       ) : value ? (
         <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-[#2a4d34] dark:bg-[#1f4029]">

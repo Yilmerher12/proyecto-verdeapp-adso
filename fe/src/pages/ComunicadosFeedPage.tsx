@@ -13,7 +13,7 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
   URGENTE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
   MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  RECICLAJE: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
 };
 
 /**
@@ -94,7 +94,7 @@ export function ComunicadosFeedPage() {
                 href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 transition-colors hover:text-green-800 dark:text-green-400"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
               >
                 <Paperclip className="h-3.5 w-3.5" />
                 {t("comunicados.viewAttachment")}

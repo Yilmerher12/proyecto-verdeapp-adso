@@ -26,7 +26,6 @@ interface CookieEntry {
 const SERVICE_COOKIES: readonly CookieEntry[] = [
   { name: "access_token" },
   { name: "refresh_token" },
-  { name: "theme_preference" },
 ] as const;
 
 interface PoliticaCookiesPageProps {
@@ -71,8 +70,8 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
   return (
     <LegalLayout
       title={t("legal.cookies.title")}
-      lastUpdated="2026-02-01"
-      version="1.0"
+      lastUpdated="2026-09-11"
+      version="1.1"
       embedded={embedded}
     >
       <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
@@ -109,10 +108,9 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-[#2a4d34] dark:bg-[#132a1c] p-4">
-            <h3 className="mb-1 text-sm font-semibold text-accent-400">
-              {t("legal.cookies.s2.prefCategory.title")}
-            </h3>
-            <p>{t("legal.cookies.s2.prefCategory.p1")}</p>
+            <p>
+              <Trans i18nKey="legal.cookies.s2.localStorageNote" components={{ strong: S, code: C }} />
+            </p>
           </div>
         </div>
       </LegalSection>

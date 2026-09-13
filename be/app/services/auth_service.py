@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.usuario import Usuario
@@ -20,6 +21,7 @@ from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.password_reset_token import PasswordResetToken
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.token_revocado import TokenRevocado
+from app.services.user_service import obtener_registro_de_perfil
 
 from app.schemas.user import (
     ResetPasswordRequest,
@@ -157,8 +159,6 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
             )
             db.add(nuevo_reciclador)
 
-        db.commit()
-
         token_verificacion = str(uuid.uuid4())
         expiration_verif = datetime.now(timezone.utc) + timedelta(days=1)
 
@@ -170,6 +170,19 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
             used=False
         )
         db.add(db_token_verif)
+
+        # ¿Qué? Issue #215 — antes había un commit aquí y OTRO más abajo,
+        #       separados. Si algo fallaba justo entre los dos (ej. se cae
+        #       la conexión a la BD), el usuario y su perfil ya habían
+        #       quedado guardados PARA SIEMPRE por el primer commit, pero
+        #       sin su código de verificación — una cuenta fantasma:
+        #       nunca se puede activar, y como el correo ya quedó
+        #       registrado, tampoco se puede volver a intentar el registro.
+        # ¿Para qué? Un solo commit al final garantiza que el usuario, su
+        #           perfil (Residente/Reciclador) y el token de verificación
+        #           se guardan TODOS juntos o NINGUNO — si algo falla antes
+        #           de llegar aquí, el rollback del except de abajo deshace
+        #           todo, sin dejar nada a medias.
         db.commit()
 
         try:
@@ -183,6 +196,24 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
     except HTTPException:
         db.rollback()
         raise
+    except IntegrityError:
+        # ¿Qué? Issue #215 (b9 del diagnóstico) — el pre-chequeo de arriba
+        #       (líneas 51-58) revisa si el correo ya existe ANTES de
+        #       insertar, pero entre ese chequeo y el INSERT real puede
+        #       colarse otra petición con el mismo correo (condición de
+        #       carrera). Si eso pasa, el UNIQUE de correo_electronico en
+        #       la base de datos es quien de verdad lo impide — y antes,
+        #       ese choque cala hasta el except Exception genérico de abajo,
+        #       devolviendo un 500 en vez del mismo error claro que ya
+        #       devuelve el pre-chequeo normal.
+        # ¿Impacto? Con esto, la persona ve el mismo mensaje de siempre
+        #           ("El correo ya está registrado.") sin importar si
+        #           chocó contra el pre-chequeo o contra la carrera.
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El correo ya está registrado.",
+        )
     except Exception:
         # ¿Qué? Antes el detail del 500 incluía str(e) — el mensaje crudo de
         #       la excepción (puede traer nombres de columnas, constraints o
@@ -226,6 +257,18 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     #           por cuenta, y es exactamente el comportamiento que pide
     #           RQF-001.
     if user and user.bloqueado_hasta and user.bloqueado_hasta > datetime.now(timezone.utc):
+        # ¿Qué? Issue #215 (b8 del diagnóstico) — se corre verify_password()
+        #       igual que en las otras dos ramas de rechazo de abajo
+        #       (credenciales inválidas / cuenta inexistente), aunque acá
+        #       el resultado no se use para nada.
+        # ¿Para qué? Sin esto, esta rama respondía casi al instante,
+        #           mientras las otras dos tardaban lo que tarda comparar
+        #           un hash de bcrypt. Esa diferencia de tiempo — no el
+        #           mensaje, que ya de por sí distingue "bloqueada" de
+        #           "incorrectas" — es una segunda forma de detectar qué
+        #           correos están bloqueados (y por lo tanto existen) sin
+        #           siquiera necesitar leer la respuesta.
+        verify_password(login_data.password, user.password)
         log_login_fallido(correo, "cuenta_bloqueada")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -288,33 +331,16 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
 
 
 def _obtener_nombre_real(db: Session, user: Usuario):
-    """Busca el nombre y apellidos reales del usuario según su rol."""
-    real_first_name = "Administrador"
-    real_last_name = "del Sistema"
+    """Busca el nombre y apellidos reales del usuario según su rol.
 
-    if user.id_rol == RolId.RESIDENTE:
-        stmt_res = select(Residente).where(Residente.id_usuario == user.id_usuario)
-        residente = db.execute(stmt_res).scalar_one_or_none()
-        if residente:
-            real_first_name = residente.nombre
-            real_last_name = residente.apellidos
-
-    elif user.id_rol == RolId.RECICLADOR:
-        stmt_rec = select(Reciclador).where(Reciclador.id_usuario == user.id_usuario)
-        reciclador = db.execute(stmt_rec).scalar_one_or_none()
-        if reciclador:
-            real_first_name = reciclador.nombre
-            real_last_name = reciclador.apellidos
-
-    elif user.id_rol == RolId.ADMIN_CONJUNTO:
-        from app.models.administrador_conjunto import AdministradorConjunto
-        stmt_admin = select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == user.id_usuario)
-        administrador = db.execute(stmt_admin).scalar_one_or_none()
-        if administrador:
-            real_first_name = administrador.nombre
-            real_last_name = administrador.apellidos
-
-    return real_first_name, real_last_name
+    ¿Qué? Issue #220 (b13 del diagnóstico) — reutiliza
+          user_service.obtener_registro_de_perfil en vez de repetir aquí
+          la misma búsqueda "¿en qué tabla vive el perfil de este rol?".
+    """
+    registro = obtener_registro_de_perfil(db, user)
+    if registro:
+        return registro.nombre, registro.apellidos
+    return "Administrador", "del Sistema"
 
 
 def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:

@@ -10,7 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select, text
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db, require_role
 from app.models.usuario import Usuario
 from app.models.rol import RolId
 from app.schemas.admin import CambiarHabilitadoRequest
@@ -30,12 +30,13 @@ MAX_LIMIT = 100
 
 # Estos endpoints muestran datos de todos los usuarios (correo, teléfono,
 # dirección), así que solo el Administrador del Sistema puede verlos.
-def _verificar_es_admin_sistema(current_user: Usuario) -> None:
-    if current_user.id_rol != RolId.ADMIN_SISTEMA:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Administrador del Sistema puede acceder a este recurso.",
-        )
+# ¿Qué? Issue #216 — antes esto era una función local que cada endpoint
+#       llamaba a mano como primera línea; ahora es una dependencia de
+#       FastAPI (ver require_role en app/dependencies.py), compartida con
+#       otros 4 routers que tenían la misma verificación copiada.
+_requiere_admin_sistema = require_role(
+    RolId.ADMIN_SISTEMA, "Solo un Administrador del Sistema puede acceder a este recurso."
+)
 
 
 def _resolver_orden(
@@ -65,7 +66,7 @@ def _resolver_orden(
 def cambiar_habilitado(
     correo_electronico: str,
     body: CambiarHabilitadoRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """
@@ -81,8 +82,6 @@ def cambiar_habilitado(
               puede volver a iniciar sesión ni renovar su token mientras
               siga desactivada.
     """
-    _verificar_es_admin_sistema(current_user)
-
     if correo_electronico == current_user.correo_electronico:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -121,46 +120,13 @@ def obtener_vista_residentes(
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
     offset: int = Query(0, ge=0),
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
-    """Crea (si no existe) y consulta una Vista SQL de Residentes sin mostrar IDs."""
-    _verificar_es_admin_sistema(current_user)
-
-    # 1. Crear o reemplazar la Vista SQL
-    # ¿Qué? Se agregó "id_conjunto_residencial" AL FINAL de la vista — antes
-    #       solo se podía filtrar por localidad completa, nunca por un
-    #       conjunto puntual dentro de ella.
-    # ¿Impacto? Postgres exige que un CREATE OR REPLACE VIEW mantenga el
-    #           mismo nombre y posición para cada columna que ya existía;
-    #           solo permite AGREGAR columnas nuevas al final de la lista
-    #           (si no, falla con "cannot change name of view column"). Por
-    #           eso esta columna nueva va después de "Habilitado", no cerca
-    #           de "Conjunto" donde estaría más ordenada a simple vista.
-    db.execute(text("""
-    CREATE OR REPLACE VIEW vista_directorio_residentes AS
-    SELECT
-        u.correo_electronico AS "Correo",
-        r.nombre AS "Nombre",
-        r.apellidos AS "Apellido",
-        r.numero_telefonico AS "Teléfono",
-        c.nombre_conjunto AS "Conjunto",
-        uni.torre AS "Bloque",
-        uni.apto AS "Apartamento",
-        l.id_localidad AS "id_localidad",
-        l.nombre_localidad AS "Localidad",
-        u.habilitado AS "Habilitado",
-        c.id_conjunto_residencial AS "id_conjunto_residencial"
-    FROM residentes r
-    JOIN usuarios u ON r.id_usuario = u.id_usuario
-    JOIN unidades uni ON r.id_unidad = uni.id_unidad
-    JOIN conjuntos_residenciales c ON uni.id_conjunto_residencial = c.id_conjunto_residencial
-    JOIN localidades l ON c.id_localidad = l.id_localidad;
-    """))
-    db.commit()
-
-    # 2. Armar el filtro dinámicamente
-    # ¿Qué? Antes esto era un "SELECT * FROM vista" sin ningún WHERE — con
+    """Consulta la Vista SQL de Residentes (creada por Alembic, ver
+    issue #217) sin mostrar IDs."""
+    # ¿Qué? Armar el filtro dinámicamente.
+    # ¿Para qué? Antes esto era un "SELECT * FROM vista" sin ningún WHERE — con
     #       miles de residentes, el Admin del Sistema no tenía forma de
     #       encontrar a alguien puntual sin scrollear todo.
     condiciones = []
@@ -208,108 +174,11 @@ def obtener_sp_recicladores(
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
     offset: int = Query(0, ge=0),
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
-    """Crea y ejecuta un Procedimiento Almacenado (Función) de Recicladores sin IDs."""
-    _verificar_es_admin_sistema(current_user)
-
-    # ¿Qué? Postgres NO permite que CREATE OR REPLACE FUNCTION cambie las
-    #       columnas de salida (RETURNS TABLE) ni la firma de parámetros de
-    #       una función que ya existe con otra forma — falla con "cannot
-    #       change return type/parameter of existing function". Como esta
-    #       función se recrea en cada petición y le acabamos de agregar
-    #       p_order_by/p_order_dir, hay que borrar la versión vieja primero.
-    # ¿Para qué? Sin este DROP, cualquier entorno que ya tuviera creada la
-    #           función con la firma anterior (4 parámetros) se quedaría
-    #           con un error 500 permanente en este endpoint.
-    # ¿Impacto? DROP FUNCTION IF EXISTS no falla si la función no existe
-    #           todavía (primera vez que corre este endpoint).
-    db.execute(text(
-        "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, INT, INT)"
-    ))
-    db.execute(text(
-        "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, TEXT, TEXT, INT, INT)"
-    ))
-    db.execute(text(
-        "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, UUID, TEXT, TEXT, INT, INT)"
-    ))
-
-    # 1. Crear el Procedimiento Almacenado / Función
-    # ¿Qué? Ahora la función SÍ recibe parámetros (búsqueda, localidad,
-    #       orden, límite, desplazamiento) — antes no aceptaba ninguno, así
-    #       que siempre devolvía la tabla completa sin filtrar.
-    # ¿Para qué? Un Procedimiento Almacenado parametrizado es, de hecho,
-    #           una demostración más completa del Criterio 7 que una
-    #           función sin argumentos.
-    # ¿Impacto? p_order_by/p_order_dir ya llegan validados contra
-    #           COLUMNAS_ORDENABLES_RECICLADORES desde Python (nunca el
-    #           texto crudo del query param) — el CASE de abajo solo
-    #           reconoce esos 4 valores exactos, cualquier otra cosa cae en
-    #           el ELSE (orden por nombre, el de siempre).
-    db.execute(text("""
-    CREATE OR REPLACE FUNCTION sp_obtener_recicladores(
-        p_search TEXT DEFAULT NULL,
-        p_localidad_id INT DEFAULT NULL,
-        p_conjunto_id UUID DEFAULT NULL,
-        p_order_by TEXT DEFAULT 'nombre',
-        p_order_dir TEXT DEFAULT 'asc',
-        p_limit INT DEFAULT 20,
-        p_offset INT DEFAULT 0
-    )
-    RETURNS TABLE (
-        "Correo" VARCHAR,
-        "Nombre_Completo" VARCHAR,
-        "Asociacion" VARCHAR,
-        "id_localidad" INT,
-        "Localidad" VARCHAR,
-        "Habilitado" BOOLEAN
-    ) AS $$
-    BEGIN
-        RETURN QUERY
-        SELECT
-            u.correo_electronico::VARCHAR,
-            (rec.nombre || ' ' || rec.apellidos)::VARCHAR,
-            rec.asociacion::VARCHAR,
-            l.id_localidad,
-            l.nombre_localidad::VARCHAR,
-            u.habilitado
-        FROM recicladores rec
-        JOIN usuarios u ON rec.id_usuario = u.id_usuario
-        LEFT JOIN localidades l ON rec.localidad_id = l.id_localidad
-        WHERE (p_search IS NULL OR rec.nombre ILIKE '%' || p_search || '%'
-               OR rec.apellidos ILIKE '%' || p_search || '%'
-               OR u.correo_electronico ILIKE '%' || p_search || '%')
-          AND (p_localidad_id IS NULL OR rec.localidad_id = p_localidad_id)
-          AND (p_conjunto_id IS NULL OR EXISTS (
-                SELECT 1 FROM recicladores_conjuntos rc2
-                WHERE rc2.id_reciclador = rec.id_reciclador
-                  AND rc2.id_conjunto_residencial = p_conjunto_id
-                  AND rc2.fecha_revocacion IS NULL
-              ))
-        ORDER BY
-            CASE WHEN p_order_dir = 'asc' THEN
-                CASE p_order_by
-                    WHEN 'correo' THEN u.correo_electronico
-                    WHEN 'asociacion' THEN rec.asociacion
-                    WHEN 'estado' THEN u.habilitado::TEXT
-                    ELSE rec.nombre
-                END
-            END ASC,
-            CASE WHEN p_order_dir = 'desc' THEN
-                CASE p_order_by
-                    WHEN 'correo' THEN u.correo_electronico
-                    WHEN 'asociacion' THEN rec.asociacion
-                    WHEN 'estado' THEN u.habilitado::TEXT
-                    ELSE rec.nombre
-                END
-            END DESC
-        LIMIT p_limit OFFSET p_offset;
-    END;
-    $$ LANGUAGE plpgsql;
-    """))
-    db.commit()
-
+    """Ejecuta el Procedimiento Almacenado (Función) de Recicladores
+    (creado por Alembic, ver issue #217) sin mostrar IDs."""
     order_by_validado = order_by if order_by in COLUMNAS_ORDENABLES_RECICLADORES else "nombre"
     order_dir_validado = "desc" if order_dir == "desc" else "asc"
 
@@ -380,7 +249,7 @@ def obtener_administradores_conjunto(
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
     offset: int = Query(0, ge=0),
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """
@@ -395,8 +264,6 @@ def obtener_administradores_conjunto(
               dos ya demuestran los Criterios 6 y 7 con Residente/Reciclador;
               repetir la misma técnica aquí no agrega nada nuevo.
     """
-    _verificar_es_admin_sistema(current_user)
-
     params = {
         "search": f"%{search}%" if search else None,
         "localidad_id": localidad_id,

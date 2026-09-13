@@ -11,10 +11,10 @@ Descripción: Endpoints del flujo de invitación, desvinculación y reasignació
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db, require_role
 from app.models.usuario import Usuario
 from app.models.rol import RolId
 from app.schemas.admin_conjunto import (
@@ -37,22 +37,19 @@ router = APIRouter(prefix="/api/v1/admin-conjunto", tags=["admin-conjunto"])
 
 # Solo el Administrador del Sistema puede invitar — esto evita que cualquiera
 # se autoasigne el rol de Administrador de Conjunto.
-def _verificar_es_admin_sistema(current_user: Usuario) -> None:
-    if current_user.id_rol != RolId.ADMIN_SISTEMA:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Administrador del Sistema puede invitar administradores de conjunto.",
-        )
+# ¿Qué? Issue #216 — ver el mismo comentario en admin.py.
+_requiere_admin_sistema = require_role(
+    RolId.ADMIN_SISTEMA, "Solo un Administrador del Sistema puede invitar administradores de conjunto."
+)
 
 
 @router.post("/invitar", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 async def invitar_admin_conjunto(
     datos: InvitarAdminConjuntoRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """Solo el Administrador del Sistema puede usar esta ruta."""
-    _verificar_es_admin_sistema(current_user)
     await admin_conjunto_service.invitar_admin_conjunto(
         db=db, datos=datos, invitado_por=current_user
     )
@@ -97,11 +94,10 @@ def aceptar_invitacion(
 
 @router.get("/solicitudes-desvinculacion", response_model=List[SolicitudDesvinculacionResponse])
 def listar_solicitudes_desvinculacion(
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-023 (CA-023.1): solicitudes de desvinculación pendientes de resolver."""
-    _verificar_es_admin_sistema(current_user)
     return desvinculacion_service.listar_solicitudes_pendientes(db)
 
 
@@ -109,11 +105,10 @@ def listar_solicitudes_desvinculacion(
 def resolver_solicitud_desvinculacion(
     id_solicitud: UUID,
     datos: ResolverSolicitudDesvinculacionRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-023 (CA-023.2, CA-023.3): aprueba o rechaza una solicitud de desvinculación."""
-    _verificar_es_admin_sistema(current_user)
     desvinculacion_service.resolver_solicitud(
         db=db,
         id_solicitud=id_solicitud,
@@ -128,22 +123,20 @@ def resolver_solicitud_desvinculacion(
 @router.get("/listar", response_model=List[AdministradorConjuntoResumenResponse])
 def listar_administradores_conjunto(
     query: Optional[str] = None,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-024 (CA-024.1): busca Administradores de Conjunto ya existentes, por nombre/apellidos/correo."""
-    _verificar_es_admin_sistema(current_user)
     return desvinculacion_service.buscar_administradores(db, query)
 
 
 @router.post("/asignar-conjunto-adicional", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 def asignar_conjunto_adicional(
     datos: AsignarConjuntoAdicionalRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-024 (CA-024.2, CA-024.3): vincula un conjunto sin administrador a un Admin Conjunto existente."""
-    _verificar_es_admin_sistema(current_user)
     desvinculacion_service.asignar_conjunto_adicional(
         db=db,
         id_administrador=datos.id_administrador,

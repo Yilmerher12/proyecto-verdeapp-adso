@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.database import Base
@@ -61,13 +61,114 @@ TestSessionLocal = sessionmaker(
 # ────────────────────────────
 
 
+def _crear_vista_y_funcion_panel_admin(session: Session) -> None:
+    """Crea vista_directorio_residentes y sp_obtener_recicladores.
+
+    ¿Qué? Mismo SQL, palabra por palabra, que be/alembic/versions/
+          fb1891a1aa72_mover_vista_y_funcion_sql_del_panel_.py.
+    ¿Para qué? Issue #217 — esa vista y esa función ahora se crean vía
+              Alembic contra la BD real, pero setup_database() (abajo)
+              arma la BD de test con Base.metadata.create_all(), que
+              SOLO conoce tablas ORM — nunca ejecuta migraciones. Sin
+              esto, /vista-residentes y /sp-recicladores fallarían en
+              cada test con "relation/function does not exist".
+    ¿Impacto? Se corre una sola vez por sesión de pytest (mismo fixture
+              que siembra los roles), no en cada test individual.
+    """
+    session.execute(text("""
+    CREATE OR REPLACE VIEW vista_directorio_residentes AS
+    SELECT
+        u.correo_electronico AS "Correo",
+        r.nombre AS "Nombre",
+        r.apellidos AS "Apellido",
+        r.numero_telefonico AS "Teléfono",
+        c.nombre_conjunto AS "Conjunto",
+        uni.torre AS "Bloque",
+        uni.apto AS "Apartamento",
+        l.id_localidad AS "id_localidad",
+        l.nombre_localidad AS "Localidad",
+        u.habilitado AS "Habilitado",
+        c.id_conjunto_residencial AS "id_conjunto_residencial"
+    FROM residentes r
+    JOIN usuarios u ON r.id_usuario = u.id_usuario
+    JOIN unidades uni ON r.id_unidad = uni.id_unidad
+    JOIN conjuntos_residenciales c ON uni.id_conjunto_residencial = c.id_conjunto_residencial
+    JOIN localidades l ON c.id_localidad = l.id_localidad;
+    """))
+
+    session.execute(text("""
+    CREATE OR REPLACE FUNCTION sp_obtener_recicladores(
+        p_search TEXT DEFAULT NULL,
+        p_localidad_id INT DEFAULT NULL,
+        p_conjunto_id UUID DEFAULT NULL,
+        p_order_by TEXT DEFAULT 'nombre',
+        p_order_dir TEXT DEFAULT 'asc',
+        p_limit INT DEFAULT 20,
+        p_offset INT DEFAULT 0
+    )
+    RETURNS TABLE (
+        "Correo" VARCHAR,
+        "Nombre_Completo" VARCHAR,
+        "Asociacion" VARCHAR,
+        "id_localidad" INT,
+        "Localidad" VARCHAR,
+        "Habilitado" BOOLEAN
+    ) AS $$
+    BEGIN
+        RETURN QUERY
+        SELECT
+            u.correo_electronico::VARCHAR,
+            (rec.nombre || ' ' || rec.apellidos)::VARCHAR,
+            rec.asociacion::VARCHAR,
+            l.id_localidad,
+            l.nombre_localidad::VARCHAR,
+            u.habilitado
+        FROM recicladores rec
+        JOIN usuarios u ON rec.id_usuario = u.id_usuario
+        LEFT JOIN localidades l ON rec.localidad_id = l.id_localidad
+        WHERE (p_search IS NULL OR rec.nombre ILIKE '%' || p_search || '%'
+               OR rec.apellidos ILIKE '%' || p_search || '%'
+               OR u.correo_electronico ILIKE '%' || p_search || '%')
+          AND (p_localidad_id IS NULL OR rec.localidad_id = p_localidad_id)
+          AND (p_conjunto_id IS NULL OR EXISTS (
+                SELECT 1 FROM recicladores_conjuntos rc2
+                WHERE rc2.id_reciclador = rec.id_reciclador
+                  AND rc2.id_conjunto_residencial = p_conjunto_id
+                  AND rc2.fecha_revocacion IS NULL
+              ))
+        ORDER BY
+            CASE WHEN p_order_dir = 'asc' THEN
+                CASE p_order_by
+                    WHEN 'correo' THEN u.correo_electronico
+                    WHEN 'asociacion' THEN rec.asociacion
+                    WHEN 'estado' THEN u.habilitado::TEXT
+                    ELSE rec.nombre
+                END
+            END ASC,
+            CASE WHEN p_order_dir = 'desc' THEN
+                CASE p_order_by
+                    WHEN 'correo' THEN u.correo_electronico
+                    WHEN 'asociacion' THEN rec.asociacion
+                    WHEN 'estado' THEN u.habilitado::TEXT
+                    ELSE rec.nombre
+                END
+            END DESC
+        LIMIT p_limit OFFSET p_offset;
+    END;
+    $$ LANGUAGE plpgsql;
+    """))
+    session.commit()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_database() -> Generator[None, None, None]:
     """Crea las tablas, siembra los roles obligatorios, y limpia al final.
 
     ¿Qué? Además de crear la estructura de tablas, este fixture inserta
           las 4 filas de la tabla "roles" que el esquema real exige
-          como referencia obligatoria (FK) en la tabla "usuarios".
+          como referencia obligatoria (FK) en la tabla "usuarios", y crea
+          la vista/función SQL del panel de Admin del Sistema (ver
+          _crear_vista_y_funcion_panel_admin).
     ¿Para qué? La BD de desarrollo siembra estos roles vía app/seed.py
               (be/app/seed_data.sql) al levantar Docker — pero la BD de
               TEST se crea limpia en cada sesión de pytest, solo con la
@@ -93,7 +194,21 @@ def setup_database() -> Generator[None, None, None]:
         seed_session.add_all(roles_seed)
         seed_session.commit()
 
+        _crear_vista_y_funcion_panel_admin(seed_session)
+
     yield
+
+    # ¿Qué? La vista depende de la tabla "residentes" (CREATE VIEW ... FROM
+    #       residentes ...) — sin borrarla primero, el DROP TABLE de abajo
+    #       falla con "cannot drop table because other objects depend on
+    #       it". Mismo orden inverso que seguiría un "alembic downgrade".
+    with TestSessionLocal(bind=test_engine.connect()) as cleanup_session:
+        cleanup_session.execute(text(
+            "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, UUID, TEXT, TEXT, INT, INT)"
+        ))
+        cleanup_session.execute(text("DROP VIEW IF EXISTS vista_directorio_residentes"))
+        cleanup_session.commit()
+
     Base.metadata.drop_all(bind=test_engine)
 
 

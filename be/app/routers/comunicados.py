@@ -9,13 +9,11 @@ Descripción: Endpoints de comunicados del conjunto (RQF-014).
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_current_user, get_db, require_admin_conjunto
 from app.models.administrador_conjunto import AdministradorConjunto
-from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.comunicado import ComunicadoResponse, CrearComunicadoRequest, EditarComunicadoRequest
 from app.schemas.user import MessageResponse
@@ -23,39 +21,29 @@ from app.services import comunicado_service
 
 router = APIRouter(prefix="/api/v1/comunicados", tags=["comunicados"])
 
-
-def _obtener_administrador_o_rechazar(db: Session, current_user: Usuario) -> AdministradorConjunto:
-    if current_user.id_rol != RolId.ADMIN_CONJUNTO:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Administrador de Conjunto puede gestionar comunicados.",
-        )
-    administrador = db.execute(
-        select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == current_user.id_usuario)
-    ).scalar_one_or_none()
-    if not administrador:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se encontró tu perfil de administrador.")
-    return administrador
+# ¿Qué? Issue #216 — misma idea que require_role en admin.py, pero con
+#       require_admin_conjunto (ver dependencies.py): antes esta función
+#       (que revisa el rol Y busca el perfil de AdministradorConjunto)
+#       estaba copiada igual en este archivo y en conjunto_panel.py.
+_requiere_admin_conjunto = require_admin_conjunto("Solo un Administrador de Conjunto puede gestionar comunicados.")
 
 
 @router.post("", response_model=ComunicadoResponse, status_code=status.HTTP_201_CREATED)
 def crear_comunicado(
     datos: CrearComunicadoRequest,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """RQF-014 / HU-027: publica un comunicado nuevo en uno de mis conjuntos."""
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
     return comunicado_service.crear_comunicado(db, administrador, datos)
 
 
 @router.get("/mis-comunicados", response_model=List[ComunicadoResponse])
 def listar_mis_comunicados(
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """Todo lo que he publicado en mis conjuntos (activos y vencidos), para poder editarlos o eliminarlos."""
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
     return comunicado_service.listar_mis_comunicados(db, administrador)
 
 
@@ -63,22 +51,20 @@ def listar_mis_comunicados(
 def editar_comunicado(
     id_comunicado: UUID,
     datos: EditarComunicadoRequest,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """RQF-014 / HU-029: edita texto, adjunto, tipo o expiración de un comunicado propio."""
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
     return comunicado_service.editar_comunicado(db, administrador, id_comunicado, datos)
 
 
 @router.delete("/{id_comunicado}", response_model=MessageResponse)
 def eliminar_comunicado(
     id_comunicado: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """RQF-014 / HU-030: elimina definitivamente un comunicado propio."""
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
     comunicado_service.eliminar_comunicado(db, administrador, id_comunicado)
     return MessageResponse(message="Comunicado eliminado correctamente.")
 

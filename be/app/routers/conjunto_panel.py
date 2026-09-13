@@ -9,14 +9,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from typing import List
 
-from app.dependencies import get_current_user, get_db
-from app.models.usuario import Usuario
+from app.dependencies import get_db, require_admin_conjunto
 from app.models.administrador_conjunto import AdministradorConjunto
+from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.conjunto_residencial import ConjuntoResidencial
-from app.models.rol import RolId
 from app.models.solicitud_desvinculacion import EstadoSolicitudDesvinculacion, SolicitudDesvinculacion
 from app.schemas.conjunto_panel import CodigoAccesoResponse, ConjuntoAdministradoResponse, EditarConjuntoRequest
 from app.schemas.desvinculacion import SolicitarDesvinculacionRequest
@@ -26,31 +25,8 @@ from app.utils.codigo_acceso import generar_codigo_acceso
 
 router = APIRouter(prefix="/api/v1/conjunto-panel", tags=["conjunto-panel"])
 
-
-def _obtener_administrador_o_rechazar(db: Session, current_user: Usuario) -> AdministradorConjunto:
-    """
-    Confirma que quien hace la petición es realmente un Administrador de
-    Conjunto y devuelve su registro de datos personales — así evitamos que
-    cualquier otro rol consulte o edite conjuntos por esta ruta.
-    """
-    if current_user.id_rol != RolId.ADMIN_CONJUNTO:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Administrador de Conjunto puede acceder a este panel.",
-        )
-
-    stmt = select(AdministradorConjunto).where(
-        AdministradorConjunto.id_usuario == current_user.id_usuario
-    )
-    administrador = db.execute(stmt).scalar_one_or_none()
-
-    if not administrador:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No se encontró tu perfil de administrador.",
-        )
-
-    return administrador
+# ¿Qué? Issue #216 — ver el mismo comentario en comunicados.py.
+_requiere_admin_conjunto = require_admin_conjunto("Solo un Administrador de Conjunto puede acceder a este panel.")
 
 
 def _obtener_conjunto_propio_o_rechazar(
@@ -86,12 +62,10 @@ def _obtener_conjunto_propio_o_rechazar(
 
 @router.get("/mis-conjuntos", response_model=List[ConjuntoAdministradoResponse])
 def listar_mis_conjuntos(
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """Devuelve todos los conjuntos que administra la persona en sesión."""
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
-
     ids_con_solicitud_pendiente = set(
         db.execute(
             select(SolicitudDesvinculacion.id_conjunto_residencial).where(
@@ -100,6 +74,25 @@ def listar_mis_conjuntos(
             )
         ).scalars().all()
     )
+
+    # ¿Qué? Issue #219 (b7 del diagnóstico) — antes se recorría
+    #       administrador.conjuntos y se accedía a c.localidad por cada
+    #       uno, disparando una consulta aparte por conjunto (carga
+    #       perezosa de SQLAlchemy). selectinload trae TODAS las
+    #       localidades de estos conjuntos en una segunda consulta única,
+    #       sin importar cuántos conjuntos administre esta persona.
+    conjuntos = db.execute(
+        select(ConjuntoResidencial)
+        .join(
+            AdministradorConjuntoAsignacion,
+            AdministradorConjuntoAsignacion.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial,
+        )
+        .where(
+            AdministradorConjuntoAsignacion.id_administrador == administrador.id_administrador,
+            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
+        )
+        .options(selectinload(ConjuntoResidencial.localidad))
+    ).scalars().all()
 
     return [
         ConjuntoAdministradoResponse(
@@ -111,7 +104,7 @@ def listar_mis_conjuntos(
             tiene_solicitud_pendiente=c.id_conjunto_residencial in ids_con_solicitud_pendiente,
             codigo_acceso=c.codigo_acceso,
         )
-        for c in administrador.conjuntos
+        for c in conjuntos
     ]
 
 
@@ -119,7 +112,7 @@ def listar_mis_conjuntos(
 def editar_mi_conjunto(
     id_conjunto_residencial: UUID,
     datos: EditarConjuntoRequest,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """
@@ -135,10 +128,18 @@ def editar_mi_conjunto(
               con 403 — esto evita que un administrador edite conjuntos
               que no le pertenecen, aunque conozca su id.
     """
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
     conjunto = _obtener_conjunto_propio_o_rechazar(db, administrador, id_conjunto_residencial)
 
-    conjunto.nit = datos.nit.strip() if datos.nit else None
+    # ¿Qué? Issue #220 (b14 del diagnóstico) — antes, "datos.nit.strip() if
+    #       datos.nit else None" solo revisaba que datos.nit no fuera
+    #       vacío/None ANTES de recortarlo — un NIT de puros espacios
+    #       ("   ") pasaba esa condición igual (no está vacío como string),
+    #       así que se guardaba como "" en vez de None.
+    # ¿Para qué? Mismo patrón que ya usa asociacion en user_service.py:
+    #           recortar primero, y que el vacío resultante sea "sin
+    #           valor" (None), no una cadena vacía.
+    nit_recortado = (datos.nit or "").strip()
+    conjunto.nit = nit_recortado or None
     db.commit()
 
     return MessageResponse(message="Conjunto actualizado correctamente.")
@@ -152,11 +153,10 @@ def editar_mi_conjunto(
 def solicitar_desvinculacion(
     id_conjunto_residencial: UUID,
     datos: SolicitarDesvinculacionRequest,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-022: pide dejar de administrar uno de mis conjuntos. Queda pendiente hasta que el Admin Sistema la resuelva."""
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
     desvinculacion_service.solicitar_desvinculacion(
         db=db,
         administrador=administrador,
@@ -172,7 +172,7 @@ def solicitar_desvinculacion(
 )
 def regenerar_codigo_acceso(
     id_conjunto_residencial: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """
@@ -187,7 +187,6 @@ def regenerar_codigo_acceso(
               de este lote) antes de guardar, para no depender solo de la
               probabilidad de choque de ~0.01%.
     """
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
     conjunto = _obtener_conjunto_propio_o_rechazar(db, administrador, id_conjunto_residencial)
 
     nuevo_codigo = generar_codigo_acceso()

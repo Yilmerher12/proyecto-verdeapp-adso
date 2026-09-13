@@ -73,9 +73,9 @@ export function VerifyEmailPage() {
           {/* ──── Estado: éxito ──── */}
           {status === "success" && (
             <div className="mt-6">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-900/30">
                 <svg
-                  className="h-7 w-7 text-green-600 dark:text-green-400"
+                  className="h-7 w-7 text-accent-600 dark:text-accent-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

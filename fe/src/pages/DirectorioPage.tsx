@@ -176,7 +176,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                 onClick={() => setTab(id)}
                 className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   tab === id
-                    ? "bg-green-700 text-white shadow-sm"
+                    ? "bg-accent-700 text-white shadow-sm"
                     : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                 }`}
               >
@@ -193,20 +193,20 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             indicador fijo. Puntos de Acopio sigue con el filtro libre. */}
         {tab === "recicladores" && !soloAcopio ? (
           <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200">
-            <MapPin className="h-4 w-4 shrink-0 text-green-600" />
+            <MapPin className="h-4 w-4 shrink-0 text-accent-600" />
             {localidadPropiaNombre
               ? t("directorio.ownLocality", { localidad: localidadPropiaNombre })
               : t("directorio.ownLocalityUnknown")}
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 shrink-0 text-green-600" />
+            <MapPin className="h-4 w-4 shrink-0 text-accent-600" />
             <select
               value={localidadPuntosId}
               onChange={(e) =>
                 setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value))
               }
-              className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
+              className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
             >
               <option value="">{t("directorio.allLocalities")}</option>
               {localidades.map((l) => (
@@ -381,7 +381,7 @@ function TarjetaReciclador({
               href={waLink(r.numero_telefonico)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-700 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600"
             >
               <MessageCircle className="h-3.5 w-3.5" />
               WhatsApp
@@ -418,8 +418,8 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
       <div className="mb-3 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/30">
-          <Building2 className="h-5 w-5 text-green-700 dark:text-green-400" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-900/30">
+          <Building2 className="h-5 w-5 text-accent-700 dark:text-accent-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
@@ -442,7 +442,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
             title={t("directorio.copyAddress")}
           >
             {copiado ? (
-              <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+              <Check className="h-3.5 w-3.5 text-accent-600 dark:text-accent-400" />
             ) : (
               <Copy className="h-3.5 w-3.5" />
             )}

@@ -19,6 +19,14 @@ interface SolicitudesDesvinculacionProps {
    *  encabezado duplicado. Por defecto se muestra (para no romper ningún
    *  otro lugar que ya use este componente tal cual). */
   mostrarEncabezado?: boolean;
+  /** ¿Para qué? Dentro de un <Modal>, el fondo blanco/borde redondeado/sombra
+   *  ya los pone el propio modal — repetirlos aquí adentro se veía como una
+   *  tarjeta dentro de otra tarjeta (doble borde, doble sombra), además de
+   *  que el contenido quedaba pegado al botón "cerrar" (X) del modal sin
+   *  nada de aire arriba. Con esto, el componente se monta como contenido
+   *  plano (sin su propia tarjeta). Default false para no romper el uso
+   *  normal, embebido directo en el panel. */
+  dentroDeModal?: boolean;
 }
 
 /**
@@ -31,6 +39,7 @@ interface SolicitudesDesvinculacionProps {
 export function SolicitudesDesvinculacion({
   onCountChange,
   mostrarEncabezado = true,
+  dentroDeModal = false,
 }: SolicitudesDesvinculacionProps = {}) {
   const { t } = useTranslation();
   const [solicitudes, setSolicitudes] = useState<SolicitudDesvinculacion[]>([]);
@@ -64,7 +73,7 @@ export function SolicitudesDesvinculacion({
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("desvinculacion.adminSistema.errorDefault"));
+      setError(err.message || t("desvinculacion.adminSistema.errorDefault"));
     } finally {
       setProcesandoId(null);
     }
@@ -81,17 +90,23 @@ export function SolicitudesDesvinculacion({
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("desvinculacion.adminSistema.errorDefault"));
+      setError(err.message || t("desvinculacion.adminSistema.errorDefault"));
     } finally {
       setProcesandoId(null);
     }
   };
 
   return (
-    <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+    <div
+      className={
+        dentroDeModal
+          ? ""
+          : "bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm"
+      }
+    >
       {mostrarEncabezado && (
         <div className="flex items-center gap-2 mb-4">
-          <ClipboardList className="h-4 w-4 text-green-600" />
+          <ClipboardList className="h-4 w-4 text-accent-600" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">
             {t("desvinculacion.adminSistema.sectionTitle")}
           </h3>
@@ -141,7 +156,7 @@ export function SolicitudesDesvinculacion({
                     onChange={(e) => setMotivoRechazo(e.target.value)}
                     placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}
                     rows={2}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                   />
                   <div className="flex gap-2">
                     <button
@@ -168,7 +183,7 @@ export function SolicitudesDesvinculacion({
                   <button
                     onClick={() => aprobar(s.id)}
                     disabled={procesandoId === s.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t("desvinculacion.adminSistema.approve")}

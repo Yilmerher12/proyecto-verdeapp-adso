@@ -39,6 +39,11 @@ interface InputFieldProps {
    *             teclado/lector de pantalla llegan directamente al punto de entrada. */
   autoFocus?: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /** ¿Qué? Se dispara al salir del campo (perder el foco).
+   *  ¿Para qué? Permite mostrar un error de validación apenas el usuario
+   *             termina de escribir ese campo, sin esperar a que envíe
+   *             todo el formulario. */
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 /**
@@ -59,6 +64,7 @@ export function InputField({
   disablePaste = false,
   autoFocus = false,
   onChange,
+  onBlur,
 }: InputFieldProps) {
   // ¿Qué? Estado para mostrar/ocultar contraseña.
   // ¿Para qué? Permitir al usuario verificar lo que escribió en campos de password.
@@ -104,6 +110,7 @@ export function InputField({
           autoComplete={disablePaste ? "off" : autoComplete}
           autoFocus={autoFocus}
           onChange={onChange}
+          onBlur={onBlur}
           aria-invalid={!!error}
           aria-describedby={error ? `${name}-error` : undefined}
           // ¿Qué? Bloquea pegar, copiar, cortar y arrastrar cuando disablePaste=true.
