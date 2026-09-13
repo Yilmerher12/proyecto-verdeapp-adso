@@ -284,53 +284,31 @@
   }
 }
 
-/* ¿Qué? Textura de fondo del panel interno — la hoja del propio logo,
-   repetida en mosaico.
-   ¿Para qué? El área detrás de las tarjetas de los 4 dashboards
-   (AppShell.tsx) era un color plano — se pidió más carácter visual de
-   cara a la feria, sin salirse de "colores sólidos únicamente"
-   (restricciones.md prohíbe degradados): cada hoja es un relleno sólido,
-   sin transición de color.
-   ¿Impacto? El verde queda escrito directamente en el SVG (no puede leer
-   la variable --color-accent-* de este archivo porque un mask-image con
-   ese mismo mosaico se probó primero y, en este proyecto, el navegador
-   descartaba la regla en tiempo de parseo sin ningún error visible —
-   quedó así de frágil y se prefirió esta versión, comprobada, aunque
-   pierda el acople automático con accent-*). Si el día de mañana se
-   clona el proyecto a otro stack (ver el bloque @theme más arriba), esta
-   textura también hay que recolorearla a mano — igual que ya pasa con
-   los demás verdes fijos de AppShell.tsx (#03130b, #132a1c, #2a4d34). */
-@layer utilities {
-  .bg-leaf-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath id='l' d='M0 7 Q7 -3 14 2 Q7 12 0 7Z' fill='%2316a34a' fill-opacity='0.14'/%3E%3Cuse href='%23l' transform='translate(14,18) rotate(12)'/%3E%3Cuse href='%23l' transform='translate(62,52) rotate(-28) scale(.85)'/%3E%3Cuse href='%23l' transform='translate(28,78) rotate(58) scale(1.2)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 96px 96px;
+/* ¿Qué? Cursor parpadeante del efecto de máquina de escribir del Hero
+   (ver LandingPage.tsx — "VerdeApp" + el eslogan se escriben letra por
+   letra).
+   ¿Para qué? Sin esto, el cursor se quedaría fijo mientras dura cada
+   pausa entre letras — no se leería como un cursor de texto real.
+   ¿Impacto? Esta regla es un respaldo: LandingPage.tsx ya decide en
+   JavaScript no escribir letra por letra si el sistema operativo pidió
+   "reducir movimiento" (el cursor ni siquiera se monta en ese caso), pero
+   dejar también la guarda aquí evita que esta animación específica quede
+   como la única excepción a la convención del resto del archivo. */
+@keyframes caret-blink {
+  0%,
+  50% {
+    opacity: 1;
   }
-
-  .dark .bg-leaf-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath id='l' d='M0 7 Q7 -3 14 2 Q7 12 0 7Z' fill='%234ade80' fill-opacity='0.16'/%3E%3Cuse href='%23l' transform='translate(14,18) rotate(12)'/%3E%3Cuse href='%23l' transform='translate(62,52) rotate(-28) scale(.85)'/%3E%3Cuse href='%23l' transform='translate(28,78) rotate(58) scale(1.2)'/%3E%3C/svg%3E");
-  }
-}
-
-/* ¿Qué? Deriva muy lenta del mosaico de hojas (60s por ciclo completo).
-   ¿Para qué? RNF-005 (accesibilidad) — igual que .animate-hero-in más
-   arriba, el movimiento se apaga por completo si el sistema operativo
-   pidió "reducir movimiento".
-   ¿Impacto? Anima background-position — el color ya viene fijo en cada
-   una de las dos imágenes (clara/oscura) de arriba. */
-@keyframes leaf-drift {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: -96px -96px;
+  50.01%,
+  100% {
+    opacity: 0;
   }
 }
 
 @layer utilities {
   @media (prefers-reduced-motion: no-preference) {
-    .animate-leaf-drift {
-      animation: leaf-drift 60s linear infinite;
+    .animate-caret-blink {
+      animation: caret-blink 1s step-end infinite;
     }
   }
 }
