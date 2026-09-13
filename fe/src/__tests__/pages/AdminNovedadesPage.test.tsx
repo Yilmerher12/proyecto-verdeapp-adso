@@ -47,11 +47,11 @@ function renderPage() {
 describe("AdminNovedadesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListar.mockResolvedValue([]);
+    mockListar.mockResolvedValue({ items: [], total: 0 });
   });
 
   it("muestra la fecha de creación y de expiración de cada novedad", async () => {
-    mockListar.mockResolvedValue([NOVEDAD]);
+    mockListar.mockResolvedValue({ items: [NOVEDAD], total: 1 });
     renderPage();
 
     const creadoEsperado = new Date(FECHA_CREACION).toLocaleDateString();
@@ -60,6 +60,22 @@ describe("AdminNovedadesPage", () => {
     await waitFor(() => {
       expect(screen.getByText(`Creado el ${creadoEsperado}`)).toBeInTheDocument();
       expect(screen.getByText(`Expira el ${expiraEsperado}`)).toBeInTheDocument();
+    });
+  });
+
+  it("muestra la paginación y pide la siguiente página al hacer clic en la flecha", async () => {
+    // ¿Qué? Issue #227 — con 20 novedades en total y 8 por página, debe
+    //       mostrar "1–8 de 20" y, al avanzar, pedir offset=8.
+    mockListar.mockResolvedValue({ items: [NOVEDAD], total: 20 });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Mostrando 1–8 de 20");
+
+    await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+
+    await waitFor(() => {
+      expect(mockListar).toHaveBeenLastCalledWith(8, 8);
     });
   });
 

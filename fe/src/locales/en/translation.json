@@ -65,7 +65,12 @@
     "phone": "Phone",
     "saving": "Saving...",
     "saveError": "Could not save. Please try again.",
-    "formIncomplete": "Complete the form"
+    "formIncomplete": "Complete the form",
+    "pagination": {
+      "showing": "Showing {{from}}–{{to}} of {{total}}",
+      "prev": "Previous page",
+      "next": "Next page"
+    }
   },
   "auth": {
     "login": {

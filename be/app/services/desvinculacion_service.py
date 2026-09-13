@@ -180,9 +180,22 @@ def resolver_solicitud(
     db.commit()
 
 
-def buscar_administradores(db: Session, query: Optional[str]) -> List[AdministradorConjuntoResumenResponse]:
-    """CA-024.1: busca Admin de Conjunto ya existentes en la plataforma, por nombre, apellidos o correo."""
-    stmt = select(AdministradorConjunto).join(Usuario, AdministradorConjunto.id_usuario == Usuario.id_usuario)
+def buscar_administradores(
+    db: Session, query: Optional[str], limit: int = 20
+) -> List[AdministradorConjuntoResumenResponse]:
+    """CA-024.1: busca Admin de Conjunto ya existentes en la plataforma, por nombre, apellidos o correo.
+
+    ¿Qué? Issue #227 — antes traía TODOS los Admin de Conjunto que
+          coincidieran, sin ningún tope. Mismo criterio que ya usa
+          ConjuntoCombobox/geography.py: si hay más de `limit` resultados,
+          se espera que la persona afine la búsqueda, no que se le mande
+          todo de una vez.
+    """
+    stmt = (
+        select(AdministradorConjunto)
+        .join(Usuario, AdministradorConjunto.id_usuario == Usuario.id_usuario)
+        .limit(limit)
+    )
 
     if query and query.strip():
         patron = f"%{query.strip().upper()}%"

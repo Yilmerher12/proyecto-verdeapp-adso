@@ -8,6 +8,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { Alert } from "@/components/ui/Alert";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
 import {
   archivarNovedad,
   crearNovedad,
@@ -16,6 +18,9 @@ import {
   type AlcanceNovedad,
   type Novedad,
 } from "@/lib/novedadesApi";
+
+// ¿Qué? Cuántas novedades se piden por página (issue #227).
+const TAMANO_PAGINA = 8;
 
 interface FormState {
   alcance: AlcanceNovedad;
@@ -67,6 +72,7 @@ export function AdminNovedadesPage() {
   const { user } = useAuth();
 
   const [novedades, setNovedades] = useState<Novedad[]>([]);
+  const [total, setTotal] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -75,16 +81,21 @@ export function AdminNovedadesPage() {
   const [form, setForm] = useState<FormState>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
 
+  const paginacion = usePaginacion(TAMANO_PAGINA, total);
+
   const cargar = () => {
     if (!user) return;
     setCargando(true);
-    listarTodasLasNovedades()
-      .then(setNovedades)
+    listarTodasLasNovedades(TAMANO_PAGINA, paginacion.offset)
+      .then(({ items, total: totalRes }) => {
+        setNovedades(items);
+        setTotal(totalRes);
+      })
       .catch((err) => console.error("Error cargando novedades", err))
       .finally(() => setCargando(false));
   };
 
-  useEffect(cargar, [user]);
+  useEffect(cargar, [user, paginacion.offset]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
@@ -253,6 +264,22 @@ export function AdminNovedadesPage() {
           </div>
         ))}
       </div>
+
+      {!cargando && total > 0 && (
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
+          <Paginacion
+            desde={paginacion.desde}
+            hasta={paginacion.hasta}
+            total={total}
+            pagina={paginacion.pagina}
+            totalPaginas={paginacion.totalPaginas}
+            puedeAnterior={paginacion.puedeAnterior}
+            puedeSiguiente={paginacion.puedeSiguiente}
+            onAnterior={paginacion.irAAnterior}
+            onSiguiente={paginacion.irASiguiente}
+          />
+        </div>
+      )}
 
       {(creando || editando) && (
         <Modal

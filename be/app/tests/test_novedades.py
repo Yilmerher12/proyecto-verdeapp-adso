@@ -111,8 +111,28 @@ class TestListarTodas:
         response = client.get("/api/v1/novedades/todas", headers=admin_sistema_auth_headers)
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 1
-        assert data[0]["archivada"] is True
+        assert data["total"] == 1
+        assert len(data["items"]) == 1
+        assert data["items"][0]["archivada"] is True
+
+    def test_limit_acota_resultados_sin_afectar_el_total(
+        self, client: TestClient, admin_sistema_auth_headers
+    ):
+        """Issue #227: el historial completo no debe traerse sin tope."""
+        for i in range(3):
+            client.post(
+                "/api/v1/novedades",
+                headers=admin_sistema_auth_headers,
+                json={"alcance": "TODOS", "texto": f"Novedad {i}."},
+            )
+
+        response = client.get(
+            "/api/v1/novedades/todas", params={"limit": 2}, headers=admin_sistema_auth_headers
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) == 2
+        assert data["total"] == 3
 
 
 class TestEditarNovedad:
@@ -139,7 +159,7 @@ class TestEditarNovedad:
 
     def test_sin_fecha_nueva_conserva_la_actual(self, client: TestClient, admin_sistema_auth_headers):
         id_novedad = self._crear(client, admin_sistema_auth_headers)
-        original = client.get("/api/v1/novedades/todas", headers=admin_sistema_auth_headers).json()[0]
+        original = client.get("/api/v1/novedades/todas", headers=admin_sistema_auth_headers).json()["items"][0]
 
         response = client.patch(
             f"/api/v1/novedades/{id_novedad}",
