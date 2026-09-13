@@ -499,7 +499,7 @@ export function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-[#2a4d34]">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-[#2a4d34]">
                   <div>
                     <label htmlFor="prefijo_unidad" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitType")}</label>
                     <select id="prefijo_unidad" name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-[#0d2116]">
