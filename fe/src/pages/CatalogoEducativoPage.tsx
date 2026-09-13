@@ -33,8 +33,9 @@ export function CatalogoEducativoPage() {
       .then(setContenido)
       .catch(() => setError(t("catalogoEducativo.loadError")))
       .finally(() => setCargando(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    // ¿Qué? Issue #225 — "t" faltaba en las dependencias; se silenciaba la
+    //       advertencia en vez de agregarla.
+  }, [user, t]);
 
   const categorias = Array.from(new Set(contenido.map((c) => c.modulo_categoria)));
 

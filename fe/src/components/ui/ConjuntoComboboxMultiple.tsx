@@ -22,6 +22,10 @@ interface ConjuntoComboboxMultipleProps {
   placeholder?: string;
   loadingLabel?: string;
   emptyLabel?: string;
+  /** ¿Qué? Issue #225 — mismo motivo que en ConjuntoCombobox: la etiqueta
+   *        visual que acompaña a este campo en el formulario es un <label>
+   *        suelto, sin id fijo al que un htmlFor pueda apuntar. */
+  ariaLabel?: string;
 }
 
 export function ConjuntoComboboxMultiple({
@@ -31,6 +35,7 @@ export function ConjuntoComboboxMultiple({
   placeholder,
   loadingLabel = "Buscando…",
   emptyLabel = "Sin resultados",
+  ariaLabel,
 }: ConjuntoComboboxMultipleProps) {
   const { setQuery, options, loading } = useConjuntoBusqueda(fetchOptions);
 
@@ -75,6 +80,7 @@ export function ConjuntoComboboxMultiple({
               displayValue={() => ""}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
+              aria-label={ariaLabel}
             />
           </div>
           <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-[#2a4d34] dark:bg-[#1f4029]">

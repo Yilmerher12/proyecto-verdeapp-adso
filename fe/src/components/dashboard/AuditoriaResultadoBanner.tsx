@@ -13,7 +13,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ClipboardCheck } from "lucide-react";
-import type { NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import type { NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 
 interface AuditoriaResultadoBannerProps {

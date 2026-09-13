@@ -226,6 +226,12 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
       cancelado = true;
       temporizadores.forEach(clearTimeout);
     };
+    // ¿Qué? Issue #225 — este silencio SÍ es intencional (a diferencia de
+    //       otros que se corrigieron): la animación de escritura debe
+    //       correr UNA sola vez al montar la pantalla. Si se agregaran
+    //       "eslogan"/"debeEscribir" a las dependencias, cambiar de idioma
+    //       a mitad de la animación la reiniciaría desde cero — un efecto
+    //       visual no deseado, no un bug real que corregir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

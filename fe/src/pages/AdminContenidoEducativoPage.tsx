@@ -48,8 +48,10 @@ export function AdminContenidoEducativoPage() {
       .finally(() => setCargando(false));
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(cargar, [user]);
+  // ¿Qué? Issue #225 — "t" (la función de traducción, usada en el mensaje
+  //       de error) faltaba en las dependencias; se silenciaba la
+  //       advertencia en vez de agregarla.
+  useEffect(cargar, [user, t]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MapPin, Pencil, Plus, Power, PowerOff, Trash2 } from "lucide-react";
 import axios from "axios";
@@ -49,23 +49,26 @@ export function AdminPuntosAcopioPage() {
   const [aDarDeBaja, setADarDeBaja] = useState<PuntoAcopioAdmin | null>(null);
   const [aEliminar, setAEliminar] = useState<PuntoAcopioAdmin | null>(null);
 
-  const cargar = () => {
+  const cargar = useCallback(() => {
     if (!user) return;
     setCargando(true);
     listarPuntosAcopio()
       .then(setPuntos)
       .catch(() => setErrorMsg(t("adminPuntosAcopio.loadError")))
       .finally(() => setCargando(false));
-  };
+  }, [user, t]);
 
+  // ¿Qué? Issue #225 — "cargar" faltaba en las dependencias; se silenciaba
+  //       la advertencia en vez de arreglarla. Envolverla en useCallback
+  //       (arriba) la vuelve estable salvo cuando "user" o "t" cambian de
+  //       verdad, así que agregarla aquí no dispara peticiones de más.
   useEffect(() => {
     cargar();
     axios
       .get<Localidad[]>(`${API_BASE_URL}/api/v1/geography/localidades`)
       .then((res) => setLocalidades(res.data))
       .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [cargar]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);

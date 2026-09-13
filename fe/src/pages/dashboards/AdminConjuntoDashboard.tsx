@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
@@ -22,7 +22,8 @@ import {
   type InvitacionEnviada,
   type RecicladorAutorizado,
 } from "@/lib/recicladorConjuntoApi";
-import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import type { NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
@@ -204,7 +205,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
   // ¿Impacto? Ahora se consultan las dos fuentes por separado: la lista
   //           real de autorizados (recicladores_conjuntos) y el historial
   //           de invitaciones, cada una con su propio título honesto.
-  const cargarAutorizados = () => {
+  const cargarAutorizados = useCallback(() => {
     setCargandoAutorizados(true);
     obtenerRecicladoresAutorizados(idConjunto)
       .then((data) => {
@@ -223,21 +224,24 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
         setErrorAutorizados(true);
       })
       .finally(() => setCargandoAutorizados(false));
-  };
+  }, [idConjunto]);
 
-  const cargarInvitaciones = () => {
+  const cargarInvitaciones = useCallback(() => {
     setCargando(true);
     obtenerInvitacionesDeConjunto(idConjunto)
       .then(setInvitaciones)
       .catch((err) => console.error("Error cargando invitaciones de reciclador", err))
       .finally(() => setCargando(false));
-  };
+  }, [idConjunto]);
 
+  // ¿Qué? Issue #225 — "cargarAutorizados"/"cargarInvitaciones" faltaban en
+  //       las dependencias; se silenciaba la advertencia en vez de
+  //       agregarlas. Envolverlas en useCallback (arriba) las vuelve
+  //       estables salvo cuando "idConjunto" cambia de verdad.
   useEffect(() => {
     cargarAutorizados();
     cargarInvitaciones();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idConjunto]);
+  }, [cargarAutorizados, cargarInvitaciones]);
 
   const handleInvitar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -524,10 +528,11 @@ function SeccionDesvinculacion({
       ) : (
         <div className="bg-[#f7f9f3] dark:bg-[#1c341b] p-3 rounded-xl space-y-2">
           <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
-          <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
+          <label htmlFor={`desvinculacion-motivo-${idConjunto}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("desvinculacion.motivoLabel")}
           </label>
           <textarea
+            id={`desvinculacion-motivo-${idConjunto}`}
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
             placeholder={t("desvinculacion.motivoPlaceholder")}
@@ -588,7 +593,7 @@ export function AdminConjuntoDashboard() {
   const [errorNotifs, setErrorNotifs] = useState(false);
   const [errorAccionNotif, setErrorAccionNotif] = useState(false);
 
-  const cargarConjuntos = () => {
+  const cargarConjuntos = useCallback(() => {
     if (!user) return;
     setCargando(true);
     obtenerMisConjuntos()
@@ -607,7 +612,7 @@ export function AdminConjuntoDashboard() {
         setErrorConjuntos(true);
       })
       .finally(() => setCargando(false));
-  };
+  }, [user]);
 
   const cargarNotificaciones = () => {
     if (!user) return;
@@ -654,10 +659,11 @@ export function AdminConjuntoDashboard() {
     }
   };
 
+  // ¿Qué? Issue #225 — "cargarConjuntos" faltaba en las dependencias; se
+  //       silenciaba la advertencia en vez de agregarla.
   useEffect(() => {
     cargarConjuntos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [cargarConjuntos]);
 
   usePolling(cargarNotificaciones, { enabled: !!user });
 
@@ -790,8 +796,9 @@ export function AdminConjuntoDashboard() {
                                 de verdad falta completar.
                     */}
                     <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
+                      <label htmlFor={`nit-${c.id_conjunto_residencial}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
                       <input
+                        id={`nit-${c.id_conjunto_residencial}`}
                         type="text"
                         value={formEdicion.nit}
                         onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}

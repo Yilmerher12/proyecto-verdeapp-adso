@@ -18,7 +18,7 @@ import { Alert } from "@/components/ui/Alert";
 import { API_BASE_URL } from "@/api/axios";
 import { obtenerAuditoria, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { tiempoRelativo } from "@/components/dashboard/NotificationFeed";
+import { tiempoRelativo } from "@/lib/notificaciones";
 
 interface AuditoriaResultadoModalProps {
   idAuditoria: string;

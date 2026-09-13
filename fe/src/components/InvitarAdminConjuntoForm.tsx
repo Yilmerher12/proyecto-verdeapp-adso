@@ -111,12 +111,12 @@ export function InvitarAdminConjuntoForm() {
         />
 
         <div>
-          <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+          <label htmlFor="invitar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
             <MapPin className="w-4 h-4" />
             {t("invitarAdminConjunto.localityLabel")}
           </label>
           <select
-            aria-label={t("invitarAdminConjunto.localityLabel")}
+            id="invitar-localidad"
             value={localidadId}
             onChange={(e) => setLocalidadId(e.target.value === "" ? "" : Number(e.target.value))}
             className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
@@ -147,6 +147,7 @@ export function InvitarAdminConjuntoForm() {
               placeholder={t("invitarAdminConjunto.conjuntoSearchPlaceholder")}
               emptyLabel={t("invitarAdminConjunto.conjuntoNoResults")}
               loadingLabel={t("common.loading")}
+              ariaLabel={t("invitarAdminConjunto.conjuntosLabel")}
             />
           )}
           {conjuntosSeleccionados.length > 0 && (

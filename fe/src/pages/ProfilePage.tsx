@@ -1,5 +1,5 @@
  
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
@@ -84,16 +84,20 @@ export function ProfilePage() {
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
   const inputFotoRef = useRef<HTMLInputElement>(null);
 
-  const cargarPerfil = () => {
+  const cargarPerfil = useCallback(() => {
     if (!user) return;
     axios
       .get(`${API_BASE_URL}/api/v1/users/me`)
       .then((res) => setPerfil(res.data))
       .catch(() => {})
       .finally(() => setCargando(false));
-  };
+  }, [user]);
 
-  useEffect(() => { cargarPerfil(); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ¿Qué? Issue #225 — "cargarPerfil" faltaba en las dependencias; se
+  //       silenciaba la advertencia en vez de agregarla.
+  useEffect(() => {
+    cargarPerfil();
+  }, [cargarPerfil]);
 
   // ¿Qué? Sube la foto de perfil — disponible para los 4 roles (a
   //       diferencia de nombre/teléfono, que el Admin del Sistema no puede

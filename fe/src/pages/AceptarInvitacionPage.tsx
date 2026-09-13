@@ -7,11 +7,8 @@ import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import {
-  PasswordStrengthIndicator,
-  getPasswordRequirementError,
-  type PasswordRequirementError,
-} from "@/components/ui/PasswordStrengthIndicator";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { getPasswordRequirementError, type PasswordRequirementError } from "@/lib/passwordStrength";
 import { Building2, ShieldCheck, XCircle } from "lucide-react";
 import {
     consultarInvitacion,

@@ -34,6 +34,13 @@ interface ConjuntoComboboxProps {
   placeholder?: string;
   loadingLabel?: string;
   emptyLabel?: string;
+  /** ¿Qué? Issue #225 — la etiqueta visual ("Conjunto Residencial") que
+   *        acompaña a este combobox en cada formulario es un <label> suelto,
+   *        no conectado formalmente al campo (Headless UI arma su propio
+   *        input internamente, sin un id fijo que un htmlFor pueda apuntar).
+   *  ¿Para qué? Repetir ese mismo texto aquí, como aria-label, le da al
+   *            campo un nombre accesible real para lectores de pantalla. */
+  ariaLabel?: string;
 }
 
 export function ConjuntoCombobox({
@@ -44,6 +51,7 @@ export function ConjuntoCombobox({
   placeholder,
   loadingLabel = "Buscando…",
   emptyLabel = "Sin resultados",
+  ariaLabel,
 }: ConjuntoComboboxProps) {
   const { setQuery, options, loading } = useConjuntoBusqueda(fetchOptions, !disabled);
 
@@ -60,6 +68,7 @@ export function ConjuntoCombobox({
             displayValue={(c: ConjuntoOption | null) => c?.nombre_conjunto ?? ""}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
+            aria-label={ariaLabel}
           />
         </div>
         <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-[#2a4d34] dark:bg-[#1f4029]">
