@@ -15,7 +15,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.administrador_conjunto import AdministradorConjunto
@@ -104,10 +104,19 @@ def crear_novedad(db: Session, admin_usuario: Usuario, datos: CrearNovedadReques
     return _a_response(novedad)
 
 
-def listar_todas(db: Session) -> List[NovedadResponse]:
-    """CA-035.4: el Admin Sistema ve el historial completo, activas y archivadas."""
-    stmt = select(Novedad).order_by(Novedad.created_at.desc())
-    return [_a_response(n) for n in db.execute(stmt).scalars().all()]
+def listar_todas(db: Session, limit: int, offset: int) -> tuple[List[NovedadResponse], int]:
+    """CA-035.4: el Admin Sistema ve el historial completo, activas y archivadas.
+
+    ¿Qué? Issue #227 — antes esto traía TODO el historial en una sola
+          respuesta, sin ningún tope. Con el tiempo, ese historial solo
+          crece (nunca se borra nada, solo se archiva) — igual que el
+          listado de Residentes/Recicladores de admin.py (issue #207),
+          ahora se pide de a "páginas".
+    """
+    total = db.execute(select(func.count()).select_from(Novedad)).scalar_one()
+    stmt = select(Novedad).order_by(Novedad.created_at.desc()).limit(limit).offset(offset)
+    items = [_a_response(n) for n in db.execute(stmt).scalars().all()]
+    return items, total
 
 
 def _obtener_o_404(db: Session, id_novedad: UUID) -> Novedad:

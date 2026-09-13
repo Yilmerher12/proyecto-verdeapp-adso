@@ -65,7 +65,12 @@
     "phone": "Teléfono",
     "saving": "Guardando...",
     "saveError": "No se pudo guardar. Intenta de nuevo.",
-    "formIncomplete": "Completa el formulario"
+    "formIncomplete": "Completa el formulario",
+    "pagination": {
+      "showing": "Mostrando {{from}}–{{to}} de {{total}}",
+      "prev": "Página anterior",
+      "next": "Página siguiente"
+    }
   },
   "auth": {
     "login": {
