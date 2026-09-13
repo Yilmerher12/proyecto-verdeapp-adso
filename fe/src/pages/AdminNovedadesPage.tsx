@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
+import { Alert } from "@/components/ui/Alert";
 import {
   archivarNovedad,
   crearNovedad,
@@ -175,9 +176,7 @@ export function AdminNovedadesPage() {
       </div>
 
       {errorMsg && !creando && !editando && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-          {errorMsg}
-        </p>
+        <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />
       )}
 
       {cargando && <LoadingState message={t("common.loading")} />}
@@ -267,11 +266,7 @@ export function AdminNovedadesPage() {
               {editando ? t("novedades.admin.editTitle") : t("novedades.admin.newButton")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             {!editando ? (
               <div>

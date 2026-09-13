@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, ClipboardList, XCircle } from "lucide-react";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Alert } from "@/components/ui/Alert";
 import {
   listarSolicitudesDesvinculacion,
   resolverSolicitudDesvinculacion,
@@ -120,9 +121,9 @@ export function SolicitudesDesvinculacion({
       )}
 
       {error && (
-        <p className="mb-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg dark:bg-red-900/20 dark:text-red-400">
-          {error}
-        </p>
+        <div className="mb-3">
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        </div>
       )}
 
       {cargando ? (

@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Camera, Loader2, Plus, X } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { Alert } from "@/components/ui/Alert";
 import { crearAuditoria, type AuditoriaConjunto, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
 import { listarContenido } from "@/lib/contenidoEducativoApi";
 import { NIVELES_DESEMPENO, ORDEN_NIVELES_SELECCIONABLES } from "@/config/nivelesDesempeno";
@@ -290,9 +291,9 @@ export function AuditoriaConjuntoForm({
         </div>
 
         {error && (
-          <p className="mb-4 text-xs text-red-600 dark:text-red-400" role="alert">
-            {error}
-          </p>
+          <div className="mb-4">
+            <Alert type="error" message={error} onClose={() => setError(null)} />
+          </div>
         )}
 
         <div className="flex gap-2">

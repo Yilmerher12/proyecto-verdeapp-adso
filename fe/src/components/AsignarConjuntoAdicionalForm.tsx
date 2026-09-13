@@ -10,6 +10,7 @@ import {
   type AdministradorConjuntoResumen,
 } from "@/lib/adminConjuntoApi";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
+import { Alert } from "@/components/ui/Alert";
 
 interface Localidad {
   id_localidad: number;
@@ -154,9 +155,9 @@ export function AsignarConjuntoAdicionalForm() {
       </form>
 
       {error && (
-        <p className="mb-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg dark:bg-red-900/20 dark:text-red-400">
-          {error}
-        </p>
+        <div className="mb-3">
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        </div>
       )}
 
       {busquedaHecha && resultados.length === 0 && (
@@ -194,9 +195,9 @@ export function AsignarConjuntoAdicionalForm() {
       {seleccionado && (
         <div className="border-t border-gray-100 dark:border-[#2a4d34] pt-4">
           {mensajeExito && (
-            <p className="mb-3 text-xs text-accent-700 bg-accent-50 px-3 py-2 rounded-lg dark:bg-accent-900/20 dark:text-accent-400">
-              {mensajeExito}
-            </p>
+            <div className="mb-3">
+              <Alert type="success" message={mensajeExito} onClose={() => setMensajeExito(null)} />
+            </div>
           )}
 
           <div className="mb-3">

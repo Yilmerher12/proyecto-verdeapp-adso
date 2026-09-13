@@ -23,6 +23,7 @@ import { ROLE_THEME } from "@/config/roleTheme";
 import { notificarFotoPerfilActualizada } from "@/lib/profileEvents";
 import { TELEFONO_REGEX } from "@/lib/validacion";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
+import { Alert } from "@/components/ui/Alert";
 
 interface PerfilData {
   id: number;
@@ -373,11 +374,7 @@ export function ProfilePage() {
           ) : (
             /* Modo edición */
             <div className="space-y-4">
-              {errorMsg && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                  {errorMsg}
-                </p>
-              )}
+              {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
               <div>
                 <label htmlFor="perfil-nombre" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
