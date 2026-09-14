@@ -14,7 +14,7 @@
       "puntosAcopio": "Puntos de Acopio",
       "gestionarComunicados": "Comunicados de mis Conjuntos",
       "comunicados": "Comunicados",
-      "aprenderGuias": "Aprender (Guías)",
+      "aprenderGuias": "Aprende a Reciclar",
       "directorioGeneral": "Directorio General",
       "groupComunidad": "Comunidad",
       "groupRecursos": "Recursos",
@@ -978,7 +978,7 @@
     }
   },
   "catalogoEducativo": {
-    "title": "Aprender a reciclar",
+    "title": "Aprende a reciclar",
     "subtitle": "Elige un tema para ver sus videos y guías de apoyo.",
     "loading": "Cargando contenido...",
     "loadError": "No se pudo cargar el catálogo educativo.",
@@ -987,7 +987,7 @@
     "temas": "temas"
   },
   "categoriaEducativa": {
-    "back": "Volver a Aprender a reciclar",
+    "back": "Volver a Aprende a reciclar",
     "emptyForCategory": "No se encontró contenido para esta categoría.",
     "viewGuide": "Ver guía de apoyo"
   },
