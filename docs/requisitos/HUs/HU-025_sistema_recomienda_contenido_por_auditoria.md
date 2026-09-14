@@ -2,8 +2,8 @@
 
 <!--
   ¿Qué? Historia de usuario para que el sistema recomiende contenido educativo automáticamente.
-  ¿Para qué? Ayudar a los residentes a mejorar justo en las categorías donde fallaron.
-  ¿Impacto? Cierra el ciclo entre auditoría (HU-010) y educación (HU-005).
+  ¿Para qué? Ayudar a los residentes a mejorar justo en el tema donde la auditoría salió mal.
+  ¿Impacto? Cierra el ciclo entre auditoría (RQF-009) y educación (RQF-004).
 -->
 
 ---
@@ -16,7 +16,7 @@
 | **Título**         | Sistema recomienda contenido según la auditoría              |
 | **Módulo**         | Contenido Educativo / Auditoría                             |
 | **Prioridad**      | Media                                                        |
-| **Estado**         | Por implementar                                              |
+| **Estado**         | Implementado                                                 |
 | **RF asociados**   | RQF-013                                                     |
 
 ---
@@ -24,33 +24,33 @@
 ## Historia
 
 **Como** sistema,
-**quiero** detectar automáticamente qué categorías de una auditoría recibieron calificación negativa,
-**para** recomendar a los residentes del conjunto el contenido educativo relacionado con esas categorías.
+**quiero** detectar automáticamente cuándo una auditoría se calificó como Regular o Malo,
+**para** notificar a los Residentes del conjunto el contenido educativo relacionado con ese tema.
 
 ---
 
 ## Criterios de aceptación
 
-### CA-025.1 — Detección de categorías negativas
+### CA-025.1 — Detección de nivel negativo
 
-- **Dado que** se guarda una calificación de auditoría con al menos una categoría negativa,
+- **Dado que** se guarda una auditoría con `nivel_desempeno` Regular o Malo,
 - **cuando** el sistema procesa el guardado,
-- **entonces** debe identificar automáticamente cuáles categorías (Separación, Preparación, Presentación o Contaminación) fallaron.
+- **entonces** debe crear una notificación de tipo `CONTENIDO_RECOMENDADO` para los Residentes del conjunto, apuntando a esa auditoría.
 
-### CA-025.2 — Búsqueda de módulos relacionados
+### CA-025.2 — Nivel Bueno no genera recomendación
 
-- **Dado que** se identificaron categorías negativas,
-- **cuando** el sistema busca contenido relacionado,
-- **entonces** debe buscar módulos educativos etiquetados con esas mismas categorías.
+- **Dado que** una auditoría se calificó como Bueno,
+- **cuando** el sistema procesa el guardado,
+- **entonces** no debe crear ninguna notificación de contenido recomendado.
 
-### CA-025.3 — Sin módulo disponible
+### CA-025.3 — El contenido relacionado se identifica por coincidencia directa
 
-- **Dado que** una categoría falló pero no hay ningún módulo educativo con esa etiqueta,
-- **cuando** el sistema genera las recomendaciones,
-- **entonces** no debe crear una recomendación vacía para esa categoría.
+- **Dado que** se calificó un tema de auditoría (ej. "Separación en la fuente y código de colores"),
+- **cuando** el Residente abre la recomendación,
+- **entonces** el sistema debe llevarlo al contenido educativo cuya categoría coincide exactamente con ese tema — sin necesitar ningún algoritmo de clasificación.
 
-### CA-025.4 — Expiración de la recomendación
+### CA-025.4 — El Administrador de Conjunto no recibe esta notificación
 
-- **Dado que** una recomendación lleva activa 30 días, o se publica una nueva auditoría del mismo conjunto,
-- **cuando** se cumple cualquiera de esas condiciones,
-- **entonces** la recomendación anterior debe dejar de mostrarse.
+- **Dado que** se genera una recomendación de contenido para un conjunto,
+- **cuando** el sistema decide a quién notificar,
+- **entonces** solo debe avisar a los Residentes de ese conjunto, nunca al Administrador de Conjunto.

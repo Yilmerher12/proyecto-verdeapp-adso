@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
@@ -15,6 +16,7 @@ import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
+import { obtenerAuditoria } from "@/lib/auditoriaConjuntoApi";
 
 interface EstadoShut {
   lleno: boolean;
@@ -24,6 +26,7 @@ interface EstadoShut {
 export function ResidenteDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || t("roles.residente");
   const { WatermarkIcon } = ROLE_THEME[RoleId.RESIDENTE];
 
@@ -99,6 +102,23 @@ export function ResidenteDashboard() {
     try {
       await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`);
       setNotificaciones((prev) => prev.filter((n) => !n.leida));
+    } catch {
+      setErrorAccion(true);
+    }
+  };
+
+  // ¿Qué? Issue #4 (RQF-013) — clic en la notificación de contenido
+  //       recomendado lleva directo a la categoría de "Aprender" que
+  //       corresponde, sin pasos intermedios ("entre menos clicks tenga
+  //       que hacer el usuario, mejor").
+  // ¿Para qué? tema_educativo se guarda igual que modulo_categoria a
+  //           propósito (ver models/auditoria_conjunto.py) — se pide la
+  //           auditoría por su id_referencia solo para leer ese texto.
+  const irAContenidoRecomendado = async (notif: NotificacionItem) => {
+    if (notif.tipo !== "CONTENIDO_RECOMENDADO" || !notif.id_referencia) return;
+    try {
+      const auditoria = await obtenerAuditoria(notif.id_referencia);
+      navigate(`/catalogo-educativo/${encodeURIComponent(auditoria.tema_educativo)}`);
     } catch {
       setErrorAccion(true);
     }
@@ -227,6 +247,7 @@ export function ResidenteDashboard() {
             onMarkRead={marcarLeida}
             onMarkAllRead={marcarTodasLeidas}
             onClearRead={limpiarLeidas}
+            onItemClick={irAContenidoRecomendado}
           />
         </>
       )}
