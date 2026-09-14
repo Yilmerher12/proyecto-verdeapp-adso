@@ -18,7 +18,7 @@ import { Alert } from "@/components/ui/Alert";
 import { crearAuditoria, type AuditoriaConjunto, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
 import { listarContenido } from "@/lib/contenidoEducativoApi";
 import { NIVELES_DESEMPENO, ORDEN_NIVELES_SELECCIONABLES } from "@/config/nivelesDesempeno";
-import { NOMBRE_SIMPLE_CATEGORIA } from "@/config/categoriasEducativas";
+import { CATEGORIAS_NO_AUDITABLES, NOMBRE_SIMPLE_CATEGORIA } from "@/config/categoriasEducativas";
 
 const MAXIMO_FOTOS = 3;
 
@@ -78,10 +78,15 @@ export function AuditoriaConjuntoForm({
 
   // ¿Qué? Mismas categorías que ya usa CatalogoEducativoPage — se derivan
   //       del catálogo real en vez de mantener una lista aparte que se
-  //       puede desactualizar.
+  //       puede desactualizar. Se excluyen las que no son observables en
+  //       una sola visita (CATEGORIAS_NO_AUDITABLES, issue #4/RQF-013).
   useEffect(() => {
     listarContenido()
-      .then((contenido) => setTemas(Array.from(new Set(contenido.map((c) => c.modulo_categoria)))))
+      .then((contenido) => {
+        const categorias = new Set(contenido.map((c) => c.modulo_categoria));
+        CATEGORIAS_NO_AUDITABLES.forEach((c) => categorias.delete(c));
+        setTemas(Array.from(categorias));
+      })
       .catch(() => setTemas([]));
   }, []);
 

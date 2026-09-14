@@ -11,7 +11,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Bell, Building2, Clock, DoorOpen, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
+import { AlertTriangle, Bell, Building2, Clock, DoorOpen, GraduationCap, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 
@@ -30,6 +30,8 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   // RQF-015 (novedades generales de la plataforma)
   NOVEDAD_NUEVA: { Icon: Newspaper, color: "text-indigo-700 dark:text-indigo-400" },
   NOVEDAD_ACTUALIZADA: { Icon: Newspaper, color: "text-indigo-500 dark:text-indigo-300" },
+  // RQF-013 (recomendación de contenido educativo según auditoría)
+  CONTENIDO_RECOMENDADO: { Icon: GraduationCap, color: "text-amber-700 dark:text-amber-500" },
 };
 
 interface NotificationFeedProps {
@@ -43,6 +45,16 @@ interface NotificationFeedProps {
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   onClearRead: () => void;
+  /**
+   * ¿Qué? Acción opcional al hacer clic en una notificación, además de
+   * marcarla leída (ej: navegar a la página relacionada).
+   * ¿Para qué? Issue #4 (RQF-013) — "entre menos clicks tenga que hacer el
+   * usuario, mejor": clic en la notificación de contenido recomendado debe
+   * llevar directo a "Aprender", no solo marcarla como leída. Se deja
+   * opcional para no forzar a los otros 2 dashboards que usan este mismo
+   * componente a implementar una navegación que no necesitan.
+   */
+  onItemClick?: (notif: NotificacionItem) => void;
 }
 
 export function NotificationFeed({
@@ -54,6 +66,7 @@ export function NotificationFeed({
   onMarkRead,
   onMarkAllRead,
   onClearRead,
+  onItemClick,
 }: NotificationFeedProps) {
   const { t } = useTranslation();
   const [expandido, setExpandido] = useState(false);
@@ -92,19 +105,30 @@ export function NotificationFeed({
           <ul className="divide-y divide-gray-50 dark:divide-gray-800">
             {(expandido ? notifications : notifications.slice(0, 5)).map((n) => {
               const meta = TIPO_META[n.tipo] ?? { Icon: Bell, color: "text-gray-500" };
+              const interactiva = !n.leida || Boolean(onItemClick);
+              const activar = () => {
+                if (!n.leida) onMarkRead(n.id);
+                onItemClick?.(n);
+              };
               return (
                 <li
                   key={n.id}
-                  onClick={() => !n.leida && onMarkRead(n.id)}
+                  onClick={() => interactiva && activar()}
                   onKeyDown={(e) => {
-                    if (!n.leida && (e.key === "Enter" || e.key === " ")) {
+                    if (interactiva && (e.key === "Enter" || e.key === " ")) {
                       e.preventDefault();
-                      onMarkRead(n.id);
+                      activar();
                     }
                   }}
-                  role={!n.leida ? "button" : undefined}
-                  tabIndex={!n.leida ? 0 : undefined}
-                  aria-label={!n.leida ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}` : undefined}
+                  role={interactiva ? "button" : undefined}
+                  tabIndex={interactiva ? 0 : undefined}
+                  aria-label={
+                    interactiva
+                      ? !n.leida
+                        ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}`
+                        : n.mensaje
+                      : undefined
+                  }
                   className={`flex cursor-pointer items-start gap-3 px-5 py-3.5 transition-colors ${
                     !n.leida ? accentHighlight : "hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
                   }`}

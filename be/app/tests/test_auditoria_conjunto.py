@@ -358,6 +358,94 @@ class TestNotificacionAlPublicar:
         assert not any(n["tipo"] == "AUDITORIA_PUBLICADA" for n in response.json())
 
 
+class TestNotificacionDeContenidoRecomendado:
+    """¿Por qué? Issue #4 (RQF-013) — un desempeño Regular o Malo debe
+    avisarle a los Residentes del conjunto que hay contenido educativo
+    recomendado sobre el tema calificado; un desempeño Bueno no, y el
+    Admin de Conjunto tampoco recibe este tipo (no puede entrar a
+    "Aprender", ver RoleGuard de /catalogo-educativo en App.tsx)."""
+
+    def test_nivel_regular_notifica_a_los_residentes(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado, auth_headers
+    ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
+        payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
+        payload["nivel_desempeno"] = "REGULAR"
+        creada = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=payload,
+            files=_archivo_valido(),
+        ).json()
+
+        response = client.get("/api/v1/notificaciones/mis-notificaciones", headers=auth_headers)
+        assert response.status_code == 200
+        notifs = [n for n in response.json() if n["tipo"] == "CONTENIDO_RECOMENDADO"]
+        assert len(notifs) == 1
+        assert notifs[0]["id_referencia"] == creada["id_auditoria"]
+        # Decisión del 2026-09-14: mensaje corto, sin repetir tema ni nivel
+        # (ya visibles al abrir la recomendación) — que se vea conciso en
+        # la tarjeta de notificación del panel del Residente.
+        assert notifs[0]["mensaje"] == "El reciclador recomienda contenido educativo para tu conjunto."
+
+    def test_nivel_deficiente_notifica_a_los_residentes(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado, auth_headers
+    ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
+        payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
+        payload["nivel_desempeno"] = "DEFICIENTE"
+        client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=payload,
+            files=_archivo_valido(),
+        )
+
+        response = client.get("/api/v1/notificaciones/mis-notificaciones", headers=auth_headers)
+        assert response.status_code == 200
+        assert any(n["tipo"] == "CONTENIDO_RECOMENDADO" for n in response.json())
+
+    def test_nivel_bueno_no_notifica(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado, auth_headers
+    ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
+        payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
+        payload["nivel_desempeno"] = "BUENA"
+        client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=payload,
+            files=_archivo_valido(),
+        )
+
+        response = client.get("/api/v1/notificaciones/mis-notificaciones", headers=auth_headers)
+        assert response.status_code == 200
+        assert not any(n["tipo"] == "CONTENIDO_RECOMENDADO" for n in response.json())
+
+    def test_admin_de_conjunto_no_recibe_este_tipo(
+        self,
+        client: TestClient,
+        reciclador_auth_headers,
+        reciclador_autorizado,
+        conjunto_verificado,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+    ):
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
+        payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
+        payload["nivel_desempeno"] = "REGULAR"
+        client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=payload,
+            files=_archivo_valido(),
+        )
+
+        response = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_conjunto_auth_headers)
+        assert response.status_code == 200
+        assert not any(n["tipo"] == "CONTENIDO_RECOMENDADO" for n in response.json())
+
+
 class TestObtenerAuditoriaPorId:
     def test_sin_login_devuelve_401(self, client: TestClient):
         response = client.get(f"/api/v1/auditorias-conjunto/{uuid.uuid4()}")
