@@ -388,12 +388,12 @@ export function RegisterPage() {
                  visualmente DETRÁS del de registro.
       */}
       {documentoAbierto === "terminos" && (
-        <Modal onClose={() => setDocumentoAbierto(null)} wide layer="stacked" aria-label="Términos de Uso">
+        <Modal onClose={() => setDocumentoAbierto(null)} wide layer="stacked" aria-label={t("legal.terms.title")}>
           <TerminosDeUsoPage embedded />
         </Modal>
       )}
       {documentoAbierto === "privacidad" && (
-        <Modal onClose={() => setDocumentoAbierto(null)} wide layer="stacked" aria-label="Política de Privacidad">
+        <Modal onClose={() => setDocumentoAbierto(null)} wide layer="stacked" aria-label={t("legal.privacy.title")}>
           <PoliticaPrivacidadPage embedded />
         </Modal>
       )}
