@@ -60,6 +60,13 @@ function isoToDateInputUTC(iso: string): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// ¿Qué? Issue #7 (hallazgo F2 de la auditoría) — una novedad no tiene
+//       título, solo texto libre; se usa un recorte corto como el nombre
+//       que distingue cada fila en los aria-label de editar/archivar.
+function resumirTexto(texto: string): string {
+  return texto.length > 40 ? `${texto.slice(0, 40)}…` : texto;
+}
+
 /**
  * ¿Qué? Panel del Administrador del Sistema para publicar, editar y
  *       archivar novedades generales de la plataforma (RQF-015,
@@ -247,14 +254,14 @@ export function AdminNovedadesPage() {
                   <button
                     onClick={() => abrirEditar(item)}
                     className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-                    aria-label={t("novedades.admin.editAria")}
+                    aria-label={t("novedades.admin.editAria", { resumen: resumirTexto(item.texto) })}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => archivar(item)}
                     className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
-                    aria-label={t("novedades.admin.archiveAria")}
+                    aria-label={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
                   >
                     <Archive className="h-4 w-4" />
                   </button>

@@ -4,6 +4,7 @@
  * ¿Para qué? Dar feedback visual al usuario después de una acción (login exitoso, error, etc.).
  * ¿Impacto? Sin alertas, el usuario no sabría si una operación tuvo éxito o falló.
  */
+import { useTranslation } from "react-i18next";
 
 /**
  * ¿Qué? Props del componente Alert.
@@ -22,6 +23,7 @@ interface AlertProps {
  * ¿Impacto? Colores sólidos (sin degradados), bordes sutiles, transiciones suaves.
  */
 export function Alert({ type, message, onClose }: AlertProps) {
+  const { t } = useTranslation();
   // ¿Qué? Mapeo de tipo → clases CSS para colores del contenedor.
   // ¿Para qué? Cada tipo de alerta tiene colores que comunican su naturaleza.
   // ¿Impacto? Verde = éxito, rojo = error, azul = información.
@@ -103,7 +105,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
         <button
           onClick={onClose}
           className={`shrink-0 cursor-pointer transition-colors ${closeClasses[type]}`}
-          aria-label="Cerrar alerta"
+          aria-label={t("common.close")}
         >
           {/* ¿Qué? Ícono X decorativo — la acción ya está descrita por aria-label del botón. */}
           <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">

@@ -73,6 +73,13 @@ function isoToDateInputUTC(iso: string): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// ¿Qué? Issue #7 (hallazgo F2 de la auditoría) — un comunicado no tiene
+//       título, solo texto libre; se usa un recorte corto como el nombre
+//       que distingue cada fila en los aria-label de editar/eliminar.
+function resumirTexto(texto: string): string {
+  return texto.length > 40 ? `${texto.slice(0, 40)}…` : texto;
+}
+
 // ¿Qué? Color por tipo — Urgente en rojo para que salte a la vista, igual
 //       que en el feed que ven residentes/recicladores.
 const TIPO_ESTILO: Record<TipoComunicado, string> = {
@@ -290,14 +297,14 @@ export function AdminConjuntoComunicadosPage() {
                 <button
                   onClick={() => abrirEditar(item)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-                  aria-label={t("comunicados.admin.editAria")}
+                  aria-label={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setAEliminar(item)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
-                  aria-label={t("comunicados.admin.deleteAria")}
+                  aria-label={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
