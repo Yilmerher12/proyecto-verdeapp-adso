@@ -62,6 +62,8 @@
     "back": "Back",
     "or": "or",
     "close": "Close",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "edit": "Edit",
     "phone": "Phone",
     "saving": "Saving...",
