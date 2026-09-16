@@ -851,6 +851,12 @@
         "successMessage": "Audit submitted.",
         "errorDefault": "Couldn't submit the audit.",
         "errorTimeout": "The upload is taking too long — check your connection and try again.",
+        "confirmSubmit": {
+          "ariaLabel": "Confirm audit",
+          "title": "Send this audit?",
+          "warning": "You're about to rate \"{{tema}}\" as {{nivel}}. Once sent, an audit can't be edited.",
+          "confirm": "Yes, send"
+        },
         "validation": {
           "conjunto": "Select a building.",
           "nivel": "Select a performance level.",
@@ -1262,6 +1268,12 @@
       "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
       "archiveError": "Could not archive. Please try again.",
+      "archiveConfirm": {
+        "ariaLabel": "Confirm archiving",
+        "title": "Archive this news item?",
+        "warning": "It will stop showing in the active news feed. This action cannot be undone.",
+        "confirm": "Yes, archive"
+      },
       "alcanceNoEditable": "The scope can't be changed after publishing. If you made a mistake, archive it and create a new one.",
       "validation": {
         "textoRequerido": "The news item text is required."
