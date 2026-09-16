@@ -587,8 +587,8 @@ export function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   onBlur={handleBlur}
+                  error={fieldErrors.email}
                 />
-                {fieldErrors.email && <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>}
               </div>
 
               <div>
@@ -600,10 +600,8 @@ export function RegisterPage() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   disablePaste
+                  error={fieldErrors.confirmEmail}
                 />
-                {fieldErrors.confirmEmail && (
-                  <p className="text-xs text-red-500 mt-1">{fieldErrors.confirmEmail}</p>
-                )}
               </div>
 
               <div>
@@ -615,9 +613,9 @@ export function RegisterPage() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   placeholder={t("auth.register.fields.passwordPlaceholder")}
+                  error={fieldErrors.password}
                 />
                 <PasswordStrengthIndicator password={formData.password} />
-                {fieldErrors.password && <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.password}</p>}
               </div>
 
               <div>
@@ -630,8 +628,8 @@ export function RegisterPage() {
                   onBlur={handleBlur}
                   placeholder={t("auth.register.fields.confirmPasswordPlaceholder")}
                   disablePaste
+                  error={fieldErrors.confirmPassword}
                 />
-                {fieldErrors.confirmPassword && <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors.confirmPassword}</p>}
               </div>
             </div>
 
