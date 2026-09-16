@@ -24,6 +24,7 @@ import { notificarFotoPerfilActualizada } from "@/lib/profileEvents";
 import { TELEFONO_REGEX } from "@/lib/validacion";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 interface PerfilData {
   id: number;
@@ -183,8 +184,8 @@ export function ProfilePage() {
     }
   };
 
-  if (cargando) return <p className="text-sm text-gray-500 dark:text-gray-400 px-2 pt-6">{t("profile.loading")}</p>;
-  if (!perfil) return <p className="text-sm text-red-500 px-2 pt-6">{t("profile.loadError")}</p>;
+  if (cargando) return <div className="pt-6"><LoadingState message={t("profile.loading")} /></div>;
+  if (!perfil) return <div className="pt-6"><Alert type="error" message={t("profile.loadError")} /></div>;
 
   const role = ROLE_THEME[perfil.role_id] ?? ROLE_THEME[RoleId.RESIDENTE];
   const { Icon: RoleIcon } = role;

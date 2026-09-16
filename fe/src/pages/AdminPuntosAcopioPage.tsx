@@ -40,6 +40,10 @@ export function AdminPuntosAcopioPage() {
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // ¿Qué? Issue #6 (hallazgo F1 de la auditoría) — mismo problema que
+  //       AdminContenidoEducativoPage: errorMsg solo se veía dentro del
+  //       modal de crear/editar, nunca en la carga inicial.
+  const [cargaError, setCargaError] = useState(false);
 
   const [editando, setEditando] = useState<PuntoAcopioAdmin | null>(null);
   const [creando, setCreando] = useState(false);
@@ -52,11 +56,12 @@ export function AdminPuntosAcopioPage() {
   const cargar = useCallback(() => {
     if (!user) return;
     setCargando(true);
+    setCargaError(false);
     listarPuntosAcopio()
       .then(setPuntos)
-      .catch(() => setErrorMsg(t("adminPuntosAcopio.loadError")))
+      .catch(() => setCargaError(true))
       .finally(() => setCargando(false));
-  }, [user, t]);
+  }, [user]);
 
   // ¿Qué? Issue #225 — "cargar" faltaba en las dependencias; se silenciaba
   //       la advertencia en vez de arreglarla. Envolverla en useCallback
@@ -174,8 +179,9 @@ export function AdminPuntosAcopioPage() {
       </div>
 
       {cargando && <LoadingState message={t("common.loading")} />}
+      {!cargando && cargaError && <Alert type="error" message={t("adminPuntosAcopio.loadError")} />}
 
-      {!cargando && puntos.length === 0 && (
+      {!cargando && !cargaError && puntos.length === 0 && (
         <EmptyState icon={MapPin} message={t("adminPuntosAcopio.emptyState")} />
       )}
 

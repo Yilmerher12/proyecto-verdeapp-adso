@@ -5,6 +5,7 @@ import { BookOpen, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Alert } from "@/components/ui/Alert";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
 import {
   listarContenido,
@@ -49,7 +50,7 @@ export function CatalogoEducativoPage() {
       </div>
 
       {cargando && <LoadingState message={t("catalogoEducativo.loading")} />}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <Alert type="error" message={error} />}
 
       {!cargando && !error && categorias.length === 0 && (
         <EmptyState icon={BookOpen} message={t("catalogoEducativo.emptyState")} />

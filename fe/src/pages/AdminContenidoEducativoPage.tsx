@@ -31,6 +31,12 @@ export function AdminContenidoEducativoPage() {
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // ¿Qué? Issue #6 (hallazgo F1 de la auditoría) — errorMsg solo se
+  //       mostraba dentro del modal de crear/editar, así que si la carga
+  //       inicial fallaba, la lista vacía se veía igual que "no hay nada
+  //       registrado". cargaError es aparte para que el aviso se vea en
+  //       la página, sin depender de que el modal esté abierto.
+  const [cargaError, setCargaError] = useState(false);
 
   const [editando, setEditando] = useState<ContenidoEducativo | null>(null);
   const [creando, setCreando] = useState(false);
@@ -42,9 +48,10 @@ export function AdminContenidoEducativoPage() {
   const cargar = () => {
     if (!user) return;
     setCargando(true);
+    setCargaError(false);
     listarContenido()
       .then(setContenido)
-      .catch(() => setErrorMsg(t("catalogoEducativo.loadError")))
+      .catch(() => setCargaError(true))
       .finally(() => setCargando(false));
   };
 
@@ -149,8 +156,9 @@ export function AdminContenidoEducativoPage() {
       </div>
 
       {cargando && <LoadingState message={t("common.loading")} />}
+      {!cargando && cargaError && <Alert type="error" message={t("catalogoEducativo.loadError")} />}
 
-      {!cargando && contenido.length === 0 && (
+      {!cargando && !cargaError && contenido.length === 0 && (
         <EmptyState icon={BookOpen} message={t("adminContenidoEducativo.emptyState")} />
       )}
 
