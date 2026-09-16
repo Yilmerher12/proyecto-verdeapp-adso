@@ -855,6 +855,12 @@
         "successMessage": "Auditoría enviada.",
         "errorDefault": "No se pudo enviar la auditoría.",
         "errorTimeout": "La subida está tardando demasiado — revisa tu conexión e intenta de nuevo.",
+        "confirmSubmit": {
+          "ariaLabel": "Confirmar auditoría",
+          "title": "¿Enviar esta auditoría?",
+          "warning": "Vas a calificar \"{{tema}}\" como {{nivel}}. Una vez enviada, la auditoría no se puede editar.",
+          "confirm": "Sí, enviar"
+        },
         "validation": {
           "conjunto": "Selecciona un conjunto.",
           "nivel": "Selecciona un nivel de desempeño.",
@@ -1266,6 +1272,12 @@
       "creadoEl": "Creado el {{fecha}}",
       "expiraEl": "Expira el {{fecha}}",
       "archiveError": "No se pudo archivar. Intenta de nuevo.",
+      "archiveConfirm": {
+        "ariaLabel": "Confirmar archivado",
+        "title": "¿Archivar esta novedad?",
+        "warning": "Dejará de verse en el feed de novedades activas. Esta acción no se puede deshacer.",
+        "confirm": "Sí, archivar"
+      },
       "alcanceNoEditable": "El alcance no se puede cambiar después de publicar. Si te equivocaste, archívala y crea una nueva.",
       "validation": {
         "textoRequerido": "El texto de la novedad es obligatorio."

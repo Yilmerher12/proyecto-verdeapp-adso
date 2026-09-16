@@ -4,6 +4,7 @@ import { Archive, CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus } fro
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
@@ -87,6 +88,10 @@ export function AdminNovedadesPage() {
   const [editando, setEditando] = useState<Novedad | null>(null);
   const [form, setForm] = useState<FormState>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
+  // ¿Qué? Issue #9 (hallazgo U2 de la auditoría) — archivar se ejecutaba
+  //       directo al clic, sin confirmar, a diferencia de eliminar un
+  //       comunicado (misma acción conceptual, otra pantalla).
+  const [aArchivar, setAArchivar] = useState<Novedad | null>(null);
 
   const paginacion = usePaginacion(TAMANO_PAGINA, total);
 
@@ -166,10 +171,11 @@ export function AdminNovedadesPage() {
     }
   };
 
-  const archivar = async (item: Novedad) => {
-    if (!user) return;
+  const confirmarArchivar = async () => {
+    if (!user || !aArchivar) return;
     try {
-      await archivarNovedad(item.id_novedad);
+      await archivarNovedad(aArchivar.id_novedad);
+      setAArchivar(null);
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -259,7 +265,7 @@ export function AdminNovedadesPage() {
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => archivar(item)}
+                    onClick={() => setAArchivar(item)}
                     className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
                     aria-label={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
                   >
@@ -398,6 +404,19 @@ export function AdminNovedadesPage() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {aArchivar && (
+        <ConfirmModal
+          icon={Archive}
+          variant="danger"
+          ariaLabel={t("novedades.admin.archiveConfirm.ariaLabel")}
+          title={t("novedades.admin.archiveConfirm.title")}
+          description={t("novedades.admin.archiveConfirm.warning")}
+          confirmLabel={t("novedades.admin.archiveConfirm.confirm")}
+          onConfirm={confirmarArchivar}
+          onClose={() => setAArchivar(null)}
+        />
       )}
     </div>
   );

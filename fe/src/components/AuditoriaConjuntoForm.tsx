@@ -12,8 +12,9 @@
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Camera, Loader2, Plus, X } from "lucide-react";
+import { Camera, ClipboardCheck, Loader2, Plus, X } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
 import { crearAuditoria, type AuditoriaConjunto, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
 import { listarContenido } from "@/lib/contenidoEducativoApi";
@@ -54,6 +55,11 @@ export function AuditoriaConjuntoForm({
   const [enviando, setEnviando] = useState(false);
   const [progreso, setProgreso] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // ¿Qué? Issue #9 (hallazgo U10 de la auditoría) — la calificación se
+  //       enviaba directo al hacer clic, sin confirmar, pese a ser una
+  //       acción de una sola vía (no hay endpoint para editar una auditoría
+  //       ya creada).
+  const [confirmando, setConfirmando] = useState(false);
 
   // ¿Qué? URLs de vista previa (blob:) para las fotos ya elegidas.
   // ¿Para qué? Antes el formulario solo mostraba el nombre del archivo —
@@ -95,7 +101,7 @@ export function AuditoriaConjuntoForm({
   //       el reciclador se entere del campo que falta después de intentar.
   const formularioIncompleto = !idConjunto || !nivel || !tema || evidencias.length === 0;
 
-  const enviar = async () => {
+  const intentarEnviar = () => {
     setError(null);
     if (!idConjunto) {
       setError(t("dashboards.reciclador.auditoria.validation.conjunto"));
@@ -113,7 +119,12 @@ export function AuditoriaConjuntoForm({
       setError(t("dashboards.reciclador.auditoria.validation.evidencia"));
       return;
     }
+    setConfirmando(true);
+  };
 
+  const enviar = async () => {
+    if (!nivel) return;
+    setConfirmando(false);
     setEnviando(true);
     setProgreso(0);
     try {
@@ -314,7 +325,7 @@ export function AuditoriaConjuntoForm({
           </button>
           <button
             type="button"
-            onClick={enviar}
+            onClick={intentarEnviar}
             disabled={enviando || formularioIncompleto}
             className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -334,6 +345,23 @@ export function AuditoriaConjuntoForm({
           </button>
         </div>
       </div>
+
+      {confirmando && nivel && (
+        <ConfirmModal
+          layer="stacked"
+          icon={ClipboardCheck}
+          variant="primary"
+          ariaLabel={t("dashboards.reciclador.auditoria.confirmSubmit.ariaLabel")}
+          title={t("dashboards.reciclador.auditoria.confirmSubmit.title")}
+          description={t("dashboards.reciclador.auditoria.confirmSubmit.warning", {
+            tema: NOMBRE_SIMPLE_CATEGORIA[tema] ?? tema,
+            nivel: t(`dashboards.reciclador.auditoria.niveles.${nivel.toLowerCase()}`),
+          })}
+          confirmLabel={t("dashboards.reciclador.auditoria.confirmSubmit.confirm")}
+          onConfirm={enviar}
+          onClose={() => setConfirmando(false)}
+        />
+      )}
     </Modal>
   );
 }

@@ -21,7 +21,7 @@ import { usePolling } from "@/hooks/usePolling";
 import * as authApi from "@/api/auth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
-import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { RoleId } from "@/types/auth";
 import api, { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
@@ -402,36 +402,20 @@ export function AppShell({ children }: AppShellProps) {
           </button>
         </div>
 
+        {/* ¿Qué? Issue #9 (hallazgo M1 de la auditoría) — este diálogo
+            estaba escrito a mano en vez de usar ConfirmModal, el componente
+            que se creó justo para reemplazar copias como esta (issue #224). */}
         {showLogoutConfirm && (
-          <Modal onClose={() => setShowLogoutConfirm(false)}>
-            <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-                <LogOut className="h-6 w-6 text-red-500 dark:text-red-400" />
-              </div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                {t("appShell.confirmarLogout.titulo")}
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                {t("appShell.confirmarLogout.mensaje")}
-              </p>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowLogoutConfirm(false)}
-                  className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-                >
-                  {t("common.cancel")}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex-1 cursor-pointer rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-                >
-                  {t("appShell.confirmarLogout.confirmar")}
-                </button>
-              </div>
-            </div>
-          </Modal>
+          <ConfirmModal
+            icon={LogOut}
+            variant="danger"
+            ariaLabel={t("appShell.confirmarLogout.titulo")}
+            title={t("appShell.confirmarLogout.titulo")}
+            description={t("appShell.confirmarLogout.mensaje")}
+            confirmLabel={t("appShell.confirmarLogout.confirmar")}
+            onConfirm={handleLogout}
+            onClose={() => setShowLogoutConfirm(false)}
+          />
         )}
 
         {/* Alternador de ancho (solo desktop) */}

@@ -176,6 +176,11 @@ describe("RecicladorDashboard", () => {
 
     await user.click(screen.getByRole("button", { name: "Enviar auditoría" }));
 
+    // ¿Qué? Issue #9 — enviar ya no dispara la petición directo, primero
+    //       pide confirmar (ConfirmModal apilado sobre el formulario).
+    expect(screen.getByText("¿Enviar esta auditoría?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Sí, enviar" }));
+
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/auditorias-conjunto"),
