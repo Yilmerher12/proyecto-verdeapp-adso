@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session, selectinload
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.auditoria_conjunto import AuditoriaConjunto
-from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
 from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.residente import Residente
@@ -23,7 +22,12 @@ from app.models.rol import RolId
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.schemas.auditoria_conjunto import NivelDesempeno
-from app.services.notificaciones_helpers import admins_del_conjunto, reciclador_esta_presente, residentes_del_conjunto
+from app.services.notificaciones_helpers import (
+    admins_del_conjunto,
+    crear_notificacion,
+    reciclador_esta_presente,
+    residentes_del_conjunto,
+)
 from app.utils.imagenes import guardar_imagen_subida
 
 # ¿Qué? Carpeta donde quedan las fotos de evidencia, servida luego como
@@ -172,16 +176,14 @@ def _notificar_auditoria_publicada(db: Session, auditoria: AuditoriaConjunto) ->
     if not destinatarios:
         return
 
-    notif = Notificacion(
+    crear_notificacion(
+        db,
         tipo="AUDITORIA_PUBLICADA",
-        id_conjunto_residencial=auditoria.id_conjunto_residencial,
-        id_referencia=auditoria.id_auditoria,
         mensaje="El reciclador auditó la separación de residuos de tu conjunto.",
+        destinatarios=destinatarios,
+        id_conjunto=auditoria.id_conjunto_residencial,
+        id_referencia=auditoria.id_auditoria,
     )
-    db.add(notif)
-    db.flush()
-    for id_usuario in destinatarios:
-        db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=id_usuario))
 
 
 # ¿Qué? Niveles de desempeño que disparan una recomendación (ver
@@ -214,16 +216,14 @@ def _notificar_recomendacion_si_corresponde(db: Session, auditoria: AuditoriaCon
     if not destinatarios:
         return
 
-    notif = Notificacion(
+    crear_notificacion(
+        db,
         tipo="CONTENIDO_RECOMENDADO",
-        id_conjunto_residencial=auditoria.id_conjunto_residencial,
-        id_referencia=auditoria.id_auditoria,
         mensaje="El reciclador recomienda contenido educativo para tu conjunto.",
+        destinatarios=destinatarios,
+        id_conjunto=auditoria.id_conjunto_residencial,
+        id_referencia=auditoria.id_auditoria,
     )
-    db.add(notif)
-    db.flush()
-    for id_usuario in destinatarios:
-        db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=id_usuario))
 
 
 def _pertenece_al_conjunto(db: Session, current_user: Usuario, id_conjunto: UUID) -> bool:

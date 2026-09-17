@@ -20,12 +20,12 @@ from sqlalchemy.orm import Session
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.novedad import AlcanceNovedad, Novedad
-from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
 from app.models.residente import Residente
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.novedad import CrearNovedadRequest, EditarNovedadRequest, NovedadResponse
+from app.services.notificaciones_helpers import crear_notificacion
 
 # ¿Qué? El RF no define plazos distintos por tipo (a diferencia de
 #       Comunicados) — solo dice "el sistema sugiere una fecha, editable".
@@ -72,14 +72,10 @@ def _notificar_novedad(db: Session, novedad: Novedad, tipo: str, mensaje: str) -
     if not destinatarios_ids:
         return
 
-    # ¿Qué? id_conjunto_residencial queda en None a propósito — esta
-    #       notificación no pertenece a ningún conjunto (ver
-    #       models/notificacion.py, columna ahora opcional).
-    notif = Notificacion(tipo=tipo, id_conjunto_residencial=None, mensaje=mensaje)
-    db.add(notif)
-    db.flush()
-    for uid in destinatarios_ids:
-        db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=uid))
+    # ¿Qué? id_conjunto queda en None a propósito — esta notificación no
+    #       pertenece a ningún conjunto (ver models/notificacion.py,
+    #       columna opcional justo para este caso).
+    crear_notificacion(db, tipo=tipo, mensaje=mensaje, destinatarios=destinatarios_ids)
 
 
 def crear_novedad(db: Session, admin_usuario: Usuario, datos: CrearNovedadRequest) -> NovedadResponse:
