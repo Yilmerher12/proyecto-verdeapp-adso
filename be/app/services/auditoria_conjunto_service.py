@@ -10,7 +10,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
@@ -327,6 +327,10 @@ def listar_historial(db: Session, current_user: Usuario) -> list[AuditoriaConjun
     if not ids_conjuntos:
         return []
 
+    # ¿Qué? Issue #2 (hallazgo B2 de la auditoría) — auditoria.conjunto y
+    #       auditoria.reciclador son lazy="select" (default de SQLAlchemy):
+    #       _a_response() (routers/auditoria_conjunto.py) los lee por cada
+    #       fila, disparando 2 consultas extra por auditoría sin selectinload.
     stmt = (
         select(AuditoriaConjunto)
         .where(AuditoriaConjunto.id_conjunto_residencial.in_(ids_conjuntos))
@@ -340,6 +344,7 @@ def listar_historial(db: Session, current_user: Usuario) -> list[AuditoriaConjun
         #       ID ya no sirve como desempate — ver orden_interno en el
         #       modelo.
         .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
+        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
         .limit(50)
     )
     return list(db.execute(stmt).scalars().all())
@@ -355,5 +360,6 @@ def listar_mias(db: Session, id_usuario_reciclador: UUID) -> list[AuditoriaConju
         select(AuditoriaConjunto)
         .where(AuditoriaConjunto.id_reciclador == reciclador.id_reciclador)
         .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
+        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
     )
     return list(db.execute(stmt).scalars().all())
