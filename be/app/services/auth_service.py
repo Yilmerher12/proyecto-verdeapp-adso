@@ -305,7 +305,7 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
                 user.bloqueado_hasta = datetime.now(timezone.utc) + timedelta(minutes=MINUTOS_DE_BLOQUEO)
             db.commit()
         log_login_fallido(correo, "credenciales_invalidas")
-        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales incorrectas")
 
     if not user.is_active:
         log_login_fallido(correo, "cuenta_no_verificada")
