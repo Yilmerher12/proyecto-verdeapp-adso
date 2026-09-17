@@ -14,7 +14,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
@@ -191,9 +191,15 @@ def buscar_administradores(
           se espera que la persona afine la búsqueda, no que se le mande
           todo de una vez.
     """
+    # ¿Qué? Issue #2 (hallazgo B1 de la auditoría) — admin.usuario y
+    #       admin.conjuntos son lazy="select" (default de SQLAlchemy):
+    #       sin selectinload, cada fila de la página dispara 1-2 consultas
+    #       extra al armar la respuesta más abajo. Mismo patrón ya
+    #       corregido en conjunto_panel.py (issue #219).
     stmt = (
         select(AdministradorConjunto)
         .join(Usuario, AdministradorConjunto.id_usuario == Usuario.id_usuario)
+        .options(selectinload(AdministradorConjunto.usuario), selectinload(AdministradorConjunto.conjuntos))
         .limit(limit)
     )
 
