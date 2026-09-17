@@ -25,6 +25,7 @@ import { TELEFONO_REGEX } from "@/lib/validacion";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { InputField } from "@/components/ui/InputField";
 
 interface PerfilData {
   id: number;
@@ -80,6 +81,11 @@ export function ProfilePage() {
   const [guardando, setGuardando] = useState(false);
   const [exito, mostrarExito] = useAvisoTemporal<boolean>();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // ¿Qué? Issue #13 (hallazgo U8 de la auditoría) — antes "nombre y
+  //       apellidos son obligatorios" era un solo Alert genérico que no
+  //       decía cuál de los dos. Ahora cada campo se valida al salir de
+  //       él (onBlur), igual que ya hacen los formularios de auth.
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
@@ -147,21 +153,43 @@ export function ProfilePage() {
     setEditando(true);
     mostrarExito(false);
     setErrorMsg(null);
+    setFieldErrors({});
   };
 
   const cancelarEdicion = () => {
     setEditando(false);
     setErrorMsg(null);
+    setFieldErrors({});
+  };
+
+  const limpiarError = (campo: string) => {
+    if (fieldErrors[campo]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[campo];
+        return copy;
+      });
+    }
+  };
+
+  const validarCampo = (campo: "nombre" | "apellidos" | "telefono") => {
+    let mensaje = "";
+    if (campo === "nombre" && !formNombre.trim()) mensaje = t("profile.validation.firstNameRequired");
+    if (campo === "apellidos" && !formApellidos.trim()) mensaje = t("profile.validation.lastNameRequired");
+    if (campo === "telefono" && formTelefono.trim() && !TELEFONO_REGEX.test(formTelefono.trim())) {
+      mensaje = t("profile.validation.phoneInvalid");
+    }
+    setFieldErrors((prev) => (mensaje ? { ...prev, [campo]: mensaje } : prev));
   };
 
   const guardarPerfil = async () => {
-    if (!formNombre.trim() || !formApellidos.trim()) {
-      setErrorMsg(t("profile.validation.nameRequired"));
-      return;
-    }
+    const errores: Record<string, string> = {};
+    if (!formNombre.trim()) errores.nombre = t("profile.validation.firstNameRequired");
+    if (!formApellidos.trim()) errores.apellidos = t("profile.validation.lastNameRequired");
     const telefono = formTelefono.trim();
-    if (telefono && !TELEFONO_REGEX.test(telefono)) {
-      setErrorMsg(t("profile.validation.phoneInvalid"));
+    if (telefono && !TELEFONO_REGEX.test(telefono)) errores.telefono = t("profile.validation.phoneInvalid");
+    if (Object.keys(errores).length > 0) {
+      setFieldErrors(errores);
       return;
     }
     setGuardando(true);
@@ -381,57 +409,52 @@ export function ProfilePage() {
             <div className="space-y-4">
               {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
-              <div>
-                <label htmlFor="perfil-nombre" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("profile.fields.firstName")} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="perfil-nombre"
-                  value={formNombre}
-                  onChange={(e) => setFormNombre(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("profile.fields.firstName")}
+                name="nombre"
+                value={formNombre}
+                onChange={(e) => {
+                  setFormNombre(e.target.value);
+                  limpiarError("nombre");
+                }}
+                onBlur={() => validarCampo("nombre")}
+                error={fieldErrors.nombre}
+              />
 
-              <div>
-                <label htmlFor="perfil-apellidos" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("profile.fields.lastName")} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="perfil-apellidos"
-                  value={formApellidos}
-                  onChange={(e) => setFormApellidos(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("profile.fields.lastName")}
+                name="apellidos"
+                value={formApellidos}
+                onChange={(e) => {
+                  setFormApellidos(e.target.value);
+                  limpiarError("apellidos");
+                }}
+                onBlur={() => validarCampo("apellidos")}
+                error={fieldErrors.apellidos}
+              />
 
-              <div>
-                <label htmlFor="perfil-telefono" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("common.phone")}
-                </label>
-                <input
-                  id="perfil-telefono"
-                  value={formTelefono}
-                  onChange={(e) => setFormTelefono(e.target.value)}
-                  placeholder={t("profile.phonePlaceholder")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("common.phone")}
+                name="telefono"
+                value={formTelefono}
+                onChange={(e) => {
+                  setFormTelefono(e.target.value);
+                  limpiarError("telefono");
+                }}
+                onBlur={() => validarCampo("telefono")}
+                placeholder={t("profile.phonePlaceholder")}
+                error={fieldErrors.telefono}
+              />
 
               {perfil.role_id === RoleId.RECICLADOR && (
                 <>
-                  <div>
-                    <label htmlFor="perfil-asociacion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                      {t("profile.fields.association")}
-                    </label>
-                    <input
-                      id="perfil-asociacion"
-                      value={formAsociacion}
-                      onChange={(e) => setFormAsociacion(e.target.value)}
-                      placeholder={t("profile.associationPlaceholder")}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                    />
-                  </div>
+                  <InputField
+                    label={t("profile.fields.association")}
+                    name="asociacion"
+                    value={formAsociacion}
+                    onChange={(e) => setFormAsociacion(e.target.value)}
+                    placeholder={t("profile.associationPlaceholder")}
+                  />
 
                   {/* ¿Qué? Interruptor de consentimiento — apagado por
                       defecto. Sin esto, no había forma de que el reciclador

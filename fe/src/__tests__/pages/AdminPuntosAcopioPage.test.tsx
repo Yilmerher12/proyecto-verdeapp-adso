@@ -106,6 +106,24 @@ describe("AdminPuntosAcopioPage", () => {
     });
   });
 
+  // ¿Qué? Issue #13 (hallazgo U8 de la auditoría) — antes un campo vacío
+  //       solo se avisaba con un Alert genérico al enviar ("Nombre,
+  //       dirección y localidad son obligatorios"). Ahora cada campo se
+  //       valida al salir de él, y el error queda anclado a ESE campo.
+  it("marca el campo Nombre con su propio error al salir vacío, sin tocar los demás", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Todavía no hay puntos de acopio registrados.");
+    await user.click(screen.getByRole("button", { name: "Nuevo punto de acopio" }));
+
+    await user.click(screen.getByLabelText("Nombre"));
+    await user.tab();
+
+    expect(await screen.findByText("El nombre es obligatorio.")).toBeInTheDocument();
+    expect(screen.queryByText("La dirección es obligatoria.")).not.toBeInTheDocument();
+  });
+
   it("edita un punto de acopio existente", async () => {
     mockRespuestas([puntoActivo]);
     const user = userEvent.setup();

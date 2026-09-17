@@ -99,6 +99,22 @@ describe("AdminContenidoEducativoPage", () => {
     expect(mockCrear).not.toHaveBeenCalled();
   });
 
+  // ¿Qué? Issue #13 (hallazgo U8 de la auditoría) — antes un campo vacío
+  //       solo se avisaba con un Alert genérico al enviar. Ahora cada
+  //       campo se valida al salir de él, con el error anclado a ese campo.
+  it("marca el campo Categoría con su propio error al salir vacío, sin tocar los demás", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("button", { name: /nuevo módulo/i }));
+
+    await user.click(screen.getByLabelText("Categoría"));
+    await user.tab();
+
+    expect(await screen.findByText("La categoría es obligatoria.")).toBeInTheDocument();
+    expect(screen.queryByText("El título es obligatorio.")).not.toBeInTheDocument();
+  });
+
   it("edita un módulo existente", async () => {
     mockListar.mockResolvedValue([moduloExistente]);
     mockEditar.mockResolvedValue(moduloExistente);

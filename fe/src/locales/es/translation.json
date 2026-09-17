@@ -951,7 +951,8 @@
     "notRegistered": "No registrado",
     "emailNote": "El correo no se puede cambiar desde aquí.",
     "validation": {
-      "nameRequired": "Nombre y apellidos son obligatorios.",
+      "firstNameRequired": "El nombre es obligatorio.",
+      "lastNameRequired": "Los apellidos son obligatorios.",
       "phoneInvalid": "El número telefónico tiene un formato inválido."
     },
     "phonePlaceholder": "Ej: 3001234567",
@@ -1012,8 +1013,10 @@
       "deleteAriaLabel": "Confirmar eliminación"
     },
     "validation": {
-      "required": "Categoría, título y contenido son obligatorios.",
+      "categoryRequired": "La categoría es obligatoria.",
+      "titleRequired": "El título es obligatorio.",
       "titleTooShort": "El título debe tener al menos 5 caracteres.",
+      "bodyRequired": "El contenido es obligatorio.",
       "bodyTooShort": "El contenido debe tener al menos 20 caracteres."
     },
     "deleteError": "No se pudo eliminar. Intenta de nuevo.",
@@ -1049,7 +1052,9 @@
       "deleteAriaLabel": "Confirmar eliminación"
     },
     "validation": {
-      "required": "Nombre, dirección y localidad son obligatorios."
+      "nameRequired": "El nombre es obligatorio.",
+      "addressRequired": "La dirección es obligatoria.",
+      "localityRequired": "Selecciona una localidad."
     },
     "loadError": "No se pudo cargar la lista de puntos de acopio.",
     "deactivateError": "No se pudo dar de baja. Intenta de nuevo.",
