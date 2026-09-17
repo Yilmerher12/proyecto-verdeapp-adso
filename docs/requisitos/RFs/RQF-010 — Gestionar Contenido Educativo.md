@@ -28,7 +28,7 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' crear, modificar y e
 | `titulo`       | Texto  | Sí          | Mínimo 5 caracteres, máximo 255                                              |
 | `cuerpo_texto` | Texto  | Sí          | Mínimo 20 caracteres                                                         |
 | `accion`       | Enum   | Sí          | Valores permitidos: `crear`, `editar`, `eliminar`                            |
-| `contenido_id` | Número | Condicional | Obligatorio solo si la acción es editar o eliminar. Debe existir en la BD.   |
+| `contenido_id` | UUID   | Condicional | Obligatorio solo si la acción es editar o eliminar. Debe existir en la BD.   |
 
 ---
 

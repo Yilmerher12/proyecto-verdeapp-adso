@@ -31,7 +31,7 @@ El sistema debe enviar una notificación de 'Llegada al conjunto' a los Resident
 
 | Campo         | Tipo   | Obligatorio | Validaciones                                                                 |
 | ------------- | ------ | ----------- | ---------------------------------------------------------------------------- |
-| `conjunto_id` | Número | Sí          | Debe ser un ID válido, y el reciclador debe estar autorizado en ese conjunto.|
+| `conjunto_id` | UUID   | Sí          | Debe ser un ID válido, y el reciclador debe estar autorizado en ese conjunto.|
 
 ---
 
