@@ -810,7 +810,7 @@
       },
       "myConjuntos": {
         "title": "Mis conjuntos autorizados",
-        "empty": "Todavía no estás autorizado en ningún conjunto. Cuando un administrador te invite y aceptes, aparecerá aquí."
+        "empty": "Todavía no tienes ningún conjunto autorizado. Cuando un administrador te invite y aceptes, aparecerá aquí."
       },
       "notifications": {
         "title": "Notificaciones recibidas",

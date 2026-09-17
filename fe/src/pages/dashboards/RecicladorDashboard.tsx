@@ -27,6 +27,7 @@ import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResulta
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
 import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
 import { listarMisAuditorias, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
@@ -502,9 +503,7 @@ export function RecicladorDashboard() {
         {cargando ? (
           <LoadingState message={t("common.loading")} />
         ) : conjuntosAutorizados.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t("dashboards.reciclador.myConjuntos.empty")}
-          </p>
+          <EmptyState icon={Building2} message={t("dashboards.reciclador.myConjuntos.empty")} />
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {conjuntosAutorizados.map((c) => (

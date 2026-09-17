@@ -82,7 +82,7 @@ describe("RecicladorDashboard", () => {
     renderPage();
     await waitFor(() => {
       expect(
-        screen.getByText("Todavía no estás autorizado en ningún conjunto. Cuando un administrador te invite y aceptes, aparecerá aquí.")
+        screen.getByText("Todavía no tienes ningún conjunto autorizado. Cuando un administrador te invite y aceptes, aparecerá aquí.")
       ).toBeInTheDocument();
     });
     expect(screen.queryByRole("button", { name: "Llegué al conjunto" })).not.toBeInTheDocument();

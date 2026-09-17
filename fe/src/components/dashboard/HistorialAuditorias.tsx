@@ -17,6 +17,7 @@ import { listarHistorial, type AuditoriaConjunto } from "@/lib/auditoriaConjunto
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 export function HistorialAuditorias() {
@@ -47,7 +48,7 @@ export function HistorialAuditorias() {
       {cargando ? (
         <LoadingState message={t("common.loading")} />
       ) : auditorias.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("auditoriaResultado.historialEmpty")}</p>
+        <EmptyState icon={History} message={t("auditoriaResultado.historialEmpty")} />
       ) : (
         <ul className="divide-y divide-gray-50 dark:divide-gray-800">
           {auditorias.map((a) => {
