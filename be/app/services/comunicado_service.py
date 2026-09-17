@@ -15,7 +15,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.administrador_conjunto import AdministradorConjunto
@@ -156,12 +156,32 @@ def crear_comunicado(db: Session, administrador: AdministradorConjunto, datos: C
     return _a_response(comunicado, conjunto.nombre_conjunto)
 
 
-def listar_mis_comunicados(db: Session, administrador: AdministradorConjunto) -> List[ComunicadoResponse]:
+def listar_mis_comunicados(
+    db: Session, administrador: AdministradorConjunto, limit: int, offset: int
+) -> tuple[List[ComunicadoResponse], int]:
     """
     ¿Qué? Todo lo que el Admin Conjunto ha publicado, en TODOS los
           conjuntos que administra — activos y ya vencidos, porque sigue
           siendo su historial y debe poder gestionarlo (editar/eliminar).
+    ¿Para qué? Issue #11 (hallazgo U4 de la auditoría) — antes traía todo
+              el historial de una sola vez, igual que le pasaba a
+              Novedades antes de la issue #227. Mismo patrón de
+              limit/offset + total.
     """
+    condiciones = (
+        AdministradorConjuntoAsignacion.id_administrador == administrador.id_administrador,
+        AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
+    )
+
+    total = db.execute(
+        select(func.count(Comunicado.id_comunicado))
+        .join(
+            AdministradorConjuntoAsignacion,
+            AdministradorConjuntoAsignacion.id_conjunto_residencial == Comunicado.id_conjunto_residencial,
+        )
+        .where(*condiciones)
+    ).scalar_one()
+
     stmt = (
         select(Comunicado, ConjuntoResidencial.nombre_conjunto)
         .join(ConjuntoResidencial, Comunicado.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial)
@@ -169,14 +189,14 @@ def listar_mis_comunicados(db: Session, administrador: AdministradorConjunto) ->
             AdministradorConjuntoAsignacion,
             AdministradorConjuntoAsignacion.id_conjunto_residencial == Comunicado.id_conjunto_residencial,
         )
-        .where(
-            AdministradorConjuntoAsignacion.id_administrador == administrador.id_administrador,
-            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
-        )
+        .where(*condiciones)
         .order_by(Comunicado.created_at.desc())
+        .limit(limit)
+        .offset(offset)
     )
     filas = db.execute(stmt).all()
-    return [_a_response(comunicado, nombre) for comunicado, nombre in filas]
+    items = [_a_response(comunicado, nombre) for comunicado, nombre in filas]
+    return items, total
 
 
 def editar_comunicado(

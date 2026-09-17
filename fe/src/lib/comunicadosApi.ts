@@ -45,9 +45,16 @@ export async function crearComunicado(datos: CrearComunicadoPayload): Promise<Co
   return data;
 }
 
+export interface PaginaDeComunicados {
+  items: Comunicado[];
+  total: number;
+}
+
 // ¿Qué? Admin Conjunto — todo lo que ha publicado, en todos sus conjuntos.
-export async function listarMisComunicados(): Promise<Comunicado[]> {
-  const { data } = await axios.get(`${API_BASE}/mis-comunicados`);
+// ¿Para qué? Issue #11 — pedido de a páginas (limit/offset), igual que
+//           listarTodasLasNovedades (issue #227).
+export async function listarMisComunicados(limit: number, offset: number): Promise<PaginaDeComunicados> {
+  const { data } = await axios.get(`${API_BASE}/mis-comunicados`, { params: { limit, offset } });
   return data;
 }
 
