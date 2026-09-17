@@ -10,7 +10,6 @@ Descripción: Lógica de negocio del perfil del usuario autenticado.
           distinto por cada uno de los 4 roles (cada uno guarda su nombre y
           teléfono en su propia tabla) — ver obtener_registro_de_perfil.
 """
-import re
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile, status
@@ -32,10 +31,6 @@ from app.utils.imagenes import guardar_imagen_subida
 #       adjuntos de comunicados/novedades (be/app/uploads/), cada feature
 #       en su propia subcarpeta.
 CARPETA_FOTOS_PERFIL = Path(__file__).parent.parent / "uploads" / "perfiles"
-
-# ¿Qué? Formato válido de teléfono local (RQF-008): solo dígitos, entre 7
-#       (fijo con indicativo corto) y 10 (celular colombiano) caracteres.
-TELEFONO_REGEX = re.compile(r"^\d{7,10}$")
 
 
 def obtener_registro_de_perfil(db: Session, user: Usuario) -> Residente | Reciclador | AdministradorConjunto | None:
@@ -168,17 +163,14 @@ def obtener_perfil(db: Session, current_user: Usuario) -> dict:
 
 
 def actualizar_perfil(db: Session, current_user: Usuario, body: UpdateProfileBody) -> None:
+    # ¿Qué? Antes aquí se revisaba a mano que nombre/apellidos no estuvieran
+    #       vacíos y que el teléfono cumpliera el formato (RQF-008).
+    # ¿Impacto? Esas reglas ahora viven en UpdateProfileBody (schemas/user.py)
+    #           — Pydantic las aplica antes de que esta función reciba el
+    #           body, así que un dato inválido nunca llega hasta aquí.
     nombre = body.nombre.strip()
     apellidos = body.apellidos.strip()
-    if not nombre or not apellidos:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="Nombre y apellidos son obligatorios.")
-
     telefono = (body.numero_telefonico or "").strip()
-    if telefono and not TELEFONO_REGEX.match(telefono):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El número telefónico tiene un formato inválido.",
-        )
 
     if current_user.id_rol == RolId.ADMIN_SISTEMA:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="El perfil del administrador del sistema no es editable.")

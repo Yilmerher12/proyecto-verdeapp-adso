@@ -57,7 +57,7 @@ export function VerifyEmailPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#03130b] px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-200 dark:border-[#2a4d34] p-8 shadow-sm text-center">
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-200 dark:border-[#2a4d34] p-8 shadow-sm text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {t("verifyEmail.title")}
           </h1>
@@ -73,9 +73,9 @@ export function VerifyEmailPage() {
           {/* ──── Estado: éxito ──── */}
           {status === "success" && (
             <div className="mt-6">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-900/30">
                 <svg
-                  className="h-7 w-7 text-green-600 dark:text-green-400"
+                  className="h-7 w-7 text-accent-600 dark:text-accent-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

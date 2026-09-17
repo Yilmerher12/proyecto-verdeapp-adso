@@ -78,6 +78,54 @@ class TestRegister:
         assert response.status_code == 400
         assert "código de acceso" in response.json()["detail"].lower()
 
+    def test_register_residente_sin_torre(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #254: antes, sin torre, se guardaba el texto "None" en vez
+        de rechazar el registro."""
+        payload = _payload_residente(conjunto_verificado, email="sin.torre@verdeapp.com")
+        del payload["torre"]
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "torre" in response.json()["detail"].lower()
+
+    def test_register_residente_sin_apto(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #254: mismo caso que la torre, para el apartamento."""
+        payload = _payload_residente(conjunto_verificado, email="sin.apto@verdeapp.com")
+        del payload["apto"]
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "apartamento" in response.json()["detail"].lower()
+
+    def test_register_residente_torre_solo_simbolos(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: "!!!" no es un nombre real de torre."""
+        payload = _payload_residente(conjunto_verificado, email="torre.simbolos@verdeapp.com")
+        payload["torre"] = "!!!"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_residente_torre_guiones_repetidos(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: guiones repetidos ("1----B") tampoco son un dato real."""
+        payload = _payload_residente(conjunto_verificado, email="torre.guiones@verdeapp.com")
+        payload["torre"] = "1----B"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_residente_apto_con_guion_valido(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: el guion sigue permitido como separador legítimo."""
+        payload = _payload_residente(conjunto_verificado, email="apto.guion@verdeapp.com")
+        payload["apto"] = "12-B"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 201
+
     def test_register_residente_codigo_acceso_incorrecto(
         self, client: TestClient, conjunto_verificado: ConjuntoResidencial
     ) -> None:
@@ -191,6 +239,8 @@ class TestRegister:
                 "password": "TestPass123",
                 "nombre": "Sin",
                 "apellidos": "Conjunto",
+                "torre": "TORRE 1",
+                "apto": "101",
             },
         )
         assert response.status_code == 400
@@ -201,6 +251,22 @@ class TestRegister:
     ) -> None:
         payload = _payload_residente(conjunto_verificado, email="sinapellido@verdeapp.com")
         payload["apellidos"] = "   "
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_nombre_muy_corto(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email="nombrecorto@verdeapp.com")
+        payload["nombre"] = "A"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_telefono_invalido(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email="telefonoinvalido@verdeapp.com")
+        payload["numero_telefonico"] = "abc123!!"
         response = client.post(self.URL, json=payload)
         assert response.status_code == 422
 
@@ -673,8 +739,7 @@ class TestUpdateProfile:
             json={"nombre": "Nombre", "apellidos": "Apellido", "numero_telefonico": "abc123"},
             headers=auth_headers,
         )
-        assert response.status_code == 400
-        assert "formato inválido" in response.json()["detail"]
+        assert response.status_code == 422
 
     def test_update_profile_no_auth(self, client: TestClient) -> None:
         response = client.put(

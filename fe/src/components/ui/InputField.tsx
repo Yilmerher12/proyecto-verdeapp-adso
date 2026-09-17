@@ -7,6 +7,7 @@
  */
 
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 
 /**
@@ -39,6 +40,11 @@ interface InputFieldProps {
    *             teclado/lector de pantalla llegan directamente al punto de entrada. */
   autoFocus?: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /** ¿Qué? Se dispara al salir del campo (perder el foco).
+   *  ¿Para qué? Permite mostrar un error de validación apenas el usuario
+   *             termina de escribir ese campo, sin esperar a que envíe
+   *             todo el formulario. */
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 /**
@@ -59,10 +65,12 @@ export function InputField({
   disablePaste = false,
   autoFocus = false,
   onChange,
+  onBlur,
 }: InputFieldProps) {
   // ¿Qué? Estado para mostrar/ocultar contraseña.
   // ¿Para qué? Permitir al usuario verificar lo que escribió en campos de password.
   // ¿Impacto? Mejora la UX — evita errores de tipeo al registrarse o cambiar contraseña.
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
@@ -104,6 +112,7 @@ export function InputField({
           autoComplete={disablePaste ? "off" : autoComplete}
           autoFocus={autoFocus}
           onChange={onChange}
+          onBlur={onBlur}
           aria-invalid={!!error}
           aria-describedby={error ? `${name}-error` : undefined}
           // ¿Qué? Bloquea pegar, copiar, cortar y arrastrar cuando disablePaste=true.
@@ -129,7 +138,7 @@ export function InputField({
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            aria-label={showPassword ? t("common.hidePassword") : t("common.showPassword")}
           >
             {/* ¿Qué? Antes el ícono mostraba "lo que pasará si haces clic"
                 (ojo abierto cuando estaba oculta, tachado cuando ya estaba

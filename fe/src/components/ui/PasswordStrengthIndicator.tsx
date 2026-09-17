@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 /**
  * Archivo: components/ui/PasswordStrengthIndicator.tsx
  * Descripción: Indicador visual de fortaleza de contraseña con barras de colores y etiqueta.
@@ -9,49 +8,7 @@
  */
 
 import { useTranslation } from "react-i18next";
-
-/**
- * ¿Qué? Nivel de fortaleza calculado a partir de los criterios de la contraseña.
- * ¿Para qué? Tipado explícito para evitar valores inválidos en el cálculo de fortaleza.
- * ¿Impacto? TypeScript garantiza que solo se usen los cuatro valores definidos.
- */
-export type PasswordStrength = 0 | 1 | 2 | 3 | 4 | 5;
-
-export function calculatePasswordStrength(password: string): PasswordStrength {
-  if (!password) return 0;
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[a-z]/.test(password)) score++;
-  if (/\d/.test(password)) score++;
-  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)) score++;
-  return score as PasswordStrength;
-}
-
-/**
- * Antes cada uno de los 4 formularios que piden una contraseña nueva
- * (Registro, Cambiar contraseña, Restablecer contraseña, Aceptar invitación)
- * traía su propia versión de "¿esta contraseña sirve?" copiada y pegada —
- * y no siempre decían lo mismo: Registro exigía además un símbolo especial
- * que el backend nunca pidió, y Aceptar invitación solo revisaba el largo,
- * sin mayúscula/minúscula/número. Esta función es la única fuente de verdad
- * de ahora en adelante, y refleja EXACTAMENTE la regla real del backend
- * (be/app/schemas/user.py: 8+ caracteres, mayúscula, minúscula, número — el
- * símbolo especial es un extra que suma puntos en la barra, pero nunca es
- * obligatorio para poder enviar el formulario).
- *
- * Devuelve un código (no un texto) para que cada pantalla lo traduzca con
- * sus propias claves de i18next (todas los 4 formularios ya usan i18n).
- */
-export type PasswordRequirementError = "too_short" | "no_uppercase" | "no_lowercase" | "no_digit";
-
-export function getPasswordRequirementError(password: string): PasswordRequirementError | null {
-  if (password.length < 8) return "too_short";
-  if (!/[A-Z]/.test(password)) return "no_uppercase";
-  if (!/[a-z]/.test(password)) return "no_lowercase";
-  if (!/\d/.test(password)) return "no_digit";
-  return null;
-}
+import { calculatePasswordStrength, type PasswordStrength } from "@/lib/passwordStrength";
 
 // ¿Qué? Solo colores — la etiqueta de texto ahora viene de translation.json
 //       (clave "passwordStrength.1".."passwordStrength.5") para que cambie
@@ -64,7 +21,7 @@ const STRENGTH_META: Record<
   2: { labelColor: "text-red-500 dark:text-red-400",     barColor: "bg-red-400" },
   3: { labelColor: "text-orange-500 dark:text-orange-400", barColor: "bg-orange-400" },
   4: { labelColor: "text-yellow-600 dark:text-yellow-400", barColor: "bg-yellow-400" },
-  5: { labelColor: "text-green-600 dark:text-green-500", barColor: "bg-green-500" },
+  5: { labelColor: "text-accent-600 dark:text-accent-500", barColor: "bg-accent-500" },
 };
 
 interface PasswordStrengthIndicatorProps {

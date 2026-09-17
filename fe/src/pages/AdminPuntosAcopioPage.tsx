@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MapPin, Pencil, Plus, Power, PowerOff, Trash2 } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Alert } from "@/components/ui/Alert";
 import {
   crearPuntoAcopio,
   darDeBajaPuntoAcopio,
@@ -36,6 +40,10 @@ export function AdminPuntosAcopioPage() {
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // ¿Qué? Issue #6 (hallazgo F1 de la auditoría) — mismo problema que
+  //       AdminContenidoEducativoPage: errorMsg solo se veía dentro del
+  //       modal de crear/editar, nunca en la carga inicial.
+  const [cargaError, setCargaError] = useState(false);
 
   const [editando, setEditando] = useState<PuntoAcopioAdmin | null>(null);
   const [creando, setCreando] = useState(false);
@@ -45,23 +53,27 @@ export function AdminPuntosAcopioPage() {
   const [aDarDeBaja, setADarDeBaja] = useState<PuntoAcopioAdmin | null>(null);
   const [aEliminar, setAEliminar] = useState<PuntoAcopioAdmin | null>(null);
 
-  const cargar = () => {
+  const cargar = useCallback(() => {
     if (!user) return;
     setCargando(true);
+    setCargaError(false);
     listarPuntosAcopio()
       .then(setPuntos)
-      .catch(() => setErrorMsg(t("adminPuntosAcopio.loadError")))
+      .catch(() => setCargaError(true))
       .finally(() => setCargando(false));
-  };
+  }, [user]);
 
+  // ¿Qué? Issue #225 — "cargar" faltaba en las dependencias; se silenciaba
+  //       la advertencia en vez de arreglarla. Envolverla en useCallback
+  //       (arriba) la vuelve estable salvo cuando "user" o "t" cambian de
+  //       verdad, así que agregarla aquí no dispara peticiones de más.
   useEffect(() => {
     cargar();
     axios
       .get<Localidad[]>(`${API_BASE_URL}/api/v1/geography/localidades`)
       .then((res) => setLocalidades(res.data))
       .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [cargar]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
@@ -150,7 +162,7 @@ export function AdminPuntosAcopioPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("adminPuntosAcopio.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -159,27 +171,25 @@ export function AdminPuntosAcopioPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("adminPuntosAcopio.newPoint")}
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
+      {!cargando && cargaError && <Alert type="error" message={t("adminPuntosAcopio.loadError")} />}
 
-      {!cargando && puntos.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <MapPin className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("adminPuntosAcopio.emptyState")}</p>
-        </div>
+      {!cargando && !cargaError && puntos.length === 0 && (
+        <EmptyState icon={MapPin} message={t("adminPuntosAcopio.emptyState")} />
       )}
 
       <div className="space-y-3">
         {puntos.map((item) => (
           <div
             key={item.id_punto_acopio}
-            className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+            className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#f7f9f3] p-4 dark:border-[#2a4d34] dark:bg-[#1c341b]"
           >
             <div className="min-w-0">
               <div className="flex items-center gap-2">
@@ -216,7 +226,7 @@ export function AdminPuntosAcopioPage() {
                 <>
                   <button
                     onClick={() => reactivar(item)}
-                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-green-600 transition-colors hover:bg-green-50 dark:border-[#2a4d34] dark:text-green-400 dark:hover:bg-green-900/20"
+                    className="cursor-pointer rounded-lg border border-gray-200 p-2 text-accent-600 transition-colors hover:bg-accent-50 dark:border-[#2a4d34] dark:text-accent-400 dark:hover:bg-accent-900/20"
                     aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
                   >
                     <Power className="h-4 w-4" />
@@ -242,11 +252,7 @@ export function AdminPuntosAcopioPage() {
               {editando ? t("adminPuntosAcopio.modal.editTitle") : t("adminPuntosAcopio.newPoint")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
@@ -258,7 +264,7 @@ export function AdminPuntosAcopioPage() {
                   value={form.nombre}
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                   placeholder={t("adminPuntosAcopio.fields.namePlaceholder")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -270,7 +276,7 @@ export function AdminPuntosAcopioPage() {
                   id="acopio-localidad"
                   value={form.id_localidad || ""}
                   onChange={(e) => setForm({ ...form, id_localidad: Number(e.target.value) })}
-                  className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 >
                   <option value="" disabled>
                     {t("adminPuntosAcopio.fields.localitySelect")}
@@ -293,7 +299,7 @@ export function AdminPuntosAcopioPage() {
                 value={form.direccion}
                 onChange={(e) => setForm({ ...form, direccion: e.target.value })}
                 placeholder={t("adminPuntosAcopio.fields.addressPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -306,7 +312,7 @@ export function AdminPuntosAcopioPage() {
                   id="acopio-encargado"
                   value={form.nombre_encargado ?? ""}
                   onChange={(e) => setForm({ ...form, nombre_encargado: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -318,7 +324,7 @@ export function AdminPuntosAcopioPage() {
                   id="acopio-telefono"
                   value={form.telefono_contacto ?? ""}
                   onChange={(e) => setForm({ ...form, telefono_contacto: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
             </div>
@@ -333,7 +339,7 @@ export function AdminPuntosAcopioPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")
@@ -347,63 +353,29 @@ export function AdminPuntosAcopioPage() {
       )}
 
       {aDarDeBaja && (
-        <Modal onClose={() => setADarDeBaja(null)} aria-label={t("adminPuntosAcopio.modal.deactivateAriaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <PowerOff className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("adminPuntosAcopio.deactivateConfirm.title", { nombre: aDarDeBaja.nombre })}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("adminPuntosAcopio.deactivateConfirm.warning")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setADarDeBaja(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={confirmarDarDeBaja}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                {t("adminPuntosAcopio.deactivateConfirm.confirm")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={PowerOff}
+          variant="danger"
+          ariaLabel={t("adminPuntosAcopio.modal.deactivateAriaLabel")}
+          title={t("adminPuntosAcopio.deactivateConfirm.title", { nombre: aDarDeBaja.nombre })}
+          description={t("adminPuntosAcopio.deactivateConfirm.warning")}
+          confirmLabel={t("adminPuntosAcopio.deactivateConfirm.confirm")}
+          onConfirm={confirmarDarDeBaja}
+          onClose={() => setADarDeBaja(null)}
+        />
       )}
 
       {aEliminar && (
-        <Modal onClose={() => setAEliminar(null)} aria-label={t("adminPuntosAcopio.modal.deleteAriaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <Trash2 className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("adminPuntosAcopio.deleteConfirm.title", { nombre: aEliminar.nombre })}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("adminPuntosAcopio.deleteConfirm.warning")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setAEliminar(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={confirmarEliminar}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                {t("adminPuntosAcopio.deleteConfirm.confirm")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={Trash2}
+          variant="danger"
+          ariaLabel={t("adminPuntosAcopio.modal.deleteAriaLabel")}
+          title={t("adminPuntosAcopio.deleteConfirm.title", { nombre: aEliminar.nombre })}
+          description={t("adminPuntosAcopio.deleteConfirm.warning")}
+          confirmLabel={t("adminPuntosAcopio.deleteConfirm.confirm")}
+          onConfirm={confirmarEliminar}
+          onClose={() => setAEliminar(null)}
+        />
       )}
     </div>
   );

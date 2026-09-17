@@ -23,6 +23,83 @@ def _validate_password_strength(v: str) -> str:
     return v
 
 
+# ¿Qué? Longitud mínima para nombre/apellidos, y formato del teléfono
+#       (RQF-008: solo dígitos, entre 7 y 10 caracteres).
+# ¿Para qué? Antes cada formulario (registro, editar perfil) definía su
+#           propia copia de estas reglas — o, en el caso del registro, no
+#           tenía ninguna regla en absoluto. Ahora es una sola fuente de
+#           verdad, compartida por UserCreate y UpdateProfileBody más
+#           abajo, para que registrarse y editar el perfil exijan
+#           exactamente lo mismo.
+NOMBRE_MIN_LENGTH = 2
+TELEFONO_REGEX = re.compile(r"^\d{7,10}$")
+
+# ¿Qué? Issue #255 — formato de Torre/Bloque y Apartamento: letras y
+#       números, con un solo espacio o guion como separador entre partes
+#       ("12-B", "TORRE 1", "BLOQUE 12-B"), nunca repetido ni suelto al
+#       principio o final ("1----B", "-3B", "3B-").
+# ¿Para qué? Las convenciones de nombres de torres/bloques varían demasiado
+#           entre conjuntos reales como para exigir un formato más estricto
+#           — esto solo descarta lo que claramente no es un dato real
+#           (puros símbolos, "3b..a.a.s").
+UNIDAD_REGEX = re.compile(r"^[A-Za-z0-9]+(?:[ -][A-Za-z0-9]+)*$")
+
+
+def _validar_nombre_obligatorio(v: str) -> str:
+    """Exige contenido real (no solo espacios) y una longitud mínima razonable.
+
+    ¿Para qué? Un mínimo de 2 caracteres descarta lo obviamente inválido
+              (nombre="", nombre="a") sin imponer una regla de "solo
+              letras" que rechazaría nombres reales con guion, apóstrofe
+              o tilde.
+    """
+    texto = (v or "").strip()
+    if not texto:
+        raise ValueError("Este campo es obligatorio.")
+    if len(texto) < NOMBRE_MIN_LENGTH:
+        raise ValueError(f"Debe tener al menos {NOMBRE_MIN_LENGTH} caracteres.")
+    return v
+
+
+def _validar_telefono_opcional(v: Optional[str]) -> Optional[str]:
+    """El teléfono sigue siendo opcional — pero si se da uno, debe ser real.
+
+    ¿Qué? Antes esta regla (RQF-008) solo existía para "editar perfil"
+          (be/app/services/user_service.py) — el registro no tenía
+          ninguna, así que se podía crear una cuenta con
+          numero_telefonico="abc!!!".
+    ¿Impacto? Vacío o None sigue pasando sin problema (campo opcional).
+              "N/A" (el valor por defecto que ya usan cuentas existentes
+              cuando no se registró ningún teléfono) también se acepta
+              tal cual, para no romper ese valor histórico.
+    """
+    if v is None:
+        return v
+    texto = v.strip()
+    if not texto or texto == "N/A":
+        return v
+    if not TELEFONO_REGEX.match(texto):
+        raise ValueError("El número telefónico tiene un formato inválido.")
+    return v
+
+
+def _validar_formato_unidad(v: Optional[str]) -> Optional[str]:
+    """Torre/Bloque y Apartamento siguen siendo opcionales aquí (la
+    obligatoriedad para Residente vive en auth_service.register_user) —
+    pero si se da un valor, no puede ser solo símbolos ni texto vacío con
+    espacios.
+
+    ¿Impacto? "TORRE 1", "12-B", "B2" pasan sin problema. "!!!", "   ",
+              "1----B", "3b..a.a.s" se rechazan.
+    """
+    if v is None:
+        return v
+    texto = v.strip()
+    if texto and not UNIDAD_REGEX.match(texto):
+        raise ValueError("Solo se permiten letras, números, y un espacio o guion como separador.")
+    return v
+
+
 # Schemas de REQUEST (Registro y Login)
 
 class UserCreate(BaseModel):
@@ -62,12 +139,30 @@ class UserCreate(BaseModel):
     #       no aquí (mismo patrón ya usado para id_conjunto_residencial).
     codigo_acceso: Optional[str] = None
 
+    @field_validator("nombre")
+    @classmethod
+    def validate_nombre(cls, v: str) -> str:
+        return _validar_nombre_obligatorio(v)
+
     @field_validator("apellidos")
     @classmethod
     def validate_apellidos_no_vacio(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("Los apellidos son obligatorios")
-        return v
+        return _validar_nombre_obligatorio(v)
+
+    @field_validator("numero_telefonico")
+    @classmethod
+    def validate_numero_telefonico(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_telefono_opcional(v)
+
+    @field_validator("torre")
+    @classmethod
+    def validate_torre(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_formato_unidad(v)
+
+    @field_validator("apto")
+    @classmethod
+    def validate_apto(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_formato_unidad(v)
 
     # ¿Qué? Antes UserCreate era el único de los 3 schemas de contraseña
     #       (registro, cambio, recuperación) sin este validador.
@@ -165,6 +260,25 @@ class UpdateProfileBody(BaseModel):
     #       Directorio general. Solo aplica al rol Reciclador, igual que
     #       "asociacion" — el endpoint la ignora para los demás roles.
     mostrar_contacto_directorio: bool = False
+
+    # ¿Qué? Mismas reglas que UserCreate (arriba) — antes esta pantalla
+    #       ("editar perfil") las revisaba a mano dentro de
+    #       user_service.actualizar_perfil() en vez de aquí, en el molde
+    #       de datos, que es el lugar correcto para esto.
+    @field_validator("nombre")
+    @classmethod
+    def validate_nombre(cls, v: str) -> str:
+        return _validar_nombre_obligatorio(v)
+
+    @field_validator("apellidos")
+    @classmethod
+    def validate_apellidos(cls, v: str) -> str:
+        return _validar_nombre_obligatorio(v)
+
+    @field_validator("numero_telefonico")
+    @classmethod
+    def validate_numero_telefonico(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_telefono_opcional(v)
 
 
 class UpdateLocaleRequest(BaseModel):

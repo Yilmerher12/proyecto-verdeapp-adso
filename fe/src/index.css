@@ -283,3 +283,32 @@
     }
   }
 }
+
+/* ¿Qué? Cursor parpadeante del efecto de máquina de escribir del Hero
+   (ver LandingPage.tsx — "VerdeApp" + el eslogan se escriben letra por
+   letra).
+   ¿Para qué? Sin esto, el cursor se quedaría fijo mientras dura cada
+   pausa entre letras — no se leería como un cursor de texto real.
+   ¿Impacto? Esta regla es un respaldo: LandingPage.tsx ya decide en
+   JavaScript no escribir letra por letra si el sistema operativo pidió
+   "reducir movimiento" (el cursor ni siquiera se monta en ese caso), pero
+   dejar también la guarda aquí evita que esta animación específica quede
+   como la única excepción a la convención del resto del archivo. */
+@keyframes caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-caret-blink {
+      animation: caret-blink 1s step-end infinite;
+    }
+  }
+}

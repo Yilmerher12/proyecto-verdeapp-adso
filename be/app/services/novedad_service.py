@@ -15,17 +15,17 @@ from typing import List
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.novedad import AlcanceNovedad, Novedad
-from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
 from app.models.residente import Residente
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.novedad import CrearNovedadRequest, EditarNovedadRequest, NovedadResponse
+from app.services.notificaciones_helpers import crear_notificacion
 
 # ¿Qué? El RF no define plazos distintos por tipo (a diferencia de
 #       Comunicados) — solo dice "el sistema sugiere una fecha, editable".
@@ -72,14 +72,10 @@ def _notificar_novedad(db: Session, novedad: Novedad, tipo: str, mensaje: str) -
     if not destinatarios_ids:
         return
 
-    # ¿Qué? id_conjunto_residencial queda en None a propósito — esta
-    #       notificación no pertenece a ningún conjunto (ver
-    #       models/notificacion.py, columna ahora opcional).
-    notif = Notificacion(tipo=tipo, id_conjunto_residencial=None, mensaje=mensaje)
-    db.add(notif)
-    db.flush()
-    for uid in destinatarios_ids:
-        db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=uid))
+    # ¿Qué? id_conjunto queda en None a propósito — esta notificación no
+    #       pertenece a ningún conjunto (ver models/notificacion.py,
+    #       columna opcional justo para este caso).
+    crear_notificacion(db, tipo=tipo, mensaje=mensaje, destinatarios=destinatarios_ids)
 
 
 def crear_novedad(db: Session, admin_usuario: Usuario, datos: CrearNovedadRequest) -> NovedadResponse:
@@ -104,10 +100,19 @@ def crear_novedad(db: Session, admin_usuario: Usuario, datos: CrearNovedadReques
     return _a_response(novedad)
 
 
-def listar_todas(db: Session) -> List[NovedadResponse]:
-    """CA-035.4: el Admin Sistema ve el historial completo, activas y archivadas."""
-    stmt = select(Novedad).order_by(Novedad.created_at.desc())
-    return [_a_response(n) for n in db.execute(stmt).scalars().all()]
+def listar_todas(db: Session, limit: int, offset: int) -> tuple[List[NovedadResponse], int]:
+    """CA-035.4: el Admin Sistema ve el historial completo, activas y archivadas.
+
+    ¿Qué? Issue #227 — antes esto traía TODO el historial en una sola
+          respuesta, sin ningún tope. Con el tiempo, ese historial solo
+          crece (nunca se borra nada, solo se archiva) — igual que el
+          listado de Residentes/Recicladores de admin.py (issue #207),
+          ahora se pide de a "páginas".
+    """
+    total = db.execute(select(func.count()).select_from(Novedad)).scalar_one()
+    stmt = select(Novedad).order_by(Novedad.created_at.desc()).limit(limit).offset(offset)
+    items = [_a_response(n) for n in db.execute(stmt).scalars().all()]
+    return items, total
 
 
 def _obtener_o_404(db: Session, id_novedad: UUID) -> Novedad:

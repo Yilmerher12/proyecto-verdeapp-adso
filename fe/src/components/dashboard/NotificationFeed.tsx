@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 /**
  * Este bloque (el título, el contador de no leídas, la lista, el botón de
  * "ver más", marcar leídas / limpiar leídas) estaba copiado casi igual en
@@ -12,66 +11,50 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Bell, Building2, Clock, DoorOpen, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
+import { AlertTriangle, Bell, Building2, Clock, DoorOpen, GraduationCap, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import i18n from "@/i18n";
-
-export interface NotificacionItem {
-  id: string;
-  tipo: string;
-  mensaje: string;
-  // ¿Qué? Puntero opcional al registro relacionado (ej. id_auditoria para
-  //       AUDITORIA_PUBLICADA) — la mayoría de tipos no lo usan.
-  id_referencia: string | null;
-  // ¿Qué? Puede ser null — las novedades de plataforma (RQF-015) no
-  //       pertenecen a ningún conjunto residencial.
-  nombre_conjunto: string | null;
-  leida: boolean;
-  created_at: string;
-}
+import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 
 const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   LLEGADA_RECICLADOR: { Icon: Truck, color: "text-teal-700 dark:text-teal-400" },
   SHUT_LLENO: { Icon: AlertTriangle, color: "text-amber-700 dark:text-amber-500" },
-  SHUT_LIBRE: { Icon: PackageCheck, color: "text-green-700 dark:text-green-500" },
+  SHUT_LIBRE: { Icon: PackageCheck, color: "text-accent-700 dark:text-accent-500" },
   FINALIZACION_RECICLADOR: { Icon: DoorOpen, color: "text-indigo-700 dark:text-indigo-400" },
   // RQF-016 (desvinculación y reasignación de conjuntos)
   DESVINCULACION_APROBADA: { Icon: Unlink, color: "text-gray-600 dark:text-gray-400" },
   DESVINCULACION_RECHAZADA: { Icon: XCircle, color: "text-red-600 dark:text-red-400" },
-  CONJUNTO_ASIGNADO: { Icon: Building2, color: "text-green-700 dark:text-green-500" },
+  CONJUNTO_ASIGNADO: { Icon: Building2, color: "text-accent-700 dark:text-accent-500" },
   // RQF-014 (comunicados del conjunto)
   COMUNICADO_NUEVO: { Icon: Megaphone, color: "text-purple-700 dark:text-purple-400" },
   COMUNICADO_ACTUALIZADO: { Icon: Megaphone, color: "text-purple-500 dark:text-purple-300" },
   // RQF-015 (novedades generales de la plataforma)
   NOVEDAD_NUEVA: { Icon: Newspaper, color: "text-indigo-700 dark:text-indigo-400" },
   NOVEDAD_ACTUALIZADA: { Icon: Newspaper, color: "text-indigo-500 dark:text-indigo-300" },
+  // RQF-013 (recomendación de contenido educativo según auditoría)
+  CONTENIDO_RECOMENDADO: { Icon: GraduationCap, color: "text-amber-700 dark:text-amber-500" },
 };
-
-// ¿Qué? Se usa i18n.t() directamente (no el hook useTranslation) porque esta
-//       es una función común, no un componente — pero como siempre se llama
-//       desde el render de un componente que sí usa el hook, el texto se
-//       actualiza igual al cambiar de idioma.
-export function tiempoRelativo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return i18n.t("notificationFeed.time.justNow");
-  if (mins < 60) return i18n.t("notificationFeed.time.minutesAgo", { count: mins });
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return i18n.t("notificationFeed.time.hoursAgo", { count: hrs });
-  return i18n.t("notificationFeed.time.daysAgo", { count: Math.floor(hrs / 24) });
-}
 
 interface NotificationFeedProps {
   title: string;
   notifications: NotificacionItem[];
   emptyMessage: string;
-  /** Color del contador y el punto de "no leída" — el acento del rol (ej: "bg-green-600" / "bg-amber-500"). */
+  /** Color del contador y el punto de "no leída" — el acento del rol (ej: "bg-accent-600" / "bg-amber-500"). */
   accentBg: string;
   /** Fondo de la fila cuando está sin leer (claro + oscuro), a tono con el mismo acento. */
   accentHighlight: string;
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   onClearRead: () => void;
+  /**
+   * ¿Qué? Acción opcional al hacer clic en una notificación, además de
+   * marcarla leída (ej: navegar a la página relacionada).
+   * ¿Para qué? Issue #4 (RQF-013) — "entre menos clicks tenga que hacer el
+   * usuario, mejor": clic en la notificación de contenido recomendado debe
+   * llevar directo a "Aprender", no solo marcarla como leída. Se deja
+   * opcional para no forzar a los otros 2 dashboards que usan este mismo
+   * componente a implementar una navegación que no necesitan.
+   */
+  onItemClick?: (notif: NotificacionItem) => void;
 }
 
 export function NotificationFeed({
@@ -83,16 +66,17 @@ export function NotificationFeed({
   onMarkRead,
   onMarkAllRead,
   onClearRead,
+  onItemClick,
 }: NotificationFeedProps) {
   const { t } = useTranslation();
   const [expandido, setExpandido] = useState(false);
   const noLeidas = notifications.filter((n) => !n.leida).length;
 
   return (
-    <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
+    <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-green-600" />
+          <Clock className="h-4 w-4 text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h2>
           {noLeidas > 0 && (
             <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white ${accentBg}`}>
@@ -102,7 +86,7 @@ export function NotificationFeed({
         </div>
         <div className="flex items-center gap-3">
           {noLeidas > 0 && (
-            <button onClick={onMarkAllRead} className="cursor-pointer text-xs font-medium text-green-700 transition-colors hover:text-green-600 dark:text-green-500 dark:hover:text-green-400">
+            <button onClick={onMarkAllRead} className="cursor-pointer text-xs font-medium text-accent-700 transition-colors hover:text-accent-600 dark:text-accent-500 dark:hover:text-accent-400">
               {t("notificationFeed.markAllRead")}
             </button>
           )}
@@ -121,19 +105,30 @@ export function NotificationFeed({
           <ul className="divide-y divide-gray-50 dark:divide-gray-800">
             {(expandido ? notifications : notifications.slice(0, 5)).map((n) => {
               const meta = TIPO_META[n.tipo] ?? { Icon: Bell, color: "text-gray-500" };
+              const interactiva = !n.leida || Boolean(onItemClick);
+              const activar = () => {
+                if (!n.leida) onMarkRead(n.id);
+                onItemClick?.(n);
+              };
               return (
                 <li
                   key={n.id}
-                  onClick={() => !n.leida && onMarkRead(n.id)}
+                  onClick={() => interactiva && activar()}
                   onKeyDown={(e) => {
-                    if (!n.leida && (e.key === "Enter" || e.key === " ")) {
+                    if (interactiva && (e.key === "Enter" || e.key === " ")) {
                       e.preventDefault();
-                      onMarkRead(n.id);
+                      activar();
                     }
                   }}
-                  role={!n.leida ? "button" : undefined}
-                  tabIndex={!n.leida ? 0 : undefined}
-                  aria-label={!n.leida ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}` : undefined}
+                  role={interactiva ? "button" : undefined}
+                  tabIndex={interactiva ? 0 : undefined}
+                  aria-label={
+                    interactiva
+                      ? !n.leida
+                        ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}`
+                        : n.mensaje
+                      : undefined
+                  }
                   className={`flex cursor-pointer items-start gap-3 px-5 py-3.5 transition-colors ${
                     !n.leida ? accentHighlight : "hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
                   }`}

@@ -1,5 +1,5 @@
  
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
@@ -21,6 +21,10 @@ import {
 import { RoleId } from "@/types/auth";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { notificarFotoPerfilActualizada } from "@/lib/profileEvents";
+import { TELEFONO_REGEX } from "@/lib/validacion";
+import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
+import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 interface PerfilData {
   id: number;
@@ -74,27 +78,27 @@ export function ProfilePage() {
   const [formAsociacion, setFormAsociacion] = useState("");
   const [formMostrarContacto, setFormMostrarContacto] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [exito, setExito] = useState(false);
+  const [exito, mostrarExito] = useAvisoTemporal<boolean>();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
   const inputFotoRef = useRef<HTMLInputElement>(null);
 
-  // ¿Qué? Mismo formato que valida el backend (RQF-008): solo dígitos,
-  //       entre 7 (fijo) y 10 (celular) caracteres.
-  const TELEFONO_REGEX = /^\d{7,10}$/;
-
-  const cargarPerfil = () => {
+  const cargarPerfil = useCallback(() => {
     if (!user) return;
     axios
       .get(`${API_BASE_URL}/api/v1/users/me`)
       .then((res) => setPerfil(res.data))
       .catch(() => {})
       .finally(() => setCargando(false));
-  };
+  }, [user]);
 
-  useEffect(() => { cargarPerfil(); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ¿Qué? Issue #225 — "cargarPerfil" faltaba en las dependencias; se
+  //       silenciaba la advertencia en vez de agregarla.
+  useEffect(() => {
+    cargarPerfil();
+  }, [cargarPerfil]);
 
   // ¿Qué? Sube la foto de perfil — disponible para los 4 roles (a
   //       diferencia de nombre/teléfono, que el Admin del Sistema no puede
@@ -141,7 +145,7 @@ export function ProfilePage() {
     setFormAsociacion(asoc && asoc !== "INDEPENDIENTE" ? asoc : "");
     setFormMostrarContacto(perfil.mostrar_contacto_directorio);
     setEditando(true);
-    setExito(false);
+    mostrarExito(false);
     setErrorMsg(null);
   };
 
@@ -171,21 +175,17 @@ export function ProfilePage() {
         mostrar_contacto_directorio: formMostrarContacto,
       });
       setEditando(false);
-      setExito(true);
-      setTimeout(() => setExito(false), 3000);
+      mostrarExito(true);
       cargarPerfil();
     } catch (err) {
-      const backendMsg = axios.isAxiosError(err)
-        ? (err.response?.data as { detail?: string } | undefined)?.detail
-        : undefined;
-      setErrorMsg(backendMsg || t("common.saveError"));
+      setErrorMsg(err instanceof Error ? err.message : t("common.saveError"));
     } finally {
       setGuardando(false);
     }
   };
 
-  if (cargando) return <p className="text-sm text-gray-500 dark:text-gray-400 px-2 pt-6">{t("profile.loading")}</p>;
-  if (!perfil) return <p className="text-sm text-red-500 px-2 pt-6">{t("profile.loadError")}</p>;
+  if (cargando) return <div className="pt-6"><LoadingState message={t("profile.loading")} /></div>;
+  if (!perfil) return <div className="pt-6"><Alert type="error" message={t("profile.loadError")} /></div>;
 
   const role = ROLE_THEME[perfil.role_id] ?? ROLE_THEME[RoleId.RESIDENTE];
   const { Icon: RoleIcon } = role;
@@ -204,14 +204,14 @@ export function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
       {/* Header */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("profile.subtitle")}</p>
       </div>
 
       {/* Success banner */}
       {exito && (
-        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           {t("profile.updateSuccess")}
         </div>
@@ -219,7 +219,7 @@ export function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* LEFT — Avatar + rol + datos de contexto (2/5) */}
-        <div className="lg:col-span-2 lg:self-start bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8 flex flex-col items-center text-center">
+        <div className="lg:col-span-2 lg:self-start bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8 flex flex-col items-center text-center">
           {/* Avatar — foto real si existe, si no el círculo con la inicial de siempre. */}
           <div className="relative mb-4">
             {urlFotoPerfil ? (
@@ -229,7 +229,7 @@ export function ProfilePage() {
                 className="h-20 w-20 rounded-full object-cover select-none"
               />
             ) : (
-              <div className="h-20 w-20 rounded-full bg-green-700 flex items-center justify-center text-white text-3xl font-bold select-none">
+              <div className="h-20 w-20 rounded-full bg-accent-700 flex items-center justify-center text-white text-3xl font-bold select-none">
                 {inicial}
               </div>
             )}
@@ -239,7 +239,7 @@ export function ProfilePage() {
               disabled={subiendoFoto}
               aria-label={t("profile.photo.change")}
               title={t("profile.photo.change")}
-              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#132a1c]"
+              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-[#f7f9f3] bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#1c341b]"
             >
               {subiendoFoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
             </button>
@@ -323,7 +323,7 @@ export function ProfilePage() {
         </div>
 
         {/* RIGHT — Información personal editable (3/5) */}
-        <div className="lg:col-span-3 bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8">
+        <div className="lg:col-span-3 bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("profile.personalInfoSection.title")}</h3>
             {canEdit && !editando && (
@@ -379,11 +379,7 @@ export function ProfilePage() {
           ) : (
             /* Modo edición */
             <div className="space-y-4">
-              {errorMsg && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                  {errorMsg}
-                </p>
-              )}
+              {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
               <div>
                 <label htmlFor="perfil-nombre" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
@@ -393,7 +389,7 @@ export function ProfilePage() {
                   id="perfil-nombre"
                   value={formNombre}
                   onChange={(e) => setFormNombre(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -405,7 +401,7 @@ export function ProfilePage() {
                   id="perfil-apellidos"
                   value={formApellidos}
                   onChange={(e) => setFormApellidos(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -418,7 +414,7 @@ export function ProfilePage() {
                   value={formTelefono}
                   onChange={(e) => setFormTelefono(e.target.value)}
                   placeholder={t("profile.phonePlaceholder")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
 
@@ -433,7 +429,7 @@ export function ProfilePage() {
                       value={formAsociacion}
                       onChange={(e) => setFormAsociacion(e.target.value)}
                       placeholder={t("profile.associationPlaceholder")}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                     />
                   </div>
 
@@ -447,7 +443,7 @@ export function ProfilePage() {
                       type="checkbox"
                       checked={formMostrarContacto}
                       onChange={(e) => setFormMostrarContacto(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-[#2a4d34]"
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-[#2a4d34]"
                     />
                     <span>
                       <span className="block text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -488,7 +484,7 @@ export function ProfilePage() {
                 <button
                   onClick={guardarPerfil}
                   disabled={guardando}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}

@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
+import { Alert } from "@/components/ui/Alert";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
 import {
   crearComunicado,
@@ -69,6 +73,13 @@ function isoToDateInputUTC(iso: string): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// ¿Qué? Issue #7 (hallazgo F2 de la auditoría) — un comunicado no tiene
+//       título, solo texto libre; se usa un recorte corto como el nombre
+//       que distingue cada fila en los aria-label de editar/eliminar.
+function resumirTexto(texto: string): string {
+  return texto.length > 40 ? `${texto.slice(0, 40)}…` : texto;
+}
+
 // ¿Qué? Color por tipo — Urgente en rojo para que salte a la vista, igual
 //       que en el feed que ven residentes/recicladores.
 const TIPO_ESTILO: Record<TipoComunicado, string> = {
@@ -76,7 +87,7 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
   URGENTE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
   MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  RECICLAJE: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
 };
 
 /**
@@ -193,7 +204,7 @@ export function AdminConjuntoComunicadosPage() {
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.detail || t("common.saveError"));
+      setErrorMsg(err.message || t("common.saveError"));
     } finally {
       setGuardando(false);
     }
@@ -212,7 +223,7 @@ export function AdminConjuntoComunicadosPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.admin.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.subtitle")}</p>
@@ -220,31 +231,28 @@ export function AdminConjuntoComunicadosPage() {
         <button
           onClick={abrirCrear}
           disabled={conjuntos.length === 0}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
           {t("comunicados.admin.newButton")}
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && conjuntos.length === 0 && (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.noConjuntos")}</p>
       )}
 
       {!cargando && comunicados.length === 0 && conjuntos.length > 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.emptyState")}</p>
-        </div>
+        <EmptyState icon={Megaphone} message={t("comunicados.admin.emptyState")} />
       )}
 
       <div className="space-y-3">
         {comunicados.map((item) => (
           <div
             key={item.id_comunicado}
-            className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+            className="rounded-2xl border border-gray-100 bg-[#f7f9f3] p-4 dark:border-[#2a4d34] dark:bg-[#1c341b]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -268,7 +276,7 @@ export function AdminConjuntoComunicadosPage() {
                     href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 transition-colors hover:text-green-800 dark:text-green-400"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
                   >
                     <Paperclip className="h-3.5 w-3.5" />
                     {t("comunicados.viewAttachment")}
@@ -289,14 +297,14 @@ export function AdminConjuntoComunicadosPage() {
                 <button
                   onClick={() => abrirEditar(item)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-                  aria-label={t("comunicados.admin.editAria")}
+                  aria-label={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setAEliminar(item)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
-                  aria-label={t("comunicados.admin.deleteAria")}
+                  aria-label={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -318,11 +326,7 @@ export function AdminConjuntoComunicadosPage() {
               {editando ? t("comunicados.admin.editTitle") : t("comunicados.admin.newButton")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             {!editando && (
               <>
@@ -334,7 +338,7 @@ export function AdminConjuntoComunicadosPage() {
                     id="comunicado-conjunto"
                     value={form.id_conjunto_residencial}
                     onChange={(e) => setForm({ ...form, id_conjunto_residencial: e.target.value })}
-                    className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                    className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                   >
                     {conjuntos.map((c) => (
                       <option key={c.id_conjunto_residencial} value={c.id_conjunto_residencial}>
@@ -367,8 +371,8 @@ export function AdminConjuntoComunicadosPage() {
                         onClick={() => setForm({ ...form, destinatarios: d })}
                         className={`flex-1 cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                           form.destinatarios === d
-                            ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                            : "border-gray-200 text-gray-600 hover:border-green-300 dark:border-[#2a4d34] dark:text-gray-300"
+                            ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                            : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-[#2a4d34] dark:text-gray-300"
                         }`}
                       >
                         {t(`comunicados.destinatarios.${d}`)}
@@ -399,7 +403,7 @@ export function AdminConjuntoComunicadosPage() {
                 id="comunicado-tipo"
                 value={form.tipo}
                 onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoComunicado })}
-                className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               >
                 {TIPOS.map((tipo) => (
                   <option key={tipo} value={tipo}>
@@ -419,7 +423,7 @@ export function AdminConjuntoComunicadosPage() {
                   type="date"
                   value={form.fecha_evento}
                   onChange={(e) => setForm({ ...form, fecha_evento: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                 />
               </div>
             )}
@@ -433,7 +437,7 @@ export function AdminConjuntoComunicadosPage() {
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -453,7 +457,7 @@ export function AdminConjuntoComunicadosPage() {
                 type="date"
                 value={form.fecha_expiracion}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
             </div>
@@ -468,7 +472,7 @@ export function AdminConjuntoComunicadosPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")
@@ -482,33 +486,16 @@ export function AdminConjuntoComunicadosPage() {
       )}
 
       {aEliminar && (
-        <Modal onClose={() => setAEliminar(null)} aria-label={t("comunicados.admin.deleteConfirm.ariaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <AlertTriangle className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("comunicados.admin.deleteConfirm.title")}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("comunicados.admin.deleteConfirm.warning")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setAEliminar(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={confirmarEliminar}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                {t("comunicados.admin.deleteConfirm.confirm")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={Trash2}
+          variant="danger"
+          ariaLabel={t("comunicados.admin.deleteConfirm.ariaLabel")}
+          title={t("comunicados.admin.deleteConfirm.title")}
+          description={t("comunicados.admin.deleteConfirm.warning")}
+          confirmLabel={t("comunicados.admin.deleteConfirm.confirm")}
+          onConfirm={confirmarEliminar}
+          onClose={() => setAEliminar(null)}
+        />
       )}
     </div>
   );

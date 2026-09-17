@@ -14,8 +14,11 @@
       "puntosAcopio": "Collection Points",
       "gestionarComunicados": "My Buildings' Announcements",
       "comunicados": "Announcements",
-      "aprenderGuias": "Learn (Guides)",
-      "directorioGeneral": "General Directory"
+      "aprenderGuias": "Learn to Recycle",
+      "directorioGeneral": "General Directory",
+      "groupComunidad": "Community",
+      "groupRecursos": "Resources",
+      "groupCuenta": "Account"
     },
     "proximamente": "Coming soon",
     "notificaciones": "Notifications",
@@ -45,6 +48,7 @@
   },
   "common": {
     "loading": "Loading...",
+    "verifyingSession": "Verifying session, please wait",
     "loadError": "We couldn't load this information. Please try again later.",
     "actionError": "The action couldn't be completed. Please try again.",
     "email": "Email address",
@@ -58,11 +62,18 @@
     "back": "Back",
     "or": "or",
     "close": "Close",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "edit": "Edit",
     "phone": "Phone",
     "saving": "Saving...",
     "saveError": "Could not save. Please try again.",
-    "formIncomplete": "Complete the form"
+    "formIncomplete": "Complete the form",
+    "pagination": {
+      "showing": "Showing {{from}}–{{to}} of {{total}}",
+      "prev": "Previous page",
+      "next": "Next page"
+    }
   },
   "auth": {
     "login": {
@@ -100,6 +111,8 @@
         "emailsMismatch": "Email addresses do not match",
         "firstNameMin": "First name must be at least 2 characters",
         "lastNameMin": "Last name must be at least 2 characters",
+        "phoneInvalid": "The phone number format is invalid.",
+        "unitFormatInvalid": "Only letters, numbers, and a single space or hyphen as a separator are allowed.",
         "passwordMin": "Minimum 8 characters",
         "passwordUppercase": "Must include at least one uppercase letter",
         "passwordLowercase": "Must include at least one lowercase letter",
@@ -190,6 +203,10 @@
       "backToLogin": "Back to sign in",
       "successMessage": "If your email is registered, you'll receive a link to reset your password.",
       "errorDefault": "Error sending the request",
+      "confirmTitle": "Send recovery link?",
+      "confirmDescription": "An email with the link will be sent to {{email}}.",
+      "confirmButton": "Yes, send it",
+      "confirmSending": "Sending...",
       "validation": {
         "emailRequired": "Email is required"
       }
@@ -474,6 +491,7 @@
     "backToTop": "Back to top",
     "nav": { "homeAriaLabel": "VerdeApp — home", "login": "Sign in", "register": "Sign up" },
     "hero": {
+      "tagline": "Changing the world",
       "subtitle": "Waste management for residential buildings in Bogotá",
       "description": "We connect residents, recyclers, and administrators to transform waste management in your community.",
       "ctaLogin": "I already have an account",
@@ -835,6 +853,12 @@
         "successMessage": "Audit submitted.",
         "errorDefault": "Couldn't submit the audit.",
         "errorTimeout": "The upload is taking too long — check your connection and try again.",
+        "confirmSubmit": {
+          "ariaLabel": "Confirm audit",
+          "title": "Send this audit?",
+          "warning": "You're about to rate \"{{tema}}\" as {{nivel}}. Once sent, an audit can't be edited.",
+          "confirm": "Yes, send"
+        },
         "validation": {
           "conjunto": "Select a building.",
           "nivel": "Select a performance level.",
@@ -1192,8 +1216,8 @@
       "newButton": "New announcement",
       "noConjuntos": "You don't administer any building yet.",
       "emptyState": "You haven't posted any announcement yet.",
-      "editAria": "Edit announcement",
-      "deleteAria": "Delete announcement",
+      "editAria": "Edit {{resumen}}",
+      "deleteAria": "Delete {{resumen}}",
       "editTitle": "Edit announcement",
       "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
@@ -1240,12 +1264,18 @@
       "subtitle": "Post general announcements for the whole VerdeApp platform.",
       "newButton": "New item",
       "emptyState": "You haven't posted any news item yet.",
-      "editAria": "Edit news item",
-      "archiveAria": "Archive news item",
+      "editAria": "Edit {{resumen}}",
+      "archiveAria": "Archive {{resumen}}",
       "editTitle": "Edit news item",
       "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
       "archiveError": "Could not archive. Please try again.",
+      "archiveConfirm": {
+        "ariaLabel": "Confirm archiving",
+        "title": "Archive this news item?",
+        "warning": "It will stop showing in the active news feed. This action cannot be undone.",
+        "confirm": "Yes, archive"
+      },
       "alcanceNoEditable": "The scope can't be changed after publishing. If you made a mistake, archive it and create a new one.",
       "validation": {
         "textoRequerido": "The news item text is required."

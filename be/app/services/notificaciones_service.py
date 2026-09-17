@@ -36,7 +36,13 @@ from app.schemas.notificacion import (
     EstadoShutResponse,
     NotificacionEnviarBody,
 )
-from app.services.notificaciones_helpers import admins_del_conjunto, reciclador_esta_presente, residentes_del_conjunto
+from app.services.notificaciones_helpers import (
+    admins_del_conjunto,
+    crear_notificacion,
+    reciclador_esta_presente,
+    recicladores_del_conjunto,
+    residentes_del_conjunto,
+)
 
 TIPOS_VALIDOS = {"LLEGADA_RECICLADOR", "SHUT_LLENO", "SHUT_LIBRE", "FINALIZACION_RECICLADOR"}
 
@@ -50,18 +56,6 @@ MENSAJE_RESIDENTE_SHUT = "Un residente reportó que el SHUT está lleno."
 
 
 # ── Helpers privados de este servicio ───────────────────────────────────────
-
-def _recicladores_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
-    stmt = (
-        select(Reciclador.id_usuario)
-        .join(RecicladorConjunto, Reciclador.id_reciclador == RecicladorConjunto.id_reciclador)
-        .where(
-            RecicladorConjunto.id_conjunto_residencial == id_conjunto,
-            RecicladorConjunto.fecha_revocacion.is_(None),
-        )
-    )
-    return [r[0] for r in db.execute(stmt).all()]
-
 
 def _conjunto_del_residente(db: Session, id_usuario: UUID) -> UUID | None:
     stmt = (
@@ -124,7 +118,7 @@ def enviar_notificacion(db: Session, current_user: Usuario, body: NotificacionEn
         if _shut_esta_lleno(db, id_conjunto):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El SHUT de tu conjunto ya está reportado como lleno.")
         mensaje = MENSAJE_RESIDENTE_SHUT
-        destinatarios = set(_recicladores_del_conjunto(db, id_conjunto) + admins_del_conjunto(db, id_conjunto))
+        destinatarios = set(recicladores_del_conjunto(db, id_conjunto) + admins_del_conjunto(db, id_conjunto))
 
     elif role_id == RolId.RECICLADOR:
         if not body.id_conjunto_residencial:
@@ -190,17 +184,14 @@ def enviar_notificacion(db: Session, current_user: Usuario, body: NotificacionEn
 
     destinatarios.discard(current_user.id_usuario)
 
-    notif = Notificacion(
+    crear_notificacion(
+        db,
         tipo=body.tipo,
-        id_conjunto_residencial=id_conjunto,
-        id_emisor=current_user.id_usuario,
         mensaje=mensaje,
+        destinatarios=destinatarios,
+        id_conjunto=id_conjunto,
+        id_emisor=current_user.id_usuario,
     )
-    db.add(notif)
-    db.flush()
-
-    for uid in destinatarios:
-        db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=uid))
 
     db.commit()
     return {"ok": True, "destinatarios": len(destinatarios)}

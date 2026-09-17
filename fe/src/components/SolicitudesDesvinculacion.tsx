@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, ClipboardList, XCircle } from "lucide-react";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { Alert } from "@/components/ui/Alert";
 import {
   listarSolicitudesDesvinculacion,
   resolverSolicitudDesvinculacion,
@@ -49,7 +51,15 @@ export function SolicitudesDesvinculacion({
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const cargar = () => {
+  // ¿Qué? Issue #225 — antes el useEffect de abajo llamaba a "cargar" con
+  //       un arreglo de dependencias vacío ([]) silenciado con un
+  //       comentario de ESLint, porque "cargar" se creaba de nuevo en cada
+  //       render. Envolverla en useCallback la vuelve estable de verdad
+  //       (mientras "onCountChange" tampoco cambie — y no cambia: las dos
+  //       pantallas que usan este componente le pasan directamente un
+  //       "setState", que React garantiza estable), así que ya no hace
+  //       falta silenciar nada.
+  const cargar = useCallback(() => {
     setCargando(true);
     listarSolicitudesDesvinculacion()
       .then((data) => {
@@ -58,12 +68,11 @@ export function SolicitudesDesvinculacion({
       })
       .catch((err) => console.error("Error cargando solicitudes de desvinculación", err))
       .finally(() => setCargando(false));
-  };
+  }, [onCountChange]);
 
   useEffect(() => {
     cargar();
-
-  }, []);
+  }, [cargar]);
 
   const aprobar = async (id: string) => {
     setProcesandoId(id);
@@ -73,7 +82,7 @@ export function SolicitudesDesvinculacion({
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("desvinculacion.adminSistema.errorDefault"));
+      setError(err.message || t("desvinculacion.adminSistema.errorDefault"));
     } finally {
       setProcesandoId(null);
     }
@@ -90,7 +99,7 @@ export function SolicitudesDesvinculacion({
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("desvinculacion.adminSistema.errorDefault"));
+      setError(err.message || t("desvinculacion.adminSistema.errorDefault"));
     } finally {
       setProcesandoId(null);
     }
@@ -101,12 +110,12 @@ export function SolicitudesDesvinculacion({
       className={
         dentroDeModal
           ? ""
-          : "bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm"
+          : "bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm"
       }
     >
       {mostrarEncabezado && (
         <div className="flex items-center gap-2 mb-4">
-          <ClipboardList className="h-4 w-4 text-green-600" />
+          <ClipboardList className="h-4 w-4 text-accent-600" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">
             {t("desvinculacion.adminSistema.sectionTitle")}
           </h3>
@@ -119,13 +128,13 @@ export function SolicitudesDesvinculacion({
       )}
 
       {error && (
-        <p className="mb-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg dark:bg-red-900/20 dark:text-red-400">
-          {error}
-        </p>
+        <div className="mb-3">
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        </div>
       )}
 
       {cargando ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        <LoadingState message={t("common.loading")} />
       ) : solicitudes.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("desvinculacion.adminSistema.empty")}</p>
       ) : (
@@ -148,15 +157,16 @@ export function SolicitudesDesvinculacion({
 
               {rechazandoId === s.id ? (
                 <div className="mt-3 space-y-2">
-                  <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                  <label htmlFor="motivo-rechazo" className="text-xs font-bold text-gray-600 dark:text-gray-400">
                     {t("desvinculacion.adminSistema.rejectModal.motivoLabel")}
                   </label>
                   <textarea
+                    id="motivo-rechazo"
                     value={motivoRechazo}
                     onChange={(e) => setMotivoRechazo(e.target.value)}
                     placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}
                     rows={2}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
                   />
                   <div className="flex gap-2">
                     <button
@@ -183,7 +193,7 @@ export function SolicitudesDesvinculacion({
                   <button
                     onClick={() => aprobar(s.id)}
                     disabled={procesandoId === s.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t("desvinculacion.adminSistema.approve")}

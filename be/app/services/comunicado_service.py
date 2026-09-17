@@ -22,7 +22,6 @@ from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.comunicado import Comunicado, DestinatariosComunicado, TipoComunicado
 from app.models.conjunto_residencial import ConjuntoResidencial
-from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
 from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.residente import Residente
@@ -30,6 +29,7 @@ from app.models.rol import RolId
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.schemas.comunicado import ComunicadoResponse, CrearComunicadoRequest, EditarComunicadoRequest
+from app.services.notificaciones_helpers import crear_notificacion, recicladores_del_conjunto, residentes_del_conjunto
 
 # ¿Qué? Expiración sugerida por tipo (RF, tabla "Tipos de comunicado").
 _EXPIRACION_POR_TIPO = {
@@ -100,27 +100,6 @@ def _a_response(comunicado: Comunicado, nombre_conjunto: str) -> ComunicadoRespo
     )
 
 
-def _residentes_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
-    stmt = (
-        select(Residente.id_usuario)
-        .join(Unidad, Residente.id_unidad == Unidad.id_unidad)
-        .where(Unidad.id_conjunto_residencial == id_conjunto)
-    )
-    return [r[0] for r in db.execute(stmt).all()]
-
-
-def _recicladores_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
-    stmt = (
-        select(Reciclador.id_usuario)
-        .join(RecicladorConjunto, Reciclador.id_reciclador == RecicladorConjunto.id_reciclador)
-        .where(
-            RecicladorConjunto.id_conjunto_residencial == id_conjunto,
-            RecicladorConjunto.fecha_revocacion.is_(None),
-        )
-    )
-    return [r[0] for r in db.execute(stmt).all()]
-
-
 def _notificar_comunicado(db: Session, comunicado: Comunicado, tipo: str, mensaje: str) -> None:
     """
     ¿Qué? Notifica a los destinatarios elegidos del comunicado (CA-031.2:
@@ -132,24 +111,22 @@ def _notificar_comunicado(db: Session, comunicado: Comunicado, tipo: str, mensaj
               editar_comunicado / CA-029.2), así que la misma lógica de
               "a quién le llega" sirve para ambos casos.
     """
-    destinatarios_ids: set[int] = set()
+    destinatarios_ids: set[UUID] = set()
     if comunicado.destinatarios in (DestinatariosComunicado.RESIDENTES, DestinatariosComunicado.AMBOS):
-        destinatarios_ids.update(_residentes_del_conjunto(db, comunicado.id_conjunto_residencial))
+        destinatarios_ids.update(residentes_del_conjunto(db, comunicado.id_conjunto_residencial))
     if comunicado.destinatarios in (DestinatariosComunicado.RECICLADORES, DestinatariosComunicado.AMBOS):
-        destinatarios_ids.update(_recicladores_del_conjunto(db, comunicado.id_conjunto_residencial))
+        destinatarios_ids.update(recicladores_del_conjunto(db, comunicado.id_conjunto_residencial))
 
     if not destinatarios_ids:
         return
 
-    notif = Notificacion(
+    crear_notificacion(
+        db,
         tipo=tipo,
-        id_conjunto_residencial=comunicado.id_conjunto_residencial,
         mensaje=mensaje,
+        destinatarios=destinatarios_ids,
+        id_conjunto=comunicado.id_conjunto_residencial,
     )
-    db.add(notif)
-    db.flush()
-    for uid in destinatarios_ids:
-        db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=uid))
 
 
 def crear_comunicado(db: Session, administrador: AdministradorConjunto, datos: CrearComunicadoRequest) -> ComunicadoResponse:

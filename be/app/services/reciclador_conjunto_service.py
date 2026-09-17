@@ -20,10 +20,10 @@ from app.models.reciclador import Reciclador
 from app.models.usuario import Usuario
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
-from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.rol import RolId
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjunto
+from app.services.notificaciones_helpers import crear_notificacion
 from app.utils.email import send_reciclador_conjunto_invitation_email
 
 logger = logging.getLogger(__name__)
@@ -325,13 +325,12 @@ def revocar_reciclador(db: Session, id_usuario_admin: UUID, id_conjunto: UUID, i
         )
 
     conjunto = db.get(ConjuntoResidencial, id_conjunto)
-    notif = Notificacion(
+    crear_notificacion(
+        db,
         tipo="RECICLADOR_REVOCADO",
-        id_conjunto_residencial=id_conjunto,
         mensaje=f"Ya no estás autorizado para recoger material en {conjunto.nombre_conjunto}.",
+        destinatarios=[reciclador.id_usuario],
+        id_conjunto=id_conjunto,
     )
-    db.add(notif)
-    db.flush()
-    db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=reciclador.id_usuario))
 
     db.commit()

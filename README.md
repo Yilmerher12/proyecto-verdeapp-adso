@@ -454,15 +454,11 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 | Métrica | Avance |
 |---|---|
-| Historias de Usuario | 42 / 44 implementadas |
-| Requisitos Funcionales | 18 / 19 implementados |
+| Historias de Usuario | 44 / 44 implementadas |
+| Requisitos Funcionales | 19 / 19 implementados |
 | Requisitos No Funcionales | 4 / 6 completos (2 parciales — de naturaleza continua: se miden, no se "terminan") |
-| Pruebas backend (pytest) | 327 |
-| Pruebas frontend (vitest) | 210 |
-
-Pendiente por implementar, documentado con su alcance completo antes de programarlo:
-
-* **RQF-013 — Recomendación de contenido educativo por auditoría** ([issue #4](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/4)): al publicarse una auditoría con resultado negativo, recomendar automáticamente módulos educativos relacionados a los residentes del conjunto.
+| Pruebas backend (pytest) | 347 |
+| Pruebas frontend (vitest) | 225 |
 
 ---
 

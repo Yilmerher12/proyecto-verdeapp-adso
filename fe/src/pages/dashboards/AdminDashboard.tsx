@@ -5,15 +5,15 @@ import { Shield, Users, Database, UserPlus, Search, MapPin, ChevronLeft, Chevron
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
 import { SolicitudesDesvinculacion } from "@/components/SolicitudesDesvinculacion";
 import { AsignarConjuntoAdicionalForm } from "@/components/AsignarConjuntoAdicionalForm";
 import { ConjuntoCombobox } from "@/components/ui/ConjuntoCombobox";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
-import { ROLE_THEME } from "@/config/roleTheme";
-import { RoleId } from "@/types/auth";
 
 interface ResidenteRow {
   Correo: string;
@@ -369,7 +369,7 @@ export function AdminDashboard() {
       <span
         className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
           habilitado
-            ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+            ? "bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
             : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
         }`}
       >
@@ -399,7 +399,6 @@ export function AdminDashboard() {
   );
 
   const fullName = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || t("roles.adminSistema");
-  const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_SISTEMA];
 
   const totalPaginas = Math.max(1, Math.ceil(total / TAMANO_PAGINA));
   const desde = total === 0 ? 0 : pagina * TAMANO_PAGINA + 1;
@@ -410,14 +409,15 @@ export function AdminDashboard() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
-      {/* Header — el ícono grande de fondo (Shield) es solo un detalle visual
-          tenue para que este panel se sienta del Admin del Sistema, sin
-          estorbar la lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
-        <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-slate-900/5 dark:text-white/5" aria-hidden="true" />
+      {/* ¿Qué? Antes llevaba también un ícono grande (Shield) muy tenue de
+          fondo, encima de la foto del panel.
+          ¿Para qué? Con la foto de hoja detrás de todo el panel, ese
+          segundo elemento decorativo se sentía como "dos fondos" a la vez
+          — se quitó, dejando solo la foto (retroalimentación directa). */}
+      <div className="relative overflow-hidden bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
-            <Shield className="h-7 w-7 text-green-700 dark:text-green-400" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
+            <Shield className="h-7 w-7 text-accent-700 dark:text-accent-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.admin.title")}</h1>
@@ -426,7 +426,7 @@ export function AdminDashboard() {
               <span className="font-semibold text-gray-800 dark:text-gray-200 uppercase">{fullName}</span>
               .
             </p>
-            <p className="text-xs text-green-700 dark:text-green-400 font-semibold mt-1">{user?.email}</p>
+            <p className="text-xs text-accent-700 dark:text-accent-400 font-semibold mt-1">{user?.email}</p>
           </div>
         </div>
       </div>
@@ -446,7 +446,7 @@ export function AdminDashboard() {
       {/* Usuarios registrados — ya no empieza plegada (ver estado
           usuariosAbierto arriba). Adentro va todo: pestañas, buscador,
           filtros de Localidad/Conjunto, tabla y paginación. */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
         <button
           type="button"
           onClick={() => setUsuariosAbierto((v) => !v)}
@@ -455,7 +455,7 @@ export function AdminDashboard() {
           aria-controls="usuarios-registrados-body"
         >
           <span className="flex min-w-0 items-center gap-2">
-            <Database className="h-4 w-4 shrink-0 text-green-600" />
+            <Database className="h-4 w-4 shrink-0 text-accent-600" />
             <h3 className="truncate text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.usersSection.title")}</h3>
           </span>
           <span className="flex shrink-0 items-center gap-2">
@@ -488,7 +488,7 @@ export function AdminDashboard() {
                   onClick={() => cambiarTab(id)}
                   className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     tab === id
-                      ? "bg-green-700 text-white shadow-sm"
+                      ? "bg-accent-700 text-white shadow-sm"
                       : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                   }`}
                 >
@@ -504,7 +504,7 @@ export function AdminDashboard() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder={t("dashboards.admin.usersSection.searchPlaceholder")}
-                className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200 sm:w-48"
+                className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200 sm:w-48"
               />
             </div>
           </div>
@@ -514,11 +514,11 @@ export function AdminDashboard() {
               en vez de buscar entre miles de conjuntos reales de Bogotá. */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-green-600" />
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-accent-600" />
               <select
                 value={localidadId}
                 onChange={(e) => cambiarLocalidad(e.target.value === "" ? "" : Number(e.target.value))}
-                className="cursor-pointer rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
+                className="cursor-pointer rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
               >
                 <option value="">{t("directorio.allLocalities")}</option>
                 {localidades.map((l) => (
@@ -530,7 +530,7 @@ export function AdminDashboard() {
             </div>
 
             <div className="flex items-center gap-1.5 sm:w-64">
-              <Building2 className="h-3.5 w-3.5 shrink-0 text-green-600" />
+              <Building2 className="h-3.5 w-3.5 shrink-0 text-accent-600" />
               <div className="flex-1 [&_input]:!mt-0 [&_input]:!py-1.5 [&_input]:!text-xs">
                 <ConjuntoCombobox
                   value={conjuntoSeleccionado}
@@ -581,8 +581,8 @@ export function AdminDashboard() {
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
               {cargando ? (
                 <tr>
-                  <td colSpan={colSpanActivo} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                    {t("dashboards.admin.loadingData")}
+                  <td colSpan={colSpanActivo} className="px-5 py-6">
+                    <LoadingState message={t("dashboards.admin.loadingData")} />
                   </td>
                 </tr>
               ) : error ? (
@@ -625,7 +625,7 @@ export function AdminDashboard() {
                       <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
                       <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">{r.Nombre_Completo}</td>
                       <td className="px-5 py-3">
-                        <span className="rounded-full bg-green-50 dark:bg-green-900/20 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:text-green-400">
+                        <span className="rounded-full bg-accent-50 dark:bg-accent-900/20 px-2.5 py-0.5 text-xs font-semibold text-accent-700 dark:text-accent-400">
                           {r.Asociacion}
                         </span>
                       </td>
@@ -697,16 +697,16 @@ export function AdminDashboard() {
           este panel y debe verse de primeras, sin que el usuario tenga que
           bajar a buscarla). */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
           <div className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4 text-green-600" />
+            <UserPlus className="h-4 w-4 text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
           </div>
           <div className="flex flex-1 flex-col gap-2">
             <button
               type="button"
               onClick={() => setMostrarModalInvitar(true)}
-              className="cursor-pointer rounded-xl bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600"
+              className="cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600"
             >
               {t("dashboards.admin.inviteSection.show")}
             </button>
@@ -720,9 +720,9 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
           <div className="flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-green-600" />
+            <ClipboardList className="h-4 w-4 text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.pendingRequests.title")}</h3>
             {solicitudesPendientes > 0 && (
               <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
@@ -738,15 +738,15 @@ export function AdminDashboard() {
           <button
             type="button"
             onClick={() => setMostrarModalSolicitudes(true)}
-            className="cursor-pointer self-start rounded-xl bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition-colors hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+            className="cursor-pointer self-start rounded-xl bg-accent-50 px-3 py-1.5 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
           >
             {t("dashboards.admin.pendingRequests.viewButton")}
           </button>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
           <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-green-600" />
+            <BarChart3 className="h-4 w-4 text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.totals.title")}</h3>
           </div>
           {/* ¿Qué? grid-cols-3 en vez de un flex con justify-between — Tailwind
@@ -802,45 +802,27 @@ export function AdminDashboard() {
       )}
 
       {confirmando && (
-        <Modal onClose={() => setConfirmando(null)} aria-label={t("dashboards.admin.usersSection.status.confirmButton")}>
-          <div className="p-6">
-            <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">
-              {confirmando.nuevoEstado
-                ? t("dashboards.admin.usersSection.status.confirmEnableTitle")
-                : t("dashboards.admin.usersSection.status.confirmDisableTitle")}
-            </h3>
-            <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
-              {confirmando.nuevoEstado
-                ? t("dashboards.admin.usersSection.status.confirmEnableBody", { correo: confirmando.correo })
-                : t("dashboards.admin.usersSection.status.confirmDisableBody", { correo: confirmando.correo })}
-            </p>
-            {errorAccion && (
-              <div className="mb-4">
-                <Alert type="error" message={errorAccion} onClose={() => setErrorAccion(null)} />
-              </div>
-            )}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setConfirmando(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-              >
-                {t("common.cancel")}
-              </button>
-              <div className="flex-1">
-                <Button
-                  type="button"
-                  fullWidth
-                  variant={confirmando.nuevoEstado ? "primary" : "danger"}
-                  isLoading={actualizando}
-                  onClick={ejecutarCambioHabilitado}
-                >
-                  {t("dashboards.admin.usersSection.status.confirmButton")}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={confirmando.nuevoEstado ? CircleCheck : Ban}
+          variant={confirmando.nuevoEstado ? "primary" : "danger"}
+          ariaLabel={t("dashboards.admin.usersSection.status.confirmButton")}
+          title={
+            confirmando.nuevoEstado
+              ? t("dashboards.admin.usersSection.status.confirmEnableTitle")
+              : t("dashboards.admin.usersSection.status.confirmDisableTitle")
+          }
+          description={
+            confirmando.nuevoEstado
+              ? t("dashboards.admin.usersSection.status.confirmEnableBody", { correo: confirmando.correo })
+              : t("dashboards.admin.usersSection.status.confirmDisableBody", { correo: confirmando.correo })
+          }
+          error={errorAccion}
+          onDismissError={() => setErrorAccion(null)}
+          isConfirming={actualizando}
+          confirmLabel={t("dashboards.admin.usersSection.status.confirmButton")}
+          onConfirm={ejecutarCambioHabilitado}
+          onClose={() => setConfirmando(null)}
+        />
       )}
     </div>
   );

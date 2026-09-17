@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, type ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -18,10 +17,11 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { usePolling } from "@/hooks/usePolling";
 import * as authApi from "@/api/auth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
-import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { RoleId } from "@/types/auth";
 import api, { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
@@ -87,26 +87,17 @@ export function AppShell({ children }: AppShellProps) {
   };
 
   // Polling de notificaciones no leídas cada 20s
-  useEffect(() => {
-    if (!user) return;
-    const fetchCount = () => {
-      api
-        .get<{ count: number }>("/api/v1/notificaciones/no-leidas-count")
-        .then((r) => setNoLeidas(r.data.count ?? 0))
-        .catch(() => {});
-    };
-    fetchCount();
-    const interval = setInterval(fetchCount, 20000);
-    // ¿Qué? Además del polling, escucha el evento que disparan los
-    //       dashboards al marcar notificaciones como leídas.
-    // ¿Para qué? Para que el número baje al instante en vez de esperar
-    //           hasta 20s al siguiente ciclo de polling.
-    const unsubscribe = onNotificacionesActualizadas(fetchCount);
-    return () => {
-      clearInterval(interval);
-      unsubscribe();
-    };
-  }, [user]);
+  const fetchCount = () => {
+    api
+      .get<{ count: number }>("/api/v1/notificaciones/no-leidas-count")
+      .then((r) => setNoLeidas(r.data.count ?? 0))
+      .catch(() => {});
+  };
+  // ¿Qué? Además del polling, escucha el evento que disparan los
+  //       dashboards al marcar notificaciones como leídas.
+  // ¿Para qué? Para que el número baje al instante en vez de esperar
+  //           hasta 20s al siguiente ciclo de polling.
+  usePolling(fetchCount, { enabled: !!user, onExternalTrigger: onNotificacionesActualizadas });
 
   // ¿Qué? Trae la foto de perfil para el círculo de esta tarjeta lateral.
   // ¿Para qué? Este círculo lee su nombre/rol del token de sesión (JWT,
@@ -127,8 +118,14 @@ export function AppShell({ children }: AppShellProps) {
     return unsubscribe;
   }, [user]);
 
-  const userData = user as any;
-  const roleId = (userData?.role_id || userData?.id_rol || RoleId.RESIDENTE) as RoleId;
+  // ¿Qué? Issue #223 (f3 del diagnóstico) — antes esto era "user as any" y
+  //       leía cada dato de 2-3 formas distintas (role_id O id_rol;
+  //       correo_electronico O email O sub), restos de una versión vieja
+  //       del tipo de usuario que ya no existe. UserResponse (types/auth.ts)
+  //       ya es el único tipo real, con un solo nombre correcto por campo —
+  //       usarlo directo permite que TypeScript avise si algún campo deja
+  //       de existir, en vez de fallar en silencio en tiempo de ejecución.
+  const roleId = user?.role_id ?? RoleId.RESIDENTE;
   const roleMeta = ROLE_THEME[roleId] ?? ROLE_THEME[RoleId.RESIDENTE];
 
   // ¿Qué? ROLE_THEME (fe/src/config/roleTheme.ts) es un objeto de configuración
@@ -144,27 +141,40 @@ export function AppShell({ children }: AppShellProps) {
   };
   const roleLabel = t(ROLE_LABEL_KEY[roleId] ?? ROLE_LABEL_KEY[RoleId.RESIDENTE]);
 
-  const rawEmail = userData?.correo_electronico || userData?.email || userData?.sub || "usuario@verdeapp.com";
+  const rawEmail = user?.email || "usuario@verdeapp.com";
   const fallbackName = rawEmail.split("@")[0].toUpperCase();
-  const displayName = userData?.first_name && userData.first_name !== "Usuario"
-    ? `${userData.first_name} ${userData.last_name || ""}`.toUpperCase()
+  const displayName = user?.first_name && user.first_name !== "Usuario"
+    ? `${user.first_name} ${user.last_name || ""}`.toUpperCase()
     : fallbackName;
+
+  // ¿Qué? Cada opción lleva un "group" (principal/comunidad/recursos/cuenta)
+  //       para que la barra lateral las muestre separadas visualmente, en
+  //       vez de una sola lista corrida.
+  // ¿Para qué? Con 4-6 opciones seguidas costaba más escanear cuál era
+  //           cuál — agrupar por lo que la opción REALMENTE es (contenido
+  //           de comunidad, recursos de consulta, cuenta propia) ayuda a
+  //           ubicarse más rápido, sin agregar ninguna opción nueva.
+  // ¿Impacto? "principal" nunca lleva encabezado (es un ancla, no una
+  //           categoría) — los otros 3 grupos sí, y solo se muestran si
+  //           el rol tiene al menos una opción en ese grupo (ver
+  //           GRUPOS_NAV más abajo).
+  type GrupoNav = "principal" | "comunidad" | "recursos" | "cuenta";
 
   const getNavItemsByRole = () => {
     const commonStart = [
-      { icon: LayoutDashboard, label: t("appShell.nav.panelPrincipal"), href: roleMeta.dashboardHref, enabled: true },
+      { icon: LayoutDashboard, label: t("appShell.nav.panelPrincipal"), href: roleMeta.dashboardHref, enabled: true, group: "principal" as GrupoNav },
     ];
 
     const commonEnd = [
-      { icon: ShieldCheck, label: t("appShell.nav.seguridad"), href: "/change-password", enabled: true },
+      { icon: ShieldCheck, label: t("appShell.nav.seguridad"), href: "/change-password", enabled: true, group: "cuenta" as GrupoNav },
     ];
 
     if (roleId === RoleId.ADMIN_SISTEMA) {
       return [
         ...commonStart,
-        { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: "/admin/novedades", enabled: true },
-        { icon: BookOpen, label: t("appShell.nav.contenidoEducativo"), href: "/admin/contenido-educativo", enabled: true },
-        { icon: MapPin, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true },
+        { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: "/admin/novedades", enabled: true, group: "comunidad" as GrupoNav },
+        { icon: BookOpen, label: t("appShell.nav.contenidoEducativo"), href: "/admin/contenido-educativo", enabled: true, group: "recursos" as GrupoNav },
+        { icon: MapPin, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true, group: "recursos" as GrupoNav },
         ...commonEnd,
       ];
     }
@@ -172,10 +182,10 @@ export function AppShell({ children }: AppShellProps) {
     if (roleId === RoleId.RECICLADOR) {
       return [
         ...commonStart,
-        { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
-        { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true },
-        { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true },
-        { icon: MapPin, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true },
+        { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true, group: "comunidad" as GrupoNav },
+        { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true, group: "comunidad" as GrupoNav },
+        { icon: MapPin, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true, group: "recursos" as GrupoNav },
+        { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true, group: "cuenta" as GrupoNav },
         ...commonEnd,
       ];
     }
@@ -183,25 +193,32 @@ export function AppShell({ children }: AppShellProps) {
     if (roleId === RoleId.ADMIN_CONJUNTO) {
       return [
         ...commonStart,
-        { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
-        { icon: Megaphone, label: t("appShell.nav.gestionarComunicados"), href: "/admin-conjunto/comunicados", enabled: true },
-        { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true },
+        { icon: Megaphone, label: t("appShell.nav.gestionarComunicados"), href: "/admin-conjunto/comunicados", enabled: true, group: "comunidad" as GrupoNav },
+        { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true, group: "comunidad" as GrupoNav },
+        { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true, group: "cuenta" as GrupoNav },
         ...commonEnd,
       ];
     }
 
     return [
       ...commonStart,
-      { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true },
-      { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true },
-      { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true },
-      { icon: BookOpen, label: t("appShell.nav.aprenderGuias"), href: "/catalogo-educativo", enabled: true },
-      { icon: MapPin, label: t("appShell.nav.directorioGeneral"), href: "/directorio", enabled: true },
+      { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true, group: "comunidad" as GrupoNav },
+      { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true, group: "comunidad" as GrupoNav },
+      { icon: BookOpen, label: t("appShell.nav.aprenderGuias"), href: "/catalogo-educativo", enabled: true, group: "recursos" as GrupoNav },
+      { icon: MapPin, label: t("appShell.nav.directorioGeneral"), href: "/directorio", enabled: true, group: "recursos" as GrupoNav },
+      { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true, group: "cuenta" as GrupoNav },
       ...commonEnd,
     ];
   };
 
   const navItems = getNavItemsByRole();
+
+  const GRUPOS_NAV: { id: GrupoNav; labelKey: string | null }[] = [
+    { id: "principal", labelKey: null },
+    { id: "comunidad", labelKey: "appShell.nav.groupComunidad" },
+    { id: "recursos", labelKey: "appShell.nav.groupRecursos" },
+    { id: "cuenta", labelKey: "appShell.nav.groupCuenta" },
+  ];
 
 
   return (
@@ -216,11 +233,21 @@ export function AppShell({ children }: AppShellProps) {
     //           casos distintos puede igual disparar la barra. La solución
     //           correcta es forzar min-w-0 en cada contenedor flex de la cadena.
     <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#03130b] flex-col sm:flex-row">
+      {/* ¿Qué? bg-accent-900 (antes un verde fijo #052e16, más oscuro).
+          ¿Para qué? Se reportó que la barra lateral se veía "muy oscura"
+          — accent-900 es un paso más claro dentro de la misma escala de
+          verde de marca, y de paso queda enganchado al token accent-*
+          en vez de un hex suelto (restricciones.md: accent-* es el único
+          acento permitido en componentes reutilizables).
+          ¿Impacto? Sigue siendo claramente más oscuro que el contenido
+          (bg-gray-200/dark:bg-[#082013]) y que las tarjetas
+          (bg-[#f7f9f3]/dark:bg-[#1c341b]) — no se pierde la jerarquía
+          visual entre barra lateral y contenido. */}
       <aside
         className={`
           flex min-w-0 shrink-0 flex-col border-r border-white/10
-          bg-[#052e16]
-          transition-[width] duration-200 ease-in-out text-green-50
+          bg-accent-900
+          transition-[width] duration-200 ease-in-out text-accent-50
           overflow-hidden
           ${collapsed ? "sm:w-16 h-16 sm:h-screen" : "sm:w-64 h-auto sm:h-screen"}
         `}
@@ -250,7 +277,7 @@ export function AppShell({ children }: AppShellProps) {
           <button
             type="button"
             onClick={() => setCollapsed((prev) => !prev)}
-            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-green-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
+            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-accent-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
             aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
           >
             {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
@@ -287,53 +314,76 @@ export function AppShell({ children }: AppShellProps) {
 
         {/* Navegación */}
         <nav className={`min-w-0 flex-1 overflow-y-auto overflow-x-hidden py-3 ${collapsed ? "hidden sm:block" : "block"}`} aria-label={t("appShell.ariaLabel")}>
-          <ul className="min-w-0 space-y-0.5 px-3">
-            {navItems.map(({ icon: Icon, label, href, enabled }, idx) => {
-              if (enabled && href) {
-                return (
-                  <li key={idx} className="min-w-0">
-                    <NavLink
-                      to={href}
-                      className={({ isActive }) =>
-                        `flex min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors
-                        ${collapsed ? "justify-center" : ""}
-                        ${
-                          isActive
-                            ? roleMeta.sidebarActiveNav
-                            : "text-green-50/80 hover:bg-white/10 hover:text-white"
-                        }`
-                      }
-                    >
-                      <Icon className="h-4.5 w-4.5 shrink-0" />
-                      {!collapsed && <span className="min-w-0 truncate">{label}</span>}
-                    </NavLink>
-                  </li>
-                );
-              }
+          {GRUPOS_NAV.map(({ id: grupoId, labelKey }) => {
+            const itemsDelGrupo = navItems.filter((item) => item.group === grupoId);
+            if (itemsDelGrupo.length === 0) return null;
 
-              return (
-                <li key={idx} className="min-w-0">
-                  <div
-                    className={`
-                      flex min-w-0 cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5
-                      text-sm font-medium text-green-100/40
-                      ${collapsed ? "justify-center" : ""}
-                    `}
+            return (
+              <div key={grupoId} className="min-w-0 px-3 py-1.5">
+                {/* ¿Qué? Encabezado de grupo — nunca se muestra para
+                    "principal" (labelKey null) ni con la barra colapsada
+                    (no hay espacio para texto ahí).
+                    ¿Impacto? aria-hidden porque es puramente visual — los
+                    NavLink siguen siendo el único contenido que un lector
+                    de pantalla necesita anunciar, ya con su propio texto. */}
+                {labelKey && !collapsed && (
+                  <p
+                    aria-hidden="true"
+                    className="mb-1 truncate px-3 text-[11px] font-semibold uppercase tracking-wider text-accent-100/50"
                   >
-                    <Icon className="h-4.5 w-4.5 shrink-0" />
-                    {!collapsed && (
-                      <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                        <span className="min-w-0 truncate">{label}</span>
-                        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-green-100/70">
-                          {t("appShell.proximamente")}
-                        </span>
-                      </span>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                    {t(labelKey)}
+                  </p>
+                )}
+                <ul className="min-w-0 space-y-0.5">
+                  {itemsDelGrupo.map(({ icon: Icon, label, href, enabled }, idx) => {
+                    if (enabled && href) {
+                      return (
+                        <li key={idx} className="min-w-0">
+                          <NavLink
+                            to={href}
+                            className={({ isActive }) =>
+                              `flex min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors
+                              ${collapsed ? "justify-center" : ""}
+                              ${
+                                isActive
+                                  ? roleMeta.sidebarActiveNav
+                                  : "text-accent-50/80 hover:bg-white/10 hover:text-white"
+                              }`
+                            }
+                          >
+                            <Icon className="h-4.5 w-4.5 shrink-0" />
+                            {!collapsed && <span className="min-w-0 truncate">{label}</span>}
+                          </NavLink>
+                        </li>
+                      );
+                    }
+
+                    return (
+                      <li key={idx} className="min-w-0">
+                        <div
+                          className={`
+                            flex min-w-0 cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5
+                            text-sm font-medium text-accent-100/40
+                            ${collapsed ? "justify-center" : ""}
+                          `}
+                        >
+                          <Icon className="h-4.5 w-4.5 shrink-0" />
+                          {!collapsed && (
+                            <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                              <span className="min-w-0 truncate">{label}</span>
+                              <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-accent-100/70">
+                                {t("appShell.proximamente")}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
         </nav>
 
         {/* Footer — cerrar sesión */}
@@ -343,7 +393,7 @@ export function AppShell({ children }: AppShellProps) {
             onClick={() => setShowLogoutConfirm(true)}
             className={`
               flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium
-              text-green-50/70 transition-colors hover:bg-red-900/30 hover:text-red-200
+              text-accent-50/70 transition-colors hover:bg-red-900/30 hover:text-red-200
               ${collapsed ? "justify-center" : ""}
             `}
           >
@@ -352,36 +402,20 @@ export function AppShell({ children }: AppShellProps) {
           </button>
         </div>
 
+        {/* ¿Qué? Issue #9 (hallazgo M1 de la auditoría) — este diálogo
+            estaba escrito a mano en vez de usar ConfirmModal, el componente
+            que se creó justo para reemplazar copias como esta (issue #224). */}
         {showLogoutConfirm && (
-          <Modal onClose={() => setShowLogoutConfirm(false)}>
-            <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-                <LogOut className="h-6 w-6 text-red-500 dark:text-red-400" />
-              </div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                {t("appShell.confirmarLogout.titulo")}
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                {t("appShell.confirmarLogout.mensaje")}
-              </p>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowLogoutConfirm(false)}
-                  className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-                >
-                  {t("common.cancel")}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex-1 cursor-pointer rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-                >
-                  {t("appShell.confirmarLogout.confirmar")}
-                </button>
-              </div>
-            </div>
-          </Modal>
+          <ConfirmModal
+            icon={LogOut}
+            variant="danger"
+            ariaLabel={t("appShell.confirmarLogout.titulo")}
+            title={t("appShell.confirmarLogout.titulo")}
+            description={t("appShell.confirmarLogout.mensaje")}
+            confirmLabel={t("appShell.confirmarLogout.confirmar")}
+            onConfirm={handleLogout}
+            onClose={() => setShowLogoutConfirm(false)}
+          />
         )}
 
         {/* Alternador de ancho (solo desktop) */}
@@ -389,7 +423,7 @@ export function AppShell({ children }: AppShellProps) {
           type="button"
           onClick={() => setCollapsed((prev) => !prev)}
           className="hidden sm:flex h-9 w-full shrink-0 cursor-pointer items-center justify-center border-t border-white/10
-            text-green-100/50 hover:bg-white/5 hover:text-white transition-colors"
+            text-accent-100/50 hover:bg-white/5 hover:text-white transition-colors"
           aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
@@ -398,7 +432,7 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* Área de contenido */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-[#2a4d34] dark:bg-[#132a1c]">
+        <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-[#2a4d34] dark:bg-[#1c341b]">
           {/* Campana de notificaciones */}
           <button
             onClick={() => navigate(roleMeta.dashboardHref)}
@@ -420,19 +454,42 @@ export function AppShell({ children }: AppShellProps) {
           <ThemeToggle />
         </header>
 
-        {/* ¿Qué? Fondo del área de contenido, más oscuro que el sidebar.
-            ¿Para qué? Las tarjetas (bg-white dark:bg-[#132a1c]) se perdían
-            contra un fondo casi del mismo tono que el sidebar. gray-100
-            (claro, el mismo tono neutro que ya usa el contenedor raíz más
-            arriba) y #03130b (oscuro, notablemente más oscuro que el
-            #052e16 del sidebar) marcan mejor dónde termina la barra lateral
-            y dónde empieza el contenido.
-            ¿Impacto? Antes era un verde pálido (#dfeadf) elegido a mano —
-            se veía raro/desentonado en modo claro (retroalimentación
-            directa). gray-100 es neutro y ya es parte de la paleta que este
-            mismo layout usa (ver el contenedor raíz, más arriba). */}
-        <main className="flex-1 overflow-y-auto bg-gray-100 dark:bg-[#03130b]">
-          <div className="mx-auto max-w-7xl px-6 pb-6">{children}</div>
+        {/* ¿Qué? Fondo del área de contenido — foto fija (no animada), en
+            su propia capa, con una capa sólida encima.
+            ¿Para qué? Antes la imagen estaba puesta directo en <main>, que
+            es el elemento que hace scroll — con contenido más alto que la
+            pantalla, el navegador no estira una sola foto continua sobre
+            todo el alto scrolleable, sino que la repite/corta, dejando un
+            corte visible a la mitad de la pantalla (retroalimentación
+            directa, con captura). La solución es la misma que ya se había
+            usado para el patrón de puntos: una capa aparte, con position
+            absolute e inset-0, del tamaño FIJO de la parte visible de
+            <main> (no del contenido completo) — así nunca necesita
+            "cubrir" más alto de lo que ya cubre, sin importar cuánto
+            crezca el contenido debajo.
+            ¿Para qué (la opacidad)? Se pidió una foto más vívida (el
+            corte del bug, sin querer, dejaba ver la foto casi sin
+            atenuar, y eso gustó más que la versión muy tenue de antes).
+            80% en oscuro / 85% en claro se eligieron probando varias
+            opacidades con la fórmula WCAG: son las que dan más presencia
+            de foto mientras el contraste tarjeta/fondo se mantiene igual
+            o mejor que sin foto en el peor caso — 90% en oscuro, por
+            ejemplo, se probó y se descartó porque ahí el fondo compuesto
+            coincide casi exactamente con el color de la tarjeta oscura
+            (contraste 1.00, prácticamente invisible) en el punto más
+            claro de la foto.
+            ¿Impacto? La capa sigue siendo un color SÓLIDO semitransparente
+            (rgba de un tono, no gradient) — restricciones.md prohíbe
+            degradados. */}
+        <main className="relative flex-1 overflow-y-auto bg-gray-200 dark:bg-[#082013]">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('/landing/green-leaf-texture.jpg')" }}
+          >
+            <div className="absolute inset-0 bg-gray-200/85 dark:bg-[#082013]/80" />
+          </div>
+          <div className="relative z-10 mx-auto max-w-7xl px-6 pb-6">{children}</div>
         </main>
       </div>
     </div>

@@ -5,6 +5,8 @@ import { Phone, MapPin, Users, Building2, MessageCircle, Info, Copy, Check } fro
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 interface Localidad {
   id_localidad: number;
@@ -150,7 +152,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
       {/* Encabezado */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {soloAcopio ? t("appShell.nav.puntosAcopio") : t("appShell.nav.directorioGeneral")}
         </h1>
@@ -176,7 +178,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                 onClick={() => setTab(id)}
                 className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   tab === id
-                    ? "bg-green-700 text-white shadow-sm"
+                    ? "bg-accent-700 text-white shadow-sm"
                     : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                 }`}
               >
@@ -193,20 +195,20 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             indicador fijo. Puntos de Acopio sigue con el filtro libre. */}
         {tab === "recicladores" && !soloAcopio ? (
           <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200">
-            <MapPin className="h-4 w-4 shrink-0 text-green-600" />
+            <MapPin className="h-4 w-4 shrink-0 text-accent-600" />
             {localidadPropiaNombre
               ? t("directorio.ownLocality", { localidad: localidadPropiaNombre })
               : t("directorio.ownLocalityUnknown")}
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 shrink-0 text-green-600" />
+            <MapPin className="h-4 w-4 shrink-0 text-accent-600" />
             <select
               value={localidadPuntosId}
               onChange={(e) =>
                 setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value))
               }
-              className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
+              className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
             >
               <option value="">{t("directorio.allLocalities")}</option>
               {localidades.map((l) => (
@@ -246,12 +248,12 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
 
       {/* Contenido */}
       {cargandoDirectorio ? (
-        <div className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</div>
+        <LoadingState message={t("common.loading")} />
       ) : errorDirectorio ? (
         <Alert type="error" message={t("common.loadError")} />
       ) : tab === "recicladores" && !soloAcopio ? (
         recicladores.length === 0 ? (
-          <EmptyState mensaje={t("directorio.emptyRecyclers")} />
+          <EmptyState icon={MapPin} message={t("directorio.emptyRecyclers")} />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {recicladores.map((r) => (
@@ -265,7 +267,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           </div>
         )
       ) : puntos.length === 0 ? (
-        <EmptyState mensaje={t("directorio.emptyPoints")} />
+        <EmptyState icon={MapPin} message={t("directorio.emptyPoints")} />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {puntos.map((p) => (
@@ -343,7 +345,7 @@ function TarjetaReciclador({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+    <div className="flex flex-col rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
       <div className="mb-3 flex items-start gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-900/30">
           <Users className="h-5 w-5 text-teal-700 dark:text-teal-400" />
@@ -381,7 +383,7 @@ function TarjetaReciclador({
               href={waLink(r.numero_telefonico)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-700 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600"
             >
               <MessageCircle className="h-3.5 w-3.5" />
               WhatsApp
@@ -416,10 +418,10 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
   };
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+    <div className="rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
       <div className="mb-3 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/30">
-          <Building2 className="h-5 w-5 text-green-700 dark:text-green-400" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-900/30">
+          <Building2 className="h-5 w-5 text-accent-700 dark:text-accent-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
@@ -442,7 +444,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
             title={t("directorio.copyAddress")}
           >
             {copiado ? (
-              <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+              <Check className="h-3.5 w-3.5 text-accent-600 dark:text-accent-400" />
             ) : (
               <Copy className="h-3.5 w-3.5" />
             )}
@@ -461,15 +463,6 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
           </p>
         )}
       </div>
-    </div>
-  );
-}
-
-function EmptyState({ mensaje }: { mensaje: string }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-16 text-center dark:border-[#2a4d34] dark:bg-[#132a1c]/40">
-      <MapPin className="mx-auto mb-3 h-8 w-8 text-gray-300 dark:text-gray-600" />
-      <p className="text-sm text-gray-500 dark:text-gray-400">{mensaje}</p>
     </div>
   );
 }

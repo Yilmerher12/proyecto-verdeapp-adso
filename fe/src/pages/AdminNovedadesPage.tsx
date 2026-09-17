@@ -4,7 +4,13 @@ import { Archive, CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus } fro
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
+import { Alert } from "@/components/ui/Alert";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
 import {
   archivarNovedad,
   crearNovedad,
@@ -13,6 +19,9 @@ import {
   type AlcanceNovedad,
   type Novedad,
 } from "@/lib/novedadesApi";
+
+// ¿Qué? Cuántas novedades se piden por página (issue #227).
+const TAMANO_PAGINA = 8;
 
 interface FormState {
   alcance: AlcanceNovedad;
@@ -52,6 +61,13 @@ function isoToDateInputUTC(iso: string): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// ¿Qué? Issue #7 (hallazgo F2 de la auditoría) — una novedad no tiene
+//       título, solo texto libre; se usa un recorte corto como el nombre
+//       que distingue cada fila en los aria-label de editar/archivar.
+function resumirTexto(texto: string): string {
+  return texto.length > 40 ? `${texto.slice(0, 40)}…` : texto;
+}
+
 /**
  * ¿Qué? Panel del Administrador del Sistema para publicar, editar y
  *       archivar novedades generales de la plataforma (RQF-015,
@@ -64,6 +80,7 @@ export function AdminNovedadesPage() {
   const { user } = useAuth();
 
   const [novedades, setNovedades] = useState<Novedad[]>([]);
+  const [total, setTotal] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -71,17 +88,26 @@ export function AdminNovedadesPage() {
   const [editando, setEditando] = useState<Novedad | null>(null);
   const [form, setForm] = useState<FormState>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
+  // ¿Qué? Issue #9 (hallazgo U2 de la auditoría) — archivar se ejecutaba
+  //       directo al clic, sin confirmar, a diferencia de eliminar un
+  //       comunicado (misma acción conceptual, otra pantalla).
+  const [aArchivar, setAArchivar] = useState<Novedad | null>(null);
+
+  const paginacion = usePaginacion(TAMANO_PAGINA, total);
 
   const cargar = () => {
     if (!user) return;
     setCargando(true);
-    listarTodasLasNovedades()
-      .then(setNovedades)
+    listarTodasLasNovedades(TAMANO_PAGINA, paginacion.offset)
+      .then(({ items, total: totalRes }) => {
+        setNovedades(items);
+        setTotal(totalRes);
+      })
       .catch((err) => console.error("Error cargando novedades", err))
       .finally(() => setCargando(false));
   };
 
-  useEffect(cargar, [user]);
+  useEffect(cargar, [user, paginacion.offset]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
@@ -139,33 +165,34 @@ export function AdminNovedadesPage() {
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.detail || t("common.saveError"));
+      setErrorMsg(err.message || t("common.saveError"));
     } finally {
       setGuardando(false);
     }
   };
 
-  const archivar = async (item: Novedad) => {
-    if (!user) return;
+  const confirmarArchivar = async () => {
+    if (!user || !aArchivar) return;
     try {
-      await archivarNovedad(item.id_novedad);
+      await archivarNovedad(aArchivar.id_novedad);
+      setAArchivar(null);
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.detail || t("novedades.admin.archiveError"));
+      setErrorMsg(err.message || t("novedades.admin.archiveError"));
     }
   };
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("novedades.admin.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("novedades.admin.subtitle")}</p>
         </div>
         <button
           onClick={abrirCrear}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("novedades.admin.newButton")}
@@ -173,25 +200,20 @@ export function AdminNovedadesPage() {
       </div>
 
       {errorMsg && !creando && !editando && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-          {errorMsg}
-        </p>
+        <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />
       )}
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && novedades.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("novedades.admin.emptyState")}</p>
-        </div>
+        <EmptyState icon={Megaphone} message={t("novedades.admin.emptyState")} />
       )}
 
       <div className="space-y-3">
         {novedades.map((item) => (
           <div
             key={item.id_novedad}
-            className={`rounded-2xl border bg-white p-4 dark:bg-[#132a1c] ${
+            className={`rounded-2xl border bg-[#f7f9f3] p-4 dark:bg-[#1c341b] ${
               item.archivada ? "border-gray-100 opacity-60 dark:border-[#2a4d34]" : "border-gray-100 dark:border-[#2a4d34]"
             }`}
           >
@@ -216,7 +238,7 @@ export function AdminNovedadesPage() {
                     href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 transition-colors hover:text-green-800 dark:text-green-400"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
                   >
                     <Paperclip className="h-3.5 w-3.5" />
                     {t("comunicados.viewAttachment")}
@@ -238,14 +260,14 @@ export function AdminNovedadesPage() {
                   <button
                     onClick={() => abrirEditar(item)}
                     className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-                    aria-label={t("novedades.admin.editAria")}
+                    aria-label={t("novedades.admin.editAria", { resumen: resumirTexto(item.texto) })}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => archivar(item)}
+                    onClick={() => setAArchivar(item)}
                     className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
-                    aria-label={t("novedades.admin.archiveAria")}
+                    aria-label={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
                   >
                     <Archive className="h-4 w-4" />
                   </button>
@@ -255,6 +277,22 @@ export function AdminNovedadesPage() {
           </div>
         ))}
       </div>
+
+      {!cargando && total > 0 && (
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
+          <Paginacion
+            desde={paginacion.desde}
+            hasta={paginacion.hasta}
+            total={total}
+            pagina={paginacion.pagina}
+            totalPaginas={paginacion.totalPaginas}
+            puedeAnterior={paginacion.puedeAnterior}
+            puedeSiguiente={paginacion.puedeSiguiente}
+            onAnterior={paginacion.irAAnterior}
+            onSiguiente={paginacion.irASiguiente}
+          />
+        </div>
+      )}
 
       {(creando || editando) && (
         <Modal
@@ -268,11 +306,7 @@ export function AdminNovedadesPage() {
               {editando ? t("novedades.admin.editTitle") : t("novedades.admin.newButton")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             {!editando ? (
               <div>
@@ -295,8 +329,8 @@ export function AdminNovedadesPage() {
                       onClick={() => setForm({ ...form, alcance: a })}
                       className={`cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                         form.alcance === a
-                          ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                          : "border-gray-200 text-gray-600 hover:border-green-300 dark:border-[#2a4d34] dark:text-gray-300"
+                          ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                          : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-[#2a4d34] dark:text-gray-300"
                       }`}
                     >
                       {t(`novedades.alcances.${a}`)}
@@ -325,7 +359,7 @@ export function AdminNovedadesPage() {
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -344,7 +378,7 @@ export function AdminNovedadesPage() {
                 type="date"
                 value={form.fecha_expiracion}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
             </div>
@@ -359,7 +393,7 @@ export function AdminNovedadesPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")
@@ -370,6 +404,19 @@ export function AdminNovedadesPage() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {aArchivar && (
+        <ConfirmModal
+          icon={Archive}
+          variant="danger"
+          ariaLabel={t("novedades.admin.archiveConfirm.ariaLabel")}
+          title={t("novedades.admin.archiveConfirm.title")}
+          description={t("novedades.admin.archiveConfirm.warning")}
+          confirmLabel={t("novedades.admin.archiveConfirm.confirm")}
+          onConfirm={confirmarArchivar}
+          onClose={() => setAArchivar(null)}
+        />
       )}
     </div>
   );

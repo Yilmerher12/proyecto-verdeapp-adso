@@ -190,24 +190,3 @@ def get_conjuntos_por_localidad(
         stmt = stmt.where(ConjuntoResidencial.nombre_conjunto.ilike(f"%{search}%"))
     stmt = stmt.order_by(ConjuntoResidencial.nombre_conjunto).limit(limit)
     return db.execute(stmt).scalars().all()
-
-
-@router.get(
-    "/conjuntos",
-    response_model=List[ConjuntoResponse],
-    status_code=status.HTTP_200_OK,
-    summary="Obtener la lista global de conjuntos residenciales verificados"
-)
-def get_todos_los_conjuntos(db: Session = Depends(get_db)):
-    """
-    ¿Qué cambió? Igual que el endpoint anterior — se agrega el filtro
-    verificado=True. Este endpoint no se usa actualmente en ningún
-    formulario visto hasta ahora, pero se corrige por consistencia: ningún
-    endpoint de geografía debería exponer conjuntos no verificados salvo
-    "/conjuntos/todos" (de uso exclusivo del Administrador del Sistema, que
-    YA filtraba correctamente).
-    """
-    stmt = select(ConjuntoResidencial).where(ConjuntoResidencial.verificado.is_(True))
-    return db.execute(stmt).scalars().all()
-
-

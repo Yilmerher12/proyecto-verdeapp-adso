@@ -14,8 +14,11 @@
       "puntosAcopio": "Puntos de Acopio",
       "gestionarComunicados": "Comunicados de mis Conjuntos",
       "comunicados": "Comunicados",
-      "aprenderGuias": "Aprender (Guías)",
-      "directorioGeneral": "Directorio General"
+      "aprenderGuias": "Aprende a Reciclar",
+      "directorioGeneral": "Directorio General",
+      "groupComunidad": "Comunidad",
+      "groupRecursos": "Recursos",
+      "groupCuenta": "Cuenta"
     },
     "proximamente": "Pronto",
     "notificaciones": "Notificaciones",
@@ -45,6 +48,7 @@
   },
   "common": {
     "loading": "Cargando...",
+    "verifyingSession": "Verificando sesión, por favor espera",
     "loadError": "No se pudo cargar la información. Intenta de nuevo más tarde.",
     "actionError": "No se pudo completar la acción. Inténtalo de nuevo.",
     "email": "Correo electrónico",
@@ -58,11 +62,18 @@
     "back": "Volver",
     "or": "o",
     "close": "Cerrar",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
     "edit": "Editar",
     "phone": "Teléfono",
     "saving": "Guardando...",
     "saveError": "No se pudo guardar. Intenta de nuevo.",
-    "formIncomplete": "Completa el formulario"
+    "formIncomplete": "Completa el formulario",
+    "pagination": {
+      "showing": "Mostrando {{from}}–{{to}} de {{total}}",
+      "prev": "Página anterior",
+      "next": "Página siguiente"
+    }
   },
   "auth": {
     "login": {
@@ -100,6 +111,8 @@
         "emailsMismatch": "Los correos electrónicos no coinciden",
         "firstNameMin": "El nombre debe tener al menos 2 caracteres",
         "lastNameMin": "El apellido debe tener al menos 2 caracteres",
+        "phoneInvalid": "El número telefónico tiene un formato inválido.",
+        "unitFormatInvalid": "Solo se permiten letras, números, y un espacio o guion como separador.",
         "passwordMin": "Mínimo 8 caracteres",
         "passwordUppercase": "Debe incluir al menos una mayúscula",
         "passwordLowercase": "Debe incluir al menos una minúscula",
@@ -190,6 +203,10 @@
       "backToLogin": "Volver al inicio de sesión",
       "successMessage": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
       "errorDefault": "Error al enviar la solicitud",
+      "confirmTitle": "¿Enviar enlace de recuperación?",
+      "confirmDescription": "Se enviará un correo con el enlace a {{email}}.",
+      "confirmButton": "Sí, enviar",
+      "confirmSending": "Enviando...",
       "validation": {
         "emailRequired": "El correo es obligatorio"
       }
@@ -478,6 +495,7 @@
       "register": "Registrarse"
     },
     "hero": {
+      "tagline": "Cambiando el mundo",
       "subtitle": "Gestión de residuos para conjuntos residenciales en Bogotá",
       "description": "Conectamos residentes, recicladores y administradores para transformar la gestión de residuos en tu comunidad.",
       "ctaLogin": "Ya tengo cuenta",
@@ -839,6 +857,12 @@
         "successMessage": "Auditoría enviada.",
         "errorDefault": "No se pudo enviar la auditoría.",
         "errorTimeout": "La subida está tardando demasiado — revisa tu conexión e intenta de nuevo.",
+        "confirmSubmit": {
+          "ariaLabel": "Confirmar auditoría",
+          "title": "¿Enviar esta auditoría?",
+          "warning": "Vas a calificar \"{{tema}}\" como {{nivel}}. Una vez enviada, la auditoría no se puede editar.",
+          "confirm": "Sí, enviar"
+        },
         "validation": {
           "conjunto": "Selecciona un conjunto.",
           "nivel": "Selecciona un nivel de desempeño.",
@@ -963,7 +987,7 @@
     }
   },
   "catalogoEducativo": {
-    "title": "Aprender a reciclar",
+    "title": "Aprende a reciclar",
     "subtitle": "Elige un tema para ver sus videos y guías de apoyo.",
     "loading": "Cargando contenido...",
     "loadError": "No se pudo cargar el catálogo educativo.",
@@ -972,7 +996,7 @@
     "temas": "temas"
   },
   "categoriaEducativa": {
-    "back": "Volver a Aprender a reciclar",
+    "back": "Volver a Aprende a reciclar",
     "emptyForCategory": "No se encontró contenido para esta categoría.",
     "viewGuide": "Ver guía de apoyo"
   },
@@ -1196,8 +1220,8 @@
       "newButton": "Nuevo comunicado",
       "noConjuntos": "No administras ningún conjunto todavía.",
       "emptyState": "Todavía no has publicado ningún comunicado.",
-      "editAria": "Editar comunicado",
-      "deleteAria": "Eliminar comunicado",
+      "editAria": "Editar {{resumen}}",
+      "deleteAria": "Eliminar {{resumen}}",
       "editTitle": "Editar comunicado",
       "creadoEl": "Creado el {{fecha}}",
       "expiraEl": "Expira el {{fecha}}",
@@ -1244,12 +1268,18 @@
       "subtitle": "Publica avisos generales para toda la plataforma VerdeApp.",
       "newButton": "Nueva novedad",
       "emptyState": "Todavía no has publicado ninguna novedad.",
-      "editAria": "Editar novedad",
-      "archiveAria": "Archivar novedad",
+      "editAria": "Editar {{resumen}}",
+      "archiveAria": "Archivar {{resumen}}",
       "editTitle": "Editar novedad",
       "creadoEl": "Creado el {{fecha}}",
       "expiraEl": "Expira el {{fecha}}",
       "archiveError": "No se pudo archivar. Intenta de nuevo.",
+      "archiveConfirm": {
+        "ariaLabel": "Confirmar archivado",
+        "title": "¿Archivar esta novedad?",
+        "warning": "Dejará de verse en el feed de novedades activas. Esta acción no se puede deshacer.",
+        "confirm": "Sí, archivar"
+      },
       "alcanceNoEditable": "El alcance no se puede cambiar después de publicar. Si te equivocaste, archívala y crea una nueva.",
       "validation": {
         "textoRequerido": "El texto de la novedad es obligatorio."

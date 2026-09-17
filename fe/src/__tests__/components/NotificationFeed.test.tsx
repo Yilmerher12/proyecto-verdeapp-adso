@@ -7,7 +7,8 @@
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import type { NotificacionItem } from "@/lib/notificaciones";
 
 const notificacionNoLeida: NotificacionItem = {
   id: "1",
@@ -25,8 +26,8 @@ function renderFeed(onMarkRead = vi.fn()) {
       title="Notificaciones"
       notifications={[notificacionNoLeida]}
       emptyMessage="Sin notificaciones"
-      accentBg="bg-green-600"
-      accentHighlight="bg-green-50"
+      accentBg="bg-accent-600"
+      accentHighlight="bg-accent-50"
       onMarkRead={onMarkRead}
       onMarkAllRead={vi.fn()}
       onClearRead={vi.fn()}
@@ -70,8 +71,8 @@ describe("NotificationFeed — accesibilidad de la fila no leída", () => {
         title="Notificaciones"
         notifications={[{ ...notificacionNoLeida, leida: true }]}
         emptyMessage="Sin notificaciones"
-        accentBg="bg-green-600"
-        accentHighlight="bg-green-50"
+        accentBg="bg-accent-600"
+        accentHighlight="bg-accent-50"
         onMarkRead={vi.fn()}
         onMarkAllRead={vi.fn()}
         onClearRead={vi.fn()}

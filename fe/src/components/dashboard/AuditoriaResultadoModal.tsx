@@ -15,10 +15,11 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { API_BASE_URL } from "@/api/axios";
 import { obtenerAuditoria, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { tiempoRelativo } from "@/components/dashboard/NotificationFeed";
+import { tiempoRelativo } from "@/lib/notificaciones";
 
 interface AuditoriaResultadoModalProps {
   idAuditoria: string;
@@ -48,7 +49,7 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
           {t("auditoriaResultado.modalTitle")}
         </h3>
 
-        {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+        {cargando && <LoadingState message={t("common.loading")} />}
         {error && <Alert type="error" message={t("auditoriaResultado.errorLoad")} />}
 
         {auditoria && nivel && (

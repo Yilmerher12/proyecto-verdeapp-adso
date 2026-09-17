@@ -15,7 +15,7 @@ import { AuthLayout } from "@/components/layout/AuthLayout";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 /**
  * ¿Qué? Formulario de solicitud de recuperación de contraseña.
@@ -31,6 +31,11 @@ export function ForgotPasswordPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  // ¿Qué? Error propio del envío (dentro del modal de confirmación) —
+  //       separado de "error" (validación del correo, antes de siquiera
+  //       abrir el modal), para que cada uno se muestre en el lugar
+  //       correcto, igual que hacen los demás ConfirmModal de la app.
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
 
   const formularioIncompleto = !email.trim();
 
@@ -45,15 +50,16 @@ export function ForgotPasswordPage() {
   };
 
   const confirmSend = async () => {
-    setShowConfirm(false);
     setIsLoading(true);
+    setErrorEnvio(null);
     try {
       await forgotPassword({ email });
       setSuccess(t("auth.forgotPassword.successMessage"));
       setEmail("");
+      setShowConfirm(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : t("auth.forgotPassword.errorDefault");
-      setError(message);
+      setErrorEnvio(message);
     } finally {
       setIsLoading(false);
     }
@@ -62,43 +68,25 @@ export function ForgotPasswordPage() {
   return (
     <>
     {showConfirm && (
-      <Modal onClose={() => setShowConfirm(false)}>
-        <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50 dark:bg-green-900/20">
-            <Mail className="h-6 w-6 text-green-600 dark:text-green-400" />
-          </div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-            ¿Enviar enlace de recuperación?
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-            Se enviará un correo a:
-          </p>
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-6 break-all">
-            {email}
-          </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setShowConfirm(false)}
-              className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={confirmSend}
-              className="flex-1 cursor-pointer rounded-xl bg-green-700 hover:bg-green-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-            >
-              Sí, enviar
-            </button>
-          </div>
-        </div>
-      </Modal>
+      <ConfirmModal
+        icon={Mail}
+        variant="primary"
+        ariaLabel={t("auth.forgotPassword.confirmTitle")}
+        title={t("auth.forgotPassword.confirmTitle")}
+        description={t("auth.forgotPassword.confirmDescription", { email })}
+        error={errorEnvio}
+        onDismissError={() => setErrorEnvio(null)}
+        isConfirming={isLoading}
+        confirmLabel={t("auth.forgotPassword.confirmButton")}
+        confirmingLabel={t("auth.forgotPassword.confirmSending")}
+        onConfirm={confirmSend}
+        onClose={() => setShowConfirm(false)}
+      />
     )}
     <AuthLayout title={t("auth.forgotPassword.title")} subtitle={t("auth.forgotPassword.subtitle")}>
       {success && (
         <div className="mb-4">
-          <Alert type="success" message={success} />
+          <Alert type="success" message={success} onClose={() => setSuccess(null)} />
         </div>
       )}
       {error && (

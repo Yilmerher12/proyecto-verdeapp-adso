@@ -36,9 +36,17 @@ export async function crearNovedad(datos: CrearNovedadPayload): Promise<Novedad>
   return data;
 }
 
+export interface PaginaDeNovedades {
+  items: Novedad[];
+  total: number;
+}
+
 // ¿Qué? Admin Sistema — historial completo, activas y archivadas (CA-035.4).
-export async function listarTodasLasNovedades(): Promise<Novedad[]> {
-  const { data } = await axios.get(`${API_BASE}/todas`);
+// ¿Para qué? Issue #227 — antes traía todo el historial de una sola vez;
+//           ahora se pide de a páginas (limit/offset), igual que ya hacen
+//           los listados de admin.py.
+export async function listarTodasLasNovedades(limit: number, offset: number): Promise<PaginaDeNovedades> {
+  const { data } = await axios.get(`${API_BASE}/todas`, { params: { limit, offset } });
   return data;
 }
 

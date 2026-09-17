@@ -36,8 +36,11 @@ export function LoginPage() {
       sessionStorage.removeItem("verdeapp:session-expired");
       setError(t("auth.login.sessionExpired"));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // ¿Qué? Issue #225 — "t" faltaba en las dependencias; se silenciaba la
+    //       advertencia en vez de agregarla. Es seguro incluirla: la marca
+    //       se borra apenas se lee, así que un cambio de idioma después no
+    //       vuelve a disparar nada (la condición ya no se cumple).
+  }, [t]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -117,7 +120,7 @@ export function LoginPage() {
       <Modal onClose={() => navigate("/")} closeOnBackdrop={false}>
         <div className="p-6 sm:p-8 max-w-md mx-auto">
           <div className="mb-6 text-center sm:text-left">
-            <div className="h-12 w-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mb-3 mx-auto sm:mx-0 shadow-sm border border-green-200">
+            <div className="h-12 w-12 bg-accent-100 rounded-xl flex items-center justify-center text-accent-600 mb-3 mx-auto sm:mx-0 shadow-sm border border-accent-200">
               <Leaf className="h-6 w-6" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -163,7 +166,7 @@ export function LoginPage() {
             <div className="flex justify-end pt-1">
               <Link
                 to="/forgot-password"
-                className="text-xs font-semibold text-green-600 transition-colors hover:text-green-700 dark:text-green-400"
+                className="text-xs font-semibold text-accent-600 transition-colors hover:text-accent-700 dark:text-accent-400"
               >
                 {t("auth.login.forgotPassword")}
               </Link>
@@ -180,7 +183,7 @@ export function LoginPage() {
             {t("auth.login.noAccount")}{" "}
             <Link
               to="/register"
-              className="font-bold text-green-600 transition-colors hover:text-green-700 dark:text-green-400"
+              className="font-bold text-accent-600 transition-colors hover:text-accent-700 dark:text-accent-400"
             >
               {t("auth.login.createAccountLink")}
             </Link>

@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import axios from "axios";
 import * as authApi from "@/api/auth";
 import { AuthContext } from "@/context/authContextDef";
 import i18n from "@/i18n";
@@ -83,8 +84,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         //           al abrir la app, el usuario ya no pierde una sesión que
         //           seguía siendo válida — solo se cierra sesión de verdad
         //           cuando el servidor confirma que el token no sirve.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const status = (err as any)?.response?.status;
+        // ¿Qué? axios.isAxiosError es el type guard real que expone la
+        //       librería para distinguir un AxiosError de cualquier otro
+        //       valor lanzado — antes se forzaba con "as any" para leer
+        //       ".response.status" sin que TypeScript revisara nada.
+        const status = axios.isAxiosError(err) ? err.response?.status : undefined;
         if (status === 401 || status === 403) {
           clearAuth();
         }

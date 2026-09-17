@@ -3,6 +3,10 @@ import { useTranslation } from "react-i18next";
 import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Alert } from "@/components/ui/Alert";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import {
   crearContenido,
@@ -27,6 +31,12 @@ export function AdminContenidoEducativoPage() {
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // ¿Qué? Issue #6 (hallazgo F1 de la auditoría) — errorMsg solo se
+  //       mostraba dentro del modal de crear/editar, así que si la carga
+  //       inicial fallaba, la lista vacía se veía igual que "no hay nada
+  //       registrado". cargaError es aparte para que el aviso se vea en
+  //       la página, sin depender de que el modal esté abierto.
+  const [cargaError, setCargaError] = useState(false);
 
   const [editando, setEditando] = useState<ContenidoEducativo | null>(null);
   const [creando, setCreando] = useState(false);
@@ -38,14 +48,17 @@ export function AdminContenidoEducativoPage() {
   const cargar = () => {
     if (!user) return;
     setCargando(true);
+    setCargaError(false);
     listarContenido()
       .then(setContenido)
-      .catch(() => setErrorMsg(t("catalogoEducativo.loadError")))
+      .catch(() => setCargaError(true))
       .finally(() => setCargando(false));
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(cargar, [user]);
+  // ¿Qué? Issue #225 — "t" (la función de traducción, usada en el mensaje
+  //       de error) faltaba en las dependencias; se silenciaba la
+  //       advertencia en vez de agregarla.
+  useEffect(cargar, [user, t]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
@@ -126,7 +139,7 @@ export function AdminContenidoEducativoPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("adminContenidoEducativo.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -135,27 +148,25 @@ export function AdminContenidoEducativoPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
         >
           <Plus className="h-4 w-4" />
           {t("adminContenidoEducativo.newModule")}
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
+      {!cargando && cargaError && <Alert type="error" message={t("catalogoEducativo.loadError")} />}
 
-      {!cargando && contenido.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <BookOpen className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("adminContenidoEducativo.emptyState")}</p>
-        </div>
+      {!cargando && !cargaError && contenido.length === 0 && (
+        <EmptyState icon={BookOpen} message={t("adminContenidoEducativo.emptyState")} />
       )}
 
       <div className="space-y-3">
         {contenido.map((item) => (
           <div
             key={item.id_contenido}
-            className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+            className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#f7f9f3] p-4 dark:border-[#2a4d34] dark:bg-[#1c341b]"
           >
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">
@@ -192,11 +203,7 @@ export function AdminContenidoEducativoPage() {
               {editando ? t("adminContenidoEducativo.modal.editTitle") : t("adminContenidoEducativo.newModule")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             <div>
               <label htmlFor="contenido-categoria" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
@@ -207,7 +214,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.modulo_categoria}
                 onChange={(e) => setForm({ ...form, modulo_categoria: e.target.value })}
                 placeholder={t("adminContenidoEducativo.fields.categoryPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -220,7 +227,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.titulo_tema}
                 onChange={(e) => setForm({ ...form, titulo_tema: e.target.value })}
                 placeholder={t("adminContenidoEducativo.fields.titlePlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -233,7 +240,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.cuerpo_texto}
                 onChange={(e) => setForm({ ...form, cuerpo_texto: e.target.value })}
                 rows={6}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 {t("adminContenidoEducativo.fields.contentMarkdownHint")}
@@ -249,7 +256,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.url_video ?? ""}
                 onChange={(e) => setForm({ ...form, url_video: e.target.value })}
                 placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
               />
             </div>
 
@@ -269,7 +276,7 @@ export function AdminContenidoEducativoPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")
@@ -283,33 +290,16 @@ export function AdminContenidoEducativoPage() {
       )}
 
       {aEliminar && (
-        <Modal onClose={() => setAEliminar(null)} aria-label={t("adminContenidoEducativo.modal.deleteAriaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <Trash2 className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("adminContenidoEducativo.deleteConfirm.title", { titulo: aEliminar.titulo_tema })}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("adminContenidoEducativo.deleteConfirm.warning")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setAEliminar(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={confirmarEliminar}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                {t("adminContenidoEducativo.deleteConfirm.confirm")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={Trash2}
+          variant="danger"
+          ariaLabel={t("adminContenidoEducativo.modal.deleteAriaLabel")}
+          title={t("adminContenidoEducativo.deleteConfirm.title", { titulo: aEliminar.titulo_tema })}
+          description={t("adminContenidoEducativo.deleteConfirm.warning")}
+          confirmLabel={t("adminContenidoEducativo.deleteConfirm.confirm")}
+          onConfirm={confirmarEliminar}
+          onClose={() => setAEliminar(null)}
+        />
       )}
     </div>
   );

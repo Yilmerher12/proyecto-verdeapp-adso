@@ -10,6 +10,7 @@ import {
   type AdministradorConjuntoResumen,
 } from "@/lib/adminConjuntoApi";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
+import { Alert } from "@/components/ui/Alert";
 
 interface Localidad {
   id_localidad: number;
@@ -63,7 +64,7 @@ export function AsignarConjuntoAdicionalForm() {
       setBusquedaHecha(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("desvinculacion.asignarAdicional.errorDefault"));
+      setError(err.message || t("desvinculacion.asignarAdicional.errorDefault"));
     } finally {
       setBuscando(false);
     }
@@ -115,7 +116,7 @@ export function AsignarConjuntoAdicionalForm() {
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.detail || t("desvinculacion.asignarAdicional.errorDefault"));
+      setError(err.message || t("desvinculacion.asignarAdicional.errorDefault"));
     } finally {
       setAsignando(false);
     }
@@ -127,7 +128,7 @@ export function AsignarConjuntoAdicionalForm() {
     //       aquí no se repite esa decoración.
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <UserCog className="h-4 w-4 text-green-600" />
+        <UserCog className="h-4 w-4 text-accent-600" />
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">
           {t("desvinculacion.asignarAdicional.sectionTitle")}
         </h3>
@@ -141,22 +142,22 @@ export function AsignarConjuntoAdicionalForm() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("desvinculacion.asignarAdicional.searchPlaceholder")}
-            className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-green-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+            className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
           />
         </div>
         <button
           type="submit"
           disabled={buscando}
-          className="cursor-pointer rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           {t("desvinculacion.asignarAdicional.searchButton")}
         </button>
       </form>
 
       {error && (
-        <p className="mb-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg dark:bg-red-900/20 dark:text-red-400">
-          {error}
-        </p>
+        <div className="mb-3">
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        </div>
       )}
 
       {busquedaHecha && resultados.length === 0 && (
@@ -172,8 +173,8 @@ export function AsignarConjuntoAdicionalForm() {
               onClick={() => seleccionarAdministrador(admin)}
               className={`w-full cursor-pointer text-left rounded-xl border px-4 py-3 transition-colors ${
                 seleccionado?.id_administrador === admin.id_administrador
-                  ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                  : "border-gray-200 hover:border-green-300 dark:border-[#2a4d34] dark:hover:border-green-700"
+                  ? "border-accent-500 bg-accent-50 dark:bg-accent-900/20"
+                  : "border-gray-200 hover:border-accent-300 dark:border-[#2a4d34] dark:hover:border-accent-700"
               }`}
             >
               <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -194,24 +195,24 @@ export function AsignarConjuntoAdicionalForm() {
       {seleccionado && (
         <div className="border-t border-gray-100 dark:border-[#2a4d34] pt-4">
           {mensajeExito && (
-            <p className="mb-3 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg dark:bg-green-900/20 dark:text-green-400">
-              {mensajeExito}
-            </p>
+            <div className="mb-3">
+              <Alert type="success" message={mensajeExito} onClose={() => setMensajeExito(null)} />
+            </div>
           )}
 
           <div className="mb-3">
-            <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+            <label htmlFor="asignar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
               <MapPin className="w-4 h-4" />
               {t("desvinculacion.asignarAdicional.localityLabel")}
             </label>
             <select
-              aria-label={t("desvinculacion.asignarAdicional.localityLabel")}
+              id="asignar-localidad"
               value={localidadId}
               onChange={(e) => {
                 setLocalidadId(e.target.value === "" ? "" : Number(e.target.value));
                 setConjuntoElegido(null);
               }}
-              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
             >
               <option value="">{t("desvinculacion.asignarAdicional.localitySelectPlaceholder")}</option>
               {localidades.map((l) => (
@@ -241,13 +242,14 @@ export function AsignarConjuntoAdicionalForm() {
                   placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
                   emptyLabel={t("desvinculacion.asignarAdicional.noConjuntosDisponibles")}
                   loadingLabel={t("common.loading")}
+                  ariaLabel={t("desvinculacion.asignarAdicional.selectConjuntoLabel")}
                 />
               </div>
               <button
                 type="button"
                 onClick={asignar}
                 disabled={!conjuntoElegido || asignando}
-                className="cursor-pointer rounded-xl bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 h-fit mt-1"
+                className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 h-fit mt-1"
               >
                 {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
               </button>

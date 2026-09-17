@@ -56,6 +56,6 @@
 
 ### CA-039.4 — Paginación
 
-- **Dado que** hay más de 10 resultados,
+- **Dado que** hay más de 8 resultados,
 - **cuando** reviso el listado,
-- **entonces** los veo repartidos en páginas de 10, con controles para avanzar/retroceder.
+- **entonces** los veo repartidos en páginas de 8, con controles para avanzar/retroceder — mismo tamaño de página que usa el resto de listados paginados de la app (`TAMANO_PAGINA` en `AdminDashboard.tsx`/`AdminNovedadesPage.tsx`).

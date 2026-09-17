@@ -1,7 +1,9 @@
  
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { usePolling } from "@/hooks/usePolling";
+import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import {
   Recycle,
   Mail,
@@ -19,10 +21,12 @@ import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
-import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import type { NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { Modal } from "@/components/ui/Modal";
 import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
 import { listarMisAuditorias, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
@@ -112,7 +116,7 @@ const ACCIONES_META = [
     tipo: "SHUT_LIBRE",
     key: "shutLibre",
     icon: PackageCheck,
-    color: "bg-[#14532d] hover:bg-green-800 text-white",  // verde bosque — despejado, natural
+    color: "bg-[#14532d] hover:bg-accent-800 text-white",  // verde bosque — despejado, natural
   },
   {
     tipo: "FINALIZACION_RECICLADOR",
@@ -140,7 +144,7 @@ export function RecicladorDashboard() {
   const [estadoReciclador, setEstadoReciclador] = useState<EstadoRecicladorConjunto[]>([]);
   // ¿Qué? Motivo a mostrar cuando el reciclador le da clic a un botón de
   //       notificación que se ve apagado (bloqueado) en vez de abrir el modal.
-  const [avisoBoton, setAvisoBoton] = useState<string | null>(null);
+  const [avisoBoton, mostrarAvisoBoton] = useAvisoTemporal<string>();
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -152,11 +156,11 @@ export function RecicladorDashboard() {
   const [modalTipo, setModalTipo] = useState<string | null>(null);
   const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<string | null>(null);
   const [enviandoNotif, setEnviandoNotif] = useState(false);
-  const [feedbackOk, setFeedbackOk] = useState<string | null>(null);
+  const [feedbackOk, mostrarFeedbackOk] = useAvisoTemporal<string>();
 
   // Formulario de auditoría (RQF-009)
   const [conjuntoParaAuditar, setConjuntoParaAuditar] = useState<string | null>(null);
-  const [feedbackAuditoria, setFeedbackAuditoria] = useState<string | null>(null);
+  const [feedbackAuditoria, mostrarFeedbackAuditoria] = useAvisoTemporal<string>();
   const [auditoriaAbierta, setAuditoriaAbierta] = useState<string | null>(null);
 
   const cargarDatos = () => {
@@ -186,14 +190,7 @@ export function RecicladorDashboard() {
       .finally(() => setCargando(false));
   };
 
-  useEffect(() => {
-    if (user) {
-      cargarDatos();
-      const interval = setInterval(cargarDatos, 20000);
-      return () => clearInterval(interval);
-    }
-     
-  }, [user]);
+  usePolling(cargarDatos, { enabled: !!user });
 
   const responderInvitacion = async (id: string, aceptar: boolean) => {
     setProcesandoId(id);
@@ -237,8 +234,7 @@ export function RecicladorDashboard() {
         id_conjunto_residencial: conjuntoSeleccionado,
       });
       const accion = ACCIONES.find((a) => a.tipo === modalTipo);
-      setFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
-      setTimeout(() => setFeedbackOk(null), 3500);
+      mostrarFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
       setModalTipo(null);
       cargarDatos();
     } catch {
@@ -298,8 +294,7 @@ export function RecicladorDashboard() {
 
   const alEnviarAuditoria = () => {
     setConjuntoParaAuditar(null);
-    setFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
-    setTimeout(() => setFeedbackAuditoria(null), 3500);
+    mostrarFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
     cargarDatos();
   };
 
@@ -308,7 +303,7 @@ export function RecicladorDashboard() {
       {/* Header — el símbolo de reciclaje de fondo es solo un detalle tenue,
           para que este panel se sienta del Reciclador, sin estorbar la
           lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-teal-900/30">
@@ -334,14 +329,14 @@ export function RecicladorDashboard() {
 
       {/* Feedback de notificación enviada */}
       {feedbackOk && (
-        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
         </div>
       )}
 
       {feedbackAuditoria && (
-        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           {feedbackAuditoria}
         </div>
@@ -361,7 +356,7 @@ export function RecicladorDashboard() {
             {conjuntosPendientesAuditoria.map((c) => (
               <div
                 key={c.id_conjunto_residencial}
-                className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-[#132a1c] sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-2 rounded-xl bg-[#f7f9f3] px-4 py-3 dark:bg-[#1c341b] sm:flex-row sm:items-center sm:justify-between"
               >
                 <p className="text-sm text-gray-700 dark:text-gray-300">
                   {t("dashboards.reciclador.auditoria.bannerSubtitle", { conjunto: c.nombre_conjunto })}
@@ -379,7 +374,7 @@ export function RecicladorDashboard() {
       )}
 
       {/* Acciones de notificación */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <p className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</p>
         <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
           {t("dashboards.reciclador.sendSection.subtitle")}
@@ -412,8 +407,7 @@ export function RecicladorDashboard() {
                   key={tipo}
                   onClick={() => {
                     if (motivo) {
-                      setAvisoBoton(motivo);
-                      setTimeout(() => setAvisoBoton(null), 4000);
+                      mostrarAvisoBoton(motivo);
                     } else {
                       abrirModal(tipo);
                     }
@@ -455,7 +449,7 @@ export function RecicladorDashboard() {
 
       {/* Invitaciones pendientes */}
       {!cargando && invitaciones.length > 0 && (
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <Mail className="h-4 w-4 text-amber-600" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
@@ -478,7 +472,7 @@ export function RecicladorDashboard() {
                   <button
                     onClick={() => responderInvitacion(inv.id, true)}
                     disabled={procesandoId === inv.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {t("dashboards.reciclador.invitations.accept")}
@@ -499,13 +493,13 @@ export function RecicladorDashboard() {
       )}
 
       {/* Mis conjuntos autorizados */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-green-600" />
+          <Building2 className="h-4 w-4 text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
         </div>
         {cargando ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+          <LoadingState message={t("common.loading")} />
         ) : conjuntosAutorizados.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {t("dashboards.reciclador.myConjuntos.empty")}
@@ -533,14 +527,14 @@ export function RecicladorDashboard() {
           ¿Para qué? Reutiliza los datos que ya se cargan para calcular el
                     aviso de "auditoría pendiente" (auditorias, arriba) —
                     no dispara una petición nueva. */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
         <div className="mb-4 flex items-center gap-2">
           <History className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
         </div>
 
         {cargando ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+          <LoadingState message={t("common.loading")} />
         ) : auditorias.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("auditoriaResultado.historialEmpty")}</p>
         ) : (
@@ -584,8 +578,8 @@ export function RecicladorDashboard() {
 
       {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) */}
       {cargando ? (
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+          <LoadingState message={t("common.loading")} />
         </div>
       ) : (
         <NotificationFeed
@@ -626,8 +620,8 @@ export function RecicladorDashboard() {
                   onClick={() => setConjuntoSeleccionado(c.id_conjunto_residencial)}
                   className={`w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                     conjuntoSeleccionado === c.id_conjunto_residencial
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                      : "border-gray-200 hover:border-green-300 dark:border-[#2a4d34] dark:hover:border-green-700"
+                      ? "border-accent-500 bg-accent-50 dark:bg-accent-900/20"
+                      : "border-gray-200 hover:border-accent-300 dark:border-[#2a4d34] dark:hover:border-accent-700"
                   }`}
                 >
                   <p className="font-semibold text-gray-900 dark:text-white">{c.nombre_conjunto}</p>
@@ -657,7 +651,7 @@ export function RecicladorDashboard() {
               <button
                 onClick={enviarNotificacion}
                 disabled={!conjuntoSeleccionado || enviandoNotif || !!motivoModal}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {enviandoNotif ? t("dashboards.reciclador.modal.sending") : t("dashboards.reciclador.modal.submit")}
               </button>

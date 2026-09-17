@@ -61,6 +61,12 @@ describe("RecicladorDashboard", () => {
     expect(screen.getByText("Test User")).toBeInTheDocument();
   });
 
+  it("muestra un aviso de error si falla la carga (issue #223, f9 del diagnóstico)", async () => {
+    mockGet.mockRejectedValue(new Error("Network Error"));
+    renderPage();
+    expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
   it("carga invitaciones, conjuntos y notificaciones al montar", async () => {
     renderPage();
     await waitFor(() => {
@@ -169,6 +175,11 @@ describe("RecicladorDashboard", () => {
     await user.upload(inputArchivo, archivo);
 
     await user.click(screen.getByRole("button", { name: "Enviar auditoría" }));
+
+    // ¿Qué? Issue #9 — enviar ya no dispara la petición directo, primero
+    //       pide confirmar (ConfirmModal apilado sobre el formulario).
+    expect(screen.getByText("¿Enviar esta auditoría?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Sí, enviar" }));
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
