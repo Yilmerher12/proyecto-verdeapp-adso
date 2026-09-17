@@ -806,7 +806,7 @@
       },
       "myConjuntos": {
         "title": "My authorized buildings",
-        "empty": "You're not authorized in any building yet. Once an administrator invites you and you accept, it will appear here."
+        "empty": "You don't have any authorized building yet. Once an administrator invites you and you accept, it will appear here."
       },
       "notifications": {
         "title": "Received notifications",

@@ -30,6 +30,7 @@ import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -770,9 +771,7 @@ export function AdminConjuntoDashboard() {
         ) : errorConjuntos ? (
           <Alert type="error" message={t("common.loadError")} />
         ) : conjuntos.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
-            {t("dashboards.adminConjunto.myConjuntos.empty")}
-          </p>
+          <EmptyState icon={Building2} message={t("dashboards.adminConjunto.myConjuntos.empty")} />
         ) : (
           <div className="space-y-4">
             {conjuntos.map((c) => (
