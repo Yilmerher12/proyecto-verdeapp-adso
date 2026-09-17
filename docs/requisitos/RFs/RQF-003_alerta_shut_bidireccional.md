@@ -31,20 +31,20 @@ El sistema debe permitir al 'Residente' notificar que el SHUT está lleno y al '
 
 | Campo         | Tipo   | Obligatorio | Validaciones                                                                 |
 | ------------- | ------ | ----------- | ---------------------------------------------------------------------------- |
-| `conjunto_id` | Número | Sí          | Debe ser un ID de conjunto válido en el sistema                              |
-| `accion`      | Enum   | Sí          | Valores permitidos: `llenar`, `vaciar`                                       |
+| `conjunto_id` | UUID   | Sí          | Debe ser un ID de conjunto válido en el sistema                              |
+| `accion`      | Enum   | Sí          | Valores permitidos: `SHUT_LLENO`, `SHUT_LIBRE`                               |
 
 ---
 
 ## Proceso
 
 1. Un **Residente** ingresa al sistema y presiona el botón "SHUT Lleno".
-2. El frontend envía una petición al backend indicando la acción `llenar` para el `conjunto_id` al que pertenece el residente.
+2. El frontend envía una petición al backend indicando la acción `SHUT_LLENO` para el `conjunto_id` al que pertenece el residente.
 3. El backend verifica la asociación del usuario con el conjunto y cambia el estado del SHUT en la base de datos a "lleno".
 4. El sistema busca todos los usuarios con rol **Reciclador** asociados a ese mismo `conjunto_id`.
 5. Se dispara una notificación a los recicladores encontrados.
 6. Posteriormente, el **Reciclador** recoge los residuos y presiona el botón "SHUT Vaciado".
-7. El frontend envía la petición con la acción `vaciar`.
+7. El frontend envía la petición con la acción `SHUT_LIBRE`.
 8. El backend actualiza el estado del SHUT a "vacío".
 9. Se busca a los **Residentes** del `conjunto_id` y se les envía una notificación confirmando el vaciado.
 
