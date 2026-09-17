@@ -9,6 +9,8 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { Alert } from "@/components/ui/Alert";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
 import {
   crearComunicado,
@@ -19,6 +21,9 @@ import {
   type DestinatariosComunicado,
   type TipoComunicado,
 } from "@/lib/comunicadosApi";
+
+// ¿Qué? Issue #11 — mismo tamaño de página que ya usa Novedades (issue #227).
+const TAMANO_PAGINA = 8;
 
 interface FormState {
   id_conjunto_residencial: string | "";
@@ -103,6 +108,7 @@ export function AdminConjuntoComunicadosPage() {
 
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
+  const [total, setTotal] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -113,19 +119,22 @@ export function AdminConjuntoComunicadosPage() {
 
   const [aEliminar, setAEliminar] = useState<Comunicado | null>(null);
 
+  const paginacion = usePaginacion(TAMANO_PAGINA, total);
+
   const cargar = () => {
     if (!user) return;
     setCargando(true);
-    Promise.all([obtenerMisConjuntos(), listarMisComunicados()])
-      .then(([listaConjuntos, listaComunicados]) => {
+    Promise.all([obtenerMisConjuntos(), listarMisComunicados(TAMANO_PAGINA, paginacion.offset)])
+      .then(([listaConjuntos, paginaComunicados]) => {
         setConjuntos(listaConjuntos);
-        setComunicados(listaComunicados);
+        setComunicados(paginaComunicados.items);
+        setTotal(paginaComunicados.total);
       })
       .catch((err) => console.error("Error cargando comunicados", err))
       .finally(() => setCargando(false));
   };
 
-  useEffect(cargar, [user]);
+  useEffect(cargar, [user, paginacion.offset]);
 
   const abrirCrear = () => {
     setForm({ ...FORM_VACIO, id_conjunto_residencial: conjuntos[0]?.id_conjunto_residencial ?? "" });
@@ -313,6 +322,22 @@ export function AdminConjuntoComunicadosPage() {
           </div>
         ))}
       </div>
+
+      {!cargando && total > 0 && (
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
+          <Paginacion
+            desde={paginacion.desde}
+            hasta={paginacion.hasta}
+            total={total}
+            pagina={paginacion.pagina}
+            totalPaginas={paginacion.totalPaginas}
+            puedeAnterior={paginacion.puedeAnterior}
+            puedeSiguiente={paginacion.puedeSiguiente}
+            onAnterior={paginacion.irAAnterior}
+            onSiguiente={paginacion.irASiguiente}
+          />
+        </div>
+      )}
 
       {(creando || editando) && (
         <Modal

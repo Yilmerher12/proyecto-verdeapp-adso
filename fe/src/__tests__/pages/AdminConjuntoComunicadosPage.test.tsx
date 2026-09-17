@@ -67,11 +67,11 @@ describe("AdminConjuntoComunicadosPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockObtenerConjuntos.mockResolvedValue([CONJUNTO]);
-    mockListar.mockResolvedValue([]);
+    mockListar.mockResolvedValue({ items: [], total: 0 });
   });
 
   it("muestra la fecha de creación y de expiración de cada comunicado", async () => {
-    mockListar.mockResolvedValue([COMUNICADO]);
+    mockListar.mockResolvedValue({ items: [COMUNICADO], total: 1 });
     renderPage();
 
     // ¿Qué? No se hardcodea el string de fecha esperado — se calcula con el
@@ -90,6 +90,22 @@ describe("AdminConjuntoComunicadosPage", () => {
     renderPage();
     await waitFor(() => {
       expect(screen.getByText("Todavía no has publicado ningún comunicado.")).toBeInTheDocument();
+    });
+  });
+
+  it("muestra la paginación y pide la siguiente página al hacer clic en la flecha", async () => {
+    // ¿Qué? Issue #11 — con 20 comunicados en total y 8 por página, debe
+    //       mostrar "1–8 de 20" y, al avanzar, pedir offset=8.
+    mockListar.mockResolvedValue({ items: [COMUNICADO], total: 20 });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Mostrando 1–8 de 20");
+
+    await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+
+    await waitFor(() => {
+      expect(mockListar).toHaveBeenLastCalledWith(8, 8);
     });
   });
 
