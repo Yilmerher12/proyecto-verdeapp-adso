@@ -11,7 +11,7 @@ from app.dependencies import get_current_user, get_db
 from app.models.usuario import Usuario
 from app.schemas.user import UpdateLocaleRequest, UpdateProfileBody, UserResponse
 from app.services import user_service
-from app.services.auth_service import update_user_locale
+from app.services.auth_service import obtener_nombre_real, update_user_locale
 
 router = APIRouter(
     prefix="/api/v1/users",
@@ -59,13 +59,14 @@ def update_locale(
     db: Session = Depends(get_db),
 ) -> UserResponse:
     updated_user = update_user_locale(db=db, user=current_user, locale=locale_data.locale)
+    first_name, last_name = obtener_nombre_real(db, updated_user)
 
     return UserResponse(
         id=updated_user.id_usuario,
         email=updated_user.correo_electronico,
         role_id=updated_user.id_rol,
         is_active=updated_user.is_active,
-        first_name="Usuario",
-        last_name="VerdeApp",
+        first_name=first_name,
+        last_name=last_name,
         locale=updated_user.locale
     )

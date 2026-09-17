@@ -335,7 +335,7 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
         db.commit()
 
     log_login_exitoso(correo)
-    real_first_name, real_last_name = _obtener_nombre_real(db, user)
+    real_first_name, real_last_name = obtener_nombre_real(db, user)
 
     access_token = create_access_token(data={
         "sub": user.correo_electronico,
@@ -348,7 +348,7 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
-def _obtener_nombre_real(db: Session, user: Usuario):
+def obtener_nombre_real(db: Session, user: Usuario):
     """Busca el nombre y apellidos reales del usuario según su rol.
 
     ¿Qué? Issue #220 (b13 del diagnóstico) — reutiliza
@@ -420,7 +420,7 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
             detail="Tu cuenta fue desactivada por un administrador.",
         )
 
-    real_first_name, real_last_name = _obtener_nombre_real(db, user)
+    real_first_name, real_last_name = obtener_nombre_real(db, user)
 
     nuevo_access_token = create_access_token(data={
         "sub": user.correo_electronico,
