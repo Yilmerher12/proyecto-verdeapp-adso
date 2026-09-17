@@ -20,6 +20,7 @@ import { API_BASE_URL } from "@/api/axios";
 import { obtenerAuditoria, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import { tiempoRelativo } from "@/lib/notificaciones";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 interface AuditoriaResultadoModalProps {
   idAuditoria: string;
@@ -97,7 +98,7 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {t("auditoriaResultado.auditadoPor", { nombre: auditoria.nombre_reciclador })} ·{" "}
-              {new Date(auditoria.created_at).toLocaleDateString()} ({tiempoRelativo(auditoria.created_at)})
+              {formatearFechaCreacion(auditoria.created_at)} ({tiempoRelativo(auditoria.created_at)})
             </p>
           </div>
         )}

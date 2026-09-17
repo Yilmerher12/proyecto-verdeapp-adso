@@ -31,6 +31,7 @@ import { Modal } from "@/components/ui/Modal";
 import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
 import { listarMisAuditorias, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 // ¿Qué? Cada cuántos días se le vuelve a sugerir al reciclador auditar el
 //       mismo conjunto. Ver issue #5: se decidió semanal porque no todos
@@ -552,7 +553,7 @@ export function RecicladorDashboard() {
                         {a.nombre_conjunto} — {a.tema_educativo}
                       </p>
                       <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(a.created_at).toLocaleDateString()}
+                        {formatearFechaCreacion(a.created_at)}
                       </p>
                     </div>
                     <span
