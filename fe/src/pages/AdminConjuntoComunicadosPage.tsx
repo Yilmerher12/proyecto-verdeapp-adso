@@ -12,6 +12,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
+import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
 import {
   crearComunicado,
   editarComunicado,
@@ -47,36 +48,6 @@ const FORM_VACIO: FormState = {
 
 const TIPOS: TipoComunicado[] = ["INFORMATIVO", "URGENTE", "CONVOCATORIA", "MANTENIMIENTO", "RECICLAJE"];
 const DESTINATARIOS: DestinatariosComunicado[] = ["RESIDENTES", "RECICLADORES", "AMBOS"];
-
-// ¿Qué? Muestra la fecha en UTC, no en la zona horaria del navegador.
-// ¿Para qué? Para Convocatoria, el backend calcula la expiración como
-//           "medianoche UTC del día siguiente al evento" — si se muestra
-//           en hora local de Bogotá (UTC-5), esa medianoche UTC cae la
-//           noche ANTERIOR en hora local, y la fecha mostrada retrocede
-//           un día respecto a la que el admin realmente eligió.
-function formatearFechaUTC(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { timeZone: "UTC" });
-}
-
-// ¿Qué? "created_at" es un instante real (con hora), no una fecha elegida a
-//       mano como "fecha_expiracion" — aquí SÍ se muestra en la zona horaria
-//       del navegador (igual que en el feed que ven los residentes), porque
-//       no aplica el mismo truco de "medianoche UTC" de arriba.
-function formatearFechaCreacion(iso: string): string {
-  return new Date(iso).toLocaleDateString();
-}
-
-// ¿Qué? Igual que formatearFechaUTC, pero en formato YYYY-MM-DD (lo que
-//       espera un <input type="date">) — se usa para precargar la fecha
-//       de expiración actual al abrir el formulario de edición, con el
-//       mismo criterio de UTC para no mostrar un día distinto al real.
-function isoToDateInputUTC(iso: string): string {
-  const d = new Date(iso);
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
 
 // ¿Qué? Issue #7 (hallazgo F2 de la auditoría) — un comunicado no tiene
 //       título, solo texto libre; se usa un recorte corto como el nombre

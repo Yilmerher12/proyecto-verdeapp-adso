@@ -17,6 +17,7 @@ import { listarHistorial, type AuditoriaConjunto } from "@/lib/auditoriaConjunto
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 export function HistorialAuditorias() {
   const { t } = useTranslation();
@@ -63,7 +64,7 @@ export function HistorialAuditorias() {
                       {a.tema_educativo}
                     </p>
                     <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(a.created_at).toLocaleDateString()}
+                      {formatearFechaCreacion(a.created_at)}
                     </p>
                   </div>
                   <span

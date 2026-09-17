@@ -11,6 +11,7 @@ import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { Alert } from "@/components/ui/Alert";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
+import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
 import {
   archivarNovedad,
   crearNovedad,
@@ -38,28 +39,6 @@ const FORM_VACIO: FormState = {
 };
 
 const ALCANCES: AlcanceNovedad[] = ["TODOS", "RESIDENTES", "RECICLADORES", "ADMIN_CONJUNTO"];
-
-// ¿Qué? Muestra la fecha en UTC, no en la zona horaria del navegador —
-//       mismo criterio que en Comunicados, para que la fecha mostrada no
-//       retroceda un día en zonas detrás de UTC (ej. Bogotá, UTC-5).
-function formatearFechaUTC(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { timeZone: "UTC" });
-}
-
-// ¿Qué? Mismo criterio que en Comunicados: "created_at" es un instante real,
-//       se muestra en la hora local del navegador, sin el truco de UTC de
-//       "fecha_expiracion" (ver el mismo comentario en AdminConjuntoComunicadosPage.tsx).
-function formatearFechaCreacion(iso: string): string {
-  return new Date(iso).toLocaleDateString();
-}
-
-function isoToDateInputUTC(iso: string): string {
-  const d = new Date(iso);
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
 
 // ¿Qué? Issue #7 (hallazgo F2 de la auditoría) — una novedad no tiene
 //       título, solo texto libre; se usa un recorte corto como el nombre
