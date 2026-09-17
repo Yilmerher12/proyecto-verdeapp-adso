@@ -958,6 +958,15 @@ class TestUpdateLocale:
         get_response = client.get("/api/v1/users/me", headers=auth_headers)
         assert get_response.json()["locale"] == "en"
 
+    def test_update_locale_returns_real_name(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        """Issue #268 — la respuesta no debe traer el nombre falso "Usuario VerdeApp"."""
+        response = client.patch(self.URL, json={"locale": "en"}, headers=auth_headers)
+        body = response.json()
+        assert body["first_name"] == TEST_USER_NOMBRE
+        assert body["last_name"] == TEST_USER_APELLIDOS
+
     def test_update_locale_invalid_value(
         self, client: TestClient, auth_headers: dict[str, str]
     ) -> None:

@@ -39,7 +39,7 @@ def obtener_registro_de_perfil(db: Session, user: Usuario) -> Residente | Recicl
     ¿Qué? Issue #220 (b13 del diagnóstico) — "¿en qué tabla vive el nombre
           real de esta persona, según su rol?" se resolvía de 3 formas
           parecidas pero distintas: aquí, en
-          auth_service._obtener_nombre_real, y en actualizar_perfil (más
+          auth_service.obtener_nombre_real, y en actualizar_perfil (más
           abajo). Esta es ahora la única fuente de verdad para esa
           pregunta — las otras dos la reutilizan.
     ¿Para qué? Si se agrega un rol nuevo, o cambia qué tabla guarda el
