@@ -3,7 +3,6 @@ Módulo: routers/geography.py
 Descripción: Endpoints optimizados para el llenado dinámico de formularios geográficos.
 """
 
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -16,7 +15,7 @@ from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.desvinculacion import ConjuntoSinAdministradorResponse
-from app.schemas.geography import LocalidadResponse, ConjuntoResponse, UnidadResponse
+from app.schemas.geography import LocalidadResponse, ConjuntoResponse
 
 router = APIRouter(
     prefix="/api/v1/geography",
@@ -212,25 +211,3 @@ def get_todos_los_conjuntos(db: Session = Depends(get_db)):
     return db.execute(stmt).scalars().all()
 
 
-# ¿Qué? El summary decía "Endpoint adaptado para nomenclatura dinámica" —
-#       no dejaba claro, ni en Swagger ni para quien lo llamara, que esto es
-#       un placeholder que siempre responde vacío.
-# ¿Para qué? El frontend actual no usa este endpoint (las unidades se crean
-#           dinámicamente durante el registro del residente, ver
-#           auth_service.register_user), pero queda expuesto en la API.
-# ¿Impacto? Si en el futuro alguien lo conecta esperando una lista real,
-#           ahora el summary lo avisa desde la documentación interactiva,
-#           sin tener que leer el docstring.
-@router.get(
-    "/unidades/{id_conjunto_residencial}",
-    response_model=List[UnidadResponse],
-    status_code=status.HTTP_200_OK,
-    summary="[Placeholder] Siempre devuelve una lista vacía",
-)
-def get_unidades_por_conjunto(id_conjunto_residencial: UUID, db: Session = Depends(get_db)):
-    """
-    Retorna un arreglo vacío a propósito. Las unidades habitacionales ahora
-    se crean de forma dinámica durante el registro del residente — este
-    endpoint no tiene ningún consumidor en el frontend actual.
-    """
-    return []

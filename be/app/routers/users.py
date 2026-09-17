@@ -4,7 +4,7 @@ Descripción: Endpoints de usuario — perfil del usuario autenticado y preferen
 ¿Para qué? Issue #218 — este router solo recibe la petición HTTP y responde;
            las reglas de negocio reales viven en services/user_service.py.
 """
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db
@@ -38,7 +38,7 @@ def update_profile(
     return {"ok": True}
 
 
-@router.post("/me/foto-perfil", status_code=201, summary="Subir o reemplazar la foto de perfil del usuario en sesión")
+@router.post("/me/foto-perfil", status_code=status.HTTP_201_CREATED, summary="Subir o reemplazar la foto de perfil del usuario en sesión")
 async def subir_foto_perfil(
     archivo: UploadFile,
     current_user: Usuario = Depends(get_current_user),
