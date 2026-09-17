@@ -947,7 +947,8 @@
     "notRegistered": "Not registered",
     "emailNote": "Your email can't be changed from here.",
     "validation": {
-      "nameRequired": "First and last name are required.",
+      "firstNameRequired": "First name is required.",
+      "lastNameRequired": "Last name is required.",
       "phoneInvalid": "The phone number format is invalid."
     },
     "phonePlaceholder": "E.g.: 3001234567",
@@ -1008,8 +1009,10 @@
       "deleteAriaLabel": "Confirm deletion"
     },
     "validation": {
-      "required": "Category, title, and content are required.",
+      "categoryRequired": "Category is required.",
+      "titleRequired": "Title is required.",
       "titleTooShort": "Title must be at least 5 characters long.",
+      "bodyRequired": "Content is required.",
       "bodyTooShort": "Content must be at least 20 characters long."
     },
     "deleteError": "Could not delete. Please try again.",
@@ -1045,7 +1048,9 @@
       "deleteAriaLabel": "Confirm deletion"
     },
     "validation": {
-      "required": "Name, address, and locality are required."
+      "nameRequired": "Name is required.",
+      "addressRequired": "Address is required.",
+      "localityRequired": "Select a locality."
     },
     "loadError": "Could not load the list of collection points.",
     "deactivateError": "Could not deactivate. Please try again.",

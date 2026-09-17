@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
+import { InputField } from "@/components/ui/InputField";
 import {
   crearPuntoAcopio,
   darDeBajaPuntoAcopio,
@@ -49,6 +50,12 @@ export function AdminPuntosAcopioPage() {
   const [creando, setCreando] = useState(false);
   const [form, setForm] = useState<PuntoAcopioPayload>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
+  // ¿Qué? Issue #13 (hallazgo U8 de la auditoría) — antes solo había un
+  //       Alert genérico al enviar ("Nombre, dirección y localidad son
+  //       obligatorios"), sin decir cuál campo en concreto. Ahora cada
+  //       campo se valida al salir de él (onBlur), igual que ya hacen
+  //       los formularios de auth (RegisterPage, etc.).
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [aDarDeBaja, setADarDeBaja] = useState<PuntoAcopioAdmin | null>(null);
   const [aEliminar, setAEliminar] = useState<PuntoAcopioAdmin | null>(null);
@@ -77,6 +84,7 @@ export function AdminPuntosAcopioPage() {
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
+    setFieldErrors({});
     setCreando(true);
   };
 
@@ -88,6 +96,7 @@ export function AdminPuntosAcopioPage() {
       nombre_encargado: item.nombre_encargado ?? "",
       telefono_contacto: item.telefono_contacto ?? "",
     });
+    setFieldErrors({});
     setEditando(item);
   };
 
@@ -95,6 +104,28 @@ export function AdminPuntosAcopioPage() {
     setCreando(false);
     setEditando(null);
     setErrorMsg(null);
+    setFieldErrors({});
+  };
+
+  // ¿Qué? Limpia el error de un campo apenas el usuario vuelve a escribir
+  //       en él — mismo criterio que RegisterPage.handleChange.
+  const actualizarCampo = <K extends keyof PuntoAcopioPayload>(campo: K, valor: PuntoAcopioPayload[K]) => {
+    setForm((prev) => ({ ...prev, [campo]: valor }));
+    if (fieldErrors[campo]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[campo];
+        return copy;
+      });
+    }
+  };
+
+  const validarCampo = (campo: "nombre" | "direccion" | "id_localidad") => {
+    let mensaje = "";
+    if (campo === "nombre" && !form.nombre.trim()) mensaje = t("adminPuntosAcopio.validation.nameRequired");
+    if (campo === "direccion" && !form.direccion.trim()) mensaje = t("adminPuntosAcopio.validation.addressRequired");
+    if (campo === "id_localidad" && !form.id_localidad) mensaje = t("adminPuntosAcopio.validation.localityRequired");
+    setFieldErrors((prev) => (mensaje ? { ...prev, [campo]: mensaje } : prev));
   };
 
   const formularioIncompleto =
@@ -102,8 +133,12 @@ export function AdminPuntosAcopioPage() {
 
   const guardar = async () => {
     if (!user) return;
-    if (formularioIncompleto) {
-      setErrorMsg(t("adminPuntosAcopio.validation.required"));
+    const errores: Record<string, string> = {};
+    if (!form.nombre.trim()) errores.nombre = t("adminPuntosAcopio.validation.nameRequired");
+    if (!form.direccion.trim()) errores.direccion = t("adminPuntosAcopio.validation.addressRequired");
+    if (!form.id_localidad) errores.id_localidad = t("adminPuntosAcopio.validation.localityRequired");
+    if (Object.keys(errores).length > 0) {
+      setFieldErrors(errores);
       return;
     }
     setGuardando(true);
@@ -255,18 +290,15 @@ export function AdminPuntosAcopioPage() {
             {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="acopio-nombre" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("adminPuntosAcopio.fields.name")} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="acopio-nombre"
-                  value={form.nombre}
-                  onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  placeholder={t("adminPuntosAcopio.fields.namePlaceholder")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("adminPuntosAcopio.fields.name")}
+                name="nombre"
+                value={form.nombre}
+                onChange={(e) => actualizarCampo("nombre", e.target.value)}
+                onBlur={() => validarCampo("nombre")}
+                placeholder={t("adminPuntosAcopio.fields.namePlaceholder")}
+                error={fieldErrors.nombre}
+              />
 
               <div>
                 <label htmlFor="acopio-localidad" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
@@ -275,8 +307,15 @@ export function AdminPuntosAcopioPage() {
                 <select
                   id="acopio-localidad"
                   value={form.id_localidad || ""}
-                  onChange={(e) => setForm({ ...form, id_localidad: Number(e.target.value) })}
-                  className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  onChange={(e) => actualizarCampo("id_localidad", Number(e.target.value))}
+                  onBlur={() => validarCampo("id_localidad")}
+                  aria-invalid={!!fieldErrors.id_localidad}
+                  aria-describedby={fieldErrors.id_localidad ? "acopio-localidad-error" : undefined}
+                  className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1f4029] dark:text-white ${
+                    fieldErrors.id_localidad
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                      : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-[#2a4d34]"
+                  }`}
                 >
                   <option value="" disabled>
                     {t("adminPuntosAcopio.fields.localitySelect")}
@@ -287,46 +326,38 @@ export function AdminPuntosAcopioPage() {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.id_localidad && (
+                  <p id="acopio-localidad-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                    {fieldErrors.id_localidad}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div>
-              <label htmlFor="acopio-direccion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminPuntosAcopio.fields.address")} <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="acopio-direccion"
-                value={form.direccion}
-                onChange={(e) => setForm({ ...form, direccion: e.target.value })}
-                placeholder={t("adminPuntosAcopio.fields.addressPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-              />
-            </div>
+            <InputField
+              label={t("adminPuntosAcopio.fields.address")}
+              name="direccion"
+              value={form.direccion}
+              onChange={(e) => actualizarCampo("direccion", e.target.value)}
+              onBlur={() => validarCampo("direccion")}
+              placeholder={t("adminPuntosAcopio.fields.addressPlaceholder")}
+              error={fieldErrors.direccion}
+            />
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="acopio-encargado" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("adminPuntosAcopio.fields.contactName")}
-                </label>
-                <input
-                  id="acopio-encargado"
-                  value={form.nombre_encargado ?? ""}
-                  onChange={(e) => setForm({ ...form, nombre_encargado: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("adminPuntosAcopio.fields.contactName")}
+                name="nombre_encargado"
+                value={form.nombre_encargado ?? ""}
+                onChange={(e) => actualizarCampo("nombre_encargado", e.target.value)}
+              />
 
-              <div>
-                <label htmlFor="acopio-telefono" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("adminPuntosAcopio.fields.phone")}
-                </label>
-                <input
-                  id="acopio-telefono"
-                  value={form.telefono_contacto ?? ""}
-                  onChange={(e) => setForm({ ...form, telefono_contacto: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("adminPuntosAcopio.fields.phone")}
+                name="telefono_contacto"
+                value={form.telefono_contacto ?? ""}
+                onChange={(e) => actualizarCampo("telefono_contacto", e.target.value)}
+              />
             </div>
 
             <div className="flex gap-2 pt-2">

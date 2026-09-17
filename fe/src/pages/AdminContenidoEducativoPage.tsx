@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
+import { InputField } from "@/components/ui/InputField";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import {
   crearContenido,
@@ -42,6 +43,10 @@ export function AdminContenidoEducativoPage() {
   const [creando, setCreando] = useState(false);
   const [form, setForm] = useState<ContenidoEducativoPayload>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
+  // ¿Qué? Issue #13 (hallazgo U8 de la auditoría) — antes solo había un
+  //       Alert genérico al enviar, sin decir cuál campo en concreto.
+  //       Ahora cada campo se valida al salir de él (onBlur).
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [aEliminar, setAEliminar] = useState<ContenidoEducativo | null>(null);
 
@@ -62,6 +67,7 @@ export function AdminContenidoEducativoPage() {
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
+    setFieldErrors({});
     setCreando(true);
   };
 
@@ -73,6 +79,7 @@ export function AdminContenidoEducativoPage() {
       url_video: item.url_video ?? "",
       url_guia: item.url_guia ?? "",
     });
+    setFieldErrors({});
     setEditando(item);
   };
 
@@ -80,6 +87,40 @@ export function AdminContenidoEducativoPage() {
     setCreando(false);
     setEditando(null);
     setErrorMsg(null);
+    setFieldErrors({});
+  };
+
+  const actualizarCampo = <K extends keyof ContenidoEducativoPayload>(
+    campo: K,
+    valor: ContenidoEducativoPayload[K]
+  ) => {
+    setForm((prev) => ({ ...prev, [campo]: valor }));
+    if (fieldErrors[campo]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[campo];
+        return copy;
+      });
+    }
+  };
+
+  // ¿Qué? HU-012/HU-013 (CA-012.1, CA-012.3, CA-013.3): mínimo 5 caracteres
+  //       en el título, 20 en el contenido — el backend ya lo valida, pero
+  //       revisarlo aquí evita el viaje de ida y vuelta al servidor.
+  const validarCampo = (campo: "modulo_categoria" | "titulo_tema" | "cuerpo_texto") => {
+    let mensaje = "";
+    if (campo === "modulo_categoria" && !form.modulo_categoria.trim()) {
+      mensaje = t("adminContenidoEducativo.validation.categoryRequired");
+    }
+    if (campo === "titulo_tema") {
+      if (!form.titulo_tema.trim()) mensaje = t("adminContenidoEducativo.validation.titleRequired");
+      else if (form.titulo_tema.trim().length < 5) mensaje = t("adminContenidoEducativo.validation.titleTooShort");
+    }
+    if (campo === "cuerpo_texto") {
+      if (!form.cuerpo_texto.trim()) mensaje = t("adminContenidoEducativo.validation.bodyRequired");
+      else if (form.cuerpo_texto.trim().length < 20) mensaje = t("adminContenidoEducativo.validation.bodyTooShort");
+    }
+    setFieldErrors((prev) => (mensaje ? { ...prev, [campo]: mensaje } : prev));
   };
 
   // ¿Qué? Solo revisa presencia — el largo mínimo de título/cuerpo lo
@@ -89,19 +130,14 @@ export function AdminContenidoEducativoPage() {
 
   const guardar = async () => {
     if (!user) return;
-    if (!form.modulo_categoria.trim() || !form.titulo_tema.trim() || !form.cuerpo_texto.trim()) {
-      setErrorMsg(t("adminContenidoEducativo.validation.required"));
-      return;
-    }
-    // ¿Qué? HU-012/HU-013 (CA-012.1, CA-012.3, CA-013.3): mínimo 5 caracteres
-    //       en el título, 20 en el contenido — el backend ya lo valida, pero
-    //       revisarlo aquí evita el viaje de ida y vuelta al servidor.
-    if (form.titulo_tema.trim().length < 5) {
-      setErrorMsg(t("adminContenidoEducativo.validation.titleTooShort"));
-      return;
-    }
-    if (form.cuerpo_texto.trim().length < 20) {
-      setErrorMsg(t("adminContenidoEducativo.validation.bodyTooShort"));
+    const errores: Record<string, string> = {};
+    if (!form.modulo_categoria.trim()) errores.modulo_categoria = t("adminContenidoEducativo.validation.categoryRequired");
+    if (!form.titulo_tema.trim()) errores.titulo_tema = t("adminContenidoEducativo.validation.titleRequired");
+    else if (form.titulo_tema.trim().length < 5) errores.titulo_tema = t("adminContenidoEducativo.validation.titleTooShort");
+    if (!form.cuerpo_texto.trim()) errores.cuerpo_texto = t("adminContenidoEducativo.validation.bodyRequired");
+    else if (form.cuerpo_texto.trim().length < 20) errores.cuerpo_texto = t("adminContenidoEducativo.validation.bodyTooShort");
+    if (Object.keys(errores).length > 0) {
+      setFieldErrors(errores);
       return;
     }
     setGuardando(true);
@@ -205,31 +241,25 @@ export function AdminContenidoEducativoPage() {
 
             {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
-            <div>
-              <label htmlFor="contenido-categoria" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminContenidoEducativo.fields.category")} <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="contenido-categoria"
-                value={form.modulo_categoria}
-                onChange={(e) => setForm({ ...form, modulo_categoria: e.target.value })}
-                placeholder={t("adminContenidoEducativo.fields.categoryPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-              />
-            </div>
+            <InputField
+              label={t("adminContenidoEducativo.fields.category")}
+              name="modulo_categoria"
+              value={form.modulo_categoria}
+              onChange={(e) => actualizarCampo("modulo_categoria", e.target.value)}
+              onBlur={() => validarCampo("modulo_categoria")}
+              placeholder={t("adminContenidoEducativo.fields.categoryPlaceholder")}
+              error={fieldErrors.modulo_categoria}
+            />
 
-            <div>
-              <label htmlFor="contenido-titulo" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminContenidoEducativo.fields.titleField")} <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="contenido-titulo"
-                value={form.titulo_tema}
-                onChange={(e) => setForm({ ...form, titulo_tema: e.target.value })}
-                placeholder={t("adminContenidoEducativo.fields.titlePlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-              />
-            </div>
+            <InputField
+              label={t("adminContenidoEducativo.fields.titleField")}
+              name="titulo_tema"
+              value={form.titulo_tema}
+              onChange={(e) => actualizarCampo("titulo_tema", e.target.value)}
+              onBlur={() => validarCampo("titulo_tema")}
+              placeholder={t("adminContenidoEducativo.fields.titlePlaceholder")}
+              error={fieldErrors.titulo_tema}
+            />
 
             <div>
               <label htmlFor="contenido-cuerpo" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
@@ -238,13 +268,25 @@ export function AdminContenidoEducativoPage() {
               <textarea
                 id="contenido-cuerpo"
                 value={form.cuerpo_texto}
-                onChange={(e) => setForm({ ...form, cuerpo_texto: e.target.value })}
+                onChange={(e) => actualizarCampo("cuerpo_texto", e.target.value)}
+                onBlur={() => validarCampo("cuerpo_texto")}
                 rows={6}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                aria-invalid={!!fieldErrors.cuerpo_texto}
+                aria-describedby={fieldErrors.cuerpo_texto ? "contenido-cuerpo-error" : undefined}
+                className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1f4029] dark:text-white ${
+                  fieldErrors.cuerpo_texto
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                    : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-[#2a4d34]"
+                }`}
               />
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 {t("adminContenidoEducativo.fields.contentMarkdownHint")}
               </p>
+              {fieldErrors.cuerpo_texto && (
+                <p id="contenido-cuerpo-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                  {fieldErrors.cuerpo_texto}
+                </p>
+              )}
             </div>
 
             <div>
