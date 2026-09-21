@@ -205,7 +205,33 @@ class TestListarMisComunicados:
         )
         response = client.get("/api/v1/comunicados/mis-comunicados", headers=admin_conjunto_auth_headers)
         assert response.status_code == 200
-        assert len(response.json()) == 1
+        data = response.json()
+        assert len(data["items"]) == 1
+        assert data["total"] == 1
+
+    def test_limit_acota_resultados_sin_afectar_el_total(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Issue #11: el historial completo no debe traerse sin tope."""
+        for i in range(3):
+            client.post(
+                "/api/v1/comunicados",
+                headers=admin_conjunto_auth_headers,
+                json={
+                    "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
+                    "destinatarios": "AMBOS",
+                    "tipo": "INFORMATIVO",
+                    "texto": f"Comunicado {i}.",
+                },
+            )
+
+        response = client.get(
+            "/api/v1/comunicados/mis-comunicados", params={"limit": 2}, headers=admin_conjunto_auth_headers
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) == 2
+        assert data["total"] == 3
 
 
 class TestEditarComunicado:
@@ -283,7 +309,7 @@ class TestEliminarComunicado:
         assert eliminar.status_code == 200
 
         lista = client.get("/api/v1/comunicados/mis-comunicados", headers=admin_conjunto_auth_headers)
-        assert lista.json() == []
+        assert lista.json()["items"] == []
 
 
 class TestFeed:

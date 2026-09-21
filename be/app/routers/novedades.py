@@ -9,7 +9,7 @@ Descripción: Endpoints de novedades generales de la plataforma (RQF-015).
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db, require_role
@@ -29,6 +29,10 @@ _requiere_admin_sistema = require_role(
     RolId.ADMIN_SISTEMA, "Solo un Administrador del Sistema puede gestionar novedades."
 )
 
+# ¿Qué? Issue #227 — mismo criterio que admin.py (issue #207): tope máximo
+#       de filas por página, sin importar cuántas pida el frontend.
+MAX_LIMIT_NOVEDADES = 100
+
 
 @router.post("", response_model=NovedadResponse, status_code=status.HTTP_201_CREATED)
 def crear_novedad(
@@ -40,13 +44,16 @@ def crear_novedad(
     return novedad_service.crear_novedad(db, current_user, datos)
 
 
-@router.get("/todas", response_model=List[NovedadResponse])
+@router.get("/todas")
 def listar_todas(
+    limit: int = Query(8, ge=1, le=MAX_LIMIT_NOVEDADES),
+    offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
-    """CA-035.4: historial completo — activas y archivadas."""
-    return novedad_service.listar_todas(db)
+    """CA-035.4: historial completo — activas y archivadas, paginado."""
+    items, total = novedad_service.listar_todas(db, limit=limit, offset=offset)
+    return {"items": items, "total": total}
 
 
 @router.patch("/{id_novedad}", response_model=NovedadResponse)

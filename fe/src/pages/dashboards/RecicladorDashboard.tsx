@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
+import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import {
   Recycle,
   Mail,
@@ -20,14 +21,18 @@ import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
-import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import type { NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
 import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
 import { listarMisAuditorias, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 // ¿Qué? Cada cuántos días se le vuelve a sugerir al reciclador auditar el
 //       mismo conjunto. Ver issue #5: se decidió semanal porque no todos
@@ -141,7 +146,7 @@ export function RecicladorDashboard() {
   const [estadoReciclador, setEstadoReciclador] = useState<EstadoRecicladorConjunto[]>([]);
   // ¿Qué? Motivo a mostrar cuando el reciclador le da clic a un botón de
   //       notificación que se ve apagado (bloqueado) en vez de abrir el modal.
-  const [avisoBoton, setAvisoBoton] = useState<string | null>(null);
+  const [avisoBoton, mostrarAvisoBoton] = useAvisoTemporal<string>();
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -153,11 +158,11 @@ export function RecicladorDashboard() {
   const [modalTipo, setModalTipo] = useState<string | null>(null);
   const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<string | null>(null);
   const [enviandoNotif, setEnviandoNotif] = useState(false);
-  const [feedbackOk, setFeedbackOk] = useState<string | null>(null);
+  const [feedbackOk, mostrarFeedbackOk] = useAvisoTemporal<string>();
 
   // Formulario de auditoría (RQF-009)
   const [conjuntoParaAuditar, setConjuntoParaAuditar] = useState<string | null>(null);
-  const [feedbackAuditoria, setFeedbackAuditoria] = useState<string | null>(null);
+  const [feedbackAuditoria, mostrarFeedbackAuditoria] = useAvisoTemporal<string>();
   const [auditoriaAbierta, setAuditoriaAbierta] = useState<string | null>(null);
 
   const cargarDatos = () => {
@@ -231,8 +236,7 @@ export function RecicladorDashboard() {
         id_conjunto_residencial: conjuntoSeleccionado,
       });
       const accion = ACCIONES.find((a) => a.tipo === modalTipo);
-      setFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
-      setTimeout(() => setFeedbackOk(null), 3500);
+      mostrarFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
       setModalTipo(null);
       cargarDatos();
     } catch {
@@ -292,8 +296,7 @@ export function RecicladorDashboard() {
 
   const alEnviarAuditoria = () => {
     setConjuntoParaAuditar(null);
-    setFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
-    setTimeout(() => setFeedbackAuditoria(null), 3500);
+    mostrarFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
     cargarDatos();
   };
 
@@ -302,7 +305,7 @@ export function RecicladorDashboard() {
       {/* Header — el símbolo de reciclaje de fondo es solo un detalle tenue,
           para que este panel se sienta del Reciclador, sin estorbar la
           lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-teal-900/30">
@@ -355,7 +358,7 @@ export function RecicladorDashboard() {
             {conjuntosPendientesAuditoria.map((c) => (
               <div
                 key={c.id_conjunto_residencial}
-                className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-[#132a1c] sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-2 rounded-xl bg-[#f7f9f3] px-4 py-3 dark:bg-[#1c341b] sm:flex-row sm:items-center sm:justify-between"
               >
                 <p className="text-sm text-gray-700 dark:text-gray-300">
                   {t("dashboards.reciclador.auditoria.bannerSubtitle", { conjunto: c.nombre_conjunto })}
@@ -373,7 +376,7 @@ export function RecicladorDashboard() {
       )}
 
       {/* Acciones de notificación */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <p className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</p>
         <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
           {t("dashboards.reciclador.sendSection.subtitle")}
@@ -406,8 +409,7 @@ export function RecicladorDashboard() {
                   key={tipo}
                   onClick={() => {
                     if (motivo) {
-                      setAvisoBoton(motivo);
-                      setTimeout(() => setAvisoBoton(null), 4000);
+                      mostrarAvisoBoton(motivo);
                     } else {
                       abrirModal(tipo);
                     }
@@ -449,7 +451,7 @@ export function RecicladorDashboard() {
 
       {/* Invitaciones pendientes */}
       {!cargando && invitaciones.length > 0 && (
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <Mail className="h-4 w-4 text-amber-600" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
@@ -493,17 +495,15 @@ export function RecicladorDashboard() {
       )}
 
       {/* Mis conjuntos autorizados */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
           <Building2 className="h-4 w-4 text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
         </div>
         {cargando ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+          <LoadingState message={t("common.loading")} />
         ) : conjuntosAutorizados.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t("dashboards.reciclador.myConjuntos.empty")}
-          </p>
+          <EmptyState icon={Building2} message={t("dashboards.reciclador.myConjuntos.empty")} />
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {conjuntosAutorizados.map((c) => (
@@ -527,14 +527,14 @@ export function RecicladorDashboard() {
           ¿Para qué? Reutiliza los datos que ya se cargan para calcular el
                     aviso de "auditoría pendiente" (auditorias, arriba) —
                     no dispara una petición nueva. */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
         <div className="mb-4 flex items-center gap-2">
           <History className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
         </div>
 
         {cargando ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+          <LoadingState message={t("common.loading")} />
         ) : auditorias.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("auditoriaResultado.historialEmpty")}</p>
         ) : (
@@ -552,7 +552,7 @@ export function RecicladorDashboard() {
                         {a.nombre_conjunto} — {a.tema_educativo}
                       </p>
                       <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(a.created_at).toLocaleDateString()}
+                        {formatearFechaCreacion(a.created_at)}
                       </p>
                     </div>
                     <span
@@ -578,8 +578,8 @@ export function RecicladorDashboard() {
 
       {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) */}
       {cargando ? (
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+          <LoadingState message={t("common.loading")} />
         </div>
       ) : (
         <NotificationFeed

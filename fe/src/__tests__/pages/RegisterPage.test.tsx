@@ -400,4 +400,48 @@ describe("RegisterPage", () => {
 
     expect(screen.getByRole("button", { name: "Completa los campos y acepta los términos" })).toBeDisabled();
   });
+
+  it("muestra error si el número de unidad es solo símbolos, apenas se sale del campo", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+    await llenarCamposComunes(user);
+
+    // ¿Qué? El campo de número de unidad está deshabilitado hasta elegir
+    //       un conjunto residencial.
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.selectOptions(comboboxes[0], "1");
+    const buscadorConjunto = screen.getByPlaceholderText("Escribe el nombre de tu conjunto...");
+    await user.type(buscadorConjunto, "TORRES");
+    const opcionConjunto = await screen.findByText("TORRES DE ARANJUEZ");
+    await user.click(opcionConjunto);
+
+    await user.type(screen.getByPlaceholderText("Ej: 3, B"), "!!!");
+    await user.click(screen.getByPlaceholderText("Ej: 402")); // blur -> valida numero_bloque
+
+    expect(
+      screen.getByText("Solo se permiten letras, números, y un espacio o guion como separador."),
+    ).toBeInTheDocument();
+  });
+
+  it("mantiene el botón deshabilitado para Residente si el número de unidad tiene guiones repetidos", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await llenarCamposComunes(user);
+
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.selectOptions(comboboxes[0], "1");
+    const buscadorConjunto = screen.getByPlaceholderText("Escribe el nombre de tu conjunto...");
+    await user.type(buscadorConjunto, "TORRES");
+    const opcionConjunto = await screen.findByText("TORRES DE ARANJUEZ");
+    await user.click(opcionConjunto);
+
+    await user.type(screen.getByPlaceholderText("Ej: 3, B"), "1----B");
+    await user.type(screen.getByPlaceholderText("Ej: 402"), "101");
+    await user.type(screen.getByPlaceholderText("Ej: AB3K9Q"), "ab3k9q");
+
+    expect(
+      screen.getByRole("button", { name: "Completa los campos y acepta los términos" }),
+    ).toBeDisabled();
+  });
 });

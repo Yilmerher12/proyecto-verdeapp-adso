@@ -7,6 +7,7 @@ Descripción: Consultas de "quién debe recibir una notificación de este
              (ej. auditoría del reciclador) las reutilice en vez de
              duplicar la misma consulta SQL.
 """
+from typing import Iterable, Optional
 from uuid import UUID
 
 from sqlalchemy import select
@@ -14,7 +15,9 @@ from sqlalchemy.orm import Session
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
-from app.models.notificacion import Notificacion
+from app.models.notificacion import Notificacion, NotificacionDestinatario
+from app.models.reciclador import Reciclador
+from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.residente import Residente
 from app.models.unidad import Unidad
 
@@ -24,6 +27,20 @@ def residentes_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
         select(Residente.id_usuario)
         .join(Unidad, Residente.id_unidad == Unidad.id_unidad)
         .where(Unidad.id_conjunto_residencial == id_conjunto)
+    )
+    return [r[0] for r in db.execute(stmt).all()]
+
+
+def recicladores_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
+    stmt = (
+        select(Reciclador.id_usuario)
+        .join(RecicladorConjunto, Reciclador.id_reciclador == RecicladorConjunto.id_reciclador)
+        .where(
+            RecicladorConjunto.id_conjunto_residencial == id_conjunto,
+            # ¿Qué? fecha_revocacion IS NULL — un reciclador ya revocado
+            #       de este conjunto no debe seguir recibiendo sus avisos.
+            RecicladorConjunto.fecha_revocacion.is_(None),
+        )
     )
     return [r[0] for r in db.execute(stmt).all()]
 
@@ -77,3 +94,42 @@ def reciclador_esta_presente(db: Session, id_conjunto: UUID, id_usuario_reciclad
     )
     ultimo_tipo = db.execute(stmt).scalar_one_or_none()
     return ultimo_tipo == "LLEGADA_RECICLADOR"
+
+
+def crear_notificacion(
+    db: Session,
+    *,
+    tipo: str,
+    mensaje: str,
+    destinatarios: Iterable[UUID],
+    id_conjunto: Optional[UUID] = None,
+    id_referencia: Optional[UUID] = None,
+    id_emisor: Optional[UUID] = None,
+) -> None:
+    """
+    ¿Qué? Issue #3 (hallazgo B4 de la auditoría) — el bloque "crear
+          Notificacion, flush, agregar un NotificacionDestinatario por cada
+          destinatario" estaba copiado en 6 servicios distintos. Cambia
+          quién recibe el aviso, nunca cómo se guarda.
+    ¿Para qué? Un solo lugar que arma la notificación — si el patrón
+              cambia (ej. un campo nuevo), se cambia aquí una vez.
+    ¿Impacto? Siempre crea la Notificacion, aunque `destinatarios` llegue
+              vacío — enviar_notificacion (notificaciones_service.py) la
+              usa también como registro de estado (ej. "¿el SHUT quedó
+              lleno?" se responde mirando la última Notificacion de ese
+              tipo, sin importar a quién le llegó). Los llamadores que sí
+              quieren omitir una notificación sin destinatarios (evitar
+              una fila sin nadie que la reciba) deben revisarlo ANTES de
+              llamar esta función, no delegárselo a ella.
+    """
+    notif = Notificacion(
+        tipo=tipo,
+        id_conjunto_residencial=id_conjunto,
+        id_referencia=id_referencia,
+        id_emisor=id_emisor,
+        mensaje=mensaje,
+    )
+    db.add(notif)
+    db.flush()
+    for id_usuario in destinatarios:
+        db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=id_usuario))

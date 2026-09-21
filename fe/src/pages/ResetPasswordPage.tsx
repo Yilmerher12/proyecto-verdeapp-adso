@@ -15,7 +15,8 @@ import { AuthLayout } from "@/components/layout/AuthLayout";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { PasswordStrengthIndicator, getPasswordRequirementError } from "@/components/ui/PasswordStrengthIndicator";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { getPasswordRequirementError } from "@/lib/passwordStrength";
 
 /**
  * ¿Qué? Formulario de restablecimiento de contraseña con token de email.

@@ -4,10 +4,14 @@ import { Archive, CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus } fro
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { Alert } from "@/components/ui/Alert";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
+import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
 import {
   archivarNovedad,
   crearNovedad,
@@ -16,6 +20,9 @@ import {
   type AlcanceNovedad,
   type Novedad,
 } from "@/lib/novedadesApi";
+
+// ¿Qué? Cuántas novedades se piden por página (issue #227).
+const TAMANO_PAGINA = 8;
 
 interface FormState {
   alcance: AlcanceNovedad;
@@ -33,26 +40,11 @@ const FORM_VACIO: FormState = {
 
 const ALCANCES: AlcanceNovedad[] = ["TODOS", "RESIDENTES", "RECICLADORES", "ADMIN_CONJUNTO"];
 
-// ¿Qué? Muestra la fecha en UTC, no en la zona horaria del navegador —
-//       mismo criterio que en Comunicados, para que la fecha mostrada no
-//       retroceda un día en zonas detrás de UTC (ej. Bogotá, UTC-5).
-function formatearFechaUTC(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { timeZone: "UTC" });
-}
-
-// ¿Qué? Mismo criterio que en Comunicados: "created_at" es un instante real,
-//       se muestra en la hora local del navegador, sin el truco de UTC de
-//       "fecha_expiracion" (ver el mismo comentario en AdminConjuntoComunicadosPage.tsx).
-function formatearFechaCreacion(iso: string): string {
-  return new Date(iso).toLocaleDateString();
-}
-
-function isoToDateInputUTC(iso: string): string {
-  const d = new Date(iso);
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+// ¿Qué? Issue #7 (hallazgo F2 de la auditoría) — una novedad no tiene
+//       título, solo texto libre; se usa un recorte corto como el nombre
+//       que distingue cada fila en los aria-label de editar/archivar.
+function resumirTexto(texto: string): string {
+  return texto.length > 40 ? `${texto.slice(0, 40)}…` : texto;
 }
 
 /**
@@ -67,6 +59,7 @@ export function AdminNovedadesPage() {
   const { user } = useAuth();
 
   const [novedades, setNovedades] = useState<Novedad[]>([]);
+  const [total, setTotal] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -74,17 +67,26 @@ export function AdminNovedadesPage() {
   const [editando, setEditando] = useState<Novedad | null>(null);
   const [form, setForm] = useState<FormState>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
+  // ¿Qué? Issue #9 (hallazgo U2 de la auditoría) — archivar se ejecutaba
+  //       directo al clic, sin confirmar, a diferencia de eliminar un
+  //       comunicado (misma acción conceptual, otra pantalla).
+  const [aArchivar, setAArchivar] = useState<Novedad | null>(null);
+
+  const paginacion = usePaginacion(TAMANO_PAGINA, total);
 
   const cargar = () => {
     if (!user) return;
     setCargando(true);
-    listarTodasLasNovedades()
-      .then(setNovedades)
+    listarTodasLasNovedades(TAMANO_PAGINA, paginacion.offset)
+      .then(({ items, total: totalRes }) => {
+        setNovedades(items);
+        setTotal(totalRes);
+      })
       .catch((err) => console.error("Error cargando novedades", err))
       .finally(() => setCargando(false));
   };
 
-  useEffect(cargar, [user]);
+  useEffect(cargar, [user, paginacion.offset]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
@@ -148,10 +150,11 @@ export function AdminNovedadesPage() {
     }
   };
 
-  const archivar = async (item: Novedad) => {
-    if (!user) return;
+  const confirmarArchivar = async () => {
+    if (!user || !aArchivar) return;
     try {
-      await archivarNovedad(item.id_novedad);
+      await archivarNovedad(aArchivar.id_novedad);
+      setAArchivar(null);
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -236,14 +239,14 @@ export function AdminNovedadesPage() {
                   <button
                     onClick={() => abrirEditar(item)}
                     className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-                    aria-label={t("novedades.admin.editAria")}
+                    aria-label={t("novedades.admin.editAria", { resumen: resumirTexto(item.texto) })}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => archivar(item)}
+                    onClick={() => setAArchivar(item)}
                     className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
-                    aria-label={t("novedades.admin.archiveAria")}
+                    aria-label={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
                   >
                     <Archive className="h-4 w-4" />
                   </button>
@@ -253,6 +256,22 @@ export function AdminNovedadesPage() {
           </div>
         ))}
       </div>
+
+      {!cargando && total > 0 && (
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
+          <Paginacion
+            desde={paginacion.desde}
+            hasta={paginacion.hasta}
+            total={total}
+            pagina={paginacion.pagina}
+            totalPaginas={paginacion.totalPaginas}
+            puedeAnterior={paginacion.puedeAnterior}
+            puedeSiguiente={paginacion.puedeSiguiente}
+            onAnterior={paginacion.irAAnterior}
+            onSiguiente={paginacion.irASiguiente}
+          />
+        </div>
+      )}
 
       {(creando || editando) && (
         <Modal
@@ -364,6 +383,19 @@ export function AdminNovedadesPage() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {aArchivar && (
+        <ConfirmModal
+          icon={Archive}
+          variant="danger"
+          ariaLabel={t("novedades.admin.archiveConfirm.ariaLabel")}
+          title={t("novedades.admin.archiveConfirm.title")}
+          description={t("novedades.admin.archiveConfirm.warning")}
+          confirmLabel={t("novedades.admin.archiveConfirm.confirm")}
+          onConfirm={confirmarArchivar}
+          onClose={() => setAArchivar(null)}
+        />
       )}
     </div>
   );

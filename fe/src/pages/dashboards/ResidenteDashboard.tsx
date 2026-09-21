@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
+import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import { Home, AlertTriangle, Bell, CheckCircle2 } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
-import { NotificationFeed, tiempoRelativo, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
+import { obtenerAuditoria } from "@/lib/auditoriaConjuntoApi";
 
 interface EstadoShut {
   lleno: boolean;
@@ -21,6 +26,7 @@ interface EstadoShut {
 export function ResidenteDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || t("roles.residente");
   const { WatermarkIcon } = ROLE_THEME[RoleId.RESIDENTE];
 
@@ -29,7 +35,7 @@ export function ResidenteDashboard() {
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(false);
   const [enviando, setEnviando] = useState(false);
-  const [feedbackOk, setFeedbackOk] = useState(false);
+  const [feedbackOk, mostrarFeedbackOk] = useAvisoTemporal<boolean>();
   const [errorReporte, setErrorReporte] = useState(false);
   const [errorAccion, setErrorAccion] = useState(false);
 
@@ -60,8 +66,7 @@ export function ResidenteDashboard() {
     setErrorReporte(false);
     try {
       await axios.post(`${API_BASE_URL}/api/v1/notificaciones/enviar`, { tipo: "SHUT_LLENO" });
-      setFeedbackOk(true);
-      setTimeout(() => setFeedbackOk(false), 3500);
+      mostrarFeedbackOk(true);
       cargarDatos();
     } catch {
       // ¿Qué? Antes, si esto fallaba, el residente no se enteraba — creía
@@ -102,12 +107,29 @@ export function ResidenteDashboard() {
     }
   };
 
+  // ¿Qué? Issue #4 (RQF-013) — clic en la notificación de contenido
+  //       recomendado lleva directo a la categoría de "Aprender" que
+  //       corresponde, sin pasos intermedios ("entre menos clicks tenga
+  //       que hacer el usuario, mejor").
+  // ¿Para qué? tema_educativo se guarda igual que modulo_categoria a
+  //           propósito (ver models/auditoria_conjunto.py) — se pide la
+  //           auditoría por su id_referencia solo para leer ese texto.
+  const irAContenidoRecomendado = async (notif: NotificacionItem) => {
+    if (notif.tipo !== "CONTENIDO_RECOMENDADO" || !notif.id_referencia) return;
+    try {
+      const auditoria = await obtenerAuditoria(notif.id_referencia);
+      navigate(`/catalogo-educativo/${encodeURIComponent(auditoria.tema_educativo)}`);
+    } catch {
+      setErrorAccion(true);
+    }
+  };
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-5">
       {/* Header — la llave de fondo es solo un detalle tenue, para que este
           panel se sienta del Residente (su casa, su unidad), sin estorbar la
           lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
@@ -157,7 +179,7 @@ export function ResidenteDashboard() {
       )}
 
       {/* Acción: reportar SHUT lleno */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -208,8 +230,8 @@ export function ResidenteDashboard() {
 
       {/* Actividad reciente (notificaciones recibidas) */}
       {cargando ? (
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+          <LoadingState message={t("common.loading")} />
         </div>
       ) : (
         <>
@@ -225,6 +247,7 @@ export function ResidenteDashboard() {
             onMarkRead={marcarLeida}
             onMarkAllRead={marcarTodasLeidas}
             onClearRead={limpiarLeidas}
+            onItemClick={irAContenidoRecomendado}
           />
         </>
       )}

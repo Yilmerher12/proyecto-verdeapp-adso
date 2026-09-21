@@ -13,7 +13,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { PasswordStrengthIndicator, getPasswordRequirementError } from "@/components/ui/PasswordStrengthIndicator";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { getPasswordRequirementError } from "@/lib/passwordStrength";
 
 /**
  * ¿Qué? Formulario de cambio de contraseña con validación y feedback.

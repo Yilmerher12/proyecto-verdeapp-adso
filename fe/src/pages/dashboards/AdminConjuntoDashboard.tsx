@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
@@ -22,12 +22,15 @@ import {
   type InvitacionEnviada,
   type RecicladorAutorizado,
 } from "@/lib/recicladorConjuntoApi";
-import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import type { NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -203,7 +206,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
   // ¿Impacto? Ahora se consultan las dos fuentes por separado: la lista
   //           real de autorizados (recicladores_conjuntos) y el historial
   //           de invitaciones, cada una con su propio título honesto.
-  const cargarAutorizados = () => {
+  const cargarAutorizados = useCallback(() => {
     setCargandoAutorizados(true);
     obtenerRecicladoresAutorizados(idConjunto)
       .then((data) => {
@@ -222,21 +225,24 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
         setErrorAutorizados(true);
       })
       .finally(() => setCargandoAutorizados(false));
-  };
+  }, [idConjunto]);
 
-  const cargarInvitaciones = () => {
+  const cargarInvitaciones = useCallback(() => {
     setCargando(true);
     obtenerInvitacionesDeConjunto(idConjunto)
       .then(setInvitaciones)
       .catch((err) => console.error("Error cargando invitaciones de reciclador", err))
       .finally(() => setCargando(false));
-  };
+  }, [idConjunto]);
 
+  // ¿Qué? Issue #225 — "cargarAutorizados"/"cargarInvitaciones" faltaban en
+  //       las dependencias; se silenciaba la advertencia en vez de
+  //       agregarlas. Envolverlas en useCallback (arriba) las vuelve
+  //       estables salvo cuando "idConjunto" cambia de verdad.
   useEffect(() => {
     cargarAutorizados();
     cargarInvitaciones();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idConjunto]);
+  }, [cargarAutorizados, cargarInvitaciones]);
 
   const handleInvitar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -319,7 +325,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
         <form
           id={`recicladores-invitar-${idConjunto}`}
           onSubmit={handleInvitar}
-          className="flex flex-col sm:flex-row gap-2 mb-4 bg-white dark:bg-[#132a1c] p-3 rounded-xl"
+          className="flex flex-col sm:flex-row gap-2 mb-4 bg-[#f7f9f3] dark:bg-[#1c341b] p-3 rounded-xl"
         >
           <div className="flex-1 relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -343,7 +349,9 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
       )}
 
       {errorInvitar && (
-        <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-3 dark:bg-red-900/20 dark:text-red-400">{errorInvitar}</p>
+        <div className="mb-3">
+          <Alert type="error" message={errorInvitar} onClose={() => setErrorInvitar(null)} />
+        </div>
       )}
 
       {mostrarDetalle && (
@@ -353,9 +361,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
           </p>
           {cargandoAutorizados ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              {t("dashboards.adminConjunto.recyclersSection.authorizedLoading")}
-            </p>
+            <LoadingState message={t("dashboards.adminConjunto.recyclersSection.authorizedLoading")} />
           ) : errorAutorizados ? (
             <div className="mb-4">
               <Alert type="error" message={t("common.loadError")} />
@@ -403,7 +409,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
           </p>
           {cargando ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.recyclersSection.loading")}</p>
+            <LoadingState message={t("dashboards.adminConjunto.recyclersSection.loading")} />
           ) : invitaciones.length === 0 ? (
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {t("dashboards.adminConjunto.recyclersSection.empty")}
@@ -413,7 +419,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
               {invitaciones.map((inv) => (
                 <div
                   key={inv.id}
-                  className="flex items-center justify-between gap-3 bg-white dark:bg-[#132a1c] rounded-lg px-3 py-2"
+                  className="flex items-center justify-between gap-3 bg-[#f7f9f3] dark:bg-[#1c341b] rounded-lg px-3 py-2"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
@@ -521,12 +527,13 @@ function SeccionDesvinculacion({
           <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">{t("desvinculacion.clarification")}</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-[#132a1c] p-3 rounded-xl space-y-2">
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] p-3 rounded-xl space-y-2">
           <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
-          <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
+          <label htmlFor={`desvinculacion-motivo-${idConjunto}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("desvinculacion.motivoLabel")}
           </label>
           <textarea
+            id={`desvinculacion-motivo-${idConjunto}`}
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
             placeholder={t("desvinculacion.motivoPlaceholder")}
@@ -576,14 +583,18 @@ export function AdminConjuntoDashboard() {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [formEdicion, setFormEdicion] = useState({ nit: "" });
   const [guardando, setGuardando] = useState(false);
-  const [mensaje, setMensaje] = useState<string | null>(null);
+  // ¿Qué? Antes "mensaje" era un simple string, y el aviso siempre se
+  //       pintaba de verde (éxito) aunque el texto fuera el de error.
+  // ¿Impacto? Ahora guarda también el tipo ("success"/"error"), así el
+  //           color que se ve siempre corresponde a lo que pasó de verdad.
+  const [mensaje, setMensaje] = useState<{ tipo: "success" | "error"; texto: string } | null>(null);
 
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [cargandoNotifs, setCargandoNotifs] = useState(true);
   const [errorNotifs, setErrorNotifs] = useState(false);
   const [errorAccionNotif, setErrorAccionNotif] = useState(false);
 
-  const cargarConjuntos = () => {
+  const cargarConjuntos = useCallback(() => {
     if (!user) return;
     setCargando(true);
     obtenerMisConjuntos()
@@ -602,7 +613,7 @@ export function AdminConjuntoDashboard() {
         setErrorConjuntos(true);
       })
       .finally(() => setCargando(false));
-  };
+  }, [user]);
 
   const cargarNotificaciones = () => {
     if (!user) return;
@@ -649,10 +660,11 @@ export function AdminConjuntoDashboard() {
     }
   };
 
+  // ¿Qué? Issue #225 — "cargarConjuntos" faltaba en las dependencias; se
+  //       silenciaba la advertencia en vez de agregarla.
   useEffect(() => {
     cargarConjuntos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [cargarConjuntos]);
 
   usePolling(cargarNotificaciones, { enabled: !!user });
 
@@ -671,12 +683,12 @@ export function AdminConjuntoDashboard() {
     setGuardando(true);
     try {
       await editarMiConjunto(id, { nit: formEdicion.nit || null });
-      setMensaje(t("dashboards.adminConjunto.editForm.successMessage"));
+      setMensaje({ tipo: "success", texto: t("dashboards.adminConjunto.editForm.successMessage") });
       setEditandoId(null);
       cargarConjuntos();
     } catch (err) {
       console.error("Error al editar conjunto", err);
-      setMensaje(t("dashboards.adminConjunto.editForm.errorMessage"));
+      setMensaje({ tipo: "error", texto: t("dashboards.adminConjunto.editForm.errorMessage") });
     } finally {
       setGuardando(false);
     }
@@ -687,7 +699,7 @@ export function AdminConjuntoDashboard() {
       {/* TARJETA DE PERFIL — el maletín de fondo es solo un detalle tenue,
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-amber-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
@@ -718,8 +730,8 @@ export function AdminConjuntoDashboard() {
       )}
 
       {cargandoNotifs ? (
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+          <LoadingState message={t("common.loading")} />
         </div>
       ) : (
         <>
@@ -745,25 +757,21 @@ export function AdminConjuntoDashboard() {
       )}
 
       {mensaje && (
-        <div className="bg-accent-50 border border-accent-200 text-accent-800 text-sm px-4 py-3 rounded-xl dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
-          {mensaje}
-        </div>
+        <Alert type={mensaje.tipo} message={mensaje.texto} onClose={() => setMensaje(null)} />
       )}
 
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-[#2a4d34] pb-2">
           <Building2 className="text-accent-600 w-5 h-5" />
           <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
         </div>
 
         {cargando ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">{t("dashboards.adminConjunto.myConjuntos.loading")}</p>
+          <LoadingState message={t("dashboards.adminConjunto.myConjuntos.loading")} />
         ) : errorConjuntos ? (
           <Alert type="error" message={t("common.loadError")} />
         ) : conjuntos.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 py-4">
-            {t("dashboards.adminConjunto.myConjuntos.empty")}
-          </p>
+          <EmptyState icon={Building2} message={t("dashboards.adminConjunto.myConjuntos.empty")} />
         ) : (
           <div className="space-y-4">
             {conjuntos.map((c) => (
@@ -787,8 +795,9 @@ export function AdminConjuntoDashboard() {
                                 de verdad falta completar.
                     */}
                     <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
+                      <label htmlFor={`nit-${c.id_conjunto_residencial}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
                       <input
+                        id={`nit-${c.id_conjunto_residencial}`}
                         type="text"
                         value={formEdicion.nit}
                         onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}

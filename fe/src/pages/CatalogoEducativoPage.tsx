@@ -5,6 +5,7 @@ import { BookOpen, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Alert } from "@/components/ui/Alert";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
 import {
   listarContenido,
@@ -33,8 +34,9 @@ export function CatalogoEducativoPage() {
       .then(setContenido)
       .catch(() => setError(t("catalogoEducativo.loadError")))
       .finally(() => setCargando(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    // ¿Qué? Issue #225 — "t" faltaba en las dependencias; se silenciaba la
+    //       advertencia en vez de agregarla.
+  }, [user, t]);
 
   const categorias = Array.from(new Set(contenido.map((c) => c.modulo_categoria)));
 
@@ -48,7 +50,7 @@ export function CatalogoEducativoPage() {
       </div>
 
       {cargando && <LoadingState message={t("catalogoEducativo.loading")} />}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <Alert type="error" message={error} />}
 
       {!cargando && !error && categorias.length === 0 && (
         <EmptyState icon={BookOpen} message={t("catalogoEducativo.emptyState")} />

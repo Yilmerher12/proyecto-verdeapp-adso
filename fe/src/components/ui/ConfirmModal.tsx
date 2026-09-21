@@ -37,6 +37,10 @@ interface ConfirmModalProps {
   onConfirm: () => void;
   onClose: () => void;
   ariaLabel: string;
+  /** ¿Qué? Se reenvía tal cual a Modal — "stacked" cuando esta confirmación
+   *        se abre encima de otro modal ya abierto (ej: confirmar el envío
+   *        de un formulario que sigue visible detrás). Default: "base". */
+  layer?: "base" | "stacked";
 }
 
 const ESTILOS_VARIANTE = {
@@ -70,12 +74,13 @@ export function ConfirmModal({
   onConfirm,
   onClose,
   ariaLabel,
+  layer = "base",
 }: ConfirmModalProps) {
   const { t } = useTranslation();
   const estilo = ESTILOS_VARIANTE[variant];
 
   return (
-    <Modal onClose={onClose} aria-label={ariaLabel}>
+    <Modal onClose={onClose} aria-label={ariaLabel} layer={layer}>
       <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
         <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${estilo.circulo}`}>
           <Icon className={`h-6 w-6 ${estilo.icono}`} />

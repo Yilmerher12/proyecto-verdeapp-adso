@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, ClipboardList, XCircle } from "lucide-react";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { Alert } from "@/components/ui/Alert";
 import {
   listarSolicitudesDesvinculacion,
   resolverSolicitudDesvinculacion,
@@ -49,7 +51,15 @@ export function SolicitudesDesvinculacion({
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const cargar = () => {
+  // ¿Qué? Issue #225 — antes el useEffect de abajo llamaba a "cargar" con
+  //       un arreglo de dependencias vacío ([]) silenciado con un
+  //       comentario de ESLint, porque "cargar" se creaba de nuevo en cada
+  //       render. Envolverla en useCallback la vuelve estable de verdad
+  //       (mientras "onCountChange" tampoco cambie — y no cambia: las dos
+  //       pantallas que usan este componente le pasan directamente un
+  //       "setState", que React garantiza estable), así que ya no hace
+  //       falta silenciar nada.
+  const cargar = useCallback(() => {
     setCargando(true);
     listarSolicitudesDesvinculacion()
       .then((data) => {
@@ -58,12 +68,11 @@ export function SolicitudesDesvinculacion({
       })
       .catch((err) => console.error("Error cargando solicitudes de desvinculación", err))
       .finally(() => setCargando(false));
-  };
+  }, [onCountChange]);
 
   useEffect(() => {
     cargar();
-
-  }, []);
+  }, [cargar]);
 
   const aprobar = async (id: string) => {
     setProcesandoId(id);
@@ -101,7 +110,7 @@ export function SolicitudesDesvinculacion({
       className={
         dentroDeModal
           ? ""
-          : "bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm"
+          : "bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm"
       }
     >
       {mostrarEncabezado && (
@@ -119,13 +128,13 @@ export function SolicitudesDesvinculacion({
       )}
 
       {error && (
-        <p className="mb-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg dark:bg-red-900/20 dark:text-red-400">
-          {error}
-        </p>
+        <div className="mb-3">
+          <Alert type="error" message={error} onClose={() => setError(null)} />
+        </div>
       )}
 
       {cargando ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        <LoadingState message={t("common.loading")} />
       ) : solicitudes.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("desvinculacion.adminSistema.empty")}</p>
       ) : (
@@ -148,10 +157,11 @@ export function SolicitudesDesvinculacion({
 
               {rechazandoId === s.id ? (
                 <div className="mt-3 space-y-2">
-                  <label className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                  <label htmlFor="motivo-rechazo" className="text-xs font-bold text-gray-600 dark:text-gray-400">
                     {t("desvinculacion.adminSistema.rejectModal.motivoLabel")}
                   </label>
                   <textarea
+                    id="motivo-rechazo"
                     value={motivoRechazo}
                     onChange={(e) => setMotivoRechazo(e.target.value)}
                     placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}

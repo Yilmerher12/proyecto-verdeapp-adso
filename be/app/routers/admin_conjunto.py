@@ -11,7 +11,7 @@ Descripción: Endpoints del flujo de invitación, desvinculación y reasignació
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
@@ -123,11 +123,12 @@ def resolver_solicitud_desvinculacion(
 @router.get("/listar", response_model=List[AdministradorConjuntoResumenResponse])
 def listar_administradores_conjunto(
     query: Optional[str] = None,
+    limit: int = Query(20, ge=1, le=50),
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-024 (CA-024.1): busca Administradores de Conjunto ya existentes, por nombre/apellidos/correo."""
-    return desvinculacion_service.buscar_administradores(db, query)
+    return desvinculacion_service.buscar_administradores(db, query, limit=limit)
 
 
 @router.post("/asignar-conjunto-adicional", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)

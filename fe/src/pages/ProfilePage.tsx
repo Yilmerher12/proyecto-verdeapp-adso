@@ -1,5 +1,5 @@
  
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
@@ -22,6 +22,10 @@ import { RoleId } from "@/types/auth";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { notificarFotoPerfilActualizada } from "@/lib/profileEvents";
 import { TELEFONO_REGEX } from "@/lib/validacion";
+import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
+import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { InputField } from "@/components/ui/InputField";
 
 interface PerfilData {
   id: number;
@@ -75,23 +79,32 @@ export function ProfilePage() {
   const [formAsociacion, setFormAsociacion] = useState("");
   const [formMostrarContacto, setFormMostrarContacto] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [exito, setExito] = useState(false);
+  const [exito, mostrarExito] = useAvisoTemporal<boolean>();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // ¿Qué? Issue #13 (hallazgo U8 de la auditoría) — antes "nombre y
+  //       apellidos son obligatorios" era un solo Alert genérico que no
+  //       decía cuál de los dos. Ahora cada campo se valida al salir de
+  //       él (onBlur), igual que ya hacen los formularios de auth.
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
   const inputFotoRef = useRef<HTMLInputElement>(null);
 
-  const cargarPerfil = () => {
+  const cargarPerfil = useCallback(() => {
     if (!user) return;
     axios
       .get(`${API_BASE_URL}/api/v1/users/me`)
       .then((res) => setPerfil(res.data))
       .catch(() => {})
       .finally(() => setCargando(false));
-  };
+  }, [user]);
 
-  useEffect(() => { cargarPerfil(); }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ¿Qué? Issue #225 — "cargarPerfil" faltaba en las dependencias; se
+  //       silenciaba la advertencia en vez de agregarla.
+  useEffect(() => {
+    cargarPerfil();
+  }, [cargarPerfil]);
 
   // ¿Qué? Sube la foto de perfil — disponible para los 4 roles (a
   //       diferencia de nombre/teléfono, que el Admin del Sistema no puede
@@ -138,23 +151,45 @@ export function ProfilePage() {
     setFormAsociacion(asoc && asoc !== "INDEPENDIENTE" ? asoc : "");
     setFormMostrarContacto(perfil.mostrar_contacto_directorio);
     setEditando(true);
-    setExito(false);
+    mostrarExito(false);
     setErrorMsg(null);
+    setFieldErrors({});
   };
 
   const cancelarEdicion = () => {
     setEditando(false);
     setErrorMsg(null);
+    setFieldErrors({});
+  };
+
+  const limpiarError = (campo: string) => {
+    if (fieldErrors[campo]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[campo];
+        return copy;
+      });
+    }
+  };
+
+  const validarCampo = (campo: "nombre" | "apellidos" | "telefono") => {
+    let mensaje = "";
+    if (campo === "nombre" && !formNombre.trim()) mensaje = t("profile.validation.firstNameRequired");
+    if (campo === "apellidos" && !formApellidos.trim()) mensaje = t("profile.validation.lastNameRequired");
+    if (campo === "telefono" && formTelefono.trim() && !TELEFONO_REGEX.test(formTelefono.trim())) {
+      mensaje = t("profile.validation.phoneInvalid");
+    }
+    setFieldErrors((prev) => (mensaje ? { ...prev, [campo]: mensaje } : prev));
   };
 
   const guardarPerfil = async () => {
-    if (!formNombre.trim() || !formApellidos.trim()) {
-      setErrorMsg(t("profile.validation.nameRequired"));
-      return;
-    }
+    const errores: Record<string, string> = {};
+    if (!formNombre.trim()) errores.nombre = t("profile.validation.firstNameRequired");
+    if (!formApellidos.trim()) errores.apellidos = t("profile.validation.lastNameRequired");
     const telefono = formTelefono.trim();
-    if (telefono && !TELEFONO_REGEX.test(telefono)) {
-      setErrorMsg(t("profile.validation.phoneInvalid"));
+    if (telefono && !TELEFONO_REGEX.test(telefono)) errores.telefono = t("profile.validation.phoneInvalid");
+    if (Object.keys(errores).length > 0) {
+      setFieldErrors(errores);
       return;
     }
     setGuardando(true);
@@ -168,8 +203,7 @@ export function ProfilePage() {
         mostrar_contacto_directorio: formMostrarContacto,
       });
       setEditando(false);
-      setExito(true);
-      setTimeout(() => setExito(false), 3000);
+      mostrarExito(true);
       cargarPerfil();
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : t("common.saveError"));
@@ -178,8 +212,8 @@ export function ProfilePage() {
     }
   };
 
-  if (cargando) return <p className="text-sm text-gray-500 dark:text-gray-400 px-2 pt-6">{t("profile.loading")}</p>;
-  if (!perfil) return <p className="text-sm text-red-500 px-2 pt-6">{t("profile.loadError")}</p>;
+  if (cargando) return <div className="pt-6"><LoadingState message={t("profile.loading")} /></div>;
+  if (!perfil) return <div className="pt-6"><Alert type="error" message={t("profile.loadError")} /></div>;
 
   const role = ROLE_THEME[perfil.role_id] ?? ROLE_THEME[RoleId.RESIDENTE];
   const { Icon: RoleIcon } = role;
@@ -198,7 +232,7 @@ export function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
       {/* Header */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("profile.subtitle")}</p>
       </div>
@@ -213,7 +247,7 @@ export function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* LEFT — Avatar + rol + datos de contexto (2/5) */}
-        <div className="lg:col-span-2 lg:self-start bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8 flex flex-col items-center text-center">
+        <div className="lg:col-span-2 lg:self-start bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8 flex flex-col items-center text-center">
           {/* Avatar — foto real si existe, si no el círculo con la inicial de siempre. */}
           <div className="relative mb-4">
             {urlFotoPerfil ? (
@@ -233,7 +267,7 @@ export function ProfilePage() {
               disabled={subiendoFoto}
               aria-label={t("profile.photo.change")}
               title={t("profile.photo.change")}
-              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#132a1c]"
+              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-[#f7f9f3] bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#1c341b]"
             >
               {subiendoFoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
             </button>
@@ -317,7 +351,7 @@ export function ProfilePage() {
         </div>
 
         {/* RIGHT — Información personal editable (3/5) */}
-        <div className="lg:col-span-3 bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8">
+        <div className="lg:col-span-3 bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("profile.personalInfoSection.title")}</h3>
             {canEdit && !editando && (
@@ -373,63 +407,54 @@ export function ProfilePage() {
           ) : (
             /* Modo edición */
             <div className="space-y-4">
-              {errorMsg && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                  {errorMsg}
-                </p>
-              )}
+              {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
-              <div>
-                <label htmlFor="perfil-nombre" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("profile.fields.firstName")} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="perfil-nombre"
-                  value={formNombre}
-                  onChange={(e) => setFormNombre(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("profile.fields.firstName")}
+                name="nombre"
+                value={formNombre}
+                onChange={(e) => {
+                  setFormNombre(e.target.value);
+                  limpiarError("nombre");
+                }}
+                onBlur={() => validarCampo("nombre")}
+                error={fieldErrors.nombre}
+              />
 
-              <div>
-                <label htmlFor="perfil-apellidos" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("profile.fields.lastName")} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="perfil-apellidos"
-                  value={formApellidos}
-                  onChange={(e) => setFormApellidos(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("profile.fields.lastName")}
+                name="apellidos"
+                value={formApellidos}
+                onChange={(e) => {
+                  setFormApellidos(e.target.value);
+                  limpiarError("apellidos");
+                }}
+                onBlur={() => validarCampo("apellidos")}
+                error={fieldErrors.apellidos}
+              />
 
-              <div>
-                <label htmlFor="perfil-telefono" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("common.phone")}
-                </label>
-                <input
-                  id="perfil-telefono"
-                  value={formTelefono}
-                  onChange={(e) => setFormTelefono(e.target.value)}
-                  placeholder={t("profile.phonePlaceholder")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("common.phone")}
+                name="telefono"
+                value={formTelefono}
+                onChange={(e) => {
+                  setFormTelefono(e.target.value);
+                  limpiarError("telefono");
+                }}
+                onBlur={() => validarCampo("telefono")}
+                placeholder={t("profile.phonePlaceholder")}
+                error={fieldErrors.telefono}
+              />
 
               {perfil.role_id === RoleId.RECICLADOR && (
                 <>
-                  <div>
-                    <label htmlFor="perfil-asociacion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                      {t("profile.fields.association")}
-                    </label>
-                    <input
-                      id="perfil-asociacion"
-                      value={formAsociacion}
-                      onChange={(e) => setFormAsociacion(e.target.value)}
-                      placeholder={t("profile.associationPlaceholder")}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                    />
-                  </div>
+                  <InputField
+                    label={t("profile.fields.association")}
+                    name="asociacion"
+                    value={formAsociacion}
+                    onChange={(e) => setFormAsociacion(e.target.value)}
+                    placeholder={t("profile.associationPlaceholder")}
+                  />
 
                   {/* ¿Qué? Interruptor de consentimiento — apagado por
                       defecto. Sin esto, no había forma de que el reciclador

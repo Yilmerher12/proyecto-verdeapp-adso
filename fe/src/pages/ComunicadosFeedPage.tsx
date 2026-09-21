@@ -4,6 +4,7 @@ import { AlertTriangle, Megaphone, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { verFeedComunicados, type Comunicado, type TipoComunicado } from "@/lib/comunicadosApi";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -77,7 +78,7 @@ export function ComunicadosFeedPage() {
                 <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
               )}
               <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-                {new Date(item.created_at).toLocaleDateString()}
+                {formatearFechaCreacion(item.created_at)}
               </span>
             </div>
 

@@ -12,13 +12,14 @@
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Camera, Loader2, Plus, X } from "lucide-react";
+import { Camera, ClipboardCheck, Loader2, Plus, X } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
 import { crearAuditoria, type AuditoriaConjunto, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
 import { listarContenido } from "@/lib/contenidoEducativoApi";
 import { NIVELES_DESEMPENO, ORDEN_NIVELES_SELECCIONABLES } from "@/config/nivelesDesempeno";
-import { NOMBRE_SIMPLE_CATEGORIA } from "@/config/categoriasEducativas";
+import { CATEGORIAS_NO_AUDITABLES, NOMBRE_SIMPLE_CATEGORIA } from "@/config/categoriasEducativas";
 
 const MAXIMO_FOTOS = 3;
 
@@ -54,6 +55,11 @@ export function AuditoriaConjuntoForm({
   const [enviando, setEnviando] = useState(false);
   const [progreso, setProgreso] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  // ¿Qué? Issue #9 (hallazgo U10 de la auditoría) — la calificación se
+  //       enviaba directo al hacer clic, sin confirmar, pese a ser una
+  //       acción de una sola vía (no hay endpoint para editar una auditoría
+  //       ya creada).
+  const [confirmando, setConfirmando] = useState(false);
 
   // ¿Qué? URLs de vista previa (blob:) para las fotos ya elegidas.
   // ¿Para qué? Antes el formulario solo mostraba el nombre del archivo —
@@ -78,10 +84,15 @@ export function AuditoriaConjuntoForm({
 
   // ¿Qué? Mismas categorías que ya usa CatalogoEducativoPage — se derivan
   //       del catálogo real en vez de mantener una lista aparte que se
-  //       puede desactualizar.
+  //       puede desactualizar. Se excluyen las que no son observables en
+  //       una sola visita (CATEGORIAS_NO_AUDITABLES, issue #4/RQF-013).
   useEffect(() => {
     listarContenido()
-      .then((contenido) => setTemas(Array.from(new Set(contenido.map((c) => c.modulo_categoria)))))
+      .then((contenido) => {
+        const categorias = new Set(contenido.map((c) => c.modulo_categoria));
+        CATEGORIAS_NO_AUDITABLES.forEach((c) => categorias.delete(c));
+        setTemas(Array.from(categorias));
+      })
       .catch(() => setTemas([]));
   }, []);
 
@@ -90,7 +101,7 @@ export function AuditoriaConjuntoForm({
   //       el reciclador se entere del campo que falta después de intentar.
   const formularioIncompleto = !idConjunto || !nivel || !tema || evidencias.length === 0;
 
-  const enviar = async () => {
+  const intentarEnviar = () => {
     setError(null);
     if (!idConjunto) {
       setError(t("dashboards.reciclador.auditoria.validation.conjunto"));
@@ -108,7 +119,12 @@ export function AuditoriaConjuntoForm({
       setError(t("dashboards.reciclador.auditoria.validation.evidencia"));
       return;
     }
+    setConfirmando(true);
+  };
 
+  const enviar = async () => {
+    if (!nivel) return;
+    setConfirmando(false);
     setEnviando(true);
     setProgreso(0);
     try {
@@ -157,10 +173,11 @@ export function AuditoriaConjuntoForm({
                un conjunto asignado, aunque ya se supiera la respuesta. */}
         {!conjuntoPreseleccionado && conjuntos.length > 1 && (
           <div className="mb-4">
-            <label className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
+            <label htmlFor="auditoria-conjunto" className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
               {t("dashboards.reciclador.auditoria.conjuntoLabel")}
             </label>
             <select
+              id="auditoria-conjunto"
               value={idConjunto}
               onChange={(e) => setIdConjunto(e.target.value)}
               className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
@@ -214,10 +231,11 @@ export function AuditoriaConjuntoForm({
         </div>
 
         <div className="mb-4">
-          <label className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
+          <label htmlFor="auditoria-tema" className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("dashboards.reciclador.auditoria.temaLabel")}
           </label>
           <select
+            id="auditoria-tema"
             value={tema}
             onChange={(e) => setTema(e.target.value)}
             className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
@@ -232,10 +250,11 @@ export function AuditoriaConjuntoForm({
         </div>
 
         <div className="mb-4">
-          <label className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
+          <label htmlFor="auditoria-descripcion" className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("dashboards.reciclador.auditoria.descripcionLabel")}
           </label>
           <textarea
+            id="auditoria-descripcion"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
             rows={2}
@@ -306,7 +325,7 @@ export function AuditoriaConjuntoForm({
           </button>
           <button
             type="button"
-            onClick={enviar}
+            onClick={intentarEnviar}
             disabled={enviando || formularioIncompleto}
             className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -326,6 +345,23 @@ export function AuditoriaConjuntoForm({
           </button>
         </div>
       </div>
+
+      {confirmando && nivel && (
+        <ConfirmModal
+          layer="stacked"
+          icon={ClipboardCheck}
+          variant="primary"
+          ariaLabel={t("dashboards.reciclador.auditoria.confirmSubmit.ariaLabel")}
+          title={t("dashboards.reciclador.auditoria.confirmSubmit.title")}
+          description={t("dashboards.reciclador.auditoria.confirmSubmit.warning", {
+            tema: NOMBRE_SIMPLE_CATEGORIA[tema] ?? tema,
+            nivel: t(`dashboards.reciclador.auditoria.niveles.${nivel.toLowerCase()}`),
+          })}
+          confirmLabel={t("dashboards.reciclador.auditoria.confirmSubmit.confirm")}
+          onConfirm={enviar}
+          onClose={() => setConfirmando(false)}
+        />
+      )}
     </Modal>
   );
 }

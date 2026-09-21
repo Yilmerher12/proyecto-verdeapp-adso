@@ -4,9 +4,15 @@ import { CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus, Trash2 } from
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
+import { Alert } from "@/components/ui/Alert";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
+import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
 import {
   crearComunicado,
   editarComunicado,
@@ -16,6 +22,9 @@ import {
   type DestinatariosComunicado,
   type TipoComunicado,
 } from "@/lib/comunicadosApi";
+
+// ¿Qué? Issue #11 — mismo tamaño de página que ya usa Novedades (issue #227).
+const TAMANO_PAGINA = 8;
 
 interface FormState {
   id_conjunto_residencial: string | "";
@@ -40,34 +49,11 @@ const FORM_VACIO: FormState = {
 const TIPOS: TipoComunicado[] = ["INFORMATIVO", "URGENTE", "CONVOCATORIA", "MANTENIMIENTO", "RECICLAJE"];
 const DESTINATARIOS: DestinatariosComunicado[] = ["RESIDENTES", "RECICLADORES", "AMBOS"];
 
-// ¿Qué? Muestra la fecha en UTC, no en la zona horaria del navegador.
-// ¿Para qué? Para Convocatoria, el backend calcula la expiración como
-//           "medianoche UTC del día siguiente al evento" — si se muestra
-//           en hora local de Bogotá (UTC-5), esa medianoche UTC cae la
-//           noche ANTERIOR en hora local, y la fecha mostrada retrocede
-//           un día respecto a la que el admin realmente eligió.
-function formatearFechaUTC(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { timeZone: "UTC" });
-}
-
-// ¿Qué? "created_at" es un instante real (con hora), no una fecha elegida a
-//       mano como "fecha_expiracion" — aquí SÍ se muestra en la zona horaria
-//       del navegador (igual que en el feed que ven los residentes), porque
-//       no aplica el mismo truco de "medianoche UTC" de arriba.
-function formatearFechaCreacion(iso: string): string {
-  return new Date(iso).toLocaleDateString();
-}
-
-// ¿Qué? Igual que formatearFechaUTC, pero en formato YYYY-MM-DD (lo que
-//       espera un <input type="date">) — se usa para precargar la fecha
-//       de expiración actual al abrir el formulario de edición, con el
-//       mismo criterio de UTC para no mostrar un día distinto al real.
-function isoToDateInputUTC(iso: string): string {
-  const d = new Date(iso);
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+// ¿Qué? Issue #7 (hallazgo F2 de la auditoría) — un comunicado no tiene
+//       título, solo texto libre; se usa un recorte corto como el nombre
+//       que distingue cada fila en los aria-label de editar/eliminar.
+function resumirTexto(texto: string): string {
+  return texto.length > 40 ? `${texto.slice(0, 40)}…` : texto;
 }
 
 // ¿Qué? Color por tipo — Urgente en rojo para que salte a la vista, igual
@@ -93,6 +79,7 @@ export function AdminConjuntoComunicadosPage() {
 
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
+  const [total, setTotal] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -103,19 +90,22 @@ export function AdminConjuntoComunicadosPage() {
 
   const [aEliminar, setAEliminar] = useState<Comunicado | null>(null);
 
+  const paginacion = usePaginacion(TAMANO_PAGINA, total);
+
   const cargar = () => {
     if (!user) return;
     setCargando(true);
-    Promise.all([obtenerMisConjuntos(), listarMisComunicados()])
-      .then(([listaConjuntos, listaComunicados]) => {
+    Promise.all([obtenerMisConjuntos(), listarMisComunicados(TAMANO_PAGINA, paginacion.offset)])
+      .then(([listaConjuntos, paginaComunicados]) => {
         setConjuntos(listaConjuntos);
-        setComunicados(listaComunicados);
+        setComunicados(paginaComunicados.items);
+        setTotal(paginaComunicados.total);
       })
       .catch((err) => console.error("Error cargando comunicados", err))
       .finally(() => setCargando(false));
   };
 
-  useEffect(cargar, [user]);
+  useEffect(cargar, [user, paginacion.offset]);
 
   const abrirCrear = () => {
     setForm({ ...FORM_VACIO, id_conjunto_residencial: conjuntos[0]?.id_conjunto_residencial ?? "" });
@@ -213,7 +203,7 @@ export function AdminConjuntoComunicadosPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.admin.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.subtitle")}</p>
@@ -228,24 +218,21 @@ export function AdminConjuntoComunicadosPage() {
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && conjuntos.length === 0 && (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.noConjuntos")}</p>
       )}
 
       {!cargando && comunicados.length === 0 && conjuntos.length > 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.emptyState")}</p>
-        </div>
+        <EmptyState icon={Megaphone} message={t("comunicados.admin.emptyState")} />
       )}
 
       <div className="space-y-3">
         {comunicados.map((item) => (
           <div
             key={item.id_comunicado}
-            className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+            className="rounded-2xl border border-gray-100 bg-[#f7f9f3] p-4 dark:border-[#2a4d34] dark:bg-[#1c341b]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -290,14 +277,14 @@ export function AdminConjuntoComunicadosPage() {
                 <button
                   onClick={() => abrirEditar(item)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-                  aria-label={t("comunicados.admin.editAria")}
+                  aria-label={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setAEliminar(item)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
-                  aria-label={t("comunicados.admin.deleteAria")}
+                  aria-label={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -306,6 +293,22 @@ export function AdminConjuntoComunicadosPage() {
           </div>
         ))}
       </div>
+
+      {!cargando && total > 0 && (
+        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
+          <Paginacion
+            desde={paginacion.desde}
+            hasta={paginacion.hasta}
+            total={total}
+            pagina={paginacion.pagina}
+            totalPaginas={paginacion.totalPaginas}
+            puedeAnterior={paginacion.puedeAnterior}
+            puedeSiguiente={paginacion.puedeSiguiente}
+            onAnterior={paginacion.irAAnterior}
+            onSiguiente={paginacion.irASiguiente}
+          />
+        </div>
+      )}
 
       {(creando || editando) && (
         <Modal
@@ -319,11 +322,7 @@ export function AdminConjuntoComunicadosPage() {
               {editando ? t("comunicados.admin.editTitle") : t("comunicados.admin.newButton")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             {!editando && (
               <>

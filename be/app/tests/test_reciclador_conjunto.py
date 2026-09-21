@@ -313,3 +313,31 @@ class TestRevocarReciclador:
         """Un Reciclador no tiene perfil de Administrador de Conjunto."""
         response = client.delete(self._url(conjunto_verificado, reciclador_test), headers=reciclador_auth_headers)
         assert response.status_code == 403
+
+
+class TestAutorizacionUnificada:
+    """¿Por qué? Issue #4 (hallazgo B5 de la auditoría) — antes, un rol
+    equivocado en los endpoints exclusivos del Reciclador (mis-invitaciones,
+    responder, mis-conjuntos-autorizados) devolvía 404 "Perfil de reciclador
+    no encontrado" en vez de un 403 por rol — el service nunca llegaba a
+    confirmar el rol, solo notaba que no existía la fila de Reciclador.
+    Ahora el router usa require_role ANTES de que el service se entere."""
+
+    def test_residente_no_puede_ver_invitaciones_de_reciclador(self, client: TestClient, auth_headers):
+        """auth_headers pertenece a un Residente (ver conftest)."""
+        response = client.get("/api/v1/reciclador-conjunto/mis-invitaciones", headers=auth_headers)
+        assert response.status_code == 403
+
+    def test_residente_no_puede_ver_conjuntos_autorizados_de_reciclador(self, client: TestClient, auth_headers):
+        response = client.get("/api/v1/reciclador-conjunto/mis-conjuntos-autorizados", headers=auth_headers)
+        assert response.status_code == 403
+
+    def test_admin_conjunto_sin_asignacion_a_ese_conjunto_devuelve_403(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_no_verificado
+    ):
+        """conjunto_no_verificado no está asignado a admin_conjunto_test — mismo 403 uniforme."""
+        response = client.get(
+            f"/api/v1/reciclador-conjunto/mi-conjunto/{conjunto_no_verificado.id_conjunto_residencial}/invitaciones",
+            headers=admin_conjunto_auth_headers,
+        )
+        assert response.status_code == 403

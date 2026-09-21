@@ -29,20 +29,17 @@ El sistema debe mostrar al rol 'Residente' una interfaz de solo lectura con el c
 
 ## Entradas
 
-| Campo        | Tipo   | Obligatorio | Validaciones                                                                 |
-| ------------ | ------ | ----------- | ---------------------------------------------------------------------------- |
-| `modulo_id`  | Número | No          | Para filtrar por un módulo específico. Debe existir en la base de datos.     |
+Sin parámetros de entrada — la petición trae el catálogo completo, sin filtrar por categoría en el backend. El filtrado por categoría (por ejemplo, al entrar a `/catalogo-educativo/:categoria`) lo hace el frontend sobre la lista ya recibida.
 
 ---
 
 ## Proceso
 
-1. El usuario con rol **Residente** navega a la sección "Educación".
-2. El frontend realiza una petición `GET` al backend para obtener los módulos educativos disponibles.
-3. El backend consulta la base de datos (`modulos_educativos`).
-4. El backend formatea la respuesta devolviendo los datos organizados jerárquicamente.
-5. El frontend renderiza el contenido.
-6. Si el usuario selecciona un módulo específico, se hace una petición para cargar los detalles puntuales.
+1. El usuario navega a la sección "Aprende a Reciclar" (antes "Educación").
+2. El frontend hace una petición `GET` a `/api/v1/contenido-educativo`.
+3. El backend consulta la tabla `contenido_educativo` y devuelve todo el catálogo, ordenado del módulo más reciente al más antiguo.
+4. El frontend agrupa los módulos por `modulo_categoria` y renderiza el contenido.
+5. Si el usuario entra a una categoría específica, el frontend filtra la lista ya cargada — no hace una segunda petición al backend.
 
 ---
 
@@ -50,16 +47,20 @@ El sistema debe mostrar al rol 'Residente' una interfaz de solo lectura con el c
 
 | Escenario           | Código HTTP | Respuesta                                                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Consulta exitosa    | 200         | JSON con la lista de módulos: `[{"id": 1, "titulo": "Plásticos", "contenido": "..."}]`                       |
+| Consulta exitosa    | 200         | JSON con la lista de módulos: `[{"id_contenido": "...", "modulo_categoria": "...", "titulo_tema": "...", "cuerpo_texto": "...", "url_video": "...", "url_guia": "...", "fecha_publicacion": "..."}]` |
 | Sin contenido       | 200         | Array vacío `[]`                                                                                             |
 
 ---
 
 ## Endpoints asociados
 
-| Método | Ruta                     | Auth requerida | Descripción                                      |
-| ------ | ------------------------ | -------------- | ------------------------------------------------ |
-| GET    | `/api/v1/educacion`      | Sí (Residente) | Lista todos los módulos educativos disponibles   |
+<!-- ¿Qué? La ruta original de esta tabla (/api/v1/educacion) nunca existió
+     así en código — se corrigió a la real, igual que ya se había hecho en
+     RQF-010 (documento hermano) para los endpoints de escritura. -->
+
+| Método | Ruta                             | Auth requerida        | Descripción                     |
+| ------ | --------------------------------- | ---------------------- | -------------------------------- |
+| GET    | `/api/v1/contenido-educativo`     | Sí (cualquier usuario) | Lista todo el catálogo educativo |
 
 ---
 

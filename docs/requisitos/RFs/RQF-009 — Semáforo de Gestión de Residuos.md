@@ -25,8 +25,8 @@ El sistema debe implementar un panel de auditoría cualitativa donde el 'Recicla
 
 | Campo           | Tipo   | Obligatorio | Validaciones                                                                 |
 | --------------- | ------ | ----------- | ---------------------------------------------------------------------------- |
-| `conjunto_id`   | Número | Sí          | Debe ser un ID de conjunto válido en la base de datos.                       |
-| `calificacion`  | Enum   | Sí          | Valores permitidos: `ROJO`, `AMARILLO`, `VERDE`                              |
+| `conjunto_id`   | UUID   | Sí          | Debe ser un ID de conjunto válido en la base de datos.                       |
+| `calificacion`  | Enum   | Sí          | Valores permitidos: `BUENA`, `REGULAR`, `DEFICIENTE`                         |
 | `observaciones` | Texto  | No          | Máximo 255 caracteres.                                                       |
 
 ---
@@ -48,7 +48,7 @@ El sistema debe implementar un panel de auditoría cualitativa donde el 'Recicla
 | Escenario           | Código HTTP | Respuesta                                                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
 | Registro exitoso    | 201         | `{"message": "Calificación registrada exitosamente."}`                                                       |
-| Consulta exitosa    | 200         | JSON con historial: `[{"fecha": "...", "calificacion": "VERDE", "observaciones": "..."}]`                    |
+| Consulta exitosa    | 200         | JSON con historial: `[{"fecha": "...", "calificacion": "BUENA", "observaciones": "..."}]`                    |
 
 ---
 

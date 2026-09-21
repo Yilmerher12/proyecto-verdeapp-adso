@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MapPin, Pencil, Plus, Power, PowerOff, Trash2 } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Alert } from "@/components/ui/Alert";
+import { InputField } from "@/components/ui/InputField";
 import {
   crearPuntoAcopio,
   darDeBajaPuntoAcopio,
@@ -37,35 +41,50 @@ export function AdminPuntosAcopioPage() {
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // ¿Qué? Issue #6 (hallazgo F1 de la auditoría) — mismo problema que
+  //       AdminContenidoEducativoPage: errorMsg solo se veía dentro del
+  //       modal de crear/editar, nunca en la carga inicial.
+  const [cargaError, setCargaError] = useState(false);
 
   const [editando, setEditando] = useState<PuntoAcopioAdmin | null>(null);
   const [creando, setCreando] = useState(false);
   const [form, setForm] = useState<PuntoAcopioPayload>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
+  // ¿Qué? Issue #13 (hallazgo U8 de la auditoría) — antes solo había un
+  //       Alert genérico al enviar ("Nombre, dirección y localidad son
+  //       obligatorios"), sin decir cuál campo en concreto. Ahora cada
+  //       campo se valida al salir de él (onBlur), igual que ya hacen
+  //       los formularios de auth (RegisterPage, etc.).
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [aDarDeBaja, setADarDeBaja] = useState<PuntoAcopioAdmin | null>(null);
   const [aEliminar, setAEliminar] = useState<PuntoAcopioAdmin | null>(null);
 
-  const cargar = () => {
+  const cargar = useCallback(() => {
     if (!user) return;
     setCargando(true);
+    setCargaError(false);
     listarPuntosAcopio()
       .then(setPuntos)
-      .catch(() => setErrorMsg(t("adminPuntosAcopio.loadError")))
+      .catch(() => setCargaError(true))
       .finally(() => setCargando(false));
-  };
+  }, [user]);
 
+  // ¿Qué? Issue #225 — "cargar" faltaba en las dependencias; se silenciaba
+  //       la advertencia en vez de arreglarla. Envolverla en useCallback
+  //       (arriba) la vuelve estable salvo cuando "user" o "t" cambian de
+  //       verdad, así que agregarla aquí no dispara peticiones de más.
   useEffect(() => {
     cargar();
     axios
       .get<Localidad[]>(`${API_BASE_URL}/api/v1/geography/localidades`)
       .then((res) => setLocalidades(res.data))
       .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [cargar]);
 
   const abrirCrear = () => {
     setForm(FORM_VACIO);
+    setFieldErrors({});
     setCreando(true);
   };
 
@@ -77,6 +96,7 @@ export function AdminPuntosAcopioPage() {
       nombre_encargado: item.nombre_encargado ?? "",
       telefono_contacto: item.telefono_contacto ?? "",
     });
+    setFieldErrors({});
     setEditando(item);
   };
 
@@ -84,6 +104,28 @@ export function AdminPuntosAcopioPage() {
     setCreando(false);
     setEditando(null);
     setErrorMsg(null);
+    setFieldErrors({});
+  };
+
+  // ¿Qué? Limpia el error de un campo apenas el usuario vuelve a escribir
+  //       en él — mismo criterio que RegisterPage.handleChange.
+  const actualizarCampo = <K extends keyof PuntoAcopioPayload>(campo: K, valor: PuntoAcopioPayload[K]) => {
+    setForm((prev) => ({ ...prev, [campo]: valor }));
+    if (fieldErrors[campo]) {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[campo];
+        return copy;
+      });
+    }
+  };
+
+  const validarCampo = (campo: "nombre" | "direccion" | "id_localidad") => {
+    let mensaje = "";
+    if (campo === "nombre" && !form.nombre.trim()) mensaje = t("adminPuntosAcopio.validation.nameRequired");
+    if (campo === "direccion" && !form.direccion.trim()) mensaje = t("adminPuntosAcopio.validation.addressRequired");
+    if (campo === "id_localidad" && !form.id_localidad) mensaje = t("adminPuntosAcopio.validation.localityRequired");
+    setFieldErrors((prev) => (mensaje ? { ...prev, [campo]: mensaje } : prev));
   };
 
   const formularioIncompleto =
@@ -91,8 +133,12 @@ export function AdminPuntosAcopioPage() {
 
   const guardar = async () => {
     if (!user) return;
-    if (formularioIncompleto) {
-      setErrorMsg(t("adminPuntosAcopio.validation.required"));
+    const errores: Record<string, string> = {};
+    if (!form.nombre.trim()) errores.nombre = t("adminPuntosAcopio.validation.nameRequired");
+    if (!form.direccion.trim()) errores.direccion = t("adminPuntosAcopio.validation.addressRequired");
+    if (!form.id_localidad) errores.id_localidad = t("adminPuntosAcopio.validation.localityRequired");
+    if (Object.keys(errores).length > 0) {
+      setFieldErrors(errores);
       return;
     }
     setGuardando(true);
@@ -151,7 +197,7 @@ export function AdminPuntosAcopioPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("adminPuntosAcopio.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -167,20 +213,18 @@ export function AdminPuntosAcopioPage() {
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
+      {!cargando && cargaError && <Alert type="error" message={t("adminPuntosAcopio.loadError")} />}
 
-      {!cargando && puntos.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <MapPin className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("adminPuntosAcopio.emptyState")}</p>
-        </div>
+      {!cargando && !cargaError && puntos.length === 0 && (
+        <EmptyState icon={MapPin} message={t("adminPuntosAcopio.emptyState")} />
       )}
 
       <div className="space-y-3">
         {puntos.map((item) => (
           <div
             key={item.id_punto_acopio}
-            className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+            className="flex items-center justify-between rounded-2xl border border-gray-100 bg-[#f7f9f3] p-4 dark:border-[#2a4d34] dark:bg-[#1c341b]"
           >
             <div className="min-w-0">
               <div className="flex items-center gap-2">
@@ -243,25 +287,18 @@ export function AdminPuntosAcopioPage() {
               {editando ? t("adminPuntosAcopio.modal.editTitle") : t("adminPuntosAcopio.newPoint")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="acopio-nombre" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("adminPuntosAcopio.fields.name")} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="acopio-nombre"
-                  value={form.nombre}
-                  onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  placeholder={t("adminPuntosAcopio.fields.namePlaceholder")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("adminPuntosAcopio.fields.name")}
+                name="nombre"
+                value={form.nombre}
+                onChange={(e) => actualizarCampo("nombre", e.target.value)}
+                onBlur={() => validarCampo("nombre")}
+                placeholder={t("adminPuntosAcopio.fields.namePlaceholder")}
+                error={fieldErrors.nombre}
+              />
 
               <div>
                 <label htmlFor="acopio-localidad" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
@@ -270,8 +307,15 @@ export function AdminPuntosAcopioPage() {
                 <select
                   id="acopio-localidad"
                   value={form.id_localidad || ""}
-                  onChange={(e) => setForm({ ...form, id_localidad: Number(e.target.value) })}
-                  className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  onChange={(e) => actualizarCampo("id_localidad", Number(e.target.value))}
+                  onBlur={() => validarCampo("id_localidad")}
+                  aria-invalid={!!fieldErrors.id_localidad}
+                  aria-describedby={fieldErrors.id_localidad ? "acopio-localidad-error" : undefined}
+                  className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1f4029] dark:text-white ${
+                    fieldErrors.id_localidad
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                      : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-[#2a4d34]"
+                  }`}
                 >
                   <option value="" disabled>
                     {t("adminPuntosAcopio.fields.localitySelect")}
@@ -282,46 +326,38 @@ export function AdminPuntosAcopioPage() {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.id_localidad && (
+                  <p id="acopio-localidad-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                    {fieldErrors.id_localidad}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div>
-              <label htmlFor="acopio-direccion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("adminPuntosAcopio.fields.address")} <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="acopio-direccion"
-                value={form.direccion}
-                onChange={(e) => setForm({ ...form, direccion: e.target.value })}
-                placeholder={t("adminPuntosAcopio.fields.addressPlaceholder")}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-              />
-            </div>
+            <InputField
+              label={t("adminPuntosAcopio.fields.address")}
+              name="direccion"
+              value={form.direccion}
+              onChange={(e) => actualizarCampo("direccion", e.target.value)}
+              onBlur={() => validarCampo("direccion")}
+              placeholder={t("adminPuntosAcopio.fields.addressPlaceholder")}
+              error={fieldErrors.direccion}
+            />
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label htmlFor="acopio-encargado" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("adminPuntosAcopio.fields.contactName")}
-                </label>
-                <input
-                  id="acopio-encargado"
-                  value={form.nombre_encargado ?? ""}
-                  onChange={(e) => setForm({ ...form, nombre_encargado: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("adminPuntosAcopio.fields.contactName")}
+                name="nombre_encargado"
+                value={form.nombre_encargado ?? ""}
+                onChange={(e) => actualizarCampo("nombre_encargado", e.target.value)}
+              />
 
-              <div>
-                <label htmlFor="acopio-telefono" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("adminPuntosAcopio.fields.phone")}
-                </label>
-                <input
-                  id="acopio-telefono"
-                  value={form.telefono_contacto ?? ""}
-                  onChange={(e) => setForm({ ...form, telefono_contacto: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-                />
-              </div>
+              <InputField
+                label={t("adminPuntosAcopio.fields.phone")}
+                name="telefono_contacto"
+                value={form.telefono_contacto ?? ""}
+                onChange={(e) => actualizarCampo("telefono_contacto", e.target.value)}
+              />
             </div>
 
             <div className="flex gap-2 pt-2">

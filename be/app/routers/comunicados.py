@@ -9,7 +9,7 @@ Descripción: Endpoints de comunicados del conjunto (RQF-014).
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db, require_admin_conjunto
@@ -27,6 +27,9 @@ router = APIRouter(prefix="/api/v1/comunicados", tags=["comunicados"])
 #       estaba copiada igual en este archivo y en conjunto_panel.py.
 _requiere_admin_conjunto = require_admin_conjunto("Solo un Administrador de Conjunto puede gestionar comunicados.")
 
+# ¿Qué? Issue #11 — mismo tope que ya usa novedades.py (issue #227).
+MAX_LIMIT_COMUNICADOS = 100
+
 
 @router.post("", response_model=ComunicadoResponse, status_code=status.HTTP_201_CREATED)
 def crear_comunicado(
@@ -38,13 +41,16 @@ def crear_comunicado(
     return comunicado_service.crear_comunicado(db, administrador, datos)
 
 
-@router.get("/mis-comunicados", response_model=List[ComunicadoResponse])
+@router.get("/mis-comunicados")
 def listar_mis_comunicados(
+    limit: int = Query(8, ge=1, le=MAX_LIMIT_COMUNICADOS),
+    offset: int = Query(0, ge=0),
     administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
-    """Todo lo que he publicado en mis conjuntos (activos y vencidos), para poder editarlos o eliminarlos."""
-    return comunicado_service.listar_mis_comunicados(db, administrador)
+    """Todo lo que he publicado en mis conjuntos (activos y vencidos), para poder editarlos o eliminarlos. Paginado."""
+    items, total = comunicado_service.listar_mis_comunicados(db, administrador, limit=limit, offset=offset)
+    return {"items": items, "total": total}
 
 
 @router.patch("/{id_comunicado}", response_model=ComunicadoResponse)

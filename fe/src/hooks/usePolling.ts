@@ -36,8 +36,17 @@ interface UsePollingOptions {
 export function usePolling(fetchFn: () => void, options: UsePollingOptions = {}): void {
   const { intervalMs = 20000, enabled = true, onExternalTrigger } = options;
 
+  // ¿Qué? Issue #225 — mutar "fetchRef.current" directo en el cuerpo del
+  //       componente (durante el render) ahora lo marca como error una
+  //       regla más nueva de ESLint (react-hooks/refs): una ref no debe
+  //       tocarse fuera de un efecto/manejador de evento. Se mueve a su
+  //       propio useEffect (sin dependencias, así que corre después de
+  //       CADA render) — mismo resultado de "siempre la última versión",
+  //       de la forma que React espera.
   const fetchRef = useRef(fetchFn);
-  fetchRef.current = fetchFn;
+  useEffect(() => {
+    fetchRef.current = fetchFn;
+  });
 
   useEffect(() => {
     if (!enabled) return;
@@ -51,6 +60,11 @@ export function usePolling(fetchFn: () => void, options: UsePollingOptions = {})
       clearInterval(interval);
       cancelarSuscripcion?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, intervalMs]);
+    // ¿Qué? Issue #225 — "onExternalTrigger" faltaba aquí y la advertencia
+    //       se silenciaba en vez de arreglarla. Sí se puede incluir: su
+    //       único uso real (AppShell.tsx) le pasa una función exportada a
+    //       nivel de módulo (notificationEvents.ts), que nunca cambia de
+    //       referencia entre renders — agregarla no reinicia el temporizador
+    //       de más.
+  }, [enabled, intervalMs, onExternalTrigger]);
 }

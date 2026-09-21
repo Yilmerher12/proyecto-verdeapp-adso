@@ -7,6 +7,7 @@
  */
 
 import { Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 
 /**
@@ -25,6 +26,7 @@ interface ProtectedRouteProps {
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
+  const { t } = useTranslation();
 
   // ¿Qué? Spinner de carga mientras se verifica la sesión.
   // ¿Para qué? Al cargar la app, se hace GET /me para validar el token.
@@ -43,7 +45,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-[#03130b]"
         role="status"
         aria-live="polite"
-        aria-label="Verificando sesión, por favor espera"
+        aria-label={t("common.verifyingSession")}
       >
         <div className="flex flex-col items-center gap-3">
           <svg
@@ -67,7 +69,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Cargando...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
         </div>
       </div>
     );

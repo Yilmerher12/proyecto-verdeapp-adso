@@ -14,39 +14,33 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.conjunto_residencial import ConjuntoResidencial
-from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.solicitud_desvinculacion import EstadoSolicitudDesvinculacion, SolicitudDesvinculacion
 from app.models.usuario import Usuario
 from app.schemas.desvinculacion import (
     AdministradorConjuntoResumenResponse,
     SolicitudDesvinculacionResponse,
 )
+from app.services.notificaciones_helpers import crear_notificacion
 
 
 def _crear_notificacion(
     db: Session, id_conjunto: UUID, id_usuario_destino: UUID, tipo: str, mensaje: str
 ) -> None:
     """
-    ¿Qué? Crea una notificación de una sola persona, reutilizando el mismo
-          modelo Notificacion/NotificacionDestinatario que ya usa el flujo
-          de SHUT lleno/vacío (be/app/routers/notificaciones.py).
-    ¿Para qué? No hace falta pasar por ese router (sus reglas son para
-              Residente/Reciclador) — aquí el emisor siempre es el
-              Admin Sistema y el destinatario siempre se conoce de antemano.
+    ¿Qué? Notifica a una sola persona — aquí el emisor siempre es el Admin
+          Sistema y el destinatario siempre se conoce de antemano, a
+          diferencia del flujo de SHUT lleno/vacío que sí necesita
+          calcular una lista de destinatarios.
+    ¿Para qué? Mantiene la firma corta (un solo id_usuario_destino, no una
+              lista) en los 3 call sites de este archivo, delegando el
+              guardado real a crear_notificacion (notificaciones_helpers.py).
     """
-    notif = Notificacion(
-        tipo=tipo,
-        id_conjunto_residencial=id_conjunto,
-        mensaje=mensaje,
-    )
-    db.add(notif)
-    db.flush()
-    db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=id_usuario_destino))
+    crear_notificacion(db, tipo=tipo, mensaje=mensaje, destinatarios=[id_usuario_destino], id_conjunto=id_conjunto)
 
 
 def solicitar_desvinculacion(
@@ -180,9 +174,28 @@ def resolver_solicitud(
     db.commit()
 
 
-def buscar_administradores(db: Session, query: Optional[str]) -> List[AdministradorConjuntoResumenResponse]:
-    """CA-024.1: busca Admin de Conjunto ya existentes en la plataforma, por nombre, apellidos o correo."""
-    stmt = select(AdministradorConjunto).join(Usuario, AdministradorConjunto.id_usuario == Usuario.id_usuario)
+def buscar_administradores(
+    db: Session, query: Optional[str], limit: int = 20
+) -> List[AdministradorConjuntoResumenResponse]:
+    """CA-024.1: busca Admin de Conjunto ya existentes en la plataforma, por nombre, apellidos o correo.
+
+    ¿Qué? Issue #227 — antes traía TODOS los Admin de Conjunto que
+          coincidieran, sin ningún tope. Mismo criterio que ya usa
+          ConjuntoCombobox/geography.py: si hay más de `limit` resultados,
+          se espera que la persona afine la búsqueda, no que se le mande
+          todo de una vez.
+    """
+    # ¿Qué? Issue #2 (hallazgo B1 de la auditoría) — admin.usuario y
+    #       admin.conjuntos son lazy="select" (default de SQLAlchemy):
+    #       sin selectinload, cada fila de la página dispara 1-2 consultas
+    #       extra al armar la respuesta más abajo. Mismo patrón ya
+    #       corregido en conjunto_panel.py (issue #219).
+    stmt = (
+        select(AdministradorConjunto)
+        .join(Usuario, AdministradorConjunto.id_usuario == Usuario.id_usuario)
+        .options(selectinload(AdministradorConjunto.usuario), selectinload(AdministradorConjunto.conjuntos))
+        .limit(limit)
+    )
 
     if query and query.strip():
         patron = f"%{query.strip().upper()}%"

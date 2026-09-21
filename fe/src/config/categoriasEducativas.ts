@@ -46,6 +46,30 @@ export const NOMBRE_SIMPLE_CATEGORIA: Record<string, string> = {
   "Tipos de residuos y su preparación": "Cómo entregar el material",
   "Puntos limpios y Ecopuntos": "Objetos grandes (muebles, colchones)",
   "Residuos de construcción y demolición": "Escombros de obra o remodelación",
-  "Marco distrital y consumo responsable": "Consumir menos, botar menos",
+  // ¿Qué? Antes se llamaba "Consumir menos, botar menos" (decisión del
+  //       2026-08-27). ¿Para qué? Ese nombre no dejaba claro qué debía
+  //       mirar el reciclador — "cantidad de basura generada" sí es algo
+  //       observable comparando una visita con otra (más bolsas que la
+  //       semana pasada, el SHUT se llena más rápido de lo normal). Ajuste
+  //       del 2026-09-14, a pedido del usuario.
+  "Marco distrital y consumo responsable": "Cantidad de basura generada",
   "Economía circular y aprovechamiento": "Por qué es importante reciclar",
 };
+
+// ¿Qué? Issue #4 (RQF-013) — de las 6 categorías del catálogo, esta 1 no
+//       corresponde a algo que el reciclador pueda calificar mirando el
+//       cuarto de basuras en una sola visita ("por qué es importante
+//       reciclar" es un tema de conciencia a largo plazo, no un estado
+//       físico observable ese día).
+// ¿Para qué? AuditoriaConjuntoForm.tsx la excluye del desplegable de
+//           "tema" al calificar — sigue existiendo en el catálogo
+//           educativo para que el Residente la lea por su cuenta, pero ya
+//           no se usa como criterio de auditoría. Mismo criterio ya usado
+//           para "Excelente" en nivelesDesempeno.ts: seguir existiendo
+//           para lo suyo, sin ofrecerse donde ya no aplica.
+// ¿Impacto? "Marco distrital y consumo responsable" (ahora "Cantidad de
+//           basura generada") salió de este set el 2026-09-14 — sí es
+//           observable comparando la cantidad de residuos entre visitas.
+export const CATEGORIAS_NO_AUDITABLES = new Set<string>([
+  "Economía circular y aprovechamiento",
+]);

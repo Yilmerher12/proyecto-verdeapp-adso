@@ -45,7 +45,7 @@ describe("Alert", () => {
 
     render(<Alert type="error" message="Cerrable" onClose={handleClose} />);
 
-    const closeButton = screen.getByLabelText("Cerrar alerta");
+    const closeButton = screen.getByLabelText("Cerrar");
     expect(closeButton).toBeInTheDocument();
 
     await user.click(closeButton);

@@ -99,6 +99,33 @@ class TestRegister:
         assert response.status_code == 400
         assert "apartamento" in response.json()["detail"].lower()
 
+    def test_register_residente_torre_solo_simbolos(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: "!!!" no es un nombre real de torre."""
+        payload = _payload_residente(conjunto_verificado, email="torre.simbolos@verdeapp.com")
+        payload["torre"] = "!!!"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_residente_torre_guiones_repetidos(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: guiones repetidos ("1----B") tampoco son un dato real."""
+        payload = _payload_residente(conjunto_verificado, email="torre.guiones@verdeapp.com")
+        payload["torre"] = "1----B"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_residente_apto_con_guion_valido(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: el guion sigue permitido como separador legítimo."""
+        payload = _payload_residente(conjunto_verificado, email="apto.guion@verdeapp.com")
+        payload["apto"] = "12-B"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 201
+
     def test_register_residente_codigo_acceso_incorrecto(
         self, client: TestClient, conjunto_verificado: ConjuntoResidencial
     ) -> None:
@@ -930,6 +957,15 @@ class TestUpdateLocale:
         client.patch(self.URL, json={"locale": "en"}, headers=auth_headers)
         get_response = client.get("/api/v1/users/me", headers=auth_headers)
         assert get_response.json()["locale"] == "en"
+
+    def test_update_locale_returns_real_name(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        """Issue #268 — la respuesta no debe traer el nombre falso "Usuario VerdeApp"."""
+        response = client.patch(self.URL, json={"locale": "en"}, headers=auth_headers)
+        body = response.json()
+        assert body["first_name"] == TEST_USER_NOMBRE
+        assert body["last_name"] == TEST_USER_APELLIDOS
 
     def test_update_locale_invalid_value(
         self, client: TestClient, auth_headers: dict[str, str]

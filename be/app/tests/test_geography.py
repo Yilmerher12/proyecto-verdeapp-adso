@@ -115,10 +115,3 @@ class TestConjuntosPorLocalidad:
         assert response.status_code == 200
         assert len(response.json()) == 1
 
-
-class TestUnidades:
-    def test_siempre_devuelve_lista_vacia(self, client: TestClient, conjunto_verificado):
-        """Este endpoint es un placeholder: las unidades ahora se crean en el registro."""
-        response = client.get(f"/api/v1/geography/unidades/{conjunto_verificado.id_conjunto_residencial}")
-        assert response.status_code == 200
-        assert response.json() == []

@@ -35,7 +35,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
             <Link
               to="/"
               className="inline-block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
-              aria-label="VerdeApp — volver al inicio"
+              aria-label={t("common.backToHome")}
             >
               <h1 className="text-2xl font-bold tracking-tight text-gray-900 transition-colors hover:text-accent-600 dark:text-white dark:hover:text-accent-400">
                 VerdeApp
@@ -61,7 +61,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
       <footer className="border-t border-gray-200 px-6 py-5 dark:border-[#2a4d34]">
         <nav
           className="mb-3 flex flex-wrap justify-center gap-x-5 gap-y-1"
-          aria-label="Información legal"
+          aria-label={t("legal.navAriaLabel")}
         >
           <Link
             to="/terminos-de-uso"

@@ -14,7 +14,7 @@
       "puntosAcopio": "Collection Points",
       "gestionarComunicados": "My Buildings' Announcements",
       "comunicados": "Announcements",
-      "aprenderGuias": "Learn (Guides)",
+      "aprenderGuias": "Learn to Recycle",
       "directorioGeneral": "General Directory",
       "groupComunidad": "Community",
       "groupRecursos": "Resources",
@@ -48,6 +48,7 @@
   },
   "common": {
     "loading": "Loading...",
+    "verifyingSession": "Verifying session, please wait",
     "loadError": "We couldn't load this information. Please try again later.",
     "actionError": "The action couldn't be completed. Please try again.",
     "email": "Email address",
@@ -61,11 +62,18 @@
     "back": "Back",
     "or": "or",
     "close": "Close",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "edit": "Edit",
     "phone": "Phone",
     "saving": "Saving...",
     "saveError": "Could not save. Please try again.",
-    "formIncomplete": "Complete the form"
+    "formIncomplete": "Complete the form",
+    "pagination": {
+      "showing": "Showing {{from}}–{{to}} of {{total}}",
+      "prev": "Previous page",
+      "next": "Next page"
+    }
   },
   "auth": {
     "login": {
@@ -104,6 +112,7 @@
         "firstNameMin": "First name must be at least 2 characters",
         "lastNameMin": "Last name must be at least 2 characters",
         "phoneInvalid": "The phone number format is invalid.",
+        "unitFormatInvalid": "Only letters, numbers, and a single space or hyphen as a separator are allowed.",
         "passwordMin": "Minimum 8 characters",
         "passwordUppercase": "Must include at least one uppercase letter",
         "passwordLowercase": "Must include at least one lowercase letter",
@@ -797,7 +806,7 @@
       },
       "myConjuntos": {
         "title": "My authorized buildings",
-        "empty": "You're not authorized in any building yet. Once an administrator invites you and you accept, it will appear here."
+        "empty": "You don't have any authorized building yet. Once an administrator invites you and you accept, it will appear here."
       },
       "notifications": {
         "title": "Received notifications",
@@ -844,6 +853,12 @@
         "successMessage": "Audit submitted.",
         "errorDefault": "Couldn't submit the audit.",
         "errorTimeout": "The upload is taking too long — check your connection and try again.",
+        "confirmSubmit": {
+          "ariaLabel": "Confirm audit",
+          "title": "Send this audit?",
+          "warning": "You're about to rate \"{{tema}}\" as {{nivel}}. Once sent, an audit can't be edited.",
+          "confirm": "Yes, send"
+        },
         "validation": {
           "conjunto": "Select a building.",
           "nivel": "Select a performance level.",
@@ -932,7 +947,8 @@
     "notRegistered": "Not registered",
     "emailNote": "Your email can't be changed from here.",
     "validation": {
-      "nameRequired": "First and last name are required.",
+      "firstNameRequired": "First name is required.",
+      "lastNameRequired": "Last name is required.",
       "phoneInvalid": "The phone number format is invalid."
     },
     "phonePlaceholder": "E.g.: 3001234567",
@@ -993,8 +1009,10 @@
       "deleteAriaLabel": "Confirm deletion"
     },
     "validation": {
-      "required": "Category, title, and content are required.",
+      "categoryRequired": "Category is required.",
+      "titleRequired": "Title is required.",
       "titleTooShort": "Title must be at least 5 characters long.",
+      "bodyRequired": "Content is required.",
       "bodyTooShort": "Content must be at least 20 characters long."
     },
     "deleteError": "Could not delete. Please try again.",
@@ -1030,7 +1048,9 @@
       "deleteAriaLabel": "Confirm deletion"
     },
     "validation": {
-      "required": "Name, address, and locality are required."
+      "nameRequired": "Name is required.",
+      "addressRequired": "Address is required.",
+      "localityRequired": "Select a locality."
     },
     "loadError": "Could not load the list of collection points.",
     "deactivateError": "Could not deactivate. Please try again.",
@@ -1201,8 +1221,8 @@
       "newButton": "New announcement",
       "noConjuntos": "You don't administer any building yet.",
       "emptyState": "You haven't posted any announcement yet.",
-      "editAria": "Edit announcement",
-      "deleteAria": "Delete announcement",
+      "editAria": "Edit {{resumen}}",
+      "deleteAria": "Delete {{resumen}}",
       "editTitle": "Edit announcement",
       "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
@@ -1249,12 +1269,18 @@
       "subtitle": "Post general announcements for the whole VerdeApp platform.",
       "newButton": "New item",
       "emptyState": "You haven't posted any news item yet.",
-      "editAria": "Edit news item",
-      "archiveAria": "Archive news item",
+      "editAria": "Edit {{resumen}}",
+      "archiveAria": "Archive {{resumen}}",
       "editTitle": "Edit news item",
       "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
       "archiveError": "Could not archive. Please try again.",
+      "archiveConfirm": {
+        "ariaLabel": "Confirm archiving",
+        "title": "Archive this news item?",
+        "warning": "It will stop showing in the active news feed. This action cannot be undone.",
+        "confirm": "Yes, archive"
+      },
       "alcanceNoEditable": "The scope can't be changed after publishing. If you made a mistake, archive it and create a new one.",
       "validation": {
         "textoRequerido": "The news item text is required."

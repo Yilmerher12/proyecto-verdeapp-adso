@@ -4,14 +4,14 @@ Descripción: Endpoints de usuario — perfil del usuario autenticado y preferen
 ¿Para qué? Issue #218 — este router solo recibe la petición HTTP y responde;
            las reglas de negocio reales viven en services/user_service.py.
 """
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db
 from app.models.usuario import Usuario
 from app.schemas.user import UpdateLocaleRequest, UpdateProfileBody, UserResponse
 from app.services import user_service
-from app.services.auth_service import update_user_locale
+from app.services.auth_service import obtener_nombre_real, update_user_locale
 
 router = APIRouter(
     prefix="/api/v1/users",
@@ -38,7 +38,7 @@ def update_profile(
     return {"ok": True}
 
 
-@router.post("/me/foto-perfil", status_code=201, summary="Subir o reemplazar la foto de perfil del usuario en sesión")
+@router.post("/me/foto-perfil", status_code=status.HTTP_201_CREATED, summary="Subir o reemplazar la foto de perfil del usuario en sesión")
 async def subir_foto_perfil(
     archivo: UploadFile,
     current_user: Usuario = Depends(get_current_user),
@@ -59,13 +59,14 @@ def update_locale(
     db: Session = Depends(get_db),
 ) -> UserResponse:
     updated_user = update_user_locale(db=db, user=current_user, locale=locale_data.locale)
+    first_name, last_name = obtener_nombre_real(db, updated_user)
 
     return UserResponse(
         id=updated_user.id_usuario,
         email=updated_user.correo_electronico,
         role_id=updated_user.id_rol,
         is_active=updated_user.is_active,
-        first_name="Usuario",
-        last_name="VerdeApp",
+        first_name=first_name,
+        last_name=last_name,
         locale=updated_user.locale
     )

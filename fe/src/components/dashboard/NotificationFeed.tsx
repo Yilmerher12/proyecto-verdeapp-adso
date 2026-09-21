@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 /**
  * Este bloque (el título, el contador de no leídas, la lista, el botón de
  * "ver más", marcar leídas / limpiar leídas) estaba copiado casi igual en
@@ -12,23 +11,9 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Bell, Building2, Clock, DoorOpen, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
+import { AlertTriangle, Bell, Building2, Clock, DoorOpen, GraduationCap, Megaphone, Newspaper, PackageCheck, Truck, Unlink, XCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import i18n from "@/i18n";
-
-export interface NotificacionItem {
-  id: string;
-  tipo: string;
-  mensaje: string;
-  // ¿Qué? Puntero opcional al registro relacionado (ej. id_auditoria para
-  //       AUDITORIA_PUBLICADA) — la mayoría de tipos no lo usan.
-  id_referencia: string | null;
-  // ¿Qué? Puede ser null — las novedades de plataforma (RQF-015) no
-  //       pertenecen a ningún conjunto residencial.
-  nombre_conjunto: string | null;
-  leida: boolean;
-  created_at: string;
-}
+import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 
 const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   LLEGADA_RECICLADOR: { Icon: Truck, color: "text-teal-700 dark:text-teal-400" },
@@ -45,21 +30,9 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   // RQF-015 (novedades generales de la plataforma)
   NOVEDAD_NUEVA: { Icon: Newspaper, color: "text-indigo-700 dark:text-indigo-400" },
   NOVEDAD_ACTUALIZADA: { Icon: Newspaper, color: "text-indigo-500 dark:text-indigo-300" },
+  // RQF-013 (recomendación de contenido educativo según auditoría)
+  CONTENIDO_RECOMENDADO: { Icon: GraduationCap, color: "text-amber-700 dark:text-amber-500" },
 };
-
-// ¿Qué? Se usa i18n.t() directamente (no el hook useTranslation) porque esta
-//       es una función común, no un componente — pero como siempre se llama
-//       desde el render de un componente que sí usa el hook, el texto se
-//       actualiza igual al cambiar de idioma.
-export function tiempoRelativo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return i18n.t("notificationFeed.time.justNow");
-  if (mins < 60) return i18n.t("notificationFeed.time.minutesAgo", { count: mins });
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return i18n.t("notificationFeed.time.hoursAgo", { count: hrs });
-  return i18n.t("notificationFeed.time.daysAgo", { count: Math.floor(hrs / 24) });
-}
 
 interface NotificationFeedProps {
   title: string;
@@ -72,6 +45,16 @@ interface NotificationFeedProps {
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
   onClearRead: () => void;
+  /**
+   * ¿Qué? Acción opcional al hacer clic en una notificación, además de
+   * marcarla leída (ej: navegar a la página relacionada).
+   * ¿Para qué? Issue #4 (RQF-013) — "entre menos clicks tenga que hacer el
+   * usuario, mejor": clic en la notificación de contenido recomendado debe
+   * llevar directo a "Aprender", no solo marcarla como leída. Se deja
+   * opcional para no forzar a los otros 2 dashboards que usan este mismo
+   * componente a implementar una navegación que no necesitan.
+   */
+  onItemClick?: (notif: NotificacionItem) => void;
 }
 
 export function NotificationFeed({
@@ -83,6 +66,7 @@ export function NotificationFeed({
   onMarkRead,
   onMarkAllRead,
   onClearRead,
+  onItemClick,
 }: NotificationFeedProps) {
   const { t } = useTranslation();
   const [expandido, setExpandido] = useState(false);
@@ -121,19 +105,30 @@ export function NotificationFeed({
           <ul className="divide-y divide-gray-50 dark:divide-gray-800">
             {(expandido ? notifications : notifications.slice(0, 5)).map((n) => {
               const meta = TIPO_META[n.tipo] ?? { Icon: Bell, color: "text-gray-500" };
+              const interactiva = !n.leida || Boolean(onItemClick);
+              const activar = () => {
+                if (!n.leida) onMarkRead(n.id);
+                onItemClick?.(n);
+              };
               return (
                 <li
                   key={n.id}
-                  onClick={() => !n.leida && onMarkRead(n.id)}
+                  onClick={() => interactiva && activar()}
                   onKeyDown={(e) => {
-                    if (!n.leida && (e.key === "Enter" || e.key === " ")) {
+                    if (interactiva && (e.key === "Enter" || e.key === " ")) {
                       e.preventDefault();
-                      onMarkRead(n.id);
+                      activar();
                     }
                   }}
-                  role={!n.leida ? "button" : undefined}
-                  tabIndex={!n.leida ? 0 : undefined}
-                  aria-label={!n.leida ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}` : undefined}
+                  role={interactiva ? "button" : undefined}
+                  tabIndex={interactiva ? 0 : undefined}
+                  aria-label={
+                    interactiva
+                      ? !n.leida
+                        ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}`
+                        : n.mensaje
+                      : undefined
+                  }
                   className={`flex cursor-pointer items-start gap-3 px-5 py-3.5 transition-colors ${
                     !n.leida ? accentHighlight : "hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
                   }`}
