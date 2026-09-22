@@ -63,13 +63,26 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' crear, modificar y e
 | PUT    | `/api/v1/contenido-educativo/{id}`   | Sí (Admin)     | Actualiza un módulo existente                         |
 | DELETE | `/api/v1/contenido-educativo/{id}`   | Sí (Admin)     | Elimina un módulo del catálogo                        |
 | POST   | `/api/v1/uploads/adjunto?permitir_pdf=true` | Sí (Admin) | Sube el archivo real de la guía de apoyo (imagen o PDF) |
+| GET    | `/api/v1/contenido-educativo/{id}`          | Sí (cualquiera) | Detalle de un módulo puntual |
+| GET    | `/api/v1/contenido-educativo/{id}/envios`   | Sí (Admin) | Lista los conjuntos a los que se envió ese módulo a mano, con fecha |
+| POST   | `/api/v1/contenido-educativo/{id}/enviar`   | Sí (Admin) | Envía un módulo a uno o varios conjuntos a la vez (`{"conjuntos": ["<uuid>", ...]}`) |
 
 <!-- ¿Qué? La ruta original de esta tabla (/api/v1/educacion) nunca existió
      así en código — se corrigió a la real. Además, `cuerpo_texto` ahora
      admite sintaxis Markdown simple (##, listas, negrita) para que el
      admin pueda estructurar el contenido, y `url_guia` puede venir de un
      archivo subido (vía el endpoint de uploads) o de un link externo
-     escrito a mano — ambos casos se guardan igual, como texto. -->
+     escrito a mano — ambos casos se guardan igual, como texto.
+
+     Los 3 endpoints agregados al final son del "envío manual": el Admin
+     Sistema, desde la pestaña "Módulos" del panel rediseñado, puede
+     recomendar un módulo a mano a uno o varios conjuntos — no solo esperar
+     a que una auditoría Regular/Mala lo dispare automáticamente (RQF-013).
+     Cada envío queda registrado en la tabla `contenido_educativo_envios` y
+     genera una notificación `CONTENIDO_RECOMENDADO_MANUAL` a los Residentes
+     de ese conjunto (mismo tipo de notificación que RQF-013, pero con
+     `id_referencia` apuntando al módulo en vez de a una auditoría). Ver
+     RQF-013 (Flujo C) para el detalle de negocio de este envío. -->
 
 ---
 
@@ -77,3 +90,4 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' crear, modificar y e
 
 - RN-001: Control de Acceso Estricto. Ningún usuario con rol residente o reciclador puede ejecutar estos endpoints bajo ninguna circunstancia.
 - RN-002: Las eliminaciones deben ser lógicas (cambiar un estado a inactivo) o físicas dependiendo de las políticas de auditoría del proyecto, asegurando que no se rompa la vista del frontend.
+- RN-003: El envío manual no reemplaza ni bloquea la recomendación automática de RQF-013 — si un conjunto ya recibió el módulo automáticamente por una auditoría Regular/Mala, ese origen ("automático") tiene prioridad visual sobre un envío manual duplicado al mismo conjunto. **Implementado.**

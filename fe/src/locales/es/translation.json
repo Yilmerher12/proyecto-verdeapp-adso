@@ -699,8 +699,13 @@
           "confirmEnableTitle": "¿Activar esta cuenta?",
           "confirmEnableBody": "{{correo}} podrá volver a iniciar sesión con normalidad.",
           "confirmButton": "Sí, continuar",
-          "updateError": "No se pudo actualizar el estado de la cuenta."
-        }
+          "updateError": "No se pudo actualizar el estado de la cuenta.",
+          "reasonLabel": "Motivo (opcional)",
+          "reasonPlaceholder": "Por ejemplo: se mudó de conjunto, cuenta duplicada..."
+        },
+        "inactiveButton": "Inactivos {{count}}",
+        "noReason": "Sin motivo registrado",
+        "noInactive": "No hay cuentas inactivas en esta pestaña."
       },
       "residentsTable": {
         "headers": {
@@ -728,6 +733,38 @@
           "conjuntos": "Conjuntos"
         },
         "empty": "No hay administradores de conjunto registrados todavía."
+      },
+      "profilePanel": {
+        "ariaLabel": "Perfil de {{nombre}}",
+        "openProfile": "Ver perfil de {{nombre}}",
+        "readOnly": "Solo lectura",
+        "sections": {
+          "personal": "Datos personales",
+          "account": "Cuenta",
+          "deactivated": "Cuenta desactivada"
+        },
+        "fields": {
+          "fullName": "Nombre completo",
+          "conjunto": "Conjunto",
+          "unit": "Torre y apartamento",
+          "association": "Asociación",
+          "conjuntos": "Conjuntos",
+          "directory": "Contacto en el Directorio",
+          "emailVerified": "Correo verificado",
+          "language": "Idioma",
+          "lockout": "Bloqueo por intentos",
+          "since": "Desde",
+          "reason": "Motivo"
+        },
+        "yes": "Sí",
+        "no": "No",
+        "visible": "Visible",
+        "hidden": "Oculto",
+        "noLockout": "Sin bloqueo",
+        "lockedUntil": "Bloqueada hasta las {{hora}}",
+        "disableAccount": "Desactivar cuenta",
+        "enableAccount": "Reactivar cuenta",
+        "editSoon": "Editar datos · próximamente"
       }
     },
     "adminConjunto": {
@@ -1003,7 +1040,7 @@
   },
   "adminContenidoEducativo": {
     "title": "Contenido educativo",
-    "subtitle": "Crea, edita y elimina los módulos del catálogo.",
+    "subtitle": "Crea, edita y elimina los módulos del catálogo, y revisa qué se recomendó a cada conjunto.",
     "newModule": "Nuevo módulo",
     "emptyState": "Todavía no hay módulos creados.",
     "editAria": "Editar {{titulo}}",
@@ -1020,21 +1057,125 @@
       "bodyTooShort": "El contenido debe tener al menos 20 caracteres."
     },
     "deleteError": "No se pudo eliminar. Intenta de nuevo.",
+    "newSection": {
+      "title": "Nuevo contenido",
+      "newCategory": "+ Nueva categoría"
+    },
+    "catalogSection": {
+      "title": "Catálogo",
+      "modules": "Módulos",
+      "categories": "Categorías",
+      "notRecommended": "Sin recomendar",
+      "notRecommendedHint": "Esta semana no hay recomendación en {{count}} tema — puedes enviar contenido a mano para variar los temas.",
+      "notRecommendedHint_other": "Esta semana no hay recomendación en {{count}} temas — puedes enviar contenido a mano para variar los temas.",
+      "allCovered": "Todos los temas tuvieron alguna recomendación esta semana."
+    },
+    "currentWeek": {
+      "title": "Semana {{rango}}",
+      "good": "Bueno",
+      "regular": "Regular",
+      "bad": "Malo"
+    },
+    "tabs": {
+      "ratings": "Calificaciones por conjunto",
+      "modules": "Módulos"
+    },
+    "week": {
+      "prev": "Semana anterior",
+      "next": "Semana siguiente",
+      "mondayToSunday": "lunes a domingo",
+      "inProgress": "En curso",
+      "closed": "Cerrada el domingo {{fecha}}",
+      "searchPlaceholder": "Buscar conjunto u observación…",
+      "all": "Todas {{count}}",
+      "noObservations": "Sin observaciones",
+      "empty": "No hay calificaciones con esos filtros en esta semana.",
+      "notified": "Se avisó a {{count}} residente",
+      "notified_other": "Se avisó a {{count}} residentes",
+      "noRecommendation": "Sin recomendación",
+      "headers": {
+        "conjunto": "Conjunto",
+        "tema": "Tema",
+        "nivel": "Semáforo",
+        "observaciones": "Observaciones",
+        "fecha": "Fecha",
+        "avisados": "Contenido recomendado"
+      }
+    },
+    "modules": {
+      "searchPlaceholder": "Buscar por título o categoría…",
+      "categoryFilterLabel": "Filtrar por categoría",
+      "allCategories": "Todas las categorías",
+      "total": "{{count}} módulo",
+      "total_other": "{{count}} módulos",
+      "recommendedTo": "{{count}} conjunto",
+      "recommendedTo_other": "{{count}} conjuntos"
+    },
+    "ratingPanel": {
+      "ariaLabel": "Calificación de {{conjunto}}",
+      "details": "Detalle",
+      "theme": "Tema",
+      "date": "Fecha",
+      "recycler": "Reciclador",
+      "observations": "Observaciones",
+      "evidence": "Evidencia",
+      "enlarge": "Ampliar foto",
+      "recommendedContent": "Contenido recomendado",
+      "noRecommendationHint": "Una calificación Buena no genera recomendación: no hay nada que mejorar en este tema."
+    },
+    "modulePanel": {
+      "ariaLabel": "Módulo: {{titulo}}",
+      "recommendedTo": "Recomendado a {{count}} conjunto",
+      "recommendedTo_other": "Recomendado a {{count}} conjuntos",
+      "noneYet": "Todavía no se ha recomendado a ningún conjunto.",
+      "sentManually": "Enviado a mano",
+      "guideImageHint": "Clic en la imagen para ampliarla."
+    },
+    "send": {
+      "title": "Enviar a otros conjuntos",
+      "oneLabel": "A un conjunto específico",
+      "severalLabel": "A varios conjuntos",
+      "searchPlaceholder": "Buscar conjunto…",
+      "button": "Enviar",
+      "buttonMany": "Enviar a {{count}} conjunto",
+      "buttonMany_other": "Enviar a {{count}} conjuntos",
+      "error": "No se pudo enviar. Intenta de nuevo."
+    },
     "fields": {
       "category": "Categoría",
       "categoryPlaceholder": "Ej: Separación en la fuente",
+      "categoryPlaceholderSelect": "Elige una categoría…",
+      "newCategoryOption": "+ Nueva categoría…",
+      "newCategoryWarning": "Se creará una categoría nueva en el catálogo del Residente. Escríbela igual que las existentes para no duplicarla.",
       "titleField": "Título",
       "titlePlaceholder": "Ej: Código de colores de bolsas",
       "content": "Contenido",
       "contentMarkdownHint": "Puedes usar ## para subtítulos, **negrita** y - para listas.",
+      "charCount": "{{count}} caracteres · mínimo 20",
+      "formatHeading": "Subtítulo",
+      "formatBold": "Negrita",
+      "formatList": "Lista",
+      "boldPlaceholder": "texto en negrita",
       "videoLink": "Link de video (YouTube)",
+      "videoRecognized": "✓ Link de YouTube reconocido",
+      "videoNotRecognized": "Este link no parece de YouTube: el Residente no verá el video.",
       "guideLink": "Guía de apoyo"
+    },
+    "preview": {
+      "label": "Así lo verá el Residente",
+      "live": "en vivo",
+      "categoryPlaceholder": "Categoría",
+      "titlePlaceholder": "Aquí verás el título",
+      "bodyPlaceholder": "Aquí verás el contenido tal como lo leerá el Residente."
     },
     "deleteConfirm": {
       "title": "¿Eliminar \"{{titulo}}\"?",
       "warning": "Esta acción no se puede deshacer.",
       "confirm": "Sí, eliminar"
-    }
+    },
+    "collapse": "Recoger",
+    "expandRatings": "Ver calificaciones",
+    "expandModules": "Ver módulos"
   },
   "adminPuntosAcopio": {
     "title": "Puntos de acopio",

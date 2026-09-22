@@ -32,6 +32,8 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   NOVEDAD_ACTUALIZADA: { Icon: Newspaper, color: "text-indigo-500 dark:text-indigo-300" },
   // RQF-013 (recomendación de contenido educativo según auditoría)
   CONTENIDO_RECOMENDADO: { Icon: GraduationCap, color: "text-amber-700 dark:text-amber-500" },
+  // RQF-018 (Admin del Sistema envía un módulo a mano, sin auditoría de por medio)
+  CONTENIDO_RECOMENDADO_MANUAL: { Icon: GraduationCap, color: "text-amber-700 dark:text-amber-500" },
 };
 
 interface NotificationFeedProps {

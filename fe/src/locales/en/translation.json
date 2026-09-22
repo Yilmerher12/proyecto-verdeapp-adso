@@ -669,6 +669,9 @@
       "usersSection": {
         "title": "Registered users",
         "totalBadge": "{{count}} total",
+        "inactiveButton": "Inactive {{count}}",
+        "noReason": "No reason recorded",
+        "noInactive": "There are no inactive accounts in this tab.",
         "tabs": {
           "residentes": "Residents",
           "recicladores": "Recyclers",
@@ -695,8 +698,42 @@
           "confirmEnableTitle": "Enable this account?",
           "confirmEnableBody": "{{correo}} will be able to log in normally again.",
           "confirmButton": "Yes, continue",
-          "updateError": "Could not update the account's status."
+          "updateError": "Could not update the account's status.",
+          "reasonLabel": "Reason (optional)",
+          "reasonPlaceholder": "For example: moved to another building, duplicate account..."
         }
+      },
+      "profilePanel": {
+        "ariaLabel": "Profile of {{nombre}}",
+        "openProfile": "View profile of {{nombre}}",
+        "readOnly": "Read only",
+        "sections": {
+          "personal": "Personal details",
+          "account": "Account",
+          "deactivated": "Deactivated account"
+        },
+        "fields": {
+          "fullName": "Full name",
+          "conjunto": "Building",
+          "unit": "Tower and apartment",
+          "association": "Association",
+          "conjuntos": "Buildings",
+          "directory": "Directory contact",
+          "emailVerified": "Email verified",
+          "language": "Language",
+          "lockout": "Login lockout",
+          "since": "Since",
+          "reason": "Reason"
+        },
+        "yes": "Yes",
+        "no": "No",
+        "visible": "Visible",
+        "hidden": "Hidden",
+        "noLockout": "Not locked",
+        "lockedUntil": "Locked until {{hora}}",
+        "disableAccount": "Deactivate account",
+        "enableAccount": "Reactivate account",
+        "editSoon": "Edit details · coming soon"
       },
       "residentsTable": {
         "headers": {
@@ -998,40 +1035,144 @@
     "viewGuide": "View support guide"
   },
   "adminContenidoEducativo": {
-    "title": "Educational content",
-    "subtitle": "Create, edit, and delete the catalog modules.",
-    "newModule": "New module",
-    "emptyState": "No modules created yet.",
-    "editAria": "Edit {{titulo}}",
-    "deleteAria": "Delete {{titulo}}",
-    "modal": {
-      "editTitle": "Edit module",
-      "deleteAriaLabel": "Confirm deletion"
-    },
-    "validation": {
-      "categoryRequired": "Category is required.",
-      "titleRequired": "Title is required.",
-      "titleTooShort": "Title must be at least 5 characters long.",
-      "bodyRequired": "Content is required.",
-      "bodyTooShort": "Content must be at least 20 characters long."
-    },
-    "deleteError": "Could not delete. Please try again.",
-    "fields": {
-      "category": "Category",
-      "categoryPlaceholder": "E.g.: Separation at the source",
-      "titleField": "Title",
-      "titlePlaceholder": "E.g.: Color-coding for bags",
-      "content": "Content",
-      "contentMarkdownHint": "You can use ## for subheadings, **bold**, and - for lists.",
-      "videoLink": "Video link (YouTube)",
-      "guideLink": "Support guide"
-    },
-    "deleteConfirm": {
-      "title": "Delete \"{{titulo}}\"?",
-      "warning": "This action cannot be undone.",
-      "confirm": "Yes, delete"
-    }
-  },
+        "title": "Educational content",
+        "subtitle": "Create, edit and delete catalog modules, and check what was recommended to each building.",
+        "collapse": "Collapse",
+        "expandRatings": "View ratings",
+        "expandModules": "View modules",
+        "newModule": "New module",
+        "emptyState": "No modules created yet.",
+        "editAria": "Edit {{titulo}}",
+        "deleteAria": "Delete {{titulo}}",
+        "modal": {
+          "editTitle": "Edit module",
+          "deleteAriaLabel": "Confirm deletion"
+        },
+        "validation": {
+          "categoryRequired": "The category is required.",
+          "titleRequired": "The title is required.",
+          "titleTooShort": "The title must be at least 5 characters long.",
+          "bodyRequired": "The content is required.",
+          "bodyTooShort": "The content must be at least 20 characters long."
+        },
+        "deleteError": "Could not delete. Please try again.",
+        "newSection": {
+          "title": "New content",
+          "newCategory": "+ New category"
+        },
+        "catalogSection": {
+          "title": "Catalog",
+          "modules": "Modules",
+          "categories": "Categories",
+          "notRecommended": "Not recommended",
+          "notRecommendedHint": "This week there's no recommendation in {{count}} topic — you can send content by hand to vary the topics.",
+          "notRecommendedHint_other": "This week there's no recommendation in {{count}} topics — you can send content by hand to vary the topics.",
+          "allCovered": "Every topic had some recommendation this week."
+        },
+        "currentWeek": {
+          "title": "Week {{rango}}",
+          "good": "Good",
+          "regular": "Regular",
+          "bad": "Bad"
+        },
+        "tabs": {
+          "ratings": "Ratings by building",
+          "modules": "Modules"
+        },
+        "week": {
+          "prev": "Previous week",
+          "next": "Next week",
+          "mondayToSunday": "Monday to Sunday",
+          "inProgress": "In progress",
+          "closed": "Closed on Sunday the {{fecha}}",
+          "searchPlaceholder": "Search building or notes…",
+          "all": "All {{count}}",
+          "noObservations": "No notes",
+          "empty": "No ratings match those filters this week.",
+          "notified": "{{count}} resident notified",
+          "notified_other": "{{count}} residents notified",
+          "noRecommendation": "No recommendation",
+          "headers": {
+            "conjunto": "Building",
+            "tema": "Topic",
+            "nivel": "Rating",
+            "observaciones": "Notes",
+            "fecha": "Date",
+            "avisados": "Recommended content"
+          }
+        },
+        "modules": {
+          "searchPlaceholder": "Search by title or category…",
+          "categoryFilterLabel": "Filter by category",
+          "allCategories": "All categories",
+          "total": "{{count}} module",
+          "total_other": "{{count}} modules",
+          "recommendedTo": "{{count}} building",
+          "recommendedTo_other": "{{count}} buildings"
+        },
+        "ratingPanel": {
+          "ariaLabel": "Rating for {{conjunto}}",
+          "details": "Details",
+          "theme": "Topic",
+          "date": "Date",
+          "recycler": "Recycler",
+          "observations": "Notes",
+          "evidence": "Evidence",
+          "enlarge": "Enlarge photo",
+          "recommendedContent": "Recommended content",
+          "noRecommendationHint": "A Good rating doesn't generate a recommendation: there's nothing to improve on this topic."
+        },
+        "modulePanel": {
+          "ariaLabel": "Module: {{titulo}}",
+          "recommendedTo": "Recommended to {{count}} building",
+          "recommendedTo_other": "Recommended to {{count}} buildings",
+          "noneYet": "Not recommended to any building yet.",
+          "sentManually": "Sent by hand",
+          "guideImageHint": "Click the image to enlarge it."
+        },
+        "send": {
+          "title": "Send to other buildings",
+          "oneLabel": "To a specific building",
+          "severalLabel": "To several buildings",
+          "searchPlaceholder": "Search building…",
+          "button": "Send",
+          "buttonMany": "Send to {{count}} building",
+          "buttonMany_other": "Send to {{count}} buildings",
+          "error": "Could not send. Please try again."
+        },
+        "fields": {
+          "category": "Category",
+          "categoryPlaceholder": "E.g.: Source separation",
+          "categoryPlaceholderSelect": "Choose a category…",
+          "newCategoryOption": "+ New category…",
+          "newCategoryWarning": "This will create a new category in the Resident's catalog. Type it exactly like the existing ones to avoid duplicating it.",
+          "titleField": "Title",
+          "titlePlaceholder": "E.g.: Bag color code",
+          "content": "Content",
+          "contentMarkdownHint": "You can use ## for subheadings, **bold**, and - for lists.",
+          "charCount": "{{count}} characters · minimum 20",
+          "formatHeading": "Heading",
+          "formatBold": "Bold",
+          "formatList": "List",
+          "boldPlaceholder": "bold text",
+          "videoLink": "Video link (YouTube)",
+          "videoRecognized": "✓ YouTube link recognized",
+          "videoNotRecognized": "This link doesn't look like YouTube: the Resident won't see the video.",
+          "guideLink": "Support guide"
+        },
+        "preview": {
+          "label": "How the Resident will see it",
+          "live": "live",
+          "categoryPlaceholder": "Category",
+          "titlePlaceholder": "The title will show here",
+          "bodyPlaceholder": "The content will show here, exactly as the Resident will read it."
+        },
+        "deleteConfirm": {
+          "title": "Delete \"{{titulo}}\"?",
+          "warning": "This action cannot be undone.",
+          "confirm": "Yes, delete"
+        }
+      },
   "adminPuntosAcopio": {
     "title": "Collection points",
     "subtitle": "Register, edit, and deactivate the official collection points in the directory.",

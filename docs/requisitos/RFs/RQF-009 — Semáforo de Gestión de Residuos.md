@@ -62,6 +62,15 @@ El sistema debe implementar un panel de auditoría cualitativa donde el 'Recicla
 | GET    | `/api/v1/auditorias-conjunto/historial`   | Sí (Residente, Admin de Conjunto) | Obtiene el historial de auditorías del conjunto |
 | GET    | `/api/v1/auditorias-conjunto/mias`        | Sí (Reciclador) | Historial de las auditorías que el reciclador mismo envió |
 | GET    | `/api/v1/auditorias-conjunto/{id}`        | Sí (Residente, Admin de Conjunto, o el Reciclador que la envió) | Detalle de una auditoría puntual |
+| GET    | `/api/v1/auditorias-conjunto/admin`       | Sí (Admin Sistema) | Lista todas las auditorías de todos los conjuntos, filtrables por la semana (parámetro `lunes`, formato `YYYY-MM-DD` — devuelve `[lunes, lunes+7)`); cada ítem incluye `avisados` (cuántos Residentes recibieron la recomendación automática de RQF-013 por esa auditoría) |
+
+<!-- ¿Qué? `GET /admin` se agregó junto con el rediseño de RQF-010 (pestaña
+     "Calificaciones por conjunto" del panel de Contenido educativo) — el
+     Admin Sistema necesitaba ver, semana a semana, el semáforo de TODOS los
+     conjuntos en un solo lugar, no conjunto por conjunto como ya permitía
+     `/historial`. ¿Para qué? Decidir a qué conjuntos conviene enviarles
+     contenido educativo a mano (RQF-013, Flujo C) cuando su calificación fue
+     Regular o Malo. ¿Impacto? Nuevo — no reemplaza ningún endpoint existente. -->
 
 ---
 

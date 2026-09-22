@@ -16,6 +16,11 @@ interface ModalProps {
   children: React.ReactNode;
   /** ¿Qué? Amplía el diálogo a max-w-xl para formularios con más campos (ej: registro). */
   wide?: boolean;
+  /** ¿Qué? Amplía el diálogo a max-w-5xl — para un formulario de dos
+   *        columnas (ej: crear/editar contenido educativo, con la vista
+   *        previa en vivo al lado). Tiene prioridad sobre `wide` si se
+   *        pasan los dos. Default: false. */
+  extraWide?: boolean;
   /** ¿Qué? Label accesible del diálogo para lectores de pantalla (aria-label). */
   "aria-label"?: string;
   /**
@@ -54,6 +59,7 @@ export function Modal({
   onClose,
   children,
   wide = false,
+  extraWide = false,
   "aria-label": ariaLabel,
   layer = "base",
   closeOnBackdrop = true,
@@ -136,7 +142,7 @@ export function Modal({
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
-        className={`animate-scale-in relative my-auto w-full ${wide ? "max-w-xl" : "max-w-md"} rounded-2xl bg-white shadow-2xl outline-none dark:bg-[#132a1c]`}
+        className={`animate-scale-in relative my-auto w-full ${extraWide ? "max-w-5xl" : wide ? "max-w-xl" : "max-w-md"} rounded-2xl bg-white shadow-2xl outline-none dark:bg-[#132a1c]`}
         onClick={(e) => e.stopPropagation()}
       >
         <button

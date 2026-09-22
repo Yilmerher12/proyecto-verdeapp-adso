@@ -65,7 +65,8 @@ def _crear_vista_y_funcion_panel_admin(session: Session) -> None:
     """Crea vista_directorio_residentes y sp_obtener_recicladores.
 
     ¿Qué? Mismo SQL, palabra por palabra, que be/alembic/versions/
-          fb1891a1aa72_mover_vista_y_funcion_sql_del_panel_.py.
+          fb1891a1aa72_mover_vista_y_funcion_sql_del_panel_.py
+          (más las columnas nuevas de ed64a91d01f6, fecha y motivo de desactivación).
     ¿Para qué? Issue #217 — esa vista y esa función ahora se crean vía
               Alembic contra la BD real, pero setup_database() (abajo)
               arma la BD de test con Base.metadata.create_all(), que
@@ -88,7 +89,9 @@ def _crear_vista_y_funcion_panel_admin(session: Session) -> None:
         l.id_localidad AS "id_localidad",
         l.nombre_localidad AS "Localidad",
         u.habilitado AS "Habilitado",
-        c.id_conjunto_residencial AS "id_conjunto_residencial"
+        c.id_conjunto_residencial AS "id_conjunto_residencial",
+        u.fecha_desactivacion AS "Fecha_Desactivacion",
+        u.motivo_desactivacion AS "Motivo_Desactivacion"
     FROM residentes r
     JOIN usuarios u ON r.id_usuario = u.id_usuario
     JOIN unidades uni ON r.id_unidad = uni.id_unidad
@@ -104,7 +107,8 @@ def _crear_vista_y_funcion_panel_admin(session: Session) -> None:
         p_order_by TEXT DEFAULT 'nombre',
         p_order_dir TEXT DEFAULT 'asc',
         p_limit INT DEFAULT 20,
-        p_offset INT DEFAULT 0
+        p_offset INT DEFAULT 0,
+        p_habilitado BOOLEAN DEFAULT NULL
     )
     RETURNS TABLE (
         "Correo" VARCHAR,
@@ -112,7 +116,9 @@ def _crear_vista_y_funcion_panel_admin(session: Session) -> None:
         "Asociacion" VARCHAR,
         "id_localidad" INT,
         "Localidad" VARCHAR,
-        "Habilitado" BOOLEAN
+        "Habilitado" BOOLEAN,
+        "Fecha_Desactivacion" TIMESTAMPTZ,
+        "Motivo_Desactivacion" VARCHAR
     ) AS $$
     BEGIN
         RETURN QUERY
@@ -122,7 +128,9 @@ def _crear_vista_y_funcion_panel_admin(session: Session) -> None:
             rec.asociacion::VARCHAR,
             l.id_localidad,
             l.nombre_localidad::VARCHAR,
-            u.habilitado
+            u.habilitado,
+            u.fecha_desactivacion,
+            u.motivo_desactivacion::VARCHAR
         FROM recicladores rec
         JOIN usuarios u ON rec.id_usuario = u.id_usuario
         LEFT JOIN localidades l ON rec.localidad_id = l.id_localidad
@@ -130,6 +138,7 @@ def _crear_vista_y_funcion_panel_admin(session: Session) -> None:
                OR rec.apellidos ILIKE '%' || p_search || '%'
                OR u.correo_electronico ILIKE '%' || p_search || '%')
           AND (p_localidad_id IS NULL OR rec.localidad_id = p_localidad_id)
+          AND (p_habilitado IS NULL OR u.habilitado = p_habilitado)
           AND (p_conjunto_id IS NULL OR EXISTS (
                 SELECT 1 FROM recicladores_conjuntos rc2
                 WHERE rc2.id_reciclador = rec.id_reciclador
@@ -204,7 +213,7 @@ def setup_database() -> Generator[None, None, None]:
     #       it". Mismo orden inverso que seguiría un "alembic downgrade".
     with TestSessionLocal(bind=test_engine.connect()) as cleanup_session:
         cleanup_session.execute(text(
-            "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, UUID, TEXT, TEXT, INT, INT)"
+            "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, UUID, TEXT, TEXT, INT, INT, BOOLEAN)"
         ))
         cleanup_session.execute(text("DROP VIEW IF EXISTS vista_directorio_residentes"))
         cleanup_session.commit()

@@ -9,41 +9,11 @@ import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
+import { COMPONENTES_MARKDOWN } from "@/config/contenidoEducativoMarkdown";
 import {
   listarContenido,
   type ContenidoEducativo,
 } from "@/lib/contenidoEducativoApi";
-
-// ¿Qué? Estilo de cada elemento que un admin puede escribir en Markdown
-//       (## subtítulo, listas, negrita) dentro del cuerpo del texto.
-// ¿Para qué? react-markdown no trae estilos propios — sin esto, un
-//           subtítulo se vería exactamente igual que un párrafo normal.
-// ¿Impacto? Mismos tokens de color que ya usa el resto de esta tarjeta
-//           (text-gray-600/300), para que no se sienta como un bloque
-//           aparte del resto de la página.
-const COMPONENTES_MARKDOWN = {
-  h1: (props: React.ComponentPropsWithoutRef<"h1">) => (
-    <h3 className="mt-4 text-base font-bold text-gray-900 first:mt-0 dark:text-white" {...props} />
-  ),
-  h2: (props: React.ComponentPropsWithoutRef<"h2">) => (
-    <h3 className="mt-4 text-base font-bold text-gray-900 first:mt-0 dark:text-white" {...props} />
-  ),
-  h3: (props: React.ComponentPropsWithoutRef<"h3">) => (
-    <h4 className="mt-3 text-sm font-bold text-gray-900 first:mt-0 dark:text-white" {...props} />
-  ),
-  p: (props: React.ComponentPropsWithoutRef<"p">) => (
-    <p className="mt-2 text-sm text-gray-600 first:mt-0 dark:text-gray-300" {...props} />
-  ),
-  ul: (props: React.ComponentPropsWithoutRef<"ul">) => (
-    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300" {...props} />
-  ),
-  ol: (props: React.ComponentPropsWithoutRef<"ol">) => (
-    <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300" {...props} />
-  ),
-  a: (props: React.ComponentPropsWithoutRef<"a">) => (
-    <a className="text-accent-400 underline-offset-4 transition-colors hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
-  ),
-};
 
 export function CategoriaEducativaPage() {
   const { t } = useTranslation();

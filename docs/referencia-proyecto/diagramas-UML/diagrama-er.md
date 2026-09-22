@@ -52,6 +52,8 @@ erDiagram
         VARCHAR password
         BOOLEAN is_active
         BOOLEAN habilitado
+        TIMESTAMP fecha_desactivacion
+        VARCHAR motivo_desactivacion
         VARCHAR locale
         INT intentos_fallidos
         TIMESTAMP bloqueado_hasta
@@ -122,6 +124,14 @@ erDiagram
         DATE fecha_publicacion
         VARCHAR url_video
         VARCHAR url_guia
+    }
+
+    CONTENIDO_EDUCATIVO_ENVIOS {
+        UUID id PK
+        UUID id_contenido FK
+        UUID id_conjunto_residencial FK
+        UUID enviado_por_id FK
+        TIMESTAMP created_at
     }
 
     RECICLADORES_CONJUNTOS {
@@ -296,6 +306,10 @@ erDiagram
 
     CONJUNTOS_RESIDENCIALES ||--o{ NOTIFICACIONES : genera
     NOTIFICACIONES ||--o{ NOTIFICACIONES_DESTINATARIOS : envia
+
+    CONTENIDO_EDUCATIVO ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : se_envia
+    CONJUNTOS_RESIDENCIALES ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : recibe
+    USUARIOS ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : envia
 ```
 
 ---
@@ -355,7 +369,10 @@ USUARIOS (Admin_sistema) ── NOVEDADES
 
 TOKENS_REVOCADOS  (lista negra de JWT, sin relación a otras tablas)
 
-CONTENIDO_EDUCATIVO  (catálogo independiente, sin relación a otras tablas)
+CONTENIDO_EDUCATIVO
+   │
+   ▼
+CONTENIDO_EDUCATIVO_ENVIOS ── CONJUNTOS_RESIDENCIALES / USUARIOS (quién lo envió)
 ```
 
 ---
@@ -390,12 +407,14 @@ CONTENIDO_EDUCATIVO  (catálogo independiente, sin relación a otras tablas)
 | password           | VARCHAR   |
 | is_active          | BOOLEAN   |
 | habilitado         | BOOLEAN   |
+| fecha_desactivacion | TIMESTAMP |
+| motivo_desactivacion | VARCHAR  |
 | locale             | VARCHAR   |
 | intentos_fallidos  | INT       |
 | bloqueado_hasta    | TIMESTAMP |
 | foto_perfil_url    | VARCHAR   |
 
-`is_active` refleja si el correo ya fue verificado al registrarse; `habilitado` es un interruptor manual aparte, que solo el Admin Sistema puede apagar (RQF: gestión de usuarios). Una cuenta puede tener `is_active = true` y `habilitado = false` — no puede iniciar sesión de todas formas.
+`is_active` refleja si el correo ya fue verificado al registrarse; `habilitado` es un interruptor manual aparte, que solo el Admin Sistema puede apagar (RQF: gestión de usuarios). Una cuenta puede tener `is_active = true` y `habilitado = false` — no puede iniciar sesión de todas formas. Al desactivarla se guardan `fecha_desactivacion` y `motivo_desactivacion` (opcional, máx. 200 caracteres); al reactivarla se borran.
 
 ---
 
@@ -498,6 +517,20 @@ CONTENIDO_EDUCATIVO  (catálogo independiente, sin relación a otras tablas)
 | url_guia          | VARCHAR |
 
 `cuerpo_texto` admite Markdown, renderizado en el frontend. `url_guia` puede ser un archivo subido (PDF/imagen) o un link externo.
+
+---
+
+## contenido_educativo_envios
+
+| Campo                   | Tipo      |
+| ------------------------ | --------- |
+| id                      | UUID      |
+| id_contenido            | UUID      |
+| id_conjunto_residencial | UUID      |
+| enviado_por_id          | UUID      |
+| created_at              | TIMESTAMP |
+
+Registra el envío manual de un módulo del catálogo a un conjunto (RQF-013, Flujo C) — el Admin Sistema decide recomendar un módulo aunque no haya habido una auditoría Regular/Mala que lo dispare automáticamente. `enviado_por_id` queda `NULL` si el usuario que lo envió se elimina después (`ON DELETE SET NULL`), para no perder el registro histórico del envío.
 
 ---
 

@@ -115,4 +115,3 @@ class TestConjuntosPorLocalidad:
         assert response.status_code == 200
         assert len(response.json()) == 1
 
-

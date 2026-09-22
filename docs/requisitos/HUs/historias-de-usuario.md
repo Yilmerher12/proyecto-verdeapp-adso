@@ -56,3 +56,4 @@
 | HU-042 | [Usuario recupera su contraseña olvidada](HU-042_usuario_recupera_contrasena.md) | [RQF-019](../RFs/RQF-019_recuperacion_cambio_contrasena.md) |
 | HU-043 | [Usuario cambia su contraseña estando autenticado](HU-043_usuario_cambia_contrasena.md) | [RQF-019](../RFs/RQF-019_recuperacion_cambio_contrasena.md) |
 | HU-044 | [Admin de Conjunto edita el NIT y regenera el código de acceso de su conjunto](HU-044_admin_conjunto_gestiona_datos_propio_conjunto.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
+| HU-045 | [Admin Sistema ve el perfil de cualquier usuario](HU-045_admin_sistema_ve_perfil_usuario.md) | [RQF-018](../RFs/RQF-018_gestion_usuarios_admin_sistema.md) |
