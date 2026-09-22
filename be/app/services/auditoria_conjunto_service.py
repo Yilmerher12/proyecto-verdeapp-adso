@@ -4,17 +4,18 @@ Descripción: Lógica de negocio de la auditoría del Reciclador al conjunto
              (RQF-009) — validaciones y guardado de la foto de evidencia.
 """
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from uuid import UUID
 
 from fastapi import HTTPException, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.auditoria_conjunto import AuditoriaConjunto
+from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
 from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.residente import Residente
@@ -348,6 +349,68 @@ def listar_historial(db: Session, current_user: Usuario) -> list[AuditoriaConjun
         .limit(50)
     )
     return list(db.execute(stmt).scalars().all())
+
+
+def _contar_avisados(db: Session, ids_auditoria: list[UUID]) -> dict[UUID, int]:
+    """¿Qué? Cuántos residentes fueron avisados con "contenido recomendado"
+    a raíz de cada auditoría (ver _notificar_recomendacion_si_corresponde) —
+    una consulta agrupada, no una por auditoría, para no repetir N veces la
+    misma vuelta a la base de datos."""
+    if not ids_auditoria:
+        return {}
+    stmt = (
+        select(Notificacion.id_referencia, func.count(NotificacionDestinatario.id_usuario))
+        .join(NotificacionDestinatario, NotificacionDestinatario.id_notificacion == Notificacion.id)
+        .where(
+            Notificacion.tipo == "CONTENIDO_RECOMENDADO",
+            Notificacion.id_referencia.in_(ids_auditoria),
+        )
+        .group_by(Notificacion.id_referencia)
+    )
+    return dict(db.execute(stmt).all())
+
+
+def listar_admin(
+    db: Session, lunes: date | None, limit: int, offset: int
+) -> tuple[list[AuditoriaConjunto], int, dict[UUID, int]]:
+    """
+    ¿Qué? RQF-018 — el Admin del Sistema ve las auditorías del reciclador
+          sin importar a qué conjunto pertenecen, a diferencia de
+          listar_historial (acotado al conjunto de quien pregunta).
+    ¿Para qué? Con `lunes`, se acota a esa semana completa: desde la
+              medianoche UTC de ese lunes hasta la medianoche UTC del lunes
+              siguiente (sin exigirlo) — misma convención UTC que ya usa el
+              resto de la app para fechas (ver formatearFechaUTC en
+              fe/src/lib/dateFormat.ts), sin sumarle conversión de huso
+              horario aparte. Sin `lunes`, trae las más recientes de
+              cualquier semana — así el catálogo educativo puede armar "a
+              qué conjuntos se le recomendó este módulo" sin acotarlo a una
+              sola semana.
+    ¿Impacto? El tercer valor devuelto es cuántos residentes fueron
+              avisados por cada auditoría (ver _contar_avisados) — siempre
+              0 para nivel BUENA, nunca un error de datos.
+    """
+    condiciones = []
+    if lunes is not None:
+        desde = datetime(lunes.year, lunes.month, lunes.day, tzinfo=timezone.utc)
+        condiciones.append(AuditoriaConjunto.created_at >= desde)
+        condiciones.append(AuditoriaConjunto.created_at < desde + timedelta(days=7))
+
+    total = db.execute(
+        select(func.count()).select_from(AuditoriaConjunto).where(*condiciones)
+    ).scalar_one()
+
+    stmt = (
+        select(AuditoriaConjunto)
+        .where(*condiciones)
+        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
+        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
+        .limit(limit)
+        .offset(offset)
+    )
+    auditorias = list(db.execute(stmt).scalars().all())
+    avisados_por_auditoria = _contar_avisados(db, [a.id_auditoria for a in auditorias])
+    return auditorias, total, avisados_por_auditoria
 
 
 def listar_mias(db: Session, id_usuario_reciclador: UUID) -> list[AuditoriaConjunto]:

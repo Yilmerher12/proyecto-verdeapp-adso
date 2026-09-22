@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -55,5 +55,26 @@ class ContenidoEducativoUpdate(ContenidoEducativoBase):
 class ContenidoEducativoResponse(ContenidoEducativoBase):
     id_contenido: UUID
     fecha_publicacion: date
+
+    model_config = {"from_attributes": True}
+
+
+# ¿Qué? Envío manual de un módulo a uno o varios conjuntos (RQF-018) — sin
+#       pasar por una auditoría del Reciclador.
+class EnviarContenidoRequest(BaseModel):
+    conjuntos: list[UUID]
+
+    @field_validator("conjuntos")
+    @classmethod
+    def al_menos_un_conjunto(cls, v: list[UUID]) -> list[UUID]:
+        if not v:
+            raise ValueError("Elige al menos un conjunto.")
+        return v
+
+
+class EnvioContenidoResponse(BaseModel):
+    id_conjunto_residencial: UUID
+    nombre_conjunto: str
+    created_at: datetime
 
     model_config = {"from_attributes": True}

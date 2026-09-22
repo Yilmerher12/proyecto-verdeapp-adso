@@ -85,3 +85,22 @@ export async function listarHistorial(): Promise<AuditoriaConjunto[]> {
   const { data } = await axios.get(`${API_BASE}/historial`);
   return data;
 }
+
+export interface AuditoriaAdmin extends AuditoriaConjunto {
+  avisados: number;
+}
+
+export interface AuditoriasAdminResultado {
+  items: AuditoriaAdmin[];
+  total: number;
+}
+
+// ¿Qué? El Admin del Sistema ve las auditorías del reciclador sin importar
+//       a qué conjunto pertenecen (RQF-018) — con `lunes` (YYYY-MM-DD),
+//       filtra esa semana completa; sin él, trae las más recientes de
+//       cualquier semana (para cruzar "a qué conjuntos se recomendó cada
+//       módulo" sin acotar a una sola semana).
+export async function listarAuditoriasAdmin(opciones?: { lunes?: string; limit?: number }): Promise<AuditoriasAdminResultado> {
+  const { data } = await axios.get(`${API_BASE}/admin`, { params: opciones });
+  return data;
+}

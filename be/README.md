@@ -1003,7 +1003,7 @@ def change_password(
 ### 14.3 Otros routers del dominio (resumen)
 
 Las tablas anteriores solo cubrían `auth.py` y `users.py` — el backend real
-tiene 10 routers más, todos del dominio de reciclaje. En vez de repetir el
+tiene 11 routers más, todos del dominio de reciclaje. En vez de repetir el
 fragmento pedagógico completo para cada uno (ver directamente el código,
 cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 
@@ -1016,7 +1016,8 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 | `reciclador_conjunto.py`    | `/api/v1/reciclador-conjunto`   |     5     | Invitar, listar, aceptar/rechazar la relación Reciclador↔Conjunto                  |
 | `directorio.py`             | `/api/v1/directorio`            |     2     | Directorio público de recicladores y puntos de acopio                              |
 | `notificaciones.py`         | `/api/v1/notificaciones`        |     7     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, etc.)      |
-| `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     4     | Catálogo de contenido educativo — lectura para todos, gestión solo Admin Sistema (RQF-004/010) |
+| `auditoria_conjunto.py`     | `/api/v1/auditorias-conjunto`   |     5     | Semáforo de auditoría del Reciclador — registro, historiales e historial global del Admin Sistema por semana (RQF-009) |
+| `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     7     | Catálogo de contenido educativo — lectura para todos, gestión y envío manual a conjuntos solo Admin Sistema (RQF-004/010/013) |
 | `comunicados.py`            | `/api/v1/comunicados`           |     5     | Comunicados del conjunto — publica Admin de Conjunto, ven Residente/Reciclador (RQF-014) |
 | `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
 

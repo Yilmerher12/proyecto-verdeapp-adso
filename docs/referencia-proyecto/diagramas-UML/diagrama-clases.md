@@ -32,6 +32,8 @@ class Usuario {
     +string password
     +bool is_active
     +bool habilitado
+    +datetime fecha_desactivacion
+    +string motivo_desactivacion
     +string locale
     +int intentos_fallidos
     +datetime bloqueado_hasta
@@ -274,6 +276,14 @@ class ContenidoEducativo {
     +string url_guia
 }
 
+class ContenidoEducativoEnvio {
+    +UUID id
+    +UUID id_contenido
+    +UUID id_conjunto_residencial
+    +UUID enviado_por_id
+    +datetime created_at
+}
+
 Role "1" --> "*" Usuario
 Usuario "1" --> "1" Residente
 Usuario "1" --> "1" Reciclador
@@ -317,6 +327,10 @@ InvitacionRecicladorConjunto "*" --> "1" ConjuntoResidencial
 ConjuntoResidencial "1" --> "*" Notificacion
 ConjuntoResidencial "1" --> "*" AuditoriaConjunto
 Notificacion "1" --> "*" NotificacionDestinatario
+
+ContenidoEducativo "1" --> "*" ContenidoEducativoEnvio
+ConjuntoResidencial "1" --> "*" ContenidoEducativoEnvio : recibe
+Usuario "1" --> "*" ContenidoEducativoEnvio : envia
 ```
 
 ---
@@ -452,6 +466,12 @@ Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autori
 ## ContenidoEducativo
 
 Representa los módulos educativos publicados en la plataforma — texto, video y guía descargable, organizados por módulo/categoría.
+
+---
+
+## ContenidoEducativoEnvio
+
+Registra que el Admin Sistema envió un módulo del catálogo a mano a un conjunto puntual (RQF-013, Flujo C) — independiente de la recomendación automática que dispara una auditoría Regular/Mala. `enviado_por_id` queda `NULL` si el usuario que lo envió se elimina después, para no perder el historial del envío.
 
 ---
 

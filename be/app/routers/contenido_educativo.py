@@ -20,6 +20,8 @@ from app.schemas.contenido_educativo import (
     ContenidoEducativoCreate,
     ContenidoEducativoResponse,
     ContenidoEducativoUpdate,
+    EnviarContenidoRequest,
+    EnvioContenidoResponse,
 )
 from app.services import contenido_educativo_service as service
 
@@ -43,6 +45,63 @@ def listar(
     db: Session = Depends(get_db),
 ) -> list[ContenidoEducativoResponse]:
     return service.listar_contenido(db)
+
+
+@router.get(
+    "/{id_contenido}",
+    response_model=ContenidoEducativoResponse,
+    summary="Ver un módulo puntual — el Residente lo abre desde una recomendación manual (RQF-018)",
+)
+def obtener(
+    id_contenido: UUID,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ContenidoEducativoResponse:
+    return service.obtener_contenido_o_404(db, id_contenido)
+
+
+@router.get(
+    "/{id_contenido}/envios",
+    response_model=list[EnvioContenidoResponse],
+    summary="Admin Sistema ve a qué conjuntos se envió este módulo a mano (RQF-018)",
+)
+def listar_envios(
+    id_contenido: UUID,
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+) -> list[EnvioContenidoResponse]:
+    envios = service.listar_envios_de_contenido(db, id_contenido)
+    return [
+        EnvioContenidoResponse(
+            id_conjunto_residencial=e.id_conjunto_residencial,
+            nombre_conjunto=e.conjunto.nombre_conjunto,
+            created_at=e.created_at,
+        )
+        for e in envios
+    ]
+
+
+@router.post(
+    "/{id_contenido}/enviar",
+    response_model=list[EnvioContenidoResponse],
+    status_code=status.HTTP_201_CREATED,
+    summary="Admin Sistema envía un módulo a uno o varios conjuntos, a mano (RQF-018)",
+)
+def enviar(
+    id_contenido: UUID,
+    body: EnviarContenidoRequest,
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+) -> list[EnvioContenidoResponse]:
+    envios = service.enviar_a_conjuntos(db, id_contenido, body.conjuntos, current_user.id_usuario)
+    return [
+        EnvioContenidoResponse(
+            id_conjunto_residencial=e.id_conjunto_residencial,
+            nombre_conjunto=e.conjunto.nombre_conjunto,
+            created_at=e.created_at,
+        )
+        for e in envios
+    ]
 
 
 @router.post(

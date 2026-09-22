@@ -34,3 +34,17 @@ class AuditoriaConjuntoResponse(BaseModel):
     nombre_reciclador: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ¿Qué? Vista del Admin del Sistema sobre las auditorías (RQF-018) — igual a
+#       la de arriba, más cuántos residentes fueron avisados con
+#       "contenido recomendado" a raíz de esta auditoría.
+# ¿Para qué? avisados es 0 para nivel BUENA (RQF-013: una calificación buena
+#           nunca dispara esa notificación) — nunca es un error de datos.
+class AuditoriaAdminResponse(AuditoriaConjuntoResponse):
+    avisados: int = 0
+
+
+class AuditoriasAdminListResponse(BaseModel):
+    items: list[AuditoriaAdminResponse]
+    total: int

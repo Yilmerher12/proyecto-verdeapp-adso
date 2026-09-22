@@ -5,17 +5,23 @@ Descripción: Endpoints de la auditoría del Reciclador al conjunto (RQF-009).
            desempeño de separación de un conjunto donde está autorizado, y
            que pueda ver el historial de las que ya envió.
 """
+from datetime import date
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db, require_role
 from app.models.auditoria_conjunto import AuditoriaConjunto
 from app.models.rol import RolId
 from app.models.usuario import Usuario
-from app.schemas.auditoria_conjunto import AuditoriaConjuntoResponse, NivelDesempeno
+from app.schemas.auditoria_conjunto import (
+    AuditoriaAdminResponse,
+    AuditoriaConjuntoResponse,
+    AuditoriasAdminListResponse,
+    NivelDesempeno,
+)
 from app.services import auditoria_conjunto_service as service
 
 router = APIRouter(prefix="/api/v1/auditorias-conjunto", tags=["Auditoría de Conjunto"])
@@ -24,6 +30,7 @@ router = APIRouter(prefix="/api/v1/auditorias-conjunto", tags=["Auditoría de Co
 #       y obtener_auditoria() (abajo) NO usan esta dependencia a propósito:
 #       tienen su propio chequeo de rol distinto (o ninguno).
 _requiere_reciclador = require_role(RolId.RECICLADOR, "Solo un Reciclador puede auditar un conjunto.")
+_requiere_admin_sistema = require_role(RolId.ADMIN_SISTEMA, "Solo un Administrador del Sistema puede ver esto.")
 
 
 def _a_response(auditoria: AuditoriaConjunto) -> AuditoriaConjuntoResponse:
@@ -101,6 +108,31 @@ def listar_historial(
         )
     auditorias = service.listar_historial(db, current_user)
     return [_a_response(a) for a in auditorias]
+
+
+@router.get(
+    "/admin",
+    response_model=AuditoriasAdminListResponse,
+    summary="Admin Sistema ve las auditorías del reciclador, por semana o las más recientes (RQF-018)",
+)
+def listar_admin(
+    lunes: Optional[date] = Query(
+        None, description="Lunes de la semana a consultar — sin este parámetro, trae las más recientes de cualquier semana"
+    ),
+    limit: int = Query(100, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+) -> AuditoriasAdminListResponse:
+    auditorias, total, avisados_por_auditoria = service.listar_admin(db, lunes=lunes, limit=limit, offset=offset)
+    items = [
+        AuditoriaAdminResponse(
+            **_a_response(a).model_dump(),
+            avisados=avisados_por_auditoria.get(a.id_auditoria, 0),
+        )
+        for a in auditorias
+    ]
+    return AuditoriasAdminListResponse(items=items, total=total)
 
 
 @router.get(

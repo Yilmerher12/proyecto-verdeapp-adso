@@ -17,6 +17,7 @@ import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResult
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { obtenerAuditoria } from "@/lib/auditoriaConjuntoApi";
+import { obtenerContenido } from "@/lib/contenidoEducativoApi";
 
 interface EstadoShut {
   lleno: boolean;
@@ -114,11 +115,20 @@ export function ResidenteDashboard() {
   // ¿Para qué? tema_educativo se guarda igual que modulo_categoria a
   //           propósito (ver models/auditoria_conjunto.py) — se pide la
   //           auditoría por su id_referencia solo para leer ese texto.
+  //           CONTENIDO_RECOMENDADO_MANUAL (RQF-018) es la misma idea, pero
+  //           sin auditoría de por medio: el Admin del Sistema envió el
+  //           módulo a mano, así que id_referencia apunta directo al
+  //           módulo (id_contenido), no a una auditoría.
   const irAContenidoRecomendado = async (notif: NotificacionItem) => {
-    if (notif.tipo !== "CONTENIDO_RECOMENDADO" || !notif.id_referencia) return;
+    if (!notif.id_referencia) return;
     try {
-      const auditoria = await obtenerAuditoria(notif.id_referencia);
-      navigate(`/catalogo-educativo/${encodeURIComponent(auditoria.tema_educativo)}`);
+      if (notif.tipo === "CONTENIDO_RECOMENDADO") {
+        const auditoria = await obtenerAuditoria(notif.id_referencia);
+        navigate(`/catalogo-educativo/${encodeURIComponent(auditoria.tema_educativo)}`);
+      } else if (notif.tipo === "CONTENIDO_RECOMENDADO_MANUAL") {
+        const contenido = await obtenerContenido(notif.id_referencia);
+        navigate(`/catalogo-educativo/${encodeURIComponent(contenido.modulo_categoria)}`);
+      }
     } catch {
       setErrorAccion(true);
     }
