@@ -2,11 +2,11 @@
  * Archivo: __tests__/pages/AdminDashboard.test.tsx
  * Descripción: Tests del panel del Administrador del Sistema — pestañas de
  *              usuarios (Residentes / Recicladores / Admins de Conjunto)
- *              con búsqueda, filtro de localidad y paginación, más la
+ *              con búsqueda, filtro de conjunto, botón Inactivos y paginación, más la
  *              sección de invitar administradores de conjunto.
  */
 
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
 import { AdminDashboard } from "@/pages/dashboards/AdminDashboard";
@@ -169,16 +169,23 @@ describe("AdminDashboard", () => {
   // ¿Qué? El profesor pidió, en la sustentación, que esta vista permitiera
   //       HACER algo con los usuarios, no solo consultarlos.
   it("desactiva una cuenta desde la tabla, con confirmación", async () => {
+    // ¿Qué? Tras el cambio, el panel vuelve a pedir la lista al backend (en
+    //       vez de parchar la fila a mano) — por eso el mock cambia de
+    //       respuesta en cuanto llega el PATCH.
+    let habilitado = true;
     mockGet.mockImplementation((url: string) => {
       if (url.includes("/admin/vista-residentes")) {
-        return Promise.resolve({ data: { items: [residente], total: 1 } });
+        return Promise.resolve({ data: { items: [{ ...residente, Habilitado: habilitado }], total: 1 } });
       }
       if (url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
         return Promise.resolve({ data: { items: [], total: 0 } });
       }
       return Promise.resolve({ data: [] });
     });
-    mockPatch.mockResolvedValue({ data: { correo_electronico: residente.Correo, habilitado: false } });
+    mockPatch.mockImplementation(() => {
+      habilitado = false;
+      return Promise.resolve({ data: {} });
+    });
     const user = userEvent.setup();
     renderPage();
     await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
@@ -503,7 +510,7 @@ describe("AdminDashboard", () => {
     expect(await screen.findByText("Conjunto asignado correctamente.")).toBeInTheDocument();
   });
 
-  it("el filtro de Conjunto se acota a la localidad elegida y manda conjunto_id al backend", async () => {
+  it("el filtro de Conjunto manda conjunto_id al backend, sin ningún filtro de localidad", async () => {
     mockGet.mockImplementation((url: string) => {
       if (
         url.includes("/admin/vista-residentes") ||
@@ -511,9 +518,6 @@ describe("AdminDashboard", () => {
         url.includes("/admin/administradores-conjunto")
       ) {
         return Promise.resolve({ data: { items: [], total: 0 } });
-      }
-      if (url.includes("/geography/localidades")) {
-        return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
       }
       if (url.includes("/geography/conjuntos/todos")) {
         return Promise.resolve({
@@ -524,18 +528,6 @@ describe("AdminDashboard", () => {
     });
     const user = userEvent.setup();
     renderPage();
-    // ¿Qué? El <select> de Localidad no tiene nombre accesible propio (ver
-    //       el mismo campo antes de este cambio) — se toma directo del DOM,
-    //       mismo recurso que ya usa este archivo para el botón de
-    //       HeadlessUI más abajo.
-    const selectLocalidad = document.querySelector("select") as HTMLSelectElement;
-    // ¿Para qué? "Usuarios registrados" ya está abierta desde el montaje,
-    //           así que hay que esperar a que termine de llegar
-    //           /geography/localidades antes de elegir una opción — antes
-    //           ese tiempo ya se consumía esperando el clic que abría el
-    //           acordeón, que ahora no existe.
-    await waitFor(() => expect(selectLocalidad.options.length).toBeGreaterThan(1));
-    await user.selectOptions(selectLocalidad, "1");
 
     await user.type(screen.getByPlaceholderText("Buscar conjunto..."), "RESERVA");
     const opcionConjunto = await screen.findByText("RESERVA DE PRUEBA — Usaquén");
@@ -544,11 +536,18 @@ describe("AdminDashboard", () => {
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalledWith(
         expect.stringContaining("/admin/vista-residentes"),
-        expect.objectContaining({
-          params: expect.objectContaining({ conjunto_id: "c-1", localidad_id: 1 }),
-        })
+        expect.objectContaining({ params: expect.objectContaining({ conjunto_id: "c-1" }) })
       );
     });
+    const llamadasALaTabla = mockGet.mock.calls.filter(
+      ([url, opciones]) => String(url).includes("/admin/vista-residentes") && (opciones as { params?: Record<string, unknown> })?.params?.limit !== 1
+    );
+    for (const [, opciones] of llamadasALaTabla) {
+      expect((opciones as { params: Record<string, unknown> }).params).not.toHaveProperty("localidad_id");
+    }
+    // ¿Qué? El buscador de conjunto pide conjuntos sin acotar por localidad.
+    const llamadaConjuntos = mockGet.mock.calls.find(([url]) => String(url).includes("/geography/conjuntos/todos"));
+    expect((llamadaConjuntos?.[1] as { params: Record<string, unknown> }).params).not.toHaveProperty("id_localidad");
   });
 
   it("el conteo de solicitudes pendientes llega antes de abrir el modal, y 'Ver solicitudes' lo abre", async () => {
@@ -593,5 +592,292 @@ describe("AdminDashboard", () => {
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(await screen.findAllByText("Conjunto Los Alpes")).not.toHaveLength(0);
+  });
+  describe("botón Inactivos, motivo de desactivación y perfil", () => {
+    const inactivo = {
+      ...residente,
+      Correo: "laura@example.com",
+      Nombre: "Laura",
+      Apellido: "Gómez",
+      Habilitado: false,
+      Fecha_Desactivacion: "2026-08-18T15:00:00Z",
+      Motivo_Desactivacion: "Se mudó de ciudad",
+    };
+
+    const perfilResidente = {
+      correo_electronico: residente.Correo,
+      role_id: RoleId.RESIDENTE,
+      rol: "RESIDENTE",
+      habilitado: true,
+      correo_verificado: true,
+      idioma: "es",
+      foto_perfil_url: null,
+      bloqueado_hasta: null,
+      fecha_desactivacion: null,
+      motivo_desactivacion: null,
+      nombre: "Juan",
+      apellidos: "Pérez",
+      telefono: "3001112233",
+      detalle: { conjunto: "Conjunto Los Alpes", localidad: "Usaquén", torre: "A", apto: "101" },
+    };
+
+    // ¿Qué? Un mock que distingue la tabla, los contadores (limit=1) y el
+    //       perfil de una persona.
+    function mockConInactivos(opts: { items?: unknown[]; perfil?: unknown } = {}) {
+      mockGet.mockImplementation((url: string, config?: { params?: Record<string, unknown> }) => {
+        if (url.includes("/admin/usuarios/")) return Promise.resolve({ data: opts.perfil ?? perfilResidente });
+        if (url.includes("/admin/vista-residentes")) {
+          const soloInactivos = config?.params?.habilitado === false || config?.params?.habilitado === "false";
+          const items = soloInactivos ? [inactivo] : (opts.items ?? [residente, inactivo]);
+          return Promise.resolve({ data: { items, total: items.length } });
+        }
+        if (url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+          return Promise.resolve({ data: { items: [], total: 0 } });
+        }
+        return Promise.resolve({ data: [] });
+      });
+    }
+
+    it("ya no muestra el filtro de localidad", async () => {
+      mockConInactivos();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+      expect(screen.queryByText("Todas las localidades")).not.toBeInTheDocument();
+    });
+
+    it("muestra las tarjetas de resumen ANTES de la tabla de usuarios", async () => {
+      mockConInactivos();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+      const tarjeta = screen.getByRole("heading", { name: "Solicitudes pendientes" });
+      const tabla = screen.getByRole("heading", { name: "Usuarios registrados" });
+      expect(tarjeta.compareDocumentPosition(tabla) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it("una cuenta inactiva muestra la fecha y el motivo en la tabla", async () => {
+      mockConInactivos({ items: [inactivo] });
+      renderPage();
+      expect(await screen.findByText(/Se mudó de ciudad/)).toBeInTheDocument();
+    });
+
+    it("con Inactivos encendido y sin cuentas inactivas, la tabla lo dice en vez de 'no hay residentes'", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/admin/vista-residentes") || url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+          return Promise.resolve({ data: { items: [], total: 0 } });
+        }
+        return Promise.resolve({ data: [] });
+      });
+      const user = userEvent.setup();
+      renderPage();
+      await user.click(await screen.findByRole("button", { name: /Inactivos 0/ }));
+      expect(await screen.findByText("No hay cuentas inactivas en esta pestaña.")).toBeInTheDocument();
+      expect(screen.queryByText(/No hay residentes registrados/)).not.toBeInTheDocument();
+    });
+
+    it("una cuenta inactiva sin motivo dice 'Sin motivo registrado'", async () => {
+      mockConInactivos({ items: [{ ...inactivo, Motivo_Desactivacion: null }] });
+      renderPage();
+      expect(await screen.findByText(/Sin motivo registrado/)).toBeInTheDocument();
+    });
+
+    it("el botón Inactivos muestra el conteo, filtra con habilitado=false y al apagarlo vuelve a mostrar todo", async () => {
+      mockGet.mockImplementation((url: string, config?: { params?: Record<string, unknown> }) => {
+        if (url.includes("/admin/vista-residentes")) {
+          const soloInactivos = config?.params?.habilitado === false || config?.params?.habilitado === "false";
+          const items = soloInactivos ? [inactivo] : [residente, inactivo];
+          return Promise.resolve({ data: { items, total: items.length } });
+        }
+        if (url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+          return Promise.resolve({ data: { items: [], total: 0 } });
+        }
+        return Promise.resolve({ data: [] });
+      });
+      const user = userEvent.setup();
+      renderPage();
+
+      const boton = await screen.findByRole("button", { name: /Inactivos 1/ });
+      expect(boton).toHaveAttribute("aria-pressed", "false");
+
+      await user.click(boton);
+      await waitFor(() => {
+        expect(mockGet).toHaveBeenCalledWith(
+          expect.stringContaining("/admin/vista-residentes"),
+          expect.objectContaining({ params: expect.objectContaining({ habilitado: "false" }) })
+        );
+      });
+      expect(boton).toHaveAttribute("aria-pressed", "true");
+      await waitFor(() => expect(screen.queryByText("Juan Pérez")).not.toBeInTheDocument());
+      expect(screen.getByText("Laura Gómez")).toBeInTheDocument();
+
+      mockGet.mockClear();
+      await user.click(boton);
+      await waitFor(() => {
+        const llamadaTabla = mockGet.mock.calls.find(
+          ([url, opciones]) => String(url).includes("/admin/vista-residentes") && (opciones as { params: Record<string, unknown> }).params.limit !== 1
+        );
+        expect(llamadaTabla).toBeDefined();
+        expect((llamadaTabla?.[1] as { params: Record<string, unknown> }).params).not.toHaveProperty("habilitado");
+      });
+      expect(boton).toHaveAttribute("aria-pressed", "false");
+      expect(await screen.findByText("Juan Pérez")).toBeInTheDocument();
+    });
+
+    it("con Inactivos encendido, cada pestaña muestra su número de cuentas inactivas", async () => {
+      mockGet.mockImplementation((url: string, config?: { params?: Record<string, unknown> }) => {
+        const inactivosPedidos = config?.params?.habilitado === false || config?.params?.habilitado === "false";
+        if (url.includes("/admin/vista-residentes")) {
+          return Promise.resolve({ data: { items: inactivosPedidos ? [inactivo] : [residente], total: inactivosPedidos ? 3 : 5 } });
+        }
+        if (url.includes("/admin/sp-recicladores")) {
+          return Promise.resolve({ data: { items: [], total: inactivosPedidos ? 2 : 4 } });
+        }
+        if (url.includes("/admin/administradores-conjunto")) {
+          return Promise.resolve({ data: { items: [], total: 0 } });
+        }
+        return Promise.resolve({ data: [] });
+      });
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("button", { name: /Inactivos 3/ }));
+      const pestanaRecicladores = screen.getByRole("button", { name: /^Recicladores/ });
+      await waitFor(() => expect(pestanaRecicladores).toHaveTextContent("2"));
+    });
+
+    it("pide un motivo opcional al desactivar y lo manda al backend", async () => {
+      mockConInactivos({ items: [residente] });
+      mockPatch.mockResolvedValue({ data: {} });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+
+      await user.click(screen.getByRole("button", { name: /^Desactivar$/ }));
+      await user.type(screen.getByLabelText(/Motivo/), "Se mudó de conjunto");
+      await user.click(screen.getByRole("button", { name: "Sí, continuar" }));
+
+      await waitFor(() => {
+        expect(mockPatch).toHaveBeenCalledWith(
+          expect.stringContaining(`/admin/usuarios/${encodeURIComponent(residente.Correo)}/habilitado`),
+          { habilitado: false, motivo: "Se mudó de conjunto" }
+        );
+      });
+    });
+
+    it("no pide motivo al reactivar una cuenta", async () => {
+      mockConInactivos({ items: [inactivo] });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Laura Gómez")).toBeInTheDocument());
+
+      await user.click(screen.getByRole("button", { name: /^Activar$/ }));
+      expect(screen.getByText("¿Activar esta cuenta?")).toBeInTheDocument();
+      expect(screen.queryByLabelText(/Motivo/)).not.toBeInTheDocument();
+    });
+
+    it("un clic en el nombre abre el perfil de solo lectura con los datos de esa persona", async () => {
+      mockConInactivos({ items: [residente] });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+
+      await user.click(screen.getByRole("button", { name: "Ver perfil de Juan Pérez" }));
+
+      const panel = await screen.findByRole("dialog", { name: "Perfil de Juan Pérez" });
+      expect(panel).toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining(`/admin/usuarios/${encodeURIComponent(residente.Correo)}`));
+      expect(await screen.findByText("Solo lectura")).toBeInTheDocument();
+      expect(await within(panel).findByText("Conjunto Los Alpes")).toBeInTheDocument();
+      expect(within(panel).getByText("A · 101")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Editar datos/ })).toBeDisabled();
+    });
+
+    it("un clic en cualquier parte de la fila también abre el perfil, pero no el botón Desactivar", async () => {
+      mockConInactivos({ items: [residente] });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+
+      await user.click(screen.getByText(residente.Conjunto));
+      expect(await screen.findByRole("dialog", { name: "Perfil de Juan Pérez" })).toBeInTheDocument();
+    });
+
+    it("Desactivar en la fila abre la confirmación, no el perfil", async () => {
+      mockConInactivos({ items: [residente] });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+
+      await user.click(screen.getByRole("button", { name: /^Desactivar$/ }));
+      expect(screen.getByText("¿Desactivar esta cuenta?")).toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: /Perfil de/ })).not.toBeInTheDocument();
+    });
+
+    it("Esc cierra el perfil", async () => {
+      mockConInactivos({ items: [residente] });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+      await user.click(screen.getByRole("button", { name: "Ver perfil de Juan Pérez" }));
+      await screen.findByRole("dialog", { name: "Perfil de Juan Pérez" });
+
+      await user.keyboard("{Escape}");
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: /Perfil de/ })).not.toBeInTheDocument());
+    });
+
+    it("desde el perfil se puede desactivar, y Esc cierra solo la confirmación, no el perfil", async () => {
+      mockConInactivos({ items: [residente] });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+      await user.click(screen.getByRole("button", { name: "Ver perfil de Juan Pérez" }));
+      await screen.findByRole("dialog", { name: "Perfil de Juan Pérez" });
+
+      await user.click(await screen.findByRole("button", { name: "Desactivar cuenta" }));
+      expect(screen.getByText("¿Desactivar esta cuenta?")).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+      await waitFor(() => expect(screen.queryByText("¿Desactivar esta cuenta?")).not.toBeInTheDocument());
+      expect(screen.getByRole("dialog", { name: "Perfil de Juan Pérez" })).toBeInTheDocument();
+    });
+
+    it("el perfil de una cuenta desactivada muestra la fecha y el motivo", async () => {
+      mockConInactivos({
+        items: [inactivo],
+        perfil: {
+          ...perfilResidente,
+          correo_electronico: "laura@example.com",
+          nombre: "Laura",
+          apellidos: "Gómez",
+          habilitado: false,
+          fecha_desactivacion: "2026-08-18T15:00:00Z",
+          motivo_desactivacion: "Cuenta duplicada",
+        },
+      });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Laura Gómez")).toBeInTheDocument());
+      await user.click(screen.getByRole("button", { name: "Ver perfil de Laura Gómez" }));
+
+      expect(await screen.findByText("Cuenta desactivada")).toBeInTheDocument();
+      expect(screen.getByText("“Cuenta duplicada”")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Reactivar cuenta" })).toBeInTheDocument();
+    });
+
+    it("muestra un aviso si no se puede cargar el perfil", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/admin/usuarios/")) return Promise.reject(new Error("Network Error"));
+        if (url.includes("/admin/vista-residentes")) return Promise.resolve({ data: { items: [residente], total: 1 } });
+        if (url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+          return Promise.resolve({ data: { items: [], total: 0 } });
+        }
+        return Promise.resolve({ data: [] });
+      });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+      await user.click(screen.getByRole("button", { name: "Ver perfil de Juan Pérez" }));
+
+      expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+    });
   });
 });

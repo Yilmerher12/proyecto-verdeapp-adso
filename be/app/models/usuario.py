@@ -42,6 +42,17 @@ class Usuario(Base):
     #           por accidente al agregar esta columna.
     habilitado = Column(Boolean, nullable=False, default=True, server_default="true")
 
+    # ¿Qué? Cuándo y por qué el Admin del Sistema desactivó la cuenta.
+    # ¿Para qué? Antes solo se guardaba "habilitado = false", sin ningún
+    #           rastro de la fecha ni de la razón — al mirar una cuenta
+    #           desactivada no había forma de saber si fue por mudanza,
+    #           cuenta duplicada o un abuso. El motivo es opcional.
+    # ¿Impacto? Ambos quedan en NULL mientras la cuenta esté activa: al
+    #           reactivarla se borran, para que un dato viejo no se
+    #           confunda con una desactivación nueva.
+    fecha_desactivacion = Column(DateTime(timezone=True), nullable=True)
+    motivo_desactivacion = Column(String(200), nullable=True)
+
     # ¿Qué? Idioma preferido de la interfaz para este usuario ("es" o "en").
     # ¿Para qué? Que la preferencia de idioma siga a la persona entre dispositivos,
     #           no solo al navegador donde la eligió (eso lo cubre localStorage).

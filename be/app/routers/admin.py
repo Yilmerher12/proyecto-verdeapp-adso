@@ -13,7 +13,8 @@ from sqlalchemy import select, text
 from app.dependencies import get_db, require_role
 from app.models.usuario import Usuario
 from app.models.rol import RolId
-from app.schemas.admin import CambiarHabilitadoRequest
+from app.schemas.admin import CambiarHabilitadoRequest, PerfilUsuarioAdminResponse
+from app.services import admin_usuarios_service
 
 router = APIRouter(
     prefix="/api/v1/admin",
@@ -94,9 +95,36 @@ def cambiar_habilitado(
     if not usuario_objetivo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado.")
 
-    usuario_objetivo.habilitado = body.habilitado
-    db.commit()
-    return {"correo_electronico": correo_electronico, "habilitado": body.habilitado}
+    admin_usuarios_service.cambiar_habilitado(db, usuario_objetivo, body.habilitado, body.motivo)
+    return {
+        "correo_electronico": correo_electronico,
+        "habilitado": body.habilitado,
+        "fecha_desactivacion": usuario_objetivo.fecha_desactivacion,
+        "motivo_desactivacion": usuario_objetivo.motivo_desactivacion,
+    }
+
+
+@router.get(
+    "/usuarios/{correo_electronico}",
+    response_model=PerfilUsuarioAdminResponse,
+    summary="Ver el perfil (solo lectura) de cualquier usuario",
+)
+def obtener_perfil_usuario(
+    correo_electronico: str,
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+):
+    """
+    ¿Qué? Perfil de solo lectura de cualquier usuario, sin importar su rol.
+    ¿Para qué? El Admin del Sistema abre el perfil desde una fila de su
+              tabla de usuarios (panel lateral). Usa el correo como
+              identificador por la misma razón que el PATCH de habilitado.
+    ¿Impacto? No modifica nada. Nunca devuelve la contraseña ni tokens.
+    """
+    perfil = admin_usuarios_service.obtener_perfil_usuario(db, correo_electronico)
+    if not perfil:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado.")
+    return perfil
 
 
 # ¿Qué? Columnas por las que se puede ordenar el listado de Residentes,
@@ -116,6 +144,7 @@ def obtener_vista_residentes(
     search: Optional[str] = Query(None, description="Busca por nombre, apellido o correo"),
     localidad_id: Optional[int] = Query(None),
     conjunto_id: Optional[UUID] = Query(None),
+    habilitado: Optional[bool] = Query(None, description="true = solo activos, false = solo inactivos"),
     order_by: Optional[str] = Query(None, description="correo, nombre, conjunto, unidad o estado"),
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
@@ -140,6 +169,9 @@ def obtener_vista_residentes(
     if conjunto_id:
         condiciones.append('"id_conjunto_residencial" = :conjunto_id')
         params["conjunto_id"] = str(conjunto_id)
+    if habilitado is not None:
+        condiciones.append('"Habilitado" = :habilitado')
+        params["habilitado"] = habilitado
     where_sql = f"WHERE {' AND '.join(condiciones)}" if condiciones else ""
 
     total = db.execute(
@@ -170,6 +202,7 @@ def obtener_sp_recicladores(
     search: Optional[str] = Query(None, description="Busca por nombre, apellido o correo"),
     localidad_id: Optional[int] = Query(None),
     conjunto_id: Optional[UUID] = Query(None, description="Filtra por conjunto autorizado activo"),
+    habilitado: Optional[bool] = Query(None, description="true = solo activos, false = solo inactivos"),
     order_by: Optional[str] = Query(None, description="correo, nombre, asociacion o estado"),
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
@@ -186,6 +219,7 @@ def obtener_sp_recicladores(
         "search": search,
         "localidad_id": localidad_id,
         "conjunto_id": str(conjunto_id) if conjunto_id else None,
+        "habilitado": habilitado,
         "order_by": order_by_validado,
         "order_dir": order_dir_validado,
         "limit": min(limit, MAX_LIMIT),
@@ -202,6 +236,7 @@ def obtener_sp_recicladores(
                    OR rec.apellidos ILIKE '%' || :search || '%'
                    OR u.correo_electronico ILIKE '%' || :search || '%')
               AND (:localidad_id IS NULL OR rec.localidad_id = :localidad_id)
+              AND (CAST(:habilitado AS BOOLEAN) IS NULL OR u.habilitado = CAST(:habilitado AS BOOLEAN))
               AND (:conjunto_id IS NULL OR EXISTS (
                     SELECT 1 FROM recicladores_conjuntos rc2
                     WHERE rc2.id_reciclador = rec.id_reciclador
@@ -213,7 +248,7 @@ def obtener_sp_recicladores(
     ).scalar_one()
 
     # ¿Qué? Llamada con parámetros nombrados (p_x => :x) en vez de
-    #       posicionales — con 7 parámetros ahora, uno posicional mal
+    #       posicionales — con 8 parámetros ahora, uno posicional mal
     #       ordenado pasaría desapercibido (todos son TEXT/INT/UUID).
     result = db.execute(
         text(
@@ -221,7 +256,8 @@ def obtener_sp_recicladores(
             "p_search => :search, p_localidad_id => :localidad_id, "
             "p_conjunto_id => CAST(:conjunto_id AS UUID), "
             "p_order_by => :order_by, p_order_dir => :order_dir, "
-            "p_limit => :limit, p_offset => :offset)"
+            "p_limit => :limit, p_offset => :offset, "
+            "p_habilitado => CAST(:habilitado AS BOOLEAN))"
         ),
         params,
     )
@@ -245,6 +281,7 @@ def obtener_administradores_conjunto(
     search: Optional[str] = Query(None, description="Busca por nombre, apellido o correo"),
     localidad_id: Optional[int] = Query(None, description="Filtra por localidad de alguno de sus conjuntos"),
     conjunto_id: Optional[UUID] = Query(None, description="Filtra por uno de sus conjuntos asignados"),
+    habilitado: Optional[bool] = Query(None, description="true = solo activos, false = solo inactivos"),
     order_by: Optional[str] = Query(None, description="correo, nombre, telefono, conjuntos o estado"),
     order_dir: Optional[str] = Query(None, description="asc o desc"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT),
@@ -268,10 +305,14 @@ def obtener_administradores_conjunto(
         "search": f"%{search}%" if search else None,
         "localidad_id": localidad_id,
         "conjunto_id": str(conjunto_id) if conjunto_id else None,
+        "habilitado": habilitado,
         "limit": min(limit, MAX_LIMIT),
         "offset": offset,
     }
 
+    filtro_habilitado = """
+        AND (CAST(:habilitado AS BOOLEAN) IS NULL OR u.habilitado = CAST(:habilitado AS BOOLEAN))
+    """
     filtro_localidad = """
         AND (:localidad_id IS NULL OR EXISTS (
             SELECT 1 FROM administradores_conjuntos aca2
@@ -304,7 +345,7 @@ def obtener_administradores_conjunto(
         text(f"""
             SELECT COUNT(*) FROM administradores_conjunto ac
             JOIN usuarios u ON u.id_usuario = ac.id_usuario
-            WHERE 1=1 {filtro_search} {filtro_localidad} {filtro_conjunto}
+            WHERE 1=1 {filtro_search} {filtro_habilitado} {filtro_localidad} {filtro_conjunto}
         """),
         params,
     ).scalar_one()
@@ -317,6 +358,8 @@ def obtener_administradores_conjunto(
                 ac.apellidos AS "Apellido",
                 ac.numero_telefonico AS "Teléfono",
                 u.habilitado AS "Habilitado",
+                u.fecha_desactivacion AS "Fecha_Desactivacion",
+                u.motivo_desactivacion AS "Motivo_Desactivacion",
                 COALESCE(STRING_AGG(DISTINCT cr.nombre_conjunto, ', '), '—') AS "Conjuntos"
             FROM administradores_conjunto ac
             JOIN usuarios u ON u.id_usuario = ac.id_usuario
@@ -324,8 +367,9 @@ def obtener_administradores_conjunto(
                 ON aca.id_administrador = ac.id_administrador AND aca.fecha_desvinculacion IS NULL
             LEFT JOIN conjuntos_residenciales cr
                 ON cr.id_conjunto_residencial = aca.id_conjunto_residencial
-            WHERE 1=1 {filtro_search} {filtro_localidad} {filtro_conjunto}
-            GROUP BY u.correo_electronico, ac.nombre, ac.apellidos, ac.numero_telefonico, u.habilitado
+            WHERE 1=1 {filtro_search} {filtro_habilitado} {filtro_localidad} {filtro_conjunto}
+            GROUP BY u.correo_electronico, ac.nombre, ac.apellidos, ac.numero_telefonico, u.habilitado,
+                     u.fecha_desactivacion, u.motivo_desactivacion
             ORDER BY {columna_sql} {direccion_sql}
             LIMIT :limit OFFSET :offset
         """),

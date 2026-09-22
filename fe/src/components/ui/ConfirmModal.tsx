@@ -12,6 +12,7 @@
  *           en toda la app — si el diseño cambia, se cambia aquí una vez.
  */
 
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
@@ -27,6 +28,9 @@ interface ConfirmModalProps {
   variant: "warning" | "danger" | "primary";
   title: string;
   description: string;
+  /** ¿Qué? Contenido extra opcional entre la descripción y los botones (ej: un
+   *        campo de texto para el motivo). Sin él, la ventana se ve exactamente igual. */
+  children?: ReactNode;
   confirmLabel: string;
   /** ¿Qué? Texto del botón mientras isConfirming=true. Por defecto, el mismo confirmLabel. */
   confirmingLabel?: string;
@@ -66,6 +70,7 @@ export function ConfirmModal({
   variant,
   title,
   description,
+  children,
   confirmLabel,
   confirmingLabel,
   isConfirming = false,
@@ -86,7 +91,8 @@ export function ConfirmModal({
           <Icon className={`h-6 w-6 ${estilo.icono}`} />
         </div>
         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{title}</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{description}</p>
+        <p className={`text-sm text-gray-500 dark:text-gray-400 ${children ? "mb-4" : "mb-6"}`}>{description}</p>
+        {children && <div className="mb-6 text-left">{children}</div>}
         {error && (
           <div className="mb-4 text-left">
             <Alert type="error" message={error} onClose={onDismissError} />
