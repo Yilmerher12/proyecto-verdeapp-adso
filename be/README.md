@@ -1071,9 +1071,17 @@ async def send_verification_email(email: str, token: str) -> None:
         await asyncio.to_thread(_send_email_sync, params)
         return
 
-    # 3. Sin backend — mostrar enlace en los logs de uvicorn
-    logger.info("📧 ENLACE DE VERIFICACIÓN — Para: %s — Enlace: %s", email, verification_url)
+    # 3. Sin backend (o si el envío falla) — mostrar el enlace en los logs de
+    #    uvicorn, pero SOLO con ENVIRONMENT=development
+    if settings.ENVIRONMENT == "development":
+        logger.info("📧 ENLACE — Para: %s — Enlace: %s", email, verification_url)
 ```
+
+> **Simplificado.** En el código real, este bloque vive una sola vez en `_enviar()` y
+> lo usan las 4 funciones `send_*_email` (issue #309). El enlace lleva un token de un
+> solo uso: fuera de desarrollo, escribirlo en el log le permitiría a cualquiera que lea
+> los logs restablecer la contraseña de otra persona. En `production` solo queda
+> "falló el envío a `ye***@gmail.com`".
 
 > **¿Por qué `asyncio.to_thread()`?**
 > FastAPI es asíncrono (async). Si llamamos una función síncrona bloqueante (como el SDK
@@ -1118,9 +1126,9 @@ import logging
 import json
 from datetime import datetime, timezone
 
-audit_logger = logging.getLogger("security.audit")
+audit_logger = logging.getLogger("verdeapp.audit")
 
-def _redactar_correo(correo: str) -> str:
+def redactar_correo(correo: str) -> str:
     # "residente@correo.com" → "re***@correo.com" — deja lo suficiente para
     # diagnosticar sin exponer el correo completo si el log se filtra
     usuario, _, dominio = correo.partition("@")
@@ -1130,7 +1138,7 @@ def log_login_fallido(correo: str, motivo: str) -> None:
     audit_logger.warning(json.dumps({
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "event": "login_failed",
-        "email": _redactar_correo(correo),
+        "email": redactar_correo(correo),
         "reason": motivo,   # "credenciales_invalidas", "cuenta_no_verificada" o "cuenta_bloqueada"
     }))
     # NUNCA un "reason" distinto para "correo no existe" vs "contraseña incorrecta"
@@ -1148,6 +1156,13 @@ def log_acceso_denegado(correo: str, endpoint: str, motivo: str) -> None: ...
 > específica. La redacción parcial (`re***@correo.com`) es el punto medio: suficiente
 > para correlacionar eventos, insuficiente para identificar a la persona con certeza.
 > Esto implementa **OWASP A09 — Security Logging Failures** (ver `docs/conceptos/owasp-top-10.md`).
+
+> **Dónde se ven estos eventos:** en la consola de uvicorn, gracias a
+> `logging.basicConfig(level=logging.INFO)` en `app/main.py` (issue #309). Antes de eso,
+> Python descartaba en silencio todo `logger.info()` de la app, así que ningún evento
+> de auditoría llegaba a ningún lado. `log_acceso_denegado` se llama desde
+> `require_role()` y `require_admin_conjunto()` (`app/dependencies.py`) cada vez que
+> niegan un acceso con 403.
 
 ---
 

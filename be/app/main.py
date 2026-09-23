@@ -1,3 +1,5 @@
+import logging
+import sys
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -41,6 +43,20 @@ from app.routers import puntos_acopio
 #           development/testing (el valor por defecto) siguen disponibles
 #           igual que antes.
 _es_produccion = settings.ENVIRONMENT == "production"
+
+# ¿Qué? Issue #309 (CN-012): configura el logging raíz de Python en nivel INFO.
+# ¿Para qué? Sin esto, el logger raíz queda en WARNING y todo logger.info() de
+#           la app se descartaba en silencio — incluidos los eventos de
+#           seguridad de utils/audit_log.py (login_success, login_failed,
+#           password_changed, access_denied), que nunca llegaban a ningún lado.
+# ¿Impacto? Uvicorn configura sus propios loggers aparte (sin propagar al
+#           raíz), así que no se duplican sus líneas de acceso.
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stdout,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+
 app = FastAPI(
     title="VerdeApp API",
     docs_url=None if _es_produccion else "/docs",

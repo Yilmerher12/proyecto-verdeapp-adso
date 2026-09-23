@@ -21,6 +21,7 @@ from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.rol import RolId
 from app.models.token_revocado import TokenRevocado
 from app.models.usuario import Usuario
+from app.utils.audit_log import log_acceso_denegado
 from app.utils.security import decode_token
 
 # ¿Qué? auto_error=False: si no llega header "Authorization", HTTPBearer
@@ -214,8 +215,15 @@ def require_role(rol_requerido: RolId, mensaje: str | None = None) -> Callable[.
         mensaje: Detalle del 403 si el rol no coincide. Por defecto, un
                 mensaje genérico que menciona el rol exigido.
     """
-    def _verificar(current_user: Usuario = Depends(get_current_user)) -> Usuario:
+    def _verificar(request: Request, current_user: Usuario = Depends(get_current_user)) -> Usuario:
         if current_user.id_rol != rol_requerido:
+            # ¿Qué? Issue #309 (CN-012): deja rastro de quién intentó entrar
+            #       a una ruta de otro rol. log_acceso_denegado existía desde
+            #       el principio en audit_log.py, pero nadie la llamaba.
+            # ¿Para qué? Un Residente probando rutas de /admin una por una es
+            #           justo el tipo de señal que un registro de auditoría
+            #           debe mostrar.
+            log_acceso_denegado(current_user.correo_electronico, request.url.path, f"requiere_{rol_requerido.name}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=mensaje or f"Este recurso requiere el rol {rol_requerido.name}.",
@@ -246,10 +254,13 @@ def require_admin_conjunto(mensaje: str | None = None) -> Callable[..., Administ
         mensaje: Detalle del 403 si el usuario no es Admin de Conjunto.
     """
     def _verificar(
+        request: Request,
         current_user: Usuario = Depends(get_current_user),
         db: Session = Depends(get_db),
     ) -> AdministradorConjunto:
         if current_user.id_rol != RolId.ADMIN_CONJUNTO:
+            # ¿Qué? Mismo registro de auditoría que en require_role().
+            log_acceso_denegado(current_user.correo_electronico, request.url.path, "requiere_ADMIN_CONJUNTO")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=mensaje or "Solo un Administrador de Conjunto puede acceder a este recurso.",

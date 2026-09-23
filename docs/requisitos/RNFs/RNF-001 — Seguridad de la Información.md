@@ -53,7 +53,7 @@ Una auditoría completa contra el OWASP Top 10 (documentada en `docs/conceptos/o
 - **Rate limiting realmente conectado**: existía el límite de intentos de login/registro (`slowapi`) pero nunca se había registrado con FastAPI — superarlo no daba una respuesta 429 real. Corregido y verificado contra el servidor real.
 - **Cabeceras de seguridad HTTP**: no existía ninguna (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`). Agregadas a toda respuesta.
 - **Mitigación de ataque de temporización en el login**: corregido con un hash señuelo (`DUMMY_PASSWORD_HASH`) para que "usuario no existe" y "contraseña incorrecta" tarden lo mismo.
-- **Registro de auditoría de seguridad**: no existía ningún log de eventos de seguridad (logins fallidos, cambios de contraseña). Se creó `be/app/utils/audit_log.py` y se conectó en login y cambio de contraseña.
+- **Registro de auditoría de seguridad**: no existía ningún log de eventos de seguridad (logins fallidos, cambios de contraseña). Se creó `be/app/utils/audit_log.py` y se conectó en login y cambio de contraseña. Issue #309: hasta entonces esos eventos se descartaban en silencio porque el logging de Python nunca se configuraba; ahora salen en la consola de uvicorn (`basicConfig` en `main.py`), también se registran los accesos denegados por rol, y los enlaces con token de los correos ya no se escriben en el log fuera de desarrollo.
 
 > Ver `docs/requisitos/RFs/RF-001_validar_usuario.md` — el límite de intentos por CORREO específico (15 min de bloqueo) ya se implementó también (columnas `intentos_fallidos`/`bloqueado_hasta` en `usuarios`); el rate limiting de este punto es por dirección IP, un control distinto y complementario.
 
