@@ -99,7 +99,17 @@ class TestConsultarYAceptar:
             },
         )
         assert aceptar.status_code == 201
-        assert "access_token" in aceptar.json()
+        # ¿Qué? Issue #311 (CN-028): la respuesta ya no trae tokens en el
+        #       cuerpo (RNF-001.9) — la persona inicia sesión normal después.
+        assert "access_token" not in aceptar.json()
+        assert "refresh_token" not in aceptar.json()
+        assert not aceptar.cookies.get("access_token")
+
+        login = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": correo, "password": "ClaveFuerte123"},
+        )
+        assert login.status_code == 200
 
         # El token ya usado no debe servir dos veces.
         reintento = client.post(

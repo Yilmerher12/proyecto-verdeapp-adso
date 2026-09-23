@@ -43,11 +43,13 @@
 - **cuando** la completo,
 - **entonces** debo poder ingresar mis datos personales y definir mi contraseña, con las mismas reglas de fortaleza que el registro normal.
 
-### CA-019.3 — Cuenta creada y sesión iniciada
+### CA-019.3 — Cuenta creada, lista para iniciar sesión
 
 - **Dado que** completé el formulario correctamente,
 - **cuando** confirmo,
-- **entonces** mi cuenta debe crearse con el rol Admin de Conjunto, ya vinculada a los conjuntos indicados, y debo quedar con sesión iniciada de inmediato.
+- **entonces** mi cuenta debe crearse con el rol Admin de Conjunto, ya vinculada a los conjuntos indicados, y el sistema me confirma que ya puedo iniciar sesión con la contraseña que definí.
+
+> **Corrección (issue #311, 2026-09-23):** antes este criterio decía "debo quedar con sesión iniciada de inmediato". El endpoint devolvía los tokens en el cuerpo JSON para eso, pero la pantalla nunca los usó (siempre mostró "Ir a iniciar sesión"). Además, devolverlos así los dejaba al alcance de JavaScript, contra RNF-001.9 (hallazgo CN-028 del informe de seguridad Cyber Neo). Se quitaron, y el criterio ahora describe el comportamiento real.
 
 ### CA-019.4 — Enlace inválido o ya usado
 
