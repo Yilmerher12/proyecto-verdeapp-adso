@@ -106,6 +106,8 @@ Una vez encendido, la aplicación está disponible en:
 | Bandeja de correos (Mailpit) | http://localhost:8025 |
 | Base de datos | `localhost:5433` |
 
+> 🔒 Estos puertos solo aceptan conexiones desde tu propio computador (`docker-compose.yml` los publica en `127.0.0.1`). Nadie más en tu misma red wifi puede entrar a tu base de datos ni a tu bandeja de Mailpit. Si alguna vez necesitas abrir la app desde tu celular en la misma red, eso se hace a propósito y por separado; no es el comportamiento por defecto.
+
 Para apagar todo cuando termines:
 
 ```bash
