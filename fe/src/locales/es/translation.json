@@ -1054,7 +1054,9 @@
       "titleRequired": "El título es obligatorio.",
       "titleTooShort": "El título debe tener al menos 5 caracteres.",
       "bodyRequired": "El contenido es obligatorio.",
-      "bodyTooShort": "El contenido debe tener al menos 20 caracteres."
+      "bodyTooShort": "El contenido debe tener al menos 20 caracteres.",
+      "videoNotYoutube": "El video debe ser un enlace de YouTube que empiece por https:// (por ejemplo https://youtu.be/...).",
+      "guideNotHttps": "El enlace de la guía debe empezar por https://."
     },
     "deleteError": "No se pudo eliminar. Intenta de nuevo.",
     "newSection": {

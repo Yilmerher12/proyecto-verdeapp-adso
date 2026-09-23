@@ -16,12 +16,15 @@ interface GuiaApoyoFieldProps {
   label: string;
   value: string;
   onChange: (url: string) => void;
+  /** ¿Qué? Issue #314: error del link pegado a mano (no https://), lo decide la página. */
+  errorEnlace?: string;
+  onBlurEnlace?: () => void;
 }
 
 const TIPOS_PERMITIDOS = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024;
 
-export function GuiaApoyoField({ label, value, onChange }: GuiaApoyoFieldProps) {
+export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnlace }: GuiaApoyoFieldProps) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(false);
@@ -104,13 +107,28 @@ export function GuiaApoyoField({ label, value, onChange }: GuiaApoyoFieldProps) 
       </div>
 
       {modo === "link" ? (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="https://..."
-          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-        />
+        <>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlurEnlace}
+            placeholder="https://..."
+            aria-label={label}
+            aria-invalid={!!errorEnlace}
+            aria-describedby={errorEnlace ? "guia-apoyo-enlace-error" : undefined}
+            className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1f4029] dark:text-white ${
+              errorEnlace
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-[#2a4d34]"
+            }`}
+          />
+          {errorEnlace && (
+            <p id="guia-apoyo-enlace-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+              {errorEnlace}
+            </p>
+          )}
+        </>
       ) : value ? (
         <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-[#2a4d34] dark:bg-[#1f4029]">
           <FileText className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />

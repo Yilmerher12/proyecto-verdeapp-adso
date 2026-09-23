@@ -60,6 +60,9 @@ const FORM_VACIO: ContenidoEducativoPayload = {
 };
 
 const NUEVA_CATEGORIA = "__nueva__";
+// ¿Qué? Mismos formatos que reconoce YoutubeEmbed, pero exigiendo https://
+//       como el backend (be/app/utils/enlaces.py, issue #314).
+const REGEX_VIDEO_YOUTUBE = /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[\w-]{11}/;
 
 // ¿Qué? Cuántas auditorías "de todos los tiempos" se piden para cruzar
 //       "a qué conjuntos se recomendó cada módulo" en la tabla y en el
@@ -382,8 +385,20 @@ export function AdminContenidoEducativoPage() {
     }
   };
 
-  const validarCampo = (campo: "categoria" | "titulo_tema" | "cuerpo_texto") => {
+  // ¿Qué? Issue #314: mismas reglas que be/app/utils/enlaces.py — el video
+  //       solo de YouTube, la guía solo https:// o un archivo subido.
+  // ¿Para qué? Sin esto, el backend respondía 422 y el admin veía un aviso
+  //           genérico en vez del error pegado al campo que falló.
+  const errorDeEnlace = (campo: "url_video" | "url_guia"): string => {
+    const valor = (form[campo] ?? "").trim();
+    if (!valor) return "";
+    if (campo === "url_video") return REGEX_VIDEO_YOUTUBE.test(valor) ? "" : t(`${p}.validation.videoNotYoutube`);
+    return /^https:\/\/[^/\s]+/.test(valor) || valor.startsWith("/uploads/") ? "" : t(`${p}.validation.guideNotHttps`);
+  };
+
+  const validarCampo = (campo: "categoria" | "titulo_tema" | "cuerpo_texto" | "url_video" | "url_guia") => {
     let mensaje = "";
+    if (campo === "url_video" || campo === "url_guia") mensaje = errorDeEnlace(campo);
     if (campo === "categoria" && !categoriaEfectiva) mensaje = t(`${p}.validation.categoryRequired`);
     if (campo === "titulo_tema") {
       if (!form.titulo_tema.trim()) mensaje = t(`${p}.validation.titleRequired`);
@@ -406,6 +421,10 @@ export function AdminContenidoEducativoPage() {
     else if (form.titulo_tema.trim().length < 5) errores.titulo_tema = t(`${p}.validation.titleTooShort`);
     if (!form.cuerpo_texto.trim()) errores.cuerpo_texto = t(`${p}.validation.bodyRequired`);
     else if (form.cuerpo_texto.trim().length < 20) errores.cuerpo_texto = t(`${p}.validation.bodyTooShort`);
+    for (const campo of ["url_video", "url_guia"] as const) {
+      const mensaje = errorDeEnlace(campo);
+      if (mensaje) errores[campo] = mensaje;
+    }
     if (Object.keys(errores).length > 0) {
       setFieldErrors(errores);
       return;
@@ -480,7 +499,7 @@ export function AdminContenidoEducativoPage() {
     });
   };
 
-  const idVideoReconocido = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/.test(form.url_video || "");
+  const idVideoReconocido = REGEX_VIDEO_YOUTUBE.test(form.url_video || "");
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 p-6">
@@ -1193,17 +1212,34 @@ export function AdminContenidoEducativoPage() {
                   id="contenido-url-video"
                   value={form.url_video ?? ""}
                   onChange={(e) => actualizarCampo("url_video", e.target.value)}
+                  onBlur={() => validarCampo("url_video")}
                   placeholder="https://www.youtube.com/watch?v=..."
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  aria-invalid={!!fieldErrors.url_video}
+                  aria-describedby={fieldErrors.url_video ? "contenido-url-video-error" : undefined}
+                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1f4029] dark:text-white ${
+                    fieldErrors.url_video
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                      : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-[#2a4d34]"
+                  }`}
                 />
-                {form.url_video?.trim() && (
+                {fieldErrors.url_video ? (
+                  <p id="contenido-url-video-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                    {fieldErrors.url_video}
+                  </p>
+                ) : form.url_video?.trim() && (
                   <p className={`mt-1 text-xs font-semibold ${idVideoReconocido ? "text-accent-600 dark:text-accent-400" : "text-amber-600 dark:text-amber-400"}`}>
                     {idVideoReconocido ? t(`${p}.fields.videoRecognized`) : t(`${p}.fields.videoNotRecognized`)}
                   </p>
                 )}
               </div>
 
-              <GuiaApoyoField label={t(`${p}.fields.guideLink`)} value={form.url_guia ?? ""} onChange={(url) => actualizarCampo("url_guia", url)} />
+              <GuiaApoyoField
+                label={t(`${p}.fields.guideLink`)}
+                value={form.url_guia ?? ""}
+                onChange={(url) => actualizarCampo("url_guia", url)}
+                errorEnlace={fieldErrors.url_guia}
+                onBlurEnlace={() => validarCampo("url_guia")}
+              />
 
               <div className="flex gap-2 pt-2">
                 <button
