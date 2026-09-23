@@ -11,7 +11,7 @@ Descripción: Endpoints del flujo de invitación, desvinculación y reasignació
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
@@ -30,6 +30,7 @@ from app.schemas.desvinculacion import (
 )
 from app.schemas.user import MessageResponse, TokenResponse
 from app.services import admin_conjunto_service, desvinculacion_service
+from app.utils.limiter import limiter
 from app.utils.security import create_access_token, create_refresh_token
 
 router = APIRouter(prefix="/api/v1/admin-conjunto", tags=["admin-conjunto"])
@@ -68,7 +69,11 @@ def consultar_invitacion(token: str, db: Session = Depends(get_db)):
 
 
 @router.post("/aceptar", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+# ¿Qué? Issue #310 (CN-013): ruta pública — sin límite se podían probar
+#       tokens de invitación al azar sin freno.
+@limiter.limit("5/minute")
 def aceptar_invitacion(
+    request: Request,
     datos: AceptarInvitacionAdminConjuntoRequest,
     db: Session = Depends(get_db),
 ):

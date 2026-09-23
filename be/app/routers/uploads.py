@@ -12,8 +12,9 @@ Descripción: Endpoint genérico para subir el archivo adjunto de un
 """
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, status
 from app.dependencies import get_current_user
+from app.utils.limiter import limiter
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.utils.imagenes import guardar_imagen_subida
@@ -32,7 +33,12 @@ ROLES_PERMITIDOS = {RolId.ADMIN_CONJUNTO, RolId.ADMIN_SISTEMA}
 
 
 @router.post("/adjunto", status_code=status.HTTP_201_CREATED)
+# ¿Qué? Issue #310 (CN-013): sin límite, una sesión de admin podía subir
+#       archivos en bucle hasta llenar el disco del servidor. 30/minuto no
+#       estorba a quien sube varios adjuntos seguidos para un comunicado.
+@limiter.limit("30/minute")
 async def subir_adjunto(
+    request: Request,
     archivo: UploadFile,
     permitir_documentos: bool = Query(
         False,
