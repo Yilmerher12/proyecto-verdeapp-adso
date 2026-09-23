@@ -156,6 +156,12 @@ def get_current_user(
 
     if not user:
         raise credentials_exception
+    # ¿Qué? Issue #308 (CN-010): el token se emitió antes del último cambio
+    #       o restablecimiento de contraseña (ver Usuario.version_sesion).
+    # ¿Impacto? Sin esto, cambiar la contraseña no sacaba a nadie: un token
+    #           robado seguía funcionando hasta su expiración natural.
+    if payload.get("ver", 0) != user.version_sesion:
+        raise credentials_exception
     # ¿Qué? Verificar que la cuenta esté activa.
     # ¿Para qué? Un admin podría desactivar una cuenta; si el usuario tiene un token vigente,
     #            esta verificación le niega el acceso.

@@ -168,6 +168,7 @@ def logout(
 
 @router.post("/change-password", response_model=MessageResponse)
 def change_password(
+    response: Response,
     password_data: ChangePasswordRequest,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -184,7 +185,18 @@ def change_password(
         )
 
     current_user.password = hash_password(password_data.new_password)
+    # ¿Qué? Issue #308 (CN-010): subir la versión invalida TODAS las
+    #       sesiones abiertas de la cuenta, incluida la actual...
+    current_user.version_sesion += 1
     db.commit()
+    # ¿Qué? ...por eso quien hizo el cambio recibe cookies nuevas con la
+    #       versión ya actualizada.
+    # ¿Para qué? Sin esto, su siguiente petición daría 401 y axios.ts lo
+    #           mandaría al login con "tu sesión expiró", justo después de
+    #           ver "contraseña actualizada".
+    # ¿Impacto? Se cierran las demás sesiones (otro navegador, otro
+    #           dispositivo); la de quien cambió la contraseña continúa.
+    _fijar_cookies_de_sesion(response, auth_service.emitir_tokens(db, current_user))
 
     log_password_cambiada(current_user.correo_electronico)
     return MessageResponse(message="Contraseña actualizada exitosamente")

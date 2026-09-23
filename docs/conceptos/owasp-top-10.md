@@ -258,6 +258,12 @@ Las dos ramas ahora tardan lo mismo — no queda ninguna señal de temporizació
 
 Otro hueco de sesión encontrado: "cerrar sesión" solo borraba el token del navegador (`sessionStorage`) — el servidor nunca se enteraba, así que ese mismo `access_token`, si alguien lo hubiera copiado antes, seguía siendo válido hasta expirar solo (15 minutos). Se agregó un `jti` único a cada token y una tabla `tokens_revocados`: al cerrar sesión (`POST /api/v1/auth/logout`), el `jti` del access y del refresh token se guarda ahí, y `get_current_user`/`refresh_access_token` los rechazan con 401 aunque no hayan expirado. Verificado con curl reutilizando el token exacto de una sesión recién cerrada.
 
+### Agregado después (2026-09-23): cambiar la contraseña cierra las demás sesiones (issue #308)
+
+El informe de seguridad Cyber Neo (hallazgo CN-010) encontró el siguiente hueco: cambiar o restablecer la contraseña solo guardaba el hash nuevo. Un token robado seguía sirviendo hasta 7 días (lo que dura el refresh token), aunque la víctima ya hubiera cambiado su contraseña, que es justo lo primero que hace alguien que sospecha que le entraron a la cuenta. Además, `/refresh` entregaba un par nuevo sin revocar el refresh token usado, así que un mismo refresh token se podía reutilizar sin límite.
+
+Se agregó `usuarios.version_sesion`, un contador que sube con cada cambio o restablecimiento de contraseña. Cada JWT lleva la versión vigente (claim `ver`), y `get_current_user`/`refresh_access_token` rechazan los que no coinciden. `/change-password` le entrega cookies nuevas a quien hizo el cambio: se cierran las otras sesiones, pero no la suya. Y `/refresh` ahora rota: el refresh token usado pasa a `tokens_revocados` (ver RQF-019, RN-005 y RN-006).
+
 ---
 
 ## A08 — Software and Data Integrity Failures
