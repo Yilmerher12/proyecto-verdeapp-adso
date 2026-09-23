@@ -8,8 +8,14 @@ un error claro indicando cuál es el problema.
 lo que podría causar errores silenciosos o difíciles de depurar en tiempo de ejecución.
 """
 
+from typing import Literal
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# ¿Qué? Palabras que aparecen en claves de ejemplo o de relleno, nunca en una
+#       clave generada al azar (ver validate_secret_key_strength).
+_PALABRAS_DE_CLAVE_DE_EJEMPLO = ("reemplaza", "cambia", "change", "example", "ejemplo")
 
 
 class Settings(BaseSettings):
@@ -54,19 +60,35 @@ class Settings(BaseSettings):
             El valor válido si supera la validación.
 
         Raises:
-            ValueError: Si la clave tiene menos de 32 caracteres.
+            ValueError: Si la clave tiene menos de 32 caracteres o es el
+                        texto de ejemplo de be/.env.example.
         """
         if len(v) < 32:  # noqa: PLR2004
             raise ValueError(
                 "SECRET_KEY debe tener al menos 32 caracteres. "
                 "Genera una con: openssl rand -hex 32"
             )
+        # ¿Qué? Issue #315 (CN-006): el valor de ejemplo de be/.env.example
+        #       ("reemplaza-esto-por-tu-propia-clave") tiene 34 caracteres,
+        #       así que pasaba la regla de longitud de arriba.
+        # ¿Para qué? Quien copiaba el .env.example sin cambiar la clave
+        #           arrancaba con una clave que está publicada en el repo —
+        #           cualquiera podía firmar tokens válidos para cualquier usuario.
+        # ¿Impacto? Una clave generada con openssl/secrets es hexadecimal y
+        #           nunca contiene estas palabras.
+        if any(palabra in v.lower() for palabra in _PALABRAS_DE_CLAVE_DE_EJEMPLO):
+            raise ValueError(
+                "SECRET_KEY sigue siendo el valor de ejemplo de .env.example. "
+                "Genera una propia con: openssl rand -hex 32"
+            )
         return v
 
     # ¿Qué? Algoritmo criptográfico para firmar JWT (HS256 = HMAC con SHA-256).
     # ¿Para qué? Definir cómo se firma el token — HS256 es simétrico (misma clave firma y verifica).
-    # ¿Impacto? Cambiar el algoritmo invalida todos los tokens existentes.
-    ALGORITHM: str = "HS256"
+    # ¿Impacto? Cambiar el algoritmo invalida todos los tokens existentes. Issue #315:
+    #           Literal hace que cualquier otro valor en el .env detenga el arranque,
+    #           en vez de firmar con un algoritmo que nadie revisó.
+    ALGORITHM: Literal["HS256"] = "HS256"
 
     # ¿Qué? Tiempo de vida del access token en minutos.
     # ¿Para qué? Limitar la ventana de tiempo en que un token robado es útil.
@@ -140,8 +162,11 @@ class Settings(BaseSettings):
     # ¿Impacto? OWASP A05 — Security Misconfiguration: exponer la documentación interactiva
     #           de la API en producción permite que cualquier persona explore todos los endpoints,
     #           schemas y modelos sin autenticación, facilitando el reconocimiento previo a un ataque.
-    #           Valores válidos: "development" | "production" | "testing"
-    ENVIRONMENT: str = "development"
+    #           Issue #315 (CN-005): antes era un texto libre y todo lo que no fuera
+    #           exactamente "production" ("prod", "Production") se trataba como
+    #           desarrollo — con /docs público y cookies sin "Secure". Con Literal,
+    #           cualquier otro valor detiene el arranque con un error claro.
+    ENVIRONMENT: Literal["development", "production"] = "development"
 
     # ¿Qué? Configuración del modelo Pydantic Settings.
     # ¿Para qué? Indicar que las variables se cargan desde el archivo .env en la carpeta be/.

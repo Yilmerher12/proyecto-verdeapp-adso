@@ -71,6 +71,15 @@ fe/coverage/
 .env
 *.env.local
 .env.*.local
+# Issue #315 (CN-018): variantes por entorno (.env.production, .env.staging...)
+# y archivos de claves/certificados — ninguno debe llegar al repositorio.
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+id_rsa*
 
 # Sí versionar los .env.example (plantillas sin datos reales)
 !.env.example
