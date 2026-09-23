@@ -21,11 +21,17 @@ function resolveKey(
   key: string,
   opts?: Record<string, unknown>,
 ): string {
+  // ¿Qué? Con opts.count, la clave real lleva sufijo de plural ("total_one" / "total_other"),
+  //       como resuelve i18next en español: 1 → _one, cualquier otro número → _other.
+  // ¿Para qué? Poder probar textos como "3 puntos" / "1 punto" sin i18next real.
+  const ultima = typeof opts?.count === "number" ? `_${opts.count === 1 ? "one" : "other"}` : "";
   const parts = key.split(".");
   let current: unknown = obj;
-  for (const part of parts) {
+  for (const [i, part] of parts.entries()) {
     if (typeof current !== "object" || current === null) return key;
-    current = (current as Record<string, unknown>)[part];
+    const hijos = current as Record<string, unknown>;
+    const sufijado = i === parts.length - 1 ? hijos[part + ultima] : undefined;
+    current = typeof hijos[part] === "string" ? hijos[part] : (sufijado ?? hijos[part]);
   }
   if (typeof current !== "string") return key;
   // ¿Qué? Sustituir interpolaciones como {{name}} con los valores de opts.

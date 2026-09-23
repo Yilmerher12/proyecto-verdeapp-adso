@@ -6,11 +6,20 @@ const API_BASE = `${API_BASE_URL}/api/v1/novedades`;
 
 export type AlcanceNovedad = "TODOS" | "RESIDENTES" | "RECICLADORES" | "ADMIN_CONJUNTO";
 
+export interface ConjuntoDestino {
+  id_conjunto_residencial: string;
+  nombre_conjunto: string;
+}
+
 export interface Novedad {
   id_novedad: string;
   alcance: AlcanceNovedad;
   texto: string;
   url_adjunto: string | null;
+  url_video: string | null;
+  // ¿Qué? Vacía = la novedad llega a todos los conjuntos del alcance; con
+  //       uno o varios, solo a esos (ver models/novedad.py en el backend).
+  conjuntos: ConjuntoDestino[];
   fecha_expiracion: string;
   created_at: string;
   editado: boolean;
@@ -21,12 +30,18 @@ export interface CrearNovedadPayload {
   alcance: AlcanceNovedad;
   texto: string;
   url_adjunto?: string | null;
+  url_video?: string | null;
+  // ¿Qué? Ids de los conjuntos elegidos; vacía o sin mandar = todos.
+  conjuntos?: string[];
   fecha_expiracion?: string | null;
 }
 
+// ¿Qué? A propósito sin alcance ni conjuntos — a quién llega
+//       una novedad se decide al publicarla (CA-034.2), no se edita después.
 export interface EditarNovedadPayload {
   texto: string;
   url_adjunto?: string | null;
+  url_video?: string | null;
   fecha_expiracion?: string | null;
 }
 
@@ -45,8 +60,29 @@ export interface PaginaDeNovedades {
 // ¿Para qué? Issue #227 — antes traía todo el historial de una sola vez;
 //           ahora se pide de a páginas (limit/offset), igual que ya hacen
 //           los listados de admin.py.
-export async function listarTodasLasNovedades(limit: number, offset: number): Promise<PaginaDeNovedades> {
-  const { data } = await axios.get(`${API_BASE}/todas`, { params: { limit, offset } });
+export interface FiltrosNovedades {
+  alcance?: AlcanceNovedad;
+  incluirArchivadas?: boolean;
+  search?: string;
+}
+
+// ¿Qué? Los filtros viajan al backend (no se aplican en el navegador):
+//       con la lista paginada, filtrar aquí solo revisaría las 8 filas de
+//       la página visible.
+export async function listarTodasLasNovedades(
+  limit: number,
+  offset: number,
+  filtros: FiltrosNovedades = {}
+): Promise<PaginaDeNovedades> {
+  const { data } = await axios.get(`${API_BASE}/todas`, {
+    params: {
+      limit,
+      offset,
+      alcance: filtros.alcance || undefined,
+      incluir_archivadas: filtros.incluirArchivadas ?? true,
+      search: filtros.search?.trim() || undefined,
+    },
+  });
   return data;
 }
 

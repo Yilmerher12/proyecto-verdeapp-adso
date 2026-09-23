@@ -116,6 +116,14 @@ erDiagram
         BOOLEAN activo
     }
 
+    PUNTOS_ACOPIO_COMENTARIOS {
+        UUID id_comentario PK
+        UUID id_punto_acopio FK
+        UUID id_autor FK
+        TEXT texto
+        TIMESTAMP created_at
+    }
+
     CONTENIDO_EDUCATIVO {
         UUID id_contenido PK
         VARCHAR modulo_categoria
@@ -204,10 +212,16 @@ erDiagram
         VARCHAR alcance
         TEXT texto
         VARCHAR url_adjunto
+        VARCHAR url_video
         TIMESTAMP fecha_expiracion
         TIMESTAMP created_at
         TIMESTAMP fecha_edicion
         TIMESTAMP fecha_archivado
+    }
+
+    NOVEDADES_CONJUNTOS {
+        UUID id_novedad PK,FK
+        UUID id_conjunto_residencial PK,FK
     }
 
     NOTIFICACIONES {
@@ -274,6 +288,8 @@ erDiagram
     USUARIOS ||--o{ INVITACIONES_ADMIN_CONJUNTO : invita
     USUARIOS ||--o{ SOLICITUDES_DESVINCULACION : resuelve
     USUARIOS ||--o{ NOVEDADES : publica
+    NOVEDADES ||--o{ NOVEDADES_CONJUNTOS : dirige
+    CONJUNTOS_RESIDENCIALES ||--o{ NOVEDADES_CONJUNTOS : recibe
     USUARIOS ||--o{ NOTIFICACIONES : emite
     USUARIOS ||--o{ NOTIFICACIONES_DESTINATARIOS : recibe
     USUARIOS ||--o{ CONJUNTOS_RESIDENCIALES : verifica
@@ -281,6 +297,8 @@ erDiagram
 
     LOCALIDADES ||--o{ CONJUNTOS_RESIDENCIALES : contiene
     LOCALIDADES ||--o{ PUNTOS_ACOPIOS : contiene
+    PUNTOS_ACOPIOS ||--o{ PUNTOS_ACOPIO_COMENTARIOS : tiene
+    USUARIOS |o--o{ PUNTOS_ACOPIO_COMENTARIOS : escribe
     LOCALIDADES ||--o{ RECICLADORES : ubica
 
     CONJUNTOS_RESIDENCIALES ||--o{ UNIDADES : tiene
@@ -504,6 +522,20 @@ CONTENIDO_EDUCATIVO_ENVIOS ── CONJUNTOS_RESIDENCIALES / USUARIOS (quién lo 
 
 ---
 
+## puntos_acopio_comentarios
+
+| Campo            | Tipo      |
+| ---------------- | --------- |
+| id_comentario    | UUID      |
+| id_punto_acopio  | UUID      |
+| id_autor         | UUID      |
+| texto            | TEXT      |
+| created_at       | TIMESTAMP |
+
+Comentarios internos del Admin Sistema sobre un punto de acopio (RQF-011): notas y el "motivo del cambio" que se escribe al editar. Se borran con el punto (ON DELETE CASCADE); si se borra la cuenta del autor, `id_autor` queda `NULL` y el comentario se conserva (ON DELETE SET NULL).
+
+---
+
 ## contenido_educativo
 
 | Campo             | Tipo    |
@@ -641,12 +673,24 @@ Avisos que un Admin de Conjunto publica para los residentes y/o recicladores de 
 | alcance            | VARCHAR   |
 | texto              | TEXT      |
 | url_adjunto        | VARCHAR   |
+| url_video          | VARCHAR   |
 | fecha_expiracion   | TIMESTAMP |
 | created_at         | TIMESTAMP |
 | fecha_edicion      | TIMESTAMP |
 | fecha_archivado    | TIMESTAMP |
 
-Avisos de alcance general que el Admin Sistema publica (RQF-015), no ligados a un conjunto — `alcance` decide si va a todos los usuarios o a un rol concreto. Puede archivarse manualmente antes de expirar.
+Avisos de alcance general que el Admin Sistema publica (RQF-015) — `alcance` decide si va a todos los usuarios o a un rol concreto. A qué conjuntos llega (uno o varios) se guarda en `novedades_conjuntos`: sin filas = llega a todos los conjuntos del alcance (lo de siempre); con filas = solo a esos conjuntos. No se puede cambiar después de publicar, igual que `alcance`. `url_video` guarda un enlace de YouTube opcional. Puede archivarse manualmente antes de expirar.
+
+---
+
+## novedades_conjuntos
+
+| Campo                   | Tipo |
+| ------------------------ | ---- |
+| id_novedad              | UUID |
+| id_conjunto_residencial | UUID |
+
+Tabla de asociación (RQF-015): un conjunto al que va dirigida una novedad. La llave primaria es compuesta (novedad + conjunto), así que un conjunto no se repite dentro de una misma novedad. Se borra sola si se borra la novedad o el conjunto.
 
 ---
 
@@ -748,6 +792,8 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 | Usuarios                       | Notificaciones Destinatarios     | 1:N          |
 | Usuarios                       | Conjuntos Residenciales          | 1:N (verifica) |
 | Usuarios                       | Recicladores Conjuntos           | 1:N (revoca) |
+| Usuarios                       | Puntos Acopio Comentarios        | 1:N (escribe) |
+| Puntos Acopios                 | Puntos Acopio Comentarios        | 1:N          |
 | Localidades                    | Conjuntos Residenciales          | 1:N          |
 | Localidades                    | Puntos de Acopio                 | 1:N          |
 | Localidades                    | Recicladores                     | 1:N          |

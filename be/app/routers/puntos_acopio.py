@@ -18,6 +18,8 @@ from app.dependencies import get_db, require_role
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.puntos_acopio import (
+    ComentarioCreate,
+    ComentarioResponse,
     PuntoAcopioAdminResponse,
     PuntoAcopioCreate,
     PuntoAcopioUpdate,
@@ -68,7 +70,7 @@ def editar(
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> dict:
-    return service.editar(db, id_punto_acopio, data)
+    return service.editar(db, id_punto_acopio, data, current_user)
 
 
 @router.delete(
@@ -108,3 +110,31 @@ def eliminar_definitivamente(
     db: Session = Depends(get_db),
 ) -> None:
     service.eliminar_definitivamente(db, id_punto_acopio)
+
+
+@router.get(
+    "/{id_punto_acopio}/comentarios",
+    response_model=list[ComentarioResponse],
+    summary="Listar los comentarios internos de un punto de acopio",
+)
+def listar_comentarios(
+    id_punto_acopio: UUID,
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    return service.listar_comentarios(db, id_punto_acopio)
+
+
+@router.post(
+    "/{id_punto_acopio}/comentarios",
+    response_model=ComentarioResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Agregar un comentario interno a un punto de acopio",
+)
+def agregar_comentario(
+    id_punto_acopio: UUID,
+    data: ComentarioCreate,
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+) -> dict:
+    return service.agregar_comentario(db, id_punto_acopio, current_user, data.texto)

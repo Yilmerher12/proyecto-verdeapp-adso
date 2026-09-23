@@ -214,3 +214,115 @@ class TestEliminarDefinitivamente:
     ):
         response = client.delete(f"{BASE}/{punto_acopio_test.id_punto_acopio}/definitivo", headers=auth_headers)
         assert response.status_code == 403
+
+
+class TestComentarios:
+    """RQF-011: notas internas del Admin Sistema sobre cada punto de acopio."""
+
+    def test_agrega_y_lista_un_comentario_con_su_autor(
+        self, client: TestClient, admin_sistema_auth_headers, admin_sistema_test, punto_acopio_test: PuntoAcopio
+    ):
+        url = f"{BASE}/{punto_acopio_test.id_punto_acopio}/comentarios"
+        creado = client.post(url, headers=admin_sistema_auth_headers, json={"texto": "  Nuevo encargado confirmado  "})
+        assert creado.status_code == 201
+        assert creado.json()["texto"] == "Nuevo encargado confirmado"
+        assert creado.json()["autor"] == admin_sistema_test.correo_electronico
+
+        lista = client.get(url, headers=admin_sistema_auth_headers)
+        assert lista.status_code == 200
+        assert [c["texto"] for c in lista.json()] == ["Nuevo encargado confirmado"]
+
+    def test_lista_del_mas_reciente_al_mas_antiguo(
+        self, client: TestClient, admin_sistema_auth_headers, punto_acopio_test: PuntoAcopio
+    ):
+        url = f"{BASE}/{punto_acopio_test.id_punto_acopio}/comentarios"
+        client.post(url, headers=admin_sistema_auth_headers, json={"texto": "primero"})
+        client.post(url, headers=admin_sistema_auth_headers, json={"texto": "segundo"})
+        textos = [c["texto"] for c in client.get(url, headers=admin_sistema_auth_headers).json()]
+        assert textos == ["segundo", "primero"]
+
+    def test_comentario_vacio_devuelve_422(
+        self, client: TestClient, admin_sistema_auth_headers, punto_acopio_test: PuntoAcopio
+    ):
+        response = client.post(
+            f"{BASE}/{punto_acopio_test.id_punto_acopio}/comentarios",
+            headers=admin_sistema_auth_headers,
+            json={"texto": "   "},
+        )
+        assert response.status_code == 422
+
+    def test_comentario_demasiado_largo_devuelve_422(
+        self, client: TestClient, admin_sistema_auth_headers, punto_acopio_test: PuntoAcopio
+    ):
+        response = client.post(
+            f"{BASE}/{punto_acopio_test.id_punto_acopio}/comentarios",
+            headers=admin_sistema_auth_headers,
+            json={"texto": "x" * 1001},
+        )
+        assert response.status_code == 422
+
+    def test_punto_inexistente_devuelve_404(self, client: TestClient, admin_sistema_auth_headers):
+        url = f"{BASE}/00000000-0000-0000-0000-000000000000/comentarios"
+        assert client.get(url, headers=admin_sistema_auth_headers).status_code == 404
+        assert client.post(url, headers=admin_sistema_auth_headers, json={"texto": "hola"}).status_code == 404
+
+    def test_con_rol_incorrecto_devuelve_403(
+        self, client: TestClient, auth_headers, punto_acopio_test: PuntoAcopio
+    ):
+        url = f"{BASE}/{punto_acopio_test.id_punto_acopio}/comentarios"
+        assert client.get(url, headers=auth_headers).status_code == 403
+        assert client.post(url, headers=auth_headers, json={"texto": "hola"}).status_code == 403
+
+    def test_sin_login_devuelve_401(self, client: TestClient, punto_acopio_test: PuntoAcopio):
+        assert client.get(f"{BASE}/{punto_acopio_test.id_punto_acopio}/comentarios").status_code == 401
+
+    def test_editar_con_motivo_guarda_un_comentario(
+        self, client: TestClient, admin_sistema_auth_headers, punto_acopio_test: PuntoAcopio, localidad_test: Localidad
+    ):
+        response = client.put(
+            f"{BASE}/{punto_acopio_test.id_punto_acopio}",
+            headers=admin_sistema_auth_headers,
+            json={
+                "nombre": "PUNTO DE PRUEBA",
+                "direccion": "Calle 50 # 5-50",
+                "id_localidad": localidad_test.id_localidad,
+                "nombre_encargado": "Luis Peña",
+                "motivo_cambio": "Cambió el encargado",
+            },
+        )
+        assert response.status_code == 200
+        assert "motivo_cambio" not in response.json()
+        comentarios = client.get(
+            f"{BASE}/{punto_acopio_test.id_punto_acopio}/comentarios", headers=admin_sistema_auth_headers
+        ).json()
+        assert [c["texto"] for c in comentarios] == ["Cambió el encargado"]
+
+    def test_editar_sin_motivo_no_guarda_comentario(
+        self, client: TestClient, admin_sistema_auth_headers, punto_acopio_test: PuntoAcopio, localidad_test: Localidad
+    ):
+        client.put(
+            f"{BASE}/{punto_acopio_test.id_punto_acopio}",
+            headers=admin_sistema_auth_headers,
+            json={
+                "nombre": "PUNTO DE PRUEBA",
+                "direccion": "Calle 50 # 5-50",
+                "id_localidad": localidad_test.id_localidad,
+                "motivo_cambio": "   ",
+            },
+        )
+        comentarios = client.get(
+            f"{BASE}/{punto_acopio_test.id_punto_acopio}/comentarios", headers=admin_sistema_auth_headers
+        ).json()
+        assert comentarios == []
+
+    def test_eliminar_definitivamente_borra_tambien_sus_comentarios(
+        self, client: TestClient, db: Session, admin_sistema_auth_headers, punto_acopio_test: PuntoAcopio
+    ):
+        from app.models.punto_acopio_comentario import PuntoAcopioComentario
+
+        id_punto = punto_acopio_test.id_punto_acopio
+        client.post(f"{BASE}/{id_punto}/comentarios", headers=admin_sistema_auth_headers, json={"texto": "nota"})
+        client.delete(f"{BASE}/{id_punto}", headers=admin_sistema_auth_headers)
+        assert client.delete(f"{BASE}/{id_punto}/definitivo", headers=admin_sistema_auth_headers).status_code == 204
+
+        assert db.query(PuntoAcopioComentario).filter_by(id_punto_acopio=id_punto).count() == 0

@@ -51,6 +51,13 @@ El sistema debe permitir a cualquier usuario recuperar el acceso a su cuenta si 
 2. El sistema verifica que la contraseña actual sea correcta.
 3. Si es correcta, actualiza la contraseña; si no, rechaza el cambio sin aplicarlo.
 
+Ayudas en el formulario (solo frontend, `ChangePasswordPage`):
+
+- Lista de 4 requisitos (8+ caracteres, mayúscula, minúscula, número) que se marca con ✓ en vivo, además de la barra de fortaleza.
+- Mensaje bajo la confirmación: "Las contraseñas coinciden" / "Todavía no coinciden".
+- "Guardar" solo se habilita con la actual escrita, la nueva cumpliendo los 4 requisitos y la confirmación igual a la nueva.
+- Enlace "¿No la recuerdas? Recupérala por correo" hacia el flujo A (`/forgot-password`).
+
 ---
 
 ## Entradas

@@ -186,6 +186,17 @@
       "confirmPassword": "Confirm new password",
       "submit": "Change password",
       "successMessage": "Password updated successfully",
+      "requirements": {
+        "title": "Password requirements",
+        "minLength": "8 characters or more",
+        "uppercase": "One uppercase letter",
+        "lowercase": "One lowercase letter",
+        "number": "One number"
+      },
+      "passwordsMatch": "Passwords match",
+      "passwordsNoMatch": "They don't match yet",
+      "forgotHint": "Don't remember it?",
+      "forgotLink": "Recover it by email",
       "backToDashboard": "Back to dashboard",
       "validation": {
         "currentRequired": "Current password is required",
@@ -1183,6 +1194,53 @@
     "deactivateAria": "Deactivate {{nombre}}",
     "reactivateAria": "Reactivate {{nombre}}",
     "deleteAria": "Delete {{nombre}}",
+    "mapLink": "View on map",
+    "mapAria": "View {{nombre}} on the map",
+    "noPhone": "No phone",
+    "noManager": "No manager",
+    "search": {
+      "placeholder": "Search by name or address",
+      "noResults": "No point matches your search.",
+      "status": {
+        "todos": "All",
+        "activos": "Active",
+        "baja": "Deactivated"
+      }
+    },
+    "summary": {
+      "points_one": "{{count}} point",
+      "points_other": "{{count}} points",
+      "localities_one": "{{count}} locality",
+      "localities_other": "{{count}} localities",
+      "pointsIn": "{{puntos}} in {{localidades}}",
+      "inactive_one": "{{count}} deactivated",
+      "inactive_other": "{{count}} deactivated"
+    },
+    "panel": {
+      "ariaLabel": "Details of {{nombre}}",
+      "active": "Active",
+      "dataSection": "Point details",
+      "manager": "Manager",
+      "phone": "Phone",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate",
+      "deleteForever": "Delete permanently"
+    },
+    "comments": {
+      "title": "Administrator comments",
+      "empty": "There are no comments about this point yet.",
+      "placeholder": "Write a comment about this point…",
+      "add": "Add comment",
+      "addError": "Could not save the comment. Please try again.",
+      "loadError": "Could not load the comments.",
+      "deletedAuthor": "Deleted account"
+    },
+    "form": {
+      "managerChanged": "Changed: {{antes}} → {{despues}}",
+      "changeReason": "Reason for the change",
+      "changeReasonHint": "(optional, saved in the comments)",
+      "changeReasonPlaceholder": "E.g. the previous manager left the position."
+    },
     "modal": {
       "editTitle": "Edit collection point",
       "deactivateAriaLabel": "Confirm deactivation",
@@ -1422,14 +1480,53 @@
         "warning": "It will stop showing in the active news feed. This action cannot be undone.",
         "confirm": "Yes, archive"
       },
+      "viewVideo": "Watch video",
+      "listBar": "Filters and list",
+      "collapse": "Collapse",
+      "expand": "View news",
+      "filters": {
+        "all": "All",
+        "showArchived": "Show archived",
+        "searchPlaceholder": "Search the news text…",
+        "noResults": "No news match those filters."
+      },
+      "destino": {
+        "allConjuntos": "All buildings",
+        "several": "{{count}} buildings"
+      },
+      "expiraPronto": "Expires in {{count}} day",
+      "expiraPronto_other": "Expires in {{count}} days",
+      "moreOptions": {
+        "title": "More options",
+        "hint": "image, video",
+        "show": "Show",
+        "hide": "Collapse"
+      },
+      "conjunto": {
+        "label": "Buildings",
+        "question": "who gets it?",
+        "pick": "Choose one or several",
+        "all": "All buildings",
+        "count": "{{count}} building",
+        "count_other": "{{count}} buildings",
+        "searchPlaceholder": "Search and add another building…",
+        "pickAtLeastOne": "Choose at least one building to be able to publish.",
+        "massWarning": "This is a mass notice: it will reach all buildings on the platform.",
+        "example": "E.g.: an in-person meeting is only announced to the buildings you list.",
+        "notEditable": "The buildings can't be changed after publishing.",
+        "noResults": "No results",
+        "searching": "Searching…"
+      },
       "alcanceNoEditable": "The scope can't be changed after publishing. If you made a mistake, archive it and create a new one.",
       "validation": {
-        "textoRequerido": "The news item text is required."
+        "textoRequerido": "The news item text is required.",
+        "conjuntoRequerido": "Choose at least one building, or select «All buildings»."
       },
       "fields": {
         "alcance": "Scope",
         "texto": "Message",
-        "urlAdjunto": "Attached image (optional)",
+        "urlAdjunto": "Attached image or file (optional)",
+        "urlVideo": "Video link (YouTube, optional)",
         "fechaExpiracion": "Expiration date (optional)",
         "fechaExpiracionHint": "If left blank, a system-suggested date is used."
       }

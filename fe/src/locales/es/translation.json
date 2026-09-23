@@ -186,6 +186,17 @@
       "confirmPassword": "Confirmar nueva contraseña",
       "submit": "Cambiar contraseña",
       "successMessage": "Contraseña actualizada exitosamente",
+      "requirements": {
+        "title": "Requisitos de la contraseña",
+        "minLength": "8 caracteres o más",
+        "uppercase": "Una mayúscula",
+        "lowercase": "Una minúscula",
+        "number": "Un número"
+      },
+      "passwordsMatch": "Las contraseñas coinciden",
+      "passwordsNoMatch": "Todavía no coinciden",
+      "forgotHint": "¿No la recuerdas?",
+      "forgotLink": "Recupérala por correo",
       "backToDashboard": "Volver al dashboard",
       "validation": {
         "currentRequired": "La contraseña actual es obligatoria",
@@ -1187,6 +1198,53 @@
     "deactivateAria": "Dar de baja {{nombre}}",
     "reactivateAria": "Reactivar {{nombre}}",
     "deleteAria": "Eliminar {{nombre}}",
+    "mapLink": "Ver en el mapa",
+    "mapAria": "Ver {{nombre}} en el mapa",
+    "noPhone": "Sin teléfono",
+    "noManager": "Sin encargado",
+    "search": {
+      "placeholder": "Buscar por nombre o dirección",
+      "noResults": "Ningún punto coincide con tu búsqueda.",
+      "status": {
+        "todos": "Todos",
+        "activos": "Activos",
+        "baja": "De baja"
+      }
+    },
+    "summary": {
+      "points_one": "{{count}} punto",
+      "points_other": "{{count}} puntos",
+      "localities_one": "{{count}} localidad",
+      "localities_other": "{{count}} localidades",
+      "pointsIn": "{{puntos}} en {{localidades}}",
+      "inactive_one": "{{count}} de baja",
+      "inactive_other": "{{count}} de baja"
+    },
+    "panel": {
+      "ariaLabel": "Detalle de {{nombre}}",
+      "active": "Activo",
+      "dataSection": "Datos del punto",
+      "manager": "Encargado",
+      "phone": "Teléfono",
+      "deactivate": "Dar de baja",
+      "reactivate": "Reactivar",
+      "deleteForever": "Eliminar definitivamente"
+    },
+    "comments": {
+      "title": "Comentarios del administrador",
+      "empty": "Todavía no hay comentarios sobre este punto.",
+      "placeholder": "Escribe un comentario sobre este punto…",
+      "add": "Agregar comentario",
+      "addError": "No se pudo guardar el comentario. Intenta de nuevo.",
+      "loadError": "No se pudieron cargar los comentarios.",
+      "deletedAuthor": "Cuenta eliminada"
+    },
+    "form": {
+      "managerChanged": "Cambió: {{antes}} → {{despues}}",
+      "changeReason": "Motivo del cambio",
+      "changeReasonHint": "(opcional, queda en los comentarios)",
+      "changeReasonPlaceholder": "Ej: el encargado anterior dejó el cargo."
+    },
     "modal": {
       "editTitle": "Editar punto de acopio",
       "deactivateAriaLabel": "Confirmar baja",
@@ -1428,15 +1486,54 @@
       },
       "alcanceNoEditable": "El alcance no se puede cambiar después de publicar. Si te equivocaste, archívala y crea una nueva.",
       "validation": {
-        "textoRequerido": "El texto de la novedad es obligatorio."
+        "textoRequerido": "El texto de la novedad es obligatorio.",
+        "conjuntoRequerido": "Elige al menos un conjunto, o marca «Todos los conjuntos»."
       },
       "fields": {
         "alcance": "Alcance",
         "texto": "Mensaje",
-        "urlAdjunto": "Imagen adjunta (opcional)",
+        "urlAdjunto": "Imagen o archivo adjunto (opcional)",
         "fechaExpiracion": "Fecha de expiración (opcional)",
-        "fechaExpiracionHint": "Si la dejas vacía, se usa una fecha sugerida por el sistema."
-      }
+        "fechaExpiracionHint": "Si la dejas vacía, se usa una fecha sugerida por el sistema.",
+        "urlVideo": "Enlace de video (YouTube, opcional)"
+      },
+      "listBar": "Filtros y lista",
+      "collapse": "Recoger",
+      "expand": "Ver novedades",
+      "filters": {
+        "all": "Todas",
+        "showArchived": "Ver archivadas",
+        "searchPlaceholder": "Buscar en el texto de la novedad…",
+        "noResults": "No hay novedades con esos filtros."
+      },
+      "destino": {
+        "allConjuntos": "Todos los conjuntos",
+        "several": "{{count}} conjuntos"
+      },
+      "expiraPronto": "Expira en {{count}} día",
+      "expiraPronto_other": "Expira en {{count}} días",
+      "moreOptions": {
+        "title": "Más opciones",
+        "hint": "imagen, video",
+        "show": "Mostrar",
+        "hide": "Recoger"
+      },
+      "conjunto": {
+        "label": "Conjuntos",
+        "question": "¿a quién le llega?",
+        "pick": "Elegir uno o varios",
+        "all": "Todos los conjuntos",
+        "count": "{{count}} conjunto",
+        "count_other": "{{count}} conjuntos",
+        "searchPlaceholder": "Buscar y agregar otro conjunto…",
+        "pickAtLeastOne": "Elige al menos un conjunto para poder publicar.",
+        "massWarning": "Es un aviso masivo: le llegará a todos los conjuntos de la plataforma.",
+        "example": "Ej.: una reunión presencial solo se avisa a los conjuntos que citas.",
+        "notEditable": "Los conjuntos no se pueden cambiar después de publicar.",
+        "noResults": "Sin resultados",
+        "searching": "Buscando…"
+      },
+      "viewVideo": "Ver video"
     },
     "feed": {
       "title": "Novedades",
