@@ -12,6 +12,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
+from app.utils.enlaces import EnlaceAdjunto
+
 from app.models.comunicado import DestinatariosComunicado, TipoComunicado
 
 
@@ -21,7 +23,7 @@ class CrearComunicadoRequest(BaseModel):
     destinatarios: DestinatariosComunicado
     tipo: TipoComunicado
     texto: str
-    url_adjunto: Optional[str] = None
+    url_adjunto: EnlaceAdjunto = None
     # ¿Qué? Obligatoria solo cuando tipo=CONVOCATORIA (RF: "expira al día
     #       siguiente del evento") — se valida en el service, no aquí,
     #       porque depende del valor de otro campo.
@@ -48,7 +50,7 @@ class EditarComunicadoRequest(BaseModel):
     """
     tipo: TipoComunicado
     texto: str
-    url_adjunto: Optional[str] = None
+    url_adjunto: EnlaceAdjunto = None
     fecha_evento: Optional[date] = None
     fecha_expiracion: Optional[datetime] = None
 

@@ -68,6 +68,7 @@ Los usuarios destinatarios ven los comunicados en un feed dentro de la app y rec
 - RN-003: El sistema sugiere la fecha de expiración según el tipo de comunicado, pero es editable.
 - RN-004: Los comunicados se eliminan automáticamente del feed al vencer su fecha de expiración.
 - RN-005: El Admin Conjunto solo puede gestionar comunicados de los conjuntos que administra.
+- RN-006: El adjunto (`url_adjunto`) solo puede ser un archivo subido a VerdeApp (`/uploads/...`) o un enlace `https://`; cualquier otro valor se rechaza con 422 (issue #314, hallazgo CN-015 del informe de seguridad). El archivo subido no puede pasar de 5 MB, y el servidor deja de leerlo en cuanto supera ese tope.
 
 ---
 

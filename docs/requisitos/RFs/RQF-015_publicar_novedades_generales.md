@@ -58,6 +58,7 @@ A diferencia de los comunicados de conjunto (RQF-014), las novedades las publica
 - RN-004: El sistema archiva automáticamente las novedades al llegar su fecha de expiración.
 - RN-005: No se pueden reactivar novedades archivadas directamente; se debe crear una nueva.
 - RN-006: El Admin Sistema ve el historial completo de novedades, incluyendo las archivadas.
+- RN-007: El adjunto (`url_adjunto`) solo puede ser un archivo subido a VerdeApp (`/uploads/...`) o un enlace `https://`; cualquier otro valor se rechaza con 422 (issue #314, hallazgo CN-015 del informe de seguridad).
 
 ---
 

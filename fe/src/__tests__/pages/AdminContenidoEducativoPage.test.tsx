@@ -359,6 +359,28 @@ describe("AdminContenidoEducativoPage", () => {
       });
     });
 
+    it("no deja guardar un video que no es de YouTube y muestra el error en el campo (issue #314)", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await screen.findByText("Código de colores");
+
+      await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
+      await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+      await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Nuevo tema de prueba");
+      await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
+      await user.type(screen.getByPlaceholderText("https://www.youtube.com/watch?v=..."), "https://sitio-malo.com/video");
+      await user.tab();
+
+      expect(await screen.findByText(/El video debe ser un enlace de YouTube/)).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Guardar" }));
+      expect(mockPost).not.toHaveBeenCalled();
+    });
+
     it("permite crear una categoría nueva desde el formulario, con su aviso", async () => {
       const user = userEvent.setup({ delay: null });
       renderPage();

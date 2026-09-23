@@ -12,6 +12,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
+from app.utils.enlaces import EnlaceAdjunto
+
 from app.models.novedad import AlcanceNovedad
 
 
@@ -19,7 +21,7 @@ class CrearNovedadRequest(BaseModel):
     """¿Qué? Lo que envía el Admin Sistema al publicar una novedad nueva (HU-032)."""
     alcance: AlcanceNovedad
     texto: str
-    url_adjunto: Optional[str] = None
+    url_adjunto: EnlaceAdjunto = None
     # ¿Qué? Si no se manda, el service usa una expiración sugerida por
     #       defecto (CA-032.3) — el RF no define tipos con plazos
     #       distintos como en Comunicados, solo "el sistema sugiere una
@@ -41,7 +43,7 @@ class EditarNovedadRequest(BaseModel):
               no se puede cambiar después de publicar.
     """
     texto: str
-    url_adjunto: Optional[str] = None
+    url_adjunto: EnlaceAdjunto = None
     fecha_expiracion: Optional[datetime] = None
 
     @field_validator("texto")
