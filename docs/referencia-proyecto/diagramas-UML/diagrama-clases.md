@@ -168,6 +168,7 @@ class Novedad {
     +string alcance
     +string texto
     +string url_adjunto
+    +string url_video
     +datetime fecha_expiracion
     +datetime created_at
     +datetime fecha_edicion
@@ -176,6 +177,11 @@ class Novedad {
     +publicar()
     +editar()
     +archivar()
+}
+
+class NovedadConjunto {
+    +UUID id_novedad
+    +UUID id_conjunto_residencial
 }
 
 class Notificacion {
@@ -266,6 +272,14 @@ class PuntoAcopio {
     +bool activo
 }
 
+class PuntoAcopioComentario {
+    +UUID id_comentario
+    +UUID id_punto_acopio
+    +UUID id_autor
+    +string texto
+    +datetime created_at
+}
+
 class ContenidoEducativo {
     +UUID id_contenido
     +string modulo_categoria
@@ -293,12 +307,16 @@ Usuario "1" --> "*" EmailVerificationToken
 Usuario "1" --> "*" InvitacionAdminConjunto : invita
 Usuario "1" --> "*" SolicitudDesvinculacion : resuelve
 Usuario "1" --> "*" Novedad : publica
+Novedad "1" --> "*" NovedadConjunto : dirige
+ConjuntoResidencial "1" --> "*" NovedadConjunto : recibe
 Usuario "1" --> "*" Notificacion : emite
 Usuario "1" --> "*" NotificacionDestinatario
 Usuario "1" --> "*" ConjuntoResidencial : verifica
 
 Localidad "1" --> "*" ConjuntoResidencial
 Localidad "1" --> "*" PuntoAcopio
+PuntoAcopio "1" --> "*" PuntoAcopioComentario : tiene
+Usuario "1" --> "*" PuntoAcopioComentario : escribe
 Localidad "1" --> "*" Reciclador
 
 ConjuntoResidencial "1" --> "*" Unidad
@@ -463,6 +481,12 @@ Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autori
 
 ---
 
+## PuntoAcopioComentario
+
+Nota interna del Admin Sistema sobre un punto de acopio (RQF-011), con autor y fecha — incluye el "motivo del cambio" que se escribe al editar el punto. Solo la ve el Admin Sistema. Se borra junto con el punto; si se borra la cuenta del autor, `id_autor` queda `NULL` y el comentario se conserva.
+
+---
+
 ## ContenidoEducativo
 
 Representa los módulos educativos publicados en la plataforma — texto, video y guía descargable, organizados por módulo/categoría.
@@ -499,6 +523,8 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 | Usuario                     | ConjuntoResidencial               | 1 : N (verifica) |
 | Localidad                   | ConjuntoResidencial               | 1 : N    |
 | Localidad                   | PuntoAcopio                       | 1 : N    |
+| PuntoAcopio                 | PuntoAcopioComentario             | 1 : N    |
+| Usuario                     | PuntoAcopioComentario             | 1 : N (escribe) |
 | Localidad                   | Reciclador                        | 1 : N    |
 | ConjuntoResidencial         | Unidad                            | 1 : N    |
 | Unidad                      | Residente                         | 1 : N    |

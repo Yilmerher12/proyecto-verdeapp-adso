@@ -48,3 +48,21 @@
 - **Dado que** guardé los cambios,
 - **cuando** un residente consulta ese punto en el directorio,
 - **entonces** debe ver la información actualizada.
+
+### CA-016.4 — Editar desde un panel al lado de la lista
+
+- **Dado que** estoy viendo la lista de puntos de acopio,
+- **cuando** hago clic en un punto o en su lápiz,
+- **entonces** se abre un panel lateral con sus datos y puedo editarlo sin salir de la lista.
+
+### CA-016.5 — Dejar constancia del motivo del cambio
+
+- **Dado que** edito un punto (por ejemplo, cambia el encargado o el dueño),
+- **cuando** escribo un "Motivo del cambio" y guardo,
+- **entonces** el motivo queda como un comentario del punto, con mi correo y la fecha, y el campo es opcional.
+
+### CA-016.6 — Comentarios internos del punto
+
+- **Dado que** abrí el panel de un punto,
+- **cuando** escribo un comentario y lo agrego,
+- **entonces** aparece de primero en la lista de comentarios, con autor y fecha, y ningún Residente ni Reciclador puede verlo.

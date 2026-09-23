@@ -52,6 +52,13 @@ El sistema debe permitir a cualquier usuario recuperar el acceso a su cuenta si 
 3. Si es correcta, actualiza la contraseña; si no, rechaza el cambio sin aplicarlo.
 4. Si el cambio se aplicó, cierra todas las demás sesiones de la cuenta y le entrega cookies de sesión nuevas al navegador que hizo el cambio, para que ese usuario siga dentro (RN-005).
 
+Ayudas en el formulario (solo frontend, `ChangePasswordPage`):
+
+- Lista de 4 requisitos (8+ caracteres, mayúscula, minúscula, número) que se marca con ✓ en vivo, además de la barra de fortaleza.
+- Mensaje bajo la confirmación: "Las contraseñas coinciden" / "Todavía no coinciden".
+- "Guardar" solo se habilita con la actual escrita, la nueva cumpliendo los 4 requisitos y la confirmación igual a la nueva.
+- Enlace "¿No la recuerdas? Recupérala por correo" hacia el flujo A (`/forgot-password`).
+
 ---
 
 ## Entradas

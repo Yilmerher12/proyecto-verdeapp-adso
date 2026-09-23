@@ -43,6 +43,24 @@
 - **cuando** completo el formulario,
 - **entonces** debo poder agregar un enlace (URL) a un archivo alojado externamente o a un sitio externo, de forma opcional — el texto sí es obligatorio.
 
+### CA-032.5 — Adjuntos y video opcionales
+
+- **Dado que** estoy creando una novedad,
+- **cuando** abro "Más opciones" (recogido por defecto, para que un aviso rápido de solo texto siga siendo rápido),
+- **entonces** puedo adjuntar una imagen o archivo (subiéndolo o pegando un enlace, igual que la guía de apoyo de Contenido Educativo) y/o un enlace de video de YouTube — ambos opcionales.
+
+### CA-032.6 — Elegir a qué conjuntos les llega
+
+- **Dado que** estoy creando una novedad,
+- **cuando** veo el formulario,
+- **entonces** encuentro una sección "Conjuntos" siempre visible (no escondida en "Más opciones") donde elijo uno o varios conjuntos con un buscador, o marco "Todos los conjuntos". Solo los usuarios de esos conjuntos que pertenezcan al alcance reciben la notificación y ven la novedad en su feed.
+
+### CA-032.7 — Publicar a todos tiene que ser una decisión
+
+- **Dado que** estoy creando una novedad,
+- **cuando** aún no he elegido ningún conjunto ni marcado "Todos los conjuntos",
+- **entonces** no puedo publicar (el botón queda bloqueado) y el formulario me dice que elija al menos un conjunto — así un aviso puntual, como una reunión presencial, no sale masivo por descuido. Si marco "Todos los conjuntos", el formulario avisa que es un aviso masivo.
+
 ### CA-032.3 — Fecha de expiración
 
 - **Dado que** estoy creando una novedad,

@@ -8,6 +8,13 @@ import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
+
+// ¿Qué? Una novedad no tiene título, solo texto — el reproductor de video
+//       necesita uno (accesibilidad), así que se usa un recorte corto del texto.
+function resumirTitulo(texto: string): string {
+  return texto.length > 60 ? `${texto.slice(0, 60)}…` : texto;
+}
 
 /**
  * ¿Qué? Feed de novedades activas de la plataforma (RQF-015, HU-033) —
@@ -70,6 +77,8 @@ export function NovedadesFeedPage() {
             </div>
 
             <p className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
+
+            {item.url_video && <YoutubeEmbed url={item.url_video} titulo={resumirTitulo(item.texto)} />}
 
             {item.url_adjunto && (
               <a

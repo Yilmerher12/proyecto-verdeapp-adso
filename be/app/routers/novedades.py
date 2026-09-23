@@ -6,13 +6,14 @@ Descripción: Endpoints de novedades generales de la plataforma (RQF-015).
            - GET /feed -> Residente, Reciclador o Admin de Conjunto (ven, no publican).
 """
 
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db, require_role
+from app.models.novedad import AlcanceNovedad
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.novedad import CrearNovedadRequest, EditarNovedadRequest, NovedadResponse
@@ -48,11 +49,21 @@ def crear_novedad(
 def listar_todas(
     limit: int = Query(8, ge=1, le=MAX_LIMIT_NOVEDADES),
     offset: int = Query(0, ge=0),
+    alcance: Optional[AlcanceNovedad] = Query(None),
+    incluir_archivadas: bool = Query(True),
+    search: Optional[str] = Query(None, max_length=100),
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
-    """CA-035.4: historial completo — activas y archivadas, paginado."""
-    items, total = novedad_service.listar_todas(db, limit=limit, offset=offset)
+    """CA-035.4: historial completo — activas y archivadas, paginado y filtrable por alcance/estado/texto."""
+    items, total = novedad_service.listar_todas(
+        db,
+        limit=limit,
+        offset=offset,
+        alcance=alcance,
+        incluir_archivadas=incluir_archivadas,
+        search=search,
+    )
     return {"items": items, "total": total}
 
 

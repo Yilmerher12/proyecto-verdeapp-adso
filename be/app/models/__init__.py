@@ -16,6 +16,7 @@ from app.models.contenido_educativo import ContenidoEducativo
 from app.models.usuario import Usuario
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.punto_acopio import PuntoAcopio
+from app.models.punto_acopio_comentario import PuntoAcopioComentario
 
 # Tablas Nivel 2 y 3
 from app.models.unidad import Unidad
@@ -29,6 +30,7 @@ from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjun
 from app.models.solicitud_desvinculacion import SolicitudDesvinculacion, EstadoSolicitudDesvinculacion
 from app.models.comunicado import Comunicado, TipoComunicado, DestinatariosComunicado
 from app.models.novedad import Novedad, AlcanceNovedad
+from app.models.novedad_conjunto import NovedadConjunto
 
 # 🔐 Tokens de Seguridad (¡Esenciales para que Alembic no falle!)
 from app.models.password_reset_token import PasswordResetToken
@@ -58,6 +60,7 @@ __all__ = [
     "Usuario",
     "ConjuntoResidencial",
     "PuntoAcopio",
+    "PuntoAcopioComentario",
     "Unidad",
     "Residente",
     "Reciclador",
@@ -73,6 +76,7 @@ __all__ = [
     "DestinatariosComunicado",
     "Novedad",
     "AlcanceNovedad",
+    "NovedadConjunto",
     "PasswordResetToken",
     "EmailVerificationToken",
     "Notificacion",
