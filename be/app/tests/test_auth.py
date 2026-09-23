@@ -424,6 +424,22 @@ class TestRefresh:
         assert len(response.cookies.get("access_token") or "") > 0
         assert len(response.cookies.get("refresh_token") or "") > 0
 
+    def test_refresh_token_solo_sirve_una_vez(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Issue #308 (CN-010): rotación — el refresh token usado queda
+        revocado, y el nuevo que se entregó sí funciona."""
+        sesion = _iniciar_sesion(client)
+
+        primera = client.post(self.URL, json={"refresh_token": sesion["refresh_token"]})
+        assert primera.status_code == 200
+
+        segunda = client.post(self.URL, json={"refresh_token": sesion["refresh_token"]})
+        assert segunda.status_code == 401
+
+        nuevo = primera.cookies.get("refresh_token")
+        assert client.post(self.URL, json={"refresh_token": nuevo}).status_code == 200
+
     def test_refresh_invalid_token(self, client: TestClient) -> None:
         """Sin cookie de sesión, el refresh_token del cuerpo es la vía alterna."""
         response = client.post(self.URL, json={"refresh_token": "token.invalido.falso"})
@@ -467,29 +483,32 @@ class TestRefresh:
         assert response.status_code == 403
 
 
+def _iniciar_sesion(client: TestClient) -> dict[str, str]:
+    """Inicia sesión y devuelve los valores de las cookies que dejó el
+    login — ya no vienen en el cuerpo de la respuesta (RNF-001.9).
+    Cada llamada es una sesión distinta (como otro navegador), con su
+    propio "jti"."""
+    respuesta = client.post(
+        "/api/v1/auth/login",
+        json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+    )
+    return {
+        "access_token": respuesta.cookies.get("access_token"),
+        "refresh_token": respuesta.cookies.get("refresh_token"),
+    }
+
+
 class TestLogout:
     """Tests para el endpoint de cierre de sesión real en el servidor (HU-008/RQF-007)."""
 
     URL = "/api/v1/auth/logout"
-
-    def _login(self, client: TestClient) -> dict[str, str]:
-        """Inicia sesión y devuelve los valores de las cookies que dejó el
-        login — ya no vienen en el cuerpo de la respuesta (RNF-001.9)."""
-        respuesta = client.post(
-            "/api/v1/auth/login",
-            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
-        )
-        return {
-            "access_token": respuesta.cookies.get("access_token"),
-            "refresh_token": respuesta.cookies.get("refresh_token"),
-        }
 
     def test_logout_invalida_el_access_token(
         self, client: TestClient, test_user: object
     ) -> None:
         """CA-008.x / RN-001 de RQF-007: tras el logout, el MISMO access token
         ya no debe servir para acceder a un endpoint protegido."""
-        tokens = self._login(client)
+        tokens = _iniciar_sesion(client)
         headers = {"Authorization": f"Bearer {tokens['access_token']}"}
 
         logout_response = client.post(
@@ -504,7 +523,7 @@ class TestLogout:
         self, client: TestClient, test_user: object
     ) -> None:
         """El refresh token de la misma sesión también queda inservible."""
-        tokens = self._login(client)
+        tokens = _iniciar_sesion(client)
         headers = {"Authorization": f"Bearer {tokens['access_token']}"}
 
         client.post(self.URL, json={"refresh_token": tokens["refresh_token"]}, headers=headers)
@@ -523,8 +542,8 @@ class TestLogout:
     ) -> None:
         """Cerrar sesión en un dispositivo NO cierra sesión en otro — cada
         token tiene su propio "jti" (ver app/models/token_revocado.py)."""
-        sesion_1 = self._login(client)
-        sesion_2 = self._login(client)
+        sesion_1 = _iniciar_sesion(client)
+        sesion_2 = _iniciar_sesion(client)
 
         headers_1 = {"Authorization": f"Bearer {sesion_1['access_token']}"}
         headers_2 = {"Authorization": f"Bearer {sesion_2['access_token']}"}
@@ -584,6 +603,47 @@ class TestChangePassword:
         )
         assert response.status_code == 422
 
+    def test_change_password_cierra_las_demas_sesiones(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Issue #308 (CN-010): otra sesión abierta (otro navegador) deja de
+        servir, tanto su access token como su refresh token."""
+        otra_sesion = _iniciar_sesion(client)
+        mi_sesion = _iniciar_sesion(client)
+
+        response = client.post(
+            self.URL,
+            json={"current_password": TEST_USER_PASSWORD, "new_password": "NewSecure456"},
+            headers={"Authorization": f"Bearer {mi_sesion['access_token']}"},
+        )
+        assert response.status_code == 200
+
+        headers_otra = {"Authorization": f"Bearer {otra_sesion['access_token']}"}
+        assert client.get("/api/v1/users/me", headers=headers_otra).status_code == 401
+        refresh = client.post(
+            "/api/v1/auth/refresh", json={"refresh_token": otra_sesion["refresh_token"]}
+        )
+        assert refresh.status_code == 401
+
+    def test_change_password_mantiene_la_sesion_de_quien_la_cambia(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Issue #308: la respuesta trae cookies nuevas, y con ellas la
+        sesión de quien cambió la contraseña sigue funcionando."""
+        mi_sesion = _iniciar_sesion(client)
+
+        response = client.post(
+            self.URL,
+            json={"current_password": TEST_USER_PASSWORD, "new_password": "NewSecure456"},
+            headers={"Authorization": f"Bearer {mi_sesion['access_token']}"},
+        )
+        assert response.status_code == 200
+
+        nuevo_access = response.cookies.get("access_token")
+        assert nuevo_access and nuevo_access != mi_sesion["access_token"]
+        headers_nuevos = {"Authorization": f"Bearer {nuevo_access}"}
+        assert client.get("/api/v1/users/me", headers=headers_nuevos).status_code == 200
+
 
 class TestForgotPassword:
     """Tests para el endpoint de solicitud de recuperación de contraseña."""
@@ -623,6 +683,25 @@ class TestResetPassword:
             json={"correo_electronico": TEST_USER_EMAIL, "password": new_password},
         )
         assert login_response.status_code == 200
+
+    def test_reset_password_cierra_las_sesiones_abiertas(
+        self, client: TestClient, valid_reset_token: str
+    ) -> None:
+        """Issue #308 (CN-010): restablecer la contraseña saca a cualquier
+        sesión que ya estuviera abierta, incluido su refresh token."""
+        sesion = _iniciar_sesion(client)
+
+        response = client.post(
+            self.URL, json={"token": valid_reset_token, "new_password": "ResetPass789"}
+        )
+        assert response.status_code == 200
+
+        headers = {"Authorization": f"Bearer {sesion['access_token']}"}
+        assert client.get("/api/v1/users/me", headers=headers).status_code == 401
+        refresh = client.post(
+            "/api/v1/auth/refresh", json={"refresh_token": sesion["refresh_token"]}
+        )
+        assert refresh.status_code == 401
 
     def test_reset_password_invalid_token(self, client: TestClient) -> None:
         response = client.post(

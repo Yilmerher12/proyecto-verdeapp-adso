@@ -59,3 +59,9 @@
 - **Dado que** el enlace tiene más de 1 hora, o ya se usó una vez,
 - **cuando** intento usarlo de nuevo,
 - **entonces** el sistema lo rechaza y me pide solicitar uno nuevo.
+
+### CA-042.5 — Se cierran las sesiones que estuvieran abiertas
+
+- **Dado que** mi cuenta tenía sesiones abiertas (mías o de alguien que consiguió entrar),
+- **cuando** restablezco mi contraseña con el enlace,
+- **entonces** todas esas sesiones quedan cerradas y hay que volver a iniciar sesión con la contraseña nueva (issue #308).

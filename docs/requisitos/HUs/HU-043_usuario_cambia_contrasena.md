@@ -54,3 +54,9 @@
 - **Dado que** tengo una sesión activa y válida,
 - **cuando** intento cambiar mi contraseña,
 - **entonces** el sistema me pide la contraseña actual de todas formas — tener sesión iniciada no es suficiente por sí solo.
+
+### CA-043.4 — Se cierran mis otras sesiones, pero no la actual
+
+- **Dado que** tengo sesión iniciada en más de un navegador o dispositivo,
+- **cuando** cambio mi contraseña desde uno de ellos,
+- **entonces** todas las demás sesiones quedan cerradas de inmediato, y yo sigo con sesión iniciada en el navegador desde el que hice el cambio (issue #308).
