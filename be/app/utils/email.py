@@ -12,7 +12,7 @@ Descripción: Utilidades para el envío de emails transaccionales.
 Backend de email — orden de prioridad:
   1. SMTP_HOST configurado → usa smtplib (stdlib) — ideal para Mailpit en desarrollo.
   2. RESEND_API_KEY configurado → usa la API de Resend.
-  3. Ninguno → simula en logs (el enlace aparece en consola para testing manual).
+  3. Ninguno → simula en logs (el enlace aparece en consola, solo con ENVIRONMENT=development).
 
 Mailpit — probar emails localmente sin cuenta ni dominio:
   Con Docker Compose: el servicio mailpit arranca automáticamente junto al backend.
@@ -22,12 +22,14 @@ Mailpit — probar emails localmente sin cuenta ni dominio:
 import asyncio
 import logging
 import smtplib
+import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import resend
 
 from app.config import settings
+from app.utils.audit_log import redactar_correo
 
 logger = logging.getLogger(__name__)
 
@@ -48,8 +50,68 @@ def _send_email_smtp(to_email: str, subject: str, html: str) -> None:
 
     with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
         if settings.SMTP_USERNAME:
+            # ¿Qué? Issue #309 (CN-023): cifra la conexión antes de mandar
+            #       usuario y contraseña del servidor de correo.
+            # ¿Para qué? Sin esto, con un servidor SMTP real, la contraseña
+            #           del correo y los enlaces de recuperación viajaban en
+            #           texto plano por la red.
+            # ¿Impacto? Solo cuando hay SMTP_USERNAME: Mailpit (desarrollo)
+            #           no tiene usuario ni soporta STARTTLS, y sigue igual.
+            server.starttls(context=ssl.create_default_context())
             server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
         server.send_message(msg)
+
+
+async def _enviar(
+    email: str, subject: str, html: str, tipo: str, enlace: str | None = None
+) -> None:
+    """Envía un correo por SMTP, por Resend o, si no hay ninguno, solo lo registra.
+
+    ¿Qué? Issue #309 — antes, cada una de las 4 funciones send_*_email
+          copiaba este mismo bloque (12 lugares que escribían en el log).
+    ¿Para qué? CN-011: el enlace lleva un token de un solo uso (restablecer
+              contraseña, aceptar una invitación de admin). Registrarlo en
+              el log fuera de desarrollo le permite a cualquiera que lea los
+              logs tomar el control de otra cuenta. Con un solo lugar, esa
+              regla no se puede olvidar en una de las copias.
+    ¿Impacto? En development todo sigue igual: el enlace completo sale en
+              consola si el envío falla o no hay backend de correo (el
+              equipo lo usa para probar sin Mailpit). En production solo
+              queda "falló el envío a ye***@gmail.com", sin enlace.
+    """
+    es_desarrollo = settings.ENVIRONMENT == "development"
+    destinatario = email if es_desarrollo else redactar_correo(email)
+
+    try:
+        if settings.SMTP_HOST:
+            await asyncio.to_thread(_send_email_smtp, email, subject, html)
+            via = "SMTP"
+        elif settings.RESEND_API_KEY:
+            params: resend.Emails.SendParams = {
+                "from": f"{settings.RESEND_FROM_NAME} <{settings.RESEND_FROM_EMAIL}>",
+                "to": [email],
+                "subject": subject,
+                "html": html,
+            }
+            await asyncio.to_thread(_send_email_sync, params)
+            via = "Resend"
+        else:
+            via = None
+    except Exception as exc:
+        logger.error("Falló el envío de %s a %s: %s", tipo, destinatario, exc)
+        via = None
+    else:
+        if via:
+            logger.info("Correo de %s enviado vía %s a %s", tipo, via, destinatario)
+            return
+        logger.warning("No hay backend de correo configurado — %s para %s no se envió", tipo, destinatario)
+
+    # ¿Qué? Sin emojis en estos mensajes a propósito.
+    # ¿Para qué? La consola de Windows usa la codificación cp1252, que no
+    #           tiene emojis: cada línea con uno imprimía un "Logging error"
+    #           de 50 líneas al correr uvicorn en consola.
+    if es_desarrollo and enlace:
+        logger.info("\n%s\nENLACE (%s) para %s:\n   %s\n%s", "=" * 60, tipo, email, enlace, "=" * 60)
 
 
 async def send_verification_email(email: str, token: str) -> None:
@@ -88,62 +150,7 @@ async def send_verification_email(email: str, token: str) -> None:
     </html>
     """
 
-    if settings.SMTP_HOST:
-        try:
-            await asyncio.to_thread(_send_email_smtp, email, subject, html_content)
-            logger.info("✅ Email de verificación enviado vía SMTP a %s", email)
-        except Exception as exc:
-            logger.error("❌ Error enviando email de verificación vía SMTP a %s: %s", email, exc)
-            logger.info(
-                "\n%s\n"
-                "📧 ENLACE DE VERIFICACIÓN (fallback — SMTP falló)\n"
-                "   Para: %s\n"
-                "   Enlace: %s\n"
-                "%s",
-                "=" * 60,
-                email,
-                verification_url,
-                "=" * 60,
-            )
-        return
-
-    if not settings.RESEND_API_KEY:
-        logger.info(
-            "\n%s\n"
-            "📧 EMAIL DE VERIFICACIÓN (sin backend de email — copiar enlace del log)\n"
-            "   Para: %s\n"
-            "   Enlace: %s\n"
-            "%s",
-            "=" * 60,
-            email,
-            verification_url,
-            "=" * 60,
-        )
-        return
-
-    params: resend.Emails.SendParams = {
-        "from": f"{settings.RESEND_FROM_NAME} <{settings.RESEND_FROM_EMAIL}>",
-        "to": [email],
-        "subject": subject,
-        "html": html_content,
-    }
-
-    try:
-        await asyncio.to_thread(_send_email_sync, params)
-        logger.info("✅ Email de verificación enviado vía Resend a %s", email)
-    except Exception as exc:
-        logger.error("❌ Error enviando email de verificación a %s: %s", email, exc)
-        logger.info(
-            "\n%s\n"
-            "📧 ENLACE DE VERIFICACIÓN (fallback — Resend falló)\n"
-            "   Para: %s\n"
-            "   Enlace: %s\n"
-            "%s",
-            "=" * 60,
-            email,
-            verification_url,
-            "=" * 60,
-        )
+    await _enviar(email, subject, html_content, "verificación de cuenta", verification_url)
 
 
 async def send_password_reset_email(email: str, token: str) -> None:
@@ -181,62 +188,7 @@ async def send_password_reset_email(email: str, token: str) -> None:
     </html>
     """
 
-    if settings.SMTP_HOST:
-        try:
-            await asyncio.to_thread(_send_email_smtp, email, subject, html_content)
-            logger.info("✅ Email de recuperación enviado vía SMTP a %s", email)
-        except Exception as exc:
-            logger.error("❌ Error enviando email de recuperación vía SMTP a %s: %s", email, exc)
-            logger.info(
-                "\n%s\n"
-                "📧 ENLACE DE RECUPERACIÓN (fallback — SMTP falló)\n"
-                "   Para: %s\n"
-                "   Enlace: %s\n"
-                "%s",
-                "=" * 60,
-                email,
-                reset_url,
-                "=" * 60,
-            )
-        return
-
-    if not settings.RESEND_API_KEY:
-        logger.info(
-            "\n%s\n"
-            "📧 EMAIL DE RECUPERACIÓN (sin backend de email — copiar enlace del log)\n"
-            "   Para: %s\n"
-            "   Enlace: %s\n"
-            "%s",
-            "=" * 60,
-            email,
-            reset_url,
-            "=" * 60,
-        )
-        return
-
-    params: resend.Emails.SendParams = {
-        "from": f"{settings.RESEND_FROM_NAME} <{settings.RESEND_FROM_EMAIL}>",
-        "to": [email],
-        "subject": subject,
-        "html": html_content,
-    }
-
-    try:
-        await asyncio.to_thread(_send_email_sync, params)
-        logger.info("✅ Email de recuperación enviado vía Resend a %s", email)
-    except Exception as exc:
-        logger.error("❌ Error enviando email de recuperación a %s: %s", email, exc)
-        logger.info(
-            "\n%s\n"
-            "📧 ENLACE DE RECUPERACIÓN (fallback — Resend falló)\n"
-            "   Para: %s\n"
-            "   Enlace: %s\n"
-            "%s",
-            "=" * 60,
-            email,
-            reset_url,
-            "=" * 60,
-        )
+    await _enviar(email, subject, html_content, "recuperación de contraseña", reset_url)
 
 
 async def send_admin_conjunto_invitation_email(email: str, token: str) -> None:
@@ -279,62 +231,7 @@ async def send_admin_conjunto_invitation_email(email: str, token: str) -> None:
     </html>
     """
 
-    if settings.SMTP_HOST:
-        try:
-            await asyncio.to_thread(_send_email_smtp, email, subject, html_content)
-            logger.info("✅ Email de invitación de administrador enviado vía SMTP a %s", email)
-        except Exception as exc:
-            logger.error("❌ Error enviando invitación de administrador vía SMTP a %s: %s", email, exc)
-            logger.info(
-                "\n%s\n"
-                "📧 ENLACE DE INVITACIÓN (fallback — SMTP falló)\n"
-                "   Para: %s\n"
-                "   Enlace: %s\n"
-                "%s",
-                "=" * 60,
-                email,
-                invitation_url,
-                "=" * 60,
-            )
-        return
-
-    if not settings.RESEND_API_KEY:
-        logger.info(
-            "\n%s\n"
-            "📧 EMAIL DE INVITACIÓN (sin backend de email — copiar enlace del log)\n"
-            "   Para: %s\n"
-            "   Enlace: %s\n"
-            "%s",
-            "=" * 60,
-            email,
-            invitation_url,
-            "=" * 60,
-        )
-        return
-
-    params: resend.Emails.SendParams = {
-        "from": f"{settings.RESEND_FROM_NAME} <{settings.RESEND_FROM_EMAIL}>",
-        "to": [email],
-        "subject": subject,
-        "html": html_content,
-    }
-
-    try:
-        await asyncio.to_thread(_send_email_sync, params)
-        logger.info("✅ Email de invitación de administrador enviado vía Resend a %s", email)
-    except Exception as exc:
-        logger.error("❌ Error enviando invitación de administrador a %s: %s", email, exc)
-        logger.info(
-            "\n%s\n"
-            "📧 ENLACE DE INVITACIÓN (fallback — Resend falló)\n"
-            "   Para: %s\n"
-            "   Enlace: %s\n"
-            "%s",
-            "=" * 60,
-            email,
-            invitation_url,
-            "=" * 60,
-        )
+    await _enviar(email, subject, html_content, "invitación de Administrador de Conjunto", invitation_url)
 
 
 async def send_reciclador_conjunto_invitation_email(email: str, nombre_conjunto: str) -> None:
@@ -377,59 +274,4 @@ async def send_reciclador_conjunto_invitation_email(email: str, nombre_conjunto:
     </html>
     """
 
-    if settings.SMTP_HOST:
-        try:
-            await asyncio.to_thread(_send_email_smtp, email, subject, html_content)
-            logger.info("✅ Email de invitación reciclador-conjunto enviado vía SMTP a %s", email)
-        except Exception as exc:
-            logger.error("❌ Error enviando invitación reciclador-conjunto vía SMTP a %s: %s", email, exc)
-            logger.info(
-                "\n%s\n"
-                "📧 INVITACIÓN RECICLADOR-CONJUNTO (fallback — SMTP falló)\n"
-                "   Para: %s\n"
-                "   Conjunto: %s\n"
-                "%s",
-                "=" * 60,
-                email,
-                nombre_conjunto,
-                "=" * 60,
-            )
-        return
-
-    if not settings.RESEND_API_KEY:
-        logger.info(
-            "\n%s\n"
-            "📧 INVITACIÓN RECICLADOR-CONJUNTO (sin backend de email — copiar del log)\n"
-            "   Para: %s\n"
-            "   Conjunto: %s\n"
-            "%s",
-            "=" * 60,
-            email,
-            nombre_conjunto,
-            "=" * 60,
-        )
-        return
-
-    params: resend.Emails.SendParams = {
-        "from": f"{settings.RESEND_FROM_NAME} <{settings.RESEND_FROM_EMAIL}>",
-        "to": [email],
-        "subject": subject,
-        "html": html_content,
-    }
-
-    try:
-        await asyncio.to_thread(_send_email_sync, params)
-        logger.info("✅ Email de invitación reciclador-conjunto enviado vía Resend a %s", email)
-    except Exception as exc:
-        logger.error("❌ Error enviando invitación reciclador-conjunto a %s: %s", email, exc)
-        logger.info(
-            "\n%s\n"
-            "📧 INVITACIÓN RECICLADOR-CONJUNTO (fallback — Resend falló)\n"
-            "   Para: %s\n"
-            "   Conjunto: %s\n"
-            "%s",
-            "=" * 60,
-            email,
-            nombre_conjunto,
-            "=" * 60,
-        )
+    await _enviar(email, subject, html_content, f"invitación de reciclador a {nombre_conjunto}")

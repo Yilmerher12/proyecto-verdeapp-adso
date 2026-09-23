@@ -301,6 +301,15 @@ Conectado en `login_user()` (éxito y las 2 razones de fallo: credenciales invá
 
 > **Alcance de esta primera versión**: se conectó en login y cambio de contraseña, los dos eventos de mayor impacto de seguridad. Extenderlo a los `_verificar_es_*` de cada router (registrar cada acceso denegado por rol) es un buen siguiente paso, no incluido aún.
 
+### Agregado después (2026-09-23): los eventos no llegaban a ningún lado (issue #309)
+
+El informe de seguridad Cyber Neo (hallazgos CN-012 y CN-011) encontró dos problemas encadenados:
+
+1. **El registro de auditoría se descartaba en silencio.** La app nunca configuraba el logging de Python (`logging.basicConfig`), así que el logger raíz quedaba en su nivel por defecto (`WARNING`) y todo `logger.info()` se perdía, incluidos los eventos de `audit_log.py`. El módulo existía, pero no dejaba ningún rastro. Se agregó `basicConfig(level=INFO)` en `be/app/main.py`.
+2. **Arreglar el punto 1 abría un hueco.** `be/app/utils/email.py` escribía en el log el enlace completo de recuperación de contraseña, verificación e invitación de admin (con su token) cuando el envío fallaba o no había backend de correo, en cualquier entorno. Mientras nada se registraba, no se notaba. Ahora ese bloque vive una sola vez en `_enviar()` (antes estaba copiado 12 veces), y el enlace solo se escribe con `ENVIRONMENT=development`. En `production` queda "falló el envío a `ye***@gmail.com`".
+
+También se completó el "siguiente paso" de la nota de arriba: `require_role()` y `require_admin_conjunto()` (`be/app/dependencies.py`), que desde el issue #216 reemplazan a los `_verificar_es_*`, llaman a `log_acceso_denegado` en cada 403. Y el envío SMTP hace `starttls()` antes de `login()` cuando hay un servidor con usuario (CN-023); Mailpit no tiene usuario y sigue igual.
+
 ---
 
 ## A10 — Server-Side Request Forgery (SSRF)
