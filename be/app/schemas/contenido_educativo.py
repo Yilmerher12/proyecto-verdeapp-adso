@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
+from app.utils.enlaces import EnlaceAdjunto, EnlaceVideo
+
 
 class ContenidoEducativoBase(BaseModel):
     modulo_categoria: str
@@ -44,11 +46,24 @@ class ContenidoEducativoBase(BaseModel):
         return v
 
 
-class ContenidoEducativoCreate(ContenidoEducativoBase):
+class _ContenidoEducativoEntrada(ContenidoEducativoBase):
+    """
+    ¿Qué? Issue #314 (CN-015): los enlaces se validan solo en lo que ENTRA
+          (crear/editar) — video solo de YouTube, guía solo https:// o un
+          archivo subido.
+    ¿Para qué? No se ponen en ContenidoEducativoBase porque de ahí también
+              hereda ContenidoEducativoResponse: un dato viejo que no
+              cumpla rompería el catálogo completo con un 500.
+    """
+    url_video: EnlaceVideo = None
+    url_guia: EnlaceAdjunto = None
+
+
+class ContenidoEducativoCreate(_ContenidoEducativoEntrada):
     pass
 
 
-class ContenidoEducativoUpdate(ContenidoEducativoBase):
+class ContenidoEducativoUpdate(_ContenidoEducativoEntrada):
     pass
 
 

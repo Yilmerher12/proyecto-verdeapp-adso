@@ -102,6 +102,9 @@ def login(request: Request, response: Response, login_data: UserLogin, db: Sessi
     return MessageResponse(message="Sesión iniciada correctamente")
 
 @router.post("/refresh", response_model=MessageResponse)
+# ¿Qué? Issue #310 (CN-013): límite más holgado que el de login porque es
+#       uso normal de la sesión, pero sin permitir miles de peticiones.
+@limiter.limit("30/minute")
 def refresh_token(
     request: Request,
     response: Response,
@@ -167,7 +170,13 @@ def logout(
     return MessageResponse(message="Sesión cerrada correctamente")
 
 @router.post("/change-password", response_model=MessageResponse)
+# ¿Qué? Issue #310 (CN-013): sin límite, alguien con una sesión robada podía
+#       probar miles de "contraseñas actuales" por minuto hasta acertar y
+#       quedarse con la cuenta. "request" lo exige slowapi para saber la IP.
+@limiter.limit("5/minute")
 def change_password(
+    request: Request,
+    response: Response,
     password_data: ChangePasswordRequest,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -184,7 +193,18 @@ def change_password(
         )
 
     current_user.password = hash_password(password_data.new_password)
+    # ¿Qué? Issue #308 (CN-010): subir la versión invalida TODAS las
+    #       sesiones abiertas de la cuenta, incluida la actual...
+    current_user.version_sesion += 1
     db.commit()
+    # ¿Qué? ...por eso quien hizo el cambio recibe cookies nuevas con la
+    #       versión ya actualizada.
+    # ¿Para qué? Sin esto, su siguiente petición daría 401 y axios.ts lo
+    #           mandaría al login con "tu sesión expiró", justo después de
+    #           ver "contraseña actualizada".
+    # ¿Impacto? Se cierran las demás sesiones (otro navegador, otro
+    #           dispositivo); la de quien cambió la contraseña continúa.
+    _fijar_cookies_de_sesion(response, auth_service.emitir_tokens(db, current_user))
 
     log_password_cambiada(current_user.correo_electronico)
     return MessageResponse(message="Contraseña actualizada exitosamente")
@@ -196,11 +216,16 @@ async def forgot_password(request: Request, request_data: ForgotPasswordRequest,
     return MessageResponse(message="Si el email está registrado, recibirás un enlace de recuperación")
 
 @router.post("/reset-password", response_model=MessageResponse)
-def reset_password(reset_data: ResetPasswordRequest, db: Session = Depends(get_db)):
+# ¿Qué? Issue #310 (CN-013): mismo límite que /forgot-password — sin él se
+#       podían probar tokens de recuperación al azar sin freno.
+@limiter.limit("5/minute")
+def reset_password(request: Request, reset_data: ResetPasswordRequest, db: Session = Depends(get_db)):
     auth_service.reset_password(db=db, reset_data=reset_data)
     return MessageResponse(message="Contraseña restablecida exitosamente")
 
 @router.post("/verify-email", response_model=MessageResponse)
-def verify_email(request_data: VerifyEmailRequest, db: Session = Depends(get_db)):
+# ¿Qué? Issue #310 (CN-013): mismo motivo que /reset-password.
+@limiter.limit("5/minute")
+def verify_email(request: Request, request_data: VerifyEmailRequest, db: Session = Depends(get_db)):
     auth_service.verify_email(db=db, token=request_data.token)
     return MessageResponse(message="Email verificado exitosamente. Ya puedes iniciar sesión.")

@@ -140,7 +140,14 @@ async def guardar_imagen_subida(
             detail=f"El archivo debe ser {formatos}.",
         )
 
-    contenido = await archivo.read()
+    # ¿Qué? Issue #314 (CN-025): lee como máximo el límite + 1 byte.
+    # ¿Para qué? Antes, read() sin tope cargaba el archivo ENTERO en memoria
+    #           (500 MB, 2 GB...) y recién después lo comparaba con 5 MB.
+    #           Con el byte extra basta para saber si se pasó del límite.
+    # ¿Impacto? El cuerpo igual llega completo al servidor (FastAPI lo
+    #           guarda en un archivo temporal); frenarlo antes de recibirlo
+    #           es tarea del proxy (client_max_body_size, issue #317).
+    contenido = await archivo.read(TAMANO_MAXIMO_BYTES + 1)
     if len(contenido) > TAMANO_MAXIMO_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

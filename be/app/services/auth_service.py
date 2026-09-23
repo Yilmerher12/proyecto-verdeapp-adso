@@ -335,16 +335,33 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
         db.commit()
 
     log_login_exitoso(correo)
-    real_first_name, real_last_name = obtener_nombre_real(db, user)
+    return emitir_tokens(db, user)
 
-    access_token = create_access_token(data={
+
+def emitir_tokens(db: Session, user: Usuario) -> TokenResponse:
+    """Emite un par access/refresh nuevo para el usuario.
+
+    ¿Qué? Un solo lugar que arma los tokens — antes el mismo bloque estaba
+          copiado en login_user y en refresh_access_token.
+    ¿Para qué? Issue #308: todo token nuevo debe llevar "ver" (la
+              version_sesion vigente). Con el bloque copiado, bastaba
+              olvidarlo en un sitio para emitir tokens que nunca se
+              invalidan al cambiar la contraseña.
+    ¿Impacto? Lo usan login, /refresh y /change-password (este último para
+              que quien cambia su contraseña no pierda su propia sesión).
+    """
+    real_first_name, real_last_name = obtener_nombre_real(db, user)
+    datos_comunes = {
         "sub": user.correo_electronico,
         "role_id": user.id_rol,
+        "ver": user.version_sesion,
+    }
+    access_token = create_access_token(data={
+        **datos_comunes,
         "first_name": real_first_name,
-        "last_name": real_last_name
+        "last_name": real_last_name,
     })
-    refresh_token = create_refresh_token(data={"sub": user.correo_electronico, "role_id": user.id_rol})
-
+    refresh_token = create_refresh_token(data=datos_comunes)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -420,20 +437,33 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
             detail="Tu cuenta fue desactivada por un administrador.",
         )
 
-    real_first_name, real_last_name = obtener_nombre_real(db, user)
+    # ¿Qué? Issue #308: un refresh token emitido antes del último cambio de
+    #       contraseña ya no sirve (ver Usuario.version_sesion).
+    # ¿Impacto? Sin esto, quien robó la cookie podía seguir renovando la
+    #           sesión hasta 7 días después de que la víctima cambiara su
+    #           contraseña.
+    if payload.get("ver", 0) != user.version_sesion:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="El token de sesión ha sido invalidado. Inicia sesión de nuevo.",
+        )
 
-    nuevo_access_token = create_access_token(data={
-        "sub": user.correo_electronico,
-        "role_id": user.id_rol,
-        "first_name": real_first_name,
-        "last_name": real_last_name,
-    })
-    nuevo_refresh_token = create_refresh_token(data={
-        "sub": user.correo_electronico,
-        "role_id": user.id_rol,
-    })
+    # ¿Qué? Issue #308: rotación — el refresh token que se acaba de usar
+    #       pasa a la lista negra antes de emitir el par nuevo.
+    # ¿Para qué? Que cada refresh token sirva UNA sola vez. Si alguien lo
+    #           copió, en cuanto uno de los dos lo use, el otro queda fuera.
+    # ¿Impacto? El frontend hoy no llama a /refresh de forma automática,
+    #           así que no hay riesgo de dos renovaciones en paralelo con el
+    #           mismo token.
+    exp = payload.get("exp")
+    if jti and exp:
+        db.add(TokenRevocado(
+            jti=uuid.UUID(jti),
+            expira_en=datetime.fromtimestamp(exp, tz=timezone.utc),
+        ))
+        db.commit()
 
-    return TokenResponse(access_token=nuevo_access_token, refresh_token=nuevo_refresh_token)
+    return emitir_tokens(db, user)
 
 
 def verify_email(db: Session, token: str) -> bool:
@@ -527,6 +557,10 @@ def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
         )
 
     user.password = hash_password(nueva_contrasenia)
+    # ¿Qué? Issue #308: invalida todas las sesiones abiertas de la cuenta.
+    # ¿Para qué? Quien restablece su contraseña suele hacerlo porque
+    #           sospecha que alguien más entró — esa otra sesión debe caer.
+    user.version_sesion += 1
     db_token.used = True
     db.commit()
     return True

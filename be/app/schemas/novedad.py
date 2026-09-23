@@ -12,6 +12,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
+from app.utils.enlaces import EnlaceAdjunto
+
 from app.models.novedad import AlcanceNovedad
 
 
@@ -19,7 +21,7 @@ class CrearNovedadRequest(BaseModel):
     """¿Qué? Lo que envía el Admin Sistema al publicar una novedad nueva (HU-032)."""
     alcance: AlcanceNovedad
     texto: str
-    url_adjunto: Optional[str] = None
+    url_adjunto: EnlaceAdjunto = None
     url_video: Optional[str] = None
     # ¿Qué? Lista vacía (o sin mandar) = la novedad llega a todos los
     #       conjuntos del alcance elegido, igual que siempre. Con uno o
@@ -47,7 +49,7 @@ class EditarNovedadRequest(BaseModel):
               decide al publicarla, no después.
     """
     texto: str
-    url_adjunto: Optional[str] = None
+    url_adjunto: EnlaceAdjunto = None
     url_video: Optional[str] = None
     fecha_expiracion: Optional[datetime] = None
 

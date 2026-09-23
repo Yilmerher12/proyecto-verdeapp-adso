@@ -55,19 +55,25 @@
 - **cuando** intento cambiar mi contraseña,
 - **entonces** el sistema me pide la contraseña actual de todas formas — tener sesión iniciada no es suficiente por sí solo.
 
-### CA-043.4 — Ver en vivo qué le falta a la contraseña nueva
+### CA-043.4 — Se cierran mis otras sesiones, pero no la actual
+
+- **Dado que** tengo sesión iniciada en más de un navegador o dispositivo,
+- **cuando** cambio mi contraseña desde uno de ellos,
+- **entonces** todas las demás sesiones quedan cerradas de inmediato, y yo sigo con sesión iniciada en el navegador desde el que hice el cambio (issue #308).
+
+### CA-043.5 — Ver en vivo qué le falta a la contraseña nueva
 
 - **Dado que** estoy escribiendo la contraseña nueva,
 - **cuando** voy tecleando,
 - **entonces** veo marcados los requisitos que ya cumplo (8+ caracteres, mayúscula, minúscula, número) y un mensaje que indica si la confirmación ya coincide con la nueva.
 
-### CA-043.5 — Guardar solo con el formulario válido
+### CA-043.6 — Guardar solo con el formulario válido
 
 - **Dado que** falta la contraseña actual, la nueva no cumple los requisitos o la confirmación no coincide,
 - **cuando** miro el botón "Guardar",
 - **entonces** está deshabilitado y dice "Completa el formulario".
 
-### CA-043.6 — Recuperar la contraseña si no recuerdo la actual
+### CA-043.7 — Recuperar la contraseña si no recuerdo la actual
 
 - **Dado que** no recuerdo mi contraseña actual,
 - **cuando** pulso "Recupérala por correo",

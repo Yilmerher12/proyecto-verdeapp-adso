@@ -58,10 +58,11 @@ A diferencia de los comunicados de conjunto (RQF-014), las novedades las publica
 - RN-004: El sistema archiva automáticamente las novedades al llegar su fecha de expiración.
 - RN-005: No se pueden reactivar novedades archivadas directamente; se debe crear una nueva.
 - RN-006: El Admin Sistema ve el historial completo de novedades, incluyendo las archivadas.
-- RN-007: Una novedad SIN conjuntos asociados (tabla `novedades_conjuntos`) significa "todos los conjuntos" (comportamiento original: las novedades ya existentes no cambian). Con uno o varios, la novedad y su notificación solo llegan a los usuarios de esos conjuntos que estén en el alcance por rol. **Implementada.**
-- RN-008: Al publicar desde el panel hay que elegir al menos un conjunto o marcar "Todos los conjuntos" explícitamente — el formulario no permite publicar sin decidir, para evitar avisos masivos por descuido (ej. una reunión presencial). La API sigue aceptando una lista vacía como "todos". Esto no reemplaza a los Comunicados (RQF-014): esos los publica el Admin de Conjunto para SU conjunto; una novedad con conjuntos la publica el Admin Sistema. **Implementada.**
-- RN-009: Los conjuntos elegidos no se pueden cambiar después de publicar (igual que el alcance). **Implementada.**
-- RN-010: Con varios conjuntos se crea una notificación por conjunto, y un Reciclador o Admin de Conjunto que pertenezca a varios de los elegidos la recibe una sola vez. **Implementada.**
+- RN-007: El adjunto (`url_adjunto`) solo puede ser un archivo subido a VerdeApp (`/uploads/...`) o un enlace `https://`; cualquier otro valor se rechaza con 422 (issue #314, hallazgo CN-015 del informe de seguridad).
+- RN-008: Una novedad SIN conjuntos asociados (tabla `novedades_conjuntos`) significa "todos los conjuntos" (comportamiento original: las novedades ya existentes no cambian). Con uno o varios, la novedad y su notificación solo llegan a los usuarios de esos conjuntos que estén en el alcance por rol. **Implementada.**
+- RN-009: Al publicar desde el panel hay que elegir al menos un conjunto o marcar "Todos los conjuntos" explícitamente — el formulario no permite publicar sin decidir, para evitar avisos masivos por descuido (ej. una reunión presencial). La API sigue aceptando una lista vacía como "todos". Esto no reemplaza a los Comunicados (RQF-014): esos los publica el Admin de Conjunto para SU conjunto; una novedad con conjuntos la publica el Admin Sistema. **Implementada.**
+- RN-010: Los conjuntos elegidos no se pueden cambiar después de publicar (igual que el alcance). **Implementada.**
+- RN-011: Con varios conjuntos se crea una notificación por conjunto, y un Reciclador o Admin de Conjunto que pertenezca a varios de los elegidos la recibe una sola vez. **Implementada.**
 
 ---
 

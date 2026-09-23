@@ -1064,7 +1064,9 @@
           "titleRequired": "The title is required.",
           "titleTooShort": "The title must be at least 5 characters long.",
           "bodyRequired": "The content is required.",
-          "bodyTooShort": "The content must be at least 20 characters long."
+          "bodyTooShort": "The content must be at least 20 characters long.",
+          "videoNotYoutube": "The video must be a YouTube link starting with https:// (for example https://youtu.be/...).",
+          "guideNotHttps": "The guide link must start with https://."
         },
         "deleteError": "Could not delete. Please try again.",
         "newSection": {

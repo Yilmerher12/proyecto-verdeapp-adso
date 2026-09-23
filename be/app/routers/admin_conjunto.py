@@ -11,7 +11,7 @@ Descripción: Endpoints del flujo de invitación, desvinculación y reasignació
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
@@ -28,9 +28,9 @@ from app.schemas.desvinculacion import (
     ResolverSolicitudDesvinculacionRequest,
     SolicitudDesvinculacionResponse,
 )
-from app.schemas.user import MessageResponse, TokenResponse
+from app.schemas.user import MessageResponse
 from app.services import admin_conjunto_service, desvinculacion_service
-from app.utils.security import create_access_token, create_refresh_token
+from app.utils.limiter import limiter
 
 router = APIRouter(prefix="/api/v1/admin-conjunto", tags=["admin-conjunto"])
 
@@ -67,29 +67,31 @@ def consultar_invitacion(token: str, db: Session = Depends(get_db)):
     return admin_conjunto_service.consultar_invitacion(db=db, token=token)
 
 
-@router.post("/aceptar", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/aceptar", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
+# ¿Qué? Issue #310 (CN-013): ruta pública — sin límite se podían probar
+#       tokens de invitación al azar sin freno.
+@limiter.limit("5/minute")
 def aceptar_invitacion(
+    request: Request,
     datos: AceptarInvitacionAdminConjuntoRequest,
     db: Session = Depends(get_db),
 ):
     """
     Ruta pública protegida por el token de invitación (no por sesión,
     porque la persona todavía no tiene cuenta). Al aceptar, se crea su
-    cuenta y se le entrega sesión iniciada de una vez (igual de cómodo
-    que registrarse normalmente).
+    cuenta; después inicia sesión normal desde /login.
+
+    ¿Qué? Issue #311 (CN-028): antes devolvía access_token y refresh_token
+          en el cuerpo JSON — el único flujo que dejaba tokens al alcance
+          de JavaScript, contra RNF-001.9 (solo cookies httpOnly).
+    ¿Para qué? AceptarInvitacionPage.tsx nunca usó esos tokens: muestra
+              "Ir a iniciar sesión" al terminar. Se quitan en vez de pasarlos
+              a cookies, que dejarían una sesión abierta mientras la
+              pantalla pide iniciar sesión.
+    ¿Impacto? El flujo que ve la persona invitada no cambia.
     """
-    nuevo_usuario = admin_conjunto_service.aceptar_invitacion(db=db, datos=datos)
-
-    access_token = create_access_token(data={
-        "sub": nuevo_usuario.correo_electronico,
-        "role_id": nuevo_usuario.id_rol,
-    })
-    refresh_token = create_refresh_token(data={
-        "sub": nuevo_usuario.correo_electronico,
-        "role_id": nuevo_usuario.id_rol,
-    })
-
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    admin_conjunto_service.aceptar_invitacion(db=db, datos=datos)
+    return MessageResponse(message="Cuenta creada. Ya puedes iniciar sesión.")
 
 
 @router.get("/solicitudes-desvinculacion", response_model=List[SolicitudDesvinculacionResponse])

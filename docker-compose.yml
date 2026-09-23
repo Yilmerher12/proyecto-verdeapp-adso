@@ -7,8 +7,17 @@ services:
       POSTGRES_USER: verde_user
       POSTGRES_PASSWORD: verde_password
       POSTGRES_DB: verdeapp_db
+    # ¿Qué? Issue #315 (CN-002/003/004): todos los puertos de este archivo
+    #       llevan el prefijo "127.0.0.1:" — solo aceptan conexiones desde
+    #       el mismo computador donde corre Docker.
+    # ¿Para qué? Sin el prefijo, Docker abre el puerto en TODAS las
+    #           direcciones del equipo, incluida la de la wifi: cualquiera
+    #           en la misma red podía entrar a Postgres con la contraseña
+    #           del README, o leer en Mailpit los enlaces de recuperación.
+    # ¿Impacto? Para quien desarrolla no cambia nada — localhost:5433,
+    #           :8000, :3000 y :8025 siguen funcionando igual.
     ports:
-        - "5433:5432"  # antes era 5432:5432
+        - "127.0.0.1:5433:5432"  # antes era 5432:5432
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -52,7 +61,7 @@ services:
       #           resuelve dentro de "verde_network", igual que "verde_db".
       SMTP_HOST: verde_mailpit
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       # ¿Qué? Guarda las fotos de evidencia de auditorías fuera del contenedor.
       # ¿Para qué? Sin esto, cada "docker compose up --build" crea un contenedor
@@ -75,7 +84,7 @@ services:
     env_file:
       - ./fe/.env # 🛡️ Lee las variables de forma segura y oculta
     ports:
-      - "3000:80"
+      - "127.0.0.1:3000:80"
     depends_on:
       - verde_be
     networks:
@@ -86,8 +95,8 @@ services:
     container_name: verde_mailpit
     restart: unless-stopped
     ports:
-      - "8025:8025"
-      - "1025:1025"
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
     networks:
       - verde_network
 

@@ -43,13 +43,14 @@ El sistema debe permitir a cualquier usuario recuperar el acceso a su cuenta si 
 1. El usuario, desde la pantalla de login, pide "¿Olvidaste tu contraseña?" e ingresa su correo.
 2. El sistema genera un token de un solo uso y envía un correo con el enlace de recuperación — **siempre** responde el mismo mensaje genérico, exista o no una cuenta con ese correo (RN-002).
 3. El usuario abre el enlace (antes de que expire) e ingresa su nueva contraseña.
-4. El sistema valida el token, actualiza la contraseña (con hash bcrypt) y marca el token como usado.
+4. El sistema valida el token, actualiza la contraseña (con hash bcrypt), marca el token como usado y cierra todas las sesiones abiertas de la cuenta (RN-005).
 
 ### Flujo B — Cambiar contraseña estando autenticado
 
 1. El usuario, desde su perfil, ingresa su contraseña actual y la nueva.
 2. El sistema verifica que la contraseña actual sea correcta.
 3. Si es correcta, actualiza la contraseña; si no, rechaza el cambio sin aplicarlo.
+4. Si el cambio se aplicó, cierra todas las demás sesiones de la cuenta y le entrega cookies de sesión nuevas al navegador que hizo el cambio, para que ese usuario siga dentro (RN-005).
 
 Ayudas en el formulario (solo frontend, `ChangePasswordPage`):
 
@@ -98,6 +99,8 @@ Ayudas en el formulario (solo frontend, `ChangePasswordPage`):
 - RN-002: `forgot-password` responde el mismo mensaje genérico exista o no una cuenta con ese correo — evita que alguien use este endpoint para descubrir qué correos están registrados (RNF-001.3).
 - RN-003: El token de recuperación tiene una validez de 1 hora y es de un solo uso — se marca `used = true` al aplicarse, y un segundo intento con el mismo token se rechaza.
 - RN-004: `change-password` (estando autenticado) siempre exige la contraseña actual — nunca se puede cambiar solo con la sesión activa, sin volver a demostrar que se conoce la contraseña vigente.
+- RN-005: Cambiar o restablecer la contraseña cierra las sesiones abiertas (issue #308, hallazgo CN-010 del informe de seguridad). `usuarios.version_sesion` sube en 1, y cada JWT lleva la versión vigente al emitirse (claim `ver`); `get_current_user` y `/refresh` rechazan con 401 cualquier token cuya versión no coincida. Se usa un contador y no una fecha porque la fecha de emisión de un JWT (`iat`) va en segundos enteros y un token del mismo segundo del cambio quedaría mal clasificado.
+- RN-006: Cada refresh token sirve una sola vez — al usarse en `/refresh`, su `jti` pasa a `tokens_revocados` antes de emitir el par nuevo (rotación). Si alguien copió el refresh token, en cuanto uno de los dos lo use el otro queda fuera.
 
 ---
 

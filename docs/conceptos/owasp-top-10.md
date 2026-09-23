@@ -258,6 +258,12 @@ Las dos ramas ahora tardan lo mismo — no queda ninguna señal de temporizació
 
 Otro hueco de sesión encontrado: "cerrar sesión" solo borraba el token del navegador (`sessionStorage`) — el servidor nunca se enteraba, así que ese mismo `access_token`, si alguien lo hubiera copiado antes, seguía siendo válido hasta expirar solo (15 minutos). Se agregó un `jti` único a cada token y una tabla `tokens_revocados`: al cerrar sesión (`POST /api/v1/auth/logout`), el `jti` del access y del refresh token se guarda ahí, y `get_current_user`/`refresh_access_token` los rechazan con 401 aunque no hayan expirado. Verificado con curl reutilizando el token exacto de una sesión recién cerrada.
 
+### Agregado después (2026-09-23): cambiar la contraseña cierra las demás sesiones (issue #308)
+
+El informe de seguridad Cyber Neo (hallazgo CN-010) encontró el siguiente hueco: cambiar o restablecer la contraseña solo guardaba el hash nuevo. Un token robado seguía sirviendo hasta 7 días (lo que dura el refresh token), aunque la víctima ya hubiera cambiado su contraseña, que es justo lo primero que hace alguien que sospecha que le entraron a la cuenta. Además, `/refresh` entregaba un par nuevo sin revocar el refresh token usado, así que un mismo refresh token se podía reutilizar sin límite.
+
+Se agregó `usuarios.version_sesion`, un contador que sube con cada cambio o restablecimiento de contraseña. Cada JWT lleva la versión vigente (claim `ver`), y `get_current_user`/`refresh_access_token` rechazan los que no coinciden. `/change-password` le entrega cookies nuevas a quien hizo el cambio: se cierran las otras sesiones, pero no la suya. Y `/refresh` ahora rota: el refresh token usado pasa a `tokens_revocados` (ver RQF-019, RN-005 y RN-006).
+
 ---
 
 ## A08 — Software and Data Integrity Failures
@@ -294,6 +300,15 @@ Conectado en `login_user()` (éxito y las 2 razones de fallo: credenciales invá
 **¿Por qué el correo redactado (`re***@correo.com`)?** Un archivo de logs es, en el fondo, un archivo de texto más. Si el servidor se compromete, los logs no deben revelar el correo completo de nadie — la redacción deja lo suficiente para diagnosticar sin exponer el dato completo.
 
 > **Alcance de esta primera versión**: se conectó en login y cambio de contraseña, los dos eventos de mayor impacto de seguridad. Extenderlo a los `_verificar_es_*` de cada router (registrar cada acceso denegado por rol) es un buen siguiente paso, no incluido aún.
+
+### Agregado después (2026-09-23): los eventos no llegaban a ningún lado (issue #309)
+
+El informe de seguridad Cyber Neo (hallazgos CN-012 y CN-011) encontró dos problemas encadenados:
+
+1. **El registro de auditoría se descartaba en silencio.** La app nunca configuraba el logging de Python (`logging.basicConfig`), así que el logger raíz quedaba en su nivel por defecto (`WARNING`) y todo `logger.info()` se perdía, incluidos los eventos de `audit_log.py`. El módulo existía, pero no dejaba ningún rastro. Se agregó `basicConfig(level=INFO)` en `be/app/main.py`.
+2. **Arreglar el punto 1 abría un hueco.** `be/app/utils/email.py` escribía en el log el enlace completo de recuperación de contraseña, verificación e invitación de admin (con su token) cuando el envío fallaba o no había backend de correo, en cualquier entorno. Mientras nada se registraba, no se notaba. Ahora ese bloque vive una sola vez en `_enviar()` (antes estaba copiado 12 veces), y el enlace solo se escribe con `ENVIRONMENT=development`. En `production` queda "falló el envío a `ye***@gmail.com`".
+
+También se completó el "siguiente paso" de la nota de arriba: `require_role()` y `require_admin_conjunto()` (`be/app/dependencies.py`), que desde el issue #216 reemplazan a los `_verificar_es_*`, llaman a `log_acceso_denegado` en cada 403. Y el envío SMTP hace `starttls()` antes de `login()` cuando hay un servidor con usuario (CN-023); Mailpit no tiene usuario y sigue igual.
 
 ---
 

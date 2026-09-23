@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 logger = logging.getLogger("verdeapp.audit")
 
 
-def _redactar_correo(correo: str) -> str:
+def redactar_correo(correo: str) -> str:
     """¿Qué? "residente@correo.com" -> "re***@correo.com".
     ¿Para qué? Un log es suficiente para diagnosticar sin exponer el correo
     completo de alguien si el archivo de logs llega a filtrarse."""
@@ -43,16 +43,16 @@ def _registrar(evento: str, **datos) -> None:
 
 
 def log_login_exitoso(correo: str) -> None:
-    _registrar("login_success", email=_redactar_correo(correo))
+    _registrar("login_success", email=redactar_correo(correo))
 
 
 def log_login_fallido(correo: str, motivo: str) -> None:
-    _registrar("login_failed", email=_redactar_correo(correo), reason=motivo)
+    _registrar("login_failed", email=redactar_correo(correo), reason=motivo)
 
 
 def log_password_cambiada(correo: str) -> None:
-    _registrar("password_changed", email=_redactar_correo(correo))
+    _registrar("password_changed", email=redactar_correo(correo))
 
 
 def log_acceso_denegado(correo: str, endpoint: str, motivo: str) -> None:
-    _registrar("access_denied", email=_redactar_correo(correo), endpoint=endpoint, reason=motivo)
+    _registrar("access_denied", email=redactar_correo(correo), endpoint=endpoint, reason=motivo)

@@ -12,7 +12,7 @@
           antes.
 
 Revision ID: d5756bdfc663
-Revises: 30a83eda6c54
+Revises: ebc147db9ce7
 Create Date: 2026-09-22 15:02:34.912824
 
 """
@@ -27,7 +27,7 @@ from sqlalchemy.dialects import postgresql
 # ¿Para qué? down_revision apunta a la migración anterior; None indica que es la raíz.
 # ¿Impacto? Alterar estos valores rompe el historial y puede causar errores al migrar.
 revision: str = 'd5756bdfc663'
-down_revision: Union[str, Sequence[str], None] = '30a83eda6c54'
+down_revision: Union[str, Sequence[str], None] = 'ebc147db9ce7'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
