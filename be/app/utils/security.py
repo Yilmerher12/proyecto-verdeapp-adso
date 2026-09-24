@@ -10,19 +10,28 @@ Descripción: Utilidades de seguridad — hashing de contraseñas y manejo de to
 
 from datetime import datetime, timedelta, timezone
 
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
+import jwt
 
 from app.config import settings
 from app.utils.ids import generar_uuid4
 
-# ¿Qué? Contexto de hashing de contraseñas usando bcrypt.
-# ¿Para qué? Proveer una interfaz unificada para hashear y verificar contraseñas.
-#            bcrypt es un algoritmo diseñado específicamente para contraseñas:
-#            es deliberadamente LENTO para dificultar ataques de fuerza bruta.
-# ¿Impacto? deprecated="auto" indica que si en el futuro se cambia el algoritmo,
-#           los hashes antiguos seguirán siendo verificables (migración gradual).
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# ¿Qué? Issue #312 (CN-008): bcrypt se usa directo y los JWT con PyJWT.
+#       Antes: passlib (sin versiones desde 2020, obligaba a quedarse en
+#       bcrypt==4.0.1) y python-jose (casi sin mantenimiento, arrastraba
+#       ecdsa, con una vulnerabilidad que nunca se va a corregir).
+# ¿Para qué? Las librerías de la parte más sensible del sistema (sesiones y
+#           contraseñas) deben seguir recibiendo parches de seguridad.
+# ¿Impacto? Los hashes ya guardados ($2b$12$...) son formato bcrypt estándar
+#           y bcrypt.checkpw los lee igual que passlib; los tokens ya emitidos
+#           son JWT HS256 estándar y PyJWT los valida igual. Ni contraseñas ni
+#           sesiones existentes se ven afectadas.
+
+# ¿Qué? bcrypt solo usa los primeros 72 bytes de la contraseña; desde
+#       bcrypt 5.0 una más larga lanza ValueError en vez de cortarse en
+#       silencio. schemas/user.py ya las rechaza al registrar/cambiar; aquí
+#       se cubre el login, que no pasa por ese validador.
+MAXIMO_BYTES_BCRYPT = 72
 
 # ¿Qué? Un hash bcrypt válido de una contraseña que nadie usa — no corresponde
 #       a ninguna cuenta real.
@@ -35,7 +44,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 #           aunque el mensaje de error sea idéntico en ambos casos.
 # ¿Impacto? auth_service.login_user() compara siempre contra un hash real
 #           (este, si el usuario no existe) — las dos ramas tardan lo mismo.
-DUMMY_PASSWORD_HASH = pwd_context.hash("no-corresponde-a-ninguna-cuenta-real")
+DUMMY_PASSWORD_HASH = bcrypt.hashpw(b"no-corresponde-a-ninguna-cuenta-real", bcrypt.gensalt()).decode("utf-8")
 
 
 def hash_password(password: str) -> str:
@@ -53,7 +62,7 @@ def hash_password(password: str) -> str:
     Returns:
         Hash bcrypt de la contraseña (~60 caracteres).
     """
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -71,7 +80,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True si la contraseña coincide, False en caso contrario.
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    contrasena = plain_password.encode("utf-8")
+    if len(contrasena) > MAXIMO_BYTES_BCRYPT:
+        return False
+    try:
+        return bcrypt.checkpw(contrasena, hashed_password.encode("utf-8"))
+    except ValueError:
+        # ¿Qué? Hash guardado con un formato que bcrypt no reconoce — se
+        #       trata como contraseña incorrecta, no como un error 500.
+        return False
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
@@ -181,8 +198,8 @@ def decode_token(token: str) -> dict | None:
             algorithms=[settings.ALGORITHM],
         )
         return payload
-    except JWTError:
-        # ¿Qué? JWTError captura tokens expirados, mal formados, o con firma inválida.
+    except jwt.PyJWTError:
+        # ¿Qué? PyJWTError captura tokens expirados, mal formados, o con firma inválida.
         # ¿Para qué? Manejar todos los errores de JWT en un solo lugar.
         # ¿Impacto? Retornar None en lugar de lanzar excepción permite al caller
         #           decidir cómo manejar el error (401, redirect a login, etc.).

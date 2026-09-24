@@ -14,6 +14,13 @@ from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_validator
 def _validate_password_strength(v: str) -> str:
     if len(v) < 8:
         raise ValueError("La contraseña debe tener al menos 8 caracteres")
+    # ¿Qué? Issue #312: bcrypt solo usa los primeros 72 bytes. Antes passlib
+    #       cortaba el resto en silencio (dos contraseñas largas que empiezan
+    #       igual valían lo mismo); bcrypt 5 lanza un error.
+    # ¿Impacto? Se mide en bytes UTF-8, no en caracteres: una tilde o una ñ
+    #           ocupan 2 bytes.
+    if len(v.encode("utf-8")) > 72:  # noqa: PLR2004
+        raise ValueError("La contraseña no puede superar 72 caracteres (menos si usa tildes o ñ)")
     if not re.search(r"[A-Z]", v):
         raise ValueError("La contraseña debe contener al menos una mayúscula")
     if not re.search(r"[a-z]", v):

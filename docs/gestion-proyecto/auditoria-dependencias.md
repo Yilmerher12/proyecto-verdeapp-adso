@@ -121,3 +121,18 @@ A partir de ahora, `.github/workflows/ci.yml` corre esta misma auditoría en **c
 - **Frontend:** `pnpm audit --prod` — revisa solo las dependencias que de verdad llegan al navegador del usuario, sin bloquear el PR por las de desarrollo (ESLint, Vite, Vitest) ya documentadas arriba como riesgo aceptado.
 
 Ambos pasos son bloqueantes: si aparece una vulnerabilidad nueva en ese subconjunto, el Pull Request no se puede mezclar hasta resolverla. La auditoría manual completa (incluyendo dependencias de desarrollo) sigue siendo útil hacerla de vez en cuando, como se recomienda arriba, pero ya no es la única red de seguridad.
+
+---
+
+## Actualización — riesgo de `ecdsa` eliminado (2026-09-24, issue #312)
+
+El riesgo aceptado de `ecdsa` (`PYSEC-2026-1325`, antes `CVE-2024-23342`) ya no existe: el paquete dejó de estar instalado. El informe de seguridad Cyber Neo (hallazgo CN-008) marcó además que las librerías de autenticación estaban sin mantenimiento, así que se reemplazaron:
+
+| Antes | Ahora | Motivo |
+|---|---|---|
+| `python-jose[cryptography]==3.5.0` | `pyjwt==2.15.0` | python-jose casi no recibe mantenimiento y arrastraba `ecdsa` |
+| `passlib[bcrypt]==1.7.4` | `bcrypt==5.0.0` (directo) | passlib no publica versiones desde 2020 y obligaba a quedarse en `bcrypt==4.0.1` |
+| `ecdsa==0.19.2`, `cryptography==50.0.0` | — | No las usaba ningún archivo de `be/app/` |
+| `pytest==9.0.2` (dev) | `pytest==9.1.1` | CVE-2025-71176 (directorio temporal predecible, solo desarrollo) |
+
+El CI ya no ignora ninguna vulnerabilidad (se quitó `--ignore-vuln PYSEC-2026-1325`). `pip-audit` sobre las dependencias de producción: **No known vulnerabilities found**.
