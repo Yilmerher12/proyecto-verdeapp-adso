@@ -21,11 +21,12 @@ Las contraseñas de los usuarios deben encriptarse en la base de datos utilizand
 
 ### RNF-001.2 — Tokens JWT
 La autenticación debe basarse en tokens JWT (JSON Web Tokens) firmados con algoritmo **HS256**:
-- **Access token**: duración de 60 minutos.
-- **Refresh token**: duración de 7 días.
+- **Access token**: duración de 15 minutos.
+- **Refresh token**: duración de 7 días. Cada vez que se usa entrega uno nuevo con otros 7 días (rotación, issue #308).
+- **Renovación automática (issue #319)**: cuando el access token vence, el frontend (`fe/src/api/axios.ts`) llama solo a `POST /auth/refresh` y repite la petición que había fallado, sin que el usuario note nada. La sesión solo termina si pasan más de 7 días sin usar la app, si se cierra sesión o si la contraseña cambia en otro dispositivo. Si varias peticiones fallan a la vez, se hace una sola renovación compartida (cada refresh token sirve una sola vez).
 - La clave secreta debe tener mínimo 32 caracteres y almacenarse en variable de entorno.
 
-> **Nota (2026-08-28)**: la duración real del `access_token` es de **15 minutos**, no 60 — un valor más estricto que el documentado aquí, no un incumplimiento. El resto (HS256, refresh de 7 días, `SECRET_KEY` con mínimo de 32 caracteres validado al arrancar) coincide exactamente con `be/app/config.py`.
+> **Nota (2026-08-28)**: la duración real del `access_token` es de **15 minutos**, no 60 como decía antes este documento — un valor más estricto, no un incumplimiento. (Corregido arriba el 2026-09-24; `be/.env.example` también decía 60 y se alineó a 15.) El resto (HS256, refresh de 7 días, `SECRET_KEY` con mínimo de 32 caracteres validado al arrancar) coincide exactamente con `be/app/config.py`.
 
 ### RNF-001.3 — Prevención de enumeración de usuarios
 Los mensajes de error en endpoints de autenticación deben ser genéricos:
