@@ -182,18 +182,19 @@ dependencies = [
     "pydantic==2.12.5",              # Validación de datos con tipos Python
     "pydantic-settings==2.13.1",     # Leer y validar variables de entorno
     "email-validator==2.3.0",        # Validar formato de emails (lo usa Pydantic)
-    "python-jose[cryptography]==3.5.0",  # Crear y verificar tokens JWT
-    "passlib[bcrypt]==1.7.4",        # Hashear contraseñas con bcrypt
-    "bcrypt==4.0.1",                 # Motor de bcrypt (versión fijada por compatibilidad)
+    "pyjwt==2.15.0",                 # Crear y verificar tokens JWT (HS256)
+    "bcrypt==5.0.0",                 # Hashear y verificar contraseñas
     "resend==2.25.0",                # SDK del servicio de envío de emails Resend
     "slowapi==0.1.9",                # Rate limiting — limita peticiones por IP (OWASP A04)
     # + pines de seguridad de dependencias transitivas con CVEs conocidos
-    # (cryptography, ecdsa, pygments, requests) — ver pyproject.toml para el detalle.
+    # (pygments, requests) — ver pyproject.toml para el detalle.
+    # Issue #312: antes se usaban python-jose y passlib (sin mantenimiento),
+    # que arrastraban ecdsa (con una vulnerabilidad sin corrección).
 ]
 
 [dependency-groups]
 dev = [
-    "pytest==9.0.2",           # Framework de testing
+    "pytest==9.1.1",           # Framework de testing
     "pytest-asyncio==1.3.0",   # Soporte para funciones async en tests
     "httpx==0.28.1",           # Cliente HTTP para llamar a la API en los tests
     "pytest-cov==7.0.0",       # Medir cobertura de código
@@ -615,24 +616,30 @@ Este módulo concentra toda la lógica criptográfica del sistema.
 ### 11.1 Hashing de contraseñas
 
 ```python
-from passlib.context import CryptContext
+import bcrypt
 
-# CryptContext configura el algoritmo de hashing
 # bcrypt es lento por diseño: eso dificulta los ataques de fuerza bruta
 # Un atacante que robe la BD tardaría años en romper contraseñas bien hasheadas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
     """Genera el hash bcrypt de una contraseña en texto plano."""
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     # Resultado: "$2b$12$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
     # El hash incluye: algoritmo + factor de trabajo + salt + hash → todo en una cadena
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verifica si una contraseña plana coincide con su hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    contrasena = plain_password.encode("utf-8")
+    if len(contrasena) > 72:  # bcrypt solo usa 72 bytes; bcrypt 5 lanza error si hay más
+        return False
+    return bcrypt.checkpw(contrasena, hashed_password.encode("utf-8"))
     # bcrypt extrae el salt del hash y re-hashea la contraseña plana para comparar
 ```
+
+> **Issue #312:** antes se usaba `passlib` (`CryptContext`), que no saca versiones desde 2020
+> y obligaba a quedarse en `bcrypt==4.0.1`. Ahora se usa `bcrypt` directo (5.0). Los hashes
+> ya guardados (`$2b$12$...`) son el mismo formato estándar, así que ninguna contraseña
+> existente tuvo que cambiarse. Los JWT se firman con `PyJWT` en vez de `python-jose`.
 
 > **¿Por qué bcrypt y no SHA-256 o MD5?**
 > MD5 y SHA son algoritmos _rápidos_ — diseñados para verificar integridad de archivos.

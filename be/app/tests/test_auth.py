@@ -603,6 +603,31 @@ class TestChangePassword:
         )
         assert response.status_code == 422
 
+    def test_change_password_de_mas_de_72_bytes_devuelve_422(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        """Issue #312: bcrypt solo usa 72 bytes; "ñ" ocupa 2, así que 40 "ñ"
+        (80 bytes) se pasan aunque sean solo 40 caracteres."""
+        response = client.post(
+            self.URL,
+            json={"current_password": TEST_USER_PASSWORD, "new_password": "Aa1" + "ñ" * 40},
+            headers=auth_headers,
+        )
+        assert response.status_code == 422
+        assert "72" in response.text
+
+    def test_login_con_contrasena_de_mas_de_72_bytes_devuelve_401_no_500(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Issue #312: el login no pasa por el validador de fortaleza, y
+        bcrypt 5 lanza ValueError con más de 72 bytes — verify_password debe
+        tratarlo como contraseña incorrecta."""
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": TEST_USER_EMAIL, "password": "A" * 100},
+        )
+        assert response.status_code == 401
+
     def test_change_password_cierra_las_demas_sesiones(
         self, client: TestClient, test_user: object
     ) -> None:

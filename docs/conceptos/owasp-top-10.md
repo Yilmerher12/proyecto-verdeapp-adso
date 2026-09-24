@@ -75,8 +75,11 @@ Otro ejemplo, en `auditoria_conjunto_service.py::obtener_por_id` (agregado en es
 
 ```python
 # be/app/utils/security.py
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 ```
+
+> **Issue #312 (2026-09-24):** antes esto se hacía con `passlib` (`CryptContext`), sin mantenimiento desde 2020. Ahora se usa `bcrypt` directo. bcrypt solo usa los primeros 72 bytes de la contraseña, así que `schemas/user.py` rechaza las más largas en vez de cortarlas en silencio.
 
 bcrypt es deliberadamente **lento** — a diferencia de SHA-256 (rápido, pensado para hashes de integridad, no de contraseñas), un atacante con una GPU no puede probar miles de millones de combinaciones por segundo contra un hash bcrypt.
 

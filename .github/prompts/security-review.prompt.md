@@ -22,7 +22,7 @@ OWASP Top 10 (2021) en el contexto de una API REST con FastAPI + React/TypeScrip
 ### A02 — Cryptographic Failures
 
 - ¿Se almacenan passwords en texto plano o con hashing débil (MD5, SHA-1)?
-- ¿Se usa bcrypt vía `passlib` para hashing?
+- ¿Se usa bcrypt (directo, no `passlib`) para hashing, y se rechazan las contraseñas de más de 72 bytes?
 - ¿Los tokens JWT usan HS256 con una `SECRET_KEY` de al menos 32 caracteres?
 - ¿Se transmiten datos sensibles sin HTTPS (en producción)?
 - ¿Aparecen secrets o credenciales hardcodeadas en el código?
