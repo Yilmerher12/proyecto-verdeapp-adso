@@ -23,32 +23,44 @@ El sistema debe implementar un panel de auditoría cualitativa donde el 'Recicla
 
 ## Entradas
 
-| Campo           | Tipo   | Obligatorio | Validaciones                                                                 |
-| --------------- | ------ | ----------- | ---------------------------------------------------------------------------- |
-| `conjunto_id`   | UUID   | Sí          | Debe ser un ID de conjunto válido en la base de datos.                       |
-| `calificacion`  | Enum   | Sí          | Valores permitidos: `BUENA`, `REGULAR`, `DEFICIENTE`                         |
-| `observaciones` | Texto  | No          | Máximo 255 caracteres.                                                       |
+> **Corrección (2026-09-24, issue #284)**: la nota de Endpoints (más abajo) ya se había actualizado, pero las tablas de Entradas, Proceso y Salidas seguían con el diseño original (campos `conjunto_id`/`calificacion`/`observaciones`, tabla `historial_semaforo`, respuesta con mensaje). Se actualizaron a lo que hace el código real: `crear_auditoria` en `be/app/routers/auditoria_conjunto.py` y `be/app/services/auditoria_conjunto_service.py`.
+
+La petición es un formulario (`multipart/form-data`), porque lleva fotos.
+
+| Campo                     | Tipo     | Obligatorio | Validaciones                                                                 |
+| ------------------------- | -------- | ----------- | ---------------------------------------------------------------------------- |
+| `id_conjunto_residencial` | UUID     | Sí          | El reciclador debe estar autorizado en ese conjunto y haber avisado su llegada (RQF-006). |
+| `nivel_desempeno`         | Texto    | Sí          | `BUENA`, `REGULAR` o `DEFICIENTE` (en pantalla: Bueno / Regular / Malo). La BD también admite `EXCELENTE`, que solo tienen auditorías viejas. |
+| `tema_educativo`          | Texto    | Sí          | Categoría del contenido educativo relacionada con lo observado. No puede ir vacío. Máximo 255 caracteres. |
+| `descripcion`             | Texto    | No          | Observaciones libres, sin límite de largo.                                   |
+| `evidencias`              | Archivos | Sí          | Entre 1 y 3 fotos (JPG, PNG o WEBP, máximo 5 MB cada una, validadas por contenido real). |
 
 ---
 
 ## Proceso
 
-1. El usuario con rol **Reciclador**, tras realizar la recolección, ingresa al panel de auditoría en la aplicación.
-2. Selecciona el `conjunto_id` y asigna un color del semáforo basado en la calidad de separación de los residuos. Opcionalmente, añade una observación.
-3. El frontend (React) envía una petición `POST` al backend con estos datos.
-4. El backend (FastAPI) valida que el reciclador tenga permisos sobre ese conjunto y guarda el registro en la base de datos PostgreSQL (tabla `historial_semaforo`) con la fecha y hora actual.
-5. El usuario con rol **Residente** ingresa a su panel y realiza una petición `GET` para consultar el historial de su conjunto.
-6. El backend retorna la lista de calificaciones históricas.
-7. El frontend renderiza el historial utilizando indicadores visuales (Rojo, Amarillo, Verde).
+1. El **Reciclador**, con su llegada avisada en el conjunto, presiona "Auditar ahora" en su panel.
+2. Elige el nivel (Bueno / Regular / Malo), el tema, una descripción opcional y de 1 a 3 fotos.
+3. El frontend envía `POST /api/v1/auditorias-conjunto` como formulario.
+4. El backend valida que el reciclador esté autorizado y presente, que no haya auditado ese conjunto en las últimas 24 horas (RN-002) y que las fotos sean imágenes reales. Guarda las fotos en `be/app/uploads/evidencias-auditoria/` y el registro en la tabla `auditorias_conjunto`.
+5. Si el nivel es Regular o Malo, se recomienda contenido educativo a los residentes (RQF-013).
+6. El **Residente** (o el Admin de Conjunto) consulta `GET /api/v1/auditorias-conjunto/historial` y ve el historial de su conjunto, de la más reciente a la más antigua.
+7. El frontend muestra cada auditoría con su color de semáforo (`fe/src/config/nivelesDesempeno.ts`).
 
 ---
 
 ## Salidas
 
-| Escenario           | Código HTTP | Respuesta                                                                                                    |
-| ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Registro exitoso    | 201         | `{"message": "Calificación registrada exitosamente."}`                                                       |
-| Consulta exitosa    | 200         | JSON con historial: `[{"fecha": "...", "calificacion": "BUENA", "observaciones": "..."}]`                    |
+| Escenario                                | Código HTTP | Respuesta                                                                                  |
+| ---------------------------------------- | ----------- | ------------------------------------------------------------------------------------------ |
+| Registro exitoso                         | 201         | La auditoría creada: `id_auditoria`, `id_conjunto_residencial`, `nombre_conjunto`, `nivel_desempeno`, `tema_educativo`, `descripcion`, `ruta_evidencia` (y `ruta_evidencia_2`/`_3` si hay), `created_at`, entre otros |
+| Consulta de historial                    | 200         | Lista de auditorías con esos mismos campos                                                 |
+| Otro rol intenta auditar                 | 403         | `{"detail": "Solo un Reciclador puede auditar un conjunto."}`                              |
+| No autorizado en el conjunto             | 403         | `{"detail": "No estás autorizado en ese conjunto."}`                                       |
+| Sin avisar su llegada                    | 400         | `{"detail": "Debes avisar tu llegada a este conjunto antes de poder auditarlo."}`          |
+| Ya auditó hace menos de 24 h (RN-002)    | 400         | `{"detail": "Ya auditaste este conjunto hace menos de 24 horas."}`                         |
+| Cantidad de fotos fuera de rango         | 400         | `{"detail": "Debes adjuntar entre 1 y 3 fotos de evidencia."}`                             |
+| Tema vacío                               | 400         | `{"detail": "Selecciona un tema."}`                                                        |
 
 ---
 

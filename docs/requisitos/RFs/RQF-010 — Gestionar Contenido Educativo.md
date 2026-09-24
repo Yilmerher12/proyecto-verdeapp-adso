@@ -23,24 +23,29 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' crear, modificar y e
 
 ## Entradas
 
-| Campo          | Tipo   | Obligatorio | Validaciones                                                                 |
-| -------------- | ------ | ----------- | ---------------------------------------------------------------------------- |
-| `titulo`       | Texto  | Sí          | Mínimo 5 caracteres, máximo 255                                              |
-| `cuerpo_texto` | Texto  | Sí          | Mínimo 20 caracteres                                                         |
-| `accion`       | Enum   | Sí          | Valores permitidos: `crear`, `editar`, `eliminar`                            |
-| `contenido_id` | UUID   | Condicional | Obligatorio solo si la acción es editar o eliminar. Debe existir en la BD.   |
+> **Corrección (2026-09-24, issue #284)**: la tabla de Entradas describía un solo endpoint con un campo `accion` (crear/editar/eliminar) y un `contenido_id` en el cuerpo; faltaban la categoría y los enlaces, y las Salidas mostraban un mensaje que el backend no devuelve. Se actualizaron a lo que hace el código real: `be/app/schemas/contenido_educativo.py` y `be/app/routers/contenido_educativo.py`.
+
+La acción no es un campo: la define el método HTTP (`POST` crea, `PUT /{id_contenido}` edita, `DELETE /{id_contenido}` elimina), y el id del módulo va en la URL. Crear y editar reciben el mismo cuerpo:
+
+| Campo              | Tipo  | Obligatorio | Validaciones                                                                 |
+| ------------------ | ----- | ----------- | ---------------------------------------------------------------------------- |
+| `modulo_categoria` | Texto | Sí          | No puede quedar vacío. Máximo 255 caracteres. Puede ser una categoría existente o una nueva. |
+| `titulo_tema`      | Texto | Sí          | Mínimo 5 caracteres, máximo 255.                                             |
+| `cuerpo_texto`     | Texto | Sí          | Mínimo 20 caracteres. Admite Markdown simple (`##`, listas, negrita).        |
+| `url_video`        | Texto | No          | Solo `https://` de YouTube (RN-004). Máximo 500 caracteres.                  |
+| `url_guia`         | Texto | No          | Solo `https://` o un archivo subido a VerdeApp (`/uploads/...`) (RN-004). Máximo 500 caracteres. |
 
 ---
 
 ## Proceso
 
-1. El usuario con rol `admin_sistema` inicia sesión y accede al panel de administración de contenido.
-2. Selecciona la opción para agregar un nuevo artículo o editar uno existente.
-3. El usuario completa el formulario con el título y el cuerpo del texto.
-4. El frontend envía la petición respectiva (`POST`, `PUT` o `DELETE`) al backend.
-5. El backend (FastAPI) valida el token JWT para confirmar que el usuario tiene el rol de administrador.
-6. El backend ejecuta la instrucción en PostgreSQL insertando, actualizando o borrando el registro en la tabla `Contenido_Educativo`.
-7. El sistema retorna un mensaje de confirmación y actualiza la vista del catálogo para los residentes.
+1. El usuario con rol `admin_sistema` entra al panel "Contenido educativo", pestaña "Módulos".
+2. Elige "Nuevo módulo", o editar o eliminar uno existente.
+3. Completa categoría, título, contenido y, si quiere, un video de YouTube y una guía de apoyo (enlace o archivo subido). La vista previa muestra en vivo cómo lo verá el Residente.
+4. El frontend envía `POST`, `PUT` o `DELETE` a `/api/v1/contenido-educativo`.
+5. El backend valida que el usuario sea Administrador del Sistema y los campos del cuerpo.
+6. Inserta, actualiza o borra el registro en la tabla `contenido_educativo`.
+7. El catálogo de los residentes (RQF-004) muestra el cambio en la siguiente consulta.
 
 ---
 
@@ -48,9 +53,12 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' crear, modificar y e
 
 | Escenario           | Código HTTP | Respuesta                                                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Operación exitosa   | 200 / 201   | JSON de confirmación: `{"message": "Contenido educativo guardado/actualizado correctamente."}`               |
-| Error de permisos   | 403         | Mensaje de error: `{"detail": "Acceso denegado. Se requiere rol de Administrador."}`                         |
-| Datos inválidos     | 422         | Detalle de errores (ej. "El título es demasiado corto").                                                     |
+| Módulo creado       | 201         | El módulo creado: `id_contenido`, `modulo_categoria`, `titulo_tema`, `cuerpo_texto`, `url_video`, `url_guia`, `fecha_publicacion` |
+| Módulo editado      | 200         | El módulo actualizado, con los mismos campos                                                                 |
+| Módulo eliminado    | 204         | Sin cuerpo                                                                                                   |
+| Otro rol            | 403         | `{"detail": "Solo un Administrador del Sistema puede gestionar el contenido educativo."}`                   |
+| Módulo inexistente  | 404         | `{"detail": "No se encontró ese módulo de contenido educativo."}`                                            |
+| Datos inválidos     | 422         | Detalle por campo (ej. "El título debe tener al menos 5 caracteres.", "El cuerpo de texto debe tener al menos 20 caracteres.") |
 
 ---
 
