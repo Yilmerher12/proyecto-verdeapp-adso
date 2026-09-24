@@ -188,6 +188,14 @@ def setup_database() -> Generator[None, None, None]:
               be/app/seed_data.sql, para que el comportamiento de test
               coincida con el real.
     """
+    # ¿Qué? Issue #323: se borran la vista y la función ANTES de drop_all,
+    #       no solo al final de la sesión.
+    # ¿Para qué? Si una corrida se corta a mitad (Ctrl+C, cerrar la
+    #           terminal), el cleanup del final nunca corre: la vista queda
+    #           en la BD de pruebas y la siguiente corrida fallaba entera
+    #           con "cannot drop table residentes because other objects
+    #           depend on it" (460 errores, ninguna prueba ejecutada).
+    _borrar_vista_y_funcion_panel_admin()
     Base.metadata.drop_all(bind=test_engine)
     Base.metadata.create_all(bind=test_engine)
 
@@ -207,18 +215,25 @@ def setup_database() -> Generator[None, None, None]:
 
     yield
 
-    # ¿Qué? La vista depende de la tabla "residentes" (CREATE VIEW ... FROM
-    #       residentes ...) — sin borrarla primero, el DROP TABLE de abajo
-    #       falla con "cannot drop table because other objects depend on
-    #       it". Mismo orden inverso que seguiría un "alembic downgrade".
+    _borrar_vista_y_funcion_panel_admin()
+    Base.metadata.drop_all(bind=test_engine)
+
+
+def _borrar_vista_y_funcion_panel_admin() -> None:
+    """Borra la vista y la función SQL del panel de Admin.
+
+    ¿Qué? La vista depende de la tabla "residentes" (CREATE VIEW ... FROM
+          residentes ...) — sin borrarla primero, el DROP TABLE de
+          Base.metadata.drop_all() falla con "cannot drop table because
+          other objects depend on it". Mismo orden inverso que seguiría un
+          "alembic downgrade".
+    """
     with TestSessionLocal(bind=test_engine.connect()) as cleanup_session:
         cleanup_session.execute(text(
             "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, UUID, TEXT, TEXT, INT, INT, BOOLEAN)"
         ))
         cleanup_session.execute(text("DROP VIEW IF EXISTS vista_directorio_residentes"))
         cleanup_session.commit()
-
-    Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture()

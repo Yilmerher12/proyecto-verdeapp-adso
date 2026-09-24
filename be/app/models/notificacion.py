@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy import Column, String, Boolean, Text, ForeignKey, DateTime, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
@@ -37,7 +39,24 @@ class Notificacion(Base):
     #           que remapearla a mano en la migración de datos, contra
     #           auditorias_conjunto (hoy es la única tabla a la que apunta).
     id_referencia = Column(UUID(as_uuid=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    # ¿Qué? Issue #323: la hora la pone Python al insertar cada fila
+    #       (default); server_default queda solo como respaldo para
+    #       inserciones hechas con SQL directo (seed, migraciones).
+    # ¿Para qué? now() de Postgres devuelve la hora de INICIO de la
+    #           transacción. En las pruebas, conftest.py mete todas las
+    #           peticiones de un test en una sola transacción, así que
+    #           "Llegué" y "Terminé" quedaban con la misma hora exacta, y
+    #           las consultas que piden "el aviso más reciente"
+    #           (order_by created_at desc) elegían al azar.
+    # ¿Impacto? En la app real no cambia nada: cada petición ya era su
+    #           propia transacción con su propia hora. No requiere
+    #           migración: el esquema de la tabla es el mismo.
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        server_default=func.now(),
+        nullable=False,
+    )
 
     # ¿Qué? Issue #169 — índice compuesto para las consultas que revisan
     #       "la última notificación de tipo X de este conjunto"
