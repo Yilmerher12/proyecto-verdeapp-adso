@@ -29,21 +29,24 @@ El sistema debe enviar una notificación de 'Llegada al conjunto' a los Resident
 
 ## Entradas
 
-| Campo         | Tipo   | Obligatorio | Validaciones                                                                 |
-| ------------- | ------ | ----------- | ---------------------------------------------------------------------------- |
-| `conjunto_id` | UUID   | Sí          | Debe ser un ID válido, y el reciclador debe estar autorizado en ese conjunto.|
+> **Corrección (2026-09-24, issue #284)**: las tablas de Entradas, Proceso y Salidas describían el diseño original (campo `conjunto_id`, envío por Firebase o WebSockets, respuesta 200 con mensaje). Se actualizaron a lo que hace el código real: `NotificacionEnviarBody` en `be/app/schemas/notificacion.py` y `enviar_notificacion` en `be/app/services/notificaciones_service.py`.
+
+| Campo                     | Tipo  | Obligatorio | Validaciones                                                                 |
+| ------------------------- | ----- | ----------- | ---------------------------------------------------------------------------- |
+| `tipo`                    | Texto | Sí          | `LLEGADA_RECICLADOR` o `FINALIZACION_RECICLADOR` (el mismo endpoint acepta también `SHUT_LLENO`/`SHUT_LIBRE`, ver RQF-003). |
+| `id_conjunto_residencial` | UUID  | Sí          | El reciclador debe estar autorizado (sin revocar) en ese conjunto.          |
 
 ---
 
 ## Proceso
 
 1. El usuario con rol **Reciclador** llega físicamente a un conjunto residencial.
-2. Ingresa a la aplicación y presiona el botón "Llegada al conjunto".
-3. El frontend envía una petición `POST` al backend con el `conjunto_id` correspondiente.
-4. El backend valida el token JWT del reciclador para verificar su identidad y su vinculación con el conjunto.
-5. El backend consulta la base de datos para obtener todos los usuarios con rol **Residente** asociados a ese `conjunto_id`.
-6. El sistema despacha una notificación (ej. Firebase Cloud Messaging o WebSockets) a los dispositivos de los residentes encontrados.
-7. El sistema registra el evento de llegada en la base de datos para fines de auditoría/historial.
+2. En su panel presiona "Llegué al conjunto".
+3. El frontend envía `POST /api/v1/notificaciones/enviar` con `tipo=LLEGADA_RECICLADOR` y el `id_conjunto_residencial`.
+4. El backend valida el token del reciclador, que esté autorizado en ese conjunto, que no esté ya marcado como presente (RN-004) y que no haya avisado otra llegada allí en las últimas 2 horas (RN-003).
+5. El backend obtiene los **Residentes** y el **Admin de Conjunto** de ese conjunto.
+6. Se guarda una notificación en la base de datos para cada uno de ellos (tabla de notificaciones). No hay envío por Firebase ni WebSockets: la app de cada usuario consulta sus notificaciones cada cierto tiempo (`fe/src/hooks/usePolling.ts`) y la muestra en la campana.
+7. Esa misma notificación queda como registro de la llegada: el backend la usa para saber si el reciclador está presente.
 8. Mientras el reciclador está marcado como presente en ese conjunto (ver RN-004), puede usar `SHUT_LLENO`/`SHUT_LIBRE` (RQF-003) y, al terminar, enviar `FINALIZACION_RECICLADOR` con el mismo botón "Enviar notificación" — el backend le avisa a los mismos residentes/administrador que el reciclador ya se retiró, y lo vuelve a marcar como "no presente" (puede avisar una nueva llegada).
 
 ---
@@ -52,8 +55,12 @@ El sistema debe enviar una notificación de 'Llegada al conjunto' a los Resident
 
 | Escenario           | Código HTTP | Respuesta                                                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Notificación exitosa| 200         | `{"message": "Notificación de llegada enviada a los residentes."}`                                           |
-| Error de permisos   | 403         | `{"detail": "El reciclador no tiene permisos en este conjunto."}`                                            |
+| Notificación exitosa| 201         | `{"ok": true, "destinatarios": <cantidad de usuarios notificados>}`                                          |
+| Sin `id_conjunto_residencial` | 400 | `{"detail": "Se requiere id_conjunto_residencial."}`                                                     |
+| No autorizado en el conjunto | 403 | `{"detail": "No estás autorizado en este conjunto."}`                                                      |
+| Ya está presente (RN-004) | 400    | `{"detail": "Ya avisaste tu llegada a este conjunto — avisa que ya te vas antes de volver a llegar."}`       |
+| Llegada hace menos de 2 h (RN-003) | 400 | `{"detail": "Ya reportaste tu llegada a este conjunto hace menos de 2 horas."}`                      |
+| Finalización sin llegada (RN-004) | 400 | `{"detail": "Debes avisar tu llegada a este conjunto antes de usar esta notificación."}`              |
 
 ---
 
@@ -70,6 +77,6 @@ El sistema debe enviar una notificación de 'Llegada al conjunto' a los Resident
 ## Reglas de negocio
 
 - RN-001: La acción de 'Llegada al conjunto' está restringida exclusivamente a usuarios con el rol `reciclador`. **Implementado.**
-- RN-002: Las notificaciones solo se envían a los residentes que pertenecen exactamente al mismo `conjunto_id` desde donde el reciclador detona la alerta (y también al Administrador de Conjunto). **Implementado.**
+- RN-002: Las notificaciones solo se envían a los residentes que pertenecen exactamente al mismo conjunto (`id_conjunto_residencial`) desde donde el reciclador detona la alerta (y también al Administrador de Conjunto). **Implementado.**
 - RN-003: Debe existir un bloqueo temporal (cooldown) para evitar que un reciclador envíe múltiples notificaciones de llegada repetidas en un lapso corto (ej. máximo 1 notificación por conjunto cada 2 horas). **Implementado (2026-08-29).**
 - RN-004: Control de presencia — un reciclador no puede avisar `LLEGADA_RECICLADOR` si ya está marcado como presente en ese conjunto (debe avisar `FINALIZACION_RECICLADOR` primero); y no puede usar `SHUT_LLENO`, `SHUT_LIBRE` ni `FINALIZACION_RECICLADOR` sin haber avisado su llegada antes. Avisar la finalización vuelve a marcarlo como "no presente". **Implementado (2026-09-16, agregado a la documentación — la lógica ya existía en código).**

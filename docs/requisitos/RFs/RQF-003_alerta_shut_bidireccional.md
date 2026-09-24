@@ -29,34 +29,41 @@ El sistema debe permitir al 'Residente' notificar que el SHUT está lleno y al '
 
 ## Entradas
 
-| Campo         | Tipo   | Obligatorio | Validaciones                                                                 |
-| ------------- | ------ | ----------- | ---------------------------------------------------------------------------- |
-| `conjunto_id` | UUID   | Sí          | Debe ser un ID de conjunto válido en el sistema                              |
-| `accion`      | Enum   | Sí          | Valores permitidos: `SHUT_LLENO`, `SHUT_LIBRE`                               |
+> **Corrección (2026-09-24, issue #284)**: las tablas de Entradas, Proceso y Salidas describían el diseño original (campos `conjunto_id`/`accion`, una columna de "estado del SHUT", respuesta 200 con mensaje). Se actualizaron a lo que hace el código real: `NotificacionEnviarBody` en `be/app/schemas/notificacion.py` y `enviar_notificacion` en `be/app/services/notificaciones_service.py`.
+
+| Campo                     | Tipo | Obligatorio | Validaciones                                                                 |
+| ------------------------- | ---- | ----------- | ---------------------------------------------------------------------------- |
+| `tipo`                    | Texto | Sí         | `SHUT_LLENO` o `SHUT_LIBRE` (el mismo endpoint acepta también los tipos de RQF-006). El Residente solo puede enviar `SHUT_LLENO`. |
+| `id_conjunto_residencial` | UUID | Solo Reciclador | El Residente no lo envía: se toma de su propia unidad. El Reciclador debe estar autorizado (sin revocar) en ese conjunto. |
 
 ---
 
 ## Proceso
 
-1. Un **Residente** ingresa al sistema y presiona el botón "SHUT Lleno".
-2. El frontend envía una petición al backend indicando la acción `SHUT_LLENO` para el `conjunto_id` al que pertenece el residente.
-3. El backend verifica la asociación del usuario con el conjunto y cambia el estado del SHUT en la base de datos a "lleno".
-4. El sistema busca todos los usuarios con rol **Reciclador** asociados a ese mismo `conjunto_id`.
-5. Se dispara una notificación a los recicladores encontrados.
-6. Posteriormente, el **Reciclador** recoge los residuos y presiona el botón "SHUT Vaciado".
-7. El frontend envía la petición con la acción `SHUT_LIBRE`.
-8. El backend actualiza el estado del SHUT a "vacío".
-9. Se busca a los **Residentes** del `conjunto_id` y se les envía una notificación confirmando el vaciado.
+1. Un **Residente** presiona el botón "Reportar" (SHUT lleno) en su panel.
+2. El frontend envía `POST /api/v1/notificaciones/enviar` con `tipo=SHUT_LLENO`.
+3. El backend busca el conjunto del residente y revisa que el SHUT no esté ya reportado como lleno (RN-001).
+4. Se crea una notificación para los **Recicladores** y el **Admin de Conjunto** de ese conjunto.
+5. Posteriormente, un **Reciclador** con su llegada avisada (RQF-006) recoge los residuos y envía `tipo=SHUT_LIBRE` con el `id_conjunto_residencial`.
+6. El backend revisa que esté autorizado y presente en el conjunto, y que el SHUT esté reportado como lleno.
+7. Se crea una notificación para los **Residentes** y el **Admin de Conjunto** de ese conjunto.
+
+El "estado del SHUT" no es una columna aparte: es el tipo del **último** aviso `SHUT_LLENO`/`SHUT_LIBRE` del conjunto. `GET /api/v1/notificaciones/estado-shut` lo consulta.
 
 ---
 
 ## Salidas
 
-| Escenario           | Código HTTP | Respuesta                                                                                                    |
-| ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Alerta enviada      | 200         | `{"message": "Alerta enviada exitosamente a los usuarios correspondientes."}`                                |
-| Conjunto no existe  | 404         | `{"detail": "El conjunto asociado no existe."}`                                                              |
-| Usuario no asociado | 403         | `{"detail": "No tiene permisos para enviar alertas en este conjunto."}`                                      |
+| Escenario                                   | Código HTTP | Respuesta                                                                           |
+| ------------------------------------------- | ----------- | ----------------------------------------------------------------------------------- |
+| Aviso enviado                               | 201         | `{"ok": true, "destinatarios": <cantidad de usuarios notificados>}`                 |
+| Residente intenta enviar otro tipo          | 403         | `{"detail": "El residente solo puede enviar SHUT_LLENO."}`                          |
+| Residente sin conjunto                      | 404         | `{"detail": "No se encontró el conjunto del residente."}`                           |
+| SHUT ya reportado lleno (Residente)         | 400         | `{"detail": "El SHUT de tu conjunto ya está reportado como lleno."}`                |
+| Reciclador sin `id_conjunto_residencial`    | 400         | `{"detail": "Se requiere id_conjunto_residencial."}`                                |
+| Reciclador no autorizado en el conjunto     | 403         | `{"detail": "No estás autorizado en este conjunto."}`                               |
+| Reciclador sin avisar su llegada            | 400         | `{"detail": "Debes avisar tu llegada a este conjunto antes de usar esta notificación."}` |
+| SHUT ya lleno / ya libre (Reciclador)       | 400         | `{"detail": "El SHUT de este conjunto ya está reportado como lleno."}` / `"...como libre."` |
 
 ---
 
@@ -74,4 +81,4 @@ El sistema debe permitir al 'Residente' notificar que el SHUT está lleno y al '
 ## Reglas de negocio
 
 - RN-001: Un residente no puede enviar la alerta "SHUT Lleno" si el estado actual del SHUT ya es "lleno". **Implementado (2026-08-29).**
-- RN-002: Las notificaciones solo deben llegar a los usuarios del rol opuesto que pertenezcan estrictamente al mismo conjunto residencial. **Implementado.**
+- RN-002: Las notificaciones solo deben llegar a los usuarios del rol opuesto que pertenezcan estrictamente al mismo conjunto residencial, más el Admin de Conjunto de ese conjunto (corregido 2026-09-24: el código siempre incluyó al Admin de Conjunto, ver `admins_del_conjunto`). **Implementado.**
