@@ -156,3 +156,15 @@ El informe de seguridad Cyber Neo (hallazgo CN-009) encontró 24 alertas en el f
 
 - **Saltos de versión mayor** (Vite 8, Vitest 5, ESLint 10, TypeScript 7, jsdom 30, @vitejs/plugin-react 6, @testing-library/jest-dom 7): no corrigen ninguna alerta adicional y pueden romper compatibilidad. Se evalúan en una tarjeta aparte.
 - **`eslint-plugin-react-hooks` se mantiene en 7.0.1**: la 7.1.1 trae reglas nuevas de estilo de React que marcan 15 avisos en 11 archivos, varios de ellos del rediseño de dashboards en curso. No es un tema de seguridad; se hace en una tarjeta aparte cuando ese rediseño termine.
+
+---
+
+## Actualización — CI con versiones fijas y Dependabot (2026-09-24, issue #316)
+
+Cierra los hallazgos CN-021, CN-029 y CN-030 del informe de seguridad Cyber Neo:
+
+- **Herramientas del CI con versión exacta:** `setup-uv` instala `uv` 0.12.18 (antes, la más nueva del día) y la auditoría usa `uvx pip-audit@2.10.1` (antes, sin versión). Así el CI se comporta igual en cada ejecución y no descarga sin control una versión nueva, que podría venir con errores o comprometida.
+- **Token de GitHub:** los dos pasos `actions/checkout` usan `persist-credentials: false`, para no dejar el `GITHUB_TOKEN` guardado en `.git/config` al alcance de los pasos siguientes.
+- **Dependabot** (`.github/dependabot.yml`): cada lunes abre un PR agrupado hacia `develop` por ecosistema (`uv` en `/be`, pnpm en `/fe`, `github-actions`, imágenes de los Dockerfile y de `docker-compose.yml`). Solo propone versiones menores y parches; en Docker, solo parches. Así la regla de versiones exactas ya no significa "versiones que se quedan viejas": las actualizaciones llegan solas y el CI las prueba antes de aceptarlas. `eslint-plugin-react-hooks` se excluye temporalmente (ver la sección del issue #313).
+
+La auditoría manual completa sigue recomendándose de vez en cuando, pero ahora hay tres capas: el CI (bloquea alertas nuevas), Dependabot (propone las actualizaciones) y esta revisión manual.
