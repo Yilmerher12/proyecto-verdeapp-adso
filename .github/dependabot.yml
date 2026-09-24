@@ -16,6 +16,12 @@
 #     se evalúan a mano (ver issue de actualizaciones mayores del frontend).
 #   - groups "*": UN solo PR por ecosistema cada semana, con todo junto, en
 #     vez de uno por paquete.
+#   - cooldown 7 días: no propone una versión hasta que lleve una semana
+#     publicada. Si alguien roba la cuenta del autor de una librería y
+#     publica una versión maliciosa, ninguna auditoría la detecta hasta que
+#     se reporta — normalmente la comunidad la descubre y la retira en pocos
+#     días, antes de que llegue a proponerse aquí. Las alertas YA conocidas
+#     las atrapa el CI (pip-audit y pnpm audit) en el propio PR.
 # Ojo: Dependabot solo lee este archivo desde la rama por defecto (main), así
 # que se activa cuando develop se fusione en main.
 # ============================================================================
@@ -30,6 +36,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "chore(deps)"
     groups:
@@ -48,6 +56,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "chore(deps)"
     groups:
@@ -70,6 +80,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "chore(deps)"
     groups:
@@ -89,6 +101,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "chore(deps)"
     groups:
@@ -105,6 +119,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "chore(deps)"
     groups:

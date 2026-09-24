@@ -39,7 +39,7 @@ El backend usa `ruff` (lint + formato) y el frontend usa `eslint` + `prettier`. 
 
 > **Nota (2026-08-28)**: ahora esto se verifica automáticamente — `.github/workflows/ci.yml` corre `ruff`/`pytest` (backend) y `tsc`/`eslint`/`vitest` (frontend) en cada Pull Request. Antes solo existía `close-prs.yml` (que ni siquiera corre estas herramientas, solo cierra PRs externos).
 
-> **Nota (2026-09-24, issue #316)**: el CI usa ahora versiones exactas de sus propias herramientas (`uv` 0.12.18, `pip-audit` 2.10.1) y ya no deja el token de GitHub guardado después de descargar el código (`persist-credentials: false`). Además se activó **Dependabot** (`.github/dependabot.yml`): cada lunes revisa las dependencias del backend, del frontend, las Actions del CI y las imágenes de Docker, y abre un PR agrupado hacia `develop` con las versiones menores y parches nuevos. Los saltos de versión mayor se evalúan a mano.
+> **Nota (2026-09-24, issue #316)**: el CI usa ahora versiones exactas de sus propias herramientas (`uv` 0.12.18, `pip-audit` 2.10.1) y ya no deja el token de GitHub guardado después de descargar el código (`persist-credentials: false`). Además se activó **Dependabot** (`.github/dependabot.yml`): cada lunes revisa las dependencias del backend, del frontend, las Actions del CI y las imágenes de Docker, y abre un PR agrupado hacia `develop` con las versiones menores y parches nuevos, con un tiempo de espera (`cooldown`) de 7 días desde que cada versión se publica. Los saltos de versión mayor se evalúan a mano. El CI audita todas las dependencias del frontend (`pnpm audit`, incluidas las de desarrollo), así que un PR que traiga una versión con una alerta conocida queda en rojo.
 
 ### RNF-006.3 — Cobertura de pruebas automatizadas
 

@@ -173,13 +173,18 @@ jobs:
         #           develop sin que el pipeline los detectara.
         run: pnpm build
 
-      - name: Auditar dependencias de producción (pnpm audit)
-        # ¿Qué? Revisa solo las dependencias que de verdad llegan al
-        #       navegador del usuario (--prod excluye ESLint, Vite, Vitest,
-        #       etc., que nunca se despliegan).
-        # ¿Para qué? Ver docs/gestion-proyecto/auditoria-dependencias.md —
-        #           hoy este subconjunto está en 0 vulnerabilidades; este
-        #           paso existe para que una dependencia de producción
-        #           nueva con un CVE conocido bloquee el PR, en vez de
-        #           descubrirse en la próxima auditoría manual.
-        run: pnpm audit --prod
+      - name: Auditar dependencias (pnpm audit)
+        # ¿Qué? Revisa TODAS las dependencias del frontend: las que llegan
+        #       al navegador del usuario y también las de desarrollo (Vite,
+        #       ESLint, Vitest...), que corren en el computador de quien
+        #       programa.
+        # ¿Para qué? Antes era "pnpm audit --prod" porque las de desarrollo
+        #           arrastraban alertas ya conocidas. Desde el issue #313
+        #           están en 0, y una alerta en ellas sí afecta al equipo (ej.
+        #           la de esbuild, que en Windows permitía leer archivos a
+        #           través de "pnpm dev"). Con Dependabot proponiendo
+        #           actualizaciones cada semana, este paso es el que bloquea
+        #           un PR que traiga una versión con una alerta conocida.
+        # ¿Impacto? Si aparece una alerta nueva en una dependencia de
+        #           desarrollo, el PR queda en rojo hasta corregirla.
+        run: pnpm audit

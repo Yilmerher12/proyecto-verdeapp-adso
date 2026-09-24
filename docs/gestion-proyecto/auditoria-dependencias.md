@@ -168,3 +168,12 @@ Cierra los hallazgos CN-021, CN-029 y CN-030 del informe de seguridad Cyber Neo:
 - **Dependabot** (`.github/dependabot.yml`): cada lunes abre un PR agrupado hacia `develop` por ecosistema (`uv` en `/be`, pnpm en `/fe`, `github-actions`, imágenes de los Dockerfile y de `docker-compose.yml`). Solo propone versiones menores y parches; en Docker, solo parches. Así la regla de versiones exactas ya no significa "versiones que se quedan viejas": las actualizaciones llegan solas y el CI las prueba antes de aceptarlas. `eslint-plugin-react-hooks` se excluye temporalmente (ver la sección del issue #313).
 
 La auditoría manual completa sigue recomendándose de vez en cuando, pero ahora hay tres capas: el CI (bloquea alertas nuevas), Dependabot (propone las actualizaciones) y esta revisión manual.
+
+---
+
+## Seguimiento — tiempo de espera en Dependabot y auditoría completa del frontend (2026-09-24)
+
+Dos ajustes posteriores al issue #316:
+
+- **`cooldown` de 7 días en Dependabot:** no propone una versión hasta que lleve una semana publicada. Protege contra el caso que ninguna auditoría puede detectar a tiempo: una versión **maliciosa recién publicada** (por ejemplo, porque le robaron la cuenta al autor de la librería). Mientras nadie la reporta, `pip-audit` y `pnpm audit` la dan por buena; en la práctica, la comunidad suele descubrirla y retirarla en pocos días.
+- **El CI audita también las dependencias de desarrollo del frontend:** `pnpm audit` en vez de `pnpm audit --prod`. Desde el issue #313 están en 0, y una alerta en ellas sí afecta al equipo (la de `esbuild` permitía leer archivos en Windows a través de `pnpm dev`). Con esto, un PR de Dependabot que traiga una versión con una alerta **ya conocida** queda en rojo, tanto en el backend como en el frontend.
