@@ -69,8 +69,77 @@ function manejarRespuestaExitosa(response: import("axios").AxiosResponse) {
 //           se ignoran porque para entonces la redirección ya está en curso.
 let sesionExpiradaEnProceso = false;
 
+// ¿Qué? Issue #319: rutas donde un 401 NO significa "venció el access
+//       token", así que no tiene sentido intentar renovar la sesión.
+// ¿Para qué? En /auth/login un 401 es "contraseña incorrecta"; en
+//           /auth/refresh y /auth/logout, renovar desde ahí mismo sería un
+//           ciclo sin fin.
+const RUTAS_SIN_RENOVACION = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"];
+
+function esRutaSinRenovacion(url: string | undefined): boolean {
+  return !!url && RUTAS_SIN_RENOVACION.some((ruta) => url.includes(ruta));
+}
+
+// ¿Qué? Cliente aparte, SIN interceptores, solo para llamar a /auth/refresh.
+// ¿Para qué? Si la renovación usara "api" o "axios", su propio 401 pasaría
+//           por manejarErrorDeRespuesta y mandaría al login antes de que se
+//           pudiera hacer el reintento de abajo.
+const clienteRenovacion = axios.create({ baseURL: API_BASE_URL, withCredentials: true, timeout: 10000 });
+
+// ¿Qué? La renovación que está en curso, compartida por todas las
+//       peticiones que fallen con 401 al mismo tiempo.
+// ¿Para qué? Desde el issue #308 cada refresh token sirve UNA sola vez. Al
+//           abrir un dashboard salen 3-4 peticiones juntas: si cada una
+//           llamara a /auth/refresh, la primera gastaría el token y las
+//           demás fallarían y sacarían al usuario. Con esto solo la primera
+//           renueva y las demás esperan ese mismo resultado.
+let renovacionEnCurso: Promise<void> | null = null;
+
+function renovarSesion(): Promise<void> {
+  if (!renovacionEnCurso) {
+    renovacionEnCurso = clienteRenovacion
+      .post("/api/v1/auth/refresh")
+      .then(() => undefined)
+      // ¿Qué? Si falla no se decide aquí: igual se reintenta la petición
+      //       original (ver manejarErrorDeRespuesta) y ESE resultado decide.
+      .catch(() => undefined)
+      .finally(() => {
+        renovacionEnCurso = null;
+      });
+  }
+  return renovacionEnCurso;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function manejarErrorDeRespuesta(error: any) {
+async function manejarErrorDeRespuesta(error: any) {
+  const haySesionGuardada = sessionStorage.getItem("verdeapp:sesion-activa") === "1";
+  const configOriginal = error.config;
+
+  // ¿Qué? Issue #319: el access token dura 15 minutos y el refresh token
+  //       7 días, pero antes nadie llamaba a /auth/refresh — al vencer el
+  //       access token, la app mandaba al login aunque el refresh token
+  //       siguiera sirviendo. Ahora: renovar y repetir la petición UNA vez.
+  // ¿Para qué? Que la sesión dure lo que debe (hasta 7 días sin usar la
+  //           app; cada renovación entrega un refresh token nuevo con 7
+  //           días más) sin que el usuario note nada.
+  // ¿Impacto? La petición se repite aunque la renovación haya fallado: con
+  //           dos pestañas abiertas (cookies compartidas), la otra pestaña
+  //           puede haber renovado un instante antes y gastado el refresh
+  //           token — sus cookies nuevas también le sirven a esta. Si el
+  //           reintento vuelve a dar 401, ya tiene "_reintentado" y cae al
+  //           bloque de abajo, que manda al login como antes.
+  if (
+    error.response?.status === 401 &&
+    haySesionGuardada &&
+    configOriginal &&
+    !configOriginal._reintentado &&
+    !esRutaSinRenovacion(configOriginal.url)
+  ) {
+    configOriginal._reintentado = true;
+    await renovarSesion();
+    return axios.request(configOriginal);
+  }
+
   if (error.response) {
     // ¿Qué? Error HTTP del servidor (4xx, 5xx).
     // ¿Para qué? Extraer el mensaje de error del body de la respuesta.
@@ -92,7 +161,10 @@ function manejarErrorDeRespuesta(error: any) {
     //       se revisa una banderita sin ningún valor secreto que
     //       AuthContext.tsx pone en sessionStorage justo después de un
     //       login/getMe exitoso, y borra al cerrar sesión.
-    const haySesionGuardada = sessionStorage.getItem("verdeapp:sesion-activa") === "1";
+    // ¿Qué? Issue #319: aquí solo llega un 401 que YA pasó por la
+    //       renovación de arriba y siguió fallando — la sesión de verdad
+    //       terminó (refresh token vencido, revocado o de antes de un
+    //       cambio de contraseña).
     if (error.response.status === 401 && haySesionGuardada && !sesionExpiradaEnProceso) {
       sesionExpiradaEnProceso = true;
       sessionStorage.removeItem("verdeapp:sesion-activa");
