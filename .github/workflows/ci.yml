@@ -77,10 +77,23 @@ jobs:
         # que ya usa close-prs.yml: una etiqueta como @v7 se puede mover a
         # otro commit, un SHA no).
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        # ¿Qué? Issue #316 (CN-030): no dejar el GITHUB_TOKEN guardado en
+        #       .git/config después de descargar el código.
+        # ¿Para qué? Por defecto queda ahí durante todo el job, al alcance de
+        #           cualquier paso posterior (incluidos los scripts de
+        #           instalación de dependencias de terceros). Ningún paso de
+        #           este workflow necesita hacer push, así que no hace falta.
+        with:
+          persist-credentials: false
 
       - name: Instalar uv
         # astral-sh/setup-uv@v10.0.1
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        # ¿Qué? Issue #316 (CN-029): versión exacta de uv, en vez de "la más
+        #       nueva del día" — misma regla de versiones fijas que el resto
+        #       del proyecto. Dependabot no la actualiza sola: subirla a mano.
+        with:
+          version: "0.12.18"
 
       - name: Instalar dependencias exactas (uv.lock)
         # ¿Qué? --frozen falla si uv.lock no está sincronizado con
@@ -105,9 +118,11 @@ jobs:
         #           (paquete `ecdsa`, que arrastraba python-jose). Desde el
         #           issue #312 los JWT se firman con PyJWT y `ecdsa` ya no
         #           está instalado, así que cualquier alerta hace fallar el paso.
+        #           "pip-audit@2.10.1": versión exacta de la herramienta
+        #           (issue #316, CN-029) — antes uvx bajaba la más nueva del día.
         run: |
           uv export --no-hashes --no-dev > requirements-ci.txt
-          uvx pip-audit --requirement requirements-ci.txt -s osv
+          uvx pip-audit@2.10.1 --requirement requirements-ci.txt -s osv
 
   frontend:
     name: Frontend (tsc + eslint + vitest)
@@ -120,6 +135,9 @@ jobs:
     steps:
       - name: Descargar el código del repositorio
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        # ¿Qué? Mismo motivo que en el job del backend (issue #316, CN-030).
+        with:
+          persist-credentials: false
 
       - name: Activar pnpm (Corepack)
         # ¿Qué? Mismo comando exacto que usa fe/Dockerfile — respeta la
