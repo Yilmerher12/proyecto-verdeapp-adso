@@ -136,3 +136,23 @@ El riesgo aceptado de `ecdsa` (`PYSEC-2026-1325`, antes `CVE-2024-23342`) ya no 
 | `pytest==9.0.2` (dev) | `pytest==9.1.1` | CVE-2025-71176 (directorio temporal predecible, solo desarrollo) |
 
 El CI ya no ignora ninguna vulnerabilidad (se quitó `--ignore-vuln PYSEC-2026-1325`). `pip-audit` sobre las dependencias de producción: **No known vulnerabilities found**.
+
+---
+
+## Actualización — frontend en 0 alertas (2026-09-24, issue #313)
+
+El informe de seguridad Cyber Neo (hallazgo CN-009) encontró 24 alertas en el frontend (14 altas, 8 moderadas, 2 bajas), todas en dependencias **de desarrollo** (las herramientas para programar, probar y compilar, que no llegan a la app del usuario). La más relevante para el equipo era la de `esbuild` (GHSA-g7r4-m6w7-qqqr), que en **Windows** permitía leer archivos del equipo a través del servidor de `pnpm dev`.
+
+**Qué se hizo:**
+
+1. Todas las dependencias (de producción y de desarrollo) subieron a su **última versión dentro de la misma versión mayor**, siempre con versión exacta (sin `^` ni `~`): React 19.3.0, axios 1.20.0, react-router-dom 7.18.4, Tailwind 4.3.3, typescript-eslint 8.70.1, ESLint 9.39.5, jsdom 28.1.0, entre otras.
+2. `pnpm update --depth Infinity` volvió a resolver las dependencias internas, que el lockfile mantenía en sus versiones viejas.
+3. Se quitaron las **12 reglas de `overrides`** de `fe/pnpm-workspace.yaml`. Con las herramientas actualizadas ya no hacían falta, y dos de ellas se habían vuelto el problema: `undici: 7.28.0` y `brace-expansion 1.1.13` clavaban versiones que ya eran vulnerables. Se verificó paquete por paquete que ninguno quedó en una versión más vieja que la que exigía su regla anterior.
+4. Se quitó el bloque `pnpm.onlyBuiltDependencies` de `fe/package.json` (pnpm 11 ya no lo lee; la regla real está en `allowBuilds`).
+
+**Resultado:** `pnpm audit` (producción + desarrollo): **No known vulnerabilities found**. `esbuild` quedó en 0.28.2.
+
+**Lo que quedó fuera a propósito:**
+
+- **Saltos de versión mayor** (Vite 8, Vitest 5, ESLint 10, TypeScript 7, jsdom 30, @vitejs/plugin-react 6, @testing-library/jest-dom 7): no corrigen ninguna alerta adicional y pueden romper compatibilidad. Se evalúan en una tarjeta aparte.
+- **`eslint-plugin-react-hooks` se mantiene en 7.0.1**: la 7.1.1 trae reglas nuevas de estilo de React que marcan 15 avisos en 11 archivos, varios de ellos del rediseño de dashboards en curso. No es un tema de seguridad; se hace en una tarjeta aparte cuando ese rediseño termine.
