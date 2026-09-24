@@ -36,9 +36,9 @@ El proyecto utiliza una estructura de arquitectura limpia y desacoplada, facilit
 | Persistencia / ORM            | PostgreSQL & SQLAlchemy | 17-alpine / 2.0+         | Motor relacional robusto con consultas tipadas y transacciones atómicas.          |
 | Control de BD                 | Alembic                 | 1.18+                    | El esquema (tablas y cambios futuros) se crea y versiona con migraciones de Alembic al arrancar el backend; los datos de prueba se siembran aparte con `be/app/seed.py`. |
 | Seguridad                     | PyJWT & bcrypt          | 2.15 / 5.0               | Cifrado de contraseñas en hash y tokens de sesión (JWT) con claims de roles inyectados. |
-| Frontend Core                 | React & TypeScript      | 19.2 / 5.9+              | Interfaz reactiva basada en componentes modulares y tipado seguro.                |
+| Frontend Core                 | React & TypeScript      | 19.3 / 5.9+              | Interfaz reactiva basada en componentes modulares y tipado seguro.                |
 | Empaquetador Frontend         | Vite                    | 7.3+                     | Servidor de desarrollo con recarga instantánea (HMR) y build de producción optimizado. |
-| Estilos UI                    | TailwindCSS             | 4.1+                     | Paradigma Utility-First para diseño adaptivo y consistente con Figma.             |
+| Estilos UI                    | TailwindCSS             | 4.3+                     | Paradigma Utility-First para diseño adaptivo y consistente con Figma.             |
 | Gestor de Paquetes (Frontend) | pnpm (Corepack)         | 11.0.9                   | Resolución eficiente de dependencias mediante almacenamiento enlazado.            |
 | Infraestructura               | Docker & Docker Compose | 24+ / 2.20+              | Contenedores herméticos que aseguran el funcionamiento idéntico en cualquier PC.  |
 | Servidor Web FE               | Nginx                   | 1.27-alpine              | Servidor de alto rendimiento para la distribución de los estáticos del Frontend.  |
