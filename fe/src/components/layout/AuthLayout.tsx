@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -37,8 +38,10 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
               className="inline-block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
               aria-label={t("common.backToHome")}
             >
-              <h1 className="text-2xl font-bold tracking-tight text-gray-900 transition-colors hover:text-accent-600 dark:text-white dark:hover:text-accent-400">
-                VerdeApp
+              {/* El <h1> se mantiene (encabezado principal de la página); su
+                  nombre accesible sale del alt="VerdeApp" del logo. */}
+              <h1 className="flex justify-center">
+                <BrandLogo className="h-10" />
               </h1>
             </Link>
           </div>

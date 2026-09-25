@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { verifyEmail } from "@/api/auth";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 type VerifyStatus = "loading" | "success" | "error";
 
@@ -57,6 +58,14 @@ export function VerifyEmailPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#050f0a] px-4">
       <div className="w-full max-w-md">
+        {/* Esta página no usa AuthLayout ni AppShell: el logo va aquí directo. */}
+        <Link
+          to="/"
+          className="mb-5 flex justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+          aria-label={t("common.backToHome")}
+        >
+          <BrandLogo className="h-10" />
+        </Link>
         <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-200 dark:border-[#23392b] p-8 shadow-sm text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {t("verifyEmail.title")}

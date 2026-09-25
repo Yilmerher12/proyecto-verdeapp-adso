@@ -5,6 +5,7 @@ import { ArrowRight, MapPin, Users, Recycle, type LucideIcon } from "lucide-reac
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { BackToTopButton } from "@/components/ui/BackToTopButton";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { useRestoreScroll } from "@/hooks/useRestoreScroll";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
@@ -270,11 +271,8 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
             className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
             aria-label={t("landing.nav.homeAriaLabel")}
           >
-            <img
-              src="/logos/logo-white.png"
-              alt="VerdeApp"
-              className="h-8 w-auto object-contain"
-            />
+            {/* Barra superior: solo el símbolo; el nombre ya lo muestra el hero. */}
+            <BrandLogo variant="mark" tone="light" className="h-9" />
           </Link>
 
           <ul className="m-0 flex list-none items-center gap-2 p-0">
@@ -338,20 +336,6 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
           {/* Contenido */}
           <div className="relative mx-auto max-w-3xl px-6 pt-24 pb-32 text-center lg:px-8">
-
-            {/*
-              Logo: una vez tengasel PNG con fondo transparente y colores blancos,
-              descomenta esto y ajusta la ruta:
-
-              <div className="mb-8 flex justify-center">
-                <img
-                  src="/logos/logo-white-transparent.png"
-                  alt="VerdeApp"
-                  className="h-28 w-auto object-contain drop-shadow-2xl"
-                />
-              </div>
-            */}
-
             <h1
               id="hero-heading"
               aria-label={BRAND}
@@ -539,9 +523,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
       <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-white/10 dark:bg-[#030a06]">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-            <span className="text-sm font-extrabold tracking-tight text-gray-800 dark:text-gray-200">
-              Verde<span className="text-accent-600 dark:text-accent-400">App</span>
-            </span>
+            <BrandLogo className="h-7" />
             <p className="text-center text-xs text-gray-400 dark:text-gray-500">
               {t("landing.footer.rights", { year: new Date().getFullYear() })}
             </p>

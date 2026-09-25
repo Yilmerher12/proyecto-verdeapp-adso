@@ -13,9 +13,10 @@
 import { type ReactNode, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Leaf } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 interface LegalLayoutProps {
   children: ReactNode;
@@ -94,8 +95,8 @@ export function LegalLayout({
       <main className="flex-1 py-12 px-6">
         <article className="mx-auto max-w-3xl rounded-3xl border border-gray-200 bg-white p-8 sm:p-12 shadow-sm dark:border-[#23392b] dark:bg-[#0f2018] animate-fade-in">
           <header className="mb-10 text-center border-b border-gray-100 dark:border-[#23392b] pb-8">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
-              <Leaf className="h-8 w-8 text-accent-600 dark:text-accent-400" />
+            <div className="mb-6 flex justify-center">
+              <BrandLogo variant="mark" className="h-16" />
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-2">
               {title}
@@ -113,8 +114,7 @@ export function LegalLayout({
 
       <footer className="border-t border-gray-200 py-8 text-center dark:border-[#23392b] bg-white dark:bg-[#050f0a]">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <Leaf className="h-4 w-4 text-accent-600 dark:text-accent-400" />
-          <span className="font-semibold text-gray-700 dark:text-gray-300">VerdeApp</span>
+          <BrandLogo className="h-6" />
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           © {new Date().getFullYear()} ADSO - SENA

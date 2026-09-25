@@ -25,6 +25,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { RoleId } from "@/types/auth";
 import api, { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { onNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { onFotoPerfilActualizada } from "@/lib/profileEvents";
 
@@ -261,7 +262,9 @@ export function AppShell({ children }: AppShellProps) {
             collapsed ? "sm:justify-center sm:px-3" : ""
           }`}
         >
-          <img src="/logos/logo-white.png" alt="VerdeApp" className={`${collapsed ? "h-7" : "h-8"} w-auto object-contain`} />
+          {/* Barra superior del sidebar: solo el símbolo, sin el nombre
+              (con el nombre al lado se sentía recargado). */}
+          <BrandLogo variant="mark" tone="light" className={collapsed ? "h-8" : "h-9"} />
 
           {/* ¿Qué? Botón para colapsar/expandir la barra lateral, visible
               solo en celular (el de más abajo, "Alternador de ancho", es
