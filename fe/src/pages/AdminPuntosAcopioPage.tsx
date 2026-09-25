@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, MapPin, Pencil, Plus, Power, PowerOff, Search, Trash2 } from "lucide-react";
+import { ChevronDown, MapPin, MapPinOff, Pencil, Plus, Search, Trash2, Warehouse } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
@@ -295,7 +295,7 @@ export function AdminPuntosAcopioPage() {
             className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`}
             aria-label={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
           >
-            <PowerOff className="h-4 w-4" />
+            <MapPinOff className="h-4 w-4 icon-draw" />
           </button>
         ) : (
           <>
@@ -304,7 +304,7 @@ export function AdminPuntosAcopioPage() {
               className={`${botonAccion} text-accent-600 hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-900/20`}
               aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
             >
-              <Power className="h-4 w-4" />
+              <MapPin className="h-4 w-4 icon-draw" />
             </button>
             <button
               onClick={() => setAEliminar(item)}
@@ -388,7 +388,7 @@ export function AdminPuntosAcopioPage() {
       {!cargando && cargaError && <Alert type="error" message={t("adminPuntosAcopio.loadError")} />}
 
       {!cargando && !cargaError && puntos.length === 0 && (
-        <EmptyState icon={MapPin} message={t("adminPuntosAcopio.emptyState")} />
+        <EmptyState icon={Warehouse} message={t("adminPuntosAcopio.emptyState")} />
       )}
       {!cargando && puntos.length > 0 && visibles.length === 0 && (
         <EmptyState icon={Search} message={t("adminPuntosAcopio.search.noResults")} />
@@ -470,7 +470,7 @@ export function AdminPuntosAcopioPage() {
 
       {aDarDeBaja && (
         <ConfirmModal
-          icon={PowerOff}
+          icon={MapPinOff}
           variant="danger"
           ariaLabel={t("adminPuntosAcopio.modal.deactivateAriaLabel")}
           title={t("adminPuntosAcopio.deactivateConfirm.title", { nombre: aDarDeBaja.nombre })}

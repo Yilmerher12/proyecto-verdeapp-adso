@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MapPin, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
+import { MapPin, MapPinOff, Pencil, Trash2, Warehouse } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PanelLateral } from "@/components/ui/PanelLateral";
@@ -126,7 +126,7 @@ export function PuntoAcopioPanel({
     <PanelLateral onClose={onClose} aria-label={t(`${p}.panel.ariaLabel`, { nombre: punto.nombre })} cerrarConEscape={cerrarConEscape}>
       <div className="flex items-center gap-4 border-b border-gray-100 p-5 pr-14 dark:border-[#23392b]">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-300">
-          <MapPin className="h-6 w-6" />
+          <Warehouse className="h-6 w-6" />
         </div>
         <div className="min-w-0">
           <h2 className="break-words text-base font-bold text-gray-900 dark:text-white">{punto.nombre}</h2>
@@ -262,7 +262,7 @@ export function PuntoAcopioPanel({
                 onClick={() => onDarDeBaja(punto)}
                 className={`${botonSecundario} border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20`}
               >
-                <PowerOff className="h-4 w-4" />
+                <MapPinOff className="h-4 w-4 icon-draw" />
                 {t(`${p}.panel.deactivate`)}
               </button>
             ) : (
@@ -272,7 +272,7 @@ export function PuntoAcopioPanel({
                   onClick={() => onReactivar(punto)}
                   className={`${botonSecundario} border-accent-200 text-accent-700 hover:bg-accent-50 dark:border-accent-900/40 dark:text-accent-400 dark:hover:bg-accent-900/20`}
                 >
-                  <Power className="h-4 w-4" />
+                  <MapPin className="h-4 w-4 icon-draw" />
                   {t(`${p}.panel.reactivate`)}
                 </button>
                 <button

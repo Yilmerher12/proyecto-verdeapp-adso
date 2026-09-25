@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
-import { Building2, MapPin, Search, UserCog } from "lucide-react";
+import { Building, Map as MapIcon, Search, UserCog } from "lucide-react";
 import { API_BASE_URL } from "@/api/axios";
 import {
   buscarAdministradoresConjunto,
@@ -202,7 +202,7 @@ export function AsignarConjuntoAdicionalForm() {
 
           <div className="mb-3">
             <label htmlFor="asignar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-              <MapPin className="w-4 h-4" />
+              <MapIcon className="w-4 h-4" />
               {t("desvinculacion.asignarAdicional.localityLabel")}
             </label>
             <select
@@ -224,7 +224,7 @@ export function AsignarConjuntoAdicionalForm() {
           </div>
 
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-            <Building2 className="w-4 h-4" />
+            <Building className="w-4 h-4" />
             {t("desvinculacion.asignarAdicional.selectConjuntoLabel")}
           </label>
 

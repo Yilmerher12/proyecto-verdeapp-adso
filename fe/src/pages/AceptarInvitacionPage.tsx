@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 import { getPasswordRequirementError, type PasswordRequirementError } from "@/lib/passwordStrength";
-import { Building2, ShieldCheck, XCircle } from "lucide-react";
+import { BadgeCheck, Building, OctagonX } from "lucide-react";
 import {
     consultarInvitacion,
     aceptarInvitacion,
@@ -151,7 +151,7 @@ export function AceptarInvitacionPage() {
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4">
             <div className="mx-auto w-16 h-16 bg-red-100 flex items-center justify-center rounded-full border border-red-200 dark:bg-red-900/30 dark:border-red-800/40">
-              <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+              <OctagonX className="w-8 h-8 text-red-600 dark:text-red-400 icon-appear icon-shake" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.invalid.title")}</h2>
             <p className="text-gray-600 text-sm dark:text-gray-400">
@@ -174,7 +174,7 @@ export function AceptarInvitacionPage() {
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4 animate-fade-in">
             <div className="mx-auto w-20 h-20 bg-accent-100 flex items-center justify-center rounded-full border border-accent-200 dark:bg-accent-900/30 dark:border-accent-800/40">
-              <ShieldCheck className="w-10 h-10 text-accent-600 dark:text-accent-400" />
+              <BadgeCheck className="w-10 h-10 text-accent-600 dark:text-accent-400 icon-appear icon-hop" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.success.title")}</h2>
             <p className="text-gray-600 text-sm dark:text-gray-400">
@@ -209,7 +209,7 @@ export function AceptarInvitacionPage() {
 
           <div className="mb-6 p-4 bg-accent-50/50 border border-accent-100 rounded-xl dark:bg-accent-900/10 dark:border-accent-800/30">
             <div className="flex items-center gap-2 mb-2">
-              <Building2 className="w-4 h-4 text-accent-600 dark:text-accent-400" />
+              <Building className="w-4 h-4 text-accent-600 dark:text-accent-400" />
               <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
                 {t("aceptarInvitacion.form.willAdminister")}
               </span>

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
-import { Building2, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, AlertTriangle, UserX } from "lucide-react";
+import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -150,7 +150,7 @@ function SeccionCodigoAcceso({
 
       {confirmando && (
         <ConfirmModal
-          icon={AlertTriangle}
+          icon={TriangleAlert}
           variant="warning"
           ariaLabel={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
           title={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
@@ -576,7 +576,7 @@ function SeccionDesvinculacion({
 export function AdminConjuntoDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { WatermarkIcon } = ROLE_THEME[RoleId.ADMIN_CONJUNTO];
+  const { Icon: RolIcon } = ROLE_THEME[RoleId.ADMIN_CONJUNTO];
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorConjuntos, setErrorConjuntos] = useState(false);
@@ -700,10 +700,10 @@ export function AdminConjuntoDashboard() {
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}
       <div className="relative overflow-hidden bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
-        <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-amber-900/5 dark:text-white/5" aria-hidden="true" />
+        <RolIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-amber-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
-            <Building2 className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+            <RolIcon className="h-7 w-7 text-amber-600 dark:text-amber-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("dashboards.adminConjunto.title")}</h1>
@@ -762,7 +762,7 @@ export function AdminConjuntoDashboard() {
 
       <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-[#23392b] pb-2">
-          <Building2 className="text-accent-600 w-5 h-5" />
+          <Building className="text-accent-600 w-5 h-5" />
           <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
         </div>
 
@@ -771,7 +771,7 @@ export function AdminConjuntoDashboard() {
         ) : errorConjuntos ? (
           <Alert type="error" message={t("common.loadError")} />
         ) : conjuntos.length === 0 ? (
-          <EmptyState icon={Building2} message={t("dashboards.adminConjunto.myConjuntos.empty")} />
+          <EmptyState icon={Building} message={t("dashboards.adminConjunto.myConjuntos.empty")} />
         ) : (
           <div className="space-y-4">
             {conjuntos.map((c) => (

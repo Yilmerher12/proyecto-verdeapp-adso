@@ -5,6 +5,16 @@
  * ¿Impacto? Sin alertas, el usuario no sabría si una operación tuvo éxito o falló.
  */
 import { useTranslation } from "react-i18next";
+import { BadgeCheck, Info, OctagonX, TriangleAlert, X, type LucideIcon } from "lucide-react";
+
+// ¿Qué? Ícono y animación de cada tipo de mensaje (concepto "mensajes" del mapa
+//       de íconos: éxito BadgeCheck, error OctagonX, aviso TriangleAlert, info Info).
+const ICONO_POR_TIPO: Record<AlertProps["type"], { icon: LucideIcon; anim: string }> = {
+  success: { icon: BadgeCheck, anim: "icon-hop" },
+  error: { icon: OctagonX, anim: "icon-shake" },
+  warning: { icon: TriangleAlert, anim: "icon-ring" },
+  info: { icon: Info, anim: "icon-nudge" },
+};
 
 /**
  * ¿Qué? Props del componente Alert.
@@ -24,6 +34,7 @@ interface AlertProps {
  */
 export function Alert({ type, message, onClose }: AlertProps) {
   const { t } = useTranslation();
+  const Icono = ICONO_POR_TIPO[type].icon;
   // ¿Qué? Mapeo de tipo → clases CSS para colores del contenedor.
   // ¿Para qué? Cada tipo de alerta tiene colores que comunican su naturaleza.
   // ¿Impacto? Verde = éxito, rojo = error, azul = información.
@@ -52,50 +63,13 @@ export function Alert({ type, message, onClose }: AlertProps) {
       role="alert"
     >
       {/*
-        ¿Qué? Íconos SVG decorativos según el tipo de alerta con aria-hidden="true".
-        ¿Para qué? WCAG 1.1.1 Non-text Content: los íconos son puramente decorativos —
-                   el mensaje de texto ya comunica el tipo de alerta (éxito/error/info).
-                   aria-hidden="true" hace que el lector de pantalla los ignore completamente.
-        ¿Impacto? Sin aria-hidden, el lector de pantalla leería el path SVG completo
-                  ("M10 18a8 8 0 100-16...") antes del mensaje real, confundiendo al usuario.
+        ¿Qué? Ícono de lucide según el tipo (antes eran SVG de otra librería pegados
+              a mano). aria-hidden: el texto del mensaje ya comunica el tipo (WCAG 1.1.1).
+        ¿Para qué? icon-appear hace que el ícono se mueva UNA vez al aparecer el mensaje
+                  (el check salta, la X niega, el triángulo tiembla) — ver index.css.
       */}
       <span className="mt-0.5 shrink-0" aria-hidden="true">
-        {type === "success" && (
-          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-              clipRule="evenodd"
-            />
-          </svg>
-        )}
-        {type === "error" && (
-          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-              clipRule="evenodd"
-            />
-          </svg>
-        )}
-        {type === "info" && (
-          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
-              clipRule="evenodd"
-            />
-          </svg>
-        )}
-        {type === "warning" && (
-          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
-              clipRule="evenodd"
-            />
-          </svg>
-        )}
+        <Icono className={`h-5 w-5 icon-appear ${ICONO_POR_TIPO[type].anim}`} />
       </span>
 
       {/* ¿Qué? Texto del mensaje y botón de cierre. */}
@@ -108,9 +82,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
           aria-label={t("common.close")}
         >
           {/* ¿Qué? Ícono X decorativo — la acción ya está descrita por aria-label del botón. */}
-          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-          </svg>
+          <X className="h-5 w-5" aria-hidden="true" />
         </button>
       )}
     </div>

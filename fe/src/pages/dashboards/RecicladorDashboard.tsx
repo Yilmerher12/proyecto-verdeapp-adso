@@ -5,13 +5,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import {
-  Recycle,
   Mail,
-  CheckCircle2,
-  XCircle,
-  Building2,
+  BadgeCheck,
+  OctagonX,
+  Building,
   Truck,
-  AlertTriangle,
+  TriangleAlert,
   PackageCheck,
   DoorOpen,
   ClipboardList,
@@ -111,7 +110,7 @@ const ACCIONES_META = [
   {
     tipo: "SHUT_LLENO",
     key: "shutLleno",
-    icon: AlertTriangle,
+    icon: TriangleAlert,
     color: "bg-amber-700 hover:bg-amber-600 text-white",  // ámbar tierra — advertencia cálida
   },
   {
@@ -132,7 +131,7 @@ export function RecicladorDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || t("roles.reciclador");
-  const { WatermarkIcon } = ROLE_THEME[RoleId.RECICLADOR];
+  const { Icon: RolIcon } = ROLE_THEME[RoleId.RECICLADOR];
 
   const ACCIONES = ACCIONES_META.map(({ tipo, key, icon, color }) => ({
     tipo,
@@ -306,10 +305,10 @@ export function RecicladorDashboard() {
           para que este panel se sienta del Reciclador, sin estorbar la
           lectura del texto encima. */}
       <div className="relative overflow-hidden bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
-        <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
+        <RolIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-teal-900/30">
-            <Recycle className="h-7 w-7 text-teal-600 dark:text-teal-400" />
+            <RolIcon className="h-7 w-7 text-teal-600 dark:text-teal-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.title")}</h1>
@@ -332,14 +331,14 @@ export function RecicladorDashboard() {
       {/* Feedback de notificación enviada */}
       {feedbackOk && (
         <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <BadgeCheck className="h-4 w-4 shrink-0 icon-appear icon-hop" />
           {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
         </div>
       )}
 
       {feedbackAuditoria && (
         <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <BadgeCheck className="h-4 w-4 shrink-0 icon-appear icon-hop" />
           {feedbackAuditoria}
         </div>
       )}
@@ -422,7 +421,7 @@ export function RecicladorDashboard() {
                     motivo ? "cursor-not-allowed opacity-40" : "cursor-pointer"
                   }`}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  <Icon className={`h-4 w-4 shrink-0 ${Icon === TriangleAlert ? "icon-ring" : "icon-draw"}`} />
                   {label}
                   {/* ¿Qué? Texto oculto SOLO para lectores de pantalla, con
                       el motivo del bloqueo. ¿Para qué? Antes, poner `title`
@@ -476,7 +475,7 @@ export function RecicladorDashboard() {
                     disabled={procesandoId === inv.id}
                     className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <BadgeCheck className="h-3.5 w-3.5 icon-hop" />
                     {t("dashboards.reciclador.invitations.accept")}
                   </button>
                   <button
@@ -484,7 +483,7 @@ export function RecicladorDashboard() {
                     disabled={procesandoId === inv.id}
                     className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
                   >
-                    <XCircle className="h-3.5 w-3.5" />
+                    <OctagonX className="h-3.5 w-3.5 icon-shake" />
                     {t("dashboards.reciclador.invitations.reject")}
                   </button>
                 </div>
@@ -497,13 +496,13 @@ export function RecicladorDashboard() {
       {/* Mis conjuntos autorizados */}
       <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-accent-600" />
+          <Building className="h-4 w-4 text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
         </div>
         {cargando ? (
           <LoadingState message={t("common.loading")} />
         ) : conjuntosAutorizados.length === 0 ? (
-          <EmptyState icon={Building2} message={t("dashboards.reciclador.myConjuntos.empty")} />
+          <EmptyState icon={Building} message={t("dashboards.reciclador.myConjuntos.empty")} />
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {conjuntosAutorizados.map((c) => (

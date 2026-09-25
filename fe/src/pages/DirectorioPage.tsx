@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Phone, MapPin, Users, Building2, MessageCircle, Info, Copy, Check } from "lucide-react";
+import { Phone, MapPin, Map as MapIcon, Users, HardHat, Warehouse, MessageCircle, Info, Copy, Check } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
@@ -169,8 +169,8 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           <div className="flex rounded-xl border border-gray-200 bg-white p-1 dark:border-[#23392b] dark:bg-[#0f2018]">
             {(
               [
-                { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <Users className="h-4 w-4" /> },
-                { id: "puntos" as TabId, label: t("appShell.nav.puntosAcopio"), icon: <Building2 className="h-4 w-4" /> },
+                { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <HardHat className="h-4 w-4" /> },
+                { id: "puntos" as TabId, label: t("appShell.nav.puntosAcopio"), icon: <Warehouse className="h-4 w-4" /> },
               ] as const
             ).map(({ id, label, icon }) => (
               <button
@@ -195,14 +195,14 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             indicador fijo. Puntos de Acopio sigue con el filtro libre. */}
         {tab === "recicladores" && !soloAcopio ? (
           <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-200">
-            <MapPin className="h-4 w-4 shrink-0 text-accent-600" />
+            <MapIcon className="h-4 w-4 shrink-0 text-accent-600" />
             {localidadPropiaNombre
               ? t("directorio.ownLocality", { localidad: localidadPropiaNombre })
               : t("directorio.ownLocalityUnknown")}
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 shrink-0 text-accent-600" />
+            <MapIcon className="h-4 w-4 shrink-0 text-accent-600" />
             <select
               value={localidadPuntosId}
               onChange={(e) =>
@@ -253,7 +253,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
         <Alert type="error" message={t("common.loadError")} />
       ) : tab === "recicladores" && !soloAcopio ? (
         recicladores.length === 0 ? (
-          <EmptyState icon={MapPin} message={t("directorio.emptyRecyclers")} />
+          <EmptyState icon={HardHat} message={t("directorio.emptyRecyclers")} />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {recicladores.map((r) => (
@@ -267,7 +267,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           </div>
         )
       ) : puntos.length === 0 ? (
-        <EmptyState icon={MapPin} message={t("directorio.emptyPoints")} />
+        <EmptyState icon={Warehouse} message={t("directorio.emptyPoints")} />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {puntos.map((p) => (
@@ -348,7 +348,7 @@ function TarjetaReciclador({
     <div className="flex flex-col rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
       <div className="mb-3 flex items-start gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-900/30">
-          <Users className="h-5 w-5 text-teal-700 dark:text-teal-400" />
+          <HardHat className="h-5 w-5 text-teal-700 dark:text-teal-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-gray-900 dark:text-white">
@@ -356,7 +356,7 @@ function TarjetaReciclador({
           </p>
           {r.nombre_localidad && (
             <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-[#0c1a12] dark:text-gray-300">
-              <MapPin className="h-3 w-3" />
+              <MapIcon className="h-3 w-3" />
               {r.nombre_localidad}
             </span>
           )}
@@ -421,12 +421,12 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
     <div className="rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
       <div className="mb-3 flex items-start gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-900/30">
-          <Building2 className="h-5 w-5 text-accent-700 dark:text-accent-400" />
+          <Warehouse className="h-5 w-5 text-accent-700 dark:text-accent-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
           <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-[#0c1a12] dark:text-gray-300">
-            <MapPin className="h-3 w-3" />
+            <MapIcon className="h-3 w-3" />
             {p.nombre_localidad}
           </span>
         </div>

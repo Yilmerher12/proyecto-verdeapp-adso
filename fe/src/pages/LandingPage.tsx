@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Building2, MapPin, Truck, Users, Recycle, type LucideIcon } from "lucide-react";
+import { ArrowRight, BookOpen, Building, HardHat, Truck, Users, Recycle, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { BackToTopButton } from "@/components/ui/BackToTopButton";
@@ -17,15 +17,17 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 //           de la imagen). Ahora cada ícono es el actor del paso: el conjunto,
 //           los residentes y el reciclador.
 const PASOS_META = [
-  { icon: Building2, key: "step1" },
+  { icon: Building, key: "step1" },
   { icon: Users, key: "step2" },
   { icon: Truck, key: "step3" },
 ] as const;
 
 const PILARES_META = [
-  { icon: MapPin, key: "pillar1" },
-  { icon: Users, key: "pillar2" },
-  { icon: Recycle, key: "pillar3" },
+  // Cada ícono sigue el mapa de íconos por concepto: separación = Recycle,
+  // recicladores = HardHat (mismo ícono del rol), educación = BookOpen.
+  { icon: Recycle, key: "pillar1" },
+  { icon: HardHat, key: "pillar2" },
+  { icon: BookOpen, key: "pillar3" },
 ] as const;
 
 // ¿Qué? Un paso de "¿Cómo funciona?": círculo numerado con el ícono y, debajo,

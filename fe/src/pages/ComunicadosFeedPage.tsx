@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Megaphone, Paperclip } from "lucide-react";
+import { TriangleAlert, Megaphone, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { verFeedComunicados, type Comunicado, type TipoComunicado } from "@/lib/comunicadosApi";
@@ -67,7 +67,7 @@ export function ComunicadosFeedPage() {
             }`}
           >
             <div className="flex flex-wrap items-center gap-2">
-              {item.tipo === "URGENTE" && <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />}
+              {item.tipo === "URGENTE" && <TriangleAlert className="h-4 w-4 text-red-600 dark:text-red-400" />}
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIPO_ESTILO[item.tipo]}`}>
                 {t(`comunicados.tipos.${item.tipo}`)}
               </span>

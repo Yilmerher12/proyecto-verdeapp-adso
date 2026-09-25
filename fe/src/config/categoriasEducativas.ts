@@ -2,7 +2,7 @@ import {
   BookOpen,
   HardHat,
   Landmark,
-  MapPin,
+  Warehouse,
   Package,
   Recycle,
   Repeat,
@@ -21,7 +21,7 @@ import {
 export const ICONOS_CATEGORIAS: Record<string, LucideIcon> = {
   "Separación en la fuente y código de colores": Recycle,
   "Tipos de residuos y su preparación": Package,
-  "Puntos limpios y Ecopuntos": MapPin,
+  "Puntos limpios y Ecopuntos": Warehouse,
   "Economía circular y aprovechamiento": Repeat,
   "Residuos de construcción y demolición": HardHat,
   "Marco distrital y consumo responsable": Landmark,
