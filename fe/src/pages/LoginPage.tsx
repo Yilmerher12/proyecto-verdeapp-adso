@@ -7,9 +7,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Mail, Lock, Leaf } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
@@ -120,8 +121,8 @@ export function LoginPage() {
       <Modal onClose={() => navigate("/")} closeOnBackdrop={false}>
         <div className="p-6 sm:p-8 max-w-md mx-auto">
           <div className="mb-6 text-center sm:text-left">
-            <div className="h-12 w-12 bg-accent-100 rounded-xl flex items-center justify-center text-accent-600 mb-3 mx-auto sm:mx-0 shadow-sm border border-accent-200">
-              <Leaf className="h-6 w-6" />
+            <div className="mb-3 flex justify-center sm:justify-start">
+              <BrandLogo variant="mark" className="h-12" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {t("auth.login.title")}

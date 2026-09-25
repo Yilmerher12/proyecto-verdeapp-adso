@@ -69,6 +69,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 - Los botones de acción principal van alineados a la derecha en formularios y modales.
 - Iconografía: únicamente `lucide-react` — no mezclar con otras librerías de íconos.
 - Paleta de marca: "Páramo Fresco" en modo claro y "Bosque Andino" en modo oscuro, definidas como escala `green-*` (y `accent-*` apuntando a ella) en `fe/src/index.css`. Los botones principales usan `accent-*`; no hay un color de acento distinto (ni azul ni amarillo) para botones. Los paneles no llevan imagen de fondo: el área de contenido es un color sólido.
+- Logo: solo en SVG, en `fe/public/logos/` (`logo`, `logo-white`, `logo-mark`, `logo-mark-white` y `favicon`). Ninguna página pone un `<img>` del logo a mano: siempre se usa el componente `BrandLogo` (`fe/src/components/ui/BrandLogo.tsx`), que elige la versión según el fondo y el modo oscuro. No se usan PNG ni íconos de `lucide-react` (como `Leaf`) en lugar del logo.
 - El color de marca (`accent-*`) es el único acento de color permitido en componentes reutilizables; los colores por rol (sidebar, badges) viven centralizados en `fe/src/config/roleTheme.ts`, no repetidos por archivo.
 - Todo componente nuevo debe soportar modo claro y modo oscuro (`dark:`) desde el primer commit — no se agrega como una tarea aparte después.
 

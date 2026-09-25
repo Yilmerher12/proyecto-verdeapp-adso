@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 import { getPasswordRequirementError, type PasswordRequirementError } from "@/lib/passwordStrength";
 import { Modal } from "@/components/ui/Modal";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
@@ -401,6 +402,9 @@ export function RegisterPage() {
       <Modal onClose={() => navigate("/")} wide closeOnBackdrop={false}>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-8">
+            <div className="mb-3 flex justify-center">
+              <BrandLogo variant="mark" className="h-12" />
+            </div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("auth.register.title")}</h2>
             <p className="text-gray-500 dark:text-gray-400 mt-1">{t("auth.register.subtitle")}</p>
           </div>

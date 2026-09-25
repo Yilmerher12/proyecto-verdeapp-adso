@@ -3,13 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     
-    <!-- ¿Qué? Antes era un ícono genérico de hojita dibujado a mano (SVG en
-         línea), no el logo real de VerdeApp. Ahora usa el logo a color que
-         ya existe en el proyecto — se eligió la versión a color (no la
-         blanca) porque sus propios colores se distinguen tanto en pestañas
-         de navegador claras como oscuras; la versión blanca desaparecería
-         sobre una pestaña clara. -->
-    <link rel="icon" type="image/png" href="/logos/logo-color.png" />
+    <!-- ¿Qué? Símbolo de VerdeApp en SVG (antes un PNG de 46 KB con degradados).
+         ¿Para qué? Se ve nítido en cualquier tamaño de pestaña.
+         ¿Impacto? El propio SVG trae un @media (prefers-color-scheme: dark):
+         verde bosque en pestañas claras y verde claro en pestañas oscuras,
+         así no desaparece en ninguna de las dos. -->
+    <link rel="icon" type="image/svg+xml" href="/logos/favicon.svg" />
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="VerdeApp — Plataforma de reciclaje inteligente para Bogotá" />

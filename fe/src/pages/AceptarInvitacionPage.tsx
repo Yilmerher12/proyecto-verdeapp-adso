@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
@@ -197,6 +198,9 @@ export function AceptarInvitacionPage() {
       <Modal onClose={() => navigate("/")} wide closeOnBackdrop={false}>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-6">
+            <div className="mb-3 flex justify-center">
+              <BrandLogo variant="mark" className="h-12" />
+            </div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.form.title")}</h2>
             <p className="text-gray-500 mt-1 dark:text-gray-400">
               {t("aceptarInvitacion.form.invitationFor")} <strong>{infoInvitacion.correo_electronico}</strong>
