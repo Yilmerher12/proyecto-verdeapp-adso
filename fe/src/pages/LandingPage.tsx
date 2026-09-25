@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, MapPin, Users, Recycle, type LucideIcon } from "lucide-react";
+import { ArrowRight, Building2, MapPin, Truck, Users, Recycle, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { BackToTopButton } from "@/components/ui/BackToTopButton";
@@ -9,13 +9,17 @@ import { BrandLogo } from "@/components/ui/BrandLogo";
 import { useRestoreScroll } from "@/hooks/useRestoreScroll";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
-// ¿Qué? Solo la parte visual (imagen/ícono, número) queda fuera del
-//       componente — título y descripción se resuelven adentro con t(),
-//       porque estos arreglos ya no pueden tener texto fijo en español.
+// ¿Qué? Solo la parte visual (ícono) queda fuera del componente — título y
+//       descripción se resuelven adentro con t(), porque estos arreglos ya no
+//       pueden tener texto fijo en español.
+// ¿Para qué? Antes eran 3 imágenes PNG generadas con IA que no correspondían
+//           al texto de cada paso (una huella dactilar, texto en inglés dentro
+//           de la imagen). Ahora cada ícono es el actor del paso: el conjunto,
+//           los residentes y el reciclador.
 const PASOS_META = [
-  { imgSrc: "/landing/step-1-registration.png", key: "step1" },
-  { imgSrc: "/landing/step-2-verification.png", key: "step2" },
-  { imgSrc: "/landing/step-3-recycler-pickup.png", key: "step3" },
+  { icon: Building2, key: "step1" },
+  { icon: Users, key: "step2" },
+  { icon: Truck, key: "step3" },
 ] as const;
 
 const PILARES_META = [
@@ -24,50 +28,70 @@ const PILARES_META = [
   { icon: Recycle, key: "pillar3" },
 ] as const;
 
-// ¿Qué? Tarjeta de "¿Cómo funciona?" con su propia animación de revelado.
-// ¿Para qué? useScrollReveal() es un hook — no puede llamarse dentro del
-//           .map() del componente padre (rompe las reglas de hooks). Cada
-//           tarjeta necesita su PROPIA instancia del hook, así que se
-//           extrae a un componente aparte.
-// ¿Impacto? El "delay" escalonado por índice hace que las 3 tarjetas no
-//           aparezcan todas de golpe, sino una tras otra.
+// ¿Qué? Un paso de "¿Cómo funciona?": círculo numerado con el ícono y, debajo,
+//       la tarjeta con el texto. Entre círculos hay una línea con flecha.
+// ¿Para qué? Que los 3 pasos se lean como un recorrido en orden, no como
+//           tres tarjetas sueltas. useScrollReveal() es un hook y no puede
+//           llamarse dentro del .map() del padre: cada paso lleva su propia
+//           instancia, por eso es un componente aparte.
+// ¿Impacto? La flecha solo existe desde sm (3 columnas); en celular los pasos
+//           se apilan y cada círculo queda sobre su propia tarjeta. El delay
+//           escalonado por índice hace que aparezcan uno tras otro.
 function PasoCard({
-  imgSrc,
+  Icon,
   titulo,
   descripcion,
   numero,
   index,
+  esUltimo,
   sinAnimacion,
 }: {
-  imgSrc: string;
+  Icon: LucideIcon;
   titulo: string;
   descripcion: string;
   numero: number;
   index: number;
+  esUltimo: boolean;
   sinAnimacion: boolean;
 }) {
-  const { ref, visible } = useScrollReveal<HTMLElement>(0.15, sinAnimacion);
+  const { ref, visible } = useScrollReveal<HTMLLIElement>(0.15, sinAnimacion);
 
   return (
-    <article
+    <li
       ref={ref}
       style={{ transitionDelay: visible ? `${index * 120}ms` : "0ms" }}
-      className={`group relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all duration-700 ease-out hover:-translate-y-1 hover:shadow-lg dark:border-accent-800 dark:bg-accent-900 ${
+      className={`relative flex flex-col items-center transition-all duration-700 ease-out ${
         visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
       }`}
     >
-      <span
-        className="absolute right-4 top-3 select-none text-7xl font-black leading-none text-accent-50 dark:text-white/10"
-        aria-hidden="true"
-      >
-        {numero}
-      </span>
-      <div className="mb-5 h-14 w-14">
-        <img src={imgSrc} alt="" aria-hidden="true" className="h-full w-full object-contain drop-shadow-md" />
+      {/* Línea + flecha hacia el siguiente círculo: va del borde derecho de
+          este círculo (50% + 40px) al borde izquierdo del siguiente, cruzando
+          el gap-6 (1.5rem) de la grilla. */}
+      {!esUltimo && (
+        <div
+          aria-hidden="true"
+          className="absolute top-9 left-[calc(50%+2.75rem)] right-[calc(-50%+1.25rem)] hidden items-center sm:flex"
+        >
+          <div className="h-0.5 flex-1 bg-accent-200 dark:bg-accent-800" />
+          <ArrowRight className="-ml-1 h-4 w-4 shrink-0 text-accent-600 dark:text-accent-400" />
+        </div>
+      )}
+
+      <div className="relative mb-6 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-2 border-accent-600 bg-white dark:border-accent-500 dark:bg-accent-900">
+        <Icon className="h-8 w-8 text-accent-700 dark:text-accent-300" aria-hidden="true" />
+        <span
+          aria-hidden="true"
+          className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent-600 text-xs font-bold text-white dark:bg-accent-500 dark:text-accent-950"
+        >
+          {numero}
+        </span>
       </div>
-      <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{titulo}</h3>
-      <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{descripcion}</p>
-    </article>
+
+      <article className="w-full flex-1 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-accent-800 dark:bg-accent-900">
+        <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{titulo}</h3>
+        <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{descripcion}</p>
+      </article>
+    </li>
   );
 }
 
@@ -236,8 +260,8 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pasos = PASOS_META.map(({ imgSrc, key }) => ({
-    imgSrc,
+  const pasos = PASOS_META.map(({ icon, key }) => ({
+    icon,
     key,
     titulo: t(`landing.howItWorks.${key}.title`),
     descripcion: t(`landing.howItWorks.${key}.description`),
@@ -459,19 +483,22 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {pasos.map(({ imgSrc, key, titulo, descripcion }, i) => (
+            {/* <ol>: los pasos tienen un orden real, y el lector de pantalla
+                lo anuncia ("lista de 3 elementos"). */}
+            <ol className="m-0 grid list-none grid-cols-1 gap-10 p-0 sm:grid-cols-3 sm:gap-6">
+              {pasos.map(({ icon, key, titulo, descripcion }, i) => (
                 <PasoCard
                   key={key}
-                  imgSrc={imgSrc}
+                  Icon={icon}
                   titulo={titulo}
                   descripcion={descripcion}
                   numero={i + 1}
                   index={i}
+                  esUltimo={i === pasos.length - 1}
                   sinAnimacion={!debeAnimar}
                 />
               ))}
-            </div>
+            </ol>
           </div>
         </section>
 
