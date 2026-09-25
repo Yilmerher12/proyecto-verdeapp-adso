@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Ban, CircleCheck } from "lucide-react";
+import { UserCheck, UserX } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -191,7 +191,7 @@ export function PerfilUsuarioPanel({
                 variant={perfil.habilitado ? "danger" : "secondary"}
                 onClick={() => onCambiarEstado(perfil.correo_electronico, !perfil.habilitado)}
               >
-                {perfil.habilitado ? <Ban className="mr-1 h-3.5 w-3.5" /> : <CircleCheck className="mr-1 h-3.5 w-3.5" />}
+                {perfil.habilitado ? <UserX className="mr-1 h-3.5 w-3.5 icon-draw" /> : <UserCheck className="mr-1 h-3.5 w-3.5 icon-draw" />}
                 {perfil.habilitado ? t(`${p}.disableAccount`) : t(`${p}.enableAccount`)}
               </Button>
             )}

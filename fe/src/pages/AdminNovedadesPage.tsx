@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import {
-  AlertTriangle,
+  TriangleAlert,
   Archive,
   CalendarClock,
   ChevronDown,
   Clock,
-  Megaphone,
+  Newspaper,
   Paperclip,
   Pencil,
   Plus,
@@ -276,7 +276,7 @@ export function AdminNovedadesPage() {
       <div className="flex items-center justify-between gap-3 bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
-            <Megaphone className="h-5 w-5" />
+            <Newspaper className="h-5 w-5" />
           </span>
           <div className="min-w-0">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("novedades.admin.title")}</h1>
@@ -376,7 +376,7 @@ export function AdminNovedadesPage() {
 
             {!cargando && novedades.length === 0 && (
               <EmptyState
-                icon={Megaphone}
+                icon={Newspaper}
                 message={hayFiltros ? t("novedades.admin.filters.noResults") : t("novedades.admin.emptyState")}
               />
             )}
@@ -614,7 +614,7 @@ export function AdminNovedadesPage() {
                   </div>
                 ) : (
                   <div role="status" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold leading-snug text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
-                    <AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0" />
+                    <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0 icon-appear icon-ring" />
                     {t("novedades.admin.conjunto.massWarning")}
                   </div>
                 )}

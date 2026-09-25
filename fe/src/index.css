@@ -354,3 +354,109 @@
     }
   }
 }
+
+/* ============================================================================
+   Animaciones de íconos (lucide)
+   ¿Qué? Clases que se ponen en el propio <Icon className="...">:
+         - icon-draw: el ícono se redibuja trazo por trazo (sidebar, botones).
+         - icon-hop (salta), icon-shake (niega), icon-ring (suena/tiembla),
+           icon-nudge (crece un poco): movimiento según lo que significa.
+         Por defecto se disparan al pasar el mouse por el elemento clicable que
+         contiene al ícono (a, button, label). Con icon-appear se disparan UNA vez
+         al aparecer (mensajes de éxito/error/aviso).
+   ¿Para qué? Regla del proyecto: solo se anima lo que se puede tocar o lo que
+              aparece para avisar algo — no hay íconos moviéndose de adorno.
+   ¿Impacto? Todo va dentro de prefers-reduced-motion: no-preference, igual que el
+             resto de animaciones de este archivo: quien pidió "reducir
+             movimiento" en su sistema ve los íconos quietos.
+   ============================================================================ */
+@keyframes icon-draw {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes icon-hop {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: translateY(-4px);
+  }
+  70% {
+    transform: translateY(1px);
+  }
+}
+@keyframes icon-shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20%,
+  60% {
+    transform: translateX(-3px);
+  }
+  40%,
+  80% {
+    transform: translateX(3px);
+  }
+}
+@keyframes icon-ring {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: rotate(-12deg);
+  }
+  40% {
+    transform: rotate(10deg);
+  }
+  60% {
+    transform: rotate(-6deg);
+  }
+  80% {
+    transform: rotate(3deg);
+  }
+}
+@keyframes icon-nudge {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Los íconos de lucide miden 24×24: ningún trazo pasa de 100 unidades, así
+       que un dasharray de 100 sirve para todos sin medir cada uno. */
+    :is(a, button, label):hover > .icon-draw > *,
+    :is(a, button, label):hover .icon-draw > * {
+      stroke-dasharray: 100;
+      animation: icon-draw 0.6s ease-out;
+    }
+    :is(a, button, label):hover .icon-hop,
+    .icon-appear.icon-hop {
+      animation: icon-hop 0.6s ease-in-out;
+    }
+    :is(a, button, label):hover .icon-shake,
+    .icon-appear.icon-shake {
+      animation: icon-shake 0.5s ease-in-out;
+    }
+    :is(a, button, label):hover .icon-ring,
+    .icon-appear.icon-ring {
+      transform-origin: 50% 20%;
+      animation: icon-ring 0.7s ease-in-out;
+    }
+    :is(a, button, label):hover .icon-nudge,
+    .icon-appear.icon-nudge {
+      animation: icon-nudge 0.5s ease-in-out;
+    }
+  }
+}

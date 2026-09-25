@@ -19,7 +19,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Modal } from "@/components/ui/Modal";
 
 interface ConfirmModalProps {
-  /** ¿Qué? Ícono dentro del círculo de color, arriba del título (ej: AlertTriangle, Trash2, Ban). */
+  /** ¿Qué? Ícono dentro del círculo de color, arriba del título (ej: TriangleAlert, Trash2, UserX). */
   icon: LucideIcon;
   /** ¿Qué? Color del círculo/ícono/botón de confirmar. "warning" (ámbar) para
    *        acciones reversibles-pero-delicadas, "danger" (rojo) para acciones

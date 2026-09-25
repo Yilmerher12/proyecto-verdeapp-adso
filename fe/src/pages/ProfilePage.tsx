@@ -7,11 +7,11 @@ import { API_BASE_URL } from "@/api/axios";
 import {
   Mail,
   Phone,
-  MapPin,
-  Building2,
+  Map as MapIcon,
+  Building,
   Users as UsersIcon,
   Pencil,
-  CheckCircle2,
+  BadgeCheck,
   Camera,
   Loader2,
   Eye,
@@ -240,7 +240,7 @@ export function ProfilePage() {
       {/* Success banner */}
       {exito && (
         <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <BadgeCheck className="h-4 w-4 shrink-0 icon-appear icon-hop" />
           {t("profile.updateSuccess")}
         </div>
       )}
@@ -303,7 +303,7 @@ export function ProfilePage() {
                   <InfoField
                     label={t("profile.fields.conjunto")}
                     value={perfil.nombre_conjunto}
-                    icon={<Building2 className="h-3 w-3" />}
+                    icon={<Building className="h-3 w-3" />}
                   />
                 )}
                 {(perfil.torre || perfil.apto) && (
@@ -321,7 +321,7 @@ export function ProfilePage() {
                   <InfoField
                     label={t("profile.fields.baseLocality")}
                     value={perfil.nombre_localidad}
-                    icon={<MapPin className="h-3 w-3" />}
+                    icon={<MapIcon className="h-3 w-3" />}
                   />
                 )}
                 {perfil.asociacion && (
@@ -344,7 +344,7 @@ export function ProfilePage() {
                       : t("profile.managedConjuntoPlural")
                   }
                   value={perfil.conjuntos_administrados.join(", ")}
-                  icon={<Building2 className="h-3 w-3" />}
+                  icon={<Building className="h-3 w-3" />}
                 />
               )}
           </div>
@@ -509,7 +509,7 @@ export function ProfilePage() {
                   disabled={guardando}
                   className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
                 >
-                  <CheckCircle2 className="h-4 w-4" />
+                  <BadgeCheck className="h-4 w-4 icon-hop" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}
                 </button>
               </div>

@@ -68,6 +68,20 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 - Tipografía exclusivamente sans-serif.
 - Los botones de acción principal van alineados a la derecha en formularios y modales.
 - Iconografía: únicamente `lucide-react` — no mezclar con otras librerías de íconos.
+- Ícono por concepto (un concepto = un ícono en toda la app; si aparece un concepto nuevo, se agrega a esta tabla):
+
+  | Concepto | Ícono (`lucide-react`) |
+  | --- | --- |
+  | Roles | Residente `UserRound` · Reciclador `HardHat` · Admin. de Conjunto `UserCog` · Administrador `ShieldUser` (definidos solo en `fe/src/config/roleTheme.ts`) |
+  | Conjunto residencial | `Building` |
+  | Activar / desactivar | Usuario `UserCheck` / `UserX` · Punto de acopio `MapPin` / `MapPinOff` |
+  | Mensajes | Éxito `BadgeCheck` · Error `OctagonX` · Aviso `TriangleAlert` · Info `Info` |
+  | Comunicados / novedades | `Megaphone` / `Newspaper` |
+  | Puntos de acopio / directorio / localidad | `Warehouse` / `MapPinned` / `Map` (una dirección concreta sigue con `MapPin`) |
+  | Seguridad (cambiar contraseña) | `KeyRound` |
+  | Semáforo de auditoría | Caritas `Smile` / `Meh` / `Frown` (definidas en `fe/src/config/nivelesDesempeno.ts`) |
+
+- Animación de íconos: solo en lo que se puede tocar (sidebar, botones, selector del semáforo) o en lo que aparece para avisar (mensajes). Se usan las clases `icon-draw`, `icon-hop`, `icon-shake`, `icon-ring`, `icon-nudge` y `icon-appear` de `fe/src/index.css`, que ya respetan `prefers-reduced-motion`. No se agregan librerías de animación.
 - Paleta de marca: "Páramo Fresco" en modo claro y "Bosque Andino" en modo oscuro, definidas como escala `green-*` (y `accent-*` apuntando a ella) en `fe/src/index.css`. Los botones principales usan `accent-*`; no hay un color de acento distinto (ni azul ni amarillo) para botones. Los paneles no llevan imagen de fondo: el área de contenido es un color sólido.
 - Logo: solo en SVG, en `fe/public/logos/` (`logo`, `logo-white`, `logo-mark`, `logo-mark-white` y `favicon`). Ninguna página pone un `<img>` del logo a mano: siempre se usa el componente `BrandLogo` (`fe/src/components/ui/BrandLogo.tsx`), que elige la versión según el fondo y el modo oscuro. No se usan PNG ni íconos de `lucide-react` (como `Leaf`) en lugar del logo.
 - El color de marca (`accent-*`) es el único acento de color permitido en componentes reutilizables; los colores por rol (sidebar, badges) viven centralizados en `fe/src/config/roleTheme.ts`, no repetidos por archivo.

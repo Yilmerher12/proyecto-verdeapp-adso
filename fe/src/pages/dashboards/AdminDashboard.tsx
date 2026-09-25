@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Shield, Users, Database, UserPlus, Search, ChevronLeft, ChevronRight, ChevronDown, Building2, Ban, CircleCheck, ArrowUp, ArrowDown, ArrowUpDown, ClipboardList, BarChart3 } from "lucide-react";
+import { Database, UserPlus, Search, ChevronLeft, ChevronRight, ChevronDown, Building, UserX, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, ClipboardList, BarChart3 } from "lucide-react";
+import { ROLE_THEME } from "@/config/roleTheme";
+import { RoleId } from "@/types/auth";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
@@ -61,6 +63,12 @@ type OrderDir = "asc" | "desc";
 //           chico ayuda a que quepa completa sin bajar tanto, sin perder
 //           el propósito real de la paginación (nunca traer todo de golpe).
 const TAMANO_PAGINA = 8;
+
+// Íconos de rol desde roleTheme (una sola fuente): encabezado y pestañas de usuarios.
+const AdminIcon = ROLE_THEME[RoleId.ADMIN_SISTEMA].Icon;
+const ResidenteIcon = ROLE_THEME[RoleId.RESIDENTE].Icon;
+const RecicladorIcon = ROLE_THEME[RoleId.RECICLADOR].Icon;
+const AdminConjuntoIcon = ROLE_THEME[RoleId.ADMIN_CONJUNTO].Icon;
 
 const ENDPOINT_POR_TAB: Record<TabUsuarios, string> = {
   residentes: "vista-residentes",
@@ -415,7 +423,7 @@ export function AdminDashboard() {
           variant={habilitado ? "danger" : "secondary"}
           onClick={() => pedirConfirmacion(correo, !habilitado)}
         >
-          {habilitado ? <Ban className="mr-1 h-3.5 w-3.5" /> : <CircleCheck className="mr-1 h-3.5 w-3.5" />}
+          {habilitado ? <UserX className="mr-1 h-3.5 w-3.5 icon-draw" /> : <UserCheck className="mr-1 h-3.5 w-3.5 icon-draw" />}
           {habilitado
             ? t("dashboards.admin.usersSection.status.disable")
             : t("dashboards.admin.usersSection.status.enable")}
@@ -443,7 +451,7 @@ export function AdminDashboard() {
       <div className="relative overflow-hidden bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
-            <Shield className="h-7 w-7 text-accent-700 dark:text-accent-400" />
+            <AdminIcon className="h-7 w-7 text-accent-700 dark:text-accent-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.admin.title")}</h1>
@@ -587,9 +595,9 @@ export function AdminDashboard() {
             <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-[#23392b] dark:bg-[#0c1a12]/60">
               {(
                 [
-                  { id: "residentes" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.residentes"), icon: <Users className="h-3.5 w-3.5" /> },
-                  { id: "recicladores" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.recicladores"), icon: <Users className="h-3.5 w-3.5" /> },
-                  { id: "administradores" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.administradores"), icon: <Building2 className="h-3.5 w-3.5" /> },
+                  { id: "residentes" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.residentes"), icon: <ResidenteIcon className="h-3.5 w-3.5" /> },
+                  { id: "recicladores" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.recicladores"), icon: <RecicladorIcon className="h-3.5 w-3.5" /> },
+                  { id: "administradores" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.administradores"), icon: <AdminConjuntoIcon className="h-3.5 w-3.5" /> },
                 ] as const
               ).map(({ id, label, icon }) => (
                 <button
@@ -628,7 +636,7 @@ export function AdminDashboard() {
               encendido solo las desactivadas. */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="flex items-center gap-1.5 sm:w-64">
-              <Building2 className="h-3.5 w-3.5 shrink-0 text-accent-600" />
+              <Building className="h-3.5 w-3.5 shrink-0 text-accent-600" />
               <div className="flex-1 [&_input]:!mt-0 [&_input]:!py-1.5 [&_input]:!text-xs">
                 <ConjuntoCombobox
                   value={conjuntoSeleccionado}
@@ -649,7 +657,7 @@ export function AdminDashboard() {
                   : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-300 dark:hover:bg-[#23392b]"
               }`}
             >
-              <Ban className="h-3.5 w-3.5" aria-hidden="true" />
+              <UserX className="h-3.5 w-3.5" aria-hidden="true" />
               {t("dashboards.admin.usersSection.inactiveButton", { count: inactivos ? inactivos[tab] : 0 })}
             </button>
           </div>
@@ -855,7 +863,7 @@ export function AdminDashboard() {
       {confirmando && (
         <ConfirmModal
           layer={perfilAbierto ? "stacked" : "base"}
-          icon={confirmando.nuevoEstado ? CircleCheck : Ban}
+          icon={confirmando.nuevoEstado ? UserCheck : UserX}
           variant={confirmando.nuevoEstado ? "primary" : "danger"}
           ariaLabel={t("dashboards.admin.usersSection.status.confirmButton")}
           title={

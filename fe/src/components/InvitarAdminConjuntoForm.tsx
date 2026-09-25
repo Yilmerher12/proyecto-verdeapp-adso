@@ -6,7 +6,7 @@ import { API_BASE_URL } from "@/api/axios";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { UserPlus, Building2, MapPin } from "lucide-react";
+import { UserPlus, Building, Map as MapIcon } from "lucide-react";
 import { invitarAdministradorConjunto } from "@/lib/adminConjuntoApi";
 import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
@@ -112,7 +112,7 @@ export function InvitarAdminConjuntoForm() {
 
         <div>
           <label htmlFor="invitar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-            <MapPin className="w-4 h-4" />
+            <MapIcon className="w-4 h-4" />
             {t("invitarAdminConjunto.localityLabel")}
           </label>
           <select
@@ -132,7 +132,7 @@ export function InvitarAdminConjuntoForm() {
 
         <div>
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-            <Building2 className="w-4 h-4" />
+            <Building className="w-4 h-4" />
             {t("invitarAdminConjunto.conjuntosLabel")}
           </label>
           {localidadId === "" ? (

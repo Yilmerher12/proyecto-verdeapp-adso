@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Megaphone, Paperclip } from "lucide-react";
+import { Newspaper, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { verFeedNovedades, type Novedad } from "@/lib/novedadesApi";
@@ -55,7 +55,7 @@ export function NovedadesFeedPage() {
       {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
 
       {!cargando && !error && novedades.length === 0 && (
-        <EmptyState icon={Megaphone} message={t("novedades.feed.empty")} />
+        <EmptyState icon={Newspaper} message={t("novedades.feed.empty")} />
       )}
 
       <div className="space-y-4">

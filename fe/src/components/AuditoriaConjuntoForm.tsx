@@ -222,7 +222,14 @@ export function AuditoriaConjuntoForm({
                     seleccionado ? claseSeleccionado : `border-transparent opacity-70 hover:opacity-100 ${claseBadge}`
                   }`}
                 >
-                  <Icon className="h-6 w-6" aria-hidden="true" />
+                  {/* La carita salta al pasar el mouse y otra vez al elegirla: el
+                      key cambia al seleccionar, React la vuelve a montar y la
+                      animación de aparición (icon-appear) se repite. */}
+                  <Icon
+                    key={seleccionado ? "elegida" : "libre"}
+                    className={`h-6 w-6 icon-hop ${seleccionado ? "icon-appear" : ""}`}
+                    aria-hidden="true"
+                  />
                   {t(`dashboards.reciclador.auditoria.niveles.${n.toLowerCase()}`)}
                 </button>
               );

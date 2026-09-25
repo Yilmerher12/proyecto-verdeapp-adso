@@ -3,14 +3,15 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
-  ShieldCheck,
+  KeyRound,
   LogOut,
   ChevronsLeft,
   ChevronsRight,
   Menu,
   X,
   BookOpen,
-  MapPin,
+  MapPinned,
+  Warehouse,
   Megaphone,
   Newspaper,
   User,
@@ -167,7 +168,7 @@ export function AppShell({ children }: AppShellProps) {
     ];
 
     const commonEnd = [
-      { icon: ShieldCheck, label: t("appShell.nav.seguridad"), href: "/change-password", enabled: true, group: "cuenta" as GrupoNav },
+      { icon: KeyRound, label: t("appShell.nav.seguridad"), href: "/change-password", enabled: true, group: "cuenta" as GrupoNav },
     ];
 
     if (roleId === RoleId.ADMIN_SISTEMA) {
@@ -175,7 +176,7 @@ export function AppShell({ children }: AppShellProps) {
         ...commonStart,
         { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: "/admin/novedades", enabled: true, group: "comunidad" as GrupoNav },
         { icon: BookOpen, label: t("appShell.nav.contenidoEducativo"), href: "/admin/contenido-educativo", enabled: true, group: "recursos" as GrupoNav },
-        { icon: MapPin, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true, group: "recursos" as GrupoNav },
+        { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true, group: "recursos" as GrupoNav },
         ...commonEnd,
       ];
     }
@@ -185,7 +186,7 @@ export function AppShell({ children }: AppShellProps) {
         ...commonStart,
         { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true, group: "comunidad" as GrupoNav },
         { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true, group: "comunidad" as GrupoNav },
-        { icon: MapPin, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true, group: "recursos" as GrupoNav },
+        { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true, group: "recursos" as GrupoNav },
         { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true, group: "cuenta" as GrupoNav },
         ...commonEnd,
       ];
@@ -206,7 +207,7 @@ export function AppShell({ children }: AppShellProps) {
       { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true, group: "comunidad" as GrupoNav },
       { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true, group: "comunidad" as GrupoNav },
       { icon: BookOpen, label: t("appShell.nav.aprenderGuias"), href: "/catalogo-educativo", enabled: true, group: "recursos" as GrupoNav },
-      { icon: MapPin, label: t("appShell.nav.directorioGeneral"), href: "/directorio", enabled: true, group: "recursos" as GrupoNav },
+      { icon: MapPinned, label: t("appShell.nav.directorioGeneral"), href: "/directorio", enabled: true, group: "recursos" as GrupoNav },
       { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true, group: "cuenta" as GrupoNav },
       ...commonEnd,
     ];
@@ -354,7 +355,9 @@ export function AppShell({ children }: AppShellProps) {
                               }`
                             }
                           >
-                            <Icon className="h-4.5 w-4.5 shrink-0" />
+                            {/* Animación al pasar el mouse: comunicados "suena", novedades
+                                crece, el resto se redibuja (ver index.css). */}
+                            <Icon className={`h-4.5 w-4.5 shrink-0 ${Icon === Megaphone ? "icon-ring" : Icon === Newspaper ? "icon-nudge" : "icon-draw"}`} />
                             {!collapsed && <span className="min-w-0 truncate">{label}</span>}
                           </NavLink>
                         </li>

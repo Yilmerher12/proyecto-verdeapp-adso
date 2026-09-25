@@ -7,18 +7,24 @@
  * donde debe salir esa información de ahora en adelante: si el día de mañana
  * quieren cambiar el color de un rol, se cambia aquí una sola vez y se refleja
  * en todas las pantallas que lo usen.
+ *
+ * ¿Qué? Íconos de rol = personas (UserRound, HardHat, UserCog, ShieldUser).
+ * ¿Para qué? Antes el rol Admin. de Conjunto usaba Building2, el mismo ícono
+ *           que "conjunto residencial", y cada dashboard tenía además una marca
+ *           de agua distinta (llave, maletín). Ahora Icon es el único ícono del
+ *           rol: sidebar, perfil, registro, pestañas del panel admin, encabezado
+ *           y marca de agua de cada dashboard.
+ * ¿Impacto? Cambiar el ícono de un rol aquí lo cambia en todas esas pantallas.
  */
 
 import type { LucideIcon } from "lucide-react";
-import { Shield, Home, Recycle, Building2, KeyRound, Briefcase } from "lucide-react";
+import { ShieldUser, UserRound, HardHat, UserCog } from "lucide-react";
 import { RoleId } from "@/types/auth";
 
 export interface RoleTheme {
   label: string;
   Icon: LucideIcon;
   dashboardHref: string;
-  /** Ícono grande y tenue de fondo para el banner de bienvenida de cada dashboard. */
-  WatermarkIcon: LucideIcon;
   /** Color del texto/ícono de acento en el sidebar — un solo valor, porque el
    *  sidebar ahora es siempre verde de marca (no cambia entre modo claro/oscuro). */
   sidebarAccentText: string;
@@ -33,9 +39,8 @@ export interface RoleTheme {
 export const ROLE_THEME: Record<RoleId, RoleTheme> = {
   [RoleId.ADMIN_SISTEMA]: {
     label: "Administrador",
-    Icon: Shield,
+    Icon: ShieldUser,
     dashboardHref: "/dashboard/admin",
-    WatermarkIcon: Shield,
     // ¿Qué? Tintes suaves y apagados, uno por rol: pizarra (Administrador),
     //       lima (Residente), naranja (Reciclador) y cielo (Admin. de Conjunto).
     // ¿Para qué? Antes los 4 roles eran verdes/amarillos vecinos (emerald,
@@ -50,9 +55,8 @@ export const ROLE_THEME: Record<RoleId, RoleTheme> = {
   },
   [RoleId.RESIDENTE]: {
     label: "Residente",
-    Icon: Home,
+    Icon: UserRound,
     dashboardHref: "/dashboard/residente",
-    WatermarkIcon: KeyRound,
     sidebarAccentText: "text-lime-400",
     sidebarActiveNav: "bg-lime-400/20 text-lime-100 font-semibold",
     badgeText: "text-lime-700 dark:text-lime-400",
@@ -60,9 +64,8 @@ export const ROLE_THEME: Record<RoleId, RoleTheme> = {
   },
   [RoleId.RECICLADOR]: {
     label: "Reciclador",
-    Icon: Recycle,
+    Icon: HardHat,
     dashboardHref: "/dashboard/reciclador",
-    WatermarkIcon: Recycle,
     sidebarAccentText: "text-orange-300",
     sidebarActiveNav: "bg-orange-400/20 text-orange-100 font-semibold",
     badgeText: "text-orange-700 dark:text-orange-400",
@@ -70,9 +73,8 @@ export const ROLE_THEME: Record<RoleId, RoleTheme> = {
   },
   [RoleId.ADMIN_CONJUNTO]: {
     label: "Admin. de Conjunto",
-    Icon: Building2,
+    Icon: UserCog,
     dashboardHref: "/dashboard/admin-conjunto",
-    WatermarkIcon: Briefcase,
     sidebarAccentText: "text-sky-300",
     sidebarActiveNav: "bg-sky-400/20 text-sky-100 font-semibold",
     badgeText: "text-sky-700 dark:text-sky-400",

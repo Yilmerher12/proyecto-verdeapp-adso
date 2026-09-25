@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
-import { Home, AlertTriangle, Bell, CheckCircle2 } from "lucide-react";
+import { TriangleAlert, Bell, BadgeCheck } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import axios from "axios";
@@ -29,7 +29,7 @@ export function ResidenteDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || t("roles.residente");
-  const { WatermarkIcon } = ROLE_THEME[RoleId.RESIDENTE];
+  const { Icon: RolIcon } = ROLE_THEME[RoleId.RESIDENTE];
 
   const [estadoShut, setEstadoShut] = useState<EstadoShut>({ lleno: false, created_at: null });
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
@@ -140,10 +140,10 @@ export function ResidenteDashboard() {
           panel se sienta del Residente (su casa, su unidad), sin estorbar la
           lectura del texto encima. */}
       <div className="relative overflow-hidden bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
-        <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
+        <RolIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
-            <Home className="h-7 w-7 text-accent-600 dark:text-accent-400" />
+            <RolIcon className="h-7 w-7 text-accent-600 dark:text-accent-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.residente.title")}</h1>
@@ -161,7 +161,7 @@ export function ResidenteDashboard() {
       {/* Banner estado SHUT */}
       {!cargando && estadoShut.lleno && (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/40 dark:bg-amber-900/10">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+          <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 icon-appear icon-ring" />
           <div>
             <p className="text-sm font-semibold text-amber-900 dark:text-amber-400">
               {t("dashboards.residente.shutBanner.title")}
@@ -225,7 +225,7 @@ export function ResidenteDashboard() {
           >
             {feedbackOk || estadoShut.lleno ? (
               <>
-                <CheckCircle2 className="h-4 w-4" />
+                <BadgeCheck className="h-4 w-4 icon-appear icon-hop" />
                 {t("dashboards.residente.reportSection.sent")}
               </>
             ) : (
