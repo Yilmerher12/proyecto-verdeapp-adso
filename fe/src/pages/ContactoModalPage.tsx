@@ -100,7 +100,7 @@ export function ContactoModalPage() {
                   onChange={handleChange}
                   placeholder={t("contactoModal.message.placeholder")}
                   required
-                  className="block w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-accent-400 focus:border-accent-500 focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white dark:placeholder:text-gray-500 dark:hover:border-accent-500"
+                  className="block w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-accent-400 focus:border-accent-500 focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white dark:placeholder:text-gray-500 dark:hover:border-accent-500"
                 />
               </div>
 

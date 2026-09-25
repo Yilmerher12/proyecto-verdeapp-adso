@@ -39,7 +39,7 @@ export function HistorialAuditorias() {
   const variosConjuntos = new Set(auditorias.map((a) => a.id_conjunto_residencial)).size > 1;
 
   return (
-    <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+    <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] shadow-sm p-5">
       <div className="mb-4 flex items-center gap-2">
         <History className="h-4 w-4 text-gray-500 dark:text-gray-400" />
         <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
@@ -57,7 +57,7 @@ export function HistorialAuditorias() {
               <li key={a.id_auditoria}>
                 <button
                   onClick={() => setIdAbierta(a.id_auditoria)}
-                  className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0c1a12]/60"
                 >
                   <div className="min-w-0">
                     <p className="text-sm text-gray-800 dark:text-gray-200">

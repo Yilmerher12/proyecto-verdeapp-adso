@@ -71,7 +71,7 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
                     type="button"
                     onClick={() => setImagenAmpliada(ruta)}
                     aria-label={t("auditoriaResultado.evidenciaAmpliar")}
-                    className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-[#2a4d34]"
+                    className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-[#23392b]"
                   >
                     <img
                       src={`${API_BASE_URL}${ruta}`}

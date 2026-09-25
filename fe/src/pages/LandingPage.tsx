@@ -536,7 +536,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
           final de "Pilares" (que termina en un verde más claro, #0a3d1f) —
           si usan un tono parecido, las dos secciones se leen como una sola,
           sin ningún corte entre ellas. */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-white/10 dark:bg-[#010a05]">
+      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-white/10 dark:bg-[#030a06]">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <span className="text-sm font-extrabold tracking-tight text-gray-800 dark:text-gray-200">

@@ -503,7 +503,7 @@ export function AdminContenidoEducativoPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 p-6">
-      <div className="flex items-center gap-4 bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center gap-4 bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
           <BookOpen className="h-7 w-7 text-accent-700 dark:text-accent-400" />
         </div>
@@ -516,7 +516,7 @@ export function AdminContenidoEducativoPage() {
       {/* Franja de resumen — igual patrón que el Panel Principal: antes de
           la tabla, no encima de ella. */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
             <Plus className="h-4 w-4 text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.newSection.title`)}</h3>
@@ -532,14 +532,14 @@ export function AdminContenidoEducativoPage() {
             <button
               type="button"
               onClick={() => abrirCrear(NUEVA_CATEGORIA)}
-              className="cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+              className="cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
             >
               {t(`${p}.newSection.newCategory`)}
             </button>
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
+        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.catalogSection.title`)}</h3>
@@ -563,7 +563,7 @@ export function AdminContenidoEducativoPage() {
           </p>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
+        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.currentWeek.title`, { rango: rangoSemanaUTC(semanaActual) })}</h3>
@@ -585,7 +585,7 @@ export function AdminContenidoEducativoPage() {
         </div>
       </div>
 
-      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
+      <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] shadow-sm overflow-hidden">
         {/* ¿Qué? Toda la barra recoge/expande al hacer clic (no solo el
             texto "Recoger"/"Ver..." de la derecha) — las pestañas cortan la
             propagación para que elegir una NO dispare también el toggle,
@@ -597,7 +597,7 @@ export function AdminContenidoEducativoPage() {
           onClick={() => setPanelExpandido((v) => !v)}
           className="flex flex-wrap cursor-pointer items-center justify-between gap-2 px-5 py-4"
         >
-          <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-[#2a4d34] dark:bg-[#0d2116]/60">
+          <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-[#23392b] dark:bg-[#0c1a12]/60">
             <button
               type="button"
               onClick={(e) => {
@@ -633,7 +633,7 @@ export function AdminContenidoEducativoPage() {
               setPanelExpandido((v) => !v);
             }}
             aria-expanded={panelExpandido}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-[#0d2116]/60 dark:hover:text-gray-200"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-[#0c1a12]/60 dark:hover:text-gray-200"
           >
             {panelExpandido ? t(`${p}.collapse`) : tab === "cal" ? t(`${p}.expandRatings`) : t(`${p}.expandModules`)}
             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${panelExpandido ? "rotate-180" : ""}`} />
@@ -642,13 +642,13 @@ export function AdminContenidoEducativoPage() {
 
         {panelExpandido && (tab === "cal" ? (
           <div>
-            <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-[#2a4d34]">
+            <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-[#23392b]">
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => cambiarSemana(-7)}
                   aria-label={t(`${p}.week.prev`)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+                  className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-400 dark:hover:bg-[#23392b]"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -661,7 +661,7 @@ export function AdminContenidoEducativoPage() {
                   onClick={() => cambiarSemana(7)}
                   disabled={semana >= semanaActual}
                   aria-label={t(`${p}.week.next`)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-[#2a4d34] dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+                  className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-[#23392b] dark:text-gray-400 dark:hover:bg-[#23392b]"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -670,7 +670,7 @@ export function AdminContenidoEducativoPage() {
                 className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${
                   semana === semanaActual
                     ? "bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
-                    : "bg-gray-100 text-gray-500 dark:bg-[#0d2116] dark:text-gray-400"
+                    : "bg-gray-100 text-gray-500 dark:bg-[#0c1a12] dark:text-gray-400"
                 }`}
               >
                 {semana === semanaActual ? t(`${p}.week.inProgress`) : t(`${p}.week.closed`, { fecha: domingoDeLunesUTC(semana).getUTCDate() })}
@@ -682,12 +682,12 @@ export function AdminContenidoEducativoPage() {
                   onChange={(e) => setBuscarCal(e.target.value)}
                   placeholder={t(`${p}.week.searchPlaceholder`)}
                   aria-label={t(`${p}.week.searchPlaceholder`)}
-                  className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200 sm:w-56"
+                  className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-200 sm:w-56"
                 />
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 border-b border-gray-100 px-5 pb-4 dark:border-[#2a4d34]">
+            <div className="flex flex-wrap gap-2 border-b border-gray-100 px-5 pb-4 dark:border-[#23392b]">
               {(["" , "DEFICIENTE", "REGULAR", "BUENA"] as const).map((nivel) => (
                 <button
                   key={nivel || "todas"}
@@ -697,7 +697,7 @@ export function AdminContenidoEducativoPage() {
                   className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                     nivelFiltro === nivel
                       ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
-                      : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-400"
+                      : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-400"
                   }`}
                 >
                   {nivel === "" ? t(`${p}.week.all`, { count: calSemana.length }) : `${t(`dashboards.reciclador.auditoria.niveles.${nivel.toLowerCase()}`)} ${conteoNiveles[nivel] ?? 0}`}
@@ -708,7 +708,7 @@ export function AdminContenidoEducativoPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 dark:border-[#2a4d34] dark:bg-[#0d2116]/60">
+                  <tr className="border-b border-gray-100 bg-gray-50 dark:border-[#23392b] dark:bg-[#0c1a12]/60">
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.conjunto`)}</th>
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.tema`)}</th>
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.nivel`)}</th>
@@ -743,10 +743,10 @@ export function AdminContenidoEducativoPage() {
                         <tr
                           key={a.id_auditoria}
                           onClick={() => setCalAbierta(a.id_auditoria)}
-                          className="cursor-pointer hover:bg-gray-50 dark:hover:bg-[#0d2116]/40 transition-colors"
+                          className="cursor-pointer hover:bg-gray-50 dark:hover:bg-[#0c1a12]/40 transition-colors"
                         >
                           <td className="px-5 py-3">
-                            <button type="button" className="cursor-pointer text-left font-semibold text-gray-900 underline decoration-gray-200 underline-offset-4 hover:text-accent-700 hover:decoration-accent-600 dark:text-white dark:decoration-[#2a4d34]">
+                            <button type="button" className="cursor-pointer text-left font-semibold text-gray-900 underline decoration-gray-200 underline-offset-4 hover:text-accent-700 hover:decoration-accent-600 dark:text-white dark:decoration-[#23392b]">
                               {a.nombre_conjunto}
                             </button>
                             <p className="text-xs text-gray-500 dark:text-gray-400">{a.nombre_reciclador}</p>
@@ -775,7 +775,7 @@ export function AdminContenidoEducativoPage() {
           </div>
         ) : (
           <div>
-            <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-[#2a4d34]">
+            <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-[#23392b]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                 <input
@@ -783,14 +783,14 @@ export function AdminContenidoEducativoPage() {
                   onChange={(e) => setBuscarMod(e.target.value)}
                   placeholder={t(`${p}.modules.searchPlaceholder`)}
                   aria-label={t(`${p}.modules.searchPlaceholder`)}
-                  className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200 sm:w-56"
+                  className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-200 sm:w-56"
                 />
               </div>
               <select
                 value={categoriaFiltro}
                 onChange={(e) => setCategoriaFiltro(e.target.value)}
                 aria-label={t(`${p}.modules.categoryFilterLabel`)}
-                className="cursor-pointer rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
+                className="cursor-pointer rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-200"
               >
                 <option value="">{t(`${p}.modules.allCategories`)}</option>
                 {categorias.map((c) => (
@@ -799,7 +799,7 @@ export function AdminContenidoEducativoPage() {
                   </option>
                 ))}
               </select>
-              <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#0d2116] dark:text-gray-300">
+              <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#0c1a12] dark:text-gray-300">
                 {t(`${p}.modules.total`, { count: contenido.length })}
               </span>
             </div>
@@ -834,7 +834,7 @@ export function AdminContenidoEducativoPage() {
                     <div
                       key={item.id_contenido}
                       onClick={() => setModuloAbierto(item.id_contenido)}
-                      className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-4 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:bg-[#1c341b] dark:hover:bg-[#0d2116]/40"
+                      className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-4 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:bg-[#12231a] dark:hover:bg-[#0c1a12]/40"
                     >
                       <div className="flex min-w-0 items-start gap-3">
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
@@ -857,7 +857,7 @@ export function AdminContenidoEducativoPage() {
                             e.stopPropagation();
                             abrirEditar(item);
                           }}
-                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
                           aria-label={t(`${p}.editAria`, { titulo: item.titulo_tema })}
                         >
                           <Pencil className="h-4 w-4" />
@@ -867,7 +867,7 @@ export function AdminContenidoEducativoPage() {
                             e.stopPropagation();
                             setAEliminar(item);
                           }}
-                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
+                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#23392b] dark:hover:bg-red-900/20"
                           aria-label={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -884,7 +884,7 @@ export function AdminContenidoEducativoPage() {
       {/* ---------- Panel: detalle de una calificación ---------- */}
       {auditoriaAbierta && (
         <PanelLateral onClose={() => setCalAbierta(null)} aria-label={t(`${p}.ratingPanel.ariaLabel`, { conjunto: auditoriaAbierta.nombre_conjunto })}>
-          <div className="border-b border-gray-100 p-5 pr-14 dark:border-[#2a4d34]">
+          <div className="border-b border-gray-100 p-5 pr-14 dark:border-[#23392b]">
             <h2 className="text-base font-bold text-gray-900 dark:text-white">{auditoriaAbierta.nombre_conjunto}</h2>
             {(() => {
               const nivel = NIVELES_DESEMPENO[auditoriaAbierta.nivel_desempeno];
@@ -897,7 +897,7 @@ export function AdminContenidoEducativoPage() {
             })()}
           </div>
 
-          <section className="border-b border-gray-100 p-5 dark:border-[#2a4d34]">
+          <section className="border-b border-gray-100 p-5 dark:border-[#23392b]">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.details`)}</h3>
             <dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-sm">
               <dt className="text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.theme`)}</dt>
@@ -909,16 +909,16 @@ export function AdminContenidoEducativoPage() {
             </dl>
           </section>
 
-          <section className="border-b border-gray-100 p-5 dark:border-[#2a4d34]">
+          <section className="border-b border-gray-100 p-5 dark:border-[#23392b]">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.observations`)}</h3>
             {auditoriaAbierta.descripcion ? (
-              <p className="border-l-2 border-gray-200 pl-3 text-sm text-gray-800 dark:border-[#2a4d34] dark:text-gray-200">{auditoriaAbierta.descripcion}</p>
+              <p className="border-l-2 border-gray-200 pl-3 text-sm text-gray-800 dark:border-[#23392b] dark:text-gray-200">{auditoriaAbierta.descripcion}</p>
             ) : (
               <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.week.noObservations`)}</p>
             )}
           </section>
 
-          <section className="border-b border-gray-100 p-5 dark:border-[#2a4d34]">
+          <section className="border-b border-gray-100 p-5 dark:border-[#23392b]">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.evidence`)}</h3>
             <div className="grid grid-cols-3 gap-2">
               {[auditoriaAbierta.ruta_evidencia, auditoriaAbierta.ruta_evidencia_2, auditoriaAbierta.ruta_evidencia_3]
@@ -928,7 +928,7 @@ export function AdminContenidoEducativoPage() {
                     key={ruta}
                     type="button"
                     onClick={() => setFotoAmpliada(ruta)}
-                    className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-[#2a4d34]"
+                    className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-[#23392b]"
                     aria-label={t(`${p}.ratingPanel.enlarge`)}
                   >
                     <img src={`${API_BASE_URL}${ruta}`} alt="" className="h-full w-full object-cover" />
@@ -953,7 +953,7 @@ export function AdminContenidoEducativoPage() {
                         setTab("mod");
                         setModuloAbierto(m.id_contenido);
                       }}
-                      className="mb-1.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white px-3 py-2 text-left text-sm text-gray-800 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200 dark:hover:bg-[#0d2116]"
+                      className="mb-1.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white px-3 py-2 text-left text-sm text-gray-800 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-200 dark:hover:bg-[#0c1a12]"
                     >
                       {m.titulo_tema}
                       <Eye className="h-3.5 w-3.5 shrink-0 text-gray-400" />
@@ -984,13 +984,13 @@ export function AdminContenidoEducativoPage() {
       {/* ---------- Panel: un módulo (vista previa + recomendado a + enviar) ---------- */}
       {moduloAbiertoObj && (
         <PanelLateral onClose={() => setModuloAbierto(null)} aria-label={t(`${p}.modulePanel.ariaLabel`, { titulo: moduloAbiertoObj.titulo_tema })}>
-          <div className="border-b border-gray-100 p-5 pr-14 dark:border-[#2a4d34]">
+          <div className="border-b border-gray-100 p-5 pr-14 dark:border-[#23392b]">
             <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">{moduloAbiertoObj.modulo_categoria}</span>
             <h2 className="mt-1 text-base font-bold text-gray-900 dark:text-white">{moduloAbiertoObj.titulo_tema}</h2>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(moduloAbiertoObj.fecha_publicacion)}</p>
           </div>
 
-          <section className="border-b border-gray-100 p-5 dark:border-[#2a4d34]">
+          <section className="border-b border-gray-100 p-5 dark:border-[#23392b]">
             <ReactMarkdown components={COMPONENTES_MARKDOWN}>{moduloAbiertoObj.cuerpo_texto}</ReactMarkdown>
             {moduloAbiertoObj.url_video && <YoutubeEmbed url={moduloAbiertoObj.url_video} titulo={moduloAbiertoObj.titulo_tema} />}
             {moduloAbiertoObj.url_guia && (
@@ -999,7 +999,7 @@ export function AdminContenidoEducativoPage() {
                   <button
                     type="button"
                     onClick={() => setFotoAmpliada(moduloAbiertoObj.url_guia!)}
-                    className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-gray-100 dark:border-[#2a4d34]"
+                    className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-gray-100 dark:border-[#23392b]"
                     aria-label={t(`${p}.ratingPanel.enlarge`)}
                   >
                     <img
@@ -1018,7 +1018,7 @@ export function AdminContenidoEducativoPage() {
                   href={moduloAbiertoObj.url_guia.startsWith("http") ? moduloAbiertoObj.url_guia : `${API_BASE_URL}${moduloAbiertoObj.url_guia}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-200 dark:hover:bg-[#2a4d34]"
+                  className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-200 dark:hover:bg-[#23392b]"
                 >
                   <FileText className="h-4 w-4 shrink-0" />
                   {t("categoriaEducativa.viewGuide")}
@@ -1027,7 +1027,7 @@ export function AdminContenidoEducativoPage() {
             )}
           </section>
 
-          <section className="border-b border-gray-100 p-5 dark:border-[#2a4d34]">
+          <section className="border-b border-gray-100 p-5 dark:border-[#23392b]">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {t(`${p}.modulePanel.recommendedTo`, { count: destinatariosDelModuloAbierto.length })}
             </h3>
@@ -1038,7 +1038,7 @@ export function AdminContenidoEducativoPage() {
             ) : (
               <div className="space-y-2">
                 {destinatariosDelModuloAbierto.map((d) => (
-                  <div key={d.id_conjunto_residencial} className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-2 text-sm first:border-t-0 first:pt-0 dark:border-[#2a4d34]">
+                  <div key={d.id_conjunto_residencial} className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-2 text-sm first:border-t-0 first:pt-0 dark:border-[#23392b]">
                     <span className="flex-1 font-semibold text-gray-900 dark:text-white">{d.nombre_conjunto}</span>
                     {d.tipo === "auto" && d.nivel ? (
                       (() => {
@@ -1063,7 +1063,7 @@ export function AdminContenidoEducativoPage() {
             )}
           </section>
 
-          <section className="border-b border-gray-100 p-5 dark:border-[#2a4d34]">
+          <section className="border-b border-gray-100 p-5 dark:border-[#23392b]">
             <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.send.title`)}</h3>
             {errorEnvio && (
               <div className="mb-3">
@@ -1094,7 +1094,7 @@ export function AdminContenidoEducativoPage() {
             </div>
           </section>
 
-          <div className="sticky bottom-0 mt-auto flex flex-wrap gap-2 border-t border-gray-100 bg-[#f7f9f3] p-5 dark:border-[#2a4d34] dark:bg-[#1c341b]">
+          <div className="sticky bottom-0 mt-auto flex flex-wrap gap-2 border-t border-gray-100 bg-[#ffffff] p-5 dark:border-[#23392b] dark:bg-[#12231a]">
             <Button type="button" size="sm" onClick={() => abrirEditar(moduloAbiertoObj)}>
               <Pencil className="mr-1 h-3.5 w-3.5" />
               {t("common.edit")}
@@ -1125,8 +1125,8 @@ export function AdminContenidoEducativoPage() {
                   value={categoriaSeleccion}
                   onChange={(e) => setCategoriaSeleccion(e.target.value)}
                   onBlur={() => validarCampo("categoria")}
-                  className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1f4029] dark:text-white ${
-                    fieldErrors.categoria ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-[#2a4d34]"
+                  className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1a3324] dark:text-white ${
+                    fieldErrors.categoria ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-[#23392b]"
                   }`}
                 >
                   <option value="">{t(`${p}.fields.categoryPlaceholderSelect`)}</option>
@@ -1144,7 +1144,7 @@ export function AdminContenidoEducativoPage() {
                       onChange={(e) => setNuevaCategoriaTexto(e.target.value)}
                       onBlur={() => validarCampo("categoria")}
                       placeholder={t(`${p}.fields.categoryPlaceholder`)}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
                     />
                     <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{t(`${p}.fields.newCategoryWarning`)}</p>
                   </div>
@@ -1170,15 +1170,15 @@ export function AdminContenidoEducativoPage() {
                   <span className="text-[11px] text-gray-400 dark:text-gray-500">{t(`${p}.fields.charCount`, { count: form.cuerpo_texto.length })}</span>
                 </div>
                 <div className="mb-1.5 flex gap-1.5">
-                  <button type="button" onClick={() => aplicarFormato("h")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]">
+                  <button type="button" onClick={() => aplicarFormato("h")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]">
                     <Heading2 className="h-3.5 w-3.5" />
                     {t(`${p}.fields.formatHeading`)}
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("b")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]">
+                  <button type="button" onClick={() => aplicarFormato("b")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]">
                     <Bold className="h-3.5 w-3.5" />
                     {t(`${p}.fields.formatBold`)}
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("ul")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]">
+                  <button type="button" onClick={() => aplicarFormato("ul")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]">
                     <ListIcon className="h-3.5 w-3.5" />
                     {t(`${p}.fields.formatList`)}
                   </button>
@@ -1192,8 +1192,8 @@ export function AdminContenidoEducativoPage() {
                   rows={7}
                   aria-invalid={!!fieldErrors.cuerpo_texto}
                   aria-describedby={fieldErrors.cuerpo_texto ? "contenido-cuerpo-error" : undefined}
-                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1f4029] dark:text-white ${
-                    fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-[#2a4d34]"
+                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1a3324] dark:text-white ${
+                    fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-[#23392b]"
                   }`}
                 />
                 <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t(`${p}.fields.contentMarkdownHint`)}</p>
@@ -1216,10 +1216,10 @@ export function AdminContenidoEducativoPage() {
                   placeholder="https://www.youtube.com/watch?v=..."
                   aria-invalid={!!fieldErrors.url_video}
                   aria-describedby={fieldErrors.url_video ? "contenido-url-video-error" : undefined}
-                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1f4029] dark:text-white ${
+                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1a3324] dark:text-white ${
                     fieldErrors.url_video
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                      : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-[#2a4d34]"
+                      : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-[#23392b]"
                   }`}
                 />
                 {fieldErrors.url_video ? (
@@ -1244,7 +1244,7 @@ export function AdminContenidoEducativoPage() {
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={cerrarFormulario}
-                  className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
+                  className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b] transition-colors"
                 >
                   {t("common.cancel")}
                 </button>
@@ -1261,12 +1261,12 @@ export function AdminContenidoEducativoPage() {
             {/* ¿Qué? Vista previa en vivo — exactamente los mismos componentes
                 que usa CategoriaEducativaPage.tsx (lo que ve el Residente),
                 para que esto no sea "una aproximación" sino el resultado real. */}
-            <aside className="border-t border-gray-100 bg-[#f7f9f3] p-6 dark:border-[#2a4d34] dark:bg-[#132a1c] sm:p-8 md:border-l md:border-t-0">
+            <aside className="border-t border-gray-100 bg-[#ffffff] p-6 dark:border-[#23392b] dark:bg-[#0f2018] sm:p-8 md:border-l md:border-t-0">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.preview.label`)}</span>
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase text-gray-500 dark:bg-[#0d2116] dark:text-gray-400">{t(`${p}.preview.live`)}</span>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase text-gray-500 dark:bg-[#0c1a12] dark:text-gray-400">{t(`${p}.preview.live`)}</span>
               </div>
-              <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-[#2a4d34] dark:bg-[#1c341b]">
+              <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-[#23392b] dark:bg-[#12231a]">
                 {(() => {
                   const Icono = categoriaEfectiva ? ICONOS_CATEGORIAS[categoriaEfectiva] ?? ICONO_CATEGORIA_DEFAULT : BookOpen;
                   return (
@@ -1288,7 +1288,7 @@ export function AdminContenidoEducativoPage() {
                 )}
                 {form.url_video?.trim() && idVideoReconocido && <YoutubeEmbed url={form.url_video} titulo={form.titulo_tema || t(`${p}.preview.titlePlaceholder`)} />}
                 {form.url_guia?.trim() && (
-                  <p className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 dark:border-[#2a4d34] dark:text-gray-200">
+                  <p className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 dark:border-[#23392b] dark:text-gray-200">
                     <FileText className="h-4 w-4 shrink-0" />
                     {t("categoriaEducativa.viewGuide")}
                   </p>

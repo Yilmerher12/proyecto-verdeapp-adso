@@ -230,12 +230,12 @@ export function AdminPuntosAcopioPage() {
   ];
 
   const botonAccion =
-    "cursor-pointer rounded-lg border border-gray-200 p-2 transition-colors dark:border-[#2a4d34]";
+    "cursor-pointer rounded-lg border border-gray-200 p-2 transition-colors dark:border-[#23392b]";
 
   const renderFila = (item: PuntoAcopioAdmin) => (
     <div
       key={item.id_punto_acopio}
-      className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-gray-100 bg-white p-3 dark:border-[#2a4d34] dark:bg-[#132a1c] ${
+      className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-gray-100 bg-white p-3 dark:border-[#23392b] dark:bg-[#0f2018] ${
         item.activo ? "" : "opacity-70"
       }`}
     >
@@ -249,7 +249,7 @@ export function AdminPuntosAcopioPage() {
             {item.nombre}
           </button>
           {!item.activo && (
-            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-[#2a4d34] dark:text-gray-400">
+            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-[#23392b] dark:text-gray-400">
               {t("adminPuntosAcopio.inactiveBadge")}
             </span>
           )}
@@ -284,7 +284,7 @@ export function AdminPuntosAcopioPage() {
       <div className="flex shrink-0 gap-2">
         <button
           onClick={() => abrirPanel(item, true)}
-          className={`${botonAccion} text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-[#2a4d34]`}
+          className={`${botonAccion} text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-[#23392b]`}
           aria-label={t("adminPuntosAcopio.editAria", { nombre: item.nombre })}
         >
           <Pencil className="h-4 w-4" />
@@ -321,7 +321,7 @@ export function AdminPuntosAcopioPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("adminPuntosAcopio.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -342,7 +342,7 @@ export function AdminPuntosAcopioPage() {
 
       {puntos.length > 0 && (
         <>
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-3 dark:border-[#2a4d34] dark:bg-[#1c341b]">
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-3 dark:border-[#23392b] dark:bg-[#12231a]">
             <div className="relative min-w-[200px] flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
@@ -351,7 +351,7 @@ export function AdminPuntosAcopioPage() {
                 onChange={(e) => cambiarBusqueda(e.target.value)}
                 aria-label={t("adminPuntosAcopio.search.placeholder")}
                 placeholder={t("adminPuntosAcopio.search.placeholder")}
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
               />
             </div>
             <div className="flex gap-1.5">
@@ -364,7 +364,7 @@ export function AdminPuntosAcopioPage() {
                   className={`cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                     filtroEstado === id
                       ? "bg-accent-700 text-white"
-                      : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-200 dark:hover:bg-[#2a4d34]"
+                      : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-gray-200 dark:hover:bg-[#23392b]"
                   }`}
                 >
                   {t(`adminPuntosAcopio.search.status.${id}`)} · {cantidad}
@@ -401,7 +401,7 @@ export function AdminPuntosAcopioPage() {
           return (
             <section
               key={grupo.id}
-              className="rounded-2xl border border-gray-100 bg-[#f7f9f3] dark:border-[#2a4d34] dark:bg-[#1c341b]"
+              className="rounded-2xl border border-gray-100 bg-[#ffffff] dark:border-[#23392b] dark:bg-[#12231a]"
             >
               <button
                 type="button"

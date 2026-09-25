@@ -36,17 +36,17 @@ export const ROLE_THEME: Record<RoleId, RoleTheme> = {
     Icon: Shield,
     dashboardHref: "/dashboard/admin",
     WatermarkIcon: Shield,
-    // ¿Qué? emerald (verde suave) en vez de slate (gris).
-    // ¿Para qué? Slate era el único de los 4 roles que no estaba en la
-    //           familia verde — desentonaba contra el resto de la app
-    //           (sidebar, fondo, tarjetas), sobre todo notorio en el
-    //           propio panel de Administrador (retroalimentación directa).
-    // ¿Impacto? emerald sigue siendo distinguible de los otros 3 roles
-    //           (lime, teal, amber) sin salirse de la paleta verde de marca.
-    sidebarAccentText: "text-emerald-300",
-    sidebarActiveNav: "bg-emerald-400/20 text-emerald-100 font-semibold",
-    badgeText: "text-emerald-700 dark:text-emerald-400",
-    badgeBg: "bg-emerald-50 dark:bg-emerald-900/30",
+    // ¿Qué? Tintes suaves y apagados, uno por rol: pizarra (Administrador),
+    //       lima (Residente), naranja (Reciclador) y cielo (Admin. de Conjunto).
+    // ¿Para qué? Antes los 4 roles eran verdes/amarillos vecinos (emerald,
+    //           lime, teal, amber) y en pantalla casi no se distinguían.
+    // ¿Impacto? Se distinguen a simple vista solo en el chip y el ítem activo
+    //           del sidebar y en el badge del perfil, sin recolorear los
+    //           dashboards ni salirse de la paleta de marca.
+    sidebarAccentText: "text-slate-300",
+    sidebarActiveNav: "bg-slate-400/20 text-slate-100 font-semibold",
+    badgeText: "text-slate-700 dark:text-slate-400",
+    badgeBg: "bg-slate-50 dark:bg-slate-900/30",
   },
   [RoleId.RESIDENTE]: {
     label: "Residente",
@@ -63,19 +63,19 @@ export const ROLE_THEME: Record<RoleId, RoleTheme> = {
     Icon: Recycle,
     dashboardHref: "/dashboard/reciclador",
     WatermarkIcon: Recycle,
-    sidebarAccentText: "text-teal-300",
-    sidebarActiveNav: "bg-teal-400/20 text-teal-100 font-semibold",
-    badgeText: "text-teal-700 dark:text-teal-400",
-    badgeBg: "bg-teal-50 dark:bg-teal-900/30",
+    sidebarAccentText: "text-orange-300",
+    sidebarActiveNav: "bg-orange-400/20 text-orange-100 font-semibold",
+    badgeText: "text-orange-700 dark:text-orange-400",
+    badgeBg: "bg-orange-50 dark:bg-orange-900/30",
   },
   [RoleId.ADMIN_CONJUNTO]: {
     label: "Admin. de Conjunto",
     Icon: Building2,
     dashboardHref: "/dashboard/admin-conjunto",
     WatermarkIcon: Briefcase,
-    sidebarAccentText: "text-amber-300",
-    sidebarActiveNav: "bg-amber-400/20 text-amber-100 font-semibold",
-    badgeText: "text-amber-700 dark:text-amber-400",
-    badgeBg: "bg-amber-50 dark:bg-amber-900/30",
+    sidebarAccentText: "text-sky-300",
+    sidebarActiveNav: "bg-sky-400/20 text-sky-100 font-semibold",
+    badgeText: "text-sky-700 dark:text-sky-400",
+    badgeBg: "bg-sky-50 dark:bg-sky-900/30",
   },
 };

@@ -36,7 +36,7 @@ export function Paginacion({
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3 dark:border-[#2a4d34]">
+    <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3 dark:border-[#23392b]">
       <span className="text-xs text-gray-500 dark:text-gray-400">
         {t("common.pagination.showing", { from: desde, to: hasta, total })}
       </span>
@@ -45,7 +45,7 @@ export function Paginacion({
           type="button"
           onClick={onAnterior}
           disabled={!puedeAnterior}
-          className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+          className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#23392b]"
           aria-label={t("common.pagination.prev")}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -57,7 +57,7 @@ export function Paginacion({
           type="button"
           onClick={onSiguiente}
           disabled={!puedeSiguiente}
-          className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+          className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#23392b]"
           aria-label={t("common.pagination.next")}
         >
           <ChevronRight className="h-4 w-4" />

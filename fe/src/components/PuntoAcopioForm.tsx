@@ -126,10 +126,10 @@ export function PuntoAcopioForm({
             onBlur={() => validarCampo("id_localidad")}
             aria-invalid={!!fieldErrors.id_localidad}
             aria-describedby={fieldErrors.id_localidad ? "acopio-localidad-error" : undefined}
-            className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1f4029] dark:text-white ${
+            className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1a3324] dark:text-white ${
               fieldErrors.id_localidad
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-[#2a4d34]"
+                : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-[#23392b]"
             }`}
           >
             <option value="" disabled>
@@ -197,7 +197,7 @@ export function PuntoAcopioForm({
             maxLength={1000}
             rows={2}
             placeholder={t("adminPuntosAcopio.form.changeReasonPlaceholder")}
-            className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+            className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
           />
         </div>
       )}
@@ -206,7 +206,7 @@ export function PuntoAcopioForm({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+          className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
         >
           {t("common.cancel")}
         </button>

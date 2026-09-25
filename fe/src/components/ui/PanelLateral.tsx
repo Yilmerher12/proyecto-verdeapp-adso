@@ -80,13 +80,13 @@ export function PanelLateral({ onClose, children, "aria-label": ariaLabel, cerra
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
-        className="relative flex h-full w-full max-w-md cursor-auto flex-col overflow-y-auto border-l border-gray-100 bg-[#f7f9f3] shadow-2xl outline-none dark:border-[#2a4d34] dark:bg-[#132a1c]"
+        className="relative flex h-full w-full max-w-md cursor-auto flex-col overflow-y-auto border-l border-gray-100 bg-[#ffffff] shadow-2xl outline-none dark:border-[#23392b] dark:bg-[#0f2018]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:hover:bg-[#2a4d34] dark:hover:text-gray-300"
+          className="absolute right-4 top-4 z-10 cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:hover:bg-[#23392b] dark:hover:text-gray-300"
           aria-label={t("common.close")}
         >
           <X className="h-5 w-5" />

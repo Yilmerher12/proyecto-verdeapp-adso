@@ -418,14 +418,14 @@ export function RegisterPage() {
             <div className="grid grid-cols-2 gap-4">
               <div
                 onClick={() => setFormData(p => ({ ...p, rol: "residente" }))}
-                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "residente" ? "border-accent-600 bg-accent-50/50 dark:bg-accent-900/20 shadow-sm" : "border-gray-200 dark:border-[#2a4d34] hover:border-accent-300"}`}
+                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "residente" ? "border-accent-600 bg-accent-50/50 dark:bg-accent-900/20 shadow-sm" : "border-gray-200 dark:border-[#23392b] hover:border-accent-300"}`}
               >
                 <Home className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "residente" ? "text-accent-600" : "text-gray-400"}`}/>
                 <span className={`font-semibold ${formData.rol === "residente" ? "text-accent-800 dark:text-accent-400" : "text-gray-500 dark:text-gray-400"}`}>{t("auth.register.roleResident")}</span>
               </div>
               <div
                 onClick={() => setFormData(p => ({ ...p, rol: "reciclador" }))}
-                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "reciclador" ? "border-accent-600 bg-accent-50/50 dark:bg-accent-900/20 shadow-sm" : "border-gray-200 dark:border-[#2a4d34] hover:border-accent-300"}`}
+                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "reciclador" ? "border-accent-600 bg-accent-50/50 dark:bg-accent-900/20 shadow-sm" : "border-gray-200 dark:border-[#23392b] hover:border-accent-300"}`}
               >
                 <Recycle className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "reciclador" ? "text-accent-600" : "text-gray-400"}`}/>
                 <span className={`font-semibold ${formData.rol === "reciclador" ? "text-accent-800 dark:text-accent-400" : "text-gray-500 dark:text-gray-400"}`}>{t("auth.register.roleRecycler")}</span>
@@ -467,7 +467,7 @@ export function RegisterPage() {
             </div>
 
             {formData.rol === "residente" && (
-              <div className="space-y-4 p-5 bg-gray-50/50 dark:bg-[#0d2116]/60 border border-gray-100 dark:border-[#2a4d34] rounded-2xl">
+              <div className="space-y-4 p-5 bg-gray-50/50 dark:bg-[#0c1a12]/60 border border-gray-100 dark:border-[#23392b] rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="w-5 h-5 text-accent-600" />
                   <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("auth.register.fields.residenceLocationHeading")}</h3>
@@ -476,7 +476,7 @@ export function RegisterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.locality")}</label>
-                    <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
+                    <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-[#23392b] rounded-xl mt-1 bg-white dark:bg-[#1a3324] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
                       <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
                       {localidades.map(loc => (
                         <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
@@ -499,10 +499,10 @@ export function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-[#2a4d34]">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-[#23392b]">
                   <div>
                     <label htmlFor="prefijo_unidad" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitType")}</label>
-                    <select id="prefijo_unidad" name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-[#0d2116]">
+                    <select id="prefijo_unidad" name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-[#23392b] rounded-xl mt-1 bg-white dark:bg-[#1a3324] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-[#0c1a12]">
                       <option value="TORRE">{t("auth.register.fields.unitTypeTower")}</option>
                       <option value="INTERIOR">{t("auth.register.fields.unitTypeInterior")}</option>
                       <option value="BLOQUE">{t("auth.register.fields.unitTypeBlock")}</option>
@@ -512,13 +512,13 @@ export function RegisterPage() {
 
                   <div>
                     <label htmlFor="numero_bloque" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitNumber")}</label>
-                    <input id="numero_bloque" type="text" name="numero_bloque" placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] uppercase" />
+                    <input id="numero_bloque" type="text" name="numero_bloque" placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-[#23392b] rounded-xl mt-1 bg-white dark:bg-[#1a3324] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0c1a12] uppercase" />
                     {fieldErrors.numero_bloque && <p className="text-xs text-red-500 mt-1">{fieldErrors.numero_bloque}</p>}
                   </div>
 
                   <div>
                     <label htmlFor="apto" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
-                    <input id="apto" type="text" name="apto" placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] uppercase" />
+                    <input id="apto" type="text" name="apto" placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-[#23392b] rounded-xl mt-1 bg-white dark:bg-[#1a3324] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0c1a12] uppercase" />
                     {fieldErrors.apto && <p className="text-xs text-red-500 mt-1">{fieldErrors.apto}</p>}
                   </div>
                 </div>
@@ -532,7 +532,7 @@ export function RegisterPage() {
                             naturaleza (una prueba, no un dato del domicilio)
                             y merece su propia aclaración debajo.
                 */}
-                <div className="pt-3 border-t border-gray-200 dark:border-[#2a4d34]">
+                <div className="pt-3 border-t border-gray-200 dark:border-[#23392b]">
                   <label htmlFor="codigo_acceso" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.codigoAcceso")}</label>
                   <input
                     id="codigo_acceso"
@@ -542,7 +542,7 @@ export function RegisterPage() {
                     value={formData.codigo_acceso}
                     onChange={handleChange}
                     disabled={!formData.id_conjunto_residencial}
-                    className="w-full p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0d2116] uppercase tracking-widest font-mono"
+                    className="w-full p-2.5 border border-gray-300 dark:border-[#23392b] rounded-xl mt-1 bg-white dark:bg-[#1a3324] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-[#0c1a12] uppercase tracking-widest font-mono"
                   />
                   <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("auth.register.fields.codigoAccesoHint")}</p>
                 </div>
@@ -559,7 +559,7 @@ export function RegisterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.workLocality")}</label>
-                    <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-[#2a4d34] rounded-xl mt-1 bg-white dark:bg-[#1f4029] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
+                    <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-[#23392b] rounded-xl mt-1 bg-white dark:bg-[#1a3324] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
                       <option value="">{t("auth.register.fields.selectYourLocality")}</option>
                       {localidades.map(loc => (
                         <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
@@ -644,7 +644,7 @@ export function RegisterPage() {
                 id="terms"
                 checked={acceptedTerms}
                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-[#2a4d34] text-accent-600 focus:ring-accent-500 accent-accent-600 cursor-pointer"
+                className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-[#23392b] text-accent-600 focus:ring-accent-500 accent-accent-600 cursor-pointer"
               />
               <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
                 {t("auth.register.termsPrefix")}{" "}

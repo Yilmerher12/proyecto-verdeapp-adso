@@ -110,7 +110,7 @@ export function SolicitudesDesvinculacion({
       className={
         dentroDeModal
           ? ""
-          : "bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm"
+          : "bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-5 shadow-sm"
       }
     >
       {mostrarEncabezado && (
@@ -166,7 +166,7 @@ export function SolicitudesDesvinculacion({
                     onChange={(e) => setMotivoRechazo(e.target.value)}
                     placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}
                     rows={2}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
                   />
                   <div className="flex gap-2">
                     <button
@@ -182,7 +182,7 @@ export function SolicitudesDesvinculacion({
                         setRechazandoId(null);
                         setMotivoRechazo("");
                       }}
-                      className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:bg-transparent dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                      className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:bg-transparent dark:text-gray-300 dark:hover:bg-[#23392b]"
                     >
                       {t("common.cancel")}
                     </button>

@@ -111,7 +111,7 @@ function SeccionCodigoAcceso({
   };
 
   return (
-    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/40">
+    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0c1a12]/40">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -125,13 +125,13 @@ function SeccionCodigoAcceso({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-mono text-base font-bold tracking-widest text-gray-900 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-white">
+          <span className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-mono text-base font-bold tracking-widest text-gray-900 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-white">
             {codigoAcceso}
           </span>
           <button
             type="button"
             onClick={copiarCodigo}
-            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-white dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#1f4029]"
+            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-white dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#1a3324]"
             aria-label={t(
               copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
             )}
@@ -286,7 +286,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
     //       la tarjeta del conjunto — antes todo compartía el mismo blanco y
     //       solo una línea delgada las separaba (issue #166, "se ve todo
     //       pegado").
-    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/40">
+    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0c1a12]/40">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-accent-600" />
@@ -303,7 +303,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             onClick={() => setMostrarDetalle((v) => !v)}
             aria-expanded={mostrarDetalle}
             aria-controls={`recicladores-detalle-${idConjunto}`}
-            className="cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-[#132a1c] dark:text-gray-300 dark:border-[#2a4d34] dark:hover:bg-[#1f4029]"
+            className="cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-[#0f2018] dark:text-gray-300 dark:border-[#23392b] dark:hover:bg-[#1a3324]"
           >
             {mostrarDetalle
               ? t("dashboards.adminConjunto.recyclersSection.hideDetail")
@@ -325,7 +325,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
         <form
           id={`recicladores-invitar-${idConjunto}`}
           onSubmit={handleInvitar}
-          className="flex flex-col sm:flex-row gap-2 mb-4 bg-[#f7f9f3] dark:bg-[#1c341b] p-3 rounded-xl"
+          className="flex flex-col sm:flex-row gap-2 mb-4 bg-[#ffffff] dark:bg-[#12231a] p-3 rounded-xl"
         >
           <div className="flex-1 relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -334,7 +334,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
               placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
               value={correoNuevo}
               onChange={(e) => setCorreoNuevo(e.target.value)}
-              className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+              className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
             />
           </div>
           <button
@@ -392,7 +392,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
                     <button
                       type="button"
                       onClick={() => setARevocar(r)}
-                      className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
+                      className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-[#23392b] dark:hover:bg-red-900/20"
                       aria-label={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
                     >
                       <UserX className="h-3.5 w-3.5" />
@@ -419,7 +419,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
               {invitaciones.map((inv) => (
                 <div
                   key={inv.id}
-                  className="flex items-center justify-between gap-3 bg-[#f7f9f3] dark:bg-[#1c341b] rounded-lg px-3 py-2"
+                  className="flex items-center justify-between gap-3 bg-[#ffffff] dark:bg-[#12231a] rounded-lg px-3 py-2"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
@@ -506,7 +506,7 @@ function SeccionDesvinculacion({
     // ¿Qué? Mismo criterio que en SeccionRecicladores — fondo propio en vez
     //       de solo un borde arriba, para que se vea como un bloque aparte
     //       (issue #166).
-    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/40">
+    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0c1a12]/40">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
         {t("desvinculacion.sectionTitle")}
       </p>
@@ -527,7 +527,7 @@ function SeccionDesvinculacion({
           <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">{t("desvinculacion.clarification")}</p>
         </div>
       ) : (
-        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] p-3 rounded-xl space-y-2">
+        <div className="bg-[#ffffff] dark:bg-[#12231a] p-3 rounded-xl space-y-2">
           <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
           <label htmlFor={`desvinculacion-motivo-${idConjunto}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("desvinculacion.motivoLabel")}
@@ -538,7 +538,7 @@ function SeccionDesvinculacion({
             onChange={(e) => setMotivo(e.target.value)}
             placeholder={t("desvinculacion.motivoPlaceholder")}
             rows={2}
-            className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+            className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
           />
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex gap-2">
@@ -556,7 +556,7 @@ function SeccionDesvinculacion({
                 setMostrarFormulario(false);
                 setError(null);
               }}
-              className="cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-[#1f4029] dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+              className="cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-[#1a3324] dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
             >
               {t("common.cancel")}
             </button>
@@ -699,7 +699,7 @@ export function AdminConjuntoDashboard() {
       {/* TARJETA DE PERFIL — el maletín de fondo es solo un detalle tenue,
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-amber-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
@@ -730,7 +730,7 @@ export function AdminConjuntoDashboard() {
       )}
 
       {cargandoNotifs ? (
-        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+        <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] shadow-sm p-5">
           <LoadingState message={t("common.loading")} />
         </div>
       ) : (
@@ -760,8 +760,8 @@ export function AdminConjuntoDashboard() {
         <Alert type={mensaje.tipo} message={mensaje.texto} onClose={() => setMensaje(null)} />
       )}
 
-      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-[#2a4d34] pb-2">
+      <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-[#23392b] pb-2">
           <Building2 className="text-accent-600 w-5 h-5" />
           <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
         </div>
@@ -777,7 +777,7 @@ export function AdminConjuntoDashboard() {
             {conjuntos.map((c) => (
               <div
                 key={c.id_conjunto_residencial}
-                className="border border-gray-200 dark:border-[#2a4d34] rounded-xl p-4"
+                className="border border-gray-200 dark:border-[#23392b] rounded-xl p-4"
               >
                 {editandoId === c.id_conjunto_residencial ? (
                   <div className="space-y-3">
@@ -801,7 +801,7 @@ export function AdminConjuntoDashboard() {
                         type="text"
                         value={formEdicion.nit}
                         onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
                       />
                     </div>
                     <div className="flex gap-2 pt-2">
@@ -816,7 +816,7 @@ export function AdminConjuntoDashboard() {
                       <button
                         type="button"
                         onClick={cancelarEdicion}
-                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-[#1f4029] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-[#1a3324] dark:text-gray-300 dark:hover:bg-[#23392b]"
                       >
                         <X className="w-4 h-4" /> {t("common.cancel")}
                       </button>
