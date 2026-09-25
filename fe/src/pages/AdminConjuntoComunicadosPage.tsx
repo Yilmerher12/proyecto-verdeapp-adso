@@ -203,7 +203,7 @@ export function AdminConjuntoComunicadosPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.admin.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.subtitle")}</p>
@@ -232,7 +232,7 @@ export function AdminConjuntoComunicadosPage() {
         {comunicados.map((item) => (
           <div
             key={item.id_comunicado}
-            className="rounded-2xl border border-gray-100 bg-[#f7f9f3] p-4 dark:border-[#2a4d34] dark:bg-[#1c341b]"
+            className="rounded-2xl border border-gray-100 bg-[#ffffff] p-4 dark:border-[#23392b] dark:bg-[#12231a]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -240,7 +240,7 @@ export function AdminConjuntoComunicadosPage() {
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIPO_ESTILO[item.tipo]}`}>
                     {t(`comunicados.tipos.${item.tipo}`)}
                   </span>
-                  <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#1f4029] dark:text-gray-300">
+                  <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#1a3324] dark:text-gray-300">
                     {item.nombre_conjunto}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -262,7 +262,7 @@ export function AdminConjuntoComunicadosPage() {
                     {t("comunicados.viewAttachment")}
                   </a>
                 )}
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-[#2a4d34] dark:text-gray-400">
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-[#23392b] dark:text-gray-400">
                   <span className="inline-flex items-center gap-1.5">
                     <Clock className="h-3.5 w-3.5" />
                     {t("comunicados.admin.creadoEl", { fecha: formatearFechaCreacion(item.created_at) })}
@@ -276,14 +276,14 @@ export function AdminConjuntoComunicadosPage() {
               <div className="flex shrink-0 gap-2">
                 <button
                   onClick={() => abrirEditar(item)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
                   aria-label={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setAEliminar(item)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
+                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#23392b] dark:hover:bg-red-900/20"
                   aria-label={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -295,7 +295,7 @@ export function AdminConjuntoComunicadosPage() {
       </div>
 
       {!cargando && total > 0 && (
-        <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm">
+        <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] shadow-sm">
           <Paginacion
             desde={paginacion.desde}
             hasta={paginacion.hasta}
@@ -334,7 +334,7 @@ export function AdminConjuntoComunicadosPage() {
                     id="comunicado-conjunto"
                     value={form.id_conjunto_residencial}
                     onChange={(e) => setForm({ ...form, id_conjunto_residencial: e.target.value })}
-                    className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                    className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
                   >
                     {conjuntos.map((c) => (
                       <option key={c.id_conjunto_residencial} value={c.id_conjunto_residencial}>
@@ -368,7 +368,7 @@ export function AdminConjuntoComunicadosPage() {
                         className={`flex-1 cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                           form.destinatarios === d
                             ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
-                            : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-[#2a4d34] dark:text-gray-300"
+                            : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-[#23392b] dark:text-gray-300"
                         }`}
                       >
                         {t(`comunicados.destinatarios.${d}`)}
@@ -380,7 +380,7 @@ export function AdminConjuntoComunicadosPage() {
             )}
 
             {editando && (
-              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-[#1f4029]/60">
+              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-[#1a3324]/60">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {t("comunicados.admin.fields.conjunto")} · {t("comunicados.admin.fields.destinatarios")}
                 </p>
@@ -399,7 +399,7 @@ export function AdminConjuntoComunicadosPage() {
                 id="comunicado-tipo"
                 value={form.tipo}
                 onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoComunicado })}
-                className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
               >
                 {TIPOS.map((tipo) => (
                   <option key={tipo} value={tipo}>
@@ -419,7 +419,7 @@ export function AdminConjuntoComunicadosPage() {
                   type="date"
                   value={form.fecha_evento}
                   onChange={(e) => setForm({ ...form, fecha_evento: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
                 />
               </div>
             )}
@@ -433,7 +433,7 @@ export function AdminConjuntoComunicadosPage() {
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
               />
             </div>
 
@@ -453,7 +453,7 @@ export function AdminConjuntoComunicadosPage() {
                 type="date"
                 value={form.fecha_expiracion}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
               />
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
             </div>
@@ -461,7 +461,7 @@ export function AdminConjuntoComunicadosPage() {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={cerrarFormulario}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b] transition-colors"
               >
                 {t("common.cancel")}
               </button>

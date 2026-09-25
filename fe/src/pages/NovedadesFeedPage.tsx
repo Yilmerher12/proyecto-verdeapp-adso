@@ -45,7 +45,7 @@ export function NovedadesFeedPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pt-6">
-      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("novedades.feed.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("novedades.feed.subtitle")}</p>
       </div>
@@ -62,7 +62,7 @@ export function NovedadesFeedPage() {
         {novedades.map((item) => (
           <article
             key={item.id_novedad}
-            className="rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 dark:border-[#2a4d34] dark:bg-[#1c341b]"
+            className="rounded-2xl border border-gray-100 bg-[#ffffff] p-5 dark:border-[#23392b] dark:bg-[#12231a]"
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">

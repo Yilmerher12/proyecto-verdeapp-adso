@@ -119,7 +119,7 @@ export function InvitarAdminConjuntoForm() {
             id="invitar-localidad"
             value={localidadId}
             onChange={(e) => setLocalidadId(e.target.value === "" ? "" : Number(e.target.value))}
-            className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+            className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-gray-100"
           >
             <option value="">{t("invitarAdminConjunto.localitySelectPlaceholder")}</option>
             {localidades.map((l) => (
@@ -136,7 +136,7 @@ export function InvitarAdminConjuntoForm() {
             {t("invitarAdminConjunto.conjuntosLabel")}
           </label>
           {localidadId === "" ? (
-            <p className="rounded-xl border border-dashed border-gray-300 px-3 py-2.5 text-xs text-gray-500 dark:border-[#2a4d34] dark:text-gray-400">
+            <p className="rounded-xl border border-dashed border-gray-300 px-3 py-2.5 text-xs text-gray-500 dark:border-[#23392b] dark:text-gray-400">
               {t("invitarAdminConjunto.selectLocalityFirst")}
             </p>
           ) : (

@@ -42,7 +42,7 @@ export function CatalogoEducativoPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("catalogoEducativo.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           {t("catalogoEducativo.subtitle")}
@@ -65,7 +65,7 @@ export function CatalogoEducativoPage() {
             <button
               key={categoria}
               onClick={() => navigate(`/catalogo-educativo/${encodeURIComponent(categoria)}`)}
-              className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 text-left transition-colors hover:border-accent-200 hover:bg-accent-50/40 dark:border-[#2a4d34] dark:bg-[#1c341b] dark:hover:border-accent-800 dark:hover:bg-accent-900/10"
+              className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 text-left transition-colors hover:border-accent-200 hover:bg-accent-50/40 dark:border-[#23392b] dark:bg-[#12231a] dark:hover:border-accent-800 dark:hover:bg-accent-900/10"
             >
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
                 <Icono className="h-5.5 w-5.5" />

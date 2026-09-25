@@ -56,7 +56,7 @@ const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024;
 
 function InfoField({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-gray-50 dark:bg-[#1f4029]/60 px-4 py-3">
+    <div className="rounded-xl bg-gray-50 dark:bg-[#1a3324]/60 px-4 py-3">
       <p className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
         {icon}
         {label}
@@ -232,7 +232,7 @@ export function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 pt-6">
       {/* Header */}
-      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("profile.subtitle")}</p>
       </div>
@@ -247,7 +247,7 @@ export function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* LEFT — Avatar + rol + datos de contexto (2/5) */}
-        <div className="lg:col-span-2 lg:self-start bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8 flex flex-col items-center text-center">
+        <div className="lg:col-span-2 lg:self-start bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-8 flex flex-col items-center text-center">
           {/* Avatar — foto real si existe, si no el círculo con la inicial de siempre. */}
           <div className="relative mb-4">
             {urlFotoPerfil ? (
@@ -267,7 +267,7 @@ export function ProfilePage() {
               disabled={subiendoFoto}
               aria-label={t("profile.photo.change")}
               title={t("profile.photo.change")}
-              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-[#f7f9f3] bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#1c341b]"
+              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-[#ffffff] bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#12231a]"
             >
               {subiendoFoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
             </button>
@@ -351,13 +351,13 @@ export function ProfilePage() {
         </div>
 
         {/* RIGHT — Información personal editable (3/5) */}
-        <div className="lg:col-span-3 bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-8">
+        <div className="lg:col-span-3 bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("profile.personalInfoSection.title")}</h3>
             {canEdit && !editando && (
               <button
                 onClick={iniciarEdicion}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
+                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b] transition-colors"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 {t("common.edit")}
@@ -461,12 +461,12 @@ export function ProfilePage() {
                       controlara si su teléfono aparece en el Directorio
                       general (visible a cualquier usuario autenticado de
                       la ciudad, no solo a su propio conjunto). */}
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-[#2a4d34] dark:bg-[#1f4029]">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-[#23392b] dark:bg-[#1a3324]">
                     <input
                       type="checkbox"
                       checked={formMostrarContacto}
                       onChange={(e) => setFormMostrarContacto(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-[#2a4d34]"
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-[#23392b]"
                     />
                     <span>
                       <span className="block text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -490,7 +490,7 @@ export function ProfilePage() {
                 <p className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
                   {t("common.email")}
                 </p>
-                <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-[#2a4d34] dark:bg-[#0d2116]/60">
+                <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-[#23392b] dark:bg-[#0c1a12]/60">
                   <p className="text-sm text-gray-500 dark:text-gray-400">{perfil.email}</p>
                 </div>
                 <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("profile.emailNote")}</p>
@@ -499,7 +499,7 @@ export function ProfilePage() {
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={cancelarEdicion}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b] transition-colors"
                 >
                   <X className="h-4 w-4" />
                   {t("common.cancel")}

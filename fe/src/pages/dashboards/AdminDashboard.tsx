@@ -399,7 +399,7 @@ export function AdminDashboard() {
         type="button"
         onClick={() => setPerfilAbierto(correo)}
         aria-label={t("dashboards.admin.profilePanel.openProfile", { nombre })}
-        className="cursor-pointer text-left underline decoration-gray-200 underline-offset-4 transition-colors hover:text-accent-700 hover:decoration-accent-600 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:decoration-[#2a4d34] dark:hover:text-accent-400"
+        className="cursor-pointer text-left underline decoration-gray-200 underline-offset-4 transition-colors hover:text-accent-700 hover:decoration-accent-600 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:decoration-[#23392b] dark:hover:text-accent-400"
       >
         {nombre}
       </button>
@@ -440,7 +440,7 @@ export function AdminDashboard() {
           ¿Para qué? Con la foto de hoja detrás de todo el panel, ese
           segundo elemento decorativo se sentía como "dos fondos" a la vez
           — se quitó, dejando solo la foto (retroalimentación directa). */}
-      <div className="relative overflow-hidden bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
             <Shield className="h-7 w-7 text-accent-700 dark:text-accent-400" />
@@ -475,7 +475,7 @@ export function AdminDashboard() {
           los usuarios. (Antes la tabla iba arriba, a pedido del profesor;
           se volvió a invertir por decisión del equipo tras probar el panel.) */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
             <UserPlus className="h-4 w-4 text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
@@ -491,14 +491,14 @@ export function AdminDashboard() {
             <button
               type="button"
               onClick={() => setMostrarModalAsignar(true)}
-              className="cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+              className="cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
             >
               {t("desvinculacion.asignarAdicional.openButton")}
             </button>
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
             <ClipboardList className="h-4 w-4 text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.pendingRequests.title")}</h3>
@@ -522,7 +522,7 @@ export function AdminDashboard() {
           </button>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#f7f9f3] p-5 shadow-sm dark:border-[#2a4d34] dark:bg-[#1c341b]">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.totals.title")}</h3>
@@ -556,7 +556,7 @@ export function AdminDashboard() {
       {/* Usuarios registrados — ya no empieza plegada (ver estado
           usuariosAbierto arriba). Adentro va todo: pestañas, buscador,
           filtros de Localidad/Conjunto, tabla y paginación. */}
-      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
+      <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] shadow-sm overflow-hidden">
         <button
           type="button"
           onClick={() => setUsuariosAbierto((v) => !v)}
@@ -570,7 +570,7 @@ export function AdminDashboard() {
           </span>
           <span className="flex shrink-0 items-center gap-2">
             {totales && (
-              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#0d2116] dark:text-gray-300">
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#0c1a12] dark:text-gray-300">
                 {t("dashboards.admin.usersSection.totalBadge", {
                   count: totales.residentes + totales.recicladores + totales.administradores,
                 })}
@@ -582,9 +582,9 @@ export function AdminDashboard() {
 
         {usuariosAbierto && (
         <div id="usuarios-registrados-body">
-        <div className="px-5 py-4 border-t border-b border-gray-100 dark:border-[#2a4d34] space-y-3">
+        <div className="px-5 py-4 border-t border-b border-gray-100 dark:border-[#23392b] space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-[#2a4d34] dark:bg-[#0d2116]/60">
+            <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-[#23392b] dark:bg-[#0c1a12]/60">
               {(
                 [
                   { id: "residentes" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.residentes"), icon: <Users className="h-3.5 w-3.5" /> },
@@ -617,7 +617,7 @@ export function AdminDashboard() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder={t("dashboards.admin.usersSection.searchPlaceholder")}
-                className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200 sm:w-48"
+                className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-200 sm:w-48"
               />
             </div>
           </div>
@@ -646,7 +646,7 @@ export function AdminDashboard() {
               className={`flex cursor-pointer items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                 soloInactivos
                   ? "border-red-300 bg-red-50 text-red-700 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-300"
-                  : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                  : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-300 dark:hover:bg-[#23392b]"
               }`}
             >
               <Ban className="h-3.5 w-3.5" aria-hidden="true" />
@@ -658,7 +658,7 @@ export function AdminDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
-              <tr className="border-b border-gray-100 dark:border-[#2a4d34] bg-gray-50 dark:bg-[#0d2116]/60">
+              <tr className="border-b border-gray-100 dark:border-[#23392b] bg-gray-50 dark:bg-[#0c1a12]/60">
                 {tab === "residentes" && (
                   <>
                     {thOrdenable("correo", t("dashboards.admin.residentsTable.headers.email"))}
@@ -715,7 +715,7 @@ export function AdminDashboard() {
                     <tr
                       key={idx}
                       onClick={() => setPerfilAbierto(r.Correo)}
-                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-[#0d2116]/40 transition-colors"
+                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-[#0c1a12]/40 transition-colors"
                     >
                       <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
                       {celdaNombre(r.Correo, `${r.Nombre} ${r.Apellido}`)}
@@ -740,7 +740,7 @@ export function AdminDashboard() {
                     <tr
                       key={idx}
                       onClick={() => setPerfilAbierto(r.Correo)}
-                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-[#0d2116]/40 transition-colors"
+                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-[#0c1a12]/40 transition-colors"
                     >
                       <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
                       {celdaNombre(r.Correo, r.Nombre_Completo)}
@@ -765,7 +765,7 @@ export function AdminDashboard() {
                   <tr
                       key={idx}
                       onClick={() => setPerfilAbierto(a.Correo)}
-                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-[#0d2116]/40 transition-colors"
+                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-[#0c1a12]/40 transition-colors"
                     >
                     <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{a.Correo}</td>
                     {celdaNombre(a.Correo, `${a.Nombre} ${a.Apellido}`)}
@@ -782,7 +782,7 @@ export function AdminDashboard() {
 
         {/* Paginación */}
         {!cargando && !error && total > 0 && (
-          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3 dark:border-[#2a4d34]">
+          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3 dark:border-[#23392b]">
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {t("dashboards.admin.usersSection.pagination.showing", { from: desde, to: hasta, total })}
             </span>
@@ -791,7 +791,7 @@ export function AdminDashboard() {
                 type="button"
                 onClick={() => setPagina((p) => Math.max(0, p - 1))}
                 disabled={pagina === 0}
-                className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+                className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#23392b]"
                 aria-label={t("dashboards.admin.usersSection.pagination.prev")}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -803,7 +803,7 @@ export function AdminDashboard() {
                 type="button"
                 onClick={() => setPagina((p) => (p + 1 < totalPaginas ? p + 1 : p))}
                 disabled={pagina + 1 >= totalPaginas}
-                className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+                className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#23392b]"
                 aria-label={t("dashboards.admin.usersSection.pagination.next")}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -890,7 +890,7 @@ export function AdminDashboard() {
                 onChange={(e) => setMotivo(e.target.value)}
                 placeholder={t("dashboards.admin.usersSection.status.reasonPlaceholder")}
                 rows={3}
-                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
               />
             </div>
           )}

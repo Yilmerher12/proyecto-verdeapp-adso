@@ -109,10 +109,10 @@ export function ImagenAdjuntaField({
             <img
               src={urlCompleta}
               alt={t("imagenAdjunta.vistaPrevia")}
-              className="h-16 w-16 rounded-xl border border-gray-200 object-cover dark:border-[#2a4d34]"
+              className="h-16 w-16 rounded-xl border border-gray-200 object-cover dark:border-[#23392b]"
             />
           ) : (
-            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-[#2a4d34] dark:bg-[#1f4029]">
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-[#23392b] dark:bg-[#1a3324]">
               <FileText className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
               <span className="truncate text-xs text-gray-600 dark:text-gray-300">{value.split("/").pop()}</span>
             </div>
@@ -127,7 +127,7 @@ export function ImagenAdjuntaField({
           </button>
         </div>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-400 dark:hover:bg-[#2a4d34]">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-gray-400 dark:hover:bg-[#23392b]">
           {subiendo ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />

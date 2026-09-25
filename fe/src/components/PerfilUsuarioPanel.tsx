@@ -91,7 +91,7 @@ export function PerfilUsuarioPanel({
 
   return (
     <PanelLateral onClose={onClose} aria-label={t(`${p}.ariaLabel`, { nombre: nombreCompleto })} cerrarConEscape={cerrarConEscape}>
-      <div className="flex items-center gap-4 border-b border-gray-100 p-5 pr-14 dark:border-[#2a4d34]">
+      <div className="flex items-center gap-4 border-b border-gray-100 p-5 pr-14 dark:border-[#23392b]">
         <div
           className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-100 text-lg font-bold text-accent-800 dark:bg-accent-900/30 dark:text-accent-300"
           aria-hidden="true"
@@ -114,7 +114,7 @@ export function PerfilUsuarioPanel({
               >
                 {perfil.habilitado ? t("dashboards.admin.usersSection.status.active") : t("dashboards.admin.usersSection.status.inactive")}
               </span>
-              <span className="rounded-full border border-gray-200 px-2.5 py-0.5 text-[11px] font-semibold text-gray-500 dark:border-[#2a4d34] dark:text-gray-400">
+              <span className="rounded-full border border-gray-200 px-2.5 py-0.5 text-[11px] font-semibold text-gray-500 dark:border-[#23392b] dark:text-gray-400">
                 {t(`${p}.readOnly`)}
               </span>
             </div>
@@ -148,7 +148,7 @@ export function PerfilUsuarioPanel({
             </section>
           )}
 
-          <section className="border-b border-gray-100 p-5 dark:border-[#2a4d34]">
+          <section className="border-b border-gray-100 p-5 dark:border-[#23392b]">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.sections.personal`)}</h3>
             <dl className="grid grid-cols-[130px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
               <Fila etiqueta={t(`${p}.fields.fullName`)} valor={nombreCompleto} />
@@ -170,7 +170,7 @@ export function PerfilUsuarioPanel({
             </dl>
           </section>
 
-          <section className="border-b border-gray-100 p-5 dark:border-[#2a4d34]">
+          <section className="border-b border-gray-100 p-5 dark:border-[#23392b]">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.sections.account`)}</h3>
             <dl className="grid grid-cols-[130px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
               <Fila etiqueta={t("common.email")} valor={perfil.correo_electronico} />
@@ -183,7 +183,7 @@ export function PerfilUsuarioPanel({
             </dl>
           </section>
 
-          <div className="sticky bottom-0 mt-auto flex flex-wrap gap-2 border-t border-gray-100 bg-[#f7f9f3] p-5 dark:border-[#2a4d34] dark:bg-[#132a1c]">
+          <div className="sticky bottom-0 mt-auto flex flex-wrap gap-2 border-t border-gray-100 bg-[#ffffff] p-5 dark:border-[#23392b] dark:bg-[#0f2018]">
             {!esPropiaCuenta && (
               <Button
                 type="button"

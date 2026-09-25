@@ -232,7 +232,7 @@ export function AppShell({ children }: AppShellProps) {
     //           visualmente el desborde sin quitar la causa, y en navegadores/
     //           casos distintos puede igual disparar la barra. La solución
     //           correcta es forzar min-w-0 en cada contenedor flex de la cadena.
-    <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#03130b] flex-col sm:flex-row">
+    <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#050f0a] flex-col sm:flex-row">
       {/* ¿Qué? bg-accent-900 (antes un verde fijo #052e16, más oscuro).
           ¿Para qué? Se reportó que la barra lateral se veía "muy oscura"
           — accent-900 es un paso más claro dentro de la misma escala de
@@ -240,8 +240,8 @@ export function AppShell({ children }: AppShellProps) {
           en vez de un hex suelto (restricciones.md: accent-* es el único
           acento permitido en componentes reutilizables).
           ¿Impacto? Sigue siendo claramente más oscuro que el contenido
-          (bg-gray-200/dark:bg-[#082013]) y que las tarjetas
-          (bg-[#f7f9f3]/dark:bg-[#1c341b]) — no se pierde la jerarquía
+          (bg-gray-200/dark:bg-[#0a1510]) y que las tarjetas
+          (bg-[#ffffff]/dark:bg-[#12231a]) — no se pierde la jerarquía
           visual entre barra lateral y contenido. */}
       <aside
         className={`
@@ -432,11 +432,11 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* Área de contenido */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-[#2a4d34] dark:bg-[#1c341b]">
+        <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-[#23392b] dark:bg-[#12231a]">
           {/* Campana de notificaciones */}
           <button
             onClick={() => navigate(roleMeta.dashboardHref)}
-            className="relative cursor-pointer rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-[#2a4d34] dark:hover:text-gray-200"
+            className="relative cursor-pointer rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-[#23392b] dark:hover:text-gray-200"
             aria-label={
               noLeidas > 0
                 ? t("appShell.notificacionesConNoLeidas", { count: noLeidas })
@@ -454,41 +454,12 @@ export function AppShell({ children }: AppShellProps) {
           <ThemeToggle />
         </header>
 
-        {/* ¿Qué? Fondo del área de contenido — foto fija (no animada), en
-            su propia capa, con una capa sólida encima.
-            ¿Para qué? Antes la imagen estaba puesta directo en <main>, que
-            es el elemento que hace scroll — con contenido más alto que la
-            pantalla, el navegador no estira una sola foto continua sobre
-            todo el alto scrolleable, sino que la repite/corta, dejando un
-            corte visible a la mitad de la pantalla (retroalimentación
-            directa, con captura). La solución es la misma que ya se había
-            usado para el patrón de puntos: una capa aparte, con position
-            absolute e inset-0, del tamaño FIJO de la parte visible de
-            <main> (no del contenido completo) — así nunca necesita
-            "cubrir" más alto de lo que ya cubre, sin importar cuánto
-            crezca el contenido debajo.
-            ¿Para qué (la opacidad)? Se pidió una foto más vívida (el
-            corte del bug, sin querer, dejaba ver la foto casi sin
-            atenuar, y eso gustó más que la versión muy tenue de antes).
-            80% en oscuro / 85% en claro se eligieron probando varias
-            opacidades con la fórmula WCAG: son las que dan más presencia
-            de foto mientras el contraste tarjeta/fondo se mantiene igual
-            o mejor que sin foto en el peor caso — 90% en oscuro, por
-            ejemplo, se probó y se descartó porque ahí el fondo compuesto
-            coincide casi exactamente con el color de la tarjeta oscura
-            (contraste 1.00, prácticamente invisible) en el punto más
-            claro de la foto.
-            ¿Impacto? La capa sigue siendo un color SÓLIDO semitransparente
-            (rgba de un tono, no gradient) — restricciones.md prohíbe
-            degradados. */}
-        <main className="relative flex-1 overflow-y-auto bg-gray-200 dark:bg-[#082013]">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('/landing/green-leaf-texture.jpg')" }}
-          >
-            <div className="absolute inset-0 bg-gray-200/85 dark:bg-[#082013]/80" />
-          </div>
+        {/* ¿Qué? Fondo del área de contenido: color sólido, sin imagen.
+            ¿Para qué? Antes tenía una foto de hojas con una capa semitransparente
+            encima; no combinaba con la paleta nueva y se pidió quitarla.
+            ¿Impacto? Contraste tarjeta/fondo depende solo de los dos colores
+            sólidos (claro: gray-200, oscuro: #0a1510). */}
+        <main className="relative flex-1 overflow-y-auto bg-gray-200 dark:bg-[#0a1510]">
           <div className="relative z-10 mx-auto max-w-7xl px-6 pb-6">{children}</div>
         </main>
       </div>

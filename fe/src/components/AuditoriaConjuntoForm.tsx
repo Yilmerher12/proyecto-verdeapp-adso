@@ -180,7 +180,7 @@ export function AuditoriaConjuntoForm({
               id="auditoria-conjunto"
               value={idConjunto}
               onChange={(e) => setIdConjunto(e.target.value)}
-              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-gray-100"
             >
               <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
               {conjuntos.map((c) => (
@@ -238,7 +238,7 @@ export function AuditoriaConjuntoForm({
             id="auditoria-tema"
             value={tema}
             onChange={(e) => setTema(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+            className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-gray-100"
           >
             <option value="">{t("dashboards.reciclador.auditoria.temaPlaceholder")}</option>
             {temas.map((cat) => (
@@ -259,7 +259,7 @@ export function AuditoriaConjuntoForm({
             onChange={(e) => setDescripcion(e.target.value)}
             rows={2}
             placeholder={t("dashboards.reciclador.auditoria.descripcionPlaceholder")}
-            className="w-full resize-none rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+            className="w-full resize-none rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-gray-100"
           />
         </div>
 
@@ -271,7 +271,7 @@ export function AuditoriaConjuntoForm({
           {previews.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {previews.map((url, i) => (
-                <div key={url} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gray-200 dark:border-[#2a4d34]">
+                <div key={url} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gray-200 dark:border-[#23392b]">
                   <img src={url} alt={evidencias[i].name} className="h-full w-full object-cover" />
                   <button
                     type="button"
@@ -287,7 +287,7 @@ export function AuditoriaConjuntoForm({
           )}
 
           {evidencias.length < MAXIMO_FOTOS ? (
-            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition-colors hover:border-accent-400 dark:border-[#2a4d34] dark:text-gray-300">
+            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition-colors hover:border-accent-400 dark:border-[#23392b] dark:text-gray-300">
               {evidencias.length === 0 ? <Camera className="h-4 w-4 shrink-0" /> : <Plus className="h-4 w-4 shrink-0" />}
               {evidencias.length === 0
                 ? t("dashboards.reciclador.auditoria.evidenciaHint")
@@ -319,7 +319,7 @@ export function AuditoriaConjuntoForm({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+            className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
           >
             {t("common.cancel")}
           </button>

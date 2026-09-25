@@ -34,7 +34,7 @@ export function PasswordRequirementsChecklist({ password }: { password: string }
           >
             <span
               className={`flex h-4 w-4 items-center justify-center rounded-full ${
-                ok ? "bg-accent-600 text-white" : "bg-gray-200 dark:bg-[#0d2116]"
+                ok ? "bg-accent-600 text-white" : "bg-gray-200 dark:bg-[#0c1a12]"
               }`}
               aria-hidden="true"
             >

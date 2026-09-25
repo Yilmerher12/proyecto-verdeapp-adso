@@ -273,7 +273,7 @@ export function AdminNovedadesPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between gap-3 bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between gap-3 bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
             <Megaphone className="h-5 w-5" />
@@ -298,7 +298,7 @@ export function AdminNovedadesPage() {
 
       {/* Barra recogible — mismo patrón que "Usuarios registrados" (un solo
           <button> que abre/cierra todo lo de abajo). */}
-      <div className="bg-[#f7f9f3] dark:bg-[#1c341b] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm overflow-hidden">
+      <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] shadow-sm overflow-hidden">
         <button
           type="button"
           onClick={() => setListaAbierta((v) => !v)}
@@ -314,7 +314,7 @@ export function AdminNovedadesPage() {
         </button>
 
         {listaAbierta && (
-          <div id="novedades-lista-cuerpo" className="space-y-4 border-t border-gray-100 p-5 dark:border-[#2a4d34]">
+          <div id="novedades-lista-cuerpo" className="space-y-4 border-t border-gray-100 p-5 dark:border-[#23392b]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-2">
                 {/* ¿Qué? "Todas" ya es "sin filtro"; un chip "Todos" (alcance TODOS)
@@ -329,7 +329,7 @@ export function AdminNovedadesPage() {
                     className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                       alcanceFiltro === a
                         ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
-                        : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-400"
+                        : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-400"
                     }`}
                   >
                     {a === "" ? t("novedades.admin.filters.all") : t(`novedades.alcances.${a}`)}
@@ -348,7 +348,7 @@ export function AdminNovedadesPage() {
                   aria-labelledby="novedades-ver-archivadas"
                   onClick={cambiarVerArchivadas}
                   className={`relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full transition-colors ${
-                    verArchivadas ? "bg-accent-600" : "bg-gray-300 dark:bg-[#2a4d34]"
+                    verArchivadas ? "bg-accent-600" : "bg-gray-300 dark:bg-[#23392b]"
                   }`}
                 >
                   <span
@@ -368,7 +368,7 @@ export function AdminNovedadesPage() {
                 placeholder={t("novedades.admin.filters.searchPlaceholder")}
                 aria-label={t("novedades.admin.filters.searchPlaceholder")}
                 maxLength={100}
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-200"
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-200"
               />
             </div>
 
@@ -387,8 +387,8 @@ export function AdminNovedadesPage() {
                 return (
                   <div
                     key={item.id_novedad}
-                    className={`rounded-2xl border bg-white p-4 dark:bg-[#132a1c] ${
-                      item.archivada ? "border-gray-100 opacity-60 dark:border-[#2a4d34]" : "border-gray-100 dark:border-[#2a4d34]"
+                    className={`rounded-2xl border bg-white p-4 dark:bg-[#0f2018] ${
+                      item.archivada ? "border-gray-100 opacity-60 dark:border-[#23392b]" : "border-gray-100 dark:border-[#23392b]"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -409,7 +409,7 @@ export function AdminNovedadesPage() {
                             </span>
                           )}
                           {item.archivada && (
-                            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#1f4029] dark:text-gray-300">
+                            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#1a3324] dark:text-gray-300">
                               {t("novedades.archivedBadge")}
                             </span>
                           )}
@@ -447,7 +447,7 @@ export function AdminNovedadesPage() {
                             </a>
                           )}
                         </div>
-                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-[#2a4d34] dark:text-gray-400">
+                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-[#23392b] dark:text-gray-400">
                           <span className="inline-flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5" />
                             {t("novedades.admin.creadoEl", { fecha: formatearFechaCreacion(item.created_at) })}
@@ -462,14 +462,14 @@ export function AdminNovedadesPage() {
                         <div className="flex shrink-0 gap-2">
                           <button
                             onClick={() => abrirEditar(item)}
-                            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
                             aria-label={t("novedades.admin.editAria", { resumen: resumirTexto(item.texto) })}
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => setAArchivar(item)}
-                            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-[#2a4d34] dark:hover:bg-amber-900/20"
+                            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-[#23392b] dark:hover:bg-amber-900/20"
                             aria-label={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
                           >
                             <Archive className="h-4 w-4" />
@@ -485,7 +485,7 @@ export function AdminNovedadesPage() {
         )}
 
         {listaAbierta && !cargando && total > 0 && (
-          <div className="border-t border-gray-100 dark:border-[#2a4d34]">
+          <div className="border-t border-gray-100 dark:border-[#23392b]">
             <Paginacion
               desde={paginacion.desde}
               hasta={paginacion.hasta}
@@ -537,7 +537,7 @@ export function AdminNovedadesPage() {
                       className={`cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                         form.alcance === a
                           ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
-                          : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-[#2a4d34] dark:text-gray-300"
+                          : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-[#23392b] dark:text-gray-300"
                       }`}
                     >
                       {t(`novedades.alcances.${a}`)}
@@ -546,7 +546,7 @@ export function AdminNovedadesPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-[#1f4029]/60">
+              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-[#1a3324]/60">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {t("novedades.admin.fields.alcance")}
                 </p>
@@ -587,7 +587,7 @@ export function AdminNovedadesPage() {
                       className={`cursor-pointer rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
                         form.modoConjunto === modo
                           ? "border-indigo-600 bg-indigo-100 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-200"
-                          : "border-gray-200 bg-white text-gray-500 hover:border-indigo-300 dark:border-[#2a4d34] dark:bg-[#132a1c] dark:text-gray-400"
+                          : "border-gray-200 bg-white text-gray-500 hover:border-indigo-300 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-400"
                       }`}
                     >
                       {modo === "elegir" ? t("novedades.admin.conjunto.pick") : t("novedades.admin.conjunto.all")}
@@ -632,7 +632,7 @@ export function AdminNovedadesPage() {
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
               />
             </div>
 
@@ -645,14 +645,14 @@ export function AdminNovedadesPage() {
                 type="date"
                 value={form.fecha_expiracion}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
               />
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
             {/* "Más opciones": todo lo que no hace falta para un aviso rápido
                 de solo texto queda recogido por defecto. */}
-            <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#2a4d34]">
+            <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#23392b]">
               <button
                 type="button"
                 onClick={() => setMasOpciones((v) => !v)}
@@ -671,7 +671,7 @@ export function AdminNovedadesPage() {
               </button>
 
               {masOpciones && (
-                <div id="novedad-mas-opciones" className="space-y-4 border-t border-gray-100 px-4 pb-4 pt-3 dark:border-[#2a4d34]">
+                <div id="novedad-mas-opciones" className="space-y-4 border-t border-gray-100 px-4 pb-4 pt-3 dark:border-[#23392b]">
                   <GuiaApoyoField
                     label={t("novedades.admin.fields.urlAdjunto")}
                     value={form.url_adjunto}
@@ -687,7 +687,7 @@ export function AdminNovedadesPage() {
                       value={form.url_video}
                       onChange={(e) => setForm({ ...form, url_video: e.target.value })}
                       placeholder="https://www.youtube.com/watch?v=..."
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
                     />
                   </div>
                 </div>
@@ -697,7 +697,7 @@ export function AdminNovedadesPage() {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={cerrarFormulario}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b] transition-colors"
               >
                 {t("common.cancel")}
               </button>

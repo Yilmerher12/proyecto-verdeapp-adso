@@ -44,7 +44,7 @@ export function AuditoriaResultadoBanner({ notificaciones, onMarcarLeida }: Audi
         {pendientes.map((n) => (
           <div
             key={n.id}
-            className="flex flex-col gap-2 rounded-xl bg-[#f7f9f3] px-4 py-3 dark:bg-[#1c341b] sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-2 rounded-xl bg-[#ffffff] px-4 py-3 dark:bg-[#12231a] sm:flex-row sm:items-center sm:justify-between"
           >
             <p className="text-sm text-gray-700 dark:text-gray-300">{n.mensaje}</p>
             <button
