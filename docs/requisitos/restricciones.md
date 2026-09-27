@@ -64,7 +64,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 
 ## Diseño Visual
 
-- Prohibidos los degradados (`gradient`) en la interfaz — colores sólidos únicamente.
+- Prohibidos los degradados (`gradient`) en la interfaz — colores sólidos únicamente. Para oscurecer una foto de fondo y dar contraste al texto encima, se usa una capa de un solo color con opacidad (ej. `bg-accent-950/75`, como en el hero de la landing), nunca un degradado.
 - Tipografía exclusivamente sans-serif. Dos fuentes, ambas de Google Fonts: **Outfit** para títulos (`h1`–`h3`, aplicada sola desde `fe/src/index.css`; en otro elemento, clase `font-display`) e **Inter** para todo lo demás (texto, formularios, tablas, botones). No se agregan más fuentes.
 - Los botones de acción principal van alineados a la derecha en formularios y modales.
 - Iconografía: únicamente `lucide-react` — no mezclar con otras librerías de íconos. Tampoco se usan emojis ni caracteres sueltos (📬, ↗, ✓…) como íconos en la interfaz, y se importa cada ícono con su nombre actual en lucide (ej. `LoaderCircle`, no el alias viejo `Loader2`).
