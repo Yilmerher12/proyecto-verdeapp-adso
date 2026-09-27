@@ -88,4 +88,22 @@ describe("ProfilePage", () => {
       );
     });
   });
+
+  // ¿Qué? Mismas reglas que el registro: antes el perfil solo revisaba que
+  //       el nombre no estuviera vacío.
+  it("no deja guardar un nombre con números", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Ana Martínez");
+    await user.click(screen.getByRole("button", { name: "Editar" }));
+
+    const inputNombre = await screen.findByLabelText("Nombre");
+    await user.clear(inputNombre);
+    await user.type(inputNombre, "Ana2");
+    await user.tab();
+
+    expect(await screen.findByText("Solo se permiten letras, espacios, apóstrofe, punto o guion")).toBeInTheDocument();
+    expect(inputNombre).toHaveAttribute("maxLength", "100");
+  });
 });

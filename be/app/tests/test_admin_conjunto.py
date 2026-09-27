@@ -9,6 +9,7 @@ Descripción: Pruebas del flujo de invitación de Administradores de Conjunto.
 
 import uuid
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -64,6 +65,17 @@ class TestConsultarYAceptar:
         response = client.get("/api/v1/admin-conjunto/invitacion", params={"token": "no-existe"})
         assert response.status_code == 200
         assert response.json()["valido"] is False
+
+    @pytest.mark.parametrize(
+        "cambio",
+        [{"nombre": "Juan123"}, {"apellidos": "A" * 151}, {"numero_telefonico": "abc"}],
+    )
+    def test_aceptar_con_datos_invalidos_devuelve_422(self, client: TestClient, cambio):
+        """Mismas reglas que el registro: se rechaza antes de mirar el token."""
+        body = {"token": "no-existe", "password": "ClaveFuerte123", "nombre": "Ana", "apellidos": "Pérez"}
+        body.update(cambio)
+        response = client.post("/api/v1/admin-conjunto/aceptar", json=body)
+        assert response.status_code == 422
 
     def test_flujo_completo_invitar_consultar_y_aceptar(
         self, client: TestClient, admin_sistema_auth_headers, conjunto_verificado, db

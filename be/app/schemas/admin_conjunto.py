@@ -11,7 +11,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, field_validator
 
-from app.schemas.user import _validate_password_strength
+from app.schemas.user import (
+    _validar_apellidos_obligatorio,
+    _validar_nombre_obligatorio,
+    _validar_telefono_opcional,
+    _validate_password_strength,
+)
 
 
 class InvitarAdminConjuntoRequest(BaseModel):
@@ -50,12 +55,23 @@ class AceptarInvitacionAdminConjuntoRequest(BaseModel):
     def validate_password_strength(cls, v: str) -> str:
         return _validate_password_strength(v)
 
-    @field_validator("nombre", "apellidos")
+    # ¿Qué? Mismas reglas que el registro y el perfil (schemas/user.py): antes
+    #       aquí solo se revisaba que no estuviera vacío, y el teléfono no
+    #       se validaba.
+    @field_validator("nombre")
     @classmethod
-    def validar_no_vacio(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("Este campo es obligatorio.")
-        return v
+    def validar_nombre(cls, v: str) -> str:
+        return _validar_nombre_obligatorio(v)
+
+    @field_validator("apellidos")
+    @classmethod
+    def validar_apellidos(cls, v: str) -> str:
+        return _validar_apellidos_obligatorio(v)
+
+    @field_validator("numero_telefonico")
+    @classmethod
+    def validar_telefono(cls, v: str) -> str:
+        return _validar_telefono_opcional(v)
 
 
 class InvitacionInfoResponse(BaseModel):

@@ -17,7 +17,19 @@ import { API_BASE_URL } from "@/api/axios";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
 import { PoliticaPrivacidadPage } from "@/pages/PoliticaPrivacidadPage";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
-import { NOMBRE_MIN_LENGTH, TELEFONO_REGEX, UNIDAD_REGEX } from "@/lib/validacion";
+import {
+  APELLIDOS_MAX_LENGTH,
+  ASOCIACION_MAX_LENGTH,
+  CODIGO_ACCESO_LONGITUD,
+  CODIGO_ACCESO_REGEX,
+  CORREO_MAX_LENGTH,
+  NOMBRE_MAX_LENGTH,
+  TELEFONO_MAX_LENGTH,
+  TELEFONO_REGEX,
+  UNIDAD_MAX_LENGTH,
+  UNIDAD_REGEX,
+  motivoNombreInvalido,
+} from "@/lib/validacion";
 
 type DocumentoLegal = "terminos" | "privacidad" | null;
 
@@ -29,6 +41,7 @@ const CAMPOS_A_VALIDAR = [
   "numero_telefonico",
   "numero_bloque",
   "apto",
+  "codigo_acceso",
   "email",
   "confirmEmail",
   "password",
@@ -147,13 +160,26 @@ export function RegisterPage() {
   //           así las tres coinciden siempre en qué es "válido".
   const validarCampo = (campo: string, data: typeof formData): string | undefined => {
     switch (campo) {
-      case "nombre":
-        return data.nombre.trim().length < NOMBRE_MIN_LENGTH
-          ? t("auth.register.validation.firstNameMin")
-          : undefined;
-      case "apellidos":
-        return data.apellidos.trim().length < NOMBRE_MIN_LENGTH
-          ? t("auth.register.validation.lastNameMin")
+      // ¿Qué? Nombre y apellidos: mínimo 2, máximo el de la base de datos, y
+      //       solo letras con espacio, apóstrofe, punto o guion (lib/validacion.ts).
+      case "nombre": {
+        const motivo = motivoNombreInvalido(data.nombre, NOMBRE_MAX_LENGTH);
+        if (!motivo) return undefined;
+        if (motivo === "formato") return t("auth.register.validation.nameFormat");
+        if (motivo === "largo") return t("auth.register.validation.firstNameMax", { max: NOMBRE_MAX_LENGTH });
+        return t("auth.register.validation.firstNameMin");
+      }
+      case "apellidos": {
+        const motivo = motivoNombreInvalido(data.apellidos, APELLIDOS_MAX_LENGTH);
+        if (!motivo) return undefined;
+        if (motivo === "formato") return t("auth.register.validation.nameFormat");
+        if (motivo === "largo") return t("auth.register.validation.lastNameMax", { max: APELLIDOS_MAX_LENGTH });
+        return t("auth.register.validation.lastNameMin");
+      }
+      // ¿Qué? Solo aplica al Residente; vacío lo controla checkFormIncomplete.
+      case "codigo_acceso":
+        return data.rol === "residente" && data.codigo_acceso && !CODIGO_ACCESO_REGEX.test(data.codigo_acceso)
+          ? t("auth.register.validation.codigoAccesoFormat", { n: CODIGO_ACCESO_LONGITUD })
           : undefined;
       case "numero_telefonico":
         return data.numero_telefonico.trim() && !TELEFONO_REGEX.test(data.numero_telefonico.trim())
@@ -210,7 +236,7 @@ export function RegisterPage() {
   //           mostrarse en el campo.
   // ¿Impacto? Tope de 10 caracteres (RQF-008: máximo un celular colombiano).
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const soloDigitos = e.target.value.replace(/\D/g, "").slice(0, 10);
+    const soloDigitos = e.target.value.replace(/\D/g, "").slice(0, TELEFONO_MAX_LENGTH);
     setFormData((prev) => ({ ...prev, numero_telefonico: soloDigitos }));
     limpiarError("numero_telefonico");
   };
@@ -219,6 +245,16 @@ export function RegisterPage() {
   //       lo tiene — no hay que esperar a hacer clic en "Registrar Cuenta".
   // ¿Impacto? Antes ningún campo de este formulario avisaba nada hasta el
   //           envío; ahora el usuario ve el problema apenas ocurre.
+  // ¿Qué? El código de acceso se guarda en mayúscula y sin espacios mientras
+  //       se escribe, con tope de 6 caracteres.
+  // ¿Para qué? Así se escribe igual que en la cartelera del conjunto, y no
+  //           hay que adivinar si importan las mayúsculas.
+  const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const limpio = e.target.value.toUpperCase().split(" ").join("").slice(0, CODIGO_ACCESO_LONGITUD);
+    setFormData((prev) => ({ ...prev, codigo_acceso: limpio }));
+    limpiarError("codigo_acceso");
+  };
+
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name } = e.target;
     const error = validarCampo(name, formData);
@@ -446,6 +482,7 @@ export function RegisterPage() {
               <InputField
                 label={t("auth.register.fields.firstName")}
                 name="nombre"
+                maxLength={NOMBRE_MAX_LENGTH}
                 value={formData.nombre}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -454,6 +491,7 @@ export function RegisterPage() {
               <InputField
                 label={t("auth.register.fields.lastName")}
                 name="apellidos"
+                maxLength={APELLIDOS_MAX_LENGTH}
                 value={formData.apellidos}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -463,6 +501,8 @@ export function RegisterPage() {
                 label={t("auth.register.fields.phone")}
                 name="numero_telefonico"
                 type="tel"
+                inputMode="numeric"
+                maxLength={TELEFONO_MAX_LENGTH}
                 value={formData.numero_telefonico}
                 onChange={handlePhoneChange}
                 onBlur={handleBlur}
@@ -516,14 +556,14 @@ export function RegisterPage() {
 
                   <div>
                     <label htmlFor="numero_bloque" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitNumber")}</label>
-                    <input id="numero_bloque" type="text" name="numero_bloque" placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
-                    {fieldErrors.numero_bloque && <p className="text-xs text-red-500 mt-1">{fieldErrors.numero_bloque}</p>}
+                    <input id="numero_bloque" type="text" name="numero_bloque" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.numero_bloque} aria-describedby={fieldErrors.numero_bloque ? "numero_bloque-error" : undefined} placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
+                    {fieldErrors.numero_bloque && <p id="numero_bloque-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.numero_bloque}</p>}
                   </div>
 
                   <div>
                     <label htmlFor="apto" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
-                    <input id="apto" type="text" name="apto" placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
-                    {fieldErrors.apto && <p className="text-xs text-red-500 mt-1">{fieldErrors.apto}</p>}
+                    <input id="apto" type="text" name="apto" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.apto} aria-describedby={fieldErrors.apto ? "apto-error" : undefined} placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
+                    {fieldErrors.apto && <p id="apto-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.apto}</p>}
                   </div>
                 </div>
 
@@ -544,10 +584,16 @@ export function RegisterPage() {
                     name="codigo_acceso"
                     placeholder={t("auth.register.fields.codigoAccesoPlaceholder")}
                     value={formData.codigo_acceso}
-                    onChange={handleChange}
+                    onChange={handleCodigoChange}
+                    onBlur={handleBlur}
+                    maxLength={CODIGO_ACCESO_LONGITUD}
+                    autoComplete="off"
+                    aria-invalid={!!fieldErrors.codigo_acceso}
+                    aria-describedby={fieldErrors.codigo_acceso ? "codigo_acceso-error" : undefined}
                     disabled={!formData.id_conjunto_residencial}
                     className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase tracking-widest font-mono"
                   />
+                  {fieldErrors.codigo_acceso && <p id="codigo_acceso-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.codigo_acceso}</p>}
                   <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("auth.register.fields.codigoAccesoHint")}</p>
                 </div>
               </div>
@@ -570,7 +616,7 @@ export function RegisterPage() {
                       ))}
                     </select>
                   </div>
-                  <InputField label={t("auth.register.fields.association")} name="asociacion" value={formData.asociacion} onChange={handleChange} placeholder={t("auth.register.fields.associationPlaceholder")} />
+                  <InputField label={t("auth.register.fields.association")} name="asociacion" maxLength={ASOCIACION_MAX_LENGTH} value={formData.asociacion} onChange={handleChange} placeholder={t("auth.register.fields.associationPlaceholder")} />
                 </div>
               </div>
             )}
@@ -588,6 +634,7 @@ export function RegisterPage() {
                   label={t("auth.register.fields.email")}
                   name="email"
                   type="email"
+                  maxLength={CORREO_MAX_LENGTH}
                   value={formData.email}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -600,6 +647,7 @@ export function RegisterPage() {
                   label={t("auth.register.fields.confirmEmailField")}
                   name="confirmEmail"
                   type="email"
+                  maxLength={CORREO_MAX_LENGTH}
                   value={formData.confirmEmail}
                   onChange={handleChange}
                   onBlur={handleBlur}

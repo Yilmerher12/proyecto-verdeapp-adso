@@ -45,6 +45,12 @@ interface InputFieldProps {
    *             termina de escribir ese campo, sin esperar a que envíe
    *             todo el formulario. */
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  /** ¿Qué? Máximo de caracteres que deja escribir el input.
+   *  ¿Para qué? Que el formulario no permita escribir más de lo que guarda la
+   *             base de datos (ver lib/validacion.ts). */
+  maxLength?: number;
+  /** ¿Qué? Tipo de teclado en el celular (ej. "numeric" para teléfono). */
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 }
 
 /**
@@ -66,6 +72,8 @@ export function InputField({
   autoFocus = false,
   onChange,
   onBlur,
+  maxLength,
+  inputMode,
 }: InputFieldProps) {
   // ¿Qué? Estado para mostrar/ocultar contraseña.
   // ¿Para qué? Permitir al usuario verificar lo que escribió en campos de password.
@@ -113,6 +121,8 @@ export function InputField({
           autoFocus={autoFocus}
           onChange={onChange}
           onBlur={onBlur}
+          maxLength={maxLength}
+          inputMode={inputMode}
           aria-invalid={!!error}
           aria-describedby={error ? `${name}-error` : undefined}
           // ¿Qué? Bloquea pegar, copiar, cortar y arrastrar cuando disablePaste=true.

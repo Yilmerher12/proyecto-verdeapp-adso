@@ -33,13 +33,17 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 
 | Campo       | Tipo          | Obligatorio | Validaciones                                                                 |
 | ----------- | ------------- | ----------- | ---------------------------------------------------------------------------- |
-| `nombre`    | Texto         | Sí          | Mínimo 2 caracteres, máximo 255                                              |
-| `apellidos` | Texto         | Sí          | Mínimo 2 caracteres, máximo 255                                              |
+| `nombre`    | Texto         | Sí          | Mínimo 2 y máximo 100 caracteres. Solo letras (con tildes y ñ), con espacio, apóstrofe, punto o guion como separadores; empieza con letra |
+| `apellidos` | Texto         | Sí          | Igual que `nombre`, máximo 150 caracteres                                    |
 | `numero_telefonico` | Texto | No          | Solo números, entre 7 y 10 caracteres (si se indica)                         |
 | `correo`    | Texto (email) | Sí          | Formato válido, máximo 255 caracteres, único en BD                           |
-| `contraseña`| Texto         | Sí          | Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 carácter especial (`!@#$%^&*...`) |
+| `contraseña`| Texto         | Sí          | Mínimo 8 caracteres (máximo 72 bytes), 1 mayúscula, 1 minúscula, 1 número. El carácter especial no es obligatorio: solo sube el indicador de fortaleza |
 | `rol`       | Enum          | Sí          | Valores permitidos: `residente`, `reciclador`                                |
-| `codigo_acceso` | Texto     | Sí, solo si `rol = residente` | Debe coincidir con el código de acceso vigente del conjunto indicado |
+| `torre` / `apto` | Texto    | Sí, solo si `rol = residente` | Letras y números con un espacio o guion como separador (issue #255), máximo 10 caracteres |
+| `codigo_acceso` | Texto     | Sí, solo si `rol = residente` | Exactamente 6 caracteres del alfabeto `ABCDEFGHJKMNPQRSTUVWXYZ23456789` (sin 0, O, 1, I, L); se normaliza a mayúscula. Debe coincidir con el código vigente del conjunto indicado |
+| `asociacion`| Texto         | No (reciclador) | Máximo 100 caracteres                                                    |
+
+> **Nota (2026-09-27)**: los máximos coinciden con el tamaño de las columnas en la base de datos. El frontend no deja escribir de más (`maxLength`) y el backend responde 422 si llega un texto más largo o con formato inválido. Las reglas viven en `fe/src/lib/validacion.ts` y `be/app/schemas/user.py`, y las usan también editar perfil (RQF-008) y aceptar invitación de Admin de Conjunto.
 
 ---
 

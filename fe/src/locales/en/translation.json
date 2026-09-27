@@ -111,6 +111,10 @@
         "emailsMismatch": "Email addresses do not match",
         "firstNameMin": "First name must be at least 2 characters",
         "lastNameMin": "Last name must be at least 2 characters",
+        "firstNameMax": "First name cannot exceed {{max}} characters",
+        "lastNameMax": "Last name cannot exceed {{max}} characters",
+        "nameFormat": "Only letters, spaces, apostrophes, periods or hyphens are allowed",
+        "codigoAccesoFormat": "The code has {{n}} letters or numbers (no 0, O, 1, I or L)",
         "phoneInvalid": "The phone number format is invalid.",
         "unitFormatInvalid": "Only letters, numbers, and a single space or hyphen as a separator are allowed.",
         "passwordMin": "Minimum 8 characters",
@@ -147,7 +151,7 @@
         "apto": "Apartment",
         "aptoPlaceholder": "E.g.: 402",
         "codigoAcceso": "Building access code",
-        "codigoAccesoPlaceholder": "E.g.: AB3K9Q",
+        "codigoAccesoPlaceholder": "6 letters or numbers",
         "codigoAccesoHint": "Ask your building administrator for it (bulletin board, building group chat).",
         "operativeProfileHeading": "Operating Profile *",
         "workLocality": "Work District *",
@@ -157,7 +161,7 @@
         "email": "Email *",
         "confirmEmailField": "Confirm Email *",
         "password": "Password *",
-        "passwordPlaceholder": "Minimum 8 characters",
+        "passwordPlaceholder": "8+ characters, uppercase, lowercase and a number",
         "confirmPasswordField": "Confirm Password *",
         "confirmPasswordPlaceholder": "Repeat the password"
       },
@@ -574,82 +578,6 @@
     },
     "incomplete": "Complete all fields",
     "submit": "Send Message"
-  },
-  "contact": {
-    "nav": {
-      "backToHome": "Back to home"
-    },
-    "title": "Contact Form",
-    "subtitle": "Send us your query, report or request. We respond within the deadlines established by Law 1581 of 2012.",
-    "eduNotice": {
-      "title": "Educational project — SENA",
-      "body": "This form is for demonstration purposes only. Messages are not sent to any real server and the data you enter is not stored. Contact emails are fictional. In a real implementation, the form would send data to POST /api/v1/contact on the backend."
-    },
-    "form": {
-      "heading": "Send a message",
-      "name": {
-        "label": "Full name",
-        "placeholder": "e.g. Ana García",
-        "error": "Name must be at least 3 characters."
-      },
-      "email": {
-        "label": "Reply email address",
-        "placeholder": "your-email@example.com",
-        "hint": "We will only use this email to reply to you. Do not send sensitive data.",
-        "error": "Enter a valid email address."
-      },
-      "subject": {
-        "label": "Subject",
-        "placeholder": "— Select a subject —",
-        "error": "Select a subject for your message.",
-        "options": {
-          "general": "General inquiry",
-          "support": "Technical support",
-          "dataRights": "Exercise rights (Law 1581/2012 — Habeas Data)",
-          "authSystem": "Authentication system",
-          "bugs": "Bug or error report",
-          "other": "Other"
-        }
-      },
-      "message": {
-        "label": "Message",
-        "placeholder": "Describe your inquiry, report or request in detail...",
-        "hint": "{{count}} / 20 minimum characters",
-        "error": "Message must be at least 20 characters."
-      },
-      "privacy": {
-        "label": "I have read and accept the",
-        "link": "Privacy and Data Protection Policy",
-        "labelSuffix": "(Law 1581 of 2012). I authorize my data to be used solely to respond to my request.",
-        "error": "You must accept the Privacy Policy to continue."
-      },
-      "submit": "Send message",
-      "submitting": "Sending...",
-      "errorBanner": "There was an error processing your message. Please try again."
-    },
-    "success": {
-      "title": "Message sent successfully",
-      "body": "(Simulation — no real email was sent.) In production, we would respond within a maximum of 10 business days for queries or 15 business days for claims, pursuant to Law 1581 of 2012.",
-      "reset": "Send another message"
-    },
-    "info": {
-      "heading": "Contact information",
-      "antiSpam": {
-        "title": "Main contact channel",
-        "body": "For anti-spam reasons we do not publish email addresses. Use the form on this page to send us your message — we will reply within the legal deadlines indicated below."
-      },
-      "phone": "Phone",
-      "address": "Address",
-      "hours": "Office hours",
-      "deadlines": {
-        "title": "Response deadlines (Law 1581/2012)",
-        "queries": "Queries: 10 business days (Art. 14, Law 1581/2012)",
-        "claims": "Claims: 15 business days (Art. 15, Law 1581/2012)"
-      }
-    },
-    "footer": {
-      "credit": "SENA educational project"
-    }
   },
   "dashboards": {
     "common": {

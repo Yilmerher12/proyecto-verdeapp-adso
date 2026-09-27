@@ -21,7 +21,14 @@ import {
 import { RoleId } from "@/types/auth";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { notificarFotoPerfilActualizada } from "@/lib/profileEvents";
-import { TELEFONO_REGEX } from "@/lib/validacion";
+import {
+  APELLIDOS_MAX_LENGTH,
+  ASOCIACION_MAX_LENGTH,
+  NOMBRE_MAX_LENGTH,
+  TELEFONO_MAX_LENGTH,
+  TELEFONO_REGEX,
+  motivoNombreInvalido,
+} from "@/lib/validacion";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -172,22 +179,36 @@ export function ProfilePage() {
     }
   };
 
-  const validarCampo = (campo: "nombre" | "apellidos" | "telefono") => {
-    let mensaje = "";
-    if (campo === "nombre" && !formNombre.trim()) mensaje = t("profile.validation.firstNameRequired");
-    if (campo === "apellidos" && !formApellidos.trim()) mensaje = t("profile.validation.lastNameRequired");
-    if (campo === "telefono" && formTelefono.trim() && !TELEFONO_REGEX.test(formTelefono.trim())) {
-      mensaje = t("profile.validation.phoneInvalid");
+  // ¿Qué? Error de un campo, o "" si es válido. Mismas reglas que el registro
+  //       (lib/validacion.ts): antes aquí solo se revisaba que el nombre no
+  //       estuviera vacío, así que "Juan123" se podía guardar.
+  // ¿Para qué? Una sola función para validar al salir del campo y al guardar.
+  const errorDe = (campo: "nombre" | "apellidos" | "telefono"): string => {
+    if (campo === "telefono") {
+      const telefono = formTelefono.trim();
+      return telefono && !TELEFONO_REGEX.test(telefono) ? t("profile.validation.phoneInvalid") : "";
     }
+    const esNombre = campo === "nombre";
+    const maximo = esNombre ? NOMBRE_MAX_LENGTH : APELLIDOS_MAX_LENGTH;
+    const motivo = motivoNombreInvalido(esNombre ? formNombre : formApellidos, maximo);
+    if (!motivo) return "";
+    if (motivo === "requerido") return t(esNombre ? "profile.validation.firstNameRequired" : "profile.validation.lastNameRequired");
+    if (motivo === "formato") return t("auth.register.validation.nameFormat");
+    if (motivo === "largo") return t(esNombre ? "auth.register.validation.firstNameMax" : "auth.register.validation.lastNameMax", { max: maximo });
+    return t(esNombre ? "auth.register.validation.firstNameMin" : "auth.register.validation.lastNameMin");
+  };
+
+  const validarCampo = (campo: "nombre" | "apellidos" | "telefono") => {
+    const mensaje = errorDe(campo);
     setFieldErrors((prev) => (mensaje ? { ...prev, [campo]: mensaje } : prev));
   };
 
   const guardarPerfil = async () => {
     const errores: Record<string, string> = {};
-    if (!formNombre.trim()) errores.nombre = t("profile.validation.firstNameRequired");
-    if (!formApellidos.trim()) errores.apellidos = t("profile.validation.lastNameRequired");
-    const telefono = formTelefono.trim();
-    if (telefono && !TELEFONO_REGEX.test(telefono)) errores.telefono = t("profile.validation.phoneInvalid");
+    for (const campo of ["nombre", "apellidos", "telefono"] as const) {
+      const mensaje = errorDe(campo);
+      if (mensaje) errores[campo] = mensaje;
+    }
     if (Object.keys(errores).length > 0) {
       setFieldErrors(errores);
       return;
@@ -198,7 +219,7 @@ export function ProfilePage() {
       await axios.put(`${API_BASE_URL}/api/v1/users/me`, {
         nombre: formNombre.trim(),
         apellidos: formApellidos.trim(),
-        numero_telefonico: telefono || null,
+        numero_telefonico: formTelefono.trim() || null,
         asociacion: formAsociacion.trim() || null,
         mostrar_contacto_directorio: formMostrarContacto,
       });
@@ -412,6 +433,7 @@ export function ProfilePage() {
               <InputField
                 label={t("profile.fields.firstName")}
                 name="nombre"
+                maxLength={NOMBRE_MAX_LENGTH}
                 value={formNombre}
                 onChange={(e) => {
                   setFormNombre(e.target.value);
@@ -424,6 +446,7 @@ export function ProfilePage() {
               <InputField
                 label={t("profile.fields.lastName")}
                 name="apellidos"
+                maxLength={APELLIDOS_MAX_LENGTH}
                 value={formApellidos}
                 onChange={(e) => {
                   setFormApellidos(e.target.value);
@@ -436,9 +459,13 @@ export function ProfilePage() {
               <InputField
                 label={t("common.phone")}
                 name="telefono"
+                type="tel"
+                inputMode="numeric"
+                maxLength={TELEFONO_MAX_LENGTH}
                 value={formTelefono}
                 onChange={(e) => {
-                  setFormTelefono(e.target.value);
+                  // Solo dígitos, igual que en el registro.
+                  setFormTelefono(e.target.value.split("").filter((c) => c >= "0" && c <= "9").join(""));
                   limpiarError("telefono");
                 }}
                 onBlur={() => validarCampo("telefono")}
@@ -451,6 +478,7 @@ export function ProfilePage() {
                   <InputField
                     label={t("profile.fields.association")}
                     name="asociacion"
+                    maxLength={ASOCIACION_MAX_LENGTH}
                     value={formAsociacion}
                     onChange={(e) => setFormAsociacion(e.target.value)}
                     placeholder={t("profile.associationPlaceholder")}

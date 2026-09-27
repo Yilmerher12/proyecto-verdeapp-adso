@@ -33,10 +33,10 @@ El sistema debe permitir a los usuarios con rol 'Reciclador' o 'Residente' modif
 
 | Campo               | Tipo   | Obligatorio | Validaciones                                                                 |
 | ------------------- | ------ | ----------- | ---------------------------------------------------------------------------- |
-| `nombre`            | Texto  | No          | Máximo 255 caracteres                                                        |
-| `apellidos`         | Texto  | No          | Máximo 255 caracteres                                                        |
-| `asociacion`        | Texto  | No          | Máximo 255 caracteres                                                        |
-| `numero_telefonico` | Texto  | No          | Solo números, longitud válida según formato local                            |
+| `nombre`            | Texto  | Sí          | Mismas reglas que el registro (RF-002): 2 a 100 caracteres, solo letras con espacio, apóstrofe, punto o guion |
+| `apellidos`         | Texto  | Sí          | Igual que `nombre`, máximo 150 caracteres                                    |
+| `asociacion`        | Texto  | No          | Máximo 100 caracteres (solo Reciclador)                                      |
+| `numero_telefonico` | Texto  | No          | Solo dígitos, entre 7 y 10                                                   |
 
 ---
 

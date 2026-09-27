@@ -7,6 +7,7 @@ import io
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 from sqlalchemy.orm import Session
@@ -267,6 +268,67 @@ class TestRegister:
     ) -> None:
         payload = _payload_residente(conjunto_verificado, email="telefonoinvalido@verdeapp.com")
         payload["numero_telefonico"] = "abc123!!"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    # ¿Qué? Reglas de nombre: solo letras con espacio, apóstrofe, punto o
+    #       guion como separadores; máximo = tamaño de la columna.
+    @pytest.mark.parametrize(
+        ("campo", "valor"),
+        [
+            ("nombre", "Juan123"),
+            ("nombre", "@@"),
+            ("nombre", "-Ana"),
+            ("nombre", "A" * 101),
+            ("apellidos", "Pérez 2"),
+            ("apellidos", "P" * 151),
+        ],
+    )
+    def test_register_nombre_o_apellidos_invalidos(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial, campo: str, valor: str
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email="nombre.invalido@verdeapp.com")
+        payload[campo] = valor
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize(
+        ("nombre", "apellidos", "apto"),
+        [("María José", "Pérez-López", "401"), ("Ma. Fernanda", "O'Connor", "402"), ("Ñusta", "Güiza", "403")],
+    )
+    def test_register_nombres_reales_con_tilde_guion_o_apostrofe(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial, nombre: str, apellidos: str, apto: str
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email=f"real.{apto}@verdeapp.com")
+        payload["nombre"] = nombre
+        payload["apellidos"] = apellidos
+        payload["apto"] = apto
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 201
+
+    @pytest.mark.parametrize("campo", ["torre", "apto"])
+    def test_register_unidad_demasiado_larga(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial, campo: str
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email="unidad.larga@verdeapp.com")
+        payload[campo] = "12345678901"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize("codigo", ["AB3K9QX", "AB3K9", "AB0K9Q", "AB-K9Q"])
+    def test_register_codigo_acceso_con_formato_imposible(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial, codigo: str
+    ) -> None:
+        """Un código que no puede existir (largo, 0/O/1/I/L, símbolos) se rechaza con 422."""
+        payload = _payload_residente(conjunto_verificado, email="codigo.formato@verdeapp.com")
+        payload["codigo_acceso"] = codigo
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_correo_demasiado_largo(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email=("a" * 250) + "@verdeapp.com")
         response = client.post(self.URL, json=payload)
         assert response.status_code == 422
 
@@ -833,6 +895,20 @@ class TestUpdateProfile:
             json={"nombre": "  ", "apellidos": "Nombre"},
             headers=auth_headers,
         )
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize(
+        "body",
+        [
+            {"nombre": "Juan123", "apellidos": "Nombre"},
+            {"nombre": "Juan", "apellidos": "N" * 151},
+            {"nombre": "Juan", "apellidos": "Nombre", "asociacion": "A" * 101},
+        ],
+    )
+    def test_update_profile_datos_invalidos(
+        self, client: TestClient, auth_headers: dict[str, str], body: dict
+    ) -> None:
+        response = client.put(self.URL, json=body, headers=auth_headers)
         assert response.status_code == 422
 
     def test_update_profile_invalid_phone(

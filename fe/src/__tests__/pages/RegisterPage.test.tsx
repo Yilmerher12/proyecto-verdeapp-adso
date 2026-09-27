@@ -365,7 +365,7 @@ describe("RegisterPage", () => {
     await user.type(screen.getByPlaceholderText("Ej: 402"), "101");
     // ¿Qué? Issue #168 — el código de acceso ahora es obligatorio para
     //       Residente, igual que torre/apto.
-    await user.type(screen.getByPlaceholderText("Ej: AB3K9Q"), "ab3k9q");
+    await user.type(screen.getByPlaceholderText("6 letras o números"), "ab3k9q");
 
     await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
 
@@ -438,10 +438,43 @@ describe("RegisterPage", () => {
 
     await user.type(screen.getByPlaceholderText("Ej: 3, B"), "1----B");
     await user.type(screen.getByPlaceholderText("Ej: 402"), "101");
-    await user.type(screen.getByPlaceholderText("Ej: AB3K9Q"), "ab3k9q");
+    await user.type(screen.getByPlaceholderText("6 letras o números"), "ab3k9q");
 
     expect(
       screen.getByRole("button", { name: "Completa los campos y acepta los términos" }),
     ).toBeDisabled();
+  });
+
+  // ¿Qué? Reglas nuevas de nombre y código de acceso (lib/validacion.ts).
+  it("muestra error al salir del campo Nombres si tiene números", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await user.type(screen.getByLabelText("Nombres *"), "Juan123");
+    await user.tab();
+
+    expect(await screen.findByText("Solo se permiten letras, espacios, apóstrofe, punto o guion")).toBeInTheDocument();
+    expect(screen.getByLabelText("Nombres *")).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("acepta nombres reales con tilde, guion y apóstrofe", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await user.type(screen.getByLabelText("Nombres *"), "María-José");
+    await user.type(screen.getByLabelText("Apellidos *"), "O'Connor");
+    await user.tab();
+
+    expect(screen.queryByText("Solo se permiten letras, espacios, apóstrofe, punto o guion")).not.toBeInTheDocument();
+  });
+
+  it("limita cada campo al máximo de la base de datos", () => {
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    expect(screen.getByLabelText("Nombres *")).toHaveAttribute("maxLength", "100");
+    expect(screen.getByLabelText("Apellidos *")).toHaveAttribute("maxLength", "150");
+    expect(screen.getByPlaceholderText("Ej: 3, B")).toHaveAttribute("maxLength", "10");
+    expect(screen.getByPlaceholderText("Ej: 402")).toHaveAttribute("maxLength", "10");
+    expect(screen.getByPlaceholderText("6 letras o números")).toHaveAttribute("maxLength", "6");
   });
 });
