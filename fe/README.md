@@ -319,8 +319,18 @@ export default defineConfig({
 @import "tailwindcss";
 
 @theme {
-  /* Fuente principal: Inter (sans-serif). Regla del proyecto: nunca fuentes serif */
+  /* Fuentes (solo sans-serif): Inter para el texto, Outfit para los títulos */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Outfit", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  /* h1-h3 usan la fuente de títulos sin tener que ponerla en cada página */
+  h1,
+  h2,
+  h3 {
+    font-family: theme(--font-display);
+  }
 }
 
 @layer base {
@@ -368,7 +378,7 @@ TailwindCSS v4 cambió la forma de integrarse con bundlers:
 > En v4 ya **no existe** `tailwind.config.js`. Toda la personalización del tema va en el
 > bloque `@theme` dentro del archivo CSS.
 
-### Fuente Inter — carga desde Google Fonts
+### Fuentes Inter y Outfit — carga desde Google Fonts
 
 La fuente se declara en el CSS pero debe **cargarse** desde Google Fonts. En `index.html`:
 
@@ -377,15 +387,15 @@ La fuente se declara en el CSS pero debe **cargarse** desde Google Fonts. En `in
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-<!-- Carga Inter en 4 grosores (Regular, Medium, SemiBold, Bold) -->
+<!-- Inter (texto) en 5 grosores y Outfit (títulos) en 4 -->
 <link
-  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
   rel="stylesheet"
 />
 ```
 
 > **`display=swap`** hace que el texto sea visible inmediatamente con una fuente del sistema
-> mientras Inter carga en segundo plano. Sin esto, habría un "flash" de texto invisible.
+> mientras las fuentes cargan en segundo plano. Sin esto, habría un "flash" de texto invisible.
 
 ### Dark Mode
 
@@ -437,13 +447,13 @@ createRoot(document.getElementById("root")!).render(
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/logos/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Carga de fuente Inter desde Google Fonts -->
+    <!-- Carga de las fuentes Inter y Outfit desde Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <title>VerdeApp</title>
