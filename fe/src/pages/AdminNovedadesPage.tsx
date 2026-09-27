@@ -662,7 +662,7 @@ export function AdminNovedadesPage() {
               >
                 <span className="text-xs font-bold text-gray-700 dark:text-gray-200">
                   {t("novedades.admin.moreOptions.title")}{" "}
-                  <span className="font-medium text-gray-400 dark:text-gray-500">— {t("novedades.admin.moreOptions.hint")}</span>
+                  <span className="font-medium text-gray-500 dark:text-gray-400">— {t("novedades.admin.moreOptions.hint")}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-1 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
                   {masOpciones ? t("novedades.admin.moreOptions.hide") : t("novedades.admin.moreOptions.show")}

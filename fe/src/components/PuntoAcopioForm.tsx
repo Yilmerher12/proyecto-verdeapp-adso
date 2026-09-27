@@ -188,7 +188,7 @@ export function PuntoAcopioForm({
         <div>
           <label htmlFor="acopio-motivo" className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
             {t("adminPuntosAcopio.form.changeReason")}{" "}
-            <span className="font-normal text-gray-400">{t("adminPuntosAcopio.form.changeReasonHint")}</span>
+            <span className="font-normal text-gray-500 dark:text-gray-400">{t("adminPuntosAcopio.form.changeReasonHint")}</span>
           </label>
           <textarea
             id="acopio-motivo"

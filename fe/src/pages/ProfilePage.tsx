@@ -303,7 +303,7 @@ export function ProfilePage() {
                   <InfoField
                     label={t("profile.fields.conjunto")}
                     value={perfil.nombre_conjunto}
-                    icon={<Building className="h-3 w-3" />}
+                    icon={<Building className="icon-sm" />}
                   />
                 )}
                 {(perfil.torre || perfil.apto) && (
@@ -321,14 +321,14 @@ export function ProfilePage() {
                   <InfoField
                     label={t("profile.fields.baseLocality")}
                     value={perfil.nombre_localidad}
-                    icon={<MapIcon className="h-3 w-3" />}
+                    icon={<MapIcon className="icon-sm" />}
                   />
                 )}
                 {perfil.asociacion && (
                   <InfoField
                     label={t("profile.fields.association")}
                     value={perfil.asociacion}
-                    icon={<UsersIcon className="h-3 w-3" />}
+                    icon={<UsersIcon className="icon-sm" />}
                   />
                 )}
               </>
@@ -344,7 +344,7 @@ export function ProfilePage() {
                       : t("profile.managedConjuntoPlural")
                   }
                   value={perfil.conjuntos_administrados.join(", ")}
-                  icon={<Building className="h-3 w-3" />}
+                  icon={<Building className="icon-sm" />}
                 />
               )}
           </div>
@@ -379,7 +379,7 @@ export function ProfilePage() {
                     ? perfil.numero_telefonico
                     : t("profile.notRegistered")
                 }
-                icon={<Phone className="h-3 w-3" />}
+                icon={<Phone className="icon-sm" />}
               />
               {perfil.role_id === RoleId.RECICLADOR && (
                 <InfoField
@@ -391,7 +391,7 @@ export function ProfilePage() {
                   }
                   icon={
                     perfil.mostrar_contacto_directorio ? (
-                      <Eye className="h-3 w-3" />
+                      <Eye className="icon-sm" />
                     ) : (
                       <EyeOff className="icon-sm" />
                     )
@@ -401,7 +401,7 @@ export function ProfilePage() {
               <InfoField
                 label={t("common.email")}
                 value={perfil.email}
-                icon={<Mail className="h-3 w-3" />}
+                icon={<Mail className="icon-sm" />}
               />
             </div>
           ) : (

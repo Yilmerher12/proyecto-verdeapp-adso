@@ -158,7 +158,7 @@ export function ResetPasswordPage() {
             placeholder={t("common.passwordPlaceholder")}
             autoComplete="new-password"
             autoFocus
-            icon={<KeyRound className="h-5 w-5" />}
+            icon={<KeyRound className="icon-lg" />}
             error={errors.new_password}
             onChange={handleChange}
           />
@@ -171,7 +171,7 @@ export function ResetPasswordPage() {
             value={formData.confirmPassword}
             placeholder={t("common.passwordPlaceholder")}
             autoComplete="new-password"
-            icon={<ShieldCheck className="h-5 w-5" />}
+            icon={<ShieldCheck className="icon-lg" />}
             error={errors.confirmPassword}
             onChange={handleChange}
           />

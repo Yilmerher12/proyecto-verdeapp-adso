@@ -213,7 +213,7 @@ export function PuntoAcopioPanel({
                 key={c.id_comentario}
                 className="rounded-xl border border-gray-100 bg-white px-3 py-2.5 dark:border-night-line dark:bg-night-card"
               >
-                <div className="flex justify-between gap-2 text-[11px] text-gray-400">
+                <div className="flex justify-between gap-2 text-[11px] text-gray-500 dark:text-gray-400">
                   <span className="min-w-0 truncate font-semibold text-gray-600 dark:text-gray-300">
                     {c.autor ?? t(`${p}.comments.deletedAuthor`)}
                   </span>

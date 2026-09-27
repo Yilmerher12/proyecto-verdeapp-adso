@@ -78,7 +78,7 @@ export function ContactoModalPage() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder={t("contactoModal.email.placeholder")}
-                icon={<Mail className="h-5 w-5 text-gray-400" />}
+                icon={<Mail className="icon-lg" />}
               />
               <InputField
                 label={t("contactoModal.subject.label")}

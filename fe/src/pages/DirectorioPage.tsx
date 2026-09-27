@@ -440,7 +440,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
           <button
             type="button"
             onClick={copiarDireccion}
-            className="shrink-0 cursor-pointer rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-night-hover dark:hover:text-gray-300"
+            className="shrink-0 cursor-pointer rounded-md p-1 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-night-hover dark:hover:text-gray-300"
             aria-label={t("directorio.copyAddress")}
             title={t("directorio.copyAddress")}
           >

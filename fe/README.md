@@ -350,7 +350,7 @@ export default defineConfig({
 
   /* Color de fondo y texto según tema (claro / oscuro) */
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-[#050f0a] dark:text-gray-100;
+    @apply bg-gray-50 text-gray-900 dark:bg-night-base dark:text-gray-100;
     @apply min-h-screen antialiased;
     @apply transition-colors duration-200; /* Transición suave al cambiar tema */
     margin: 0;

@@ -148,7 +148,7 @@ export function LoginPage() {
               placeholder={t("common.emailPlaceholder")}
               autoComplete="email"
               autoFocus
-              icon={<Mail className="h-5 w-5 text-gray-400" />}
+              icon={<Mail className="icon-lg" />}
               onChange={handleChange}
             />
 
@@ -160,7 +160,7 @@ export function LoginPage() {
               error={fieldErrors.password}
               placeholder={t("common.passwordPlaceholder")}
               autoComplete="current-password"
-              icon={<Lock className="h-5 w-5 text-gray-400" />}
+              icon={<Lock className="icon-lg" />}
               onChange={handleChange}
             />
 
