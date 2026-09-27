@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Phone, MapPin, Map as MapIcon, Users, HardHat, Warehouse, MessageCircle, Info, Copy, Check } from "lucide-react";
+import { Phone, MapPin, Map as MapIcon, Users, HardHat, Warehouse, MessageCircle, Info, Copy, Check, ExternalLink } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
@@ -321,9 +321,10 @@ function InfoBanner({
                   href={fuenteHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold underline underline-offset-2 transition-colors hover:text-accent-900 dark:hover:text-accent-200"
+                  className="inline-flex items-center gap-1 font-semibold underline underline-offset-2 transition-colors hover:text-accent-900 dark:hover:text-accent-200"
                 >
-                  {fuenteLinkLabel} ↗
+                  {fuenteLinkLabel}
+                  <ExternalLink className="icon-sm" aria-hidden="true" />
                 </a>
               </>
             )}

@@ -13,7 +13,7 @@ import {
   Pencil,
   BadgeCheck,
   Camera,
-  Loader2,
+  LoaderCircle,
   Eye,
   EyeOff,
   X,
@@ -269,7 +269,7 @@ export function ProfilePage() {
               title={t("profile.photo.change")}
               className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-[#ffffff] bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#12231a]"
             >
-              {subiendoFoto ? <Loader2 className="icon-sm animate-spin" /> : <Camera className="icon-sm" />}
+              {subiendoFoto ? <LoaderCircle className="icon-sm animate-spin" /> : <Camera className="icon-sm" />}
             </button>
             <input
               ref={inputFotoRef}

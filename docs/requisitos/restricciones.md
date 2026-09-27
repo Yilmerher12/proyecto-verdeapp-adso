@@ -67,7 +67,8 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 - Prohibidos los degradados (`gradient`) en la interfaz — colores sólidos únicamente.
 - Tipografía exclusivamente sans-serif.
 - Los botones de acción principal van alineados a la derecha en formularios y modales.
-- Iconografía: únicamente `lucide-react` — no mezclar con otras librerías de íconos.
+- Iconografía: únicamente `lucide-react` — no mezclar con otras librerías de íconos. Tampoco se usan emojis ni caracteres sueltos (📬, ↗, ✓…) como íconos en la interfaz, y se importa cada ícono con su nombre actual en lucide (ej. `LoaderCircle`, no el alias viejo `Loader2`).
+- Imágenes en `fe/public/`: solo las que usa el código (una imagen sin referencias se borra; queda en el historial de git). Las fotos de fondo van a máximo 1920 px de ancho y comprimidas (JPEG calidad ~75): una pantalla Full HD no muestra más, y el resto solo alarga la carga.
 - Ícono por concepto (un concepto = un ícono en toda la app; si aparece un concepto nuevo, se agrega a esta tabla):
 
   | Concepto | Ícono (`lucide-react`) |

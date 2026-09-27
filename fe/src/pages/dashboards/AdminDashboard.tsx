@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Database, UserPlus, Search, ChevronLeft, ChevronRight, ChevronDown, Building, UserX, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, ClipboardList, BarChart3 } from "lucide-react";
+import { Database, UserPlus, Search, ChevronLeft, ChevronRight, ChevronDown, Building, UserX, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, ClipboardList, ChartColumn } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -532,7 +532,7 @@ export function AdminDashboard() {
 
         <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
-            <BarChart3 className="icon-md text-accent-600" />
+            <ChartColumn className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.totals.title")}</h3>
           </div>
           {/* ¿Qué? grid-cols-3 en vez de un flex con justify-between — Tailwind

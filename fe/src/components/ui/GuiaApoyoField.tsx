@@ -9,7 +9,7 @@
  */
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FileText, Loader2, Upload, X } from "lucide-react";
+import { FileText, LoaderCircle, Upload, X } from "lucide-react";
 import { subirAdjunto } from "@/lib/uploadsApi";
 
 interface GuiaApoyoFieldProps {
@@ -148,7 +148,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
         <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-gray-400 dark:hover:bg-[#23392b]">
           {subiendo ? (
             <>
-              <Loader2 className="icon-md animate-spin" />
+              <LoaderCircle className="icon-md animate-spin" />
               {t("guiaApoyo.subiendo")}
             </>
           ) : (
