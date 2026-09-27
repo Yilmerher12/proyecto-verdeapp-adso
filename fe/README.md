@@ -84,62 +84,41 @@ pnpm --version
 
 ```
 fe/
-├── index.html                  ← HTML base que carga Vite
+├── index.html                  ← HTML base: favicon, fuentes (Inter + Outfit) y tema inicial
 ├── package.json                ← Dependencias y scripts
-├── pnpm-lock.yaml              ← Lockfile determinístico
 ├── vite.config.ts              ← Vite + plugins + Vitest
-├── tsconfig.json               ← TypeScript base
-├── tsconfig.app.json           ← TypeScript para el código de la app
-├── tsconfig.node.json          ← TypeScript para vite.config.ts
-├── eslint.config.js            ← Linter (ESLint 9 flat config)
+├── public/
+│   ├── logos/                  ← Logo en SVG: logo, logo-white, logo-mark, logo-mark-white, favicon
+│   └── landing/                ← Fotos de fondo del hero (≤ 1920 px, comprimidas)
 └── src/
     ├── main.tsx                ← Punto de entrada: monta React en el DOM
-    ├── App.tsx                 ← Componente raíz: rutas + providers
-    ├── index.css               ← Estilos globales + TailwindCSS
-    ├── vite-env.d.ts           ← Tipos de Vite (import.meta.env)
+    ├── App.tsx                 ← Rutas (públicas, legales y protegidas por rol)
+    ├── index.css               ← Tailwind + tema: paleta, tokens night-*, escala icon-*, animaciones
+    ├── i18n.ts                 ← Configuración de react-i18next
+    ├── locales/{es,en}/        ← Textos de la interfaz (un translation.json por idioma)
     │
-    ├── types/
-    │   └── auth.ts             ← Interfaces TypeScript de toda la app
-    │
-    ├── api/
-    │   ├── axios.ts            ← Instancia Axios + interceptores
-    │   └── auth.ts             ← Funciones HTTP por endpoint
-    │
-    ├── context/
-    │   ├── authContextDef.ts   ← Crea el Context (separado del Provider)
-    │   └── AuthContext.tsx     ← Provider: estado + acciones de auth
-    │
-    ├── hooks/
-    │   └── useAuth.ts          ← Hook público para consumir el contexto
+    ├── types/                  ← Tipos compartidos (auth.ts: roles, usuario)
+    ├── api/                    ← axios.ts (instancia + interceptores) y auth.ts
+    ├── lib/                    ← Un cliente Axios por recurso (*Api.ts), fechas, eventos entre componentes
+    ├── context/                ← AuthContext (sesión del usuario)
+    ├── hooks/                  ← useAuth, usePaginacion, usePolling, useScrollReveal…
+    ├── config/                 ← Configuración visual centralizada:
+    │   ├── roleTheme.ts        ←   ícono y colores de cada rol
+    │   ├── nivelesDesempeno.ts ←   caritas y colores del semáforo de auditoría
+    │   └── categoriasEducativas.ts ← ícono de cada categoría del catálogo
     │
     ├── components/
-    │   ├── ProtectedRoute.tsx  ← Guarda rutas privadas
-    │   ├── ui/                 ← Componentes reutilizables atómicos
-    │   │   ├── Button.tsx
-    │   │   ├── InputField.tsx
-    │   │   ├── Alert.tsx
-    │   │   ├── ThemeToggle.tsx
-    │   │   └── DataTable.tsx
-    │   └── layout/             ← Estructuras de página completa
-    │       ├── AuthLayout.tsx  ← Layout para páginas sin sesión
-    │       ├── AppLayout.tsx   ← Layout para páginas con sesión
-    │       └── Navbar.tsx      ← Barra de navegación superior
+    │   ├── ui/                 ← Reutilizables: Button, InputField, Alert, Modal, ConfirmModal,
+    │   │                         EmptyState, BrandLogo, Paginacion, ThemeToggle, LanguageSwitcher…
+    │   ├── layout/             ← AppShell (sidebar + contenido con sesión), AuthLayout, LegalLayout
+    │   ├── dashboard/          ← Piezas de los paneles: notificaciones, auditorías
+    │   └── *.tsx               ← Formularios y paneles de dominio (puntos de acopio, invitaciones…)
     │
-    ├── pages/                  ← Una página por ruta
-    │   ├── LoginPage.tsx
-    │   ├── RegisterPage.tsx
-    │   ├── DashboardPage.tsx
-    │   ├── ChangePasswordPage.tsx
-    │   ├── ForgotPasswordPage.tsx
-    │   ├── ResetPasswordPage.tsx
-    │   └── DataTableDemoPage.tsx
+    ├── pages/                  ← Una página por ruta (landing, login, registro, directorio…)
+    │   └── dashboards/         ← Panel de cada rol: Residente, Reciclador, AdminConjunto, Admin
     │
-    └── __tests__/              ← Tests ordenados por tipo
-        ├── setup.ts            ← Configuración global de Vitest
-        ├── helpers.tsx         ← Utilidades y mocks compartidos
-        ├── hooks/
-        ├── components/
-        └── pages/
+    └── __tests__/              ← Tests (Vitest), en la misma estructura que src/
+```
 ```
 
 ### ¿Por qué esta estructura?
@@ -322,7 +301,29 @@ export default defineConfig({
   /* Fuentes (solo sans-serif): Inter para el texto, Outfit para los títulos */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-display: "Outfit", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Color de marca: los componentes usan accent-*, que apunta a green-*.
+     La escala green-* se redefine con la paleta "Páramo Fresco" (claro)
+     y "Bosque Andino" (oscuro) en :root y .dark, más abajo en el archivo. */
+  --color-accent-600: var(--color-green-600); /* …y así del 50 al 950 */
+
+  /* Superficies del modo oscuro: siempre con dark:, ej. dark:bg-night-card */
+  --color-night-base: #050f0a;  /* fondo raíz */
+  --color-night-page: #0a1510;  /* fondo de los paneles */
+  --color-night-card: #12231a;  /* tarjetas */
+  --color-night-panel: #0f2018; /* modales, barras fijas */
+  --color-night-inset: #0c1a12; /* zonas hundidas */
+  --color-night-field: #1a3324; /* campos de formulario */
+  --color-night-line: #23392b;  /* bordes */
+  --color-night-hover: #23392b; /* hover */
 }
+
+/* Escala de íconos: la única forma de dar tamaño a un ícono de lucide */
+@utility icon-sm { @apply size-3.5; }  /* 14px: dentro de texto pequeño */
+@utility icon-md { @apply size-4; }    /* 16px: botones y campos */
+@utility icon-lg { @apply size-5; }    /* 20px: sidebar, mensajes */
+@utility icon-xl { @apply size-8; }    /* 32px: destacado */
+@utility icon-deco { @apply size-20; } /* 80px: decorativo */
 
 @layer base {
   /* h1-h3 usan la fuente de títulos sin tener que ponerla en cada página */
@@ -349,7 +350,7 @@ export default defineConfig({
 
   /* Color de fondo y texto según tema (claro / oscuro) */
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    @apply bg-gray-50 text-gray-900 dark:bg-[#050f0a] dark:text-gray-100;
     @apply min-h-screen antialiased;
     @apply transition-colors duration-200; /* Transición suave al cambiar tema */
     margin: 0;
@@ -1006,16 +1007,31 @@ Puntos de accesibilidad:
 
 ```typescript
 interface AlertProps {
-  type: "success" | "error" | "info";
+  type: "success" | "error" | "info" | "warning";
   message: string;
   onClose?: () => void;
 }
 ```
 
 - `role="alert"` — Los lectores de pantalla anuncian el contenido automáticamente.
-- Tres variantes: verde (éxito), rojo (error), azul (información).
-- Si se provee `onClose`, aparece un botón `×` con `aria-label="Cerrar alerta"`.
-- Íconos SVG con `aria-hidden="true"` — puramente decorativos.
+- Cuatro variantes, cada una con su ícono de `lucide-react` (mapa de íconos por concepto): éxito `BadgeCheck`, error `OctagonX`, aviso `TriangleAlert`, info `Info`.
+- El ícono se mueve una vez al aparecer el mensaje (`icon-appear` + `icon-hop`/`icon-shake`/`icon-ring`/`icon-nudge`), salvo que el sistema pida "reducir movimiento".
+- Si se provee `onClose`, aparece un botón con el ícono `X` y `aria-label` de cerrar.
+- El ícono lleva `aria-hidden="true"`: el texto del mensaje ya comunica el tipo.
+
+### `BrandLogo.tsx` — Logo de VerdeApp
+
+```typescript
+interface BrandLogoProps {
+  variant?: "full" | "mark"; // símbolo + nombre, o solo el símbolo
+  tone?: "auto" | "light";   // light = siempre blanco (fondos oscuros)
+  className?: string;         // el alto, ej. "h-8"
+}
+```
+
+- Único lugar que decide qué SVG de `public/logos/` mostrar: ninguna página pone un `<img>` del logo a mano.
+- `tone="auto"` renderiza la versión verde y la blanca, y `dark:` esconde la que no toca, sin JavaScript.
+- Las barras superiores (sidebar, header de la landing) usan solo el símbolo (`variant="mark"`).
 
 ### `ThemeToggle.tsx` — Alternancia de tema
 

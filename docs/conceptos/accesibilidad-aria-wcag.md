@@ -245,7 +245,7 @@ que se revela, en ambos botones.
 
 ```tsx
 <button aria-busy={enviando} disabled={enviando}>
-  {enviando && <Loader2 aria-hidden="true" className="animate-spin" />}
+  {enviando && <LoaderCircle aria-hidden="true" className="animate-spin" />}
   {enviando ? "Enviando..." : "Enviar"}
 </button>
 ```
