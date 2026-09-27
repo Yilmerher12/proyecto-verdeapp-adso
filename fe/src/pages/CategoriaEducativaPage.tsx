@@ -44,13 +44,13 @@ export function CategoriaEducativaPage() {
         onClick={() => navigate("/catalogo-educativo")}
         className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="icon-md" />
         {t("categoriaEducativa.back")}
       </button>
 
       <div className="flex items-center gap-3 bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
-          <Icono className="h-5.5 w-5.5" />
+          <Icono className="icon-lg" />
         </span>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{categoriaDecodificada}</h1>
       </div>
@@ -83,7 +83,7 @@ export function CategoriaEducativaPage() {
                 rel="noopener noreferrer"
                 className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-200 dark:hover:bg-[#23392b]"
               >
-                <FileText className="h-4 w-4 shrink-0" />
+                <FileText className="icon-md shrink-0" />
                 {t("categoriaEducativa.viewGuide")}
               </a>
             )}

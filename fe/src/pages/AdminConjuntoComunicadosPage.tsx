@@ -213,7 +213,7 @@ export function AdminConjuntoComunicadosPage() {
           disabled={conjuntos.length === 0}
           className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="icon-md" />
           {t("comunicados.admin.newButton")}
         </button>
       </div>
@@ -258,17 +258,17 @@ export function AdminConjuntoComunicadosPage() {
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
                   >
-                    <Paperclip className="h-3.5 w-3.5" />
+                    <Paperclip className="icon-sm" />
                     {t("comunicados.viewAttachment")}
                   </a>
                 )}
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-[#23392b] dark:text-gray-400">
                   <span className="inline-flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
+                    <Clock className="icon-sm" />
                     {t("comunicados.admin.creadoEl", { fecha: formatearFechaCreacion(item.created_at) })}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <CalendarClock className="h-3.5 w-3.5" />
+                    <CalendarClock className="icon-sm" />
                     {t("comunicados.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
                   </span>
                 </div>
@@ -279,14 +279,14 @@ export function AdminConjuntoComunicadosPage() {
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
                   aria-label={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="icon-md" />
                 </button>
                 <button
                   onClick={() => setAEliminar(item)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#23392b] dark:hover:bg-red-900/20"
                   aria-label={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="icon-md" />
                 </button>
               </div>
             </div>

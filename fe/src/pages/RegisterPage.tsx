@@ -341,7 +341,7 @@ export function RegisterPage() {
           <div className="p-6 sm:p-8 text-center max-w-sm mx-auto">
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-accent-50 ring-8 ring-accent-50 dark:bg-accent-900/20 dark:ring-accent-900/20">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-800/40">
-                <MailCheck className="h-7 w-7 text-accent-600 dark:text-accent-400" strokeWidth={2} />
+                <MailCheck className="icon-xl text-accent-600 dark:text-accent-400" strokeWidth={2} />
               </div>
             </div>
 
@@ -424,14 +424,14 @@ export function RegisterPage() {
                 onClick={() => setFormData(p => ({ ...p, rol: "residente" }))}
                 className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "residente" ? "border-accent-600 bg-accent-50/50 dark:bg-accent-900/20 shadow-sm" : "border-gray-200 dark:border-[#23392b] hover:border-accent-300"}`}
               >
-                <UserRound className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "residente" ? "text-accent-600" : "text-gray-400"}`}/>
+                <UserRound className={`icon-xl mx-auto mb-2 ${formData.rol === "residente" ? "text-accent-600" : "text-gray-400"}`}/>
                 <span className={`font-semibold ${formData.rol === "residente" ? "text-accent-800 dark:text-accent-400" : "text-gray-500 dark:text-gray-400"}`}>{t("auth.register.roleResident")}</span>
               </div>
               <div
                 onClick={() => setFormData(p => ({ ...p, rol: "reciclador" }))}
                 className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "reciclador" ? "border-accent-600 bg-accent-50/50 dark:bg-accent-900/20 shadow-sm" : "border-gray-200 dark:border-[#23392b] hover:border-accent-300"}`}
               >
-                <HardHat className={`mx-auto mb-2 w-8 h-8 ${formData.rol === "reciclador" ? "text-accent-600" : "text-gray-400"}`}/>
+                <HardHat className={`icon-xl mx-auto mb-2 ${formData.rol === "reciclador" ? "text-accent-600" : "text-gray-400"}`}/>
                 <span className={`font-semibold ${formData.rol === "reciclador" ? "text-accent-800 dark:text-accent-400" : "text-gray-500 dark:text-gray-400"}`}>{t("auth.register.roleRecycler")}</span>
               </div>
             </div>
@@ -473,7 +473,7 @@ export function RegisterPage() {
             {formData.rol === "residente" && (
               <div className="space-y-4 p-5 bg-gray-50/50 dark:bg-[#0c1a12]/60 border border-gray-100 dark:border-[#23392b] rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
-                  <MapIcon className="w-5 h-5 text-accent-600" />
+                  <MapIcon className="icon-lg text-accent-600" />
                   <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("auth.register.fields.residenceLocationHeading")}</h3>
                 </div>
 
@@ -556,7 +556,7 @@ export function RegisterPage() {
             {formData.rol === "reciclador" && (
               <div className="space-y-4 p-5 bg-accent-50/30 dark:bg-accent-900/10 border border-accent-100 dark:border-accent-900/40 rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
-                  <HardHat className="w-5 h-5 text-accent-600" />
+                  <HardHat className="icon-lg text-accent-600" />
                   <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("auth.register.fields.operativeProfileHeading")}</h3>
                 </div>
 

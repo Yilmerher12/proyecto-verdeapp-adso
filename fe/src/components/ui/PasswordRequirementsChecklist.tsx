@@ -38,7 +38,7 @@ export function PasswordRequirementsChecklist({ password }: { password: string }
               }`}
               aria-hidden="true"
             >
-              {ok && <Check className="h-2.5 w-2.5" strokeWidth={3.5} />}
+              {ok && <Check className="icon-sm" strokeWidth={3.5} />}
             </span>
             {t(`auth.changePassword.requirements.${key}`)}
           </li>

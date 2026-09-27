@@ -147,9 +147,9 @@ export function InputField({
                 ojo abierto = la contraseña SÍ se ve ahora mismo; ojo
                 tachado = está oculta. */}
             {showPassword ? (
-              <Eye className="h-5 w-5" aria-hidden="true" />
+              <Eye className="icon-lg" aria-hidden="true" />
             ) : (
-              <EyeOff className="h-5 w-5" aria-hidden="true" />
+              <EyeOff className="icon-lg" aria-hidden="true" />
             )}
           </button>
         )}

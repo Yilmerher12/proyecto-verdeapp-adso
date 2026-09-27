@@ -69,7 +69,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
   return (
     <div>
       <label className="mb-2 flex items-center gap-1 text-xs font-bold text-gray-600 dark:text-gray-400">
-        <FileText className="h-4 w-4" />
+        <FileText className="icon-md" />
         {label}
       </label>
 
@@ -131,7 +131,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
         </>
       ) : value ? (
         <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-[#23392b] dark:bg-[#1a3324]">
-          <FileText className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
+          <FileText className="icon-md shrink-0 text-gray-500 dark:text-gray-400" />
           <span className="min-w-0 flex-1 truncate text-xs text-gray-600 dark:text-gray-300">
             {value.split("/").pop()}
           </span>
@@ -140,7 +140,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
             onClick={() => onChange("")}
             className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="icon-sm" />
             {t("guiaApoyo.quitar")}
           </button>
         </div>
@@ -148,12 +148,12 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
         <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-gray-400 dark:hover:bg-[#23392b]">
           {subiendo ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="icon-md animate-spin" />
               {t("guiaApoyo.subiendo")}
             </>
           ) : (
             <>
-              <Upload className="h-4 w-4" />
+              <Upload className="icon-md" />
               {t("guiaApoyo.seleccionar")}
             </>
           )}

@@ -43,7 +43,7 @@ export function YoutubeEmbed({ url, titulo }: YoutubeEmbedProps) {
         rel="noopener noreferrer"
         className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-accent-700 hover:underline dark:text-accent-500"
       >
-        <ExternalLink className="h-4 w-4 shrink-0" />
+        <ExternalLink className="icon-md shrink-0" />
         Ver video
       </a>
     );
@@ -74,7 +74,7 @@ export function YoutubeEmbed({ url, titulo }: YoutubeEmbedProps) {
             />
             <span className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors group-hover:bg-black/40">
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-red-600 shadow-lg transition-transform group-hover:scale-110">
-                <Play className="h-6 w-6 fill-current" />
+                <Play className="icon-lg fill-current" />
               </span>
             </span>
           </button>
@@ -87,7 +87,7 @@ export function YoutubeEmbed({ url, titulo }: YoutubeEmbedProps) {
           rel="noopener noreferrer"
           className="flex w-fit items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-accent-600 dark:text-gray-400 dark:hover:text-accent-500"
         >
-          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+          <ExternalLink className="icon-sm shrink-0" />
           Ver en YouTube
         </a>
       )}

@@ -41,7 +41,7 @@ export function HistorialAuditorias() {
   return (
     <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] shadow-sm p-5">
       <div className="mb-4 flex items-center gap-2">
-        <History className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+        <History className="icon-md text-gray-500 dark:text-gray-400" />
         <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
       </div>
 
@@ -71,7 +71,7 @@ export function HistorialAuditorias() {
                   <span
                     className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold ${nivel.claseBadge}`}
                   >
-                    <nivel.icon className="h-3.5 w-3.5" />
+                    <nivel.icon className="icon-sm" />
                     {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
                   </span>
                 </button>

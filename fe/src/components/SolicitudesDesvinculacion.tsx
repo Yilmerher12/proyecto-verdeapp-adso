@@ -115,7 +115,7 @@ export function SolicitudesDesvinculacion({
     >
       {mostrarEncabezado && (
         <div className="flex items-center gap-2 mb-4">
-          <ClipboardList className="h-4 w-4 text-accent-600" />
+          <ClipboardList className="icon-md text-accent-600" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">
             {t("desvinculacion.adminSistema.sectionTitle")}
           </h3>
@@ -174,7 +174,7 @@ export function SolicitudesDesvinculacion({
                       disabled={procesandoId === s.id || !motivoRechazo.trim()}
                       className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <OctagonX className="h-3.5 w-3.5 icon-shake" />
+                      <OctagonX className="icon-sm icon-shake" />
                       {t("desvinculacion.adminSistema.rejectModal.confirm")}
                     </button>
                     <button
@@ -195,7 +195,7 @@ export function SolicitudesDesvinculacion({
                     disabled={procesandoId === s.id}
                     className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <BadgeCheck className="h-3.5 w-3.5 icon-hop" />
+                    <BadgeCheck className="icon-sm icon-hop" />
                     {t("desvinculacion.adminSistema.approve")}
                   </button>
                   <button
@@ -203,7 +203,7 @@ export function SolicitudesDesvinculacion({
                     disabled={procesandoId === s.id}
                     className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
                   >
-                    <OctagonX className="h-3.5 w-3.5 icon-shake" />
+                    <OctagonX className="icon-sm icon-shake" />
                     {t("desvinculacion.adminSistema.reject")}
                   </button>
                 </div>

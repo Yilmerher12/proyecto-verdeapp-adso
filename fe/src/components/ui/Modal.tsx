@@ -153,7 +153,7 @@ export function Modal({
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
           aria-label={t("common.close")}
         >
-          <X className="h-5 w-5" />
+          <X className="icon-lg" />
         </button>
 
         {children}

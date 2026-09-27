@@ -48,7 +48,7 @@ export function Paginacion({
           className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#23392b]"
           aria-label={t("common.pagination.prev")}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="icon-md" />
         </button>
         <span className="px-2 text-xs text-gray-500 dark:text-gray-400">
           {pagina + 1} / {totalPaginas}
@@ -60,7 +60,7 @@ export function Paginacion({
           className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#23392b]"
           aria-label={t("common.pagination.next")}
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="icon-md" />
         </button>
       </div>
     </div>

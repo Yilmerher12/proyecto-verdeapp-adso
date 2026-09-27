@@ -353,12 +353,12 @@ export function AdminDashboard() {
           {label}
           {activo ? (
             orderDir === "asc" ? (
-              <ArrowUp className="h-3 w-3" aria-hidden="true" />
+              <ArrowUp className="icon-sm" aria-hidden="true" />
             ) : (
-              <ArrowDown className="h-3 w-3" aria-hidden="true" />
+              <ArrowDown className="icon-sm" aria-hidden="true" />
             )
           ) : (
-            <ArrowUpDown className="h-3 w-3 opacity-40" aria-hidden="true" />
+            <ArrowUpDown className="icon-sm opacity-40" aria-hidden="true" />
           )}
         </button>
       </th>
@@ -423,7 +423,7 @@ export function AdminDashboard() {
           variant={habilitado ? "danger" : "secondary"}
           onClick={() => pedirConfirmacion(correo, !habilitado)}
         >
-          {habilitado ? <UserX className="mr-1 h-3.5 w-3.5 icon-draw" /> : <UserCheck className="mr-1 h-3.5 w-3.5 icon-draw" />}
+          {habilitado ? <UserX className="icon-sm mr-1 icon-draw" /> : <UserCheck className="icon-sm mr-1 icon-draw" />}
           {habilitado
             ? t("dashboards.admin.usersSection.status.disable")
             : t("dashboards.admin.usersSection.status.enable")}
@@ -451,7 +451,7 @@ export function AdminDashboard() {
       <div className="relative overflow-hidden bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
-            <AdminIcon className="h-7 w-7 text-accent-700 dark:text-accent-400" />
+            <AdminIcon className="icon-xl text-accent-700 dark:text-accent-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.admin.title")}</h1>
@@ -485,7 +485,7 @@ export function AdminDashboard() {
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4 text-accent-600" />
+            <UserPlus className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
           </div>
           <div className="flex flex-1 flex-col gap-2">
@@ -508,7 +508,7 @@ export function AdminDashboard() {
 
         <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-accent-600" />
+            <ClipboardList className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.pendingRequests.title")}</h3>
             {solicitudesPendientes > 0 && (
               <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
@@ -532,7 +532,7 @@ export function AdminDashboard() {
 
         <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-accent-600" />
+            <BarChart3 className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.totals.title")}</h3>
           </div>
           {/* ¿Qué? grid-cols-3 en vez de un flex con justify-between — Tailwind
@@ -573,7 +573,7 @@ export function AdminDashboard() {
           aria-controls="usuarios-registrados-body"
         >
           <span className="flex min-w-0 items-center gap-2">
-            <Database className="h-4 w-4 shrink-0 text-accent-600" />
+            <Database className="icon-md shrink-0 text-accent-600" />
             <h3 className="truncate text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.usersSection.title")}</h3>
           </span>
           <span className="flex shrink-0 items-center gap-2">
@@ -584,7 +584,7 @@ export function AdminDashboard() {
                 })}
               </span>
             )}
-            <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${usuariosAbierto ? "rotate-180" : ""}`} aria-hidden="true" />
+            <ChevronDown className={`icon-md text-gray-400 transition-transform ${usuariosAbierto ? "rotate-180" : ""}`} aria-hidden="true" />
           </span>
         </button>
 
@@ -595,9 +595,9 @@ export function AdminDashboard() {
             <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-[#23392b] dark:bg-[#0c1a12]/60">
               {(
                 [
-                  { id: "residentes" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.residentes"), icon: <ResidenteIcon className="h-3.5 w-3.5" /> },
-                  { id: "recicladores" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.recicladores"), icon: <RecicladorIcon className="h-3.5 w-3.5" /> },
-                  { id: "administradores" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.administradores"), icon: <AdminConjuntoIcon className="h-3.5 w-3.5" /> },
+                  { id: "residentes" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.residentes"), icon: <ResidenteIcon className="icon-sm" /> },
+                  { id: "recicladores" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.recicladores"), icon: <RecicladorIcon className="icon-sm" /> },
+                  { id: "administradores" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.administradores"), icon: <AdminConjuntoIcon className="icon-sm" /> },
                 ] as const
               ).map(({ id, label, icon }) => (
                 <button
@@ -620,7 +620,7 @@ export function AdminDashboard() {
             </div>
 
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -636,7 +636,7 @@ export function AdminDashboard() {
               encendido solo las desactivadas. */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="flex items-center gap-1.5 sm:w-64">
-              <Building className="h-3.5 w-3.5 shrink-0 text-accent-600" />
+              <Building className="icon-sm shrink-0 text-accent-600" />
               <div className="flex-1 [&_input]:!mt-0 [&_input]:!py-1.5 [&_input]:!text-xs">
                 <ConjuntoCombobox
                   value={conjuntoSeleccionado}
@@ -657,7 +657,7 @@ export function AdminDashboard() {
                   : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-300 dark:hover:bg-[#23392b]"
               }`}
             >
-              <UserX className="h-3.5 w-3.5" aria-hidden="true" />
+              <UserX className="icon-sm" aria-hidden="true" />
               {t("dashboards.admin.usersSection.inactiveButton", { count: inactivos ? inactivos[tab] : 0 })}
             </button>
           </div>
@@ -802,7 +802,7 @@ export function AdminDashboard() {
                 className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#23392b]"
                 aria-label={t("dashboards.admin.usersSection.pagination.prev")}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="icon-md" />
               </button>
               <span className="px-2 text-xs text-gray-500 dark:text-gray-400">
                 {pagina + 1} / {totalPaginas}
@@ -814,7 +814,7 @@ export function AdminDashboard() {
                 className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-[#23392b]"
                 aria-label={t("dashboards.admin.usersSection.pagination.next")}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="icon-md" />
               </button>
             </div>
           </div>

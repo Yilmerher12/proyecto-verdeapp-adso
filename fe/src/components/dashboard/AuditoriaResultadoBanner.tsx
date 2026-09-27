@@ -37,7 +37,7 @@ export function AuditoriaResultadoBanner({ notificaciones, onMarcarLeida }: Audi
   return (
     <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-800/30 dark:bg-teal-900/10">
       <div className="mb-3 flex items-center gap-2">
-        <ClipboardCheck className="h-4 w-4 text-teal-700 dark:text-teal-400" />
+        <ClipboardCheck className="icon-md text-teal-700 dark:text-teal-400" />
         <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.bannerTitle")}</h2>
       </div>
       <div className="space-y-2">

@@ -240,7 +240,7 @@ export function ProfilePage() {
       {/* Success banner */}
       {exito && (
         <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
-          <BadgeCheck className="h-4 w-4 shrink-0 icon-appear icon-hop" />
+          <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
           {t("profile.updateSuccess")}
         </div>
       )}
@@ -269,7 +269,7 @@ export function ProfilePage() {
               title={t("profile.photo.change")}
               className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-[#ffffff] bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-[#12231a]"
             >
-              {subiendoFoto ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+              {subiendoFoto ? <Loader2 className="icon-sm animate-spin" /> : <Camera className="icon-sm" />}
             </button>
             <input
               ref={inputFotoRef}
@@ -359,7 +359,7 @@ export function ProfilePage() {
                 onClick={iniciarEdicion}
                 className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b] transition-colors"
               >
-                <Pencil className="h-3.5 w-3.5" />
+                <Pencil className="icon-sm" />
                 {t("common.edit")}
               </button>
             )}
@@ -393,7 +393,7 @@ export function ProfilePage() {
                     perfil.mostrar_contacto_directorio ? (
                       <Eye className="h-3 w-3" />
                     ) : (
-                      <EyeOff className="h-3 w-3" />
+                      <EyeOff className="icon-sm" />
                     )
                   }
                 />
@@ -501,7 +501,7 @@ export function ProfilePage() {
                   onClick={cancelarEdicion}
                   className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b] transition-colors"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="icon-md" />
                   {t("common.cancel")}
                 </button>
                 <button
@@ -509,7 +509,7 @@ export function ProfilePage() {
                   disabled={guardando}
                   className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
                 >
-                  <BadgeCheck className="h-4 w-4 icon-hop" />
+                  <BadgeCheck className="icon-md icon-hop" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}
                 </button>
               </div>

@@ -169,8 +169,8 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           <div className="flex rounded-xl border border-gray-200 bg-white p-1 dark:border-[#23392b] dark:bg-[#0f2018]">
             {(
               [
-                { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <HardHat className="h-4 w-4" /> },
-                { id: "puntos" as TabId, label: t("appShell.nav.puntosAcopio"), icon: <Warehouse className="h-4 w-4" /> },
+                { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <HardHat className="icon-md" /> },
+                { id: "puntos" as TabId, label: t("appShell.nav.puntosAcopio"), icon: <Warehouse className="icon-md" /> },
               ] as const
             ).map(({ id, label, icon }) => (
               <button
@@ -195,14 +195,14 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             indicador fijo. Puntos de Acopio sigue con el filtro libre. */}
         {tab === "recicladores" && !soloAcopio ? (
           <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-200">
-            <MapIcon className="h-4 w-4 shrink-0 text-accent-600" />
+            <MapIcon className="icon-md shrink-0 text-accent-600" />
             {localidadPropiaNombre
               ? t("directorio.ownLocality", { localidad: localidadPropiaNombre })
               : t("directorio.ownLocalityUnknown")}
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <MapIcon className="h-4 w-4 shrink-0 text-accent-600" />
+            <MapIcon className="icon-md shrink-0 text-accent-600" />
             <select
               value={localidadPuntosId}
               onChange={(e) =>
@@ -307,7 +307,7 @@ function InfoBanner({
   return (
     <div className="rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-800/30 dark:bg-accent-900/10">
       <div className="flex gap-3">
-        <Info className="mt-0.5 h-5 w-5 shrink-0 text-accent-600 dark:text-accent-400" />
+        <Info className="icon-lg mt-0.5 shrink-0 text-accent-600 dark:text-accent-400" />
         <div className="space-y-1.5 text-sm">
           <p className="font-semibold text-accent-900 dark:text-accent-200">{titulo}</p>
           <p className="text-accent-800/90 dark:text-accent-300/90">{descripcion}</p>
@@ -348,7 +348,7 @@ function TarjetaReciclador({
     <div className="flex flex-col rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
       <div className="mb-3 flex items-start gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-900/30">
-          <HardHat className="h-5 w-5 text-teal-700 dark:text-teal-400" />
+          <HardHat className="icon-lg text-teal-700 dark:text-teal-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-gray-900 dark:text-white">
@@ -356,7 +356,7 @@ function TarjetaReciclador({
           </p>
           {r.nombre_localidad && (
             <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-[#0c1a12] dark:text-gray-300">
-              <MapIcon className="h-3 w-3" />
+              <MapIcon className="icon-sm" />
               {r.nombre_localidad}
             </span>
           )}
@@ -376,7 +376,7 @@ function TarjetaReciclador({
               href={callLink(r.numero_telefonico)}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
             >
-              <Phone className="h-3.5 w-3.5" />
+              <Phone className="icon-sm" />
               {t("directorio.call")}
             </a>
             <a
@@ -385,7 +385,7 @@ function TarjetaReciclador({
               rel="noopener noreferrer"
               className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600"
             >
-              <MessageCircle className="h-3.5 w-3.5" />
+              <MessageCircle className="icon-sm" />
               WhatsApp
             </a>
           </div>
@@ -421,12 +421,12 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
     <div className="rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
       <div className="mb-3 flex items-start gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-900/30">
-          <Warehouse className="h-5 w-5 text-accent-700 dark:text-accent-400" />
+          <Warehouse className="icon-lg text-accent-700 dark:text-accent-400" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
           <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-[#0c1a12] dark:text-gray-300">
-            <MapIcon className="h-3 w-3" />
+            <MapIcon className="icon-sm" />
             {p.nombre_localidad}
           </span>
         </div>
@@ -434,7 +434,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
 
       <div className="space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
         <p className="flex items-start gap-1.5">
-          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <MapPin className="icon-sm mt-0.5 shrink-0 text-gray-400" />
           <span className="flex-1">{p.direccion}</span>
           <button
             type="button"
@@ -444,21 +444,21 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
             title={t("directorio.copyAddress")}
           >
             {copiado ? (
-              <Check className="h-3.5 w-3.5 text-accent-600 dark:text-accent-400" />
+              <Check className="icon-sm text-accent-600 dark:text-accent-400" />
             ) : (
-              <Copy className="h-3.5 w-3.5" />
+              <Copy className="icon-sm" />
             )}
           </button>
         </p>
         {p.telefono_contacto && (
           <p className="flex items-center gap-1.5">
-            <Phone className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+            <Phone className="icon-sm shrink-0 text-gray-400" />
             {p.telefono_contacto}
           </p>
         )}
         {p.nombre_encargado && (
           <p className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-            <Users className="h-3.5 w-3.5 shrink-0" />
+            <Users className="icon-sm shrink-0" />
             {p.nombre_encargado}
           </p>
         )}

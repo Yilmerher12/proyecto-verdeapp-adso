@@ -284,7 +284,7 @@ export function AppShell({ children }: AppShellProps) {
             className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-accent-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
             aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
           >
-            {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+            {collapsed ? <Menu className="icon-lg" /> : <X className="icon-lg" />}
           </button>
         </div>
 
@@ -357,7 +357,7 @@ export function AppShell({ children }: AppShellProps) {
                           >
                             {/* Animación al pasar el mouse: comunicados "suena", novedades
                                 crece, el resto se redibuja (ver index.css). */}
-                            <Icon className={`h-4.5 w-4.5 shrink-0 ${Icon === Megaphone ? "icon-ring" : Icon === Newspaper ? "icon-nudge" : "icon-draw"}`} />
+                            <Icon className={`icon-lg shrink-0 ${Icon === Megaphone ? "icon-ring" : Icon === Newspaper ? "icon-nudge" : "icon-draw"}`} />
                             {!collapsed && <span className="min-w-0 truncate">{label}</span>}
                           </NavLink>
                         </li>
@@ -373,7 +373,7 @@ export function AppShell({ children }: AppShellProps) {
                             ${collapsed ? "justify-center" : ""}
                           `}
                         >
-                          <Icon className="h-4.5 w-4.5 shrink-0" />
+                          <Icon className="icon-lg shrink-0" />
                           {!collapsed && (
                             <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                               <span className="min-w-0 truncate">{label}</span>
@@ -403,7 +403,7 @@ export function AppShell({ children }: AppShellProps) {
               ${collapsed ? "justify-center" : ""}
             `}
           >
-            <LogOut className="h-4.5 w-4.5 shrink-0" />
+            <LogOut className="icon-lg shrink-0" />
             {!collapsed && <span className="truncate">{t("appShell.cerrarSesion")}</span>}
           </button>
         </div>
@@ -432,7 +432,7 @@ export function AppShell({ children }: AppShellProps) {
             text-accent-100/50 hover:bg-white/5 hover:text-white transition-colors"
           aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
         >
-          {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+          {collapsed ? <ChevronsRight className="icon-md" /> : <ChevronsLeft className="icon-md" />}
         </button>
       </aside>
 
@@ -449,7 +449,7 @@ export function AppShell({ children }: AppShellProps) {
                 : t("appShell.notificaciones")
             }
           >
-            <Bell className="h-5 w-5" aria-hidden="true" />
+            <Bell className="icon-lg" aria-hidden="true" />
             {noLeidas > 0 && (
               <span aria-hidden="true" className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-700 text-[9px] font-bold text-white">
                 {noLeidas > 9 ? "9+" : noLeidas}

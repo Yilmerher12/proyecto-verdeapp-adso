@@ -69,7 +69,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
                   (el check salta, la X niega, el triángulo tiembla) — ver index.css.
       */}
       <span className="mt-0.5 shrink-0" aria-hidden="true">
-        <Icono className={`h-5 w-5 icon-appear ${ICONO_POR_TIPO[type].anim}`} />
+        <Icono className={`icon-lg icon-appear ${ICONO_POR_TIPO[type].anim}`} />
       </span>
 
       {/* ¿Qué? Texto del mensaje y botón de cierre. */}
@@ -82,7 +82,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
           aria-label={t("common.close")}
         >
           {/* ¿Qué? Ícono X decorativo — la acción ya está descrita por aria-label del botón. */}
-          <X className="h-5 w-5" aria-hidden="true" />
+          <X className="icon-lg" aria-hidden="true" />
         </button>
       )}
     </div>

@@ -88,7 +88,7 @@ export function ConfirmModal({
     <Modal onClose={onClose} aria-label={ariaLabel} layer={layer}>
       <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
         <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full ${estilo.circulo}`}>
-          <Icon className={`h-6 w-6 ${estilo.icono}`} />
+          <Icon className={`icon-lg ${estilo.icono}`} />
         </div>
         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{title}</h2>
         <p className={`text-sm text-gray-500 dark:text-gray-400 ${children ? "mb-4" : "mb-6"}`}>{description}</p>

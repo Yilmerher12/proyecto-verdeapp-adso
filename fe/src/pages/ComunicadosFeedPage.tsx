@@ -67,7 +67,7 @@ export function ComunicadosFeedPage() {
             }`}
           >
             <div className="flex flex-wrap items-center gap-2">
-              {item.tipo === "URGENTE" && <TriangleAlert className="h-4 w-4 text-red-600 dark:text-red-400" />}
+              {item.tipo === "URGENTE" && <TriangleAlert className="icon-md text-red-600 dark:text-red-400" />}
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIPO_ESTILO[item.tipo]}`}>
                 {t(`comunicados.tipos.${item.tipo}`)}
               </span>
@@ -96,7 +96,7 @@ export function ComunicadosFeedPage() {
                 rel="noopener noreferrer"
                 className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
               >
-                <Paperclip className="h-3.5 w-3.5" />
+                <Paperclip className="icon-sm" />
                 {t("comunicados.viewAttachment")}
               </a>
             )}

@@ -81,7 +81,7 @@ export function LegalLayout({
             to="/"
             className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-accent-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded-md"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="icon-md" />
             {t("common.backToHome")}
           </Link>
 

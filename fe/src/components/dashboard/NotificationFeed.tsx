@@ -78,7 +78,7 @@ export function NotificationFeed({
     <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] shadow-sm">
       <div className="flex items-center justify-between px-5 pt-5 pb-3">
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-accent-600" />
+          <Clock className="icon-md text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h2>
           {noLeidas > 0 && (
             <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white ${accentBg}`}>
@@ -135,7 +135,7 @@ export function NotificationFeed({
                     !n.leida ? accentHighlight : "hover:bg-gray-50 dark:hover:bg-[#0c1a12]/60"
                   }`}
                 >
-                  <meta.Icon className={`mt-0.5 h-4 w-4 shrink-0 ${meta.color}`} aria-hidden="true" />
+                  <meta.Icon className={`icon-md mt-0.5 shrink-0 ${meta.color}`} aria-hidden="true" />
                   <div className="min-w-0 flex-1">
                     <p className={`text-sm ${!n.leida ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
                       {n.mensaje}

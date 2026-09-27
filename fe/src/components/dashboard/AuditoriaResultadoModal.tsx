@@ -58,7 +58,7 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
             <p className="text-sm font-semibold text-gray-900 dark:text-white">{auditoria.nombre_conjunto}</p>
 
             <div className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold ${nivel.claseBadge}`}>
-              <nivel.icon className="h-4 w-4" />
+              <nivel.icon className="icon-md" />
               {t(`dashboards.reciclador.auditoria.niveles.${auditoria.nivel_desempeno.toLowerCase()}`)}
             </div>
 
