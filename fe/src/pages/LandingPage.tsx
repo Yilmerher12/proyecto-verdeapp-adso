@@ -200,20 +200,20 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
   const heroAnim = debeAnimar ? "animate-hero-in" : "";
 
-  // ¿Qué? Efecto de máquina de escribir para "VerdeApp" + el eslogan, letra
-  //       por letra.
+  // ¿Qué? Efecto de máquina de escribir para "VerdeApp", letra por letra.
+  //       (Antes también escribía un eslogan debajo; se quitó porque sumaba un
+  //       quinto nivel de texto al hero sin decir qué hace la app.)
   // ¿Para qué? Mismo criterio de accesibilidad que el resto del Hero: si el
   //           sistema operativo pidió "reducir movimiento", o si esta no es
   //           la primera vez que se monta el Hero real (debeAnimar en false),
   //           el texto aparece completo de una — nunca se queda "escribiendo"
   //           en cada visita.
-  // ¿Impacto? aria-label en el <h1>/<p> lleva el texto final completo para
+  // ¿Impacto? aria-label en el <h1> lleva el texto final completo para
   //           lectores de pantalla; los caracteres que se van revelando
   //           quedan aria-hidden, así nadie escucha la palabra a medio
   //           escribir.
   const BRAND = "VerdeApp";
-  const BRAND_ACCENT_DESDE = 5; // "Verde" (blanco) | "App" (accent-400)
-  const eslogan = t("landing.hero.tagline");
+  const BRAND_ACCENT_DESDE = 5; // "Verde" (blanco) | "App" (accent-200; en oscuro accent-50 / accent-300)
 
   const [prefiereMenosMovimiento] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -221,7 +221,6 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
   const debeEscribir = debeAnimar && !prefiereMenosMovimiento;
 
   const [marcaEscrita, setMarcaEscrita] = useState(debeEscribir ? 0 : BRAND.length);
-  const [esloganEscrito, setEsloganEscrito] = useState(debeEscribir ? 0 : eslogan.length);
 
   useEffect(() => {
     if (!debeEscribir) return;
@@ -229,21 +228,11 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
     let cancelado = false;
     const temporizadores: ReturnType<typeof setTimeout>[] = [];
 
-    const escribirEslogan = (i: number) => {
-      if (cancelado) return;
-      setEsloganEscrito(i);
-      if (i < eslogan.length) {
-        temporizadores.push(setTimeout(() => escribirEslogan(i + 1), 55));
-      }
-    };
-
     const escribirMarca = (i: number) => {
       if (cancelado) return;
       setMarcaEscrita(i);
       if (i < BRAND.length) {
         temporizadores.push(setTimeout(() => escribirMarca(i + 1), 90));
-      } else {
-        temporizadores.push(setTimeout(() => escribirEslogan(1), 450));
       }
     };
 
@@ -256,9 +245,9 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
     // ¿Qué? Issue #225 — este silencio SÍ es intencional (a diferencia de
     //       otros que se corrigieron): la animación de escritura debe
     //       correr UNA sola vez al montar la pantalla. Si se agregaran
-    //       "eslogan"/"debeEscribir" a las dependencias, cambiar de idioma
-    //       a mitad de la animación la reiniciaría desde cero — un efecto
-    //       visual no deseado, no un bug real que corregir.
+    //       "debeEscribir" a las dependencias, un re-render a mitad de la
+    //       animación podría reiniciarla desde cero — un efecto visual no
+    //       deseado, no un bug real que corregir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -342,13 +331,16 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
             }}
             aria-hidden="true"
           >
-            {/* Este degradado es DISTINTO en modo claro y en modo oscuro —
-                no es el mismo verde con una capa negra encima. En oscuro es
-                más profundo y menos brillante, para que se sienta como la
-                versión de noche, no como el mismo día con un filtro. */}
-            <div
-              className="absolute inset-0 bg-[linear-gradient(160deg,rgba(5,46,22,0.80)_0%,rgba(21,128,61,0.42)_55%,rgba(5,46,22,0.78)_100%)] dark:bg-[linear-gradient(160deg,rgba(1,10,5,0.92)_0%,rgba(6,54,30,0.55)_55%,rgba(1,10,5,0.95)_100%)]"
-            />
+            {/* ¿Qué? Capa de un solo verde semitransparente sobre la foto
+                (antes era un degradado: restricciones.md los prohíbe).
+                ¿Impacto? 60% en claro y 75% en oscuro: lo justo para que la
+                foto se vea y el texto siga pasando WCAG AA sobre la zona más
+                clara de la foto (medido con sus pixeles reales). Claro:
+                "App" accent-200 3.22 (texto grande, mínimo 3), texto blanco
+                4.97 (mínimo 4.5). Oscuro: "Verde" accent-50 7.30, "App"
+                accent-300 3.56, texto blanco 8.04. Si se baja más la
+                opacidad, "App" vuelve a verse lavado. */}
+            <div className="absolute inset-0 bg-accent-950/60 dark:bg-accent-950/75" />
             <div
               className="absolute inset-0 opacity-15"
               style={{
@@ -365,11 +357,11 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
             <h1
               id="hero-heading"
               aria-label={BRAND}
-              className={`${heroAnim} mb-4 text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow sm:text-7xl`}
+              className={`${heroAnim} mb-4 text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow sm:text-7xl dark:text-accent-50`}
             >
               <span aria-hidden="true">
                 {BRAND.slice(0, Math.min(marcaEscrita, BRAND_ACCENT_DESDE))}
-                <span className="text-accent-400">
+                <span className="text-accent-200 dark:text-accent-300">
                   {BRAND.slice(BRAND_ACCENT_DESDE, marcaEscrita)}
                 </span>
                 {debeEscribir && marcaEscrita < BRAND.length && (
@@ -378,18 +370,6 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
               </span>
             </h1>
 
-            <p
-              aria-label={eslogan}
-              className={`${heroAnim} mb-2 text-lg font-semibold text-accent-300 sm:text-xl`}
-              style={{ animationDelay: "80ms" }}
-            >
-              <span aria-hidden="true">
-                {eslogan.slice(0, esloganEscrito)}
-                {debeEscribir && marcaEscrita >= BRAND.length && esloganEscrito < eslogan.length && (
-                  <span className="ml-1 inline-block h-[1em] w-[2px] align-middle bg-accent-300/80 animate-caret-blink" />
-                )}
-              </span>
-            </p>
 
             <p
               className={`${heroAnim} mb-3 text-lg font-semibold text-white/90 sm:text-xl`}
@@ -507,11 +487,10 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
         {/* ── PILARES ── antes era una lista apilada verticalmente (muy larga);
              ahora son 3 columnas lado a lado, igual que "¿Cómo funciona?", para
              que la sección no se sienta tan alargada. ── */}
-        {/* Mismo criterio que en el Hero: el degradado de modo oscuro no es
-            "el mismo verde con negro encima", son tonos propios, más
-            profundos, pensados como la versión de noche de este bloque. */}
+        {/* Fondo sólido del verde de marca (antes un degradado). En modo
+            oscuro accent-900 ya es la versión "de noche" de la paleta. */}
         <section
-          className="relative overflow-hidden bg-[linear-gradient(160deg,#052e16_0%,#14532d_60%,#166534_100%)] px-6 py-16 dark:bg-[linear-gradient(160deg,#01100a_0%,#052e16_60%,#0a3d1f_100%)] sm:py-20"
+          className="relative overflow-hidden bg-accent-900 px-6 py-16 sm:py-20"
           aria-labelledby="pilares-heading"
         >
           <div className="relative mx-auto max-w-5xl">
@@ -546,7 +525,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
       {/* ── FOOTER ── */}
       {/* En modo oscuro el footer necesita verse claramente MÁS oscuro que el
-          final de "Pilares" (que termina en un verde más claro, #0a3d1f) —
+          fondo de "Pilares" (verde accent-900) —
           si usan un tono parecido, las dos secciones se leen como una sola,
           sin ningún corte entre ellas. */}
       <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-white/10 dark:bg-[#030a06]">

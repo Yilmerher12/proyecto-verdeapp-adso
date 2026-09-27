@@ -502,7 +502,6 @@
     "backToTop": "Back to top",
     "nav": { "homeAriaLabel": "VerdeApp — home", "login": "Sign in", "register": "Sign up" },
     "hero": {
-      "tagline": "Changing the world",
       "subtitle": "Waste management for residential buildings in Bogotá",
       "description": "We connect residents, recyclers, and administrators to transform waste management in your community.",
       "ctaLogin": "I already have an account",
