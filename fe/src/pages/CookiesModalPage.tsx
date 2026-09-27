@@ -15,7 +15,7 @@ export function CookiesModalPage() {
     <>
       <LandingPage asBackdrop />
       <Modal onClose={() => navigate("/")} wide aria-label={t("legal.cookies.title")}>
-        <PoliticaCookiesPage embedded />
+        <PoliticaCookiesPage />
       </Modal>
     </>
   );

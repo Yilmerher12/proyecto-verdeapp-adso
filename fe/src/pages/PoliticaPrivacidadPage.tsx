@@ -36,12 +36,7 @@ const RESPONSABLE = {
   telefono: "Proyecto educativo — sin línea de atención comercial",
 } as const;
 
-interface PoliticaPrivacidadPageProps {
-  /** ¿Qué? Ver LegalLayout — true cuando se muestra dentro de un Modal. */
-  embedded?: boolean;
-}
-
-export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadPageProps) {
+export function PoliticaPrivacidadPage() {
   const { t } = useTranslation();
 
   const S = <strong className="text-gray-700 dark:text-gray-300" />;
@@ -79,7 +74,6 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
       title={t("legal.privacy.title")}
       lastUpdated="2026-02-01"
       version="1.0"
-      embedded={embedded}
     >
       <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
         <Trans

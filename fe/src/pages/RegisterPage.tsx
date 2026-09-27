@@ -390,12 +390,12 @@ export function RegisterPage() {
       */}
       {documentoAbierto === "terminos" && (
         <Modal onClose={() => setDocumentoAbierto(null)} wide layer="stacked" aria-label={t("legal.terms.title")}>
-          <TerminosDeUsoPage embedded />
+          <TerminosDeUsoPage />
         </Modal>
       )}
       {documentoAbierto === "privacidad" && (
         <Modal onClose={() => setDocumentoAbierto(null)} wide layer="stacked" aria-label={t("legal.privacy.title")}>
-          <PoliticaPrivacidadPage embedded />
+          <PoliticaPrivacidadPage />
         </Modal>
       )}
 
