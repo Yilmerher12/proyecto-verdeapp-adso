@@ -24,7 +24,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
   const { t } = useTranslation();
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-[#050f0a]">
+    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-night-base">
       <div className="flex justify-end gap-2 p-4">
         <LanguageSwitcher />
         <ThemeToggle />
@@ -48,7 +48,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
 
           {notice && <div className="mb-4">{notice}</div>}
 
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-[#23392b] dark:bg-[#0f2018] sm:p-8">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-panel sm:p-8">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
               {subtitle && (
@@ -61,7 +61,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
         </div>
       </main>
 
-      <footer className="border-t border-gray-200 px-6 py-5 dark:border-[#23392b]">
+      <footer className="border-t border-gray-200 px-6 py-5 dark:border-night-line">
         <nav
           className="mb-3 flex flex-wrap justify-center gap-x-5 gap-y-1"
           aria-label={t("legal.navAriaLabel")}

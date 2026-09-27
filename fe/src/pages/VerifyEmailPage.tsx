@@ -56,7 +56,7 @@ export function VerifyEmailPage() {
         : t("verifyEmail.errorMessage");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#050f0a] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-night-base px-4">
       <div className="w-full max-w-md">
         {/* Esta página no usa AuthLayout ni AppShell: el logo va aquí directo. */}
         <Link
@@ -66,7 +66,7 @@ export function VerifyEmailPage() {
         >
           <BrandLogo className="h-10" />
         </Link>
-        <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-200 dark:border-[#23392b] p-8 shadow-sm text-center">
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-200 dark:border-night-line p-8 shadow-sm text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {t("verifyEmail.title")}
           </h1>
@@ -123,7 +123,7 @@ export function VerifyEmailPage() {
               <div className="mt-6 flex justify-end gap-3">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#1a3324] border border-gray-300 dark:border-[#23392b] rounded-lg hover:bg-gray-50 dark:hover:bg-[#23392b] transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-night-field border border-gray-300 dark:border-night-line rounded-lg hover:bg-gray-50 dark:hover:bg-night-hover transition-colors"
                 >
                   {t("verifyEmail.goToLogin")}
                 </Link>

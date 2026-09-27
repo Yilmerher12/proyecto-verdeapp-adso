@@ -86,7 +86,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "archivo"
               ? "bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400"
-              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-[#1a3324] dark:text-gray-400 dark:hover:bg-[#23392b]"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
           }`}
         >
           {t("guiaApoyo.tabUpload")}
@@ -99,7 +99,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "link"
               ? "bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400"
-              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-[#1a3324] dark:text-gray-400 dark:hover:bg-[#23392b]"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
           }`}
         >
           {t("guiaApoyo.tabLink")}
@@ -117,10 +117,10 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
             aria-label={label}
             aria-invalid={!!errorEnlace}
             aria-describedby={errorEnlace ? "guia-apoyo-enlace-error" : undefined}
-            className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-[#1a3324] dark:text-white ${
+            className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
               errorEnlace
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-[#23392b]"
+                : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
             }`}
           />
           {errorEnlace && (
@@ -130,7 +130,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           )}
         </>
       ) : value ? (
-        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-[#23392b] dark:bg-[#1a3324]">
+        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-night-line dark:bg-night-field">
           <FileText className="icon-md shrink-0 text-gray-500 dark:text-gray-400" />
           <span className="min-w-0 flex-1 truncate text-xs text-gray-600 dark:text-gray-300">
             {value.split("/").pop()}
@@ -145,7 +145,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           </button>
         </div>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-gray-400 dark:hover:bg-[#23392b]">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-line dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
           {subiendo ? (
             <>
               <LoaderCircle className="icon-md animate-spin" />

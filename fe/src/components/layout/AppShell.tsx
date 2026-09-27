@@ -234,7 +234,7 @@ export function AppShell({ children }: AppShellProps) {
     //           visualmente el desborde sin quitar la causa, y en navegadores/
     //           casos distintos puede igual disparar la barra. La solución
     //           correcta es forzar min-w-0 en cada contenedor flex de la cadena.
-    <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#050f0a] flex-col sm:flex-row">
+    <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-night-base flex-col sm:flex-row">
       {/* ¿Qué? bg-accent-900 (antes un verde fijo #052e16, más oscuro).
           ¿Para qué? Se reportó que la barra lateral se veía "muy oscura"
           — accent-900 es un paso más claro dentro de la misma escala de
@@ -242,8 +242,8 @@ export function AppShell({ children }: AppShellProps) {
           en vez de un hex suelto (restricciones.md: accent-* es el único
           acento permitido en componentes reutilizables).
           ¿Impacto? Sigue siendo claramente más oscuro que el contenido
-          (bg-gray-200/dark:bg-[#0a1510]) y que las tarjetas
-          (bg-[#ffffff]/dark:bg-[#12231a]) — no se pierde la jerarquía
+          (bg-gray-200/dark:bg-night-page) y que las tarjetas
+          (bg-white/dark:bg-night-card) — no se pierde la jerarquía
           visual entre barra lateral y contenido. */}
       <aside
         className={`
@@ -438,11 +438,11 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* Área de contenido */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-[#23392b] dark:bg-[#12231a]">
+        <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-night-line dark:bg-night-card">
           {/* Campana de notificaciones */}
           <button
             onClick={() => navigate(roleMeta.dashboardHref)}
-            className="relative cursor-pointer rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-[#23392b] dark:hover:text-gray-200"
+            className="relative cursor-pointer rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-night-hover dark:hover:text-gray-200"
             aria-label={
               noLeidas > 0
                 ? t("appShell.notificacionesConNoLeidas", { count: noLeidas })
@@ -464,8 +464,8 @@ export function AppShell({ children }: AppShellProps) {
             ¿Para qué? Antes tenía una foto de hojas con una capa semitransparente
             encima; no combinaba con la paleta nueva y se pidió quitarla.
             ¿Impacto? Contraste tarjeta/fondo depende solo de los dos colores
-            sólidos (claro: gray-200, oscuro: #0a1510). */}
-        <main className="relative flex-1 overflow-y-auto bg-gray-200 dark:bg-[#0a1510]">
+            sólidos (claro: gray-200, oscuro: night-page). */}
+        <main className="relative flex-1 overflow-y-auto bg-gray-200 dark:bg-night-page">
           <div className="relative z-10 mx-auto max-w-7xl px-6 pb-6">{children}</div>
         </main>
       </div>

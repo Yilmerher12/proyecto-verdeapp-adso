@@ -94,6 +94,18 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 
 - Animación de íconos: solo en lo que se puede tocar (sidebar, botones, selector del semáforo) o en lo que aparece para avisar (mensajes). Se usan las clases `icon-draw`, `icon-hop`, `icon-shake`, `icon-ring`, `icon-nudge` y `icon-appear` de `fe/src/index.css`, que ya respetan `prefers-reduced-motion`. No se agregan librerías de animación.
 - Paleta de marca: "Páramo Fresco" en modo claro y "Bosque Andino" en modo oscuro, definidas como escala `green-*` (y `accent-*` apuntando a ella) en `fe/src/index.css`. Los botones principales usan `accent-*`; no hay un color de acento distinto (ni azul ni amarillo) para botones. Los paneles no llevan imagen de fondo: el área de contenido es un color sólido.
+- Ningún color escrito a mano en componentes (`bg-[#12231a]`, `border-[#23392b]`…): todo color sale de un token de `fe/src/index.css`. Las superficies del modo oscuro tienen su propio token (siempre con `dark:`):
+
+  | Token | Uso |
+  | --- | --- |
+  | `night-base` | Fondo raíz (auth, legales, shell, footer) |
+  | `night-page` | Fondo del área de contenido de los paneles |
+  | `night-card` | Tarjetas |
+  | `night-panel` | Modales, tarjeta de login, barras fijas |
+  | `night-inset` | Zonas hundidas: filas en hover, botón secundario |
+  | `night-field` | Campos de formulario |
+  | `night-line` | Bordes |
+  | `night-hover` | Fondo al pasar el mouse |
 - Logo: solo en SVG, en `fe/public/logos/` (`logo`, `logo-white`, `logo-mark`, `logo-mark-white` y `favicon`). Ninguna página pone un `<img>` del logo a mano: siempre se usa el componente `BrandLogo` (`fe/src/components/ui/BrandLogo.tsx`), que elige la versión según el fondo y el modo oscuro. No se usan PNG ni íconos de `lucide-react` (como `Leaf`) en lugar del logo.
 - El color de marca (`accent-*`) es el único acento de color permitido en componentes reutilizables; los colores por rol (sidebar, badges) viven centralizados en `fe/src/config/roleTheme.ts`, no repetidos por archivo.
 - Todo componente nuevo debe soportar modo claro y modo oscuro (`dark:`) desde el primer commit — no se agrega como una tarea aparte después.

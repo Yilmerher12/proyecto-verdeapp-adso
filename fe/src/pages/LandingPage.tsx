@@ -528,7 +528,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
           fondo de "Pilares" (verde accent-900) —
           si usan un tono parecido, las dos secciones se leen como una sola,
           sin ningún corte entre ellas. */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-white/10 dark:bg-[#030a06]">
+      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-white/10 dark:bg-night-base">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <BrandLogo className="h-7" />

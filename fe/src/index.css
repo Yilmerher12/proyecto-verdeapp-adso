@@ -89,6 +89,21 @@
   --color-accent-800: var(--color-green-800);
   --color-accent-900: var(--color-green-900);
   --color-accent-950: var(--color-green-950);
+
+  /* ── Superficies del modo oscuro (paleta "Bosque Andino") ────────────── */
+  /* ¿Qué? Un token por papel: se usan siempre con el prefijo dark:, ej.     */
+  /*       dark:bg-night-card, dark:border-night-line.                       */
+  /* ¿Para qué? Antes estos 8 colores estaban escritos a mano como           */
+  /*       dark:bg-[#12231a] en 50 archivos (536 veces).                     */
+  /* ¿Impacto? Cambiar una superficie del modo oscuro es tocar una línea.    */
+  --color-night-base: #050f0a;  /* fondo raíz (auth, legales, shell, footer) */
+  --color-night-page: #0a1510;  /* fondo del área de contenido de los paneles */
+  --color-night-card: #12231a;  /* tarjetas */
+  --color-night-panel: #0f2018; /* modales, tarjeta de login, barras fijas */
+  --color-night-inset: #0c1a12; /* zonas hundidas: filas en hover, botón secundario */
+  --color-night-field: #1a3324; /* campos de formulario */
+  --color-night-line: #23392b;  /* bordes */
+  --color-night-hover: #23392b; /* fondo al pasar el mouse (mismo tono que el borde) */
 }
 
 /* ============================================================================
@@ -99,8 +114,8 @@
               modo oscuro tenga su propia escala (sidebar verde, más claro que el
               fondo) en vez de solo oscurecer la del modo claro.
    ¿Impacto? Todo lo que use green-*, accent-* o gray-50/100/200 cambia de tono
-             sin tocar componentes. Las superficies del modo oscuro siguen escritas
-             a mano como dark:bg-[#...]: fondo #0a1510, tarjetas #12231a, bordes #23392b.
+             sin tocar componentes. Las superficies del modo oscuro son los tokens
+             night-* definidos arriba (fondo, tarjetas, campos, bordes…).
    ============================================================================ */
 :root {
   --color-green-50: #eaf7f1;
