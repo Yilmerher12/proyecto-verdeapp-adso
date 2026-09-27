@@ -13,6 +13,14 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
 
+# ¿Qué? Issue #352 — tamaño de cada columna en models/punto_acopio.py.
+# ¿Impacto? Deben coincidir con PUNTO_ACOPIO_* de fe/src/lib/validacion.ts.
+NOMBRE_MAX_LENGTH = 200
+DIRECCION_MAX_LENGTH = 255
+ENCARGADO_MAX_LENGTH = 100
+TELEFONO_MAX_LENGTH = 15
+
+
 class PuntoAcopioBase(BaseModel):
     nombre: str
     direccion: str
@@ -29,11 +37,20 @@ class PuntoAcopioBase(BaseModel):
         return v
 
 
-class PuntoAcopioCreate(PuntoAcopioBase):
+class _PuntoAcopioEntrada(PuntoAcopioBase):
+    """¿Qué? Máximos solo en lo que entra (crear/editar), no en la respuesta:
+    PuntoAcopioAdminResponse también hereda de PuntoAcopioBase."""
+    nombre: str = Field(max_length=NOMBRE_MAX_LENGTH)
+    direccion: str = Field(max_length=DIRECCION_MAX_LENGTH)
+    nombre_encargado: Optional[str] = Field(default=None, max_length=ENCARGADO_MAX_LENGTH)
+    telefono_contacto: Optional[str] = Field(default=None, max_length=TELEFONO_MAX_LENGTH)
+
+
+class PuntoAcopioCreate(_PuntoAcopioEntrada):
     pass
 
 
-class PuntoAcopioUpdate(PuntoAcopioBase):
+class PuntoAcopioUpdate(_PuntoAcopioEntrada):
     # ¿Qué? Por qué se hace este cambio (ej. "nuevo encargado desde el lunes").
     # ¿Impacto? No se guarda en el punto: si viene con texto, queda como un
     #           comentario más en su historial.

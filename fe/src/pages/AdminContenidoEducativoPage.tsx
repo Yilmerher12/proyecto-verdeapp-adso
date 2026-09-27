@@ -49,6 +49,12 @@ import {
   type ContenidoEducativoPayload,
   type EnvioContenido,
 } from "@/lib/contenidoEducativoApi";
+import {
+  CONTENIDO_CUERPO_MAX_LENGTH,
+  CONTENIDO_MODULO_MAX_LENGTH,
+  CONTENIDO_TITULO_MAX_LENGTH,
+  ENLACE_MAX_LENGTH,
+} from "@/lib/validacion";
 import { listarAuditoriasAdmin, type AuditoriaAdmin, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
 
 const FORM_VACIO: ContenidoEducativoPayload = {
@@ -1143,6 +1149,7 @@ export function AdminContenidoEducativoPage() {
                       value={nuevaCategoriaTexto}
                       onChange={(e) => setNuevaCategoriaTexto(e.target.value)}
                       onBlur={() => validarCampo("categoria")}
+                      maxLength={CONTENIDO_MODULO_MAX_LENGTH}
                       placeholder={t(`${p}.fields.categoryPlaceholder`)}
                       className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
                     />
@@ -1158,6 +1165,7 @@ export function AdminContenidoEducativoPage() {
                 value={form.titulo_tema}
                 onChange={(e) => actualizarCampo("titulo_tema", e.target.value)}
                 onBlur={() => validarCampo("titulo_tema")}
+                maxLength={CONTENIDO_TITULO_MAX_LENGTH}
                 placeholder={t(`${p}.fields.titlePlaceholder`)}
                 error={fieldErrors.titulo_tema}
               />
@@ -1167,7 +1175,9 @@ export function AdminContenidoEducativoPage() {
                   <label htmlFor="contenido-cuerpo" className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {t(`${p}.fields.content`)} <span className="text-red-500">*</span>
                   </label>
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400">{t(`${p}.fields.charCount`, { count: form.cuerpo_texto.length })}</span>
+                  <span id="contenido-cuerpo-contador" className="text-[11px] text-gray-500 dark:text-gray-400">
+                    {t(`${p}.fields.charCount`, { count: form.cuerpo_texto.length, max: CONTENIDO_CUERPO_MAX_LENGTH })}
+                  </span>
                 </div>
                 <div className="mb-1.5 flex gap-1.5">
                   <button type="button" onClick={() => aplicarFormato("h")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
@@ -1189,9 +1199,12 @@ export function AdminContenidoEducativoPage() {
                   value={form.cuerpo_texto}
                   onChange={(e) => actualizarCampo("cuerpo_texto", e.target.value)}
                   onBlur={() => validarCampo("cuerpo_texto")}
+                  maxLength={CONTENIDO_CUERPO_MAX_LENGTH}
                   rows={7}
                   aria-invalid={!!fieldErrors.cuerpo_texto}
-                  aria-describedby={fieldErrors.cuerpo_texto ? "contenido-cuerpo-error" : undefined}
+                  aria-describedby={
+                    fieldErrors.cuerpo_texto ? "contenido-cuerpo-error contenido-cuerpo-contador" : "contenido-cuerpo-contador"
+                  }
                   className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                     fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-line"
                   }`}
@@ -1213,6 +1226,7 @@ export function AdminContenidoEducativoPage() {
                   value={form.url_video ?? ""}
                   onChange={(e) => actualizarCampo("url_video", e.target.value)}
                   onBlur={() => validarCampo("url_video")}
+                  maxLength={ENLACE_MAX_LENGTH}
                   placeholder="https://www.youtube.com/watch?v=..."
                   aria-invalid={!!fieldErrors.url_video}
                   aria-describedby={fieldErrors.url_video ? "contenido-url-video-error" : undefined}

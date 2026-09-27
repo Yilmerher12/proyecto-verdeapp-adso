@@ -1014,23 +1014,25 @@ def change_password(
 ### 14.3 Otros routers del dominio (resumen)
 
 Las tablas anteriores solo cubrían `auth.py` y `users.py` — el backend real
-tiene 11 routers más, todos del dominio de reciclaje. En vez de repetir el
+tiene 14 routers más, casi todos del dominio de reciclaje. En vez de repetir el
 fragmento pedagógico completo para cada uno (ver directamente el código,
 cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 
 | Router                     | Prefijo                        | Endpoints | Propósito                                                                          |
 | --------------------------- | ------------------------------- | :-------: | ----------------------------------------------------------------------------------- |
-| `geography.py`              | `/api/v1/geography`             |     6     | Localidades, conjuntos y unidades para llenar formularios dinámicos (registro, filtros) |
-| `admin.py`                  | `/api/v1/admin`                 |     2     | Panel exclusivo del Admin del Sistema — vista SQL y procedimiento almacenado (Criterios 6 y 7) |
+| `geography.py`              | `/api/v1/geography`             |     4     | Localidades, conjuntos y unidades para llenar formularios dinámicos (registro, filtros) |
+| `admin.py`                  | `/api/v1/admin`                 |     5     | Panel exclusivo del Admin del Sistema — vista SQL y procedimiento almacenado (Criterios 6 y 7), listado de Admins de Conjunto y activar/desactivar cuentas |
 | `admin_conjunto.py`         | `/api/v1/admin-conjunto`        |     7     | Invitación, desvinculación y reasignación de Administradores de Conjunto (RQF-016) |
-| `conjunto_panel.py`         | `/api/v1/conjunto-panel`        |     3     | Panel propio del Admin de Conjunto — solo ve/edita SUS conjuntos, nunca los de otro |
-| `reciclador_conjunto.py`    | `/api/v1/reciclador-conjunto`   |     5     | Invitar, listar, aceptar/rechazar la relación Reciclador↔Conjunto                  |
+| `conjunto_panel.py`         | `/api/v1/conjunto-panel`        |     4     | Panel propio del Admin de Conjunto — solo ve/edita SUS conjuntos, nunca los de otro |
+| `reciclador_conjunto.py`    | `/api/v1/reciclador-conjunto`   |     7     | Invitar, listar, aceptar/rechazar la relación Reciclador↔Conjunto                  |
 | `directorio.py`             | `/api/v1/directorio`            |     2     | Directorio público de recicladores y puntos de acopio                              |
-| `notificaciones.py`         | `/api/v1/notificaciones`        |     7     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, etc.)      |
+| `notificaciones.py`         | `/api/v1/notificaciones`        |     8     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, etc.)      |
 | `auditoria_conjunto.py`     | `/api/v1/auditorias-conjunto`   |     5     | Semáforo de auditoría del Reciclador — registro, historiales e historial global del Admin Sistema por semana (RQF-009) |
 | `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     7     | Catálogo de contenido educativo — lectura para todos, gestión y envío manual a conjuntos solo Admin Sistema (RQF-004/010/013) |
 | `comunicados.py`            | `/api/v1/comunicados`           |     5     | Comunicados del conjunto — publica Admin de Conjunto, ven Residente/Reciclador (RQF-014) |
 | `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
+| `puntos_acopio.py`          | `/api/v1/admin/puntos-acopio` |     8     | Gestión de puntos de acopio del Admin Sistema — crear, editar, dar de baja e historial de comentarios (RQF-011) |
+| `uploads.py`                | `/api/v1/uploads`               |     1     | Subida genérica de adjuntos (imagen, o PDF/Word/Excel si se pide) para comunicados, novedades y contenido educativo |
 | `contact.py`                | `/api/v1/contact`               |     1     | Formulario de contacto de la landing — público, 3/min por IP, reenvía el mensaje a `CONTACT_EMAIL` y responde 503 si el correo no sale (#351) |
 
 Todos estos routers están cubiertos por tests en `app/tests/` (ver sección 17).
@@ -1326,7 +1328,9 @@ uv run pytest app/tests/test_auth.py -v
 | `app/dependencies.py`          | ≥ 85%     |
 | **Total**                      | **≥ 90%** |
 
-### 17.5 Tests existentes (38 tests)
+### 17.5 Tests de autenticación (`test_auth.py`)
+
+Esta tabla solo resume `test_auth.py`. La suite completa tiene 24 archivos en `app/tests/`, uno por dominio (comunicados, novedades, auditorías, puntos de acopio, contacto, límites de longitud...), con 520 pruebas en total (septiembre de 2026). Para ver el conteo actual: `uv run pytest -q`.
 
 | Clase de test           | Endpoint              | Casos cubiertos                                                                       |
 | ----------------------- | --------------------- | ------------------------------------------------------------------------------------- |

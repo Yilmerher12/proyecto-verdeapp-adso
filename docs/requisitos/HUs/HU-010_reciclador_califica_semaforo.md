@@ -43,7 +43,7 @@
 - **cuando** completo el formulario,
 - **entonces** debo poder agregar una observación de texto opcional (máximo 255 caracteres).
 
-> **Nota (2026-08-28)**: la observación opcional sí existe y funciona, pero el backend no impone el límite de 255 caracteres (acepta texto de cualquier longitud). No bloquea la funcionalidad, solo difiere del criterio exacto escrito aquí.
+> **Nota (2026-08-28, actualizada 2026-09-27)**: la observación opcional existe y funciona. Desde el issue #352 el límite de 255 caracteres se cumple: el formulario no deja escribir de más y muestra un contador, y el backend responde 422 si llega un texto más largo.
 
 ### CA-010.3 — Un registro por conjunto cada 24 horas
 

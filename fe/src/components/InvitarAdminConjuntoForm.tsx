@@ -10,6 +10,7 @@ import { UserPlus, Building, Map as MapIcon } from "lucide-react";
 import { invitarAdministradorConjunto } from "@/lib/adminConjuntoApi";
 import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
+import { CORREO_MAX_LENGTH, CORREO_REGEX } from "@/lib/validacion";
 
 interface Localidad {
   id_localidad: number;
@@ -32,6 +33,19 @@ export function InvitarAdminConjuntoForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // ¿Qué? Issue #352 — con noValidate el navegador ya no revisa el correo;
+  //       lo revisa la app al salir del campo, igual que en el registro.
+  const [errorCorreo, setErrorCorreo] = useState<string | undefined>();
+  const validarCorreo = () => {
+    const valor = correo.trim();
+    const mensaje = !valor
+      ? t("auth.register.validation.emailRequired")
+      : !CORREO_REGEX.test(valor)
+        ? t("auth.register.validation.emailInvalid")
+        : undefined;
+    setErrorCorreo(mensaje);
+    return !mensaje;
+  };
 
   // ¿Qué? Localidades para el selector — mismo endpoint que ya usa el
   //       Directorio, el registro público y el panel de Admin del Sistema.
@@ -68,6 +82,8 @@ export function InvitarAdminConjuntoForm() {
     setError(null);
     setMensajeExito(null);
 
+    if (!validarCorreo()) return;
+
     if (conjuntosSeleccionados.length === 0) {
       setError(t("invitarAdminConjunto.validation.noConjuntoSelected"));
       return;
@@ -101,13 +117,19 @@ export function InvitarAdminConjuntoForm() {
         {t("invitarAdminConjunto.description")}
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} noValidate className="space-y-5">
         <InputField
           label={t("invitarAdminConjunto.emailLabel")}
           name="correo"
           type="email"
           value={correo}
-          onChange={(e) => setCorreo(e.target.value)}
+          onChange={(e) => {
+            setCorreo(e.target.value);
+            setErrorCorreo(undefined);
+          }}
+          onBlur={validarCorreo}
+          error={errorCorreo}
+          maxLength={CORREO_MAX_LENGTH}
         />
 
         <div>

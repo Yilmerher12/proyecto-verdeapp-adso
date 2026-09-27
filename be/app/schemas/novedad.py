@@ -10,19 +10,24 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
-from app.utils.enlaces import EnlaceAdjunto
+from app.utils.enlaces import ENLACE_MAX_LENGTH, EnlaceAdjunto
 
 from app.models.novedad import AlcanceNovedad
+
+# ¿Qué? Issue #352 — la columna es Text (sin límite), pero sin un máximo en
+#       la app se podía publicar un texto enorme en el feed de todos.
+# ¿Impacto? Debe coincidir con NOVEDAD_TEXTO_MAX_LENGTH de fe/src/lib/validacion.ts.
+TEXTO_MAX_LENGTH = 2000
 
 
 class CrearNovedadRequest(BaseModel):
     """¿Qué? Lo que envía el Admin Sistema al publicar una novedad nueva (HU-032)."""
     alcance: AlcanceNovedad
-    texto: str
+    texto: str = Field(max_length=TEXTO_MAX_LENGTH)
     url_adjunto: EnlaceAdjunto = None
-    url_video: Optional[str] = None
+    url_video: Optional[str] = Field(default=None, max_length=ENLACE_MAX_LENGTH)
     # ¿Qué? Lista vacía (o sin mandar) = la novedad llega a todos los
     #       conjuntos del alcance elegido, igual que siempre. Con uno o
     #       varios ids, solo a esos conjuntos.
@@ -48,9 +53,9 @@ class EditarNovedadRequest(BaseModel):
               RF (CA-034.2) dice para alcance, a quién llega una novedad se
               decide al publicarla, no después.
     """
-    texto: str
+    texto: str = Field(max_length=TEXTO_MAX_LENGTH)
     url_adjunto: EnlaceAdjunto = None
-    url_video: Optional[str] = None
+    url_video: Optional[str] = Field(default=None, max_length=ENLACE_MAX_LENGTH)
     fecha_expiracion: Optional[datetime] = None
 
     @field_validator("texto")

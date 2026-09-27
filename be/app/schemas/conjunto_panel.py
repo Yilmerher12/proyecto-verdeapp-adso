@@ -8,7 +8,11 @@ Descripción: Schemas para el panel propio del Administrador de Conjunto.
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+# ¿Qué? Issue #352 — tamaño de la columna nit (String(50)).
+# ¿Impacto? Debe coincidir con NIT_MAX_LENGTH de fe/src/lib/validacion.ts.
+NIT_MAX_LENGTH = 50
 
 
 class ConjuntoAdministradoResponse(BaseModel):
@@ -45,4 +49,4 @@ class EditarConjuntoRequest(BaseModel):
               oficial no lo trae (queda NULL al importar), así que dejarlo
               editable es la única forma de completarlo con el dato real.
     """
-    nit: Optional[str] = None
+    nit: Optional[str] = Field(default=None, max_length=NIT_MAX_LENGTH)

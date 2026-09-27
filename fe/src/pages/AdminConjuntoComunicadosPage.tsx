@@ -10,6 +10,8 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { Alert } from "@/components/ui/Alert";
 import { Paginacion } from "@/components/ui/Paginacion";
+import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
+import { COMUNICADO_TEXTO_MAX_LENGTH } from "@/lib/validacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
@@ -432,9 +434,12 @@ export function AdminConjuntoComunicadosPage() {
                 id="comunicado-texto"
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
+                maxLength={COMUNICADO_TEXTO_MAX_LENGTH}
+                aria-describedby="comunicado-texto-contador"
                 rows={5}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
               />
+              <ContadorCaracteres id="comunicado-texto-contador" actual={form.texto.length} max={COMUNICADO_TEXTO_MAX_LENGTH} />
             </div>
 
             <ImagenAdjuntaField

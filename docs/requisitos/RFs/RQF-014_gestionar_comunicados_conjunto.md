@@ -64,7 +64,7 @@ Los usuarios destinatarios ven los comunicados en un feed dentro de la app y rec
 ## Reglas de negocio
 
 - RN-001: Solo el Admin Conjunto puede publicar, editar o eliminar comunicados de su conjunto.
-- RN-002: El texto del comunicado es obligatorio; los adjuntos son opcionales.
+- RN-002: El texto del comunicado es obligatorio (máximo 2000 caracteres, issue #352); los adjuntos son opcionales (enlace de máximo 500 caracteres).
 - RN-003: El sistema sugiere la fecha de expiración según el tipo de comunicado, pero es editable.
 - RN-004: Los comunicados se eliminan automáticamente del feed al vencer su fecha de expiración.
 - RN-005: El Admin Conjunto solo puede gestionar comunicados de los conjuntos que administra.

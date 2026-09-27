@@ -449,4 +449,18 @@ describe("AdminPuntosAcopioPage", () => {
       expect(cabecera).toHaveTextContent("1 de baja");
     });
   });
+
+  // ¿Qué? Issue #352 — cada campo usa el tamaño de su columna en la base de datos.
+  it("no deja escribir más de lo que guarda cada columna", async () => {
+    const user = userEvent.setup();
+    await renderPage(false);
+
+    await screen.findByText("Todavía no hay puntos de acopio registrados.");
+    await user.click(screen.getByRole("button", { name: "Nuevo punto de acopio" }));
+
+    expect(screen.getByLabelText("Nombre")).toHaveAttribute("maxLength", "200");
+    expect(screen.getByLabelText("Dirección")).toHaveAttribute("maxLength", "255");
+    expect(screen.getByLabelText("Nombre del encargado")).toHaveAttribute("maxLength", "100");
+    expect(screen.getByLabelText("Teléfono de contacto")).toHaveAttribute("maxLength", "15");
+  });
 });

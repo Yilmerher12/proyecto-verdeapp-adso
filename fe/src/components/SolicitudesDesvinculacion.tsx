@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { BadgeCheck, ClipboardList, OctagonX } from "lucide-react";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Alert } from "@/components/ui/Alert";
+import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
+import { DESVINCULACION_MOTIVO_MAX_LENGTH } from "@/lib/validacion";
 import {
   listarSolicitudesDesvinculacion,
   resolverSolicitudDesvinculacion,
@@ -164,9 +166,16 @@ export function SolicitudesDesvinculacion({
                     id="motivo-rechazo"
                     value={motivoRechazo}
                     onChange={(e) => setMotivoRechazo(e.target.value)}
+                    maxLength={DESVINCULACION_MOTIVO_MAX_LENGTH}
+                    aria-describedby="motivo-rechazo-contador"
                     placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}
                     rows={2}
                     className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
+                  />
+                  <ContadorCaracteres
+                    id="motivo-rechazo-contador"
+                    actual={motivoRechazo.length}
+                    max={DESVINCULACION_MOTIVO_MAX_LENGTH}
                   />
                   <div className="flex gap-2">
                     <button

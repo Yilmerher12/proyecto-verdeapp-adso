@@ -10,12 +10,17 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
+
+# ¿Qué? Issue #352 — motivo y motivo_rechazo son Text (sin límite); este
+#       máximo es de la app, igual que el de los comentarios de acopio.
+# ¿Impacto? Debe coincidir con DESVINCULACION_MOTIVO_MAX_LENGTH de fe/src/lib/validacion.ts.
+MOTIVO_MAX_LENGTH = 1000
 
 
 class SolicitarDesvinculacionRequest(BaseModel):
     """¿Qué? Lo que envía el Admin Conjunto al pedir desvincularse — el motivo es opcional (RF)."""
-    motivo: Optional[str] = None
+    motivo: Optional[str] = Field(default=None, max_length=MOTIVO_MAX_LENGTH)
 
 
 class SolicitudDesvinculacionResponse(BaseModel):
@@ -38,7 +43,7 @@ class ResolverSolicitudDesvinculacionRequest(BaseModel):
               debe saber por qué su solicitud no procedió (CA-023.3).
     """
     aprobar: bool
-    motivo_rechazo: Optional[str] = None
+    motivo_rechazo: Optional[str] = Field(default=None, max_length=MOTIVO_MAX_LENGTH)
 
     # ¿Qué? Se usa un validador de MODELO (no de campo) porque un
     #       @field_validator normal no se ejecuta cuando el campo usa su

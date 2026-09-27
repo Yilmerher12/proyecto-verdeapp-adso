@@ -2,9 +2,16 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.utils.enlaces import EnlaceAdjunto, EnlaceVideo
+
+# ¿Qué? Issue #352 — módulo y título = tamaño de su columna (String(255));
+#       el cuerpo es Text, con un máximo propio de la app.
+# ¿Impacto? Deben coincidir con CONTENIDO_* de fe/src/lib/validacion.ts.
+MODULO_MAX_LENGTH = 255
+TITULO_MAX_LENGTH = 255
+CUERPO_MAX_LENGTH = 10000
 
 
 class ContenidoEducativoBase(BaseModel):
@@ -53,8 +60,12 @@ class _ContenidoEducativoEntrada(ContenidoEducativoBase):
           archivo subido.
     ¿Para qué? No se ponen en ContenidoEducativoBase porque de ahí también
               hereda ContenidoEducativoResponse: un dato viejo que no
-              cumpla rompería el catálogo completo con un 500.
+              cumpla rompería el catálogo completo con un 500. Los máximos
+              de #352 van aquí por la misma razón.
     """
+    modulo_categoria: str = Field(max_length=MODULO_MAX_LENGTH)
+    titulo_tema: str = Field(max_length=TITULO_MAX_LENGTH)
+    cuerpo_texto: str = Field(max_length=CUERPO_MAX_LENGTH)
     url_video: EnlaceVideo = None
     url_guia: EnlaceAdjunto = None
 

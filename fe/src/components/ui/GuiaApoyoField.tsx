@@ -11,6 +11,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FileText, LoaderCircle, Upload, X } from "lucide-react";
 import { subirAdjunto } from "@/lib/uploadsApi";
+import { ENLACE_MAX_LENGTH } from "@/lib/validacion";
 
 interface GuiaApoyoFieldProps {
   label: string;
@@ -113,6 +114,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onBlur={onBlurEnlace}
+            maxLength={ENLACE_MAX_LENGTH}
             placeholder="https://..."
             aria-label={label}
             aria-invalid={!!errorEnlace}

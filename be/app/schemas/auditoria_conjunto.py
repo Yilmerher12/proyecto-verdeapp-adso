@@ -14,6 +14,12 @@ from pydantic import BaseModel, ConfigDict
 #       respaldado por una foto de evidencia (ver AuditoriaConjunto.ruta_evidencia).
 NivelDesempeno = Literal["EXCELENTE", "BUENA", "REGULAR", "DEFICIENTE"]
 
+# ¿Qué? Issue #352 — el tema es String(255); la descripción es Text, con el
+#       máximo de 255 que pide HU-010. Los aplica el router (llega como Form).
+# ¿Impacto? Deben coincidir con AUDITORIA_* de fe/src/lib/validacion.ts.
+TEMA_MAX_LENGTH = 255
+DESCRIPCION_MAX_LENGTH = 255
+
 
 class AuditoriaConjuntoResponse(BaseModel):
     id_auditoria: UUID

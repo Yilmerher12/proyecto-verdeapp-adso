@@ -128,4 +128,18 @@ describe("AdminConjuntoComunicadosPage", () => {
     expect(residentes).toHaveAttribute("aria-checked", "true");
     expect(ambos).toHaveAttribute("aria-checked", "false");
   });
+
+  // ¿Qué? Issue #352 — el texto no deja escribir más de lo que acepta el
+  //       backend, y el contador avisa cuánto queda.
+  it("limita el mensaje del comunicado y muestra el contador de caracteres", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Nuevo comunicado" }));
+    const texto = await screen.findByLabelText(/Mensaje/);
+    expect(texto).toHaveAttribute("maxLength", "2000");
+
+    await user.type(texto, "Hola");
+    expect(screen.getByText("4/2000 caracteres")).toBeInTheDocument();
+  });
 });

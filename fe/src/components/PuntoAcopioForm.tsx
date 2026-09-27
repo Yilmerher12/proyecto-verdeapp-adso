@@ -15,6 +15,12 @@ import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
 import { InputField } from "@/components/ui/InputField";
 import type { PuntoAcopioPayload } from "@/lib/puntosAcopioApi";
+import {
+  PUNTO_ACOPIO_DIRECCION_MAX_LENGTH,
+  PUNTO_ACOPIO_ENCARGADO_MAX_LENGTH,
+  PUNTO_ACOPIO_NOMBRE_MAX_LENGTH,
+  PUNTO_ACOPIO_TELEFONO_MAX_LENGTH,
+} from "@/lib/validacion";
 
 interface Localidad {
   id_localidad: number;
@@ -111,6 +117,7 @@ export function PuntoAcopioForm({
           value={form.nombre}
           onChange={(e) => actualizarCampo("nombre", e.target.value)}
           onBlur={() => validarCampo("nombre")}
+          maxLength={PUNTO_ACOPIO_NOMBRE_MAX_LENGTH}
           placeholder={t("adminPuntosAcopio.fields.namePlaceholder")}
           error={fieldErrors.nombre}
         />
@@ -155,6 +162,7 @@ export function PuntoAcopioForm({
         value={form.direccion}
         onChange={(e) => actualizarCampo("direccion", e.target.value)}
         onBlur={() => validarCampo("direccion")}
+        maxLength={PUNTO_ACOPIO_DIRECCION_MAX_LENGTH}
         placeholder={t("adminPuntosAcopio.fields.addressPlaceholder")}
         error={fieldErrors.direccion}
       />
@@ -165,6 +173,7 @@ export function PuntoAcopioForm({
           name="nombre_encargado"
           value={form.nombre_encargado ?? ""}
           onChange={(e) => actualizarCampo("nombre_encargado", e.target.value)}
+        maxLength={PUNTO_ACOPIO_ENCARGADO_MAX_LENGTH}
         />
 
         <InputField
@@ -172,6 +181,7 @@ export function PuntoAcopioForm({
           name="telefono_contacto"
           value={form.telefono_contacto ?? ""}
           onChange={(e) => actualizarCampo("telefono_contacto", e.target.value)}
+        maxLength={PUNTO_ACOPIO_TELEFONO_MAX_LENGTH}
         />
       </div>
 

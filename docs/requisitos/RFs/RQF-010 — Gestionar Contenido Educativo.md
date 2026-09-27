@@ -31,7 +31,7 @@ La acción no es un campo: la define el método HTTP (`POST` crea, `PUT /{id_con
 | ------------------ | ----- | ----------- | ---------------------------------------------------------------------------- |
 | `modulo_categoria` | Texto | Sí          | No puede quedar vacío. Máximo 255 caracteres. Puede ser una categoría existente o una nueva. |
 | `titulo_tema`      | Texto | Sí          | Mínimo 5 caracteres, máximo 255.                                             |
-| `cuerpo_texto`     | Texto | Sí          | Mínimo 20 caracteres. Admite Markdown simple (`##`, listas, negrita).        |
+| `cuerpo_texto`     | Texto | Sí          | Mínimo 20 y máximo 10000 caracteres. Admite Markdown simple (`##`, listas, negrita). |
 | `url_video`        | Texto | No          | Solo `https://` de YouTube (RN-004). Máximo 500 caracteres.                  |
 | `url_guia`         | Texto | No          | Solo `https://` o un archivo subido a VerdeApp (`/uploads/...`) (RN-004). Máximo 500 caracteres. |
 

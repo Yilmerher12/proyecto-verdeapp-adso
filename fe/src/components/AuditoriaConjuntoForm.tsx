@@ -20,6 +20,8 @@ import { crearAuditoria, type AuditoriaConjunto, type NivelDesempeno } from "@/l
 import { listarContenido } from "@/lib/contenidoEducativoApi";
 import { NIVELES_DESEMPENO, ORDEN_NIVELES_SELECCIONABLES } from "@/config/nivelesDesempeno";
 import { CATEGORIAS_NO_AUDITABLES, NOMBRE_SIMPLE_CATEGORIA } from "@/config/categoriasEducativas";
+import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
+import { AUDITORIA_DESCRIPCION_MAX_LENGTH } from "@/lib/validacion";
 
 const MAXIMO_FOTOS = 3;
 
@@ -264,9 +266,16 @@ export function AuditoriaConjuntoForm({
             id="auditoria-descripcion"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
+            maxLength={AUDITORIA_DESCRIPCION_MAX_LENGTH}
+            aria-describedby="auditoria-descripcion-contador"
             rows={2}
             placeholder={t("dashboards.reciclador.auditoria.descripcionPlaceholder")}
             className="w-full resize-none rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+          />
+          <ContadorCaracteres
+            id="auditoria-descripcion-contador"
+            actual={descripcion.length}
+            max={AUDITORIA_DESCRIPCION_MAX_LENGTH}
           />
         </div>
 
