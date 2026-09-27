@@ -144,6 +144,13 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
 
+    # ¿Qué? Issue #351 — buzón del equipo que recibe los mensajes del
+    #       formulario de contacto de la landing (POST /api/v1/contact).
+    # ¿Para qué? Antes el formulario fingía el envío y el mensaje se perdía.
+    # ¿Impacto? En desarrollo llega a Mailpit (http://localhost:8025) sin
+    #           importar el dominio; en producción debe ser un buzón real.
+    CONTACT_EMAIL: str = "contacto@verdeapp.local"
+
     # ────────────────────────────
     # 🌐 URLs
     # ────────────────────────────

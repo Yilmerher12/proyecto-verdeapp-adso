@@ -580,8 +580,17 @@
       "label": "Mensaje",
       "placeholder": "Escribe tu mensaje aquí..."
     },
-    "incomplete": "Completa todos los campos",
-    "submit": "Enviar Mensaje"
+    "incomplete": "Completa todos los campos correctamente",
+    "submit": "Enviar Mensaje",
+    "charCount": "{{actual}}/{{max}} caracteres",
+    "errorDefault": "No pudimos enviar tu mensaje. Intenta de nuevo más tarde.",
+    "validation": {
+      "nameRequired": "El nombre es obligatorio",
+      "subjectMin": "El asunto debe tener al menos {{min}} caracteres",
+      "subjectMax": "El asunto no puede superar {{max}} caracteres",
+      "messageMin": "El mensaje debe tener al menos {{min}} caracteres",
+      "messageMax": "El mensaje no puede superar {{max}} caracteres"
+    }
   },
   "dashboards": {
     "common": {

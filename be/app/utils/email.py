@@ -6,6 +6,7 @@ Descripción: Utilidades para el envío de emails transaccionales.
            2. Recuperación de contraseña (enlace de reset).
            3. Invitación de Administrador de Conjunto (crea cuenta nueva).
            4. Invitación de Reciclador a un Conjunto (usuario ya existente).
+           5. Mensaje del formulario de contacto al buzón del equipo (#351).
 ¿Impacto? Sin este módulo, los flujos de verificación, recuperación e
           invitación no pueden notificar al usuario.
 
@@ -24,6 +25,7 @@ import logging
 import smtplib
 import ssl
 from email.mime.multipart import MIMEMultipart
+from html import escape
 from email.mime.text import MIMEText
 
 import resend
@@ -64,8 +66,11 @@ def _send_email_smtp(to_email: str, subject: str, html: str) -> None:
 
 async def _enviar(
     email: str, subject: str, html: str, tipo: str, enlace: str | None = None
-) -> None:
+) -> bool:
     """Envía un correo por SMTP, por Resend o, si no hay ninguno, solo lo registra.
+
+    Devuelve True solo si el correo salió de verdad (issue #351: el contacto
+    no puede decir "enviado" si no fue así). Los demás llamadores lo ignoran.
 
     ¿Qué? Issue #309 — antes, cada una de las 4 funciones send_*_email
           copiaba este mismo bloque (12 lugares que escribían en el log).
@@ -103,7 +108,7 @@ async def _enviar(
     else:
         if via:
             logger.info("Correo de %s enviado vía %s a %s", tipo, via, destinatario)
-            return
+            return True
         logger.warning("No hay backend de correo configurado — %s para %s no se envió", tipo, destinatario)
 
     # ¿Qué? Sin emojis en estos mensajes a propósito.
@@ -112,6 +117,7 @@ async def _enviar(
     #           de 50 líneas al correr uvicorn en consola.
     if es_desarrollo and enlace:
         logger.info("\n%s\nENLACE (%s) para %s:\n   %s\n%s", "=" * 60, tipo, email, enlace, "=" * 60)
+    return False
 
 
 async def send_verification_email(email: str, token: str) -> None:
@@ -275,3 +281,28 @@ async def send_reciclador_conjunto_invitation_email(email: str, nombre_conjunto:
     """
 
     await _enviar(email, subject, html_content, f"invitación de reciclador a {nombre_conjunto}")
+
+
+async def send_contact_email(name: str, email: str, subject: str, message: str) -> bool:
+    """Reenvía un mensaje del formulario de contacto al buzón del equipo.
+
+    ¿Qué? Issue #351 — a diferencia de los otros correos, el contenido lo
+          escribe un visitante anónimo, así que todo pasa por escape().
+    ¿Para qué? Sin escapar, alguien podría meter HTML (un enlace falso, una
+              imagen de rastreo) que el equipo vería como parte del correo.
+    ¿Impacto? Devuelve si el correo salió: el router responde 503 si no.
+    """
+    cuerpo = escape(message).replace("\n", "<br>")
+    html_content = f"""
+    <html>
+    <body style="font-family: system-ui, -apple-system, sans-serif;
+                 max-width: 600px; margin: 0 auto; padding: 24px; color: #111827;">
+        <h2 style="color: #15803d; margin-bottom: 8px;">Nuevo mensaje de contacto</h2>
+        <p style="color: #374151;"><strong>De:</strong> {escape(name)} &lt;{escape(email)}&gt;</p>
+        <p style="color: #374151;"><strong>Asunto:</strong> {escape(subject)}</p>
+        <p style="color: #374151;">{cuerpo}</p>
+    </body>
+    </html>
+    """
+
+    return await _enviar(settings.CONTACT_EMAIL, f"VerdeApp — Contacto: {subject}", html_content, "contacto")
