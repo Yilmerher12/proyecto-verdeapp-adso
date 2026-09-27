@@ -69,3 +69,9 @@
 3. **`dark:text-gray-500` sobre tarjeta en modo oscuro (3.39).** Mismo caso que el punto 1 (la pareja invertida).
 
 Se dejan para una tarjeta aparte (`fix/`), porque esta auditoría se hizo en una rama de documentación.
+
+## Corrección (2026-09-27, rama `fix/contraste-grises-y-limpieza`)
+
+- **Pendientes 1 y 3 — corregidos.** Las 15 clases con la pareja invertida pasaron a `text-gray-500 dark:text-gray-400` (4.84 en claro, 6.30 en oscuro), y los 3 textos que solo tenían `text-gray-400` también. Los botones de solo ícono (cerrar modal, cerrar panel lateral, copiar en el directorio) usaban `text-gray-400` (2.60, por debajo del 3:1 que WCAG 1.4.11 pide a los controles) y pasaron al mismo par. Los íconos dentro de los campos de Login y Contacto ahora heredan el color del `InputField` (mismo par).
+- **Pendiente 2 — revisado, no aplica.** Al buscar los usos reales, los subtítulos de página (`text-gray-500`) van todos dentro de tarjetas blancas (4.84), no directo sobre el fondo de página. El par 4.28 era teórico.
+- **Encontrado y corregido en la misma rama:** en "Nuestros pilares" de la landing, los números (`accent-500`, 3.54 claro / 3.01 oscuro) y el antetítulo (`accent-400`, 4.37 en oscuro) son texto pequeño sobre `accent-900`; pasaron a `accent-300` (6.08 / 6.49).

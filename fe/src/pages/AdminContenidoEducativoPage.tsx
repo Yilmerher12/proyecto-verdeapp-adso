@@ -654,7 +654,7 @@ export function AdminContenidoEducativoPage() {
                 </button>
                 <div className="min-w-[130px] text-center">
                   <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{rangoSemanaUTC(semana)}</p>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">{t(`${p}.week.mondayToSunday`)}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{t(`${p}.week.mondayToSunday`)}</p>
                 </div>
                 <button
                   type="button"
@@ -759,11 +759,11 @@ export function AdminContenidoEducativoPage() {
                             </span>
                           </td>
                           <td className="max-w-[220px] px-5 py-3 text-xs text-gray-600 dark:text-gray-300">
-                            {a.descripcion ? <span className="line-clamp-2">{a.descripcion}</span> : <span className="italic text-gray-400 dark:text-gray-500">{t(`${p}.week.noObservations`)}</span>}
+                            {a.descripcion ? <span className="line-clamp-2">{a.descripcion}</span> : <span className="italic text-gray-500 dark:text-gray-400">{t(`${p}.week.noObservations`)}</span>}
                           </td>
                           <td className="whitespace-nowrap px-5 py-3 text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(a.created_at)}</td>
                           <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">
-                            {a.avisados > 0 ? t(`${p}.week.notified`, { count: a.avisados }) : <span className="text-gray-400 dark:text-gray-500">{t(`${p}.week.noRecommendation`)}</span>}
+                            {a.avisados > 0 ? t(`${p}.week.notified`, { count: a.avisados }) : <span className="text-gray-500 dark:text-gray-400">{t(`${p}.week.noRecommendation`)}</span>}
                           </td>
                         </tr>
                       );
@@ -1056,7 +1056,7 @@ export function AdminContenidoEducativoPage() {
                         {t(`${p}.modulePanel.sentManually`)}
                       </span>
                     )}
-                    <span className="text-xs text-gray-400 dark:text-gray-500">{formatearFechaCreacion(d.fecha)}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(d.fecha)}</span>
                   </div>
                 ))}
               </div>
@@ -1167,7 +1167,7 @@ export function AdminContenidoEducativoPage() {
                   <label htmlFor="contenido-cuerpo" className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {t(`${p}.fields.content`)} <span className="text-red-500">*</span>
                   </label>
-                  <span className="text-[11px] text-gray-400 dark:text-gray-500">{t(`${p}.fields.charCount`, { count: form.cuerpo_texto.length })}</span>
+                  <span className="text-[11px] text-gray-500 dark:text-gray-400">{t(`${p}.fields.charCount`, { count: form.cuerpo_texto.length })}</span>
                 </div>
                 <div className="mb-1.5 flex gap-1.5">
                   <button type="button" onClick={() => aplicarFormato("h")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
@@ -1196,7 +1196,7 @@ export function AdminContenidoEducativoPage() {
                     fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-line"
                   }`}
                 />
-                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t(`${p}.fields.contentMarkdownHint`)}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMarkdownHint`)}</p>
                 {fieldErrors.cuerpo_texto && (
                   <p id="contenido-cuerpo-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
                     {fieldErrors.cuerpo_texto}
@@ -1284,7 +1284,7 @@ export function AdminContenidoEducativoPage() {
                 {form.cuerpo_texto.trim() ? (
                   <ReactMarkdown components={COMPONENTES_MARKDOWN}>{form.cuerpo_texto}</ReactMarkdown>
                 ) : (
-                  <p className="mt-2 text-sm italic text-gray-400 dark:text-gray-500">{t(`${p}.preview.bodyPlaceholder`)}</p>
+                  <p className="mt-2 text-sm italic text-gray-500 dark:text-gray-400">{t(`${p}.preview.bodyPlaceholder`)}</p>
                 )}
                 {form.url_video?.trim() && idVideoReconocido && <YoutubeEmbed url={form.url_video} titulo={form.titulo_tema || t(`${p}.preview.titlePlaceholder`)} />}
                 {form.url_guia?.trim() && (

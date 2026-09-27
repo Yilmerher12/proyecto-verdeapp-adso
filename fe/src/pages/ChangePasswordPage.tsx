@@ -151,7 +151,7 @@ export function ChangePasswordPage() {
             placeholder="••••••••"
             autoComplete="current-password"
             autoFocus
-            icon={<Lock className="h-5 w-5" />}
+            icon={<Lock className="icon-lg" />}
             error={errors.current_password}
             onChange={handleChange}
           />
@@ -173,7 +173,7 @@ export function ChangePasswordPage() {
             value={formData.new_password}
             placeholder={t("common.passwordPlaceholder")}
             autoComplete="new-password"
-            icon={<KeyRound className="h-5 w-5" />}
+            icon={<KeyRound className="icon-lg" />}
             error={errors.new_password}
             onChange={handleChange}
           />
@@ -191,7 +191,7 @@ export function ChangePasswordPage() {
             value={formData.confirmPassword}
             placeholder={t("common.passwordPlaceholder")}
             autoComplete="new-password"
-            icon={<ShieldCheck className="h-5 w-5" />}
+            icon={<ShieldCheck className="icon-lg" />}
             error={errors.confirmPassword}
             onChange={handleChange}
           />

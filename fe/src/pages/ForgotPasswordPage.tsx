@@ -104,7 +104,7 @@ export function ForgotPasswordPage() {
           placeholder={t("common.emailPlaceholder")}
           autoComplete="email"
           autoFocus
-          icon={<Mail className="h-5 w-5" />}
+          icon={<Mail className="icon-lg" />}
           onChange={(e) => {
             setEmail(e.target.value);
             setError(null);

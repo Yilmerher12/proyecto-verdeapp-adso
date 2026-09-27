@@ -357,7 +357,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
       {mostrarDetalle && (
         <div id={`recicladores-detalle-${idConjunto}`} className="mt-1">
           {/* Recicladores YA autorizados — el dato real (recicladores_conjuntos) */}
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
           </p>
           {cargandoAutorizados ? (
@@ -405,7 +405,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
 
           {/* Historial de invitaciones enviadas — puede estar vacío aunque sí
               haya recicladores autorizados arriba (ver comentario más arriba). */}
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
           </p>
           {cargando ? (
@@ -507,7 +507,7 @@ function SeccionDesvinculacion({
     //       de solo un borde arriba, para que se vea como un bloque aparte
     //       (issue #166).
     <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-night-inset/40">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {t("desvinculacion.sectionTitle")}
       </p>
 
@@ -524,7 +524,7 @@ function SeccionDesvinculacion({
           >
             {t("desvinculacion.solicitarButton")}
           </button>
-          <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">{t("desvinculacion.clarification")}</p>
+          <p className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-night-card p-3 rounded-xl space-y-2">

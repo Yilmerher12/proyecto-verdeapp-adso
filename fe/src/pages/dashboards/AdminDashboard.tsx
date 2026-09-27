@@ -887,7 +887,7 @@ export function AdminDashboard() {
             <div>
               <label htmlFor="motivo-desactivacion" className="flex justify-between text-xs font-semibold text-gray-700 dark:text-gray-300">
                 {t("dashboards.admin.usersSection.status.reasonLabel")}
-                <span className="font-normal text-gray-400">
+                <span className="font-normal text-gray-500 dark:text-gray-400">
                   {motivo.length} / {MOTIVO_MAX_LENGTH}
                 </span>
               </label>

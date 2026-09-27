@@ -49,7 +49,7 @@ El layout principal debe usar elementos HTML semánticos (`<nav>`, `<main>`, `<h
 
 Todo componente nuevo debe mantener un contraste de texto legible tanto en modo claro como en modo oscuro — no basta con que se vea bien en uno de los dos modos.
 
-> **Estado real (2026-09-27)**: **Re-medido con la paleta nueva** — `docs/gestion-proyecto/auditoria-contraste-paleta-nueva.md`. Todos los colores de la paleta (verdes, tokens `night-*`, colores por rol, hero) pasan AA en claro y oscuro. Pendientes: grises de Tailwind usados en texto (`text-gray-400`, la pareja invertida `text-gray-400 dark:text-gray-500` y `gray-500` sobre el fondo de página en claro), con archivo y línea en esa auditoría.
+> **Estado real (2026-09-27)**: **Re-medido con la paleta nueva** — `docs/gestion-proyecto/auditoria-contraste-paleta-nueva.md`. Todos los colores de la paleta (verdes, tokens `night-*`, colores por rol, hero) pasan AA en claro y oscuro. Los grises de Tailwind con bajo contraste que encontró esa auditoría (`text-gray-400` en texto y en botones de solo ícono, y la pareja invertida `text-gray-400 dark:text-gray-500`) se corrigieron el mismo día.
 
 ### RNF-005.5 — Navegación por teclado
 

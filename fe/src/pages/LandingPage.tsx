@@ -131,7 +131,7 @@ function PilarCard({
         >
           <Icon className="icon-lg text-accent-300" aria-hidden="true" />
         </div>
-        <span className="text-[10px] font-bold tracking-widest text-accent-500">{numero}</span>
+        <span className="text-[10px] font-bold tracking-widest text-accent-300">{numero}</span>
       </div>
       <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
       <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
@@ -495,7 +495,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
         >
           <div className="relative mx-auto max-w-5xl">
             <div className="mb-12 text-center">
-              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-accent-400">
+              <p className="mb-2 text-xs font-bold uppercase tracking-widest text-accent-300">
                 {t("landing.pillars.eyebrow")}
               </p>
               <h2
@@ -532,7 +532,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <BrandLogo className="h-7" />
-            <p className="text-center text-xs text-gray-400 dark:text-gray-500">
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">
               {t("landing.footer.rights", { year: new Date().getFullYear() })}
             </p>
           </div>
@@ -546,7 +546,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
                 <li key={to}>
                   <Link
                     to={to}
-                    className="rounded text-xs text-gray-400 transition-colors hover:text-accent-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:text-gray-500 dark:hover:text-accent-400"
+                    className="rounded text-xs text-gray-500 transition-colors hover:text-accent-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:text-gray-400 dark:hover:text-accent-400"
                   >
                     {label}
                   </Link>
