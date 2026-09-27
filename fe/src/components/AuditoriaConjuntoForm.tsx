@@ -12,7 +12,7 @@
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Camera, ClipboardCheck, Loader2, Plus, X } from "lucide-react";
+import { Camera, ClipboardCheck, LoaderCircle, Plus, X } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
@@ -336,7 +336,7 @@ export function AuditoriaConjuntoForm({
             disabled={enviando || formularioIncompleto}
             className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {enviando && <Loader2 className="icon-md animate-spin" />}
+            {enviando && <LoaderCircle className="icon-md animate-spin" />}
             {enviando
               ? // ¿Qué? Antes solo decía "Enviando..." sin ningún número.
                 // ¿Para qué? Una subida que de verdad avanza (pero lento, por
