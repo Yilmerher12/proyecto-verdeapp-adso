@@ -28,7 +28,7 @@ interface EmptyStateProps {
 export function EmptyState({ icon: Icon, message }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-[#ffffff] py-16 text-center dark:border-[#23392b] dark:bg-[#12231a]">
-      <Icon className="h-8 w-8 text-gray-300 dark:text-gray-600" />
+      <Icon className="icon-xl text-gray-300 dark:text-gray-600" />
       <p className="text-sm text-gray-500 dark:text-gray-400">{message}</p>
     </div>
   );

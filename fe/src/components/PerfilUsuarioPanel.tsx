@@ -191,7 +191,7 @@ export function PerfilUsuarioPanel({
                 variant={perfil.habilitado ? "danger" : "secondary"}
                 onClick={() => onCambiarEstado(perfil.correo_electronico, !perfil.habilitado)}
               >
-                {perfil.habilitado ? <UserX className="mr-1 h-3.5 w-3.5 icon-draw" /> : <UserCheck className="mr-1 h-3.5 w-3.5 icon-draw" />}
+                {perfil.habilitado ? <UserX className="icon-sm mr-1 icon-draw" /> : <UserCheck className="icon-sm mr-1 icon-draw" />}
                 {perfil.habilitado ? t(`${p}.disableAccount`) : t(`${p}.enableAccount`)}
               </Button>
             )}

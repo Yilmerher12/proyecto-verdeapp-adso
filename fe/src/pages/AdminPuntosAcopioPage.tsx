@@ -287,7 +287,7 @@ export function AdminPuntosAcopioPage() {
           className={`${botonAccion} text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-[#23392b]`}
           aria-label={t("adminPuntosAcopio.editAria", { nombre: item.nombre })}
         >
-          <Pencil className="h-4 w-4" />
+          <Pencil className="icon-md" />
         </button>
         {item.activo ? (
           <button
@@ -295,7 +295,7 @@ export function AdminPuntosAcopioPage() {
             className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`}
             aria-label={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
           >
-            <MapPinOff className="h-4 w-4 icon-draw" />
+            <MapPinOff className="icon-md icon-draw" />
           </button>
         ) : (
           <>
@@ -304,14 +304,14 @@ export function AdminPuntosAcopioPage() {
               className={`${botonAccion} text-accent-600 hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-900/20`}
               aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
             >
-              <MapPin className="h-4 w-4 icon-draw" />
+              <MapPin className="icon-md icon-draw" />
             </button>
             <button
               onClick={() => setAEliminar(item)}
               className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`}
               aria-label={t("adminPuntosAcopio.deleteAria", { nombre: item.nombre })}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="icon-md" />
             </button>
           </>
         )}
@@ -335,7 +335,7 @@ export function AdminPuntosAcopioPage() {
           }}
           className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="icon-md" />
           {t("adminPuntosAcopio.newPoint")}
         </button>
       </div>
@@ -344,7 +344,7 @@ export function AdminPuntosAcopioPage() {
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-3 dark:border-[#23392b] dark:bg-[#12231a]">
             <div className="relative min-w-[200px] flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="search"
                 value={busqueda}
@@ -419,7 +419,7 @@ export function AdminPuntosAcopioPage() {
                   </span>
                 )}
                 <ChevronDown
-                  className={`ml-auto h-4 w-4 text-gray-400 transition-transform ${abierta ? "rotate-180" : ""}`}
+                  className={`icon-md ml-auto text-gray-400 transition-transform ${abierta ? "rotate-180" : ""}`}
                   aria-hidden="true"
                 />
               </button>

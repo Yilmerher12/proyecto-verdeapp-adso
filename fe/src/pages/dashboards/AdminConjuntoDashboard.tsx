@@ -115,7 +115,7 @@ function SeccionCodigoAcceso({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <KeyRound className="w-4 h-4 text-accent-600" />
+            <KeyRound className="icon-md text-accent-600" />
             <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">
               {t("dashboards.adminConjunto.codigoAcceso.title")}
             </h5>
@@ -136,7 +136,7 @@ function SeccionCodigoAcceso({
               copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
             )}
           >
-            {copiado ? <Check className="h-4 w-4 text-accent-600" /> : <Copy className="h-4 w-4" />}
+            {copiado ? <Check className="icon-md text-accent-600" /> : <Copy className="icon-md" />}
           </button>
           <button
             type="button"
@@ -289,7 +289,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
     <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-[#0c1a12]/40">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-accent-600" />
+          <Users className="icon-md text-accent-600" />
           <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.recyclersSection.title")}</h5>
           {!cargandoAutorizados && (
             <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
@@ -328,7 +328,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
           className="flex flex-col sm:flex-row gap-2 mb-4 bg-[#ffffff] dark:bg-[#12231a] p-3 rounded-xl"
         >
           <div className="flex-1 relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Mail className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="email"
               placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
@@ -342,7 +342,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             disabled={enviando || !correoNuevo.trim()}
             className="flex cursor-pointer items-center justify-center gap-1.5 bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Send className="w-3.5 h-3.5" />
+            <Send className="icon-sm" />
             {enviando ? t("dashboards.adminConjunto.recyclersSection.sending") : t("dashboards.adminConjunto.recyclersSection.inviteButton")}
           </button>
         </form>
@@ -395,7 +395,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
                       className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-[#23392b] dark:hover:bg-red-900/20"
                       aria-label={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
                     >
-                      <UserX className="h-3.5 w-3.5" />
+                      <UserX className="icon-sm" />
                     </button>
                   </div>
                 </div>
@@ -513,7 +513,7 @@ function SeccionDesvinculacion({
 
       {tieneSolicitudPendiente ? (
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 px-2.5 py-1 rounded-full">
-          <Clock className="w-3.5 h-3.5" /> {t("desvinculacion.pendingBadge")}
+          <Clock className="icon-sm" /> {t("desvinculacion.pendingBadge")}
         </span>
       ) : !mostrarFormulario ? (
         <div>
@@ -700,10 +700,10 @@ export function AdminConjuntoDashboard() {
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}
       <div className="relative overflow-hidden bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
-        <RolIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-amber-900/5 dark:text-white/5" aria-hidden="true" />
+        <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-amber-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
-            <RolIcon className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+            <RolIcon className="icon-xl text-amber-600 dark:text-amber-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("dashboards.adminConjunto.title")}</h1>
@@ -762,7 +762,7 @@ export function AdminConjuntoDashboard() {
 
       <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-[#23392b] pb-2">
-          <Building className="text-accent-600 w-5 h-5" />
+          <Building className="icon-lg text-accent-600" />
           <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
         </div>
 
@@ -811,14 +811,14 @@ export function AdminConjuntoDashboard() {
                         disabled={guardando}
                         className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-white bg-accent-700 hover:bg-accent-800 px-4 py-2 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        <Check className="w-4 h-4" /> {t("common.save")}
+                        <Check className="icon-md" /> {t("common.save")}
                       </button>
                       <button
                         type="button"
                         onClick={cancelarEdicion}
                         className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-[#1a3324] dark:text-gray-300 dark:hover:bg-[#23392b]"
                       >
-                        <X className="w-4 h-4" /> {t("common.cancel")}
+                        <X className="icon-md" /> {t("common.cancel")}
                       </button>
                     </div>
                   </div>
@@ -828,7 +828,7 @@ export function AdminConjuntoDashboard() {
                       <div>
                         <h4 className="font-bold text-gray-800 dark:text-white">{c.nombre_conjunto}</h4>
                         <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
-                          <MapPin className="w-3.5 h-3.5" />
+                          <MapPin className="icon-sm" />
                           {c.direccion} — {c.nombre_localidad}
                         </p>
                         {c.nit && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>}
@@ -838,7 +838,7 @@ export function AdminConjuntoDashboard() {
                         onClick={() => iniciarEdicion(c)}
                         className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
                       >
-                        <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
+                        <Pencil className="icon-sm" /> {t("common.edit")}
                       </button>
                     </div>
 

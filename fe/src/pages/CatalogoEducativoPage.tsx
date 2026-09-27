@@ -68,7 +68,7 @@ export function CatalogoEducativoPage() {
               className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 text-left transition-colors hover:border-accent-200 hover:bg-accent-50/40 dark:border-[#23392b] dark:bg-[#12231a] dark:hover:border-accent-800 dark:hover:bg-accent-900/10"
             >
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
-                <Icono className="h-5.5 w-5.5" />
+                <Icono className="icon-lg" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-bold text-gray-900 dark:text-white">
@@ -78,7 +78,7 @@ export function CatalogoEducativoPage() {
                   {temas} {temas === 1 ? t("catalogoEducativo.tema") : t("catalogoEducativo.temas")}
                 </span>
               </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 dark:text-gray-600" />
+              <ChevronRight className="icon-md shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 dark:text-gray-600" />
             </button>
           );
         })}

@@ -505,7 +505,7 @@ export function AdminContenidoEducativoPage() {
     <div className="mx-auto max-w-6xl space-y-5 p-6">
       <div className="flex items-center gap-4 bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
-          <BookOpen className="h-7 w-7 text-accent-700 dark:text-accent-400" />
+          <BookOpen className="icon-xl text-accent-700 dark:text-accent-400" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t(`${p}.title`)}</h1>
@@ -518,7 +518,7 @@ export function AdminContenidoEducativoPage() {
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
-            <Plus className="h-4 w-4 text-accent-600" />
+            <Plus className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.newSection.title`)}</h3>
           </div>
           <div className="flex flex-1 flex-col gap-2">
@@ -541,7 +541,7 @@ export function AdminContenidoEducativoPage() {
 
         <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-accent-600" />
+            <BookOpen className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.catalogSection.title`)}</h3>
           </div>
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
@@ -565,7 +565,7 @@ export function AdminContenidoEducativoPage() {
 
         <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-[#ffffff] p-5 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-accent-600" />
+            <Calendar className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.currentWeek.title`, { rango: rangoSemanaUTC(semanaActual) })}</h3>
           </div>
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
@@ -608,7 +608,7 @@ export function AdminContenidoEducativoPage() {
                 tab === "cal" ? "bg-accent-700 text-white shadow-sm" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
-              <FileText className="h-3.5 w-3.5" />
+              <FileText className="icon-sm" />
               {t(`${p}.tabs.ratings`)}
             </button>
             <button
@@ -621,7 +621,7 @@ export function AdminContenidoEducativoPage() {
                 tab === "mod" ? "bg-accent-700 text-white shadow-sm" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
-              <BookOpen className="h-3.5 w-3.5" />
+              <BookOpen className="icon-sm" />
               {t(`${p}.tabs.modules`)}
             </button>
           </div>
@@ -636,7 +636,7 @@ export function AdminContenidoEducativoPage() {
             className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-[#0c1a12]/60 dark:hover:text-gray-200"
           >
             {panelExpandido ? t(`${p}.collapse`) : tab === "cal" ? t(`${p}.expandRatings`) : t(`${p}.expandModules`)}
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${panelExpandido ? "rotate-180" : ""}`} />
+            <ChevronDown className={`icon-sm transition-transform ${panelExpandido ? "rotate-180" : ""}`} />
           </button>
         </div>
 
@@ -650,7 +650,7 @@ export function AdminContenidoEducativoPage() {
                   aria-label={t(`${p}.week.prev`)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-400 dark:hover:bg-[#23392b]"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="icon-md" />
                 </button>
                 <div className="min-w-[130px] text-center">
                   <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{rangoSemanaUTC(semana)}</p>
@@ -663,7 +663,7 @@ export function AdminContenidoEducativoPage() {
                   aria-label={t(`${p}.week.next`)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-[#23392b] dark:text-gray-400 dark:hover:bg-[#23392b]"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="icon-md" />
                 </button>
               </div>
               <span
@@ -676,7 +676,7 @@ export function AdminContenidoEducativoPage() {
                 {semana === semanaActual ? t(`${p}.week.inProgress`) : t(`${p}.week.closed`, { fecha: domingoDeLunesUTC(semana).getUTCDate() })}
               </span>
               <div className="relative ml-auto">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   value={buscarCal}
                   onChange={(e) => setBuscarCal(e.target.value)}
@@ -754,7 +754,7 @@ export function AdminContenidoEducativoPage() {
                           <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{a.tema_educativo}</td>
                           <td className="px-5 py-3">
                             <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${nivel.claseBadge}`}>
-                              <nivel.icon className="h-3.5 w-3.5" />
+                              <nivel.icon className="icon-sm" />
                               {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
                             </span>
                           </td>
@@ -777,7 +777,7 @@ export function AdminContenidoEducativoPage() {
           <div>
             <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-[#23392b]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   value={buscarMod}
                   onChange={(e) => setBuscarMod(e.target.value)}
@@ -838,7 +838,7 @@ export function AdminContenidoEducativoPage() {
                     >
                       <div className="flex min-w-0 items-start gap-3">
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
-                          <Icono className="h-4.5 w-4.5" />
+                          <Icono className="icon-lg" />
                         </span>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">{item.modulo_categoria}</p>
@@ -860,7 +860,7 @@ export function AdminContenidoEducativoPage() {
                           className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
                           aria-label={t(`${p}.editAria`, { titulo: item.titulo_tema })}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="icon-md" />
                         </button>
                         <button
                           onClick={(e) => {
@@ -870,7 +870,7 @@ export function AdminContenidoEducativoPage() {
                           className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#23392b] dark:hover:bg-red-900/20"
                           aria-label={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="icon-md" />
                         </button>
                       </div>
                     </div>
@@ -890,7 +890,7 @@ export function AdminContenidoEducativoPage() {
               const nivel = NIVELES_DESEMPENO[auditoriaAbierta.nivel_desempeno];
               return (
                 <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${nivel.claseBadge}`}>
-                  <nivel.icon className="h-3.5 w-3.5" />
+                  <nivel.icon className="icon-sm" />
                   {t(`dashboards.reciclador.auditoria.niveles.${auditoriaAbierta.nivel_desempeno.toLowerCase()}`)}
                 </div>
               );
@@ -956,7 +956,7 @@ export function AdminContenidoEducativoPage() {
                       className="mb-1.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white px-3 py-2 text-left text-sm text-gray-800 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:bg-[#0f2018] dark:text-gray-200 dark:hover:bg-[#0c1a12]"
                     >
                       {m.titulo_tema}
-                      <Eye className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                      <Eye className="icon-sm shrink-0 text-gray-400" />
                     </button>
                   ))}
               </>
@@ -1008,7 +1008,7 @@ export function AdminContenidoEducativoPage() {
                       className="max-h-64 w-full object-cover"
                     />
                     <span className="pointer-events-none absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity group-hover:opacity-100">
-                      <Maximize2 className="h-3.5 w-3.5" />
+                      <Maximize2 className="icon-sm" />
                     </span>
                   </button>
                   <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.modulePanel.guideImageHint`)}</p>
@@ -1020,7 +1020,7 @@ export function AdminContenidoEducativoPage() {
                   rel="noopener noreferrer"
                   className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-200 dark:hover:bg-[#23392b]"
                 >
-                  <FileText className="h-4 w-4 shrink-0" />
+                  <FileText className="icon-md shrink-0" />
                   {t("categoriaEducativa.viewGuide")}
                 </a>
               )
@@ -1045,14 +1045,14 @@ export function AdminContenidoEducativoPage() {
                         const nivel = NIVELES_DESEMPENO[d.nivel];
                         return (
                           <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${nivel.claseBadge}`}>
-                            <nivel.icon className="h-3 w-3" />
+                            <nivel.icon className="icon-sm" />
                             {t(`dashboards.reciclador.auditoria.niveles.${d.nivel.toLowerCase()}`)}
                           </span>
                         );
                       })()
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:bg-purple-900/20 dark:text-purple-300">
-                        <Send className="h-3 w-3" />
+                        <Send className="icon-sm" />
                         {t(`${p}.modulePanel.sentManually`)}
                       </span>
                     )}
@@ -1078,7 +1078,7 @@ export function AdminContenidoEducativoPage() {
                     <ConjuntoCombobox value={conjuntoUnico} onChange={setConjuntoUnico} fetchOptions={fetchConjuntos} placeholder={t(`${p}.send.searchPlaceholder`)} ariaLabel={t(`${p}.send.oneLabel`)} />
                   </div>
                   <Button type="button" size="sm" onClick={enviarAUno} isLoading={enviando} disabled={!conjuntoUnico}>
-                    <Send className="mr-1 h-3.5 w-3.5" />
+                    <Send className="icon-sm mr-1" />
                     {t(`${p}.send.button`)}
                   </Button>
                 </div>
@@ -1087,7 +1087,7 @@ export function AdminContenidoEducativoPage() {
                 <label className="mb-1 block text-xs font-semibold text-gray-600 dark:text-gray-300">{t(`${p}.send.severalLabel`)}</label>
                 <ConjuntoComboboxMultiple value={conjuntosVarios} onChange={setConjuntosVarios} fetchOptions={fetchConjuntos} placeholder={t(`${p}.send.searchPlaceholder`)} ariaLabel={t(`${p}.send.severalLabel`)} />
                 <Button type="button" size="sm" fullWidth onClick={enviarAVarios} isLoading={enviando} disabled={conjuntosVarios.length === 0}>
-                  <Send className="mr-1 h-3.5 w-3.5" />
+                  <Send className="icon-sm mr-1" />
                   {conjuntosVarios.length > 0 ? t(`${p}.send.buttonMany`, { count: conjuntosVarios.length }) : t(`${p}.send.button`)}
                 </Button>
               </div>
@@ -1096,11 +1096,11 @@ export function AdminContenidoEducativoPage() {
 
           <div className="sticky bottom-0 mt-auto flex flex-wrap gap-2 border-t border-gray-100 bg-[#ffffff] p-5 dark:border-[#23392b] dark:bg-[#12231a]">
             <Button type="button" size="sm" onClick={() => abrirEditar(moduloAbiertoObj)}>
-              <Pencil className="mr-1 h-3.5 w-3.5" />
+              <Pencil className="icon-sm mr-1" />
               {t("common.edit")}
             </Button>
             <Button type="button" size="sm" variant="danger" onClick={() => setAEliminar(moduloAbiertoObj)}>
-              <Trash2 className="mr-1 h-3.5 w-3.5" />
+              <Trash2 className="icon-sm mr-1" />
               {t(`${p}.deleteConfirm.confirm`)}
             </Button>
           </div>
@@ -1171,15 +1171,15 @@ export function AdminContenidoEducativoPage() {
                 </div>
                 <div className="mb-1.5 flex gap-1.5">
                   <button type="button" onClick={() => aplicarFormato("h")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]">
-                    <Heading2 className="h-3.5 w-3.5" />
+                    <Heading2 className="icon-sm" />
                     {t(`${p}.fields.formatHeading`)}
                   </button>
                   <button type="button" onClick={() => aplicarFormato("b")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]">
-                    <Bold className="h-3.5 w-3.5" />
+                    <Bold className="icon-sm" />
                     {t(`${p}.fields.formatBold`)}
                   </button>
                   <button type="button" onClick={() => aplicarFormato("ul")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]">
-                    <ListIcon className="h-3.5 w-3.5" />
+                    <ListIcon className="icon-sm" />
                     {t(`${p}.fields.formatList`)}
                   </button>
                 </div>
@@ -1272,7 +1272,7 @@ export function AdminContenidoEducativoPage() {
                   return (
                     <div className="mb-3 flex items-center gap-2">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
-                        <Icono className="h-4 w-4" />
+                        <Icono className="icon-md" />
                       </span>
                       <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">
                         {categoriaEfectiva || t(`${p}.preview.categoryPlaceholder`)}
@@ -1289,7 +1289,7 @@ export function AdminContenidoEducativoPage() {
                 {form.url_video?.trim() && idVideoReconocido && <YoutubeEmbed url={form.url_video} titulo={form.titulo_tema || t(`${p}.preview.titlePlaceholder`)} />}
                 {form.url_guia?.trim() && (
                   <p className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 dark:border-[#23392b] dark:text-gray-200">
-                    <FileText className="h-4 w-4 shrink-0" />
+                    <FileText className="icon-md shrink-0" />
                     {t("categoriaEducativa.viewGuide")}
                   </p>
                 )}

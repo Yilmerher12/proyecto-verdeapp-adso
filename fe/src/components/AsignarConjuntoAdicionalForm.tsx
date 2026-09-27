@@ -128,7 +128,7 @@ export function AsignarConjuntoAdicionalForm() {
     //       aquí no se repite esa decoración.
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <UserCog className="h-4 w-4 text-accent-600" />
+        <UserCog className="icon-md text-accent-600" />
         <h3 className="text-sm font-bold text-gray-900 dark:text-white">
           {t("desvinculacion.asignarAdicional.sectionTitle")}
         </h3>
@@ -136,7 +136,7 @@ export function AsignarConjuntoAdicionalForm() {
 
       <form onSubmit={buscar} className="flex gap-2 mb-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={query}
@@ -202,7 +202,7 @@ export function AsignarConjuntoAdicionalForm() {
 
           <div className="mb-3">
             <label htmlFor="asignar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-              <MapIcon className="w-4 h-4" />
+              <MapIcon className="icon-md" />
               {t("desvinculacion.asignarAdicional.localityLabel")}
             </label>
             <select
@@ -224,7 +224,7 @@ export function AsignarConjuntoAdicionalForm() {
           </div>
 
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-            <Building className="w-4 h-4" />
+            <Building className="icon-md" />
             {t("desvinculacion.asignarAdicional.selectConjuntoLabel")}
           </label>
 

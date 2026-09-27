@@ -46,7 +46,7 @@ export function ContactoModalPage() {
         <div className="max-h-[85vh] overflow-y-auto p-6 sm:p-8">
           <div className="mb-6 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
-              <MessageSquare className="h-7 w-7 text-accent-600 dark:text-accent-400" />
+              <MessageSquare className="icon-xl text-accent-600 dark:text-accent-400" />
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
               {t("contactoModal.title")}
@@ -107,7 +107,7 @@ export function ContactoModalPage() {
               <Button type="submit" fullWidth isLoading={status === "loading"} disabled={isFormIncomplete}>
                 <span className="flex items-center gap-2">
                   {isFormIncomplete ? t("contactoModal.incomplete") : t("contactoModal.submit")}
-                  <Send className="h-4 w-4" />
+                  <Send className="icon-md" />
                 </span>
               </Button>
             </form>

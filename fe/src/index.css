@@ -460,3 +460,34 @@
     }
   }
 }
+
+/* ============================================================================
+   Escala de tamaños de íconos
+   ¿Qué? Los 5 únicos tamaños permitidos para un ícono de lucide:
+         icon-sm   14px — dentro de texto pequeño (chips, flechas de tabla)
+         icon-md   16px — botones, campos, junto al título de una sección
+         icon-lg   20px — navegación (sidebar), campana, mensajes, caritas
+         icon-xl   32px — destacado: encabezado del dashboard, estado vacío, modal
+         icon-deco 80px — decorativo (marca de agua del dashboard)
+   ¿Para qué? Antes había 12 tamaños distintos (h-2.5 a h-20), varios usados
+              una sola vez y puestos a ojo. Un nombre por uso evita que alguien
+              vuelva a escribir h-4.5 a mano.
+   ¿Impacto? Cambiar el tamaño de un uso (ej. todos los íconos de botón) es
+             tocar una línea aquí. En el <Icon> se usa la clase en lugar de
+             h-* y w-* (ver docs/requisitos/restricciones.md).
+   ============================================================================ */
+@utility icon-sm {
+  @apply size-3.5;
+}
+@utility icon-md {
+  @apply size-4;
+}
+@utility icon-lg {
+  @apply size-5;
+}
+@utility icon-xl {
+  @apply size-8;
+}
+@utility icon-deco {
+  @apply size-20;
+}

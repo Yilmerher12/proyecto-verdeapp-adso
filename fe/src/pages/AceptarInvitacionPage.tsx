@@ -151,7 +151,7 @@ export function AceptarInvitacionPage() {
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4">
             <div className="mx-auto w-16 h-16 bg-red-100 flex items-center justify-center rounded-full border border-red-200 dark:bg-red-900/30 dark:border-red-800/40">
-              <OctagonX className="w-8 h-8 text-red-600 dark:text-red-400 icon-appear icon-shake" />
+              <OctagonX className="icon-xl text-red-600 dark:text-red-400 icon-appear icon-shake" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.invalid.title")}</h2>
             <p className="text-gray-600 text-sm dark:text-gray-400">
@@ -174,7 +174,7 @@ export function AceptarInvitacionPage() {
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4 animate-fade-in">
             <div className="mx-auto w-20 h-20 bg-accent-100 flex items-center justify-center rounded-full border border-accent-200 dark:bg-accent-900/30 dark:border-accent-800/40">
-              <BadgeCheck className="w-10 h-10 text-accent-600 dark:text-accent-400 icon-appear icon-hop" />
+              <BadgeCheck className="icon-xl text-accent-600 dark:text-accent-400 icon-appear icon-hop" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.success.title")}</h2>
             <p className="text-gray-600 text-sm dark:text-gray-400">
@@ -209,7 +209,7 @@ export function AceptarInvitacionPage() {
 
           <div className="mb-6 p-4 bg-accent-50/50 border border-accent-100 rounded-xl dark:bg-accent-900/10 dark:border-accent-800/30">
             <div className="flex items-center gap-2 mb-2">
-              <Building className="w-4 h-4 text-accent-600 dark:text-accent-400" />
+              <Building className="icon-md text-accent-600 dark:text-accent-400" />
               <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
                 {t("aceptarInvitacion.form.willAdminister")}
               </span>

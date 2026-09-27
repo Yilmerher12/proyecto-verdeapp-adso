@@ -227,7 +227,7 @@ export function AuditoriaConjuntoForm({
                       animación de aparición (icon-appear) se repite. */}
                   <Icon
                     key={seleccionado ? "elegida" : "libre"}
-                    className={`h-6 w-6 icon-hop ${seleccionado ? "icon-appear" : ""}`}
+                    className={`icon-lg icon-hop ${seleccionado ? "icon-appear" : ""}`}
                     aria-hidden="true"
                   />
                   {t(`dashboards.reciclador.auditoria.niveles.${n.toLowerCase()}`)}
@@ -286,7 +286,7 @@ export function AuditoriaConjuntoForm({
                     aria-label={t("dashboards.reciclador.auditoria.evidenciaQuitar")}
                     className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 p-0.5 text-white transition-colors hover:bg-black/80"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="icon-sm" />
                   </button>
                 </div>
               ))}
@@ -295,7 +295,7 @@ export function AuditoriaConjuntoForm({
 
           {evidencias.length < MAXIMO_FOTOS ? (
             <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition-colors hover:border-accent-400 dark:border-[#23392b] dark:text-gray-300">
-              {evidencias.length === 0 ? <Camera className="h-4 w-4 shrink-0" /> : <Plus className="h-4 w-4 shrink-0" />}
+              {evidencias.length === 0 ? <Camera className="icon-md shrink-0" /> : <Plus className="icon-md shrink-0" />}
               {evidencias.length === 0
                 ? t("dashboards.reciclador.auditoria.evidenciaHint")
                 : t("dashboards.reciclador.auditoria.evidenciaAgregarOtra")}
@@ -336,7 +336,7 @@ export function AuditoriaConjuntoForm({
             disabled={enviando || formularioIncompleto}
             className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {enviando && <Loader2 className="h-4 w-4 animate-spin" />}
+            {enviando && <Loader2 className="icon-md animate-spin" />}
             {enviando
               ? // ¿Qué? Antes solo decía "Enviando..." sin ningún número.
                 // ¿Para qué? Una subida que de verdad avanza (pero lento, por

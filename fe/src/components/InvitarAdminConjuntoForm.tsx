@@ -94,7 +94,7 @@ export function InvitarAdminConjuntoForm() {
     //       para no terminar con una tarjeta blanca dentro de otra.
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <UserPlus className="w-5 h-5 text-accent-600" />
+        <UserPlus className="icon-lg text-accent-600" />
         <h3 className="font-bold text-gray-800 dark:text-white text-lg">{t("invitarAdminConjunto.title")}</h3>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
@@ -112,7 +112,7 @@ export function InvitarAdminConjuntoForm() {
 
         <div>
           <label htmlFor="invitar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-            <MapIcon className="w-4 h-4" />
+            <MapIcon className="icon-md" />
             {t("invitarAdminConjunto.localityLabel")}
           </label>
           <select
@@ -132,7 +132,7 @@ export function InvitarAdminConjuntoForm() {
 
         <div>
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-            <Building className="w-4 h-4" />
+            <Building className="icon-md" />
             {t("invitarAdminConjunto.conjuntosLabel")}
           </label>
           {localidadId === "" ? (

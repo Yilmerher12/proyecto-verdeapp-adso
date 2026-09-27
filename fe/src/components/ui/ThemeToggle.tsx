@@ -59,10 +59,10 @@ export function ThemeToggle() {
     >
       {isDark ? (
         // ¿Qué? Ícono de sol — indica que se cambiará a light mode.
-        <Sun className="h-5 w-5" aria-hidden="true" />
+        <Sun className="icon-lg" aria-hidden="true" />
       ) : (
         // ¿Qué? Ícono de luna — indica que se cambiará a dark mode.
-        <Moon className="h-5 w-5" aria-hidden="true" />
+        <Moon className="icon-lg" aria-hidden="true" />
       )}
     </button>
   );

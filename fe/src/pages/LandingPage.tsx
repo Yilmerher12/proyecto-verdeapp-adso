@@ -75,12 +75,12 @@ function PasoCard({
           className="absolute top-9 left-[calc(50%+2.75rem)] right-[calc(-50%+1.25rem)] hidden items-center sm:flex"
         >
           <div className="h-0.5 flex-1 bg-accent-200 dark:bg-accent-800" />
-          <ArrowRight className="-ml-1 h-4 w-4 shrink-0 text-accent-600 dark:text-accent-400" />
+          <ArrowRight className="icon-md -ml-1 shrink-0 text-accent-600 dark:text-accent-400" />
         </div>
       )}
 
       <div className="relative mb-6 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-2 border-accent-600 bg-white dark:border-accent-500 dark:bg-accent-900">
-        <Icon className="h-8 w-8 text-accent-700 dark:text-accent-300" aria-hidden="true" />
+        <Icon className="icon-xl text-accent-700 dark:text-accent-300" aria-hidden="true" />
         <span
           aria-hidden="true"
           className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent-600 text-xs font-bold text-white dark:bg-accent-500 dark:text-accent-950"
@@ -129,7 +129,7 @@ function PilarCard({
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
           style={{ background: "rgba(255,255,255,0.08)" }}
         >
-          <Icon className="h-5 w-5 text-accent-300" aria-hidden="true" />
+          <Icon className="icon-lg text-accent-300" aria-hidden="true" />
         </div>
         <span className="text-[10px] font-bold tracking-widest text-accent-500">{numero}</span>
       </div>
@@ -442,7 +442,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
                 to="/register"
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-700 px-8 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-accent-600 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300 sm:w-auto"
               >
-                {t("landing.hero.ctaRegister")} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                {t("landing.hero.ctaRegister")} <ArrowRight className="icon-md" aria-hidden="true" />
               </Link>
             </div>
           </div>

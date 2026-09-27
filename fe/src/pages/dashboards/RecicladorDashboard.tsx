@@ -305,10 +305,10 @@ export function RecicladorDashboard() {
           para que este panel se sienta del Reciclador, sin estorbar la
           lectura del texto encima. */}
       <div className="relative overflow-hidden bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
-        <RolIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
+        <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-teal-900/30">
-            <RolIcon className="h-7 w-7 text-teal-600 dark:text-teal-400" />
+            <RolIcon className="icon-xl text-teal-600 dark:text-teal-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.title")}</h1>
@@ -331,14 +331,14 @@ export function RecicladorDashboard() {
       {/* Feedback de notificación enviada */}
       {feedbackOk && (
         <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
-          <BadgeCheck className="h-4 w-4 shrink-0 icon-appear icon-hop" />
+          <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
           {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
         </div>
       )}
 
       {feedbackAuditoria && (
         <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
-          <BadgeCheck className="h-4 w-4 shrink-0 icon-appear icon-hop" />
+          <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
           {feedbackAuditoria}
         </div>
       )}
@@ -348,7 +348,7 @@ export function RecicladorDashboard() {
       {!cargando && conjuntosPendientesAuditoria.length > 0 && (
         <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-800/30 dark:bg-teal-900/10">
           <div className="mb-3 flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-teal-700 dark:text-teal-400" />
+            <ClipboardList className="icon-md text-teal-700 dark:text-teal-400" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">
               {t("dashboards.reciclador.auditoria.bannerTitle")}
             </h2>
@@ -421,7 +421,7 @@ export function RecicladorDashboard() {
                     motivo ? "cursor-not-allowed opacity-40" : "cursor-pointer"
                   }`}
                 >
-                  <Icon className={`h-4 w-4 shrink-0 ${Icon === TriangleAlert ? "icon-ring" : "icon-draw"}`} />
+                  <Icon className={`icon-md shrink-0 ${Icon === TriangleAlert ? "icon-ring" : "icon-draw"}`} />
                   {label}
                   {/* ¿Qué? Texto oculto SOLO para lectores de pantalla, con
                       el motivo del bloqueo. ¿Para qué? Antes, poner `title`
@@ -452,7 +452,7 @@ export function RecicladorDashboard() {
       {!cargando && invitaciones.length > 0 && (
         <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
-            <Mail className="h-4 w-4 text-amber-600" />
+            <Mail className="icon-md text-amber-600" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
               {invitaciones.length}
@@ -475,7 +475,7 @@ export function RecicladorDashboard() {
                     disabled={procesandoId === inv.id}
                     className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <BadgeCheck className="h-3.5 w-3.5 icon-hop" />
+                    <BadgeCheck className="icon-sm icon-hop" />
                     {t("dashboards.reciclador.invitations.accept")}
                   </button>
                   <button
@@ -483,7 +483,7 @@ export function RecicladorDashboard() {
                     disabled={procesandoId === inv.id}
                     className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
                   >
-                    <OctagonX className="h-3.5 w-3.5 icon-shake" />
+                    <OctagonX className="icon-sm icon-shake" />
                     {t("dashboards.reciclador.invitations.reject")}
                   </button>
                 </div>
@@ -496,7 +496,7 @@ export function RecicladorDashboard() {
       {/* Mis conjuntos autorizados */}
       <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
-          <Building className="h-4 w-4 text-accent-600" />
+          <Building className="icon-md text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
         </div>
         {cargando ? (
@@ -528,7 +528,7 @@ export function RecicladorDashboard() {
                     no dispara una petición nueva. */}
       <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] shadow-sm p-5">
         <div className="mb-4 flex items-center gap-2">
-          <History className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <History className="icon-md text-gray-500 dark:text-gray-400" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
         </div>
 
@@ -557,7 +557,7 @@ export function RecicladorDashboard() {
                     <span
                       className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold ${nivel.claseBadge}`}
                     >
-                      <nivel.icon className="h-3.5 w-3.5" />
+                      <nivel.icon className="icon-sm" />
                       {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
                     </span>
                   </button>

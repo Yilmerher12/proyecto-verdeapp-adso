@@ -90,7 +90,7 @@ export function NovedadesFeedPage() {
                 rel="noopener noreferrer"
                 className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
               >
-                <Paperclip className="h-3.5 w-3.5" />
+                <Paperclip className="icon-sm" />
                 {t("comunicados.viewAttachment")}
               </a>
             )}

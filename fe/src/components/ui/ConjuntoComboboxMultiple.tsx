@@ -59,7 +59,7 @@ export function ConjuntoComboboxMultiple({
                 className="cursor-pointer rounded-full transition-colors hover:bg-accent-100 dark:hover:bg-accent-900/50"
                 aria-label={`Quitar ${c.nombre_conjunto}`}
               >
-                <X className="h-3 w-3" aria-hidden="true" />
+                <X className="icon-sm" aria-hidden="true" />
               </button>
             </span>
           ))}
@@ -72,7 +72,7 @@ export function ConjuntoComboboxMultiple({
         <div className="relative">
           <div className="relative">
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+              className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
             />
             <ComboboxInput

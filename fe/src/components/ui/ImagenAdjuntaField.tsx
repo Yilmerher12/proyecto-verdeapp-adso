@@ -99,7 +99,7 @@ export function ImagenAdjuntaField({
   return (
     <div>
       <label className="mb-2 flex items-center gap-1 text-xs font-bold text-gray-600 dark:text-gray-400">
-        <ImagePlus className="h-4 w-4" />
+        <ImagePlus className="icon-md" />
         {label}
       </label>
 
@@ -113,7 +113,7 @@ export function ImagenAdjuntaField({
             />
           ) : (
             <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-[#23392b] dark:bg-[#1a3324]">
-              <FileText className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
+              <FileText className="icon-md shrink-0 text-gray-500 dark:text-gray-400" />
               <span className="truncate text-xs text-gray-600 dark:text-gray-300">{value.split("/").pop()}</span>
             </div>
           )}
@@ -122,7 +122,7 @@ export function ImagenAdjuntaField({
             onClick={quitar}
             className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="icon-sm" />
             {t("imagenAdjunta.quitar")}
           </button>
         </div>
@@ -130,12 +130,12 @@ export function ImagenAdjuntaField({
         <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-gray-400 dark:hover:bg-[#23392b]">
           {subiendo ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="icon-md animate-spin" />
               {t("imagenAdjunta.subiendo")}
             </>
           ) : (
             <>
-              <ImagePlus className="h-4 w-4" />
+              <ImagePlus className="icon-md" />
               {permitirDocumentos ? t("imagenAdjunta.seleccionarDocumento") : t("imagenAdjunta.seleccionar")}
             </>
           )}

@@ -276,7 +276,7 @@ export function AdminNovedadesPage() {
       <div className="flex items-center justify-between gap-3 bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
-            <Newspaper className="h-5 w-5" />
+            <Newspaper className="icon-lg" />
           </span>
           <div className="min-w-0">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("novedades.admin.title")}</h1>
@@ -287,7 +287,7 @@ export function AdminNovedadesPage() {
           onClick={abrirCrear}
           className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="icon-md" />
           {t("novedades.admin.newButton")}
         </button>
       </div>
@@ -309,7 +309,7 @@ export function AdminNovedadesPage() {
           <span className="text-sm font-bold text-gray-900 dark:text-white">{t("novedades.admin.listBar")}</span>
           <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400">
             {listaAbierta ? t("novedades.admin.collapse") : t("novedades.admin.expand")}
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${listaAbierta ? "rotate-180" : ""}`} />
+            <ChevronDown className={`icon-sm transition-transform ${listaAbierta ? "rotate-180" : ""}`} />
           </span>
         </button>
 
@@ -361,7 +361,7 @@ export function AdminNovedadesPage() {
             </div>
 
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
@@ -431,7 +431,7 @@ export function AdminNovedadesPage() {
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
                             >
-                              <Paperclip className="h-3.5 w-3.5" />
+                              <Paperclip className="icon-sm" />
                               {t("comunicados.viewAttachment")}
                             </a>
                           )}
@@ -442,18 +442,18 @@ export function AdminNovedadesPage() {
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
                             >
-                              <Video className="h-3.5 w-3.5" />
+                              <Video className="icon-sm" />
                               {t("novedades.admin.viewVideo")}
                             </a>
                           )}
                         </div>
                         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-[#23392b] dark:text-gray-400">
                           <span className="inline-flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5" />
+                            <Clock className="icon-sm" />
                             {t("novedades.admin.creadoEl", { fecha: formatearFechaCreacion(item.created_at) })}
                           </span>
                           <span className="inline-flex items-center gap-1.5">
-                            <CalendarClock className="h-3.5 w-3.5" />
+                            <CalendarClock className="icon-sm" />
                             {t("novedades.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
                           </span>
                         </div>
@@ -465,14 +465,14 @@ export function AdminNovedadesPage() {
                             className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#23392b] dark:text-gray-300 dark:hover:bg-[#23392b]"
                             aria-label={t("novedades.admin.editAria", { resumen: resumirTexto(item.texto) })}
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className="icon-md" />
                           </button>
                           <button
                             onClick={() => setAArchivar(item)}
                             className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-[#23392b] dark:hover:bg-amber-900/20"
                             aria-label={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
                           >
-                            <Archive className="h-4 w-4" />
+                            <Archive className="icon-md" />
                           </button>
                         </div>
                       )}
@@ -614,7 +614,7 @@ export function AdminNovedadesPage() {
                   </div>
                 ) : (
                   <div role="status" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold leading-snug text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
-                    <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0 icon-appear icon-ring" />
+                    <TriangleAlert className="icon-sm mt-px shrink-0 icon-appear icon-ring" />
                     {t("novedades.admin.conjunto.massWarning")}
                   </div>
                 )}
@@ -666,7 +666,7 @@ export function AdminNovedadesPage() {
                 </span>
                 <span className="flex shrink-0 items-center gap-1 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
                   {masOpciones ? t("novedades.admin.moreOptions.hide") : t("novedades.admin.moreOptions.show")}
-                  <ChevronDown className={`h-3 w-3 transition-transform ${masOpciones ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`icon-sm transition-transform ${masOpciones ? "rotate-180" : ""}`} />
                 </span>
               </button>
 

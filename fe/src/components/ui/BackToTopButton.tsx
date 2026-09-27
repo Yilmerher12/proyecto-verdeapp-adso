@@ -42,7 +42,7 @@ export function BackToTopButton() {
         visible ? "opacity-100 translate-y-0" : "pointer-events-none translate-y-3 opacity-0"
       }`}
     >
-      <ArrowUp className="h-5 w-5" aria-hidden="true" />
+      <ArrowUp className="icon-lg" aria-hidden="true" />
     </button>
   );
 }
