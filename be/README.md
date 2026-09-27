@@ -272,6 +272,10 @@ SMTP_PORT=1025
 SMTP_USERNAME=
 SMTP_PASSWORD=
 
+# Buzón que recibe los mensajes del formulario de contacto de la landing
+# (POST /api/v1/contact). En desarrollo llegan a Mailpit.
+CONTACT_EMAIL=contacto@verdeapp.local
+
 # URL del frontend (se usa para construir los enlaces en los emails)
 FRONTEND_URL=http://localhost:5173
 
@@ -1027,6 +1031,7 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 | `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     7     | Catálogo de contenido educativo — lectura para todos, gestión y envío manual a conjuntos solo Admin Sistema (RQF-004/010/013) |
 | `comunicados.py`            | `/api/v1/comunicados`           |     5     | Comunicados del conjunto — publica Admin de Conjunto, ven Residente/Reciclador (RQF-014) |
 | `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
+| `contact.py`                | `/api/v1/contact`               |     1     | Formulario de contacto de la landing — público, 3/min por IP, reenvía el mensaje a `CONTACT_EMAIL` y responde 503 si el correo no sale (#351) |
 
 Todos estos routers están cubiertos por tests en `app/tests/` (ver sección 17).
 

@@ -7,6 +7,21 @@ import { Send, MessageSquare, Mail } from "lucide-react";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { enviarMensajeContacto } from "@/lib/contactApi";
+import {
+  CONTACTO_ASUNTO_MAX_LENGTH,
+  CONTACTO_ASUNTO_MIN_LENGTH,
+  CONTACTO_MENSAJE_MAX_LENGTH,
+  CONTACTO_MENSAJE_MIN_LENGTH,
+  CORREO_MAX_LENGTH,
+  CORREO_REGEX,
+  NOMBRE_MAX_LENGTH,
+  motivoNombreInvalido,
+} from "@/lib/validacion";
+
+type Campo = "name" | "email" | "subject" | "message";
+const CAMPOS: Campo[] = ["name", "email", "subject", "message"];
+const FORM_VACIO: Record<Campo, string> = { name: "", email: "", subject: "", message: "" };
 
 /**
  * ¿Qué? Ruta /contacto — Landing de fondo + modal con el formulario de contacto.
@@ -19,24 +34,74 @@ export function ContactoModalPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [formData, setFormData] = useState(FORM_VACIO);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<Campo, string>>>({});
+  const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  // ¿Qué? Issue #351 — error de un campo, o "" si es válido.
+  // ¿Para qué? Una sola función para validar al salir del campo, para
+  //           activar el botón y para revisar todo al enviar.
+  const errorDe = (campo: Campo): string => {
+    const valor = formData[campo].trim();
+    if (campo === "name") {
+      const motivo = motivoNombreInvalido(valor, NOMBRE_MAX_LENGTH);
+      if (!motivo) return "";
+      if (motivo === "requerido") return t("contactoModal.validation.nameRequired");
+      if (motivo === "formato") return t("auth.register.validation.nameFormat");
+      if (motivo === "largo") return t("auth.register.validation.firstNameMax", { max: NOMBRE_MAX_LENGTH });
+      return t("auth.register.validation.firstNameMin");
+    }
+    if (campo === "email") {
+      if (!valor) return t("auth.register.validation.emailRequired");
+      return CORREO_REGEX.test(valor) ? "" : t("auth.register.validation.emailInvalid");
+    }
+    const [min, max] =
+      campo === "subject"
+        ? [CONTACTO_ASUNTO_MIN_LENGTH, CONTACTO_ASUNTO_MAX_LENGTH]
+        : [CONTACTO_MENSAJE_MIN_LENGTH, CONTACTO_MENSAJE_MAX_LENGTH];
+    if (valor.length < min) return t(`contactoModal.validation.${campo}Min`, { min });
+    if (valor.length > max) return t(`contactoModal.validation.${campo}Max`, { max });
+    return "";
   };
 
-  const isFormIncomplete =
-    !formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim();
+  const formularioValido = CAMPOS.every((campo) => !errorDe(campo));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const campo = e.target.name as Campo;
+    setFormData((prev) => ({ ...prev, [campo]: e.target.value }));
+    // ¿Qué? Al corregir, el error del campo desaparece; vuelve a revisarse al salir.
+    setFieldErrors((prev) => ({ ...prev, [campo]: undefined }));
+  };
+
+  const validarCampo = (campo: Campo) => {
+    const mensaje = errorDe(campo);
+    setFieldErrors((prev) => ({ ...prev, [campo]: mensaje || undefined }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isFormIncomplete) return;
+    const errores = Object.fromEntries(
+      CAMPOS.map((campo) => [campo, errorDe(campo) || undefined]),
+    );
+    setFieldErrors(errores);
+    if (!formularioValido) return;
+
     setStatus("loading");
-    setTimeout(() => {
+    setErrorEnvio(null);
+    try {
+      await enviarMensajeContacto({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+      });
       setStatus("success");
-      setFormData({ name: "", email: "", subject: "", message: "" });
-    }, 1500);
+      setFormData(FORM_VACIO);
+    } catch (err) {
+      setStatus("idle");
+      setErrorEnvio(err instanceof Error ? err.message : t("contactoModal.errorDefault"));
+    }
   };
 
   return (
@@ -63,12 +128,18 @@ export function ContactoModalPage() {
               onClose={() => setStatus("idle")}
             />
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} noValidate className="space-y-4">
+              {errorEnvio && (
+                <Alert type="error" message={errorEnvio} onClose={() => setErrorEnvio(null)} />
+              )}
               <InputField
                 label={t("contactoModal.name.label")}
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                onBlur={() => validarCampo("name")}
+                error={fieldErrors.name}
+                maxLength={NOMBRE_MAX_LENGTH}
                 placeholder={t("contactoModal.name.placeholder")}
               />
               <InputField
@@ -77,6 +148,9 @@ export function ContactoModalPage() {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
+                onBlur={() => validarCampo("email")}
+                error={fieldErrors.email}
+                maxLength={CORREO_MAX_LENGTH}
                 placeholder={t("contactoModal.email.placeholder")}
                 icon={<Mail className="icon-lg" />}
               />
@@ -85,6 +159,9 @@ export function ContactoModalPage() {
                 name="subject"
                 value={formData.subject}
                 onChange={handleChange}
+                onBlur={() => validarCampo("subject")}
+                error={fieldErrors.subject}
+                maxLength={CONTACTO_ASUNTO_MAX_LENGTH}
                 placeholder={t("contactoModal.subject.placeholder")}
               />
 
@@ -98,15 +175,35 @@ export function ContactoModalPage() {
                   rows={4}
                   value={formData.message}
                   onChange={handleChange}
+                  onBlur={() => validarCampo("message")}
+                  maxLength={CONTACTO_MENSAJE_MAX_LENGTH}
+                  aria-invalid={!!fieldErrors.message}
+                  aria-describedby={fieldErrors.message ? "message-error message-count" : "message-count"}
                   placeholder={t("contactoModal.message.placeholder")}
-                  required
-                  className="block w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-accent-400 focus:border-accent-500 focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:border-night-line dark:bg-night-field dark:text-white dark:placeholder:text-gray-500 dark:hover:border-accent-500"
+                  className={`block w-full rounded-xl border bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-accent-400 focus:border-accent-500 focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:bg-night-field dark:text-white dark:placeholder:text-gray-500 dark:hover:border-accent-500 ${
+                    fieldErrors.message ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-night-line"
+                  }`}
                 />
+                <div className="flex items-start justify-between gap-2">
+                  {fieldErrors.message ? (
+                    <p id="message-error" className="animate-fade-in text-sm text-red-600 dark:text-red-400" role="alert">
+                      {fieldErrors.message}
+                    </p>
+                  ) : (
+                    <span />
+                  )}
+                  <p id="message-count" className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                    {t("contactoModal.charCount", {
+                      actual: formData.message.length,
+                      max: CONTACTO_MENSAJE_MAX_LENGTH,
+                    })}
+                  </p>
+                </div>
               </div>
 
-              <Button type="submit" fullWidth isLoading={status === "loading"} disabled={isFormIncomplete}>
+              <Button type="submit" fullWidth isLoading={status === "loading"} disabled={!formularioValido}>
                 <span className="flex items-center gap-2">
-                  {isFormIncomplete ? t("contactoModal.incomplete") : t("contactoModal.submit")}
+                  {formularioValido ? t("contactoModal.submit") : t("contactoModal.incomplete")}
                   <Send className="icon-md" />
                 </span>
               </Button>

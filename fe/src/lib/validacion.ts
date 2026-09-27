@@ -18,6 +18,16 @@ export const CORREO_MAX_LENGTH = 255;
 export const ASOCIACION_MAX_LENGTH = 100;
 export const TELEFONO_MAX_LENGTH = 10;
 
+// ¿Qué? Issue #351 — límites del formulario de contacto.
+// ¿Impacto? Deben coincidir con be/app/schemas/contact.py.
+export const CONTACTO_ASUNTO_MIN_LENGTH = 3;
+export const CONTACTO_ASUNTO_MAX_LENGTH = 150;
+export const CONTACTO_MENSAJE_MIN_LENGTH = 10;
+export const CONTACTO_MENSAJE_MAX_LENGTH = 2000;
+
+// ¿Qué? Mismo chequeo de formato de correo que ya usan registro y login.
+export const CORREO_REGEX = /\S+@\S+\.\S+/;
+
 // ¿Qué? Nombres y apellidos: letras de cualquier idioma (con tildes y ñ),
 //       separadas por espacio, apóstrofe, punto o guion ("María José",
 //       "O'Connor", "Ma. Fernanda"). Empieza con letra.
