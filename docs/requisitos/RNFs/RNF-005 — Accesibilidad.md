@@ -49,6 +49,8 @@ El layout principal debe usar elementos HTML semánticos (`<nav>`, `<main>`, `<h
 
 Todo componente nuevo debe mantener un contraste de texto legible tanto en modo claro como en modo oscuro — no basta con que se vea bien en uno de los dos modos.
 
+> **Estado real (2026-09-27)**: **Re-medido con la paleta nueva** — `docs/gestion-proyecto/auditoria-contraste-paleta-nueva.md`. Todos los colores de la paleta (verdes, tokens `night-*`, colores por rol, hero) pasan AA en claro y oscuro. Pendientes: grises de Tailwind usados en texto (`text-gray-400`, la pareja invertida `text-gray-400 dark:text-gray-500` y `gray-500` sobre el fondo de página en claro), con archivo y línea en esa auditoría.
+
 ### RNF-005.5 — Navegación por teclado
 
 Los formularios y modales deben poder usarse completamente sin mouse (tab, enter, escape).
@@ -60,3 +62,5 @@ Los formularios y modales deben poder usarse completamente sin mouse (tab, enter
 Ninguna transición o animación de la interfaz (aparición de un Modal, una Alert, un mensaje de error, o cualquier otra que se agregue después) debe forzar movimiento a quien configuró `prefers-reduced-motion: reduce` en su sistema operativo — el contenido debe seguir apareciendo, solo que sin el movimiento/fundido, nunca invisible ni retrasado (WCAG 2.3.3).
 
 > **Estado real (2026-09-08, issue #197)**: **Verificado.** Antes esto solo estaba implementado para el Hero del Landing (`.animate-hero-in`) y el `useScrollReveal` de sus tarjetas. Al agregar transiciones de entrada a `Modal.tsx`, `Alert.tsx` y el mensaje de error de `InputField.tsx` (que antes aparecían de golpe, sin ninguna transición), se generalizó el mismo patrón con 2 utilidades CSS nuevas y reutilizables — `.animate-fade-in` y `.animate-scale-in` (`fe/src/index.css`) — en vez de repetir la lógica de `prefers-reduced-motion` en cada componente por separado.
+
+> **Actualización (2026-09-27)**: las animaciones de íconos agregadas con el mapa de íconos (`icon-draw`, `icon-hop`, `icon-shake`, `icon-ring`, `icon-nudge`, `icon-appear` en `fe/src/index.css`) siguen el mismo patrón: todas están dentro de `@media (prefers-reduced-motion: no-preference)`. Verificado en el navegador: con "reducir movimiento" activo, `animation-name` del ícono es `none`; sin esa preferencia, la animación corre.
