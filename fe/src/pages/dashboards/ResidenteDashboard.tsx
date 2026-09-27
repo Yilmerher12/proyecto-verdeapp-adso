@@ -139,7 +139,7 @@ export function ResidenteDashboard() {
       {/* Header — la llave de fondo es solo un detalle tenue, para que este
           panel se sienta del Residente (su casa, su unidad), sin estorbar la
           lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
+      <div className="relative overflow-hidden bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
@@ -189,7 +189,7 @@ export function ResidenteDashboard() {
       )}
 
       {/* Acción: reportar SHUT lleno */}
-      <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-5 shadow-sm">
+      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -240,7 +240,7 @@ export function ResidenteDashboard() {
 
       {/* Actividad reciente (notificaciones recibidas) */}
       {cargando ? (
-        <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] shadow-sm p-5">
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
           <LoadingState message={t("common.loading")} />
         </div>
       ) : (

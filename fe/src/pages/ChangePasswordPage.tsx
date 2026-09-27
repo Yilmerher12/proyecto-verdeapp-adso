@@ -121,7 +121,7 @@ export function ChangePasswordPage() {
 
   return (
     <div className="mx-auto max-w-md pt-6">
-      <div className="mb-6 bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
+      <div className="mb-6 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
           {t("auth.changePassword.title")}
         </h1>
@@ -130,7 +130,7 @@ export function ChangePasswordPage() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-[#ffffff] p-6 shadow-sm dark:border-[#23392b] dark:bg-[#12231a]">
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         {success && (
           <div className="mb-4">
             <Alert type="success" message={success} onClose={() => setSuccess(null)} />

@@ -56,7 +56,7 @@ export function LegalLayout({
   if (embedded) {
     return (
       <div className="max-h-[85vh] overflow-y-auto p-6 sm:p-8">
-        <header className="mb-6 text-center border-b border-gray-100 dark:border-[#23392b] pb-6">
+        <header className="mb-6 text-center border-b border-gray-100 dark:border-night-line pb-6">
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 pr-8">
             {title}
           </h1>
@@ -74,8 +74,8 @@ export function LegalLayout({
 
   // ¿Qué? Modo página completa: header de navegación + artículo + footer.
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-[#050f0a] dark:text-gray-100 flex flex-col selection:bg-accent-200 selection:text-accent-900">
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 dark:border-[#23392b] dark:bg-[#050f0a]/80 backdrop-blur-md shadow-sm">
+    <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-night-base dark:text-gray-100 flex flex-col selection:bg-accent-200 selection:text-accent-900">
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 dark:border-night-line dark:bg-night-base/80 backdrop-blur-md shadow-sm">
         <nav aria-label={t("legal.navAriaLabel")} className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link
             to="/"
@@ -93,8 +93,8 @@ export function LegalLayout({
       </header>
 
       <main className="flex-1 py-12 px-6">
-        <article className="mx-auto max-w-3xl rounded-3xl border border-gray-200 bg-white p-8 sm:p-12 shadow-sm dark:border-[#23392b] dark:bg-[#0f2018] animate-fade-in">
-          <header className="mb-10 text-center border-b border-gray-100 dark:border-[#23392b] pb-8">
+        <article className="mx-auto max-w-3xl rounded-3xl border border-gray-200 bg-white p-8 sm:p-12 shadow-sm dark:border-night-line dark:bg-night-panel animate-fade-in">
+          <header className="mb-10 text-center border-b border-gray-100 dark:border-night-line pb-8">
             <div className="mb-6 flex justify-center">
               <BrandLogo variant="mark" className="h-16" />
             </div>
@@ -112,7 +112,7 @@ export function LegalLayout({
         </article>
       </main>
 
-      <footer className="border-t border-gray-200 py-8 text-center dark:border-[#23392b] bg-white dark:bg-[#050f0a]">
+      <footer className="border-t border-gray-200 py-8 text-center dark:border-night-line bg-white dark:bg-night-base">
         <div className="flex items-center justify-center gap-2 mb-2">
           <BrandLogo className="h-6" />
         </div>

@@ -124,7 +124,7 @@ export function PuntoAcopioPanel({
 
   return (
     <PanelLateral onClose={onClose} aria-label={t(`${p}.panel.ariaLabel`, { nombre: punto.nombre })} cerrarConEscape={cerrarConEscape}>
-      <div className="flex items-center gap-4 border-b border-gray-100 p-5 pr-14 dark:border-[#23392b]">
+      <div className="flex items-center gap-4 border-b border-gray-100 p-5 pr-14 dark:border-night-line">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-300">
           <Warehouse className="icon-lg" />
         </div>
@@ -135,7 +135,7 @@ export function PuntoAcopioPanel({
               className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                 punto.activo
                   ? "bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-300"
-                  : "bg-gray-100 text-gray-600 dark:bg-[#23392b] dark:text-gray-300"
+                  : "bg-gray-100 text-gray-600 dark:bg-night-hover dark:text-gray-300"
               }`}
             >
               {punto.activo ? t(`${p}.panel.active`) : t(`${p}.inactiveBadge`)}
@@ -171,7 +171,7 @@ export function PuntoAcopioPanel({
         </div>
       ) : (
         <>
-          <section className="border-b border-gray-100 p-5 dark:border-[#23392b]">
+          <section className="border-b border-gray-100 p-5 dark:border-night-line">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {t(`${p}.panel.dataSection`)}
             </h3>
@@ -211,7 +211,7 @@ export function PuntoAcopioPanel({
             {comentarios?.map((c) => (
               <div
                 key={c.id_comentario}
-                className="rounded-xl border border-gray-100 bg-white px-3 py-2.5 dark:border-[#23392b] dark:bg-[#12231a]"
+                className="rounded-xl border border-gray-100 bg-white px-3 py-2.5 dark:border-night-line dark:bg-night-card"
               >
                 <div className="flex justify-between gap-2 text-[11px] text-gray-400">
                   <span className="min-w-0 truncate font-semibold text-gray-600 dark:text-gray-300">
@@ -231,7 +231,7 @@ export function PuntoAcopioPanel({
                 rows={2}
                 aria-label={t(`${p}.comments.placeholder`)}
                 placeholder={t(`${p}.comments.placeholder`)}
-                className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-[#23392b] dark:bg-[#1a3324] dark:text-white"
+                className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
               />
               {errorEnvio && <Alert type="error" message={t(`${p}.comments.addError`)} onClose={() => setErrorEnvio(false)} />}
               <div className="flex justify-end">
@@ -247,7 +247,7 @@ export function PuntoAcopioPanel({
             </div>
           </section>
 
-          <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-[#ffffff] p-5 dark:border-[#23392b] dark:bg-[#0f2018]">
+          <div className="sticky bottom-0 flex flex-wrap gap-2 border-t border-gray-100 bg-white p-5 dark:border-night-line dark:bg-night-panel">
             <button
               type="button"
               onClick={() => setEditando(true)}

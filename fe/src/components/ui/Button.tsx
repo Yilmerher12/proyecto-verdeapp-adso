@@ -50,7 +50,7 @@ export function Button({
     primary:
       "bg-accent-700 text-white hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800 focus:ring-accent-500/20",
     secondary:
-      "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-[#0c1a12] dark:text-gray-300 dark:border-[#23392b] dark:hover:bg-[#23392b] focus:ring-gray-500/20",
+      "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-line dark:hover:bg-night-hover focus:ring-gray-500/20",
     danger:
       "bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 focus:ring-red-500/20",
   };

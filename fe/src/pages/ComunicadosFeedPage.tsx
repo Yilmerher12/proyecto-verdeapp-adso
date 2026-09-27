@@ -43,7 +43,7 @@ export function ComunicadosFeedPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pt-6">
-      <div className="bg-[#ffffff] dark:bg-[#12231a] rounded-2xl border border-gray-100 dark:border-[#23392b] p-6 shadow-sm">
+      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.feed.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.subtitle")}</p>
       </div>
@@ -60,10 +60,10 @@ export function ComunicadosFeedPage() {
         {comunicados.map((item) => (
           <article
             key={item.id_comunicado}
-            className={`rounded-2xl border bg-[#ffffff] p-5 dark:bg-[#12231a] ${
+            className={`rounded-2xl border bg-white p-5 dark:bg-night-card ${
               item.tipo === "URGENTE"
                 ? "border-red-200 dark:border-red-800/40"
-                : "border-gray-100 dark:border-[#23392b]"
+                : "border-gray-100 dark:border-night-line"
             }`}
           >
             <div className="flex flex-wrap items-center gap-2">
@@ -71,7 +71,7 @@ export function ComunicadosFeedPage() {
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIPO_ESTILO[item.tipo]}`}>
                 {t(`comunicados.tipos.${item.tipo}`)}
               </span>
-              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#0c1a12] dark:text-gray-300">
+              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-inset dark:text-gray-300">
                 {item.nombre_conjunto}
               </span>
               {item.editado && (
