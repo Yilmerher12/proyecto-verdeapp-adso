@@ -1,9 +1,29 @@
 // ¿Qué? Reglas de validación de formulario compartidas entre pantallas
-//       (registro y editar perfil). Antes cada una tenía su propia copia.
-// ¿Para qué? Que "registrarse" y "editar perfil" exijan exactamente lo
-//           mismo para nombre/apellidos/teléfono — una sola fuente de
-//           verdad, igual que en el backend (be/app/schemas/user.py).
+//       (registro, editar perfil y aceptar invitación). Antes cada una
+//       tenía su propia copia.
+// ¿Para qué? Que las tres pantallas exijan exactamente lo mismo — una sola
+//           fuente de verdad, igual que en el backend (be/app/schemas/user.py).
+// ¿Impacto? Si cambia una regla aquí, debe cambiar también en el backend: el
+//           backend es el que de verdad protege (alguien puede llamar a la API
+//           sin pasar por el formulario).
 export const NOMBRE_MIN_LENGTH = 2;
+
+// ¿Qué? Máximos = tamaño de la columna en la base de datos.
+// ¿Para qué? Se usan como maxLength en el input (el formulario ni deja
+//           escribir de más) y el backend responde 422 si llega algo más largo.
+export const NOMBRE_MAX_LENGTH = 100;
+export const APELLIDOS_MAX_LENGTH = 150;
+export const UNIDAD_MAX_LENGTH = 10;
+export const CORREO_MAX_LENGTH = 255;
+export const ASOCIACION_MAX_LENGTH = 100;
+export const TELEFONO_MAX_LENGTH = 10;
+
+// ¿Qué? Nombres y apellidos: letras de cualquier idioma (con tildes y ñ),
+//       separadas por espacio, apóstrofe, punto o guion ("María José",
+//       "O'Connor", "Ma. Fernanda"). Empieza con letra.
+// ¿Para qué? Antes solo había un mínimo de 2 caracteres, así que
+//           "Juan123" o "@@" pasaban como nombre.
+export const NOMBRE_REGEX = /^\p{L}[\p{L} '.-]*$/u;
 
 // RQF-008: teléfono colombiano, solo dígitos, entre 7 y 10 caracteres.
 export const TELEFONO_REGEX = /^\d{7,10}$/;
@@ -16,3 +36,26 @@ export const TELEFONO_REGEX = /^\d{7,10}$/;
 //           símbolos, guiones repetidos), sin imponer un formato más
 //           estricto que rechazaría convenciones reales de nomenclatura.
 export const UNIDAD_REGEX = /^[A-Za-z0-9]+(?:[ -][A-Za-z0-9]+)*$/;
+
+// ¿Qué? Código de acceso del conjunto: exactamente 6 caracteres del mismo
+//       alfabeto con el que lo genera el backend (be/app/utils/codigo_acceso.py),
+//       que no incluye los que se confunden al leerlos: 0/O y 1/I/L.
+export const CODIGO_ACCESO_LONGITUD = 6;
+export const CODIGO_ACCESO_REGEX = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/;
+
+/**
+ * ¿Qué? Error de un nombre o apellido, o undefined si es válido.
+ * ¿Para qué? Registro, perfil e invitación validan nombre y apellidos igual;
+ *           devuelve el MOTIVO y cada pantalla lo traduce con su propio texto.
+ */
+export function motivoNombreInvalido(
+  valor: string,
+  maximo: number,
+): "requerido" | "corto" | "largo" | "formato" | undefined {
+  const texto = valor.trim();
+  if (!texto) return "requerido";
+  if (texto.length < NOMBRE_MIN_LENGTH) return "corto";
+  if (texto.length > maximo) return "largo";
+  if (!NOMBRE_REGEX.test(texto)) return "formato";
+  return undefined;
+}

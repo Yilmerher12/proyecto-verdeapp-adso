@@ -34,7 +34,7 @@ CASOS = {
         "/api/v1/auth/verify-email", 5, False,
     ),
     "aceptar-invitacion": (
-        {"json": {"token": "no-existe", "password": CONTRASENA_FUERTE, "nombre": "A", "apellidos": "B"}},
+        {"json": {"token": "no-existe", "password": CONTRASENA_FUERTE, "nombre": "Ana", "apellidos": "Pérez"}},
         "/api/v1/admin-conjunto/aceptar", 5, False,
     ),
     "refresh": (

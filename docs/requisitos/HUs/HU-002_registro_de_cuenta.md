@@ -49,6 +49,12 @@
 - **cuando** ingreso una contraseña con menos de 8 caracteres, sin mayúscula, sin minúscula o sin número,
 - **entonces** debo ver un mensaje describiendo qué requisito falta.
 
+### CA-002.3b — Datos personales y de la unidad con formato real
+
+- **Dado que** completo el formulario de registro,
+- **cuando** escribo números o símbolos en mi nombre o apellidos, un apartamento o torre de más de 10 caracteres, o un código de acceso que no tiene 6 letras o números,
+- **entonces** veo el error debajo de ese campo al salir de él, el formulario no me deja escribir más del máximo permitido, y el botón de registro sigue deshabilitado hasta corregirlo.
+
 ### CA-002.4 — Confirmación de correo y de contraseña
 
 - **Dado que** completo el formulario de registro,
