@@ -1,125 +1,40 @@
 /**
  * Archivo: components/layout/LegalLayout.tsx
- * Descripción: Layout estructural para documentos legales del sistema.
- * ¿Para qué? Un solo componente sirve tanto para las páginas legales completas
- *           (/terminos-de-uso, /privacidad, /cookies) como para mostrarse
- *           embebido dentro de un Modal (ej: desde RegisterPage o LandingPage),
- *           sin duplicar el contenido legal en dos lugares distintos.
- * ¿Impacto? Cohesión: el contenido legal vive en un solo sitio. Desacoplamiento:
- *           quien usa <TerminosDeUsoPage /> no necesita saber si está en una
- *           página completa o dentro de un modal — solo pasa embedded={true}.
+ * Descripción: Layout de los documentos legales (Términos, Privacidad, Cookies).
+ * ¿Para qué? Las tres páginas legales se muestran siempre dentro de un <Modal>
+ *           (desde el footer de la landing o desde el registro): este layout
+ *           pone el encabezado del documento y un área con scroll interno.
+ * ¿Impacto? Antes tenía además un modo "página completa" (con su propio
+ *           header, footer y logo) que ninguna ruta usaba; se quitó junto con
+ *           el prop embedded, que ya siempre valía true.
  */
 
-import { type ReactNode, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { ArrowLeft } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
-import { BrandLogo } from "@/components/ui/BrandLogo";
+import type { ReactNode } from "react";
 
 interface LegalLayoutProps {
   children: ReactNode;
   title: string;
   lastUpdated: string;
   version: string;
-  /**
-   * ¿Qué? Cuando es true, omite el <header> de navegación y el <footer> propios,
-   *       y aplica un padding/scroll pensado para vivir dentro de un <Modal>.
-   * ¿Para qué? Evitar duplicar el botón de cerrar y el encabezado cuando este
-   *           layout se renderiza DENTRO de un componente <Modal>, que ya
-   *           provee su propio botón de cierre.
-   * ¿Impacto? Como página independiente (ruta /terminos-de-uso, etc.) se omite
-   *           esta prop y todo se ve exactamente igual que antes (sin cambios).
-   */
-  embedded?: boolean;
 }
 
-export function LegalLayout({
-  children,
-  title,
-  lastUpdated,
-  version,
-  embedded = false,
-}: LegalLayoutProps) {
-  const { t } = useTranslation();
-
-  useEffect(() => {
-    if (!embedded) {
-      window.scrollTo(0, 0);
-    }
-  }, [embedded]);
-
-  // ¿Qué? Modo embebido: el propio Modal ya tiene su botón de cerrar (X) y
-  //       su backdrop — aquí solo necesitamos el contenido con buen padding
-  //       y un área de scroll interna acotada en altura (no toda la pantalla).
-  if (embedded) {
-    return (
-      <div className="max-h-[85vh] overflow-y-auto p-6 sm:p-8">
-        <header className="mb-6 text-center border-b border-gray-100 dark:border-night-line pb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 pr-8">
-            {title}
-          </h1>
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-            <p>Versión {version}</p>
-            <span>&middot;</span>
-            <p>Última actualización: {lastUpdated}</p>
-          </div>
-        </header>
-
-        <div className="space-y-8">{children}</div>
-      </div>
-    );
-  }
-
-  // ¿Qué? Modo página completa: header de navegación + artículo + footer.
+export function LegalLayout({ children, title, lastUpdated, version }: LegalLayoutProps) {
+  // El Modal ya pone el botón de cerrar y el fondo: aquí solo va el contenido,
+  // con un área de scroll acotada en altura (no toda la pantalla).
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-night-base dark:text-gray-100 flex flex-col selection:bg-accent-200 selection:text-accent-900">
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 dark:border-night-line dark:bg-night-base/80 backdrop-blur-md shadow-sm">
-        <nav aria-label={t("legal.navAriaLabel")} className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-accent-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded-md"
-          >
-            <ArrowLeft className="icon-md" />
-            {t("common.backToHome")}
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            <ThemeToggle />
-          </div>
-        </nav>
+    <div className="max-h-[85vh] overflow-y-auto p-6 sm:p-8">
+      <header className="mb-6 text-center border-b border-gray-100 dark:border-night-line pb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-2 pr-8">
+          {title}
+        </h1>
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+          <p>Versión {version}</p>
+          <span>&middot;</span>
+          <p>Última actualización: {lastUpdated}</p>
+        </div>
       </header>
 
-      <main className="flex-1 py-12 px-6">
-        <article className="mx-auto max-w-3xl rounded-3xl border border-gray-200 bg-white p-8 sm:p-12 shadow-sm dark:border-night-line dark:bg-night-panel animate-fade-in">
-          <header className="mb-10 text-center border-b border-gray-100 dark:border-night-line pb-8">
-            <div className="mb-6 flex justify-center">
-              <BrandLogo variant="mark" className="h-16" />
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-2">
-              {title}
-            </h1>
-            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-              <p>Versión {version}</p>
-              <span>&middot;</span>
-              <p>Última actualización: {lastUpdated}</p>
-            </div>
-          </header>
-
-          <div className="space-y-8 max-w-none">{children}</div>
-        </article>
-      </main>
-
-      <footer className="border-t border-gray-200 py-8 text-center dark:border-night-line bg-white dark:bg-night-base">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <BrandLogo className="h-6" />
-        </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          © {new Date().getFullYear()} ADSO - SENA
-        </p>
-      </footer>
+      <div className="space-y-8">{children}</div>
     </div>
   );
 }

@@ -15,7 +15,7 @@ export function PrivacidadModalPage() {
     <>
       <LandingPage asBackdrop />
       <Modal onClose={() => navigate("/")} wide aria-label={t("legal.privacy.title")}>
-        <PoliticaPrivacidadPage embedded />
+        <PoliticaPrivacidadPage />
       </Modal>
     </>
   );

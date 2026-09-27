@@ -28,12 +28,7 @@ const SERVICE_COOKIES: readonly CookieEntry[] = [
   { name: "refresh_token" },
 ] as const;
 
-interface PoliticaCookiesPageProps {
-  /** ¿Qué? Ver LegalLayout — true cuando se muestra dentro de un Modal. */
-  embedded?: boolean;
-}
-
-export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPageProps) {
+export function PoliticaCookiesPage() {
   const { t } = useTranslation();
 
   const S = <strong className="text-gray-700 dark:text-gray-300" />;
@@ -72,7 +67,6 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
       title={t("legal.cookies.title")}
       lastUpdated="2026-09-11"
       version="1.1"
-      embedded={embedded}
     >
       <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
         <Trans i18nKey="legal.cookies.intro1" components={{ strong: S }} />
