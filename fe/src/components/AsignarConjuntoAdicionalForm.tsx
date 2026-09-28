@@ -134,7 +134,7 @@ export function AsignarConjuntoAdicionalForm() {
         </h3>
       </div>
 
-      <form onSubmit={buscar} className="flex gap-2 mb-4">
+      <form onSubmit={buscar} noValidate className="flex gap-2 mb-4">
         <div className="flex-1 relative">
           <Search className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input

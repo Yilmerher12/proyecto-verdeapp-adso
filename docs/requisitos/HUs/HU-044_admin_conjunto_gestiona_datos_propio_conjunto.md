@@ -44,7 +44,7 @@
 
 - **Dado que** administro un conjunto,
 - **cuando** edito su NIT desde mi panel,
-- **entonces** el cambio se guarda de inmediato.
+- **entonces** el cambio se guarda de inmediato (el NIT admite máximo 50 caracteres, el tamaño de su columna; issue #352).
 
 ### CA-044.2 — Nombre y dirección son de solo lectura
 

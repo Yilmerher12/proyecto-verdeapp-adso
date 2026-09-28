@@ -25,6 +25,26 @@ export const CONTACTO_ASUNTO_MAX_LENGTH = 150;
 export const CONTACTO_MENSAJE_MIN_LENGTH = 10;
 export const CONTACTO_MENSAJE_MAX_LENGTH = 2000;
 
+// ¿Qué? Issue #352 — límites de los formularios de administración. Los de
+//       columnas String son el tamaño real en la base de datos; los de
+//       columnas Text (comunicado, novedad, cuerpo, descripción, motivos)
+//       son un máximo de la app.
+// ¿Impacto? Deben coincidir con los *_MAX_LENGTH de be/app/schemas/ y de
+//          be/app/utils/enlaces.py.
+export const ENLACE_MAX_LENGTH = 500;
+export const COMUNICADO_TEXTO_MAX_LENGTH = 2000;
+export const NOVEDAD_TEXTO_MAX_LENGTH = 2000;
+export const CONTENIDO_MODULO_MAX_LENGTH = 255;
+export const CONTENIDO_TITULO_MAX_LENGTH = 255;
+export const CONTENIDO_CUERPO_MAX_LENGTH = 10000;
+export const PUNTO_ACOPIO_NOMBRE_MAX_LENGTH = 200;
+export const PUNTO_ACOPIO_DIRECCION_MAX_LENGTH = 255;
+export const PUNTO_ACOPIO_ENCARGADO_MAX_LENGTH = 100;
+export const PUNTO_ACOPIO_TELEFONO_MAX_LENGTH = 15;
+export const AUDITORIA_DESCRIPCION_MAX_LENGTH = 255;
+export const DESVINCULACION_MOTIVO_MAX_LENGTH = 1000;
+export const NIT_MAX_LENGTH = 50;
+
 // ¿Qué? Mismo chequeo de formato de correo que ya usan registro y login.
 export const CORREO_REGEX = /\S+@\S+\.\S+/;
 

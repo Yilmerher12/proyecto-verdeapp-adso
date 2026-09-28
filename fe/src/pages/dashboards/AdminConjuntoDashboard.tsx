@@ -31,6 +31,8 @@ import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
+import { CORREO_MAX_LENGTH, CORREO_REGEX, DESVINCULACION_MOTIVO_MAX_LENGTH, NIT_MAX_LENGTH } from "@/lib/validacion";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -183,6 +185,15 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
   const [correoNuevo, setCorreoNuevo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [errorInvitar, setErrorInvitar] = useState<string | null>(null);
+  // ¿Qué? Issue #352 — con noValidate el navegador ya no revisa el formato
+  //       del correo; lo revisa la app, anclado al campo como en el resto.
+  const [errorCorreo, setErrorCorreo] = useState<string | null>(null);
+  const validarCorreo = () => {
+    const correo = correoNuevo.trim();
+    const mensaje = correo && !CORREO_REGEX.test(correo) ? t("auth.register.validation.emailInvalid") : null;
+    setErrorCorreo(mensaje);
+    return !mensaje;
+  };
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   // ¿Qué? Esta sección (autorizados + invitaciones) es la que más espacio
   //       ocupa dentro de la tarjeta de cada conjunto — con un admin que
@@ -248,7 +259,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
     e.preventDefault();
     setErrorInvitar(null);
 
-    if (!correoNuevo.trim()) return;
+    if (!correoNuevo.trim() || !validarCorreo()) return;
 
     setEnviando(true);
     try {
@@ -325,17 +336,35 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
         <form
           id={`recicladores-invitar-${idConjunto}`}
           onSubmit={handleInvitar}
+          noValidate
           className="flex flex-col sm:flex-row gap-2 mb-4 bg-white dark:bg-night-card p-3 rounded-xl"
         >
-          <div className="flex-1 relative">
-            <Mail className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="email"
-              placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
-              value={correoNuevo}
-              onChange={(e) => setCorreoNuevo(e.target.value)}
-              className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
-            />
+          <div className="flex-1">
+            <div className="relative">
+              <Mail className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="email"
+                placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
+                aria-label={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
+                value={correoNuevo}
+                onChange={(e) => {
+                  setCorreoNuevo(e.target.value);
+                  setErrorCorreo(null);
+                }}
+                onBlur={validarCorreo}
+                maxLength={CORREO_MAX_LENGTH}
+                aria-invalid={!!errorCorreo}
+                aria-describedby={errorCorreo ? `recicladores-correo-error-${idConjunto}` : undefined}
+                className={`w-full pl-9 p-2.5 border rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:bg-night-field dark:text-white ${
+                  errorCorreo ? "border-red-500 dark:border-red-400" : "border-gray-200 dark:border-night-line"
+                }`}
+              />
+            </div>
+            {errorCorreo && (
+              <p id={`recicladores-correo-error-${idConjunto}`} role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errorCorreo}
+              </p>
+            )}
           </div>
           <button
             type="submit"
@@ -536,9 +565,16 @@ function SeccionDesvinculacion({
             id={`desvinculacion-motivo-${idConjunto}`}
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
+            maxLength={DESVINCULACION_MOTIVO_MAX_LENGTH}
+            aria-describedby={`desvinculacion-motivo-contador-${idConjunto}`}
             placeholder={t("desvinculacion.motivoPlaceholder")}
             rows={2}
             className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
+          />
+          <ContadorCaracteres
+            id={`desvinculacion-motivo-contador-${idConjunto}`}
+            actual={motivo.length}
+            max={DESVINCULACION_MOTIVO_MAX_LENGTH}
           />
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex gap-2">
@@ -801,6 +837,7 @@ export function AdminConjuntoDashboard() {
                         type="text"
                         value={formEdicion.nit}
                         onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
+                        maxLength={NIT_MAX_LENGTH}
                         className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
                       />
                     </div>

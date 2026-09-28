@@ -20,7 +20,9 @@ from app.schemas.auditoria_conjunto import (
     AuditoriaAdminResponse,
     AuditoriaConjuntoResponse,
     AuditoriasAdminListResponse,
+    DESCRIPCION_MAX_LENGTH,
     NivelDesempeno,
+    TEMA_MAX_LENGTH,
 )
 from app.services import auditoria_conjunto_service as service
 
@@ -58,8 +60,8 @@ def _a_response(auditoria: AuditoriaConjunto) -> AuditoriaConjuntoResponse:
 async def crear_auditoria(
     id_conjunto_residencial: UUID = Form(...),
     nivel_desempeno: NivelDesempeno = Form(...),
-    tema_educativo: str = Form(...),
-    descripcion: Optional[str] = Form(None),
+    tema_educativo: str = Form(..., max_length=TEMA_MAX_LENGTH),
+    descripcion: Optional[str] = Form(None, max_length=DESCRIPCION_MAX_LENGTH),
     evidencias: list[UploadFile] = File(...),
     current_user: Usuario = Depends(_requiere_reciclador),
     db: Session = Depends(get_db),

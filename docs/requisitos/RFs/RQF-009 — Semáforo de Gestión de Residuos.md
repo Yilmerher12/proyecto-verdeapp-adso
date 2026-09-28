@@ -32,7 +32,7 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
 | `id_conjunto_residencial` | UUID     | Sí          | El reciclador debe estar autorizado en ese conjunto y haber avisado su llegada (RQF-006). |
 | `nivel_desempeno`         | Texto    | Sí          | `BUENA`, `REGULAR` o `DEFICIENTE` (en pantalla: Bueno / Regular / Malo). La BD también admite `EXCELENTE`, que solo tienen auditorías viejas. |
 | `tema_educativo`          | Texto    | Sí          | Categoría del contenido educativo relacionada con lo observado. No puede ir vacío. Máximo 255 caracteres. |
-| `descripcion`             | Texto    | No          | Observaciones libres, sin límite de largo.                                   |
+| `descripcion`             | Texto    | No          | Observaciones libres. Máximo 255 caracteres (HU-010, issue #352).         |
 | `evidencias`              | Archivos | Sí          | Entre 1 y 3 fotos (JPG, PNG o WEBP, máximo 5 MB cada una, validadas por contenido real). |
 
 ---

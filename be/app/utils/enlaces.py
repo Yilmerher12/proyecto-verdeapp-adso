@@ -14,7 +14,11 @@ Descripción: Validación de los enlaces que guardan comunicados, novedades y
 from typing import Annotated, Optional
 from urllib.parse import urlparse
 
-from pydantic import AfterValidator
+from pydantic import AfterValidator, Field
+
+# ¿Qué? Issue #352 — tamaño de las columnas url_adjunto, url_video y url_guia
+#       (String(500) en los modelos): más largo, la base de datos falla con 500.
+ENLACE_MAX_LENGTH = 500
 
 # ¿Qué? Los mismos formatos que reconoce fe/src/components/ui/YoutubeEmbed.tsx.
 DOMINIOS_YOUTUBE = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtube-nocookie.com"}
@@ -54,5 +58,5 @@ def validar_enlace_video(valor: str | None) -> str | None:
 # ¿Qué? Tipos listos para usar en los esquemas de crear/editar: el campo
 #       queda "url_adjunto: EnlaceAdjunto = None" en vez de repetir el mismo
 #       field_validator en cada clase.
-EnlaceAdjunto = Annotated[Optional[str], AfterValidator(validar_enlace_adjunto)]
-EnlaceVideo = Annotated[Optional[str], AfterValidator(validar_enlace_video)]
+EnlaceAdjunto = Annotated[Optional[str], Field(max_length=ENLACE_MAX_LENGTH), AfterValidator(validar_enlace_adjunto)]
+EnlaceVideo = Annotated[Optional[str], Field(max_length=ENLACE_MAX_LENGTH), AfterValidator(validar_enlace_video)]

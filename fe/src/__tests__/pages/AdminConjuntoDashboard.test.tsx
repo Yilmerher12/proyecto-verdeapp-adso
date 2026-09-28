@@ -193,6 +193,28 @@ describe("AdminConjuntoDashboard", () => {
     });
   });
 
+  // ¿Qué? Issue #352 — con noValidate, el formato del correo lo revisa la
+  //       app (mensaje anclado al campo), no el globo del navegador.
+  it("muestra el error de correo inválido al invitar y no envía nada", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Conjunto Los Alpes");
+    await user.click(screen.getByRole("button", { name: "+ Invitar reciclador" }));
+    const correo = screen.getByPlaceholderText("correo.del.reciclador@ejemplo.com");
+    expect(correo).toHaveAttribute("maxLength", "255");
+    await user.type(correo, "no-es-correo");
+    await user.click(screen.getByRole("button", { name: "Invitar" }));
+
+    expect(await screen.findByText("El formato del correo no es válido.")).toBeInTheDocument();
+    expect(correo).toHaveAttribute("aria-invalid", "true");
+    expect(mockPost).not.toHaveBeenCalled();
+  });
+
   // ¿Qué? El Admin de Conjunto revoca directo el acceso de un reciclador
   //       ya autorizado — sin que el reciclador tenga que pedir nada.
   it("revoca el acceso de un reciclador autorizado, tras confirmar", async () => {

@@ -36,7 +36,7 @@ Este proceso es manual y requiere aprobación humana (Admin Sistema) para evitar
 
 ### Flujo A — Solicitar desvinculación (Admin Conjunto)
 1. El Admin Conjunto ve la lista de conjuntos que administra en su perfil.
-2. Selecciona uno y envía una solicitud de desvinculación con motivo opcional.
+2. Selecciona uno y envía una solicitud de desvinculación con motivo opcional (máximo 1000 caracteres, issue #352; el motivo de rechazo del Admin Sistema tiene el mismo máximo).
 3. La solicitud queda pendiente hasta que el Admin Sistema la gestione.
 4. El Admin Conjunto recibe una notificación cuando se procesa su solicitud.
 

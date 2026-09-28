@@ -10,11 +10,16 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.utils.enlaces import EnlaceAdjunto
 
 from app.models.comunicado import DestinatariosComunicado, TipoComunicado
+
+# ¿Qué? Issue #352 — la columna es Text (sin límite), pero sin un máximo en
+#       la app se podía publicar un texto enorme en el feed de todos.
+# ¿Impacto? Debe coincidir con COMUNICADO_TEXTO_MAX_LENGTH de fe/src/lib/validacion.ts.
+TEXTO_MAX_LENGTH = 2000
 
 
 class CrearComunicadoRequest(BaseModel):
@@ -22,7 +27,7 @@ class CrearComunicadoRequest(BaseModel):
     id_conjunto_residencial: UUID
     destinatarios: DestinatariosComunicado
     tipo: TipoComunicado
-    texto: str
+    texto: str = Field(max_length=TEXTO_MAX_LENGTH)
     url_adjunto: EnlaceAdjunto = None
     # ¿Qué? Obligatoria solo cuando tipo=CONVOCATORIA (RF: "expira al día
     #       siguiente del evento") — se valida en el service, no aquí,
@@ -49,7 +54,7 @@ class EditarComunicadoRequest(BaseModel):
               esos dos no se pueden cambiar después de publicar.
     """
     tipo: TipoComunicado
-    texto: str
+    texto: str = Field(max_length=TEXTO_MAX_LENGTH)
     url_adjunto: EnlaceAdjunto = None
     fecha_evento: Optional[date] = None
     fecha_expiracion: Optional[datetime] = None

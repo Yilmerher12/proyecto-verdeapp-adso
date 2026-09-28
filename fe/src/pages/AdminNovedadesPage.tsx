@@ -25,6 +25,8 @@ import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
 import { Alert } from "@/components/ui/Alert";
 import { Paginacion } from "@/components/ui/Paginacion";
+import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
+import { ENLACE_MAX_LENGTH, NOVEDAD_TEXTO_MAX_LENGTH } from "@/lib/validacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
 import {
@@ -631,9 +633,12 @@ export function AdminNovedadesPage() {
                 id="novedad-texto"
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
+                maxLength={NOVEDAD_TEXTO_MAX_LENGTH}
+                aria-describedby="novedad-texto-contador"
                 rows={5}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
               />
+              <ContadorCaracteres id="novedad-texto-contador" actual={form.texto.length} max={NOVEDAD_TEXTO_MAX_LENGTH} />
             </div>
 
             <div>
@@ -686,6 +691,7 @@ export function AdminNovedadesPage() {
                       id="novedad-url-video"
                       value={form.url_video}
                       onChange={(e) => setForm({ ...form, url_video: e.target.value })}
+                      maxLength={ENLACE_MAX_LENGTH}
                       placeholder="https://www.youtube.com/watch?v=..."
                       className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
                     />

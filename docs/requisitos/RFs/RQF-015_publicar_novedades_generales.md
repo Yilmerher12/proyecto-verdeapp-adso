@@ -53,7 +53,7 @@ A diferencia de los comunicados de conjunto (RQF-014), las novedades las publica
 ## Reglas de negocio
 
 - RN-001: Solo el Admin Sistema puede publicar, editar o archivar novedades generales.
-- RN-002: El texto de la novedad es obligatorio; los adjuntos y links son opcionales.
+- RN-002: El texto de la novedad es obligatorio (máximo 2000 caracteres, issue #352); los adjuntos y links son opcionales (máximo 500 caracteres cada enlace).
 - RN-003: Las novedades se filtran por rol: cada usuario solo ve lo que le corresponde.
 - RN-004: El sistema archiva automáticamente las novedades al llegar su fecha de expiración.
 - RN-005: No se pueden reactivar novedades archivadas directamente; se debe crear una nueva.

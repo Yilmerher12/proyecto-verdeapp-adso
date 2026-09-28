@@ -376,4 +376,14 @@ describe("AdminNovedadesPage", () => {
       expect(mockEditar.mock.calls[0][1]).not.toHaveProperty("conjuntos");
     });
   });
+
+  // ¿Qué? Issue #352 — mismo límite que el backend (TEXTO_MAX_LENGTH).
+  it("limita el mensaje de la novedad y muestra el contador de caracteres", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Nueva novedad" }));
+    expect(await screen.findByLabelText(/Mensaje/)).toHaveAttribute("maxLength", "2000");
+    expect(screen.getByText("0/2000 caracteres")).toBeInTheDocument();
+  });
 });
