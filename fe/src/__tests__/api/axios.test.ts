@@ -135,4 +135,26 @@ describe("renovación de sesión (issue #319)", () => {
     expect(llamadas.filter(esRefresh)).toHaveLength(1);
     expect(destino).toBe("");
   });
+
+  it("con navigator.locks, la renovación pasa por el candado compartido entre pestañas (issue #359)", async () => {
+    // ¿Qué? jsdom no trae navigator.locks: se simula uno que corre la
+    //       función de una vez, solo para comprobar que se usa y con qué nombre.
+    const request = vi.fn((_nombre: string, fn: () => Promise<void>) => fn());
+    Object.defineProperty(navigator, "locks", { configurable: true, value: { request } });
+    responder = (url, intento) => {
+      if (esRefresh(url)) return { status: 200 };
+      return intento === 1 ? { status: 401 } : { status: 200 };
+    };
+
+    try {
+      await api.get("/api/v1/comunicados/feed");
+    } finally {
+      delete (navigator as { locks?: unknown }).locks;
+    }
+
+    expect(request).toHaveBeenCalledOnce();
+    expect(request.mock.calls[0][0]).toBe("verdeapp:renovar-sesion");
+    expect(llamadas.filter(esRefresh)).toHaveLength(1);
+    expect(destino).toBe("");
+  });
 });

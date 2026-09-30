@@ -4,18 +4,26 @@ Descripción: Tests de integración para los endpoints de autenticación y usuar
 """
 
 import io
+import threading
+import time
+import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import jwt
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.main import app as fastapi_app
 from app.models.conjunto_residencial import ConjuntoResidencial
+from app.models.token_revocado import TokenRevocado
 from app.models.usuario import Usuario
+from app.services.auth_service import revocar_jti
 from app.tests.conftest import (
+    TestSessionLocal,
     TEST_USER_EMAIL,
     TEST_USER_NOMBRE,
     TEST_USER_APELLIDOS,
@@ -614,6 +622,91 @@ class TestLogout:
 
         assert client.get("/api/v1/users/me", headers=headers_1).status_code == 401
         assert client.get("/api/v1/users/me", headers=headers_2).status_code == 200
+
+
+class TestRevocacionAtomica:
+    """Issue #359 (CN-036): dos revocaciones del mismo jti a la vez."""
+
+    def test_dos_revocaciones_simultaneas_solo_una_gana(self) -> None:
+        """¿Qué? Dos sesiones de BD reales (no la sesión compartida del
+        fixture `db`, que no permite concurrencia) intentan revocar el mismo
+        jti al mismo tiempo — es lo que pasa con dos /refresh simultáneos.
+        ¿Impacto? Con el "preguntar y después guardar" de antes, las dos
+        podían pasar la pregunta; ahora la BD deja ganar solo a una."""
+        jti = str(uuid.uuid4())
+        exp = int(time.time()) + 60
+        barrera = threading.Barrier(2)
+        resultados: list[bool] = []
+
+        def revocar() -> None:
+            with TestSessionLocal() as sesion:
+                barrera.wait()
+                resultados.append(revocar_jti(sesion, jti, exp))
+                sesion.commit()
+
+        hilos = [threading.Thread(target=revocar) for _ in range(2)]
+        try:
+            for hilo in hilos:
+                hilo.start()
+            for hilo in hilos:
+                hilo.join(timeout=10)
+            assert sorted(resultados) == [False, True]
+        finally:
+            # ¿Para qué? Estas sesiones sí hacen commit (no pasan por el
+            #           rollback del fixture `db`), así que se limpia a mano.
+            with TestSessionLocal() as sesion:
+                sesion.query(TokenRevocado).filter_by(jti=uuid.UUID(jti)).delete()
+                sesion.commit()
+
+
+def _token_a_mano(**campos) -> str:
+    """Firma con la clave real un token con exactamente estos campos — para
+    probar payloads que create_access_token nunca produciría."""
+    return jwt.encode(campos, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+class TestValidacionDelToken:
+    """Issue #359 (CN-037 y CN-038): campos obligatorios y jti mal formado."""
+
+    def _base(self, test_user, tipo: str) -> dict:
+        return {
+            "sub": TEST_USER_EMAIL,
+            "type": tipo,
+            "ver": test_user.version_sesion,
+            "exp": int(time.time()) + 600,
+            "jti": str(uuid.uuid4()),
+        }
+
+    @pytest.mark.parametrize("campo", ["exp", "jti", "type"])
+    def test_access_token_sin_campo_obligatorio_da_401(self, client: TestClient, test_user, campo: str) -> None:
+        payload = self._base(test_user, "access")
+        del payload[campo]
+        headers = {"Authorization": f"Bearer {_token_a_mano(**payload)}"}
+        assert client.get("/api/v1/users/me", headers=headers).status_code == 401
+
+    @pytest.mark.parametrize("campo", ["exp", "jti"])
+    def test_refresh_token_sin_campo_obligatorio_da_401(self, client: TestClient, test_user, campo: str) -> None:
+        payload = self._base(test_user, "refresh")
+        del payload[campo]
+        response = client.post("/api/v1/auth/refresh", json={"refresh_token": _token_a_mano(**payload)})
+        assert response.status_code == 401
+
+    def test_access_token_con_jti_que_no_es_uuid_da_401(self, client: TestClient, test_user) -> None:
+        """Antes, uuid.UUID("no-es-uuid") lanzaba ValueError → 500."""
+        payload = {**self._base(test_user, "access"), "jti": "no-es-uuid"}
+        headers = {"Authorization": f"Bearer {_token_a_mano(**payload)}"}
+        assert client.get("/api/v1/users/me", headers=headers).status_code == 401
+
+    def test_refresh_token_con_jti_que_no_es_uuid_da_401(self, client: TestClient, test_user) -> None:
+        payload = {**self._base(test_user, "refresh"), "jti": "no-es-uuid"}
+        response = client.post("/api/v1/auth/refresh", json={"refresh_token": _token_a_mano(**payload)})
+        assert response.status_code == 401
+
+    def test_token_completo_hecho_a_mano_si_funciona(self, client: TestClient, test_user) -> None:
+        """Control: el mismo token con los tres campos pasa — así los 401 de
+        arriba son por el campo que falta, no por otra cosa del token."""
+        headers = {"Authorization": f"Bearer {_token_a_mano(**self._base(test_user, 'access'))}"}
+        assert client.get("/api/v1/users/me", headers=headers).status_code == 200
 
 
 class TestChangePassword:

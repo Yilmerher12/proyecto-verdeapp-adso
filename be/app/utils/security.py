@@ -8,6 +8,7 @@ Descripción: Utilidades de seguridad — hashing de contraseñas y manejo de to
           Si los JWT se generan mal, cualquiera podría suplantar usuarios.
 """
 
+import uuid
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -192,15 +193,32 @@ def decode_token(token: str) -> dict | None:
         Diccionario con los datos del token (payload) si es válido, None si no lo es.
     """
     try:
+        # ¿Qué? Issue #359 (CN-037): "require" rechaza un token al que le
+        #       falte cualquiera de estos tres campos.
+        # ¿Para qué? Sin "exp", PyJWT aceptaría el token para siempre; sin
+        #           "jti", nunca se podría revocar (logout, rotación del
+        #           refresh token). Los dos create_*_token de arriba siempre
+        #           los incluyen, así que ningún token real se ve afectado.
         payload = jwt.decode(
             token,
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
+            options={"require": ["exp", "type", "jti"]},
         )
-        return payload
     except jwt.PyJWTError:
         # ¿Qué? PyJWTError captura tokens expirados, mal formados, o con firma inválida.
         # ¿Para qué? Manejar todos los errores de JWT en un solo lugar.
         # ¿Impacto? Retornar None en lugar de lanzar excepción permite al caller
         #           decidir cómo manejar el error (401, redirect a login, etc.).
         return None
+
+    # ¿Qué? Issue #359 (CN-038): un "jti" que no tiene forma de UUID se
+    #       trata igual que un token inválido.
+    # ¿Impacto? Quien lee el payload (get_current_user, refresh, logout) hace
+    #           uuid.UUID(jti) sin try; revisarlo aquí, una sola vez, evita
+    #           que ese ValueError salga como un 500 en vez de un 401.
+    try:
+        uuid.UUID(str(payload["jti"]))
+    except ValueError:
+        return None
+    return payload

@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -394,19 +395,6 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
             detail="El token proporcionado no es un token de renovación válido.",
         )
 
-    # ¿Qué? HU-008/RQF-007: si este refresh token ya fue revocado por un
-    #       logout previo, no debe poder usarse para generar access tokens
-    #       nuevos, aunque su firma y expiración sigan siendo válidas.
-    # ¿Impacto? Sin esto, alguien que hubiera copiado el refresh token ANTES
-    #           del logout podría seguir renovando su sesión indefinidamente
-    #           — el logout no cerraría nada de verdad.
-    jti = payload.get("jti")
-    if jti and db.get(TokenRevocado, uuid.UUID(jti)):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="El token de sesión ha sido invalidado. Inicia sesión de nuevo.",
-        )
-
     correo = payload.get("sub")
     if not correo:
         raise HTTPException(
@@ -449,19 +437,22 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
         )
 
     # ¿Qué? Issue #308: rotación — el refresh token que se acaba de usar
-    #       pasa a la lista negra antes de emitir el par nuevo.
-    # ¿Para qué? Que cada refresh token sirva UNA sola vez. Si alguien lo
-    #           copió, en cuanto uno de los dos lo use, el otro queda fuera.
-    # ¿Impacto? El frontend hoy no llama a /refresh de forma automática,
-    #           así que no hay riesgo de dos renovaciones en paralelo con el
-    #           mismo token.
-    exp = payload.get("exp")
-    if jti and exp:
-        db.add(TokenRevocado(
-            jti=uuid.UUID(jti),
-            expira_en=datetime.fromtimestamp(exp, tz=timezone.utc),
-        ))
-        db.commit()
+    #       pasa a la lista negra antes de emitir el par nuevo. Issue #359
+    #       (CN-036): revocar_jti revisa y guarda en un solo paso, así que
+    #       también cubre el caso de un token ya revocado por un logout.
+    # ¿Para qué? Que cada refresh token sirva UNA sola vez, aunque lleguen
+    #           dos /refresh con el mismo token al mismo tiempo (dos
+    #           pestañas, o quien robó la cookie a la vez que la víctima):
+    #           solo uno logra guardarlo y el otro recibe 401.
+    # ¿Impacto? El frontend renueva solo desde el issue #319; para que dos
+    #           pestañas no se choquen aquí, fe/src/api/axios.ts renueva de
+    #           a una pestaña a la vez (navigator.locks).
+    if not revocar_jti(db, payload["jti"], payload["exp"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="El token de sesión ha sido invalidado. Inicia sesión de nuevo.",
+        )
+    db.commit()
 
     return emitir_tokens(db, user)
 
@@ -576,9 +567,9 @@ def logout_user(db: Session, access_token: str, refresh_token: str | None) -> No
               (sessionStorage) — el token en sí seguía siendo 100% válido
               para el servidor durante toda su vida (15 min access, 7 días
               refresh) si alguien lo hubiera copiado antes.
-    ¿Impacto? Un token ya expirado, o sin "jti" (no debería pasar con los
-              tokens que emite este sistema), simplemente se ignora — no
-              hay nada que revocar en ese caso.
+    ¿Impacto? Un token ya expirado o inválido simplemente se ignora — no
+              hay nada que revocar en ese caso. Uno ya revocado también:
+              revocar_jti no lo guarda dos veces.
 
     Args:
         db: Sesión de base de datos.
@@ -591,24 +582,35 @@ def logout_user(db: Session, access_token: str, refresh_token: str | None) -> No
             continue
 
         payload = decode_token(token)
-        if not payload:
-            continue
-
-        jti = payload.get("jti")
-        exp = payload.get("exp")
-        if not jti or not exp:
-            continue
-
-        jti_uuid = uuid.UUID(jti)
-        if db.get(TokenRevocado, jti_uuid):
-            continue
-
-        db.add(TokenRevocado(
-            jti=jti_uuid,
-            expira_en=datetime.fromtimestamp(exp, tz=timezone.utc),
-        ))
+        if payload:
+            revocar_jti(db, payload["jti"], payload["exp"])
 
     db.commit()
+
+
+def revocar_jti(db: Session, jti: str, exp: int) -> bool:
+    """Guarda el jti de un token en la lista negra (tokens_revocados).
+
+    ¿Qué? Issue #359 (CN-036): revisa y guarda en UN solo paso con
+          INSERT ... ON CONFLICT DO NOTHING — si el jti ya estaba, PostgreSQL
+          no inserta nada y no devuelve ninguna fila.
+    ¿Para qué? Antes era "preguntar si existe" y, más abajo, "guardarlo":
+              dos /refresh simultáneos con el mismo token pasaban los dos la
+              pregunta antes de que alguno lo guardara. Como jti es la llave
+              primaria, la BD deja que solo uno de los dos lo inserte.
+    ¿Impacto? No hace commit — lo decide quien la llama. decode_token ya
+              garantiza que jti es un UUID válido y que exp existe.
+
+    Returns:
+        True si esta llamada lo revocó; False si ya estaba revocado.
+    """
+    stmt = (
+        pg_insert(TokenRevocado)
+        .values(jti=uuid.UUID(jti), expira_en=datetime.fromtimestamp(exp, tz=timezone.utc))
+        .on_conflict_do_nothing(index_elements=[TokenRevocado.jti])
+        .returning(TokenRevocado.jti)
+    )
+    return db.execute(stmt).scalar_one_or_none() is not None
 
 
 def update_user_locale(db: Session, user: Usuario, locale: str) -> Usuario:
