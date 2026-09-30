@@ -26,7 +26,7 @@ import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultip
 import { Alert } from "@/components/ui/Alert";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
-import { ENLACE_MAX_LENGTH, NOVEDAD_TEXTO_MAX_LENGTH } from "@/lib/validacion";
+import { ENLACE_MAX_LENGTH, NOVEDAD_TEXTO_MAX_LENGTH, REGEX_VIDEO_YOUTUBE } from "@/lib/validacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
 import {
@@ -129,6 +129,7 @@ export function AdminNovedadesPage() {
   const [form, setForm] = useState<FormState>(FORM_VACIO);
   const [masOpciones, setMasOpciones] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [errorVideo, setErrorVideo] = useState("");
   // ¿Qué? Issue #9 (hallazgo U2 de la auditoría) — archivar se ejecutaba
   //       directo al clic, sin confirmar, a diferencia de eliminar un
   //       comunicado (misma acción conceptual, otra pantalla).
@@ -174,6 +175,7 @@ export function AdminNovedadesPage() {
   const abrirCrear = () => {
     setForm(FORM_VACIO);
     setMasOpciones(false);
+    setErrorVideo("");
     setCreando(true);
   };
 
@@ -190,6 +192,7 @@ export function AdminNovedadesPage() {
     // ¿Qué? Si ya trae adjunto o video, "Más opciones" se abre sola para
     //       que se vea lo que ya tiene puesto.
     setMasOpciones(Boolean(item.url_adjunto || item.url_video));
+    setErrorVideo("");
     setEditando(item);
   };
 
@@ -208,8 +211,25 @@ export function AdminNovedadesPage() {
   const formularioIncompleto =
     !form.texto.trim() || (!editando && form.modoConjunto === "elegir" && form.conjuntos.length === 0);
 
+  // ¿Qué? Issue #357: misma regla que be/app/utils/enlaces.py — el video
+  //       solo puede ser de YouTube por https://.
+  // ¿Para qué? Sin esto, el backend respondía 422 y el Admin veía un aviso
+  //           genérico en vez del error pegado al campo del video.
+  const validarVideo = (): string => {
+    const valor = form.url_video.trim();
+    const mensaje = valor && !REGEX_VIDEO_YOUTUBE.test(valor) ? t("novedades.admin.validation.videoNotYoutube") : "";
+    setErrorVideo(mensaje);
+    return mensaje;
+  };
+
   const guardar = async () => {
     if (!user) return;
+    if (validarVideo()) {
+      // ¿Qué? El campo vive dentro de "Más opciones": se abre para que el
+      //       Admin vea el error aunque la sección estuviera recogida.
+      setMasOpciones(true);
+      return;
+    }
     if (!form.texto.trim()) {
       setErrorMsg(t("novedades.admin.validation.textoRequerido"));
       return;
@@ -690,11 +710,26 @@ export function AdminNovedadesPage() {
                     <input
                       id="novedad-url-video"
                       value={form.url_video}
-                      onChange={(e) => setForm({ ...form, url_video: e.target.value })}
+                      onChange={(e) => {
+                        setForm({ ...form, url_video: e.target.value });
+                        setErrorVideo("");
+                      }}
+                      onBlur={validarVideo}
                       maxLength={ENLACE_MAX_LENGTH}
                       placeholder="https://www.youtube.com/watch?v=..."
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                      aria-invalid={!!errorVideo}
+                      aria-describedby={errorVideo ? "novedad-url-video-error" : undefined}
+                      className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                        errorVideo
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                          : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                      }`}
                     />
+                    {errorVideo && (
+                      <p id="novedad-url-video-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                        {errorVideo}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

@@ -54,6 +54,7 @@ import {
   CONTENIDO_MODULO_MAX_LENGTH,
   CONTENIDO_TITULO_MAX_LENGTH,
   ENLACE_MAX_LENGTH,
+  REGEX_VIDEO_YOUTUBE,
 } from "@/lib/validacion";
 import { listarAuditoriasAdmin, type AuditoriaAdmin, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
 
@@ -66,9 +67,6 @@ const FORM_VACIO: ContenidoEducativoPayload = {
 };
 
 const NUEVA_CATEGORIA = "__nueva__";
-// ¿Qué? Mismos formatos que reconoce YoutubeEmbed, pero exigiendo https://
-//       como el backend (be/app/utils/enlaces.py, issue #314).
-const REGEX_VIDEO_YOUTUBE = /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[\w-]{11}/;
 
 // ¿Qué? Cuántas auditorías "de todos los tiempos" se piden para cruzar
 //       "a qué conjuntos se recomendó cada módulo" en la tabla y en el

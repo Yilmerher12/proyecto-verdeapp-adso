@@ -63,6 +63,7 @@ A diferencia de los comunicados de conjunto (RQF-014), las novedades las publica
 - RN-009: Al publicar desde el panel hay que elegir al menos un conjunto o marcar "Todos los conjuntos" explícitamente — el formulario no permite publicar sin decidir, para evitar avisos masivos por descuido (ej. una reunión presencial). La API sigue aceptando una lista vacía como "todos". Esto no reemplaza a los Comunicados (RQF-014): esos los publica el Admin de Conjunto para SU conjunto; una novedad con conjuntos la publica el Admin Sistema. **Implementada.**
 - RN-010: Los conjuntos elegidos no se pueden cambiar después de publicar (igual que el alcance). **Implementada.**
 - RN-011: Con varios conjuntos se crea una notificación por conjunto, y un Reciclador o Admin de Conjunto que pertenezca a varios de los elegidos la recibe una sola vez. **Implementada.**
+- RN-012: El video (`url_video`) solo puede ser un enlace `https://` de YouTube (`youtube.com`, `youtu.be`, `youtube-nocookie.com`), igual que en Contenido Educativo (RQF-010). Se valida en el backend (`be/app/utils/enlaces.py`, 422 si no cumple, al publicar y al editar) y en el formulario, con el error debajo del campo (issue #357). **Implementada.**
 
 ---
 

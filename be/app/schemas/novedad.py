@@ -12,7 +12,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.utils.enlaces import ENLACE_MAX_LENGTH, EnlaceAdjunto
+from app.utils.enlaces import EnlaceAdjunto, EnlaceVideo
 
 from app.models.novedad import AlcanceNovedad
 
@@ -27,7 +27,7 @@ class CrearNovedadRequest(BaseModel):
     alcance: AlcanceNovedad
     texto: str = Field(max_length=TEXTO_MAX_LENGTH)
     url_adjunto: EnlaceAdjunto = None
-    url_video: Optional[str] = Field(default=None, max_length=ENLACE_MAX_LENGTH)
+    url_video: EnlaceVideo = None
     # ¿Qué? Lista vacía (o sin mandar) = la novedad llega a todos los
     #       conjuntos del alcance elegido, igual que siempre. Con uno o
     #       varios ids, solo a esos conjuntos.
@@ -55,7 +55,7 @@ class EditarNovedadRequest(BaseModel):
     """
     texto: str = Field(max_length=TEXTO_MAX_LENGTH)
     url_adjunto: EnlaceAdjunto = None
-    url_video: Optional[str] = Field(default=None, max_length=ENLACE_MAX_LENGTH)
+    url_video: EnlaceVideo = None
     fecha_expiracion: Optional[datetime] = None
 
     @field_validator("texto")

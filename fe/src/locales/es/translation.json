@@ -1426,7 +1426,8 @@
       "alcanceNoEditable": "El alcance no se puede cambiar después de publicar. Si te equivocaste, archívala y crea una nueva.",
       "validation": {
         "textoRequerido": "El texto de la novedad es obligatorio.",
-        "conjuntoRequerido": "Elige al menos un conjunto, o marca «Todos los conjuntos»."
+        "conjuntoRequerido": "Elige al menos un conjunto, o marca «Todos los conjuntos».",
+        "videoNotYoutube": "El video debe ser un enlace de YouTube que empiece por https:// (por ejemplo https://youtu.be/...)."
       },
       "fields": {
         "alcance": "Alcance",
