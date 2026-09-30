@@ -115,7 +115,7 @@ def listar_historial(
 @router.get(
     "/admin",
     response_model=AuditoriasAdminListResponse,
-    summary="Admin Sistema ve las auditorías del reciclador, por semana o las más recientes (RQF-018)",
+    summary="Admin Sistema ve las auditorías del reciclador, por semana o las más recientes (RQF-009)",
 )
 def listar_admin(
     lunes: Optional[date] = Query(

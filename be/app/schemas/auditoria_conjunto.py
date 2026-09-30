@@ -42,7 +42,7 @@ class AuditoriaConjuntoResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ¿Qué? Vista del Admin del Sistema sobre las auditorías (RQF-018) — igual a
+# ¿Qué? Vista del Admin del Sistema sobre las auditorías (RQF-009) — igual a
 #       la de arriba, más cuántos residentes fueron avisados con
 #       "contenido recomendado" a raíz de esta auditoría.
 # ¿Para qué? avisados es 0 para nivel BUENA (RQF-013: una calificación buena

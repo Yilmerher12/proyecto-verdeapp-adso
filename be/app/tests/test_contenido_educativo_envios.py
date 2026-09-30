@@ -1,7 +1,7 @@
 """
 Módulo: tests/test_contenido_educativo_envios.py
 Descripción: Pruebas de ver un módulo puntual y del envío manual de un
-             módulo del catálogo a uno o varios conjuntos (RQF-018) — sin
+             módulo del catálogo a uno o varios conjuntos (RQF-013, Flujo C) — sin
              pasar por una auditoría del Reciclador.
 ¿Para qué? Archivo aparte de test_contenido_educativo.py (que ya cubre el
            catálogo en sí: listar/crear/editar/eliminar) para no mezclarlo
@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.notificacion import Notificacion, NotificacionDestinatario
+from app.schemas.contenido_educativo import CONJUNTOS_MAX_LENGTH
 
 URL = f"{'/api/v1/contenido-educativo'}"
 
@@ -81,6 +82,41 @@ class TestEnviar:
         id_contenido = _crear_modulo(client, admin_sistema_auth_headers)
         response = client.post(f"{URL}/{id_contenido}/enviar", json={"conjuntos": []}, headers=admin_sistema_auth_headers)
         assert response.status_code == 422
+
+    def test_mas_conjuntos_que_el_tope_devuelve_422(self, client: TestClient, admin_sistema_auth_headers):
+        """¿Qué? Issue #358 — una lista por encima de CONJUNTOS_MAX_LENGTH se
+        rechaza antes de tocar la BD."""
+        id_contenido = _crear_modulo(client, admin_sistema_auth_headers)
+        conjuntos = [str(uuid.uuid4()) for _ in range(CONJUNTOS_MAX_LENGTH + 1)]
+        response = client.post(
+            f"{URL}/{id_contenido}/enviar", json={"conjuntos": conjuntos}, headers=admin_sistema_auth_headers
+        )
+        assert response.status_code == 422
+
+    def test_conjunto_repetido_crea_un_solo_envio_y_una_sola_notificacion(
+        self, client: TestClient, admin_sistema_auth_headers, db: Session, conjunto_verificado, test_user
+    ):
+        """¿Qué? Issue #358 — el mismo conjunto dos veces en la lista no debe
+        avisarle dos veces a sus residentes."""
+        id_contenido = _crear_modulo(client, admin_sistema_auth_headers)
+        id_conjunto = str(conjunto_verificado.id_conjunto_residencial)
+        response = client.post(
+            f"{URL}/{id_contenido}/enviar",
+            json={"conjuntos": [id_conjunto, id_conjunto]},
+            headers=admin_sistema_auth_headers,
+        )
+        assert response.status_code == 201
+        assert len(response.json()) == 1
+
+        listado = client.get(f"{URL}/{id_contenido}/envios", headers=admin_sistema_auth_headers)
+        assert len(listado.json()) == 1
+
+        notificaciones = (
+            db.query(Notificacion)
+            .filter(Notificacion.tipo == "CONTENIDO_RECOMENDADO_MANUAL", Notificacion.id_referencia == uuid.UUID(id_contenido))
+            .all()
+        )
+        assert len(notificaciones) == 1
 
     def test_conjunto_inexistente_devuelve_400(self, client: TestClient, admin_sistema_auth_headers):
         id_contenido = _crear_modulo(client, admin_sistema_auth_headers)

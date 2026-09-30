@@ -13,6 +13,14 @@ MODULO_MAX_LENGTH = 255
 TITULO_MAX_LENGTH = 255
 CUERPO_MAX_LENGTH = 10000
 
+# ¿Qué? Issue #358 — máximo de conjuntos por envío manual.
+# ¿Para qué? En la pantalla se eligen uno por uno en un buscador, así que
+#            nadie llega a 100 usándola; el tope solo frena una petición
+#            armada a mano con miles de ids, que obligaría al backend a
+#            buscarlos todos en la BD de una sola vez.
+# ¿Impacto? Mismo valor que CONJUNTOS_MAX_LENGTH de schemas/novedad.py.
+CONJUNTOS_MAX_LENGTH = 100
+
 
 class ContenidoEducativoBase(BaseModel):
     modulo_categoria: str
@@ -85,17 +93,20 @@ class ContenidoEducativoResponse(ContenidoEducativoBase):
     model_config = {"from_attributes": True}
 
 
-# ¿Qué? Envío manual de un módulo a uno o varios conjuntos (RQF-018) — sin
-#       pasar por una auditoría del Reciclador.
+# ¿Qué? Envío manual de un módulo a uno o varios conjuntos (RQF-013,
+#       Flujo C) — sin pasar por una auditoría del Reciclador.
 class EnviarContenidoRequest(BaseModel):
-    conjuntos: list[UUID]
+    conjuntos: list[UUID] = Field(max_length=CONJUNTOS_MAX_LENGTH)
 
     @field_validator("conjuntos")
     @classmethod
     def al_menos_un_conjunto(cls, v: list[UUID]) -> list[UUID]:
         if not v:
             raise ValueError("Elige al menos un conjunto.")
-        return v
+        # ¿Para qué? Un id repetido haría que el servicio registre el envío
+        #            y notifique a los residentes de ese conjunto dos veces.
+        #            dict.fromkeys quita repetidos sin cambiar el orden.
+        return list(dict.fromkeys(v))
 
 
 class EnvioContenidoResponse(BaseModel):

@@ -2,7 +2,7 @@
  * Archivo: __tests__/pages/AdminContenidoEducativoPage.test.tsx
  * Descripción: Tests del panel de administración del catálogo educativo
  *              (HU-012 crear, HU-013 editar, HU-014 eliminar) y del
- *              rediseño RQF-018: pestaña "Calificaciones por conjunto" por
+ *              rediseño de RQF-009, RQF-010 y RQF-013: pestaña "Calificaciones por conjunto" por
  *              semana, "Sin recomendar", vista previa en vivo, y el envío
  *              manual de un módulo a uno o varios conjuntos.
  * ¿Para qué? La página usa axios directo (vía las funciones de

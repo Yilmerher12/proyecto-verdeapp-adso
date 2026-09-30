@@ -2,7 +2,7 @@
 
 ¿Qué? Nueva tabla que registra cada vez que el Admin del Sistema envía un
       módulo del catálogo educativo a mano a un conjunto, sin pasar por una
-      auditoría del Reciclador (RQF-018).
+      auditoría del Reciclador (RQF-013, Flujo C).
 ¿Para qué? Antes, "recomendado a un conjunto" solo podía nacer de una
           calificación Regular o Mala (RQF-013). Esta tabla es la única
           forma de registrar un envío manual — no reemplaza ni modifica

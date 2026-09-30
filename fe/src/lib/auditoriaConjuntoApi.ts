@@ -96,7 +96,7 @@ export interface AuditoriasAdminResultado {
 }
 
 // ¿Qué? El Admin del Sistema ve las auditorías del reciclador sin importar
-//       a qué conjunto pertenecen (RQF-018) — con `lunes` (YYYY-MM-DD),
+//       a qué conjunto pertenecen (RQF-009) — con `lunes` (YYYY-MM-DD),
 //       filtra esa semana completa; sin él, trae las más recientes de
 //       cualquier semana (para cruzar "a qué conjuntos se recomendó cada
 //       módulo" sin acotar a una sola semana).

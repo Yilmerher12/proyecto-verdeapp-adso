@@ -1,6 +1,6 @@
 """
 Módulo: tests/test_auditoria_conjunto_admin.py
-Descripción: Pruebas de GET /api/v1/auditorias-conjunto/admin (RQF-018) —
+Descripción: Pruebas de GET /api/v1/auditorias-conjunto/admin (RQF-009) —
              la vista del Admin del Sistema sobre las auditorías del
              reciclador, por semana o las más recientes.
 ¿Para qué? Archivo aparte de test_auditoria_conjunto.py (que ya cubre crear,

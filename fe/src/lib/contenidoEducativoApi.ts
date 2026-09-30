@@ -33,7 +33,7 @@ export async function listarContenido(): Promise<ContenidoEducativo[]> {
 }
 
 // ¿Qué? Un módulo puntual — lo usa el Residente al abrir una recomendación
-//       manual (RQF-018), y el panel del Admin del Sistema al armar la
+//       manual (RQF-013, Flujo C), y el panel del Admin del Sistema al armar la
 //       vista previa en vivo con datos ya guardados.
 export async function obtenerContenido(id: string): Promise<ContenidoEducativo> {
   const { data } = await axios.get(`${API_BASE}/${id}`);

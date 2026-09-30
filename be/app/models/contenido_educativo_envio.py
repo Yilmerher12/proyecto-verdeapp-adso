@@ -13,7 +13,7 @@ class ContenidoEducativoEnvio(Base):
           Reciclador (RQF-013 solo recomienda automáticamente si la
           calificación fue Regular o Malo).
     ¿Para qué? Aprovechar un módulo ya calificado bien, o cualquier otro,
-              para darle variedad al conjunto — RQF-018.
+              para darle variedad al conjunto — RQF-013, Flujo C.
     ¿Impacto? No se borra ni se reemplaza: cada envío queda como su propia
               fila, igual que el historial de auditorías. Puede haber varios
               envíos del mismo módulo al mismo conjunto en fechas distintas.
