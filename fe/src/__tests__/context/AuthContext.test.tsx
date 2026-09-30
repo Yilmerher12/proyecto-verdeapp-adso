@@ -56,7 +56,7 @@ function LoginTrigger() {
 describe("AuthProvider — restaurar idioma al iniciar sesión (HU-037)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    sessionStorage.clear();
+    localStorage.clear();
   });
 
   it("aplica el idioma guardado del usuario al hacer login (CA-037.2)", async () => {
@@ -84,9 +84,9 @@ describe("AuthProvider — restaurar idioma al iniciar sesión (HU-037)", () => 
     // ¿Qué? Simula que ya había una sesión activa (la cookie httpOnly del
     //       backend, invisible para este test) antes de que el componente
     //       se montara — el mismo caso de "recargar la página con sesión
-    //       ya iniciada". La banderita en sessionStorage es lo único que
+    //       ya iniciada". La marca en localStorage es lo único que
     //       AuthContext puede leer para saberlo (RNF-001.9).
-    sessionStorage.setItem("verdeapp:sesion-activa", "1");
+    localStorage.setItem("verdeapp:sesion-activa", "1");
     mockGetMe.mockResolvedValue(usuarioConIngles);
 
     await act(async () => {
@@ -119,5 +119,70 @@ describe("AuthProvider — restaurar idioma al iniciar sesión (HU-037)", () => 
       expect(mockGetMe).toHaveBeenCalled();
     });
     expect(mockChangeLanguage).not.toHaveBeenCalled();
+  });
+});
+
+// ¿Qué? Muestra si el AuthProvider tiene usuario, para leerlo desde el test.
+function EstadoSesion() {
+  const { isAuthenticated } = useAuth();
+  return <p>{isAuthenticated ? "con sesión" : "sin sesión"}</p>;
+}
+
+// ¿Qué? Lo que el navegador le avisa a ESTA pestaña cuando otra pestaña
+//       cambia localStorage (jsdom no lo dispara solo entre "pestañas").
+function cambioEnOtraPestana(key: string | null, newValue: string | null) {
+  act(() => {
+    window.dispatchEvent(new StorageEvent("storage", { key, newValue }));
+  });
+}
+
+describe("AuthProvider — sesión compartida entre pestañas", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    mockGetMe.mockResolvedValue(usuarioConIngles);
+  });
+
+  async function montarConSesion() {
+    localStorage.setItem("verdeapp:sesion-activa", "1");
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <EstadoSesion />
+        </AuthProvider>,
+      );
+    });
+    await waitFor(() => expect(screen.getByText("con sesión")).toBeInTheDocument());
+  }
+
+  it("el login deja la marca en localStorage, donde la ven las demás pestañas", async () => {
+    mockLoginUser.mockResolvedValue({ message: "Sesión iniciada correctamente" });
+
+    const user = userEvent.setup();
+    render(
+      <AuthProvider>
+        <LoginTrigger />
+      </AuthProvider>,
+    );
+    await user.click(screen.getByText("Entrar"));
+
+    await waitFor(() => expect(localStorage.getItem("verdeapp:sesion-activa")).toBe("1"));
+    expect(sessionStorage.getItem("verdeapp:sesion-activa")).toBeNull();
+  });
+
+  it("si otra pestaña cierra sesión, esta también queda sin usuario", async () => {
+    await montarConSesion();
+
+    cambioEnOtraPestana("verdeapp:sesion-activa", null);
+
+    expect(screen.getByText("sin sesión")).toBeInTheDocument();
+  });
+
+  it("un cambio de otra clave de localStorage (ej. el tema) no cierra la sesión", async () => {
+    await montarConSesion();
+
+    cambioEnOtraPestana("theme", "dark");
+
+    expect(screen.getByText("con sesión")).toBeInTheDocument();
   });
 });

@@ -11,6 +11,7 @@ import axios from "axios";
 import * as authApi from "@/api/auth";
 import { AuthContext } from "@/context/authContextDef";
 import i18n from "@/i18n";
+import { alCerrarSesionEnOtraPestana, borrarSesionActiva, haySesionActiva, marcarSesionActiva } from "@/lib/sesionActiva";
 import type {
   AuthContextType,
   ChangePasswordRequest,
@@ -27,16 +28,15 @@ interface AuthProviderProps {
 
 // ¿Qué? RNF-001.9: el token de sesión vive en una cookie httpOnly — por
 //       diseño, JavaScript no puede leer su valor bajo ninguna
-//       circunstancia (esa es justo la protección contra XSS). Esta
-//       banderita en sessionStorage NO es una credencial ni un secreto:
-//       solo dice "la última vez que se supo, este navegador tenía una
-//       sesión iniciada", para poder decidir sin adivinar si vale la pena
-//       llamar a getMe() al abrir la app, y para que axios.ts distinga un
-//       401 de "la sesión venció" de un 401 de "nunca hubo sesión".
+//       circunstancia (esa es justo la protección contra XSS). La marca de
+//       lib/sesionActiva.ts NO es una credencial ni un secreto: solo dice
+//       "la última vez que se supo, este navegador tenía una sesión
+//       iniciada", para poder decidir sin adivinar si vale la pena llamar a
+//       getMe() al abrir la app, y para que axios.ts distinga un 401 de "la
+//       sesión venció" de un 401 de "nunca hubo sesión".
 // ¿Impacto? Aunque un script malicioso la leyera o la modificara, no
 //           obtiene ningún token ni gana ningún acceso — en el peor caso,
 //           la app llama a getMe() una vez de más o de menos.
-const CLAVE_SESION_ACTIVA = "verdeapp:sesion-activa";
 
 export function AuthProvider({ children }: AuthProviderProps) {
   // El estado ahora maneja directamente el tipo UserResponse corregido
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isAuthenticated = !!user;
 
   const clearAuth = useCallback(() => {
-    sessionStorage.removeItem(CLAVE_SESION_ACTIVA);
+    borrarSesionActiva();
     // ¿Qué? También se borra la posición de scroll guardada del Landing.
     // ¿Para qué? AppShell hace un recargue completo hacia "/" al cerrar
     //           sesión, y el Landing (useRestoreScroll) restaura esta clave
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const verifySession = async () => {
-      const huboSesion = sessionStorage.getItem(CLAVE_SESION_ACTIVA) === "1";
+      const huboSesion = haySesionActiva();
       if (!huboSesion) {
         setIsLoading(false);
         return;
@@ -100,6 +100,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     verifySession();
   }, [clearAuth]);
 
+  // ¿Qué? Si otra pestaña cierra sesión (o su sesión vence), esta también
+  //       queda sin usuario, y ProtectedRoute la manda al login.
+  // ¿Para qué? Las pestañas comparten las cookies: cuando una cierra sesión,
+  //           los tokens ya quedaron revocados para todas. Sin esto, esta
+  //           pestaña seguiría mostrando datos de una sesión que ya no existe.
+  // ¿Impacto? Solo setUser(null): una pestaña en una página pública (el
+  //           landing) se queda donde está.
+  useEffect(() => alCerrarSesionEnOtraPestana(() => setUser(null)), []);
+
   /**
    * Acción de Login adaptada
    * Sincroniza las credenciales y el estado expandido del perfil para el Dashboard.
@@ -109,7 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     //       cookies httpOnly en esta misma respuesta — no hay nada que
     //       leer ni guardar aquí (RNF-001.9).
     await authApi.loginUser(data);
-    sessionStorage.setItem(CLAVE_SESION_ACTIVA, "1");
+    marcarSesionActiva();
 
     const userData = await authApi.getMe();
     setUser(userData);

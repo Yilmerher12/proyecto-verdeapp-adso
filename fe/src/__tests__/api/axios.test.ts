@@ -38,7 +38,7 @@ beforeEach(async () => {
   axios.defaults.adapter = adaptadorFalso;
   vi.resetModules();
   api = (await import("@/api/axios")).default;
-  sessionStorage.setItem("verdeapp:sesion-activa", "1");
+  localStorage.setItem("verdeapp:sesion-activa", "1");
   Object.defineProperty(window, "location", {
     configurable: true,
     value: {
@@ -55,6 +55,7 @@ beforeEach(async () => {
 afterEach(() => {
   axios.defaults.adapter = adaptadorOriginal;
   sessionStorage.clear();
+  localStorage.clear();
   axios.interceptors.response.clear();
 });
 
@@ -82,7 +83,7 @@ describe("renovación de sesión (issue #319)", () => {
 
     expect(destino).toBe("/login");
     expect(sessionStorage.getItem("verdeapp:session-expired")).toBe("1");
-    expect(sessionStorage.getItem("verdeapp:sesion-activa")).toBeNull();
+    expect(localStorage.getItem("verdeapp:sesion-activa")).toBeNull();
   });
 
   it("varias peticiones que fallan juntas producen UNA sola renovación", async () => {
@@ -102,7 +103,7 @@ describe("renovación de sesión (issue #319)", () => {
   });
 
   it("un 401 en /auth/login (contraseña incorrecta) no intenta renovar", async () => {
-    sessionStorage.removeItem("verdeapp:sesion-activa");
+    localStorage.removeItem("verdeapp:sesion-activa");
     responder = () => ({ status: 401, data: { detail: "Credenciales incorrectas" } });
 
     await expect(api.post("/api/v1/auth/login", {})).rejects.toThrow("Credenciales incorrectas");

@@ -29,6 +29,7 @@ import { ROLE_THEME } from "@/config/roleTheme";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { onNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { onFotoPerfilActualizada } from "@/lib/profileEvents";
+import { borrarSesionActiva } from "@/lib/sesionActiva";
 
 interface AppShellProps {
   children: ReactNode;
@@ -61,7 +62,7 @@ export function AppShell({ children }: AppShellProps) {
     //       hacia el landing reemplazara todo.
     // ¿Para qué? Como la página completa se va a recargar de inmediato, no
     //           hace falta tocar el estado de React para nada — solo hay que
-    //           borrar lo mismo que borra clearAuth() en sessionStorage.
+    //           borrar lo mismo que borra clearAuth() (la marca de sesión y el scroll).
     // ¿Impacto? Sin ningún cambio de estado de React de por medio, no hay
     //           ningún re-render que alcance a mostrar "/login" de paso.
 
@@ -83,7 +84,7 @@ export function AppShell({ children }: AppShellProps) {
       // Falla silenciosa a propósito — ver comentario de arriba.
     }
 
-    sessionStorage.removeItem("verdeapp:sesion-activa");
+    borrarSesionActiva();
     sessionStorage.removeItem("landing-scroll-y");
     window.location.href = "/";
   };
