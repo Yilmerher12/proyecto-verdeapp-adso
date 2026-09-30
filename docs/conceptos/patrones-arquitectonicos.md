@@ -302,7 +302,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && /* había sesión activa */) {
-      sessionStorage.clear();
+      borrarSesionActiva(); // lib/sesionActiva.ts — la marca vive en localStorage
       window.location.href = "/login";
     }
     return Promise.reject(error);

@@ -726,12 +726,20 @@ api.interceptors.response.use(
 export default api;
 ```
 
-> **¿Por qué `sessionStorage` y no `localStorage`?**
+> **Actualización (RNF-001.9 y cierre de la sesión compartida entre pestañas):**
+> el código de arriba es el de la plantilla original. En VerdeApp los tokens
+> ya **no** viven en `sessionStorage` ni se pegan a mano en el header: el
+> backend los deja en cookies `httpOnly` (JavaScript no puede leerlas) y el
+> navegador las adjunta solo gracias a `withCredentials: true`.
 >
-> - `sessionStorage`: vive mientras la pestaña está abierta (más seguro).
-> - `localStorage`: persiste días/semanas, mayor superficie de ataque.
-> - Para tokens cortos (15 min), `sessionStorage` es el balance adecuado.
-> - En producción con alta seguridad: usar cookies `HttpOnly` (no accesibles desde JS).
+> Lo único que el frontend guarda es una marca sin valor secreto,
+> `verdeapp:sesion-activa` = `"1"`, en **`localStorage`**
+> ([`lib/sesionActiva.ts`](src/lib/sesionActiva.ts)). Va en `localStorage` y
+> no en `sessionStorage` porque las cookies las comparten todas las pestañas
+> y duran 7 días: con `sessionStorage` (una tabla por pestaña, que se borra
+> al cerrarla) una pestaña nueva no veía la marca y mandaba al login aunque
+> la sesión siguiera viva. Como la marca no es un token, guardarla en
+> `localStorage` no agrega ningún riesgo.
 
 ### `api/auth.ts` — Una función por endpoint
 
@@ -888,8 +896,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 ```
 AuthProvider monta
   ↓ isLoading = true          → ProtectedRoute muestra spinner
-  ↓ Lee sessionStorage
-  ↓ Si hay token → GET /me
+  ↓ Lee la marca verdeapp:sesion-activa de localStorage (lib/sesionActiva.ts)
+  ↓ Si hay marca → GET /me (el navegador adjunta solo las cookies con los tokens)
       → 200 OK  → setUser(data)    → sesión restaurada
       → 401/err → clearAuth()      → sesión expirada, volver al login
   ↓ isLoading = false         → ProtectedRoute decide redirigir o mostrar la ruta
@@ -897,6 +905,10 @@ AuthProvider monta
 
 Sin este flujo, recargar la página causaría un redireccionamiento innecesario al login,
 incluso con una sesión válida.
+
+Además, `AuthProvider` escucha el evento `storage` del navegador: si **otra**
+pestaña borra la marca (cerró sesión o su sesión venció), esta pestaña también
+queda sin usuario y `ProtectedRoute` la manda al login.
 
 ---
 

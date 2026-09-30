@@ -45,7 +45,8 @@ El sistema debe mostrar un modal de confirmación antes de cerrar la sesión. Al
 3. Si el usuario cancela, el modal se cierra y la sesión continúa.
 4. Si el usuario confirma, el frontend llama a `POST /api/v1/auth/logout` sin cuerpo — el access token y el refresh token viajan solos en sus cookies httpOnly.
 5. El backend guarda el "jti" (identificador único) de ambos tokens en la tabla `tokens_revocados` — una lista negra que cualquier request futuro revisa antes de aceptar un token — y le pide al navegador, en la misma respuesta, que borre ambas cookies.
-6. El frontend borra la banderita `verdeapp:sesion-activa` de `sessionStorage` (un simple indicador de "hubo sesión", sin ningún valor secreto — ver RNF-001.9) y redirige al usuario fuera de las rutas protegidas.
+6. El frontend borra la banderita `verdeapp:sesion-activa` de `localStorage` (un simple indicador de "hubo sesión", sin ningún valor secreto — ver RNF-001.9) y redirige al usuario fuera de las rutas protegidas.
+7. Las demás pestañas abiertas de VerdeApp se enteran de que la banderita se borró (evento `storage` del navegador) y también mandan al login: como todas comparten las mismas cookies, la sesión se cerró para todas.
 
 > **Nota (2026-08-28)**: el paso 4 está envuelto en un `try/catch` a propósito en el frontend (`AppShell.tsx`) — si el servidor no responde (sin red, caído), el usuario igual puede cerrar sesión localmente. La invalidación en el servidor es una capa adicional de seguridad, no un bloqueo del flujo normal.
 

@@ -101,9 +101,11 @@ Object.defineProperty(window, "ResizeObserver", {
   value: ResizeObserverMock,
 });
 
-// ¿Qué? Mock de sessionStorage para tests.
-// ¿Para qué? AuthContext usa sessionStorage para persistir tokens.
-// ¿Impacto? jsdom implementa sessionStorage, pero lo limpiamos para asegurar aislamiento.
+// ¿Qué? Limpieza de sessionStorage y localStorage después de cada test.
+// ¿Para qué? La marca de sesión (lib/sesionActiva.ts) vive en localStorage y
+//           el aviso de sesión vencida en sessionStorage.
+// ¿Impacto? jsdom implementa los dos, pero sin limpiarlos un test le dejaría
+//           una sesión "iniciada" al siguiente.
 afterEach(() => {
   sessionStorage.clear();
   localStorage.clear();

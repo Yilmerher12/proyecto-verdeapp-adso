@@ -8,6 +8,7 @@
 
 import axios from "axios";
 import { notificarServidorInalcanzable, notificarServidorRecuperado } from "@/lib/serverStatusEvents";
+import { borrarSesionActiva, haySesionActiva } from "@/lib/sesionActiva";
 
 // La URL de la API sale de esta única variable de entorno de Vite. Antes había
 // varias pantallas (dashboards, formularios, DirectorioPage) que se escribían
@@ -131,7 +132,7 @@ function renovarSesion(): Promise<void> {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function manejarErrorDeRespuesta(error: any) {
-  const haySesionGuardada = sessionStorage.getItem("verdeapp:sesion-activa") === "1";
+  const haySesionGuardada = haySesionActiva();
   const configOriginal = error.config;
 
   // ¿Qué? Issue #319: el access token dura 15 minutos y el refresh token
@@ -178,7 +179,7 @@ async function manejarErrorDeRespuesta(error: any) {
     // ¿Qué? RNF-001.9: el token vive en una cookie httpOnly — JavaScript no
     //       puede leerla para saber si "hay sesión guardada". En su lugar,
     //       se revisa una banderita sin ningún valor secreto que
-    //       AuthContext.tsx pone en sessionStorage justo después de un
+    //       AuthContext.tsx anota (lib/sesionActiva.ts) justo después de un
     //       login/getMe exitoso, y borra al cerrar sesión.
     // ¿Qué? Issue #319: aquí solo llega un 401 que YA pasó por la
     //       renovación de arriba y siguió fallando — la sesión de verdad
@@ -186,7 +187,7 @@ async function manejarErrorDeRespuesta(error: any) {
     //       cambio de contraseña).
     if (error.response.status === 401 && haySesionGuardada && !sesionExpiradaEnProceso) {
       sesionExpiradaEnProceso = true;
-      sessionStorage.removeItem("verdeapp:sesion-activa");
+      borrarSesionActiva();
       sessionStorage.setItem("verdeapp:session-expired", "1");
       window.location.href = "/login";
     }
