@@ -140,8 +140,9 @@ def get_current_user(
     #           servidor: el mismo token seguiría funcionando hasta sus
     #           15 minutos de vida, sin importar que el usuario haya
     #           cerrado sesión.
-    jti = payload.get("jti")
-    if jti and db.get(TokenRevocado, uuid.UUID(jti)):
+    # ¿Impacto? decode_token ya exige "jti" y que sea un UUID válido (issue
+    #           #359), así que esta conversión no puede fallar con un 500.
+    if db.get(TokenRevocado, uuid.UUID(payload["jti"])):
         raise credentials_exception
 
     email: str | None = payload.get("sub")

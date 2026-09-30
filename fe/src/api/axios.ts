@@ -95,17 +95,36 @@ const clienteRenovacion = axios.create({ baseURL: API_BASE_URL, withCredentials:
 //           renueva y las demás esperan ese mismo resultado.
 let renovacionEnCurso: Promise<void> | null = null;
 
-function renovarSesion(): Promise<void> {
-  if (!renovacionEnCurso) {
-    renovacionEnCurso = clienteRenovacion
+function pedirRenovacion(): Promise<void> {
+  return (
+    clienteRenovacion
       .post("/api/v1/auth/refresh")
       .then(() => undefined)
       // ¿Qué? Si falla no se decide aquí: igual se reintenta la petición
       //       original (ver manejarErrorDeRespuesta) y ESE resultado decide.
       .catch(() => undefined)
-      .finally(() => {
-        renovacionEnCurso = null;
-      });
+  );
+}
+
+// ¿Qué? Issue #359: renovacionEnCurso solo coordina las peticiones de UNA
+//       pestaña. navigator.locks (del navegador, no es una librería) hace
+//       que entre pestañas también se renueve de a una a la vez.
+// ¿Para qué? Las pestañas comparten las cookies. Desde el #359 el backend
+//           deja usar cada refresh token una sola vez, de verdad: si dos
+//           pestañas lo mandan juntas, una recibe 401. Con el candado, la
+//           segunda espera a que la primera termine y renueva ya con la
+//           cookie nueva que dejó la primera.
+// ¿Impacto? Si el navegador no tiene navigator.locks (o en las pruebas con
+//           jsdom), se renueva sin candado, como antes.
+function renovarSesion(): Promise<void> {
+  if (!renovacionEnCurso) {
+    const candado = typeof navigator !== "undefined" ? navigator.locks : undefined;
+    const renovacion: Promise<void> = candado
+      ? candado.request("verdeapp:renovar-sesion", pedirRenovacion).then(() => undefined)
+      : pedirRenovacion();
+    renovacionEnCurso = renovacion.finally(() => {
+      renovacionEnCurso = null;
+    });
   }
   return renovacionEnCurso;
 }
