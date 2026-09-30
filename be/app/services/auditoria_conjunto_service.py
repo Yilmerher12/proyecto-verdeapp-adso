@@ -374,7 +374,7 @@ def listar_admin(
     db: Session, lunes: date | None, limit: int, offset: int
 ) -> tuple[list[AuditoriaConjunto], int, dict[UUID, int]]:
     """
-    ¿Qué? RQF-018 — el Admin del Sistema ve las auditorías del reciclador
+    ¿Qué? RQF-009 — el Admin del Sistema ve las auditorías del reciclador
           sin importar a qué conjunto pertenecen, a diferencia de
           listar_historial (acotado al conjunto de quien pregunta).
     ¿Para qué? Con `lunes`, se acota a esa semana completa: desde la

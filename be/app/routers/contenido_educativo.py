@@ -50,7 +50,7 @@ def listar(
 @router.get(
     "/{id_contenido}",
     response_model=ContenidoEducativoResponse,
-    summary="Ver un módulo puntual — el Residente lo abre desde una recomendación manual (RQF-018)",
+    summary="Ver un módulo puntual — el Residente lo abre desde una recomendación manual (RQF-013, Flujo C)",
 )
 def obtener(
     id_contenido: UUID,
@@ -63,7 +63,7 @@ def obtener(
 @router.get(
     "/{id_contenido}/envios",
     response_model=list[EnvioContenidoResponse],
-    summary="Admin Sistema ve a qué conjuntos se envió este módulo a mano (RQF-018)",
+    summary="Admin Sistema ve a qué conjuntos se envió este módulo a mano (RQF-013, Flujo C)",
 )
 def listar_envios(
     id_contenido: UUID,
@@ -85,7 +85,7 @@ def listar_envios(
     "/{id_contenido}/enviar",
     response_model=list[EnvioContenidoResponse],
     status_code=status.HTTP_201_CREATED,
-    summary="Admin Sistema envía un módulo a uno o varios conjuntos, a mano (RQF-018)",
+    summary="Admin Sistema envía un módulo a uno o varios conjuntos, a mano (RQF-013, Flujo C)",
 )
 def enviar(
     id_contenido: UUID,

@@ -42,7 +42,7 @@ from app.models.notificacion import Notificacion, NotificacionDestinatario
 # Auditoría del reciclador al conjunto (RQF-009)
 from app.models.auditoria_conjunto import AuditoriaConjunto
 
-# Envío manual de un módulo del catálogo a un conjunto (RQF-018)
+# Envío manual de un módulo del catálogo a un conjunto (RQF-013, Flujo C)
 from app.models.contenido_educativo_envio import ContenidoEducativoEnvio
 
 # Lista negra de tokens JWT invalidados por logout (RQF-007)

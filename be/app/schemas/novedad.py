@@ -21,6 +21,13 @@ from app.models.novedad import AlcanceNovedad
 # ¿Impacto? Debe coincidir con NOVEDAD_TEXTO_MAX_LENGTH de fe/src/lib/validacion.ts.
 TEXTO_MAX_LENGTH = 2000
 
+# ¿Qué? Issue #358 — máximo de conjuntos elegidos a mano para una novedad.
+# ¿Para qué? Igual que en el envío de contenido educativo: frena una
+#            petición armada con miles de ids. "Todos los conjuntos" se
+#            manda como lista vacía, así que el tope no lo afecta.
+# ¿Impacto? Mismo valor que CONJUNTOS_MAX_LENGTH de schemas/contenido_educativo.py.
+CONJUNTOS_MAX_LENGTH = 100
+
 
 class CrearNovedadRequest(BaseModel):
     """¿Qué? Lo que envía el Admin Sistema al publicar una novedad nueva (HU-032)."""
@@ -31,7 +38,7 @@ class CrearNovedadRequest(BaseModel):
     # ¿Qué? Lista vacía (o sin mandar) = la novedad llega a todos los
     #       conjuntos del alcance elegido, igual que siempre. Con uno o
     #       varios ids, solo a esos conjuntos.
-    conjuntos: List[UUID] = []
+    conjuntos: List[UUID] = Field(default=[], max_length=CONJUNTOS_MAX_LENGTH)
     # ¿Qué? Si no se manda, el service usa una expiración sugerida por
     #       defecto (CA-032.3) — el RF no define tipos con plazos
     #       distintos como en Comunicados, solo "el sistema sugiere una

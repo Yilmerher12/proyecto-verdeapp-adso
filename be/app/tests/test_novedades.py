@@ -20,6 +20,7 @@ from app.models.residente import Residente
 from app.models.rol import RolId
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
+from app.schemas.novedad import CONJUNTOS_MAX_LENGTH
 from app.utils.security import create_access_token, hash_password
 
 # ¿Qué? Issue #357 — enlaces de video que NO son de YouTube por https://.
@@ -41,6 +42,16 @@ class TestCrearNovedad:
     def test_texto_vacio_devuelve_422(self, client: TestClient, admin_sistema_auth_headers):
         response = client.post(
             "/api/v1/novedades", headers=admin_sistema_auth_headers, json={"alcance": "TODOS", "texto": "   "}
+        )
+        assert response.status_code == 422
+
+    def test_mas_conjuntos_que_el_tope_devuelve_422(self, client: TestClient, admin_sistema_auth_headers):
+        """¿Qué? Issue #358 — mismo tope que el envío de contenido educativo."""
+        conjuntos = [str(uuid.uuid4()) for _ in range(CONJUNTOS_MAX_LENGTH + 1)]
+        response = client.post(
+            "/api/v1/novedades",
+            headers=admin_sistema_auth_headers,
+            json={"alcance": "TODOS", "texto": "Aviso de prueba", "conjuntos": conjuntos},
         )
         assert response.status_code == 422
 

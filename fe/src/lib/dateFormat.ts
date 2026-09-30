@@ -41,7 +41,7 @@ export function isoToDateInputUTC(iso: string): string {
 // ¿Qué? El lunes (en UTC) de la semana que contiene esta fecha, en formato
 //       YYYY-MM-DD — mismo criterio UTC del resto de este archivo, para que
 //       coincida con cómo el backend recorta la semana
-//       (GET /auditorias-conjunto/admin?lunes=, RQF-018).
+//       (GET /auditorias-conjunto/admin?lunes=, RQF-009).
 // ¿Para qué? El panel de "Calificaciones por conjunto" navega semana a
 //           semana; este lunes es justo lo que se manda como parámetro.
 export function lunesUTC(fecha: Date = new Date()): string {

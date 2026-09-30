@@ -76,7 +76,7 @@ def eliminar_contenido(db: Session, id_contenido: UUID) -> None:
 
 
 def listar_envios_de_contenido(db: Session, id_contenido: UUID) -> list[ContenidoEducativoEnvio]:
-    """¿Qué? A qué conjuntos se envió este módulo a mano (RQF-018), más
+    """¿Qué? A qué conjuntos se envió este módulo a mano (RQF-013, Flujo C), más
     reciente primero — el 404 confirma que el módulo existe antes de listar
     (una lista vacía por sí sola no distingue "sin envíos" de "el módulo no existe")."""
     obtener_contenido_o_404(db, id_contenido)
@@ -94,7 +94,7 @@ def enviar_a_conjuntos(
 ) -> list[ContenidoEducativoEnvio]:
     """
     ¿Qué? El Admin del Sistema envía un módulo a mano a uno o varios
-          conjuntos, sin pasar por una auditoría del Reciclador (RQF-018).
+          conjuntos, sin pasar por una auditoría del Reciclador (RQF-013, Flujo C).
     ¿Para qué? Aprovechar un módulo ya bueno para darle variedad a un
               conjunto, o cubrir un tema que esta semana no tuvo ninguna
               calificación Regular o Mala (ver el resumen "Sin recomendar"
