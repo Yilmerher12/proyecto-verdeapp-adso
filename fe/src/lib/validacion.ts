@@ -45,6 +45,11 @@ export const AUDITORIA_DESCRIPCION_MAX_LENGTH = 255;
 export const DESVINCULACION_MOTIVO_MAX_LENGTH = 1000;
 export const NIT_MAX_LENGTH = 50;
 
+// ¿Qué? Enlace de video: mismos formatos que reconoce YoutubeEmbed, pero
+//       exigiendo https:// como el backend (be/app/utils/enlaces.py, issues
+//       #314 y #357). Lo usan contenido educativo y novedades.
+export const REGEX_VIDEO_YOUTUBE = /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[\w-]{11}/;
+
 // ¿Qué? Mismo chequeo de formato de correo que ya usan registro y login.
 export const CORREO_REGEX = /\S+@\S+\.\S+/;
 

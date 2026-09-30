@@ -10,6 +10,7 @@ Descripción: Pruebas de novedades generales de la plataforma (RQF-015).
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -20,6 +21,9 @@ from app.models.rol import RolId
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.utils.security import create_access_token, hash_password
+
+# ¿Qué? Issue #357 — enlaces de video que NO son de YouTube por https://.
+VIDEOS_NO_YOUTUBE = ["https://sitio-malo.com/video", "http://www.youtube.com/watch?v=abc123", "mi video"]
 
 
 class TestCrearNovedad:
@@ -37,6 +41,15 @@ class TestCrearNovedad:
     def test_texto_vacio_devuelve_422(self, client: TestClient, admin_sistema_auth_headers):
         response = client.post(
             "/api/v1/novedades", headers=admin_sistema_auth_headers, json={"alcance": "TODOS", "texto": "   "}
+        )
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize("url_video", VIDEOS_NO_YOUTUBE)
+    def test_video_no_youtube_devuelve_422(self, client: TestClient, admin_sistema_auth_headers, url_video):
+        response = client.post(
+            "/api/v1/novedades",
+            headers=admin_sistema_auth_headers,
+            json={"alcance": "TODOS", "texto": "Aviso con video", "url_video": url_video},
         )
         assert response.status_code == 422
 
@@ -247,6 +260,26 @@ class TestEditarNovedad:
             json={"texto": "No debería aplicar."},
         )
         assert response.status_code == 404
+
+    @pytest.mark.parametrize("url_video", VIDEOS_NO_YOUTUBE)
+    def test_video_no_youtube_devuelve_422(self, client: TestClient, admin_sistema_auth_headers, url_video):
+        id_novedad = self._crear(client, admin_sistema_auth_headers)
+        response = client.patch(
+            f"/api/v1/novedades/{id_novedad}",
+            headers=admin_sistema_auth_headers,
+            json={"texto": "Texto corregido.", "url_video": url_video},
+        )
+        assert response.status_code == 422
+
+    def test_video_youtube_se_guarda(self, client: TestClient, admin_sistema_auth_headers):
+        id_novedad = self._crear(client, admin_sistema_auth_headers)
+        response = client.patch(
+            f"/api/v1/novedades/{id_novedad}",
+            headers=admin_sistema_auth_headers,
+            json={"texto": "Texto corregido.", "url_video": "https://youtu.be/dQw4w9WgXcQ"},
+        )
+        assert response.status_code == 200
+        assert response.json()["url_video"] == "https://youtu.be/dQw4w9WgXcQ"
 
 
 class TestArchivarNovedad:

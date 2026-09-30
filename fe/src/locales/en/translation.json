@@ -1459,7 +1459,8 @@
       "alcanceNoEditable": "The scope can't be changed after publishing. If you made a mistake, archive it and create a new one.",
       "validation": {
         "textoRequerido": "The news item text is required.",
-        "conjuntoRequerido": "Choose at least one building, or select «All buildings»."
+        "conjuntoRequerido": "Choose at least one building, or select «All buildings».",
+        "videoNotYoutube": "The video must be a YouTube link starting with https:// (for example https://youtu.be/...)."
       },
       "fields": {
         "alcance": "Scope",

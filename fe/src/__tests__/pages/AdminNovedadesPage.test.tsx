@@ -375,6 +375,28 @@ describe("AdminNovedadesPage", () => {
       // ¿Qué? EditarNovedadPayload a propósito no lleva conjuntos ni alcance.
       expect(mockEditar.mock.calls[0][1]).not.toHaveProperty("conjuntos");
     });
+
+    // ¿Qué? Issue #357 — mismo chequeo que el backend (EnlaceVideo).
+    it("un video que no es de YouTube muestra el error bajo el campo y no publica", async () => {
+      const user = userEvent.setup();
+      renderPage();
+      const dialogo = await abrirFormulario(user);
+
+      await user.click(within(dialogo).getByRole("radio", { name: "Todos los conjuntos" }));
+      await user.type(within(dialogo).getByLabelText(/Mensaje/), "Aviso general.");
+      await user.click(within(dialogo).getByRole("button", { name: /Más opciones/ }));
+      const campoVideo = within(dialogo).getByLabelText(/Enlace de video/);
+      await user.type(campoVideo, "http://sitio-malo.com/video");
+      await user.tab();
+
+      const error = within(dialogo).getByRole("alert");
+      expect(error).toHaveTextContent(/El video debe ser un enlace de YouTube/);
+      expect(campoVideo).toHaveAttribute("aria-invalid", "true");
+      expect(campoVideo).toHaveAttribute("aria-describedby", error.id);
+
+      await user.click(within(dialogo).getByRole("button", { name: "Guardar" }));
+      expect(mockCrear).not.toHaveBeenCalled();
+    });
   });
 
   // ¿Qué? Issue #352 — mismo límite que el backend (TEXTO_MAX_LENGTH).
