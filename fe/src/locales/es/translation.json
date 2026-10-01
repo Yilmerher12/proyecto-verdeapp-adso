@@ -749,6 +749,13 @@
         "loading": "Cargando tus conjuntos...",
         "empty": "Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp."
       },
+      "avisosSection": {
+        "title": "Avisos de este conjunto",
+        "fromRecycler": "De recicladores",
+        "fromResident": "De residentes",
+        "unreadBadge_one": "{{count}} aviso nuevo",
+        "unreadBadge_other": "{{count}} avisos nuevos"
+      },
       "codigoAcceso": {
         "title": "Código de acceso",
         "description": "Compártelo con tus residentes (cartelera, grupo del conjunto) — lo necesitan para registrarse.",
