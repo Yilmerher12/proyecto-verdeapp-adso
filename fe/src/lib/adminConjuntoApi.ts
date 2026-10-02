@@ -108,6 +108,40 @@ export async function resolverSolicitudDesvinculacion(
     return data;
 }
 
+// ¿Qué? Bandeja unificada — junta desvinculación con las novedades que
+//       envían los demás roles, filtrable por tipo.
+export type TipoSolicitudUnificada = "DESVINCULACION" | "NOVEDAD";
+
+export interface SolicitudUnificada {
+    id: string;
+    tipo: TipoSolicitudUnificada;
+    titulo: string;
+    origen: string;
+    nombre_conjunto: string;
+    detalle: string;
+    url_evidencia: string | null;
+    estado: string;
+    created_at: string;
+}
+
+export async function listarSolicitudesUnificadas(tipo?: TipoSolicitudUnificada): Promise<SolicitudUnificada[]> {
+    const { data } = await axios.get(`${API_BASE}/solicitudes`, { params: tipo ? { tipo } : undefined });
+    return data;
+}
+
+export async function resolverSolicitudUnificada(
+    tipo: TipoSolicitudUnificada,
+    idSolicitud: string,
+    aprobar: boolean,
+    motivoRechazo: string | undefined
+) {
+    const { data } = await axios.post(`${API_BASE}/solicitudes/${tipo}/${idSolicitud}/resolver`, {
+        aprobar,
+        motivo_rechazo: motivoRechazo || null,
+    });
+    return data;
+}
+
 // ¿Qué? RQF-016 (HU-024, CA-024.2): conjuntos verificados sin ningún administrador activo hoy.
 // ¿Para qué? `search` + `limit` acotan el resultado — con miles de conjuntos
 //           reales registrados, este endpoint ya no devuelve todo de una vez.

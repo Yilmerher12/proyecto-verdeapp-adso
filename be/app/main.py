@@ -18,6 +18,7 @@ from app.routers import notificaciones
 from app.routers import contenido_educativo
 from app.routers import comunicados
 from app.routers import novedades
+from app.routers import novedades_enviadas
 from app.routers import auditoria_conjunto
 from app.routers import uploads
 from app.routers import puntos_acopio
@@ -138,6 +139,7 @@ app.include_router(notificaciones.router)
 app.include_router(contenido_educativo.router)
 app.include_router(comunicados.router)
 app.include_router(novedades.router)
+app.include_router(novedades_enviadas.router)
 app.include_router(auditoria_conjunto.router)
 app.include_router(uploads.router)
 app.include_router(puntos_acopio.router)

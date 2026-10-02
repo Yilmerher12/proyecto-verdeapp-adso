@@ -35,6 +35,9 @@ const CONJUNTO: ConjuntoAdministrado = {
   nombre_localidad: "Usaquén",
   tiene_solicitud_pendiente: false,
   codigo_acceso: "AB3K9Q",
+  total_apartamentos: null,
+  apartamentos_registrados: 0,
+  residentes_registrados: 0,
 };
 
 // ¿Qué? Se usan fechas alejadas entre sí (creación en enero, expiración en

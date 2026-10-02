@@ -28,6 +28,8 @@ from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAs
 from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto
 from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjunto
 from app.models.solicitud_desvinculacion import SolicitudDesvinculacion, EstadoSolicitudDesvinculacion
+from app.models.novedad_enviada import NovedadEnviada, EstadoNovedadEnviada
+from app.models.agenda_conjunto import AgendaConjunto, EstadoAgenda
 from app.models.comunicado import Comunicado, TipoComunicado, DestinatariosComunicado
 from app.models.novedad import Novedad, AlcanceNovedad
 from app.models.novedad_conjunto import NovedadConjunto
@@ -71,6 +73,10 @@ __all__ = [
     "InvitacionRecicladorConjunto",
     "SolicitudDesvinculacion",
     "EstadoSolicitudDesvinculacion",
+    "NovedadEnviada",
+    "EstadoNovedadEnviada",
+    "AgendaConjunto",
+    "EstadoAgenda",
     "Comunicado",
     "TipoComunicado",
     "DestinatariosComunicado",

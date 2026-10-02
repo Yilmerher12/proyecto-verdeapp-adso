@@ -9,6 +9,7 @@ import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
+import { MisNovedadesEnviadas, NovedadEnviadaForm } from "@/components/NovedadesEnviadas";
 
 // ¿Qué? Una novedad no tiene título, solo texto — el reproductor de video
 //       necesita uno (accesibilidad), así que se usa un recorte corto del texto.
@@ -30,6 +31,8 @@ export function NovedadesFeedPage() {
   const [novedades, setNovedades] = useState<Novedad[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
+  const [pestana, setPestana] = useState<"recibidas" | "escribir" | "mias">("recibidas");
+  const [versionEnvios, setVersionEnvios] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -46,57 +49,106 @@ export function NovedadesFeedPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 pt-6">
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("novedades.feed.title")}</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("novedades.feed.subtitle")}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {t("novedades.feed.title")}
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          {t("novedades.feed.subtitle")}
+        </p>
       </div>
 
-      {cargando && <LoadingState message={t("common.loading")} />}
-
-      {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
-
-      {!cargando && !error && novedades.length === 0 && (
-        <EmptyState icon={Newspaper} message={t("novedades.feed.empty")} />
-      )}
-
-      <div className="space-y-4">
-        {novedades.map((item) => (
-          <article
-            key={item.id_novedad}
-            className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-night-line dark:bg-night-card"
+      <div className="flex flex-wrap gap-2" role="tablist">
+        {(
+          [
+            ["recibidas", "novedadesEnviadas.tabReceived"],
+            ["escribir", "novedadesEnviadas.tabWrite"],
+            ["mias", "novedadesEnviadas.tabMine"],
+          ] as const
+        ).map(([id, labelKey]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={pestana === id}
+            onClick={() => setPestana(id)}
+            className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+              pestana === id
+                ? "bg-accent-700 text-white"
+                : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-field"
+            }`}
           >
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                {t(`novedades.alcances.${item.alcance}`)}
-              </span>
-              {item.editado && (
-                <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
-              )}
-              <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-                {formatearFechaCreacion(item.created_at)}
-              </span>
-            </div>
-
-            <p className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
-
-            {item.url_video && <YoutubeEmbed url={item.url_video} titulo={resumirTitulo(item.texto)} />}
-
-            {item.url_adjunto && (
-              <a
-                // ¿Qué? Igual que en ComunicadosFeedPage.tsx: un adjunto
-                //       subido como archivo devuelve una ruta relativa que
-                //       hay que completar con la URL del backend.
-                href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
-              >
-                <Paperclip className="icon-sm" />
-                {t("comunicados.viewAttachment")}
-              </a>
-            )}
-          </article>
+            {t(labelKey)}
+          </button>
         ))}
       </div>
+
+      {pestana === "escribir" && (
+        <NovedadEnviadaForm onEnviada={() => setVersionEnvios((v) => v + 1)} />
+      )}
+
+      {pestana === "mias" && <MisNovedadesEnviadas version={versionEnvios} />}
+
+      {pestana === "recibidas" && (
+        <>
+          {cargando && <LoadingState message={t("common.loading")} />}
+
+          {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
+
+          {!cargando && !error && novedades.length === 0 && (
+            <EmptyState icon={Newspaper} message={t("novedades.feed.empty")} />
+          )}
+
+          <div className="space-y-4">
+            {novedades.map((item) => (
+              <article
+                key={item.id_novedad}
+                className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-night-line dark:bg-night-card"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                    {t(`novedades.alcances.${item.alcance}`)}
+                  </span>
+                  {item.editado && (
+                    <span className="text-xs italic text-gray-500 dark:text-gray-400">
+                      {t("comunicados.editedBadge")}
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                    {formatearFechaCreacion(item.created_at)}
+                  </span>
+                </div>
+
+                <p className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">
+                  {item.texto}
+                </p>
+
+                {item.url_video && (
+                  <YoutubeEmbed url={item.url_video} titulo={resumirTitulo(item.texto)} />
+                )}
+
+                {item.url_adjunto && (
+                  <a
+                    // ¿Qué? Igual que en ComunicadosFeedPage.tsx: un adjunto
+                    //       subido como archivo devuelve una ruta relativa que
+                    //       hay que completar con la URL del backend.
+                    href={
+                      item.url_adjunto.startsWith("http")
+                        ? item.url_adjunto
+                        : `${API_BASE_URL}${item.url_adjunto}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
+                  >
+                    <Paperclip className="icon-sm" />
+                    {t("comunicados.viewAttachment")}
+                  </a>
+                )}
+              </article>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

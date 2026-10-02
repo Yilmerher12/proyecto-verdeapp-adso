@@ -12,7 +12,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
-import { SolicitudesDesvinculacion } from "@/components/SolicitudesDesvinculacion";
+import { SolicitudesPendientes } from "@/components/SolicitudesPendientes";
 import { AsignarConjuntoAdicionalForm } from "@/components/AsignarConjuntoAdicionalForm";
 import { ConjuntoCombobox } from "@/components/ui/ConjuntoCombobox";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
@@ -144,7 +144,7 @@ export function AdminDashboard() {
   //       segundo acordeón aparte — la tarjeta de resumen de arriba y ese
   //       acordeón hacían exactamente lo mismo, mostrar la misma lista.
   const [mostrarModalSolicitudes, setMostrarModalSolicitudes] = useState(false);
-  // ¿Para qué? El número de pendientes lo reporta SolicitudesDesvinculacion
+  // ¿Para qué? El número de pendientes lo reporta SolicitudesPendientes
   //           vía onCountChange, sin duplicar la petición solo para contar.
   const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
 
@@ -465,7 +465,7 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* ¿Qué? Instancia oculta de SolicitudesDesvinculacion — SIEMPRE
+      {/* ¿Qué? Instancia oculta de SolicitudesPendientes — SIEMPRE
           montada (con "hidden", no deja de renderizarse) solo para que
           reporte su conteo a la tarjeta de arriba desde antes de que el
           usuario abra el modal. El modal (más abajo, junto a
@@ -475,7 +475,7 @@ export function AdminDashboard() {
           mostraba exactamente la misma lista que ya se veía al abrir el
           modal desde la tarjeta de resumen — contenido duplicado en dos
           partes distintas de la misma pantalla. */}
-      <div hidden>{user && <SolicitudesDesvinculacion onCountChange={setSolicitudesPendientes} mostrarEncabezado={false} />}</div>
+      <div hidden>{user && <SolicitudesPendientes onCountChange={setSolicitudesPendientes} mostrarEncabezado={false} />}</div>
 
       {/* Franja de resumen — Administradores de conjunto / Solicitudes
           pendientes / Totales del sistema. Va ANTES de la tabla: primero
@@ -843,7 +843,7 @@ export function AdminDashboard() {
         <Modal onClose={() => setMostrarModalSolicitudes(false)} wide aria-label={t("dashboards.admin.pendingRequests.title")}>
           <div className="p-6 sm:p-8">
             {user && (
-              <SolicitudesDesvinculacion onCountChange={setSolicitudesPendientes} mostrarEncabezado dentroDeModal />
+              <SolicitudesPendientes onCountChange={setSolicitudesPendientes} mostrarEncabezado dentroDeModal />
             )}
           </div>
         </Modal>
