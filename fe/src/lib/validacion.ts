@@ -44,6 +44,9 @@ export const PUNTO_ACOPIO_TELEFONO_MAX_LENGTH = 15;
 export const AUDITORIA_DESCRIPCION_MAX_LENGTH = 255;
 export const DESVINCULACION_MOTIVO_MAX_LENGTH = 1000;
 export const NIT_MAX_LENGTH = 50;
+// ¿Qué? Tope razonable de apartamentos de un conjunto (evita un typo como 1200000).
+// ¿Impacto? Debe coincidir con TOTAL_APARTAMENTOS_MAX de be/app/schemas/conjunto_panel.py.
+export const TOTAL_APARTAMENTOS_MAX = 20000;
 
 // ¿Qué? Mismo chequeo de formato de correo que ya usan registro y login.
 export const CORREO_REGEX = /\S+@\S+\.\S+/;

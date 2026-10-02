@@ -28,8 +28,9 @@ from app.schemas.desvinculacion import (
     ResolverSolicitudDesvinculacionRequest,
     SolicitudDesvinculacionResponse,
 )
+from app.schemas.solicitud_unificada import ResolverSolicitudUnificadaRequest, SolicitudUnificadaResponse
 from app.schemas.user import MessageResponse
-from app.services import admin_conjunto_service, desvinculacion_service
+from app.services import admin_conjunto_service, desvinculacion_service, novedad_enviada_service
 from app.utils.limiter import limiter
 
 router = APIRouter(prefix="/api/v1/admin-conjunto", tags=["admin-conjunto"])
@@ -119,6 +120,44 @@ def resolver_solicitud_desvinculacion(
         resuelta_por=current_user,
     )
     mensaje = "Solicitud aprobada. El conjunto quedó desvinculado." if datos.aprobar else "Solicitud rechazada."
+    return MessageResponse(message=mensaje)
+
+
+@router.get("/solicitudes", response_model=List[SolicitudUnificadaResponse])
+def listar_solicitudes(
+    tipo: Optional[str] = Query(default=None),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+):
+    """
+    ¿Qué? Bandeja unificada "Solicitudes pendientes": junta desvinculación
+          (solicitudes_desvinculacion, sin tocarla) con las novedades que
+          envían Residentes, Recicladores y Admins de Conjunto
+          (novedades_enviadas), filtrable por `tipo`.
+    ¿Para qué? El Admin Sistema resuelve todo desde un solo lugar, sin
+              importar que por dentro sean 2 tablas distintas.
+    """
+    return novedad_enviada_service.listar_unificadas(db, tipo)
+
+
+@router.post("/solicitudes/{tipo}/{id_solicitud}/resolver", response_model=MessageResponse)
+def resolver_solicitud(
+    tipo: str,
+    id_solicitud: UUID,
+    datos: ResolverSolicitudUnificadaRequest,
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+):
+    """Aprueba o rechaza una solicitud de la bandeja unificada, sea cual sea su tipo."""
+    novedad_enviada_service.resolver_unificada(
+        db=db,
+        tipo=tipo,
+        id_solicitud=id_solicitud,
+        aprobar=datos.aprobar,
+        motivo_rechazo=datos.motivo_rechazo,
+        resuelta_por=current_user,
+    )
+    mensaje = "Solicitud aprobada." if datos.aprobar else "Solicitud rechazada."
     return MessageResponse(message=mensaje)
 
 

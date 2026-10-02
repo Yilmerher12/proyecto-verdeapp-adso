@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
-import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown } from "lucide-react";
+import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown, ClipboardList, ImageIcon, Trash2 } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -26,13 +26,29 @@ import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
 import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { HistorialAuditoriasSemanal } from "@/components/dashboard/HistorialAuditoriasSemanal";
+import { listarHistorial, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
-import { CORREO_MAX_LENGTH, CORREO_REGEX, DESVINCULACION_MOTIVO_MAX_LENGTH, NIT_MAX_LENGTH } from "@/lib/validacion";
+import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
+import {
+  CORREO_MAX_LENGTH,
+  CORREO_REGEX,
+  DESVINCULACION_MOTIVO_MAX_LENGTH,
+  NIT_MAX_LENGTH,
+  TOTAL_APARTAMENTOS_MAX,
+} from "@/lib/validacion";
+import {
+  listarAgenda,
+  crearItemAgenda,
+  cambiarEstadoItemAgenda,
+  eliminarItemAgenda,
+  type ItemAgenda,
+} from "@/lib/conjuntoPanelApi";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -111,6 +127,319 @@ function SeccionAvisosConjunto({
       <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.avisosSection.title")}</h5>
       {deReciclador.length > 0 && grupo(t("dashboards.adminConjunto.avisosSection.fromRecycler"), "text-teal-700 dark:text-teal-400", deReciclador)}
       {deResidente.length > 0 && grupo(t("dashboards.adminConjunto.avisosSection.fromResident"), "text-amber-700 dark:text-amber-400", deResidente)}
+    </div>
+  );
+}
+
+/**
+ * ¿Qué? Cobertura de UN conjunto: cuántos de sus apartamentos ya tienen al
+ *       menos un residente con cuenta, contra el total que definió su Admin.
+ * ¿Para qué? Que el Admin de Conjunto vea cuántos faltan por usar VerdeApp y
+ *           pueda invitarlos (por ejemplo en la reunión del conjunto).
+ * ¿Impacto? Si todavía no definió el total (todos los conjuntos arrancan así),
+ *          solo muestra los registrados y un botón para definirlo.
+ */
+function SeccionCobertura({ conjunto, onDefinir }: { conjunto: ConjuntoAdministrado; onDefinir: () => void }) {
+  const { t } = useTranslation();
+  const { total_apartamentos: total, apartamentos_registrados: registrados, residentes_registrados: residentes } = conjunto;
+  const tieneTotal = total !== null && total > 0;
+  // ¿Qué? Se topa en 100% / 0 faltantes por si hay más registrados que el total escrito.
+  const porcentaje = tieneTotal ? Math.min(100, Math.round((registrados / total) * 100)) : 0;
+  const faltan = tieneTotal ? Math.max(0, total - registrados) : 0;
+
+  return (
+    <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-night-line dark:bg-night-inset/40">
+      <div className="mb-2 flex items-center gap-2">
+        <Building className="icon-md text-accent-600" />
+        <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.coverage.title")}</h5>
+      </div>
+      <div className="flex flex-wrap items-baseline gap-2">
+        <span className="text-4xl font-bold leading-none text-accent-700 dark:text-accent-400">{registrados}</span>
+        <span className="text-base text-gray-500 dark:text-gray-400">
+          {tieneTotal
+            ? t("dashboards.adminConjunto.coverage.ofTotal", { total })
+            : t("dashboards.adminConjunto.coverage.alreadyHaveResidents")}
+        </span>
+      </div>
+
+      {tieneTotal ? (
+        <>
+          <div
+            role="img"
+            aria-label={t("dashboards.adminConjunto.coverage.barAria", { registrados, total })}
+            className="mt-3 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-night-line"
+          >
+            <div className="h-full rounded-full bg-accent-700" style={{ width: `${porcentaje}%` }} />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-6">
+            <div>
+              <div className="text-xl font-bold text-gray-800 dark:text-white">{faltan}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.coverage.missing")}</div>
+            </div>
+            <div>
+              <div className="text-xl font-bold text-gray-800 dark:text-white">{residentes}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.coverage.residents")}</div>
+            </div>
+          </div>
+          <p className="mt-3 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+            {t("dashboards.adminConjunto.coverage.explain")}
+          </p>
+        </>
+      ) : (
+        <div className="mt-3 space-y-3">
+          <p className="rounded-lg bg-amber-50 p-3 text-xs leading-relaxed text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+            {t("dashboards.adminConjunto.coverage.noTotal")}
+          </p>
+          <button
+            type="button"
+            onClick={onDefinir}
+            className="cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600"
+          >
+            {t("dashboards.adminConjunto.coverage.define")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * ¿Qué? Agenda interna de UN conjunto: temas (texto + foto opcional) que el
+ *       Admin de Conjunto lleva al comité — ej. "pintar el pasillo",
+ *       "arreglar la puerta del sótano".
+ * ¿Para qué? Que no se le olvide lo que le piden. En el comité abre su
+ *           agenda, discute los temas y va borrando los resueltos o los
+ *           deja "en espera".
+ * ¿Impacto? Privada: nunca llega al Admin Sistema. Sin fecha de caducidad
+ *          a propósito (el comité no tiene fecha fija que la app pueda
+ *          saber). Colapsada por defecto, igual que SeccionRecicladores.
+ */
+function SeccionAgenda({ idConjunto }: { idConjunto: string }) {
+  const { t } = useTranslation();
+  const [items, setItems] = useState<ItemAgenda[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(false);
+  const [mostrarDetalle, setMostrarDetalle] = useState(false);
+  const [agregando, setAgregando] = useState(false);
+  const [texto, setTexto] = useState("");
+  const [urlEvidencia, setUrlEvidencia] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [aBorrar, setABorrar] = useState<ItemAgenda | null>(null);
+  const [borrando, setBorrando] = useState(false);
+  const [errorBorrar, setErrorBorrar] = useState<string | null>(null);
+
+  const cargar = useCallback(() => {
+    setCargando(true);
+    listarAgenda(idConjunto)
+      .then((data) => {
+        setItems(data);
+        setErrorCarga(false);
+      })
+      .catch(() => setErrorCarga(true))
+      .finally(() => setCargando(false));
+  }, [idConjunto]);
+
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  const guardar = async () => {
+    setGuardando(true);
+    setError(null);
+    try {
+      await crearItemAgenda(idConjunto, { texto: texto.trim(), url_evidencia: urlEvidencia || null });
+      setAgregando(false);
+      setTexto("");
+      setUrlEvidencia("");
+      cargar();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setError(err.message || t("dashboards.adminConjunto.agendaSection.errorDefault"));
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const alternarEstado = async (item: ItemAgenda) => {
+    setError(null);
+    try {
+      await cambiarEstadoItemAgenda(idConjunto, item.id, item.estado === "PENDIENTE" ? "EN_ESPERA" : "PENDIENTE");
+      cargar();
+    } catch {
+      setError(t("dashboards.adminConjunto.agendaSection.actionError"));
+    }
+  };
+
+  const confirmarBorrar = async () => {
+    if (!aBorrar) return;
+    setBorrando(true);
+    setErrorBorrar(null);
+    try {
+      await eliminarItemAgenda(idConjunto, aBorrar.id);
+      setABorrar(null);
+      cargar();
+    } catch {
+      setErrorBorrar(t("dashboards.adminConjunto.agendaSection.actionError"));
+    } finally {
+      setBorrando(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-night-inset/40">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <ClipboardList className="icon-md text-accent-600" />
+          <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.agendaSection.title")}</h5>
+          {!cargando && (
+            <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
+              {items.length}
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setMostrarDetalle((v) => !v)}
+          aria-expanded={mostrarDetalle}
+          className="cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-night-panel dark:text-gray-300 dark:border-night-line dark:hover:bg-night-field"
+        >
+          {mostrarDetalle
+            ? t("dashboards.adminConjunto.agendaSection.hideDetail")
+            : t("dashboards.adminConjunto.agendaSection.showDetail")}
+        </button>
+      </div>
+
+      {mostrarDetalle && (
+        <div className="mt-3 space-y-3">
+          <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.agendaSection.hint")}</p>
+
+          {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
+
+          {agregando ? (
+            <div className="space-y-3 rounded-lg bg-white p-3 dark:bg-night-card">
+              <div>
+                <label htmlFor={`agenda-texto-${idConjunto}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                  {t("dashboards.adminConjunto.agendaSection.textLabel")}
+                </label>
+                <textarea
+                  id={`agenda-texto-${idConjunto}`}
+                  value={texto}
+                  onChange={(e) => setTexto(e.target.value)}
+                  maxLength={DESVINCULACION_MOTIVO_MAX_LENGTH}
+                  rows={2}
+                  aria-describedby={`agenda-contador-${idConjunto}`}
+                  placeholder={t("dashboards.adminConjunto.agendaSection.textPlaceholder")}
+                  className="mt-1 w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
+                />
+                <ContadorCaracteres id={`agenda-contador-${idConjunto}`} actual={texto.length} max={DESVINCULACION_MOTIVO_MAX_LENGTH} />
+              </div>
+              <ImagenAdjuntaField
+                label={t("dashboards.adminConjunto.agendaSection.evidenceLabel")}
+                value={urlEvidencia}
+                onChange={setUrlEvidencia}
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={guardar}
+                  disabled={guardando || !texto.trim()}
+                  className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Check className="icon-sm" />
+                  {guardando ? t("common.saving") : t("dashboards.adminConjunto.agendaSection.save")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAgregando(false)}
+                  className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
+                >
+                  {t("common.cancel")}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAgregando(true)}
+              className="cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+            >
+              + {t("dashboards.adminConjunto.agendaSection.add")}
+            </button>
+          )}
+
+          {cargando ? (
+            <LoadingState message={t("common.loading")} />
+          ) : errorCarga ? (
+            <Alert type="error" message={t("common.loadError")} />
+          ) : items.length === 0 ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.agendaSection.empty")}</p>
+          ) : (
+            <ul className="space-y-2">
+              {items.map((item) => (
+                <li key={item.id} className="rounded-lg bg-white p-3 dark:bg-night-card">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {item.estado === "EN_ESPERA" && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                        <Clock className="icon-sm" />
+                        {t("dashboards.adminConjunto.agendaSection.stateWaiting")}
+                      </span>
+                    )}
+                    <span className="text-[11px] text-gray-400">{formatearFechaCreacion(item.created_at)}</span>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-800 dark:text-gray-200">{item.texto}</p>
+                  {item.url_evidencia && (
+                    <a
+                      href={item.url_evidencia.startsWith("http") ? item.url_evidencia : `${API_BASE_URL}${item.url_evidencia}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-accent-700 hover:text-accent-800 dark:text-accent-400"
+                    >
+                      <ImageIcon className="icon-sm" />
+                      {t("dashboards.adminConjunto.agendaSection.viewPhoto")}
+                    </a>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => alternarEstado(item)}
+                      className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
+                    >
+                      {item.estado === "PENDIENTE"
+                        ? t("dashboards.adminConjunto.agendaSection.putOnHold")
+                        : t("dashboards.adminConjunto.agendaSection.backToPending")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setABorrar(item)}
+                      aria-label={t("dashboards.adminConjunto.agendaSection.delete")}
+                      className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 className="icon-sm" />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {aBorrar && (
+        <ConfirmModal
+          icon={Trash2}
+          variant="danger"
+          ariaLabel={t("dashboards.adminConjunto.agendaSection.deleteTitle")}
+          title={t("dashboards.adminConjunto.agendaSection.deleteTitle")}
+          description={t("dashboards.adminConjunto.agendaSection.deleteWarning")}
+          error={errorBorrar}
+          isConfirming={borrando}
+          confirmLabel={t("dashboards.adminConjunto.agendaSection.deleteConfirm")}
+          confirmingLabel={t("dashboards.adminConjunto.agendaSection.deleting")}
+          onConfirm={confirmarBorrar}
+          onClose={() => setABorrar(null)}
+        />
+      )}
     </div>
   );
 }
@@ -674,7 +1003,8 @@ export function AdminConjuntoDashboard() {
   const [cargando, setCargando] = useState(true);
   const [errorConjuntos, setErrorConjuntos] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [formEdicion, setFormEdicion] = useState({ nit: "" });
+  const [formEdicion, setFormEdicion] = useState({ nit: "", total: "" });
+  const [errorTotal, setErrorTotal] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   // ¿Qué? Antes "mensaje" era un simple string, y el aviso siempre se
   //       pintaba de verde (éxito) aunque el texto fuera el de error.
@@ -688,6 +1018,17 @@ export function AdminConjuntoDashboard() {
   //           abiertos a la vez empujaba el resto del panel fuera de la
   //           vista inicial (issue #166) — ahora solo se ve el primero.
   const [abiertos, setAbiertos] = useState<Record<string, boolean>>({});
+  // ¿Qué? Historial de auditorías de TODOS los conjuntos que administra,
+  //       pedido una sola vez aquí y filtrado por conjunto más abajo — así
+  //       HistorialAuditoriasSemanal nunca mezcla auditorías de un conjunto
+  //       con las de otro.
+  const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
+
+  useEffect(() => {
+    listarHistorial()
+      .then(setAuditorias)
+      .catch(() => setAuditorias([]));
+  }, []);
 
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [cargandoNotifs, setCargandoNotifs] = useState(true);
@@ -770,7 +1111,8 @@ export function AdminConjuntoDashboard() {
 
   const iniciarEdicion = (c: ConjuntoAdministrado) => {
     setEditandoId(c.id_conjunto_residencial);
-    setFormEdicion({ nit: c.nit || "" });
+    setFormEdicion({ nit: c.nit || "", total: c.total_apartamentos ? String(c.total_apartamentos) : "" });
+    setErrorTotal(null);
     setMensaje(null);
   };
 
@@ -780,9 +1122,17 @@ export function AdminConjuntoDashboard() {
 
   const guardarEdicion = async (id: string) => {
     if (!user) return;
+    // ¿Qué? Vacío = "sin definir"; si hay texto, debe ser un entero entre 1 y el tope.
+    const totalTexto = formEdicion.total.trim();
+    const total = totalTexto === "" ? null : Number(totalTexto);
+    if (total !== null && (!Number.isInteger(total) || total < 1 || total > TOTAL_APARTAMENTOS_MAX)) {
+      setErrorTotal(t("dashboards.adminConjunto.editForm.totalInvalid", { max: TOTAL_APARTAMENTOS_MAX }));
+      return;
+    }
+    setErrorTotal(null);
     setGuardando(true);
     try {
-      await editarMiConjunto(id, { nit: formEdicion.nit || null });
+      await editarMiConjunto(id, { nit: formEdicion.nit || null, total_apartamentos: total });
       setMensaje({ tipo: "success", texto: t("dashboards.adminConjunto.editForm.successMessage") });
       setEditandoId(null);
       cargarConjuntos();
@@ -898,6 +1248,13 @@ export function AdminConjuntoDashboard() {
                       {c.direccion} — {c.nombre_localidad}
                     </p>
                   </div>
+                  {c.total_apartamentos ? (
+                    <span className="shrink-0 rounded-full bg-accent-100 px-2.5 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
+                      {t("dashboards.adminConjunto.coverage.badge", {
+                        pct: Math.min(100, Math.round((c.apartamentos_registrados / c.total_apartamentos) * 100)),
+                      })}
+                    </span>
+                  ) : null}
                   {avisosSinLeer > 0 && (
                     <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400">
                       {t("dashboards.adminConjunto.avisosSection.unreadBadge", { count: avisosSinLeer })}
@@ -937,6 +1294,33 @@ export function AdminConjuntoDashboard() {
                         className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
                       />
                     </div>
+                    <div>
+                      <label htmlFor={`total-${c.id_conjunto_residencial}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                        {t("dashboards.adminConjunto.editForm.totalApartments")}
+                      </label>
+                      <input
+                        id={`total-${c.id_conjunto_residencial}`}
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={TOTAL_APARTAMENTOS_MAX}
+                        value={formEdicion.total}
+                        onChange={(e) => setFormEdicion((p) => ({ ...p, total: e.target.value }))}
+                        aria-invalid={!!errorTotal}
+                        aria-describedby={`total-ayuda-${c.id_conjunto_residencial}`}
+                        className={`w-40 p-2.5 border rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:bg-night-field dark:text-white ${
+                          errorTotal ? "border-red-500 dark:border-red-400" : "border-gray-200 dark:border-night-line"
+                        }`}
+                      />
+                      <p id={`total-ayuda-${c.id_conjunto_residencial}`} className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {t("dashboards.adminConjunto.editForm.totalHelp")}
+                      </p>
+                      {errorTotal && (
+                        <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+                          {errorTotal}
+                        </p>
+                      )}
+                    </div>
                     <div className="flex gap-2 pt-2">
                       <button
                         type="button"
@@ -974,6 +1358,9 @@ export function AdminConjuntoDashboard() {
                       </button>
                     </div>
 
+                    {/* Cuántos apartamentos del conjunto ya usan VerdeApp — ver SeccionCobertura arriba. */}
+                    <SeccionCobertura conjunto={c} onDefinir={() => iniciarEdicion(c)} />
+
                     {/* Avisos de este conjunto, separados por rol — ver SeccionAvisosConjunto arriba. */}
                     <SeccionAvisosConjunto nombreConjunto={c.nombre_conjunto} notificaciones={notificaciones} />
 
@@ -993,10 +1380,16 @@ export function AdminConjuntoDashboard() {
                           onRegenerado={cargarConjuntos}
                         />
                         <SeccionRecicladores idConjunto={c.id_conjunto_residencial} />
+                        <SeccionAgenda idConjunto={c.id_conjunto_residencial} />
                         <SeccionDesvinculacion
                           idConjunto={c.id_conjunto_residencial}
                           tieneSolicitudPendiente={c.tiene_solicitud_pendiente}
                           onSolicitudEnviada={cargarConjuntos}
+                        />
+                        {/* Historial de auditorías de ESTE conjunto — log histórico,
+                            sin urgencia, va al final del acordeón. */}
+                        <HistorialAuditoriasSemanal
+                          auditorias={auditorias.filter((a) => a.id_conjunto_residencial === c.id_conjunto_residencial)}
                         />
                       </>
                     )}
@@ -1010,9 +1403,6 @@ export function AdminConjuntoDashboard() {
           </div>
         )}
       </div>
-
-      {/* Historial de auditorías, agrupado por semana — log histórico, sin urgencia, va al final. */}
-      <HistorialAuditoriasSemanal />
     </div>
   );
 }

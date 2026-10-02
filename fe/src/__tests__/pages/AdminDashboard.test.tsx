@@ -559,18 +559,17 @@ describe("AdminDashboard", () => {
       ) {
         return Promise.resolve({ data: { items: [], total: 0 } });
       }
-      if (url.includes("/admin-conjunto/solicitudes-desvinculacion")) {
+      if (url.includes("/admin-conjunto/solicitudes")) {
         return Promise.resolve({
           data: [
             {
               id: "s-1",
-              id_conjunto_residencial: "c-1",
+              tipo: "DESVINCULACION",
+              titulo: "Dejar de administrar Conjunto Los Alpes",
+              origen: "Admin de Conjunto · Pedro Gómez",
               nombre_conjunto: "Conjunto Los Alpes",
-              id_administrador: "a-1",
-              nombre_administrador: "Pedro",
-              apellidos_administrador: "Gómez",
-              motivo: null,
-              estado: "pendiente",
+              detalle: "",
+              estado: "PENDIENTE",
               created_at: new Date().toISOString(),
             },
           ],
@@ -581,7 +580,7 @@ describe("AdminDashboard", () => {
     const user = userEvent.setup();
     renderPage();
 
-    // ¿Qué? El número de pendientes llega apenas carga (SolicitudesDesvinculacion
+    // ¿Qué? El número de pendientes llega apenas carga (SolicitudesPendientes
     //       avisa por onCountChange) gracias a la instancia oculta (con
     //       "hidden", no deja de renderizarse) — antes de que el usuario
     //       abra el modal, la solicitud ya está en el DOM pero no visible.
@@ -591,7 +590,7 @@ describe("AdminDashboard", () => {
     await user.click(screen.getByRole("button", { name: "Ver solicitudes" }));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(await screen.findAllByText("Conjunto Los Alpes")).not.toHaveLength(0);
+    expect(await screen.findAllByText(/Conjunto Los Alpes/)).not.toHaveLength(0);
   });
   describe("botón Inactivos, motivo de desactivación y perfil", () => {
     const inactivo = {

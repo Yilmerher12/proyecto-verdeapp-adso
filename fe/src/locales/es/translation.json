@@ -744,6 +744,30 @@
         "loading": "Cargando invitaciones...",
         "empty": "Todavía no has enviado ninguna invitación."
       },
+      "agendaSection": {
+        "title": "Agenda del conjunto",
+        "hint": "Temas para llevar al comité. Solo los ves tú: no llegan al Administrador del Sistema.",
+        "showDetail": "Ver agenda",
+        "hideDetail": "Ocultar agenda",
+        "empty": "Todavía no hay temas en la agenda de este conjunto.",
+        "add": "Agregar tema",
+        "textLabel": "Tema",
+        "textPlaceholder": "Ej. Arreglar la puerta del sótano, pintar el pasillo...",
+        "evidenceLabel": "Foto de soporte (opcional)",
+        "save": "Guardar tema",
+        "stateWaiting": "En espera",
+        "statePending": "Pendiente",
+        "putOnHold": "Dejar en espera",
+        "backToPending": "Volver a pendiente",
+        "delete": "Eliminar tema",
+        "deleteTitle": "¿Eliminar este tema?",
+        "deleteWarning": "Se borra para siempre. Úsalo cuando ya lo hayas resuelto en el comité.",
+        "deleteConfirm": "Sí, eliminar",
+        "deleting": "Eliminando...",
+        "viewPhoto": "Ver foto",
+        "errorDefault": "No se pudo guardar el tema. Intenta de nuevo.",
+        "actionError": "No se pudo completar la acción. Intenta de nuevo."
+      },
       "myConjuntos": {
         "title": "Conjuntos que administras",
         "loading": "Cargando tus conjuntos...",
@@ -768,8 +792,23 @@
         "confirmButton": "Sí, regenerar",
         "errorDefault": "No se pudo regenerar el código. Intenta de nuevo."
       },
+      "coverage": {
+        "title": "Apartamentos registrados en VerdeApp",
+        "ofTotal": "de {{total}} apartamentos",
+        "alreadyHaveResidents": "apartamentos ya tienen residentes",
+        "barAria": "{{registrados}} de {{total}} apartamentos registrados",
+        "missing": "apartamentos por registrar",
+        "residents": "residentes con cuenta",
+        "explain": "Un apartamento cuenta como registrado cuando tiene al menos un residente con cuenta. Úsalo en la reunión del conjunto para invitar a los que faltan: el código de acceso lo tienes más abajo.",
+        "noTotal": "Todavía no dijiste cuántos apartamentos tiene este conjunto, por eso no podemos calcular cuántos faltan. Defínelo en Editar.",
+        "define": "Definir cantidad de apartamentos",
+        "badge": "{{pct}}% registrado"
+      },
       "editForm": {
         "nit": "NIT (opcional)",
+        "totalApartments": "Cantidad de apartamentos (opcional)",
+        "totalHelp": "Total de apartamentos del conjunto (no de residentes). Con este número calculamos cuántos faltan por registrarse en VerdeApp.",
+        "totalInvalid": "Escribe un número entero entre 1 y {{max}}.",
         "successMessage": "Conjunto actualizado correctamente.",
         "errorMessage": "No se pudo guardar el cambio. Intenta de nuevo."
       },
@@ -1298,6 +1337,38 @@
     },
     "successMessage": "Invitación enviada a {{correo}}. Cuando la acepte, quedará asignado a los conjuntos seleccionados.",
     "errorDefault": "No se pudo enviar la invitación. Verifica los datos e intenta de nuevo."
+  },
+  "novedadesEnviadas": {
+    "tabReceived": "Recibidas",
+    "tabWrite": "Escribir novedad",
+    "tabMine": "Mis envíos",
+    "formTitle": "Cuéntale una novedad a VerdeApp",
+    "formHint": "Le llega al Administrador del Sistema con tus datos (nombre, conjunto y unidad). No tienes que escribirlos.",
+    "textLabel": "Novedad",
+    "textPlaceholder": "Cuenta qué pasó...",
+    "imageLabel": "Imagen adjunta (opcional)",
+    "conjuntoLabel": "¿De qué conjunto hablas?",
+    "conjuntoAny": "Ninguno en particular",
+    "send": "Enviar novedad",
+    "sending": "Enviando...",
+    "sentMessage": "Novedad enviada. El Administrador del Sistema la revisará.",
+    "errorDefault": "No se pudo enviar la novedad. Intenta de nuevo.",
+    "mineEmpty": "Todavía no has enviado ninguna novedad.",
+    "stateNew": "Enviada",
+    "stateSeen": "Vista por el Admin del Sistema"
+  },
+  "solicitudesPendientes": {
+    "sectionTitle": "Solicitudes pendientes",
+    "empty": "No hay solicitudes pendientes.",
+    "emptyFiltro": "Ninguna solicitud de este tipo por ahora.",
+    "errorDefault": "No se pudo procesar la solicitud.",
+    "marcarVista": "Marcar como vista",
+    "verFoto": "Ver foto",
+    "filtros": {
+      "todas": "Todas",
+      "desvinculacion": "Desvinculación",
+      "novedad": "Novedad"
+    }
   },
   "desvinculacion": {
     "sectionTitle": "Tu rol como administrador",

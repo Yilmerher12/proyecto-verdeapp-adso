@@ -39,6 +39,9 @@ const conjunto = {
   nombre_localidad: "Suba",
   tiene_solicitud_pendiente: false,
   codigo_acceso: "AB3K9Q",
+  total_apartamentos: null,
+  apartamentos_registrados: 0,
+  residentes_registrados: 0,
 };
 
 function mockRespuestasVacias() {
@@ -159,7 +162,7 @@ describe("AdminConjuntoDashboard", () => {
     await waitFor(() => {
       expect(mockPatch).toHaveBeenCalledWith(
         expect.stringContaining("/conjunto-panel/mis-conjuntos/1"),
-        { nit: "900111222-1" }
+        { nit: "900111222-1", total_apartamentos: null }
       );
     });
     expect(await screen.findByText("Conjunto actualizado correctamente.")).toBeInTheDocument();
@@ -349,6 +352,210 @@ describe("AdminConjuntoDashboard", () => {
 
       await screen.findByText("Conjunto Los Alpes");
       expect(screen.queryByText("Avisos de este conjunto")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("agenda del conjunto", () => {
+    const tema = {
+      id: "t-1",
+      texto: "Arreglar la puerta del sótano.",
+      url_evidencia: "/uploads/adjuntos/puerta.jpg",
+      estado: "PENDIENTE",
+      created_at: "2026-09-22T10:00:00Z",
+    };
+
+    function mockConAgenda(items: unknown[]) {
+      mockGet.mockImplementation((url: string) => {
+        // ¿Qué? "/agenda" se revisa primero: su URL también contiene "/mis-conjuntos".
+        if (url.includes("/agenda")) return Promise.resolve({ data: items });
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+        return Promise.resolve({ data: [] });
+      });
+    }
+
+    async function abrirAgenda(user: ReturnType<typeof userEvent.setup>) {
+      await screen.findByText("Conjunto Los Alpes");
+      await user.click(screen.getByRole("button", { name: "Ver agenda" }));
+    }
+
+    it("lista los temas al desplegar la agenda, con su foto", async () => {
+      mockConAgenda([tema]);
+      const user = userEvent.setup();
+      renderPage();
+      await abrirAgenda(user);
+
+      expect(await screen.findByText("Arreglar la puerta del sótano.")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Ver foto" })).toHaveAttribute("href", expect.stringContaining("/uploads/adjuntos/puerta.jpg"));
+    });
+
+    it("muestra el estado vacío si no hay temas", async () => {
+      mockConAgenda([]);
+      const user = userEvent.setup();
+      renderPage();
+      await abrirAgenda(user);
+
+      expect(await screen.findByText("Todavía no hay temas en la agenda de este conjunto.")).toBeInTheDocument();
+    });
+
+    it("agrega un tema nuevo (el botón se habilita solo con texto)", async () => {
+      mockConAgenda([]);
+      mockPost.mockResolvedValue({ data: {} });
+      const user = userEvent.setup();
+      renderPage();
+      await abrirAgenda(user);
+
+      await user.click(await screen.findByRole("button", { name: "+ Agregar tema" }));
+      const guardar = screen.getByRole("button", { name: "Guardar tema" });
+      expect(guardar).toBeDisabled();
+
+      await user.type(screen.getByLabelText("Tema"), "Pintar el pasillo.");
+      expect(guardar).toBeEnabled();
+      await user.click(guardar);
+
+      await waitFor(() => {
+        expect(mockPost).toHaveBeenCalledWith(
+          expect.stringContaining("/conjunto-panel/mis-conjuntos/1/agenda"),
+          { texto: "Pintar el pasillo.", url_evidencia: null }
+        );
+      });
+    });
+
+    it("deja un tema en espera", async () => {
+      mockConAgenda([tema]);
+      mockPatch.mockResolvedValue({ data: {} });
+      const user = userEvent.setup();
+      renderPage();
+      await abrirAgenda(user);
+
+      await user.click(await screen.findByRole("button", { name: "Dejar en espera" }));
+
+      await waitFor(() => {
+        expect(mockPatch).toHaveBeenCalledWith(
+          expect.stringContaining("/conjunto-panel/mis-conjuntos/1/agenda/t-1"),
+          { estado: "EN_ESPERA" }
+        );
+      });
+    });
+
+    it("borra un tema con confirmación", async () => {
+      mockConAgenda([tema]);
+      mockDelete.mockResolvedValue({ data: {} });
+      const user = userEvent.setup();
+      renderPage();
+      await abrirAgenda(user);
+
+      await user.click(await screen.findByRole("button", { name: "Eliminar tema" }));
+      await user.click(await screen.findByRole("button", { name: "Sí, eliminar" }));
+
+      await waitFor(() => {
+        expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining("/conjunto-panel/mis-conjuntos/1/agenda/t-1"));
+      });
+    });
+  });
+
+  describe("historial de auditorías por conjunto", () => {
+    const auditoria = (id: string, idConjunto: number, tema: string) => ({
+      id_auditoria: id,
+      id_conjunto_residencial: idConjunto,
+      nombre_conjunto: "x",
+      nivel_desempeno: "BUENA",
+      tema_educativo: tema,
+      descripcion: null,
+      ruta_evidencia: "/x.jpg",
+      ruta_evidencia_2: null,
+      ruta_evidencia_3: null,
+      created_at: "2026-09-22T10:00:00Z",
+      nombre_reciclador: "Juan",
+    });
+
+    it("muestra dentro de cada conjunto solo las auditorías de ESE conjunto", async () => {
+      mockGet.mockImplementation((url: string) => {
+        // ¿Qué? "/historial" se revisa primero: la lista mezcla auditorías de 2 conjuntos.
+        if (url.includes("/auditorias-conjunto/historial")) {
+          return Promise.resolve({
+            data: [auditoria("a1", 1, "Tema del conjunto uno"), auditoria("a2", 2, "Tema del conjunto dos")],
+          });
+        }
+        if (url.includes("/conjunto-panel/mis-conjuntos")) {
+          return Promise.resolve({
+            data: [conjunto, { ...conjunto, id_conjunto_residencial: 2, nombre_conjunto: "Conjunto Capellanía" }],
+          });
+        }
+        return Promise.resolve({ data: [] });
+      });
+      renderPage();
+
+      // ¿Qué? Solo el primer conjunto viene desplegado: ve su tema y NO el del otro.
+      expect(await screen.findByText("Tema del conjunto uno")).toBeInTheDocument();
+      expect(screen.queryByText("Tema del conjunto dos")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("apartamentos registrados por conjunto", () => {
+    function mockConjunto(extra: object) {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [{ ...conjunto, ...extra }] });
+        return Promise.resolve({ data: [] });
+      });
+    }
+
+    it("muestra cuántos apartamentos están registrados, el avance y cuántos faltan", async () => {
+      mockConjunto({ total_apartamentos: 120, apartamentos_registrados: 62, residentes_registrados: 71 });
+      renderPage();
+
+      expect(await screen.findByText("de 120 apartamentos")).toBeInTheDocument();
+      expect(screen.getByRole("img", { name: "62 de 120 apartamentos registrados" })).toBeInTheDocument();
+      expect(screen.getByText("58")).toBeInTheDocument();
+      expect(screen.getByText("71")).toBeInTheDocument();
+      expect(screen.getByText("52% registrado")).toBeInTheDocument();
+    });
+
+    it("nunca muestra negativos si hay más registrados que el total escrito", async () => {
+      mockConjunto({ total_apartamentos: 10, apartamentos_registrados: 14, residentes_registrados: 15 });
+      renderPage();
+
+      expect(await screen.findByText("100% registrado")).toBeInTheDocument();
+      expect(screen.getByText("apartamentos por registrar").previousElementSibling).toHaveTextContent("0");
+    });
+
+    it("sin cantidad definida muestra los registrados y el botón para definirla, que abre Editar", async () => {
+      mockConjunto({ total_apartamentos: null, apartamentos_registrados: 38 });
+      const user = userEvent.setup();
+      renderPage();
+
+      expect(await screen.findByText("apartamentos ya tienen residentes")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Definir cantidad de apartamentos" }));
+      expect(screen.getByLabelText("Cantidad de apartamentos (opcional)")).toBeInTheDocument();
+    });
+
+    it("guarda la cantidad de apartamentos junto con el NIT", async () => {
+      mockConjunto({ total_apartamentos: null });
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("button", { name: "Editar" }));
+      await user.type(screen.getByLabelText("Cantidad de apartamentos (opcional)"), "120");
+      await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+      await waitFor(() => {
+        expect(mockPatch).toHaveBeenCalledWith(
+          expect.stringContaining("/conjunto-panel/mis-conjuntos/1"),
+          { nit: "900123456", total_apartamentos: 120 }
+        );
+      });
+    });
+
+    it("rechaza una cantidad inválida sin llamar al servidor", async () => {
+      mockConjunto({ total_apartamentos: null });
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("button", { name: "Editar" }));
+      await user.type(screen.getByLabelText("Cantidad de apartamentos (opcional)"), "0");
+      await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+      expect(await screen.findByText("Escribe un número entero entre 1 y 20000.")).toBeInTheDocument();
+      expect(mockPatch).not.toHaveBeenCalled();
     });
   });
 });
