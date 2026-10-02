@@ -5,7 +5,7 @@
  *              recicladores y solicitud de desvinculación (RQF-016).
  */
 
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
 import { AdminConjuntoDashboard } from "@/pages/dashboards/AdminConjuntoDashboard";
@@ -269,6 +269,86 @@ describe("AdminConjuntoDashboard", () => {
         expect.stringContaining("/conjunto-panel/mis-conjuntos/1/solicitar-desvinculacion"),
         { motivo: null }
       );
+    });
+  });
+
+  describe("acordeón de conjuntos (issue #166)", () => {
+    const conjunto2 = { ...conjunto, id_conjunto_residencial: 2, nombre_conjunto: "Conjunto Los Robles" };
+
+    it("solo el primer conjunto viene abierto; los demás se abren con un clic", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto, conjunto2] });
+        if (url.includes("/invitaciones")) return Promise.resolve({ data: [] });
+        return Promise.resolve({ data: [] });
+      });
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByText("Conjunto Los Alpes");
+      expect(screen.getByText("Conjunto Los Robles")).toBeInTheDocument();
+      // ¿Qué? "Editar" solo lo trae la vista abierta de cada conjunto — con
+      //       1 solo visible, solo el primero (Los Alpes) viene desplegado.
+      expect(screen.getAllByRole("button", { name: "Editar" })).toHaveLength(1);
+
+      const cabeceraRobles = screen.getByRole("button", { name: /Conjunto Los Robles/ });
+      expect(cabeceraRobles).toHaveAttribute("aria-expanded", "false");
+      await user.click(cabeceraRobles);
+      expect(cabeceraRobles).toHaveAttribute("aria-expanded", "true");
+      expect(screen.getAllByRole("button", { name: "Editar" })).toHaveLength(2);
+    });
+  });
+
+  describe("avisos del conjunto, por rol", () => {
+    const avisoReciclador = {
+      id: "n1",
+      tipo: "LLEGADA_RECICLADOR",
+      mensaje: "Juan Pérez avisó su llegada al SHUT.",
+      id_referencia: null,
+      nombre_conjunto: "Conjunto Los Alpes",
+      leida: false,
+      created_at: new Date().toISOString(),
+    };
+    const avisoResidente = {
+      id: "n2",
+      tipo: "SHUT_LLENO",
+      mensaje: "Torre 3, Apto 402 avisó que el SHUT está lleno.",
+      id_referencia: null,
+      nombre_conjunto: "Conjunto Los Alpes",
+      leida: true,
+      created_at: new Date().toISOString(),
+    };
+
+    it("separa los avisos del conjunto en 'De recicladores' y 'De residentes'", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+        if (url.includes("/mis-notificaciones")) return Promise.resolve({ data: [avisoReciclador, avisoResidente] });
+        return Promise.resolve({ data: [] });
+      });
+      renderPage();
+
+      await screen.findByText("Conjunto Los Alpes");
+      // ¿Qué? El mismo aviso también aparece en NotificationFeed, arriba del
+      //       todo (feed global) — se busca el bloque "Avisos de este
+      //       conjunto" y se mira SOLO adentro de él, para no chocar con esa
+      //       segunda copia.
+      const bloqueAvisos = (await screen.findByText("Avisos de este conjunto")).closest("div")!;
+      expect(within(bloqueAvisos).getByText("Juan Pérez avisó su llegada al SHUT.")).toBeInTheDocument();
+      expect(within(bloqueAvisos).getByText("Torre 3, Apto 402 avisó que el SHUT está lleno.")).toBeInTheDocument();
+      expect(within(bloqueAvisos).getByText("De recicladores")).toBeInTheDocument();
+      expect(within(bloqueAvisos).getByText("De residentes")).toBeInTheDocument();
+      // ¿Qué? Solo avisoReciclador está sin leer — el badge cuenta 1, no 2.
+      expect(screen.getByText("1 aviso nuevo")).toBeInTheDocument();
+    });
+
+    it("no muestra la sección de avisos si el conjunto no tiene ninguno", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+        return Promise.resolve({ data: [] });
+      });
+      renderPage();
+
+      await screen.findByText("Conjunto Los Alpes");
+      expect(screen.queryByText("Avisos de este conjunto")).not.toBeInTheDocument();
     });
   });
 });

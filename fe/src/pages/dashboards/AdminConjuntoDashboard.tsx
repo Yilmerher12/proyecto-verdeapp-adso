@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
-import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX } from "lucide-react";
+import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -23,9 +23,9 @@ import {
   type RecicladorAutorizado,
 } from "@/lib/recicladorConjuntoApi";
 import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
-import type { NotificacionItem } from "@/lib/notificaciones";
+import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
-import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
+import { HistorialAuditoriasSemanal } from "@/components/dashboard/HistorialAuditoriasSemanal";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -55,6 +55,63 @@ function BadgeEstado({ estado }: { estado: string }) {
     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${estilos[estado] || "bg-gray-100 text-gray-600"}`}>
       {etiquetas[estado] || estado}
     </span>
+  );
+}
+
+// ¿Qué? A qué rol pertenece cada tipo de notificación, visto desde el
+//       Admin de Conjunto — SHUT_LLENO solo lo puede avisar un Residente;
+//       los otros 3 solo un Reciclador autorizado (ver test_notificaciones.py).
+// ¿Para qué? Separar "De recicladores" / "De residentes" en SeccionAvisosConjunto
+//           sin tener que adivinar el rol a partir del texto del mensaje.
+const TIPOS_DE_RECICLADOR = new Set(["LLEGADA_RECICLADOR", "SHUT_LIBRE", "FINALIZACION_RECICLADOR"]);
+const TIPOS_DE_RESIDENTE = new Set(["SHUT_LLENO"]);
+
+/**
+ * ¿Qué? Avisos recientes de UN conjunto específico, separados por quién los
+ *       mandó (Reciclador / Residente).
+ * ¿Para qué? Antes todos los avisos de todos los conjuntos vivían juntos en
+ *           NotificationFeed, arriba del todo — un Admin que administra más
+ *           de un conjunto no podía saber, a simple vista, cuáles avisos
+ *           eran de cuál conjunto. Esto filtra lo mismo que ya llegó al
+ *           panel (misma polling de "notificaciones"), sin pedirlo de nuevo.
+ * ¿Impacto? Es de solo lectura — marcar como leída sigue siendo cosa de
+ *           NotificationFeed, arriba. Si no hay avisos para este conjunto,
+ *           no se muestra nada (no ocupa espacio con un estado vacío).
+ */
+function SeccionAvisosConjunto({
+  nombreConjunto,
+  notificaciones,
+}: {
+  nombreConjunto: string;
+  notificaciones: NotificacionItem[];
+}) {
+  const { t } = useTranslation();
+  const propias = notificaciones.filter((n) => n.nombre_conjunto === nombreConjunto);
+  const deReciclador = propias.filter((n) => TIPOS_DE_RECICLADOR.has(n.tipo)).slice(0, 3);
+  const deResidente = propias.filter((n) => TIPOS_DE_RESIDENTE.has(n.tipo)).slice(0, 3);
+
+  if (deReciclador.length === 0 && deResidente.length === 0) return null;
+
+  const grupo = (titulo: string, color: string, items: NotificacionItem[]) => (
+    <div>
+      <p className={`mb-1 text-[11px] font-bold uppercase tracking-wide ${color}`}>{titulo}</p>
+      <ul className="space-y-1">
+        {items.map((n) => (
+          <li key={n.id} className="flex items-center justify-between gap-2 text-xs text-gray-600 dark:text-gray-400">
+            <span className="truncate">{n.mensaje}</span>
+            <span className="shrink-0 text-gray-400">{tiempoRelativo(n.created_at)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  return (
+    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-night-inset/40 space-y-3">
+      <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.avisosSection.title")}</h5>
+      {deReciclador.length > 0 && grupo(t("dashboards.adminConjunto.avisosSection.fromRecycler"), "text-teal-700 dark:text-teal-400", deReciclador)}
+      {deResidente.length > 0 && grupo(t("dashboards.adminConjunto.avisosSection.fromResident"), "text-amber-700 dark:text-amber-400", deResidente)}
+    </div>
   );
 }
 
@@ -624,6 +681,13 @@ export function AdminConjuntoDashboard() {
   // ¿Impacto? Ahora guarda también el tipo ("success"/"error"), así el
   //           color que se ve siempre corresponde a lo que pasó de verdad.
   const [mensaje, setMensaje] = useState<{ tipo: "success" | "error"; texto: string } | null>(null);
+  // ¿Qué? Qué conjunto está desplegado — mismo patrón de acordeón que
+  //       AdminPuntosAcopioPage (Record<id, boolean>): sin decisión manual,
+  //       solo el primero de la lista viene abierto (ver estaAbierto más abajo).
+  // ¿Para qué? Con un Admin que administra varios conjuntos, tenerlos todos
+  //           abiertos a la vez empujaba el resto del panel fuera de la
+  //           vista inicial (issue #166) — ahora solo se ve el primero.
+  const [abiertos, setAbiertos] = useState<Record<string, boolean>>({});
 
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [cargandoNotifs, setCargandoNotifs] = useState(true);
@@ -810,11 +874,43 @@ export function AdminConjuntoDashboard() {
           <EmptyState icon={Building} message={t("dashboards.adminConjunto.myConjuntos.empty")} />
         ) : (
           <div className="space-y-4">
-            {conjuntos.map((c) => (
+            {conjuntos.map((c, i) => {
+              const abierto = abiertos[c.id_conjunto_residencial] ?? i === 0;
+              const avisosSinLeer = notificaciones.filter(
+                (n) => n.nombre_conjunto === c.nombre_conjunto && !n.leida
+              ).length;
+              return (
               <div
                 key={c.id_conjunto_residencial}
-                className="border border-gray-200 dark:border-night-line rounded-xl p-4"
+                className="overflow-hidden border border-gray-200 dark:border-night-line rounded-xl"
               >
+                <button
+                  type="button"
+                  onClick={() => setAbiertos((prev) => ({ ...prev, [c.id_conjunto_residencial]: !abierto }))}
+                  aria-expanded={abierto}
+                  className="flex w-full cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-night-inset/60"
+                >
+                  <Building className="icon-md shrink-0 text-accent-600" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-gray-800 dark:text-white">{c.nombre_conjunto}</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                      <MapPin className="icon-sm" />
+                      {c.direccion} — {c.nombre_localidad}
+                    </p>
+                  </div>
+                  {avisosSinLeer > 0 && (
+                    <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                      {t("dashboards.adminConjunto.avisosSection.unreadBadge", { count: avisosSinLeer })}
+                    </span>
+                  )}
+                  <ChevronDown
+                    className={`icon-sm shrink-0 text-gray-400 transition-transform ${abierto ? "rotate-180" : ""}`}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                {abierto && (
+                <div className="px-4 pb-4">
                 {editandoId === c.id_conjunto_residencial ? (
                   <div className="space-y-3">
                     {/*
@@ -861,15 +957,14 @@ export function AdminConjuntoDashboard() {
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-bold text-gray-800 dark:text-white">{c.nombre_conjunto}</h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
-                          <MapPin className="icon-sm" />
-                          {c.direccion} — {c.nombre_localidad}
-                        </p>
-                        {c.nit && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>}
-                      </div>
+                    {/* Nombre, dirección y localidad ya se ven en el encabezado del
+                        acordeón — aquí solo queda el NIT (lo único editable) y el botón. */}
+                    <div className="flex items-center justify-between gap-2">
+                      {c.nit ? (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>
+                      ) : (
+                        <span />
+                      )}
                       <button
                         type="button"
                         onClick={() => iniciarEdicion(c)}
@@ -878,6 +973,9 @@ export function AdminConjuntoDashboard() {
                         <Pencil className="icon-sm" /> {t("common.edit")}
                       </button>
                     </div>
+
+                    {/* Avisos de este conjunto, separados por rol — ver SeccionAvisosConjunto arriba. */}
+                    <SeccionAvisosConjunto nombreConjunto={c.nombre_conjunto} notificaciones={notificaciones} />
 
                     {/*
                       ¿Qué? Sección nueva de Recicladores Autorizados,
@@ -904,14 +1002,17 @@ export function AdminConjuntoDashboard() {
                     )}
                   </>
                 )}
+                </div>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Historial de auditorías — log histórico, sin urgencia, va al final. */}
-      <HistorialAuditorias />
+      {/* Historial de auditorías, agrupado por semana — log histórico, sin urgencia, va al final. */}
+      <HistorialAuditoriasSemanal />
     </div>
   );
 }

@@ -745,6 +745,13 @@
         "loading": "Loading your buildings...",
         "empty": "You don't have any building assigned yet. Contact the VerdeApp team."
       },
+      "avisosSection": {
+        "title": "Notices for this building",
+        "fromRecycler": "From recyclers",
+        "fromResident": "From residents",
+        "unreadBadge_one": "{{count}} new notice",
+        "unreadBadge_other": "{{count}} new notices"
+      },
       "codigoAcceso": {
         "title": "Access code",
         "description": "Share it with your residents (bulletin board, building group chat) — they need it to register.",
