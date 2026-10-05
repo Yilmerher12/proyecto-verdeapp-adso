@@ -124,8 +124,19 @@ export interface SolicitudUnificada {
     created_at: string;
 }
 
-export async function listarSolicitudesUnificadas(tipo?: TipoSolicitudUnificada): Promise<SolicitudUnificada[]> {
-    const { data } = await axios.get(`${API_BASE}/solicitudes`, { params: tipo ? { tipo } : undefined });
+export interface PaginaDeSolicitudes {
+    items: SolicitudUnificada[];
+    total: number;
+}
+
+// ¿Qué? Issue #372 (CN-042) — la bandeja se pide de a páginas (limit/offset);
+//       sin `tipo` trae las de los 2 tipos.
+export async function listarSolicitudesUnificadas(
+    limit: number,
+    offset: number,
+    tipo?: TipoSolicitudUnificada
+): Promise<PaginaDeSolicitudes> {
+    const { data } = await axios.get(`${API_BASE}/solicitudes`, { params: { limit, offset, tipo } });
     return data;
 }
 

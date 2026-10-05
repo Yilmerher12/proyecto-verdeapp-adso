@@ -56,7 +56,7 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 ### Flujo C — Revisar la bandeja (Administrador del Sistema)
 
 1. En su panel principal, el Administrador del Sistema ve el resumen "Solicitudes pendientes" con el número de pendientes y abre la bandeja.
-2. La bandeja lista, de la más reciente a la más antigua, las desvinculaciones pendientes y las novedades en estado NUEVA. Se puede filtrar por **Todas**, **Desvinculación** o **Novedad**.
+2. La bandeja lista, de la más reciente a la más antigua, las desvinculaciones pendientes y las novedades en estado NUEVA. Se puede filtrar por **Todas**, **Desvinculación** o **Novedad**, y se muestra de a 5 filas por página.
 3. Cada novedad muestra el rol y nombre del autor (y, si es Residente, su torre y apartamento), el conjunto, el texto y, si tiene, un enlace "Ver foto".
 4. Una **novedad** solo se puede **marcar como vista**: pasa a VISTA y sale de la bandeja. Una **desvinculación** se aprueba o se rechaza con su flujo de siempre (RQF-016).
 
@@ -95,7 +95,7 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 | ------ | ---------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------- |
 | POST   | `/api/v1/novedades-enviadas`                                    | Sí (Residente, Reciclador, Admin de Conjunto)     | Envía una novedad                     |
 | GET    | `/api/v1/novedades-enviadas/mias`                               | Sí                                                | Novedades que yo envié                |
-| GET    | `/api/v1/admin-conjunto/solicitudes?tipo=`                      | Sí (Admin Sistema)                                | Bandeja unificada, filtrable por tipo |
+| GET    | `/api/v1/admin-conjunto/solicitudes?tipo=&limit=&offset=`       | Sí (Admin Sistema)                                | Bandeja unificada, filtrable por tipo y paginada (`{items, total}`) |
 | POST   | `/api/v1/admin-conjunto/solicitudes/{tipo}/{id_solicitud}/resolver` | Sí (Admin Sistema)                            | Resuelve una solicitud de la bandeja  |
 
 Código: `be/app/routers/novedades_enviadas.py`, `be/app/routers/admin_conjunto.py`, `be/app/services/novedad_enviada_service.py`, `be/app/models/novedad_enviada.py`; interfaz en `fe/src/components/NovedadesEnviadas.tsx` (pestañas de `NovedadesFeedPage.tsx`) y `fe/src/components/SolicitudesPendientes.tsx` (panel del Admin Sistema).
@@ -111,7 +111,7 @@ Código: `be/app/routers/novedades_enviadas.py`, `be/app/routers/admin_conjunto.
 - RN-005: La bandeja muestra solo lo pendiente: desvinculaciones sin resolver y novedades en estado NUEVA, de la más reciente a la más antigua.
 - RN-006: Si se borra la cuenta del autor o el conjunto, la novedad se conserva sin ese dato (`ON DELETE SET NULL`); en la bandeja aparece como "Usuario eliminado".
 - RN-007: `url_imagen` solo acepta un archivo subido a VerdeApp (`/uploads/...`) o un enlace `https://`; cualquier otro formato responde 422. El frontend aplica la misma regla al mostrar el enlace (`fe/src/lib/enlaceSeguro.ts`), así un dato viejo con otro formato no se muestra. Corregido en el issue #369 (hallazgo CN-041): antes un enlace como `@sitio-malo.com` llevaba al Administrador del Sistema a otro sitio.
-- RN-008: Pendiente de endurecer (issue #372, hallazgos CN-042/044/045): el envío no tiene límite de peticiones, la bandeja no está paginada y un `tipo` desconocido al resolver se trata como novedad.
+- RN-008: Corregido en el issue #372 (hallazgos CN-042/044/045): el envío acepta máximo 10 novedades por minuto (la siguiente responde 429); la bandeja se entrega paginada (`limit` de 1 a 100, por defecto 10, y `offset`); un `tipo` distinto de `DESVINCULACION` o `NOVEDAD` responde 422 al listar y al resolver; y si la cuenta del autor no tiene su perfil de Residente o de Admin de Conjunto, el envío responde 404 con un mensaje claro en vez de un error 500.
 
 ---
 

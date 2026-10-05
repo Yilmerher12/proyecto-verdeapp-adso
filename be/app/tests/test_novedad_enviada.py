@@ -71,7 +71,7 @@ class TestBandejaDelAdminSistema:
         client.post(BASE, headers=reciclador_auth_headers, json={"texto": "Del reciclador"})
         client.post(BASE, headers=admin_conjunto_auth_headers, json={"texto": "Del admin"})
 
-        filas = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers, params={"tipo": "NOVEDAD"}).json()
+        filas = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers, params={"tipo": "NOVEDAD"}).json()["items"]
         assert {f["origen"] for f in filas} == {"Residente", "Reciclador", "Admin de Conjunto"}
         residente = next(f for f in filas if f["origen"] == "Residente")
         assert "Torre" in residente["titulo"]
@@ -79,21 +79,21 @@ class TestBandejaDelAdminSistema:
 
     def test_incluye_la_imagen(self, client: TestClient, admin_sistema_auth_headers, auth_headers):
         client.post(BASE, headers=auth_headers, json={"texto": "Con foto", "url_imagen": "/uploads/adjuntos/f.jpg"})
-        filas = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()
+        filas = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"]
         assert filas[0]["url_evidencia"] == "/uploads/adjuntos/f.jpg"
 
     def test_marcar_como_vista_la_saca_de_la_bandeja(self, client: TestClient, admin_sistema_auth_headers, auth_headers):
         client.post(BASE, headers=auth_headers, json={"texto": "Hola"})
-        id_novedad = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()[0]["id"]
+        id_novedad = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"][0]["id"]
 
         r = client.post(f"{BASE_ADMIN}/solicitudes/NOVEDAD/{id_novedad}/resolver", headers=admin_sistema_auth_headers, json={"aprobar": True})
         assert r.status_code == 200
-        assert client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json() == []
+        assert client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"] == []
         assert client.get(f"{BASE}/mias", headers=auth_headers).json()[0]["estado"] == "VISTA"
 
     def test_una_novedad_no_se_rechaza(self, client: TestClient, admin_sistema_auth_headers, auth_headers):
         client.post(BASE, headers=auth_headers, json={"texto": "Hola"})
-        id_novedad = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()[0]["id"]
+        id_novedad = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"][0]["id"]
         r = client.post(
             f"{BASE_ADMIN}/solicitudes/NOVEDAD/{id_novedad}/resolver",
             headers=admin_sistema_auth_headers,
@@ -120,5 +120,67 @@ class TestBandejaDelAdminSistema:
             headers=admin_conjunto_auth_headers,
             json={"motivo": "Me mudé."},
         )
-        filas = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()
+        filas = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"]
         assert "DESVINCULACION" in [f["tipo"] for f in filas]
+
+
+class TestEndurecimiento:
+    """Issue #372: límite de envíos (CN-042), bandeja paginada (CN-042), perfil faltante (CN-044) y tipo inválido (CN-045)."""
+
+    def test_supera_10_envios_por_minuto_devuelve_429(self, client: TestClient, auth_headers):
+        # La fixture `disable_rate_limiter_for_tests` apaga el limiter para toda la suite; aquí se prende solo para esta prueba.
+        from app.utils.limiter import limiter as real_limiter
+
+        real_limiter.enabled = True
+        try:
+            for _ in range(10):
+                assert client.post(BASE, headers=auth_headers, json={"texto": "x"}).status_code == 201
+            assert client.post(BASE, headers=auth_headers, json={"texto": "x"}).status_code == 429
+        finally:
+            real_limiter.enabled = False
+
+    def test_bandeja_paginada_con_total(self, client: TestClient, admin_sistema_auth_headers, auth_headers):
+        for i in range(3):
+            client.post(BASE, headers=auth_headers, json={"texto": f"N{i}"})
+        url = f"{BASE_ADMIN}/solicitudes"
+        primera = client.get(url, headers=admin_sistema_auth_headers, params={"limit": 2, "offset": 0}).json()
+        segunda = client.get(url, headers=admin_sistema_auth_headers, params={"limit": 2, "offset": 2}).json()
+        assert primera["total"] == segunda["total"] == 3
+        assert len(primera["items"]) == 2
+        assert len(segunda["items"]) == 1
+        # Las 2 páginas no repiten ninguna fila.
+        assert {f["id"] for f in primera["items"]}.isdisjoint({f["id"] for f in segunda["items"]})
+
+    def test_bandeja_rechaza_limit_fuera_de_rango(self, client: TestClient, admin_sistema_auth_headers):
+        r = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers, params={"limit": 101})
+        assert r.status_code == 422
+
+    def test_residente_sin_perfil_recibe_404_y_no_500(self, client: TestClient, db):
+        """Cuenta con rol Residente pero sin fila en `residentes`."""
+        from app.models.rol import RolId
+        from app.models.usuario import Usuario
+        from app.utils.security import create_access_token, hash_password
+
+        usuario = Usuario(
+            correo_electronico="sin-perfil@verdeapp.com",
+            id_rol=RolId.RESIDENTE,
+            password=hash_password("Clave123*"),
+            is_active=True,
+        )
+        db.add(usuario)
+        db.commit()
+        token = create_access_token(data={"sub": usuario.correo_electronico, "role_id": usuario.id_rol})
+
+        r = client.post(BASE, headers={"Authorization": f"Bearer {token}"}, json={"texto": "x"})
+        assert r.status_code == 404
+        assert "perfil" in r.json()["detail"].lower()
+
+    def test_listar_con_tipo_invalido_devuelve_422(self, client: TestClient, admin_sistema_auth_headers):
+        r = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers, params={"tipo": "OTRO"})
+        assert r.status_code == 422
+
+    def test_resolver_con_tipo_invalido_devuelve_422(self, client: TestClient, admin_sistema_auth_headers, auth_headers):
+        client.post(BASE, headers=auth_headers, json={"texto": "Hola"})
+        id_novedad = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"][0]["id"]
+        r = client.post(f"{BASE_ADMIN}/solicitudes/OTRO/{id_novedad}/resolver", headers=admin_sistema_auth_headers, json={"aprobar": True})
+        assert r.status_code == 422

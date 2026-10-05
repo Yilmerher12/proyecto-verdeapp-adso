@@ -63,7 +63,7 @@ class TestCrearYListar:
         self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_auth_headers, conjunto_verificado
     ):
         client.post(_url(conjunto_verificado), headers=admin_conjunto_auth_headers, json={"texto": "Privado"})
-        assert client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json() == []
+        assert client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"] == []
 
 
 class TestEstadoYBorrar:

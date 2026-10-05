@@ -5,12 +5,18 @@ Descripción: Schemas de la bandeja unificada "Solicitudes pendientes" del
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.desvinculacion import MOTIVO_MAX_LENGTH
+
+# ¿Qué? Los únicos 2 tipos que existen en la bandeja.
+# ¿Para qué? Issue #372 (CN-045): usarlo como tipo del parámetro hace que
+#           FastAPI responda 422 a un `tipo` inventado, en vez de que el
+#           servicio lo trate en silencio como NOVEDAD.
+TipoSolicitud = Literal["DESVINCULACION", "NOVEDAD"]
 
 
 class SolicitudUnificadaResponse(BaseModel):
@@ -40,3 +46,9 @@ class ResolverSolicitudUnificadaRequest(BaseModel):
         if self.aprobar is False and (not self.motivo_rechazo or not self.motivo_rechazo.strip()):
             raise ValueError("Debes indicar un motivo para rechazar la solicitud.")
         return self
+
+
+class PaginaDeSolicitudesResponse(BaseModel):
+    """¿Qué? Issue #372 (CN-042): una página de la bandeja + cuántas hay en total, para que el frontend pinte la paginación."""
+    items: List[SolicitudUnificadaResponse]
+    total: int

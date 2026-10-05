@@ -28,7 +28,11 @@ from app.schemas.desvinculacion import (
     ResolverSolicitudDesvinculacionRequest,
     SolicitudDesvinculacionResponse,
 )
-from app.schemas.solicitud_unificada import ResolverSolicitudUnificadaRequest, SolicitudUnificadaResponse
+from app.schemas.solicitud_unificada import (
+    PaginaDeSolicitudesResponse,
+    ResolverSolicitudUnificadaRequest,
+    TipoSolicitud,
+)
 from app.schemas.user import MessageResponse
 from app.services import admin_conjunto_service, desvinculacion_service, novedad_enviada_service
 from app.utils.limiter import limiter
@@ -123,9 +127,15 @@ def resolver_solicitud_desvinculacion(
     return MessageResponse(message=mensaje)
 
 
-@router.get("/solicitudes", response_model=List[SolicitudUnificadaResponse])
+# ¿Qué? Issue #372 (CN-042): tope de filas por página de la bandeja, igual que comunicados y novedades.
+MAX_LIMIT_SOLICITUDES = 100
+
+
+@router.get("/solicitudes", response_model=PaginaDeSolicitudesResponse)
 def listar_solicitudes(
-    tipo: Optional[str] = Query(default=None),
+    tipo: Optional[TipoSolicitud] = Query(default=None),
+    limit: int = Query(10, ge=1, le=MAX_LIMIT_SOLICITUDES),
+    offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
@@ -133,16 +143,17 @@ def listar_solicitudes(
     ¿Qué? Bandeja unificada "Solicitudes pendientes": junta desvinculación
           (solicitudes_desvinculacion, sin tocarla) con las novedades que
           envían Residentes, Recicladores y Admins de Conjunto
-          (novedades_enviadas), filtrable por `tipo`.
+          (novedades_enviadas), filtrable por `tipo`. Paginado.
     ¿Para qué? El Admin Sistema resuelve todo desde un solo lugar, sin
               importar que por dentro sean 2 tablas distintas.
     """
-    return novedad_enviada_service.listar_unificadas(db, tipo)
+    items, total = novedad_enviada_service.listar_unificadas(db, tipo, limit=limit, offset=offset)
+    return {"items": items, "total": total}
 
 
 @router.post("/solicitudes/{tipo}/{id_solicitud}/resolver", response_model=MessageResponse)
 def resolver_solicitud(
-    tipo: str,
+    tipo: TipoSolicitud,
     id_solicitud: UUID,
     datos: ResolverSolicitudUnificadaRequest,
     current_user: Usuario = Depends(_requiere_admin_sistema),
