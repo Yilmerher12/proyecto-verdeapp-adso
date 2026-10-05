@@ -94,6 +94,7 @@ erDiagram
         VARCHAR nombre_conjunto
         VARCHAR nit
         VARCHAR direccion
+        INT total_apartamentos
         BOOLEAN verificado
         UUID verificado_por_id FK
         VARCHAR codigo_acceso
@@ -190,6 +191,27 @@ erDiagram
         TIMESTAMP created_at
         TIMESTAMP resuelta_at
         UUID resuelta_por_id FK
+    }
+
+    AGENDA_CONJUNTO {
+        UUID id PK
+        UUID id_conjunto_residencial FK
+        UUID autor_id FK
+        TEXT texto
+        VARCHAR url_evidencia
+        VARCHAR estado
+        TIMESTAMP created_at
+    }
+
+    NOVEDADES_ENVIADAS {
+        UUID id PK
+        UUID autor_id FK
+        UUID id_conjunto_residencial FK
+        TEXT texto
+        VARCHAR url_imagen
+        VARCHAR estado
+        TIMESTAMP created_at
+        TIMESTAMP resuelta_at
     }
 
     COMUNICADOS {
@@ -316,6 +338,12 @@ erDiagram
     ADMINISTRADORES_CONJUNTO ||--o{ SOLICITUDES_DESVINCULACION : solicita
     CONJUNTOS_RESIDENCIALES ||--o{ SOLICITUDES_DESVINCULACION : origina
 
+    CONJUNTOS_RESIDENCIALES ||--o{ AGENDA_CONJUNTO : agenda
+    USUARIOS |o--o{ AGENDA_CONJUNTO : escribe
+
+    USUARIOS |o--o{ NOVEDADES_ENVIADAS : envia
+    CONJUNTOS_RESIDENCIALES |o--o{ NOVEDADES_ENVIADAS : menciona
+
     ADMINISTRADORES_CONJUNTO ||--o{ COMUNICADOS : publica
     CONJUNTOS_RESIDENCIALES ||--o{ COMUNICADOS : recibe
 
@@ -346,6 +374,7 @@ USUARIOS ── PASSWORD_RESET_TOKENS / EMAIL_VERIFICATION_TOKENS
               │
               ├── ADMINISTRADORES_CONJUNTOS ── CONJUNTOS_RESIDENCIALES
               ├── SOLICITUDES_DESVINCULACION ── CONJUNTOS_RESIDENCIALES
+              ├── AGENDA_CONJUNTO ── CONJUNTOS_RESIDENCIALES
               └── COMUNICADOS ── CONJUNTOS_RESIDENCIALES
 
 LOCALIDADES
@@ -487,11 +516,14 @@ CONTENIDO_EDUCATIVO_ENVIOS ── CONJUNTOS_RESIDENCIALES / USUARIOS (quién lo 
 | nombre_conjunto         | VARCHAR |
 | nit                     | VARCHAR |
 | direccion               | VARCHAR |
+| total_apartamentos      | INT     |
 | verificado              | BOOLEAN |
 | verificado_por_id       | UUID    |
 | codigo_acceso           | VARCHAR |
 
 `codigo_acceso` es único por conjunto — el Admin de Conjunto lo reparte fuera de la app para que un Residente demuestre que vive ahí al registrarse.
+
+`total_apartamentos` (opcional, entre 1 y 20000) lo escribe el Admin de Conjunto; con él su panel calcula cuántos apartamentos ya tienen residentes registrados y cuántos faltan (HU-044). `NULL` = todavía no definido.
 
 ---
 
@@ -641,6 +673,39 @@ Mismo patrón que `recicladores_conjuntos` — historial de asignación/desvincu
 | resuelta_por_id            | UUID      |
 
 Solicitud de un Admin de Conjunto para dejar de administrar un conjunto (RQF-016) — requiere aprobación del Admin Sistema. Índice único parcial: solo una solicitud `PENDIENTE` a la vez por (administrador, conjunto).
+
+---
+
+## agenda_conjunto
+
+| Campo                    | Tipo      |
+| ------------------------- | --------- |
+| id                        | UUID      |
+| id_conjunto_residencial   | UUID      |
+| autor_id                  | UUID      |
+| texto                     | TEXT      |
+| url_evidencia             | VARCHAR   |
+| estado                    | VARCHAR   |
+| created_at                | TIMESTAMP |
+
+Temas privados del Admin de Conjunto para llevar al comité de un conjunto (RQF-020). `estado` es `PENDIENTE` o `EN_ESPERA`. Se borra con el conjunto (`CASCADE`); si se borra el autor, el tema queda sin autor (`SET NULL`).
+
+---
+
+## novedades_enviadas
+
+| Campo                    | Tipo      |
+| ------------------------- | --------- |
+| id                        | UUID      |
+| autor_id                  | UUID      |
+| id_conjunto_residencial   | UUID      |
+| texto                     | TEXT      |
+| url_imagen                | VARCHAR   |
+| estado                    | VARCHAR   |
+| created_at                | TIMESTAMP |
+| resuelta_at               | TIMESTAMP |
+
+Novedad que un Residente, Reciclador o Admin de Conjunto le envía al Admin Sistema (RQF-021). `estado` es `NUEVA` o `VISTA`; el Admin Sistema la ve en la bandeja "Solicitudes pendientes" junto con `solicitudes_desvinculacion`. El conjunto es opcional (un Reciclador no tiene uno solo). No confundir con `novedades` (RQF-015), que publica el Admin Sistema.
 
 ---
 
@@ -807,6 +872,10 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 | Conjuntos Residenciales        | Administradores Conjuntos        | 1:N          |
 | Administradores de Conjunto    | Solicitudes Desvinculación       | 1:N          |
 | Conjuntos Residenciales        | Solicitudes Desvinculación       | 1:N          |
+| Conjuntos Residenciales        | Agenda Conjunto                  | 1:N          |
+| Usuarios                       | Agenda Conjunto                  | 1:N (escribe) |
+| Usuarios                       | Novedades Enviadas               | 1:N (envía)  |
+| Conjuntos Residenciales        | Novedades Enviadas               | 1:N (opcional) |
 | Administradores de Conjunto    | Comunicados                      | 1:N          |
 | Conjuntos Residenciales        | Comunicados                      | 1:N          |
 | Recicladores                   | Invitaciones Reciclador Conjunto | 1:N          |
@@ -831,6 +900,8 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 * La cuenta de Administrador de Conjunto nunca se crea por registro público: solo se origina desde una `invitacion_admin_conjunto` emitida por un Admin Sistema, con token de un solo uso y fecha de expiración.
 * Un Reciclador solo puede trabajar en un conjunto tras aceptar una `invitacion_reciclador_conjunto` emitida por el Admin de Conjunto de ese conjunto.
 * Un Admin de Conjunto puede solicitar dejar de administrar un conjunto (`solicitud_desvinculacion`) — requiere aprobación del Admin Sistema, y solo puede haber una solicitud `PENDIENTE` a la vez por (administrador, conjunto).
+* Un Admin de Conjunto lleva una agenda privada de temas por cada conjunto que administra; nadie más la ve.
+* Un Residente, Reciclador o Admin de Conjunto puede enviarle novedades al Admin Sistema; este solo las marca como vistas.
 * Un Admin de Conjunto publica comunicados dirigidos a los residentes y/o recicladores de su propio conjunto; un Admin Sistema publica novedades de alcance general (todos los usuarios, o un rol específico).
 * Las notificaciones (llegada del reciclador, SHUT lleno/vaciado, revocación de acceso) se generan una sola vez por evento y se reparten a varios destinatarios, cada uno con su propio estado de lectura.
 * Un logout real invalida el token de sesión agregando su `jti` a `tokens_revocados` — no basta con que el frontend "olvide" el token.

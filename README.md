@@ -192,6 +192,111 @@ Una vez encendido, la aplicación está disponible en:
 
 ---
 
+## 🔁 Reiniciar todo desde cero (presentación / demo)
+
+<!--
+  ¿Qué? Pasos para dejar el proyecto exactamente como recién clonado: base
+        de datos vacía + migraciones + seed (4 usuarios de prueba,
+        localidades, conjuntos reales), sin fotos ni adjuntos viejos.
+  ¿Para qué? Antes de una sustentación o demo, o cuando la base quedó en un
+            estado raro después de pruebas manuales. Antes solo existía un
+            "Caso especial" dentro de "Actualizar Migraciones", que servía
+            solo para el Método B y no limpiaba las fotos (issue #368).
+  ¿Impacto? Borra TODOS los datos: usuarios creados a mano, comunicados,
+            auditorías, fotos, todo. No hay forma de recuperarlos.
+-->
+
+> ⚠️ **Esto borra todos los datos** (usuarios que creaste, comunicados, auditorías, fotos subidas). Al terminar solo quedan los datos del seed: las 4 [cuentas de prueba](#-usuarios-de-prueba-precargados), las localidades y los conjuntos reales de Bogotá.
+
+Sigue solo el caso del método con el que corres el proyecto.
+
+### Si usas el Método A (todo con Docker) — recomendado para la sustentación
+
+Desde la raíz del proyecto:
+
+```bash
+docker compose down -v
+```
+
+```bash
+docker compose up -d --build
+```
+
+- El primero apaga todos los servicios y, con `-v`, borra sus volúmenes: la base de datos (`db_data`) y las fotos y adjuntos subidos (`be_uploads`).
+- El segundo vuelve a levantar todo. Al arrancar, el backend aplica las migraciones y siembra los datos solo (ver el `CMD` de `be/Dockerfile`) — no hay que correr nada más.
+
+Espera a que `docker compose ps` muestre los 4 servicios como `Up` o `healthy` antes de abrir http://localhost:3000.
+
+### Si usas el Método B (backend y frontend en consola)
+
+Antes de empezar, apaga el backend (`Ctrl + C` en la terminal donde corre `uvicorn`). El frontend puede seguir encendido.
+
+**1. Borrar la base de datos y volver a levantarla vacía** (desde la raíz del proyecto):
+
+```bash
+docker compose down verde_db
+```
+
+```bash
+docker volume rm proyecto-verdeapp-adso_db_data
+```
+
+```bash
+docker compose up -d verde_db
+```
+
+> El nombre del volumen depende de la carpeta donde clonaste el repo (`<carpeta>_db_data`). Si el comando falla con "no such volume", revisa el nombre real con `docker volume ls`.
+
+**2. Esperar a que la base de datos esté lista.** Corre este comando hasta que `verde_db` aparezca como `healthy` (con el volumen nuevo, Postgres tarda unos segundos en iniciar; si sigues antes, el siguiente paso falla con `connection to server ... failed`):
+
+```bash
+docker ps
+```
+
+**3. Recrear la base de datos de pruebas** (`pytest` usa una base aparte, `verdeapp_test_db`, que también se borró con el volumen):
+
+```bash
+docker exec verde_db psql -U verde_user -d verdeapp_db -c "CREATE DATABASE verdeapp_test_db OWNER verde_user;"
+```
+
+**4. Borrar las fotos y adjuntos viejos** (en el Método B se guardan en `be/app/uploads/`, no en un volumen de Docker). Desde la raíz del proyecto, en PowerShell:
+
+```powershell
+Remove-Item -Recurse -Force be/app/uploads/adjuntos
+```
+
+```powershell
+Remove-Item -Recurse -Force be/app/uploads/evidencias-auditoria
+```
+
+```powershell
+Remove-Item -Recurse -Force be/app/uploads/perfiles
+```
+
+> Si alguna carpeta no existe (nadie subió nada de ese tipo), PowerShell muestra un error que se puede ignorar. El backend vuelve a crear cada carpeta la próxima vez que alguien sube un archivo. No borres el archivo `be/app/uploads/.gitkeep`.
+
+**5. Aplicar las migraciones y sembrar los datos** — desde `be/` (desde la raíz, `uv` no encuentra `alembic`):
+
+```bash
+cd be
+```
+
+```bash
+uv run alembic upgrade head
+```
+
+```bash
+uv run python -m app.seed
+```
+
+**6. Encender de nuevo el backend:**
+
+```bash
+uv run uvicorn app.main:app --reload --port 8000
+```
+
+---
+
 ## 🧯 Solución de Problemas Comunes
 
 <!--
@@ -304,25 +409,7 @@ Es seguro correrlo aunque no haya nada nuevo — si ya estás al día, no hace n
 
 ### Caso especial — reiniciar la base de datos desde cero
 
-Solo hace falta si tu base de datos quedó en un estado raro (por ejemplo, después de haber probado algo manual directamente sobre ella, o un conflicto de migraciones que no se resuelve con `upgrade head`). Esto **borra todos los datos** — conjuntos, usuarios, todo — y vuelve a dejar la base exactamente como quedaría si acabaras de clonar el repo:
-
-```bash
-# 1. Apagar y borrar el contenedor + volumen de la base de datos (con Docker corriendo)
-docker compose down verde_db
-docker volume rm proyecto-verdeapp-adso_db_data
-
-# 2. Volver a levantar el contenedor, ya vacío
-docker compose up -d verde_db
-
-# 3. Aplicar todas las migraciones desde cero
-cd be
-uv run alembic upgrade head
-
-# 4. Sembrar los datos base (roles, localidades, usuarios de prueba, conjuntos reales)
-uv run python -m app.seed
-```
-
-> El nombre del volumen (`proyecto-verdeapp-adso_db_data`) depende del nombre de la carpeta donde clonaste el repo — Docker Compose lo arma como `<carpeta>_db_data`. Si tu carpeta se llama distinto, verifica el nombre real con `docker volume ls` antes de borrarlo.
+Solo hace falta si tu base de datos quedó en un estado raro (por ejemplo, después de haber probado algo manual directamente sobre ella, o un conflicto de migraciones que no se resuelve con `upgrade head`). Los pasos completos, para el Método A y el Método B, están en [🔁 Reiniciar todo desde cero](#-reiniciar-todo-desde-cero-presentación--demo).
 
 ---
 
@@ -456,11 +543,11 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 | Métrica | Avance |
 |---|---|
-| Historias de Usuario | 44 / 44 implementadas |
-| Requisitos Funcionales | 19 / 19 implementados |
+| Historias de Usuario | 47 / 48 implementadas (1 parcial: HU-047) |
+| Requisitos Funcionales | 20 / 21 implementados (1 parcial: RQF-021) |
 | Requisitos No Funcionales | 4 / 6 completos (2 parciales — de naturaleza continua: se miden, no se "terminan") |
-| Pruebas backend (pytest) | 347 |
-| Pruebas frontend (vitest) | 225 |
+| Pruebas backend (pytest) | 583 |
+| Pruebas frontend (vitest) | 379 |
 
 ---
 

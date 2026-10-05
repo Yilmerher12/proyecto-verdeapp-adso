@@ -46,6 +46,7 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
 5. Si el nivel es Regular o Malo, se recomienda contenido educativo a los residentes (RQF-013).
 6. El **Residente** (o el Admin de Conjunto) consulta `GET /api/v1/auditorias-conjunto/historial` y ve el historial de su conjunto, de la más reciente a la más antigua.
 7. El frontend muestra cada auditoría con su color de semáforo (`fe/src/config/nivelesDesempeno.ts`).
+8. En el panel del **Admin de Conjunto**, el historial se muestra por separado dentro del acordeón de cada conjunto que administra, agrupado por semana (lunes a domingo, UTC), con una barra Bueno/Regular/Malo por semana para comparar de un vistazo (`fe/src/components/dashboard/HistorialAuditoriasSemanal.tsx`). Las auditorías de distintos conjuntos nunca se mezclan en una misma barra. El Residente sigue viendo la lista simple del paso 6.
 
 ---
 
