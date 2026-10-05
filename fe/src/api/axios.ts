@@ -166,8 +166,7 @@ async function manejarErrorDeRespuesta(error: any) {
     const data = error.response.data;
 
     // ¿Qué? Un 401 mientras había un token guardado significa que la sesión
-    //       venció DURANTE el uso activo de la app (no es un login con
-    //       contraseña incorrecta — ese caso no tiene token guardado todavía).
+    //       venció DURANTE el uso activo de la app.
     // ¿Para qué? Antes, cuando el token expiraba (a los 15-60 minutos), la
     //           app simplemente dejaba de actualizar datos en silencio: cada
     //           petición fallaba con 401 y quedaba atrapada en los `catch`
@@ -185,7 +184,21 @@ async function manejarErrorDeRespuesta(error: any) {
     //       renovación de arriba y siguió fallando — la sesión de verdad
     //       terminó (refresh token vencido, revocado o de antes de un
     //       cambio de contraseña).
-    if (error.response.status === 401 && haySesionGuardada && !sesionExpiradaEnProceso) {
+    // ¿Qué? Salvo en las rutas de RUTAS_SIN_RENOVACION: ahí un 401 no habla
+    //       de la sesión. En /auth/login es "contraseña incorrecta"; en
+    //       /auth/logout, AppShell ya cierra la sesión local por su cuenta.
+    // ¿Para qué? Antes se asumía que en el login nunca había marca de sesión.
+    //           Sí puede haberla: alguien con sesión abierta que entra a
+    //           /login y se equivoca de contraseña veía "Tu sesión expiró"
+    //           en vez del error real, y perdía la marca aunque sus cookies
+    //           siguieran sirviendo. Y cerrar sesión con la sesión ya
+    //           vencida mandaba a /login con ese aviso en vez de al inicio.
+    if (
+      error.response.status === 401 &&
+      haySesionGuardada &&
+      !sesionExpiradaEnProceso &&
+      !esRutaSinRenovacion(configOriginal?.url)
+    ) {
       sesionExpiradaEnProceso = true;
       borrarSesionActiva();
       sessionStorage.setItem("verdeapp:session-expired", "1");
