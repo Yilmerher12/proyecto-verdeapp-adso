@@ -41,7 +41,7 @@ Este proceso es manual y requiere aprobación humana (Admin Sistema) para evitar
 4. El Admin Conjunto recibe una notificación cuando se procesa su solicitud.
 
 ### Flujo B — Gestionar solicitudes (Admin Sistema)
-1. El Admin Sistema ve las solicitudes de desvinculación pendientes en su panel.
+1. El Admin Sistema ve las solicitudes de desvinculación pendientes en la bandeja "Solicitudes pendientes" de su panel, que desde el commit 513c76d también incluye las novedades que le envían los usuarios — ver [RQF-021](RQF-021_novedades_enviadas_admin_sistema.md) y [HU-048](../HUs/HU-048_admin_sistema_revisa_bandeja_solicitudes.md). Las desvinculaciones se resuelven igual que antes.
 2. Puede aprobar o rechazar cada solicitud.
 3. Al aprobar, el conjunto se desvincula del Admin Conjunto y ambos reciben notificación.
 4. Al rechazar, el Admin Conjunto es notificado con el motivo.

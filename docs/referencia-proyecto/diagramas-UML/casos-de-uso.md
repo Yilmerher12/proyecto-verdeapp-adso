@@ -21,6 +21,7 @@ Usuario principal de la plataforma encargado de:
 * Consultar recicladores y puntos de acopio (directorio).
 * Reportar niveles de capacidad SHUT (notificación).
 * Gestionar su perfil(editarlo).
+* Enviarle novedades al Admin_sistema (RQF-021).
 * Cambiar el idioma de la interfaz (español/inglés).
 * Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
 
@@ -35,6 +36,7 @@ Usuario encargado de:
 * Actualizar información de perfil.
 * Comunicar llegada al conjunto.
 * Reportar niveles de capacidad SHUT (notificación).
+* Enviarle novedades al Admin_sistema (RQF-021).
 * Cambiar el idioma de la interfaz (español/inglés).
 * Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
 
@@ -49,6 +51,7 @@ Usuario responsable de:
 * Consultar, buscar, filtrar y ordenar los usuarios registrados de cada rol, y activar o desactivar cualquier cuenta.
 * Supervisar el funcionamiento general del sistema.
 * Aprobar o rechazar solicitudes de desvinculación de un Admin_conjunto, y asignarle conjuntos adicionales.
+* Revisar la bandeja "Solicitudes pendientes" (desvinculaciones y novedades que le envían los usuarios) y marcar las novedades como vistas (RQF-021).
 * Cambiar el idioma de la interfaz (español/inglés).
 * Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
 
@@ -63,7 +66,9 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 * Invitar recicladores autorizados a sus conjuntos, y revocarles el acceso si ya no trabajan ahí.
 * Solicitar su desvinculación de un conjunto que ya no administra.
 * Gestionar su perfil.
-* Editar el NIT y regenerar el código de acceso de los conjuntos que administra.
+* Editar el NIT y la cantidad de apartamentos, y regenerar el código de acceso de los conjuntos que administra.
+* Llevar una agenda privada de temas para el comité de cada conjunto (RQF-020).
+* Enviarle novedades al Admin_sistema (RQF-021).
 * Cambiar el idioma de la interfaz (español/inglés).
 * Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
 * Cerrar sesión.
@@ -93,6 +98,8 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 | RQF017 | Cambiar idioma de la interfaz                            | Residente, Reciclador, Admin_sistema, Admin_conjunto |
 | RQF018 | Gestión de usuarios (Admin Sistema)                      | Admin_sistema |
 | RQF019 | Recuperación y cambio de contraseña                      | Residente, Reciclador, Admin_sistema, Admin_conjunto |
+| RQF020 | Agenda interna del conjunto                              | Admin_conjunto |
+| RQF021 | Novedades enviadas al Admin Sistema y bandeja de solicitudes | Residente, Reciclador, Admin_conjunto, Admin_sistema |
 
 ---
 
@@ -125,6 +132,8 @@ flowchart TB
     RQF017([RQF017\nCambiar Idioma de la Interfaz])
     RQF018([RQF018\nGestión de Usuarios - Admin Sistema])
     RQF019([RQF019\nRecuperación y Cambio de Contraseña])
+    RQF020([RQF020\nAgenda Interna del Conjunto])
+    RQF021([RQF021\nNovedades Enviadas y Bandeja de Solicitudes])
 
     Residente --> RQF001
     Residente --> RQF002
@@ -139,6 +148,7 @@ flowchart TB
     Residente --> RQF015
     Residente --> RQF017
     Residente --> RQF019
+    Residente --> RQF021
 
     Reciclador --> RQF001
     Reciclador --> RQF002
@@ -152,6 +162,7 @@ flowchart TB
     Reciclador --> RQF015
     Reciclador --> RQF017
     Reciclador --> RQF019
+    Reciclador --> RQF021
 
     Admin --> RQF001
     Admin --> RQF007
@@ -163,6 +174,7 @@ flowchart TB
     Admin --> RQF017
     Admin --> RQF018
     Admin --> RQF019
+    Admin --> RQF021
 
     AdminConjunto --> RQF001
     AdminConjunto --> RQF002
@@ -174,6 +186,8 @@ flowchart TB
     AdminConjunto --> RQF016
     AdminConjunto --> RQF017
     AdminConjunto --> RQF019
+    AdminConjunto --> RQF020
+    AdminConjunto --> RQF021
 ```
 
 ---
@@ -563,3 +577,47 @@ Permite a cualquier usuario recuperar el acceso a su cuenta si olvidó su contra
 1. El usuario, desde su perfil, ingresa su contraseña actual y la nueva.
 2. El sistema verifica la contraseña actual antes de aplicar el cambio.
 
+---
+
+## RQF020 - Agenda Interna del Conjunto
+
+### Actor
+
+* Admin_conjunto
+
+### Descripción
+
+Permite al Admin_conjunto llevar, por cada conjunto que administra, una lista privada de temas para llevar al comité, con foto opcional. Nadie más la ve y no genera notificaciones.
+
+### Flujo Principal
+
+1. El Admin_conjunto abre "Agenda del conjunto" en el acordeón de uno de sus conjuntos.
+2. Agrega un tema (texto y foto opcional); queda como Pendiente.
+3. Después del comité, deja en espera los temas aplazados y elimina los resueltos.
+
+---
+
+## RQF021 - Novedades Enviadas al Admin Sistema y Bandeja de Solicitudes
+
+### Actores
+
+* Residente
+* Reciclador
+* Admin_conjunto
+* Admin_sistema
+
+### Descripción
+
+Permite que un Residente, Reciclador o Admin_conjunto le envíe una novedad al Admin_sistema (texto e imagen opcional). El Admin_sistema la recibe en la bandeja "Solicitudes pendientes", junto con las solicitudes de desvinculación (RQF016).
+
+### Flujo Principal
+
+1. El usuario abre Novedades → "Escribir novedad", escribe el texto y lo envía.
+2. El sistema la guarda como NUEVA con los datos de la cuenta del autor.
+3. El Admin_sistema la ve en "Solicitudes pendientes" y la marca como vista.
+4. El autor ve en "Mis envíos" que fue vista.
+
+### Flujo Alternativo
+
+1. El Admin_sistema filtra la bandeja por tipo (Desvinculación o Novedad).
+2. Las desvinculaciones se aprueban o rechazan con el flujo de RQF016.
