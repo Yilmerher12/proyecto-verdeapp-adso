@@ -60,7 +60,7 @@ La agenda es **privada**: solo la ve el Admin de Conjunto que administra ese con
 | Campo           | Tipo   | Obligatorio | Validaciones                                                         |
 | --------------- | ------ | ----------- | --------------------------------------------------------------------- |
 | `texto`         | Texto  | Sí          | Mínimo 1 carácter, máximo 1000 (mismo tope que el motivo de desvinculación) |
-| `url_evidencia` | Texto  | No          | Máximo 500 caracteres. URL que devuelve el endpoint de subida de adjuntos |
+| `url_evidencia` | Texto  | No          | Máximo 500 caracteres. Archivo subido a VerdeApp (`/uploads/...`) o `https://` (RN-006) |
 | `estado`        | Texto  | Sí (Flujo B)| Solo `PENDIENTE` o `EN_ESPERA`                                        |
 
 ---
@@ -98,7 +98,7 @@ Código: `be/app/routers/conjunto_panel.py`, `be/app/services/agenda_conjunto_se
 - RN-003: Un tema solo tiene dos estados: `PENDIENTE` (al crearlo) y `EN_ESPERA`. La lista muestra primero los pendientes y, dentro de cada grupo, del más reciente al más antiguo.
 - RN-004: Los temas no caducan solos: el comité no tiene una fecha fija que la app pueda conocer. Se eliminan a mano cuando se resuelven.
 - RN-005: Si se borra el conjunto, se borran sus temas (`ON DELETE CASCADE`). Si se borra la cuenta del autor, el tema se conserva sin autor (`ON DELETE SET NULL`).
-- RN-006: Pendiente de endurecer: `url_evidencia` hoy solo valida el largo, no el formato. Debe validarse con `EnlaceAdjunto` (archivo subido a VerdeApp o `https://`), como los comunicados — issue #369 (hallazgo CN-041 de Cyber Neo).
+- RN-006: `url_evidencia` se valida con `EnlaceAdjunto`, igual que los comunicados: solo archivo subido a VerdeApp (`/uploads/...`) o `https://`; otro formato responde 422 — issue #369 (hallazgo CN-041 de Cyber Neo).
 
 ---
 

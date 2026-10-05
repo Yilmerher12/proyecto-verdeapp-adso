@@ -4,6 +4,7 @@ Descripción: Pruebas de las novedades que Residente, Reciclador y Admin de
              Conjunto le envían al Admin Sistema, y de la bandeja unificada
              "Solicitudes pendientes" donde las recibe.
 """
+import pytest
 from fastapi.testclient import TestClient
 
 BASE = "/api/v1/novedades-enviadas"
@@ -14,6 +15,19 @@ class TestEnviar:
     def test_residente_envia_con_imagen(self, client: TestClient, auth_headers):
         r = client.post(BASE, headers=auth_headers, json={"texto": "Contenedor desbordado.", "url_imagen": "/uploads/adjuntos/c.jpg"})
         assert r.status_code == 201
+
+    def test_acepta_imagen_por_https(self, client: TestClient, auth_headers):
+        r = client.post(BASE, headers=auth_headers, json={"texto": "x", "url_imagen": "https://ejemplo.com/f.jpg"})
+        assert r.status_code == 201
+
+    @pytest.mark.parametrize(
+        "url",
+        ["@sitio-malo.com/login", "http://sitio-malo.com/f.jpg", "//sitio-malo.com/f.jpg", "javascript:alert(1)", "/uploads/../main.py"],
+    )
+    def test_rechaza_enlace_de_imagen_no_permitido(self, client: TestClient, auth_headers, url):
+        """Issue #369 (CN-041): el Admin Sistema abre este enlace desde su bandeja."""
+        r = client.post(BASE, headers=auth_headers, json={"texto": "x", "url_imagen": url})
+        assert r.status_code == 422
 
     def test_reciclador_envia(self, client: TestClient, reciclador_auth_headers):
         assert client.post(BASE, headers=reciclador_auth_headers, json={"texto": "Punto cerrado."}).status_code == 201

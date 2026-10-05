@@ -23,7 +23,7 @@
 | **Nombre**    | Novedades Enviadas al Administrador del Sistema y Bandeja de Solicitudes Pendientes |
 | **Módulo**    | Comunicación / Administración              |
 | **Prioridad** | Media                                      |
-| **Estado**    | Parcial                                    |
+| **Estado**    | Implementado                               |
 | **Usuarios**  | residente, reciclador, admin_conjunto, admin_sistema |
 
 ---
@@ -36,7 +36,7 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 
 **No confundir** con las Novedades de RQF-015: esas las publica el Administrador del Sistema hacia los usuarios. Las de este RF van en la dirección contraria.
 
-**Estado Parcial:** el formulario muestra el campo "Imagen adjunta" a los 3 roles, pero el endpoint de subida (`be/app/routers/uploads.py`) solo deja subir archivos a los dos roles de administrador. Un Residente o Reciclador que intenta adjuntar una imagen recibe 403 ("No tienes permiso para subir archivos adjuntos."); sí puede enviar la novedad solo con texto. Se resuelve en el issue #369.
+**Imagen adjunta (issue #369):** los 3 roles pueden subir la imagen con el endpoint de subida (`be/app/routers/uploads.py`). El Residente y el Reciclador solo pueden subir imagen (jpg/png/webp), nunca PDF/Word/Excel.
 
 ---
 
@@ -67,7 +67,7 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 | Campo                     | Tipo   | Obligatorio | Validaciones                                                        |
 | -------------------------- | ------ | ----------- | -------------------------------------------------------------------- |
 | `texto`                   | Texto  | Sí          | Mínimo 1 carácter, máximo 1000                                       |
-| `url_imagen`              | Texto  | No          | Máximo 500 caracteres (sin validar el formato todavía, ver RN-007)   |
+| `url_imagen`              | Texto  | No          | Máximo 500 caracteres. Archivo subido a VerdeApp (`/uploads/...`) o `https://` (RN-007) |
 | `id_conjunto_residencial` | UUID   | No          | Solo lo usa el Admin de Conjunto; debe ser uno de sus conjuntos      |
 | `tipo` (al resolver)      | Texto  | Sí          | `DESVINCULACION` o `NOVEDAD`                                          |
 | `aprobar` (al resolver)   | Booleano | Sí        | Una novedad solo admite `true` (marcar como vista)                    |
@@ -110,7 +110,7 @@ Código: `be/app/routers/novedades_enviadas.py`, `be/app/routers/admin_conjunto.
 - RN-004: Una novedad no se aprueba ni se rechaza: el Administrador del Sistema solo la marca como **vista**. Una vez vista no se puede volver a marcar.
 - RN-005: La bandeja muestra solo lo pendiente: desvinculaciones sin resolver y novedades en estado NUEVA, de la más reciente a la más antigua.
 - RN-006: Si se borra la cuenta del autor o el conjunto, la novedad se conserva sin ese dato (`ON DELETE SET NULL`); en la bandeja aparece como "Usuario eliminado".
-- RN-007: Pendiente de corregir (issue #369, hallazgo CN-041): el Residente y el Reciclador no pueden subir la imagen (ver Estado Parcial arriba), y `url_imagen` no valida el formato del enlace.
+- RN-007: `url_imagen` solo acepta un archivo subido a VerdeApp (`/uploads/...`) o un enlace `https://`; cualquier otro formato responde 422. El frontend aplica la misma regla al mostrar el enlace (`fe/src/lib/enlaceSeguro.ts`), así un dato viejo con otro formato no se muestra. Corregido en el issue #369 (hallazgo CN-041): antes un enlace como `@sitio-malo.com` llevaba al Administrador del Sistema a otro sitio.
 - RN-008: Pendiente de endurecer (issue #372, hallazgos CN-042/044/045): el envío no tiene límite de peticiones, la bandeja no está paginada y un `tipo` desconocido al resolver se trata como novedad.
 
 ---

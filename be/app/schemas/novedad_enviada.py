@@ -13,11 +13,16 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.schemas.agenda_conjunto import TEXTO_MAX_LENGTH
+from app.utils.enlaces import EnlaceAdjunto
 
 
 class CrearNovedadEnviadaRequest(BaseModel):
     texto: str = Field(min_length=1, max_length=TEXTO_MAX_LENGTH)
-    url_imagen: Optional[str] = Field(default=None, max_length=500)
+    # ¿Qué? Issue #369 (CN-041): mismo validador que los adjuntos de
+    #       comunicados — solo /uploads/... o https://.
+    # ¿Impacto? El Admin Sistema abre este enlace desde su bandeja; antes un
+    #           "@sitio-malo.com" lo llevaba a otro sitio (phishing).
+    url_imagen: EnlaceAdjunto = None
     # ¿Qué? Solo lo usa el Admin de Conjunto (elige de cuál de sus conjuntos
     #       habla). Un Residente lo hereda de su unidad; un Reciclador no tiene.
     id_conjunto_residencial: Optional[UUID] = None

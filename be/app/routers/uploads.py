@@ -30,6 +30,11 @@ router = APIRouter(
 CARPETA_ADJUNTOS = Path(__file__).parent.parent / "uploads" / "adjuntos"
 
 ROLES_PERMITIDOS = {RolId.ADMIN_CONJUNTO, RolId.ADMIN_SISTEMA}
+# ¿Qué? Issue #369: Residente y Reciclador adjuntan la foto de la novedad
+#       que le envían al Admin Sistema.
+# ¿Impacto? Solo imagen: a ellos se les ignora permitir_documentos, así no
+#           pueden subir PDF/Word/Excel que nadie les pide.
+ROLES_SOLO_IMAGEN = {RolId.RESIDENTE, RolId.RECICLADOR}
 
 
 @router.post("/adjunto", status_code=status.HTTP_201_CREATED)
@@ -47,14 +52,17 @@ async def subir_adjunto(
     current_user: Usuario = Depends(get_current_user),
 ):
     """
-    ¿Qué? Solo el Administrador de Conjunto (comunicados) y el
-          Administrador del Sistema (novedades, contenido educativo)
-          pueden usar este endpoint.
+    ¿Qué? El Administrador de Conjunto (comunicados, agenda) y el
+          Administrador del Sistema (novedades, contenido educativo) suben
+          cualquier tipo permitido; Residente y Reciclador, solo imagen
+          (foto de la novedad enviada).
     ¿Impacto? Devuelve {"url": "/uploads/adjuntos/<archivo>"} — esa URL es
              la que el frontend guarda como url_adjunto/url_guia,
              exactamente igual que si hubiera sido un link externo.
     """
-    if current_user.id_rol not in ROLES_PERMITIDOS:
+    if current_user.id_rol in ROLES_SOLO_IMAGEN:
+        permitir_documentos = False
+    elif current_user.id_rol not in ROLES_PERMITIDOS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para subir archivos adjuntos.",
