@@ -24,6 +24,8 @@ from app.models.residente import Residente
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.models.rol import RolId
+from app.tests.conftest import ADMIN_SISTEMA_EMAIL
+from app.utils.audit_log import redactar_correo
 from app.utils.security import hash_password
 
 
@@ -450,18 +452,25 @@ class TestCambiarHabilitado:
         assert response.status_code == 403
 
     def test_admin_sistema_desactiva_una_cuenta(
-        self, client: TestClient, admin_sistema_auth_headers, test_user, db
+        self, client: TestClient, admin_sistema_auth_headers, test_user, db, acciones_admin
     ):
         response = client.patch(
             self._url(test_user.correo_electronico),
             headers=admin_sistema_auth_headers,
-            json={"habilitado": False},
+            json={"habilitado": False, "motivo": "Dato personal que no va al log"},
         )
         assert response.status_code == 200
         assert response.json()["habilitado"] is False
 
         db.refresh(test_user)
         assert test_user.habilitado is False
+
+        # Issue #376: queda quién lo hizo y a quién, con correos redactados y sin el motivo.
+        [accion] = acciones_admin()
+        assert accion["action"] == "usuario_deshabilitado"
+        assert accion["admin"] == redactar_correo(ADMIN_SISTEMA_EMAIL)
+        assert accion["usuario"] == redactar_correo(test_user.correo_electronico)
+        assert "Dato personal" not in str(accion)
 
     def test_admin_sistema_reactiva_una_cuenta(
         self, client: TestClient, admin_sistema_auth_headers, test_user, db

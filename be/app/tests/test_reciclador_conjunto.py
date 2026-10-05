@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 class TestInvitar:
     def test_admin_conjunto_invita_a_su_reciclador(
-        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, reciclador_test
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, reciclador_test, acciones_admin
     ):
         response = client.post(
             "/api/v1/reciclador-conjunto/invitar",
@@ -26,6 +26,12 @@ class TestInvitar:
         )
         assert response.status_code == 201
         assert response.json()["estado"] == "PENDIENTE"
+
+        # Issue #376
+        [accion] = acciones_admin()
+        assert accion["action"] == "reciclador_invitado"
+        assert accion["reciclador"] == "re***@verdeapp.com"
+        assert accion["conjunto"] == str(conjunto_verificado.id_conjunto_residencial)
 
     def test_no_puede_invitar_a_un_conjunto_ajeno(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_no_verificado, reciclador_test
@@ -236,6 +242,7 @@ class TestRevocarReciclador:
         reciclador_auth_headers,
         conjunto_verificado,
         reciclador_test,
+        acciones_admin,
     ):
         self._autorizar(client, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test)
 
@@ -243,6 +250,12 @@ class TestRevocarReciclador:
             self._url(conjunto_verificado, reciclador_test), headers=admin_conjunto_auth_headers
         )
         assert response.status_code == 204
+
+        # Issue #376: la última acción anotada (la primera es la invitación de _autorizar).
+        accion = acciones_admin()[-1]
+        assert accion["action"] == "reciclador_revocado"
+        assert accion["reciclador"] == str(reciclador_test.reciclador.id_reciclador)
+        assert accion["conjunto"] == str(conjunto_verificado.id_conjunto_residencial)
 
         autorizados = client.get(
             f"/api/v1/reciclador-conjunto/mi-conjunto/{conjunto_verificado.id_conjunto_residencial}/autorizados",

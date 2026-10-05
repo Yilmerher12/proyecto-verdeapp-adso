@@ -82,12 +82,19 @@ class TestBandejaDelAdminSistema:
         filas = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"]
         assert filas[0]["url_evidencia"] == "/uploads/adjuntos/f.jpg"
 
-    def test_marcar_como_vista_la_saca_de_la_bandeja(self, client: TestClient, admin_sistema_auth_headers, auth_headers):
+    def test_marcar_como_vista_la_saca_de_la_bandeja(
+        self, client: TestClient, admin_sistema_auth_headers, auth_headers, acciones_admin
+    ):
         client.post(BASE, headers=auth_headers, json={"texto": "Hola"})
         id_novedad = client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"][0]["id"]
 
         r = client.post(f"{BASE_ADMIN}/solicitudes/NOVEDAD/{id_novedad}/resolver", headers=admin_sistema_auth_headers, json={"aprobar": True})
         assert r.status_code == 200
+        # Issue #376
+        [accion] = acciones_admin()
+        assert accion["action"] == "solicitud_aprobada"
+        assert accion["tipo"] == "NOVEDAD"
+        assert accion["solicitud"] == id_novedad
         assert client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"] == []
         assert client.get(f"{BASE}/mias", headers=auth_headers).json()[0]["estado"] == "VISTA"
 

@@ -9,6 +9,9 @@ Descripción: Pruebas del panel propio del Administrador de Conjunto.
 
 from fastapi.testclient import TestClient
 
+from app.tests.conftest import ADMIN_CONJUNTO_EMAIL
+from app.utils.audit_log import redactar_correo
+
 
 class TestMisConjuntos:
     def test_sin_login_devuelve_401(self, client: TestClient):
@@ -119,7 +122,7 @@ class TestRegenerarCodigoAcceso:
         assert response.status_code == 403
 
     def test_genera_un_codigo_distinto_al_anterior(
-        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, acciones_admin
     ):
         codigo_original = conjunto_verificado.codigo_acceso
         response = client.post(self._url(conjunto_verificado), headers=admin_conjunto_auth_headers)
@@ -127,6 +130,13 @@ class TestRegenerarCodigoAcceso:
         codigo_nuevo = response.json()["codigo_acceso"]
         assert codigo_nuevo != codigo_original
         assert len(codigo_nuevo) == 6
+
+        # Issue #376: se anota quién y en qué conjunto, NUNCA el código (es secreto).
+        [accion] = acciones_admin()
+        assert accion["action"] == "codigo_acceso_regenerado"
+        assert accion["admin"] == redactar_correo(ADMIN_CONJUNTO_EMAIL)
+        assert accion["conjunto"] == str(conjunto_verificado.id_conjunto_residencial)
+        assert codigo_nuevo not in str(accion)
 
         # ¿Qué? El código viejo debe dejar de servir para registrarse.
         listado = client.get("/api/v1/conjunto-panel/mis-conjuntos", headers=admin_conjunto_auth_headers)

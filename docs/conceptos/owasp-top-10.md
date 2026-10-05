@@ -323,6 +323,34 @@ El informe de seguridad Cyber Neo (hallazgos CN-012 y CN-011) encontró dos prob
 
 También se completó el "siguiente paso" de la nota de arriba: `require_role()` y `require_admin_conjunto()` (`be/app/dependencies.py`), que desde el issue #216 reemplazan a los `_verificar_es_*`, llaman a `log_acceso_denegado` en cada 403. Y el envío SMTP hace `starttls()` antes de `login()` cuando hay un servidor con usuario (CN-023); Mailpit no tiene usuario y sigue igual.
 
+### Agregado después (2026-10-05): acciones de los administradores (issue #376)
+
+El mismo hallazgo CN-012 señaló que las acciones de administración no dejaban rastro: si un Admin desactivaba una cuenta o regeneraba un código de acceso, después no había forma de saber quién lo hizo ni cuándo. Se agregó una función más:
+
+```python
+def log_accion_admin(correo_admin: str, accion: str, **detalles) -> None: ...
+```
+
+Una sola función para todas las acciones (en vez de una por acción): todas anotan lo mismo, quién, qué y sobre qué. Se llama desde el router, justo después de que la acción termina bien; si la acción falla (403, 404...), el error sale antes y no se anota nada.
+
+| Rol | Acción (`action`) | Qué se anota además |
+|---|---|---|
+| Admin Sistema | `usuario_habilitado` / `usuario_deshabilitado` | correo del usuario, redactado |
+| Admin Sistema | `admin_conjunto_invitado` | correo invitado (redactado) y conjuntos |
+| Admin Sistema | `desvinculacion_aprobada` / `desvinculacion_rechazada` | id de la solicitud |
+| Admin Sistema | `solicitud_aprobada` / `solicitud_rechazada` | tipo e id de la solicitud |
+| Admin Sistema | `conjunto_asignado` | id del administrador y del conjunto |
+| Admin Sistema | `punto_acopio_eliminado` | id del punto (es el único rastro: se borra para siempre) |
+| Admin Conjunto | `codigo_acceso_regenerado` | id del conjunto |
+| Admin Conjunto | `reciclador_invitado` | correo del reciclador (redactado) y conjunto |
+| Admin Conjunto | `reciclador_revocado` | id del reciclador y del conjunto |
+
+```json
+{"timestamp": "2026-10-05T14:00:00+00:00", "event": "admin_action", "admin": "ad***@verdeapp.com", "action": "usuario_deshabilitado", "usuario": "re***@verdeapp.com"}
+```
+
+**Lo que nunca se anota:** contraseñas, tokens, el **código de acceso nuevo** (con él cualquiera que lea el log podría registrarse en ese conjunto) ni los **motivos** escritos a mano al desactivar o rechazar (texto libre que puede traer datos personales). Las acciones de contenido (comunicados, novedades, puntos de acopio, agenda, contenido educativo) no se anotan: no cambian permisos ni accesos, y sus tablas ya guardan quién las creó.
+
 ---
 
 ## A10 — Server-Side Request Forgery (SSRF)

@@ -182,7 +182,7 @@ class TestEliminarDefinitivamente:
     """Distinto de dar de baja: borra el registro por completo."""
 
     def test_elimina_un_punto_ya_dado_de_baja(
-        self, client: TestClient, admin_sistema_auth_headers, punto_acopio_test: PuntoAcopio
+        self, client: TestClient, admin_sistema_auth_headers, punto_acopio_test: PuntoAcopio, acciones_admin
     ):
         client.delete(f"{BASE}/{punto_acopio_test.id_punto_acopio}", headers=admin_sistema_auth_headers)
 
@@ -190,6 +190,11 @@ class TestEliminarDefinitivamente:
             f"{BASE}/{punto_acopio_test.id_punto_acopio}/definitivo", headers=admin_sistema_auth_headers
         )
         assert response.status_code == 204
+
+        # Issue #376: único rastro de un registro borrado para siempre.
+        [accion] = acciones_admin()
+        assert accion["action"] == "punto_acopio_eliminado"
+        assert accion["punto_acopio"] == str(punto_acopio_test.id_punto_acopio)
 
         listado = client.get(BASE, headers=admin_sistema_auth_headers)
         ids = [p["id_punto_acopio"] for p in listado.json()]

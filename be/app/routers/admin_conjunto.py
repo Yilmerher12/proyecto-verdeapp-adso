@@ -35,6 +35,7 @@ from app.schemas.solicitud_unificada import (
 )
 from app.schemas.user import MessageResponse
 from app.services import admin_conjunto_service, desvinculacion_service, novedad_enviada_service
+from app.utils.audit_log import log_accion_admin, redactar_correo
 from app.utils.limiter import limiter
 
 router = APIRouter(prefix="/api/v1/admin-conjunto", tags=["admin-conjunto"])
@@ -57,6 +58,12 @@ async def invitar_admin_conjunto(
     """Solo el Administrador del Sistema puede usar esta ruta."""
     await admin_conjunto_service.invitar_admin_conjunto(
         db=db, datos=datos, invitado_por=current_user
+    )
+    log_accion_admin(
+        current_user.correo_electronico,
+        "admin_conjunto_invitado",
+        invitado=redactar_correo(datos.correo_electronico),
+        conjuntos=datos.ids_conjuntos,
     )
     return MessageResponse(
         message=f"Invitación enviada a {datos.correo_electronico}."
@@ -123,6 +130,12 @@ def resolver_solicitud_desvinculacion(
         motivo_rechazo=datos.motivo_rechazo,
         resuelta_por=current_user,
     )
+    # ¿Qué? Issue #376: sin motivo_rechazo — texto libre (ver log_accion_admin).
+    log_accion_admin(
+        current_user.correo_electronico,
+        "desvinculacion_aprobada" if datos.aprobar else "desvinculacion_rechazada",
+        solicitud=id_solicitud,
+    )
     mensaje = "Solicitud aprobada. El conjunto quedó desvinculado." if datos.aprobar else "Solicitud rechazada."
     return MessageResponse(message=mensaje)
 
@@ -168,6 +181,12 @@ def resolver_solicitud(
         motivo_rechazo=datos.motivo_rechazo,
         resuelta_por=current_user,
     )
+    log_accion_admin(
+        current_user.correo_electronico,
+        "solicitud_aprobada" if datos.aprobar else "solicitud_rechazada",
+        tipo=tipo,
+        solicitud=id_solicitud,
+    )
     mensaje = "Solicitud aprobada." if datos.aprobar else "Solicitud rechazada."
     return MessageResponse(message=mensaje)
 
@@ -194,5 +213,11 @@ def asignar_conjunto_adicional(
         db=db,
         id_administrador=datos.id_administrador,
         id_conjunto=datos.id_conjunto_residencial,
+    )
+    log_accion_admin(
+        current_user.correo_electronico,
+        "conjunto_asignado",
+        administrador=datos.id_administrador,
+        conjunto=datos.id_conjunto_residencial,
     )
     return MessageResponse(message="Conjunto asignado correctamente.")

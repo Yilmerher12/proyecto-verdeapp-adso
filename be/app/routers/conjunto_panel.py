@@ -25,6 +25,7 @@ from app.schemas.desvinculacion import SolicitarDesvinculacionRequest
 from app.schemas.agenda_conjunto import AgendaItemResponse, CambiarEstadoAgendaRequest, CrearAgendaItemRequest
 from app.schemas.user import MessageResponse
 from app.services import agenda_conjunto_service, desvinculacion_service
+from app.utils.audit_log import log_accion_admin
 from app.utils.codigo_acceso import generar_codigo_acceso
 
 router = APIRouter(prefix="/api/v1/conjunto-panel", tags=["conjunto-panel"])
@@ -232,6 +233,11 @@ def regenerar_codigo_acceso(
 
     conjunto.codigo_acceso = nuevo_codigo
     db.commit()
+    # ¿Qué? Issue #376: se anota EN QUÉ conjunto se cambió, nunca el código
+    #       nuevo — con él cualquiera que lea el log podría registrarse ahí.
+    log_accion_admin(
+        administrador.usuario.correo_electronico, "codigo_acceso_regenerado", conjunto=id_conjunto_residencial
+    )
 
     return CodigoAccesoResponse(codigo_acceso=nuevo_codigo)
 

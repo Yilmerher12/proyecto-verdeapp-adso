@@ -10,6 +10,8 @@ Descripción: Fixtures compartidos para todos los tests del backend de VerdeApp.
           que los tests NUNCA afecten la BD de desarrollo.
 """
 
+import json
+import logging
 import uuid
 from collections.abc import Generator
 from datetime import datetime, timedelta, timezone
@@ -699,3 +701,25 @@ def punto_acopio_test(db: Session, localidad_test: Localidad) -> PuntoAcopio:
     db.commit()
     db.refresh(punto)
     return punto
+
+# ────────────────────────────
+# 📝 Log de auditoría de acciones de administración (issue #376)
+# ────────────────────────────
+
+
+@pytest.fixture()
+def acciones_admin(caplog: pytest.LogCaptureFixture):
+    """Devuelve una función que lista las líneas "admin_action" ya escritas.
+
+    ¿Qué? Captura el logger "verdeapp.audit" y convierte cada línea de
+          log_accion_admin en un dict.
+    ¿Para qué? Que cada prueba compruebe "quedó anotada esta acción" con una
+              sola línea, sin repetir el parseo del JSON en cada archivo.
+    """
+    caplog.set_level(logging.INFO, logger="verdeapp.audit")
+
+    def leer() -> list[dict]:
+        lineas = [json.loads(r.getMessage()) for r in caplog.records if r.name == "verdeapp.audit"]
+        return [linea for linea in lineas if linea["event"] == "admin_action"]
+
+    return leer
