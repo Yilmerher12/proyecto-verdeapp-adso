@@ -70,6 +70,8 @@
     "saving": "Saving...",
     "saveError": "Could not save. Please try again.",
     "formIncomplete": "Complete the form",
+    "datePast": "The date must be today or a future date.",
+    "dateTooFar": "The date can't be more than {{dias}} days from today.",
     "pagination": {
       "showing": "Showing {{from}}–{{to}} of {{total}}",
       "prev": "Previous page",

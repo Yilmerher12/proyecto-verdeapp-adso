@@ -65,6 +65,7 @@ A diferencia de los comunicados de conjunto (RQF-014), las novedades las publica
 - RN-011: Con varios conjuntos se crea una notificación por conjunto, y un Reciclador o Admin de Conjunto que pertenezca a varios de los elegidos la recibe una sola vez. **Implementada.**
 - RN-012: El video (`url_video`) solo puede ser un enlace `https://` de YouTube (`youtube.com`, `youtu.be`, `youtube-nocookie.com`), igual que en Contenido Educativo (RQF-010). Se valida en el backend (`be/app/utils/enlaces.py`, 422 si no cumple, al publicar y al editar) y en el formulario, con el error debajo del campo (issue #357). **Implementada.**
 - RN-013: La lista de conjuntos elegidos acepta máximo 100 — por encima de eso responde 422 (`CONJUNTOS_MAX_LENGTH` en `be/app/schemas/novedad.py`, issue #358). Un conjunto repetido en la lista cuenta una sola vez. "Todos los conjuntos" se manda como lista vacía, así que el tope no lo afecta. **Implementada.**
+- RN-014: La fecha de expiración elegida a mano debe estar entre hoy y un año desde hoy, al publicar y al editar — misma regla y mismo validador que en Comunicados (RQF-014, RN-007). Se valida en el backend (422) y en el formulario, con el error debajo del campo (issue #367). **Implementada.**
 
 ---
 

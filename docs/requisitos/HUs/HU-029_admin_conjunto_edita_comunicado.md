@@ -37,6 +37,13 @@
 - **cuando** veo el formulario,
 - **entonces** debo poder modificar el texto, los adjuntos, el tipo y la fecha de expiración.
 
+### CA-029.1b — Fecha de expiración válida al editar
+
+- **Dado que** estoy editando un comunicado,
+- **cuando** elijo una fecha de expiración anterior a hoy o a más de un año desde hoy,
+- **entonces** el formulario me muestra el error debajo del campo y no deja guardar; si alguien llama la API directamente, responde 422. El calendario solo ofrece fechas dentro de ese rango (issue #367).
+- **y** si el comunicado ya estaba vencido, su fecha pasada aparece precargada y debo elegir una nueva para guardar (así se puede volver a publicar a propósito).
+
 ### CA-029.2 — Destinatarios no editables
 
 - **Dado que** estoy editando un comunicado,

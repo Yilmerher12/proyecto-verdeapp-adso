@@ -13,6 +13,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
 from app.utils.enlaces import EnlaceAdjunto
+from app.utils.fechas import FechaEvento, FechaExpiracion
 
 from app.models.comunicado import DestinatariosComunicado, TipoComunicado
 
@@ -32,11 +33,12 @@ class CrearComunicadoRequest(BaseModel):
     # ¿Qué? Obligatoria solo cuando tipo=CONVOCATORIA (RF: "expira al día
     #       siguiente del evento") — se valida en el service, no aquí,
     #       porque depende del valor de otro campo.
-    fecha_evento: Optional[date] = None
+    fecha_evento: FechaEvento = None
     # ¿Qué? Si no se manda, el service calcula la expiración sugerida según
     #       el tipo (CA-027.3). Si se manda, se respeta tal cual — el RF
-    #       permite que el admin la cambie.
-    fecha_expiracion: Optional[datetime] = None
+    #       permite que el admin la cambie — siempre que no esté vencida ni
+    #       supere un año (issue #367, ver utils/fechas.py).
+    fecha_expiracion: FechaExpiracion = None
 
     @field_validator("texto")
     @classmethod
@@ -56,8 +58,8 @@ class EditarComunicadoRequest(BaseModel):
     tipo: TipoComunicado
     texto: str = Field(max_length=TEXTO_MAX_LENGTH)
     url_adjunto: EnlaceAdjunto = None
-    fecha_evento: Optional[date] = None
-    fecha_expiracion: Optional[datetime] = None
+    fecha_evento: FechaEvento = None
+    fecha_expiracion: FechaExpiracion = None
 
     @field_validator("texto")
     @classmethod

@@ -13,6 +13,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
 from app.utils.enlaces import EnlaceAdjunto, EnlaceVideo
+from app.utils.fechas import FechaExpiracion
 
 from app.models.novedad import AlcanceNovedad
 
@@ -42,8 +43,9 @@ class CrearNovedadRequest(BaseModel):
     # ¿Qué? Si no se manda, el service usa una expiración sugerida por
     #       defecto (CA-032.3) — el RF no define tipos con plazos
     #       distintos como en Comunicados, solo "el sistema sugiere una
-    #       fecha, editable".
-    fecha_expiracion: Optional[datetime] = None
+    #       fecha, editable". Si se manda, no puede estar vencida ni
+    #       superar un año (issue #367, ver utils/fechas.py).
+    fecha_expiracion: FechaExpiracion = None
 
     @field_validator("texto")
     @classmethod
@@ -63,7 +65,7 @@ class EditarNovedadRequest(BaseModel):
     texto: str = Field(max_length=TEXTO_MAX_LENGTH)
     url_adjunto: EnlaceAdjunto = None
     url_video: EnlaceVideo = None
-    fecha_expiracion: Optional[datetime] = None
+    fecha_expiracion: FechaExpiracion = None
 
     @field_validator("texto")
     @classmethod

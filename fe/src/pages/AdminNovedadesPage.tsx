@@ -26,7 +26,14 @@ import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultip
 import { Alert } from "@/components/ui/Alert";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
-import { ENLACE_MAX_LENGTH, NOVEDAD_TEXTO_MAX_LENGTH, REGEX_VIDEO_YOUTUBE } from "@/lib/validacion";
+import {
+  DIAS_MAX_EXPIRACION,
+  ENLACE_MAX_LENGTH,
+  NOVEDAD_TEXTO_MAX_LENGTH,
+  REGEX_VIDEO_YOUTUBE,
+  rangoFechaAviso,
+  validarFechaAviso,
+} from "@/lib/validacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
 import {
@@ -130,6 +137,7 @@ export function AdminNovedadesPage() {
   const [masOpciones, setMasOpciones] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorVideo, setErrorVideo] = useState("");
+  const [errorFechaExpiracion, setErrorFechaExpiracion] = useState("");
   // ¿Qué? Issue #9 (hallazgo U2 de la auditoría) — archivar se ejecutaba
   //       directo al clic, sin confirmar, a diferencia de eliminar un
   //       comunicado (misma acción conceptual, otra pantalla).
@@ -200,6 +208,7 @@ export function AdminNovedadesPage() {
     setCreando(false);
     setEditando(null);
     setErrorMsg(null);
+    setErrorFechaExpiracion("");
   };
 
   // ¿Qué? Misma condición que ya revisaba "guardar" al hacer clic, pero
@@ -222,8 +231,20 @@ export function AdminNovedadesPage() {
     return mensaje;
   };
 
+  // ¿Qué? Issue #367 — misma regla que be/app/utils/fechas.py: desde hoy
+  //       hasta un año. Una novedad vencida al editarla trae su fecha pasada
+  //       precargada, y aquí se pide una nueva antes de guardar.
+  const validarFechaExpiracion = (): string => {
+    const motivo = validarFechaAviso(form.fecha_expiracion);
+    const mensaje = motivo ? t(`common.${motivo}`, { dias: DIAS_MAX_EXPIRACION }) : "";
+    setErrorFechaExpiracion(mensaje);
+    return mensaje;
+  };
+  const rangoFecha = rangoFechaAviso();
+
   const guardar = async () => {
     if (!user) return;
+    if (validarFechaExpiracion()) return;
     if (validarVideo()) {
       // ¿Qué? El campo vive dentro de "Más opciones": se abre para que el
       //       Admin vea el error aunque la sección estuviera recogida.
@@ -669,9 +690,23 @@ export function AdminNovedadesPage() {
                 id="novedad-fecha-expiracion"
                 type="date"
                 value={form.fecha_expiracion}
+                min={rangoFecha.min}
+                max={rangoFecha.max}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                onBlur={validarFechaExpiracion}
+                aria-invalid={!!errorFechaExpiracion}
+                aria-describedby={errorFechaExpiracion ? "novedad-fecha-expiracion-error" : undefined}
+                className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                  errorFechaExpiracion
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                    : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                }`}
               />
+              {errorFechaExpiracion && (
+                <p id="novedad-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                  {errorFechaExpiracion}
+                </p>
+              )}
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
