@@ -23,12 +23,21 @@ from app.services import desvinculacion_service
 
 ROLES_QUE_ENVIAN = {RolId.RESIDENTE, RolId.RECICLADOR, RolId.ADMIN_CONJUNTO}
 
+# ¿Qué? Issue #372 (CN-044): mensaje cuando la cuenta existe pero su fila de
+#       residentes/administradores_conjunto no.
+# ¿Impacto? Antes eso reventaba con AttributeError y la API respondía 500.
+_PERFIL_INCOMPLETO = "Tu perfil está incompleto. Contacta al administrador para completarlo."
+
 
 def _conjunto_del_autor(usuario: Usuario, id_pedido: Optional[UUID]) -> Optional[UUID]:
     """¿Qué? Residente: el de su unidad. Admin de Conjunto: el que eligió (debe ser suyo), o el único que tiene. Reciclador: ninguno."""
     if usuario.id_rol == RolId.RESIDENTE:
+        if not usuario.residente:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_PERFIL_INCOMPLETO)
         return usuario.residente.unidad.id_conjunto_residencial
     if usuario.id_rol == RolId.ADMIN_CONJUNTO:
+        if not usuario.administrador_conjunto:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_PERFIL_INCOMPLETO)
         ids_propios = [c.id_conjunto_residencial for c in usuario.administrador_conjunto.conjuntos]
         if id_pedido is not None:
             if id_pedido not in ids_propios:
@@ -76,10 +85,11 @@ def _rol_y_nombre(autor: Optional[Usuario]) -> tuple[str, str]:
     return "Usuario", autor.correo_electronico
 
 
-def listar_unificadas(db: Session, tipo: Optional[str]) -> list[dict]:
+def listar_unificadas(db: Session, tipo: Optional[str], limit: int, offset: int) -> tuple[list[dict], int]:
     """
     ¿Qué? Junta lo PENDIENTE de las 2 fuentes (desvinculaciones + novedades
-          enviadas nuevas) en una sola lista, más reciente primero.
+          enviadas nuevas) en una sola lista, más reciente primero, y
+          devuelve solo la página pedida + el total.
     ¿Para qué? El frontend pinta una sola bandeja "Solicitudes pendientes",
               filtrable por `tipo`, sin saber que por dentro son 2 tablas.
     """
@@ -116,7 +126,8 @@ def listar_unificadas(db: Session, tipo: Optional[str]) -> list[dict]:
             })
 
     filas.sort(key=lambda f: f["created_at"], reverse=True)
-    return filas
+    # ponytail: pagina en Python porque son 2 tablas; solo carga las PENDIENTES (pocas). Si crecen, pasar a UNION ALL en SQL.
+    return filas[offset : offset + limit], len(filas)
 
 
 def resolver_unificada(

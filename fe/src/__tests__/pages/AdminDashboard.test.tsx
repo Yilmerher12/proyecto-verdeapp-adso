@@ -561,7 +561,7 @@ describe("AdminDashboard", () => {
       }
       if (url.includes("/admin-conjunto/solicitudes")) {
         return Promise.resolve({
-          data: [
+          data: { total: 1, items: [
             {
               id: "s-1",
               tipo: "DESVINCULACION",
@@ -572,7 +572,7 @@ describe("AdminDashboard", () => {
               estado: "PENDIENTE",
               created_at: new Date().toISOString(),
             },
-          ],
+          ] },
         });
       }
       return Promise.resolve({ data: [] });

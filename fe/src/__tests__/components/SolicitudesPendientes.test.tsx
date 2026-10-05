@@ -45,9 +45,14 @@ const novedad = {
   created_at: new Date().toISOString(),
 };
 
-function mockLista(data: unknown[]) {
-  mockGet.mockImplementation((url: string) => {
-    if (url.includes("/admin-conjunto/solicitudes")) return Promise.resolve({ data });
+// ¿Qué? Imita al backend (issue #372): filtra por `tipo` y recorta con limit/offset, devolviendo {items, total}.
+function mockLista(data: { tipo: string }[]) {
+  mockGet.mockImplementation((url: string, config?: { params?: { limit: number; offset: number; tipo?: string } }) => {
+    if (url.includes("/admin-conjunto/solicitudes")) {
+      const { limit = 10, offset = 0, tipo } = config?.params ?? {};
+      const filtradas = tipo ? data.filter((s) => s.tipo === tipo) : data;
+      return Promise.resolve({ data: { items: filtradas.slice(offset, offset + limit), total: filtradas.length } });
+    }
     return Promise.resolve({ data: [] });
   });
 }
@@ -70,29 +75,54 @@ describe("SolicitudesPendientes", () => {
 
     expect(await screen.findByText("Dejar de administrar Quintas de Aranjuez")).toBeInTheDocument();
     expect(screen.getByText("Novedad — Laura Méndez")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Todas · 2" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Desvinculación · 1" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Novedad · 1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Todas" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Desvinculación" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Novedad" })).toBeInTheDocument();
   });
 
-  it("filtra por tipo al hacer clic en un chip", async () => {
+  it("filtra por tipo al hacer clic en un chip, pidiéndoselo al backend", async () => {
     mockLista([desvinculacion, novedad]);
     const user = userEvent.setup();
     renderWithProviders(<SolicitudesPendientes />);
 
     await screen.findByText("Dejar de administrar Quintas de Aranjuez");
-    await user.click(screen.getByRole("button", { name: "Novedad · 1" }));
+    await user.click(screen.getByRole("button", { name: "Novedad" }));
 
-    expect(screen.queryByText("Dejar de administrar Quintas de Aranjuez")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText("Dejar de administrar Quintas de Aranjuez")).not.toBeInTheDocument()
+    );
     expect(screen.getByText("Novedad — Laura Méndez")).toBeInTheDocument();
+    expect(mockGet).toHaveBeenCalledWith(
+      expect.stringContaining("/admin-conjunto/solicitudes"),
+      { params: { limit: 5, offset: 0, tipo: "NOVEDAD" } }
+    );
   });
 
   it("avisa el conteo total (sin importar el filtro) por onCountChange", async () => {
     mockLista([desvinculacion, novedad]);
     const onCountChange = vi.fn();
+    const user = userEvent.setup();
     renderWithProviders(<SolicitudesPendientes onCountChange={onCountChange} />);
 
     await waitFor(() => expect(onCountChange).toHaveBeenCalledWith(2));
+    await user.click(await screen.findByRole("button", { name: "Novedad" }));
+    await screen.findByText("Novedad — Laura Méndez");
+    expect(onCountChange).not.toHaveBeenCalledWith(1);
+  });
+
+  it("pagina de a 5 filas y pide la siguiente página al backend (issue #372)", async () => {
+    const muchas = Array.from({ length: 7 }, (_, i) => ({ ...novedad, id: `n-${i}`, titulo: `Novedad ${i}` }));
+    mockLista(muchas);
+    const user = userEvent.setup();
+    renderWithProviders(<SolicitudesPendientes />);
+
+    expect(await screen.findByText("Novedad 0")).toBeInTheDocument();
+    expect(screen.queryByText("Novedad 5")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /siguiente/i }));
+
+    expect(await screen.findByText("Novedad 5")).toBeInTheDocument();
+    expect(screen.queryByText("Novedad 0")).not.toBeInTheDocument();
   });
 
   it("aprueba una desvinculación con el endpoint de su propio tipo", async () => {

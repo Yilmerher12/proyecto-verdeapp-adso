@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { BadgeCheck, ClipboardList, ImageIcon, OctagonX } from "lucide-react";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
 import { Alert } from "@/components/ui/Alert";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
 import { DESVINCULACION_MOTIVO_MAX_LENGTH } from "@/lib/validacion";
@@ -30,6 +32,9 @@ const FILTROS: { id: TipoSolicitudUnificada | "TODAS"; labelKey: string }[] = [
   { id: "NOVEDAD", labelKey: "solicitudesPendientes.filtros.novedad" },
 ];
 
+// ¿Qué? Issue #372 (CN-042) — filas por página; va dentro de un modal, así que pocas.
+const TAMANO_PAGINA = 5;
+
 const CLASE_TIPO: Record<string, string> = {
   DESVINCULACION: "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400",
   NOVEDAD: "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
@@ -55,6 +60,9 @@ export function SolicitudesPendientes({
 }: SolicitudesPendientesProps = {}) {
   const { t } = useTranslation();
   const [solicitudes, setSolicitudes] = useState<SolicitudUnificada[]>([]);
+  const [total, setTotal] = useState(0);
+  // ¿Qué? Total de pendientes SIN filtro — el del encabezado y el que se reporta a onCountChange.
+  const [totalTodas, setTotalTodas] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [filtro, setFiltro] = useState<TipoSolicitudUnificada | "TODAS">("TODAS");
   const [procesandoId, setProcesandoId] = useState<string | null>(null);
@@ -62,20 +70,42 @@ export function SolicitudesPendientes({
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // ¿Qué? Se pide SIEMPRE la lista completa (sin `tipo`) — los chips
-  //       filtran en el navegador, así no hay que pedir de nuevo al
-  //       backend cada vez que se cambia de chip, y el conteo total
-  //       (onCountChange) no depende de qué chip esté activo.
+  const paginacion = usePaginacion(TAMANO_PAGINA, total);
+  const { offset, irAAnterior } = paginacion;
+
+  // ¿Qué? Issue #372 (CN-042) — el backend devuelve una página a la vez, así
+  //       que cada chip le pide al backend su `tipo` (ya no se filtra en el
+  //       navegador). Con un chip activo se pide además el total sin filtro
+  //       (limit=1), para que el conteo de onCountChange no dependa del chip.
   const cargar = useCallback(() => {
     setCargando(true);
-    listarSolicitudesUnificadas()
-      .then((data) => {
-        setSolicitudes(data);
-        onCountChange?.(data.length);
+    const tipo = filtro === "TODAS" ? undefined : filtro;
+    Promise.all([
+      listarSolicitudesUnificadas(TAMANO_PAGINA, offset, tipo),
+      tipo ? listarSolicitudesUnificadas(1, 0) : null,
+    ])
+      .then(([pagina, sinFiltro]) => {
+        // ¿Qué? Si se resolvió la última fila de la última página, esa página
+        //       quedó vacía — se vuelve a la anterior en vez de mostrarla así.
+        if (pagina.items.length === 0 && offset > 0) {
+          irAAnterior();
+          return;
+        }
+        setSolicitudes(pagina.items);
+        setTotal(pagina.total);
+        const todas = (sinFiltro ?? pagina).total;
+        setTotalTodas(todas);
+        onCountChange?.(todas);
       })
       .catch((err) => console.error("Error cargando solicitudes pendientes", err))
       .finally(() => setCargando(false));
-  }, [onCountChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- irAAnterior es un setState envuelto, cambia de identidad en cada render
+  }, [onCountChange, filtro, offset]);
+
+  const cambiarFiltro = (id: TipoSolicitudUnificada | "TODAS") => {
+    setFiltro(id);
+    paginacion.reiniciar();
+  };
 
   useEffect(() => {
     cargar();
@@ -112,10 +142,6 @@ export function SolicitudesPendientes({
     }
   };
 
-  const visibles = filtro === "TODAS" ? solicitudes : solicitudes.filter((s) => s.tipo === filtro);
-  const conteos: Record<string, number> = { TODAS: solicitudes.length };
-  for (const s of solicitudes) conteos[s.tipo] = (conteos[s.tipo] ?? 0) + 1;
-
   return (
     <div
       className={
@@ -128,21 +154,21 @@ export function SolicitudesPendientes({
         <div className="mb-4 flex items-center gap-2">
           <ClipboardList className="icon-md text-accent-600" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("solicitudesPendientes.sectionTitle")}</h3>
-          {solicitudes.length > 0 && (
+          {totalTodas > 0 && (
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-              {solicitudes.length}
+              {totalTodas}
             </span>
           )}
         </div>
       )}
 
-      {!cargando && solicitudes.length > 0 && (
+      {totalTodas > 0 && (
         <div className="mb-4 flex flex-wrap gap-1.5">
           {FILTROS.map(({ id, labelKey }) => (
             <button
               key={id}
               type="button"
-              onClick={() => setFiltro(id)}
+              onClick={() => cambiarFiltro(id)}
               aria-pressed={filtro === id}
               className={`cursor-pointer rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
                 filtro === id
@@ -150,7 +176,7 @@ export function SolicitudesPendientes({
                   : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-field"
               }`}
             >
-              {t(labelKey)} · {conteos[id] ?? 0}
+              {t(labelKey)}
             </button>
           ))}
         </div>
@@ -164,13 +190,13 @@ export function SolicitudesPendientes({
 
       {cargando ? (
         <LoadingState message={t("common.loading")} />
-      ) : solicitudes.length === 0 ? (
+      ) : totalTodas === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("solicitudesPendientes.empty")}</p>
-      ) : visibles.length === 0 ? (
+      ) : solicitudes.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("solicitudesPendientes.emptyFiltro")}</p>
       ) : (
         <div className="space-y-3">
-          {visibles.map((s) => (
+          {solicitudes.map((s) => (
             <div
               key={s.id}
               className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-800/30 dark:bg-amber-900/10"
@@ -271,6 +297,22 @@ export function SolicitudesPendientes({
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {!cargando && total > TAMANO_PAGINA && (
+        <div className="mt-3">
+          <Paginacion
+            desde={paginacion.desde}
+            hasta={paginacion.hasta}
+            total={total}
+            pagina={paginacion.pagina}
+            totalPaginas={paginacion.totalPaginas}
+            puedeAnterior={paginacion.puedeAnterior}
+            puedeSiguiente={paginacion.puedeSiguiente}
+            onAnterior={paginacion.irAAnterior}
+            onSiguiente={paginacion.irASiguiente}
+          />
         </div>
       )}
     </div>

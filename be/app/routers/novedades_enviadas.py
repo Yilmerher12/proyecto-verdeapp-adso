@@ -9,7 +9,7 @@ Descripción: Novedades que un Residente, Reciclador o Admin de Conjunto le
 
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db
@@ -17,6 +17,7 @@ from app.models.usuario import Usuario
 from app.schemas.novedad_enviada import CrearNovedadEnviadaRequest, NovedadEnviadaResponse
 from app.schemas.user import MessageResponse
 from app.services import novedad_enviada_service
+from app.utils.limiter import limiter
 
 router = APIRouter(prefix="/api/v1/novedades-enviadas", tags=["novedades-enviadas"])
 
@@ -32,8 +33,13 @@ def _a_respuesta(n) -> NovedadEnviadaResponse:
     )
 
 
+# ¿Qué? Issue #372 (CN-042): máximo 10 envíos por minuto.
+# ¿Impacto? Sin este tope, una sola cuenta podía llenar la bandeja del Admin
+#          Sistema con cientos de novedades. `request` lo exige slowapi.
 @router.post("", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 def enviar_novedad(
+    request: Request,
     datos: CrearNovedadEnviadaRequest,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
