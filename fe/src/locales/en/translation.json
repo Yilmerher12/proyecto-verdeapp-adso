@@ -184,7 +184,7 @@
       "genericError": "Error registering. Check your details or try a different email.",
       "success": {
         "title": "Check your inbox!",
-        "bodyPrefix": "We sent a verification link to",
+        "bodyPrefix": "We sent an email to",
         "step1": "Open your email",
         "step2": "Look for the email from VerdeApp",
         "step3": "Click \"Verify my account\"",

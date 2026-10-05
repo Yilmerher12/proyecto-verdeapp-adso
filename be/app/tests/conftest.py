@@ -34,7 +34,7 @@ from app.models.email_verification_token import EmailVerificationToken
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.punto_acopio import PuntoAcopio
-from app.utils.security import create_access_token, hash_password
+from app.utils.security import create_access_token, hash_password, hash_token
 
 # ────────────────────────────
 # 🗄️ Configuración de BD de testing
@@ -470,7 +470,7 @@ def expired_reset_token(db: Session, test_user: Usuario) -> str:
     token_record = PasswordResetToken(
         id=str(uuid.uuid4()),
         id_usuario=test_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
     )
     db.add(token_record)
@@ -485,7 +485,7 @@ def used_reset_token(db: Session, test_user: Usuario) -> str:
     token_record = PasswordResetToken(
         id=str(uuid.uuid4()),
         id_usuario=test_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
         used=True,
     )
@@ -501,7 +501,7 @@ def valid_reset_token(db: Session, test_user: Usuario) -> str:
     token_record = PasswordResetToken(
         id=str(uuid.uuid4()),
         id_usuario=test_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
     )
     db.add(token_record)
@@ -521,7 +521,7 @@ def valid_verification_token(db: Session, unverified_user: Usuario) -> str:
     token_record = EmailVerificationToken(
         id=str(uuid.uuid4()),
         id_usuario=unverified_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
     )
     db.add(token_record)
@@ -536,7 +536,7 @@ def expired_verification_token(db: Session, unverified_user: Usuario) -> str:
     token_record = EmailVerificationToken(
         id=str(uuid.uuid4()),
         id_usuario=unverified_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
     )
     db.add(token_record)
@@ -551,7 +551,7 @@ def used_verification_token(db: Session, unverified_user: Usuario) -> str:
     token_record = EmailVerificationToken(
         id=str(uuid.uuid4()),
         id_usuario=unverified_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
         used=True,
     )

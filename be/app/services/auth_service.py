@@ -7,7 +7,7 @@ Descripción: Lógica de negocio de autenticación adaptada a las tablas en espa
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
@@ -31,7 +31,11 @@ from app.schemas.user import (
     UserLogin,
 )
 
-from app.utils.email import send_password_reset_email, send_verification_email
+from app.utils.email import (
+    send_duplicate_registration_email,
+    send_password_reset_email,
+    send_verification_email,
+)
 from app.utils.audit_log import log_login_exitoso, log_login_fallido
 from app.utils.security import (
     DUMMY_PASSWORD_HASH,
@@ -39,6 +43,7 @@ from app.utils.security import (
     create_refresh_token,
     decode_token,
     hash_password,
+    hash_token,
     verify_password,
 )
 
@@ -48,17 +53,114 @@ logger = logging.getLogger(__name__)
 MAXIMO_INTENTOS_FALLIDOS = 5
 MINUTOS_DE_BLOQUEO = 15
 
+# ¿Qué? Issue #373 (CN-026): un solo mensaje para "contraseña incorrecta",
+#       "correo inexistente" y "cuenta bloqueada".
+# ¿Para qué? Que la respuesta no revele cuál de los tres pasó, pero el dueño
+#           real de una cuenta bloqueada igual entienda que debe esperar.
+MENSAJE_CREDENCIALES_INCORRECTAS = (
+    f"Credenciales incorrectas. Si fallaste varias veces, espera {MINUTOS_DE_BLOQUEO} minutos e intenta de nuevo."
+)
 
-async def register_user(db: Session, user_data: UserCreate) -> Usuario:
-    """Registra un usuario en estado INACTIVO, gestiona su perfil y emite el correo de activación."""
-    stmt = select(Usuario).where(Usuario.correo_electronico == user_data.correo_electronico)
-    existing_user = db.execute(stmt).scalar_one_or_none()
 
-    if existing_user:
+def _validar_datos_residente(db: Session, user_data: UserCreate) -> tuple[ConjuntoResidencial, str, str]:
+    """Valida conjunto, código de acceso y unidad de un Residente; no guarda nada.
+
+    ¿Qué? Issue #373 (CN-026): estas validaciones antes corrían DESPUÉS de
+          revisar si el correo ya existía. Ahora corren antes, en todos los
+          casos.
+    ¿Para qué? Si un correo ya registrado saltara directo a la respuesta
+              genérica sin pasar por aquí, un código de acceso malo daría
+              "éxito" con un correo existente y error con uno nuevo — y esa
+              diferencia volvería a revelar qué correos tienen cuenta.
+
+    Returns:
+        (conjunto, torre, apto) ya normalizados en mayúsculas.
+    """
+    # ¿Qué? Antes, si "torre"/"apto" llegaban vacíos (posible al llamar la
+    #       API directo, sin pasar por el formulario de registro), quedaba
+    #       guardado el texto literal "None" como si fuera un dato real.
+    # ¿Para qué? En vez de inventar un dato de reemplazo, se rechaza el
+    #           registro por completo — mismo criterio que para "conjunto
+    #           residencial" y "código de acceso": si falta un dato real de
+    #           dónde vive la persona, no hay registro.
+    torre_texto = (user_data.torre or "").strip().upper()
+    apto_texto = (user_data.apto or "").strip().upper()
+
+    if not torre_texto or not apto_texto:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El correo ya está registrado.",
+            detail="Debes indicar la torre/bloque y el apartamento donde vives.",
         )
+
+    id_conjunto = user_data.id_conjunto_residencial
+
+    if not id_conjunto:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debes seleccionar el conjunto residencial al que perteneces."
+        )
+
+    stmt_conjunto = select(ConjuntoResidencial).where(
+        ConjuntoResidencial.id_conjunto_residencial == id_conjunto,
+        ConjuntoResidencial.verificado.is_(True),
+    )
+    conjunto_existente = db.execute(stmt_conjunto).scalar_one_or_none()
+
+    if not conjunto_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Tu conjunto residencial aún no está afiliado a VerdeApp. "
+                "Pide a tu administración que se registre con nosotros."
+            ),
+        )
+
+    # ¿Qué? Issue #168 — se exige el código de acceso que el Admin de
+    #       Conjunto reparte fuera de la app, como prueba de que la persona
+    #       vive ahí.
+    # ¿Impacto? Comparación insensible a mayúsculas/espacios, mismo
+    #           criterio que el resto de la app usa para nombres.
+    codigo_ingresado = (user_data.codigo_acceso or "").strip().upper()
+    if not codigo_ingresado:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debes ingresar el código de acceso de tu conjunto.",
+        )
+    if codigo_ingresado != conjunto_existente.codigo_acceso:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El código de acceso no es válido para este conjunto. Pídeselo a tu administrador.",
+        )
+
+    return conjunto_existente, torre_texto, apto_texto
+
+
+def register_user(db: Session, user_data: UserCreate, background_tasks: BackgroundTasks) -> None:
+    """Registra un usuario en estado INACTIVO, gestiona su perfil y emite el correo de activación.
+
+    ¿Qué? Issue #373 (CN-026): termina igual (sin error) tanto si la cuenta
+          se creó como si el correo ya tenía una. En el segundo caso no se
+          crea nada y al dueño del correo le llega un aviso.
+    ¿Para qué? Antes respondía "El correo ya está registrado.", y con eso
+              cualquiera podía averiguar qué correos tienen cuenta en
+              VerdeApp. El aviso por correo le sirve al dueño real (si fue
+              él, sabe que ya tiene cuenta) sin decirle nada a quien no lo es.
+    ¿Impacto? Los correos salen con BackgroundTasks, después de responder:
+              los dos caminos tardan lo mismo y no se delatan por tiempo.
+    """
+    datos_residente = _validar_datos_residente(db, user_data) if user_data.rol == "residente" else None
+
+    # ¿Qué? bcrypt corre en los dos caminos, aunque en el de correo
+    #       duplicado el resultado no se use.
+    # ¿Para qué? Es lo que más tarda de todo el registro (decenas de ms):
+    #           si solo corriera al crear la cuenta, la respuesta rápida
+    #           delataría que el correo ya existía.
+    password_hasheada = hash_password(user_data.password)
+
+    stmt = select(Usuario).where(Usuario.correo_electronico == user_data.correo_electronico)
+    if db.execute(stmt).scalar_one_or_none():
+        background_tasks.add_task(send_duplicate_registration_email, email=user_data.correo_electronico)
+        return
 
     # Por ahora el registro público solo deja escoger entre residente y reciclador
     # (el rol de Administrador de Conjunto se crea aparte, por invitación).
@@ -68,76 +170,15 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
         nuevo_usuario = Usuario(
             correo_electronico=user_data.correo_electronico,
             id_rol=role_id_mapped,
-            password=hash_password(user_data.password),
+            password=password_hasheada,
             is_active=False
         )
         db.add(nuevo_usuario)
         db.flush()
 
-        if user_data.rol == "residente":
-            # ¿Qué? Antes, si "torre"/"apto" llegaban vacíos (posible al
-            #       llamar la API directo, sin pasar por el formulario de
-            #       registro), el código intentaba rellenar "TORRE UNICA"/
-            #       "APTO UNICO" — pero un error de programación hacía que
-            #       ese relleno nunca se activara, y quedaba guardado el
-            #       texto literal "None" como si fuera un dato real.
-            # ¿Para qué? En vez de inventar un dato de reemplazo, se rechaza
-            #           el registro por completo — mismo criterio que ya se
-            #           usa abajo para "conjunto residencial" y "código de
-            #           acceso": si falta un dato real de dónde vive la
-            #           persona, no hay registro.
-            torre_texto = (user_data.torre or "").strip().upper()
-            apto_texto = (user_data.apto or "").strip().upper()
-
-            if not torre_texto or not apto_texto:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Debes indicar la torre/bloque y el apartamento donde vives.",
-                )
-
-            id_conjunto = user_data.id_conjunto_residencial
-
-            if not id_conjunto:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Debes seleccionar el conjunto residencial al que perteneces."
-                )
-
-            stmt_conjunto = select(ConjuntoResidencial).where(
-                ConjuntoResidencial.id_conjunto_residencial == id_conjunto,
-                ConjuntoResidencial.verificado.is_(True),
-            )
-            conjunto_existente = db.execute(stmt_conjunto).scalar_one_or_none()
-
-            if not conjunto_existente:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=(
-                        "Tu conjunto residencial aún no está afiliado a VerdeApp. "
-                        "Pide a tu administración que se registre con nosotros."
-                    ),
-                )
-
-            # ¿Qué? Issue #168 — antes cualquiera podía declarar pertenecer a
-            #       cualquier conjunto verificado, sin ninguna prueba real de
-            #       que vive ahí. Ahora se exige el código de acceso que el
-            #       Admin de Conjunto reparte fuera de la app.
-            # ¿Para qué? Todo conjunto ya tiene un código desde que se creó
-            #           (ver default en el modelo) — nunca hay excepción de
-            #           "este conjunto todavía no tiene código".
-            # ¿Impacto? Comparación insensible a mayúsculas/espacios, mismo
-            #           criterio que el resto de la app usa para nombres.
-            codigo_ingresado = (user_data.codigo_acceso or "").strip().upper()
-            if not codigo_ingresado:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Debes ingresar el código de acceso de tu conjunto.",
-                )
-            if codigo_ingresado != conjunto_existente.codigo_acceso:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="El código de acceso no es válido para este conjunto. Pídeselo a tu administrador.",
-                )
+        if datos_residente:
+            conjunto_existente, torre_texto, apto_texto = datos_residente
+            id_conjunto = conjunto_existente.id_conjunto_residencial
 
             stmt_unidad = select(Unidad).where(
                 Unidad.id_conjunto_residencial == id_conjunto,
@@ -184,7 +225,8 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
         db_token_verif = EmailVerificationToken(
             # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv4 por su cuenta.
             id_usuario=nuevo_usuario.id_usuario,
-            token=token_verificacion,
+            # ¿Qué? Issue #373 (CN-031): se guarda el hash; el correo lleva el original.
+            token=hash_token(token_verificacion),
             expires_at=expiration_verif,
             used=False
         )
@@ -204,35 +246,24 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
         #           todo, sin dejar nada a medias.
         db.commit()
 
-        try:
-            await send_verification_email(email=nuevo_usuario.correo_electronico, token=token_verificacion)
-        except Exception:
-            logger.warning("Registro completado, pero el correo no se pudo despachar", exc_info=True)
+        # ¿Impacto? _enviar (app/utils/email.py) ya atrapa y registra
+        #           cualquier fallo de envío: un correo caído no tumba el
+        #           registro, que ya quedó guardado.
+        background_tasks.add_task(
+            send_verification_email, email=nuevo_usuario.correo_electronico, token=token_verificacion
+        )
 
-        db.refresh(nuevo_usuario)
-        return nuevo_usuario
-
-    except HTTPException:
-        db.rollback()
-        raise
     except IntegrityError:
         # ¿Qué? Issue #215 (b9 del diagnóstico) — el pre-chequeo de arriba
-        #       (líneas 51-58) revisa si el correo ya existe ANTES de
-        #       insertar, pero entre ese chequeo y el INSERT real puede
-        #       colarse otra petición con el mismo correo (condición de
-        #       carrera). Si eso pasa, el UNIQUE de correo_electronico en
-        #       la base de datos es quien de verdad lo impide — y antes,
-        #       ese choque cala hasta el except Exception genérico de abajo,
-        #       devolviendo un 500 en vez del mismo error claro que ya
-        #       devuelve el pre-chequeo normal.
-        # ¿Impacto? Con esto, la persona ve el mismo mensaje de siempre
-        #           ("El correo ya está registrado.") sin importar si
-        #           chocó contra el pre-chequeo o contra la carrera.
+        #       revisa si el correo ya existe ANTES de insertar, pero entre
+        #       ese chequeo y el INSERT real puede colarse otra petición con
+        #       el mismo correo (condición de carrera). Si eso pasa, el
+        #       UNIQUE de correo_electronico en la base de datos es quien de
+        #       verdad lo impide.
+        # ¿Impacto? Issue #373: se trata igual que el pre-chequeo — aviso
+        #           al dueño y la misma respuesta genérica de éxito.
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El correo ya está registrado.",
-        )
+        background_tasks.add_task(send_duplicate_registration_email, email=user_data.correo_electronico)
     except Exception:
         # ¿Qué? Antes el detail del 500 incluía str(e) — el mensaje crudo de
         #       la excepción (puede traer nombres de columnas, constraints o
@@ -270,29 +301,20 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     # ¿Para qué? Antes de esto, un atacante podía probar contraseñas contra
     #           un correo específico sin ningún límite por cuenta — el
     #           rate limit de slowapi es por dirección IP, no por correo.
-    # ¿Impacto? Esta respuesta SÍ revela que la cuenta existe (una cuenta
-    #           inexistente nunca llega aquí, porque `user` sería None) —
-    #           es un trade-off conocido e inevitable de cualquier bloqueo
-    #           por cuenta, y es exactamente el comportamiento que pide
-    #           RQF-001.
+    # ¿Impacto? Issue #373 (CN-026): responde EXACTAMENTE lo mismo que una
+    #           contraseña incorrecta (antes era un 403 con su propio
+    #           mensaje, y con eso cualquiera sabía que el correo existía).
+    #           El motivo real queda solo en el log de auditoría.
     if user and user.bloqueado_hasta and user.bloqueado_hasta > datetime.now(timezone.utc):
         # ¿Qué? Issue #215 (b8 del diagnóstico) — se corre verify_password()
-        #       igual que en las otras dos ramas de rechazo de abajo
-        #       (credenciales inválidas / cuenta inexistente), aunque acá
+        #       igual que en las otras ramas de rechazo de abajo, aunque acá
         #       el resultado no se use para nada.
-        # ¿Para qué? Sin esto, esta rama respondía casi al instante,
-        #           mientras las otras dos tardaban lo que tarda comparar
-        #           un hash de bcrypt. Esa diferencia de tiempo — no el
-        #           mensaje, que ya de por sí distingue "bloqueada" de
-        #           "incorrectas" — es una segunda forma de detectar qué
-        #           correos están bloqueados (y por lo tanto existen) sin
-        #           siquiera necesitar leer la respuesta.
+        # ¿Para qué? Sin esto, esta rama respondería casi al instante y la
+        #           diferencia de tiempo delataría la cuenta bloqueada,
+        #           aunque el mensaje sea el mismo.
         verify_password(login_data.password, user.password)
         log_login_fallido(correo, "cuenta_bloqueada")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Demasiados intentos fallidos. Intenta de nuevo en {MINUTOS_DE_BLOQUEO} minutos.",
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MENSAJE_CREDENCIALES_INCORRECTAS)
 
     # ¿Qué? Se corre verify_password() SIEMPRE, incluso si el usuario no
     #       existe — contra el hash real si existe, o contra DUMMY_PASSWORD_HASH
@@ -306,7 +328,7 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
                 user.bloqueado_hasta = datetime.now(timezone.utc) + timedelta(minutes=MINUTOS_DE_BLOQUEO)
             db.commit()
         log_login_fallido(correo, "credenciales_invalidas")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales incorrectas")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MENSAJE_CREDENCIALES_INCORRECTAS)
 
     if not user.is_active:
         log_login_fallido(correo, "cuenta_no_verificada")
@@ -459,7 +481,7 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
 
 def verify_email(db: Session, token: str) -> bool:
     db_token = db.query(EmailVerificationToken).filter(
-        EmailVerificationToken.token == token,
+        EmailVerificationToken.token == hash_token(token),
         EmailVerificationToken.used.is_(False)
     ).first()
 
@@ -489,10 +511,19 @@ def verify_email(db: Session, token: str) -> bool:
     return True
 
 
-async def request_password_reset(db: Session, email: str) -> bool:
+def request_password_reset(db: Session, email: str, background_tasks: BackgroundTasks) -> None:
+    """Crea un token de recuperación y programa su correo, si el correo tiene cuenta.
+
+    ¿Qué? Issue #373 (CN-027): el correo sale con BackgroundTasks, después
+          de responder.
+    ¿Para qué? Antes se esperaba a que el correo saliera (cientos de ms por
+              SMTP) solo cuando la cuenta existía; si no existía se
+              respondía al instante. Midiendo el tiempo se sabía qué
+              correos tienen cuenta, aunque el mensaje fuera el mismo.
+    """
     user = db.query(Usuario).filter(Usuario.correo_electronico == email).first()
     if not user:
-        return True
+        return
 
     token_str = str(uuid.uuid4())
     expiration = datetime.now(timezone.utc) + timedelta(hours=1)
@@ -500,23 +531,20 @@ async def request_password_reset(db: Session, email: str) -> bool:
     db_token = PasswordResetToken(
         # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv4 por su cuenta.
         id_usuario=user.id_usuario,
-        token=token_str,
+        # ¿Qué? Issue #373 (CN-031): se guarda el hash; el correo lleva el original.
+        token=hash_token(token_str),
         expires_at=expiration,
         used=False
     )
     db.add(db_token)
     db.commit()
 
-    try:
-        await send_password_reset_email(email=user.correo_electronico, token=token_str)
-    except Exception:
-        logger.warning("No se pudo despachar el correo SMTP de recuperación", exc_info=True)
-    return True
+    background_tasks.add_task(send_password_reset_email, email=user.correo_electronico, token=token_str)
 
 
 def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
     db_token = db.query(PasswordResetToken).filter(
-        PasswordResetToken.token == reset_data.token,
+        PasswordResetToken.token == hash_token(reset_data.token),
         PasswordResetToken.used.is_(False)
     ).first()
 

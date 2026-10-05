@@ -78,8 +78,22 @@ class TestConsultarYAceptar:
         assert response.status_code == 422
 
     def test_flujo_completo_invitar_consultar_y_aceptar(
-        self, client: TestClient, admin_sistema_auth_headers, conjunto_verificado, db
+        self, client: TestClient, admin_sistema_auth_headers, conjunto_verificado, db, monkeypatch
     ):
+        from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto
+        from app.services import admin_conjunto_service
+        from app.utils.security import hash_token
+        from sqlalchemy import select
+
+        # ¿Qué? Issue #373 (CN-031): en la BD solo queda el hash del token,
+        #       así que el original se toma del correo, como lo recibe la persona.
+        tokens_enviados: list[str] = []
+
+        async def enviar_falso(email: str, token: str) -> None:
+            tokens_enviados.append(token)
+
+        monkeypatch.setattr(admin_conjunto_service, "send_admin_conjunto_invitation_email", enviar_falso)
+
         correo = "invitado.completo@verdeapp.com"
         client.post(
             "/api/v1/admin-conjunto/invitar",
@@ -87,13 +101,11 @@ class TestConsultarYAceptar:
             json={"correo_electronico": correo, "ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)]},
         )
 
-        from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto
-        from sqlalchemy import select
-
         invitacion = db.execute(
             select(InvitacionAdminConjunto).where(InvitacionAdminConjunto.correo_electronico == correo)
         ).scalar_one()
-        token = invitacion.token
+        token = tokens_enviados[0]
+        assert invitacion.token == hash_token(token)
 
         consulta = client.get("/api/v1/admin-conjunto/invitacion", params={"token": token})
         assert consulta.status_code == 200

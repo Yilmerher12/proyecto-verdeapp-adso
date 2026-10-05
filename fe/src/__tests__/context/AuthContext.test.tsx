@@ -26,10 +26,12 @@ vi.mock("@/i18n", () => ({
 
 const mockLoginUser = vi.fn();
 const mockGetMe = vi.fn();
+const mockRegisterUser = vi.fn();
 
 vi.mock("@/api/auth", () => ({
   loginUser: (...args: unknown[]) => mockLoginUser(...args),
   getMe: () => mockGetMe(),
+  registerUser: (...args: unknown[]) => mockRegisterUser(...args),
 }));
 
 const usuarioConIngles: UserResponse = {
@@ -184,5 +186,40 @@ describe("AuthProvider — sesión compartida entre pestañas", () => {
     cambioEnOtraPestana("theme", "dark");
 
     expect(screen.getByText("con sesión")).toBeInTheDocument();
+  });
+});
+
+describe("AuthProvider — registro (issue #373)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  // ¿Qué? Antes register() intentaba un login automático justo después;
+  //       ahora solo llama al endpoint de registro.
+  // ¿Para qué? Ese login ya no distingue nada: el backend responde igual
+  //           aunque el correo ya tuviera cuenta.
+  it("registra sin intentar iniciar sesión después", async () => {
+    mockRegisterUser.mockResolvedValue({ message: "Registro recibido." });
+
+    function RegisterTrigger() {
+      const { register } = useAuth();
+      return (
+        <button onClick={() => void register({ email: "nuevo@example.com", password: "x" } as never)}>
+          Registrar
+        </button>
+      );
+    }
+
+    const user = userEvent.setup();
+    render(
+      <AuthProvider>
+        <RegisterTrigger />
+      </AuthProvider>,
+    );
+    await user.click(screen.getByText("Registrar"));
+
+    await waitFor(() => expect(mockRegisterUser).toHaveBeenCalledTimes(1));
+    expect(mockLoginUser).not.toHaveBeenCalled();
   });
 });

@@ -197,6 +197,46 @@ async def send_password_reset_email(email: str, token: str) -> None:
     await _enviar(email, subject, html_content, "recuperación de contraseña", reset_url)
 
 
+async def send_duplicate_registration_email(email: str) -> None:
+    """Avisa al dueño de un correo que alguien intentó registrarse con él.
+
+    ¿Qué? Issue #373 (CN-026): /register ya no responde "el correo ya está
+          registrado" — responde igual que un registro nuevo. Este correo
+          es la única forma de que el dueño real se entere.
+    ¿Para qué? Si fue él (olvidó que ya tenía cuenta), el correo le dice
+              cómo entrar; si no fue él, sabe que alguien usó su correo.
+    ¿Impacto? No lleva token: solo enlaces a /login y /forgot-password.
+    """
+    login_url = f"{settings.FRONTEND_URL}/login"
+    forgot_url = f"{settings.FRONTEND_URL}/forgot-password"
+    subject = "VerdeApp — Intento de registro con tu correo"
+    html_content = f"""
+    <html>
+    <body style="font-family: system-ui, -apple-system, sans-serif;
+                 max-width: 600px; margin: 0 auto; padding: 24px; color: #111827;">
+        <h2 style="color: #15803d; margin-bottom: 8px;">
+            Ya tienes una cuenta en VerdeApp
+        </h2>
+        <p style="color: #374151;">
+            Alguien intentó crear una cuenta nueva con este correo, pero ya
+            tiene una cuenta registrada. No se creó ninguna cuenta nueva.
+        </p>
+        <p style="color: #374151;">
+            Si fuiste tú, puedes <a href="{login_url}" style="color: #15803d;">iniciar sesión</a>
+            o, si no recuerdas tu contraseña,
+            <a href="{forgot_url}" style="color: #15803d;">restablecerla</a>.
+        </p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+        <p style="color: #6b7280; font-size: 13px;">
+            Si no fuiste tú, puedes ignorar este email: tu cuenta sigue igual.
+        </p>
+    </body>
+    </html>
+    """
+
+    await _enviar(email, subject, html_content, "aviso de registro duplicado")
+
+
 async def send_admin_conjunto_invitation_email(email: str, token: str) -> None:
     """Envía el email de invitación para crear una cuenta de Administrador de Conjunto."""
     invitation_url = f"{settings.FRONTEND_URL}/aceptar-invitacion?token={token}"

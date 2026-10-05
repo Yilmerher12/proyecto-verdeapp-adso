@@ -320,6 +320,33 @@ describe("RegisterPage", () => {
         }),
       );
     });
+    expect(await screen.findByText("¡Revisa tu bandeja!")).toBeInTheDocument();
+  });
+
+  // ¿Qué? Issue #373: el modal de éxito sale solo si register() no falla;
+  //       un error real del backend se muestra tal cual, sin modal.
+  it("muestra el error del backend y no el modal de éxito si el registro falla", async () => {
+    const registerMock = vi.fn().mockRejectedValue(new Error("El código de acceso no es válido para este conjunto."));
+    const user = userEvent.setup();
+
+    renderWithProviders(<RegisterPage />, {
+      initialRoute: "/register",
+      authContext: { register: registerMock },
+    });
+
+    await user.click(screen.getByText("Reciclador"));
+    await waitFor(() => screen.getByText("Localidad de Trabajo *"));
+    await llenarCamposComunes(user, {
+      nombre: "Carlos",
+      apellidos: "Ramírez",
+      email: "carlos@correo.com",
+      confirmEmail: "carlos@correo.com",
+    });
+    await user.selectOptions(screen.getAllByRole("combobox")[0], "1");
+    await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
+
+    expect(await screen.findByText("El código de acceso no es válido para este conjunto.")).toBeInTheDocument();
+    expect(screen.queryByText("¡Revisa tu bandeja!")).not.toBeInTheDocument();
   });
 
   it("mantiene el botón deshabilitado para Residente si falta Conjunto/Torre/Apto", async () => {

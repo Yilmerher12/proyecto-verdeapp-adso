@@ -53,7 +53,8 @@ El sistema debe bloquear el acceso y mostrar un mensaje de error genérico ('Cre
 | Escenario           | Código HTTP | Respuesta                                                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
 | Login exitoso       | 200         | Token de acceso JWT y datos básicos del usuario (`id`, `rol`, `email`)                                       |
-| Error de validación | 401         | Mensaje de error genérico: `{"detail": "Credenciales incorrectas"}`                                          |
+| Error de validación o cuenta bloqueada | 401 | Mensaje de error genérico: `{"detail": "Credenciales incorrectas. Si fallaste varias veces, espera 15 minutos e intenta de nuevo."}` |
+| Cuenta no verificada o desactivada (contraseña correcta) | 403 | Mensaje que explica cuál de los dos casos es                                         |
 | Datos incompletos   | 422         | Detalle de errores de validación de los campos                                                               |
 
 ---
@@ -69,7 +70,9 @@ El sistema debe bloquear el acceso y mostrar un mensaje de error genérico ('Cre
 ## Reglas de negocio
 
 - RN-001: Bajo ninguna circunstancia el sistema debe revelar si un correo electrónico está o no registrado durante un intento fallido.
-- RN-002: El mensaje de error debe ser estrictamente "Credenciales incorrectas".
+- RN-002: El mensaje de error debe empezar por "Credenciales incorrectas" y ser idéntico para correo inexistente, contraseña incorrecta y cuenta bloqueada (issue #373).
 - RN-003: Tras 5 intentos fallidos consecutivos, el sistema debe bloquear temporalmente el inicio de sesión para ese correo durante 15 minutos (mitigación de fuerza bruta).
 
 > **Nota (2026-08-29)**: RN-001, RN-002 y RN-003 implementados y verificados. RN-003 se agregó como un mecanismo aparte del rate limit por IP (`slowapi`) que ya existía — dos controles distintos y complementarios: uno por dirección IP (10/min, protege contra fuerza bruta masiva), otro por cuenta específica (5 fallos → 15 min de bloqueo, columnas `intentos_fallidos`/`bloqueado_hasta` en `usuarios`).
+>
+> **Nota (2026-10-05, issue #373 — CN-026)**: la cuenta bloqueada respondía 403 con el mensaje "Demasiados intentos fallidos...", y eso revelaba que el correo tenía cuenta (incumplía RN-001). Ahora responde el mismo 401 que una contraseña incorrecta, con un texto que menciona la espera de 15 minutos para que el dueño real entienda qué pasa. El motivo real (`cuenta_bloqueada`) sigue quedando en el log de auditoría.

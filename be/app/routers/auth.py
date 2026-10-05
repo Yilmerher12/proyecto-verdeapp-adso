@@ -1,7 +1,7 @@
 """
 Módulo: routers/auth.py
 """
-from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, status, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
@@ -21,7 +21,6 @@ from app.schemas.user import (
     TokenResponse,
     UserCreate,
     UserLogin,
-    UserResponse,
     VerifyEmailRequest,
 )
 from app.services import auth_service
@@ -82,14 +81,17 @@ def _borrar_cookies_de_sesion(response: Response) -> None:
     response.delete_cookie(_COOKIE_ACCESS, path=_COOKIE_PATH)
     response.delete_cookie(_COOKIE_REFRESH, path=_COOKIE_PATH)
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
-async def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
-    user = await auth_service.register_user(db=db, user_data=user_data)
-    return UserResponse(
-        id=user.id_usuario, email=user.correo_electronico, role_id=user.id_rol,
-        is_active=user.is_active, first_name="Usuario", last_name="VerdeApp", locale="es"
-    )
+def register(
+    request: Request, user_data: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+):
+    # ¿Qué? Issue #373 (CN-026): solo un mensaje, igual se haya creado la
+    #       cuenta o el correo ya tuviera una. Antes devolvía los datos del
+    #       usuario nuevo (con su id), y eso por sí solo delataba cuál de
+    #       los dos casos ocurrió.
+    auth_service.register_user(db=db, user_data=user_data, background_tasks=background_tasks)
+    return MessageResponse(message="Registro recibido. Revisa tu correo para activar tu cuenta.")
 
 @router.post("/login", response_model=MessageResponse)
 @limiter.limit("10/minute")
@@ -213,8 +215,13 @@ def change_password(
 
 @router.post("/forgot-password", response_model=MessageResponse)
 @limiter.limit("5/minute")
-async def forgot_password(request: Request, request_data: ForgotPasswordRequest, db: Session = Depends(get_db)):
-    await auth_service.request_password_reset(db=db, email=request_data.email)
+def forgot_password(
+    request: Request,
+    request_data: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    auth_service.request_password_reset(db=db, email=request_data.email, background_tasks=background_tasks)
     return MessageResponse(message="Si el email está registrado, recibirás un enlace de recuperación")
 
 @router.post("/reset-password", response_model=MessageResponse)

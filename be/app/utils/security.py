@@ -8,6 +8,7 @@ Descripción: Utilidades de seguridad — hashing de contraseñas y manejo de to
           Si los JWT se generan mal, cualquiera podría suplantar usuarios.
 """
 
+import hashlib
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -46,6 +47,24 @@ MAXIMO_BYTES_BCRYPT = 72
 # ¿Impacto? auth_service.login_user() compara siempre contra un hash real
 #           (este, si el usuario no existe) — las dos ramas tardan lo mismo.
 DUMMY_PASSWORD_HASH = bcrypt.hashpw(b"no-corresponde-a-ninguna-cuenta-real", bcrypt.gensalt()).decode("utf-8")
+
+
+def hash_token(token: str) -> str:
+    """Devuelve el sha256 (hex) de un token de un solo uso.
+
+    ¿Qué? Issue #373 (CN-031): los tokens de verificar correo, recuperar
+          contraseña e invitación de Admin de Conjunto se guardan en la BD
+          como este hash, nunca tal cual. El correo sigue llevando el token
+          original, y al usarlo se busca por su hash.
+    ¿Para qué? Quien logre leer la base de datos (un respaldo filtrado, una
+              inyección SQL) no puede usar esos tokens para activar cuentas
+              ajenas ni cambiarles la contraseña.
+    ¿Impacto? sha256 y no bcrypt a propósito: el token es un UUID aleatorio
+              (122 bits), no una contraseña que se pueda adivinar, así que
+              no hace falta un hash lento — y uno rápido permite buscarlo
+              directo con WHERE token = ... usando el índice.
+    """
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def hash_password(password: str) -> str:

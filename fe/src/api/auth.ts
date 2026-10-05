@@ -27,10 +27,12 @@ const USERS_PREFIX = "/api/v1/users";
 /**
  * ¿Qué? Registra un nuevo usuario en el sistema.
  * ¿Para qué? Enviar POST /api/v1/auth/register con email, nombre y contraseña.
- * ¿Impacto? Si el registro es exitoso, retorna los datos del usuario creado (sin password).
+ * ¿Impacto? Issue #373: solo devuelve un mensaje, nunca datos del usuario —
+ *           el backend responde igual si el correo ya tenía cuenta, para no
+ *           revelar qué correos están registrados.
  */
-export async function registerUser(data: RegisterRequest): Promise<UserResponse> {
-  const response = await api.post<UserResponse>(`${AUTH_PREFIX}/register`, data);
+export async function registerUser(data: RegisterRequest): Promise<MessageResponse> {
+  const response = await api.post<MessageResponse>(`${AUTH_PREFIX}/register`, data);
   return response.data;
 }
 

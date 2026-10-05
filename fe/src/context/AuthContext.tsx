@@ -133,19 +133,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Acción de Registro adaptada
    * Recibe la estructura de datos unificada del formulario por pasos de Figma.
    */
-  const register = useCallback(
-    async (data: RegisterRequest) => {
-      await authApi.registerUser(data);
-      try {
-        await login({ email: data.email, password: data.password });
-      } catch (loginErr) {
-        const err = new Error(loginErr instanceof Error ? loginErr.message : String(loginErr));
-        (err as Error & { requiresEmailVerification: boolean }).requiresEmailVerification = true;
-        throw err;
-      }
-    },
-    [login],
-  );
+  // ¿Qué? Issue #373: antes, tras registrar se intentaba un login
+  //       automático que fallaba a propósito (la cuenta aún no está
+  //       verificada) y ese fallo era la señal de "sí se registró".
+  // ¿Para qué? El backend ahora responde lo mismo aunque el correo ya
+  //           tuviera cuenta, así que ese truco ya no distingue nada: si la
+  //           petición no da error, el registro quedó recibido y punto.
+  const register = useCallback(async (data: RegisterRequest) => {
+    await authApi.registerUser(data);
+  }, []);
 
   const logout = useCallback(() => {
     clearAuth();
