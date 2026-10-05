@@ -111,6 +111,30 @@ describe("renovación de sesión (issue #319)", () => {
     expect(llamadas.filter(esRefresh)).toHaveLength(0);
   });
 
+  // ¿Qué? El test de arriba borra la marca de sesión antes de probar, así
+  //       que nunca cubría a alguien CON sesión abierta que entra a /login
+  //       y se equivoca de contraseña.
+  // ¿Para qué? Ese caso mostraba "Tu sesión expiró" en vez del error real
+  //           y borraba la marca aunque la sesión siguiera viva.
+  it("con sesión abierta, un login fallido muestra el error real y no manda al login", async () => {
+    responder = () => ({ status: 401, data: { detail: "Credenciales incorrectas" } });
+
+    await expect(api.post("/api/v1/auth/login", {})).rejects.toThrow("Credenciales incorrectas");
+
+    expect(destino).toBe("");
+    expect(sessionStorage.getItem("verdeapp:session-expired")).toBeNull();
+    expect(localStorage.getItem("verdeapp:sesion-activa")).toBe("1");
+  });
+
+  it("cerrar sesión con la sesión ya vencida no muestra el aviso de sesión expirada", async () => {
+    responder = () => ({ status: 401 });
+
+    await expect(api.post("/api/v1/auth/logout")).rejects.toBeTruthy();
+
+    expect(destino).toBe("");
+    expect(sessionStorage.getItem("verdeapp:session-expired")).toBeNull();
+  });
+
   it("con dos pestañas: si la renovación falla pero otra pestaña ya renovó, el reintento funciona", async () => {
     // ¿Qué? /auth/refresh responde 401 (la otra pestaña ya gastó el refresh
     //       token), pero el reintento de la petición original sí pasa,

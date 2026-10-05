@@ -301,7 +301,9 @@ const api = axios.create({ baseURL: API_BASE_URL, withCredentials: true });
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && /* había sesión activa */) {
+    // Salvo /auth/login y /auth/logout: ahí un 401 es "contraseña
+    // incorrecta" o "ya no había sesión", no "tu sesión venció".
+    if (error.response?.status === 401 && /* había sesión activa */ && !esRutaSinRenovacion(url)) {
       borrarSesionActiva(); // lib/sesionActiva.ts — la marca vive en localStorage
       window.location.href = "/login";
     }
