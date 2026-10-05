@@ -69,6 +69,7 @@ Los usuarios destinatarios ven los comunicados en un feed dentro de la app y rec
 - RN-004: Los comunicados se eliminan automáticamente del feed al vencer su fecha de expiración.
 - RN-005: El Admin Conjunto solo puede gestionar comunicados de los conjuntos que administra.
 - RN-006: El adjunto (`url_adjunto`) solo puede ser un archivo subido a VerdeApp (`/uploads/...`) o un enlace `https://`; cualquier otro valor se rechaza con 422 (issue #314, hallazgo CN-015 del informe de seguridad). El archivo subido no puede pasar de 5 MB, y el servidor deja de leerlo en cuanto supera ese tope.
+- RN-007: La fecha de expiración elegida a mano debe estar entre hoy y un año desde hoy (`DIAS_MAX_EXPIRACION` en `be/app/utils/fechas.py`), al crear y al editar; la fecha del evento de una Convocatoria sigue el mismo rango. Antes se aceptaba una fecha pasada: el comunicado nacía vencido, el feed lo ocultaba (RN-004) pero la notificación sí llegaba, y el destinatario no podía leerlo. Se valida en el backend (422) y en el formulario, con el error debajo del campo (issue #367). **Implementada.**
 
 ---
 

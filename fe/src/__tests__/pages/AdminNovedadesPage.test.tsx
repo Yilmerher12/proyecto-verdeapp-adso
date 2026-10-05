@@ -9,7 +9,7 @@
  *           directo para el buscador de conjuntos — por eso se mockea
  *           también "axios", igual que AdminContenidoEducativoPage.test.tsx.
  */
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach, describe, it, expect } from "vitest";
 import { AdminNovedadesPage } from "@/pages/AdminNovedadesPage";
@@ -350,7 +350,15 @@ describe("AdminNovedadesPage", () => {
 
     it("al editar, los conjuntos quedan fijos (solo se ven) y sí se puede cambiar el video", async () => {
       mockListar.mockResolvedValue({
-        items: [{ ...NOVEDAD, conjuntos: [CONJUNTO, CONJUNTO_2] }],
+        // ¿Qué? Issue #367 — al guardar se revalida la expiración precargada,
+        //       así que aquí debe estar dentro del rango (hoy a un año).
+        items: [
+          {
+            ...NOVEDAD,
+            conjuntos: [CONJUNTO, CONJUNTO_2],
+            fecha_expiracion: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+        ],
         total: 1,
       });
       const user = userEvent.setup();
@@ -393,6 +401,27 @@ describe("AdminNovedadesPage", () => {
       expect(error).toHaveTextContent(/El video debe ser un enlace de YouTube/);
       expect(campoVideo).toHaveAttribute("aria-invalid", "true");
       expect(campoVideo).toHaveAttribute("aria-describedby", error.id);
+
+      await user.click(within(dialogo).getByRole("button", { name: "Guardar" }));
+      expect(mockCrear).not.toHaveBeenCalled();
+    });
+
+    // ¿Qué? Issue #367 — misma regla que el backend (FechaExpiracion).
+    it("una fecha de expiración pasada muestra el error bajo el campo y no publica", async () => {
+      const user = userEvent.setup();
+      renderPage();
+      const dialogo = await abrirFormulario(user);
+
+      await user.click(within(dialogo).getByRole("radio", { name: "Todos los conjuntos" }));
+      await user.type(within(dialogo).getByLabelText(/Mensaje/), "Aviso general.");
+      const campo = within(dialogo).getByLabelText(/Fecha de expiración/);
+      const ayer = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      fireEvent.change(campo, { target: { value: ayer } });
+      fireEvent.blur(campo);
+
+      const error = within(dialogo).getByRole("alert");
+      expect(error).toHaveTextContent("La fecha debe ser hoy o una fecha futura.");
+      expect(campo).toHaveAttribute("aria-describedby", error.id);
 
       await user.click(within(dialogo).getByRole("button", { name: "Guardar" }));
       expect(mockCrear).not.toHaveBeenCalled();

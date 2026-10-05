@@ -21,10 +21,16 @@ from app.models.rol import RolId
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.schemas.novedad import CONJUNTOS_MAX_LENGTH
+from app.utils.fechas import DIAS_MAX_EXPIRACION
 from app.utils.security import create_access_token, hash_password
 
 # ¿Qué? Issue #357 — enlaces de video que NO son de YouTube por https://.
 VIDEOS_NO_YOUTUBE = ["https://sitio-malo.com/video", "http://www.youtube.com/watch?v=abc123", "mi video"]
+
+
+def _fecha_formulario(dias: int) -> str:
+    """¿Qué? La expiración tal como la manda el formulario: el día elegido a las 23:59:59."""
+    return f"{(datetime.now(timezone.utc).date() + timedelta(days=dias)).isoformat()}T23:59:59"
 
 
 class TestCrearNovedad:
@@ -42,6 +48,18 @@ class TestCrearNovedad:
     def test_texto_vacio_devuelve_422(self, client: TestClient, admin_sistema_auth_headers):
         response = client.post(
             "/api/v1/novedades", headers=admin_sistema_auth_headers, json={"alcance": "TODOS", "texto": "   "}
+        )
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize("dias", [-1, DIAS_MAX_EXPIRACION + 1])
+    def test_expiracion_vencida_o_mayor_a_un_anio_devuelve_422(
+        self, client: TestClient, admin_sistema_auth_headers, dias
+    ):
+        """¿Qué? Issue #367 — misma regla que en comunicados."""
+        response = client.post(
+            "/api/v1/novedades",
+            headers=admin_sistema_auth_headers,
+            json={"alcance": "TODOS", "texto": "Aviso de prueba", "fecha_expiracion": _fecha_formulario(dias)},
         )
         assert response.status_code == 422
 
@@ -249,6 +267,16 @@ class TestEditarNovedad:
             json={"texto": "Texto corregido."},
         )
         assert response.json()["fecha_expiracion"] == original["fecha_expiracion"]
+
+    def test_editar_con_expiracion_vencida_devuelve_422(self, client: TestClient, admin_sistema_auth_headers):
+        id_novedad = self._crear(client, admin_sistema_auth_headers)
+
+        response = client.patch(
+            f"/api/v1/novedades/{id_novedad}",
+            headers=admin_sistema_auth_headers,
+            json={"texto": "Texto corregido.", "fecha_expiracion": _fecha_formulario(-1)},
+        )
+        assert response.status_code == 422
 
     def test_reenvia_notificacion_a_los_mismos_destinatarios(
         self, client: TestClient, admin_sistema_auth_headers, auth_headers

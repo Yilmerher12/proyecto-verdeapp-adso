@@ -70,6 +70,8 @@
     "saving": "Guardando...",
     "saveError": "No se pudo guardar. Intenta de nuevo.",
     "formIncomplete": "Completa el formulario",
+    "datePast": "La fecha debe ser hoy o una fecha futura.",
+    "dateTooFar": "La fecha no puede superar {{dias}} días desde hoy.",
     "pagination": {
       "showing": "Mostrando {{from}}–{{to}} de {{total}}",
       "prev": "Página anterior",

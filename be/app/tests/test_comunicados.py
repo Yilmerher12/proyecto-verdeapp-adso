@@ -15,6 +15,16 @@ from sqlalchemy.orm import Session
 
 from app.models.reciclador import Reciclador
 from app.models.reciclador_conjunto import RecicladorConjunto
+from app.utils.fechas import DIAS_MAX_EXPIRACION
+
+
+def _hoy_utc() -> date:
+    return datetime.now(timezone.utc).date()
+
+
+def _fecha_formulario(dias: int) -> str:
+    """¿Qué? La expiración tal como la manda el formulario: el día elegido a las 23:59:59."""
+    return f"{(_hoy_utc() + timedelta(days=dias)).isoformat()}T23:59:59"
 
 
 @pytest.fixture()
@@ -158,6 +168,57 @@ class TestCrearComunicado:
         expiracion = datetime.fromisoformat(data["fecha_expiracion"]).date()
         assert expiracion == date.today() + timedelta(days=11)
 
+    @pytest.mark.parametrize("dias", [-1, DIAS_MAX_EXPIRACION + 1])
+    def test_expiracion_vencida_o_mayor_a_un_anio_devuelve_422(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, dias
+    ):
+        """¿Qué? Issue #367 — un comunicado vencido nace invisible en el feed aunque su notificación sí llegue."""
+        response = client.post(
+            "/api/v1/comunicados",
+            headers=admin_conjunto_auth_headers,
+            json={
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
+                "destinatarios": "RESIDENTES",
+                "tipo": "URGENTE",
+                "texto": "Se va el agua mañana.",
+                "fecha_expiracion": _fecha_formulario(dias),
+            },
+        )
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize("dias", [0, DIAS_MAX_EXPIRACION])
+    def test_expiracion_hoy_o_en_el_tope_se_acepta(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, dias
+    ):
+        response = client.post(
+            "/api/v1/comunicados",
+            headers=admin_conjunto_auth_headers,
+            json={
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
+                "destinatarios": "RESIDENTES",
+                "tipo": "INFORMATIVO",
+                "texto": "Aviso con fecha límite válida.",
+                "fecha_expiracion": _fecha_formulario(dias),
+            },
+        )
+        assert response.status_code == 201
+
+    def test_convocatoria_con_evento_pasado_devuelve_422(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        response = client.post(
+            "/api/v1/comunicados",
+            headers=admin_conjunto_auth_headers,
+            json={
+                "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
+                "destinatarios": "RESIDENTES",
+                "tipo": "CONVOCATORIA",
+                "texto": "Asamblea general de propietarios.",
+                "fecha_evento": (_hoy_utc() - timedelta(days=1)).isoformat(),
+            },
+        )
+        assert response.status_code == 422
+
     def test_notifica_solo_a_los_destinatarios_elegidos(
         self,
         client: TestClient,
@@ -273,6 +334,19 @@ class TestEditarComunicado:
             json={"tipo": "INFORMATIVO", "texto": "No debería aplicar."},
         )
         assert response.status_code == 404
+
+    def test_editar_con_expiracion_vencida_devuelve_422(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """¿Qué? Issue #367 — el caso real: se editó un comunicado y quedó con una fecha que ya había pasado."""
+        id_comunicado = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        response = client.patch(
+            f"/api/v1/comunicados/{id_comunicado}",
+            headers=admin_conjunto_auth_headers,
+            json={"tipo": "RECICLAJE", "texto": "El reciclador pasa los martes.", "fecha_expiracion": _fecha_formulario(-1)},
+        )
+        assert response.status_code == 422
 
     def test_editar_reenvia_notificacion_a_los_mismos_destinatarios(
         self, client: TestClient, admin_conjunto_auth_headers, auth_headers, conjunto_verificado

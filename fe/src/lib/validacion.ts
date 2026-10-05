@@ -48,6 +48,36 @@ export const NIT_MAX_LENGTH = 50;
 // ¿Impacto? Debe coincidir con TOTAL_APARTAMENTOS_MAX de be/app/schemas/conjunto_panel.py.
 export const TOTAL_APARTAMENTOS_MAX = 20000;
 
+// ¿Qué? Issue #367 — rango permitido para la fecha de expiración (y la del
+//       evento de una Convocatoria) de comunicados y novedades: desde hoy
+//       hasta un año.
+// ¿Para qué? Una fecha pasada publicaba un aviso ya vencido: el feed lo
+//           ocultaba pero la notificación sí llegaba.
+// ¿Impacto? Debe coincidir con DIAS_MAX_EXPIRACION de be/app/utils/fechas.py.
+//          Las fechas van en UTC, igual que las guarda el backend y las
+//          muestra formatearFechaUTC.
+export const DIAS_MAX_EXPIRACION = 365;
+
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+export function rangoFechaAviso(): { min: string; max: string } {
+  const ahora = Date.now();
+  return {
+    min: new Date(ahora).toISOString().slice(0, 10),
+    max: new Date(ahora + DIAS_MAX_EXPIRACION * MS_POR_DIA).toISOString().slice(0, 10),
+  };
+}
+
+// ¿Qué? Devuelve el motivo del error, o null si la fecha sirve (vacía = opcional).
+//       Compara texto "AAAA-MM-DD", que ordena igual que las fechas.
+export function validarFechaAviso(valor: string): "datePast" | "dateTooFar" | null {
+  if (!valor) return null;
+  const { min, max } = rangoFechaAviso();
+  if (valor < min) return "datePast";
+  if (valor > max) return "dateTooFar";
+  return null;
+}
+
 // ¿Qué? Enlace de video: mismos formatos que reconoce YoutubeEmbed, pero
 //       exigiendo https:// como el backend (be/app/utils/enlaces.py, issues
 //       #314 y #357). Lo usan contenido educativo y novedades.

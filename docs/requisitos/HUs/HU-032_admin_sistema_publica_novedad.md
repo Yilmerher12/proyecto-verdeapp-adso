@@ -67,6 +67,12 @@
 - **cuando** el sistema arma el formulario,
 - **entonces** debe sugerirme una fecha de expiración, y debo poder modificarla.
 
+### CA-032.3b — La fecha de expiración no puede estar vencida ni superar un año
+
+- **Dado que** estoy creando una novedad,
+- **cuando** elijo una fecha de expiración anterior a hoy o a más de un año desde hoy,
+- **entonces** el formulario me muestra el error debajo del campo y no deja guardar; si alguien llama la API directamente, responde 422. El calendario solo ofrece fechas dentro de ese rango (issue #367).
+
 ### CA-032.4 — Publicación exitosa
 
 - **Dado que** completé la novedad correctamente,

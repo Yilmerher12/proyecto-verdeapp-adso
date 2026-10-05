@@ -5,7 +5,7 @@
  *           la de expiración (issue #165) — estas pruebas cubren que ambas
  *           aparecen en cada tarjeta del listado, con el formato correcto.
  */
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach, describe, it, expect } from "vitest";
 import { AdminConjuntoComunicadosPage } from "@/pages/AdminConjuntoComunicadosPage";
@@ -15,11 +15,13 @@ import type { ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
 
 const mockListar = vi.fn();
 const mockObtenerConjuntos = vi.fn();
+const mockCrear = vi.fn();
+const mockEditar = vi.fn();
 
 vi.mock("@/lib/comunicadosApi", () => ({
   listarMisComunicados: (...args: unknown[]) => mockListar(...args),
-  crearComunicado: vi.fn(),
-  editarComunicado: vi.fn(),
+  crearComunicado: (...args: unknown[]) => mockCrear(...args),
+  editarComunicado: (...args: unknown[]) => mockEditar(...args),
   eliminarComunicado: vi.fn(),
 }));
 
@@ -59,6 +61,11 @@ const COMUNICADO: Comunicado = {
   created_at: FECHA_CREACION,
   editado: false,
 };
+
+// ¿Qué? Fecha "AAAA-MM-DD" a N días de hoy, en UTC como el formulario.
+function fechaEnDias(dias: number): string {
+  return new Date(Date.now() + dias * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
 function renderPage() {
   return renderWithProviders(<AdminConjuntoComunicadosPage />, {
@@ -144,5 +151,69 @@ describe("AdminConjuntoComunicadosPage", () => {
 
     await user.type(texto, "Hola");
     expect(screen.getByText("4/2000 caracteres")).toBeInTheDocument();
+  });
+
+  // ¿Qué? Issue #367 — un comunicado con fecha pasada nacía vencido: el
+  //       residente recibía la notificación pero no lo veía en su feed.
+  describe("fecha de expiración", () => {
+    it("el calendario solo ofrece desde hoy hasta un año", async () => {
+      const user = userEvent.setup();
+      renderPage();
+      await user.click(await screen.findByRole("button", { name: "Nuevo comunicado" }));
+
+      const campo = await screen.findByLabelText(/Fecha de expiración/);
+      expect(campo).toHaveAttribute("min", fechaEnDias(0));
+      expect(campo).toHaveAttribute("max", fechaEnDias(365));
+    });
+
+    it("una fecha pasada muestra el error bajo el campo al salir y no publica", async () => {
+      const user = userEvent.setup();
+      renderPage();
+      await user.click(await screen.findByRole("button", { name: "Nuevo comunicado" }));
+      await user.type(await screen.findByLabelText(/Mensaje/), "Se va el agua mañana.");
+
+      const campo = screen.getByLabelText(/Fecha de expiración/);
+      fireEvent.change(campo, { target: { value: fechaEnDias(-1) } });
+      fireEvent.blur(campo);
+
+      const error = screen.getByRole("alert");
+      expect(error).toHaveTextContent("La fecha debe ser hoy o una fecha futura.");
+      expect(campo).toHaveAttribute("aria-invalid", "true");
+      expect(campo).toHaveAttribute("aria-describedby", error.id);
+
+      await user.click(screen.getByRole("button", { name: "Guardar" }));
+      expect(mockCrear).not.toHaveBeenCalled();
+    });
+
+    it("una fecha a más de un año muestra el error y no publica", async () => {
+      const user = userEvent.setup();
+      renderPage();
+      await user.click(await screen.findByRole("button", { name: "Nuevo comunicado" }));
+      await user.type(await screen.findByLabelText(/Mensaje/), "Aviso muy lejano.");
+
+      const campo = screen.getByLabelText(/Fecha de expiración/);
+      fireEvent.change(campo, { target: { value: fechaEnDias(400) } });
+      fireEvent.blur(campo);
+
+      expect(screen.getByRole("alert")).toHaveTextContent("La fecha no puede superar 365 días desde hoy.");
+      await user.click(screen.getByRole("button", { name: "Guardar" }));
+      expect(mockCrear).not.toHaveBeenCalled();
+    });
+
+    it("al editar un comunicado ya vencido pide una fecha nueva antes de guardar", async () => {
+      const user = userEvent.setup();
+      mockListar.mockResolvedValue({
+        items: [{ ...COMUNICADO, fecha_expiracion: `${fechaEnDias(-4)}T23:59:59Z` }],
+        total: 1,
+      });
+      renderPage();
+
+      await user.click(await screen.findByRole("button", { name: /Editar/ }));
+      const dialogo = await screen.findByRole("dialog");
+      await user.click(within(dialogo).getByRole("button", { name: "Guardar" }));
+
+      expect(within(dialogo).getByRole("alert")).toHaveTextContent("La fecha debe ser hoy o una fecha futura.");
+      expect(mockEditar).not.toHaveBeenCalled();
+    });
   });
 });

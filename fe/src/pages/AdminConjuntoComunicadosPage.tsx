@@ -11,7 +11,7 @@ import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { Alert } from "@/components/ui/Alert";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
-import { COMUNICADO_TEXTO_MAX_LENGTH } from "@/lib/validacion";
+import { COMUNICADO_TEXTO_MAX_LENGTH, DIAS_MAX_EXPIRACION, rangoFechaAviso, validarFechaAviso } from "@/lib/validacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
@@ -89,6 +89,9 @@ export function AdminConjuntoComunicadosPage() {
   const [editando, setEditando] = useState<Comunicado | null>(null);
   const [form, setForm] = useState<FormState>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
+  // ¿Qué? Issue #367 — error de cada campo de fecha, mostrado debajo del campo al salir de él.
+  const [errorFechaEvento, setErrorFechaEvento] = useState<string | null>(null);
+  const [errorFechaExpiracion, setErrorFechaExpiracion] = useState<string | null>(null);
 
   const [aEliminar, setAEliminar] = useState<Comunicado | null>(null);
 
@@ -133,7 +136,15 @@ export function AdminConjuntoComunicadosPage() {
     setCreando(false);
     setEditando(null);
     setErrorMsg(null);
+    setErrorFechaEvento(null);
+    setErrorFechaExpiracion(null);
   };
+
+  const mensajeFecha = (valor: string): string | null => {
+    const motivo = validarFechaAviso(valor);
+    return motivo ? t(`common.${motivo}`, { dias: DIAS_MAX_EXPIRACION }) : null;
+  };
+  const rangoFecha = rangoFechaAviso();
 
   // ¿Qué? Mismas condiciones que ya revisaba "guardar" al hacer clic, pero
   //       calculadas ANTES, para deshabilitar el botón en vez de dejar que
@@ -157,6 +168,13 @@ export function AdminConjuntoComunicadosPage() {
       setErrorMsg(t("comunicados.admin.validation.fechaEventoRequerida"));
       return;
     }
+    // ¿Qué? Un comunicado vencido al editarlo trae su fecha pasada precargada:
+    //       aquí se le pide al admin una fecha nueva antes de guardar.
+    const errorEvento = form.tipo === "CONVOCATORIA" ? mensajeFecha(form.fecha_evento) : null;
+    const errorExpiracion = mensajeFecha(form.fecha_expiracion);
+    setErrorFechaEvento(errorEvento);
+    setErrorFechaExpiracion(errorExpiracion);
+    if (errorEvento || errorExpiracion) return;
 
     setGuardando(true);
     setErrorMsg(null);
@@ -420,9 +438,21 @@ export function AdminConjuntoComunicadosPage() {
                   id="comunicado-fecha-evento"
                   type="date"
                   value={form.fecha_evento}
+                  min={rangoFecha.min}
+                  max={rangoFecha.max}
                   onChange={(e) => setForm({ ...form, fecha_evento: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                  onBlur={() => setErrorFechaEvento(mensajeFecha(form.fecha_evento))}
+                  aria-invalid={!!errorFechaEvento}
+                  aria-describedby={errorFechaEvento ? "comunicado-fecha-evento-error" : undefined}
+                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                    errorFechaEvento ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                  }`}
                 />
+                {errorFechaEvento && (
+                  <p id="comunicado-fecha-evento-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                    {errorFechaEvento}
+                  </p>
+                )}
               </div>
             )}
 
@@ -457,9 +487,21 @@ export function AdminConjuntoComunicadosPage() {
                 id="comunicado-fecha-expiracion"
                 type="date"
                 value={form.fecha_expiracion}
+                min={rangoFecha.min}
+                max={rangoFecha.max}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                onBlur={() => setErrorFechaExpiracion(mensajeFecha(form.fecha_expiracion))}
+                aria-invalid={!!errorFechaExpiracion}
+                aria-describedby={errorFechaExpiracion ? "comunicado-fecha-expiracion-error" : undefined}
+                className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                  errorFechaExpiracion ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                }`}
               />
+              {errorFechaExpiracion && (
+                <p id="comunicado-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                  {errorFechaExpiracion}
+                </p>
+              )}
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
