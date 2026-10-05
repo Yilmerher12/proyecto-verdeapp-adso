@@ -24,6 +24,7 @@ from app.schemas.reciclador_conjunto import (
     RecicladorAutorizadoResponse,
 )
 from app.services import reciclador_conjunto_service
+from app.utils.audit_log import log_accion_admin, redactar_correo
 
 router = APIRouter(
     prefix="/api/v1/reciclador-conjunto",
@@ -52,6 +53,12 @@ async def invitar_reciclador(
         id_usuario_admin=administrador.id_usuario,
         correo_reciclador=data.correo_reciclador,
         id_conjunto=data.id_conjunto_residencial,
+    )
+    log_accion_admin(
+        administrador.usuario.correo_electronico,
+        "reciclador_invitado",
+        reciclador=redactar_correo(data.correo_reciclador),
+        conjunto=data.id_conjunto_residencial,
     )
     return {"id": invitacion.id, "estado": invitacion.estado, "message": "Invitación enviada correctamente."}
 
@@ -136,6 +143,12 @@ def revocar_reciclador(
         id_usuario_admin=administrador.id_usuario,
         id_conjunto=id_conjunto,
         id_reciclador=id_reciclador,
+    )
+    log_accion_admin(
+        administrador.usuario.correo_electronico,
+        "reciclador_revocado",
+        reciclador=id_reciclador,
+        conjunto=id_conjunto,
     )
 
 

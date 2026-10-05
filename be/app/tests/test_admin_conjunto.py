@@ -78,7 +78,7 @@ class TestConsultarYAceptar:
         assert response.status_code == 422
 
     def test_flujo_completo_invitar_consultar_y_aceptar(
-        self, client: TestClient, admin_sistema_auth_headers, conjunto_verificado, db, monkeypatch
+        self, client: TestClient, admin_sistema_auth_headers, conjunto_verificado, db, monkeypatch, acciones_admin
     ):
         from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto
         from app.services import admin_conjunto_service
@@ -100,6 +100,13 @@ class TestConsultarYAceptar:
             headers=admin_sistema_auth_headers,
             json={"correo_electronico": correo, "ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)]},
         )
+
+        # Issue #376: la invitación queda en el log, sin el token.
+        [accion] = acciones_admin()
+        assert accion["action"] == "admin_conjunto_invitado"
+        assert accion["invitado"] == "in***@verdeapp.com"
+        assert accion["conjuntos"] == [str(conjunto_verificado.id_conjunto_residencial)]
+        assert tokens_enviados[0] not in str(accion)
 
         invitacion = db.execute(
             select(InvitacionAdminConjunto).where(InvitacionAdminConjunto.correo_electronico == correo)

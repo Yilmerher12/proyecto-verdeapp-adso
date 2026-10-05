@@ -39,7 +39,9 @@ def _registrar(evento: str, **datos) -> None:
         "event": evento,
         **datos,
     }
-    logger.info(json.dumps(entrada, ensure_ascii=False))
+    # ¿Qué? default=str convierte a texto lo que JSON no conoce (los UUID
+    #       de log_accion_admin); sin esto json.dumps lanza TypeError.
+    logger.info(json.dumps(entrada, ensure_ascii=False, default=str))
 
 
 def log_login_exitoso(correo: str) -> None:
@@ -56,3 +58,20 @@ def log_password_cambiada(correo: str) -> None:
 
 def log_acceso_denegado(correo: str, endpoint: str, motivo: str) -> None:
     _registrar("access_denied", email=redactar_correo(correo), endpoint=endpoint, reason=motivo)
+
+
+def log_accion_admin(correo_admin: str, accion: str, **detalles) -> None:
+    """Registra una acción de administración: quién, qué acción y sobre qué.
+
+    ¿Qué? Issue #376 (CN-012): desactivar cuentas, invitar o revocar,
+          resolver solicitudes, regenerar el código de acceso, etc. Antes
+          ninguna dejaba rastro.
+    ¿Para qué? Poder responder después "¿quién desactivó esta cuenta?" o
+              "¿quién cambió el código de este conjunto, y cuándo?".
+    ¿Impacto? Una sola función para todas las acciones, con el nombre de la
+              acción como dato: todas escriben la misma forma de línea
+              (event "admin_action"). Quien la llama nunca debe pasar
+              contraseñas, tokens, el código de acceso ni textos libres
+              (motivos), y los correos los pasa ya redactados.
+    """
+    _registrar("admin_action", admin=redactar_correo(correo_admin), action=accion, **detalles)

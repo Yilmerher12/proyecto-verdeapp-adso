@@ -15,6 +15,7 @@ from app.models.usuario import Usuario
 from app.models.rol import RolId
 from app.schemas.admin import CambiarHabilitadoRequest, PerfilUsuarioAdminResponse
 from app.services import admin_usuarios_service
+from app.utils.audit_log import log_accion_admin, redactar_correo
 
 router = APIRouter(
     prefix="/api/v1/admin",
@@ -96,6 +97,12 @@ def cambiar_habilitado(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado.")
 
     admin_usuarios_service.cambiar_habilitado(db, usuario_objetivo, body.habilitado, body.motivo)
+    # ¿Qué? Issue #376: sin el motivo — es texto libre y puede traer datos personales.
+    log_accion_admin(
+        current_user.correo_electronico,
+        "usuario_habilitado" if body.habilitado else "usuario_deshabilitado",
+        usuario=redactar_correo(correo_electronico),
+    )
     return {
         "correo_electronico": correo_electronico,
         "habilitado": body.habilitado,

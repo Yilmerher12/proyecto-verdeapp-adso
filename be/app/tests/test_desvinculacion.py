@@ -100,6 +100,7 @@ class TestResolverSolicitud:
         admin_sistema_auth_headers,
         admin_conjunto_auth_headers,
         conjunto_verificado,
+        acciones_admin,
     ):
         client.post(
             f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}/solicitar-desvinculacion",
@@ -117,6 +118,11 @@ class TestResolverSolicitud:
             json={"aprobar": True},
         )
         assert response.status_code == 200
+
+        # Issue #376
+        [accion] = acciones_admin()
+        assert accion["action"] == "desvinculacion_aprobada"
+        assert accion["solicitud"] == str(solicitud.id)
 
         # El conjunto ya no debe aparecer en "mis conjuntos" del Admin de Conjunto.
         mis_conjuntos = client.get("/api/v1/conjunto-panel/mis-conjuntos", headers=admin_conjunto_auth_headers)
@@ -304,6 +310,7 @@ class TestAsignarConjuntoAdicional:
         admin_conjunto_auth_headers,
         admin_conjunto_test,
         conjunto_verificado_sin_admin,
+        acciones_admin,
     ):
         response = client.post(
             "/api/v1/admin-conjunto/asignar-conjunto-adicional",
@@ -314,6 +321,12 @@ class TestAsignarConjuntoAdicional:
             },
         )
         assert response.status_code == 201
+
+        # Issue #376
+        [accion] = acciones_admin()
+        assert accion["action"] == "conjunto_asignado"
+        assert accion["administrador"] == str(admin_conjunto_test.id_administrador)
+        assert accion["conjunto"] == str(conjunto_verificado_sin_admin.id_conjunto_residencial)
 
         mis_conjuntos = client.get("/api/v1/conjunto-panel/mis-conjuntos", headers=admin_conjunto_auth_headers)
         nombres = [c["nombre_conjunto"] for c in mis_conjuntos.json()]

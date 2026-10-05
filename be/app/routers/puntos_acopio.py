@@ -25,6 +25,7 @@ from app.schemas.puntos_acopio import (
     PuntoAcopioUpdate,
 )
 from app.services import puntos_acopio_service as service
+from app.utils.audit_log import log_accion_admin
 
 router = APIRouter(
     prefix="/api/v1/admin/puntos-acopio",
@@ -110,6 +111,9 @@ def eliminar_definitivamente(
     db: Session = Depends(get_db),
 ) -> None:
     service.eliminar_definitivamente(db, id_punto_acopio)
+    # ¿Qué? Issue #376: el punto se borra para siempre de la BD — esta línea
+    #       es el único rastro de que existió y de quién lo eliminó.
+    log_accion_admin(current_user.correo_electronico, "punto_acopio_eliminado", punto_acopio=id_punto_acopio)
 
 
 @router.get(
