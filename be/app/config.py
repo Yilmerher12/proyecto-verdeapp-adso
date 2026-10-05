@@ -173,7 +173,12 @@ class Settings(BaseSettings):
     #           exactamente "production" ("prod", "Production") se trataba como
     #           desarrollo — con /docs público y cookies sin "Secure". Con Literal,
     #           cualquier otro valor detiene el arranque con un error claro.
-    ENVIRONMENT: Literal["development", "production"] = "development"
+    #           Issue #371 (CN-005): ya no tiene valor por defecto. Antes, un
+    #           despliegue que olvidara definirla arrancaba en silencio como
+    #           "development" (con /docs público, cookies sin "Secure" y el seed
+    #           de cuentas de prueba). Ahora, si falta, el backend no arranca.
+    #           be/.env.example y el CI ya la definen, así que en desarrollo nada cambia.
+    ENVIRONMENT: Literal["development", "production"]
 
     # ¿Qué? Configuración del modelo Pydantic Settings.
     # ¿Para qué? Indicar que las variables se cargan desde el archivo .env en la carpeta be/.
