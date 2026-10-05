@@ -2,6 +2,12 @@
   "serverError": {
     "message": "No se pudo conectar con el servidor. Verifica tu conexión — reintentaremos automáticamente."
   },
+  "errorBoundary": {
+    "title": "Algo salió mal en esta pantalla",
+    "message": "Ocurrió un error inesperado al mostrar esta página. Puedes recargarla o volver a tu panel principal.",
+    "reload": "Recargar página",
+    "goHome": "Volver al panel principal"
+  },
   "appShell": {
     "ariaLabel": "Navegación VerdeApp",
     "nav": {
