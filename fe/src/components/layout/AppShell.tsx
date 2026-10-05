@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
@@ -27,6 +27,7 @@ import { RoleId } from "@/types/auth";
 import api, { API_BASE_URL } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { BrandLogo } from "@/components/ui/BrandLogo";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { onNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { onFotoPerfilActualizada } from "@/lib/profileEvents";
 import { borrarSesionActiva } from "@/lib/sesionActiva";
@@ -49,6 +50,7 @@ export function AppShell({ children }: AppShellProps) {
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { t } = useTranslation();
 
   const handleLogout = async () => {
@@ -467,7 +469,16 @@ export function AppShell({ children }: AppShellProps) {
             ¿Impacto? Contraste tarjeta/fondo depende solo de los dos colores
             sólidos (claro: gray-200, oscuro: night-page). */}
         <main className="relative flex-1 overflow-y-auto bg-gray-200 dark:bg-night-page">
-          <div className="relative z-10 mx-auto max-w-7xl px-6 pb-6">{children}</div>
+          <div className="relative z-10 mx-auto max-w-7xl px-6 pb-6">
+            {/* ¿Qué? ErrorBoundary solo alrededor de la página, no del sidebar.
+                ¿Para qué? Si una página falla al dibujarse, el menú lateral
+                           sigue funcionando para ir a otra (issue #378).
+                ¿Impacto? key={pathname} crea un ErrorBoundary nuevo al cambiar
+                          de ruta, así el error se limpia solo al navegar con
+                          el menú — sin key, la pantalla de error se quedaría
+                          pegada en todas las páginas siguientes. */}
+            <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+          </div>
         </main>
       </div>
     </div>

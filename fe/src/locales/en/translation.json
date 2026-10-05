@@ -2,6 +2,12 @@
   "serverError": {
     "message": "Couldn't connect to the server. Check your connection — we'll retry automatically."
   },
+  "errorBoundary": {
+    "title": "Something went wrong on this screen",
+    "message": "An unexpected error occurred while showing this page. You can reload it or go back to your main dashboard.",
+    "reload": "Reload page",
+    "goHome": "Back to main dashboard"
+  },
   "appShell": {
     "ariaLabel": "VerdeApp navigation",
     "nav": {
