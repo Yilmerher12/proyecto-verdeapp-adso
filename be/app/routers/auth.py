@@ -45,16 +45,18 @@ def _fijar_cookies_de_sesion(response: Response, tokens: TokenResponse) -> None:
           puede acceder a su valor.
     ¿Para qué? Cerrar la puerta a que un ataque XSS (inyección de código
               malicioso en el frontend) se robe el token de sesión.
-    ¿Impacto? "secure" solo se activa en producción — en desarrollo local
+    ¿Impacto? "secure" se apaga solo en desarrollo — en desarrollo local
               la app corre sobre http:// sin TLS, y una cookie "Secure"
               jamás se envía por una conexión sin cifrar, lo que rompería
               el login en las máquinas del equipo. "samesite=strict" es la
               mitigación contra CSRF que reemplaza a la protección natural
               que daba el header Authorization (ver RNF-001.9): el
               navegador nunca manda esta cookie en una petición que se
-              origine desde otro sitio.
+              origine desde otro sitio. La condición falla cerrado (issue
+              #371): cualquier entorno que no sea "development" lleva
+              "Secure", incluso uno nuevo que se agregue en el futuro.
     """
-    secure = settings.ENVIRONMENT == "production"
+    secure = settings.ENVIRONMENT != "development"
     response.set_cookie(
         key=_COOKIE_ACCESS,
         value=tokens.access_token,

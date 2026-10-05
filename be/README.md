@@ -313,7 +313,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # opcional — con default
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7     # opcional — con default
     RESEND_API_KEY: str = ""               # opcional — si vacío, simula emails
-    ENVIRONMENT: str = "development"       # opcional — afecta visibilidad de /docs
+    ENVIRONMENT: Literal["development", "production"]  # obligatorio — sin default: si falta, no arranca
 
     model_config = SettingsConfigDict(
         env_file=".env",            # lee desde el archivo .env
