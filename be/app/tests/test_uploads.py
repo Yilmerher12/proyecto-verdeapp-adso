@@ -46,21 +46,32 @@ class TestSubirAdjunto:
         )
         assert response.status_code == 401
 
-    def test_residente_no_puede_subir_devuelve_403(self, client: TestClient, auth_headers):
+    def test_residente_sube_imagen_valida(self, client: TestClient, auth_headers):
+        """Issue #369: foto de la novedad que le envía al Admin Sistema."""
         response = client.post(
             URL,
             headers=auth_headers,
             files={"archivo": ("foto.png", io.BytesIO(IMAGEN_VALIDA), "image/png")},
         )
-        assert response.status_code == 403
+        assert response.status_code == 201
+        assert response.json()["url"].startswith("/uploads/adjuntos/")
 
-    def test_reciclador_no_puede_subir_devuelve_403(self, client: TestClient, reciclador_auth_headers):
+    def test_reciclador_sube_imagen_valida(self, client: TestClient, reciclador_auth_headers):
         response = client.post(
             URL,
             headers=reciclador_auth_headers,
             files={"archivo": ("foto.png", io.BytesIO(IMAGEN_VALIDA), "image/png")},
         )
-        assert response.status_code == 403
+        assert response.status_code == 201
+
+    def test_residente_no_puede_subir_pdf_aunque_lo_pida(self, client: TestClient, auth_headers):
+        """permitir_documentos se ignora para Residente/Reciclador: solo imagen."""
+        response = client.post(
+            f"{URL}?permitir_documentos=true",
+            headers=auth_headers,
+            files={"archivo": ("guia.pdf", io.BytesIO(b"%PDF-1.4\n%mock pdf content"), "application/pdf")},
+        )
+        assert response.status_code == 400
 
     def test_admin_conjunto_sube_imagen_valida(self, client: TestClient, admin_conjunto_auth_headers):
         response = client.post(

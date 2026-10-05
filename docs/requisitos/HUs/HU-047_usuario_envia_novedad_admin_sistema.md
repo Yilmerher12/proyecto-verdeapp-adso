@@ -5,8 +5,8 @@
         Sistema (RQF-021), que ya existía en código (commit 513c76d) sin
         documentarse.
   ¿Para qué? Escribir qué debe poder hacer quien envía y qué ve después.
-  ¿Impacto? Issue #368. Queda en Parcial por el adjunto de imagen
-            (CA-047.2), que se corrige en el issue #369.
+  ¿Impacto? Issue #368. El adjunto de imagen (CA-047.2) para Residente y
+            Reciclador quedó resuelto en el issue #369.
 -->
 
 ---
@@ -19,7 +19,7 @@
 | **Título**         | Residente, Reciclador o Admin de Conjunto envía una novedad al Admin Sistema |
 | **Módulo**         | Comunicación                                                 |
 | **Prioridad**      | Media                                                         |
-| **Estado**         | Parcial                                                       |
+| **Estado**         | Implementado                                                  |
 | **RF asociados**   | RQF-021                                                      |
 
 ---
@@ -40,12 +40,12 @@
 - **cuando** abro Novedades → "Escribir novedad", escribo el texto (máximo 1000 caracteres) y presiono "Enviar novedad",
 - **entonces** el sistema la guarda y me muestra "Novedad enviada. El Administrador del Sistema la revisará." No tengo que escribir mi nombre, rol, conjunto ni unidad: el sistema los toma de mi cuenta.
 
-### CA-047.2 — Imagen opcional (pendiente para Residente y Reciclador)
+### CA-047.2 — Imagen opcional
 
 - **Dado que** quiero acompañar la novedad con una foto,
 - **cuando** uso el campo "Imagen adjunta (opcional)",
 - **entonces** la imagen se sube y queda unida a la novedad.
-- **Estado actual:** solo funciona para el Admin de Conjunto. Al Residente y al Reciclador el servidor les responde 403 al subir la imagen, porque el endpoint de subida solo admite a los administradores. Se corrige en el issue #369.
+- **y** solo se aceptan imágenes jpg, png o webp de hasta 5 MB. El enlace guardado debe ser un archivo subido a VerdeApp o un enlace `https://`; cualquier otro responde 422 (issue #369).
 
 ### CA-047.3 — Admin de Conjunto con varios conjuntos
 

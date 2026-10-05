@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BadgeCheck, ClipboardList, ImageIcon, OctagonX } from "lucide-react";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Alert } from "@/components/ui/Alert";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
@@ -186,11 +186,11 @@ export function SolicitudesPendientes({
                 {s.nombre_conjunto ? `${s.origen} — ${s.nombre_conjunto}` : s.origen}
               </p>
               {s.detalle && <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">{s.detalle}</p>}
-              {s.url_evidencia && (
+              {enlaceAdjuntoSeguro(s.url_evidencia) && (
                 <a
-                  href={`${API_BASE_URL}${s.url_evidencia}`}
+                  href={enlaceAdjuntoSeguro(s.url_evidencia) ?? undefined}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-accent-700 hover:text-accent-800 dark:text-accent-400"
                 >
                   <ImageIcon className="icon-sm" />

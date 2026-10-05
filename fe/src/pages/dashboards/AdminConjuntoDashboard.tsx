@@ -49,6 +49,7 @@ import {
   type ItemAgenda,
 } from "@/lib/conjuntoPanelApi";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -388,9 +389,9 @@ function SeccionAgenda({ idConjunto }: { idConjunto: string }) {
                     <span className="text-[11px] text-gray-400">{formatearFechaCreacion(item.created_at)}</span>
                   </div>
                   <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-800 dark:text-gray-200">{item.texto}</p>
-                  {item.url_evidencia && (
+                  {enlaceAdjuntoSeguro(item.url_evidencia) && (
                     <a
-                      href={item.url_evidencia.startsWith("http") ? item.url_evidencia : `${API_BASE_URL}${item.url_evidencia}`}
+                      href={enlaceAdjuntoSeguro(item.url_evidencia) ?? undefined}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-accent-700 hover:text-accent-800 dark:text-accent-400"

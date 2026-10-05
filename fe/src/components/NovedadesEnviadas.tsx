@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Send } from "lucide-react";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { useAuth } from "@/hooks/useAuth";
 import { RoleId } from "@/types/auth";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
@@ -205,11 +205,9 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
           <p className="mt-2 whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">
             {n.texto}
           </p>
-          {n.url_imagen && (
+          {enlaceAdjuntoSeguro(n.url_imagen) && (
             <img
-              src={
-                n.url_imagen.startsWith("http") ? n.url_imagen : `${API_BASE_URL}${n.url_imagen}`
-              }
+              src={enlaceAdjuntoSeguro(n.url_imagen) ?? undefined}
               alt=""
               className="mt-2 h-20 w-20 rounded-xl border border-gray-200 object-cover dark:border-night-line"
             />

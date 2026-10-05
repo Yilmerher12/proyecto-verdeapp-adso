@@ -12,6 +12,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.schemas.desvinculacion import MOTIVO_MAX_LENGTH
+from app.utils.enlaces import EnlaceAdjunto
 
 # ¿Qué? Mismo tope que el resto de campos libres de este tipo.
 TEXTO_MAX_LENGTH = MOTIVO_MAX_LENGTH
@@ -20,8 +21,9 @@ TEXTO_MAX_LENGTH = MOTIVO_MAX_LENGTH
 class CrearAgendaItemRequest(BaseModel):
     texto: str = Field(min_length=1, max_length=TEXTO_MAX_LENGTH)
     # ¿Qué? URL ya subida por el endpoint genérico de adjuntos — este
-    #       endpoint solo guarda la URL, no recibe el archivo.
-    url_evidencia: Optional[str] = Field(default=None, max_length=500)
+    #       endpoint solo guarda la URL, no recibe el archivo. Issue #369
+    #       (CN-041): se valida igual que url_adjunto (/uploads/... o https://).
+    url_evidencia: EnlaceAdjunto = None
 
 
 class CambiarEstadoAgendaRequest(BaseModel):

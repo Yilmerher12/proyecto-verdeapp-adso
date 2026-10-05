@@ -3,6 +3,7 @@ Módulo: tests/test_agenda_conjunto.py
 Descripción: Pruebas de la agenda interna del Admin de Conjunto — crear,
              listar, dejar en espera y borrar. Nunca llega al Admin Sistema.
 """
+import pytest
 from fastapi.testclient import TestClient
 
 from app.models.conjunto_residencial import ConjuntoResidencial
@@ -32,6 +33,12 @@ class TestCrearYListar:
         )
         lista = client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()
         assert lista[0]["url_evidencia"] == "/uploads/adjuntos/pasillo.jpg"
+
+    @pytest.mark.parametrize("url", ["@sitio-malo.com/login", "http://sitio-malo.com/f.jpg", "javascript:alert(1)"])
+    def test_rechaza_enlace_de_foto_no_permitido(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, url):
+        """Issue #369 (CN-041): solo /uploads/... o https://."""
+        response = client.post(_url(conjunto_verificado), headers=admin_conjunto_auth_headers, json={"texto": "x", "url_evidencia": url})
+        assert response.status_code == 422
 
     def test_exige_texto(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
         assert client.post(_url(conjunto_verificado), headers=admin_conjunto_auth_headers, json={"texto": ""}).status_code == 422
