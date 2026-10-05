@@ -19,9 +19,13 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.main import app as fastapi_app
 from app.models.conjunto_residencial import ConjuntoResidencial
+from app.models.email_verification_token import EmailVerificationToken
+from app.models.password_reset_token import PasswordResetToken
 from app.models.token_revocado import TokenRevocado
 from app.models.usuario import Usuario
+from app.services import auth_service
 from app.services.auth_service import revocar_jti
+from app.utils.security import hash_token
 from app.tests.conftest import (
     TestSessionLocal,
     TEST_USER_EMAIL,
@@ -41,6 +45,8 @@ def _generar_imagen_real_perfil() -> bytes:
 
 
 IMAGEN_VALIDA_PERFIL = _generar_imagen_real_perfil()
+
+MENSAJE_REGISTRO = "Registro recibido. Revisa tu correo para activar tu cuenta."
 
 
 def _payload_residente(
@@ -63,19 +69,58 @@ def _payload_residente(
     }
 
 
+@pytest.fixture()
+def correos_enviados(monkeypatch) -> list[tuple[str, dict]]:
+    """Reemplaza los envíos de correo de auth_service y anota cada llamada.
+
+    ¿Qué? Issue #373: los tokens ya no se pueden leer de la BD (solo queda
+          su hash), así que el token original se toma de aquí, igual que lo
+          recibiría la persona en su correo.
+    """
+    enviados: list[tuple[str, dict]] = []
+
+    def falso(nombre: str):
+        async def enviar(**kwargs) -> None:
+            enviados.append((nombre, kwargs))
+        return enviar
+
+    for nombre in ("send_verification_email", "send_password_reset_email", "send_duplicate_registration_email"):
+        monkeypatch.setattr(auth_service, nombre, falso(nombre))
+    return enviados
+
+
 class TestRegister:
     """Tests para el endpoint de registro de usuarios (Residente y Reciclador)."""
 
     URL = "/api/v1/auth/register"
 
     def test_register_residente_success(
-        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+        self, client: TestClient, db: Session, conjunto_verificado: ConjuntoResidencial, correos_enviados
     ) -> None:
         response = client.post(self.URL, json=_payload_residente(conjunto_verificado))
         assert response.status_code == 201
-        data = response.json()
-        assert data["email"] == "nuevo.residente@verdeapp.com"
-        assert data["is_active"] is False
+        assert response.json() == {"message": MENSAJE_REGISTRO}
+
+        usuario = db.query(Usuario).filter(Usuario.correo_electronico == "nuevo.residente@verdeapp.com").one()
+        assert usuario.is_active is False
+        assert [nombre for nombre, _ in correos_enviados] == ["send_verification_email"]
+
+    def test_register_guarda_el_token_hasheado_y_el_original_verifica(
+        self, client: TestClient, db: Session, conjunto_verificado: ConjuntoResidencial, correos_enviados
+    ) -> None:
+        """Issue #373 (CN-031): en la BD queda el sha256; el del correo sí sirve."""
+        client.post(self.URL, json=_payload_residente(conjunto_verificado))
+        token_original = correos_enviados[0][1]["token"]
+
+        guardado = db.query(EmailVerificationToken).one()
+        assert guardado.token != token_original
+        assert guardado.token == hash_token(token_original)
+
+        response = client.post("/api/v1/auth/verify-email", json={"token": token_original})
+        assert response.status_code == 200
+        # Usar el hash leído de la BD como si fuera el token no debe servir.
+        db.expire_all()
+        assert client.post("/api/v1/auth/verify-email", json={"token": guardado.token}).status_code == 400
 
     def test_register_residente_sin_codigo_acceso(
         self, client: TestClient, conjunto_verificado: ConjuntoResidencial
@@ -165,14 +210,38 @@ class TestRegister:
         assert "afiliado" in response.json()["detail"].lower()
 
     def test_register_duplicate_email(
-        self, client: TestClient, test_user: object, conjunto_verificado: ConjuntoResidencial
+        self,
+        client: TestClient,
+        db: Session,
+        test_user: Usuario,
+        conjunto_verificado: ConjuntoResidencial,
+        correos_enviados,
     ) -> None:
+        """Issue #373 (CN-026): misma respuesta que un registro nuevo, no se
+        toca la cuenta existente y al dueño le llega un aviso."""
+        password_antes = test_user.password
         response = client.post(
             self.URL,
-            json=_payload_residente(conjunto_verificado, email=TEST_USER_EMAIL),
+            json=_payload_residente(conjunto_verificado, email=TEST_USER_EMAIL, password="OtraClave999"),
         )
+        assert response.status_code == 201
+        assert response.json() == {"message": MENSAJE_REGISTRO}
+
+        db.refresh(test_user)
+        assert test_user.password == password_antes
+        assert correos_enviados == [("send_duplicate_registration_email", {"email": TEST_USER_EMAIL})]
+
+    def test_register_duplicate_email_igual_valida_el_codigo_de_acceso(
+        self, client: TestClient, test_user: Usuario, conjunto_verificado: ConjuntoResidencial, correos_enviados
+    ) -> None:
+        """Issue #373: con un correo existente, un código malo da el mismo
+        400 que con uno nuevo — si no, la diferencia delataría el correo."""
+        payload = _payload_residente(conjunto_verificado, email=TEST_USER_EMAIL)
+        payload["codigo_acceso"] = "ZZZZZZ"
+        response = client.post(self.URL, json=payload)
         assert response.status_code == 400
-        assert "ya está registrado" in response.json()["detail"]
+        assert "no es válido" in response.json()["detail"].lower()
+        assert correos_enviados == []
 
     def test_register_duplicate_email_condicion_de_carrera(
         self,
@@ -181,6 +250,7 @@ class TestRegister:
         test_user: Usuario,
         conjunto_verificado: ConjuntoResidencial,
         monkeypatch,
+        correos_enviados,
     ) -> None:
         """Issue #215 (b9 del diagnóstico): el pre-chequeo de register_user()
         revisa si el correo ya existe ANTES de insertar — pero entre ese
@@ -208,8 +278,9 @@ class TestRegister:
             self.URL,
             json=_payload_residente(conjunto_verificado, email=TEST_USER_EMAIL),
         )
-        assert response.status_code == 400
-        assert "ya está registrado" in response.json()["detail"]
+        assert response.status_code == 201
+        assert response.json() == {"message": MENSAJE_REGISTRO}
+        assert correos_enviados == [("send_duplicate_registration_email", {"email": TEST_USER_EMAIL})]
 
     def test_register_reciclador_success(self, client: TestClient, localidad_test) -> None:
         response = client.post(
@@ -405,10 +476,12 @@ class TestLogin:
         response = client.post(self.URL, json={"password": "TestPass123"})
         assert response.status_code == 422
 
-    def test_bloqueo_tras_5_intentos_fallidos_devuelve_403(
+    def test_bloqueo_tras_5_intentos_fallidos_responde_igual_que_credenciales_malas(
         self, client: TestClient, db: Session, test_user: Usuario
     ) -> None:
-        """CA-001.5 / RN-003 de RQF-001 — 5 fallos seguidos bloquean la cuenta 15 min."""
+        """CA-001.5 / RN-003 de RQF-001 — 5 fallos seguidos bloquean la cuenta 15 min.
+        Issue #373 (CN-026): la cuenta bloqueada responde lo mismo que un
+        correo inexistente, para no revelar que el correo tiene cuenta."""
         payload_malo = {"correo_electronico": TEST_USER_EMAIL, "password": "ContraseñaIncorrecta1"}
         for _ in range(5):
             respuesta = client.post(self.URL, json=payload_malo)
@@ -417,8 +490,12 @@ class TestLogin:
         # Ni siquiera con la contraseña CORRECTA debería entrar ahora.
         payload_bueno = {"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
         bloqueado = client.post(self.URL, json=payload_bueno)
-        assert bloqueado.status_code == 403
-        assert "intentos" in bloqueado.json()["detail"].lower()
+        inexistente = client.post(
+            self.URL, json={"correo_electronico": "fantasma@verdeapp.com", "password": TEST_USER_PASSWORD}
+        )
+        assert bloqueado.status_code == inexistente.status_code == 401
+        assert bloqueado.json() == inexistente.json()
+        assert "15 minutos" in bloqueado.json()["detail"]
 
         db.refresh(test_user)
         assert test_user.bloqueado_hasta is not None
@@ -831,16 +908,28 @@ class TestForgotPassword:
     URL = "/api/v1/auth/forgot-password"
 
     def test_forgot_password_existing_email(
-        self, client: TestClient, test_user: object
+        self, client: TestClient, db: Session, test_user: object, correos_enviados
     ) -> None:
         response = client.post(self.URL, json={"email": TEST_USER_EMAIL})
         assert response.status_code == 200
         assert "registrado" in response.json()["message"].lower()
 
-    def test_forgot_password_nonexistent_email(self, client: TestClient) -> None:
+        # Issue #373 (CN-031): en la BD queda el hash; el del correo restablece.
+        nombre, datos = correos_enviados[0]
+        assert nombre == "send_password_reset_email"
+        guardado = db.query(PasswordResetToken).one()
+        assert guardado.token == hash_token(datos["token"])
+
+        reset = client.post(
+            "/api/v1/auth/reset-password", json={"token": datos["token"], "new_password": "NuevaClave456"}
+        )
+        assert reset.status_code == 200
+
+    def test_forgot_password_nonexistent_email(self, client: TestClient, correos_enviados) -> None:
         response = client.post(self.URL, json={"email": "fantasma@verdeapp.com"})
         assert response.status_code == 200
         assert "registrado" in response.json()["message"].lower()
+        assert correos_enviados == []
 
     def test_forgot_password_invalid_email_format(self, client: TestClient) -> None:
         response = client.post(self.URL, json={"email": "no-es-un-correo"})

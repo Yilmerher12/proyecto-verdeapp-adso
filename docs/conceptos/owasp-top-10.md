@@ -257,6 +257,16 @@ if not user or not verify_password(login_data.password, password_hash):
 
 Las dos ramas ahora tardan lo mismo — no queda ninguna señal de temporización que un atacante pueda medir.
 
+### Agregado después (2026-10-05): los otros caminos que revelaban correos (issue #373)
+
+El login ya no revelaba nada, pero otros tres lugares sí:
+
+1. **Cuenta bloqueada (CN-026)**: respondía 403 "Demasiados intentos fallidos". Bastaba fallar 5 veces con un correo ajeno para saber si tenía cuenta. Ahora responde el mismo 401 que una contraseña incorrecta, con una línea extra para el dueño real: *"Si fallaste varias veces, espera 15 minutos e intenta de nuevo."*
+2. **Registro (CN-026)**: respondía "El correo ya está registrado.". Ahora responde siempre "Registro recibido. Revisa tu correo..." y, si el correo ya tenía cuenta, no crea nada y le manda al dueño un correo de aviso. Las validaciones del Residente (conjunto, código de acceso) corren antes de mirar el correo, y bcrypt corre en los dos caminos: ni el mensaje, ni las validaciones, ni el tiempo distinguen un caso del otro.
+3. **Recuperar contraseña (CN-027)**: el mensaje ya era genérico, pero si el correo existía se esperaba a que saliera el correo por SMTP antes de responder. La diferencia de tiempo delataba el correo. Ahora el correo sale con `BackgroundTasks`, después de responder.
+
+Además (**CN-031**), los tokens de un solo uso (verificar correo, recuperar contraseña, invitación de Admin de Conjunto) ya no se guardan tal cual: la BD guarda su `sha256` (`hash_token` en `be/app/utils/security.py`) y el token original solo viaja en el correo. Si alguien lee la base de datos, no puede usar esos tokens. Se usa sha256 y no bcrypt porque el token es un UUID aleatorio, no una contraseña que se pueda adivinar.
+
 ### Agregado después (2026-08-28): logout que invalida el token de verdad (HU-008/RQF-007)
 
 Otro hueco de sesión encontrado: "cerrar sesión" solo borraba el token del navegador (`sessionStorage`) — el servidor nunca se enteraba, así que ese mismo `access_token`, si alguien lo hubiera copiado antes, seguía siendo válido hasta expirar solo (15 minutos). Se agregó un `jti` único a cada token y una tabla `tokens_revocados`: al cerrar sesión (`POST /api/v1/auth/logout`), el `jti` del access y del refresh token se guarda ahí, y `get_current_user`/`refresh_access_token` los rechazan con 401 aunque no hayan expirado. Verificado con curl reutilizando el token exacto de una sesión recién cerrada.

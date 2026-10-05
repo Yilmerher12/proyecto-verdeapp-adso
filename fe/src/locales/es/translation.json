@@ -184,7 +184,7 @@
       "genericError": "Error al registrar. Verifica los datos o intenta con otro correo.",
       "success": {
         "title": "¡Revisa tu bandeja!",
-        "bodyPrefix": "Enviamos un enlace de verificación a",
+        "bodyPrefix": "Enviamos un correo a",
         "step1": "Abre tu correo electrónico",
         "step2": "Busca el email de VerdeApp",
         "step3": "Haz clic en \"Verificar mi cuenta\"",

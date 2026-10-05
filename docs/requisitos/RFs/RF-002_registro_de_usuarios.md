@@ -51,12 +51,13 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 
 1. El usuario selecciona su rol deseado y completa el formulario de registro con nombre, correo y contraseña.
 2. El frontend valida los formatos y envía la petición al backend.
-3. El backend verifica que el correo electrónico no esté en uso.
+3. Si el rol es Residente, el backend valida el conjunto, el código de acceso y la unidad.
 4. Se aplica la función de hash (bcrypt) a la contraseña.
-5. Se inserta el nuevo usuario en la base de datos con estado inactivo o pendiente de verificación.
-6. El sistema genera un token de verificación único asociado al correo.
-7. Se dispara un servicio de envío de correos (ej. Resend, SMTP) enviando el enlace de activación.
-8. El sistema informa al usuario en pantalla que debe revisar su bandeja de entrada.
+5. El backend revisa si el correo ya está en uso. Si lo está, no crea nada, programa un correo de aviso al dueño y salta al paso 9.
+6. Se inserta el nuevo usuario en la base de datos con estado inactivo o pendiente de verificación.
+7. El sistema genera un token de verificación único y guarda en la BD solo su hash `sha256`.
+8. Se programa el correo con el enlace de activación (con el token original), que sale después de responder (`BackgroundTasks`).
+9. El sistema responde lo mismo en los dos casos, y el frontend informa que debe revisar su bandeja de entrada.
 
 ---
 
@@ -64,8 +65,9 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 
 | Escenario           | Código HTTP | Respuesta                                                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Registro exitoso    | 201         | Mensaje de confirmación: `{"message": "Usuario registrado. Verifique su correo."}`                           |
-| Email duplicado     | 400         | Mensaje de error: `{"detail": "El correo ya está registrado."}`                                              |
+| Registro exitoso    | 201         | Mensaje de confirmación: `{"message": "Registro recibido. Revisa tu correo para activar tu cuenta."}`         |
+| Email duplicado     | 201         | La misma respuesta del registro exitoso; no se crea nada y al dueño del correo le llega un aviso (issue #373) |
+| Conjunto, código o unidad inválidos (Residente) | 400 | Mensaje que explica qué dato falló                                                            |
 | Datos inválidos     | 422         | Detalle de los errores en los campos (ej. contraseña débil)                                                  |
 
 ---
@@ -84,3 +86,4 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 - RN-002: La cuenta no podrá iniciar sesión (RQF-001) hasta que el enlace de verificación del correo sea visitado.
 - RN-003: El token del correo de verificación tiene una validez de 24 horas.
 - RN-004: Un Residente solo puede registrarse aportando el `código de acceso` real y vigente de su conjunto (issue #168) — el Admin de Conjunto lo reparte fuera de la app (cartelera, grupo del conjunto). Si el Admin de Conjunto lo regenera (RQF-012/HU-044), el código anterior deja de servir de inmediato.
+- RN-005: El registro no debe revelar si un correo ya tiene cuenta (issue #373, CN-026): misma respuesta, mismo tiempo de respuesta y mismas validaciones en los dos casos.

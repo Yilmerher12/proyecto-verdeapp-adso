@@ -34,6 +34,12 @@ La autenticación debe basarse en tokens JWT (JSON Web Tokens) firmados con algo
 Los mensajes de error en endpoints de autenticación deben ser genéricos:
 - En login: "Credenciales incorrectas" (sin distinguir si el email existe).
 
+> **Nota (2026-10-05, issue #373 — hallazgos CN-026, CN-027 y CN-031)**:
+> - **Login**: la cuenta bloqueada por intentos fallidos responde el mismo 401 que una contraseña incorrecta o un correo inexistente: *"Credenciales incorrectas. Si fallaste varias veces, espera 15 minutos e intenta de nuevo."* Antes era un 403 con su propio mensaje, y eso revelaba que el correo existía. Los mensajes de "cuenta no verificada" y "cuenta desactivada" (403) se mantienen: solo aparecen después de acertar la contraseña, así que no revelan nada a quien no la conoce.
+> - **Registro**: `/register` responde siempre `201 {"message": "Registro recibido. Revisa tu correo para activar tu cuenta."}`, se haya creado la cuenta o el correo ya tuviera una. En el segundo caso no se crea nada y al dueño le llega un correo de aviso. Las validaciones del conjunto y del código de acceso corren antes de mirar el correo, para que tampoco se pueda distinguir por ellas.
+> - **Tiempos de respuesta**: los correos de registro y de recuperación de contraseña salen con `BackgroundTasks`, después de responder, y el hash bcrypt de la contraseña se calcula en los dos caminos del registro. Así la respuesta tarda lo mismo exista o no el correo.
+> - **Tokens de un solo uso**: verificar correo, recuperar contraseña e invitación de Admin de Conjunto se guardan en la BD como `sha256` (función `hash_token` de `be/app/utils/security.py`); el correo lleva el token original. La migración `e6f7a8b9c0d1` convirtió los tokens que ya existían.
+
 ### RNF-001.4 — Validación de entradas
 Todas las entradas del usuario deben validarse tanto en el frontend como en el backend:
 - Frontend: validación con lógica React/TypeScript antes de enviar.

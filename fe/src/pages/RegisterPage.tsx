@@ -342,26 +342,8 @@ export function RegisterPage() {
       });
 
       setShowSuccessModal(true);
-    } catch (err: any) {
-      // ¿Qué? register() en AuthContext SIEMPRE intenta hacer login automático
-      //       justo después de crear la cuenta — y ese login falla a propósito
-      //       porque la cuenta recién creada todavía no está verificada. Por
-      //       eso marca el error con `requiresEmailVerification = true`: es la
-      //       señal exacta de "sí se registró, solo falta que confirmes el
-      //       correo", sin necesidad de adivinar por el texto del error.
-      // ¿Para qué? Antes se buscaba texto tipo "registrado" dentro del error
-      //           para decidir si mostrar éxito — pero el error real de
-      //           "correo ya registrado" (cuenta que NUNCA se creó) también
-      //           contiene esa palabra, así que se mostraba éxito por error.
-      // ¿Impacto? Ahora solo se muestra éxito cuando la cuenta sí se creó;
-      //           cualquier otro fallo (correo duplicado, datos inválidos,
-      //           etc.) muestra el mensaje real del backend.
-      if (err?.requiresEmailVerification) {
-        setGeneralError(null);
-        setShowSuccessModal(true);
-      } else {
-        setGeneralError(err instanceof Error ? err.message : t("auth.register.genericError"));
-      }
+    } catch (err: unknown) {
+      setGeneralError(err instanceof Error ? err.message : t("auth.register.genericError"));
     } finally {
       setIsLoading(false);
     }

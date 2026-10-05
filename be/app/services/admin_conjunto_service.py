@@ -32,7 +32,7 @@ from app.schemas.admin_conjunto import (
 )
 
 from app.utils.email import send_admin_conjunto_invitation_email
-from app.utils.security import hash_password
+from app.utils.security import hash_password, hash_token
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,8 @@ async def invitar_admin_conjunto(
         # ¿Qué? Sin "id=" aquí a propósito — el modelo ya genera un UUIDv4
         #       por su cuenta (default=generar_uuid4 en el modelo).
         correo_electronico=datos.correo_electronico,
-        token=token,
+        # ¿Qué? Issue #373 (CN-031): se guarda el hash; el correo lleva el original.
+        token=hash_token(token),
         conjuntos_asignados=ids_como_texto,
         invitado_por_id=invitado_por.id_usuario,
         expires_at=expira,
@@ -177,7 +178,7 @@ def _obtener_invitacion_valida(db: Session, token: str, lanzar_error: bool):
           valida que no esté usada ni vencida.
     """
     invitacion = db.query(InvitacionAdminConjunto).filter(
-        InvitacionAdminConjunto.token == token,
+        InvitacionAdminConjunto.token == hash_token(token),
         InvitacionAdminConjunto.used.is_(False),
     ).first()
 

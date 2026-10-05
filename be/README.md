@@ -434,6 +434,8 @@ class PasswordResetToken(Base):
         # ondelete="CASCADE" → si se elimina el usuario, se elimina el token
     )
     token = Column(String(255), unique=True, index=True, nullable=False)
+    # token → guarda el sha256 del token (hash_token, issue #373), nunca el original:
+    #         quien lea la BD no puede usarlo. El original solo viaja en el correo.
     expires_at = Column(DateTime(timezone=True), nullable=False)
     used = Column(Boolean, default=False, nullable=False)
     # used=True → token de un solo uso, no puede volver a usarse
@@ -824,18 +826,23 @@ reutilizar funciones entre endpoints, y cambiar el framework web sin tocar la l�
 # El código real también crea la fila de perfil (Residente o Reciclador)
 # según user_data.rol — Usuario solo guarda los campos de autenticación
 # (correo, contraseña, rol); nombre/apellidos viven en esas tablas aparte.
-async def register_user(db: Session, user_data: UserCreate) -> Usuario:
-    # Paso 1: Verificar correo duplicado
-    stmt = select(Usuario).where(Usuario.correo_electronico == user_data.correo_electronico)
-    existing_user = db.execute(stmt).scalar_one_or_none()
-    if existing_user:
-        raise HTTPException(400, "El correo ya está registrado.")
+def register_user(db: Session, user_data: UserCreate, background_tasks: BackgroundTasks) -> None:
+    # Paso 1: Validar conjunto/código/unidad (Residente) ANTES de mirar el correo,
+    #         para que un correo existente no se delate por saltarse estas validaciones
+    datos_residente = _validar_datos_residente(db, user_data) if user_data.rol == "residente" else None
+    password_hasheada = hash_password(user_data.password)  # en los dos caminos: mismo tiempo
 
-    # Paso 2: Crear usuario INACTIVO con contraseña hasheada
+    # Paso 2: Correo duplicado → no se crea nada, se avisa al dueño y se responde igual (issue #373)
+    stmt = select(Usuario).where(Usuario.correo_electronico == user_data.correo_electronico)
+    if db.execute(stmt).scalar_one_or_none():
+        background_tasks.add_task(send_duplicate_registration_email, email=user_data.correo_electronico)
+        return
+
+    # Paso 3: Crear usuario INACTIVO con contraseña hasheada
     nuevo_usuario = Usuario(
         correo_electronico=user_data.correo_electronico,
         id_rol=role_id_mapped,                              # RESIDENTE o RECICLADOR
-        password=hash_password(user_data.password),         # ← NUNCA texto plano
+        password=password_hasheada,                         # ← NUNCA texto plano
         is_active=False,                                    # se activa al verificar el correo
     )
     db.add(nuevo_usuario)
@@ -843,26 +850,21 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
 
     # (aquí el código real crea la fila de Residente o Reciclador correspondiente)
 
-    db.commit()
-
-    # Paso 3: Generar token de verificación de email
+    # Paso 4: Generar token de verificación — en la BD queda solo su sha256
     token_verificacion = str(uuid.uuid4())
     db_token_verif = EmailVerificationToken(
         id_usuario=nuevo_usuario.id_usuario,
-        token=token_verificacion,
+        token=hash_token(token_verificacion),
         expires_at=datetime.now(timezone.utc) + timedelta(days=1),
         used=False,
     )
     db.add(db_token_verif)
-    db.commit()
+    db.commit()  # usuario, perfil y token: todos juntos o ninguno
 
-    # Paso 4: Enviar email de verificación (no bloqueante — si falla, el usuario igual se crea)
-    try:
-        await send_verification_email(email=nuevo_usuario.correo_electronico, token=token_verificacion)
-    except Exception:
-        logger.warning("Registro completado, pero el correo no se pudo despachar", exc_info=True)
-
-    return nuevo_usuario
+    # Paso 5: El correo (con el token original) sale después de responder
+    background_tasks.add_task(
+        send_verification_email, email=nuevo_usuario.correo_electronico, token=token_verificacion
+    )
 ```
 
 ### 13.3 Flujo de login
@@ -870,7 +872,8 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
 ```python
 # Versión simplificada del flujo real (be/app/services/auth_service.py).
 # El código real, además, bloquea la cuenta 15 min tras 5 fallos seguidos
-# (RN-003/RQF-001) y siempre corre verify_password() — incluso si el
+# (RN-003/RQF-001) — respondiendo el mismo 401 que una contraseña
+# incorrecta (issue #373) — y siempre corre verify_password() — incluso si el
 # usuario no existe, contra un hash señuelo — para que ambas ramas
 # tarden lo mismo y no revelen por temporización qué correos existen.
 def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
@@ -881,8 +884,9 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     password_hash = user.password if user else DUMMY_PASSWORD_HASH
     if not user or not verify_password(login_data.password, password_hash):
         log_login_fallido(login_data.correo_electronico, "credenciales_invalidas")
-        raise HTTPException(401, "Credenciales incorrectas")
+        raise HTTPException(401, MENSAJE_CREDENCIALES_INCORRECTAS)
 
+    # Este 403 solo lo ve quien acertó la contraseña: no revela nada a un atacante
     if not user.is_active:
         log_login_fallido(login_data.correo_electronico, "cuenta_no_verificada")
         raise HTTPException(403, "Tu cuenta no ha sido verificada aún.")
@@ -900,24 +904,26 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
 # Versión simplificada del flujo real (be/app/services/auth_service.py).
 
 # PASO 1 — Solicitar recuperación
-async def request_password_reset(db: Session, email: str) -> bool:
+def request_password_reset(db: Session, email: str, background_tasks: BackgroundTasks) -> None:
     user = db.query(Usuario).filter(Usuario.correo_electronico == email).first()
 
     # SEGURIDAD: retorna silenciosamente aunque el correo no exista
     # Así el atacante no puede saber qué correos están registrados en el sistema
     if not user:
-        return True
+        return
 
+    token_str = str(uuid.uuid4())             # 122 bits de entropía — imposible de adivinar
     db_token = PasswordResetToken(
         id_usuario=user.id_usuario,
-        token=str(uuid.uuid4()),              # 122 bits de entropía — imposible de adivinar
+        token=hash_token(token_str),          # en la BD solo el sha256 (issue #373)
         expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
         used=False,
     )
     db.add(db_token)
     db.commit()
-    await send_password_reset_email(email=user.correo_electronico, token=db_token.token)
-    return True
+    # El correo sale DESPUÉS de responder: si se esperara aquí, la respuesta
+    # tardaría más cuando el correo existe y eso lo delataría (issue #373)
+    background_tasks.add_task(send_password_reset_email, email=user.correo_electronico, token=token_str)
 
 # PASO 2 — Restablecer contraseña con el token
 def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
@@ -925,7 +931,7 @@ def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
     # token inválido Y uno ya usado comparten el mismo mensaje de error:
     # el atacante no gana información distinguiendo un caso del otro.
     db_token = db.query(PasswordResetToken).filter(
-        PasswordResetToken.token == reset_data.token,
+        PasswordResetToken.token == hash_token(reset_data.token),  # se busca por el hash
         PasswordResetToken.used.is_(False),
     ).first()
     if not db_token:
@@ -1330,15 +1336,15 @@ uv run pytest app/tests/test_auth.py -v
 
 ### 17.5 Tests de autenticación (`test_auth.py`)
 
-Esta tabla solo resume `test_auth.py`. La suite completa tiene 24 archivos en `app/tests/`, uno por dominio (comunicados, novedades, auditorías, puntos de acopio, contacto, límites de longitud...), con 520 pruebas en total (septiembre de 2026). Para ver el conteo actual: `uv run pytest -q`.
+Esta tabla solo resume `test_auth.py`. La suite completa tiene 27 archivos en `app/tests/`, uno por dominio (comunicados, novedades, auditorías, puntos de acopio, contacto, límites de longitud...), con 602 pruebas en total (octubre de 2026). Para ver el conteo actual: `uv run pytest -q`.
 
 | Clase de test           | Endpoint              | Casos cubiertos                                                                       |
 | ----------------------- | --------------------- | ------------------------------------------------------------------------------------- |
-| `TestRegister`          | POST /register        | Éxito, email duplicado, contraseña débil (4 variantes), email inválido, nombre vacío  |
-| `TestLogin`             | POST /login           | Éxito, contraseña incorrecta, email inexistente, cuenta inactiva, email no verificado |
+| `TestRegister`          | POST /register        | Éxito, email duplicado (misma respuesta + aviso al dueño), token guardado con hash, contraseña débil, email inválido, nombre vacío |
+| `TestLogin`             | POST /login           | Éxito, contraseña incorrecta, email inexistente, cuenta bloqueada (mismo 401), cuenta inactiva, email no verificado |
 | `TestRefresh`           | POST /refresh         | Éxito, token inválido, usar access token como refresh                                 |
 | `TestChangePassword`    | POST /change-password | Éxito + verificar login, contraseña actual incorrecta, sin autenticación              |
-| `TestForgotPassword`    | POST /forgot-password | Email existente, email inexistente (mismo mensaje — anti-enumeración)                 |
+| `TestForgotPassword`    | POST /forgot-password | Email existente (token con hash + restablece), email inexistente (mismo mensaje, sin correo) |
 | `TestResetPassword`     | POST /reset-password  | Éxito + verificar login, token inválido, token expirado, token usado                  |
 | `TestGetMe`             | GET /users/me         | Éxito, sin autenticación, token inválido                                              |
 | `TestEmailVerification` | POST /verify-email    | Éxito + login funciona, token inválido, token expirado, token usado                   |

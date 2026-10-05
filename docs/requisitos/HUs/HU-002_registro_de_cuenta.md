@@ -41,7 +41,9 @@
 
 - **Dado que** completo el formulario de registro,
 - **cuando** ingreso un correo que ya está registrado en el sistema,
-- **entonces** debo ver un mensaje de error indicando que el correo ya está en uso.
+- **entonces** no se crea una cuenta nueva, la pantalla muestra la misma confirmación de "revisa tu correo" que un registro nuevo, y al correo le llega un aviso de que ya tiene una cuenta, con enlaces para iniciar sesión o recuperar la contraseña.
+
+> **Nota (2026-10-05, issue #373 — CN-026)**: antes este criterio pedía mostrar "el correo ya está en uso" en pantalla. Se cambió porque ese mensaje dejaba a cualquiera averiguar qué correos tienen cuenta en VerdeApp. El dueño real se entera igual, por el correo de aviso.
 
 ### CA-002.3 — Validación de contraseña
 
