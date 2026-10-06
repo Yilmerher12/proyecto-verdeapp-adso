@@ -1360,14 +1360,14 @@ cd be
 # Todos los tests con salida detallada
 uv run pytest -v
 
-# Con reporte de cobertura
-uv run pytest --cov=app --cov-report=term-missing
+# Cobertura: ya la mide "uv run pytest" solo (addopts en pyproject.toml) y falla si baja de fail_under
+uv run pytest
 
 # Un test específico
-uv run pytest app/tests/test_auth.py::TestLogin::test_login_success -v
+uv run pytest app/tests/test_auth.py::TestLogin::test_login_success -v --no-cov
 
 # Un archivo específico
-uv run pytest app/tests/test_auth.py -v
+uv run pytest app/tests/test_auth.py -v --no-cov   # --no-cov: un solo archivo no alcanza el umbral
 ```
 
 ### 17.4 Cobertura del proyecto
@@ -1457,7 +1457,7 @@ uv run alembic upgrade head
 uv run ruff check app/
 
 # 5. Tests completos con cobertura
-uv run pytest --cov=app --cov-report=term-missing -v
+uv run pytest -v
 
 # 6. Arrancar el servidor
 uv run uvicorn app.main:app --reload

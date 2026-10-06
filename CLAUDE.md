@@ -18,9 +18,9 @@ uv run alembic upgrade head                          # aplicar migraciones pendi
 uv run alembic revision --autogenerate -m "mensaje"  # generar una migración nueva (revisar el archivo generado a mano — ver Arquitectura)
 uv run python -m app.seed                            # sembrar roles/localidades/usuarios de prueba/conjuntos reales (idempotente)
 uv run uvicorn app.main:app --reload --port 8000     # levantar el servidor de desarrollo
-uv run pytest -q                                     # correr toda la suite
-uv run pytest app/tests/test_auth.py -q              # un solo archivo
-uv run pytest app/tests/test_auth.py::TestGetMe::test_get_me_success -q  # un solo test
+uv run pytest -q                                     # correr toda la suite (mide cobertura y falla si baja de fail_under)
+uv run pytest app/tests/test_auth.py -q --no-cov     # un solo archivo (--no-cov: si no, falla por el umbral de cobertura)
+uv run pytest app/tests/test_auth.py::TestGetMe::test_get_me_success -q --no-cov  # un solo test
 uv run ruff check .                                  # lint (incluye formato)
 ```
 
@@ -29,7 +29,7 @@ uv run ruff check .                                  # lint (incluye formato)
 ```bash
 pnpm install       # instalar dependencias
 pnpm dev           # servidor de desarrollo (Vite, puerto 5173)
-pnpm test          # toda la suite (vitest run)
+pnpm test          # toda la suite con cobertura (vitest run --coverage; falla si baja de thresholds)
 pnpm test:watch    # modo watch
 npx vitest run src/__tests__/pages/AdminDashboard.test.tsx   # un solo archivo de test
 pnpm lint          # eslint .
@@ -37,6 +37,17 @@ npx tsc -b --noEmit  # solo chequeo de tipos, sin compilar (pnpm build ya incluy
 pnpm build         # tsc -b && vite build
 pnpm format        # prettier --write
 ```
+
+### E2E (`e2e/`) — Playwright, `pnpm`
+
+```bash
+pnpm install                           # instalar dependencias
+pnpm exec playwright install chromium  # descargar el navegador (una sola vez por equipo)
+pnpm test                              # correr los E2E (Playwright levanta fe/ solo; backend y BD deben estar encendidos)
+pnpm codegen                           # grabar un flujo en el navegador y generar el código del test
+```
+
+Bootcamp de testing del trimestre (repo del instructor: `ergrato-dev/bc-testing-adso`): cada semana tiene un reto que se resuelve en este repo, en una rama `test/semana-NN`. La matriz de capas por integrante y el historial de cobertura viven en `docs/matriz-rotacion.md`; el umbral de cobertura (`fail_under` en `be/pyproject.toml`, `thresholds` en `fe/vite.config.ts`) solo sube, nunca baja.
 
 ### Entorno completo
 
@@ -87,7 +98,7 @@ Ver `docs/requisitos/restricciones.md` para el detalle completo (versiones fijad
 
 ## Modelo de ramas y flujo de trabajo en Git
 
-`main` (estable, se etiqueta por entrega) ← `develop` (integración) ← una rama por tarjeta, siempre creada desde `develop` actualizado, nunca directo sobre `develop`/`main`. Prefijo según el tipo de cambio: `feat/`, `fix/`, `docs/`, `chore/`, `content/`. Commits en Conventional Commits, en español (`feat: agregar filtro por localidad...`), el tipo coincide con el prefijo de la rama. PR siempre hacia `develop`, nunca hacia `main` directo.
+`main` (estable, se etiqueta por entrega) ← `develop` (integración) ← una rama por tarjeta, siempre creada desde `develop` actualizado, nunca directo sobre `develop`/`main`. Prefijo según el tipo de cambio: `feat/`, `fix/`, `docs/`, `chore/`, `content/`, `test/`. Commits en Conventional Commits, en español (`feat: agregar filtro por localidad...`), el tipo coincide con el prefijo de la rama. PR siempre hacia `develop`, nunca hacia `main` directo.
 
 ## Cómo trabajar en este proyecto con Claude Code
 
