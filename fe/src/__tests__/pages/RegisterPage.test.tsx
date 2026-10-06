@@ -11,6 +11,7 @@
 
 import { createEvent, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Route, Routes, useLocation } from "react-router-dom";
 import axios from "axios";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { renderWithProviders } from "../helpers";
@@ -503,5 +504,92 @@ describe("RegisterPage", () => {
     expect(screen.getByPlaceholderText("Ej: 3, B")).toHaveAttribute("maxLength", "10");
     expect(screen.getByPlaceholderText("Ej: 402")).toHaveAttribute("maxLength", "10");
     expect(screen.getByPlaceholderText("6 letras o números")).toHaveAttribute("maxLength", "6");
+  });
+
+  // ¿Qué? Opción "¿Administras un conjunto?": no es un rol registrable, así
+  //       que reemplaza el formulario por las instrucciones para pedir la
+  //       cuenta (solo se crea por invitación).
+  describe("opción ¿Administras un conjunto?", () => {
+    // ¿Qué? Muestra la ruta + query a la que se llegó, para comprobar a
+    //       dónde lleva el botón "Solicitar acceso".
+    function DestinoContacto() {
+      const { pathname, search } = useLocation();
+      return <p>destino:{pathname}{search}</p>;
+    }
+
+    function renderConRutas() {
+      return renderWithProviders(
+        <Routes>
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/contacto" element={<DestinoContacto />} />
+        </Routes>,
+        { initialRoute: "/register" },
+      );
+    }
+
+    it("las 3 opciones de rol son botones alcanzables con el teclado y marcan cuál está elegida", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+      const residente = screen.getByRole("button", { name: "Residente" });
+      const reciclador = screen.getByRole("button", { name: "Reciclador" });
+      const admin = screen.getByRole("button", { name: "¿Administras un conjunto?" });
+      expect(residente).toHaveAttribute("aria-pressed", "true");
+      expect(reciclador).toHaveAttribute("aria-pressed", "false");
+      expect(admin).toHaveAttribute("aria-pressed", "false");
+
+      reciclador.focus();
+      await user.keyboard("{Enter}");
+      expect(reciclador).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByText("Perfil Operativo *")).toBeInTheDocument();
+    });
+
+    it("al elegirla oculta el formulario y muestra las instrucciones y los documentos", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+      await user.click(screen.getByRole("button", { name: "¿Administras un conjunto?" }));
+
+      expect(screen.getByText("Las cuentas de administrador se crean por invitación")).toBeInTheDocument();
+      expect(screen.getByText(/Certificado de existencia y representación legal/)).toBeInTheDocument();
+      expect(screen.getByText(/Copia de tu cédula/)).toBeInTheDocument();
+      expect(screen.getByText(/nunca se suben a VerdeApp/)).toBeInTheDocument();
+      expect(screen.queryByLabelText("Nombres *")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Contraseña *")).not.toBeInTheDocument();
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Registrar Cuenta|Completa los campos/ })).not.toBeInTheDocument();
+    });
+
+    it("no muestra ningún correo electrónico en pantalla", async () => {
+      const user = userEvent.setup();
+      const { container } = renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+      await user.click(screen.getByRole("button", { name: "¿Administras un conjunto?" }));
+
+      expect(container.textContent).not.toMatch(/\S+@\S+\.\S+/);
+      expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
+    });
+
+    it("el botón Solicitar acceso lleva al formulario de contacto con el motivo de la solicitud", async () => {
+      const user = userEvent.setup();
+      renderConRutas();
+
+      await user.click(screen.getByRole("button", { name: "¿Administras un conjunto?" }));
+      await user.click(screen.getByRole("button", { name: "Solicitar acceso" }));
+
+      expect(screen.getByText("destino:/contacto?motivo=admin-conjunto")).toBeInTheDocument();
+    });
+
+    it("al volver a Residente el formulario reaparece con lo que ya se había escrito", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+      await user.type(screen.getByLabelText("Nombres *"), "Juan");
+      await user.click(screen.getByRole("button", { name: "¿Administras un conjunto?" }));
+      await user.click(screen.getByRole("button", { name: "Residente" }));
+
+      expect(screen.getByLabelText("Nombres *")).toHaveValue("Juan");
+      expect(screen.getByText("Ubicación de Residencia *")).toBeInTheDocument();
+    });
   });
 });

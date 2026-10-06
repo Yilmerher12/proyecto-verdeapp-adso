@@ -424,7 +424,7 @@ Cada vez que se siembra la base de datos (`uv run python -m app.seed`, o automá
 | Reciclador | `reciclador.prueba@verdeapp.com` | `AdminVerde2026*` |
 | Residente | `residente.prueba@verdeapp.com` | `AdminVerde2026*` |
 
-> ⚠️ **Importante:** Administrador del Sistema y Administrador de Conjunto **no tienen registro público** — solo existen estas cuentas sembradas (el Admin de Conjunto se crea normalmente por invitación del Admin del Sistema, ver [HU-018](docs/requisitos/HUs/HU-018_admin_sistema_invita_admin_conjunto.md)). Si olvidas estas credenciales en un equipo nuevo (p. ej. en el SENA), no hay forma de crear otra cuenta de esos dos roles desde la interfaz — hay que volver a esta tabla.
+> ⚠️ **Importante:** Administrador del Sistema y Administrador de Conjunto **no tienen registro público** — solo existen estas cuentas sembradas (el Admin de Conjunto se crea normalmente por invitación del Admin del Sistema, ver [HU-018](docs/requisitos/HUs/HU-018_admin_sistema_invita_admin_conjunto.md); en el registro, la opción "¿Administras un conjunto?" explica cómo pedir esa invitación, ver [HU-002](docs/requisitos/HUs/HU-002_registro_de_cuenta.md) CA-002.7). Si olvidas estas credenciales en un equipo nuevo (p. ej. en el SENA), no hay forma de crear otra cuenta de esos dos roles desde la interfaz — hay que volver a esta tabla.
 >
 > Residente y Reciclador sí tienen registro público (`/register`), así que para esos dos roles siempre puedes crear una cuenta nueva si lo necesitas.
 

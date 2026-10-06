@@ -6,6 +6,8 @@
  *           rompiendo la consistencia visual del diseño.
  */
 
+import { useTranslation } from "react-i18next";
+
 /**
  * ¿Qué? Props del componente Button.
  * ¿Para qué? Configurar variante (primary, secondary, danger), tamaño, loading, etc.
@@ -68,13 +70,16 @@ export function Button({
   //            de pantalla no puede ver el spinner visual. aria-busy="true" + aria-label
   //            dinámico le informan que la acción está en progreso.
   // ¿Impacto? Sin esto, un usuario ciego haría clic repetidamente al no recibir feedback.
+  //           El texto sale de i18n: antes estaba fijo en español.
+  const { t } = useTranslation();
+
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled || isLoading}
       aria-busy={isLoading}
-      aria-label={isLoading ? "Procesando, por favor espera" : undefined}
+      aria-label={isLoading ? t("common.processing") : undefined}
       className={`inline-flex cursor-pointer items-center justify-center rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""}`}
     >
       {/* ¿Qué? Spinner SVG animado que aparece durante la carga. */}

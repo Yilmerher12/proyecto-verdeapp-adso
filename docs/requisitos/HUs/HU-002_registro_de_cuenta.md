@@ -74,3 +74,14 @@
 - **Dado que** me registré pero no he hecho clic en el enlace de verificación,
 - **cuando** intento iniciar sesión,
 - **entonces** el sistema me lo impide y me indica que debo verificar mi correo primero.
+
+### CA-002.7 — Opción para administradores de conjunto
+
+- **Dado que** estoy en la página de registro y administro un conjunto,
+- **cuando** elijo la opción "¿Administras un conjunto?" (tercera opción del selector de rol),
+- **entonces** el formulario se reemplaza por instrucciones para pedir la cuenta: los pasos, los documentos que acreditan el cargo (certificado de existencia y representación legal de la Alcaldía Local, cédula, acta de nombramiento, contrato y, si es una empresa, certificado de Cámara de Comercio) y un botón "Solicitar acceso" que abre el formulario de contacto con el asunto y una plantilla del mensaje ya escritos.
+- La pantalla **no muestra ningún correo** y la app **no recibe ni guarda documentos**: los documentos se piden después por correo y se eliminan tras la revisión (ver HU-018 y la Política de Privacidad, sección 2).
+- Las 3 opciones del selector son botones: se pueden alcanzar con Tab y elegir con Enter.
+
+> **Nota (2026-10-06)**: antes un Administrador de Conjunto que llegaba al registro no tenía cómo saber que su cuenta se crea por invitación ni a quién pedirla.
+

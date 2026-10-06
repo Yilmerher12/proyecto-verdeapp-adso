@@ -56,3 +56,11 @@
 - **Dado que** envié la invitación exitosamente,
 - **cuando** el sistema responde,
 - **entonces** debo ver un mensaje confirmando que se envió al correo indicado.
+
+### CA-018.5 — Cómo llega una solicitud al Admin Sistema
+
+- **Dado que** una persona eligió "¿Administras un conjunto?" en el registro (CA-002.7) y envió la solicitud,
+- **cuando** el mensaje llega al buzón de contacto del equipo (`CONTACT_EMAIL` del backend) con el asunto "Solicitud de cuenta de Administrador de Conjunto",
+- **entonces** el equipo le responde por correo pidiendo los documentos, los verifica fuera de la app y, si todo está en orden, usa el formulario de invitación de esta HU con el correo de la persona.
+- Los documentos nunca pasan por VerdeApp y se eliminan del correo al terminar la revisión.
+

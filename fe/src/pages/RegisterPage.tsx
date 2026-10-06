@@ -11,12 +11,15 @@ import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { UserRound, HardHat, MailCheck, Map as MapIcon } from "lucide-react";
+import { HardHat, MailCheck, Map as MapIcon } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
 import { PoliticaPrivacidadPage } from "@/pages/PoliticaPrivacidadPage";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
+import { SolicitudAdminConjuntoInfo } from "@/components/SolicitudAdminConjuntoInfo";
+import { ROLE_THEME } from "@/config/roleTheme";
+import { RoleId } from "@/types/auth";
 import {
   APELLIDOS_MAX_LENGTH,
   ASOCIACION_MAX_LENGTH,
@@ -32,6 +35,16 @@ import {
 } from "@/lib/validacion";
 
 type DocumentoLegal = "terminos" | "privacidad" | null;
+
+// ¿Qué? Las 3 opciones del selector de rol, con el ícono de cada rol sacado
+//       de ROLE_THEME (el mismo del sidebar y del perfil).
+// ¿Para qué? "admin_conjunto" no se envía nunca al backend: al elegirlo, el
+//           formulario se reemplaza por SolicitudAdminConjuntoInfo.
+const OPCIONES_ROL = [
+  { rol: "residente", Icon: ROLE_THEME[RoleId.RESIDENTE].Icon, etiqueta: "auth.register.roleResident" },
+  { rol: "reciclador", Icon: ROLE_THEME[RoleId.RECICLADOR].Icon, etiqueta: "auth.register.roleRecycler" },
+  { rol: "admin_conjunto", Icon: ROLE_THEME[RoleId.ADMIN_CONJUNTO].Icon, etiqueta: "auth.register.roleAdminConjunto" },
+] as const;
 
 // ¿Qué? Campos que se revisan tanto en tiempo real (al salir del campo)
 //       como al enviar el formulario — una sola lista para no repetirla.
@@ -428,285 +441,300 @@ export function RegisterPage() {
           </div>
 
           {/*
-            ¿Qué? noValidate desactiva la validación nativa del navegador
-                  (los globos tipo "Please include an '@'..." de Chrome).
-            ¿Para qué? El resto de formularios de auth (Login, Cambiar
-                      contraseña, Recuperar contraseña) ya lo tienen — este
-                      era el único que se había quedado sin él, por eso
-                      Chrome mostraba sus propios avisos en vez de los
-                      mensajes en rojo consistentes con el diseño de la app.
+            ¿Qué? Selector de rol con 3 opciones. La tercera no es un rol que
+                  se pueda registrar: muestra cómo pedir la cuenta de
+                  Administrador de Conjunto (solo se crea por invitación).
+            ¿Para qué? Antes eran <div> con onClick: no se podían alcanzar con
+                      Tab ni elegir con Enter. Como <button> sí, y aria-pressed
+                      le dice al lector de pantalla cuál está elegido.
+            ¿Impacto? Va FUERA del <form> para que elegir la tercera opción
+                     pueda reemplazar el formulario completo.
           */}
-          <form onSubmit={handleSubmit} noValidate className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div
-                onClick={() => setFormData(p => ({ ...p, rol: "residente" }))}
-                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "residente" ? "border-accent-600 bg-accent-50/50 dark:bg-accent-900/20 shadow-sm" : "border-gray-200 dark:border-night-line hover:border-accent-300"}`}
-              >
-                <UserRound className={`icon-xl mx-auto mb-2 ${formData.rol === "residente" ? "text-accent-600" : "text-gray-400"}`}/>
-                <span className={`font-semibold ${formData.rol === "residente" ? "text-accent-800 dark:text-accent-400" : "text-gray-500 dark:text-gray-400"}`}>{t("auth.register.roleResident")}</span>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+            {OPCIONES_ROL.map(({ rol, Icon, etiqueta }) => {
+              const elegido = formData.rol === rol;
+              return (
+                <button
+                  key={rol}
+                  type="button"
+                  aria-pressed={elegido}
+                  onClick={() => setFormData(p => ({ ...p, rol }))}
+                  className={`flex flex-col items-center justify-start p-2 sm:p-4 border-2 text-center cursor-pointer rounded-2xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${elegido ? "border-accent-600 bg-accent-50/50 dark:bg-accent-900/20 shadow-sm" : "border-gray-200 dark:border-night-line hover:border-accent-300"}`}
+                >
+                  <Icon className={`icon-xl mb-2 ${elegido ? "text-accent-600" : "text-gray-400"}`}/>
+                  <span className={`text-xs sm:text-base leading-tight font-semibold ${elegido ? "text-accent-800 dark:text-accent-400" : "text-gray-500 dark:text-gray-400"}`}>{t(etiqueta)}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {formData.rol === "admin_conjunto" ? (
+            <SolicitudAdminConjuntoInfo />
+          ) : (
+            /*
+              ¿Qué? noValidate desactiva la validación nativa del navegador
+                    (los globos tipo "Please include an '@'..." de Chrome).
+              ¿Para qué? El resto de formularios de auth (Login, Cambiar
+                        contraseña, Recuperar contraseña) ya lo tienen — este
+                        era el único que se había quedado sin él, por eso
+                        Chrome mostraba sus propios avisos en vez de los
+                        mensajes en rojo consistentes con el diseño de la app.
+            */
+            <form onSubmit={handleSubmit} noValidate className="space-y-6">
+              {/*
+                ¿Qué? Bloque de identidad: Nombres, Apellidos y Teléfono, cada
+                      uno en su propia fila a ancho completo.
+                ¿Para qué? Teléfono se ubica aquí (junto a los datos personales,
+                          no junto a las credenciales), tal como se pidió.
+              */}
+              <div className="space-y-4">
+                <InputField
+                  label={t("auth.register.fields.firstName")}
+                  name="nombre"
+                  maxLength={NOMBRE_MAX_LENGTH}
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={fieldErrors.nombre}
+                />
+                <InputField
+                  label={t("auth.register.fields.lastName")}
+                  name="apellidos"
+                  maxLength={APELLIDOS_MAX_LENGTH}
+                  value={formData.apellidos}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={fieldErrors.apellidos}
+                />
+                <InputField
+                  label={t("auth.register.fields.phone")}
+                  name="numero_telefonico"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={TELEFONO_MAX_LENGTH}
+                  value={formData.numero_telefonico}
+                  onChange={handlePhoneChange}
+                  onBlur={handleBlur}
+                  error={fieldErrors.numero_telefonico}
+                />
               </div>
-              <div
-                onClick={() => setFormData(p => ({ ...p, rol: "reciclador" }))}
-                className={`p-4 border-2 text-center cursor-pointer rounded-2xl transition-all ${formData.rol === "reciclador" ? "border-accent-600 bg-accent-50/50 dark:bg-accent-900/20 shadow-sm" : "border-gray-200 dark:border-night-line hover:border-accent-300"}`}
-              >
-                <HardHat className={`icon-xl mx-auto mb-2 ${formData.rol === "reciclador" ? "text-accent-600" : "text-gray-400"}`}/>
-                <span className={`font-semibold ${formData.rol === "reciclador" ? "text-accent-800 dark:text-accent-400" : "text-gray-500 dark:text-gray-400"}`}>{t("auth.register.roleRecycler")}</span>
-              </div>
-            </div>
 
-            {/*
-              ¿Qué? Bloque de identidad: Nombres, Apellidos y Teléfono, cada
-                    uno en su propia fila a ancho completo.
-              ¿Para qué? Teléfono se ubica aquí (junto a los datos personales,
-                        no junto a las credenciales), tal como se pidió.
-            */}
-            <div className="space-y-4">
-              <InputField
-                label={t("auth.register.fields.firstName")}
-                name="nombre"
-                maxLength={NOMBRE_MAX_LENGTH}
-                value={formData.nombre}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={fieldErrors.nombre}
-              />
-              <InputField
-                label={t("auth.register.fields.lastName")}
-                name="apellidos"
-                maxLength={APELLIDOS_MAX_LENGTH}
-                value={formData.apellidos}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={fieldErrors.apellidos}
-              />
-              <InputField
-                label={t("auth.register.fields.phone")}
-                name="numero_telefonico"
-                type="tel"
-                inputMode="numeric"
-                maxLength={TELEFONO_MAX_LENGTH}
-                value={formData.numero_telefonico}
-                onChange={handlePhoneChange}
-                onBlur={handleBlur}
-                error={fieldErrors.numero_telefonico}
-              />
-            </div>
-
-            {formData.rol === "residente" && (
-              <div className="space-y-4 p-5 bg-gray-50/50 dark:bg-night-inset/60 border border-gray-100 dark:border-night-line rounded-2xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <MapIcon className="icon-lg text-accent-600" />
-                  <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("auth.register.fields.residenceLocationHeading")}</h3>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.locality")}</label>
-                    <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
-                      <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
-                      {localidades.map(loc => (
-                        <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
-                      ))}
-                    </select>
+              {formData.rol === "residente" && (
+                <div className="space-y-4 p-5 bg-gray-50/50 dark:bg-night-inset/60 border border-gray-100 dark:border-night-line rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapIcon className="icon-lg text-accent-600" />
+                    <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("auth.register.fields.residenceLocationHeading")}</h3>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.conjunto")}</label>
-                    <ConjuntoCombobox
-                      value={conjuntoSeleccionado}
-                      onChange={handleConjuntoChange}
-                      fetchOptions={fetchConjuntos}
-                      disabled={!formData.localidad_id}
-                      placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
-                      emptyLabel={t("auth.register.fields.conjuntoNoResults")}
-                      loadingLabel={t("common.loading")}
-                      ariaLabel={t("auth.register.fields.conjunto")}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.locality")}</label>
+                      <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
+                        <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
+                        {localidades.map(loc => (
+                          <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.conjunto")}</label>
+                      <ConjuntoCombobox
+                        value={conjuntoSeleccionado}
+                        onChange={handleConjuntoChange}
+                        fetchOptions={fetchConjuntos}
+                        disabled={!formData.localidad_id}
+                        placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
+                        emptyLabel={t("auth.register.fields.conjuntoNoResults")}
+                        loadingLabel={t("common.loading")}
+                        ariaLabel={t("auth.register.fields.conjunto")}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-night-line">
+                    <div>
+                      <label htmlFor="prefijo_unidad" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitType")}</label>
+                      <select id="prefijo_unidad" name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-night-inset">
+                        <option value="TORRE">{t("auth.register.fields.unitTypeTower")}</option>
+                        <option value="INTERIOR">{t("auth.register.fields.unitTypeInterior")}</option>
+                        <option value="BLOQUE">{t("auth.register.fields.unitTypeBlock")}</option>
+                        <option value="CASA">{t("auth.register.fields.unitTypeHouse")}</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="numero_bloque" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitNumber")}</label>
+                      <input id="numero_bloque" type="text" name="numero_bloque" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.numero_bloque} aria-describedby={fieldErrors.numero_bloque ? "numero_bloque-error" : undefined} placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
+                      {fieldErrors.numero_bloque && <p id="numero_bloque-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.numero_bloque}</p>}
+                    </div>
+
+                    <div>
+                      <label htmlFor="apto" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
+                      <input id="apto" type="text" name="apto" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.apto} aria-describedby={fieldErrors.apto ? "apto-error" : undefined} placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
+                      {fieldErrors.apto && <p id="apto-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.apto}</p>}
+                    </div>
+                  </div>
+
+                  {/*
+                    ¿Qué? Issue #168 — el código que el Admin de Conjunto
+                          reparte fuera de la app (cartelera, grupo del
+                          conjunto) para demostrar que de verdad vives ahí.
+                    ¿Para qué? Va en su propia fila, no en el grid de 3
+                              columnas de arriba — es un campo distinto en
+                              naturaleza (una prueba, no un dato del domicilio)
+                              y merece su propia aclaración debajo.
+                  */}
+                  <div className="pt-3 border-t border-gray-200 dark:border-night-line">
+                    <label htmlFor="codigo_acceso" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.codigoAcceso")}</label>
+                    <input
+                      id="codigo_acceso"
+                      type="text"
+                      name="codigo_acceso"
+                      placeholder={t("auth.register.fields.codigoAccesoPlaceholder")}
+                      value={formData.codigo_acceso}
+                      onChange={handleCodigoChange}
+                      onBlur={handleBlur}
+                      maxLength={CODIGO_ACCESO_LONGITUD}
+                      autoComplete="off"
+                      aria-invalid={!!fieldErrors.codigo_acceso}
+                      aria-describedby={fieldErrors.codigo_acceso ? "codigo_acceso-error" : undefined}
+                      disabled={!formData.id_conjunto_residencial}
+                      className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase tracking-widest font-mono"
                     />
+                    {fieldErrors.codigo_acceso && <p id="codigo_acceso-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.codigo_acceso}</p>}
+                    <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("auth.register.fields.codigoAccesoHint")}</p>
                   </div>
                 </div>
+              )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-night-line">
-                  <div>
-                    <label htmlFor="prefijo_unidad" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitType")}</label>
-                    <select id="prefijo_unidad" name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-night-inset">
-                      <option value="TORRE">{t("auth.register.fields.unitTypeTower")}</option>
-                      <option value="INTERIOR">{t("auth.register.fields.unitTypeInterior")}</option>
-                      <option value="BLOQUE">{t("auth.register.fields.unitTypeBlock")}</option>
-                      <option value="CASA">{t("auth.register.fields.unitTypeHouse")}</option>
-                    </select>
+              {formData.rol === "reciclador" && (
+                <div className="space-y-4 p-5 bg-accent-50/30 dark:bg-accent-900/10 border border-accent-100 dark:border-accent-900/40 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <HardHat className="icon-lg text-accent-600" />
+                    <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("auth.register.fields.operativeProfileHeading")}</h3>
                   </div>
 
-                  <div>
-                    <label htmlFor="numero_bloque" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitNumber")}</label>
-                    <input id="numero_bloque" type="text" name="numero_bloque" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.numero_bloque} aria-describedby={fieldErrors.numero_bloque ? "numero_bloque-error" : undefined} placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
-                    {fieldErrors.numero_bloque && <p id="numero_bloque-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.numero_bloque}</p>}
-                  </div>
-
-                  <div>
-                    <label htmlFor="apto" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
-                    <input id="apto" type="text" name="apto" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.apto} aria-describedby={fieldErrors.apto ? "apto-error" : undefined} placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
-                    {fieldErrors.apto && <p id="apto-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.apto}</p>}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.workLocality")}</label>
+                      <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
+                        <option value="">{t("auth.register.fields.selectYourLocality")}</option>
+                        {localidades.map(loc => (
+                          <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <InputField label={t("auth.register.fields.association")} name="asociacion" maxLength={ASOCIACION_MAX_LENGTH} value={formData.asociacion} onChange={handleChange} placeholder={t("auth.register.fields.associationPlaceholder")} />
                   </div>
                 </div>
+              )}
 
-                {/*
-                  ¿Qué? Issue #168 — el código que el Admin de Conjunto
-                        reparte fuera de la app (cartelera, grupo del
-                        conjunto) para demostrar que de verdad vives ahí.
-                  ¿Para qué? Va en su propia fila, no en el grid de 3
-                            columnas de arriba — es un campo distinto en
-                            naturaleza (una prueba, no un dato del domicilio)
-                            y merece su propia aclaración debajo.
-                */}
-                <div className="pt-3 border-t border-gray-200 dark:border-night-line">
-                  <label htmlFor="codigo_acceso" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.codigoAcceso")}</label>
-                  <input
-                    id="codigo_acceso"
-                    type="text"
-                    name="codigo_acceso"
-                    placeholder={t("auth.register.fields.codigoAccesoPlaceholder")}
-                    value={formData.codigo_acceso}
-                    onChange={handleCodigoChange}
+              {/*
+                ¿Qué? Bloque de credenciales: Correo, Confirmar correo, Contraseña
+                      y Confirmar contraseña — cada uno en su PROPIA fila a ancho
+                      completo (ya no en grid de 2 columnas).
+                ¿Para qué? Es lo que se pidió: que los 4 campos se vean igual de
+                          "grandes" e importantes, consistentes entre sí.
+              */}
+              <div className="space-y-4 pt-2">
+                <div>
+                  <InputField
+                    label={t("auth.register.fields.email")}
+                    name="email"
+                    type="email"
+                    maxLength={CORREO_MAX_LENGTH}
+                    value={formData.email}
+                    onChange={handleChange}
                     onBlur={handleBlur}
-                    maxLength={CODIGO_ACCESO_LONGITUD}
-                    autoComplete="off"
-                    aria-invalid={!!fieldErrors.codigo_acceso}
-                    aria-describedby={fieldErrors.codigo_acceso ? "codigo_acceso-error" : undefined}
-                    disabled={!formData.id_conjunto_residencial}
-                    className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase tracking-widest font-mono"
+                    error={fieldErrors.email}
                   />
-                  {fieldErrors.codigo_acceso && <p id="codigo_acceso-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.codigo_acceso}</p>}
-                  <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("auth.register.fields.codigoAccesoHint")}</p>
-                </div>
-              </div>
-            )}
-
-            {formData.rol === "reciclador" && (
-              <div className="space-y-4 p-5 bg-accent-50/30 dark:bg-accent-900/10 border border-accent-100 dark:border-accent-900/40 rounded-2xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <HardHat className="icon-lg text-accent-600" />
-                  <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("auth.register.fields.operativeProfileHeading")}</h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.workLocality")}</label>
-                    <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
-                      <option value="">{t("auth.register.fields.selectYourLocality")}</option>
-                      {localidades.map(loc => (
-                        <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <InputField label={t("auth.register.fields.association")} name="asociacion" maxLength={ASOCIACION_MAX_LENGTH} value={formData.asociacion} onChange={handleChange} placeholder={t("auth.register.fields.associationPlaceholder")} />
+                <div>
+                  <InputField
+                    label={t("auth.register.fields.confirmEmailField")}
+                    name="confirmEmail"
+                    type="email"
+                    maxLength={CORREO_MAX_LENGTH}
+                    value={formData.confirmEmail}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    disablePaste
+                    error={fieldErrors.confirmEmail}
+                  />
+                </div>
+
+                <div>
+                  <InputField
+                    label={t("auth.register.fields.password")}
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder={t("auth.register.fields.passwordPlaceholder")}
+                    error={fieldErrors.password}
+                  />
+                  <PasswordStrengthIndicator password={formData.password} />
+                </div>
+
+                <div>
+                  <InputField
+                    label={t("auth.register.fields.confirmPasswordField")}
+                    name="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder={t("auth.register.fields.confirmPasswordPlaceholder")}
+                    disablePaste
+                    error={fieldErrors.confirmPassword}
+                  />
                 </div>
               </div>
-            )}
 
-            {/*
-              ¿Qué? Bloque de credenciales: Correo, Confirmar correo, Contraseña
-                    y Confirmar contraseña — cada uno en su PROPIA fila a ancho
-                    completo (ya no en grid de 2 columnas).
-              ¿Para qué? Es lo que se pidió: que los 4 campos se vean igual de
-                        "grandes" e importantes, consistentes entre sí.
-            */}
-            <div className="space-y-4 pt-2">
-              <div>
-                <InputField
-                  label={t("auth.register.fields.email")}
-                  name="email"
-                  type="email"
-                  maxLength={CORREO_MAX_LENGTH}
-                  value={formData.email}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  error={fieldErrors.email}
+              {/*
+                ¿Qué? CASILLA DE TÉRMINOS Y CONDICIONES.
+                ¿Para qué? Botones que abren el Modal secundario "stacked"
+                          definido arriba — el formulario nunca se desmonta.
+              */}
+              <div className="flex items-start gap-3 p-2 select-none">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-night-line text-accent-600 focus:ring-accent-500 accent-accent-600 cursor-pointer"
                 />
+                <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                  {t("auth.register.termsPrefix")}{" "}
+                  <button
+                    type="button"
+                    onClick={() => setDocumentoAbierto("terminos")}
+                    className="cursor-pointer text-accent-600 transition-colors hover:underline font-semibold"
+                  >
+                    {t("auth.register.termsLinkLabel")}
+                  </button>
+                  {" "}{t("auth.register.andThe")}{" "}
+                  <button
+                    type="button"
+                    onClick={() => setDocumentoAbierto("privacidad")}
+                    className="cursor-pointer text-accent-600 transition-colors hover:underline font-semibold"
+                  >
+                    {t("auth.register.privacyLinkLabel")}
+                  </button>
+                  {" "}{t("auth.register.brandSuffix")}
+                </label>
               </div>
 
-              <div>
-                <InputField
-                  label={t("auth.register.fields.confirmEmailField")}
-                  name="confirmEmail"
-                  type="email"
-                  maxLength={CORREO_MAX_LENGTH}
-                  value={formData.confirmEmail}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  disablePaste
-                  error={fieldErrors.confirmEmail}
-                />
+              <div className="w-full pt-4">
+                <Button type="submit" fullWidth isLoading={isLoading} disabled={isButtonDisabled}>
+                  {isButtonDisabled ? t("auth.register.submitIncomplete") : t("auth.register.submitFull")}
+                </Button>
               </div>
-
-              <div>
-                <InputField
-                  label={t("auth.register.fields.password")}
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder={t("auth.register.fields.passwordPlaceholder")}
-                  error={fieldErrors.password}
-                />
-                <PasswordStrengthIndicator password={formData.password} />
-              </div>
-
-              <div>
-                <InputField
-                  label={t("auth.register.fields.confirmPasswordField")}
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder={t("auth.register.fields.confirmPasswordPlaceholder")}
-                  disablePaste
-                  error={fieldErrors.confirmPassword}
-                />
-              </div>
-            </div>
-
-            {/*
-              ¿Qué? CASILLA DE TÉRMINOS Y CONDICIONES.
-              ¿Para qué? Botones que abren el Modal secundario "stacked"
-                        definido arriba — el formulario nunca se desmonta.
-            */}
-            <div className="flex items-start gap-3 p-2 select-none">
-              <input
-                type="checkbox"
-                id="terms"
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-night-line text-accent-600 focus:ring-accent-500 accent-accent-600 cursor-pointer"
-              />
-              <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
-                {t("auth.register.termsPrefix")}{" "}
-                <button
-                  type="button"
-                  onClick={() => setDocumentoAbierto("terminos")}
-                  className="cursor-pointer text-accent-600 transition-colors hover:underline font-semibold"
-                >
-                  {t("auth.register.termsLinkLabel")}
-                </button>
-                {" "}{t("auth.register.andThe")}{" "}
-                <button
-                  type="button"
-                  onClick={() => setDocumentoAbierto("privacidad")}
-                  className="cursor-pointer text-accent-600 transition-colors hover:underline font-semibold"
-                >
-                  {t("auth.register.privacyLinkLabel")}
-                </button>
-                {" "}{t("auth.register.brandSuffix")}
-              </label>
-            </div>
-
-            <div className="w-full pt-4">
-              <Button type="submit" fullWidth isLoading={isLoading} disabled={isButtonDisabled}>
-                {isButtonDisabled ? t("auth.register.submitIncomplete") : t("auth.register.submitFull")}
-              </Button>
-            </div>
-          </form>
+            </form>
+          )}
 
           {generalError && (
             <div className="mt-6">
