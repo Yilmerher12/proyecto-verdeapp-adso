@@ -442,30 +442,35 @@ verde-app/
 ├── scripts/                 # Utilidades Bash (start.sh, stop.sh) para automatizar contenedores
 ├── be/                      # Backend (Python + FastAPI)
 │   ├── app/                 # Código fuente principal de la API
-│   │   ├── data/            # Datos abiertos usados por el seed (ver seed.py)
+│   │   ├── data/            # CSV de conjuntos residenciales reales de Bogotá (lo usa seed.py)
 │   │   ├── models/          # Entidades e imperativos relacionales de SQLAlchemy
 │   │   ├── routers/         # Controladores de endpoints divididos por recursos
 │   │   ├── schemas/         # Modelos de validación estricta de Pydantic (DTOs)
 │   │   ├── services/        # Lógica de negocio pura encapsulada
 │   │   ├── tests/           # Entorno de pruebas automatizadas (pytest)
-│   │   ├── utils/           # Helpers de infraestructura (Seguridad, utilidades)
+│   │   ├── uploads/         # Imágenes subidas por los usuarios, servidas en /uploads
+│   │   ├── utils/           # Helpers de infraestructura (seguridad, correo, imágenes, logs)
+│   │   ├── seed.py          # Siembra roles, localidades, cuentas de prueba y conjuntos reales
 │   │   ├── database.py      # Configuración de la sesión y conexión con la BD
 │   │   ├── dependencies.py  # Inyección de dependencias (Autenticación, Sesión DB)
 │   │   └── main.py          # Punto de entrada y configuración central de FastAPI
 │   ├── .env.example         # Plantilla de variables de entorno (Sin datos sensibles)
-│   ├── alembic.ini          # Configuración de Alembic — el esquema se versiona con migraciones reales
+│   ├── alembic/versions/    # Migraciones: el esquema solo cambia por aquí, nunca con create_all()
+│   ├── alembic.ini          # Configuración de Alembic
 │   ├── Dockerfile           # Instrucciones de empaquetado para la imagen Docker
 │   ├── pyproject.toml       # Manifiesto de dependencias (lo lee uv)
 │   └── uv.lock              # Versiones EXACTAS resueltas de cada dependencia
 ├── fe/                      # Frontend (React + TypeScript + Vite)
 │   ├── src/                 # Código fuente de la interfaz
 │   │   ├── __tests__/       # Entorno de pruebas del Frontend
-│   │   ├── api/             # Instancias y configuraciones de clientes Axios/Fetch
-│   │   ├── components/      # Componentes UI reutilizables (Botones, Formularios)
+│   │   ├── api/             # Instancia de Axios (cookies de sesión, renovación) y endpoints de auth
+│   │   ├── components/      # Componentes UI reutilizables (ui/), layouts (layout/) y piezas de los paneles
+│   │   ├── config/          # Ícono y color de cada rol, semáforo de auditorías, categorías educativas
 │   │   ├── context/         # Proveedores de estado global (Context API)
 │   │   ├── hooks/           # Ganchos personalizados (Lógica reutilizable)
-│   │   ├── locales/         # Archivos de internacionalización
-│   │   ├── pages/           # Vistas principales de la aplicación
+│   │   ├── lib/             # Un cliente por recurso (*Api.ts), fechas, validaciones, eventos entre componentes
+│   │   ├── locales/         # Textos de la interfaz en español e inglés
+│   │   ├── pages/           # Una vista por ruta; dashboards/ tiene el panel de cada rol
 │   │   └── types/           # Definiciones estrictas de interfaces TypeScript
 │   ├── .env.example         # Plantilla de variables de entorno del Frontend
 │   ├── Dockerfile           # Instrucciones de empaquetado para la imagen Docker
@@ -473,6 +478,7 @@ verde-app/
 │   ├── package.json         # Manifiesto de dependencias y scripts de Node.js
 │   ├── pnpm-lock.yaml       # Árbol de dependencias bloqueado (Instalaciones exactas)
 │   └── vite.config.ts       # Configuración del empaquetador Vite
+├── docs/                    # Requisitos (HU/RF/RNF), conceptos, UML y gestión del proyecto
 ├── .gitignore               # Reglas de exclusión de Git (Ignora credenciales y cachés)
 ├── docker-compose.yml       # Archivo maestro de orquestación de contenedores Docker
 ├── LICENSE                  # Licencia del proyecto (CC BY-NC-SA 4.0)
@@ -543,11 +549,11 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 | Métrica | Avance |
 |---|---|
-| Historias de Usuario | 47 / 48 implementadas (1 parcial: HU-047) |
-| Requisitos Funcionales | 20 / 21 implementados (1 parcial: RQF-021) |
+| Historias de Usuario | 48 / 48 implementadas |
+| Requisitos Funcionales | 21 / 21 implementados |
 | Requisitos No Funcionales | 4 / 6 completos (2 parciales — de naturaleza continua: se miden, no se "terminan") |
-| Pruebas backend (pytest) | 583 |
-| Pruebas frontend (vitest) | 379 |
+| Pruebas backend (pytest) | 604 (6 de octubre de 2026; conteo de hoy: `uv run pytest -q` desde `be/`) |
+| Pruebas frontend (vitest) | Más de 410 (conteo de hoy: `pnpm test` desde `fe/`) |
 
 ---
 

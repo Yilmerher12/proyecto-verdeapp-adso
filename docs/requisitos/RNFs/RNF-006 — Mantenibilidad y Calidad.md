@@ -48,6 +48,8 @@ Cada router del backend con lógica de negocio real (permisos, invitaciones, not
 > **Estado real (2026-08-28)**: backend con 233 tests en 13 archivos (creció de los 10 archivos originales), frontend con 167 tests en 24 archivos — **incluyendo ya los 4 dashboards por rol** (`ResidenteDashboard.test.tsx`, `RecicladorDashboard.test.tsx`, `AdminDashboard.test.tsx`, `AdminConjuntoDashboard.test.tsx`), que antes faltaban. Lo que decía "Pendiente" aquí ya no aplica.
 >
 > **Actualización (2026-09-08)**: backend con 327 tests en 15 archivos, frontend con 210 tests en 30 archivos — sigue creciendo con cada tarjeta nueva, como debe ser.
+>
+> **Actualización (2026-10-06)**: backend con 604 tests en 27 archivos, frontend con más de 410 tests en 46 archivos. Los README ya no anotan conteos fijos (se desactualizaban con cada tarjeta): para el número del día, `uv run pytest -q` (desde `be/`) y `pnpm test` (desde `fe/`).
 
 ### RNF-006.4 — Control de versiones del esquema de base de datos
 
