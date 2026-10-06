@@ -39,3 +39,23 @@ dev = [
     "pytest-cov==7.0.0",
     "ruff==0.15.7",
 ]
+
+# ¿Qué? Cada "uv run pytest" mide la cobertura del código de app/.
+# ¿Para qué? Que nadie pueda "olvidar" medirla: el mismo comando de siempre
+#           (y el del CI) la calcula y falla si baja del umbral.
+# ¿Impacto? Al correr un solo archivo de tests la cobertura sale baja y el
+#           comando falla por el umbral — en ese caso agregar --no-cov.
+[tool.pytest]
+addopts = ["--cov", "--cov-report=term-missing:skip-covered"]
+
+[tool.coverage.run]
+source = ["app"]
+# ¿Qué? Se excluyen los propios tests y el script de datos de prueba (seed.py).
+# ¿Para qué? Los tests no son lógica de negocio: contarlos inflaría el número,
+#           y seed.py solo siembra la BD de desarrollo.
+omit = ["app/tests/*", "app/seed.py"]
+
+[tool.coverage.report]
+# ¿Qué? Umbral mínimo (bootcamp de testing, semana 1: línea base del 6 de
+#       octubre de 2026, 96.69% redondeado hacia abajo). Solo se sube.
+fail_under = 96

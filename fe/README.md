@@ -1205,14 +1205,11 @@ Regla del proyecto: **toda funcionalidad nueva lleva sus pruebas antes de darse 
 ### Comandos de testing
 
 ```bash
-# Ejecutar todos los tests (modo ci, sin watch)
+# Ejecutar todos los tests con cobertura (falla si baja del umbral de vite.config.ts)
 pnpm test
 
 # Modo interactivo — re-ejecuta al guardar archivos
 pnpm test:watch
-
-# Con reporte de cobertura
-pnpm test:coverage
 
 # Un solo archivo de tests
 pnpm exec vitest run src/__tests__/pages/LoginPage.test.tsx
@@ -1227,9 +1224,8 @@ pnpm exec vitest run src/__tests__/pages/LoginPage.test.tsx
 pnpm dev                # Arranca servidor de desarrollo en http://localhost:5173
 
 # ── Tests ─────────────────────────────────────────────────────────────────
-pnpm test               # Ejecuta todos los tests (sin watch)
+pnpm test               # Ejecuta todos los tests + cobertura (falla si baja del umbral)
 pnpm test:watch         # Modo interactivo — ideal durante desarrollo
-pnpm test:coverage      # Tests + reporte de cobertura
 
 # ── Calidad de código ─────────────────────────────────────────────────────
 pnpm lint               # ESLint — detecta problemas

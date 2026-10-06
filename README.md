@@ -478,6 +478,9 @@ verde-app/
 │   ├── package.json         # Manifiesto de dependencias y scripts de Node.js
 │   ├── pnpm-lock.yaml       # Árbol de dependencias bloqueado (Instalaciones exactas)
 │   └── vite.config.ts       # Configuración del empaquetador Vite
+├── e2e/                     # Pruebas E2E con Playwright (navegador real contra front + back + BD)
+│   ├── tests/               # Un archivo *.spec.js por flujo probado
+│   └── playwright.config.js # URL del frontend y cómo levantarlo
 ├── docs/                    # Requisitos (HU/RF/RNF), conceptos, UML y gestión del proyecto
 ├── .gitignore               # Reglas de exclusión de Git (Ignora credenciales y cachés)
 ├── docker-compose.yml       # Archivo maestro de orquestación de contenedores Docker
@@ -520,10 +523,11 @@ El proyecto usa dos ramas permanentes y ramas de trabajo temporales:
 | `docs/` | Solo documentación, sin cambios de código |
 | `chore/` | Mantenimiento (dependencias, configuración) sin efecto funcional |
 | `content/` | Cambios de contenido (textos, datos de ejemplo) sin lógica nueva |
+| `test/` | Solo pruebas (ej. los retos semanales del bootcamp de testing: `test/semana-01`) |
 
 **Flujo normal:** crear la rama desde `develop` → hacer el cambio → abrir un Pull Request hacia `develop` → esperar a que el CI (pruebas automáticas) pase en verde → fusionar. `main` solo recibe código a través de `develop`, cuando se prepara una entrega.
 
-**Mensajes de commit:** siguen [Conventional Commits](https://www.conventionalcommits.org/) — `tipo: descripción en español`, por ejemplo `fix: bloquear reportes repetidos sin espera` o `docs: actualizar diagramas UML`. El tipo (`feat`, `fix`, `docs`, `chore`) coincide con el prefijo de la rama.
+**Mensajes de commit:** siguen [Conventional Commits](https://www.conventionalcommits.org/) — `tipo: descripción en español`, por ejemplo `fix: bloquear reportes repetidos sin espera` o `docs: actualizar diagramas UML`. El tipo (`feat`, `fix`, `docs`, `chore`, `test`) coincide con el prefijo de la rama.
 
 ---
 
@@ -540,6 +544,7 @@ Toda la documentación vive en `docs/`, en Markdown, versionada junto con el có
 | [`docs/conceptos/`](docs/conceptos/) | Explicación pedagógica de OWASP Top 10, accesibilidad (ARIA/WCAG) y patrones de arquitectura, con evidencia real de archivo y línea |
 | [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Diagrama de clases y catálogo de casos de uso |
 | [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance |
+| [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md) | Bootcamp de testing: capa de cada integrante por semana y cobertura registrada |
 
 Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implementar`) que se actualiza cada vez que su funcionalidad cambia de verdad — es la fuente de verdad más confiable sobre qué tan avanzado está el proyecto, más que cualquier resumen (incluido este README).
 
@@ -554,6 +559,20 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 | Requisitos No Funcionales | 4 / 6 completos (2 parciales — de naturaleza continua: se miden, no se "terminan") |
 | Pruebas backend (pytest) | 604 (6 de octubre de 2026; conteo de hoy: `uv run pytest -q` desde `be/`) |
 | Pruebas frontend (vitest) | Más de 410 (conteo de hoy: `pnpm test` desde `fe/`) |
+
+---
+
+## 🧪 Pruebas y cobertura
+
+| Tipo | Dónde | Comando |
+|---|---|---|
+| API e integración (BD real `verdeapp_test_db`) | `be/app/tests/` | `uv run pytest` desde `be/` |
+| Componentes React | `fe/src/__tests__/` | `pnpm test` desde `fe/` |
+| E2E (navegador real) | `e2e/tests/` | `pnpm test` desde `e2e/` |
+
+**Cobertura**: `uv run pytest` y `pnpm test` (en `fe/`) miden siempre qué porcentaje del código ejecutan las pruebas, y **fallan** si baja del umbral configurado (`fail_under` en `be/pyproject.toml`, `thresholds` en `fe/vite.config.ts`). El CI corre esos mismos comandos, así que un PR que baje la cobertura queda en rojo. El umbral solo sube; su historial está en [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md).
+
+**E2E, primera vez** (desde `e2e/`): `pnpm install` y luego `pnpm exec playwright install chromium` (descarga el navegador). Antes de `pnpm test`, el backend y la BD deben estar encendidos (Método B); el frontend lo levanta Playwright solo. `pnpm codegen` abre un navegador que graba lo que haces y lo convierte en código de test.
 
 ---
 
