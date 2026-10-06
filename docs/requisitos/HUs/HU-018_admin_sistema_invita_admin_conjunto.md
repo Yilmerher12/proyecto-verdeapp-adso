@@ -63,4 +63,7 @@
 - **cuando** el mensaje llega al buzón de contacto del equipo (`CONTACT_EMAIL` del backend) con el asunto "Solicitud de cuenta de Administrador de Conjunto",
 - **entonces** el equipo le responde por correo pidiendo los documentos, los verifica fuera de la app y, si todo está en orden, usa el formulario de invitación de esta HU con el correo de la persona.
 - Los documentos nunca pasan por VerdeApp y se eliminan del correo al terminar la revisión.
+- El correo llega con la cabecera `Reply-To` igual al correo de la persona: al presionar "Responder", la respuesta le llega directo a ella, sin copiar su dirección a mano.
+
+> **Nota (2026-10-06)**: antes el correo de contacto solo traía la dirección de la persona dentro del texto ("De: ..."), y "Responder" le escribía a la dirección de la app. Ahora `send_contact_email` (`be/app/utils/email.py`) agrega `Reply-To`; los demás correos de la app (verificación, recuperación, invitaciones) no la llevan.
 

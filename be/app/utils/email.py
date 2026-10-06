@@ -42,12 +42,14 @@ def _send_email_sync(params: resend.Emails.SendParams) -> None:
     resend.Emails.send(params)
 
 
-def _send_email_smtp(to_email: str, subject: str, html: str) -> None:
+def _send_email_smtp(to_email: str, subject: str, html: str, reply_to: str | None = None) -> None:
     """Envía un email usando un servidor SMTP con la biblioteca estándar de Python."""
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = f"{settings.RESEND_FROM_NAME} <{settings.RESEND_FROM_EMAIL}>"
     msg["To"] = to_email
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg.attach(MIMEText(html, "html"))
 
     with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
@@ -65,7 +67,12 @@ def _send_email_smtp(to_email: str, subject: str, html: str) -> None:
 
 
 async def _enviar(
-    email: str, subject: str, html: str, tipo: str, enlace: str | None = None
+    email: str,
+    subject: str,
+    html: str,
+    tipo: str,
+    enlace: str | None = None,
+    reply_to: str | None = None,
 ) -> bool:
     """Envía un correo por SMTP, por Resend o, si no hay ninguno, solo lo registra.
 
@@ -83,13 +90,17 @@ async def _enviar(
               consola si el envío falla o no hay backend de correo (el
               equipo lo usa para probar sin Mailpit). En production solo
               queda "falló el envío a ye***@gmail.com", sin enlace.
+
+    ¿Qué? reply_to agrega la cabecera Reply-To: al presionar "Responder",
+          el programa de correo le escribe a esa dirección y no a la de la
+          app (From). Solo la usa el formulario de contacto.
     """
     es_desarrollo = settings.ENVIRONMENT == "development"
     destinatario = email if es_desarrollo else redactar_correo(email)
 
     try:
         if settings.SMTP_HOST:
-            await asyncio.to_thread(_send_email_smtp, email, subject, html)
+            await asyncio.to_thread(_send_email_smtp, email, subject, html, reply_to)
             via = "SMTP"
         elif settings.RESEND_API_KEY:
             params: resend.Emails.SendParams = {
@@ -98,6 +109,8 @@ async def _enviar(
                 "subject": subject,
                 "html": html,
             }
+            if reply_to:
+                params["reply_to"] = reply_to
             await asyncio.to_thread(_send_email_sync, params)
             via = "Resend"
         else:
@@ -345,4 +358,12 @@ async def send_contact_email(name: str, email: str, subject: str, message: str) 
     </html>
     """
 
-    return await _enviar(settings.CONTACT_EMAIL, f"VerdeApp — Contacto: {subject}", html_content, "contacto")
+    # ¿Qué? Reply-To con el correo de quien escribió.
+    # ¿Para qué? Que el equipo responda con "Responder" (ej. para pedirle los
+    #           documentos a un Administrador de Conjunto, HU-018 CA-018.5) sin
+    #           copiar la dirección a mano y arriesgarse a un error de tipeo.
+    # ¿Impacto? Sin riesgo de inyectar cabeceras: el schema valida email como
+    #           EmailStr, que no admite saltos de línea.
+    return await _enviar(
+        settings.CONTACT_EMAIL, f"VerdeApp — Contacto: {subject}", html_content, "contacto", reply_to=email
+    )
