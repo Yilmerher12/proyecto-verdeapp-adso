@@ -16,7 +16,7 @@
 | **Título**         | Residente ve el contenido educativo recomendado            |
 | **Módulo**         | Contenido Educativo / Auditoría                            |
 | **Prioridad**      | Media                                                        |
-| **Estado**         | Implementado                                                 |
+| **Estado**         | Implementada                                                  |
 | **RF asociados**   | RQF-013                                                     |
 
 ---

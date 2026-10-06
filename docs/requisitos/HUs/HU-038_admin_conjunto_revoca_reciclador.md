@@ -21,7 +21,7 @@
 | **Título**         | Admin de Conjunto revoca el acceso de un reciclador           |
 | **Módulo**         | Administración / Conjuntos                                   |
 | **Prioridad**      | Media                                                         |
-| **Estado**         | Implementado                                                  |
+| **Estado**         | Implementada                                                   |
 | **RF asociados**   | RQF-012                                                      |
 
 ---

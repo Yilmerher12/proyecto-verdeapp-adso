@@ -16,7 +16,7 @@
 | **Título**         | Sistema recomienda contenido según la auditoría              |
 | **Módulo**         | Contenido Educativo / Auditoría                             |
 | **Prioridad**      | Media                                                        |
-| **Estado**         | Implementado                                                 |
+| **Estado**         | Implementada                                                  |
 | **RF asociados**   | RQF-013                                                     |
 
 ---

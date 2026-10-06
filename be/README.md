@@ -61,8 +61,8 @@ docker compose version
 También se necesita tener la base de datos PostgreSQL corriendo. Desde la **raíz del repositorio**:
 
 ```bash
-# Levanta PostgreSQL 17 en un contenedor Docker
-docker compose up -d
+# Levanta SOLO PostgreSQL y Mailpit en Docker (el backend corre en consola con uvicorn)
+docker compose up -d verde_db verde_mailpit
 
 # Verifica que está corriendo
 docker compose ps
@@ -88,29 +88,31 @@ be/
 │   ├── env.py              # Conecta Alembic con la BD y los modelos
 │   └── versions/           # Archivos de migración (uno por cambio en el esquema)
 └── app/                    # Todo el código fuente de la aplicación
-    ├── main.py             # Punto de entrada — crea y configura la app FastAPI
+    ├── main.py             # Punto de entrada: crea la app, CORS, cabeceras de seguridad, routers, /uploads
     ├── config.py           # Configuración centralizada desde variables de entorno
     ├── database.py         # Engine y sesión de SQLAlchemy
-    ├── dependencies.py     # Dependencias inyectables (get_db, get_current_user)
-    ├── models/             # Modelos ORM — representan las tablas de la BD
-    │   ├── user.py
-    │   ├── password_reset_token.py
-    │   └── email_verification_token.py
-    ├── schemas/            # Schemas Pydantic — validan datos de entrada y salida
-    │   └── user.py
-    ├── routers/            # Endpoints agrupados por dominio
-    │   ├── auth.py         # /api/v1/auth/...
-    │   └── users.py        # /api/v1/users/...
-    ├── services/           # Lógica de negocio (separada de los endpoints)
-    │   └── auth_service.py
-    ├── utils/              # Utilidades reutilizables
-    │   ├── security.py     # Hashing de contraseñas y tokens JWT
-    │   ├── email.py        # Envío de emails
-    │   ├── limiter.py      # Rate limiting (instancia global)
-    │   └── audit_log.py    # Registro estructurado de eventos de seguridad
+    ├── dependencies.py     # get_db, get_current_user, require_role, require_admin_conjunto
+    ├── seed.py             # Siembra roles, localidades, cuentas de prueba y conjuntos reales (idempotente)
+    ├── data/               # CSV de conjuntos residenciales reales de Bogotá (fuente del seed)
+    ├── models/             # Un archivo por tabla (usuario.py, residente.py, reciclador.py,
+    │                       #   administrador_conjunto.py, conjunto_residencial.py, comunicado.py,
+    │                       #   novedad.py, auditoria_conjunto.py, notificacion.py, punto_acopio.py…)
+    ├── schemas/            # Schemas Pydantic de entrada/salida, uno por dominio
+    ├── routers/            # Endpoints, un archivo por dominio (17 — tabla completa en la sección 14)
+    ├── services/           # Lógica de negocio cuando el router hace más que un CRUD
+    │                       #   (auth_service, comunicado_service, notificaciones_helpers…)
+    ├── utils/              # Herramientas compartidas:
+    │   ├── security.py     #   hash de contraseñas y JWT
+    │   ├── email.py        #   envío de correos (SMTP / Resend / solo log)
+    │   ├── imagenes.py     #   validación de imágenes subidas (Pillow, 5 MB, jpg/png/webp)
+    │   ├── limiter.py      #   rate limiting (slowapi)
+    │   ├── audit_log.py    #   log de eventos de seguridad y acciones de administración
+    │   ├── codigo_acceso.py #  código de acceso de 6 caracteres de cada conjunto
+    │   └── fechas.py, enlaces.py, ids.py
+    ├── uploads/            # Imágenes subidas (una subcarpeta por feature), servidas en /uploads
     └── tests/
-        ├── conftest.py     # Fixtures compartidos entre tests
-        └── test_auth.py    # 38 tests de los endpoints de autenticación
+        ├── conftest.py     # Fixtures compartidos (BD de pruebas verdeapp_test_db, cliente, usuarios)
+        └── test_*.py       # Un archivo por dominio (27); el conteo actual: uv run pytest -q
 ```
 
 > **El patrón de capas**
@@ -124,6 +126,8 @@ be/
 >
 > Esto se llama **Separation of Concerns** — cada pieza tiene una sola responsabilidad.
 > Si el día de mañana cambias de PostgreSQL a MySQL, solo tocas `database.py` y los modelos.
+>
+> `docker compose up -d` sin nombrar servicios levanta **también** el backend en Docker (`verde_be`), que choca con `uv run uvicorn` en el puerto 8000. Si corres el backend en consola, levanta solo `verde_db` y `verde_mailpit`.
 
 ---
 
@@ -455,6 +459,22 @@ una contraseña olvidada. Al usarse, activa `Usuario.is_active` (ver flujo de re
 > que los IDs colisionen. Además, son impredecibles: un atacante no puede adivinar que
 > el usuario con `id=5` existe simplemente porque ve que existe `id=4` en la URL.
 
+### 8.4 El resto de tablas
+
+Las 3 tablas de arriba son las de autenticación. El dominio de VerdeApp suma 25 más, cada una con su archivo en `app/models/`:
+
+| Grupo | Tablas |
+| ----- | ------ |
+| Roles y personas | `roles`, `usuarios`, `residentes`, `recicladores`, `administradores_conjunto` |
+| Conjuntos | `localidades`, `conjuntos_residenciales`, `unidades`, `administradores_conjuntos` (asignación admin ↔ conjunto), `recicladores_conjuntos`, `agenda_conjunto` |
+| Invitaciones y solicitudes | `invitaciones_admin_conjunto`, `invitaciones_reciclador_conjunto`, `solicitudes_desvinculacion` |
+| Operación | `auditorias_conjunto`, `notificaciones`, `notificaciones_destinatarios`, `comunicados` |
+| Contenido y novedades | `contenido_educativo`, `contenido_educativo_envios`, `novedades`, `novedades_conjuntos`, `novedades_enviadas` |
+| Directorio | `puntos_acopios`, `puntos_acopio_comentarios` |
+| Seguridad | `tokens_revocados` (lista negra de tokens invalidados al cerrar sesión, HU-008/RQF-007) |
+
+Los datos propios de cada rol viven en su tabla (`residentes`, `recicladores`, `administradores_conjunto`), enlazada a `usuarios` por `id_usuario`; `usuarios` solo guarda lo común a los 4 roles. Todas las PK/FK son UUIDv4, salvo `roles.id_rol` y `localidades.id_localidad` (catálogos fijos, `Integer`).
+
 ---
 
 ## 9. Migraciones con Alembic
@@ -666,21 +686,21 @@ eyJhbGciOiJIUzI1NiJ9  .  eyJzdWIiOiJ1c2VyQGV4LmNvbSIsImV4cCI6MTcwMH0  .  firma
 
 ```python
 from datetime import datetime, timedelta, timezone
-from jose import jwt, JWTError
+import jwt  # PyJWT (issue #312: reemplazó a python-jose)
 from app.config import settings
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Crea un JWT de corta duración (15 min) para autenticar peticiones."""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire, "type": "access"})
+    to_encode.update({"exp": expire, "type": "access", "jti": str(generar_uuid4())})  # jti: id único para poder revocarlo
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Crea un JWT de larga duración (7 días) para renovar el access token."""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS))
-    to_encode.update({"exp": expire, "type": "refresh"})
+    to_encode.update({"exp": expire, "type": "refresh", "jti": str(generar_uuid4())})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def decode_token(token: str) -> dict | None:
@@ -688,7 +708,7 @@ def decode_token(token: str) -> dict | None:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
-    except JWTError:
+    except jwt.PyJWTError:  # firma inválida, expirado, mal formado o sin exp/type/jti
         return None  # no lanza excepción — el que llama esta función decide qué hacer
 ```
 
@@ -713,7 +733,7 @@ FastAPI tiene un sistema de **inyección de dependencias** que permite reutiliza
 # app/dependencies.py
 
 import uuid
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -733,15 +753,23 @@ def get_db():
     finally:
         db.close()      # siempre se ejecuta, incluso si hay una excepción
 
-# HTTPBearer extrae el token del header "Authorization: Bearer <token>".
-# Se usa HTTPBearer (no OAuth2PasswordBearer) porque el login de VerdeApp
-# recibe JSON, no form-data — con HTTPBearer, Swagger UI muestra un campo
-# simple para pegar el token directamente.
-http_bearer = HTTPBearer()
+# El token puede llegar por dos vías:
+#   1. Cookie httpOnly "access_token" — la que usa el navegador con el frontend
+#      (RNF-001.9): JavaScript nunca ve el token.
+#   2. Header "Authorization: Bearer <token>" — pruebas automáticas o Swagger UI.
+# auto_error=False: si no hay header, HTTPBearer no corta la petición con 403;
+# deja que se busque la cookie.
+http_bearer = HTTPBearer(auto_error=False)
+
+def obtener_token_de_la_peticion(request: Request, credentials) -> str | None:
+    if credentials:                                # un header explícito gana
+        return credentials.credentials
+    return request.cookies.get("access_token")     # si no, la cookie
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),  # extrae el token del header
-    db: Session = Depends(get_db),                                    # inyecta la sesión de BD
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(http_bearer),
+    db: Session = Depends(get_db),                 # inyecta la sesión de BD
 ) -> Usuario:
     """
     Verifica el token JWT y retorna el usuario autenticado.
@@ -752,7 +780,9 @@ def get_current_user(
         detail="No se pudieron validar las credenciales",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    token = credentials.credentials
+    token = obtener_token_de_la_peticion(request, credentials)
+    if not token:
+        raise credentials_exception
     payload = decode_token(token)
     if payload is None:
         raise credentials_exception
@@ -965,21 +995,26 @@ Los routers agrupan los endpoints por dominio. Cada endpoint es una función que
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
-@router.post("/register", response_model=UserResponse, status_code=201)
+@router.post("/register", response_model=MessageResponse, status_code=201)
 @limiter.limit("5/minute")  # máximo 5 registros por minuto por IP
-async def register(
-    request: Request,              # necesario para el rate limiter
-    user_data: UserCreate,         # Pydantic valida automáticamente (422 si inválido)
-    db: Session = Depends(get_db)  # sesión de BD inyectada
+def register(
+    request: Request,                   # necesario para el rate limiter
+    user_data: UserCreate,              # Pydantic valida automáticamente (422 si inválido)
+    background_tasks: BackgroundTasks,  # el correo de verificación sale después de responder
+    db: Session = Depends(get_db),      # sesión de BD inyectada
 ):
-    """Registra un nuevo usuario. Envía email de verificación."""
-    return await auth_service.register_user(db, user_data)
+    """Registra un usuario. Misma respuesta si el correo ya existía (issue #373, no revela cuentas)."""
+    auth_service.register_user(db=db, user_data=user_data, background_tasks=background_tasks)
+    return MessageResponse(message="Registro recibido. Revisa tu correo para activar tu cuenta.")
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=MessageResponse)
 @limiter.limit("10/minute")  # más permisivo — el login es más frecuente
-def login(request: Request, login_data: UserLogin, db: Session = Depends(get_db)):
-    """Autentica al usuario y retorna access + refresh tokens."""
-    return auth_service.login_user(db, login_data)
+def login(request: Request, response: Response, login_data: UserLogin, db: Session = Depends(get_db)):
+    """Autentica y deja access + refresh token en cookies httpOnly (RNF-001.9).
+    El cuerpo de la respuesta NO trae los tokens: JavaScript nunca los ve."""
+    tokens = auth_service.login_user(db=db, login_data=login_data)
+    _fijar_cookies_de_sesion(response, tokens)  # httponly, samesite="strict", secure fuera de desarrollo
+    return MessageResponse(message="Sesión iniciada correctamente")
 
 @router.post("/change-password", response_model=MessageResponse)
 def change_password(
@@ -1006,16 +1041,21 @@ def change_password(
 | ------ | ------------------------------ | ---- | ---------- | ------------------------------ |
 | POST   | `/api/v1/auth/register`        | No   | 5/min      | Registrar nuevo usuario        |
 | POST   | `/api/v1/auth/login`           | No   | 10/min     | Iniciar sesión                 |
-| POST   | `/api/v1/auth/refresh`         | No\* | —          | Renovar access token           |
-| POST   | `/api/v1/auth/change-password` | Sí   | —          | Cambiar contraseña             |
+| POST   | `/api/v1/auth/refresh`         | No\* | 30/min     | Renovar access token (rota también el refresh token, issue #308) |
+| POST   | `/api/v1/auth/change-password` | Sí   | 5/min      | Cambiar contraseña             |
 | POST   | `/api/v1/auth/logout`          | Sí   | —          | Cerrar sesión — revoca access y refresh token (HU-008/RQF-007) |
 | POST   | `/api/v1/auth/forgot-password` | No   | 5/min      | Solicitar recuperación         |
-| POST   | `/api/v1/auth/reset-password`  | No\* | —          | Restablecer contraseña         |
-| POST   | `/api/v1/auth/verify-email`    | No\* | —          | Verificar email                |
+| POST   | `/api/v1/auth/reset-password`  | No\* | 5/min      | Restablecer contraseña         |
+| POST   | `/api/v1/auth/verify-email`    | No\* | 5/min      | Verificar email                |
 | GET    | `/api/v1/users/me`             | Sí   | —          | Ver perfil propio              |
+| PUT    | `/api/v1/users/me`             | Sí   | —          | Editar nombre, apellidos, teléfono y asociación |
+| POST   | `/api/v1/users/me/foto-perfil` | Sí   | —          | Subir o reemplazar la foto de perfil |
+| PATCH  | `/api/v1/users/me/locale`      | Sí   | —          | Guardar el idioma preferido    |
 | GET    | `/api/v1/health`               | No   | —          | Verificar que la API está viva |
 
-(\*) Requieren un token especial (refresh o verificación), pero no el access token estándar.
+(\*) Requieren un token especial (refresh, recuperación o verificación), pero no el access token estándar.
+
+Los tokens de sesión viajan en cookies `httpOnly` (`access_token`, `refresh_token`), nunca en el cuerpo de la respuesta.
 
 ### 14.3 Otros routers del dominio (resumen)
 
@@ -1028,8 +1068,8 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 | --------------------------- | ------------------------------- | :-------: | ----------------------------------------------------------------------------------- |
 | `geography.py`              | `/api/v1/geography`             |     4     | Localidades, conjuntos y unidades para llenar formularios dinámicos (registro, filtros) |
 | `admin.py`                  | `/api/v1/admin`                 |     5     | Panel exclusivo del Admin del Sistema — vista SQL y procedimiento almacenado (Criterios 6 y 7), listado de Admins de Conjunto y activar/desactivar cuentas |
-| `admin_conjunto.py`         | `/api/v1/admin-conjunto`        |     7     | Invitación, desvinculación y reasignación de Administradores de Conjunto (RQF-016) |
-| `conjunto_panel.py`         | `/api/v1/conjunto-panel`        |     4     | Panel propio del Admin de Conjunto — solo ve/edita SUS conjuntos, nunca los de otro |
+| `admin_conjunto.py`         | `/api/v1/admin-conjunto`        |     9     | Invitación, desvinculación y reasignación de Administradores de Conjunto (RQF-016) |
+| `conjunto_panel.py`         | `/api/v1/conjunto-panel`        |     8     | Panel propio del Admin de Conjunto — solo ve/edita SUS conjuntos, nunca los de otro (datos, código de acceso, agenda del comité) |
 | `reciclador_conjunto.py`    | `/api/v1/reciclador-conjunto`   |     7     | Invitar, listar, aceptar/rechazar la relación Reciclador↔Conjunto                  |
 | `directorio.py`             | `/api/v1/directorio`            |     2     | Directorio público de recicladores y puntos de acopio                              |
 | `notificaciones.py`         | `/api/v1/notificaciones`        |     8     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, etc.)      |
@@ -1037,6 +1077,7 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 | `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     7     | Catálogo de contenido educativo — lectura para todos, gestión y envío manual a conjuntos solo Admin Sistema (RQF-004/010/013) |
 | `comunicados.py`            | `/api/v1/comunicados`           |     5     | Comunicados del conjunto — publica Admin de Conjunto, ven Residente/Reciclador (RQF-014) |
 | `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
+| `novedades_enviadas.py`     | `/api/v1/novedades-enviadas`    |     2     | Novedades que los usuarios le envían al Admin Sistema y su historial propio (RQF-021) |
 | `puntos_acopio.py`          | `/api/v1/admin/puntos-acopio` |     8     | Gestión de puntos de acopio del Admin Sistema — crear, editar, dar de baja e historial de comentarios (RQF-011) |
 | `uploads.py`                | `/api/v1/uploads`               |     1     | Subida genérica de adjuntos (imagen, o PDF/Word/Excel si se pide) para comunicados, novedades y contenido educativo |
 | `contact.py`                | `/api/v1/contact`               |     1     | Formulario de contacto de la landing — público, 3/min por IP, reenvía el mensaje a `CONTACT_EMAIL` con `Reply-To` igual al correo de quien escribió (para responderle con "Responder") y responde 503 si el correo no sale (#351) |
@@ -1342,7 +1383,7 @@ uv run pytest app/tests/test_auth.py -v
 
 ### 17.5 Tests de autenticación (`test_auth.py`)
 
-Esta tabla solo resume `test_auth.py`. La suite completa tiene 27 archivos en `app/tests/`, uno por dominio (comunicados, novedades, auditorías, puntos de acopio, contacto, límites de longitud...), con 602 pruebas en total (octubre de 2026). Para ver el conteo actual: `uv run pytest -q`.
+Esta tabla solo resume `test_auth.py`. La suite completa tiene 27 archivos en `app/tests/`, uno por dominio (comunicados, novedades, auditorías, puntos de acopio, contacto, límites de longitud...), con más de 600 pruebas en total (octubre de 2026). Para ver el conteo exacto de hoy: `uv run pytest -q`.
 
 | Clase de test           | Endpoint              | Casos cubiertos                                                                       |
 | ----------------------- | --------------------- | ------------------------------------------------------------------------------------- |
@@ -1403,8 +1444,8 @@ uv run ruff check --fix app/ && uv run ruff format app/
 ### 18.4 Flujo completo de verificación
 
 ```bash
-# 1. Base de datos corriendo
-docker compose up -d
+# 1. Base de datos y correo de prueba corriendo (desde la raíz)
+docker compose up -d verde_db verde_mailpit
 
 # 2. Entrar a la carpeta del backend (uv usa el entorno del proyecto automáticamente)
 cd be

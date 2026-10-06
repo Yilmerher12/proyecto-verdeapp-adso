@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema actualiza un punto de acopio existente          |
 | **Módulo**         | Directorio / Administración                                  |
 | **Prioridad**      | Alta                                                          |
-| **Estado**         | Implementado                                                   |
+| **Estado**         | Implementada                                                    |
 | **RF asociados**   | RQF-011                                                      |
 
 ---

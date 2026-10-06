@@ -102,7 +102,7 @@ async def crear_auditoria(db, id_usuario_reciclador, ..., evidencias) -> Auditor
 
 ### Ventaja
 
-Un cambio en cómo se guarda una auditoría en la base de datos no afecta al router. Un cambio en el formato del request no afecta la lógica de negocio. Cada capa se puede probar por separado (por eso el backend tiene 245 tests sin necesitar un servidor HTTP real corriendo).
+Un cambio en cómo se guarda una auditoría en la base de datos no afecta al router. Un cambio en el formato del request no afecta la lógica de negocio. Cada capa se puede probar por separado (por eso el backend tiene más de 600 tests que no necesitan un servidor HTTP real corriendo).
 
 ---
 
@@ -182,7 +182,7 @@ async def crear_auditoria(
 
 ### Ventaja
 
-Para los 245 tests del backend, `get_db` se reemplaza por una base de datos de prueba sin tocar ni un router — FastAPI resuelve el cambio automáticamente vía `app.dependency_overrides`.
+En los tests del backend, `get_db` se reemplaza por una base de datos de prueba sin tocar ni un router — FastAPI resuelve el cambio automáticamente vía `app.dependency_overrides`.
 
 ---
 
@@ -534,5 +534,5 @@ Juntos, estos 14 patrones hacen que VerdeApp sea:
 - **Seguro** — DTO + JWT + guardas de rol (ver `owasp-top-10.md`)
 - **Mantenible** — Capas + Service Layer + DI + Custom Hooks
 - **Escalable** — Stateless + REST + Monorepo
-- **Testeable** — DI con overrides + 245 tests backend + 167 tests frontend
+- **Testeable** — DI con overrides + más de 600 tests de backend y más de 400 de frontend (conteo exacto: `uv run pytest -q` y `pnpm test`)
 - **Evolutivo sin perder datos** — Expand/Contract + siembra con guardas independientes

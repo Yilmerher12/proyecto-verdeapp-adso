@@ -44,6 +44,16 @@ const resources = {
   },
 };
 
+// ¿Qué? Mantiene el atributo lang de <html> igual al idioma activo.
+// ¿Para qué? index.html arranca con lang="es" fijo: con la app en inglés,
+//            el lector de pantalla leía el texto en inglés con pronunciación
+//            española (WCAG 3.1.1 — Idioma de la página).
+// ¿Impacto? Se registra ANTES de init() para que también corra con el idioma
+//           detectado al cargar, no solo cuando el usuario lo cambia.
+i18n.on("languageChanged", (lng) => {
+  document.documentElement.lang = i18n.resolvedLanguage ?? lng;
+});
+
 // ¿Qué? Inicialización de i18next con plugins y configuración.
 // ¿Para qué? Configurar el motor de traducción con:
 //   1. LanguageDetector: detecta automáticamente el idioma del navegador

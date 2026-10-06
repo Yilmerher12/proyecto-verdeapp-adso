@@ -44,7 +44,6 @@ export interface LoginRequest {
 export interface RegisterRequest {
   rol: string;
   correo_electronico: string;
-  email: string; // se reutiliza para el auto-login que hace AuthContext justo después de registrarse
   password: string;
   nombre: string;
   apellidos: string;

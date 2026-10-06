@@ -341,7 +341,6 @@ export function RegisterPage() {
       await register({
         rol: formData.rol,
         correo_electronico: formData.email,
-        email: formData.email,
         password: formData.password,
         nombre: formData.nombre,
         apellidos: formData.apellidos,

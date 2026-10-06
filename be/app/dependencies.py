@@ -86,15 +86,17 @@ def get_current_user(
 ) -> Usuario:
     """Obtiene el usuario autenticado a partir del access token JWT.
 
-    ¿Qué? Decodifica el token del header Authorization, extrae el email (sub)
-          y busca al usuario en la BD.
+    ¿Qué? Decodifica el token (cookie httpOnly o header Authorization, ver
+          obtener_token_de_la_peticion), extrae el email (sub) y busca al
+          usuario en la BD.
     ¿Para qué? Proteger endpoints que requieren autenticación — si el token no es válido
               o el usuario no existe, retorna 401 y el endpoint no se ejecuta.
     ¿Impacto? Esta dependencia es el "guardián" de todos los endpoints protegidos.
               Cualquier endpoint que use Depends(get_current_user) requiere un token válido.
 
     Args:
-        token: Access token JWT extraído automáticamente del header Authorization.
+        request: Petición HTTP, de donde se lee la cookie "access_token".
+        credentials: Header Authorization, si la petición lo trae.
         db: Sesión de base de datos.
 
     Returns:

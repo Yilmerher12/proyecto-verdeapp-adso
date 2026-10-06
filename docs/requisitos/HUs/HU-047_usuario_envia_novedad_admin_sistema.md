@@ -19,7 +19,7 @@
 | **Título**         | Residente, Reciclador o Admin de Conjunto envía una novedad al Admin Sistema |
 | **Módulo**         | Comunicación                                                 |
 | **Prioridad**      | Media                                                         |
-| **Estado**         | Implementado                                                  |
+| **Estado**         | Implementada                                                   |
 | **RF asociados**   | RQF-021                                                      |
 
 ---

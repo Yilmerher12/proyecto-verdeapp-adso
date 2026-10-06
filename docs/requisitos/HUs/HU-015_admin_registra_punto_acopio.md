@@ -16,7 +16,7 @@
 | **Título**         | Admin Sistema registra un nuevo punto de acopio        |
 | **Módulo**         | Directorio / Administración                            |
 | **Prioridad**      | Alta                                                    |
-| **Estado**         | Implementado                                            |
+| **Estado**         | Implementada                                             |
 | **RF asociados**   | RQF-011                                               |
 
 ---
