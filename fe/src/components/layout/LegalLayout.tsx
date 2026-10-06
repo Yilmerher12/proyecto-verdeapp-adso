@@ -10,6 +10,8 @@
  */
 
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { formatearFechaUTC } from "@/lib/dateFormat";
 
 interface LegalLayoutProps {
   children: ReactNode;
@@ -19,6 +21,7 @@ interface LegalLayoutProps {
 }
 
 export function LegalLayout({ children, title, lastUpdated, version }: LegalLayoutProps) {
+  const { t } = useTranslation();
   // El Modal ya pone el botón de cerrar y el fondo: aquí solo va el contenido,
   // con un área de scroll acotada en altura (no toda la pantalla).
   return (
@@ -28,9 +31,15 @@ export function LegalLayout({ children, title, lastUpdated, version }: LegalLayo
           {title}
         </h1>
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-          <p>Versión {version}</p>
+          {/*
+            ¿Qué? Antes "Versión" y "Última actualización" estaban escritos
+                  en español a mano, y la fecha salía cruda (2026-02-01).
+            ¿Impacto? Ahora se traducen con el idioma activo y la fecha usa
+                     formatearFechaUTC, como el resto de fechas elegidas a mano.
+          */}
+          <p>{t("legal.version", { version })}</p>
           <span>&middot;</span>
-          <p>Última actualización: {lastUpdated}</p>
+          <p>{t("legal.lastUpdated", { fecha: formatearFechaUTC(lastUpdated) })}</p>
         </div>
       </header>
 

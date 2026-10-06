@@ -54,6 +54,11 @@
   },
   "common": {
     "loading": "Loading...",
+    "processing": "Processing, please wait",
+    "switchToLight": "Switch to light theme",
+    "switchToDark": "Switch to dark theme",
+    "lightTheme": "Light theme",
+    "darkTheme": "Dark theme",
     "verifyingSession": "Verifying session, please wait",
     "loadError": "We couldn't load this information. Please try again later.",
     "charCount": "{{actual}}/{{max}} characters",
@@ -140,6 +145,22 @@
       "acceptCookies": "I have read and accept the <link>Cookies Policy</link>",
       "roleResident": "Resident",
       "roleRecycler": "Recycler",
+      "roleAdminConjunto": "Do you manage a complex?",
+      "adminRequest": {
+        "heading": "Administrator accounts are created by invitation",
+        "intro": "This way nobody can give themselves the Complex Administrator role. To request yours:",
+        "step1": "Send us a request with the button below: your name, your email, your position and the details of the complex you manage.",
+        "step2": "We reply to your email and ask for the documents that prove your position. You attach them by replying to that same email.",
+        "step3": "If everything checks out, you get an invitation in your email to finish creating your account.",
+        "docsHeading": "Have these documents ready",
+        "doc1": "Certificate of existence and legal representation of the residential complex, issued by the Local Mayor's Office (at most 30 days old).",
+        "doc2": "Copy of your national ID card, both sides.",
+        "doc3": "Minutes of the assembly or board meeting where you were appointed.",
+        "doc4": "Contract signed with the complex, if you have one.",
+        "doc5": "If you manage on behalf of a company: Chamber of Commerce certificate and ID of its legal representative.",
+        "privacyNotice": "Your documents are never uploaded to VerdeApp: they travel only by email, are used solely to verify your identity and position, and are deleted after the review.",
+        "cta": "Request access"
+      },
       "fields": {
         "firstName": "First name *",
         "lastName": "Last name *",
@@ -284,6 +305,8 @@
     "navAriaLabel": "Legal pages navigation",
     "backToHome": "Back to home",
     "footerCredit": "SENA educational project",
+    "version": "Version {{version}}",
+    "lastUpdated": "Last updated: {{fecha}}",
     "terms": {
       "title": "Terms of Use",
       "intro1": "These Terms of Use govern access to and use of the <strong>VerdeApp</strong> service (hereinafter, \"the Service\"), operated by <strong>{{responsable}} — {{nit}}</strong>, headquartered in {{domicilio}}.",
@@ -363,7 +386,8 @@
         "li3": "<strong>Hashed password</strong> — stored only as a bcrypt hash; never in plain text. The Controller cannot recover or view the original password.",
         "li4": "<strong>IP address and session data</strong> — automatically recorded in server logs for technical and security reasons, pursuant to Decree 1078 of 2015.",
         "li5": "<strong>Registration date and time</strong> — technical metadata automatically generated at account creation.",
-        "noCollect": "<strong>Sensitive data is not collected</strong> (Art. 5, Law 1581/2012) such as racial origin, sexual orientation, biometric data, health data, or political affiliation."
+        "noCollect": "<strong>Sensitive data is not collected</strong> (Art. 5, Law 1581/2012) such as racial origin, sexual orientation, biometric data, health data, or political affiliation.",
+        "adminRequest": "If you request a <strong>Complex Administrator</strong> account, the documents that prove your position (ID card, legal representation certificate, appointment minutes or contract) <strong>are never uploaded to or stored in VerdeApp</strong>: they are requested by email after the first contact, used solely to verify your identity and position, and deleted from the mailbox once the review is complete."
       },
       "s3": {
         "heading": "Purposes of Processing",
@@ -526,7 +550,7 @@
       "subtitle": "VerdeApp connects everyone involved in recycling at the residential building.",
       "step1": {
         "title": "The building joins",
-        "description": "The administrator registers the building on VerdeApp and invites the residents and the assigned recycler."
+        "description": "The administrator requests their VerdeApp account, shares the access code with the residents and invites the assigned recycler."
       },
       "step2": {
         "title": "Residents get involved",
@@ -589,12 +613,17 @@
     "submit": "Send Message",
     "charCount": "{{actual}}/{{max}} characters",
     "errorDefault": "We couldn't send your message. Please try again later.",
+    "adminRequest": {
+      "subject": "Complex Administrator account request",
+      "messageTemplate": "Complex name:\nComplex address:\nDistrict:\nMy position at the complex:\nContact phone:"
+    },
     "validation": {
       "nameRequired": "Name is required",
       "subjectMin": "Subject must be at least {{min}} characters",
       "subjectMax": "Subject cannot exceed {{max}} characters",
       "messageMin": "Message must be at least {{min}} characters",
-      "messageMax": "Message cannot exceed {{max}} characters"
+      "messageMax": "Message cannot exceed {{max}} characters",
+      "templateUnchanged": "Fill in the template details before sending"
     }
   },
   "dashboards": {

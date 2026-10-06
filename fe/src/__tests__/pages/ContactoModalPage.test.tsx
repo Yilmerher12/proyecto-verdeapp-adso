@@ -73,4 +73,57 @@ describe("ContactoModalPage", () => {
     expect(screen.queryByText(/Mensaje enviado con éxito/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Mensaje")).toHaveValue("No puedo ver las auditorías.");
   });
+
+  // ¿Qué? Llegada desde "¿Administras un conjunto?" del registro.
+  describe("con ?motivo=admin-conjunto", () => {
+    const PLANTILLA = "Nombre del conjunto:\nDirección del conjunto:\nLocalidad:\nMi cargo en el conjunto:\nTeléfono de contacto:";
+
+    it("trae el asunto y la plantilla del mensaje ya escritos", () => {
+      renderWithProviders(<ContactoModalPage />, { initialRoute: "/contacto?motivo=admin-conjunto" });
+
+      expect(screen.getByLabelText("Asunto")).toHaveValue("Solicitud de cuenta de Administrador de Conjunto");
+      expect(screen.getByLabelText("Mensaje")).toHaveValue(PLANTILLA);
+      expect(screen.getByLabelText("Nombre completo")).toHaveValue("");
+    });
+
+    it("no deja enviar la plantilla sin llenar", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<ContactoModalPage />, { initialRoute: "/contacto?motivo=admin-conjunto" });
+
+      await user.type(screen.getByLabelText("Nombre completo"), "Laura Gómez");
+      await user.type(screen.getByLabelText("Correo electrónico"), "laura@ejemplo.com");
+      await user.click(screen.getByLabelText("Mensaje"));
+      await user.tab();
+
+      expect(screen.getByText("Completa los datos de la plantilla antes de enviar")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Completa todos los campos/ })).toBeDisabled();
+      expect(enviarMock).not.toHaveBeenCalled();
+    });
+
+    it("envía la solicitud cuando la plantilla tiene los datos", async () => {
+      enviarMock.mockResolvedValue(undefined);
+      const user = userEvent.setup();
+      renderWithProviders(<ContactoModalPage />, { initialRoute: "/contacto?motivo=admin-conjunto" });
+
+      await user.type(screen.getByLabelText("Nombre completo"), "Laura Gómez");
+      await user.type(screen.getByLabelText("Correo electrónico"), "laura@ejemplo.com");
+      await user.clear(screen.getByLabelText("Mensaje"));
+      await user.type(screen.getByLabelText("Mensaje"), "Nombre del conjunto: Torres de Aranjuez");
+      await user.click(screen.getByRole("button", { name: "Enviar Mensaje" }));
+
+      expect(enviarMock).toHaveBeenCalledWith({
+        name: "Laura Gómez",
+        email: "laura@ejemplo.com",
+        subject: "Solicitud de cuenta de Administrador de Conjunto",
+        message: "Nombre del conjunto: Torres de Aranjuez",
+      });
+    });
+
+    it("sin motivo el formulario empieza vacío", () => {
+      renderWithProviders(<ContactoModalPage />, { initialRoute: "/contacto?motivo=otra-cosa" });
+
+      expect(screen.getByLabelText("Asunto")).toHaveValue("");
+      expect(screen.getByLabelText("Mensaje")).toHaveValue("");
+    });
+  });
 });

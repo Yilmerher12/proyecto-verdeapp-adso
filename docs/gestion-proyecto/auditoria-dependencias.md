@@ -177,3 +177,14 @@ Dos ajustes posteriores al issue #316:
 
 - **`cooldown` de 7 días en Dependabot:** no propone una versión hasta que lleve una semana publicada. Protege contra el caso que ninguna auditoría puede detectar a tiempo: una versión **maliciosa recién publicada** (por ejemplo, porque le robaron la cuenta al autor de la librería). Mientras nadie la reporta, `pip-audit` y `pnpm audit` la dan por buena; en la práctica, la comunidad suele descubrirla y retirarla en pocos días.
 - **El CI audita también las dependencias de desarrollo del frontend:** `pnpm audit` en vez de `pnpm audit --prod`. Desde el issue #313 están en 0, y una alerta en ellas sí afecta al equipo (la de `esbuild` permitía leer archivos en Windows a través de `pnpm dev`). Con esto, un PR de Dependabot que traiga una versión con una alerta **ya conocida** queda en rojo, tanto en el backend como en el frontend.
+
+---
+
+## Actualización — alertas nuevas en `source-map-js` y `mako` (2026-10-06)
+
+El CI del PR de la opción "¿Administras un conjunto?" quedó en rojo sin que ese PR tocara dependencias: entre un PR y otro se publicaron dos alertas nuevas sobre versiones que ya estaban en los lockfiles. El CI hizo justo lo que debe hacer: bloquear.
+
+- **Frontend — `source-map-js` 1.2.1 → 1.2.2** (GHSA-68fv-2mgg-jv7q, alta: un source map armado a propósito puede congelar el proceso). Llega como dependencia indirecta de Tailwind, PostCSS, Vite y jsdom; todos aceptan la 1.2.2 dentro de su rango, así que bastó con `pnpm update source-map-js --depth Infinity` (solo cambia `fe/pnpm-lock.yaml`, sin overrides).
+- **Backend — `mako` 1.4.1 → 1.4.3** (CVE-2026-102991). Llega como dependencia de `alembic` (plantillas de migraciones); se corrigió con `uv lock --upgrade-package mako` (solo cambia `be/uv.lock`).
+
+Verificado: `pnpm audit` y `pip-audit` en 0, y las suites completas de backend (602) y frontend (407) en verde.

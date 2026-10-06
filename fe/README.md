@@ -1338,13 +1338,17 @@ const handleSubmit = async (e: React.FormEvent) => {
 ### `RegisterPage.tsx`
 
 ```typescript
-// Campos: nombre completo, email, contraseña, confirmar contraseña
-// Validación cliente (función validate()):
-//   - nombre: mínimo 2 caracteres
-//   - password: ≥8 chars, ≥1 mayús, ≥1 minús, ≥1 número
-//   - confirmPassword: debe coincidir con password
-// En éxito: register() llama auto-login → navigate("/dashboard")
-// Los errores se muestran bajo cada campo (InputField.error prop)
+// Selector de rol con 3 botones (Tab + Enter, aria-pressed):
+//   - Residente / Reciclador → formulario con los campos propios de cada rol
+//   - "¿Administras un conjunto?" → reemplaza el formulario por
+//     <SolicitudAdminConjuntoInfo />: pasos, documentos a tener listos y un
+//     botón "Solicitar acceso" que abre /contacto?motivo=admin-conjunto
+//     (asunto y plantilla ya escritos). No muestra correos ni recibe archivos.
+// Campos comunes: nombres, apellidos, teléfono, correo + confirmación,
+//   contraseña + confirmación, aceptación de Términos y Privacidad
+// Validación: por campo al salir de él (validarCampo); el botón sigue
+//   deshabilitado mientras falte algo o haya un formato inválido
+// En éxito: modal "revisa tu correo" — la cuenta se activa con el enlace de verificación
 ```
 
 ### `DashboardPage.tsx`

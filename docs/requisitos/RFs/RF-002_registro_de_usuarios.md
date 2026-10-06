@@ -87,3 +87,4 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 - RN-003: El token del correo de verificación tiene una validez de 24 horas.
 - RN-004: Un Residente solo puede registrarse aportando el `código de acceso` real y vigente de su conjunto (issue #168) — el Admin de Conjunto lo reparte fuera de la app (cartelera, grupo del conjunto). Si el Admin de Conjunto lo regenera (RQF-012/HU-044), el código anterior deja de servir de inmediato.
 - RN-005: El registro no debe revelar si un correo ya tiene cuenta (issue #373, CN-026): misma respuesta, mismo tiempo de respuesta y mismas validaciones en los dos casos.
+- RN-006: El selector de rol del registro tiene una tercera opción, "¿Administras un conjunto?", que **no** crea ninguna cuenta: reemplaza el formulario por las instrucciones para pedir la invitación (HU-002 CA-002.7, HU-018 CA-018.5). El valor `admin_conjunto` nunca se envía al backend, así que RN-001 sigue igual.

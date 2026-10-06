@@ -72,8 +72,8 @@ export function PoliticaPrivacidadPage() {
   return (
     <LegalLayout
       title={t("legal.privacy.title")}
-      lastUpdated="2026-02-01"
-      version="1.0"
+      lastUpdated="2026-10-06"
+      version="1.1"
     >
       <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
         <Trans
@@ -152,6 +152,17 @@ export function PoliticaPrivacidadPage() {
         </ul>
         <p>
           <Trans i18nKey="legal.privacy.s2.noCollect" components={{ strong: S }} />
+        </p>
+        {/*
+          ¿Qué? Cómo se tratan los documentos de quien pide una cuenta de
+                Administrador de Conjunto (opción "¿Administras un conjunto?"
+                del registro).
+          ¿Para qué? Esa pantalla promete que los documentos no se suben a la
+                    app y se borran tras la revisión; la política debe decir
+                    lo mismo.
+        */}
+        <p>
+          <Trans i18nKey="legal.privacy.s2.adminRequest" components={{ strong: S }} />
         </p>
       </LegalSection>
 

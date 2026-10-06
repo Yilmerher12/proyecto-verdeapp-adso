@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
@@ -8,6 +8,7 @@ import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { enviarMensajeContacto } from "@/lib/contactApi";
+import { MOTIVO_SOLICITUD_ADMIN } from "@/components/SolicitudAdminConjuntoInfo";
 import {
   CONTACTO_ASUNTO_MAX_LENGTH,
   CONTACTO_ASUNTO_MIN_LENGTH,
@@ -34,7 +35,21 @@ export function ContactoModalPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const [formData, setFormData] = useState(FORM_VACIO);
+  // ¿Qué? Si se llega desde la opción "¿Administras un conjunto?" del
+  //       registro (?motivo=admin-conjunto), el asunto y una plantilla del
+  //       mensaje ya vienen escritos en el idioma activo.
+  // ¿Para qué? Que todas las solicitudes lleguen al equipo con el mismo
+  //           asunto y los mismos datos, sin que la persona adivine qué poner.
+  // ¿Impacto? Nada personal viaja en la URL: solo el motivo.
+  const [searchParams] = useSearchParams();
+  const esSolicitudAdmin = searchParams.get("motivo") === MOTIVO_SOLICITUD_ADMIN;
+  const plantillaAdmin = t("contactoModal.adminRequest.messageTemplate");
+
+  const [formData, setFormData] = useState(() =>
+    esSolicitudAdmin
+      ? { ...FORM_VACIO, subject: t("contactoModal.adminRequest.subject"), message: plantillaAdmin }
+      : FORM_VACIO,
+  );
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Campo, string>>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
@@ -62,6 +77,11 @@ export function ContactoModalPage() {
         : [CONTACTO_MENSAJE_MIN_LENGTH, CONTACTO_MENSAJE_MAX_LENGTH];
     if (valor.length < min) return t(`contactoModal.validation.${campo}Min`, { min });
     if (valor.length > max) return t(`contactoModal.validation.${campo}Max`, { max });
+    // ¿Qué? La plantilla ya supera el mínimo de caracteres, así que sin esta
+    //       revisión se podía enviar tal cual, sin ningún dato del conjunto.
+    if (campo === "message" && esSolicitudAdmin && valor === plantillaAdmin.trim()) {
+      return t("contactoModal.validation.templateUnchanged");
+    }
     return "";
   };
 
@@ -172,7 +192,7 @@ export function ContactoModalPage() {
                 <textarea
                   id="message"
                   name="message"
-                  rows={4}
+                  rows={esSolicitudAdmin ? 6 : 4}
                   value={formData.message}
                   onChange={handleChange}
                   onBlur={() => validarCampo("message")}
