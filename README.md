@@ -574,6 +574,8 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 **E2E, primera vez** (desde `e2e/`): `pnpm install` y luego `pnpm exec playwright install chromium` (descarga el navegador). Antes de `pnpm test`, el backend y la BD deben estar encendidos (Método B); el frontend lo levanta Playwright solo. `pnpm codegen` abre un navegador que graba lo que haces y lo convierte en código de test.
 
+**E2E y el CI**: las carpetas `e2e/playwright-report/` y `e2e/test-results/` **no se suben como artefacto** del CI (ya están en `.gitignore`). Las trazas de Playwright guardan paso a paso lo que hizo el navegador, y pueden incluir el correo y la contraseña de las cuentas de prueba. Si algún día el CI sube esos reportes, hay que revisar primero qué contienen. Las dependencias de `e2e/` las vigilan Dependabot y un paso `pnpm audit` del CI, igual que las de `fe/`.
+
 ---
 
 ## 🎓 Contexto Formativo

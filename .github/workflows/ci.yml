@@ -188,3 +188,14 @@ jobs:
         # ¿Impacto? Si aparece una alerta nueva en una dependencia de
         #           desarrollo, el PR queda en rojo hasta corregirla.
         run: pnpm audit
+
+      - name: Auditar dependencias de e2e (pnpm audit)
+        # ¿Qué? Issue #405 (CN-066): lo mismo que el paso anterior, sobre la
+        #       carpeta e2e/ (Playwright), que tiene su propio lockfile.
+        # ¿Para qué? Dependabot ya propone sus actualizaciones; este paso es el
+        #           que deja en rojo un PR que traiga una alerta conocida.
+        # ¿Impacto? Se reutiliza este job (ya tiene Node y pnpm 11.0.9, la
+        #           misma versión que fija e2e/package.json). No hace falta
+        #           instalar nada: pnpm audit lee solo el lockfile.
+        working-directory: e2e
+        run: pnpm audit

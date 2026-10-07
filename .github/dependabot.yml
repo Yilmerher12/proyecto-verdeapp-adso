@@ -71,6 +71,28 @@ updates:
       #       (issue #313). Quitar esta línea cuando se haga esa tarjeta.
       - dependency-name: "eslint-plugin-react-hooks"
 
+  # --- E2E: e2e/package.json + e2e/pnpm-lock.yaml ---
+  # ¿Qué? Issue #405 (CN-066): la carpeta de las pruebas con Playwright tiene
+  #       su propia lista de dependencias, aparte de las de /fe.
+  # ¿Para qué? Sin este bloque nadie se enteraba de un parche de seguridad de
+  #           Playwright. Mismas reglas que el bloque de /fe.
+  - package-ecosystem: "npm"
+    directory: "/e2e"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      e2e:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   # --- Actions usadas en .github/workflows/ (fijadas por SHA) ---
   # ¿Qué? Dependabot actualiza el SHA y el comentario de versión que lo
   #       acompaña (ej. "# actions/checkout@v7.0.1").
