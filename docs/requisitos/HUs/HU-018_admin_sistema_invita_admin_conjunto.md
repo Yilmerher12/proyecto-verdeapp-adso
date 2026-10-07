@@ -57,6 +57,14 @@
 - **cuando** el sistema responde,
 - **entonces** debo ver un mensaje confirmando que se envió al correo indicado.
 
+### CA-018.4b — Conjuntos que no se pueden invitar (issue #402)
+
+- **Dado que** elijo conjuntos para invitar,
+- **cuando** alguno ya tiene un administrador activo, o ya tiene una invitación pendiente para **otra** persona,
+- **entonces** el sistema rechaza la invitación con un error 409 que nombra esos conjuntos, en vez de dejar que el choque aparezca recién cuando la persona invitada acepta (RN-003: un conjunto, un solo administrador activo).
+- Si un conjunto viene repetido en la misma invitación, se cuenta una sola vez; el máximo es 100 conjuntos por invitación.
+- Reenviar la invitación al **mismo** correo sigue permitido (por si se perdió el correo): una invitación pendiente de la misma persona no bloquea.
+
 ### CA-018.5 — Cómo llega una solicitud al Admin Sistema
 
 - **Dado que** una persona eligió "¿Administras un conjunto?" en el registro (CA-002.7) y envió la solicitud,

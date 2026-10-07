@@ -45,6 +45,7 @@
 - **Dado que** administro un conjunto,
 - **cuando** edito su NIT desde mi panel,
 - **entonces** el cambio se guarda de inmediato (el NIT admite máximo 50 caracteres, el tamaño de su columna; issue #352).
+- **y** si la petición no trae el campo NIT (por ejemplo, solo cambia la cantidad de apartamentos), el NIT guardado no se toca; solo se borra cuando llega vacío o `null` a propósito (issue #402). La pantalla siempre manda los dos campos, así que esto solo afecta a quien llame a la API directamente.
 
 ### CA-044.1b — Definir la cantidad de apartamentos
 

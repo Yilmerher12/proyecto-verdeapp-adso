@@ -59,6 +59,120 @@ class TestInvitar:
         )
         assert response.status_code == 400
 
+    def test_mas_de_100_conjuntos_devuelve_422(self, client: TestClient, admin_sistema_auth_headers):
+        """Issue #402 (CN-060): tope de 100 conjuntos por invitación."""
+        response = client.post(
+            "/api/v1/admin-conjunto/invitar",
+            headers=admin_sistema_auth_headers,
+            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [str(uuid.uuid4()) for _ in range(101)]},
+        )
+        assert response.status_code == 422
+
+    def test_conjunto_con_administrador_activo_devuelve_409(
+        self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_test, conjunto_verificado
+    ):
+        """Issue #402 (CN-060): el aviso llega al invitar, con el nombre del conjunto, no al aceptar."""
+        response = client.post(
+            "/api/v1/admin-conjunto/invitar",
+            headers=admin_sistema_auth_headers,
+            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)]},
+        )
+        assert response.status_code == 409
+        assert conjunto_verificado.nombre_conjunto in response.json()["detail"]
+
+    def test_conjunto_ya_desvinculado_se_puede_invitar(
+        self, client: TestClient, db, admin_sistema_auth_headers, admin_conjunto_test, conjunto_verificado
+    ):
+        """Un vínculo terminado (fecha_desvinculacion) no cuenta como administrador activo."""
+        from datetime import datetime
+
+        from sqlalchemy import select
+
+        from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
+
+        asignacion = db.execute(
+            select(AdministradorConjuntoAsignacion).where(
+                AdministradorConjuntoAsignacion.id_conjunto_residencial == conjunto_verificado.id_conjunto_residencial
+            )
+        ).scalar_one()
+        asignacion.fecha_desvinculacion = datetime.now()
+        db.commit()
+
+        response = client.post(
+            "/api/v1/admin-conjunto/invitar",
+            headers=admin_sistema_auth_headers,
+            json={"correo_electronico": "nuevo@verdeapp.com", "ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)]},
+        )
+        assert response.status_code == 201
+
+    def test_conjunto_con_invitacion_pendiente_de_otra_persona_devuelve_409(
+        self, client: TestClient, admin_sistema_auth_headers, conjunto_verificado
+    ):
+        """Issue #402 (CN-060): dos invitaciones pendientes al mismo conjunto harían fallar la segunda al aceptarse."""
+        cuerpo = {"ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)]}
+        primera = client.post(
+            "/api/v1/admin-conjunto/invitar",
+            headers=admin_sistema_auth_headers,
+            json={"correo_electronico": "ana@verdeapp.com", **cuerpo},
+        )
+        assert primera.status_code == 201
+
+        segunda = client.post(
+            "/api/v1/admin-conjunto/invitar",
+            headers=admin_sistema_auth_headers,
+            json={"correo_electronico": "luis@verdeapp.com", **cuerpo},
+        )
+        assert segunda.status_code == 409
+        assert conjunto_verificado.nombre_conjunto in segunda.json()["detail"]
+
+    def test_reinvitar_al_mismo_correo_sigue_permitido(
+        self, client: TestClient, admin_sistema_auth_headers, conjunto_verificado
+    ):
+        """Si a la persona se le perdió el correo, se le puede reenviar la invitación."""
+        cuerpo = {
+            "correo_electronico": "ana@verdeapp.com",
+            "ids_conjuntos": [str(conjunto_verificado.id_conjunto_residencial)],
+        }
+        for _ in range(2):
+            response = client.post("/api/v1/admin-conjunto/invitar", headers=admin_sistema_auth_headers, json=cuerpo)
+            assert response.status_code == 201
+
+    def test_conjuntos_repetidos_se_guardan_una_sola_vez_y_la_invitacion_se_acepta(
+        self, client: TestClient, admin_sistema_auth_headers, conjunto_verificado, db, monkeypatch
+    ):
+        """Issue #402 (CN-060): antes, un conjunto repetido hacía fallar el aceptar con 500."""
+        from sqlalchemy import select
+
+        from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto
+        from app.services import admin_conjunto_service
+
+        tokens_enviados: list[str] = []
+
+        async def enviar_falso(email: str, token: str) -> None:
+            tokens_enviados.append(token)
+
+        monkeypatch.setattr(admin_conjunto_service, "send_admin_conjunto_invitation_email", enviar_falso)
+
+        id_conjunto = str(conjunto_verificado.id_conjunto_residencial)
+        correo = "repetido@verdeapp.com"
+        invitar = client.post(
+            "/api/v1/admin-conjunto/invitar",
+            headers=admin_sistema_auth_headers,
+            json={"correo_electronico": correo, "ids_conjuntos": [id_conjunto, id_conjunto]},
+        )
+        assert invitar.status_code == 201
+
+        invitacion = db.execute(
+            select(InvitacionAdminConjunto).where(InvitacionAdminConjunto.correo_electronico == correo)
+        ).scalar_one()
+        assert invitacion.conjuntos_asignados == id_conjunto
+
+        aceptar = client.post(
+            "/api/v1/admin-conjunto/aceptar",
+            json={"token": tokens_enviados[0], "password": "ClaveFuerte123", "nombre": "Nuevo", "apellidos": "Administrador"},
+        )
+        assert aceptar.status_code == 201
+
 
 class TestConsultarYAceptar:
     def test_token_invalido_devuelve_no_valido(self, client: TestClient):

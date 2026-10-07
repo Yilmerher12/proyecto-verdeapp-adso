@@ -168,8 +168,18 @@ def editar_mi_conjunto(
     # ¿Para qué? Mismo patrón que ya usa asociacion en user_service.py:
     #           recortar primero, y que el vacío resultante sea "sin
     #           valor" (None), no una cadena vacía.
-    nit_recortado = (datos.nit or "").strip()
-    conjunto.nit = nit_recortado or None
+    #
+    # ¿Qué? Issue #402 (CN-062) — el NIT, igual que la cantidad de
+    #       apartamentos, solo se toca si la petición lo trae.
+    # ¿Para qué? Antes, una petición que solo traía total_apartamentos dejaba
+    #           datos.nit en None, y eso se guardaba como "sin valor": el NIT
+    #           ya guardado se borraba sin que nadie lo pidiera.
+    # ¿Impacto? "nit" ausente = se conserva; "nit": null (o vacío) explícito
+    #           = se borra a propósito. La pantalla siempre manda los dos
+    #           campos, así que su comportamiento no cambia.
+    if "nit" in datos.model_fields_set:
+        nit_recortado = (datos.nit or "").strip()
+        conjunto.nit = nit_recortado or None
     # ¿Qué? La cantidad de apartamentos solo se toca si la petición la trae
     #       (así editar solo el NIT no la borra).
     if "total_apartamentos" in datos.model_fields_set:
