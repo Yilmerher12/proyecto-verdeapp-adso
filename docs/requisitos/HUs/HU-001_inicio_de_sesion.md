@@ -64,6 +64,8 @@
 > **Nota (2026-08-29)**: implementado y probado contra el servidor real — 5 intentos fallidos seguidos bloquean la cuenta 15 minutos, y ni siquiera la contraseña correcta funciona mientras dura el bloqueo. Un login exitoso (antes de llegar a 5 fallos) resetea el contador.
 >
 > **Nota (2026-10-05, issue #373)**: mientras dura el bloqueo, el mensaje es el mismo de CA-001.3 con una línea extra: *"Credenciales incorrectas. Si fallaste varias veces, espera 15 minutos e intenta de nuevo."* Antes era un mensaje propio ("Demasiados intentos fallidos...") que dejaba saber a cualquiera que ese correo tenía cuenta.
+>
+> **Nota (2026-10-07, issue #396 — CN-026)**: cuando el bloqueo de 15 minutos termina, el conteo empieza de nuevo: un solo fallo justo después ya no vuelve a bloquear (antes el contador seguía en 5 y el siguiente fallo, el 6.º, bloqueaba otros 15 minutos). El contador se suma en la base de datos con una sola sentencia, así que dos fallos simultáneos cuentan los dos. Restablecer la contraseña con el enlace de correo también quita el bloqueo (ver HU-042, CA-042.6).
 
 ### CA-001.6 — Redirección según el rol
 
