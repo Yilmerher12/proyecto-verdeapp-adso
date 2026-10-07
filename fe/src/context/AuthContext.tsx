@@ -11,7 +11,13 @@ import axios from "axios";
 import * as authApi from "@/api/auth";
 import { AuthContext } from "@/context/authContextDef";
 import i18n from "@/i18n";
-import { alCerrarSesionEnOtraPestana, borrarSesionActiva, haySesionActiva, marcarSesionActiva } from "@/lib/sesionActiva";
+import {
+  alCerrarSesionEnOtraPestana,
+  alIniciarSesionEnOtraPestana,
+  borrarSesionActiva,
+  haySesionActiva,
+  marcarSesionActiva,
+} from "@/lib/sesionActiva";
 import type {
   AuthContextType,
   ChangePasswordRequest,
@@ -108,6 +114,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // ¿Impacto? Solo setUser(null): una pestaña en una página pública (el
   //           landing) se queda donde está.
   useEffect(() => alCerrarSesionEnOtraPestana(() => setUser(null)), []);
+
+  // ¿Qué? Si otra pestaña inicia sesión (con la misma cuenta u otra), esta
+  //       vuelve a preguntarle al backend quién es y actualiza `user`.
+  // ¿Para qué? Las cookies son compartidas: si la otra pestaña entró con otra
+  //           cuenta, esta ya habla con el backend como esa cuenta, pero seguía
+  //           dibujando la anterior (issue #404). Con `user` nuevo, las rutas
+  //           protegidas mandan a cada rol a su panel solas.
+  // ¿Impacto? El catch vacío es a propósito: si getMe() falla con 401, el
+  //           interceptor de axios ya cierra la sesión local; cualquier otro
+  //           fallo deja la pantalla como estaba, igual que verifySession().
+  useEffect(
+    () =>
+      alIniciarSesionEnOtraPestana(() => {
+        authApi
+          .getMe()
+          .then(async (userData) => {
+            setUser(userData);
+            if (userData.locale) await i18n.changeLanguage(userData.locale);
+          })
+          .catch(() => {});
+      }),
+    [],
+  );
 
   /**
    * Acción de Login adaptada

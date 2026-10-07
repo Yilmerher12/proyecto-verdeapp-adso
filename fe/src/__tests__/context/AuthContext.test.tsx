@@ -130,6 +130,13 @@ function EstadoSesion() {
   return <p>{isAuthenticated ? "con sesión" : "sin sesión"}</p>;
 }
 
+// ¿Qué? Muestra el correo del usuario en sesión, para ver cuál cuenta tiene
+//       esta pestaña después de un cambio de cuenta en otra.
+function UsuarioActual() {
+  const { user } = useAuth();
+  return <p>{user?.email ?? "sin usuario"}</p>;
+}
+
 // ¿Qué? Lo que el navegador le avisa a ESTA pestaña cuando otra pestaña
 //       cambia localStorage (jsdom no lo dispara solo entre "pestañas").
 function cambioEnOtraPestana(key: string | null, newValue: string | null) {
@@ -168,7 +175,7 @@ describe("AuthProvider — sesión compartida entre pestañas", () => {
     );
     await user.click(screen.getByText("Entrar"));
 
-    await waitFor(() => expect(localStorage.getItem("verdeapp:sesion-activa")).toBe("1"));
+    await waitFor(() => expect(localStorage.getItem("verdeapp:sesion-activa")).not.toBeNull());
     expect(sessionStorage.getItem("verdeapp:sesion-activa")).toBeNull();
   });
 
@@ -178,6 +185,7 @@ describe("AuthProvider — sesión compartida entre pestañas", () => {
     cambioEnOtraPestana("verdeapp:sesion-activa", null);
 
     expect(screen.getByText("sin sesión")).toBeInTheDocument();
+    expect(mockGetMe).toHaveBeenCalledTimes(1);
   });
 
   it("un cambio de otra clave de localStorage (ej. el tema) no cierra la sesión", async () => {
@@ -186,6 +194,35 @@ describe("AuthProvider — sesión compartida entre pestañas", () => {
     cambioEnOtraPestana("theme", "dark");
 
     expect(screen.getByText("con sesión")).toBeInTheDocument();
+    expect(mockGetMe).toHaveBeenCalledTimes(1);
+  });
+
+  // ¿Qué? Issue #404 (CN-064): la otra pestaña entra con OTRA cuenta.
+  // ¿Para qué? Las cookies son compartidas, así que esta pestaña ya habla con
+  //           el backend como la cuenta nueva; la pantalla tiene que alcanzarla.
+  it("si otra pestaña inicia sesión con otra cuenta, esta pasa a mostrar la cuenta nueva", async () => {
+    localStorage.setItem("verdeapp:sesion-activa", "codigo-anterior");
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <UsuarioActual />
+        </AuthProvider>,
+      );
+    });
+    await waitFor(() => expect(screen.getByText("test@example.com")).toBeInTheDocument());
+
+    mockGetMe.mockResolvedValue({
+      ...usuarioConIngles,
+      email: "reciclador@example.com",
+      role_id: 3,
+      locale: "es",
+    });
+    await act(async () => {
+      cambioEnOtraPestana("verdeapp:sesion-activa", "codigo-nuevo");
+    });
+
+    await waitFor(() => expect(screen.getByText("reciclador@example.com")).toBeInTheDocument());
+    expect(mockChangeLanguage).toHaveBeenLastCalledWith("es");
   });
 });
 

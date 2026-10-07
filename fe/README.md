@@ -629,7 +629,7 @@ const api = axios.create({
 });
 ```
 
-**Los tokens no los toca JavaScript.** El backend los guarda en cookies `httpOnly` (el código de la página no puede leerlas, así un script malicioso no puede robarlas) y el navegador las adjunta solo gracias a `withCredentials: true`. Lo único que el frontend guarda es una marca sin valor secreto, `verdeapp:sesion-activa` = `"1"`, en `localStorage` ([`lib/sesionActiva.ts`](src/lib/sesionActiva.ts)), para saber si vale la pena preguntar `GET /me` al recargar.
+**Los tokens no los toca JavaScript.** El backend los guarda en cookies `httpOnly` (el código de la página no puede leerlas, así un script malicioso no puede robarlas) y el navegador las adjunta solo gracias a `withCredentials: true`. Lo único que el frontend guarda es una marca sin valor secreto, `verdeapp:sesion-activa` (un código aleatorio distinto en cada login), en `localStorage` ([`lib/sesionActiva.ts`](src/lib/sesionActiva.ts)), para saber si vale la pena preguntar `GET /me` al recargar. Como el valor cambia en cada login, el navegador avisa a las demás pestañas, que vuelven a preguntar `GET /me` y pasan a mostrar la cuenta nueva.
 
 El interceptor de respuesta hace 3 cosas:
 
