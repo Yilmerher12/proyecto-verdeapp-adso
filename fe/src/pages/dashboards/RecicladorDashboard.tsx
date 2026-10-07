@@ -164,8 +164,16 @@ export function RecicladorDashboard() {
   const [feedbackAuditoria, mostrarFeedbackAuditoria] = useAvisoTemporal<string>();
   const [auditoriaAbierta, setAuditoriaAbierta] = useState<string | null>(null);
 
+  // ¿Qué? Issue #406 — allSettled en vez de all: cada una de las 5 peticiones
+  //       guarda su resultado por separado.
+  // ¿Para qué? Con Promise.all, si UNA sola fallaba no se guardaba NINGUNA de
+  //           las otras 4 y el panel quedaba vacío, aunque ya hubieran llegado
+  //           bien (por ejemplo, las notificaciones).
+  // ¿Impacto? Lo que falla conserva su último valor bueno (el polling de 20s
+  //           lo reintenta) y se muestra el aviso de errorCarga; el resto del
+  //           panel se pinta igual.
   const cargarDatos = () => {
-    Promise.all([
+    Promise.allSettled([
       axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-invitaciones`),
       axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-conjuntos-autorizados`),
       axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`),
@@ -175,19 +183,20 @@ export function RecicladorDashboard() {
       axios.get(`${API_BASE_URL}/api/v1/notificaciones/mi-estado-reciclador`),
     ])
       .then(([resInv, resConj, resNotifs, misAuditorias, resEstado]) => {
-        setInvitaciones(resInv.data);
-        setConjuntosAutorizados(resConj.data);
-        setNotificaciones(resNotifs.data);
-        setAuditorias(misAuditorias);
-        setEstadoReciclador(resEstado.data);
-        setErrorCarga(false);
+        if (resInv.status === "fulfilled") setInvitaciones(resInv.value.data);
+        if (resConj.status === "fulfilled") setConjuntosAutorizados(resConj.value.data);
+        if (resNotifs.status === "fulfilled") setNotificaciones(resNotifs.value.data);
+        if (misAuditorias.status === "fulfilled") setAuditorias(misAuditorias.value);
+        if (resEstado.status === "fulfilled") setEstadoReciclador(resEstado.value.data);
+        // ¿Qué? Antes un .catch(() => {}) vacío no dejaba ningún rastro de que
+        //       algo falló — el dashboard se quedaba tal cual, sin avisar.
+        // ¿Impacto? Ahora se muestra un aviso; como cargarDatos() también
+        //           corre cada 20s (polling), el aviso desaparece solo en
+        //           cuanto una siguiente carga sí funcione.
+        setErrorCarga(
+          [resInv, resConj, resNotifs, misAuditorias, resEstado].some((r) => r.status === "rejected")
+        );
       })
-      // ¿Qué? Antes un .catch(() => {}) vacío no dejaba ningún rastro de que
-      //       algo falló — el dashboard se quedaba tal cual, sin avisar.
-      // ¿Impacto? Ahora se muestra un aviso; como cargarDatos() también
-      //           corre cada 20s (polling), el aviso desaparece solo en
-      //           cuanto una siguiente carga sí funcione.
-      .catch(() => setErrorCarga(true))
       .finally(() => setCargando(false));
   };
 
