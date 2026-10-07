@@ -25,6 +25,10 @@ from app.schemas.desvinculacion import (
     AdministradorConjuntoResumenResponse,
     SolicitudDesvinculacionResponse,
 )
+from app.services.admin_conjunto_service import (
+    nombres_con_administrador_activo,
+    nombres_con_invitacion_pendiente_de_otro,
+)
 from app.services.notificaciones_helpers import crear_notificacion
 
 
@@ -244,16 +248,24 @@ def asignar_conjunto_adicional(db: Session, id_administrador: UUID, id_conjunto:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El conjunto no existe.")
 
     # RN-003: un conjunto no puede tener dos administradores activos.
-    ya_tiene_admin = db.execute(
-        select(AdministradorConjuntoAsignacion).where(
-            AdministradorConjuntoAsignacion.id_conjunto_residencial == id_conjunto,
-            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
-        )
-    ).scalar_one_or_none()
-    if ya_tiene_admin:
+    # ¿Qué? Issue #409 — 409 (antes 400): es el mismo caso que al invitar
+    #       (admin_conjunto_service.py), y debe responder igual en los dos.
+    if nombres_con_administrador_activo(db, [id_conjunto]):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Este conjunto ya tiene un administrador activo.",
+        )
+    # ¿Qué? Issue #409 — tampoco se asigna un conjunto que ya está prometido en
+    #       una invitación pendiente de otra persona.
+    # ¿Para qué? Si se asignara, la persona invitada chocaría con
+    #           ux_admin_conjunto_activo al aceptar y su invitación quedaría
+    #           inutilizable. Así el Admin Sistema lo sabe antes.
+    # ¿Impacto? Hay que esperar a que esa invitación se acepte o venza (48 h).
+    if nombres_con_invitacion_pendiente_de_otro(db, [id_conjunto]):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Este conjunto tiene una invitación pendiente para otra persona. "
+            "Espera a que la acepte o venza antes de asignarlo.",
         )
 
     db.add(

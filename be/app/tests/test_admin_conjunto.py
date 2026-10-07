@@ -268,6 +268,64 @@ class TestConsultarYAceptar:
         )
         assert reintento.status_code == 400
 
+    def test_aceptar_con_conjunto_que_ya_tiene_administrador_devuelve_409(
+        self,
+        client: TestClient,
+        admin_sistema_auth_headers,
+        admin_conjunto_test,
+        conjunto_verificado_sin_admin,
+        db,
+        monkeypatch,
+    ):
+        """Issue #409: si el conjunto consiguió administrador mientras la invitación esperaba, se avisa con 409 y no se crea nada."""
+        from sqlalchemy import select
+
+        from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
+        from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto
+        from app.models.usuario import Usuario
+        from app.services import admin_conjunto_service
+
+        tokens_enviados: list[str] = []
+
+        async def enviar_falso(email: str, token: str) -> None:
+            tokens_enviados.append(token)
+
+        monkeypatch.setattr(admin_conjunto_service, "send_admin_conjunto_invitation_email", enviar_falso)
+
+        correo = "tarde@verdeapp.com"
+        invitar = client.post(
+            "/api/v1/admin-conjunto/invitar",
+            headers=admin_sistema_auth_headers,
+            json={
+                "correo_electronico": correo,
+                "ids_conjuntos": [str(conjunto_verificado_sin_admin.id_conjunto_residencial)],
+            },
+        )
+        assert invitar.status_code == 201
+
+        # ¿Qué? Se inserta el vínculo directo en la BD: por la API ya no se puede
+        #       (asignar-conjunto-adicional rechaza conjuntos con invitación pendiente).
+        db.add(
+            AdministradorConjuntoAsignacion(
+                id_administrador=admin_conjunto_test.id_administrador,
+                id_conjunto_residencial=conjunto_verificado_sin_admin.id_conjunto_residencial,
+            )
+        )
+        db.commit()
+
+        aceptar = client.post(
+            "/api/v1/admin-conjunto/aceptar",
+            json={"token": tokens_enviados[0], "password": "ClaveFuerte123", "nombre": "Nuevo", "apellidos": "Administrador"},
+        )
+        assert aceptar.status_code == 409
+        assert conjunto_verificado_sin_admin.nombre_conjunto in aceptar.json()["detail"]
+
+        assert db.execute(select(Usuario).where(Usuario.correo_electronico == correo)).scalar_one_or_none() is None
+        invitacion = db.execute(
+            select(InvitacionAdminConjunto).where(InvitacionAdminConjunto.correo_electronico == correo)
+        ).scalar_one()
+        assert invitacion.used is False
+
     def test_aceptar_con_token_inexistente_devuelve_400(self, client: TestClient):
         response = client.post(
             "/api/v1/admin-conjunto/aceptar",

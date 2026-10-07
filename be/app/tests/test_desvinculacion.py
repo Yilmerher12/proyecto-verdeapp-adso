@@ -335,9 +335,10 @@ class TestAsignarConjuntoAdicional:
         notifs = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_conjunto_auth_headers)
         assert any(n["tipo"] == "CONJUNTO_ASIGNADO" for n in notifs.json())
 
-    def test_conjunto_ya_tiene_administrador_devuelve_400(
+    def test_conjunto_ya_tiene_administrador_devuelve_409(
         self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_test, conjunto_verificado
     ):
+        """Issue #409: mismo código (409) que al invitar a un conjunto con administrador."""
         response = client.post(
             "/api/v1/admin-conjunto/asignar-conjunto-adicional",
             headers=admin_sistema_auth_headers,
@@ -346,7 +347,32 @@ class TestAsignarConjuntoAdicional:
                 "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
             },
         )
-        assert response.status_code == 400
+        assert response.status_code == 409
+
+    def test_conjunto_con_invitacion_pendiente_devuelve_409(
+        self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_test, conjunto_verificado_sin_admin
+    ):
+        """Issue #409: un conjunto prometido en una invitación pendiente no se asigna a otra persona."""
+        invitar = client.post(
+            "/api/v1/admin-conjunto/invitar",
+            headers=admin_sistema_auth_headers,
+            json={
+                "correo_electronico": "ana@verdeapp.com",
+                "ids_conjuntos": [str(conjunto_verificado_sin_admin.id_conjunto_residencial)],
+            },
+        )
+        assert invitar.status_code == 201
+
+        response = client.post(
+            "/api/v1/admin-conjunto/asignar-conjunto-adicional",
+            headers=admin_sistema_auth_headers,
+            json={
+                "id_administrador": str(admin_conjunto_test.id_administrador),
+                "id_conjunto_residencial": str(conjunto_verificado_sin_admin.id_conjunto_residencial),
+            },
+        )
+        assert response.status_code == 409
+        assert "invitación pendiente" in response.json()["detail"]
 
     def test_administrador_inexistente_devuelve_404(
         self, client: TestClient, admin_sistema_auth_headers, conjunto_verificado_sin_admin

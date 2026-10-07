@@ -49,7 +49,7 @@ Este proceso es manual y requiere aprobación humana (Admin Sistema) para evitar
 ### Flujo C — Asignar conjunto adicional (Admin Sistema)
 1. El Admin Sistema busca un Admin Conjunto que ya existe en la plataforma.
 2. Selecciona el conjunto a asignar de la lista de conjuntos disponibles sin administrador.
-3. El sistema valida que el conjunto no tenga ya otro administrador activo.
+3. El sistema valida que el conjunto no tenga ya otro administrador activo **ni una invitación pendiente para otra persona** (RQF-012); en cualquiera de los dos casos responde 409 con un mensaje claro (issue #409).
 4. Al confirmar, el Admin Conjunto recibe una notificación con el nuevo conjunto asignado.
 
 ---

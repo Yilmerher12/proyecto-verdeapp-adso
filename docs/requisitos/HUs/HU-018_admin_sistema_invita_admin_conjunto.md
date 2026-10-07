@@ -64,6 +64,7 @@
 - **entonces** el sistema rechaza la invitación con un error 409 que nombra esos conjuntos, en vez de dejar que el choque aparezca recién cuando la persona invitada acepta (RN-003: un conjunto, un solo administrador activo).
 - Si un conjunto viene repetido en la misma invitación, se cuenta una sola vez; el máximo es 100 conjuntos por invitación.
 - Reenviar la invitación al **mismo** correo sigue permitido (por si se perdió el correo): una invitación pendiente de la misma persona no bloquea.
+- Al **aceptar** la invitación, el sistema vuelve a comprobar que ninguno de sus conjuntos tenga ya administrador activo. Si lo tiene, responde 409 con el nombre del conjunto, no crea la cuenta y la invitación queda sin usar (issue #409). Es una red de seguridad: por la API ya no se puede asignar un conjunto con invitación pendiente (HU-024).
 
 ### CA-018.5 — Cómo llega una solicitud al Admin Sistema
 
