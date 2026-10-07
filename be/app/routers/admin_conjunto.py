@@ -106,7 +106,11 @@ def aceptar_invitacion(
               pantalla pide iniciar sesión.
     ¿Impacto? El flujo que ve la persona invitada no cambia.
     """
-    admin_conjunto_service.aceptar_invitacion(db=db, datos=datos)
+    usuario = admin_conjunto_service.aceptar_invitacion(db=db, datos=datos)
+    # ¿Qué? Issue #401: crea una cuenta de administrador sin sesión previa; la
+    #       línea lleva solo su correo (log_accion_admin lo redacta), nunca el
+    #       token de invitación.
+    log_accion_admin(usuario.correo_electronico, "admin_conjunto_invitacion_aceptada")
     return MessageResponse(message="Cuenta creada. Ya puedes iniciar sesión.")
 
 

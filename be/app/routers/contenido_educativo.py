@@ -24,6 +24,7 @@ from app.schemas.contenido_educativo import (
     EnvioContenidoResponse,
 )
 from app.services import contenido_educativo_service as service
+from app.utils.audit_log import log_accion_admin
 
 router = APIRouter(
     prefix="/api/v1/contenido-educativo",
@@ -94,6 +95,9 @@ def enviar(
     db: Session = Depends(get_db),
 ) -> list[EnvioContenidoResponse]:
     envios = service.enviar_a_conjuntos(db, id_contenido, body.conjuntos, current_user.id_usuario)
+    log_accion_admin(
+        current_user.correo_electronico, "contenido_educativo_enviado", contenido=id_contenido, conjuntos=body.conjuntos
+    )
     return [
         EnvioContenidoResponse(
             id_conjunto_residencial=e.id_conjunto_residencial,
@@ -115,7 +119,11 @@ def crear(
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> ContenidoEducativoResponse:
-    return service.crear_contenido(db, data)
+    contenido = service.crear_contenido(db, data)
+    log_accion_admin(
+        current_user.correo_electronico, "contenido_educativo_creado", contenido=contenido.id_contenido
+    )
+    return contenido
 
 
 @router.put(
@@ -129,7 +137,9 @@ def editar(
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> ContenidoEducativoResponse:
-    return service.editar_contenido(db, id_contenido, data)
+    contenido = service.editar_contenido(db, id_contenido, data)
+    log_accion_admin(current_user.correo_electronico, "contenido_educativo_editado", contenido=id_contenido)
+    return contenido
 
 
 @router.delete(
@@ -143,3 +153,4 @@ def eliminar(
     db: Session = Depends(get_db),
 ) -> None:
     service.eliminar_contenido(db, id_contenido)
+    log_accion_admin(current_user.correo_electronico, "contenido_educativo_eliminado", contenido=id_contenido)

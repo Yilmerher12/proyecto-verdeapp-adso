@@ -9,6 +9,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.utils.limiter import limiter
+from app.utils.audit_log import ip_de_origen
 from app.routers import auth, users, geography, admin
 from app.routers import admin_conjunto
 from app.routers import conjunto_panel
@@ -119,6 +120,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 #     ubicación — se le niega el acceso explícitamente al navegador.
 @app.middleware("http")
 async def agregar_cabeceras_seguridad(request: Request, call_next):
+    # ¿Qué? Issue #401: deja la IP de origen disponible para el log de
+    #       auditoría (ver ip_de_origen en utils/audit_log.py).
+    ip_de_origen.set(request.client.host if request.client else None)
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"

@@ -185,6 +185,10 @@ def editar_mi_conjunto(
     if "total_apartamentos" in datos.model_fields_set:
         conjunto.total_apartamentos = datos.total_apartamentos
     db.commit()
+    # ¿Qué? Issue #401: se anota EN QUÉ conjunto se editó, no el NIT (dato del conjunto).
+    log_accion_admin(
+        administrador.usuario.correo_electronico, "conjunto_editado", conjunto=id_conjunto_residencial
+    )
 
     return MessageResponse(message="Conjunto actualizado correctamente.")
 
@@ -206,6 +210,10 @@ def solicitar_desvinculacion(
         administrador=administrador,
         id_conjunto=id_conjunto_residencial,
         motivo=datos.motivo,
+    )
+    # ¿Qué? Issue #401: sin el motivo — es texto libre (ver log_accion_admin).
+    log_accion_admin(
+        administrador.usuario.correo_electronico, "desvinculacion_solicitada", conjunto=id_conjunto_residencial
     )
     return MessageResponse(message="Solicitud de desvinculación enviada. Un Administrador del Sistema la revisará.")
 
