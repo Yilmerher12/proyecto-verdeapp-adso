@@ -63,6 +63,7 @@
     "loadError": "No se pudo cargar la información. Intenta de nuevo más tarde.",
     "charCount": "{{actual}}/{{max}} caracteres",
     "actionError": "No se pudo completar la acción. Inténtalo de nuevo.",
+    "tooManyRequests": "Hiciste demasiadas peticiones. Espera un momento e intenta de nuevo.",
     "email": "Correo electrónico",
     "emailPlaceholder": "correo@ejemplo.com",
     "password": "Contraseña",

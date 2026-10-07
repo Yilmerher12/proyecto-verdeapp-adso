@@ -34,6 +34,13 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/__tests__/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    // ¿Qué? Tiempo máximo de cada test: 15 s (el valor por defecto es 5 s).
+    // ¿Para qué? Los tests de formularios que teclean mucho (RegisterPage,
+    //           AdminNovedadesPage...) pasan solos en ~1 s, pero con la suite
+    //           completa en una máquina con carga superaban los 5 s y fallaban
+    //           sin que hubiera ningún error real (visto en los issues #404 y #400).
+    // ¿Impacto? Un test colgado de verdad tarda más en fallar; ninguno se vuelve más permisivo.
+    testTimeout: 15000,
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary"],

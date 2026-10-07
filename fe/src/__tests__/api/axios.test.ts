@@ -183,3 +183,37 @@ describe("renovación de sesión (issue #319)", () => {
     expect(destino).toBe("");
   });
 });
+
+// ¿Qué? Issue #414: el motivo con el que el servidor rechaza una petición
+//       llega a la pantalla en el mensaje del error.
+describe("motivo del servidor (issue #414)", () => {
+  it("un 429 del límite de peticiones (sin detail) da un mensaje claro y traducido", async () => {
+    responder = () => ({ status: 429, data: { error: "Rate limit exceeded: 5 per 1 minute" } });
+    // ¿Qué? vi.resetModules() reinicia i18n con el idioma del navegador de
+    //       jsdom (inglés); se fija español para comprobar el texto.
+    await (await import("@/i18n")).default.changeLanguage("es");
+
+    await expect(api.post("/api/v1/auth/login", {})).rejects.toThrow(
+      "Hiciste demasiadas peticiones. Espera un momento e intenta de nuevo."
+    );
+  });
+
+  it("un rechazo con detail de texto conserva ese texto", async () => {
+    responder = () => ({ status: 400, data: { detail: "Ya enviaste este aviso a este conjunto hace menos de 5 minutos." } });
+
+    await expect(api.post("/api/v1/notificaciones/enviar", {})).rejects.toThrow(
+      "Ya enviaste este aviso a este conjunto hace menos de 5 minutos."
+    );
+  });
+
+  it("motivoDelServidor: 422 une los mensajes, y sin motivo devuelve null", async () => {
+    const { motivoDelServidor } = await import("@/api/axios");
+
+    expect(
+      motivoDelServidor({ response: { status: 422, data: { detail: [{ msg: "Campo obligatorio" }, { msg: "Muy corto" }] } } })
+    ).toBe("Campo obligatorio. Muy corto");
+    expect(motivoDelServidor({ response: { status: 500, data: {} } })).toBeNull();
+    expect(motivoDelServidor(new Error("Network Error"))).toBeNull();
+    expect(motivoDelServidor(null)).toBeNull();
+  });
+});

@@ -53,6 +53,13 @@ describe("YoutubeEmbed", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  // ¿Qué? Issue #414: el backend ya aceptaba youtube-nocookie.com.
+  it("reconoce un video de youtube-nocookie.com", () => {
+    render(<YoutubeEmbed url="https://www.youtube-nocookie.com/embed/abc12345678" titulo="Código de colores" />);
+
+    expect(screen.getByRole("button", { name: /reproducir video/i })).toBeInTheDocument();
+  });
+
   it("arma el link a YouTube con el ID del video, no con la URL que escribió el usuario", () => {
     render(<YoutubeEmbed url="https://youtu.be/abc12345678?si=rastreo" titulo="Código de colores" />);
 

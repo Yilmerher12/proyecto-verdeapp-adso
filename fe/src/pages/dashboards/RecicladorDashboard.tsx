@@ -17,7 +17,7 @@ import {
   History,
 } from "lucide-react";
 import axios from "axios";
-import { API_BASE_URL } from "@/api/axios";
+import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
@@ -157,6 +157,7 @@ export function RecicladorDashboard() {
   const [modalTipo, setModalTipo] = useState<string | null>(null);
   const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<string | null>(null);
   const [enviandoNotif, setEnviandoNotif] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
   const [feedbackOk, mostrarFeedbackOk] = useAvisoTemporal<string>();
 
   // Formulario de auditoría (RQF-009)
@@ -222,6 +223,7 @@ export function RecicladorDashboard() {
 
   const abrirModal = (tipo: string) => {
     if (conjuntosAutorizados.length === 0) return;
+    setErrorEnvio(null);
     setModalTipo(tipo);
     setConjuntoSeleccionado(
       conjuntosAutorizados.length === 1 ? conjuntosAutorizados[0].id_conjunto_residencial : null
@@ -238,6 +240,7 @@ export function RecicladorDashboard() {
   const enviarNotificacion = async () => {
     if (!modalTipo || !conjuntoSeleccionado || motivoModal) return;
     setEnviandoNotif(true);
+    setErrorEnvio(null);
     try {
       await axios.post(`${API_BASE_URL}/api/v1/notificaciones/enviar`, {
         tipo: modalTipo,
@@ -247,10 +250,17 @@ export function RecicladorDashboard() {
       mostrarFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
       setModalTipo(null);
       cargarDatos();
-    } catch {
+    } catch (err) {
       // ¿Qué? Antes, si el envío fallaba, el modal se cerraba igual sin
       //       avisar — el reciclador creía que el aviso salió y no fue así.
-      setErrorAccion(true);
+      // ¿Para qué? Issue #414: el motivo exacto que manda el backend (aviso
+      //           reciente, SHUT ya lleno, presencia...) se muestra DENTRO del
+      //           modal, donde el reciclador está mirando; la alerta de arriba
+      //           queda tapada por el modal.
+      // ¿Impacto? Se recargan los datos: si el rechazo fue porque el estado
+      //           cambió, el modal ya refleja el motivo real.
+      setErrorEnvio(motivoDelServidor(err) ?? t("common.actionError"));
+      cargarDatos();
     } finally {
       setEnviandoNotif(false);
     }
@@ -646,6 +656,12 @@ export function RecicladorDashboard() {
             {motivoModal && (
               <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
                 {motivoModal}
+              </p>
+            )}
+
+            {errorEnvio && (
+              <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                {errorEnvio}
               </p>
             )}
 
