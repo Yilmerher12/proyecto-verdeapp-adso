@@ -283,6 +283,20 @@ def client(db: Session) -> Generator[TestClient, None, None]:
 # ────────────────────────────
 
 
+@pytest.fixture(autouse=True)
+def reiniciar_avisos_de_correo_duplicado() -> None:
+    """Vacía el registro de avisos de "correo ya registrado" entre pruebas.
+
+    ¿Qué? Issue #397 (CN-051): auth_service recuerda en memoria a quién avisó
+          en la última hora.
+    ¿Para qué? Sin esto, el aviso de una prueba bloquearía el de la siguiente
+              que use el mismo correo de prueba.
+    """
+    from app.services import auth_service
+
+    auth_service._ultimo_aviso_duplicado.clear()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def disable_rate_limiter_for_tests() -> Generator[None, None, None]:
     """Desactiva el rate limiter por completo durante toda la sesión de tests.

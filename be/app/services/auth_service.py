@@ -5,10 +5,11 @@ Descripción: Lógica de negocio de autenticación adaptada a las tablas en espa
 """
 
 import logging
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from fastapi import BackgroundTasks, HTTPException, status
-from sqlalchemy import and_, case, select, update
+from sqlalchemy import and_, case, delete, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -18,6 +19,7 @@ from app.models.residente import Residente
 from app.models.reciclador import Reciclador
 from app.models.rol import RolId
 from app.models.unidad import Unidad
+from app.models.localidad import Localidad
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.password_reset_token import PasswordResetToken
 from app.models.email_verification_token import EmailVerificationToken
@@ -135,6 +137,57 @@ def _validar_datos_residente(db: Session, user_data: UserCreate) -> tuple[Conjun
     return conjunto_existente, torre_texto, apto_texto
 
 
+def _es_cuenta_sin_verificar_vencida(db: Session, usuario: Usuario) -> bool:
+    """True si la cuenta nunca se verificó y ya no le queda ningún enlace vigente.
+
+    ¿Qué? Issue #397 (CN-050): solo ese caso se puede reemplazar al registrarse
+          de nuevo con el mismo correo.
+    ¿Para qué? Mientras haya un enlace vigente (24 h), el registro pendiente de
+              su dueño se respeta: si cualquiera pudiera reemplazarlo, lo
+              dejaría con la contraseña del atacante y el correo de
+              verificación llegaría a la víctima una y otra vez.
+    ¿Impacto? Una cuenta desactivada por un Administrador del Sistema
+              (habilitado = False) tampoco se reemplaza. Roles distintos de
+              Residente/Reciclador nunca se reemplazan.
+    """
+    if usuario.is_active or not usuario.habilitado:
+        return False
+    if usuario.id_rol not in (RolId.RESIDENTE, RolId.RECICLADOR):
+        return False
+    enlace_vigente = db.execute(
+        select(EmailVerificationToken.id).where(
+            EmailVerificationToken.id_usuario == usuario.id_usuario,
+            EmailVerificationToken.used.is_(False),
+            EmailVerificationToken.expires_at > datetime.now(timezone.utc),
+        )
+    ).first()
+    return enlace_vigente is None
+
+
+# ¿Qué? Issue #397 (CN-051): cuándo se mandó el último aviso de "correo ya
+#       registrado" a cada correo (tiempo monotónico, en segundos).
+# ¿Para qué? El límite por IP de /register deja disparar hasta 5 avisos por
+#           minuto contra el mismo destinatario: sirve para llenarle el buzón.
+# ¿Impacto? Vive en memoria de cada proceso: se pierde al reiniciar el servidor
+#           y con varios workers cada uno cuenta aparte. Para el nivel actual
+#           del proyecto alcanza; si hace falta exacto, pasarlo a una tabla.
+_ultimo_aviso_duplicado: dict[str, float] = {}
+SEGUNDOS_ENTRE_AVISOS_DUPLICADO = 3600
+
+
+def _avisar_registro_duplicado(background_tasks: BackgroundTasks, correo: str) -> None:
+    """Programa el aviso de correo ya registrado, máximo uno por hora por correo."""
+    ahora = time.monotonic()
+    # Se purgan los vencidos para que el diccionario no crezca sin límite.
+    for clave in [c for c, t in _ultimo_aviso_duplicado.items() if ahora - t >= SEGUNDOS_ENTRE_AVISOS_DUPLICADO]:
+        del _ultimo_aviso_duplicado[clave]
+    clave = correo.lower()
+    if clave in _ultimo_aviso_duplicado:
+        return
+    _ultimo_aviso_duplicado[clave] = ahora
+    background_tasks.add_task(send_duplicate_registration_email, email=correo)
+
+
 def register_user(db: Session, user_data: UserCreate, background_tasks: BackgroundTasks) -> None:
     """Registra un usuario en estado INACTIVO, gestiona su perfil y emite el correo de activación.
 
@@ -150,6 +203,19 @@ def register_user(db: Session, user_data: UserCreate, background_tasks: Backgrou
     """
     datos_residente = _validar_datos_residente(db, user_data) if user_data.rol == "residente" else None
 
+    # ¿Qué? Issue #397 (CN-047): la localidad del Reciclador se valida ANTES de
+    #       revisar si el correo existe, igual que las validaciones del Residente.
+    # ¿Para qué? Con localidad_id=9999 la llave foránea fallaba al insertar, el
+    #           except IntegrityError de abajo lo tomaba por "correo duplicado",
+    #           el cliente recibía el éxito genérico y al correo le llegaba un
+    #           aviso falso de "ya tienes una cuenta".
+    # ¿Impacto? Va antes del chequeo de correo para que un correo nuevo y uno
+    #           existente den el mismo 400 (si no, la diferencia delataría cuáles
+    #           tienen cuenta, igual que en #373).
+    if user_data.rol == "reciclador" and user_data.localidad_id is not None:
+        if db.get(Localidad, user_data.localidad_id) is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La localidad no existe.")
+
     # ¿Qué? bcrypt corre en los dos caminos, aunque en el de correo
     #       duplicado el resultado no se use.
     # ¿Para qué? Es lo que más tarda de todo el registro (decenas de ms):
@@ -158,8 +224,10 @@ def register_user(db: Session, user_data: UserCreate, background_tasks: Backgrou
     password_hasheada = hash_password(user_data.password)
 
     stmt = select(Usuario).where(Usuario.correo_electronico == user_data.correo_electronico)
-    if db.execute(stmt).scalar_one_or_none():
-        background_tasks.add_task(send_duplicate_registration_email, email=user_data.correo_electronico)
+    existente = db.execute(stmt).scalar_one_or_none()
+    cuenta_a_reemplazar = existente if existente and _es_cuenta_sin_verificar_vencida(db, existente) else None
+    if existente and not cuenta_a_reemplazar:
+        _avisar_registro_duplicado(background_tasks, user_data.correo_electronico)
         return
 
     # Por ahora el registro público solo deja escoger entre residente y reciclador
@@ -167,6 +235,26 @@ def register_user(db: Session, user_data: UserCreate, background_tasks: Backgrou
     role_id_mapped = RolId.RESIDENTE if user_data.rol == "residente" else RolId.RECICLADOR
 
     try:
+        if cuenta_a_reemplazar:
+            # ¿Qué? Issue #397 (CN-050): la cuenta vieja sin verificar se borra
+            #       con su perfil (y sus tokens, que caen en cascada) y se crea
+            #       la nueva con los datos de ESTE registro, todo en el mismo
+            #       commit de abajo.
+            # ¿Para qué? Antes esa fila quedaba para siempre: el dueño real del
+            #           correo no podía registrarse ni recuperar la contraseña.
+            #           Se reemplaza (no se reenvía el enlace) para que la
+            #           contraseña y los datos queden los de quien se registra
+            #           ahora, no los de quien reservó el correo antes.
+            # ¿Impacto? Residente/Reciclador no tienen ON DELETE CASCADE hacia
+            #           usuarios: se borran a mano antes. Una cuenta sin
+            #           verificar nunca inició sesión, así que no tiene más
+            #           datos colgando.
+            id_viejo = cuenta_a_reemplazar.id_usuario
+            db.execute(delete(Residente).where(Residente.id_usuario == id_viejo))
+            db.execute(delete(Reciclador).where(Reciclador.id_usuario == id_viejo))
+            db.execute(delete(Usuario).where(Usuario.id_usuario == id_viejo))
+            db.flush()
+
         nuevo_usuario = Usuario(
             correo_electronico=user_data.correo_electronico,
             id_rol=role_id_mapped,
@@ -263,7 +351,7 @@ def register_user(db: Session, user_data: UserCreate, background_tasks: Backgrou
         # ¿Impacto? Issue #373: se trata igual que el pre-chequeo — aviso
         #           al dueño y la misma respuesta genérica de éxito.
         db.rollback()
-        background_tasks.add_task(send_duplicate_registration_email, email=user_data.correo_electronico)
+        _avisar_registro_duplicado(background_tasks, user_data.correo_electronico)
     except Exception:
         # ¿Qué? Antes el detail del 500 incluía str(e) — el mensaje crudo de
         #       la excepción (puede traer nombres de columnas, constraints o

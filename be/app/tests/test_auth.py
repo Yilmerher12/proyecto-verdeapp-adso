@@ -302,6 +302,110 @@ class TestRegister:
         )
         assert response.status_code == 201
 
+    def test_register_reciclador_localidad_inexistente(
+        self, client: TestClient, db: Session, correos_enviados
+    ) -> None:
+        """Issue #397 (CN-047): antes la llave foránea fallaba, se tomaba por
+        "correo duplicado" y salía un éxito falso con aviso falso."""
+        response = client.post(
+            self.URL,
+            json={
+                "rol": "reciclador",
+                "correo_electronico": "reciclador.sinlocalidad@verdeapp.com",
+                "password": "RecyPass123",
+                "nombre": "Carlos",
+                "apellidos": "Ramírez",
+                "numero_telefonico": "3009998888",
+                "localidad_id": 9999,
+            },
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"] == "La localidad no existe."
+        assert correos_enviados == []
+        assert db.query(Usuario).filter(Usuario.correo_electronico == "reciclador.sinlocalidad@verdeapp.com").count() == 0
+
+    def test_register_cuenta_sin_verificar_vencida_se_reemplaza(
+        self,
+        client: TestClient,
+        db: Session,
+        unverified_user: Usuario,
+        conjunto_verificado: ConjuntoResidencial,
+        correos_enviados,
+    ) -> None:
+        """Issue #397 (CN-050): sin enlace vigente, el dueño real puede
+        registrarse; la cuenta vieja se borra y la nueva lleva SU contraseña."""
+        id_viejo = unverified_user.id_usuario
+        db.add(EmailVerificationToken(
+            id_usuario=id_viejo,
+            token=hash_token("token-viejo"),
+            expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
+        ))
+        db.flush()
+
+        response = client.post(
+            self.URL,
+            json=_payload_residente(conjunto_verificado, email=UNVERIFIED_USER_EMAIL, password="ClaveDelDueno1"),
+        )
+        assert response.status_code == 201
+
+        db.expire_all()
+        usuario = db.query(Usuario).filter(Usuario.correo_electronico == UNVERIFIED_USER_EMAIL).one()
+        assert usuario.id_usuario != id_viejo
+        assert usuario.is_active is False
+        assert [nombre for nombre, _ in correos_enviados] == ["send_verification_email"]
+        # El token viejo ya no existe y el nuevo sí activa la cuenta.
+        assert db.query(EmailVerificationToken).filter(EmailVerificationToken.token == hash_token("token-viejo")).count() == 0
+        token_nuevo = correos_enviados[0][1]["token"]
+        assert client.post("/api/v1/auth/verify-email", json={"token": token_nuevo}).status_code == 200
+        login = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": UNVERIFIED_USER_EMAIL, "password": "ClaveDelDueno1"},
+        )
+        assert login.status_code == 200
+
+    def test_register_cuenta_sin_verificar_con_enlace_vigente_no_se_reemplaza(
+        self,
+        client: TestClient,
+        db: Session,
+        unverified_user: Usuario,
+        conjunto_verificado: ConjuntoResidencial,
+        correos_enviados,
+    ) -> None:
+        """Issue #397: mientras haya un enlace vigente, el registro pendiente
+        de su dueño se respeta (si no, cualquiera lo reemplazaría)."""
+        db.add(EmailVerificationToken(
+            id_usuario=unverified_user.id_usuario,
+            token=hash_token("token-vigente"),
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        ))
+        db.flush()
+        password_antes = unverified_user.password
+
+        response = client.post(
+            self.URL,
+            json=_payload_residente(conjunto_verificado, email=UNVERIFIED_USER_EMAIL, password="ClaveAtacante1"),
+        )
+        assert response.status_code == 201
+
+        db.refresh(unverified_user)
+        assert unverified_user.password == password_antes
+        assert correos_enviados == [("send_duplicate_registration_email", {"email": UNVERIFIED_USER_EMAIL})]
+
+    def test_register_duplicado_avisa_maximo_una_vez_por_hora(
+        self, client: TestClient, test_user: Usuario, conjunto_verificado: ConjuntoResidencial, correos_enviados
+    ) -> None:
+        """Issue #397 (CN-051): el segundo intento contra el mismo correo da la
+        misma respuesta pero no manda otro aviso."""
+        for _ in range(3):
+            response = client.post(self.URL, json=_payload_residente(conjunto_verificado, email=TEST_USER_EMAIL))
+            assert response.status_code == 201
+        assert correos_enviados == [("send_duplicate_registration_email", {"email": TEST_USER_EMAIL})]
+
+        # Pasada la hora, vuelve a avisar.
+        auth_service._ultimo_aviso_duplicado[TEST_USER_EMAIL.lower()] -= auth_service.SEGUNDOS_ENTRE_AVISOS_DUPLICADO
+        client.post(self.URL, json=_payload_residente(conjunto_verificado, email=TEST_USER_EMAIL))
+        assert len(correos_enviados) == 2
+
     def test_register_missing_required_field(self, client: TestClient) -> None:
         response = client.post(
             self.URL,

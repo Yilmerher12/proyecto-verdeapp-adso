@@ -53,7 +53,7 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 2. El frontend valida los formatos y envía la petición al backend.
 3. Si el rol es Residente, el backend valida el conjunto, el código de acceso y la unidad.
 4. Se aplica la función de hash (bcrypt) a la contraseña.
-5. El backend revisa si el correo ya está en uso. Si lo está, no crea nada, programa un correo de aviso al dueño y salta al paso 9.
+5. El backend revisa si el correo ya está en uso. Si lo está, no crea nada, programa un correo de aviso al dueño (máximo uno por hora por correo, issue #397) y salta al paso 9. Excepción (issue #397): si la cuenta existente nunca se verificó y ya no tiene ningún enlace de verificación vigente (24 h), se borra junto con su perfil y el registro sigue como uno nuevo; mientras haya un enlace vigente, se respeta el registro pendiente y solo se manda el aviso.
 6. Se inserta el nuevo usuario en la base de datos con estado inactivo o pendiente de verificación.
 7. El sistema genera un token de verificación único y guarda en la BD solo su hash `sha256`.
 8. Se programa el correo con el enlace de activación (con el token original), que sale después de responder (`BackgroundTasks`).
@@ -68,6 +68,7 @@ El sistema debe registrar los datos del usuario (nombre, correo, contraseña, ro
 | Registro exitoso    | 201         | Mensaje de confirmación: `{"message": "Registro recibido. Revisa tu correo para activar tu cuenta."}`         |
 | Email duplicado     | 201         | La misma respuesta del registro exitoso; no se crea nada y al dueño del correo le llega un aviso (issue #373) |
 | Conjunto, código o unidad inválidos (Residente) | 400 | Mensaje que explica qué dato falló                                                            |
+| Localidad inexistente (Reciclador) | 400 | `La localidad no existe.` (issue #397)                                                          |
 | Datos inválidos     | 422         | Detalle de los errores en los campos (ej. contraseña débil)                                                  |
 
 ---
