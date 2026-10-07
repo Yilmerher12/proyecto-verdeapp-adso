@@ -7,7 +7,7 @@ Descripción: Endpoints de notificaciones (RQF-003, RQF-006, RQF-007).
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, get_current_user
@@ -20,12 +20,21 @@ from app.schemas.notificacion import (
     NotificacionResponse,
 )
 from app.services import notificaciones_service as service
+from app.utils.limiter import limiter
 
 router = APIRouter(prefix="/api/v1/notificaciones", tags=["notificaciones"])
 
 
 @router.post("/enviar", status_code=status.HTTP_201_CREATED)
+# ¿Qué? Issue #398 (CN-055): máximo 10 avisos por minuto desde una misma IP.
+# ¿Para qué? Cada llamada crea una notificación más una fila por cada residente
+#           y administrador del conjunto; sin límite, un reciclador podía
+#           alternar SHUT_LLENO y SHUT_LIBRE sin freno y llenar todas las
+#           bandejas. Además hay un enfriamiento de 5 minutos por tipo de
+#           aviso (notificaciones_service.py).
+@limiter.limit("10/minute")
 def enviar_notificacion(
+    request: Request,
     body: NotificacionEnviarBody,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),

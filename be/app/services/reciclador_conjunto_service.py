@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.models.reciclador import Reciclador
@@ -27,6 +27,12 @@ from app.services.notificaciones_helpers import crear_notificacion
 from app.utils.email import send_reciclador_conjunto_invitation_email
 
 logger = logging.getLogger(__name__)
+
+# ¿Qué? Issue #398 (CN-056): máximo de invitaciones PENDIENTES (sin responder ni
+#       vencer) que un conjunto puede tener a la vez.
+# ¿Para qué? Un Admin de Conjunto podía invitar sin tope; cada invitación manda
+#           un correo a un reciclador.
+MAXIMO_INVITACIONES_PENDIENTES_POR_CONJUNTO = 20
 
 
 def _verificar_admin_administra_conjunto(db: Session, id_usuario_admin: UUID, id_conjunto: UUID) -> None:
@@ -64,6 +70,22 @@ def _verificar_admin_administra_conjunto(db: Session, id_usuario_admin: UUID, id
 async def invitar_reciclador(db: Session, id_usuario_admin: UUID, correo_reciclador: str, id_conjunto: UUID) -> InvitacionRecicladorConjunto:
     """Crea la invitación y envía el correo al Reciclador."""
     _verificar_admin_administra_conjunto(db, id_usuario_admin, id_conjunto)
+
+    pendientes = db.execute(
+        select(func.count())
+        .select_from(InvitacionRecicladorConjunto)
+        .where(
+            InvitacionRecicladorConjunto.id_conjunto_residencial == id_conjunto,
+            InvitacionRecicladorConjunto.estado == "PENDIENTE",
+            InvitacionRecicladorConjunto.expires_at > datetime.now(timezone.utc),
+        )
+    ).scalar_one()
+    if pendientes >= MAXIMO_INVITACIONES_PENDIENTES_POR_CONJUNTO:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Este conjunto ya tiene {MAXIMO_INVITACIONES_PENDIENTES_POR_CONJUNTO} invitaciones pendientes. "
+            "Espera a que respondan o venzan antes de invitar a más recicladores.",
+        )
 
     stmt_usuario = select(Usuario).where(Usuario.correo_electronico == correo_reciclador, Usuario.id_rol == RolId.RECICLADOR)
     usuario_reciclador = db.execute(stmt_usuario).scalar_one_or_none()

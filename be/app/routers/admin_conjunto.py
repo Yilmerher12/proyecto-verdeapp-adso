@@ -71,7 +71,11 @@ async def invitar_admin_conjunto(
 
 
 @router.get("/invitacion", response_model=InvitacionInfoResponse)
-def consultar_invitacion(token: str, db: Session = Depends(get_db)):
+# ¿Qué? Issue #398 (CN-057): máximo 10 consultas por minuto desde una misma IP.
+# ¿Para qué? Era el único endpoint público con token de un solo uso sin límite
+#           (los demás ya lo tenían desde el issue #310).
+@limiter.limit("10/minute")
+def consultar_invitacion(request: Request, token: str, db: Session = Depends(get_db)):
     """
     Ruta pública: la persona invitada todavía no tiene cuenta, así que
     no puede autenticarse. Solo necesita el token que recibió por correo.

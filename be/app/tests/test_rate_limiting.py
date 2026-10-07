@@ -45,6 +45,12 @@ CASOS = {
         {"files": {"archivo": ("a.png", b"no-importa", "image/png")}},
         "/api/v1/uploads/adjunto", 30, True,
     ),
+    # Issue #398 (CN-055): el Residente de prueba no tiene un SHUT al que avisar
+    # de más, pero la petición entra al endpoint (cuenta para el límite).
+    "notificaciones-enviar": (
+        {"json": {"tipo": "SHUT_LLENO"}},
+        "/api/v1/notificaciones/enviar", 10, True,
+    ),
 }
 
 
@@ -73,4 +79,31 @@ def test_supera_el_limite_devuelve_429(
         assert respuesta.status_code != 429
 
     respuesta_extra = client.post(url, headers=headers, **envio)
+    assert respuesta_extra.status_code == 429
+
+
+def test_consultar_invitacion_supera_el_limite_devuelve_429(client: TestClient, limiter_encendido: None) -> None:
+    """Issue #398 (CN-057): es un GET, así que no cabe en CASOS (que usa POST)."""
+    for _ in range(10):
+        respuesta = client.get("/api/v1/admin-conjunto/invitacion", params={"token": "no-existe"})
+        assert respuesta.status_code != 429
+
+    respuesta_extra = client.get("/api/v1/admin-conjunto/invitacion", params={"token": "no-existe"})
+    assert respuesta_extra.status_code == 429
+
+
+def test_invitar_reciclador_supera_el_limite_devuelve_429(
+    client: TestClient, admin_conjunto_auth_headers: dict[str, str], conjunto_verificado, limiter_encendido: None
+) -> None:
+    """Issue #398 (CN-056): necesita la sesión de un Admin de Conjunto, no la del Residente de CASOS."""
+    cuerpo = {
+        "correo_reciclador": "no.existe@verdeapp.com",
+        "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
+    }
+    url = "/api/v1/reciclador-conjunto/invitar"
+    for _ in range(20):
+        respuesta = client.post(url, headers=admin_conjunto_auth_headers, json=cuerpo)
+        assert respuesta.status_code != 429
+
+    respuesta_extra = client.post(url, headers=admin_conjunto_auth_headers, json=cuerpo)
     assert respuesta_extra.status_code == 429

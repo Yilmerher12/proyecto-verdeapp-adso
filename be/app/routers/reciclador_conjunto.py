@@ -7,7 +7,7 @@ Descripción: Endpoints del flujo de invitación Reciclador-Conjunto.
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -25,6 +25,7 @@ from app.schemas.reciclador_conjunto import (
 )
 from app.services import reciclador_conjunto_service
 from app.utils.audit_log import log_accion_admin, redactar_correo
+from app.utils.limiter import limiter
 
 router = APIRouter(
     prefix="/api/v1/reciclador-conjunto",
@@ -41,7 +42,13 @@ _requiere_reciclador = require_role(RolId.RECICLADOR, "Solo un Reciclador puede 
 
 
 @router.post("/invitar", status_code=status.HTTP_201_CREATED, summary="Admin de Conjunto invita a un Reciclador")
+# ¿Qué? Issue #398 (CN-056): máximo 20 invitaciones por hora desde una misma IP.
+# ¿Para qué? Sin límite, un Admin de Conjunto podía probar correos sin freno: el
+#           404 ("No existe ningún Reciclador...") frente al 201 revela qué
+#           correos son de recicladores, y cada acierto manda un correo.
+@limiter.limit("20/hour")
 async def invitar_reciclador(
+    request: Request,
     data: InvitarRecicladorRequest,
     administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
