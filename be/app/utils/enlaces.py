@@ -11,6 +11,7 @@ Descripción: Validación de los enlaces que guardan comunicados, novedades y
           listados.
 """
 
+import re
 from typing import Annotated, Optional
 from urllib.parse import urlparse
 
@@ -22,6 +23,9 @@ ENLACE_MAX_LENGTH = 500
 
 # ¿Qué? Los mismos formatos que reconoce fe/src/components/ui/YoutubeEmbed.tsx.
 DOMINIOS_YOUTUBE = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtube-nocookie.com"}
+
+
+_RUTA_CODIFICADA = re.compile(r"%2[ef]", re.IGNORECASE)
 
 
 def _vacio_a_none(valor: str | None) -> str | None:
@@ -36,7 +40,13 @@ def validar_enlace_adjunto(valor: str | None) -> str | None:
     valor = _vacio_a_none(valor)
     if valor is None:
         return None
-    if valor.startswith("/uploads/") and ".." not in valor:
+    # ¿Qué? "%2e" es un "." y "%2f" es una "/" escritos en forma codificada
+    #       (issue #400, CN-052). Solo se revisa en la rama /uploads/: en un
+    #       enlace https:// externo "%2f" es normal.
+    # ¿Para qué? "/uploads/%2e%2e/api/v1/..." no contiene ".." escrito, pero el
+    #            navegador lo decodifica y lo resuelve a otra ruta del mismo sitio.
+    # ¿Impacto? Mismas reglas que enlaceAdjuntoSeguro del frontend.
+    if valor.startswith("/uploads/") and ".." not in valor and not _RUTA_CODIFICADA.search(valor):
         return valor
     partes = urlparse(valor)
     if partes.scheme == "https" and partes.netloc:

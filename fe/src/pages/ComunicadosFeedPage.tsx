@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TriangleAlert, Megaphone, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { verFeedComunicados, type Comunicado, type TipoComunicado } from "@/lib/comunicadosApi";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { Alert } from "@/components/ui/Alert";
@@ -84,14 +84,13 @@ export function ComunicadosFeedPage() {
 
             <p className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
 
-            {item.url_adjunto && (
+            {enlaceAdjuntoSeguro(item.url_adjunto) && (
               <a
-                // ¿Qué? Si el adjunto viene de un archivo subido a VerdeApp,
-                //       el backend devuelve una ruta relativa
-                //       (/uploads/adjuntos/...) que hay que completar con la
-                //       URL del backend — si viene de un link externo viejo,
-                //       ya trae http(s) y se usa tal cual.
-                href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
+                // ¿Qué? enlaceAdjuntoSeguro completa la ruta relativa de un
+                //       archivo subido (/uploads/adjuntos/...) con la URL del
+                //       backend y deja pasar solo https://; si el enlace no
+                //       es seguro devuelve null y no se pinta (issue #400).
+                href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"

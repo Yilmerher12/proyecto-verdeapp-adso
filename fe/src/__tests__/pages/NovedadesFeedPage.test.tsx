@@ -8,6 +8,7 @@
  */
 import { screen } from "@testing-library/react";
 import { vi, beforeEach, describe, it, expect } from "vitest";
+import { API_BASE_URL } from "@/api/axios";
 import { NovedadesFeedPage } from "@/pages/NovedadesFeedPage";
 import { renderWithProviders, mockUser } from "../helpers";
 import type { Novedad } from "@/lib/novedadesApi";
@@ -58,4 +59,26 @@ describe("NovedadesFeedPage", () => {
     expect(await screen.findByText(NOVEDAD.texto)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Reproducir video/ })).not.toBeInTheDocument();
   });
+
+  // ¿Qué? Issue #400 (CN-048): el adjunto pasa por enlaceAdjuntoSeguro.
+  it("pinta el adjunto subido a VerdeApp con la URL del backend", async () => {
+    mockFeed.mockResolvedValue([{ ...NOVEDAD, url_adjunto: "/uploads/adjuntos/circular.pdf" }]);
+    renderPage();
+
+    expect(await screen.findByRole("link", { name: "Ver adjunto" })).toHaveAttribute(
+      "href",
+      `${API_BASE_URL}/uploads/adjuntos/circular.pdf`
+    );
+  });
+
+  it.each(["javascript:alert(1)", "/uploads/%2e%2e/api/v1/users/me", "http://sitio-malo.com/f.pdf"])(
+    "no pinta el adjunto %s",
+    async (url) => {
+      mockFeed.mockResolvedValue([{ ...NOVEDAD, url_adjunto: url }]);
+      renderPage();
+
+      expect(await screen.findByText(NOVEDAD.texto)).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Ver adjunto" })).not.toBeInTheDocument();
+    }
+  );
 });

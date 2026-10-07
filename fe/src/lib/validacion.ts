@@ -80,8 +80,12 @@ export function validarFechaAviso(valor: string): "datePast" | "dateTooFar" | nu
 
 // ¿Qué? Enlace de video: mismos formatos que reconoce YoutubeEmbed, pero
 //       exigiendo https:// como el backend (be/app/utils/enlaces.py, issues
-//       #314 y #357). Lo usan contenido educativo y novedades.
-export const REGEX_VIDEO_YOUTUBE = /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[\w-]{11}/;
+//       #314 y #357). Lo usan contenido educativo, novedades y YoutubeEmbed.
+// ¿Qué? El grupo de captura es el ID del video (11 caracteres).
+// ¿Para qué? Issue #400 (CN-065): YoutubeEmbed arma el enlace de YouTube con
+//           ese ID, nunca con la URL cruda que escribió el usuario.
+// ¿Impacto? Para .test() el grupo no cambia nada: acepta lo mismo que antes.
+export const REGEX_VIDEO_YOUTUBE = /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/;
 
 // ¿Qué? Mismo chequeo de formato de correo que ya usan registro y login.
 export const CORREO_REGEX = /\S+@\S+\.\S+/;

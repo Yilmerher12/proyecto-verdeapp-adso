@@ -11,6 +11,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
+import { API_BASE_URL } from "@/api/axios";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { renderWithProviders, mockUser } from "../helpers";
 
@@ -71,6 +72,25 @@ describe("ProfilePage", () => {
 
     expect(await screen.findByText("El nombre es obligatorio.")).toBeInTheDocument();
     expect(screen.queryByText("Los apellidos son obligatorios.")).not.toBeInTheDocument();
+  });
+
+  // ¿Qué? Issue #400 (CN-048): la foto de perfil pasa por enlaceAdjuntoSeguro.
+  it("muestra la foto de perfil subida con la URL del backend", async () => {
+    mockGet.mockResolvedValue({ data: { ...perfil, foto_perfil_url: "/uploads/perfiles/ana.png" } });
+    renderPage();
+
+    expect(await screen.findByRole("img", { name: "Ana Martínez" })).toHaveAttribute(
+      "src",
+      `${API_BASE_URL}/uploads/perfiles/ana.png`
+    );
+  });
+
+  it("no pinta la foto si la ruta guardada no es segura", async () => {
+    mockGet.mockResolvedValue({ data: { ...perfil, foto_perfil_url: "/uploads/%2e%2e/api/ana.png" } });
+    renderPage();
+
+    await screen.findByText("Ana Martínez");
+    expect(screen.queryByRole("img", { name: "Ana Martínez" })).not.toBeInTheDocument();
   });
 
   it("guarda el perfil cuando los campos son válidos", async () => {

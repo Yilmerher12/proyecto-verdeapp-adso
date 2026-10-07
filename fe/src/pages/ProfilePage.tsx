@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import {
   Mail,
   Phone,
@@ -248,7 +249,10 @@ export function ProfilePage() {
   const nombreCompleto = `${perfil.first_name} ${perfil.last_name}`.trim();
   const inicial = perfil.first_name?.charAt(0)?.toUpperCase() || "U";
   const canEdit = perfil.role_id !== 1;
-  const urlFotoPerfil = perfil.foto_perfil_url ? `${API_BASE_URL}${perfil.foto_perfil_url}` : null;
+  // ¿Qué? Issue #400: enlaceAdjuntoSeguro completa la ruta (/uploads/perfiles/...)
+  //       con la URL del backend, o devuelve null si no es un enlace seguro
+  //       (entonces se muestra la inicial, igual que sin foto).
+  const urlFotoPerfil = enlaceAdjuntoSeguro(perfil.foto_perfil_url);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pt-6">

@@ -8,6 +8,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach, describe, it, expect } from "vitest";
+import { API_BASE_URL } from "@/api/axios";
 import { AdminConjuntoComunicadosPage } from "@/pages/AdminConjuntoComunicadosPage";
 import { renderWithProviders, mockUser } from "../helpers";
 import type { Comunicado } from "@/lib/comunicadosApi";
@@ -94,6 +95,23 @@ describe("AdminConjuntoComunicadosPage", () => {
       expect(screen.getByText(`Creado el ${creadoEsperado}`)).toBeInTheDocument();
       expect(screen.getByText(`Expira el ${expiraEsperado}`)).toBeInTheDocument();
     });
+  });
+
+  // ¿Qué? Issue #400 (CN-048): el adjunto pasa por enlaceAdjuntoSeguro.
+  it("pinta el adjunto subido a VerdeApp y no pinta uno inseguro", async () => {
+    mockListar.mockResolvedValue({
+      items: [
+        { ...COMUNICADO, id_comunicado: "c-seguro", texto: "Con adjunto seguro.", url_adjunto: "/uploads/adjuntos/circular.pdf" },
+        { ...COMUNICADO, id_comunicado: "c-malo", texto: "Con adjunto inseguro.", url_adjunto: "/uploads/%2e%2e/api/v1/users/me" },
+      ],
+      total: 2,
+    });
+    renderPage();
+
+    await screen.findByText("Con adjunto inseguro.");
+    const enlaces = screen.getAllByRole("link", { name: "Ver adjunto" });
+    expect(enlaces).toHaveLength(1);
+    expect(enlaces[0]).toHaveAttribute("href", `${API_BASE_URL}/uploads/adjuntos/circular.pdf`);
   });
 
   it("muestra un estado vacío cuando el admin no tiene comunicados", async () => {

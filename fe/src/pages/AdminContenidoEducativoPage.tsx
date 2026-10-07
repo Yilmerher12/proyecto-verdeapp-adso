@@ -33,6 +33,7 @@ import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
 import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import axios from "axios";
 import { COMPONENTES_MARKDOWN } from "@/config/contenidoEducativoMarkdown";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT, CATEGORIAS_NO_AUDITABLES } from "@/config/categoriasEducativas";
@@ -926,7 +927,7 @@ export function AdminContenidoEducativoPage() {
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.evidence`)}</h3>
             <div className="grid grid-cols-3 gap-2">
               {[auditoriaAbierta.ruta_evidencia, auditoriaAbierta.ruta_evidencia_2, auditoriaAbierta.ruta_evidencia_3]
-                .filter((r): r is string => Boolean(r))
+                .filter((r): r is string => Boolean(enlaceAdjuntoSeguro(r)))
                 .map((ruta) => (
                   <button
                     key={ruta}
@@ -935,7 +936,7 @@ export function AdminContenidoEducativoPage() {
                     className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
                     aria-label={t(`${p}.ratingPanel.enlarge`)}
                   >
-                    <img src={`${API_BASE_URL}${ruta}`} alt="" className="h-full w-full object-cover" />
+                    <img src={enlaceAdjuntoSeguro(ruta) ?? undefined} alt="" className="h-full w-full object-cover" />
                   </button>
                 ))}
             </div>
@@ -973,12 +974,12 @@ export function AdminContenidoEducativoPage() {
 
       {fotoAmpliada && (
         <Modal onClose={() => setFotoAmpliada(null)} layer="stacked" wide aria-label={t(`${p}.ratingPanel.enlarge`)}>
-          {/* ¿Qué? A diferencia de una foto de evidencia (siempre una ruta
-              relativa /uploads/...), la imagen de la guía puede venir de un
-              link externo pegado a mano — ya trae http(s) y no hay que
-              completarla con la URL del backend. */}
+          {/* ¿Qué? La imagen de la guía puede venir de un link externo pegado a
+              mano (https://) o de un archivo subido (/uploads/...);
+              enlaceAdjuntoSeguro completa solo el segundo caso con la URL del
+              backend (issue #400). */}
           <img
-            src={fotoAmpliada.startsWith("http") ? fotoAmpliada : `${API_BASE_URL}${fotoAmpliada}`}
+            src={enlaceAdjuntoSeguro(fotoAmpliada) ?? undefined}
             alt=""
             className="max-h-[80vh] w-full rounded-2xl object-contain"
           />
@@ -997,8 +998,8 @@ export function AdminContenidoEducativoPage() {
           <section className="border-b border-gray-100 p-5 dark:border-night-line">
             <ReactMarkdown components={COMPONENTES_MARKDOWN}>{moduloAbiertoObj.cuerpo_texto}</ReactMarkdown>
             {moduloAbiertoObj.url_video && <YoutubeEmbed url={moduloAbiertoObj.url_video} titulo={moduloAbiertoObj.titulo_tema} />}
-            {moduloAbiertoObj.url_guia && (
-              esImagenGuia(moduloAbiertoObj.url_guia) ? (
+            {enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) && (
+              esImagenGuia(moduloAbiertoObj.url_guia!) ? (
                 <div className="mt-3">
                   <button
                     type="button"
@@ -1007,7 +1008,7 @@ export function AdminContenidoEducativoPage() {
                     aria-label={t(`${p}.ratingPanel.enlarge`)}
                   >
                     <img
-                      src={moduloAbiertoObj.url_guia.startsWith("http") ? moduloAbiertoObj.url_guia : `${API_BASE_URL}${moduloAbiertoObj.url_guia}`}
+                      src={enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) ?? undefined}
                       alt=""
                       className="max-h-64 w-full object-cover"
                     />
@@ -1019,7 +1020,7 @@ export function AdminContenidoEducativoPage() {
                 </div>
               ) : (
                 <a
-                  href={moduloAbiertoObj.url_guia.startsWith("http") ? moduloAbiertoObj.url_guia : `${API_BASE_URL}${moduloAbiertoObj.url_guia}`}
+                  href={enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) ?? undefined}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-200 dark:hover:bg-night-hover"

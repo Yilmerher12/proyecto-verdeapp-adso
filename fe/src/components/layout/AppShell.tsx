@@ -24,7 +24,8 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { RoleId } from "@/types/auth";
-import api, { API_BASE_URL } from "@/api/axios";
+import api from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -48,6 +49,10 @@ export function AppShell({ children }: AppShellProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [noLeidas, setNoLeidas] = useState(0);
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState<string | null>(null);
+  // ¿Qué? La ruta guardada (/uploads/perfiles/...) ya completa y revisada.
+  // ¿Para qué? Issue #400: si no es un enlace seguro (null), se muestra la
+  //           inicial del nombre en vez de una imagen rota.
+  const urlFotoPerfilSegura = enlaceAdjuntoSeguro(fotoPerfilUrl);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -295,9 +300,9 @@ export function AppShell({ children }: AppShellProps) {
         {!collapsed && user && (
           <div className="min-w-0 px-5 py-5 border-b border-white/10">
             <div className="flex min-w-0 items-center gap-3">
-              {fotoPerfilUrl ? (
+              {urlFotoPerfilSegura ? (
                 <img
-                  src={`${API_BASE_URL}${fotoPerfilUrl}`}
+                  src={urlFotoPerfilSegura}
                   alt={displayName}
                   className="h-10 w-10 shrink-0 rounded-full object-cover select-none"
                 />

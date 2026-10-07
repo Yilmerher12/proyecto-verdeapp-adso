@@ -27,10 +27,20 @@ def test_adjunto_valido(valor: str) -> None:
     "javascript:alert(1)",
     "/uploads/../main.py",
     "ftp://archivos.com/x",
+    # Issue #400 (CN-052): ".." y "/" escritos en forma codificada.
+    "/uploads/%2e%2e/api/v1/users/me",
+    "/uploads/%2E%2E/api/v1/users/me",
+    "/uploads/adjuntos%2f..%2fmain.py",
 ])
 def test_adjunto_invalido(valor: str) -> None:
     with pytest.raises(ValueError):
         validar_enlace_adjunto(valor)
+
+
+def test_adjunto_https_externo_con_barra_codificada_es_valido() -> None:
+    """El %2f solo se rechaza en /uploads/: en un enlace externo es normal."""
+    valor = "https://ejemplo.com/ruta%2fcodificada"
+    assert validar_enlace_adjunto(valor) == valor
 
 
 @pytest.mark.parametrize("valor", [
