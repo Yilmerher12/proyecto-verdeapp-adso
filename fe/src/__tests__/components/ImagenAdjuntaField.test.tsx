@@ -134,6 +134,15 @@ describe("ImagenAdjuntaField", () => {
     expect(mockSubirAdjunto).not.toHaveBeenCalled();
   });
 
+  // ¿Qué? Issue #400 (CN-048): un valor guardado con una ruta insegura (aquí
+  //       "..", escrito en forma codificada) no se pinta como miniatura.
+  it("no pinta la miniatura si la ruta guardada no es segura", () => {
+    render(<ImagenAdjuntaField label="Imagen" value="/uploads/%2e%2e/api/foto.png" onChange={vi.fn()} />);
+
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(screen.getByText("foto.png")).toBeInTheDocument();
+  });
+
   it("con permitirDocumentos, muestra el nombre del archivo (no una miniatura) para un PDF ya guardado", () => {
     render(
       <ImagenAdjuntaField

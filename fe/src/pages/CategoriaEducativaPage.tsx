@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import { ArrowLeft, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -72,13 +72,13 @@ export function CategoriaEducativaPage() {
 
             {item.url_video && <YoutubeEmbed url={item.url_video} titulo={item.titulo_tema} />}
 
-            {item.url_guia && (
+            {enlaceAdjuntoSeguro(item.url_guia) && (
               <a
-                // ¿Qué? Si la guía viene de un archivo subido a VerdeApp, el
-                //       backend devuelve una ruta relativa (/uploads/adjuntos/...)
-                //       que hay que completar con la URL del backend — si viene
-                //       de un link externo, ya trae http(s) y se usa tal cual.
-                href={item.url_guia.startsWith("http") ? item.url_guia : `${API_BASE_URL}${item.url_guia}`}
+                // ¿Qué? enlaceAdjuntoSeguro completa la ruta relativa de un
+                //       archivo subido (/uploads/adjuntos/...) con la URL del
+                //       backend y deja pasar solo https://; si el enlace no
+                //       es seguro devuelve null y no se pinta (issue #400).
+                href={enlaceAdjuntoSeguro(item.url_guia) ?? undefined}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-200 dark:hover:bg-night-hover"

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -467,9 +468,9 @@ export function AdminNovedadesPage() {
                           </p>
                         )}
                         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-                          {item.url_adjunto && (
+                          {enlaceAdjuntoSeguro(item.url_adjunto) && (
                             <a
-                              href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
+                              href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
@@ -478,9 +479,9 @@ export function AdminNovedadesPage() {
                               {t("comunicados.viewAttachment")}
                             </a>
                           )}
-                          {item.url_video && (
+                          {enlaceAdjuntoSeguro(item.url_video) && (
                             <a
-                              href={item.url_video}
+                              href={enlaceAdjuntoSeguro(item.url_video) ?? undefined}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"

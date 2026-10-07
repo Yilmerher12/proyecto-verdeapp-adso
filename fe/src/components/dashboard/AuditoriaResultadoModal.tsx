@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { obtenerAuditoria, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import { tiempoRelativo } from "@/lib/notificaciones";
@@ -64,7 +64,7 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {[auditoria.ruta_evidencia, auditoria.ruta_evidencia_2, auditoria.ruta_evidencia_3]
-                .filter((ruta): ruta is string => Boolean(ruta))
+                .filter((ruta): ruta is string => Boolean(enlaceAdjuntoSeguro(ruta)))
                 .map((ruta) => (
                   <button
                     key={ruta}
@@ -74,7 +74,7 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
                     className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
                   >
                     <img
-                      src={`${API_BASE_URL}${ruta}`}
+                      src={enlaceAdjuntoSeguro(ruta) ?? undefined}
                       alt={t("auditoriaResultado.evidenciaAlt")}
                       className="h-full w-full object-cover"
                     />
@@ -107,7 +107,7 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
       {imagenAmpliada && (
         <Modal onClose={() => setImagenAmpliada(null)} layer="stacked" wide aria-label={t("auditoriaResultado.evidenciaAlt")}>
           <img
-            src={`${API_BASE_URL}${imagenAmpliada}`}
+            src={enlaceAdjuntoSeguro(imagenAmpliada) ?? undefined}
             alt={t("auditoriaResultado.evidenciaAlt")}
             className="max-h-[80vh] w-full rounded-2xl object-contain"
           />

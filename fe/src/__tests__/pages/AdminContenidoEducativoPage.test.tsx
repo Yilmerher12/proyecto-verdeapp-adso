@@ -586,6 +586,24 @@ describe("AdminContenidoEducativoPage", () => {
       expect(lightbox.querySelector("img")).toHaveAttribute("src", "http://localhost:8000/uploads/adjuntos/guia.jpg");
     });
 
+    // ¿Qué? Issue #400 (CN-048): una guía con ruta insegura no se pinta ni
+    //       como imagen ni como botón "Ver guía de apoyo".
+    it("no pinta la guía de apoyo si el enlace guardado no es seguro", async () => {
+      const moduloConGuiaInsegura: ContenidoEducativo = { ...moduloExistente, url_guia: "/uploads/%2e%2e/api/guia.jpg" };
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloConGuiaInsegura] });
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByText("Código de colores"));
+
+      const panel = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
+      expect(within(panel).queryByRole("link", { name: "Ver guía de apoyo" })).not.toBeInTheDocument();
+      expect(within(panel).queryByRole("button", { name: "Ampliar foto" })).not.toBeInTheDocument();
+    });
+
     it("muestra el botón 'Ver guía de apoyo' cuando el archivo no es una imagen", async () => {
       const moduloConGuiaPdf: ContenidoEducativo = { ...moduloExistente, url_guia: "/uploads/adjuntos/guia.pdf" };
       mockGet.mockImplementation((url: string) => {

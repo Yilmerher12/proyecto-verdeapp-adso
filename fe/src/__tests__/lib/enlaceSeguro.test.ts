@@ -26,7 +26,15 @@ describe("enlaceAdjuntoSeguro", () => {
     "//sitio-malo.com/f.jpg",
     "javascript:alert(1)",
     "/uploads/../main.py",
+    // ¿Qué? Issue #400 (CN-052): ".." y "/" escritos en forma codificada.
+    "/uploads/%2e%2e/api/v1/users/me",
+    "/uploads/%2E%2E/api/v1/users/me",
+    "/uploads/adjuntos%2f..%2fmain.py",
   ])("rechaza %s", (url) => {
     expect(enlaceAdjuntoSeguro(url)).toBeNull();
+  });
+
+  it("no rechaza un %2f dentro de un enlace https:// externo", () => {
+    expect(enlaceAdjuntoSeguro("https://ejemplo.com/ruta%2fcodificada")).toBe("https://ejemplo.com/ruta%2fcodificada");
   });
 });

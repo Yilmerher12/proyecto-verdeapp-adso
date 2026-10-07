@@ -12,6 +12,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach, describe, it, expect } from "vitest";
+import { API_BASE_URL } from "@/api/axios";
 import { AdminNovedadesPage } from "@/pages/AdminNovedadesPage";
 import { renderWithProviders, mockUser } from "../helpers";
 import type { Novedad } from "@/lib/novedadesApi";
@@ -251,6 +252,30 @@ describe("AdminNovedadesPage", () => {
 
       const enlace = await screen.findByRole("link", { name: "Ver video" });
       expect(enlace).toHaveAttribute("href", "https://www.youtube.com/watch?v=abc123DEF45");
+    });
+
+    // ¿Qué? Issue #400 (CN-048, CN-065): adjunto y video pasan por
+    //       enlaceAdjuntoSeguro; uno inseguro no se pinta.
+    it("pinta el adjunto subido a VerdeApp con la URL del backend", async () => {
+      mockListar.mockResolvedValue({ items: [{ ...NOVEDAD, url_adjunto: "/uploads/adjuntos/circular.pdf" }], total: 1 });
+      renderPage();
+
+      expect(await screen.findByRole("link", { name: "Ver adjunto" })).toHaveAttribute(
+        "href",
+        `${API_BASE_URL}/uploads/adjuntos/circular.pdf`
+      );
+    });
+
+    it("no pinta un adjunto ni un video con enlace inseguro", async () => {
+      mockListar.mockResolvedValue({
+        items: [{ ...NOVEDAD, url_adjunto: "/uploads/%2e%2e/api/v1/users/me", url_video: "javascript:alert(1)" }],
+        total: 1,
+      });
+      renderPage();
+
+      await screen.findByText(NOVEDAD.texto);
+      expect(screen.queryByRole("link", { name: "Ver adjunto" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Ver video" })).not.toBeInTheDocument();
     });
   });
 

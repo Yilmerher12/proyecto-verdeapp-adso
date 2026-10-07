@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -271,9 +271,9 @@ export function AdminConjuntoComunicadosPage() {
                   )}
                 </div>
                 <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
-                {item.url_adjunto && (
+                {enlaceAdjuntoSeguro(item.url_adjunto) && (
                   <a
-                    href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
+                    href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"

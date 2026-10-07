@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Newspaper, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { verFeedNovedades, type Novedad } from "@/lib/novedadesApi";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { Alert } from "@/components/ui/Alert";
@@ -126,16 +126,12 @@ export function NovedadesFeedPage() {
                   <YoutubeEmbed url={item.url_video} titulo={resumirTitulo(item.texto)} />
                 )}
 
-                {item.url_adjunto && (
+                {enlaceAdjuntoSeguro(item.url_adjunto) && (
                   <a
-                    // ¿Qué? Igual que en ComunicadosFeedPage.tsx: un adjunto
-                    //       subido como archivo devuelve una ruta relativa que
-                    //       hay que completar con la URL del backend.
-                    href={
-                      item.url_adjunto.startsWith("http")
-                        ? item.url_adjunto
-                        : `${API_BASE_URL}${item.url_adjunto}`
-                    }
+                    // ¿Qué? Igual que en ComunicadosFeedPage.tsx: enlaceAdjuntoSeguro
+                    //       completa la ruta relativa de un archivo subido y
+                    //       devuelve null si el enlace no es seguro (issue #400).
+                    href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"

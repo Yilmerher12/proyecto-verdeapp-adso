@@ -16,7 +16,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FileText, ImagePlus, LoaderCircle, X } from "lucide-react";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { subirAdjunto } from "@/lib/uploadsApi";
 
 interface ImagenAdjuntaFieldProps {
@@ -43,7 +43,7 @@ const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024;
 
 // ¿Qué? Un PDF/Word/Excel no se puede mostrar como miniatura de imagen.
 function esImagen(value: string): boolean {
-  return /\.(jpe?g|png|webp)$/i.test(value) || (value.startsWith("http") && !/\.(pdf|docx?|xlsx?)$/i.test(value));
+  return /\.(jpe?g|png|webp)$/i.test(value) || (value.startsWith("https://") && !/\.(pdf|docx?|xlsx?)$/i.test(value));
 }
 
 export function ImagenAdjuntaField({
@@ -91,10 +91,13 @@ export function ImagenAdjuntaField({
 
   // ¿Qué? url_adjunto puede venir de un enlace externo viejo (datos ya
   //       guardados antes de este cambio) — en ese caso empieza con
-  //       http(s), y se usa tal cual. Si viene de esta subida, es una
+  //       https://, y se usa tal cual. Si viene de esta subida, es una
   //       ruta relativa (/uploads/adjuntos/...) que hay que completar con
   //       la URL del backend para poder mostrarla.
-  const urlCompleta = value.startsWith("http") ? value : `${API_BASE_URL}${value}`;
+  // ¿Para qué? enlaceAdjuntoSeguro hace las dos cosas y devuelve null si el
+  //           valor no es seguro (issue #400): en ese caso no se pinta la
+  //           miniatura y se muestra solo el nombre del archivo.
+  const urlCompleta = enlaceAdjuntoSeguro(value);
 
   return (
     <div>
@@ -105,7 +108,7 @@ export function ImagenAdjuntaField({
 
       {value ? (
         <div className="flex items-center gap-3">
-          {esImagen(value) ? (
+          {esImagen(value) && urlCompleta ? (
             <img
               src={urlCompleta}
               alt={t("imagenAdjunta.vistaPrevia")}

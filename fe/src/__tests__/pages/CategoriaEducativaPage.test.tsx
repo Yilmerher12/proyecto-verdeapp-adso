@@ -100,6 +100,18 @@ describe("CategoriaEducativaPage", () => {
     });
   });
 
+  // ¿Qué? Issue #400 (CN-048): una guía con un enlace inseguro no se pinta.
+  it.each(["javascript:alert(1)", "/uploads/%2e%2e/api/v1/users/me", "http://sitio-malo.com/guia.pdf"])(
+    "no pinta el link de guía %s",
+    async (url) => {
+      mockListarContenido.mockResolvedValue([{ ...modulos[0], url_guia: url }]);
+      renderConRuta("Puntos limpios y Ecopuntos");
+
+      expect(await screen.findByText("Dónde llevar escombros")).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /ver guía de apoyo/i })).not.toBeInTheDocument();
+    }
+  );
+
   it("renderiza subtítulos en Markdown del cuerpo del texto", async () => {
     mockListarContenido.mockResolvedValue([
       { ...modulos[0], cuerpo_texto: "## Antes de reciclar\n\nTexto de ejemplo." },
