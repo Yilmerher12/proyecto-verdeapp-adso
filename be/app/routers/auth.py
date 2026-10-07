@@ -9,7 +9,7 @@ from app.config import settings
 from app.dependencies import get_current_user, get_db, http_bearer, obtener_token_de_la_peticion
 from app.utils.limiter import limiter
 from app.utils.security import hash_password, verify_password
-from app.utils.audit_log import log_password_cambiada
+from app.utils.audit_log import log_logout, log_password_cambiada, log_registro_solicitado
 from app.models.usuario import Usuario
 from app.schemas.user import (
     ChangePasswordRequest,
@@ -91,6 +91,7 @@ def register(
     #       usuario nuevo (con su id), y eso por sí solo delataba cuál de
     #       los dos casos ocurrió.
     auth_service.register_user(db=db, user_data=user_data, background_tasks=background_tasks)
+    log_registro_solicitado(user_data.correo_electronico)
     return MessageResponse(message="Registro recibido. Revisa tu correo para activar tu cuenta.")
 
 @router.post("/login", response_model=MessageResponse)
@@ -171,6 +172,7 @@ def logout(
         refresh_token=refresh_token_value,
     )
     _borrar_cookies_de_sesion(response)
+    log_logout(current_user.correo_electronico)
     return MessageResponse(message="Sesión cerrada correctamente")
 
 @router.post("/change-password", response_model=MessageResponse)

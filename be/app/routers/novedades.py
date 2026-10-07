@@ -19,6 +19,7 @@ from app.models.usuario import Usuario
 from app.schemas.novedad import CrearNovedadRequest, EditarNovedadRequest, NovedadResponse
 from app.schemas.user import MessageResponse
 from app.services import novedad_service
+from app.utils.audit_log import log_accion_admin
 
 router = APIRouter(prefix="/api/v1/novedades", tags=["novedades"])
 
@@ -42,7 +43,9 @@ def crear_novedad(
     db: Session = Depends(get_db),
 ):
     """RQF-015 / HU-032: publica una novedad nueva para el alcance elegido."""
-    return novedad_service.crear_novedad(db, current_user, datos)
+    novedad = novedad_service.crear_novedad(db, current_user, datos)
+    log_accion_admin(current_user.correo_electronico, "novedad_creada", novedad=novedad.id_novedad)
+    return novedad
 
 
 @router.get("/todas")
@@ -75,7 +78,9 @@ def editar_novedad(
     db: Session = Depends(get_db),
 ):
     """RQF-015 / HU-034: edita texto, adjunto o expiración de una novedad."""
-    return novedad_service.editar_novedad(db, id_novedad, datos)
+    novedad = novedad_service.editar_novedad(db, id_novedad, datos)
+    log_accion_admin(current_user.correo_electronico, "novedad_editada", novedad=id_novedad)
+    return novedad
 
 
 @router.post("/{id_novedad}/archivar", response_model=MessageResponse)
@@ -86,6 +91,7 @@ def archivar_novedad(
 ):
     """RQF-015 / HU-035: archiva manualmente — no se puede reactivar (CA-035.3)."""
     novedad_service.archivar_novedad(db, id_novedad)
+    log_accion_admin(current_user.correo_electronico, "novedad_archivada", novedad=id_novedad)
     return MessageResponse(message="Novedad archivada correctamente.")
 
 

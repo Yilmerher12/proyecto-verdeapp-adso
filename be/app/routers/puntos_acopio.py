@@ -57,7 +57,9 @@ def crear(
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> dict:
-    return service.crear(db, data)
+    punto = service.crear(db, data)
+    log_accion_admin(current_user.correo_electronico, "punto_acopio_creado", punto_acopio=punto["id_punto_acopio"])
+    return punto
 
 
 @router.put(
@@ -71,7 +73,10 @@ def editar(
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> dict:
-    return service.editar(db, id_punto_acopio, data, current_user)
+    punto = service.editar(db, id_punto_acopio, data, current_user)
+    # ¿Qué? Issue #401: sin motivo_cambio — es texto libre (ver log_accion_admin).
+    log_accion_admin(current_user.correo_electronico, "punto_acopio_editado", punto_acopio=id_punto_acopio)
+    return punto
 
 
 @router.delete(
@@ -85,6 +90,7 @@ def dar_de_baja(
     db: Session = Depends(get_db),
 ) -> None:
     service.dar_de_baja(db, id_punto_acopio)
+    log_accion_admin(current_user.correo_electronico, "punto_acopio_dado_de_baja", punto_acopio=id_punto_acopio)
 
 
 @router.post(
@@ -97,7 +103,9 @@ def reactivar(
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> dict:
-    return service.reactivar(db, id_punto_acopio)
+    punto = service.reactivar(db, id_punto_acopio)
+    log_accion_admin(current_user.correo_electronico, "punto_acopio_reactivado", punto_acopio=id_punto_acopio)
+    return punto
 
 
 @router.delete(

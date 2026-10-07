@@ -18,6 +18,7 @@ from app.models.usuario import Usuario
 from app.schemas.comunicado import ComunicadoResponse, CrearComunicadoRequest, EditarComunicadoRequest
 from app.schemas.user import MessageResponse
 from app.services import comunicado_service
+from app.utils.audit_log import log_accion_admin
 
 router = APIRouter(prefix="/api/v1/comunicados", tags=["comunicados"])
 
@@ -38,7 +39,14 @@ def crear_comunicado(
     db: Session = Depends(get_db),
 ):
     """RQF-014 / HU-027: publica un comunicado nuevo en uno de mis conjuntos."""
-    return comunicado_service.crear_comunicado(db, administrador, datos)
+    comunicado = comunicado_service.crear_comunicado(db, administrador, datos)
+    log_accion_admin(
+        administrador.usuario.correo_electronico,
+        "comunicado_creado",
+        comunicado=comunicado.id_comunicado,
+        conjunto=datos.id_conjunto_residencial,
+    )
+    return comunicado
 
 
 @router.get("/mis-comunicados")
@@ -61,7 +69,9 @@ def editar_comunicado(
     db: Session = Depends(get_db),
 ):
     """RQF-014 / HU-029: edita texto, adjunto, tipo o expiración de un comunicado propio."""
-    return comunicado_service.editar_comunicado(db, administrador, id_comunicado, datos)
+    comunicado = comunicado_service.editar_comunicado(db, administrador, id_comunicado, datos)
+    log_accion_admin(administrador.usuario.correo_electronico, "comunicado_editado", comunicado=id_comunicado)
+    return comunicado
 
 
 @router.delete("/{id_comunicado}", response_model=MessageResponse)
@@ -72,6 +82,7 @@ def eliminar_comunicado(
 ):
     """RQF-014 / HU-030: elimina definitivamente un comunicado propio."""
     comunicado_service.eliminar_comunicado(db, administrador, id_comunicado)
+    log_accion_admin(administrador.usuario.correo_electronico, "comunicado_eliminado", comunicado=id_comunicado)
     return MessageResponse(message="Comunicado eliminado correctamente.")
 
 

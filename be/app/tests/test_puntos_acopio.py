@@ -192,7 +192,8 @@ class TestEliminarDefinitivamente:
         assert response.status_code == 204
 
         # Issue #376: único rastro de un registro borrado para siempre.
-        [accion] = acciones_admin()
+        # (la línea anterior es la baja, anotada desde el issue #401)
+        accion = acciones_admin()[-1]
         assert accion["action"] == "punto_acopio_eliminado"
         assert accion["punto_acopio"] == str(punto_acopio_test.id_punto_acopio)
 

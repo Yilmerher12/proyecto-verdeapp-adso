@@ -341,6 +341,13 @@ Una sola función para todas las acciones (en vez de una por acción): todas ano
 | Admin Sistema | `solicitud_aprobada` / `solicitud_rechazada` | tipo e id de la solicitud |
 | Admin Sistema | `conjunto_asignado` | id del administrador y del conjunto |
 | Admin Sistema | `punto_acopio_eliminado` | id del punto (es el único rastro: se borra para siempre) |
+| Admin Sistema | `punto_acopio_creado` / `_editado` / `_dado_de_baja` / `_reactivado` | id del punto |
+| Admin Sistema | `contenido_educativo_creado` / `_editado` / `_eliminado` | id del módulo |
+| Admin Sistema | `contenido_educativo_enviado` | id del módulo y conjuntos destino |
+| Admin Sistema | `novedad_creada` / `_editada` / `_archivada` | id de la novedad |
+| Admin Conjunto | `comunicado_creado` / `_editado` / `_eliminado` | id del comunicado (y conjunto al crear) |
+| Admin Conjunto | `conjunto_editado` / `desvinculacion_solicitada` | id del conjunto |
+| Admin Conjunto (invitado) | `admin_conjunto_invitacion_aceptada` | solo el correo de la cuenta nueva, redactado |
 | Admin Conjunto | `codigo_acceso_regenerado` | id del conjunto |
 | Admin Conjunto | `reciclador_invitado` | correo del reciclador (redactado) y conjunto |
 | Admin Conjunto | `reciclador_revocado` | id del reciclador y del conjunto |
@@ -349,7 +356,13 @@ Una sola función para todas las acciones (en vez de una por acción): todas ano
 {"timestamp": "2026-10-05T14:00:00+00:00", "event": "admin_action", "admin": "ad***@verdeapp.com", "action": "usuario_deshabilitado", "usuario": "re***@verdeapp.com"}
 ```
 
-**Lo que nunca se anota:** contraseñas, tokens, el **código de acceso nuevo** (con él cualquiera que lea el log podría registrarse en ese conjunto) ni los **motivos** escritos a mano al desactivar o rechazar (texto libre que puede traer datos personales). Las acciones de contenido (comunicados, novedades, puntos de acopio, agenda, contenido educativo) no se anotan: no cambian permisos ni accesos, y sus tablas ya guardan quién las creó.
+**Lo que nunca se anota:** contraseñas, tokens, el **código de acceso nuevo** (con él cualquiera que lea el log podría registrarse en ese conjunto) ni los **textos libres** (motivos al desactivar, rechazar o desvincular; texto de comunicados y novedades; NIT), que pueden traer datos personales.
+
+### Agregado después (2026-10-07): lo que había quedado sin anotar (issue #401)
+
+- El contenido que antes se había dejado fuera (comunicados, novedades, puntos de acopio, contenido educativo) ahora también se anota: es lo que un administrador publica a nombre de la plataforma y conviene poder responder "¿quién lo cambió?". La agenda interna del conjunto sigue sin anotarse (nunca sale de su panel).
+- **Toda línea del log lleva la IP de origen** (`"ip"`). El middleware de `main.py` la guarda en una variable de contexto (`ip_de_origen`) y `_registrar` la lee, así ningún router tiene que pasarla. Detrás de un proxy sería la IP del proxy, igual que en el rate limiter (ver `utils/limiter.py`).
+- Tres eventos nuevos de cuenta, solo con el correo redactado: `register_requested` (se anota igual si la cuenta se creó o el correo ya existía, porque la respuesta es la misma), `email_verified` y `logout`.
 
 ---
 

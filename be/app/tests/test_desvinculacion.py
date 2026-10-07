@@ -120,7 +120,8 @@ class TestResolverSolicitud:
         assert response.status_code == 200
 
         # Issue #376
-        [accion] = acciones_admin()
+        # (la línea anterior es la solicitud, anotada desde el issue #401)
+        accion = acciones_admin()[-1]
         assert accion["action"] == "desvinculacion_aprobada"
         assert accion["solicitud"] == str(solicitud.id)
 

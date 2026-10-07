@@ -38,7 +38,12 @@ from app.utils.email import (
     send_password_reset_email,
     send_verification_email,
 )
-from app.utils.audit_log import log_login_exitoso, log_login_fallido, log_password_cambiada
+from app.utils.audit_log import (
+    log_email_verificado,
+    log_login_exitoso,
+    log_login_fallido,
+    log_password_cambiada,
+)
 from app.utils.security import (
     DUMMY_PASSWORD_HASH,
     create_access_token,
@@ -644,6 +649,7 @@ def verify_email(db: Session, token: str) -> bool:
         .execution_options(synchronize_session=False)
     )
     db.commit()
+    log_email_verificado(user.correo_electronico)
     return True
 
 

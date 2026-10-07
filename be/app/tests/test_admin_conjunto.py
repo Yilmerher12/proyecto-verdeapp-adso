@@ -249,6 +249,11 @@ class TestConsultarYAceptar:
         assert "access_token" not in aceptar.json()
         assert "refresh_token" not in aceptar.json()
         assert not aceptar.cookies.get("access_token")
+        # Issue #401: aceptar la invitación crea una cuenta de administrador y queda anotado, sin el token.
+        accion = acciones_admin()[-1]
+        assert accion["action"] == "admin_conjunto_invitacion_aceptada"
+        assert accion["admin"] == "in***@verdeapp.com"
+        assert token not in str(accion)
 
         login = client.post(
             "/api/v1/auth/login",
