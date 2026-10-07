@@ -188,3 +188,15 @@ El CI del PR de la opción "¿Administras un conjunto?" quedó en rojo sin que e
 - **Backend — `mako` 1.4.1 → 1.4.3** (CVE-2026-102991). Llega como dependencia de `alembic` (plantillas de migraciones); se corrigió con `uv lock --upgrade-package mako` (solo cambia `be/uv.lock`).
 
 Verificado: `pnpm audit` y `pip-audit` en 0, y las suites completas de backend (602) y frontend (407) en verde.
+
+---
+
+## Actualización — `e2e/` entra a Dependabot y al CI (2026-10-07, issue #405, CN-066)
+
+La carpeta `e2e/` (pruebas con Playwright, `@playwright/test` 1.63.0) tiene su propio `package.json` y `pnpm-lock.yaml`, pero ni Dependabot ni el CI la vigilaban: una alerta nueva en esa dependencia no habría avisado a nadie.
+
+- **Dependabot** (`.github/dependabot.yml`): bloque `npm` para `/e2e`, con las mismas reglas que `/fe` (lunes, `cooldown` de 7 días, un PR agrupado hacia `develop`, sin saltos de versión mayor).
+- **CI** (`.github/workflows/ci.yml`): paso `pnpm audit` con `working-directory: e2e`, dentro del job `frontend` (ya trae Node y pnpm 11.0.9). `pnpm audit` solo lee el lockfile, así que no hace falta instalar nada.
+- **Reportes de Playwright:** `playwright-report/` y `test-results/` no se suben como artefacto, porque las trazas pueden contener las credenciales de las cuentas de prueba (quedó escrito en el `README.md` raíz, sección de pruebas).
+
+Verificado: `pnpm audit` en `e2e/` da 0 vulnerabilidades (también sobre una copia solo con `package.json` y `pnpm-lock.yaml`, sin `node_modules`).
