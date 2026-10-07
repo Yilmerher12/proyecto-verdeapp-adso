@@ -67,6 +67,31 @@ describe("RecicladorDashboard", () => {
     expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
   });
 
+  it("si falla una de las 5 cargas, pinta las otras y avisa del error (issue #406)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("mis-notificaciones")) return Promise.reject(new Error("Network Error"));
+      if (url.includes("mis-invitaciones")) {
+        return Promise.resolve({
+          data: [
+            {
+              id: "inv-1",
+              nombre_conjunto: "Conjunto Los Alpes",
+              direccion_conjunto: "Cra 10 # 20-30",
+              invitado_por_nombre: "Ana Admin",
+              estado: "PENDIENTE",
+              expires_at: "2026-09-01T00:00:00Z",
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
+
+    expect(await screen.findByText("Conjunto Los Alpes")).toBeInTheDocument();
+    expect(screen.getByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
   it("carga invitaciones, conjuntos y notificaciones al montar", async () => {
     renderPage();
     await waitFor(() => {

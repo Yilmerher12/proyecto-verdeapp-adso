@@ -40,24 +40,24 @@ export function ResidenteDashboard() {
   const [errorReporte, setErrorReporte] = useState(false);
   const [errorAccion, setErrorAccion] = useState(false);
 
+  // ¿Qué? Issue #406 — allSettled en vez de all, igual que el panel del
+  //       Reciclador: cada petición guarda su resultado por separado.
+  // ¿Para qué? Con Promise.all, si fallaba una de las dos no se guardaba la
+  //           otra (por ejemplo, las notificaciones llegaban bien y no se
+  //           mostraban porque el estado del SHUT había fallado).
+  // ¿Impacto? Lo que falla conserva su último valor bueno y se muestra el
+  //           aviso de errorCarga. Como cargarDatos() también corre cada 20s
+  //           (polling), el aviso desaparece solo apenas una siguiente carga
+  //           funcione. Antes de esto, esta carga fallaba en silencio.
   const cargarDatos = async () => {
-    try {
-      const [resEstado, resNotifs] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/v1/notificaciones/estado-shut`),
-        axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`),
-      ]);
-      setEstadoShut(resEstado.data);
-      setNotificaciones(resNotifs.data);
-      setErrorCarga(false);
-    } catch {
-      // ¿Qué? Antes esto fallaba en silencio — el panel se quedaba con los
-      //       datos viejos sin ningún aviso de que algo salió mal.
-      // ¿Impacto? Como cargarDatos() también corre cada 20s (polling), el
-      //           aviso desaparece solo apenas una siguiente carga funcione.
-      setErrorCarga(true);
-    } finally {
-      setCargando(false);
-    }
+    const [resEstado, resNotifs] = await Promise.allSettled([
+      axios.get(`${API_BASE_URL}/api/v1/notificaciones/estado-shut`),
+      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`),
+    ]);
+    if (resEstado.status === "fulfilled") setEstadoShut(resEstado.value.data);
+    if (resNotifs.status === "fulfilled") setNotificaciones(resNotifs.value.data);
+    setErrorCarga(resEstado.status === "rejected" || resNotifs.status === "rejected");
+    setCargando(false);
   };
 
   usePolling(cargarDatos, { enabled: !!user });

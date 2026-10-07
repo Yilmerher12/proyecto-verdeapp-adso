@@ -57,6 +57,32 @@ describe("ResidenteDashboard", () => {
     expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
   });
 
+  it("si falla el estado del SHUT, igual pinta las notificaciones y avisa del error (issue #406)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("estado-shut")) return Promise.reject(new Error("Network Error"));
+      if (url.includes("mis-notificaciones")) {
+        return Promise.resolve({
+          data: [
+            {
+              id: 5,
+              tipo: "AUDITORIA_PUBLICADA",
+              mensaje: "El reciclador auditó la separación de residuos de tu conjunto.",
+              id_referencia: 42,
+              nombre_conjunto: "Conjunto Los Alpes",
+              leida: false,
+              created_at: "2026-08-27T10:00:00Z",
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
+
+    expect(await screen.findByText("Nueva auditoría de tu conjunto")).toBeInTheDocument();
+    expect(screen.getByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
   it("carga el estado del SHUT y las notificaciones al montar", async () => {
     renderPage();
     await waitFor(() => {
