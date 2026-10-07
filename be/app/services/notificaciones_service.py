@@ -54,6 +54,13 @@ MENSAJES = {
 }
 MENSAJE_RESIDENTE_SHUT = "Un residente reportó que el SHUT está lleno."
 
+# ¿Qué? Issue #398 (CN-055): minutos mínimos entre dos avisos IGUALES del mismo
+#       reciclador para el mismo conjunto (SHUT_LLENO, SHUT_LIBRE y
+#       FINALIZACION_RECICLADOR; LLEGADA_RECICLADOR ya tiene su propio candado de 2 h).
+# ¿Para qué? Los candados de estado dejan alternar SHUT_LLENO y SHUT_LIBRE sin
+#           parar, y cada aviso crea una fila por cada residente y administrador.
+MINUTOS_ENFRIAMIENTO_AVISO = 5
+
 
 # ── Helpers privados de este servicio ───────────────────────────────────────
 
@@ -175,6 +182,11 @@ def enviar_notificacion(db: Session, current_user: Usuario, body: NotificacionEn
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El SHUT de este conjunto ya está reportado como lleno.")
             if body.tipo == "SHUT_LIBRE" and not _shut_esta_lleno(db, id_conjunto):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El SHUT de este conjunto ya está reportado como libre.")
+            if _aviso_reciente(db, id_conjunto, current_user.id_usuario, body.tipo, minutos=MINUTOS_ENFRIAMIENTO_AVISO):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Ya enviaste este aviso a este conjunto hace menos de {MINUTOS_ENFRIAMIENTO_AVISO} minutos.",
+                )
 
         mensaje = MENSAJES[body.tipo]
         destinatarios = set(residentes_del_conjunto(db, id_conjunto) + admins_del_conjunto(db, id_conjunto))

@@ -33,6 +33,26 @@ class TestInvitar:
         assert accion["reciclador"] == "re***@verdeapp.com"
         assert accion["conjunto"] == str(conjunto_verificado.id_conjunto_residencial)
 
+    def test_tope_de_invitaciones_pendientes_por_conjunto(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, reciclador_test, monkeypatch
+    ):
+        """Issue #398 (CN-056): con el tope en 1, la segunda invitación se rechaza
+        por el tope (antes de revisar si ese mismo reciclador ya tiene una pendiente)."""
+        from app.services import reciclador_conjunto_service
+
+        monkeypatch.setattr(reciclador_conjunto_service, "MAXIMO_INVITACIONES_PENDIENTES_POR_CONJUNTO", 1)
+        cuerpo = {
+            "correo_reciclador": reciclador_test.correo_electronico,
+            "id_conjunto_residencial": str(conjunto_verificado.id_conjunto_residencial),
+        }
+
+        primera = client.post("/api/v1/reciclador-conjunto/invitar", headers=admin_conjunto_auth_headers, json=cuerpo)
+        assert primera.status_code == 201
+
+        segunda = client.post("/api/v1/reciclador-conjunto/invitar", headers=admin_conjunto_auth_headers, json=cuerpo)
+        assert segunda.status_code == 400
+        assert "1 invitaciones pendientes" in segunda.json()["detail"]
+
     def test_no_puede_invitar_a_un_conjunto_ajeno(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_no_verificado, reciclador_test
     ):

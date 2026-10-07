@@ -11,6 +11,7 @@ Descripción: Pruebas del sistema de notificaciones (SHUT lleno/vaciado y llegad
 import uuid
 
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
 
 def _autorizar_reciclador(client: TestClient, admin_headers: dict, reciclador_headers: dict, correo_reciclador: str, id_conjunto) -> None:
@@ -326,6 +327,30 @@ class TestControlDePresencia:
         #       ya no debería servir hasta la próxima llegada.
         despues = _enviar(client, reciclador_auth_headers, "SHUT_LLENO", id_conjunto)
         assert despues.status_code == 400
+
+    def test_mismo_aviso_antes_de_5_minutos_se_rechaza(
+        self, client: TestClient, db, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test
+    ):
+        """Issue #398 (CN-055): los candados de estado dejan alternar SHUT_LLENO
+        y SHUT_LIBRE; el enfriamiento frena el MISMO aviso repetido en menos de 5 min."""
+        _autorizar_reciclador(
+            client, admin_conjunto_auth_headers, reciclador_auth_headers,
+            reciclador_test.correo_electronico, conjunto_verificado.id_conjunto_residencial,
+        )
+        id_conjunto = conjunto_verificado.id_conjunto_residencial
+
+        assert _enviar(client, reciclador_auth_headers, "LLEGADA_RECICLADOR", id_conjunto).status_code == 201
+        assert _enviar(client, reciclador_auth_headers, "SHUT_LLENO", id_conjunto).status_code == 201
+        assert _enviar(client, reciclador_auth_headers, "SHUT_LIBRE", id_conjunto).status_code == 201
+
+        repetido = _enviar(client, reciclador_auth_headers, "SHUT_LLENO", id_conjunto)
+        assert repetido.status_code == 400
+        assert "5 minutos" in repetido.json()["detail"]
+
+        # ¿Qué? Se envejece 10 minutos el primer SHUT_LLENO: ya pasó el enfriamiento.
+        db.execute(text("UPDATE notificaciones SET created_at = created_at - interval '10 minutes' WHERE tipo = 'SHUT_LLENO'"))
+        db.commit()
+        assert _enviar(client, reciclador_auth_headers, "SHUT_LLENO", id_conjunto).status_code == 201
 
     def test_mi_estado_reciclador_refleja_presencia_y_shut(
         self, client: TestClient, admin_conjunto_auth_headers, reciclador_auth_headers, conjunto_verificado, reciclador_test

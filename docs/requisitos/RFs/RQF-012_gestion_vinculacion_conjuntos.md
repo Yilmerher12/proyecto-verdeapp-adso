@@ -74,6 +74,7 @@ El nombre del RF quedó como "Invitación y Vinculación Inicial" por su alcance
 - RN-004: Un reciclador solo queda autorizado en un conjunto después de aceptar explícitamente la invitación — nunca de forma automática.
 - RN-005: Solo el Admin de Conjunto que administra ese conjunto puede revocar el acceso de un reciclador ahí — igual que RN-002 para invitar. La revocación es un soft-delete (se conserva el historial), nunca borra el vínculo.
 - RN-006: El Admin de Conjunto solo puede editar el NIT y la cantidad de apartamentos (entero entre 1 y 20000, opcional) de un conjunto que administra — nombre y dirección son de solo lectura, verificados desde el dataset oficial. Solo puede regenerar el código de acceso de sus propios conjuntos.
+- RN-007 (issue #398, CN-056 y CN-057): `POST /api/v1/reciclador-conjunto/invitar` acepta máximo 20 peticiones por hora desde una misma IP (la siguiente responde 429), y un conjunto no puede tener más de 20 invitaciones a recicladores pendientes (sin responder ni vencer) a la vez; la siguiente responde 400. Sin esto, un Admin de Conjunto podía probar correos sin freno (el 404 "no existe ningún Reciclador" frente al 201 revela qué correos son de recicladores) y cada acierto manda un correo. `GET /api/v1/admin-conjunto/invitacion` (pública, con token) acepta máximo 10 consultas por minuto desde una misma IP. **Implementado (2026-10-07).**
 
 ---
 
