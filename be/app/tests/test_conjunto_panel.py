@@ -86,6 +86,38 @@ class TestEditarConjunto:
         db.refresh(conjunto_verificado)
         assert conjunto_verificado.nit is None
 
+    def test_editar_solo_la_cantidad_de_apartamentos_conserva_el_nit(
+        self, client: TestClient, db, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Issue #402 (CN-062): si la petición no trae "nit", el NIT guardado no se borra."""
+        nit_original = conjunto_verificado.nit
+        assert nit_original
+
+        response = client.patch(
+            f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}",
+            headers=admin_conjunto_auth_headers,
+            json={"total_apartamentos": 80},
+        )
+        assert response.status_code == 200
+
+        db.refresh(conjunto_verificado)
+        assert conjunto_verificado.nit == nit_original
+        assert conjunto_verificado.total_apartamentos == 80
+
+    def test_nit_null_explicito_lo_borra(
+        self, client: TestClient, db, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Issue #402 (CN-062): "nit": null SÍ es pedir el borrado — se distingue de no mandarlo."""
+        response = client.patch(
+            f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}",
+            headers=admin_conjunto_auth_headers,
+            json={"nit": None},
+        )
+        assert response.status_code == 200
+
+        db.refresh(conjunto_verificado)
+        assert conjunto_verificado.nit is None
+
     def test_no_puede_editar_un_conjunto_ajeno(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_no_verificado
     ):

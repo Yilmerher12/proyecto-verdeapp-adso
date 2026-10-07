@@ -70,6 +70,61 @@ async def invitar_admin_conjunto(
             detail="Ese correo ya tiene una cuenta registrada en VerdeApp.",
         )
 
+    # ¿Qué? Issue #402 (CN-060) — rechazar al INVITAR los conjuntos que ya
+    #       tienen administrador activo o que ya tienen una invitación
+    #       pendiente de OTRA persona (RN-003: un conjunto, un solo
+    #       administrador activo a la vez).
+    # ¿Para qué? Antes la invitación se creaba igual y el choque con el índice
+    #           ux_admin_conjunto_activo aparecía recién al ACEPTARLA, como un
+    #           500 genérico para la persona invitada y con la invitación
+    #           inutilizable. Así el aviso le llega al Admin Sistema, que
+    #           puede corregirlo.
+    # ¿Impacto? Una invitación pendiente del MISMO correo no cuenta: reenviar
+    #           el enlace a la misma persona (se le perdió el correo) sigue
+    #           permitido, y solo la primera aceptación puede crear la cuenta.
+    nombres_con_administrador = db.execute(
+        select(ConjuntoResidencial.nombre_conjunto)
+        .join(
+            AdministradorConjuntoAsignacion,
+            AdministradorConjuntoAsignacion.id_conjunto_residencial
+            == ConjuntoResidencial.id_conjunto_residencial,
+        )
+        .where(
+            ConjuntoResidencial.id_conjunto_residencial.in_(datos.ids_conjuntos),
+            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
+        )
+    ).scalars().all()
+    if nombres_con_administrador:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Estos conjuntos ya tienen un administrador activo: "
+            + ", ".join(nombres_con_administrador)
+            + ".",
+        )
+
+    asignados_en_pendientes = db.execute(
+        select(InvitacionAdminConjunto.conjuntos_asignados).where(
+            InvitacionAdminConjunto.used.is_(False),
+            InvitacionAdminConjunto.expires_at > datetime.now(timezone.utc),
+            InvitacionAdminConjunto.correo_electronico != datos.correo_electronico,
+        )
+    ).scalars().all()
+    ids_con_invitacion_pendiente = {
+        id_conjunto for fila in asignados_en_pendientes for id_conjunto in fila.split(",")
+    }
+    nombres_con_invitacion_pendiente = [
+        c.nombre_conjunto
+        for c in conjuntos_encontrados
+        if str(c.id_conjunto_residencial) in ids_con_invitacion_pendiente
+    ]
+    if nombres_con_invitacion_pendiente:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Estos conjuntos ya tienen una invitación pendiente para otra persona: "
+            + ", ".join(nombres_con_invitacion_pendiente)
+            + ".",
+        )
+
     token = str(uuid.uuid4())
     expira = datetime.now(timezone.utc) + timedelta(hours=HORAS_VALIDEZ_INVITACION)
     ids_como_texto = ",".join(str(i) for i in datos.ids_conjuntos)

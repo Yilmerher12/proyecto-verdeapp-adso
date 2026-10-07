@@ -9,7 +9,7 @@ Descripción: Schemas Pydantic para el flujo de invitación de Administradores d
 from typing import List
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.schemas.user import (
     _validar_apellidos_obligatorio,
@@ -28,14 +28,21 @@ class InvitarAdminConjuntoRequest(BaseModel):
               Administrador del Sistema.
     """
     correo_electronico: EmailStr
-    ids_conjuntos: List[UUID]
+    # ¿Qué? Issue #402 (CN-060) — tope de 100 conjuntos por invitación.
+    # ¿Para qué? Sin tope se podían mandar miles de UUID en una sola petición.
+    ids_conjuntos: List[UUID] = Field(max_length=100)
 
     @field_validator("ids_conjuntos")
     @classmethod
     def validar_al_menos_un_conjunto(cls, v: List[UUID]) -> List[UUID]:
         if not v or len(v) == 0:
             raise ValueError("Debes asignar al menos un conjunto residencial.")
-        return v
+        # ¿Qué? Quita los conjuntos repetidos conservando el orden.
+        # ¿Para qué? Con un conjunto repetido, al aceptar la invitación se
+        #           intentaba crear dos vínculos activos para el mismo conjunto,
+        #           la base de datos lo rechazaba (ux_admin_conjunto_activo) y
+        #           la invitación quedaba inutilizable.
+        return list(dict.fromkeys(v))
 
 
 class AceptarInvitacionAdminConjuntoRequest(BaseModel):
