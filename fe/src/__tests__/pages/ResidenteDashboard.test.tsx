@@ -129,6 +129,19 @@ describe("ResidenteDashboard", () => {
     expect(await screen.findByText("Enviado")).toBeInTheDocument();
   });
 
+  // ¿Qué? Issue #414: el motivo exacto del rechazo llega a la pantalla.
+  it("si el backend rechaza el reporte de SHUT lleno, muestra su motivo exacto", async () => {
+    mockPost.mockRejectedValue({
+      response: { status: 400, data: { detail: "El SHUT de tu conjunto ya está reportado como lleno." } },
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Reportar" }));
+
+    expect(await screen.findByText("El SHUT de tu conjunto ya está reportado como lleno.")).toBeInTheDocument();
+  });
+
   it("muestra el aviso de auditoría publicada, aparte del feed normal, y su detalle al hacer clic en Ver", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });

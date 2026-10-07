@@ -7,6 +7,7 @@
  */
 
 import axios from "axios";
+import i18n from "@/i18n";
 import { notificarServidorInalcanzable, notificarServidorRecuperado } from "@/lib/serverStatusEvents";
 import { borrarSesionActiva, haySesionActiva } from "@/lib/sesionActiva";
 
@@ -130,6 +131,31 @@ function renovarSesion(): Promise<void> {
   return renovacionEnCurso;
 }
 
+// ¿Qué? El motivo que el servidor dio para rechazar una petición, en texto
+//       para mostrar al usuario; null si no dio ninguno.
+//       - 429 (límite de peticiones): slowapi manda { error: "Rate limit
+//         exceeded: ..." } sin "detail", así que se muestra un mensaje propio
+//         y traducido.
+//       - 422 (validación de Pydantic): { detail: [{ msg }] } → los "msg" unidos.
+//       - Cualquier otro error con { detail: "texto" } → ese texto.
+// ¿Para qué? Issue #414: antes solo se leía "detail" y un 429 llegaba a la
+//           pantalla como "Request failed with status code 429". Las pantallas
+//           que atrapan el error por su cuenta (paneles de Reciclador y
+//           Residente) la usan para mostrar el motivo exacto en vez de un
+//           mensaje genérico.
+// ¿Impacto? No usa axios.isAxiosError a propósito: varias pruebas simulan el
+//           módulo "axios" sin esa función. Se revisa la forma del error.
+export function motivoDelServidor(error: unknown): string | null {
+  const respuesta = (error as { response?: { status?: number; data?: { detail?: unknown } } } | null)?.response;
+  if (!respuesta) return null;
+  if (respuesta.status === 429) return i18n.t("common.tooManyRequests");
+  const detail = respuesta.data?.detail;
+  if (respuesta.status === 422 && Array.isArray(detail)) {
+    return detail.map((e: { msg: string }) => e.msg).join(". ");
+  }
+  return typeof detail === "string" ? detail : null;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function manejarErrorDeRespuesta(error: any) {
   const haySesionGuardada = haySesionActiva();
@@ -162,8 +188,6 @@ async function manejarErrorDeRespuesta(error: any) {
 
   if (error.response) {
     // ¿Qué? Error HTTP del servidor (4xx, 5xx).
-    // ¿Para qué? Extraer el mensaje de error del body de la respuesta.
-    const data = error.response.data;
 
     // ¿Qué? Un 401 mientras había un token guardado significa que la sesión
     //       venció DURANTE el uso activo de la app.
@@ -205,16 +229,9 @@ async function manejarErrorDeRespuesta(error: any) {
       window.location.href = "/login";
     }
 
-    // ¿Qué? Manejo especial para errores de validación Pydantic (422).
-    // ¿Para qué? Los errores 422 tienen estructura { detail: [{loc, msg, type}] }.
-    if (error.response.status === 422 && Array.isArray(data.detail)) {
-      const messages = data.detail.map(
-        (err: { msg: string }) => err.msg,
-      );
-      error.message = messages.join(". ");
-    } else if (typeof data.detail === "string") {
-      error.message = data.detail;
-    }
+    // ¿Qué? Extraer el mensaje de error del body de la respuesta (422, 429, detail).
+    const motivo = motivoDelServidor(error);
+    if (motivo) error.message = motivo;
     // ¿Qué? Sí hubo respuesta (aunque sea un error 4xx/5xx) — el servidor
     //       está vivo y contestando, así que también cuenta como "se
     //       recuperó" si el banner estaba visible por una caída anterior.

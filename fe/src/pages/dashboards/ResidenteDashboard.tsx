@@ -8,7 +8,7 @@ import { TriangleAlert, Bell, BadgeCheck } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import axios from "axios";
-import { API_BASE_URL } from "@/api/axios";
+import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
@@ -37,7 +37,7 @@ export function ResidenteDashboard() {
   const [errorCarga, setErrorCarga] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [feedbackOk, mostrarFeedbackOk] = useAvisoTemporal<boolean>();
-  const [errorReporte, setErrorReporte] = useState(false);
+  const [errorReporte, setErrorReporte] = useState<string | null>(null);
   const [errorAccion, setErrorAccion] = useState(false);
 
   // ¿Qué? Issue #406 — allSettled en vez de all, igual que el panel del
@@ -64,16 +64,18 @@ export function ResidenteDashboard() {
 
   const reportarShutLleno = async () => {
     setEnviando(true);
-    setErrorReporte(false);
+    setErrorReporte(null);
     try {
       await axios.post(`${API_BASE_URL}/api/v1/notificaciones/enviar`, { tipo: "SHUT_LLENO" });
       mostrarFeedbackOk(true);
       cargarDatos();
-    } catch {
+    } catch (err) {
       // ¿Qué? Antes, si esto fallaba, el residente no se enteraba — creía
       //       que había reportado el SHUT lleno y en realidad no pasó nada.
-      // ¿Impacto? Ahora se ve un aviso claro de que debe intentar de nuevo.
-      setErrorReporte(true);
+      // ¿Impacto? Se ve el motivo exacto que manda el backend (SHUT ya
+      //           reportado como lleno, límite de peticiones...); si no hay
+      //           ninguno, el aviso genérico de intentar de nuevo (issue #414).
+      setErrorReporte(motivoDelServidor(err) ?? t("common.actionError"));
     } finally {
       setEnviando(false);
     }
@@ -200,7 +202,7 @@ export function ResidenteDashboard() {
             </p>
             {errorReporte && (
               <div className="mt-2">
-                <Alert type="error" message={t("common.actionError")} onClose={() => setErrorReporte(false)} />
+                <Alert type="error" message={errorReporte} onClose={() => setErrorReporte(null)} />
               </div>
             )}
           </div>

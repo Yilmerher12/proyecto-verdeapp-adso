@@ -84,8 +84,11 @@ export function validarFechaAviso(valor: string): "datePast" | "dateTooFar" | nu
 // ¿Qué? El grupo de captura es el ID del video (11 caracteres).
 // ¿Para qué? Issue #400 (CN-065): YoutubeEmbed arma el enlace de YouTube con
 //           ese ID, nunca con la URL cruda que escribió el usuario.
-// ¿Impacto? Para .test() el grupo no cambia nada: acepta lo mismo que antes.
-export const REGEX_VIDEO_YOUTUBE = /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/;
+// ¿Impacto? Para .test() el grupo no cambia nada. youtube-nocookie.com/embed/
+//           se reconoce desde el issue #414: el backend ya aceptaba ese
+//           dominio (DOMINIOS_YOUTUBE) y sin esto un video guardado así no se
+//           mostraba.
+export const REGEX_VIDEO_YOUTUBE = /^https:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/)([\w-]{11})/;
 
 // ¿Qué? Mismo chequeo de formato de correo que ya usan registro y login.
 export const CORREO_REGEX = /\S+@\S+\.\S+/;

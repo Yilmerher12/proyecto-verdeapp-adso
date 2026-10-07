@@ -169,6 +169,36 @@ describe("RecicladorDashboard", () => {
     });
   });
 
+  // ¿Qué? Issue #414: el motivo exacto del rechazo sale DENTRO del modal.
+  async function abrirModalLlegada() {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole("button", { name: "Llegué al conjunto" }));
+    await user.click(screen.getByRole("button", { name: "Enviar aviso" }));
+  }
+
+  it("si el backend rechaza el aviso, muestra su motivo exacto dentro del modal", async () => {
+    mockPost.mockRejectedValue({
+      response: { status: 400, data: { detail: "Ya enviaste este aviso a este conjunto hace menos de 5 minutos." } },
+    });
+    await abrirModalLlegada();
+
+    const alerta = await screen.findByRole("alert");
+    expect(alerta).toHaveTextContent("Ya enviaste este aviso a este conjunto hace menos de 5 minutos.");
+    expect(screen.getByText("¿A qué conjunto notificas?")).toBeInTheDocument();
+  });
+
+  it("si el rechazo no trae motivo, muestra el aviso genérico dentro del modal", async () => {
+    mockPost.mockRejectedValue(new Error("Network Error"));
+    await abrirModalLlegada();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No se pudo completar la acción. Inténtalo de nuevo.");
+  });
+
   it("muestra el aviso de auditoría pendiente y envía la auditoría con evidencia", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
