@@ -42,6 +42,7 @@
 - **Dado que** seleccioné un Admin de Conjunto,
 - **cuando** elijo el conjunto a asignarle,
 - **entonces** solo debo poder elegir conjuntos que no tengan ya otro administrador activo.
+- **y** si de todos modos el conjunto tiene un administrador activo, o una invitación pendiente para otra persona (HU-018), el sistema rechaza la asignación con un error 409 y un mensaje claro (issue #409). Con una invitación pendiente hay que esperar a que se acepte o venza (48 horas): así la persona invitada no pierde su invitación por una asignación hecha en el medio.
 
 ### CA-024.3 — Asignación exitosa
 
