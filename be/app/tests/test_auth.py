@@ -4,6 +4,8 @@ Descripción: Tests de integración para los endpoints de autenticación y usuar
 """
 
 import io
+import json
+import logging
 import threading
 import time
 import uuid
@@ -14,6 +16,7 @@ import jwt
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -25,6 +28,7 @@ from app.models.token_revocado import TokenRevocado
 from app.models.usuario import Usuario
 from app.services import auth_service
 from app.services.auth_service import revocar_jti
+from app.utils.audit_log import redactar_correo
 from app.utils.security import hash_token
 from app.tests.conftest import (
     TestSessionLocal,
@@ -528,6 +532,42 @@ class TestLogin:
         )
         assert respuesta.status_code == 200
 
+    def test_un_fallo_despues_de_un_bloqueo_vencido_no_bloquea_de_nuevo(
+        self, client: TestClient, db: Session, test_user: Usuario
+    ) -> None:
+        """Issue #396 (CN-026): al vencer el bloqueo el conteo empieza de nuevo.
+        Antes el contador seguía en 5 y el primer fallo siguiente (el 6.º)
+        bloqueaba otros 15 minutos."""
+        test_user.intentos_fallidos = 5
+        test_user.bloqueado_hasta = datetime.now(timezone.utc) - timedelta(minutes=1)
+        db.commit()
+
+        respuesta = client.post(
+            self.URL, json={"correo_electronico": TEST_USER_EMAIL, "password": "ContraseñaIncorrecta1"}
+        )
+        assert respuesta.status_code == 401
+
+        db.refresh(test_user)
+        assert test_user.intentos_fallidos == 1
+        assert test_user.bloqueado_hasta is None
+
+    def test_el_contador_se_suma_en_la_base_y_no_desde_un_valor_viejo(
+        self, client: TestClient, db: Session, test_user: Usuario
+    ) -> None:
+        """Issue #396 (CN-026): dos fallos simultáneos deben contar los dos.
+        Se simula dejando en memoria el valor viejo (0) mientras la BD ya está
+        en 3 por otro intento: con "leer, sumar 1 y escribir" quedaría en 1."""
+        assert test_user.intentos_fallidos == 0  # carga el valor viejo en memoria
+        db.execute(
+            text("UPDATE usuarios SET intentos_fallidos = 3 WHERE id_usuario = :id"),
+            {"id": test_user.id_usuario},
+        )
+
+        client.post(self.URL, json={"correo_electronico": TEST_USER_EMAIL, "password": "ContraseñaIncorrecta1"})
+
+        db.refresh(test_user)
+        assert test_user.intentos_fallidos == 4
+
     def test_supera_el_limite_de_intentos_devuelve_429_limpio(self, client: TestClient) -> None:
         """OWASP A04 — antes, app.state.limiter nunca se registraba en main.py,
         así que RateLimitExceeded no tenía un exception_handler asociado y se
@@ -925,6 +965,21 @@ class TestForgotPassword:
         )
         assert reset.status_code == 200
 
+    def test_pedir_otro_enlace_anula_el_anterior(
+        self, client: TestClient, test_user: object, correos_enviados
+    ) -> None:
+        """Issue #396 (CN-053): solo sirve el enlace del último correo pedido."""
+        client.post(self.URL, json={"email": TEST_USER_EMAIL})
+        client.post(self.URL, json={"email": TEST_USER_EMAIL})
+        token_viejo = correos_enviados[0][1]["token"]
+        token_nuevo = correos_enviados[1][1]["token"]
+
+        url_reset = "/api/v1/auth/reset-password"
+        viejo = client.post(url_reset, json={"token": token_viejo, "new_password": "NuevaClave456"})
+        assert viejo.status_code == 400
+        nuevo = client.post(url_reset, json={"token": token_nuevo, "new_password": "NuevaClave456"})
+        assert nuevo.status_code == 200
+
     def test_forgot_password_nonexistent_email(self, client: TestClient, correos_enviados) -> None:
         response = client.post(self.URL, json={"email": "fantasma@verdeapp.com"})
         assert response.status_code == 200
@@ -971,6 +1026,61 @@ class TestResetPassword:
             "/api/v1/auth/refresh", json={"refresh_token": sesion["refresh_token"]}
         )
         assert refresh.status_code == 401
+
+    def test_reset_password_no_se_puede_usar_dos_veces(
+        self, client: TestClient, valid_reset_token: str
+    ) -> None:
+        """Issue #396 (CN-053): el segundo uso del mismo enlace falla."""
+        primero = client.post(self.URL, json={"token": valid_reset_token, "new_password": "ResetPass789"})
+        assert primero.status_code == 200
+        segundo = client.post(self.URL, json={"token": valid_reset_token, "new_password": "OtraClave789"})
+        assert segundo.status_code == 400
+
+    def test_reset_password_anula_los_demas_enlaces(
+        self, client: TestClient, db: Session, test_user: Usuario, valid_reset_token: str
+    ) -> None:
+        """Issue #396 (CN-053): al usar un enlace, otro enlace vigente del mismo usuario deja de servir."""
+        otro_token = str(uuid.uuid4())
+        db.add(
+            PasswordResetToken(
+                id_usuario=test_user.id_usuario,
+                token=hash_token(otro_token),
+                expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            )
+        )
+        db.commit()
+
+        usado = client.post(self.URL, json={"token": valid_reset_token, "new_password": "ResetPass789"})
+        assert usado.status_code == 200
+        otro = client.post(self.URL, json={"token": otro_token, "new_password": "OtraClave789"})
+        assert otro.status_code == 400
+
+    def test_reset_password_quita_el_bloqueo_y_queda_en_el_registro(
+        self,
+        client: TestClient,
+        db: Session,
+        test_user: Usuario,
+        valid_reset_token: str,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Issue #396 (CN-026): quien restablece la contraseña por correo no
+        debe seguir bloqueado, y el cambio queda en el registro de auditoría."""
+        caplog.set_level(logging.INFO, logger="verdeapp.audit")
+        test_user.intentos_fallidos = 5
+        test_user.bloqueado_hasta = datetime.now(timezone.utc) + timedelta(minutes=15)
+        db.commit()
+
+        response = client.post(self.URL, json={"token": valid_reset_token, "new_password": "ResetPass789"})
+        assert response.status_code == 200
+
+        db.refresh(test_user)
+        assert test_user.intentos_fallidos == 0
+        assert test_user.bloqueado_hasta is None
+
+        eventos = [json.loads(r.getMessage()) for r in caplog.records if r.name == "verdeapp.audit"]
+        [cambio] = [e for e in eventos if e["event"] == "password_changed"]
+        assert cambio["email"] == redactar_correo(TEST_USER_EMAIL)
+        assert "ResetPass789" not in str(eventos)
 
     def test_reset_password_invalid_token(self, client: TestClient) -> None:
         response = client.post(
@@ -1281,6 +1391,23 @@ class TestEmailVerification:
 
         assert login_response.status_code == 200
         assert login_response.cookies.get("access_token")
+
+    def test_verify_email_anula_los_demas_enlaces(
+        self, client: TestClient, db: Session, unverified_user: Usuario, valid_verification_token: str
+    ) -> None:
+        """Issue #396 (CN-053): al verificar con un enlace, otro enlace vigente de la misma cuenta deja de servir."""
+        otro_token = str(uuid.uuid4())
+        db.add(
+            EmailVerificationToken(
+                id_usuario=unverified_user.id_usuario,
+                token=hash_token(otro_token),
+                expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+            )
+        )
+        db.commit()
+
+        assert client.post(self.URL, json={"token": valid_verification_token}).status_code == 200
+        assert client.post(self.URL, json={"token": otro_token}).status_code == 400
 
     def test_verify_email_invalid_token(self, client: TestClient) -> None:
         response = client.post(self.URL, json={"token": "token-falso-inexistente"})

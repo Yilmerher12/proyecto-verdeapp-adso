@@ -8,7 +8,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from fastapi import BackgroundTasks, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import and_, case, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -36,7 +36,7 @@ from app.utils.email import (
     send_password_reset_email,
     send_verification_email,
 )
-from app.utils.audit_log import log_login_exitoso, log_login_fallido
+from app.utils.audit_log import log_login_exitoso, log_login_fallido, log_password_cambiada
 from app.utils.security import (
     DUMMY_PASSWORD_HASH,
     create_access_token,
@@ -282,6 +282,42 @@ def register_user(db: Session, user_data: UserCreate, background_tasks: Backgrou
         )
 
 
+def _registrar_intento_fallido(db: Session, user: Usuario) -> None:
+    """
+    ¿Qué? Issue #396 (CN-026) — suma un intento fallido con UNA sola sentencia
+          UPDATE, y bloquea la cuenta en la misma sentencia si llega al máximo.
+          Si el bloqueo anterior ya venció, el conteo empieza de nuevo en 1.
+    ¿Para qué? Antes: (1) el contador solo volvía a 0 con un login exitoso, así
+              que tras vencer un bloqueo de 15 min el siguiente fallo (el 6.º)
+              bloqueaba otros 15 — quien se equivocaba UNA vez quedaba
+              bloqueado de nuevo, y un atacante podía mantener bloqueada la
+              cuenta de cualquiera con 1 petición cada 15 min. (2) "+= 1" en
+              Python lee, suma y escribe: dos fallos simultáneos contaban uno.
+    ¿Impacto? En un UPDATE, el lado derecho de cada asignación usa el valor
+              VIEJO de la fila, por eso "base + 1 >= máximo" compara con el
+              contador que había antes de este intento. synchronize_session=False
+              porque el objeto en memoria no se vuelve a usar: login_user
+              responde 401 enseguida.
+    """
+    ahora = datetime.now(timezone.utc)
+    bloqueo_vencido = and_(Usuario.bloqueado_hasta.is_not(None), Usuario.bloqueado_hasta <= ahora)
+    base = case((bloqueo_vencido, 0), else_=Usuario.intentos_fallidos)
+    db.execute(
+        update(Usuario)
+        .where(Usuario.id_usuario == user.id_usuario)
+        .values(
+            intentos_fallidos=base + 1,
+            bloqueado_hasta=case(
+                (base + 1 >= MAXIMO_INTENTOS_FALLIDOS, ahora + timedelta(minutes=MINUTOS_DE_BLOQUEO)),
+                (bloqueo_vencido, None),
+                else_=Usuario.bloqueado_hasta,
+            ),
+        )
+        .execution_options(synchronize_session=False)
+    )
+    db.commit()
+
+
 def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     """Valida credenciales y genera tokens inyectando los NOMBRES REALES de la base de datos."""
     correo = login_data.correo_electronico or login_data.email or login_data.username
@@ -323,10 +359,7 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     password_hash = user.password if user else DUMMY_PASSWORD_HASH
     if not user or not verify_password(login_data.password, password_hash):
         if user:
-            user.intentos_fallidos += 1
-            if user.intentos_fallidos >= MAXIMO_INTENTOS_FALLIDOS:
-                user.bloqueado_hasta = datetime.now(timezone.utc) + timedelta(minutes=MINUTOS_DE_BLOQUEO)
-            db.commit()
+            _registrar_intento_fallido(db, user)
         log_login_fallido(correo, "credenciales_invalidas")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MENSAJE_CREDENCIALES_INCORRECTAS)
 
@@ -480,10 +513,16 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
 
 
 def verify_email(db: Session, token: str) -> bool:
+    # ¿Qué? Issue #396 (CN-053) — with_for_update() bloquea la fila del token
+    #       hasta el commit.
+    # ¿Para qué? Sin el bloqueo, dos peticiones simultáneas con el mismo enlace
+    #           leían "used = false" las dos y las dos lo usaban.
+    # ¿Impacto? La segunda espera a que la primera termine, vuelve a evaluar el
+    #           filtro, ya no encuentra el token sin usar y recibe el 400 normal.
     db_token = db.query(EmailVerificationToken).filter(
         EmailVerificationToken.token == hash_token(token),
         EmailVerificationToken.used.is_(False)
-    ).first()
+    ).with_for_update().first()
 
     if not db_token:
         raise HTTPException(
@@ -506,7 +545,16 @@ def verify_email(db: Session, token: str) -> bool:
         )
 
     user.is_active = True
-    db_token.used = True
+    # ¿Qué? Issue #396 (CN-053) — se marcan como usados TODOS los enlaces sin
+    #       usar de esta cuenta (incluido este), no solo el presentado.
+    # ¿Para qué? Verificada la cuenta, ningún otro enlace de verificación debe
+    #           seguir sirviendo.
+    db.execute(
+        update(EmailVerificationToken)
+        .where(EmailVerificationToken.id_usuario == user.id_usuario, EmailVerificationToken.used.is_(False))
+        .values(used=True)
+        .execution_options(synchronize_session=False)
+    )
     db.commit()
     return True
 
@@ -524,6 +572,19 @@ def request_password_reset(db: Session, email: str, background_tasks: Background
     user = db.query(Usuario).filter(Usuario.correo_electronico == email).first()
     if not user:
         return
+
+    # ¿Qué? Issue #396 (CN-053) — los enlaces anteriores sin usar de este
+    #       usuario se anulan antes de crear el nuevo.
+    # ¿Para qué? Cada "olvidé mi contraseña" dejaba un enlace más con 1 hora de
+    #           vida: uno viejo (por ejemplo de un buzón comprometido) permitía
+    #           cambiar la contraseña aunque la persona ya hubiera pedido otro.
+    # ¿Impacto? Solo sirve el enlace del último correo pedido.
+    db.execute(
+        update(PasswordResetToken)
+        .where(PasswordResetToken.id_usuario == user.id_usuario, PasswordResetToken.used.is_(False))
+        .values(used=True)
+        .execution_options(synchronize_session=False)
+    )
 
     token_str = str(uuid.uuid4())
     expiration = datetime.now(timezone.utc) + timedelta(hours=1)
@@ -543,10 +604,13 @@ def request_password_reset(db: Session, email: str, background_tasks: Background
 
 
 def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
+    # ¿Qué? Issue #396 (CN-053) — with_for_update(): mismo motivo que en
+    #       verify_email; dos peticiones simultáneas con el mismo enlace ya no
+    #       pueden usarlo las dos.
     db_token = db.query(PasswordResetToken).filter(
         PasswordResetToken.token == hash_token(reset_data.token),
         PasswordResetToken.used.is_(False)
-    ).first()
+    ).with_for_update().first()
 
     if not db_token:
         raise HTTPException(
@@ -580,8 +644,23 @@ def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
     # ¿Para qué? Quien restablece su contraseña suele hacerlo porque
     #           sospecha que alguien más entró — esa otra sesión debe caer.
     user.version_sesion += 1
-    db_token.used = True
+    # ¿Qué? Issue #396 (CN-026) — quita también el bloqueo por intentos fallidos.
+    # ¿Para qué? Quien restablece la contraseña por correo acaba de demostrar que
+    #           controla la cuenta; seguía bloqueada hasta que pasaran los 15 min
+    #           aunque entrara con la contraseña nueva.
+    user.intentos_fallidos = 0
+    user.bloqueado_hasta = None
+    # ¿Qué? Issue #396 (CN-053) — se marcan como usados TODOS los enlaces sin
+    #       usar de este usuario (incluido el presentado), no solo uno.
+    db.execute(
+        update(PasswordResetToken)
+        .where(PasswordResetToken.id_usuario == user.id_usuario, PasswordResetToken.used.is_(False))
+        .values(used=True)
+        .execution_options(synchronize_session=False)
+    )
     db.commit()
+    # ¿Qué? Mismo registro de auditoría que el cambio de contraseña desde el perfil.
+    log_password_cambiada(user.correo_electronico)
     return True
 
 
