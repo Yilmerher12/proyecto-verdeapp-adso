@@ -10,6 +10,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FileText, LoaderCircle, Upload, X } from "lucide-react";
+import { motivoDelServidor } from "@/api/axios";
 import { subirAdjunto } from "@/lib/uploadsApi";
 import { ENLACE_MAX_LENGTH } from "@/lib/validacion";
 
@@ -53,8 +54,8 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
     try {
       const url = await subirAdjunto(archivo, { permitirDocumentos: true });
       onChange(url);
-    } catch {
-      setError(t("guiaApoyo.errorSubida"));
+    } catch (err) {
+      setError(motivoDelServidor(err) ?? t("guiaApoyo.errorSubida"));
     } finally {
       setSubiendo(false);
       if (inputRef.current) inputRef.current.value = "";

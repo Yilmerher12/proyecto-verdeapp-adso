@@ -30,6 +30,7 @@ from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjun
 from app.models.solicitud_desvinculacion import SolicitudDesvinculacion, EstadoSolicitudDesvinculacion
 from app.models.novedad_enviada import NovedadEnviada, EstadoNovedadEnviada
 from app.models.agenda_conjunto import AgendaConjunto, EstadoAgenda
+from app.models.archivo_subido import ArchivoSubido
 from app.models.comunicado import Comunicado, TipoComunicado, DestinatariosComunicado
 from app.models.novedad import Novedad, AlcanceNovedad
 from app.models.novedad_conjunto import NovedadConjunto
@@ -77,6 +78,7 @@ __all__ = [
     "EstadoNovedadEnviada",
     "AgendaConjunto",
     "EstadoAgenda",
+    "ArchivoSubido",
     "Comunicado",
     "TipoComunicado",
     "DestinatariosComunicado",

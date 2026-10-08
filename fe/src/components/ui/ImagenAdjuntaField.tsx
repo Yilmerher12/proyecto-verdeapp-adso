@@ -16,6 +16,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FileText, ImagePlus, LoaderCircle, X } from "lucide-react";
+import { motivoDelServidor } from "@/api/axios";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { subirAdjunto } from "@/lib/uploadsApi";
 
@@ -76,8 +77,9 @@ export function ImagenAdjuntaField({
     try {
       const url = await subirAdjunto(archivo, { permitirDocumentos });
       onChange(url);
-    } catch {
-      setError(t("imagenAdjunta.errorSubida"));
+    } catch (err) {
+      // ¿Qué? Issue #395: el motivo del servidor (cuota pasada, demasiados píxeles...); el genérico solo si no dio ninguno.
+      setError(motivoDelServidor(err) ?? t("imagenAdjunta.errorSubida"));
     } finally {
       setSubiendo(false);
       if (inputRef.current) inputRef.current.value = "";

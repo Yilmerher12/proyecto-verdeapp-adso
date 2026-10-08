@@ -88,6 +88,20 @@ describe("ImagenAdjuntaField", () => {
     expect(await screen.findByText("No se pudo subir la imagen. Intenta de nuevo.")).toBeInTheDocument();
   });
 
+  it("si el servidor da el motivo (cuota de subidas, demasiados píxeles), lo muestra en vez del mensaje genérico", async () => {
+    mockSubirAdjunto.mockRejectedValue({
+      response: { status: 429, data: { detail: "Llegaste al máximo de 5 archivos subidos en un día. Intenta de nuevo mañana." } },
+    });
+    const user = userEvent.setup();
+
+    const { container } = render(<ImagenAdjuntaField label="Imagen" value="" onChange={vi.fn()} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, crearArchivoImagen());
+
+    expect(await screen.findByText("Llegaste al máximo de 5 archivos subidos en un día. Intenta de nuevo mañana.")).toBeInTheDocument();
+    expect(screen.queryByText("No se pudo subir la imagen. Intenta de nuevo.")).not.toBeInTheDocument();
+  });
+
   it("muestra la vista previa y permite quitar la imagen ya elegida", async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();

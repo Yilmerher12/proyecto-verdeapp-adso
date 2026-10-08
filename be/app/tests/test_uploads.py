@@ -10,9 +10,13 @@ Descripción: Pruebas del endpoint genérico de subida de adjuntos
 """
 import io
 import zipfile
+from datetime import datetime, timedelta, timezone
 
+import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
+
+from app.models.archivo_subido import ArchivoSubido
 
 
 def _generar_imagen_real() -> bytes:
@@ -210,3 +214,90 @@ class TestSubirAdjunto:
             files={"archivo": ("roto.png", io.BytesIO(png_con_crc_invalido), "image/png")},
         )
         assert response.status_code == 400
+
+
+@pytest.fixture()
+def carpeta_temporal(tmp_path, monkeypatch):
+    """Las subidas de estas pruebas se guardan en una carpeta temporal, no en be/app/uploads/adjuntos/."""
+    monkeypatch.setattr("app.routers.uploads.CARPETA_ADJUNTOS", tmp_path)
+    return tmp_path
+
+
+def _subir(client: TestClient, headers, contenido: bytes = IMAGEN_VALIDA):
+    return client.post(URL, headers=headers, files={"archivo": ("foto.png", io.BytesIO(contenido), "image/png")})
+
+
+def _registrar_subidas(db, usuario, cantidad: int, hace: timedelta) -> None:
+    for _ in range(cantidad):
+        db.add(ArchivoSubido(id_usuario=usuario.id_usuario, ruta="/uploads/adjuntos/x.png", created_at=datetime.now(timezone.utc) - hace))
+    db.commit()
+
+
+class TestCuotaPorUsuario:
+    """Issue #395 (CN-046): tope por usuario (por minuto y por día) y registro del dueño de cada archivo."""
+
+    def test_guarda_de_quien_es_el_archivo(self, client: TestClient, db, test_user, auth_headers, carpeta_temporal):
+        url = _subir(client, auth_headers).json()["url"]
+        [registro] = db.query(ArchivoSubido).all()
+        assert registro.id_usuario == test_user.id_usuario
+        assert registro.ruta == url
+
+    def test_residente_no_pasa_de_3_por_minuto(self, client: TestClient, auth_headers, carpeta_temporal):
+        for _ in range(3):
+            assert _subir(client, auth_headers).status_code == 201
+        r = _subir(client, auth_headers)
+        assert r.status_code == 429
+        assert "último minuto" in r.json()["detail"]
+
+    def test_residente_no_pasa_de_5_por_dia(self, client: TestClient, db, test_user, auth_headers, carpeta_temporal):
+        _registrar_subidas(db, test_user, 5, hace=timedelta(hours=2))
+        r = _subir(client, auth_headers)
+        assert r.status_code == 429
+        assert "5 archivos" in r.json()["detail"]
+
+    def test_lo_subido_hace_mas_de_un_dia_no_cuenta(self, client: TestClient, db, test_user, auth_headers, carpeta_temporal):
+        _registrar_subidas(db, test_user, 5, hace=timedelta(hours=25))
+        assert _subir(client, auth_headers).status_code == 201
+
+    def test_la_cuota_es_por_cuenta(self, client: TestClient, db, test_user, auth_headers, reciclador_auth_headers, carpeta_temporal):
+        _registrar_subidas(db, test_user, 5, hace=timedelta(hours=2))
+        assert _subir(client, reciclador_auth_headers).status_code == 201
+
+    def test_admin_conjunto_tiene_mas_margen(self, client: TestClient, admin_conjunto_auth_headers, carpeta_temporal):
+        for _ in range(4):
+            assert _subir(client, admin_conjunto_auth_headers).status_code == 201
+
+    def test_admin_conjunto_no_pasa_de_30_por_dia(self, client: TestClient, db, admin_conjunto_auth_headers, admin_conjunto_test, carpeta_temporal):
+        _registrar_subidas(db, admin_conjunto_test, 30, hace=timedelta(hours=2))
+        r = _subir(client, admin_conjunto_auth_headers)
+        assert r.status_code == 429
+        assert "30 archivos" in r.json()["detail"]
+
+    def test_una_subida_rechazada_no_cuenta(self, client: TestClient, db, auth_headers, carpeta_temporal):
+        assert _subir(client, auth_headers, contenido=b"esto no es una imagen").status_code == 400
+        assert db.query(ArchivoSubido).count() == 0
+
+
+def _png_de_pixeles(ancho: int, alto: int) -> bytes:
+    """PNG de 1 bit: pesa poco aunque tenga millones de píxeles."""
+    buffer = io.BytesIO()
+    Image.new("1", (ancho, alto)).save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+class TestImagenConDemasiadosPixeles:
+    """Issue #395 (CN-059): una imagen "bomba" responde 400, no 500."""
+
+    def test_imagen_de_36_millones_de_pixeles_devuelve_400(self, client: TestClient, admin_conjunto_auth_headers, carpeta_temporal):
+        r = _subir(client, admin_conjunto_auth_headers, contenido=_png_de_pixeles(6000, 6000))
+        assert r.status_code == 400
+        assert "píxeles" in r.json()["detail"]
+
+    def test_imagen_de_64_millones_de_pixeles_devuelve_400(self, client: TestClient, admin_conjunto_auth_headers, carpeta_temporal):
+        """Pasa el doble del tope: Pillow mismo lanza DecompressionBombError."""
+        r = _subir(client, admin_conjunto_auth_headers, contenido=_png_de_pixeles(8000, 8000))
+        assert r.status_code == 400
+        assert "píxeles" in r.json()["detail"]
+
+    def test_imagen_de_20_millones_de_pixeles_se_acepta(self, client: TestClient, admin_conjunto_auth_headers, carpeta_temporal):
+        assert _subir(client, admin_conjunto_auth_headers, contenido=_png_de_pixeles(5000, 4000)).status_code == 201

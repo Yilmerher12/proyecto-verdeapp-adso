@@ -135,7 +135,8 @@ function renovarSesion(): Promise<void> {
 //       para mostrar al usuario; null si no dio ninguno.
 //       - 429 (límite de peticiones): slowapi manda { error: "Rate limit
 //         exceeded: ..." } sin "detail", así que se muestra un mensaje propio
-//         y traducido.
+//         y traducido. Si el 429 SÍ trae "detail" de texto (cuota de subidas
+//         por usuario, issue #395) se muestra ese: dice cuál tope se pasó.
 //       - 422 (validación de Pydantic): { detail: [{ msg }] } → los "msg" unidos.
 //       - Cualquier otro error con { detail: "texto" } → ese texto.
 // ¿Para qué? Issue #414: antes solo se leía "detail" y un 429 llegaba a la
@@ -148,8 +149,8 @@ function renovarSesion(): Promise<void> {
 export function motivoDelServidor(error: unknown): string | null {
   const respuesta = (error as { response?: { status?: number; data?: { detail?: unknown } } } | null)?.response;
   if (!respuesta) return null;
-  if (respuesta.status === 429) return i18n.t("common.tooManyRequests");
   const detail = respuesta.data?.detail;
+  if (respuesta.status === 429) return typeof detail === "string" ? detail : i18n.t("common.tooManyRequests");
   if (respuesta.status === 422 && Array.isArray(detail)) {
     return detail.map((e: { msg: string }) => e.msg).join(". ");
   }

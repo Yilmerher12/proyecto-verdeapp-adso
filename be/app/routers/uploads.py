@@ -13,10 +13,12 @@ Descripción: Endpoint genérico para subir el archivo adjunto de un
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, status
-from app.dependencies import get_current_user
+from sqlalchemy.orm import Session
+from app.dependencies import get_current_user, get_db
 from app.utils.limiter import limiter
 from app.models.rol import RolId
 from app.models.usuario import Usuario
+from app.services import cuota_subidas_service
 from app.utils.imagenes import guardar_imagen_subida
 
 router = APIRouter(
@@ -50,6 +52,7 @@ async def subir_adjunto(
         description="La guía de apoyo del contenido educativo y los adjuntos de comunicados admiten PDF/Word/Excel además de imagen; novedades no lo pide y sigue aceptando solo imagen.",
     ),
     current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     ¿Qué? El Administrador de Conjunto (comunicados, agenda) y el
@@ -68,7 +71,11 @@ async def subir_adjunto(
             detail="No tienes permiso para subir archivos adjuntos.",
         )
 
+    # ¿Qué? Issue #395 (CN-046): cuota por usuario antes de guardar, y registro del dueño después.
+    # ¿Impacto? Una subida rechazada por formato o tamaño (400) no se cuenta: no escribió nada en disco.
+    cuota_subidas_service.verificar_cuota(db, current_user)
     url = await guardar_imagen_subida(
         archivo, CARPETA_ADJUNTOS, "/uploads/adjuntos", permitir_documentos=permitir_documentos
     )
+    cuota_subidas_service.registrar_subida(db, current_user, url)
     return {"url": url}
