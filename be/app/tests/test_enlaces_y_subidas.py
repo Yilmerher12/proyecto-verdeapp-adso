@@ -9,7 +9,7 @@ import io
 import pytest
 from fastapi.testclient import TestClient
 
-from app.utils.enlaces import validar_enlace_adjunto, validar_enlace_video
+from app.utils.enlaces import validar_enlace_adjunto, validar_enlace_video, validar_imagen_propia
 from app.utils.imagenes import TAMANO_MAXIMO_BYTES
 
 
@@ -66,6 +66,27 @@ def test_campo_vacio_es_sin_enlace(valor: str | None) -> None:
     """El formulario manda "" cuando se borra el campo."""
     assert validar_enlace_adjunto(valor) is None
     assert validar_enlace_video(valor) is None
+    assert validar_imagen_propia(valor) is None
+
+
+@pytest.mark.parametrize("extension", ["jpg", "png", "webp"])
+def test_imagen_propia_valida(extension: str) -> None:
+    """Issue #399 (CN-049): el formato exacto que genera la subida de archivos."""
+    valor = f"/uploads/adjuntos/3f9a1c7e-5b2d-4e8a-9c1f-0a7b6d5e4f3c.{extension}"
+    assert validar_imagen_propia(valor) == valor
+
+
+@pytest.mark.parametrize("valor", [
+    "https://ejemplo.com/f.jpg",
+    "/uploads/adjuntos/c.jpg",
+    "/uploads/adjuntos/3f9a1c7e-5b2d-4e8a-9c1f-0a7b6d5e4f3c.pdf",
+    "/uploads/adjuntos/3F9A1C7E-5B2D-4E8A-9C1F-0A7B6D5E4F3C.jpg",
+    "/uploads/otra/3f9a1c7e-5b2d-4e8a-9c1f-0a7b6d5e4f3c.jpg",
+    "/uploads/adjuntos/../3f9a1c7e-5b2d-4e8a-9c1f-0a7b6d5e4f3c.jpg",
+])
+def test_imagen_propia_invalida(valor: str) -> None:
+    with pytest.raises(ValueError):
+        validar_imagen_propia(valor)
 
 
 def test_crear_comunicado_con_enlace_externo_http_devuelve_422(

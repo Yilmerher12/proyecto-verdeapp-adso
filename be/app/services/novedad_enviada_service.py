@@ -12,16 +12,21 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import func, literal_column, select, union_all
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.novedad_enviada import EstadoNovedadEnviada, NovedadEnviada
+from app.models.residente import Residente
 from app.models.rol import RolId
+from app.models.solicitud_desvinculacion import EstadoSolicitudDesvinculacion, SolicitudDesvinculacion
 from app.models.usuario import Usuario
 from app.schemas.novedad_enviada import CrearNovedadEnviadaRequest
 from app.services import desvinculacion_service
 
 ROLES_QUE_ENVIAN = {RolId.RESIDENTE, RolId.RECICLADOR, RolId.ADMIN_CONJUNTO}
+
+# ¿Qué? Issue #399 (CN-054): tope de novedades NUEVAS (sin ver por el Admin Sistema) por autor.
+MAX_NOVEDADES_NUEVAS_POR_AUTOR = 10
 
 # ¿Qué? Issue #372 (CN-044): mensaje cuando la cuenta existe pero su fila de
 #       residentes/administradores_conjunto no.
@@ -50,6 +55,19 @@ def _conjunto_del_autor(usuario: Usuario, id_pedido: Optional[UUID]) -> Optional
 def crear(db: Session, usuario: Usuario, data: CrearNovedadEnviadaRequest) -> NovedadEnviada:
     if usuario.id_rol not in ROLES_QUE_ENVIAN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tu rol no puede enviar novedades.")
+    # ¿Qué? Issue #399 (CN-054): cuenta las novedades de este autor que el Admin Sistema aún no marca como vistas.
+    # ¿Para qué? El límite de 10 por minuto del router mide velocidad y por IP; este mide acumulación por cuenta.
+    # ¿Impacto? Al marcarlas como VISTA el contador baja solo, así que un usuario normal nunca lo nota.
+    pendientes = db.scalar(
+        select(func.count())
+        .select_from(NovedadEnviada)
+        .where(NovedadEnviada.autor_id == usuario.id_usuario, NovedadEnviada.estado == EstadoNovedadEnviada.NUEVA.value)
+    )
+    if pendientes >= MAX_NOVEDADES_NUEVAS_POR_AUTOR:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Ya tienes {MAX_NOVEDADES_NUEVAS_POR_AUTOR} novedades sin revisar. Espera a que el Administrador del Sistema las revise para enviar más.",
+        )
     novedad = NovedadEnviada(
         autor_id=usuario.id_usuario,
         id_conjunto_residencial=_conjunto_del_autor(usuario, data.id_conjunto_residencial),
@@ -62,13 +80,19 @@ def crear(db: Session, usuario: Usuario, data: CrearNovedadEnviadaRequest) -> No
     return novedad
 
 
-def listar_mias(db: Session, usuario: Usuario) -> list[NovedadEnviada]:
+def listar_mias(db: Session, usuario: Usuario, limit: int, offset: int) -> tuple[list[NovedadEnviada], int]:
+    """¿Qué? Issue #399: una página de mis novedades + cuántas tengo en total; `conjunto` viene en una sola consulta extra, no una por fila."""
+    donde = NovedadEnviada.autor_id == usuario.id_usuario
+    total = db.scalar(select(func.count()).select_from(NovedadEnviada).where(donde))
     stmt = (
         select(NovedadEnviada)
-        .where(NovedadEnviada.autor_id == usuario.id_usuario)
-        .order_by(NovedadEnviada.created_at.desc())
+        .where(donde)
+        .options(selectinload(NovedadEnviada.conjunto))
+        .order_by(NovedadEnviada.created_at.desc(), NovedadEnviada.id)
+        .limit(limit)
+        .offset(offset)
     )
-    return list(db.scalars(stmt).all())
+    return list(db.scalars(stmt).all()), total
 
 
 def _rol_y_nombre(autor: Optional[Usuario]) -> tuple[str, str]:
@@ -92,26 +116,64 @@ def listar_unificadas(db: Session, tipo: Optional[str], limit: int, offset: int)
           devuelve solo la página pedida + el total.
     ¿Para qué? El frontend pinta una sola bandeja "Solicitudes pendientes",
               filtrable por `tipo`, sin saber que por dentro son 2 tablas.
+    ¿Impacto? Issue #399 (CN-054): el corte lo hace la base de datos. Antes se
+              cargaban TODAS las novedades (y varias consultas por cada una)
+              solo para quedarse con 10; ahora son 3 pasos con un número de
+              consultas fijo, sin importar cuántas filas haya.
     """
-    filas: list[dict] = []
-
-    if tipo is None or tipo == "DESVINCULACION":
-        for s in desvinculacion_service.listar_solicitudes_pendientes(db):
-            filas.append({
-                "id": s.id,
-                "tipo": "DESVINCULACION",
-                "titulo": f"Dejar de administrar {s.nombre_conjunto}",
-                "origen": f"Admin de Conjunto · {s.nombre_administrador} {s.apellidos_administrador}",
-                "nombre_conjunto": s.nombre_conjunto,
-                "detalle": s.motivo or "",
-                "url_evidencia": None,
-                "estado": s.estado,
-                "created_at": s.created_at,
-            })
-
+    # Paso 1: por cada tabla, solo (id, tipo, fecha) de lo pendiente.
+    partes = []
     if tipo is None or tipo == "NOVEDAD":
-        stmt = select(NovedadEnviada).where(NovedadEnviada.estado == EstadoNovedadEnviada.NUEVA.value)
-        for n in db.scalars(stmt).all():
+        partes.append(
+            select(NovedadEnviada.id.label("id"), literal_column("'NOVEDAD'").label("tipo"), NovedadEnviada.created_at.label("created_at"))
+            .where(NovedadEnviada.estado == EstadoNovedadEnviada.NUEVA.value)
+        )
+    if tipo is None or tipo == "DESVINCULACION":
+        partes.append(
+            select(
+                SolicitudDesvinculacion.id.label("id"),
+                literal_column("'DESVINCULACION'").label("tipo"),
+                SolicitudDesvinculacion.created_at.label("created_at"),
+            ).where(SolicitudDesvinculacion.estado == EstadoSolicitudDesvinculacion.PENDIENTE)
+        )
+    union = union_all(*partes).subquery()
+    total = db.scalar(select(func.count()).select_from(union))
+    # ¿Qué? El segundo criterio (id) fija el orden entre filas con la misma fecha.
+    # ¿Impacto? Sin él, dos páginas seguidas podrían repetir o saltarse una fila.
+    pagina = db.execute(
+        select(union.c.id, union.c.tipo).order_by(union.c.created_at.desc(), union.c.id).limit(limit).offset(offset)
+    ).all()
+
+    # Paso 2: el detalle completo, solo de las filas de esta página.
+    ids_novedad = [id_ for id_, t in pagina if t == "NOVEDAD"]
+    ids_desvinculacion = [id_ for id_, t in pagina if t == "DESVINCULACION"]
+    novedades: dict = {}
+    if ids_novedad:
+        stmt = (
+            select(NovedadEnviada)
+            .where(NovedadEnviada.id.in_(ids_novedad))
+            .options(
+                selectinload(NovedadEnviada.conjunto),
+                selectinload(NovedadEnviada.autor).options(
+                    selectinload(Usuario.residente).selectinload(Residente.unidad),
+                    selectinload(Usuario.reciclador),
+                    selectinload(Usuario.administrador_conjunto),
+                ),
+            )
+        )
+        novedades = {n.id: n for n in db.scalars(stmt).all()}
+    desvinculaciones: dict = {}
+    if ids_desvinculacion:
+        solicitudes = desvinculacion_service.listar_solicitudes_pendientes(db, ids=ids_desvinculacion)
+        desvinculaciones = {s.id: s for s in solicitudes}
+
+    # Paso 3: armar las filas en el mismo orden de la página.
+    # ¿Impacto? Si alguien resolvió una fila entre el paso 1 y el 2, ya no sale
+    #           en el detalle y se omite; la página trae una fila menos esa vez.
+    filas: list[dict] = []
+    for id_, t in pagina:
+        if t == "NOVEDAD" and id_ in novedades:
+            n = novedades[id_]
             rol, nombre = _rol_y_nombre(n.autor)
             filas.append({
                 "id": n.id,
@@ -124,10 +186,20 @@ def listar_unificadas(db: Session, tipo: Optional[str], limit: int, offset: int)
                 "estado": n.estado,
                 "created_at": n.created_at,
             })
-
-    filas.sort(key=lambda f: f["created_at"], reverse=True)
-    # ponytail: pagina en Python porque son 2 tablas; solo carga las PENDIENTES (pocas). Si crecen, pasar a UNION ALL en SQL.
-    return filas[offset : offset + limit], len(filas)
+        elif t == "DESVINCULACION" and id_ in desvinculaciones:
+            s = desvinculaciones[id_]
+            filas.append({
+                "id": s.id,
+                "tipo": "DESVINCULACION",
+                "titulo": f"Dejar de administrar {s.nombre_conjunto}",
+                "origen": f"Admin de Conjunto · {s.nombre_administrador} {s.apellidos_administrador}",
+                "nombre_conjunto": s.nombre_conjunto,
+                "detalle": s.motivo or "",
+                "url_evidencia": None,
+                "estado": s.estado,
+                "created_at": s.created_at,
+            })
+    return filas, total
 
 
 def resolver_unificada(

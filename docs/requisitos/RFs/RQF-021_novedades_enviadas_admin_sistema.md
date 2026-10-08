@@ -51,7 +51,7 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 
 ### Flujo B — Ver mis envíos
 
-1. En la sub-pestaña **"Mis envíos"**, el autor ve sus novedades, de la más reciente a la más antigua, con su estado: "Enviada" (NUEVA) o "Vista por el Admin del Sistema" (VISTA).
+1. En la sub-pestaña **"Mis envíos"**, el autor ve sus novedades, de la más reciente a la más antigua, con su estado: "Enviada" (NUEVA) o "Vista por el Admin del Sistema" (VISTA). Se muestra de a 10 por página.
 
 ### Flujo C — Revisar la bandeja (Administrador del Sistema)
 
@@ -67,7 +67,7 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 | Campo                     | Tipo   | Obligatorio | Validaciones                                                        |
 | -------------------------- | ------ | ----------- | -------------------------------------------------------------------- |
 | `texto`                   | Texto  | Sí          | Mínimo 1 carácter, máximo 1000                                       |
-| `url_imagen`              | Texto  | No          | Máximo 500 caracteres. Archivo subido a VerdeApp (`/uploads/...`) o `https://` (RN-007) |
+| `url_imagen`              | Texto  | No          | Máximo 500 caracteres. Solo una imagen subida a VerdeApp: `/uploads/adjuntos/<uuid>.jpg`, `.png` o `.webp` (RN-007) |
 | `id_conjunto_residencial` | UUID   | No          | Solo lo usa el Admin de Conjunto; debe ser uno de sus conjuntos      |
 | `tipo` (al resolver)      | Texto  | Sí          | `DESVINCULACION` o `NOVEDAD`                                          |
 | `aprobar` (al resolver)   | Booleano | Sí        | Una novedad solo admite `true` (marcar como vista)                    |
@@ -79,7 +79,8 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 | Escenario                                      | Código HTTP | Respuesta                                                          |
 | ----------------------------------------------- | ----------- | -------------------------------------------------------------------- |
 | Novedad enviada                                 | 201         | `{"message": "Novedad enviada. El Administrador del Sistema la revisará."}` |
-| Mis envíos                                      | 200         | Lista (`id`, `texto`, `url_imagen`, `estado`, `nombre_conjunto`, `created_at`) |
+| Mis envíos                                      | 200         | `{items, total}`, con `items` = (`id`, `texto`, `url_imagen`, `estado`, `nombre_conjunto`, `created_at`) |
+| Ya tengo 10 novedades sin ver (RN-009)           | 409         | `{"detail": "Ya tienes 10 novedades sin revisar. Espera a que el Administrador del Sistema las revise para enviar más."}` |
 | El Admin Sistema intenta enviar una novedad     | 403         | `{"detail": "Tu rol no puede enviar novedades."}`                    |
 | Admin de Conjunto elige un conjunto que no es suyo | 403      | `{"detail": "No tienes permiso sobre este conjunto."}`               |
 | Bandeja                                         | 200         | Lista unificada (`id`, `tipo`, `titulo`, `origen`, `nombre_conjunto`, `detalle`, `url_evidencia`, `estado`, `created_at`) |
@@ -94,7 +95,7 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 | Método | Ruta                                                           | Auth requerida                                  | Descripción                          |
 | ------ | ---------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------- |
 | POST   | `/api/v1/novedades-enviadas`                                    | Sí (Residente, Reciclador, Admin de Conjunto)     | Envía una novedad                     |
-| GET    | `/api/v1/novedades-enviadas/mias`                               | Sí                                                | Novedades que yo envié                |
+| GET    | `/api/v1/novedades-enviadas/mias?limit=&offset=`                | Sí                                                | Novedades que yo envié, paginadas (`{items, total}`) |
 | GET    | `/api/v1/admin-conjunto/solicitudes?tipo=&limit=&offset=`       | Sí (Admin Sistema)                                | Bandeja unificada, filtrable por tipo y paginada (`{items, total}`) |
 | POST   | `/api/v1/admin-conjunto/solicitudes/{tipo}/{id_solicitud}/resolver` | Sí (Admin Sistema)                            | Resuelve una solicitud de la bandeja  |
 
@@ -110,8 +111,9 @@ Código: `be/app/routers/novedades_enviadas.py`, `be/app/routers/admin_conjunto.
 - RN-004: Una novedad no se aprueba ni se rechaza: el Administrador del Sistema solo la marca como **vista**. Una vez vista no se puede volver a marcar.
 - RN-005: La bandeja muestra solo lo pendiente: desvinculaciones sin resolver y novedades en estado NUEVA, de la más reciente a la más antigua.
 - RN-006: Si se borra la cuenta del autor o el conjunto, la novedad se conserva sin ese dato (`ON DELETE SET NULL`); en la bandeja aparece como "Usuario eliminado".
-- RN-007: `url_imagen` solo acepta un archivo subido a VerdeApp (`/uploads/...`) o un enlace `https://`; cualquier otro formato responde 422. El frontend aplica la misma regla al mostrar el enlace (`fe/src/lib/enlaceSeguro.ts`), así un dato viejo con otro formato no se muestra. Corregido en el issue #369 (hallazgo CN-041): antes un enlace como `@sitio-malo.com` llevaba al Administrador del Sistema a otro sitio. Desde el issue #400 (hallazgo CN-052), una ruta `/uploads/...` tampoco puede contener `..`, `%2e` ni `%2f`, en el backend ni en el frontend.
+- RN-007: `url_imagen` solo acepta una imagen subida a VerdeApp, con el formato exacto que genera la subida (`/uploads/adjuntos/<uuid>.jpg|png|webp`); cualquier otro formato, incluido un enlace `https://` externo, responde 422 (issue #399, hallazgo CN-049: la pantalla solo sube archivos, pero la API se podía llamar a mano con un enlace externo que el Admin Sistema abre desde su bandeja). El frontend aplica la misma regla al mostrar el enlace (`fe/src/lib/enlaceSeguro.ts`), así un dato viejo con otro formato no se muestra. Corregido en el issue #369 (hallazgo CN-041): antes un enlace como `@sitio-malo.com` llevaba al Administrador del Sistema a otro sitio. Desde el issue #400 (hallazgo CN-052), una ruta `/uploads/...` tampoco puede contener `..`, `%2e` ni `%2f`, en el backend ni en el frontend.
 - RN-008: Corregido en el issue #372 (hallazgos CN-042/044/045): el envío acepta máximo 10 novedades por minuto (la siguiente responde 429); la bandeja se entrega paginada (`limit` de 1 a 100, por defecto 10, y `offset`); un `tipo` distinto de `DESVINCULACION` o `NOVEDAD` responde 422 al listar y al resolver; y si la cuenta del autor no tiene su perfil de Residente o de Admin de Conjunto, el envío responde 404 con un mensaje claro en vez de un error 500.
+- RN-009: Issue #399 (hallazgo CN-054): cada cuenta puede tener como máximo **10 novedades en estado NUEVA** a la vez (la 11.ª responde 409). No cuenta el tiempo: cuando el Administrador del Sistema marca alguna como vista, el autor vuelve a poder enviar. La bandeja y "Mis envíos" cortan la página en la base de datos (`LIMIT/OFFSET`, con `UNION ALL` de las dos tablas en la bandeja) y cargan los datos del autor, la unidad y el conjunto en consultas fijas, así que el número de consultas no crece con la cantidad de novedades.
 
 ---
 

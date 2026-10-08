@@ -24,7 +24,17 @@ export async function enviarNovedad(payload: {
   return data;
 }
 
-export async function misNovedadesEnviadas(): Promise<NovedadEnviada[]> {
-  const { data } = await axios.get(`${API_BASE}/mias`);
+export interface PaginaDeNovedadesEnviadas {
+  items: NovedadEnviada[];
+  total: number;
+}
+
+// ¿Qué? Issue #399 — "Mis envíos" se pide de a páginas (limit/offset), igual
+//       que la bandeja del Admin Sistema y los comunicados.
+export async function misNovedadesEnviadas(
+  limit: number,
+  offset: number,
+): Promise<PaginaDeNovedadesEnviadas> {
+  const { data } = await axios.get(`${API_BASE}/mias`, { params: { limit, offset } });
   return data;
 }

@@ -54,6 +54,25 @@ def validar_enlace_adjunto(valor: str | None) -> str | None:
     raise ValueError("El enlace debe empezar por https:// o ser un archivo subido a VerdeApp.")
 
 
+# ¿Qué? Issue #399 (CN-049): el formato exacto que genera la subida de archivos
+#       (utils/imagenes.py): carpeta adjuntos + uuid4 + extensión de imagen.
+# ¿Impacto? `fullmatch` y no `match` con "$": "$" también acepta un salto de
+#           línea al final, y ese texto ya no sería el nombre que guardamos.
+_IMAGEN_PROPIA = re.compile(
+    r"/uploads/adjuntos/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)"
+)
+
+
+def validar_imagen_propia(valor: str | None) -> str | None:
+    """Acepta solo una imagen que subió esta misma app; ningún https:// externo."""
+    valor = _vacio_a_none(valor)
+    if valor is None:
+        return None
+    if _IMAGEN_PROPIA.fullmatch(valor):
+        return valor
+    raise ValueError("La imagen debe ser un archivo JPG, PNG o WEBP subido a VerdeApp.")
+
+
 def validar_enlace_video(valor: str | None) -> str | None:
     """Acepta solo videos de YouTube por https://."""
     valor = _vacio_a_none(valor)
@@ -69,4 +88,5 @@ def validar_enlace_video(valor: str | None) -> str | None:
 #       queda "url_adjunto: EnlaceAdjunto = None" en vez de repetir el mismo
 #       field_validator en cada clase.
 EnlaceAdjunto = Annotated[Optional[str], Field(max_length=ENLACE_MAX_LENGTH), AfterValidator(validar_enlace_adjunto)]
+ImagenPropia = Annotated[Optional[str], Field(max_length=ENLACE_MAX_LENGTH), AfterValidator(validar_imagen_propia)]
 EnlaceVideo = Annotated[Optional[str], Field(max_length=ENLACE_MAX_LENGTH), AfterValidator(validar_enlace_video)]

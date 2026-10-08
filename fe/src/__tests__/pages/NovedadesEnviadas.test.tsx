@@ -36,7 +36,7 @@ describe("Novedades enviadas al Admin Sistema", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEnviar.mockResolvedValue({});
-    mockMias.mockResolvedValue([]);
+    mockMias.mockResolvedValue({ items: [], total: 0 });
     mockConjuntos.mockResolvedValue([]);
   });
 
@@ -101,10 +101,13 @@ describe("Novedades enviadas al Admin Sistema", () => {
   });
 
   it("Mis envíos lista lo enviado con su estado", async () => {
-    mockMias.mockResolvedValue([
-      { id: "n-1", texto: "Pared rayada.", url_imagen: null, estado: "VISTA", nombre_conjunto: "Quintas", created_at: "2026-09-22T10:00:00Z" },
-      { id: "n-2", texto: "Punto cerrado.", url_imagen: null, estado: "NUEVA", nombre_conjunto: null, created_at: "2026-09-23T10:00:00Z" },
-    ]);
+    mockMias.mockResolvedValue({
+      items: [
+        { id: "n-1", texto: "Pared rayada.", url_imagen: null, estado: "VISTA", nombre_conjunto: "Quintas", created_at: "2026-09-22T10:00:00Z" },
+        { id: "n-2", texto: "Punto cerrado.", url_imagen: null, estado: "NUEVA", nombre_conjunto: null, created_at: "2026-09-23T10:00:00Z" },
+      ],
+      total: 2,
+    });
     const user = userEvent.setup();
     renderPage();
 
@@ -113,6 +116,27 @@ describe("Novedades enviadas al Admin Sistema", () => {
     expect(await screen.findByText("Pared rayada.")).toBeInTheDocument();
     expect(screen.getByText("Vista por el Admin del Sistema")).toBeInTheDocument();
     expect(screen.getByText("Enviada")).toBeInTheDocument();
+    expect(mockMias).toHaveBeenCalledWith(10, 0);
+  });
+
+  it("Mis envíos pide la página siguiente con el offset correcto", async () => {
+    const item = (id: string) => ({
+      id, texto: `Novedad ${id}`, url_imagen: null, estado: "NUEVA", nombre_conjunto: null, created_at: "2026-09-22T10:00:00Z",
+    });
+    mockMias.mockImplementation((_limit: number, offset: number) =>
+      Promise.resolve({ items: [item(offset === 0 ? "primera" : "segunda")], total: 12 })
+    );
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("tab", { name: "Mis envíos" }));
+    expect(await screen.findByText("Novedad primera")).toBeInTheDocument();
+    expect(screen.getByText("Mostrando 1–10 de 12")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+
+    expect(await screen.findByText("Novedad segunda")).toBeInTheDocument();
+    expect(mockMias).toHaveBeenLastCalledWith(10, 10);
   });
 
   it("Mis envíos muestra el estado vacío", async () => {
