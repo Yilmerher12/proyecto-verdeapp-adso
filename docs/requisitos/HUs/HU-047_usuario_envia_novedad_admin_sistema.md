@@ -45,7 +45,7 @@
 - **Dado que** quiero acompañar la novedad con una foto,
 - **cuando** uso el campo "Imagen adjunta (opcional)",
 - **entonces** la imagen se sube y queda unida a la novedad.
-- **y** solo se aceptan imágenes jpg, png o webp de hasta 5 MB. El enlace guardado debe ser un archivo subido a VerdeApp o un enlace `https://`; cualquier otro responde 422 (issue #369).
+- **y** solo se aceptan imágenes jpg, png o webp de hasta 5 MB. El enlace guardado debe ser una imagen subida a VerdeApp (`/uploads/adjuntos/<uuid>.jpg|png|webp`); cualquier otro, incluido un enlace `https://` externo, responde 422 (issues #369 y #399).
 
 ### CA-047.3 — Admin de Conjunto con varios conjuntos
 
@@ -59,9 +59,17 @@
 - **cuando** abro "Mis envíos",
 - **entonces** veo mis novedades de la más reciente a la más antigua, cada una con su estado: "Enviada" o "Vista por el Admin del Sistema".
 - **y** si todavía no envié ninguna, veo "Todavía no has enviado ninguna novedad."
+- **y** la lista se muestra de a 10 por página, con la paginación debajo (issue #399).
 
 ### CA-047.5 — El Administrador del Sistema no envía novedades
 
 - **Dado que** soy el Administrador del Sistema,
 - **cuando** intento enviar una novedad (por ejemplo, llamando la API directamente),
 - **entonces** el sistema responde 403: yo soy quien las recibe.
+
+### CA-047.6 — Tope de novedades sin revisar
+
+- **Dado que** ya tengo 10 novedades en estado "Enviada" (el Administrador del Sistema aún no las marca como vistas),
+- **cuando** intento enviar otra,
+- **entonces** el sistema responde 409 y me muestra "Ya tienes 10 novedades sin revisar. Espera a que el Administrador del Sistema las revise para enviar más."
+- **y** apenas el Administrador del Sistema marca alguna como vista, puedo volver a enviar (issue #399).

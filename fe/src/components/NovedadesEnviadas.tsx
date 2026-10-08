@@ -17,6 +17,11 @@ import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
+
+// ¿Qué? Issue #399 — novedades por página en "Mis envíos".
+const TAMANO_PAGINA = 10;
 
 /**
  * ¿Qué? Formulario para ENVIARLE una novedad (texto + imagen opcional) al
@@ -164,15 +169,23 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
 export function MisNovedadesEnviadas({ version }: { version: number }) {
   const { t } = useTranslation();
   const [items, setItems] = useState<NovedadEnviada[]>([]);
+  const [total, setTotal] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
+  const paginacion = usePaginacion(TAMANO_PAGINA, total);
+  const { offset } = paginacion;
 
+  // ¿Qué? Al cambiar de página no se vuelve a mostrar "cargando": se queda la
+  //       lista anterior hasta que llega la nueva (solo la 1.ª carga muestra el estado de carga).
   useEffect(() => {
-    misNovedadesEnviadas()
-      .then(setItems)
+    misNovedadesEnviadas(TAMANO_PAGINA, offset)
+      .then((pagina) => {
+        setItems(pagina.items);
+        setTotal(pagina.total);
+      })
       .catch(() => setError(true))
       .finally(() => setCargando(false));
-  }, [version]);
+  }, [version, offset]);
 
   if (cargando) return <LoadingState message={t("common.loading")} />;
   if (error) return <Alert type="error" message={t("common.loadError")} />;
@@ -180,40 +193,55 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
     return <EmptyState icon={Send} message={t("novedadesEnviadas.mineEmpty")} />;
 
   return (
-    <ul className="space-y-3">
-      {items.map((n) => (
-        <li
-          key={n.id}
-          className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                n.estado === "VISTA"
-                  ? "bg-gray-100 text-gray-600 dark:bg-night-field dark:text-gray-300"
-                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-              }`}
-            >
-              {n.estado === "VISTA"
-                ? t("novedadesEnviadas.stateSeen")
-                : t("novedadesEnviadas.stateNew")}
-            </span>
-            <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-              {formatearFechaCreacion(n.created_at)}
-            </span>
-          </div>
-          <p className="mt-2 whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">
-            {n.texto}
-          </p>
-          {enlaceAdjuntoSeguro(n.url_imagen) && (
-            <img
-              src={enlaceAdjuntoSeguro(n.url_imagen) ?? undefined}
-              alt=""
-              className="mt-2 h-20 w-20 rounded-xl border border-gray-200 object-cover dark:border-night-line"
-            />
-          )}
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-3">
+      <ul className="space-y-3">
+        {items.map((n) => (
+          <li
+            key={n.id}
+            className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  n.estado === "VISTA"
+                    ? "bg-gray-100 text-gray-600 dark:bg-night-field dark:text-gray-300"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                }`}
+              >
+                {n.estado === "VISTA"
+                  ? t("novedadesEnviadas.stateSeen")
+                  : t("novedadesEnviadas.stateNew")}
+              </span>
+              <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                {formatearFechaCreacion(n.created_at)}
+              </span>
+            </div>
+            <p className="mt-2 whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">
+              {n.texto}
+            </p>
+            {enlaceAdjuntoSeguro(n.url_imagen) && (
+              <img
+                src={enlaceAdjuntoSeguro(n.url_imagen) ?? undefined}
+                alt=""
+                className="mt-2 h-20 w-20 rounded-xl border border-gray-200 object-cover dark:border-night-line"
+              />
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-night-line dark:bg-night-card">
+        <Paginacion
+          desde={paginacion.desde}
+          hasta={paginacion.hasta}
+          total={total}
+          pagina={paginacion.pagina}
+          totalPaginas={paginacion.totalPaginas}
+          puedeAnterior={paginacion.puedeAnterior}
+          puedeSiguiente={paginacion.puedeSiguiente}
+          onAnterior={paginacion.irAAnterior}
+          onSiguiente={paginacion.irASiguiente}
+        />
+      </div>
+    </div>
   );
 }

@@ -7,14 +7,16 @@ Descripción: Novedades que un Residente, Reciclador o Admin de Conjunto le
           (RQF-015), que son los avisos que el Admin Sistema publica.
 """
 
-from typing import List
-
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db
 from app.models.usuario import Usuario
-from app.schemas.novedad_enviada import CrearNovedadEnviadaRequest, NovedadEnviadaResponse
+from app.schemas.novedad_enviada import (
+    CrearNovedadEnviadaRequest,
+    NovedadEnviadaResponse,
+    PaginaDeNovedadesEnviadasResponse,
+)
 from app.schemas.user import MessageResponse
 from app.services import novedad_enviada_service
 from app.utils.limiter import limiter
@@ -49,7 +51,17 @@ def enviar_novedad(
     return MessageResponse(message="Novedad enviada. El Administrador del Sistema la revisará.")
 
 
-@router.get("/mias", response_model=List[NovedadEnviadaResponse])
-def mis_novedades(current_user: Usuario = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Las novedades que yo envié, con su estado (nueva / vista)."""
-    return [_a_respuesta(n) for n in novedad_enviada_service.listar_mias(db, current_user)]
+# ¿Qué? Issue #399: tope de filas por página, igual que la bandeja del Admin Sistema.
+MAX_LIMIT_MIAS = 100
+
+
+@router.get("/mias", response_model=PaginaDeNovedadesEnviadasResponse)
+def mis_novedades(
+    limit: int = Query(10, ge=1, le=MAX_LIMIT_MIAS),
+    offset: int = Query(0, ge=0),
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Las novedades que yo envié, con su estado (nueva / vista). Paginado."""
+    items, total = novedad_enviada_service.listar_mias(db, current_user, limit=limit, offset=offset)
+    return {"items": [_a_respuesta(n) for n in items], "total": total}
