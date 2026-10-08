@@ -352,6 +352,10 @@ async def send_contact_email(name: str, email: str, subject: str, message: str) 
                  max-width: 600px; margin: 0 auto; padding: 24px; color: #111827;">
         <h2 style="color: #15803d; margin-bottom: 8px;">Nuevo mensaje de contacto</h2>
         <p style="color: #374151;"><strong>De:</strong> {escape(name)} &lt;{escape(email)}&gt;</p>
+        <p style="color: #92400e; background: #fef3c7; padding: 8px 12px; border-radius: 8px;">
+            <strong>Dirección de respuesta no verificada:</strong> la escribió quien envió el formulario.
+            Confírmala antes de responder con información sensible.
+        </p>
         <p style="color: #374151;"><strong>Asunto:</strong> {escape(subject)}</p>
         <p style="color: #374151;">{cuerpo}</p>
     </body>
@@ -364,6 +368,10 @@ async def send_contact_email(name: str, email: str, subject: str, message: str) 
     #           copiar la dirección a mano y arriesgarse a un error de tipeo.
     # ¿Impacto? Sin riesgo de inyectar cabeceras: el schema valida email como
     #           EmailStr, que no admite saltos de línea.
+    #           Issue #403 (CN-058): el formulario es público y no verifica que ese
+    #           correo sea de quien escribe; el aviso del cuerpo se lo recuerda al
+    #           equipo. Verificarlo de verdad (enviar un código a esa dirección)
+    #           queda pendiente.
     return await _enviar(
         settings.CONTACT_EMAIL, f"VerdeApp — Contacto: {subject}", html_content, "contacto", reply_to=email
     )

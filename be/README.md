@@ -94,6 +94,7 @@ be/
     ├── dependencies.py     # get_db, get_current_user, require_role, require_admin_conjunto
     ├── seed.py             # Siembra roles, localidades, cuentas de prueba y conjuntos reales (idempotente)
     ├── limpiar_adjuntos.py # Comando manual: borra de uploads/adjuntos/ lo que ninguna fila usa (ver abajo)
+    ├── purgar_tokens.py    # Comando manual: borra los tokens vencidos de 4 tablas (ver abajo)
     ├── data/               # CSV de conjuntos residenciales reales de Bogotá (fuente del seed)
     ├── models/             # Un archivo por tabla (usuario.py, residente.py, reciclador.py,
     │                       #   administrador_conjunto.py, conjunto_residencial.py, comunicado.py,
@@ -1081,7 +1082,7 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 | `novedades_enviadas.py`     | `/api/v1/novedades-enviadas`    |     2     | Novedades que los usuarios le envían al Admin Sistema y su historial propio (RQF-021) |
 | `puntos_acopio.py`          | `/api/v1/admin/puntos-acopio` |     8     | Gestión de puntos de acopio del Admin Sistema — crear, editar, dar de baja e historial de comentarios (RQF-011) |
 | `uploads.py`                | `/api/v1/uploads`               |     1     | Subida genérica de adjuntos (imagen, o PDF/Word/Excel si se pide) para comunicados, novedades y contenido educativo. Cuota por usuario: Residente/Reciclador 3 por minuto y 5 por día, administradores 30 y 30 (429 al pasarse); cada archivo queda registrado en `archivos_subidos` con su dueño |
-| `contact.py`                | `/api/v1/contact`               |     1     | Formulario de contacto de la landing — público, 3/min por IP, reenvía el mensaje a `CONTACT_EMAIL` con `Reply-To` igual al correo de quien escribió (para responderle con "Responder") y responde 503 si el correo no sale (#351) |
+| `contact.py`                | `/api/v1/contact`               |     1     | Formulario de contacto de la landing — público, 3/min por IP, reenvía el mensaje a `CONTACT_EMAIL` con `Reply-To` igual al correo de quien escribió (para responderle con "Responder"), con un aviso en el cuerpo de que esa dirección no está verificada (#403), y responde 503 si el correo no sale (#351) |
 
 Todos estos routers están cubiertos por tests en `app/tests/` (ver sección 17).
 
@@ -1093,6 +1094,14 @@ uv run python -m app.limpiar_adjuntos
 ```
 
 Las columnas que cuentan como "uso" están en `COLUMNAS_CON_ADJUNTOS` (`app/limpiar_adjuntos.py`). Si un modelo nuevo guarda rutas de `/uploads/adjuntos/`, hay que sumarla ahí o el comando borraría archivos que sí se usan; `test_limpiar_adjuntos.py` falla si aparece una columna de enlace sin clasificar.
+
+**Purga de tokens vencidos (issue #403).** Cuatro tablas solo reciben filas y nada las borraba: `tokens_revocados` (una por cada cierre y cada renovación de sesión), `email_verification_tokens`, `password_reset_tokens` e `invitaciones_admin_conjunto`. Desde `be/`:
+
+```bash
+uv run python -m app.purgar_tokens
+```
+
+Borra lo que ya venció: `tokens_revocados` apenas vence (ese token se rechazaría igual por vencido), y los tres tipos de enlace cuando llevan más de 7 días vencidos, para que quien abre un correo viejo siga viendo "el enlace ha expirado" y no "enlace inválido". Es manual, igual que la limpieza de adjuntos: programarlo en producción es del issue #317. No toca `invitaciones_reciclador_conjunto`: no tiene token y su estado (aceptada/rechazada) es historial que ve el Admin de Conjunto.
 
 ---
 

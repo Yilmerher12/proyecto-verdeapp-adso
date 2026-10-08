@@ -566,6 +566,8 @@ class TestLogin:
         )
         assert response.status_code == 403
         assert "verificada" in response.json()["detail"].lower()
+        # Issue #403: el mensaje no nombra herramientas de desarrollo (Mailpit).
+        assert "mailpit" not in response.json()["detail"].lower()
 
     def test_login_disabled_user(self, client: TestClient, test_user, db) -> None:
         """habilitado es distinto de is_active — una cuenta YA verificada
