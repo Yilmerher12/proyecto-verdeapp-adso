@@ -460,7 +460,7 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
         log_login_fallido(correo, "cuenta_no_verificada")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Tu cuenta no ha sido verificada aún. Por favor, revisa tu buzón en Mailpit."
+            detail="Tu cuenta no ha sido verificada aún. Revisa tu correo para activarla."
         )
 
     # ¿Qué? "habilitado" es distinto de "is_active" (esa es solo verificación

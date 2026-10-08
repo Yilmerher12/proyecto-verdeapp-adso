@@ -59,6 +59,14 @@ class TestEnviarContacto:
         # ¿Qué? "Responder" en el buzón del equipo le escribe a quien envió el mensaje.
         assert reply_to == "maria@ejemplo.com"
 
+    def test_avisa_al_equipo_que_la_direccion_de_respuesta_no_esta_verificada(
+        self, client: TestClient, envios: list
+    ) -> None:
+        """Issue #403 (CN-058): el formulario es público; el correo escrito no se verifica."""
+        client.post(URL, json=VALIDO)
+
+        assert "Dirección de respuesta no verificada" in envios[0][2]
+
     def test_escapa_el_html_que_escribe_el_visitante(self, client: TestClient, envios: list) -> None:
         respuesta = client.post(URL, json={**VALIDO, "message": "<script>alert(1)</script> hola"})
 

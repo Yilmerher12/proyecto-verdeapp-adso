@@ -53,7 +53,7 @@
 
 - **Dado que** mi cuenta aún no ha sido verificada por correo,
 - **cuando** intento iniciar sesión con credenciales correctas,
-- **entonces** debo ver un mensaje indicando que debo verificar mi correo antes de poder entrar.
+- **entonces** debo ver un mensaje indicando que debo verificar mi correo antes de poder entrar: "Tu cuenta no ha sido verificada aún. Revisa tu correo para activarla." (issue #403: antes nombraba la herramienta de desarrollo Mailpit).
 
 ### CA-001.5 — Bloqueo temporal por intentos fallidos
 
