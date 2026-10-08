@@ -33,6 +33,15 @@ _COOKIE_ACCESS = "access_token"
 _COOKIE_REFRESH = "refresh_token"
 _COOKIE_PATH = "/"
 
+# ¿Qué? Issue #403 (CN-063): el navegador solo manda el refresh_token a las direcciones que
+#       empiezan por esta ruta (/api/v1/auth: /refresh y /logout, los únicos que lo leen).
+# ¿Para qué? Dura 7 días y es la cookie más valiosa: antes viajaba en CADA petición al
+#           backend aunque nadie la usara. El access_token sigue en "/" porque todos
+#           los endpoints lo necesitan.
+# ¿Impacto? Si algún día otro endpoint necesita el refresh_token, debe colgar de este
+#           prefijo (o hay que ampliar la ruta aquí).
+_COOKIE_REFRESH_PATH = router.prefix
+
 
 def _fijar_cookies_de_sesion(response: Response, tokens: TokenResponse) -> None:
     """Guarda el access y el refresh token como cookies httpOnly en la respuesta.
@@ -71,14 +80,22 @@ def _fijar_cookies_de_sesion(response: Response, tokens: TokenResponse) -> None:
         httponly=True,
         secure=secure,
         samesite="strict",
-        path=_COOKIE_PATH,
+        path=_COOKIE_REFRESH_PATH,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
+    # ¿Qué? Borra la cookie refresh_token de antes del issue #403, la de ruta "/".
+    # ¿Para qué? Un navegador que ya la tenía conserva las dos con el mismo nombre, y el
+    #           servidor lee la última que llega, que sería la vieja y ya gastada.
+    # ¿Impacto? Se puede quitar cuando ya no quede ninguna sesión de antes del cambio
+    #           (el refresh token dura 7 días).
+    response.delete_cookie(_COOKIE_REFRESH, path=_COOKIE_PATH)
 
 
 def _borrar_cookies_de_sesion(response: Response) -> None:
     """Le dice al navegador que elimine ambas cookies de sesión (logout)."""
     response.delete_cookie(_COOKIE_ACCESS, path=_COOKIE_PATH)
+    response.delete_cookie(_COOKIE_REFRESH, path=_COOKIE_REFRESH_PATH)
+    # Issue #403: también la de antes del cambio, que tenía ruta "/" (ver _fijar_cookies_de_sesion).
     response.delete_cookie(_COOKIE_REFRESH, path=_COOKIE_PATH)
 
 @router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
@@ -210,7 +227,7 @@ def change_password(
     #           ver "contraseña actualizada".
     # ¿Impacto? Se cierran las demás sesiones (otro navegador, otro
     #           dispositivo); la de quien cambió la contraseña continúa.
-    _fijar_cookies_de_sesion(response, auth_service.emitir_tokens(db, current_user))
+    _fijar_cookies_de_sesion(response, auth_service.emitir_tokens(current_user))
 
     log_password_cambiada(current_user.correo_electronico)
     return MessageResponse(message="Contraseña actualizada exitosamente")

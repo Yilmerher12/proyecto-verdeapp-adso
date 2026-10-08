@@ -6,6 +6,7 @@ Descripción: Tests de integración para los endpoints de autenticación y usuar
 import io
 import json
 import logging
+import re
 import threading
 import time
 import uuid
@@ -29,7 +30,7 @@ from app.models.usuario import Usuario
 from app.services import auth_service
 from app.services.auth_service import revocar_jti
 from app.utils.audit_log import redactar_correo
-from app.utils.security import hash_token
+from app.utils.security import decode_token, hash_token
 from app.tests.conftest import (
     TestSessionLocal,
     TEST_USER_EMAIL,
@@ -543,6 +544,44 @@ class TestLogin:
         assert "httponly" in access_cookie.lower()
         assert "samesite=strict" in access_cookie.lower()
 
+    def test_refresh_token_solo_viaja_a_las_rutas_de_auth(self, client: TestClient, test_user: object) -> None:
+        """Issue #403 (CN-063): el refresh_token (7 días) solo lo leen /auth/refresh y /auth/logout."""
+        response = client.post(
+            self.URL,
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        cabeceras = response.headers.get_list("set-cookie")
+        refresh = next(h for h in cabeceras if h.startswith("refresh_token=") and "max-age=0" not in h.lower())
+        access = next(h for h in cabeceras if h.startswith("access_token="))
+        assert "path=/api/v1/auth" in refresh.lower()
+        # El access_token sigue valiendo para todo el backend.
+        assert re.search(r"path=/(;|$)", access.lower())
+        assert {c.path for c in client.cookies.jar if c.name == "refresh_token"} == {"/api/v1/auth"}
+
+    def test_login_borra_la_cookie_refresh_token_vieja_de_ruta_raiz(self, client: TestClient, test_user: object) -> None:
+        """Issue #403: si el navegador conservaba la de antes (ruta "/"), el servidor leería esa y no la nueva."""
+        response = client.post(
+            self.URL,
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        borradas = [
+            h for h in response.headers.get_list("set-cookie") if h.startswith("refresh_token=") and "max-age=0" in h.lower()
+        ]
+        assert len(borradas) == 1
+        assert re.search(r"path=/(;|$)", borradas[0].lower())
+
+    def test_el_token_de_acceso_ya_no_lleva_nombre_ni_apellidos(self, client: TestClient, test_user: object) -> None:
+        """Issue #403 (CN-063): el contenido de un JWT no está cifrado; el nombre sale de /users/me."""
+        sesion = _iniciar_sesion(client)
+        for token in (sesion["access_token"], sesion["refresh_token"]):
+            payload = decode_token(token)
+            assert payload["sub"] == TEST_USER_EMAIL
+            assert "first_name" not in payload
+            assert "last_name" not in payload
+        # El saludo de la app sigue funcionando: el nombre viene de /users/me.
+        me = client.get("/api/v1/users/me")
+        assert me.json()["first_name"] == TEST_USER_NOMBRE
+
     def test_login_wrong_password(self, client: TestClient, test_user: object) -> None:
         response = client.post(
             self.URL,
@@ -825,6 +864,18 @@ class TestLogout:
             "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
         )
         assert refresh_response.status_code == 401
+
+    def test_logout_borra_la_cookie_refresh_token_nueva_y_la_vieja(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Issue #403 (CN-063): borra la de ruta /api/v1/auth y la de antes del cambio (ruta "/")."""
+        _iniciar_sesion(client)
+        response = client.post(self.URL)
+        borradas = [
+            h.lower() for h in response.headers.get_list("set-cookie") if h.startswith("refresh_token=") and "max-age=0" in h.lower()
+        ]
+        assert any("path=/api/v1/auth" in h for h in borradas)
+        assert any(re.search(r"path=/(;|$)", h) for h in borradas)
 
     def test_logout_no_auth(self, client: TestClient) -> None:
         response = client.post(self.URL, json={"refresh_token": "token.invalido.falso"})
