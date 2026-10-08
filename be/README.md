@@ -1015,7 +1015,7 @@ def login(request: Request, response: Response, login_data: UserLogin, db: Sessi
     """Autentica y deja access + refresh token en cookies httpOnly (RNF-001.9).
     El cuerpo de la respuesta NO trae los tokens: JavaScript nunca los ve."""
     tokens = auth_service.login_user(db=db, login_data=login_data)
-    _fijar_cookies_de_sesion(response, tokens)  # httponly, samesite="strict", secure fuera de desarrollo
+    _fijar_cookies_de_sesion(response, tokens)  # httponly, samesite="strict", secure fuera de desarrollo; el refresh_token solo viaja a /api/v1/auth (#403)
     return MessageResponse(message="Sesión iniciada correctamente")
 
 @router.post("/change-password", response_model=MessageResponse)
@@ -1068,7 +1068,7 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 
 | Router                     | Prefijo                        | Endpoints | Propósito                                                                          |
 | --------------------------- | ------------------------------- | :-------: | ----------------------------------------------------------------------------------- |
-| `geography.py`              | `/api/v1/geography`             |     4     | Localidades, conjuntos y unidades para llenar formularios dinámicos (registro, filtros) |
+| `geography.py`              | `/api/v1/geography`             |     4     | Localidades, conjuntos y unidades para llenar formularios dinámicos (registro, filtros). `/localidades` y `/conjuntos/{id_localidad}` son públicos (el registro los usa sin cuenta; el segundo con límite de 120/min por IP); `/conjuntos/todos` y `/conjuntos/sin-administrador` exigen sesión (el primero solo Admin Sistema). `search` mide máximo 255 caracteres (#403) |
 | `admin.py`                  | `/api/v1/admin`                 |     5     | Panel exclusivo del Admin del Sistema — vista SQL y procedimiento almacenado (Criterios 6 y 7), listado de Admins de Conjunto y activar/desactivar cuentas |
 | `admin_conjunto.py`         | `/api/v1/admin-conjunto`        |     9     | Invitación, desvinculación y reasignación de Administradores de Conjunto (RQF-016) |
 | `conjunto_panel.py`         | `/api/v1/conjunto-panel`        |     8     | Panel propio del Admin de Conjunto — solo ve/edita SUS conjuntos, nunca los de otro (datos, código de acceso, agenda del comité) |

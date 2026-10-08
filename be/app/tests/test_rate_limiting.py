@@ -107,3 +107,13 @@ def test_invitar_reciclador_supera_el_limite_devuelve_429(
 
     respuesta_extra = client.post(url, headers=admin_conjunto_auth_headers, json=cuerpo)
     assert respuesta_extra.status_code == 429
+
+
+def test_buscador_de_conjuntos_del_registro_supera_el_limite_devuelve_429(client: TestClient, limiter_encendido: None) -> None:
+    """Issue #403 (CN-063): es un GET público (el registro lo usa sin cuenta), así que no cabe en CASOS."""
+    for _ in range(120):
+        respuesta = client.get("/api/v1/geography/conjuntos/999999")
+        assert respuesta.status_code != 429
+
+    respuesta_extra = client.get("/api/v1/geography/conjuntos/999999")
+    assert respuesta_extra.status_code == 429

@@ -301,3 +301,50 @@ class TestImagenConDemasiadosPixeles:
 
     def test_imagen_de_20_millones_de_pixeles_se_acepta(self, client: TestClient, admin_conjunto_auth_headers, carpeta_temporal):
         assert _subir(client, admin_conjunto_auth_headers, contenido=_png_de_pixeles(5000, 4000)).status_code == 201
+
+
+@pytest.fixture()
+def archivos_servidos():
+    """Crea archivos en la carpeta real que sirve /uploads y los borra al terminar la prueba."""
+    from app.main import _CARPETA_UPLOADS
+
+    carpeta = _CARPETA_UPLOADS / "adjuntos"
+    carpeta.mkdir(parents=True, exist_ok=True)
+    creados = []
+
+    def crear(nombre: str, contenido: bytes):
+        ruta = carpeta / nombre
+        ruta.write_bytes(contenido)
+        creados.append(ruta)
+        return f"/uploads/adjuntos/{nombre}"
+
+    yield crear
+    for ruta in creados:
+        ruta.unlink(missing_ok=True)
+
+
+class TestCabecerasDeUploads:
+    """Issue #403 (CN-063): lo que sale de /uploads no puede ejecutar nada y los documentos se descargan."""
+
+    CSP = "default-src 'none'; sandbox"
+
+    @pytest.mark.parametrize("nombre", ["prueba-403.pdf", "prueba-403.docx", "prueba-403.xlsx", "PRUEBA-403.PDF"])
+    def test_los_documentos_se_descargan_y_llevan_la_politica(self, client: TestClient, archivos_servidos, nombre):
+        ruta = archivos_servidos(nombre, b"%PDF-1.4 contenido de prueba")
+        response = client.get(ruta)
+        assert response.status_code == 200
+        assert response.headers["Content-Disposition"] == "attachment"
+        assert response.headers["Content-Security-Policy"] == self.CSP
+
+    @pytest.mark.parametrize("nombre", ["prueba-403.png", "prueba-403.jpg", "prueba-403.webp"])
+    def test_las_imagenes_llevan_la_politica_pero_no_se_descargan(self, client: TestClient, archivos_servidos, nombre):
+        ruta = archivos_servidos(nombre, IMAGEN_VALIDA)
+        response = client.get(ruta)
+        assert response.status_code == 200
+        assert response.headers["Content-Security-Policy"] == self.CSP
+        assert "Content-Disposition" not in response.headers
+
+    def test_el_resto_de_la_api_no_lleva_la_politica_de_uploads(self, client: TestClient):
+        response = client.get("/api/v1/health")
+        assert "Content-Security-Policy" not in response.headers
+        assert "Content-Disposition" not in response.headers

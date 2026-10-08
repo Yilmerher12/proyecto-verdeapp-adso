@@ -118,6 +118,17 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 #     en el futuro) a sitios externos al seguir un link.
 #   - Permissions-Policy: esta API no necesita cámara, micrófono ni
 #     ubicación — se le niega el acceso explícitamente al navegador.
+
+# ¿Qué? Issue #403 (CN-063): extensiones de documento que se sirven siempre como descarga.
+# ¿Para qué? De un PDF o un Word solo se revisa cómo empieza el archivo (la firma),
+#           no todo su contenido. Abierto en una pestaña, su contenido correría con
+#           la dirección de este backend, y desde ahí podría pedirle cosas a la API
+#           con la sesión de quien lo abrió.
+# ¿Impacto? Al pulsar un adjunto PDF, Word o Excel el navegador lo descarga en vez de
+#           abrirlo en la pestaña. Las imágenes se siguen viendo igual en las pantallas.
+_DOCUMENTOS_DESCARGABLES = (".pdf", ".docx", ".xlsx")
+
+
 @app.middleware("http")
 async def agregar_cabeceras_seguridad(request: Request, call_next):
     # ¿Qué? Issue #401: deja la IP de origen disponible para el log de
@@ -128,6 +139,13 @@ async def agregar_cabeceras_seguridad(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # ¿Qué? Issue #403 (CN-063): todo lo que sale de /uploads lleva una política que le
+    #       prohíbe cargar o ejecutar nada ("sandbox" lo aísla de este sitio), y los
+    #       documentos se descargan en vez de abrirse (ver _DOCUMENTOS_DESCARGABLES).
+    if request.url.path.startswith("/uploads/"):
+        response.headers["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        if request.url.path.lower().endswith(_DOCUMENTOS_DESCARGABLES):
+            response.headers["Content-Disposition"] = "attachment"
     return response
 
 # Registro ordenado de rutas

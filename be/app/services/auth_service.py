@@ -484,10 +484,10 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
         db.commit()
 
     log_login_exitoso(correo)
-    return emitir_tokens(db, user)
+    return emitir_tokens(user)
 
 
-def emitir_tokens(db: Session, user: Usuario) -> TokenResponse:
+def emitir_tokens(user: Usuario) -> TokenResponse:
     """Emite un par access/refresh nuevo para el usuario.
 
     ¿Qué? Un solo lugar que arma los tokens — antes el mismo bloque estaba
@@ -499,17 +499,18 @@ def emitir_tokens(db: Session, user: Usuario) -> TokenResponse:
     ¿Impacto? Lo usan login, /refresh y /change-password (este último para
               que quien cambia su contraseña no pierda su propia sesión).
     """
-    real_first_name, real_last_name = obtener_nombre_real(db, user)
+    # ¿Qué? Issue #403 (CN-063): los tokens ya NO llevan nombre ni apellidos.
+    # ¿Para qué? El contenido de un JWT no está cifrado: cualquiera que tenga el token lo
+    #           lee. El nombre sale de GET /users/me (lo usa AuthContext del frontend);
+    #           el frontend nunca lee el token (es una cookie httpOnly) y el backend
+    #           tampoco toma el nombre de ahí.
+    # ¿Impacto? Una consulta menos a la base de datos en cada login y renovación.
     datos_comunes = {
         "sub": user.correo_electronico,
         "role_id": user.id_rol,
         "ver": user.version_sesion,
     }
-    access_token = create_access_token(data={
-        **datos_comunes,
-        "first_name": real_first_name,
-        "last_name": real_last_name,
-    })
+    access_token = create_access_token(data=datos_comunes)
     refresh_token = create_refresh_token(data=datos_comunes)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
@@ -602,7 +603,7 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
         )
     db.commit()
 
-    return emitir_tokens(db, user)
+    return emitir_tokens(user)
 
 
 def verify_email(db: Session, token: str) -> bool:
