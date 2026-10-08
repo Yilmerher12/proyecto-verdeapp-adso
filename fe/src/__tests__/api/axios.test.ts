@@ -198,6 +198,14 @@ describe("motivo del servidor (issue #414)", () => {
     );
   });
 
+  it("un 429 con detail de texto (cuota de subidas, issue #395) conserva ese texto, no el genérico", async () => {
+    responder = () => ({ status: 429, data: { detail: "Llegaste al máximo de 5 archivos subidos en un día. Intenta de nuevo mañana." } });
+
+    await expect(api.post("/api/v1/uploads/adjunto", {})).rejects.toThrow(
+      "Llegaste al máximo de 5 archivos subidos en un día. Intenta de nuevo mañana."
+    );
+  });
+
   it("un rechazo con detail de texto conserva ese texto", async () => {
     responder = () => ({ status: 400, data: { detail: "Ya enviaste este aviso a este conjunto hace menos de 5 minutos." } });
 

@@ -93,6 +93,7 @@ be/
     ├── database.py         # Engine y sesión de SQLAlchemy
     ├── dependencies.py     # get_db, get_current_user, require_role, require_admin_conjunto
     ├── seed.py             # Siembra roles, localidades, cuentas de prueba y conjuntos reales (idempotente)
+    ├── limpiar_adjuntos.py # Comando manual: borra de uploads/adjuntos/ lo que ninguna fila usa (ver abajo)
     ├── data/               # CSV de conjuntos residenciales reales de Bogotá (fuente del seed)
     ├── models/             # Un archivo por tabla (usuario.py, residente.py, reciclador.py,
     │                       #   administrador_conjunto.py, conjunto_residencial.py, comunicado.py,
@@ -104,7 +105,7 @@ be/
     ├── utils/              # Herramientas compartidas:
     │   ├── security.py     #   hash de contraseñas y JWT
     │   ├── email.py        #   envío de correos (SMTP / Resend / solo log)
-    │   ├── imagenes.py     #   validación de imágenes subidas (Pillow, 5 MB, jpg/png/webp)
+    │   ├── imagenes.py     #   validación de imágenes subidas (Pillow, 5 MB, 25 millones de píxeles, jpg/png/webp)
     │   ├── limiter.py      #   rate limiting (slowapi)
     │   ├── audit_log.py    #   log de eventos de seguridad y acciones de administración
     │   ├── codigo_acceso.py #  código de acceso de 6 caracteres de cada conjunto
@@ -1079,10 +1080,19 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 | `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
 | `novedades_enviadas.py`     | `/api/v1/novedades-enviadas`    |     2     | Novedades que los usuarios le envían al Admin Sistema y su historial propio (RQF-021) |
 | `puntos_acopio.py`          | `/api/v1/admin/puntos-acopio` |     8     | Gestión de puntos de acopio del Admin Sistema — crear, editar, dar de baja e historial de comentarios (RQF-011) |
-| `uploads.py`                | `/api/v1/uploads`               |     1     | Subida genérica de adjuntos (imagen, o PDF/Word/Excel si se pide) para comunicados, novedades y contenido educativo |
+| `uploads.py`                | `/api/v1/uploads`               |     1     | Subida genérica de adjuntos (imagen, o PDF/Word/Excel si se pide) para comunicados, novedades y contenido educativo. Cuota por usuario: Residente/Reciclador 3 por minuto y 5 por día, administradores 30 y 30 (429 al pasarse); cada archivo queda registrado en `archivos_subidos` con su dueño |
 | `contact.py`                | `/api/v1/contact`               |     1     | Formulario de contacto de la landing — público, 3/min por IP, reenvía el mensaje a `CONTACT_EMAIL` con `Reply-To` igual al correo de quien escribió (para responderle con "Responder") y responde 503 si el correo no sale (#351) |
 
 Todos estos routers están cubiertos por tests en `app/tests/` (ver sección 17).
+
+**Limpieza de adjuntos huérfanos (issue #395).** Quien sube una foto y nunca envía el formulario deja el archivo en `app/uploads/adjuntos/`. Este comando borra los archivos de esa carpeta que tienen más de 24 horas y que ninguna fila de la base de datos referencia. Es manual: nada lo corre solo (programarlo es del issue #317) y trabaja sobre la carpeta de la máquina donde se ejecuta; en Docker, dentro del contenedor del backend. Como borrar no se deshace, primero se corre `--simular`, que solo lista:
+
+```bash
+uv run python -m app.limpiar_adjuntos --simular
+uv run python -m app.limpiar_adjuntos
+```
+
+Las columnas que cuentan como "uso" están en `COLUMNAS_CON_ADJUNTOS` (`app/limpiar_adjuntos.py`). Si un modelo nuevo guarda rutas de `/uploads/adjuntos/`, hay que sumarla ahí o el comando borraría archivos que sí se usan; `test_limpiar_adjuntos.py` falla si aparece una columna de enlace sin clasificar.
 
 ---
 
