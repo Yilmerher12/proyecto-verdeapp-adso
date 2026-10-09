@@ -91,7 +91,7 @@ services:
       - verde_network
 
   verde_mailpit:
-    image: axllent/mailpit:v1.31.0
+    image: axllent/mailpit:v1.31.3
     container_name: verde_mailpit
     restart: unless-stopped
     ports:
