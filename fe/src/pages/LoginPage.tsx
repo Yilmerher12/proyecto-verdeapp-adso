@@ -7,9 +7,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Mail, Lock, Leaf } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
@@ -36,8 +37,11 @@ export function LoginPage() {
       sessionStorage.removeItem("verdeapp:session-expired");
       setError(t("auth.login.sessionExpired"));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // ¿Qué? Issue #225 — "t" faltaba en las dependencias; se silenciaba la
+    //       advertencia en vez de agregarla. Es seguro incluirla: la marca
+    //       se borra apenas se lee, así que un cambio de idioma después no
+    //       vuelve a disparar nada (la condición ya no se cumple).
+  }, [t]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -117,8 +121,8 @@ export function LoginPage() {
       <Modal onClose={() => navigate("/")} closeOnBackdrop={false}>
         <div className="p-6 sm:p-8 max-w-md mx-auto">
           <div className="mb-6 text-center sm:text-left">
-            <div className="h-12 w-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mb-3 mx-auto sm:mx-0 shadow-sm border border-green-200">
-              <Leaf className="h-6 w-6" />
+            <div className="mb-3 flex justify-center sm:justify-start">
+              <BrandLogo variant="mark" className="h-12" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {t("auth.login.title")}
@@ -144,7 +148,7 @@ export function LoginPage() {
               placeholder={t("common.emailPlaceholder")}
               autoComplete="email"
               autoFocus
-              icon={<Mail className="h-5 w-5 text-gray-400" />}
+              icon={<Mail className="icon-lg" />}
               onChange={handleChange}
             />
 
@@ -156,14 +160,14 @@ export function LoginPage() {
               error={fieldErrors.password}
               placeholder={t("common.passwordPlaceholder")}
               autoComplete="current-password"
-              icon={<Lock className="h-5 w-5 text-gray-400" />}
+              icon={<Lock className="icon-lg" />}
               onChange={handleChange}
             />
 
             <div className="flex justify-end pt-1">
               <Link
                 to="/forgot-password"
-                className="text-xs font-semibold text-green-600 transition-colors hover:text-green-700 dark:text-green-400"
+                className="text-xs font-semibold text-accent-600 transition-colors hover:text-accent-700 dark:text-accent-400"
               >
                 {t("auth.login.forgotPassword")}
               </Link>
@@ -180,7 +184,7 @@ export function LoginPage() {
             {t("auth.login.noAccount")}{" "}
             <Link
               to="/register"
-              className="font-bold text-green-600 transition-colors hover:text-green-700 dark:text-green-400"
+              className="font-bold text-accent-600 transition-colors hover:text-accent-700 dark:text-accent-400"
             >
               {t("auth.login.createAccountLink")}
             </Link>

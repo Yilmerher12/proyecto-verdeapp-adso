@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session
 
 from app.models.localidad import Localidad
 from app.models.punto_acopio import PuntoAcopio
+from app.models.punto_acopio_comentario import PuntoAcopioComentario
+from app.models.usuario import Usuario
 from app.schemas.puntos_acopio import PuntoAcopioCreate, PuntoAcopioUpdate
 
 
@@ -106,8 +108,48 @@ def crear(db: Session, data: PuntoAcopioCreate) -> dict:
     return _a_dict(punto)
 
 
-def editar(db: Session, id_punto_acopio: UUID, data: PuntoAcopioUpdate) -> dict:
-    """HU-016: corrige nombre, dirección, contacto o localidad de un punto existente."""
+def _comentario_a_dict(c: PuntoAcopioComentario) -> dict:
+    return {
+        "id_comentario": c.id_comentario,
+        "texto": c.texto,
+        "created_at": c.created_at,
+        "autor": c.autor.correo_electronico if c.autor else None,
+    }
+
+
+def listar_comentarios(db: Session, id_punto_acopio: UUID) -> list[dict]:
+    """¿Qué? Comentarios del punto, del más reciente al más antiguo."""
+    _obtener_punto_o_404(db, id_punto_acopio)
+    stmt = (
+        select(PuntoAcopioComentario)
+        .where(PuntoAcopioComentario.id_punto_acopio == id_punto_acopio)
+        .order_by(PuntoAcopioComentario.created_at.desc())
+    )
+    return [_comentario_a_dict(c) for c in db.scalars(stmt).all()]
+
+
+def agregar_comentario(db: Session, id_punto_acopio: UUID, autor: Usuario, texto: str) -> dict:
+    """
+    ¿Qué? Guarda un comentario interno sobre el punto, firmado por el admin.
+    ¿Impacto? Se permite también en puntos dados de baja: el historial sigue
+              siendo útil (ej. anotar por qué se dio de baja).
+    """
+    _obtener_punto_o_404(db, id_punto_acopio)
+    comentario = PuntoAcopioComentario(
+        id_punto_acopio=id_punto_acopio, id_autor=autor.id_usuario, texto=texto
+    )
+    db.add(comentario)
+    db.commit()
+    db.refresh(comentario)
+    return _comentario_a_dict(comentario)
+
+
+def editar(db: Session, id_punto_acopio: UUID, data: PuntoAcopioUpdate, autor: Usuario) -> dict:
+    """
+    HU-016: corrige nombre, dirección, contacto o localidad de un punto existente.
+    Si viene motivo_cambio con texto, queda como comentario del punto en la
+    misma transacción que el cambio — o se guardan los dos, o ninguno.
+    """
     punto = _obtener_punto_o_404(db, id_punto_acopio)
     _verificar_localidad_existe(db, data.id_localidad)
 
@@ -116,6 +158,9 @@ def editar(db: Session, id_punto_acopio: UUID, data: PuntoAcopioUpdate) -> dict:
     punto.id_localidad = data.id_localidad
     punto.nombre_encargado = data.nombre_encargado.strip() if data.nombre_encargado else None
     punto.telefono_contacto = data.telefono_contacto.strip() if data.telefono_contacto else None
+    motivo = (data.motivo_cambio or "").strip()
+    if motivo:
+        db.add(PuntoAcopioComentario(id_punto_acopio=id_punto_acopio, id_autor=autor.id_usuario, texto=motivo))
     db.commit()
     db.refresh(punto)
     return _a_dict(punto)

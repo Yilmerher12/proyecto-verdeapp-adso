@@ -55,4 +55,8 @@
 | HU-041 | [Admin Sistema ordena las columnas de cada listado](HU-041_admin_sistema_ordena_columnas.md) | [RQF-018](../RFs/RQF-018_gestion_usuarios_admin_sistema.md) |
 | HU-042 | [Usuario recupera su contraseña olvidada](HU-042_usuario_recupera_contrasena.md) | [RQF-019](../RFs/RQF-019_recuperacion_cambio_contrasena.md) |
 | HU-043 | [Usuario cambia su contraseña estando autenticado](HU-043_usuario_cambia_contrasena.md) | [RQF-019](../RFs/RQF-019_recuperacion_cambio_contrasena.md) |
-| HU-044 | [Admin de Conjunto edita el NIT y regenera el código de acceso de su conjunto](HU-044_admin_conjunto_gestiona_datos_propio_conjunto.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
+| HU-044 | [Admin de Conjunto edita el NIT y la cantidad de apartamentos, y regenera el código de acceso de su conjunto](HU-044_admin_conjunto_gestiona_datos_propio_conjunto.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
+| HU-045 | [Admin Sistema ve el perfil de cualquier usuario](HU-045_admin_sistema_ve_perfil_usuario.md) | [RQF-018](../RFs/RQF-018_gestion_usuarios_admin_sistema.md) |
+| HU-046 | [Admin de Conjunto lleva la agenda de temas para el comité](HU-046_admin_conjunto_lleva_agenda_comite.md) | [RQF-020](../RFs/RQF-020_agenda_interna_conjunto.md) |
+| HU-047 | [Residente, Reciclador o Admin de Conjunto envía una novedad al Admin Sistema](HU-047_usuario_envia_novedad_admin_sistema.md) | [RQF-021](../RFs/RQF-021_novedades_enviadas_admin_sistema.md) |
+| HU-048 | [Admin Sistema revisa la bandeja unificada de solicitudes pendientes](HU-048_admin_sistema_revisa_bandeja_solicitudes.md) | [RQF-021](../RFs/RQF-021_novedades_enviadas_admin_sistema.md) |

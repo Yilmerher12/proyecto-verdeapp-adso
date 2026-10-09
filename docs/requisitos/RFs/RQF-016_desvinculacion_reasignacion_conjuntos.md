@@ -36,12 +36,12 @@ Este proceso es manual y requiere aprobación humana (Admin Sistema) para evitar
 
 ### Flujo A — Solicitar desvinculación (Admin Conjunto)
 1. El Admin Conjunto ve la lista de conjuntos que administra en su perfil.
-2. Selecciona uno y envía una solicitud de desvinculación con motivo opcional.
+2. Selecciona uno y envía una solicitud de desvinculación con motivo opcional (máximo 1000 caracteres, issue #352; el motivo de rechazo del Admin Sistema tiene el mismo máximo).
 3. La solicitud queda pendiente hasta que el Admin Sistema la gestione.
 4. El Admin Conjunto recibe una notificación cuando se procesa su solicitud.
 
 ### Flujo B — Gestionar solicitudes (Admin Sistema)
-1. El Admin Sistema ve las solicitudes de desvinculación pendientes en su panel.
+1. El Admin Sistema ve las solicitudes de desvinculación pendientes en la bandeja "Solicitudes pendientes" de su panel, que desde el commit 513c76d también incluye las novedades que le envían los usuarios — ver [RQF-021](RQF-021_novedades_enviadas_admin_sistema.md) y [HU-048](../HUs/HU-048_admin_sistema_revisa_bandeja_solicitudes.md). Las desvinculaciones se resuelven igual que antes.
 2. Puede aprobar o rechazar cada solicitud.
 3. Al aprobar, el conjunto se desvincula del Admin Conjunto y ambos reciben notificación.
 4. Al rechazar, el Admin Conjunto es notificado con el motivo.
@@ -49,7 +49,7 @@ Este proceso es manual y requiere aprobación humana (Admin Sistema) para evitar
 ### Flujo C — Asignar conjunto adicional (Admin Sistema)
 1. El Admin Sistema busca un Admin Conjunto que ya existe en la plataforma.
 2. Selecciona el conjunto a asignar de la lista de conjuntos disponibles sin administrador.
-3. El sistema valida que el conjunto no tenga ya otro administrador activo.
+3. El sistema valida que el conjunto no tenga ya otro administrador activo **ni una invitación pendiente para otra persona** (RQF-012); en cualquiera de los dos casos responde 409 con un mensaje claro (issue #409).
 4. Al confirmar, el Admin Conjunto recibe una notificación con el nuevo conjunto asignado.
 
 ---

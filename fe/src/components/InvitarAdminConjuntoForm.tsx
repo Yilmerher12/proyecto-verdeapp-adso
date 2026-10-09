@@ -6,20 +6,15 @@ import { API_BASE_URL } from "@/api/axios";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { UserPlus, Building2, MapPin } from "lucide-react";
+import { UserPlus, Building, Map as MapIcon } from "lucide-react";
 import { invitarAdministradorConjunto } from "@/lib/adminConjuntoApi";
 import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
+import { CORREO_MAX_LENGTH, CORREO_REGEX } from "@/lib/validacion";
 
 interface Localidad {
   id_localidad: number;
   nombre_localidad: string;
-}
-
-interface InvitarAdminConjuntoFormProps {
-  // ¿Qué? El token de sesión del Administrador del Sistema, para autorizar
-  //       la llamada al backend (el backend igual revalida que sea rol=1).
-  token: string;
 }
 
 /**
@@ -29,7 +24,7 @@ interface InvitarAdminConjuntoFormProps {
  *           ni datos personales del invitado (esos los completa la
  *           persona invitada por su cuenta, ver AceptarInvitacionPage).
  */
-export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProps) {
+export function InvitarAdminConjuntoForm() {
   const { t } = useTranslation();
   const [correo, setCorreo] = useState("");
   const [conjuntosSeleccionados, setConjuntosSeleccionados] = useState<ConjuntoOption[]>([]);
@@ -38,6 +33,19 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
   const [isLoading, setIsLoading] = useState(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // ¿Qué? Issue #352 — con noValidate el navegador ya no revisa el correo;
+  //       lo revisa la app al salir del campo, igual que en el registro.
+  const [errorCorreo, setErrorCorreo] = useState<string | undefined>();
+  const validarCorreo = () => {
+    const valor = correo.trim();
+    const mensaje = !valor
+      ? t("auth.register.validation.emailRequired")
+      : !CORREO_REGEX.test(valor)
+        ? t("auth.register.validation.emailInvalid")
+        : undefined;
+    setErrorCorreo(mensaje);
+    return !mensaje;
+  };
 
   // ¿Qué? Localidades para el selector — mismo endpoint que ya usa el
   //       Directorio, el registro público y el panel de Admin del Sistema.
@@ -74,6 +82,8 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
     setError(null);
     setMensajeExito(null);
 
+    if (!validarCorreo()) return;
+
     if (conjuntosSeleccionados.length === 0) {
       setError(t("invitarAdminConjunto.validation.noConjuntoSelected"));
       return;
@@ -82,15 +92,12 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
     setIsLoading(true);
     try {
       const ids = conjuntosSeleccionados.map((c) => c.id_conjunto_residencial);
-      await invitarAdministradorConjunto(correo, ids, token);
+      await invitarAdministradorConjunto(correo, ids);
       setMensajeExito(t("invitarAdminConjunto.successMessage", { correo }));
       setCorreo("");
       setConjuntosSeleccionados([]);
     } catch (err: any) {
-      setError(
-        err.response?.data?.detail ||
-          t("invitarAdminConjunto.errorDefault")
-      );
+      setError(err.message || t("invitarAdminConjunto.errorDefault"));
     } finally {
       setIsLoading(false);
     }
@@ -103,32 +110,38 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
     //       para no terminar con una tarjeta blanca dentro de otra.
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <UserPlus className="w-5 h-5 text-green-600" />
+        <UserPlus className="icon-lg text-accent-600" />
         <h3 className="font-bold text-gray-800 dark:text-white text-lg">{t("invitarAdminConjunto.title")}</h3>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
         {t("invitarAdminConjunto.description")}
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} noValidate className="space-y-5">
         <InputField
           label={t("invitarAdminConjunto.emailLabel")}
           name="correo"
           type="email"
           value={correo}
-          onChange={(e) => setCorreo(e.target.value)}
+          onChange={(e) => {
+            setCorreo(e.target.value);
+            setErrorCorreo(undefined);
+          }}
+          onBlur={validarCorreo}
+          error={errorCorreo}
+          maxLength={CORREO_MAX_LENGTH}
         />
 
         <div>
-          <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-            <MapPin className="w-4 h-4" />
+          <label htmlFor="invitar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+            <MapIcon className="icon-md" />
             {t("invitarAdminConjunto.localityLabel")}
           </label>
           <select
-            aria-label={t("invitarAdminConjunto.localityLabel")}
+            id="invitar-localidad"
             value={localidadId}
             onChange={(e) => setLocalidadId(e.target.value === "" ? "" : Number(e.target.value))}
-            className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-100"
+            className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
           >
             <option value="">{t("invitarAdminConjunto.localitySelectPlaceholder")}</option>
             {localidades.map((l) => (
@@ -141,11 +154,11 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
 
         <div>
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-            <Building2 className="w-4 h-4" />
+            <Building className="icon-md" />
             {t("invitarAdminConjunto.conjuntosLabel")}
           </label>
           {localidadId === "" ? (
-            <p className="rounded-xl border border-dashed border-gray-300 px-3 py-2.5 text-xs text-gray-500 dark:border-[#2a4d34] dark:text-gray-400">
+            <p className="rounded-xl border border-dashed border-gray-300 px-3 py-2.5 text-xs text-gray-500 dark:border-night-line dark:text-gray-400">
               {t("invitarAdminConjunto.selectLocalityFirst")}
             </p>
           ) : (
@@ -156,6 +169,7 @@ export function InvitarAdminConjuntoForm({ token }: InvitarAdminConjuntoFormProp
               placeholder={t("invitarAdminConjunto.conjuntoSearchPlaceholder")}
               emptyLabel={t("invitarAdminConjunto.conjuntoNoResults")}
               loadingLabel={t("common.loading")}
+              ariaLabel={t("invitarAdminConjunto.conjuntosLabel")}
             />
           )}
           {conjuntosSeleccionados.length > 0 && (

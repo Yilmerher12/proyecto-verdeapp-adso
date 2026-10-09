@@ -16,6 +16,11 @@ interface ModalProps {
   children: React.ReactNode;
   /** ¿Qué? Amplía el diálogo a max-w-xl para formularios con más campos (ej: registro). */
   wide?: boolean;
+  /** ¿Qué? Amplía el diálogo a max-w-5xl — para un formulario de dos
+   *        columnas (ej: crear/editar contenido educativo, con la vista
+   *        previa en vivo al lado). Tiene prioridad sobre `wide` si se
+   *        pasan los dos. Default: false. */
+  extraWide?: boolean;
   /** ¿Qué? Label accesible del diálogo para lectores de pantalla (aria-label). */
   "aria-label"?: string;
   /**
@@ -54,6 +59,7 @@ export function Modal({
   onClose,
   children,
   wide = false,
+  extraWide = false,
   "aria-label": ariaLabel,
   layer = "base",
   closeOnBackdrop = true,
@@ -136,18 +142,18 @@ export function Modal({
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
-        className={`animate-scale-in relative my-auto w-full ${wide ? "max-w-xl" : "max-w-md"} rounded-2xl bg-white shadow-2xl outline-none dark:bg-[#132a1c]`}
+        className={`animate-scale-in relative my-auto w-full ${extraWide ? "max-w-5xl" : wide ? "max-w-xl" : "max-w-md"} rounded-2xl bg-white shadow-2xl outline-none dark:bg-night-panel`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 cursor-pointer rounded-lg p-1.5 text-gray-400 transition-colors
-            hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-[#2a4d34] dark:hover:text-gray-300
+          className="absolute right-4 top-4 z-10 cursor-pointer rounded-lg p-1.5 text-gray-500 dark:text-gray-400 transition-colors
+            hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-night-hover dark:hover:text-gray-300
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
           aria-label={t("common.close")}
         >
-          <X className="h-5 w-5" />
+          <X className="icon-lg" />
         </button>
 
         {children}

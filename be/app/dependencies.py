@@ -9,25 +9,57 @@ Descripción: Dependencias inyectables de FastAPI — funciones reutilizables qu
 """
 
 import uuid
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
+from app.models.administrador_conjunto import AdministradorConjunto
+from app.models.rol import RolId
 from app.models.token_revocado import TokenRevocado
 from app.models.usuario import Usuario
+from app.utils.audit_log import log_acceso_denegado
 from app.utils.security import decode_token
 
-# ¿Qué? Esquema HTTPBearer que extrae el token JWT del header "Authorization: Bearer <token>".
-# ¿Para qué? A diferencia de OAuth2PasswordBearer, HTTPBearer hace que Swagger UI muestre
-#            un campo simple de texto para pegar el token directamente — sin formulario
-#            de usuario/contraseña que enviaría form-data incompatible con nuestro login JSON.
-# ¿Impacto? El flujo en Swagger es: 1) POST /auth/login → copiar access_token,
-#           2) clic en Authorize → pegar el token → todos los endpoints protegidos funcionan.
-http_bearer = HTTPBearer()
+# ¿Qué? auto_error=False: si no llega header "Authorization", HTTPBearer
+#       devuelve None en vez de cortar la petición con un 403 antes de
+#       tiempo — la cookie httpOnly (ver más abajo) puede ser la única
+#       credencial presente, y eso es válido.
+# ¿Para qué? VerdeApp migró de guardar el token en sessionStorage (leído
+#           por JavaScript y pegado a mano en cada petición) a una cookie
+#           httpOnly que el navegador adjunta solo, sin que ningún script
+#           de la página la pueda leer — así, si algún día apareciera una
+#           vulnerabilidad XSS, no habría ningún token que robar desde
+#           JavaScript. El header Authorization se conserva como vía
+#           alterna: el frontend real de VerdeApp ya no lo usa, pero sigue
+#           sirviendo para pruebas automáticas y herramientas como
+#           Swagger/Postman (ver RNF-001.9, actualizado).
+# ¿Impacto? Swagger sigue funcionando exactamente igual con "Authorize" +
+#           pegar el token; además, como Swagger UI vive en el mismo
+#           origen que la API (localhost:8000), cualquier llamada hecha
+#           desde /docs justo después de un login manda la cookie sola.
+http_bearer = HTTPBearer(auto_error=False)
+
+
+def obtener_token_de_la_peticion(
+    request: Request, credentials: HTTPAuthorizationCredentials | None
+) -> str | None:
+    """Extrae el JWT de la petición, priorizando una credencial explícita sobre la cookie.
+
+    ¿Qué? Si llega un header "Authorization: Bearer <token>", se usa ese.
+          Si no, se busca en la cookie httpOnly "access_token" — la vía
+          real que usa el navegador con el frontend de VerdeApp.
+    ¿Para qué? Un header explícito solo lo manda una prueba automática o
+              una herramienta externa a propósito — dejarlo ganar sobre
+              la cookie evita ambigüedad cuando un mismo cliente de
+              pruebas termina con ambos presentes a la vez.
+    """
+    if credentials:
+        return credentials.credentials
+    return request.cookies.get("access_token")
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -48,20 +80,23 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(http_bearer),
     db: Session = Depends(get_db),
 ) -> Usuario:
     """Obtiene el usuario autenticado a partir del access token JWT.
 
-    ¿Qué? Decodifica el token del header Authorization, extrae el email (sub)
-          y busca al usuario en la BD.
+    ¿Qué? Decodifica el token (cookie httpOnly o header Authorization, ver
+          obtener_token_de_la_peticion), extrae el email (sub) y busca al
+          usuario en la BD.
     ¿Para qué? Proteger endpoints que requieren autenticación — si el token no es válido
               o el usuario no existe, retorna 401 y el endpoint no se ejecuta.
     ¿Impacto? Esta dependencia es el "guardián" de todos los endpoints protegidos.
               Cualquier endpoint que use Depends(get_current_user) requiere un token válido.
 
     Args:
-        token: Access token JWT extraído automáticamente del header Authorization.
+        request: Petición HTTP, de donde se lee la cookie "access_token".
+        credentials: Header Authorization, si la petición lo trae.
         db: Sesión de base de datos.
 
     Returns:
@@ -84,7 +119,9 @@ def get_current_user(
     # ¿Para qué? Extraer el email del usuario del campo "sub" del payload.
     # ¿Impacto? Si el token expiró, fue manipulado, o tiene firma incorrecta, decode_token
     #           retorna None y se lanza la excepción 401.
-    token = credentials.credentials  # HTTPBearer entrega solo el token, sin el prefijo "Bearer "
+    token = obtener_token_de_la_peticion(request, credentials)
+    if not token:
+        raise credentials_exception
     payload = decode_token(token)
     if not payload:
         raise credentials_exception
@@ -105,8 +142,9 @@ def get_current_user(
     #           servidor: el mismo token seguiría funcionando hasta sus
     #           15 minutos de vida, sin importar que el usuario haya
     #           cerrado sesión.
-    jti = payload.get("jti")
-    if jti and db.get(TokenRevocado, uuid.UUID(jti)):
+    # ¿Impacto? decode_token ya exige "jti" y que sea un UUID válido (issue
+    #           #359), así que esta conversión no puede fallar con un 500.
+    if db.get(TokenRevocado, uuid.UUID(payload["jti"])):
         raise credentials_exception
 
     email: str | None = payload.get("sub")
@@ -121,6 +159,12 @@ def get_current_user(
     user = db.execute(stmt).scalar_one_or_none()
 
     if not user:
+        raise credentials_exception
+    # ¿Qué? Issue #308 (CN-010): el token se emitió antes del último cambio
+    #       o restablecimiento de contraseña (ver Usuario.version_sesion).
+    # ¿Impacto? Sin esto, cambiar la contraseña no sacaba a nadie: un token
+    #           robado seguía funcionando hasta su expiración natural.
+    if payload.get("ver", 0) != user.version_sesion:
         raise credentials_exception
     # ¿Qué? Verificar que la cuenta esté activa.
     # ¿Para qué? Un admin podría desactivar una cuenta; si el usuario tiene un token vigente,
@@ -146,3 +190,92 @@ def get_current_user(
         )
 
     return user
+
+
+def require_role(rol_requerido: RolId, mensaje: str | None = None) -> Callable[..., Usuario]:
+    """Crea una dependencia de FastAPI que exige un rol específico.
+
+    ¿Qué? Issue #216 — antes, la misma verificación ("¿current_user.id_rol
+          es el correcto?", si no 403) estaba copiada y pegada, casi igual,
+          en 6 archivos de routers/ (admin.py, admin_conjunto.py,
+          novedades.py, puntos_acopio.py, contenido_educativo.py,
+          auditoria_conjunto.py) — cada uno con su propia función local
+          `_verificar_es_admin_sistema` / `_verificar_es_reciclador`.
+    ¿Para qué? Si mañana hay que agregar una regla nueva a esa verificación
+              (ej. "y además la cuenta debe estar habilitada"), este es el
+              ÚNICO lugar que hay que cambiar — antes había que acordarse
+              de tocar los 6 archivos uno por uno, con el riesgo real de
+              olvidar alguno y dejar un hueco de seguridad silencioso.
+    ¿Impacto? Se usa como `Depends(require_role(RolId.ADMIN_SISTEMA, "..."))`
+              en vez de `Depends(get_current_user)` — sigue devolviendo el
+              mismo Usuario autenticado (usable en el cuerpo del endpoint
+              exactamente igual que antes), pero FastAPI corre el chequeo
+              de rol ANTES de que el endpoint reciba la petición, en vez de
+              como la primera línea manual de cada función.
+
+    Args:
+        rol_requerido: El único RolId permitido para el endpoint.
+        mensaje: Detalle del 403 si el rol no coincide. Por defecto, un
+                mensaje genérico que menciona el rol exigido.
+    """
+    def _verificar(request: Request, current_user: Usuario = Depends(get_current_user)) -> Usuario:
+        if current_user.id_rol != rol_requerido:
+            # ¿Qué? Issue #309 (CN-012): deja rastro de quién intentó entrar
+            #       a una ruta de otro rol. log_acceso_denegado existía desde
+            #       el principio en audit_log.py, pero nadie la llamaba.
+            # ¿Para qué? Un Residente probando rutas de /admin una por una es
+            #           justo el tipo de señal que un registro de auditoría
+            #           debe mostrar.
+            log_acceso_denegado(current_user.correo_electronico, request.url.path, f"requiere_{rol_requerido.name}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=mensaje or f"Este recurso requiere el rol {rol_requerido.name}.",
+            )
+        return current_user
+
+    return _verificar
+
+
+def require_admin_conjunto(mensaje: str | None = None) -> Callable[..., AdministradorConjunto]:
+    """Crea una dependencia de FastAPI que exige rol Admin de Conjunto y
+    devuelve directamente su registro de AdministradorConjunto.
+
+    ¿Qué? Issue #216 — misma duplicación que require_role(), pero con una
+          variante: dos archivos (comunicados.py, conjunto_panel.py) no
+          solo revisaban el rol, sino que además buscaban la fila de
+          AdministradorConjunto asociada al usuario — ambos pasos copiados
+          igual en los dos archivos, cada uno con su propia función local
+          `_obtener_administrador_o_rechazar`.
+    ¿Para qué? Igual que require_role(): centraliza el chequeo Y la
+              búsqueda del perfil en un solo lugar reutilizable.
+    ¿Impacto? Los endpoints que la usan reciben directamente el
+              AdministradorConjunto ya resuelto (en vez del Usuario crudo)
+              como parámetro — se ahorran la línea manual que antes
+              llamaba a la función local.
+
+    Args:
+        mensaje: Detalle del 403 si el usuario no es Admin de Conjunto.
+    """
+    def _verificar(
+        request: Request,
+        current_user: Usuario = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> AdministradorConjunto:
+        if current_user.id_rol != RolId.ADMIN_CONJUNTO:
+            # ¿Qué? Mismo registro de auditoría que en require_role().
+            log_acceso_denegado(current_user.correo_electronico, request.url.path, "requiere_ADMIN_CONJUNTO")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=mensaje or "Solo un Administrador de Conjunto puede acceder a este recurso.",
+            )
+        administrador = db.execute(
+            select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == current_user.id_usuario)
+        ).scalar_one_or_none()
+        if not administrador:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró tu perfil de administrador.",
+            )
+        return administrador
+
+    return _verificar

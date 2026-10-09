@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Megaphone, Paperclip } from "lucide-react";
+import { Newspaper, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { verFeedNovedades, type Novedad } from "@/lib/novedadesApi";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { Alert } from "@/components/ui/Alert";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
+import { MisNovedadesEnviadas, NovedadEnviadaForm } from "@/components/NovedadesEnviadas";
+
+// ¿Qué? Una novedad no tiene título, solo texto — el reproductor de video
+//       necesita uno (accesibilidad), así que se usa un recorte corto del texto.
+function resumirTitulo(texto: string): string {
+  return texto.length > 60 ? `${texto.slice(0, 60)}…` : texto;
+}
 
 /**
  * ¿Qué? Feed de novedades activas de la plataforma (RQF-015, HU-033) —
@@ -16,14 +27,16 @@ import { Alert } from "@/components/ui/Alert";
  */
 export function NovedadesFeedPage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const [novedades, setNovedades] = useState<Novedad[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
+  const [pestana, setPestana] = useState<"recibidas" | "escribir" | "mias">("recibidas");
+  const [versionEnvios, setVersionEnvios] = useState(0);
 
   useEffect(() => {
-    if (!accessToken) return;
-    verFeedNovedades(accessToken)
+    if (!user) return;
+    verFeedNovedades()
       .then(setNovedades)
       // ¿Qué? Antes solo se hacía console.error y la UI caía en el mismo
       //       bloque de "no hay novedades" que un feed vacío de verdad.
@@ -31,63 +44,107 @@ export function NovedadesFeedPage() {
       //           igual que "no hay nada nuevo" — ahora hay un aviso propio.
       .catch(() => setError(true))
       .finally(() => setCargando(false));
-  }, [accessToken]);
+  }, [user]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pt-6">
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("novedades.feed.title")}</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("novedades.feed.subtitle")}</p>
+      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {t("novedades.feed.title")}
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          {t("novedades.feed.subtitle")}
+        </p>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
-
-      {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
-
-      {!cargando && !error && novedades.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("novedades.feed.empty")}</p>
-        </div>
-      )}
-
-      <div className="space-y-4">
-        {novedades.map((item) => (
-          <article
-            key={item.id_novedad}
-            className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+      <div className="flex flex-wrap gap-2" role="tablist">
+        {(
+          [
+            ["recibidas", "novedadesEnviadas.tabReceived"],
+            ["escribir", "novedadesEnviadas.tabWrite"],
+            ["mias", "novedadesEnviadas.tabMine"],
+          ] as const
+        ).map(([id, labelKey]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={pestana === id}
+            onClick={() => setPestana(id)}
+            className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+              pestana === id
+                ? "bg-accent-700 text-white"
+                : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-field"
+            }`}
           >
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                {t(`novedades.alcances.${item.alcance}`)}
-              </span>
-              {item.editado && (
-                <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
-              )}
-              <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-                {new Date(item.created_at).toLocaleDateString()}
-              </span>
-            </div>
-
-            <p className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
-
-            {item.url_adjunto && (
-              <a
-                // ¿Qué? Igual que en ComunicadosFeedPage.tsx: un adjunto
-                //       subido como archivo devuelve una ruta relativa que
-                //       hay que completar con la URL del backend.
-                href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 transition-colors hover:text-green-800 dark:text-green-400"
-              >
-                <Paperclip className="h-3.5 w-3.5" />
-                {t("comunicados.viewAttachment")}
-              </a>
-            )}
-          </article>
+            {t(labelKey)}
+          </button>
         ))}
       </div>
+
+      {pestana === "escribir" && (
+        <NovedadEnviadaForm onEnviada={() => setVersionEnvios((v) => v + 1)} />
+      )}
+
+      {pestana === "mias" && <MisNovedadesEnviadas version={versionEnvios} />}
+
+      {pestana === "recibidas" && (
+        <>
+          {cargando && <LoadingState message={t("common.loading")} />}
+
+          {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
+
+          {!cargando && !error && novedades.length === 0 && (
+            <EmptyState icon={Newspaper} message={t("novedades.feed.empty")} />
+          )}
+
+          <div className="space-y-4">
+            {novedades.map((item) => (
+              <article
+                key={item.id_novedad}
+                className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-night-line dark:bg-night-card"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                    {t(`novedades.alcances.${item.alcance}`)}
+                  </span>
+                  {item.editado && (
+                    <span className="text-xs italic text-gray-500 dark:text-gray-400">
+                      {t("comunicados.editedBadge")}
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                    {formatearFechaCreacion(item.created_at)}
+                  </span>
+                </div>
+
+                <p className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">
+                  {item.texto}
+                </p>
+
+                {item.url_video && (
+                  <YoutubeEmbed url={item.url_video} titulo={resumirTitulo(item.texto)} />
+                )}
+
+                {enlaceAdjuntoSeguro(item.url_adjunto) && (
+                  <a
+                    // ¿Qué? Igual que en ComunicadosFeedPage.tsx: enlaceAdjuntoSeguro
+                    //       completa la ruta relativa de un archivo subido y
+                    //       devuelve null si el enlace no es seguro (issue #400).
+                    href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
+                  >
+                    <Paperclip className="icon-sm" />
+                    {t("comunicados.viewAttachment")}
+                  </a>
+                )}
+              </article>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -21,32 +21,48 @@ export type ContenidoEducativoPayload = Omit<
   "id_contenido" | "fecha_publicacion"
 >;
 
-function authHeaders(token: string) {
-  return { headers: { Authorization: `Bearer ${token}` } };
+export interface EnvioContenido {
+  id_conjunto_residencial: string;
+  nombre_conjunto: string;
+  created_at: string;
 }
 
-export async function listarContenido(token: string): Promise<ContenidoEducativo[]> {
-  const { data } = await axios.get(API_BASE, authHeaders(token));
+export async function listarContenido(): Promise<ContenidoEducativo[]> {
+  const { data } = await axios.get(API_BASE);
   return data;
 }
 
-export async function crearContenido(
-  payload: ContenidoEducativoPayload,
-  token: string
-): Promise<ContenidoEducativo> {
-  const { data } = await axios.post(API_BASE, payload, authHeaders(token));
+// ¿Qué? Un módulo puntual — lo usa el Residente al abrir una recomendación
+//       manual (RQF-013, Flujo C), y el panel del Admin del Sistema al armar la
+//       vista previa en vivo con datos ya guardados.
+export async function obtenerContenido(id: string): Promise<ContenidoEducativo> {
+  const { data } = await axios.get(`${API_BASE}/${id}`);
+  return data;
+}
+
+export async function listarEnvios(id: string): Promise<EnvioContenido[]> {
+  const { data } = await axios.get(`${API_BASE}/${id}/envios`);
+  return data;
+}
+
+export async function enviarContenido(id: string, conjuntos: string[]): Promise<EnvioContenido[]> {
+  const { data } = await axios.post(`${API_BASE}/${id}/enviar`, { conjuntos });
+  return data;
+}
+
+export async function crearContenido(payload: ContenidoEducativoPayload): Promise<ContenidoEducativo> {
+  const { data } = await axios.post(API_BASE, payload);
   return data;
 }
 
 export async function editarContenido(
   id: string,
-  payload: ContenidoEducativoPayload,
-  token: string
+  payload: ContenidoEducativoPayload
 ): Promise<ContenidoEducativo> {
-  const { data } = await axios.put(`${API_BASE}/${id}`, payload, authHeaders(token));
+  const { data } = await axios.put(`${API_BASE}/${id}`, payload);
   return data;
 }
 
-export async function eliminarContenido(id: string, token: string): Promise<void> {
-  await axios.delete(`${API_BASE}/${id}`, authHeaders(token));
+export async function eliminarContenido(id: string): Promise<void> {
+  await axios.delete(`${API_BASE}/${id}`);
 }

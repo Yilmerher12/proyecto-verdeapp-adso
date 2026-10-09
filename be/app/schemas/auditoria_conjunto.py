@@ -14,6 +14,12 @@ from pydantic import BaseModel, ConfigDict
 #       respaldado por una foto de evidencia (ver AuditoriaConjunto.ruta_evidencia).
 NivelDesempeno = Literal["EXCELENTE", "BUENA", "REGULAR", "DEFICIENTE"]
 
+# ¿Qué? Issue #352 — el tema es String(255); la descripción es Text, con el
+#       máximo de 255 que pide HU-010. Los aplica el router (llega como Form).
+# ¿Impacto? Deben coincidir con AUDITORIA_* de fe/src/lib/validacion.ts.
+TEMA_MAX_LENGTH = 255
+DESCRIPCION_MAX_LENGTH = 255
+
 
 class AuditoriaConjuntoResponse(BaseModel):
     id_auditoria: UUID
@@ -34,3 +40,17 @@ class AuditoriaConjuntoResponse(BaseModel):
     nombre_reciclador: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ¿Qué? Vista del Admin del Sistema sobre las auditorías (RQF-009) — igual a
+#       la de arriba, más cuántos residentes fueron avisados con
+#       "contenido recomendado" a raíz de esta auditoría.
+# ¿Para qué? avisados es 0 para nivel BUENA (RQF-013: una calificación buena
+#           nunca dispara esa notificación) — nunca es un error de datos.
+class AuditoriaAdminResponse(AuditoriaConjuntoResponse):
+    avisados: int = 0
+
+
+class AuditoriasAdminListResponse(BaseModel):
+    items: list[AuditoriaAdminResponse]
+    total: int

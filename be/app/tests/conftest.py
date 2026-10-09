@@ -10,13 +10,15 @@ Descripción: Fixtures compartidos para todos los tests del backend de VerdeApp.
           que los tests NUNCA afecten la BD de desarrollo.
 """
 
+import json
+import logging
 import uuid
 from collections.abc import Generator
 from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.database import Base
@@ -34,7 +36,7 @@ from app.models.email_verification_token import EmailVerificationToken
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.punto_acopio import PuntoAcopio
-from app.utils.security import create_access_token, hash_password
+from app.utils.security import create_access_token, hash_password, hash_token
 
 # ────────────────────────────
 # 🗄️ Configuración de BD de testing
@@ -61,13 +63,123 @@ TestSessionLocal = sessionmaker(
 # ────────────────────────────
 
 
+def _crear_vista_y_funcion_panel_admin(session: Session) -> None:
+    """Crea vista_directorio_residentes y sp_obtener_recicladores.
+
+    ¿Qué? Mismo SQL, palabra por palabra, que be/alembic/versions/
+          fb1891a1aa72_mover_vista_y_funcion_sql_del_panel_.py
+          (más las columnas nuevas de ed64a91d01f6, fecha y motivo de desactivación).
+    ¿Para qué? Issue #217 — esa vista y esa función ahora se crean vía
+              Alembic contra la BD real, pero setup_database() (abajo)
+              arma la BD de test con Base.metadata.create_all(), que
+              SOLO conoce tablas ORM — nunca ejecuta migraciones. Sin
+              esto, /vista-residentes y /sp-recicladores fallarían en
+              cada test con "relation/function does not exist".
+    ¿Impacto? Se corre una sola vez por sesión de pytest (mismo fixture
+              que siembra los roles), no en cada test individual.
+    """
+    session.execute(text("""
+    CREATE OR REPLACE VIEW vista_directorio_residentes AS
+    SELECT
+        u.correo_electronico AS "Correo",
+        r.nombre AS "Nombre",
+        r.apellidos AS "Apellido",
+        r.numero_telefonico AS "Teléfono",
+        c.nombre_conjunto AS "Conjunto",
+        uni.torre AS "Bloque",
+        uni.apto AS "Apartamento",
+        l.id_localidad AS "id_localidad",
+        l.nombre_localidad AS "Localidad",
+        u.habilitado AS "Habilitado",
+        c.id_conjunto_residencial AS "id_conjunto_residencial",
+        u.fecha_desactivacion AS "Fecha_Desactivacion",
+        u.motivo_desactivacion AS "Motivo_Desactivacion"
+    FROM residentes r
+    JOIN usuarios u ON r.id_usuario = u.id_usuario
+    JOIN unidades uni ON r.id_unidad = uni.id_unidad
+    JOIN conjuntos_residenciales c ON uni.id_conjunto_residencial = c.id_conjunto_residencial
+    JOIN localidades l ON c.id_localidad = l.id_localidad;
+    """))
+
+    session.execute(text("""
+    CREATE OR REPLACE FUNCTION sp_obtener_recicladores(
+        p_search TEXT DEFAULT NULL,
+        p_localidad_id INT DEFAULT NULL,
+        p_conjunto_id UUID DEFAULT NULL,
+        p_order_by TEXT DEFAULT 'nombre',
+        p_order_dir TEXT DEFAULT 'asc',
+        p_limit INT DEFAULT 20,
+        p_offset INT DEFAULT 0,
+        p_habilitado BOOLEAN DEFAULT NULL
+    )
+    RETURNS TABLE (
+        "Correo" VARCHAR,
+        "Nombre_Completo" VARCHAR,
+        "Asociacion" VARCHAR,
+        "id_localidad" INT,
+        "Localidad" VARCHAR,
+        "Habilitado" BOOLEAN,
+        "Fecha_Desactivacion" TIMESTAMPTZ,
+        "Motivo_Desactivacion" VARCHAR
+    ) AS $$
+    BEGIN
+        RETURN QUERY
+        SELECT
+            u.correo_electronico::VARCHAR,
+            (rec.nombre || ' ' || rec.apellidos)::VARCHAR,
+            rec.asociacion::VARCHAR,
+            l.id_localidad,
+            l.nombre_localidad::VARCHAR,
+            u.habilitado,
+            u.fecha_desactivacion,
+            u.motivo_desactivacion::VARCHAR
+        FROM recicladores rec
+        JOIN usuarios u ON rec.id_usuario = u.id_usuario
+        LEFT JOIN localidades l ON rec.localidad_id = l.id_localidad
+        WHERE (p_search IS NULL OR rec.nombre ILIKE '%' || p_search || '%'
+               OR rec.apellidos ILIKE '%' || p_search || '%'
+               OR u.correo_electronico ILIKE '%' || p_search || '%')
+          AND (p_localidad_id IS NULL OR rec.localidad_id = p_localidad_id)
+          AND (p_habilitado IS NULL OR u.habilitado = p_habilitado)
+          AND (p_conjunto_id IS NULL OR EXISTS (
+                SELECT 1 FROM recicladores_conjuntos rc2
+                WHERE rc2.id_reciclador = rec.id_reciclador
+                  AND rc2.id_conjunto_residencial = p_conjunto_id
+                  AND rc2.fecha_revocacion IS NULL
+              ))
+        ORDER BY
+            CASE WHEN p_order_dir = 'asc' THEN
+                CASE p_order_by
+                    WHEN 'correo' THEN u.correo_electronico
+                    WHEN 'asociacion' THEN rec.asociacion
+                    WHEN 'estado' THEN u.habilitado::TEXT
+                    ELSE rec.nombre
+                END
+            END ASC,
+            CASE WHEN p_order_dir = 'desc' THEN
+                CASE p_order_by
+                    WHEN 'correo' THEN u.correo_electronico
+                    WHEN 'asociacion' THEN rec.asociacion
+                    WHEN 'estado' THEN u.habilitado::TEXT
+                    ELSE rec.nombre
+                END
+            END DESC
+        LIMIT p_limit OFFSET p_offset;
+    END;
+    $$ LANGUAGE plpgsql;
+    """))
+    session.commit()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_database() -> Generator[None, None, None]:
     """Crea las tablas, siembra los roles obligatorios, y limpia al final.
 
     ¿Qué? Además de crear la estructura de tablas, este fixture inserta
           las 4 filas de la tabla "roles" que el esquema real exige
-          como referencia obligatoria (FK) en la tabla "usuarios".
+          como referencia obligatoria (FK) en la tabla "usuarios", y crea
+          la vista/función SQL del panel de Admin del Sistema (ver
+          _crear_vista_y_funcion_panel_admin).
     ¿Para qué? La BD de desarrollo siembra estos roles vía app/seed.py
               (be/app/seed_data.sql) al levantar Docker — pero la BD de
               TEST se crea limpia en cada sesión de pytest, solo con la
@@ -78,6 +190,14 @@ def setup_database() -> Generator[None, None, None]:
               be/app/seed_data.sql, para que el comportamiento de test
               coincida con el real.
     """
+    # ¿Qué? Issue #323: se borran la vista y la función ANTES de drop_all,
+    #       no solo al final de la sesión.
+    # ¿Para qué? Si una corrida se corta a mitad (Ctrl+C, cerrar la
+    #           terminal), el cleanup del final nunca corre: la vista queda
+    #           en la BD de pruebas y la siguiente corrida fallaba entera
+    #           con "cannot drop table residentes because other objects
+    #           depend on it" (460 errores, ninguna prueba ejecutada).
+    _borrar_vista_y_funcion_panel_admin()
     Base.metadata.drop_all(bind=test_engine)
     Base.metadata.create_all(bind=test_engine)
 
@@ -93,8 +213,29 @@ def setup_database() -> Generator[None, None, None]:
         seed_session.add_all(roles_seed)
         seed_session.commit()
 
+        _crear_vista_y_funcion_panel_admin(seed_session)
+
     yield
+
+    _borrar_vista_y_funcion_panel_admin()
     Base.metadata.drop_all(bind=test_engine)
+
+
+def _borrar_vista_y_funcion_panel_admin() -> None:
+    """Borra la vista y la función SQL del panel de Admin.
+
+    ¿Qué? La vista depende de la tabla "residentes" (CREATE VIEW ... FROM
+          residentes ...) — sin borrarla primero, el DROP TABLE de
+          Base.metadata.drop_all() falla con "cannot drop table because
+          other objects depend on it". Mismo orden inverso que seguiría un
+          "alembic downgrade".
+    """
+    with TestSessionLocal(bind=test_engine.connect()) as cleanup_session:
+        cleanup_session.execute(text(
+            "DROP FUNCTION IF EXISTS sp_obtener_recicladores(TEXT, INT, UUID, TEXT, TEXT, INT, INT, BOOLEAN)"
+        ))
+        cleanup_session.execute(text("DROP VIEW IF EXISTS vista_directorio_residentes"))
+        cleanup_session.commit()
 
 
 @pytest.fixture()
@@ -140,6 +281,20 @@ def client(db: Session) -> Generator[TestClient, None, None]:
 # ────────────────────────────
 # 🚦 Fixture de rate limiter
 # ────────────────────────────
+
+
+@pytest.fixture(autouse=True)
+def reiniciar_avisos_de_correo_duplicado() -> None:
+    """Vacía el registro de avisos de "correo ya registrado" entre pruebas.
+
+    ¿Qué? Issue #397 (CN-051): auth_service recuerda en memoria a quién avisó
+          en la última hora.
+    ¿Para qué? Sin esto, el aviso de una prueba bloquearía el de la siguiente
+              que use el mismo correo de prueba.
+    """
+    from app.services import auth_service
+
+    auth_service._ultimo_aviso_duplicado.clear()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -331,7 +486,7 @@ def expired_reset_token(db: Session, test_user: Usuario) -> str:
     token_record = PasswordResetToken(
         id=str(uuid.uuid4()),
         id_usuario=test_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
     )
     db.add(token_record)
@@ -346,7 +501,7 @@ def used_reset_token(db: Session, test_user: Usuario) -> str:
     token_record = PasswordResetToken(
         id=str(uuid.uuid4()),
         id_usuario=test_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
         used=True,
     )
@@ -362,7 +517,7 @@ def valid_reset_token(db: Session, test_user: Usuario) -> str:
     token_record = PasswordResetToken(
         id=str(uuid.uuid4()),
         id_usuario=test_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
     )
     db.add(token_record)
@@ -382,7 +537,7 @@ def valid_verification_token(db: Session, unverified_user: Usuario) -> str:
     token_record = EmailVerificationToken(
         id=str(uuid.uuid4()),
         id_usuario=unverified_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
     )
     db.add(token_record)
@@ -397,7 +552,7 @@ def expired_verification_token(db: Session, unverified_user: Usuario) -> str:
     token_record = EmailVerificationToken(
         id=str(uuid.uuid4()),
         id_usuario=unverified_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
     )
     db.add(token_record)
@@ -412,7 +567,7 @@ def used_verification_token(db: Session, unverified_user: Usuario) -> str:
     token_record = EmailVerificationToken(
         id=str(uuid.uuid4()),
         id_usuario=unverified_user.id_usuario,
-        token=token,
+        token=hash_token(token),
         expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
         used=True,
     )
@@ -560,3 +715,25 @@ def punto_acopio_test(db: Session, localidad_test: Localidad) -> PuntoAcopio:
     db.commit()
     db.refresh(punto)
     return punto
+
+# ────────────────────────────
+# 📝 Log de auditoría de acciones de administración (issue #376)
+# ────────────────────────────
+
+
+@pytest.fixture()
+def acciones_admin(caplog: pytest.LogCaptureFixture):
+    """Devuelve una función que lista las líneas "admin_action" ya escritas.
+
+    ¿Qué? Captura el logger "verdeapp.audit" y convierte cada línea de
+          log_accion_admin en un dict.
+    ¿Para qué? Que cada prueba compruebe "quedó anotada esta acción" con una
+              sola línea, sin repetir el parseo del JSON en cada archivo.
+    """
+    caplog.set_level(logging.INFO, logger="verdeapp.audit")
+
+    def leer() -> list[dict]:
+        lineas = [json.loads(r.getMessage()) for r in caplog.records if r.name == "verdeapp.audit"]
+        return [linea for linea in lineas if linea["event"] == "admin_action"]
+
+    return leer

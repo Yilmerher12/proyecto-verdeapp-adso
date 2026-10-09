@@ -77,12 +77,16 @@ describe("Button", () => {
     expect(screen.getByRole("button")).toHaveClass("w-full");
   });
 
-  // ¿Qué? Verifica las tres variantes de color.
-  it.each(["primary", "secondary", "danger"] as const)(
-    "renderiza correctamente la variante '%s'",
-    (variant) => {
-      render(<Button variant={variant}>Botón</Button>);
-      expect(screen.getByRole("button")).toBeInTheDocument();
-    },
-  );
+  // ¿Qué? Verifica que cada variante de color trae su propia clase real —
+  //       antes solo se comprobaba que el botón existiera en pantalla, sin
+  //       importar si las 3 variantes en realidad se veían distintas entre
+  //       sí (issue #225).
+  it.each([
+    ["primary", "bg-accent-700"],
+    ["secondary", "bg-white"],
+    ["danger", "bg-red-600"],
+  ] as const)("renderiza la variante '%s' con su color propio", (variant, claseEsperada) => {
+    render(<Button variant={variant}>Botón</Button>);
+    expect(screen.getByRole("button")).toHaveClass(claseEsperada);
+  });
 });

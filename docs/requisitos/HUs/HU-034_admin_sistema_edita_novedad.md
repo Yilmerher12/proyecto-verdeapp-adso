@@ -35,13 +35,19 @@
 
 - **Dado que** selecciono una novedad publicada y elijo "Editar",
 - **cuando** veo el formulario,
-- **entonces** debo poder modificar el texto, los adjuntos y la fecha de expiración.
+- **entonces** debo poder modificar el texto, los adjuntos, el enlace de video y la fecha de expiración.
+
+### CA-034.1b — Fecha de expiración válida al editar
+
+- **Dado que** estoy editando una novedad,
+- **cuando** elijo una fecha de expiración anterior a hoy o a más de un año desde hoy,
+- **entonces** el formulario me muestra el error debajo del campo y no deja guardar; si alguien llama la API directamente, responde 422. El calendario solo ofrece fechas dentro de ese rango (issue #367).
 
 ### CA-034.2 — Alcance no editable
 
 - **Dado que** estoy editando una novedad,
 - **cuando** reviso el formulario,
-- **entonces** no debo poder cambiar a quién va dirigida (eso solo se define al publicarla).
+- **entonces** no debo poder cambiar a quién va dirigida — ni el alcance por rol ni los conjuntos elegidos (eso solo se define al publicarla).
 
 ### CA-034.3 — Cambios reflejados de inmediato
 

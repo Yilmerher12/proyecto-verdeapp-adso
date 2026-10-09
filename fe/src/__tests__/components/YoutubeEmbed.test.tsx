@@ -40,13 +40,32 @@ describe("YoutubeEmbed", () => {
     expect(link).toHaveAttribute("target", "_blank");
   });
 
-  it("si la URL no es de YouTube, muestra un link normal en vez de romper", () => {
-    render(<YoutubeEmbed url="https://vimeo.com/12345" titulo="Video externo" />);
+  // ¿Qué? Issue #400 (CN-065): antes una URL que no era de YouTube caía en un
+  //       link con la URL cruda; ahora no se pinta nada.
+  it.each([
+    "https://vimeo.com/12345",
+    "javascript:alert(1)",
+    "http://www.youtube.com/watch?v=abc12345678",
+    "https://sitio-malo.com/?x=youtu.be/abc12345678",
+  ])("si la URL no es de YouTube (%s), no pinta nada", (url) => {
+    const { container } = render(<YoutubeEmbed url={url} titulo="Video externo" />);
 
-    expect(screen.queryByRole("button", { name: /reproducir/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /ver video/i })).toHaveAttribute(
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  // ¿Qué? Issue #414: el backend ya aceptaba youtube-nocookie.com.
+  it("reconoce un video de youtube-nocookie.com", () => {
+    render(<YoutubeEmbed url="https://www.youtube-nocookie.com/embed/abc12345678" titulo="Código de colores" />);
+
+    expect(screen.getByRole("button", { name: /reproducir video/i })).toBeInTheDocument();
+  });
+
+  it("arma el link a YouTube con el ID del video, no con la URL que escribió el usuario", () => {
+    render(<YoutubeEmbed url="https://youtu.be/abc12345678?si=rastreo" titulo="Código de colores" />);
+
+    expect(screen.getByRole("link", { name: /ver en youtube/i })).toHaveAttribute(
       "href",
-      "https://vimeo.com/12345"
+      "https://www.youtube.com/watch?v=abc12345678"
     );
   });
 });

@@ -1,32 +1,37 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
+ 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { usePolling } from "@/hooks/usePolling";
+import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import {
-  Recycle,
   Mail,
-  CheckCircle2,
-  XCircle,
-  Building2,
+  BadgeCheck,
+  OctagonX,
+  Building,
   Truck,
-  AlertTriangle,
+  TriangleAlert,
   PackageCheck,
   DoorOpen,
   ClipboardList,
   History,
 } from "lucide-react";
 import axios from "axios";
-import { API_BASE_URL } from "@/api/axios";
+import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
-import { NotificationFeed, type NotificacionItem } from "@/components/dashboard/NotificationFeed";
+import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import type { NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
 import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
 import { listarMisAuditorias, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 // ¿Qué? Cada cuántos días se le vuelve a sugerir al reciclador auditar el
 //       mismo conjunto. Ver issue #5: se decidió semanal porque no todos
@@ -100,19 +105,19 @@ const ACCIONES_META = [
     tipo: "LLEGADA_RECICLADOR",
     key: "llegada",
     icon: Truck,
-    color: "bg-[#134e4a] hover:bg-teal-800 text-white",   // teal bosque — llegada activa
+    color: "bg-accent-900 hover:bg-teal-800 dark:bg-accent-800 text-white",   // teal bosque — llegada activa
   },
   {
     tipo: "SHUT_LLENO",
     key: "shutLleno",
-    icon: AlertTriangle,
+    icon: TriangleAlert,
     color: "bg-amber-700 hover:bg-amber-600 text-white",  // ámbar tierra — advertencia cálida
   },
   {
     tipo: "SHUT_LIBRE",
     key: "shutLibre",
     icon: PackageCheck,
-    color: "bg-[#14532d] hover:bg-green-800 text-white",  // verde bosque — despejado, natural
+    color: "bg-accent-900 hover:bg-accent-800 dark:bg-accent-800 dark:hover:bg-accent-700 text-white",  // verde bosque — despejado, natural
   },
   {
     tipo: "FINALIZACION_RECICLADOR",
@@ -124,9 +129,9 @@ const ACCIONES_META = [
 
 export function RecicladorDashboard() {
   const { t } = useTranslation();
-  const { user, accessToken }: any = useAuth();
+  const { user } = useAuth();
   const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || t("roles.reciclador");
-  const { WatermarkIcon } = ROLE_THEME[RoleId.RECICLADOR];
+  const { Icon: RolIcon } = ROLE_THEME[RoleId.RECICLADOR];
 
   const ACCIONES = ACCIONES_META.map(({ tipo, key, icon, color }) => ({
     tipo,
@@ -140,7 +145,7 @@ export function RecicladorDashboard() {
   const [estadoReciclador, setEstadoReciclador] = useState<EstadoRecicladorConjunto[]>([]);
   // ¿Qué? Motivo a mostrar cuando el reciclador le da clic a un botón de
   //       notificación que se ve apagado (bloqueado) en vez de abrir el modal.
-  const [avisoBoton, setAvisoBoton] = useState<string | null>(null);
+  const [avisoBoton, mostrarAvisoBoton] = useAvisoTemporal<string>();
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -152,50 +157,51 @@ export function RecicladorDashboard() {
   const [modalTipo, setModalTipo] = useState<string | null>(null);
   const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<string | null>(null);
   const [enviandoNotif, setEnviandoNotif] = useState(false);
-  const [feedbackOk, setFeedbackOk] = useState<string | null>(null);
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
+  const [feedbackOk, mostrarFeedbackOk] = useAvisoTemporal<string>();
 
   // Formulario de auditoría (RQF-009)
   const [conjuntoParaAuditar, setConjuntoParaAuditar] = useState<string | null>(null);
-  const [feedbackAuditoria, setFeedbackAuditoria] = useState<string | null>(null);
+  const [feedbackAuditoria, mostrarFeedbackAuditoria] = useAvisoTemporal<string>();
   const [auditoriaAbierta, setAuditoriaAbierta] = useState<string | null>(null);
 
-  const headers = { Authorization: `Bearer ${accessToken}` };
-
+  // ¿Qué? Issue #406 — allSettled en vez de all: cada una de las 5 peticiones
+  //       guarda su resultado por separado.
+  // ¿Para qué? Con Promise.all, si UNA sola fallaba no se guardaba NINGUNA de
+  //           las otras 4 y el panel quedaba vacío, aunque ya hubieran llegado
+  //           bien (por ejemplo, las notificaciones).
+  // ¿Impacto? Lo que falla conserva su último valor bueno (el polling de 20s
+  //           lo reintenta) y se muestra el aviso de errorCarga; el resto del
+  //           panel se pinta igual.
   const cargarDatos = () => {
-    Promise.all([
-      axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-invitaciones`, { headers }),
-      axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-conjuntos-autorizados`, { headers }),
-      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`, { headers }),
-      listarMisAuditorias(accessToken ?? ""),
+    Promise.allSettled([
+      axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-invitaciones`),
+      axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-conjuntos-autorizados`),
+      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`),
+      listarMisAuditorias(),
       // ¿Qué? Estado de presencia por conjunto — issue de "control de
       //       notificaciones del reciclador según si está en el conjunto".
-      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mi-estado-reciclador`, { headers }),
+      axios.get(`${API_BASE_URL}/api/v1/notificaciones/mi-estado-reciclador`),
     ])
       .then(([resInv, resConj, resNotifs, misAuditorias, resEstado]) => {
-        setInvitaciones(resInv.data);
-        setConjuntosAutorizados(resConj.data);
-        setNotificaciones(resNotifs.data);
-        setAuditorias(misAuditorias);
-        setEstadoReciclador(resEstado.data);
-        setErrorCarga(false);
+        if (resInv.status === "fulfilled") setInvitaciones(resInv.value.data);
+        if (resConj.status === "fulfilled") setConjuntosAutorizados(resConj.value.data);
+        if (resNotifs.status === "fulfilled") setNotificaciones(resNotifs.value.data);
+        if (misAuditorias.status === "fulfilled") setAuditorias(misAuditorias.value);
+        if (resEstado.status === "fulfilled") setEstadoReciclador(resEstado.value.data);
+        // ¿Qué? Antes un .catch(() => {}) vacío no dejaba ningún rastro de que
+        //       algo falló — el dashboard se quedaba tal cual, sin avisar.
+        // ¿Impacto? Ahora se muestra un aviso; como cargarDatos() también
+        //           corre cada 20s (polling), el aviso desaparece solo en
+        //           cuanto una siguiente carga sí funcione.
+        setErrorCarga(
+          [resInv, resConj, resNotifs, misAuditorias, resEstado].some((r) => r.status === "rejected")
+        );
       })
-      // ¿Qué? Antes un .catch(() => {}) vacío no dejaba ningún rastro de que
-      //       algo falló — el dashboard se quedaba tal cual, sin avisar.
-      // ¿Impacto? Ahora se muestra un aviso; como cargarDatos() también
-      //           corre cada 20s (polling), el aviso desaparece solo en
-      //           cuanto una siguiente carga sí funcione.
-      .catch(() => setErrorCarga(true))
       .finally(() => setCargando(false));
   };
 
-  useEffect(() => {
-    if (accessToken) {
-      cargarDatos();
-      const interval = setInterval(cargarDatos, 20000);
-      return () => clearInterval(interval);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+  usePolling(cargarDatos, { enabled: !!user });
 
   const responderInvitacion = async (id: string, aceptar: boolean) => {
     setProcesandoId(id);
@@ -203,8 +209,7 @@ export function RecicladorDashboard() {
     try {
       await axios.post(
         `${API_BASE_URL}/api/v1/reciclador-conjunto/invitaciones/${id}/responder`,
-        { aceptar },
-        { headers }
+        { aceptar }
       );
       cargarDatos();
     } catch {
@@ -218,6 +223,7 @@ export function RecicladorDashboard() {
 
   const abrirModal = (tipo: string) => {
     if (conjuntosAutorizados.length === 0) return;
+    setErrorEnvio(null);
     setModalTipo(tipo);
     setConjuntoSeleccionado(
       conjuntosAutorizados.length === 1 ? conjuntosAutorizados[0].id_conjunto_residencial : null
@@ -234,21 +240,27 @@ export function RecicladorDashboard() {
   const enviarNotificacion = async () => {
     if (!modalTipo || !conjuntoSeleccionado || motivoModal) return;
     setEnviandoNotif(true);
+    setErrorEnvio(null);
     try {
-      await axios.post(
-        `${API_BASE_URL}/api/v1/notificaciones/enviar`,
-        { tipo: modalTipo, id_conjunto_residencial: conjuntoSeleccionado },
-        { headers }
-      );
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/enviar`, {
+        tipo: modalTipo,
+        id_conjunto_residencial: conjuntoSeleccionado,
+      });
       const accion = ACCIONES.find((a) => a.tipo === modalTipo);
-      setFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
-      setTimeout(() => setFeedbackOk(null), 3500);
+      mostrarFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
       setModalTipo(null);
       cargarDatos();
-    } catch {
+    } catch (err) {
       // ¿Qué? Antes, si el envío fallaba, el modal se cerraba igual sin
       //       avisar — el reciclador creía que el aviso salió y no fue así.
-      setErrorAccion(true);
+      // ¿Para qué? Issue #414: el motivo exacto que manda el backend (aviso
+      //           reciente, SHUT ya lleno, presencia...) se muestra DENTRO del
+      //           modal, donde el reciclador está mirando; la alerta de arriba
+      //           queda tapada por el modal.
+      // ¿Impacto? Se recargan los datos: si el rechazo fue porque el estado
+      //           cambió, el modal ya refleja el motivo real.
+      setErrorEnvio(motivoDelServidor(err) ?? t("common.actionError"));
+      cargarDatos();
     } finally {
       setEnviandoNotif(false);
     }
@@ -256,7 +268,7 @@ export function RecicladorDashboard() {
 
   const marcarLeida = async (id: string) => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {}, { headers });
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {});
       setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
       notificarNotificacionesActualizadas();
     } catch {
@@ -266,7 +278,7 @@ export function RecicladorDashboard() {
 
   const marcarTodasLeidas = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {}, { headers });
+      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {});
       setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
       notificarNotificacionesActualizadas();
     } catch {
@@ -276,7 +288,7 @@ export function RecicladorDashboard() {
 
   const limpiarLeidas = async () => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, { headers });
+      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`);
       setNotificaciones((prev) => prev.filter((n) => !n.leida));
     } catch {
       setErrorAccion(true);
@@ -302,8 +314,7 @@ export function RecicladorDashboard() {
 
   const alEnviarAuditoria = () => {
     setConjuntoParaAuditar(null);
-    setFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
-    setTimeout(() => setFeedbackAuditoria(null), 3500);
+    mostrarFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
     cargarDatos();
   };
 
@@ -312,11 +323,11 @@ export function RecicladorDashboard() {
       {/* Header — el símbolo de reciclaje de fondo es solo un detalle tenue,
           para que este panel se sienta del Reciclador, sin estorbar la
           lectura del texto encima. */}
-      <div className="relative overflow-hidden bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
-        <WatermarkIcon className="pointer-events-none absolute right-4 top-4 h-20 w-20 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
+      <div className="relative overflow-hidden bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
+        <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-teal-900/30">
-            <Recycle className="h-7 w-7 text-teal-600 dark:text-teal-400" />
+            <RolIcon className="icon-xl text-teal-600 dark:text-teal-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.title")}</h1>
@@ -338,15 +349,15 @@ export function RecicladorDashboard() {
 
       {/* Feedback de notificación enviada */}
       {feedbackOk && (
-        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
+          <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
           {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
         </div>
       )}
 
       {feedbackAuditoria && (
-        <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-700/40 dark:bg-green-900/15 dark:text-green-400">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
+          <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
           {feedbackAuditoria}
         </div>
       )}
@@ -356,7 +367,7 @@ export function RecicladorDashboard() {
       {!cargando && conjuntosPendientesAuditoria.length > 0 && (
         <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-800/30 dark:bg-teal-900/10">
           <div className="mb-3 flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-teal-700 dark:text-teal-400" />
+            <ClipboardList className="icon-md text-teal-700 dark:text-teal-400" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">
               {t("dashboards.reciclador.auditoria.bannerTitle")}
             </h2>
@@ -365,7 +376,7 @@ export function RecicladorDashboard() {
             {conjuntosPendientesAuditoria.map((c) => (
               <div
                 key={c.id_conjunto_residencial}
-                className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-[#132a1c] sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-night-card sm:flex-row sm:items-center sm:justify-between"
               >
                 <p className="text-sm text-gray-700 dark:text-gray-300">
                   {t("dashboards.reciclador.auditoria.bannerSubtitle", { conjunto: c.nombre_conjunto })}
@@ -383,7 +394,7 @@ export function RecicladorDashboard() {
       )}
 
       {/* Acciones de notificación */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
         <p className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</p>
         <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
           {t("dashboards.reciclador.sendSection.subtitle")}
@@ -416,8 +427,7 @@ export function RecicladorDashboard() {
                   key={tipo}
                   onClick={() => {
                     if (motivo) {
-                      setAvisoBoton(motivo);
-                      setTimeout(() => setAvisoBoton(null), 4000);
+                      mostrarAvisoBoton(motivo);
                     } else {
                       abrirModal(tipo);
                     }
@@ -430,7 +440,7 @@ export function RecicladorDashboard() {
                     motivo ? "cursor-not-allowed opacity-40" : "cursor-pointer"
                   }`}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  <Icon className={`icon-md shrink-0 ${Icon === TriangleAlert ? "icon-ring" : "icon-draw"}`} />
                   {label}
                   {/* ¿Qué? Texto oculto SOLO para lectores de pantalla, con
                       el motivo del bloqueo. ¿Para qué? Antes, poner `title`
@@ -459,9 +469,9 @@ export function RecicladorDashboard() {
 
       {/* Invitaciones pendientes */}
       {!cargando && invitaciones.length > 0 && (
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
-            <Mail className="h-4 w-4 text-amber-600" />
+            <Mail className="icon-md text-amber-600" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
               {invitaciones.length}
@@ -482,9 +492,9 @@ export function RecicladorDashboard() {
                   <button
                     onClick={() => responderInvitacion(inv.id, true)}
                     disabled={procesandoId === inv.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-green-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <BadgeCheck className="icon-sm icon-hop" />
                     {t("dashboards.reciclador.invitations.accept")}
                   </button>
                   <button
@@ -492,7 +502,7 @@ export function RecicladorDashboard() {
                     disabled={procesandoId === inv.id}
                     className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
                   >
-                    <XCircle className="h-3.5 w-3.5" />
+                    <OctagonX className="icon-sm icon-shake" />
                     {t("dashboards.reciclador.invitations.reject")}
                   </button>
                 </div>
@@ -503,23 +513,21 @@ export function RecicladorDashboard() {
       )}
 
       {/* Mis conjuntos autorizados */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-5 shadow-sm">
+      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-green-600" />
+          <Building className="icon-md text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
         </div>
         {cargando ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+          <LoadingState message={t("common.loading")} />
         ) : conjuntosAutorizados.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t("dashboards.reciclador.myConjuntos.empty")}
-          </p>
+          <EmptyState icon={Building} message={t("dashboards.reciclador.myConjuntos.empty")} />
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {conjuntosAutorizados.map((c) => (
               <div
                 key={c.id_conjunto_residencial}
-                className="rounded-xl bg-gray-50 p-4 dark:bg-[#0d2116]/60"
+                className="rounded-xl bg-gray-50 p-4 dark:bg-night-inset/60"
               >
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{c.nombre_conjunto}</p>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{c.direccion}</p>
@@ -537,14 +545,14 @@ export function RecicladorDashboard() {
           ¿Para qué? Reutiliza los datos que ya se cargan para calcular el
                     aviso de "auditoría pendiente" (auditorias, arriba) —
                     no dispara una petición nueva. */}
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
         <div className="mb-4 flex items-center gap-2">
-          <History className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <History className="icon-md text-gray-500 dark:text-gray-400" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
         </div>
 
         {cargando ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+          <LoadingState message={t("common.loading")} />
         ) : auditorias.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("auditoriaResultado.historialEmpty")}</p>
         ) : (
@@ -555,20 +563,20 @@ export function RecicladorDashboard() {
                 <li key={a.id_auditoria}>
                   <button
                     onClick={() => setAuditoriaAbierta(a.id_auditoria)}
-                    className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
+                    className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-night-inset/60"
                   >
                     <div className="min-w-0">
                       <p className="text-sm text-gray-800 dark:text-gray-200">
                         {a.nombre_conjunto} — {a.tema_educativo}
                       </p>
                       <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(a.created_at).toLocaleDateString()}
+                        {formatearFechaCreacion(a.created_at)}
                       </p>
                     </div>
                     <span
                       className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold ${nivel.claseBadge}`}
                     >
-                      <nivel.icon className="h-3.5 w-3.5" />
+                      <nivel.icon className="icon-sm" />
                       {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
                     </span>
                   </button>
@@ -581,7 +589,6 @@ export function RecicladorDashboard() {
         {auditoriaAbierta && (
           <AuditoriaResultadoModal
             idAuditoria={auditoriaAbierta}
-            token={accessToken ?? ""}
             onClose={() => setAuditoriaAbierta(null)}
           />
         )}
@@ -589,8 +596,8 @@ export function RecicladorDashboard() {
 
       {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) */}
       {cargando ? (
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
+          <LoadingState message={t("common.loading")} />
         </div>
       ) : (
         <NotificationFeed
@@ -631,8 +638,8 @@ export function RecicladorDashboard() {
                   onClick={() => setConjuntoSeleccionado(c.id_conjunto_residencial)}
                   className={`w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                     conjuntoSeleccionado === c.id_conjunto_residencial
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                      : "border-gray-200 hover:border-green-300 dark:border-[#2a4d34] dark:hover:border-green-700"
+                      ? "border-accent-500 bg-accent-50 dark:bg-accent-900/20"
+                      : "border-gray-200 hover:border-accent-300 dark:border-night-line dark:hover:border-accent-700"
                   }`}
                 >
                   <p className="font-semibold text-gray-900 dark:text-white">{c.nombre_conjunto}</p>
@@ -652,17 +659,23 @@ export function RecicladorDashboard() {
               </p>
             )}
 
+            {errorEnvio && (
+              <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                {errorEnvio}
+              </p>
+            )}
+
             <div className="flex gap-2">
               <button
                 onClick={() => setModalTipo(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={enviarNotificacion}
                 disabled={!conjuntoSeleccionado || enviandoNotif || !!motivoModal}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {enviandoNotif ? t("dashboards.reciclador.modal.sending") : t("dashboards.reciclador.modal.submit")}
               </button>
@@ -676,7 +689,6 @@ export function RecicladorDashboard() {
         <AuditoriaConjuntoForm
           conjuntos={conjuntosAutorizados}
           conjuntoPreseleccionado={conjuntoParaAuditar}
-          token={accessToken ?? ""}
           onClose={() => setConjuntoParaAuditar(null)}
           onSuccess={alEnviarAuditoria}
         />

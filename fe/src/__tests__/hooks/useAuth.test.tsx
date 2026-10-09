@@ -28,7 +28,6 @@ describe("useAuth", () => {
       ...defaultAuthContext,
       user: mockUser,
       isAuthenticated: true,
-      accessToken: "test-token",
     };
 
     const wrapper = ({ children }: { children: ReactNode }) => (
@@ -39,7 +38,6 @@ describe("useAuth", () => {
 
     expect(result.current.user).toEqual(mockUser);
     expect(result.current.isAuthenticated).toBe(true);
-    expect(result.current.accessToken).toBe("test-token");
     expect(typeof result.current.login).toBe("function");
     expect(typeof result.current.logout).toBe("function");
     expect(typeof result.current.register).toBe("function");

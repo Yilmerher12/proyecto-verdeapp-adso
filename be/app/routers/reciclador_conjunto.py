@@ -7,11 +7,13 @@ Descripción: Endpoints del flujo de invitación Reciclador-Conjunto.
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.dependencies import get_db, get_current_user
+from app.dependencies import get_db, require_admin_conjunto, require_role
+from app.models.administrador_conjunto import AdministradorConjunto
+from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.reciclador_conjunto import (
     InvitarRecicladorRequest,
@@ -22,26 +24,48 @@ from app.schemas.reciclador_conjunto import (
     RecicladorAutorizadoResponse,
 )
 from app.services import reciclador_conjunto_service
+from app.utils.audit_log import log_accion_admin, redactar_correo
+from app.utils.limiter import limiter
 
 router = APIRouter(
     prefix="/api/v1/reciclador-conjunto",
     tags=["Reciclador - Conjunto"],
 )
 
+# ¿Qué? Issue #4 (hallazgo B5 de la auditoría) — antes todos los endpoints
+#       usaban Depends(get_current_user) genérico y el chequeo de rol vivía
+#       reimplementado a mano en el service (_verificar_admin_administra_
+#       conjunto), con un 404 "Perfil no encontrado" en vez del 403
+#       uniforme que ya dan estas dependencias compartidas (issue #216).
+_requiere_admin_conjunto = require_admin_conjunto("Solo un Administrador de Conjunto puede hacer esto.")
+_requiere_reciclador = require_role(RolId.RECICLADOR, "Solo un Reciclador puede hacer esto.")
+
 
 @router.post("/invitar", status_code=status.HTTP_201_CREATED, summary="Admin de Conjunto invita a un Reciclador")
+# ¿Qué? Issue #398 (CN-056): máximo 20 invitaciones por hora desde una misma IP.
+# ¿Para qué? Sin límite, un Admin de Conjunto podía probar correos sin freno: el
+#           404 ("No existe ningún Reciclador...") frente al 201 revela qué
+#           correos son de recicladores, y cada acierto manda un correo.
+@limiter.limit("20/hour")
 async def invitar_reciclador(
+    request: Request,
     data: InvitarRecicladorRequest,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
-    """¿Qué? Solo accesible por Admin de Conjunto (id_rol=4) — la validación
-    de que administra ESE conjunto específico vive en el service."""
+    """¿Qué? Solo accesible por Admin de Conjunto — la validación de que
+    administra ESE conjunto específico vive en el service."""
     invitacion = await reciclador_conjunto_service.invitar_reciclador(
         db=db,
-        id_usuario_admin=current_user.id_usuario,
+        id_usuario_admin=administrador.id_usuario,
         correo_reciclador=data.correo_reciclador,
         id_conjunto=data.id_conjunto_residencial,
+    )
+    log_accion_admin(
+        administrador.usuario.correo_electronico,
+        "reciclador_invitado",
+        reciclador=redactar_correo(data.correo_reciclador),
+        conjunto=data.id_conjunto_residencial,
     )
     return {"id": invitacion.id, "estado": invitacion.estado, "message": "Invitación enviada correctamente."}
 
@@ -53,11 +77,11 @@ async def invitar_reciclador(
 )
 def listar_invitaciones_de_mi_conjunto(
     id_conjunto: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     resultados = reciclador_conjunto_service.listar_invitaciones_de_mi_conjunto(
-        db=db, id_usuario_admin=current_user.id_usuario, id_conjunto=id_conjunto
+        db=db, id_usuario_admin=administrador.id_usuario, id_conjunto=id_conjunto
     )
     return resultados
 
@@ -69,11 +93,11 @@ def listar_invitaciones_de_mi_conjunto(
 )
 def listar_recicladores_autorizados(
     id_conjunto: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     resultados = reciclador_conjunto_service.listar_recicladores_autorizados_de_conjunto(
-        db=db, id_usuario_admin=current_user.id_usuario, id_conjunto=id_conjunto
+        db=db, id_usuario_admin=administrador.id_usuario, id_conjunto=id_conjunto
     )
     return resultados
 
@@ -84,7 +108,7 @@ def listar_recicladores_autorizados(
     summary="Reciclador ve sus invitaciones pendientes",
 )
 def listar_mis_invitaciones(
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_reciclador),
     db: Session = Depends(get_db),
 ):
     resultados = reciclador_conjunto_service.listar_invitaciones_pendientes_del_reciclador(
@@ -97,7 +121,7 @@ def listar_mis_invitaciones(
 def responder_invitacion(
     id_invitacion: UUID,
     data: ResponderInvitacionRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_reciclador),
     db: Session = Depends(get_db),
 ):
     reciclador_conjunto_service.responder_invitacion(
@@ -118,14 +142,20 @@ def responder_invitacion(
 def revocar_reciclador(
     id_conjunto: UUID,
     id_reciclador: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     reciclador_conjunto_service.revocar_reciclador(
         db=db,
-        id_usuario_admin=current_user.id_usuario,
+        id_usuario_admin=administrador.id_usuario,
         id_conjunto=id_conjunto,
         id_reciclador=id_reciclador,
+    )
+    log_accion_admin(
+        administrador.usuario.correo_electronico,
+        "reciclador_revocado",
+        reciclador=id_reciclador,
+        conjunto=id_conjunto,
     )
 
 
@@ -135,7 +165,7 @@ def revocar_reciclador(
     summary="Reciclador ve los conjuntos donde ya está autorizado",
 )
 def listar_mis_conjuntos_autorizados(
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_reciclador),
     db: Session = Depends(get_db),
 ):
     resultados = reciclador_conjunto_service.listar_conjuntos_autorizados(

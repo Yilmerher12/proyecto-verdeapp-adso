@@ -5,10 +5,13 @@ Descripción: Lógica de negocio de autenticación adaptada a las tablas en espa
 """
 
 import logging
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
-from fastapi import HTTPException, status
-from sqlalchemy import select
+from fastapi import BackgroundTasks, HTTPException, status
+from sqlalchemy import and_, case, delete, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.usuario import Usuario
@@ -16,10 +19,12 @@ from app.models.residente import Residente
 from app.models.reciclador import Reciclador
 from app.models.rol import RolId
 from app.models.unidad import Unidad
+from app.models.localidad import Localidad
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.password_reset_token import PasswordResetToken
 from app.models.email_verification_token import EmailVerificationToken
 from app.models.token_revocado import TokenRevocado
+from app.services.user_service import obtener_registro_de_perfil
 
 from app.schemas.user import (
     ResetPasswordRequest,
@@ -28,14 +33,24 @@ from app.schemas.user import (
     UserLogin,
 )
 
-from app.utils.email import send_password_reset_email, send_verification_email
-from app.utils.audit_log import log_login_exitoso, log_login_fallido
+from app.utils.email import (
+    send_duplicate_registration_email,
+    send_password_reset_email,
+    send_verification_email,
+)
+from app.utils.audit_log import (
+    log_email_verificado,
+    log_login_exitoso,
+    log_login_fallido,
+    log_password_cambiada,
+)
 from app.utils.security import (
     DUMMY_PASSWORD_HASH,
     create_access_token,
     create_refresh_token,
     decode_token,
     hash_password,
+    hash_token,
     verify_password,
 )
 
@@ -45,78 +60,218 @@ logger = logging.getLogger(__name__)
 MAXIMO_INTENTOS_FALLIDOS = 5
 MINUTOS_DE_BLOQUEO = 15
 
+# ¿Qué? Issue #373 (CN-026): un solo mensaje para "contraseña incorrecta",
+#       "correo inexistente" y "cuenta bloqueada".
+# ¿Para qué? Que la respuesta no revele cuál de los tres pasó, pero el dueño
+#           real de una cuenta bloqueada igual entienda que debe esperar.
+MENSAJE_CREDENCIALES_INCORRECTAS = (
+    f"Credenciales incorrectas. Si fallaste varias veces, espera {MINUTOS_DE_BLOQUEO} minutos e intenta de nuevo."
+)
 
-async def register_user(db: Session, user_data: UserCreate) -> Usuario:
-    """Registra un usuario en estado INACTIVO, gestiona su perfil y emite el correo de activación."""
-    stmt = select(Usuario).where(Usuario.correo_electronico == user_data.correo_electronico)
-    existing_user = db.execute(stmt).scalar_one_or_none()
 
-    if existing_user:
+def _validar_datos_residente(db: Session, user_data: UserCreate) -> tuple[ConjuntoResidencial, str, str]:
+    """Valida conjunto, código de acceso y unidad de un Residente; no guarda nada.
+
+    ¿Qué? Issue #373 (CN-026): estas validaciones antes corrían DESPUÉS de
+          revisar si el correo ya existía. Ahora corren antes, en todos los
+          casos.
+    ¿Para qué? Si un correo ya registrado saltara directo a la respuesta
+              genérica sin pasar por aquí, un código de acceso malo daría
+              "éxito" con un correo existente y error con uno nuevo — y esa
+              diferencia volvería a revelar qué correos tienen cuenta.
+
+    Returns:
+        (conjunto, torre, apto) ya normalizados en mayúsculas.
+    """
+    # ¿Qué? Antes, si "torre"/"apto" llegaban vacíos (posible al llamar la
+    #       API directo, sin pasar por el formulario de registro), quedaba
+    #       guardado el texto literal "None" como si fuera un dato real.
+    # ¿Para qué? En vez de inventar un dato de reemplazo, se rechaza el
+    #           registro por completo — mismo criterio que para "conjunto
+    #           residencial" y "código de acceso": si falta un dato real de
+    #           dónde vive la persona, no hay registro.
+    torre_texto = (user_data.torre or "").strip().upper()
+    apto_texto = (user_data.apto or "").strip().upper()
+
+    if not torre_texto or not apto_texto:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El correo ya está registrado.",
+            detail="Debes indicar la torre/bloque y el apartamento donde vives.",
         )
+
+    id_conjunto = user_data.id_conjunto_residencial
+
+    if not id_conjunto:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debes seleccionar el conjunto residencial al que perteneces."
+        )
+
+    stmt_conjunto = select(ConjuntoResidencial).where(
+        ConjuntoResidencial.id_conjunto_residencial == id_conjunto,
+        ConjuntoResidencial.verificado.is_(True),
+    )
+    conjunto_existente = db.execute(stmt_conjunto).scalar_one_or_none()
+
+    if not conjunto_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Tu conjunto residencial aún no está afiliado a VerdeApp. "
+                "Pide a tu administración que se registre con nosotros."
+            ),
+        )
+
+    # ¿Qué? Issue #168 — se exige el código de acceso que el Admin de
+    #       Conjunto reparte fuera de la app, como prueba de que la persona
+    #       vive ahí.
+    # ¿Impacto? Comparación insensible a mayúsculas/espacios, mismo
+    #           criterio que el resto de la app usa para nombres.
+    codigo_ingresado = (user_data.codigo_acceso or "").strip().upper()
+    if not codigo_ingresado:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debes ingresar el código de acceso de tu conjunto.",
+        )
+    if codigo_ingresado != conjunto_existente.codigo_acceso:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El código de acceso no es válido para este conjunto. Pídeselo a tu administrador.",
+        )
+
+    return conjunto_existente, torre_texto, apto_texto
+
+
+def _es_cuenta_sin_verificar_vencida(db: Session, usuario: Usuario) -> bool:
+    """True si la cuenta nunca se verificó y ya no le queda ningún enlace vigente.
+
+    ¿Qué? Issue #397 (CN-050): solo ese caso se puede reemplazar al registrarse
+          de nuevo con el mismo correo.
+    ¿Para qué? Mientras haya un enlace vigente (24 h), el registro pendiente de
+              su dueño se respeta: si cualquiera pudiera reemplazarlo, lo
+              dejaría con la contraseña del atacante y el correo de
+              verificación llegaría a la víctima una y otra vez.
+    ¿Impacto? Una cuenta desactivada por un Administrador del Sistema
+              (habilitado = False) tampoco se reemplaza. Roles distintos de
+              Residente/Reciclador nunca se reemplazan.
+    """
+    if usuario.is_active or not usuario.habilitado:
+        return False
+    if usuario.id_rol not in (RolId.RESIDENTE, RolId.RECICLADOR):
+        return False
+    enlace_vigente = db.execute(
+        select(EmailVerificationToken.id).where(
+            EmailVerificationToken.id_usuario == usuario.id_usuario,
+            EmailVerificationToken.used.is_(False),
+            EmailVerificationToken.expires_at > datetime.now(timezone.utc),
+        )
+    ).first()
+    return enlace_vigente is None
+
+
+# ¿Qué? Issue #397 (CN-051): cuándo se mandó el último aviso de "correo ya
+#       registrado" a cada correo (tiempo monotónico, en segundos).
+# ¿Para qué? El límite por IP de /register deja disparar hasta 5 avisos por
+#           minuto contra el mismo destinatario: sirve para llenarle el buzón.
+# ¿Impacto? Vive en memoria de cada proceso: se pierde al reiniciar el servidor
+#           y con varios workers cada uno cuenta aparte. Para el nivel actual
+#           del proyecto alcanza; si hace falta exacto, pasarlo a una tabla.
+_ultimo_aviso_duplicado: dict[str, float] = {}
+SEGUNDOS_ENTRE_AVISOS_DUPLICADO = 3600
+
+
+def _avisar_registro_duplicado(background_tasks: BackgroundTasks, correo: str) -> None:
+    """Programa el aviso de correo ya registrado, máximo uno por hora por correo."""
+    ahora = time.monotonic()
+    # Se purgan los vencidos para que el diccionario no crezca sin límite.
+    for clave in [c for c, t in _ultimo_aviso_duplicado.items() if ahora - t >= SEGUNDOS_ENTRE_AVISOS_DUPLICADO]:
+        del _ultimo_aviso_duplicado[clave]
+    clave = correo.lower()
+    if clave in _ultimo_aviso_duplicado:
+        return
+    _ultimo_aviso_duplicado[clave] = ahora
+    background_tasks.add_task(send_duplicate_registration_email, email=correo)
+
+
+def register_user(db: Session, user_data: UserCreate, background_tasks: BackgroundTasks) -> None:
+    """Registra un usuario en estado INACTIVO, gestiona su perfil y emite el correo de activación.
+
+    ¿Qué? Issue #373 (CN-026): termina igual (sin error) tanto si la cuenta
+          se creó como si el correo ya tenía una. En el segundo caso no se
+          crea nada y al dueño del correo le llega un aviso.
+    ¿Para qué? Antes respondía "El correo ya está registrado.", y con eso
+              cualquiera podía averiguar qué correos tienen cuenta en
+              VerdeApp. El aviso por correo le sirve al dueño real (si fue
+              él, sabe que ya tiene cuenta) sin decirle nada a quien no lo es.
+    ¿Impacto? Los correos salen con BackgroundTasks, después de responder:
+              los dos caminos tardan lo mismo y no se delatan por tiempo.
+    """
+    datos_residente = _validar_datos_residente(db, user_data) if user_data.rol == "residente" else None
+
+    # ¿Qué? Issue #397 (CN-047): la localidad del Reciclador se valida ANTES de
+    #       revisar si el correo existe, igual que las validaciones del Residente.
+    # ¿Para qué? Con localidad_id=9999 la llave foránea fallaba al insertar, el
+    #           except IntegrityError de abajo lo tomaba por "correo duplicado",
+    #           el cliente recibía el éxito genérico y al correo le llegaba un
+    #           aviso falso de "ya tienes una cuenta".
+    # ¿Impacto? Va antes del chequeo de correo para que un correo nuevo y uno
+    #           existente den el mismo 400 (si no, la diferencia delataría cuáles
+    #           tienen cuenta, igual que en #373).
+    if user_data.rol == "reciclador" and user_data.localidad_id is not None:
+        if db.get(Localidad, user_data.localidad_id) is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La localidad no existe.")
+
+    # ¿Qué? bcrypt corre en los dos caminos, aunque en el de correo
+    #       duplicado el resultado no se use.
+    # ¿Para qué? Es lo que más tarda de todo el registro (decenas de ms):
+    #           si solo corriera al crear la cuenta, la respuesta rápida
+    #           delataría que el correo ya existía.
+    password_hasheada = hash_password(user_data.password)
+
+    stmt = select(Usuario).where(Usuario.correo_electronico == user_data.correo_electronico)
+    existente = db.execute(stmt).scalar_one_or_none()
+    cuenta_a_reemplazar = existente if existente and _es_cuenta_sin_verificar_vencida(db, existente) else None
+    if existente and not cuenta_a_reemplazar:
+        _avisar_registro_duplicado(background_tasks, user_data.correo_electronico)
+        return
 
     # Por ahora el registro público solo deja escoger entre residente y reciclador
     # (el rol de Administrador de Conjunto se crea aparte, por invitación).
     role_id_mapped = RolId.RESIDENTE if user_data.rol == "residente" else RolId.RECICLADOR
 
     try:
+        if cuenta_a_reemplazar:
+            # ¿Qué? Issue #397 (CN-050): la cuenta vieja sin verificar se borra
+            #       con su perfil (y sus tokens, que caen en cascada) y se crea
+            #       la nueva con los datos de ESTE registro, todo en el mismo
+            #       commit de abajo.
+            # ¿Para qué? Antes esa fila quedaba para siempre: el dueño real del
+            #           correo no podía registrarse ni recuperar la contraseña.
+            #           Se reemplaza (no se reenvía el enlace) para que la
+            #           contraseña y los datos queden los de quien se registra
+            #           ahora, no los de quien reservó el correo antes.
+            # ¿Impacto? Residente/Reciclador no tienen ON DELETE CASCADE hacia
+            #           usuarios: se borran a mano antes. Una cuenta sin
+            #           verificar nunca inició sesión, así que no tiene más
+            #           datos colgando.
+            id_viejo = cuenta_a_reemplazar.id_usuario
+            db.execute(delete(Residente).where(Residente.id_usuario == id_viejo))
+            db.execute(delete(Reciclador).where(Reciclador.id_usuario == id_viejo))
+            db.execute(delete(Usuario).where(Usuario.id_usuario == id_viejo))
+            db.flush()
+
         nuevo_usuario = Usuario(
             correo_electronico=user_data.correo_electronico,
             id_rol=role_id_mapped,
-            password=hash_password(user_data.password),
+            password=password_hasheada,
             is_active=False
         )
         db.add(nuevo_usuario)
         db.flush()
 
-        if user_data.rol == "residente":
-            torre_texto = str(getattr(user_data, 'torre', 'TORRE UNICA')).strip().upper()
-            apto_texto = str(getattr(user_data, 'apto', 'APTO UNICO')).strip().upper()
-            id_conjunto = getattr(user_data, 'id_conjunto_residencial', None)
-
-            if not id_conjunto:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Debes seleccionar el conjunto residencial al que perteneces."
-                )
-
-            stmt_conjunto = select(ConjuntoResidencial).where(
-                ConjuntoResidencial.id_conjunto_residencial == id_conjunto,
-                ConjuntoResidencial.verificado.is_(True),
-            )
-            conjunto_existente = db.execute(stmt_conjunto).scalar_one_or_none()
-
-            if not conjunto_existente:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=(
-                        "Tu conjunto residencial aún no está afiliado a VerdeApp. "
-                        "Pide a tu administración que se registre con nosotros."
-                    ),
-                )
-
-            # ¿Qué? Issue #168 — antes cualquiera podía declarar pertenecer a
-            #       cualquier conjunto verificado, sin ninguna prueba real de
-            #       que vive ahí. Ahora se exige el código de acceso que el
-            #       Admin de Conjunto reparte fuera de la app.
-            # ¿Para qué? Todo conjunto ya tiene un código desde que se creó
-            #           (ver default en el modelo) — nunca hay excepción de
-            #           "este conjunto todavía no tiene código".
-            # ¿Impacto? Comparación insensible a mayúsculas/espacios, mismo
-            #           criterio que el resto de la app usa para nombres.
-            codigo_ingresado = (user_data.codigo_acceso or "").strip().upper()
-            if not codigo_ingresado:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Debes ingresar el código de acceso de tu conjunto.",
-                )
-            if codigo_ingresado != conjunto_existente.codigo_acceso:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="El código de acceso no es válido para este conjunto. Pídeselo a tu administrador.",
-                )
+        if datos_residente:
+            conjunto_existente, torre_texto, apto_texto = datos_residente
+            id_conjunto = conjunto_existente.id_conjunto_residencial
 
             stmt_unidad = select(Unidad).where(
                 Unidad.id_conjunto_residencial == id_conjunto,
@@ -157,32 +312,51 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
             )
             db.add(nuevo_reciclador)
 
-        db.commit()
-
         token_verificacion = str(uuid.uuid4())
         expiration_verif = datetime.now(timezone.utc) + timedelta(days=1)
 
         db_token_verif = EmailVerificationToken(
             # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv4 por su cuenta.
             id_usuario=nuevo_usuario.id_usuario,
-            token=token_verificacion,
+            # ¿Qué? Issue #373 (CN-031): se guarda el hash; el correo lleva el original.
+            token=hash_token(token_verificacion),
             expires_at=expiration_verif,
             used=False
         )
         db.add(db_token_verif)
+
+        # ¿Qué? Issue #215 — antes había un commit aquí y OTRO más abajo,
+        #       separados. Si algo fallaba justo entre los dos (ej. se cae
+        #       la conexión a la BD), el usuario y su perfil ya habían
+        #       quedado guardados PARA SIEMPRE por el primer commit, pero
+        #       sin su código de verificación — una cuenta fantasma:
+        #       nunca se puede activar, y como el correo ya quedó
+        #       registrado, tampoco se puede volver a intentar el registro.
+        # ¿Para qué? Un solo commit al final garantiza que el usuario, su
+        #           perfil (Residente/Reciclador) y el token de verificación
+        #           se guardan TODOS juntos o NINGUNO — si algo falla antes
+        #           de llegar aquí, el rollback del except de abajo deshace
+        #           todo, sin dejar nada a medias.
         db.commit()
 
-        try:
-            await send_verification_email(email=nuevo_usuario.correo_electronico, token=token_verificacion)
-        except Exception:
-            logger.warning("Registro completado, pero el correo no se pudo despachar", exc_info=True)
+        # ¿Impacto? _enviar (app/utils/email.py) ya atrapa y registra
+        #           cualquier fallo de envío: un correo caído no tumba el
+        #           registro, que ya quedó guardado.
+        background_tasks.add_task(
+            send_verification_email, email=nuevo_usuario.correo_electronico, token=token_verificacion
+        )
 
-        db.refresh(nuevo_usuario)
-        return nuevo_usuario
-
-    except HTTPException:
+    except IntegrityError:
+        # ¿Qué? Issue #215 (b9 del diagnóstico) — el pre-chequeo de arriba
+        #       revisa si el correo ya existe ANTES de insertar, pero entre
+        #       ese chequeo y el INSERT real puede colarse otra petición con
+        #       el mismo correo (condición de carrera). Si eso pasa, el
+        #       UNIQUE de correo_electronico en la base de datos es quien de
+        #       verdad lo impide.
+        # ¿Impacto? Issue #373: se trata igual que el pre-chequeo — aviso
+        #           al dueño y la misma respuesta genérica de éxito.
         db.rollback()
-        raise
+        _avisar_registro_duplicado(background_tasks, user_data.correo_electronico)
     except Exception:
         # ¿Qué? Antes el detail del 500 incluía str(e) — el mensaje crudo de
         #       la excepción (puede traer nombres de columnas, constraints o
@@ -199,6 +373,42 @@ async def register_user(db: Session, user_data: UserCreate) -> Usuario:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Ocurrió un error al guardar los datos. Intenta de nuevo más tarde."
         )
+
+
+def _registrar_intento_fallido(db: Session, user: Usuario) -> None:
+    """
+    ¿Qué? Issue #396 (CN-026) — suma un intento fallido con UNA sola sentencia
+          UPDATE, y bloquea la cuenta en la misma sentencia si llega al máximo.
+          Si el bloqueo anterior ya venció, el conteo empieza de nuevo en 1.
+    ¿Para qué? Antes: (1) el contador solo volvía a 0 con un login exitoso, así
+              que tras vencer un bloqueo de 15 min el siguiente fallo (el 6.º)
+              bloqueaba otros 15 — quien se equivocaba UNA vez quedaba
+              bloqueado de nuevo, y un atacante podía mantener bloqueada la
+              cuenta de cualquiera con 1 petición cada 15 min. (2) "+= 1" en
+              Python lee, suma y escribe: dos fallos simultáneos contaban uno.
+    ¿Impacto? En un UPDATE, el lado derecho de cada asignación usa el valor
+              VIEJO de la fila, por eso "base + 1 >= máximo" compara con el
+              contador que había antes de este intento. synchronize_session=False
+              porque el objeto en memoria no se vuelve a usar: login_user
+              responde 401 enseguida.
+    """
+    ahora = datetime.now(timezone.utc)
+    bloqueo_vencido = and_(Usuario.bloqueado_hasta.is_not(None), Usuario.bloqueado_hasta <= ahora)
+    base = case((bloqueo_vencido, 0), else_=Usuario.intentos_fallidos)
+    db.execute(
+        update(Usuario)
+        .where(Usuario.id_usuario == user.id_usuario)
+        .values(
+            intentos_fallidos=base + 1,
+            bloqueado_hasta=case(
+                (base + 1 >= MAXIMO_INTENTOS_FALLIDOS, ahora + timedelta(minutes=MINUTOS_DE_BLOQUEO)),
+                (bloqueo_vencido, None),
+                else_=Usuario.bloqueado_hasta,
+            ),
+        )
+        .execution_options(synchronize_session=False)
+    )
+    db.commit()
 
 
 def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
@@ -220,17 +430,20 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     # ¿Para qué? Antes de esto, un atacante podía probar contraseñas contra
     #           un correo específico sin ningún límite por cuenta — el
     #           rate limit de slowapi es por dirección IP, no por correo.
-    # ¿Impacto? Esta respuesta SÍ revela que la cuenta existe (una cuenta
-    #           inexistente nunca llega aquí, porque `user` sería None) —
-    #           es un trade-off conocido e inevitable de cualquier bloqueo
-    #           por cuenta, y es exactamente el comportamiento que pide
-    #           RQF-001.
+    # ¿Impacto? Issue #373 (CN-026): responde EXACTAMENTE lo mismo que una
+    #           contraseña incorrecta (antes era un 403 con su propio
+    #           mensaje, y con eso cualquiera sabía que el correo existía).
+    #           El motivo real queda solo en el log de auditoría.
     if user and user.bloqueado_hasta and user.bloqueado_hasta > datetime.now(timezone.utc):
+        # ¿Qué? Issue #215 (b8 del diagnóstico) — se corre verify_password()
+        #       igual que en las otras ramas de rechazo de abajo, aunque acá
+        #       el resultado no se use para nada.
+        # ¿Para qué? Sin esto, esta rama respondería casi al instante y la
+        #           diferencia de tiempo delataría la cuenta bloqueada,
+        #           aunque el mensaje sea el mismo.
+        verify_password(login_data.password, user.password)
         log_login_fallido(correo, "cuenta_bloqueada")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Demasiados intentos fallidos. Intenta de nuevo en {MINUTOS_DE_BLOQUEO} minutos.",
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MENSAJE_CREDENCIALES_INCORRECTAS)
 
     # ¿Qué? Se corre verify_password() SIEMPRE, incluso si el usuario no
     #       existe — contra el hash real si existe, o contra DUMMY_PASSWORD_HASH
@@ -239,18 +452,15 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
     password_hash = user.password if user else DUMMY_PASSWORD_HASH
     if not user or not verify_password(login_data.password, password_hash):
         if user:
-            user.intentos_fallidos += 1
-            if user.intentos_fallidos >= MAXIMO_INTENTOS_FALLIDOS:
-                user.bloqueado_hasta = datetime.now(timezone.utc) + timedelta(minutes=MINUTOS_DE_BLOQUEO)
-            db.commit()
+            _registrar_intento_fallido(db, user)
         log_login_fallido(correo, "credenciales_invalidas")
-        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=MENSAJE_CREDENCIALES_INCORRECTAS)
 
     if not user.is_active:
         log_login_fallido(correo, "cuenta_no_verificada")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Tu cuenta no ha sido verificada aún. Por favor, revisa tu buzón en Mailpit."
+            detail="Tu cuenta no ha sido verificada aún. Revisa tu correo para activarla."
         )
 
     # ¿Qué? "habilitado" es distinto de "is_active" (esa es solo verificación
@@ -274,47 +484,48 @@ def login_user(db: Session, login_data: UserLogin) -> TokenResponse:
         db.commit()
 
     log_login_exitoso(correo)
-    real_first_name, real_last_name = _obtener_nombre_real(db, user)
+    return emitir_tokens(user)
 
-    access_token = create_access_token(data={
+
+def emitir_tokens(user: Usuario) -> TokenResponse:
+    """Emite un par access/refresh nuevo para el usuario.
+
+    ¿Qué? Un solo lugar que arma los tokens — antes el mismo bloque estaba
+          copiado en login_user y en refresh_access_token.
+    ¿Para qué? Issue #308: todo token nuevo debe llevar "ver" (la
+              version_sesion vigente). Con el bloque copiado, bastaba
+              olvidarlo en un sitio para emitir tokens que nunca se
+              invalidan al cambiar la contraseña.
+    ¿Impacto? Lo usan login, /refresh y /change-password (este último para
+              que quien cambia su contraseña no pierda su propia sesión).
+    """
+    # ¿Qué? Issue #403 (CN-063): los tokens ya NO llevan nombre ni apellidos.
+    # ¿Para qué? El contenido de un JWT no está cifrado: cualquiera que tenga el token lo
+    #           lee. El nombre sale de GET /users/me (lo usa AuthContext del frontend);
+    #           el frontend nunca lee el token (es una cookie httpOnly) y el backend
+    #           tampoco toma el nombre de ahí.
+    # ¿Impacto? Una consulta menos a la base de datos en cada login y renovación.
+    datos_comunes = {
         "sub": user.correo_electronico,
         "role_id": user.id_rol,
-        "first_name": real_first_name,
-        "last_name": real_last_name
-    })
-    refresh_token = create_refresh_token(data={"sub": user.correo_electronico, "role_id": user.id_rol})
-
+        "ver": user.version_sesion,
+    }
+    access_token = create_access_token(data=datos_comunes)
+    refresh_token = create_refresh_token(data=datos_comunes)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
-def _obtener_nombre_real(db: Session, user: Usuario):
-    """Busca el nombre y apellidos reales del usuario según su rol."""
-    real_first_name = "Administrador"
-    real_last_name = "del Sistema"
+def obtener_nombre_real(db: Session, user: Usuario):
+    """Busca el nombre y apellidos reales del usuario según su rol.
 
-    if user.id_rol == RolId.RESIDENTE:
-        stmt_res = select(Residente).where(Residente.id_usuario == user.id_usuario)
-        residente = db.execute(stmt_res).scalar_one_or_none()
-        if residente:
-            real_first_name = residente.nombre
-            real_last_name = residente.apellidos
-
-    elif user.id_rol == RolId.RECICLADOR:
-        stmt_rec = select(Reciclador).where(Reciclador.id_usuario == user.id_usuario)
-        reciclador = db.execute(stmt_rec).scalar_one_or_none()
-        if reciclador:
-            real_first_name = reciclador.nombre
-            real_last_name = reciclador.apellidos
-
-    elif user.id_rol == RolId.ADMIN_CONJUNTO:
-        from app.models.administrador_conjunto import AdministradorConjunto
-        stmt_admin = select(AdministradorConjunto).where(AdministradorConjunto.id_usuario == user.id_usuario)
-        administrador = db.execute(stmt_admin).scalar_one_or_none()
-        if administrador:
-            real_first_name = administrador.nombre
-            real_last_name = administrador.apellidos
-
-    return real_first_name, real_last_name
+    ¿Qué? Issue #220 (b13 del diagnóstico) — reutiliza
+          user_service.obtener_registro_de_perfil en vez de repetir aquí
+          la misma búsqueda "¿en qué tabla vive el perfil de este rol?".
+    """
+    registro = obtener_registro_de_perfil(db, user)
+    if registro:
+        return registro.nombre, registro.apellidos
+    return "Administrador", "del Sistema"
 
 
 def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
@@ -331,19 +542,6 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="El token proporcionado no es un token de renovación válido.",
-        )
-
-    # ¿Qué? HU-008/RQF-007: si este refresh token ya fue revocado por un
-    #       logout previo, no debe poder usarse para generar access tokens
-    #       nuevos, aunque su firma y expiración sigan siendo válidas.
-    # ¿Impacto? Sin esto, alguien que hubiera copiado el refresh token ANTES
-    #           del logout podría seguir renovando su sesión indefinidamente
-    #           — el logout no cerraría nada de verdad.
-    jti = payload.get("jti")
-    if jti and db.get(TokenRevocado, uuid.UUID(jti)):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="El token de sesión ha sido invalidado. Inicia sesión de nuevo.",
         )
 
     correo = payload.get("sub")
@@ -376,27 +574,49 @@ def refresh_access_token(db: Session, refresh_token: str) -> TokenResponse:
             detail="Tu cuenta fue desactivada por un administrador.",
         )
 
-    real_first_name, real_last_name = _obtener_nombre_real(db, user)
+    # ¿Qué? Issue #308: un refresh token emitido antes del último cambio de
+    #       contraseña ya no sirve (ver Usuario.version_sesion).
+    # ¿Impacto? Sin esto, quien robó la cookie podía seguir renovando la
+    #           sesión hasta 7 días después de que la víctima cambiara su
+    #           contraseña.
+    if payload.get("ver", 0) != user.version_sesion:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="El token de sesión ha sido invalidado. Inicia sesión de nuevo.",
+        )
 
-    nuevo_access_token = create_access_token(data={
-        "sub": user.correo_electronico,
-        "role_id": user.id_rol,
-        "first_name": real_first_name,
-        "last_name": real_last_name,
-    })
-    nuevo_refresh_token = create_refresh_token(data={
-        "sub": user.correo_electronico,
-        "role_id": user.id_rol,
-    })
+    # ¿Qué? Issue #308: rotación — el refresh token que se acaba de usar
+    #       pasa a la lista negra antes de emitir el par nuevo. Issue #359
+    #       (CN-036): revocar_jti revisa y guarda en un solo paso, así que
+    #       también cubre el caso de un token ya revocado por un logout.
+    # ¿Para qué? Que cada refresh token sirva UNA sola vez, aunque lleguen
+    #           dos /refresh con el mismo token al mismo tiempo (dos
+    #           pestañas, o quien robó la cookie a la vez que la víctima):
+    #           solo uno logra guardarlo y el otro recibe 401.
+    # ¿Impacto? El frontend renueva solo desde el issue #319; para que dos
+    #           pestañas no se choquen aquí, fe/src/api/axios.ts renueva de
+    #           a una pestaña a la vez (navigator.locks).
+    if not revocar_jti(db, payload["jti"], payload["exp"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="El token de sesión ha sido invalidado. Inicia sesión de nuevo.",
+        )
+    db.commit()
 
-    return TokenResponse(access_token=nuevo_access_token, refresh_token=nuevo_refresh_token)
+    return emitir_tokens(user)
 
 
 def verify_email(db: Session, token: str) -> bool:
+    # ¿Qué? Issue #396 (CN-053) — with_for_update() bloquea la fila del token
+    #       hasta el commit.
+    # ¿Para qué? Sin el bloqueo, dos peticiones simultáneas con el mismo enlace
+    #           leían "used = false" las dos y las dos lo usaban.
+    # ¿Impacto? La segunda espera a que la primera termine, vuelve a evaluar el
+    #           filtro, ya no encuentra el token sin usar y recibe el 400 normal.
     db_token = db.query(EmailVerificationToken).filter(
-        EmailVerificationToken.token == token,
+        EmailVerificationToken.token == hash_token(token),
         EmailVerificationToken.used.is_(False)
-    ).first()
+    ).with_for_update().first()
 
     if not db_token:
         raise HTTPException(
@@ -419,15 +639,47 @@ def verify_email(db: Session, token: str) -> bool:
         )
 
     user.is_active = True
-    db_token.used = True
+    # ¿Qué? Issue #396 (CN-053) — se marcan como usados TODOS los enlaces sin
+    #       usar de esta cuenta (incluido este), no solo el presentado.
+    # ¿Para qué? Verificada la cuenta, ningún otro enlace de verificación debe
+    #           seguir sirviendo.
+    db.execute(
+        update(EmailVerificationToken)
+        .where(EmailVerificationToken.id_usuario == user.id_usuario, EmailVerificationToken.used.is_(False))
+        .values(used=True)
+        .execution_options(synchronize_session=False)
+    )
     db.commit()
+    log_email_verificado(user.correo_electronico)
     return True
 
 
-async def request_password_reset(db: Session, email: str) -> bool:
+def request_password_reset(db: Session, email: str, background_tasks: BackgroundTasks) -> None:
+    """Crea un token de recuperación y programa su correo, si el correo tiene cuenta.
+
+    ¿Qué? Issue #373 (CN-027): el correo sale con BackgroundTasks, después
+          de responder.
+    ¿Para qué? Antes se esperaba a que el correo saliera (cientos de ms por
+              SMTP) solo cuando la cuenta existía; si no existía se
+              respondía al instante. Midiendo el tiempo se sabía qué
+              correos tienen cuenta, aunque el mensaje fuera el mismo.
+    """
     user = db.query(Usuario).filter(Usuario.correo_electronico == email).first()
     if not user:
-        return True
+        return
+
+    # ¿Qué? Issue #396 (CN-053) — los enlaces anteriores sin usar de este
+    #       usuario se anulan antes de crear el nuevo.
+    # ¿Para qué? Cada "olvidé mi contraseña" dejaba un enlace más con 1 hora de
+    #           vida: uno viejo (por ejemplo de un buzón comprometido) permitía
+    #           cambiar la contraseña aunque la persona ya hubiera pedido otro.
+    # ¿Impacto? Solo sirve el enlace del último correo pedido.
+    db.execute(
+        update(PasswordResetToken)
+        .where(PasswordResetToken.id_usuario == user.id_usuario, PasswordResetToken.used.is_(False))
+        .values(used=True)
+        .execution_options(synchronize_session=False)
+    )
 
     token_str = str(uuid.uuid4())
     expiration = datetime.now(timezone.utc) + timedelta(hours=1)
@@ -435,25 +687,25 @@ async def request_password_reset(db: Session, email: str) -> bool:
     db_token = PasswordResetToken(
         # ¿Qué? Sin "id=" — el modelo ya genera un UUIDv4 por su cuenta.
         id_usuario=user.id_usuario,
-        token=token_str,
+        # ¿Qué? Issue #373 (CN-031): se guarda el hash; el correo lleva el original.
+        token=hash_token(token_str),
         expires_at=expiration,
         used=False
     )
     db.add(db_token)
     db.commit()
 
-    try:
-        await send_password_reset_email(email=user.correo_electronico, token=token_str)
-    except Exception:
-        logger.warning("No se pudo despachar el correo SMTP de recuperación", exc_info=True)
-    return True
+    background_tasks.add_task(send_password_reset_email, email=user.correo_electronico, token=token_str)
 
 
 def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
+    # ¿Qué? Issue #396 (CN-053) — with_for_update(): mismo motivo que en
+    #       verify_email; dos peticiones simultáneas con el mismo enlace ya no
+    #       pueden usarlo las dos.
     db_token = db.query(PasswordResetToken).filter(
-        PasswordResetToken.token == reset_data.token,
+        PasswordResetToken.token == hash_token(reset_data.token),
         PasswordResetToken.used.is_(False)
-    ).first()
+    ).with_for_update().first()
 
     if not db_token:
         raise HTTPException(
@@ -483,8 +735,27 @@ def reset_password(db: Session, reset_data: ResetPasswordRequest) -> bool:
         )
 
     user.password = hash_password(nueva_contrasenia)
-    db_token.used = True
+    # ¿Qué? Issue #308: invalida todas las sesiones abiertas de la cuenta.
+    # ¿Para qué? Quien restablece su contraseña suele hacerlo porque
+    #           sospecha que alguien más entró — esa otra sesión debe caer.
+    user.version_sesion += 1
+    # ¿Qué? Issue #396 (CN-026) — quita también el bloqueo por intentos fallidos.
+    # ¿Para qué? Quien restablece la contraseña por correo acaba de demostrar que
+    #           controla la cuenta; seguía bloqueada hasta que pasaran los 15 min
+    #           aunque entrara con la contraseña nueva.
+    user.intentos_fallidos = 0
+    user.bloqueado_hasta = None
+    # ¿Qué? Issue #396 (CN-053) — se marcan como usados TODOS los enlaces sin
+    #       usar de este usuario (incluido el presentado), no solo uno.
+    db.execute(
+        update(PasswordResetToken)
+        .where(PasswordResetToken.id_usuario == user.id_usuario, PasswordResetToken.used.is_(False))
+        .values(used=True)
+        .execution_options(synchronize_session=False)
+    )
     db.commit()
+    # ¿Qué? Mismo registro de auditoría que el cambio de contraseña desde el perfil.
+    log_password_cambiada(user.correo_electronico)
     return True
 
 
@@ -498,9 +769,9 @@ def logout_user(db: Session, access_token: str, refresh_token: str | None) -> No
               (sessionStorage) — el token en sí seguía siendo 100% válido
               para el servidor durante toda su vida (15 min access, 7 días
               refresh) si alguien lo hubiera copiado antes.
-    ¿Impacto? Un token ya expirado, o sin "jti" (no debería pasar con los
-              tokens que emite este sistema), simplemente se ignora — no
-              hay nada que revocar en ese caso.
+    ¿Impacto? Un token ya expirado o inválido simplemente se ignora — no
+              hay nada que revocar en ese caso. Uno ya revocado también:
+              revocar_jti no lo guarda dos veces.
 
     Args:
         db: Sesión de base de datos.
@@ -513,24 +784,35 @@ def logout_user(db: Session, access_token: str, refresh_token: str | None) -> No
             continue
 
         payload = decode_token(token)
-        if not payload:
-            continue
-
-        jti = payload.get("jti")
-        exp = payload.get("exp")
-        if not jti or not exp:
-            continue
-
-        jti_uuid = uuid.UUID(jti)
-        if db.get(TokenRevocado, jti_uuid):
-            continue
-
-        db.add(TokenRevocado(
-            jti=jti_uuid,
-            expira_en=datetime.fromtimestamp(exp, tz=timezone.utc),
-        ))
+        if payload:
+            revocar_jti(db, payload["jti"], payload["exp"])
 
     db.commit()
+
+
+def revocar_jti(db: Session, jti: str, exp: int) -> bool:
+    """Guarda el jti de un token en la lista negra (tokens_revocados).
+
+    ¿Qué? Issue #359 (CN-036): revisa y guarda en UN solo paso con
+          INSERT ... ON CONFLICT DO NOTHING — si el jti ya estaba, PostgreSQL
+          no inserta nada y no devuelve ninguna fila.
+    ¿Para qué? Antes era "preguntar si existe" y, más abajo, "guardarlo":
+              dos /refresh simultáneos con el mismo token pasaban los dos la
+              pregunta antes de que alguno lo guardara. Como jti es la llave
+              primaria, la BD deja que solo uno de los dos lo inserte.
+    ¿Impacto? No hace commit — lo decide quien la llama. decode_token ya
+              garantiza que jti es un UUID válido y que exp existe.
+
+    Returns:
+        True si esta llamada lo revocó; False si ya estaba revocado.
+    """
+    stmt = (
+        pg_insert(TokenRevocado)
+        .values(jti=uuid.UUID(jti), expira_en=datetime.fromtimestamp(exp, tz=timezone.utc))
+        .on_conflict_do_nothing(index_elements=[TokenRevocado.jti])
+        .returning(TokenRevocado.jti)
+    )
+    return db.execute(stmt).scalar_one_or_none() is not None
 
 
 def update_user_locale(db: Session, user: Usuario, locale: str) -> Usuario:

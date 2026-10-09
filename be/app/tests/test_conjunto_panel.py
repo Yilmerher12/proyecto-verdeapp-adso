@@ -9,6 +9,9 @@ Descripción: Pruebas del panel propio del Administrador de Conjunto.
 
 from fastapi.testclient import TestClient
 
+from app.tests.conftest import ADMIN_CONJUNTO_EMAIL
+from app.utils.audit_log import redactar_correo
+
 
 class TestMisConjuntos:
     def test_sin_login_devuelve_401(self, client: TestClient):
@@ -68,6 +71,53 @@ class TestEditarConjunto:
         )
         assert response.status_code == 200
 
+    def test_nit_de_solo_espacios_se_guarda_como_sin_valor(
+        self, client: TestClient, db, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Issue #220 (b14): un NIT de puros espacios debe guardarse como
+        None ("sin valor"), no como una cadena de texto vacía."""
+        response = client.patch(
+            f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}",
+            headers=admin_conjunto_auth_headers,
+            json={"nit": "   "},
+        )
+        assert response.status_code == 200
+
+        db.refresh(conjunto_verificado)
+        assert conjunto_verificado.nit is None
+
+    def test_editar_solo_la_cantidad_de_apartamentos_conserva_el_nit(
+        self, client: TestClient, db, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Issue #402 (CN-062): si la petición no trae "nit", el NIT guardado no se borra."""
+        nit_original = conjunto_verificado.nit
+        assert nit_original
+
+        response = client.patch(
+            f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}",
+            headers=admin_conjunto_auth_headers,
+            json={"total_apartamentos": 80},
+        )
+        assert response.status_code == 200
+
+        db.refresh(conjunto_verificado)
+        assert conjunto_verificado.nit == nit_original
+        assert conjunto_verificado.total_apartamentos == 80
+
+    def test_nit_null_explicito_lo_borra(
+        self, client: TestClient, db, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Issue #402 (CN-062): "nit": null SÍ es pedir el borrado — se distingue de no mandarlo."""
+        response = client.patch(
+            f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}",
+            headers=admin_conjunto_auth_headers,
+            json={"nit": None},
+        )
+        assert response.status_code == 200
+
+        db.refresh(conjunto_verificado)
+        assert conjunto_verificado.nit is None
+
     def test_no_puede_editar_un_conjunto_ajeno(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_no_verificado
     ):
@@ -104,7 +154,7 @@ class TestRegenerarCodigoAcceso:
         assert response.status_code == 403
 
     def test_genera_un_codigo_distinto_al_anterior(
-        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, acciones_admin
     ):
         codigo_original = conjunto_verificado.codigo_acceso
         response = client.post(self._url(conjunto_verificado), headers=admin_conjunto_auth_headers)
@@ -112,6 +162,13 @@ class TestRegenerarCodigoAcceso:
         codigo_nuevo = response.json()["codigo_acceso"]
         assert codigo_nuevo != codigo_original
         assert len(codigo_nuevo) == 6
+
+        # Issue #376: se anota quién y en qué conjunto, NUNCA el código (es secreto).
+        [accion] = acciones_admin()
+        assert accion["action"] == "codigo_acceso_regenerado"
+        assert accion["admin"] == redactar_correo(ADMIN_CONJUNTO_EMAIL)
+        assert accion["conjunto"] == str(conjunto_verificado.id_conjunto_residencial)
+        assert codigo_nuevo not in str(accion)
 
         # ¿Qué? El código viejo debe dejar de servir para registrarse.
         listado = client.get("/api/v1/conjunto-panel/mis-conjuntos", headers=admin_conjunto_auth_headers)

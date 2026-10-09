@@ -52,6 +52,17 @@ FIRMA_PDF = b"%PDF-"
 FIRMA_ZIP = b"PK\x03\x04"
 TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024  # 5 MB
 
+# ¿Qué? Issue #395 (CN-059): tope de píxeles de una imagen (ancho x alto).
+# ¿Para qué? Una imagen puede pesar menos de 5 MB y tener cientos de millones de
+#           píxeles (se comprime casi a nada): al validarla, Pillow la abre y
+#           gasta mucha memoria. 25 millones es más que una foto de 20 MP.
+# ¿Impacto? Pillow avisa solo con una advertencia al pasar este valor y recién
+#           falla al doble, por eso además se compara a mano en
+#           _validar_contenido_imagen. Aplica a todo el proceso (también a la
+#           foto de perfil y a las evidencias de auditoría).
+MAX_PIXELES = 25_000_000
+Image.MAX_IMAGE_PIXELS = MAX_PIXELES
+
 
 def _validar_contenido_imagen(contenido: bytes) -> None:
     """Parte bloqueante — corre en un hilo aparte (ver guardar_imagen_subida).
@@ -63,8 +74,18 @@ def _validar_contenido_imagen(contenido: bytes) -> None:
     ¿Impacto? Sin capturar también SyntaxError, un archivo así tumbaba
              todo el endpoint con un error 500 sin control, en vez de
              responder con el 400 claro de siempre."""
+    demasiado_grande = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="La imagen es demasiado grande en píxeles.",
+    )
     try:
-        Image.open(io.BytesIO(contenido)).verify()
+        imagen = Image.open(io.BytesIO(contenido))
+        # open() solo lee la cabecera: el ancho y el alto ya se conocen sin cargar la imagen.
+        if imagen.width * imagen.height > MAX_PIXELES:
+            raise demasiado_grande
+        imagen.verify()
+    except Image.DecompressionBombError:
+        raise demasiado_grande
     except (UnidentifiedImageError, OSError, SyntaxError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -140,7 +161,14 @@ async def guardar_imagen_subida(
             detail=f"El archivo debe ser {formatos}.",
         )
 
-    contenido = await archivo.read()
+    # ¿Qué? Issue #314 (CN-025): lee como máximo el límite + 1 byte.
+    # ¿Para qué? Antes, read() sin tope cargaba el archivo ENTERO en memoria
+    #           (500 MB, 2 GB...) y recién después lo comparaba con 5 MB.
+    #           Con el byte extra basta para saber si se pasó del límite.
+    # ¿Impacto? El cuerpo igual llega completo al servidor (FastAPI lo
+    #           guarda en un archivo temporal); frenarlo antes de recibirlo
+    #           es tarea del proxy (client_max_body_size, issue #317).
+    contenido = await archivo.read(TAMANO_MAXIMO_BYTES + 1)
     if len(contenido) > TAMANO_MAXIMO_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

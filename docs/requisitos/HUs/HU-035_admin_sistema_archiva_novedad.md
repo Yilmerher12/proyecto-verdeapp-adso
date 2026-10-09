@@ -53,4 +53,4 @@
 
 - **Dado que** soy Admin Sistema,
 - **cuando** consulto el historial de novedades,
-- **entonces** debo poder ver también las archivadas, no solo las activas.
+- **entonces** debo poder ver también las archivadas, no solo las activas — con un interruptor "Ver archivadas" (apagado por defecto: solo activas), y filtrando por alcance o buscando por texto. Los filtros se aplican en el servidor, sobre todo el historial paginado, no solo sobre la página visible.

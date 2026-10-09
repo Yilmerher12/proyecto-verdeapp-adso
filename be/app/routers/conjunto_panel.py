@@ -8,49 +8,30 @@ Descripción: Endpoints del panel propio del Administrador de Conjunto.
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, selectinload
 from typing import List
 
-from app.dependencies import get_current_user, get_db
-from app.models.usuario import Usuario
+from app.dependencies import get_db, require_admin_conjunto
 from app.models.administrador_conjunto import AdministradorConjunto
+from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.conjunto_residencial import ConjuntoResidencial
-from app.models.rol import RolId
+from app.models.residente import Residente
+from app.models.unidad import Unidad
+from app.models.usuario import Usuario
 from app.models.solicitud_desvinculacion import EstadoSolicitudDesvinculacion, SolicitudDesvinculacion
 from app.schemas.conjunto_panel import CodigoAccesoResponse, ConjuntoAdministradoResponse, EditarConjuntoRequest
 from app.schemas.desvinculacion import SolicitarDesvinculacionRequest
+from app.schemas.agenda_conjunto import AgendaItemResponse, CambiarEstadoAgendaRequest, CrearAgendaItemRequest
 from app.schemas.user import MessageResponse
-from app.services import desvinculacion_service
+from app.services import agenda_conjunto_service, desvinculacion_service
+from app.utils.audit_log import log_accion_admin
 from app.utils.codigo_acceso import generar_codigo_acceso
 
 router = APIRouter(prefix="/api/v1/conjunto-panel", tags=["conjunto-panel"])
 
-
-def _obtener_administrador_o_rechazar(db: Session, current_user: Usuario) -> AdministradorConjunto:
-    """
-    Confirma que quien hace la petición es realmente un Administrador de
-    Conjunto y devuelve su registro de datos personales — así evitamos que
-    cualquier otro rol consulte o edite conjuntos por esta ruta.
-    """
-    if current_user.id_rol != RolId.ADMIN_CONJUNTO:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Administrador de Conjunto puede acceder a este panel.",
-        )
-
-    stmt = select(AdministradorConjunto).where(
-        AdministradorConjunto.id_usuario == current_user.id_usuario
-    )
-    administrador = db.execute(stmt).scalar_one_or_none()
-
-    if not administrador:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No se encontró tu perfil de administrador.",
-        )
-
-    return administrador
+# ¿Qué? Issue #216 — ver el mismo comentario en comunicados.py.
+_requiere_admin_conjunto = require_admin_conjunto("Solo un Administrador de Conjunto puede acceder a este panel.")
 
 
 def _obtener_conjunto_propio_o_rechazar(
@@ -86,12 +67,10 @@ def _obtener_conjunto_propio_o_rechazar(
 
 @router.get("/mis-conjuntos", response_model=List[ConjuntoAdministradoResponse])
 def listar_mis_conjuntos(
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """Devuelve todos los conjuntos que administra la persona en sesión."""
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
-
     ids_con_solicitud_pendiente = set(
         db.execute(
             select(SolicitudDesvinculacion.id_conjunto_residencial).where(
@@ -100,6 +79,47 @@ def listar_mis_conjuntos(
             )
         ).scalars().all()
     )
+
+    # ¿Qué? Issue #219 (b7 del diagnóstico) — antes se recorría
+    #       administrador.conjuntos y se accedía a c.localidad por cada
+    #       uno, disparando una consulta aparte por conjunto (carga
+    #       perezosa de SQLAlchemy). selectinload trae TODAS las
+    #       localidades de estos conjuntos en una segunda consulta única,
+    #       sin importar cuántos conjuntos administre esta persona.
+    conjuntos = db.execute(
+        select(ConjuntoResidencial)
+        .join(
+            AdministradorConjuntoAsignacion,
+            AdministradorConjuntoAsignacion.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial,
+        )
+        .where(
+            AdministradorConjuntoAsignacion.id_administrador == administrador.id_administrador,
+            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
+        )
+        .options(selectinload(ConjuntoResidencial.localidad))
+    ).scalars().all()
+
+    # ¿Qué? Cuántos apartamentos y residentes ya están registrados, por
+    #       conjunto, en UNA sola consulta agrupada (no una por conjunto).
+    # ¿Para qué? Solo cuentan cuentas activas: una cuenta sin verificar o
+    #           desactivada no cuenta como "ya usa VerdeApp".
+    # ¿Impacto? Se cuenta con count(distinct id_unidad): el join con
+    #          Residente deja solo apartamentos con al menos un residente.
+    ids_conjuntos = [c.id_conjunto_residencial for c in conjuntos]
+    cobertura = {
+        fila.id_conjunto_residencial: (fila.apartamentos, fila.residentes)
+        for fila in db.execute(
+            select(
+                Unidad.id_conjunto_residencial,
+                func.count(func.distinct(Unidad.id_unidad)).label("apartamentos"),
+                func.count(Residente.id_residente).label("residentes"),
+            )
+            .join(Residente, Residente.id_unidad == Unidad.id_unidad)
+            .join(Usuario, Usuario.id_usuario == Residente.id_usuario)
+            .where(Unidad.id_conjunto_residencial.in_(ids_conjuntos), Usuario.is_active.is_(True))
+            .group_by(Unidad.id_conjunto_residencial)
+        ).all()
+    }
 
     return [
         ConjuntoAdministradoResponse(
@@ -110,8 +130,11 @@ def listar_mis_conjuntos(
             nombre_localidad=c.localidad.nombre_localidad,
             tiene_solicitud_pendiente=c.id_conjunto_residencial in ids_con_solicitud_pendiente,
             codigo_acceso=c.codigo_acceso,
+            total_apartamentos=c.total_apartamentos,
+            apartamentos_registrados=cobertura.get(c.id_conjunto_residencial, (0, 0))[0],
+            residentes_registrados=cobertura.get(c.id_conjunto_residencial, (0, 0))[1],
         )
-        for c in administrador.conjuntos
+        for c in conjuntos
     ]
 
 
@@ -119,11 +142,11 @@ def listar_mis_conjuntos(
 def editar_mi_conjunto(
     id_conjunto_residencial: UUID,
     datos: EditarConjuntoRequest,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """
-    ¿Qué? Edita el NIT de UN conjunto, solo si el usuario en sesión es uno
+    ¿Qué? Edita el NIT y la cantidad de apartamentos de UN conjunto, solo si el usuario en sesión es uno
           de sus administradores asignados.
     ¿Para qué? Issue #180: nombre y dirección se quitaron de este endpoint
               porque vienen ya verificados desde el dataset oficial de
@@ -135,11 +158,37 @@ def editar_mi_conjunto(
               con 403 — esto evita que un administrador edite conjuntos
               que no le pertenecen, aunque conozca su id.
     """
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
     conjunto = _obtener_conjunto_propio_o_rechazar(db, administrador, id_conjunto_residencial)
 
-    conjunto.nit = datos.nit.strip() if datos.nit else None
+    # ¿Qué? Issue #220 (b14 del diagnóstico) — antes, "datos.nit.strip() if
+    #       datos.nit else None" solo revisaba que datos.nit no fuera
+    #       vacío/None ANTES de recortarlo — un NIT de puros espacios
+    #       ("   ") pasaba esa condición igual (no está vacío como string),
+    #       así que se guardaba como "" en vez de None.
+    # ¿Para qué? Mismo patrón que ya usa asociacion en user_service.py:
+    #           recortar primero, y que el vacío resultante sea "sin
+    #           valor" (None), no una cadena vacía.
+    #
+    # ¿Qué? Issue #402 (CN-062) — el NIT, igual que la cantidad de
+    #       apartamentos, solo se toca si la petición lo trae.
+    # ¿Para qué? Antes, una petición que solo traía total_apartamentos dejaba
+    #           datos.nit en None, y eso se guardaba como "sin valor": el NIT
+    #           ya guardado se borraba sin que nadie lo pidiera.
+    # ¿Impacto? "nit" ausente = se conserva; "nit": null (o vacío) explícito
+    #           = se borra a propósito. La pantalla siempre manda los dos
+    #           campos, así que su comportamiento no cambia.
+    if "nit" in datos.model_fields_set:
+        nit_recortado = (datos.nit or "").strip()
+        conjunto.nit = nit_recortado or None
+    # ¿Qué? La cantidad de apartamentos solo se toca si la petición la trae
+    #       (así editar solo el NIT no la borra).
+    if "total_apartamentos" in datos.model_fields_set:
+        conjunto.total_apartamentos = datos.total_apartamentos
     db.commit()
+    # ¿Qué? Issue #401: se anota EN QUÉ conjunto se editó, no el NIT (dato del conjunto).
+    log_accion_admin(
+        administrador.usuario.correo_electronico, "conjunto_editado", conjunto=id_conjunto_residencial
+    )
 
     return MessageResponse(message="Conjunto actualizado correctamente.")
 
@@ -152,16 +201,19 @@ def editar_mi_conjunto(
 def solicitar_desvinculacion(
     id_conjunto_residencial: UUID,
     datos: SolicitarDesvinculacionRequest,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-022: pide dejar de administrar uno de mis conjuntos. Queda pendiente hasta que el Admin Sistema la resuelva."""
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
     desvinculacion_service.solicitar_desvinculacion(
         db=db,
         administrador=administrador,
         id_conjunto=id_conjunto_residencial,
         motivo=datos.motivo,
+    )
+    # ¿Qué? Issue #401: sin el motivo — es texto libre (ver log_accion_admin).
+    log_accion_admin(
+        administrador.usuario.correo_electronico, "desvinculacion_solicitada", conjunto=id_conjunto_residencial
     )
     return MessageResponse(message="Solicitud de desvinculación enviada. Un Administrador del Sistema la revisará.")
 
@@ -172,7 +224,7 @@ def solicitar_desvinculacion(
 )
 def regenerar_codigo_acceso(
     id_conjunto_residencial: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
     """
@@ -187,7 +239,6 @@ def regenerar_codigo_acceso(
               de este lote) antes de guardar, para no depender solo de la
               probabilidad de choque de ~0.01%.
     """
-    administrador = _obtener_administrador_o_rechazar(db, current_user)
     conjunto = _obtener_conjunto_propio_o_rechazar(db, administrador, id_conjunto_residencial)
 
     nuevo_codigo = generar_codigo_acceso()
@@ -200,5 +251,67 @@ def regenerar_codigo_acceso(
 
     conjunto.codigo_acceso = nuevo_codigo
     db.commit()
+    # ¿Qué? Issue #376: se anota EN QUÉ conjunto se cambió, nunca el código
+    #       nuevo — con él cualquiera que lea el log podría registrarse ahí.
+    log_accion_admin(
+        administrador.usuario.correo_electronico, "codigo_acceso_regenerado", conjunto=id_conjunto_residencial
+    )
 
     return CodigoAccesoResponse(codigo_acceso=nuevo_codigo)
+
+@router.get(
+    "/mis-conjuntos/{id_conjunto_residencial}/agenda",
+    response_model=List[AgendaItemResponse],
+)
+def listar_agenda(
+    id_conjunto_residencial: UUID,
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
+    db: Session = Depends(get_db),
+):
+    """Agenda interna de uno de mis conjuntos — temas para llevar al comité; nunca sale de mi panel."""
+    return agenda_conjunto_service.listar(db, administrador, id_conjunto_residencial)
+
+
+@router.post(
+    "/mis-conjuntos/{id_conjunto_residencial}/agenda",
+    response_model=AgendaItemResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def crear_item_agenda(
+    id_conjunto_residencial: UUID,
+    datos: CrearAgendaItemRequest,
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
+    db: Session = Depends(get_db),
+):
+    """Agrega un tema (texto + foto opcional) a la agenda de uno de mis conjuntos."""
+    return agenda_conjunto_service.crear(db, administrador, id_conjunto_residencial, datos)
+
+
+@router.patch(
+    "/mis-conjuntos/{id_conjunto_residencial}/agenda/{id_item}",
+    response_model=AgendaItemResponse,
+)
+def cambiar_estado_item_agenda(
+    id_conjunto_residencial: UUID,
+    id_item: UUID,
+    datos: CambiarEstadoAgendaRequest,
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
+    db: Session = Depends(get_db),
+):
+    """Deja un tema en espera, o lo vuelve a pendiente."""
+    return agenda_conjunto_service.cambiar_estado(db, administrador, id_conjunto_residencial, id_item, datos)
+
+
+@router.delete(
+    "/mis-conjuntos/{id_conjunto_residencial}/agenda/{id_item}",
+    response_model=MessageResponse,
+)
+def eliminar_item_agenda(
+    id_conjunto_residencial: UUID,
+    id_item: UUID,
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
+    db: Session = Depends(get_db),
+):
+    """Borra un tema que ya se resolvió en el comité."""
+    agenda_conjunto_service.eliminar(db, administrador, id_conjunto_residencial, id_item)
+    return MessageResponse(message="Tema eliminado de la agenda.")

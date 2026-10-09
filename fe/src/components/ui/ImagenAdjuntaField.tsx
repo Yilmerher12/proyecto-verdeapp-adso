@@ -15,15 +15,15 @@
  */
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FileText, ImagePlus, Loader2, X } from "lucide-react";
-import { API_BASE_URL } from "@/api/axios";
+import { FileText, ImagePlus, LoaderCircle, X } from "lucide-react";
+import { motivoDelServidor } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { subirAdjunto } from "@/lib/uploadsApi";
 
 interface ImagenAdjuntaFieldProps {
   label: string;
   value: string;
   onChange: (url: string) => void;
-  token: string;
   /** ¿Qué? Además de imagen, acepta PDF/Word/Excel. Default: false (solo imagen). */
   permitirDocumentos?: boolean;
 }
@@ -44,14 +44,13 @@ const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024;
 
 // ¿Qué? Un PDF/Word/Excel no se puede mostrar como miniatura de imagen.
 function esImagen(value: string): boolean {
-  return /\.(jpe?g|png|webp)$/i.test(value) || (value.startsWith("http") && !/\.(pdf|docx?|xlsx?)$/i.test(value));
+  return /\.(jpe?g|png|webp)$/i.test(value) || (value.startsWith("https://") && !/\.(pdf|docx?|xlsx?)$/i.test(value));
 }
 
 export function ImagenAdjuntaField({
   label,
   value,
   onChange,
-  token,
   permitirDocumentos = false,
 }: ImagenAdjuntaFieldProps) {
   const { t } = useTranslation();
@@ -76,10 +75,11 @@ export function ImagenAdjuntaField({
 
     setSubiendo(true);
     try {
-      const url = await subirAdjunto(archivo, token, { permitirDocumentos });
+      const url = await subirAdjunto(archivo, { permitirDocumentos });
       onChange(url);
-    } catch {
-      setError(t("imagenAdjunta.errorSubida"));
+    } catch (err) {
+      // ¿Qué? Issue #395: el motivo del servidor (cuota pasada, demasiados píxeles...); el genérico solo si no dio ninguno.
+      setError(motivoDelServidor(err) ?? t("imagenAdjunta.errorSubida"));
     } finally {
       setSubiendo(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -93,29 +93,32 @@ export function ImagenAdjuntaField({
 
   // ¿Qué? url_adjunto puede venir de un enlace externo viejo (datos ya
   //       guardados antes de este cambio) — en ese caso empieza con
-  //       http(s), y se usa tal cual. Si viene de esta subida, es una
+  //       https://, y se usa tal cual. Si viene de esta subida, es una
   //       ruta relativa (/uploads/adjuntos/...) que hay que completar con
   //       la URL del backend para poder mostrarla.
-  const urlCompleta = value.startsWith("http") ? value : `${API_BASE_URL}${value}`;
+  // ¿Para qué? enlaceAdjuntoSeguro hace las dos cosas y devuelve null si el
+  //           valor no es seguro (issue #400): en ese caso no se pinta la
+  //           miniatura y se muestra solo el nombre del archivo.
+  const urlCompleta = enlaceAdjuntoSeguro(value);
 
   return (
     <div>
       <label className="mb-2 flex items-center gap-1 text-xs font-bold text-gray-600 dark:text-gray-400">
-        <ImagePlus className="h-4 w-4" />
+        <ImagePlus className="icon-md" />
         {label}
       </label>
 
       {value ? (
         <div className="flex items-center gap-3">
-          {esImagen(value) ? (
+          {esImagen(value) && urlCompleta ? (
             <img
               src={urlCompleta}
               alt={t("imagenAdjunta.vistaPrevia")}
-              className="h-16 w-16 rounded-xl border border-gray-200 object-cover dark:border-[#2a4d34]"
+              className="h-16 w-16 rounded-xl border border-gray-200 object-cover dark:border-night-line"
             />
           ) : (
-            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-[#2a4d34] dark:bg-[#1f4029]">
-              <FileText className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-night-line dark:bg-night-field">
+              <FileText className="icon-md shrink-0 text-gray-500 dark:text-gray-400" />
               <span className="truncate text-xs text-gray-600 dark:text-gray-300">{value.split("/").pop()}</span>
             </div>
           )}
@@ -124,20 +127,20 @@ export function ImagenAdjuntaField({
             onClick={quitar}
             className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="icon-sm" />
             {t("imagenAdjunta.quitar")}
           </button>
         </div>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-400 dark:hover:bg-[#2a4d34]">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-line dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
           {subiendo ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <LoaderCircle className="icon-md animate-spin" />
               {t("imagenAdjunta.subiendo")}
             </>
           ) : (
             <>
-              <ImagePlus className="h-4 w-4" />
+              <ImagePlus className="icon-md" />
               {permitirDocumentos ? t("imagenAdjunta.seleccionarDocumento") : t("imagenAdjunta.seleccionar")}
             </>
           )}

@@ -1,8 +1,10 @@
 /**
  * Archivo: lib/recicladorConjuntoApi.ts
  * Descripción: Llamadas API del flujo de invitación Reciclador-Conjunto.
- * ¿Para qué? Centralizar las peticiones HTTP de este flujo, siguiendo el
- *           mismo patrón que conjuntoPanelApi.ts (función + token explícito).
+ * ¿Para qué? Centralizar las peticiones HTTP de este flujo en un solo lugar.
+ * ¿Impacto? RNF-001.9: ya no recibe el token de sesión como parámetro — la
+ *           cookie httpOnly viaja sola gracias a axios.defaults.withCredentials
+ *           (ver api/axios.ts).
  */
 
 import axios from "axios";
@@ -38,14 +40,12 @@ export interface RecicladorAutorizado {
  */
 export async function invitarReciclador(
   correoReciclador: string,
-  idConjuntoResidencial: string,
-  accessToken: string
+  idConjuntoResidencial: string
 ): Promise<void> {
-  await axios.post(
-    `${API_BASE}/invitar`,
-    { correo_reciclador: correoReciclador, id_conjunto_residencial: idConjuntoResidencial },
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
+  await axios.post(`${API_BASE}/invitar`, {
+    correo_reciclador: correoReciclador,
+    id_conjunto_residencial: idConjuntoResidencial,
+  });
 }
 
 /**
@@ -53,13 +53,9 @@ export async function invitarReciclador(
  *       Conjunto ha enviado para un conjunto específico.
  */
 export async function obtenerInvitacionesDeConjunto(
-  idConjuntoResidencial: string,
-  accessToken: string
+  idConjuntoResidencial: string
 ): Promise<InvitacionEnviada[]> {
-  const response = await axios.get(
-    `${API_BASE}/mi-conjunto/${idConjuntoResidencial}/invitaciones`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
+  const response = await axios.get(`${API_BASE}/mi-conjunto/${idConjuntoResidencial}/invitaciones`);
   return response.data;
 }
 
@@ -68,13 +64,9 @@ export async function obtenerInvitacionesDeConjunto(
  *       tabla recicladores_conjuntos) — no el historial de invitaciones.
  */
 export async function obtenerRecicladoresAutorizados(
-  idConjuntoResidencial: string,
-  accessToken: string
+  idConjuntoResidencial: string
 ): Promise<RecicladorAutorizado[]> {
-  const response = await axios.get(
-    `${API_BASE}/mi-conjunto/${idConjuntoResidencial}/autorizados`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
+  const response = await axios.get(`${API_BASE}/mi-conjunto/${idConjuntoResidencial}/autorizados`);
   return response.data;
 }
 
@@ -86,11 +78,7 @@ export async function obtenerRecicladoresAutorizados(
  */
 export async function revocarReciclador(
   idConjuntoResidencial: string,
-  idReciclador: string,
-  accessToken: string
+  idReciclador: string
 ): Promise<void> {
-  await axios.delete(
-    `${API_BASE}/mi-conjunto/${idConjuntoResidencial}/autorizados/${idReciclador}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
+  await axios.delete(`${API_BASE}/mi-conjunto/${idConjuntoResidencial}/autorizados/${idReciclador}`);
 }

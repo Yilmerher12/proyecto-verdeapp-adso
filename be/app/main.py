@@ -1,3 +1,5 @@
+import logging
+import sys
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -7,6 +9,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.utils.limiter import limiter
+from app.utils.audit_log import ip_de_origen
 from app.routers import auth, users, geography, admin
 from app.routers import admin_conjunto
 from app.routers import conjunto_panel
@@ -16,9 +19,11 @@ from app.routers import notificaciones
 from app.routers import contenido_educativo
 from app.routers import comunicados
 from app.routers import novedades
+from app.routers import novedades_enviadas
 from app.routers import auditoria_conjunto
 from app.routers import uploads
 from app.routers import puntos_acopio
+from app.routers import contact
 
 # ¿Qué? El esquema de la base de datos ya NO se crea aquí en tiempo de ejecución.
 # ¿Para qué? Antes esta sección llamaba a Base.metadata.create_all(bind=engine), que
@@ -41,6 +46,20 @@ from app.routers import puntos_acopio
 #           development/testing (el valor por defecto) siguen disponibles
 #           igual que antes.
 _es_produccion = settings.ENVIRONMENT == "production"
+
+# ¿Qué? Issue #309 (CN-012): configura el logging raíz de Python en nivel INFO.
+# ¿Para qué? Sin esto, el logger raíz queda en WARNING y todo logger.info() de
+#           la app se descartaba en silencio — incluidos los eventos de
+#           seguridad de utils/audit_log.py (login_success, login_failed,
+#           password_changed, access_denied), que nunca llegaban a ningún lado.
+# ¿Impacto? Uvicorn configura sus propios loggers aparte (sin propagar al
+#           raíz), así que no se duplican sus líneas de acceso.
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stdout,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+
 app = FastAPI(
     title="VerdeApp API",
     docs_url=None if _es_produccion else "/docs",
@@ -99,13 +118,34 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 #     en el futuro) a sitios externos al seguir un link.
 #   - Permissions-Policy: esta API no necesita cámara, micrófono ni
 #     ubicación — se le niega el acceso explícitamente al navegador.
+
+# ¿Qué? Issue #403 (CN-063): extensiones de documento que se sirven siempre como descarga.
+# ¿Para qué? De un PDF o un Word solo se revisa cómo empieza el archivo (la firma),
+#           no todo su contenido. Abierto en una pestaña, su contenido correría con
+#           la dirección de este backend, y desde ahí podría pedirle cosas a la API
+#           con la sesión de quien lo abrió.
+# ¿Impacto? Al pulsar un adjunto PDF, Word o Excel el navegador lo descarga en vez de
+#           abrirlo en la pestaña. Las imágenes se siguen viendo igual en las pantallas.
+_DOCUMENTOS_DESCARGABLES = (".pdf", ".docx", ".xlsx")
+
+
 @app.middleware("http")
 async def agregar_cabeceras_seguridad(request: Request, call_next):
+    # ¿Qué? Issue #401: deja la IP de origen disponible para el log de
+    #       auditoría (ver ip_de_origen en utils/audit_log.py).
+    ip_de_origen.set(request.client.host if request.client else None)
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    # ¿Qué? Issue #403 (CN-063): todo lo que sale de /uploads lleva una política que le
+    #       prohíbe cargar o ejecutar nada ("sandbox" lo aísla de este sitio), y los
+    #       documentos se descargan en vez de abrirse (ver _DOCUMENTOS_DESCARGABLES).
+    if request.url.path.startswith("/uploads/"):
+        response.headers["Content-Security-Policy"] = "default-src 'none'; sandbox"
+        if request.url.path.lower().endswith(_DOCUMENTOS_DESCARGABLES):
+            response.headers["Content-Disposition"] = "attachment"
     return response
 
 # Registro ordenado de rutas
@@ -121,9 +161,11 @@ app.include_router(notificaciones.router)
 app.include_router(contenido_educativo.router)
 app.include_router(comunicados.router)
 app.include_router(novedades.router)
+app.include_router(novedades_enviadas.router)
 app.include_router(auditoria_conjunto.router)
 app.include_router(uploads.router)
 app.include_router(puntos_acopio.router)
+app.include_router(contact.router)
 
 # ¿Qué? Sirve las fotos de evidencia de las auditorías como archivos
 #       estáticos, bajo /uploads — es la primera vez que el backend guarda

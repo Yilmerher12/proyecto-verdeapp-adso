@@ -9,20 +9,24 @@
  */
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FileText, Loader2, Upload, X } from "lucide-react";
+import { FileText, LoaderCircle, Upload, X } from "lucide-react";
+import { motivoDelServidor } from "@/api/axios";
 import { subirAdjunto } from "@/lib/uploadsApi";
+import { ENLACE_MAX_LENGTH } from "@/lib/validacion";
 
 interface GuiaApoyoFieldProps {
   label: string;
   value: string;
   onChange: (url: string) => void;
-  token: string;
+  /** ¿Qué? Issue #314: error del link pegado a mano (no https://), lo decide la página. */
+  errorEnlace?: string;
+  onBlurEnlace?: () => void;
 }
 
 const TIPOS_PERMITIDOS = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024;
 
-export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoFieldProps) {
+export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnlace }: GuiaApoyoFieldProps) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(false);
@@ -48,10 +52,10 @@ export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoField
 
     setSubiendo(true);
     try {
-      const url = await subirAdjunto(archivo, token, { permitirDocumentos: true });
+      const url = await subirAdjunto(archivo, { permitirDocumentos: true });
       onChange(url);
-    } catch {
-      setError(t("guiaApoyo.errorSubida"));
+    } catch (err) {
+      setError(motivoDelServidor(err) ?? t("guiaApoyo.errorSubida"));
     } finally {
       setSubiendo(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -67,7 +71,7 @@ export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoField
   return (
     <div>
       <label className="mb-2 flex items-center gap-1 text-xs font-bold text-gray-600 dark:text-gray-400">
-        <FileText className="h-4 w-4" />
+        <FileText className="icon-md" />
         {label}
       </label>
 
@@ -83,8 +87,8 @@ export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoField
           onClick={() => cambiarModo("archivo")}
           className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "archivo"
-              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-[#1f4029] dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+              ? "bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
           }`}
         >
           {t("guiaApoyo.tabUpload")}
@@ -96,8 +100,8 @@ export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoField
           onClick={() => cambiarModo("link")}
           className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "link"
-              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-[#1f4029] dark:text-gray-400 dark:hover:bg-[#2a4d34]"
+              ? "bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
           }`}
         >
           {t("guiaApoyo.tabLink")}
@@ -105,16 +109,32 @@ export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoField
       </div>
 
       {modo === "link" ? (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="https://..."
-          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
-        />
+        <>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlurEnlace}
+            maxLength={ENLACE_MAX_LENGTH}
+            placeholder="https://..."
+            aria-label={label}
+            aria-invalid={!!errorEnlace}
+            aria-describedby={errorEnlace ? "guia-apoyo-enlace-error" : undefined}
+            className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+              errorEnlace
+                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+            }`}
+          />
+          {errorEnlace && (
+            <p id="guia-apoyo-enlace-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+              {errorEnlace}
+            </p>
+          )}
+        </>
       ) : value ? (
-        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-[#2a4d34] dark:bg-[#1f4029]">
-          <FileText className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
+        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 dark:border-night-line dark:bg-night-field">
+          <FileText className="icon-md shrink-0 text-gray-500 dark:text-gray-400" />
           <span className="min-w-0 flex-1 truncate text-xs text-gray-600 dark:text-gray-300">
             {value.split("/").pop()}
           </span>
@@ -123,20 +143,20 @@ export function GuiaApoyoField({ label, value, onChange, token }: GuiaApoyoField
             onClick={() => onChange("")}
             className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="icon-sm" />
             {t("guiaApoyo.quitar")}
           </button>
         </div>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-gray-400 dark:hover:bg-[#2a4d34]">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-line dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
           {subiendo ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <LoaderCircle className="icon-md animate-spin" />
               {t("guiaApoyo.subiendo")}
             </>
           ) : (
             <>
-              <Upload className="h-4 w-4" />
+              <Upload className="icon-md" />
               {t("guiaApoyo.seleccionar")}
             </>
           )}

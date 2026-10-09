@@ -7,7 +7,9 @@
  */
 
 import axios from "axios";
+import i18n from "@/i18n";
 import { notificarServidorInalcanzable, notificarServidorRecuperado } from "@/lib/serverStatusEvents";
+import { borrarSesionActiva, haySesionActiva } from "@/lib/sesionActiva";
 
 // La URL de la API sale de esta única variable de entorno de Vite. Antes había
 // varias pantallas (dashboards, formularios, DirectorioPage) que se escribían
@@ -24,34 +26,26 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:80
  * ¿Impacto? Garantiza consistencia: todas las peticiones usan JSON, timeout de 10s,
  *           y la misma URL base.
  */
+// ¿Qué? RNF-001.9: el token de sesión ya no vive en sessionStorage — vive
+//       en una cookie httpOnly que el propio navegador adjunta solo en
+//       cada petición. "withCredentials: true" es lo que le dice a axios
+//       "sí, incluye las cookies de este origen en cada request" (por
+//       defecto NO lo hace, a diferencia de un <form> HTML normal).
+// ¿Para qué? Reemplaza al interceptor manual que antes leía el token de
+//           sessionStorage y lo pegaba en el header Authorization — ya no
+//           hace falta: el navegador hace ese trabajo solo, y el
+//           JavaScript de la app nunca llega a ver el valor del token.
+// ¿Impacto? Sin esto, ninguna petición llevaría la cookie de sesión y
+//           todo endpoint protegido respondería 401 aunque el usuario ya
+//           hubiera iniciado sesión.
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 10000, // 10 segundos máximo por petición
+  withCredentials: true,
 });
-
-/**
- * ¿Qué? Interceptor de request que agrega el token JWT automáticamente.
- * ¿Para qué? Cada petición a endpoints protegidos necesita el header Authorization.
- *           En vez de agregarlo manualmente en cada llamada, el interceptor lo hace.
- * ¿Impacto? Sin este interceptor, el frontend tendría que pasar el token en cada fetch,
- *           aumentando el riesgo de olvidarlo y recibir 401.
- */
-api.interceptors.request.use(
-  (config) => {
-    // ¿Qué? Lee el access token almacenado en memoria (sessionStorage).
-    // ¿Para qué? Adjuntarlo como Bearer token en el header Authorization.
-    // ¿Impacto? sessionStorage se borra al cerrar el navegador — más seguro que localStorage.
-    const token = sessionStorage.getItem("access_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
 
 /**
  * ¿Qué? Interceptor de response que maneja errores HTTP de forma centralizada.
@@ -77,16 +71,127 @@ function manejarRespuestaExitosa(response: import("axios").AxiosResponse) {
 //           se ignoran porque para entonces la redirección ya está en curso.
 let sesionExpiradaEnProceso = false;
 
+// ¿Qué? Issue #319: rutas donde un 401 NO significa "venció el access
+//       token", así que no tiene sentido intentar renovar la sesión.
+// ¿Para qué? En /auth/login un 401 es "contraseña incorrecta"; en
+//           /auth/refresh y /auth/logout, renovar desde ahí mismo sería un
+//           ciclo sin fin.
+const RUTAS_SIN_RENOVACION = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"];
+
+function esRutaSinRenovacion(url: string | undefined): boolean {
+  return !!url && RUTAS_SIN_RENOVACION.some((ruta) => url.includes(ruta));
+}
+
+// ¿Qué? Cliente aparte, SIN interceptores, solo para llamar a /auth/refresh.
+// ¿Para qué? Si la renovación usara "api" o "axios", su propio 401 pasaría
+//           por manejarErrorDeRespuesta y mandaría al login antes de que se
+//           pudiera hacer el reintento de abajo.
+const clienteRenovacion = axios.create({ baseURL: API_BASE_URL, withCredentials: true, timeout: 10000 });
+
+// ¿Qué? La renovación que está en curso, compartida por todas las
+//       peticiones que fallen con 401 al mismo tiempo.
+// ¿Para qué? Desde el issue #308 cada refresh token sirve UNA sola vez. Al
+//           abrir un dashboard salen 3-4 peticiones juntas: si cada una
+//           llamara a /auth/refresh, la primera gastaría el token y las
+//           demás fallarían y sacarían al usuario. Con esto solo la primera
+//           renueva y las demás esperan ese mismo resultado.
+let renovacionEnCurso: Promise<void> | null = null;
+
+function pedirRenovacion(): Promise<void> {
+  return (
+    clienteRenovacion
+      .post("/api/v1/auth/refresh")
+      .then(() => undefined)
+      // ¿Qué? Si falla no se decide aquí: igual se reintenta la petición
+      //       original (ver manejarErrorDeRespuesta) y ESE resultado decide.
+      .catch(() => undefined)
+  );
+}
+
+// ¿Qué? Issue #359: renovacionEnCurso solo coordina las peticiones de UNA
+//       pestaña. navigator.locks (del navegador, no es una librería) hace
+//       que entre pestañas también se renueve de a una a la vez.
+// ¿Para qué? Las pestañas comparten las cookies. Desde el #359 el backend
+//           deja usar cada refresh token una sola vez, de verdad: si dos
+//           pestañas lo mandan juntas, una recibe 401. Con el candado, la
+//           segunda espera a que la primera termine y renueva ya con la
+//           cookie nueva que dejó la primera.
+// ¿Impacto? Si el navegador no tiene navigator.locks (o en las pruebas con
+//           jsdom), se renueva sin candado, como antes.
+function renovarSesion(): Promise<void> {
+  if (!renovacionEnCurso) {
+    const candado = typeof navigator !== "undefined" ? navigator.locks : undefined;
+    const renovacion: Promise<void> = candado
+      ? candado.request("verdeapp:renovar-sesion", pedirRenovacion).then(() => undefined)
+      : pedirRenovacion();
+    renovacionEnCurso = renovacion.finally(() => {
+      renovacionEnCurso = null;
+    });
+  }
+  return renovacionEnCurso;
+}
+
+// ¿Qué? El motivo que el servidor dio para rechazar una petición, en texto
+//       para mostrar al usuario; null si no dio ninguno.
+//       - 429 (límite de peticiones): slowapi manda { error: "Rate limit
+//         exceeded: ..." } sin "detail", así que se muestra un mensaje propio
+//         y traducido. Si el 429 SÍ trae "detail" de texto (cuota de subidas
+//         por usuario, issue #395) se muestra ese: dice cuál tope se pasó.
+//       - 422 (validación de Pydantic): { detail: [{ msg }] } → los "msg" unidos.
+//       - Cualquier otro error con { detail: "texto" } → ese texto.
+// ¿Para qué? Issue #414: antes solo se leía "detail" y un 429 llegaba a la
+//           pantalla como "Request failed with status code 429". Las pantallas
+//           que atrapan el error por su cuenta (paneles de Reciclador y
+//           Residente) la usan para mostrar el motivo exacto en vez de un
+//           mensaje genérico.
+// ¿Impacto? No usa axios.isAxiosError a propósito: varias pruebas simulan el
+//           módulo "axios" sin esa función. Se revisa la forma del error.
+export function motivoDelServidor(error: unknown): string | null {
+  const respuesta = (error as { response?: { status?: number; data?: { detail?: unknown } } } | null)?.response;
+  if (!respuesta) return null;
+  const detail = respuesta.data?.detail;
+  if (respuesta.status === 429) return typeof detail === "string" ? detail : i18n.t("common.tooManyRequests");
+  if (respuesta.status === 422 && Array.isArray(detail)) {
+    return detail.map((e: { msg: string }) => e.msg).join(". ");
+  }
+  return typeof detail === "string" ? detail : null;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function manejarErrorDeRespuesta(error: any) {
+async function manejarErrorDeRespuesta(error: any) {
+  const haySesionGuardada = haySesionActiva();
+  const configOriginal = error.config;
+
+  // ¿Qué? Issue #319: el access token dura 15 minutos y el refresh token
+  //       7 días, pero antes nadie llamaba a /auth/refresh — al vencer el
+  //       access token, la app mandaba al login aunque el refresh token
+  //       siguiera sirviendo. Ahora: renovar y repetir la petición UNA vez.
+  // ¿Para qué? Que la sesión dure lo que debe (hasta 7 días sin usar la
+  //           app; cada renovación entrega un refresh token nuevo con 7
+  //           días más) sin que el usuario note nada.
+  // ¿Impacto? La petición se repite aunque la renovación haya fallado: con
+  //           dos pestañas abiertas (cookies compartidas), la otra pestaña
+  //           puede haber renovado un instante antes y gastado el refresh
+  //           token — sus cookies nuevas también le sirven a esta. Si el
+  //           reintento vuelve a dar 401, ya tiene "_reintentado" y cae al
+  //           bloque de abajo, que manda al login como antes.
+  if (
+    error.response?.status === 401 &&
+    haySesionGuardada &&
+    configOriginal &&
+    !configOriginal._reintentado &&
+    !esRutaSinRenovacion(configOriginal.url)
+  ) {
+    configOriginal._reintentado = true;
+    await renovarSesion();
+    return axios.request(configOriginal);
+  }
+
   if (error.response) {
     // ¿Qué? Error HTTP del servidor (4xx, 5xx).
-    // ¿Para qué? Extraer el mensaje de error del body de la respuesta.
-    const data = error.response.data;
 
     // ¿Qué? Un 401 mientras había un token guardado significa que la sesión
-    //       venció DURANTE el uso activo de la app (no es un login con
-    //       contraseña incorrecta — ese caso no tiene token guardado todavía).
+    //       venció DURANTE el uso activo de la app.
     // ¿Para qué? Antes, cuando el token expiraba (a los 15-60 minutos), la
     //           app simplemente dejaba de actualizar datos en silencio: cada
     //           petición fallaba con 401 y quedaba atrapada en los `catch`
@@ -95,25 +200,39 @@ function manejarErrorDeRespuesta(error: any) {
     // ¿Impacto? Ahora se limpia la sesión y se manda a login con un aviso
     //           claro, en vez de dejar que las peticiones sigan fallando
     //           sin explicación.
-    const haySesionGuardada = !!sessionStorage.getItem("access_token");
-    if (error.response.status === 401 && haySesionGuardada && !sesionExpiradaEnProceso) {
+    // ¿Qué? RNF-001.9: el token vive en una cookie httpOnly — JavaScript no
+    //       puede leerla para saber si "hay sesión guardada". En su lugar,
+    //       se revisa una banderita sin ningún valor secreto que
+    //       AuthContext.tsx anota (lib/sesionActiva.ts) justo después de un
+    //       login/getMe exitoso, y borra al cerrar sesión.
+    // ¿Qué? Issue #319: aquí solo llega un 401 que YA pasó por la
+    //       renovación de arriba y siguió fallando — la sesión de verdad
+    //       terminó (refresh token vencido, revocado o de antes de un
+    //       cambio de contraseña).
+    // ¿Qué? Salvo en las rutas de RUTAS_SIN_RENOVACION: ahí un 401 no habla
+    //       de la sesión. En /auth/login es "contraseña incorrecta"; en
+    //       /auth/logout, AppShell ya cierra la sesión local por su cuenta.
+    // ¿Para qué? Antes se asumía que en el login nunca había marca de sesión.
+    //           Sí puede haberla: alguien con sesión abierta que entra a
+    //           /login y se equivoca de contraseña veía "Tu sesión expiró"
+    //           en vez del error real, y perdía la marca aunque sus cookies
+    //           siguieran sirviendo. Y cerrar sesión con la sesión ya
+    //           vencida mandaba a /login con ese aviso en vez de al inicio.
+    if (
+      error.response.status === 401 &&
+      haySesionGuardada &&
+      !sesionExpiradaEnProceso &&
+      !esRutaSinRenovacion(configOriginal?.url)
+    ) {
       sesionExpiradaEnProceso = true;
-      sessionStorage.removeItem("access_token");
-      sessionStorage.removeItem("refresh_token");
+      borrarSesionActiva();
       sessionStorage.setItem("verdeapp:session-expired", "1");
       window.location.href = "/login";
     }
 
-    // ¿Qué? Manejo especial para errores de validación Pydantic (422).
-    // ¿Para qué? Los errores 422 tienen estructura { detail: [{loc, msg, type}] }.
-    if (error.response.status === 422 && Array.isArray(data.detail)) {
-      const messages = data.detail.map(
-        (err: { msg: string }) => err.msg,
-      );
-      error.message = messages.join(". ");
-    } else if (typeof data.detail === "string") {
-      error.message = data.detail;
-    }
+    // ¿Qué? Extraer el mensaje de error del body de la respuesta (422, 429, detail).
+    const motivo = motivoDelServidor(error);
+    if (motivo) error.message = motivo;
     // ¿Qué? Sí hubo respuesta (aunque sea un error 4xx/5xx) — el servidor
     //       está vivo y contestando, así que también cuenta como "se
     //       recuperó" si el banner estaba visible por una caída anterior.
@@ -145,5 +264,13 @@ api.interceptors.response.use(manejarRespuestaExitosa, manejarErrorDeRespuesta);
 //           limpio), pero mientras tanto esto garantiza que RNF-002.4 se
 //           cumpla para TODA la app, no solo para lo que ya usa "api".
 axios.interceptors.response.use(manejarRespuestaExitosa, manejarErrorDeRespuesta);
+
+// ¿Qué? Mismo motivo que el interceptor de arriba: "withCredentials" se
+//       configuró en la instancia "api" (vía axios.create()), pero eso no
+//       se hereda automáticamente al módulo base "axios" — las pantallas
+//       que hacen `import axios from "axios"` directo necesitan esta
+//       misma bandera activada aparte, o sus peticiones no llevarían la
+//       cookie de sesión.
+axios.defaults.withCredentials = true;
 
 export default api;

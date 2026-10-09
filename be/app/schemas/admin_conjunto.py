@@ -9,9 +9,14 @@ Descripción: Schemas Pydantic para el flujo de invitación de Administradores d
 from typing import List
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
-from app.schemas.user import _validate_password_strength
+from app.schemas.user import (
+    _validar_apellidos_obligatorio,
+    _validar_nombre_obligatorio,
+    _validar_telefono_opcional,
+    _validate_password_strength,
+)
 
 
 class InvitarAdminConjuntoRequest(BaseModel):
@@ -23,14 +28,21 @@ class InvitarAdminConjuntoRequest(BaseModel):
               Administrador del Sistema.
     """
     correo_electronico: EmailStr
-    ids_conjuntos: List[UUID]
+    # ¿Qué? Issue #402 (CN-060) — tope de 100 conjuntos por invitación.
+    # ¿Para qué? Sin tope se podían mandar miles de UUID en una sola petición.
+    ids_conjuntos: List[UUID] = Field(max_length=100)
 
     @field_validator("ids_conjuntos")
     @classmethod
     def validar_al_menos_un_conjunto(cls, v: List[UUID]) -> List[UUID]:
         if not v or len(v) == 0:
             raise ValueError("Debes asignar al menos un conjunto residencial.")
-        return v
+        # ¿Qué? Quita los conjuntos repetidos conservando el orden.
+        # ¿Para qué? Con un conjunto repetido, al aceptar la invitación se
+        #           intentaba crear dos vínculos activos para el mismo conjunto,
+        #           la base de datos lo rechazaba (ux_admin_conjunto_activo) y
+        #           la invitación quedaba inutilizable.
+        return list(dict.fromkeys(v))
 
 
 class AceptarInvitacionAdminConjuntoRequest(BaseModel):
@@ -50,12 +62,23 @@ class AceptarInvitacionAdminConjuntoRequest(BaseModel):
     def validate_password_strength(cls, v: str) -> str:
         return _validate_password_strength(v)
 
-    @field_validator("nombre", "apellidos")
+    # ¿Qué? Mismas reglas que el registro y el perfil (schemas/user.py): antes
+    #       aquí solo se revisaba que no estuviera vacío, y el teléfono no
+    #       se validaba.
+    @field_validator("nombre")
     @classmethod
-    def validar_no_vacio(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("Este campo es obligatorio.")
-        return v
+    def validar_nombre(cls, v: str) -> str:
+        return _validar_nombre_obligatorio(v)
+
+    @field_validator("apellidos")
+    @classmethod
+    def validar_apellidos(cls, v: str) -> str:
+        return _validar_apellidos_obligatorio(v)
+
+    @field_validator("numero_telefonico")
+    @classmethod
+    def validar_telefono(cls, v: str) -> str:
+        return _validar_telefono_opcional(v)
 
 
 class InvitacionInfoResponse(BaseModel):

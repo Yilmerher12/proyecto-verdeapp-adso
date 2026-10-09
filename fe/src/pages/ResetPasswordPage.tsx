@@ -15,7 +15,8 @@ import { AuthLayout } from "@/components/layout/AuthLayout";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { PasswordStrengthIndicator, getPasswordRequirementError } from "@/components/ui/PasswordStrengthIndicator";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { getPasswordRequirementError } from "@/lib/passwordStrength";
 
 /**
  * ¿Qué? Formulario de restablecimiento de contraseña con token de email.
@@ -157,7 +158,7 @@ export function ResetPasswordPage() {
             placeholder={t("common.passwordPlaceholder")}
             autoComplete="new-password"
             autoFocus
-            icon={<KeyRound className="h-5 w-5" />}
+            icon={<KeyRound className="icon-lg" />}
             error={errors.new_password}
             onChange={handleChange}
           />
@@ -170,7 +171,7 @@ export function ResetPasswordPage() {
             value={formData.confirmPassword}
             placeholder={t("common.passwordPlaceholder")}
             autoComplete="new-password"
-            icon={<ShieldCheck className="h-5 w-5" />}
+            icon={<ShieldCheck className="icon-lg" />}
             error={errors.confirmPassword}
             onChange={handleChange}
           />

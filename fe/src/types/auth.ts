@@ -44,7 +44,6 @@ export interface LoginRequest {
 export interface RegisterRequest {
   rol: string;
   correo_electronico: string;
-  email: string; // se reutiliza para el auto-login que hace AuthContext justo después de registrarse
   password: string;
   nombre: string;
   apellidos: string;
@@ -96,8 +95,6 @@ export interface UserResponse {
 
 export interface AuthContextType {
   user: UserResponse | null;
-  accessToken: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (data: LoginRequest) => Promise<UserResponse>;
@@ -111,19 +108,4 @@ export interface AuthContextType {
 // Interfaces de control requeridas por el cliente API de axios
 export interface MessageResponse {
   message: string;
-}
-
-export interface RefreshTokenRequest {
-  refresh_token: string;
-}
-
-// HU-008/RQF-007: el refresh token también se revoca al cerrar sesión.
-export interface LogoutRequest {
-  refresh_token: string;
-}
-
-export interface TokenResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
 }

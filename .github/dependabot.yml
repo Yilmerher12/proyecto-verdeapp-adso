@@ -1,0 +1,153 @@
+# ============================================================================
+# Dependabot — actualizaciones automáticas de dependencias
+# ============================================================================
+# ¿Qué? Robot de GitHub que revisa cada semana si salió una versión nueva de
+#       alguna dependencia y, si la hay, abre un Pull Request con el cambio.
+#       El CI (.github/workflows/ci.yml) prueba ese PR igual que cualquier otro.
+# ¿Para qué? Issue #316 (CN-021): todas las dependencias van con versión
+#           exacta (docs/requisitos/restricciones.md), y sin este robot nadie
+#           se enteraba de que salían parches de seguridad — así llegaron a
+#           acumularse 24 alertas en el frontend (issue #313) y librerías sin
+#           mantenimiento en el backend (issue #312).
+# ¿Impacto? Reglas comunes a todos los bloques:
+#   - target-branch "develop": los PR siguen el mismo flujo del equipo,
+#     nunca directo a main.
+#   - Se ignoran los saltos de versión MAYOR: pueden romper compatibilidad y
+#     se evalúan a mano (ver issue de actualizaciones mayores del frontend).
+#   - groups "*": UN solo PR por ecosistema cada semana, con todo junto, en
+#     vez de uno por paquete.
+#   - cooldown 7 días: no propone una versión hasta que lleve una semana
+#     publicada. Si alguien roba la cuenta del autor de una librería y
+#     publica una versión maliciosa, ninguna auditoría la detecta hasta que
+#     se reporta — normalmente la comunidad la descubre y la retira en pocos
+#     días, antes de que llegue a proponerse aquí. Las alertas YA conocidas
+#     las atrapa el CI (pip-audit y pnpm audit) en el propio PR.
+# Ojo: Dependabot solo lee este archivo desde la rama por defecto (main), así
+# que se activa cuando develop se fusione en main.
+# ============================================================================
+
+version: 2
+
+updates:
+  # --- Backend: be/pyproject.toml + be/uv.lock ---
+  - package-ecosystem: "uv"
+    directory: "/be"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      backend:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # --- Frontend: fe/package.json + fe/pnpm-lock.yaml ---
+  # ¿Qué? El ecosistema se llama "npm" pero Dependabot detecta el
+  #       pnpm-lock.yaml y actualiza con pnpm.
+  - package-ecosystem: "npm"
+    directory: "/fe"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      frontend:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # ¿Qué? Se mantiene en 7.0.1 a propósito: la 7.1.x agrega reglas de lint
+      #       que marcan 15 avisos en archivos del rediseño de dashboards
+      #       (issue #313). Quitar esta línea cuando se haga esa tarjeta.
+      - dependency-name: "eslint-plugin-react-hooks"
+
+  # --- E2E: e2e/package.json + e2e/pnpm-lock.yaml ---
+  # ¿Qué? Issue #405 (CN-066): la carpeta de las pruebas con Playwright tiene
+  #       su propia lista de dependencias, aparte de las de /fe.
+  # ¿Para qué? Sin este bloque nadie se enteraba de un parche de seguridad de
+  #           Playwright. Mismas reglas que el bloque de /fe.
+  - package-ecosystem: "npm"
+    directory: "/e2e"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      e2e:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # --- Actions usadas en .github/workflows/ (fijadas por SHA) ---
+  # ¿Qué? Dependabot actualiza el SHA y el comentario de versión que lo
+  #       acompaña (ej. "# actions/checkout@v7.0.1").
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      actions:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # --- Imágenes base de be/Dockerfile y fe/Dockerfile ---
+  # ¿Qué? Solo parches (ej. nginx 1.27.4 -> 1.27.5): para Docker, pasar de
+  #       python:3.12 a 3.13 o de node:22 a 24 cuenta como "menor" pero es un
+  #       cambio de versión del lenguaje — eso se decide a mano.
+  - package-ecosystem: "docker"
+    directories: ["/be", "/fe"]
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      imagenes-docker:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  # --- Imágenes de docker-compose.yml (postgres, mailpit) ---
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      docker-compose:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]

@@ -13,9 +13,9 @@ import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 // ¿Qué? Wrapper controlado — GuiaApoyoField no guarda su propio valor, así
 //       que sin esto cada tecla escrita en modo "link" borraría lo anterior
 //       (el input siempre volvería al `value` fijo del test).
-function GuiaApoyoFieldControlado({ token }: { token: string }) {
+function GuiaApoyoFieldControlado() {
   const [value, setValue] = useState("");
-  return <GuiaApoyoField label="Guía" value={value} onChange={setValue} token={token} />;
+  return <GuiaApoyoField label="Guía" value={value} onChange={setValue} />;
 }
 
 const mockSubirAdjunto = vi.fn();
@@ -35,7 +35,7 @@ describe("GuiaApoyoField", () => {
   });
 
   it("arranca en modo 'subir archivo' cuando no hay valor previo", () => {
-    render(<GuiaApoyoField label="Guía" value="" onChange={vi.fn()} token="token" />);
+    render(<GuiaApoyoField label="Guía" value="" onChange={vi.fn()} />);
     expect(screen.getByText("Seleccionar imagen o PDF")).toBeInTheDocument();
   });
 
@@ -44,23 +44,19 @@ describe("GuiaApoyoField", () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
 
-    const { container } = render(
-      <GuiaApoyoField label="Guía" value="" onChange={onChange} token="token-123" />
-    );
+    const { container } = render(<GuiaApoyoField label="Guía" value="" onChange={onChange} />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(input, crearArchivo());
 
     await waitFor(() => {
-      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), "token-123", { permitirDocumentos: true });
+      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), { permitirDocumentos: true });
       expect(onChange).toHaveBeenCalledWith("/uploads/adjuntos/guia123.pdf");
     });
   });
 
   it("rechaza un tipo de archivo no permitido sin llamar al backend", async () => {
     const onChange = vi.fn();
-    const { container } = render(
-      <GuiaApoyoField label="Guía" value="" onChange={onChange} token="token" />
-    );
+    const { container } = render(<GuiaApoyoField label="Guía" value="" onChange={onChange} />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     const archivo = crearArchivo("nota.txt", "text/plain");
     Object.defineProperty(input, "files", { value: [archivo] });
@@ -74,7 +70,7 @@ describe("GuiaApoyoField", () => {
   it("cambia a modo 'pegar link' y guarda la URL escrita a mano", async () => {
     const user = userEvent.setup();
 
-    render(<GuiaApoyoFieldControlado token="token" />);
+    render(<GuiaApoyoFieldControlado />);
     await user.click(screen.getByRole("radio", { name: "Pegar link" }));
 
     const input = screen.getByPlaceholderText("https://...");
@@ -84,9 +80,7 @@ describe("GuiaApoyoField", () => {
   });
 
   it("infiere el modo 'link' cuando el valor ya guardado es una URL externa", () => {
-    render(
-      <GuiaApoyoField label="Guía" value="https://bogota.gov.co/guia" onChange={vi.fn()} token="token" />
-    );
+    render(<GuiaApoyoField label="Guía" value="https://bogota.gov.co/guia" onChange={vi.fn()} />);
     expect(screen.getByDisplayValue("https://bogota.gov.co/guia")).toBeInTheDocument();
   });
 
@@ -95,12 +89,7 @@ describe("GuiaApoyoField", () => {
     const user = userEvent.setup();
 
     render(
-      <GuiaApoyoField
-        label="Guía"
-        value="/uploads/adjuntos/existente.pdf"
-        onChange={onChange}
-        token="token"
-      />
+      <GuiaApoyoField label="Guía" value="/uploads/adjuntos/existente.pdf" onChange={onChange} />
     );
 
     expect(screen.getByText("existente.pdf")).toBeInTheDocument();

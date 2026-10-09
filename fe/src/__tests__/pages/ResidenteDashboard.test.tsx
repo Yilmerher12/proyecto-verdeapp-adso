@@ -21,13 +21,14 @@ vi.mock("axios", () => {
     delete: (...args: unknown[]) => mockDelete(...args),
     patch: vi.fn(),
     interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+    defaults: {},
   };
   return { default: { ...instance, create: () => instance } };
 });
 
 function renderPage() {
   return renderWithProviders(<ResidenteDashboard />, {
-    authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: mockUser, isAuthenticated: true },
   });
 }
 
@@ -50,17 +51,43 @@ describe("ResidenteDashboard", () => {
     expect(screen.getByText("Test User")).toBeInTheDocument();
   });
 
+  it("muestra un aviso de error si falla la carga (issue #223, f9 del diagnóstico)", async () => {
+    mockGet.mockRejectedValue(new Error("Network Error"));
+    renderPage();
+    expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
+  it("si falla el estado del SHUT, igual pinta las notificaciones y avisa del error (issue #406)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("estado-shut")) return Promise.reject(new Error("Network Error"));
+      if (url.includes("mis-notificaciones")) {
+        return Promise.resolve({
+          data: [
+            {
+              id: 5,
+              tipo: "AUDITORIA_PUBLICADA",
+              mensaje: "El reciclador auditó la separación de residuos de tu conjunto.",
+              id_referencia: 42,
+              nombre_conjunto: "Conjunto Los Alpes",
+              leida: false,
+              created_at: "2026-08-27T10:00:00Z",
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
+
+    expect(await screen.findByText("Nueva auditoría de tu conjunto")).toBeInTheDocument();
+    expect(screen.getByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
   it("carga el estado del SHUT y las notificaciones al montar", async () => {
     renderPage();
     await waitFor(() => {
-      expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/notificaciones/estado-shut"),
-        expect.objectContaining({ headers: { Authorization: "Bearer token" } })
-      );
-      expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/notificaciones/mis-notificaciones"),
-        expect.anything()
-      );
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/estado-shut"));
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/mis-notificaciones"));
     });
   });
 
@@ -96,11 +123,23 @@ describe("ResidenteDashboard", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/notificaciones/enviar"),
-        { tipo: "SHUT_LLENO" },
-        expect.objectContaining({ headers: { Authorization: "Bearer token" } })
+        { tipo: "SHUT_LLENO" }
       );
     });
     expect(await screen.findByText("Enviado")).toBeInTheDocument();
+  });
+
+  // ¿Qué? Issue #414: el motivo exacto del rechazo llega a la pantalla.
+  it("si el backend rechaza el reporte de SHUT lleno, muestra su motivo exacto", async () => {
+    mockPost.mockRejectedValue({
+      response: { status: 400, data: { detail: "El SHUT de tu conjunto ya está reportado como lleno." } },
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Reportar" }));
+
+    expect(await screen.findByText("El SHUT de tu conjunto ya está reportado como lleno.")).toBeInTheDocument();
   });
 
   it("muestra el aviso de auditoría publicada, aparte del feed normal, y su detalle al hacer clic en Ver", async () => {
@@ -157,11 +196,7 @@ describe("ResidenteDashboard", () => {
     await user.click(screen.getByRole("button", { name: "Cerrar" }));
 
     await waitFor(() => {
-      expect(mockPost).toHaveBeenCalledWith(
-        expect.stringContaining("/notificaciones/5/leer"),
-        {},
-        expect.anything()
-      );
+      expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/5/leer"), {});
     });
   });
 

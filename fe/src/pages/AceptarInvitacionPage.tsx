@@ -3,21 +3,26 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import {
-  PasswordStrengthIndicator,
-  getPasswordRequirementError,
-  type PasswordRequirementError,
-} from "@/components/ui/PasswordStrengthIndicator";
-import { Building2, ShieldCheck, XCircle } from "lucide-react";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { getPasswordRequirementError, type PasswordRequirementError } from "@/lib/passwordStrength";
+import { BadgeCheck, Building, OctagonX } from "lucide-react";
 import {
     consultarInvitacion,
     aceptarInvitacion,
     type InvitacionInfo,
 } from "@/lib/adminConjuntoApi";
+import {
+  APELLIDOS_MAX_LENGTH,
+  NOMBRE_MAX_LENGTH,
+  TELEFONO_MAX_LENGTH,
+  TELEFONO_REGEX,
+  motivoNombreInvalido,
+} from "@/lib/validacion";
 
 // ¿Qué? Misma función que en RegisterPage.tsx — mapea el código devuelto por
 //       getPasswordRequirementError() a las claves compartidas de
@@ -87,22 +92,53 @@ export function AceptarInvitacionPage() {
     }
   };
 
-  // ¿Qué? Solo revisa presencia — la fortaleza de la contraseña y la
-  //       coincidencia entre password/confirmPassword las sigue revisando
-  //       handleSubmit al enviar.
+  // ¿Qué? Solo dígitos en el teléfono, igual que en el registro.
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const soloDigitos = e.target.value.split("").filter((c) => c >= "0" && c <= "9").join("");
+    handleChange({ target: { name: "numero_telefonico", value: soloDigitos } } as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  // ¿Qué? Error de nombre, apellidos o teléfono ("" si es válido). Mismas
+  //       reglas que el registro y el perfil (lib/validacion.ts): antes aquí
+  //       solo se revisaba que no estuvieran vacíos.
+  const errorDe = (campo: "nombre" | "apellidos" | "numero_telefonico"): string => {
+    if (campo === "numero_telefonico") {
+      const telefono = formData.numero_telefonico.trim();
+      return telefono && !TELEFONO_REGEX.test(telefono) ? t("auth.register.validation.phoneInvalid") : "";
+    }
+    const esNombre = campo === "nombre";
+    const maximo = esNombre ? NOMBRE_MAX_LENGTH : APELLIDOS_MAX_LENGTH;
+    const motivo = motivoNombreInvalido(formData[campo], maximo);
+    if (!motivo) return "";
+    if (motivo === "requerido") return t(esNombre ? "aceptarInvitacion.errors.nameRequired" : "aceptarInvitacion.errors.lastNameRequired");
+    if (motivo === "formato") return t("auth.register.validation.nameFormat");
+    if (motivo === "largo") return t(esNombre ? "auth.register.validation.firstNameMax" : "auth.register.validation.lastNameMax", { max: maximo });
+    return t(esNombre ? "auth.register.validation.firstNameMin" : "auth.register.validation.lastNameMin");
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const campo = e.target.name as "nombre" | "apellidos" | "numero_telefonico";
+    const mensaje = errorDe(campo);
+    if (mensaje) setFieldErrors((prev) => ({ ...prev, [campo]: mensaje }));
+  };
+
+  // ¿Qué? El botón se habilita solo con los campos llenos Y con formato
+  //       válido; la fortaleza de la contraseña y la coincidencia entre
+  //       password/confirmPassword las revisa handleSubmit al enviar.
   const formularioIncompleto =
-    !formData.nombre.trim() ||
-    !formData.apellidos.trim() ||
     !formData.password.trim() ||
-    !formData.confirmPassword.trim();
+    !formData.confirmPassword.trim() ||
+    (["nombre", "apellidos", "numero_telefonico"] as const).some((campo) => errorDe(campo));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
     const errors: Record<string, string> = {};
 
-    if (!formData.nombre.trim()) errors["nombre"] = t("aceptarInvitacion.errors.nameRequired");
-    if (!formData.apellidos.trim()) errors["apellidos"] = t("aceptarInvitacion.errors.lastNameRequired");
+    for (const campo of ["nombre", "apellidos", "numero_telefonico"] as const) {
+      const mensaje = errorDe(campo);
+      if (mensaje) errors[campo] = mensaje;
+    }
     const passwordError = getPasswordRequirementError(formData.password);
     if (passwordError) {
       errors["password"] = traducirErrorPassword(passwordError, t);
@@ -127,10 +163,7 @@ export function AceptarInvitacionPage() {
       });
       setExito(true);
     } catch (err: any) {
-      setGeneralError(
-        err.response?.data?.detail ||
-          t("aceptarInvitacion.genericError")
-      );
+      setGeneralError(err.message || t("aceptarInvitacion.genericError"));
     } finally {
       setIsLoading(false);
     }
@@ -156,7 +189,7 @@ export function AceptarInvitacionPage() {
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4">
             <div className="mx-auto w-16 h-16 bg-red-100 flex items-center justify-center rounded-full border border-red-200 dark:bg-red-900/30 dark:border-red-800/40">
-              <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+              <OctagonX className="icon-xl text-red-600 dark:text-red-400 icon-appear icon-shake" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.invalid.title")}</h2>
             <p className="text-gray-600 text-sm dark:text-gray-400">
@@ -178,8 +211,8 @@ export function AceptarInvitacionPage() {
         <LandingPage asBackdrop />
         <Modal onClose={() => navigate("/")}>
           <div className="p-8 text-center space-y-4 animate-fade-in">
-            <div className="mx-auto w-20 h-20 bg-green-100 flex items-center justify-center rounded-full border border-green-200 dark:bg-green-900/30 dark:border-green-800/40">
-              <ShieldCheck className="w-10 h-10 text-green-600 dark:text-green-400" />
+            <div className="mx-auto w-20 h-20 bg-accent-100 flex items-center justify-center rounded-full border border-accent-200 dark:bg-accent-900/30 dark:border-accent-800/40">
+              <BadgeCheck className="icon-xl text-accent-600 dark:text-accent-400 icon-appear icon-hop" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.success.title")}</h2>
             <p className="text-gray-600 text-sm dark:text-gray-400">
@@ -203,15 +236,18 @@ export function AceptarInvitacionPage() {
       <Modal onClose={() => navigate("/")} wide closeOnBackdrop={false}>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
           <div className="text-center mb-6">
+            <div className="mb-3 flex justify-center">
+              <BrandLogo variant="mark" className="h-12" />
+            </div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.form.title")}</h2>
             <p className="text-gray-500 mt-1 dark:text-gray-400">
               {t("aceptarInvitacion.form.invitationFor")} <strong>{infoInvitacion.correo_electronico}</strong>
             </p>
           </div>
 
-          <div className="mb-6 p-4 bg-green-50/50 border border-green-100 rounded-xl dark:bg-green-900/10 dark:border-green-800/30">
+          <div className="mb-6 p-4 bg-accent-50/50 border border-accent-100 rounded-xl dark:bg-accent-900/10 dark:border-accent-800/30">
             <div className="flex items-center gap-2 mb-2">
-              <Building2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <Building className="icon-md text-accent-600 dark:text-accent-400" />
               <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
                 {t("aceptarInvitacion.form.willAdminister")}
               </span>
@@ -223,29 +259,38 @@ export function AceptarInvitacionPage() {
             </ul>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <InputField
               label={t("auth.register.fields.firstName")}
               name="nombre"
+              maxLength={NOMBRE_MAX_LENGTH}
               value={formData.nombre}
               onChange={handleChange}
+              onBlur={handleBlur}
+              error={fieldErrors.nombre}
             />
-            {fieldErrors.nombre && <p className="text-xs text-red-500 dark:text-red-400">{fieldErrors.nombre}</p>}
 
             <InputField
               label={t("auth.register.fields.lastName")}
               name="apellidos"
+              maxLength={APELLIDOS_MAX_LENGTH}
               value={formData.apellidos}
               onChange={handleChange}
+              onBlur={handleBlur}
+              error={fieldErrors.apellidos}
             />
-            {fieldErrors.apellidos && <p className="text-xs text-red-500 dark:text-red-400">{fieldErrors.apellidos}</p>}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InputField
                 label={t("common.phone")}
                 name="numero_telefonico"
+                type="tel"
+                inputMode="numeric"
+                maxLength={TELEFONO_MAX_LENGTH}
                 value={formData.numero_telefonico}
-                onChange={handleChange}
+                onChange={handlePhoneChange}
+                onBlur={handleBlur}
+                error={fieldErrors.numero_telefonico}
               />
             </div>
 

@@ -41,13 +41,21 @@
 
 - **Dado que** completo el formulario de registro,
 - **cuando** ingreso un correo que ya está registrado en el sistema,
-- **entonces** debo ver un mensaje de error indicando que el correo ya está en uso.
+- **entonces** no se crea una cuenta nueva, la pantalla muestra la misma confirmación de "revisa tu correo" que un registro nuevo, y al correo le llega un aviso de que ya tiene una cuenta, con enlaces para iniciar sesión o recuperar la contraseña.
+
+> **Nota (2026-10-05, issue #373 — CN-026)**: antes este criterio pedía mostrar "el correo ya está en uso" en pantalla. Se cambió porque ese mensaje dejaba a cualquiera averiguar qué correos tienen cuenta en VerdeApp. El dueño real se entera igual, por el correo de aviso.
 
 ### CA-002.3 — Validación de contraseña
 
 - **Dado que** completo el formulario de registro,
 - **cuando** ingreso una contraseña con menos de 8 caracteres, sin mayúscula, sin minúscula o sin número,
 - **entonces** debo ver un mensaje describiendo qué requisito falta.
+
+### CA-002.3b — Datos personales y de la unidad con formato real
+
+- **Dado que** completo el formulario de registro,
+- **cuando** escribo números o símbolos en mi nombre o apellidos, un apartamento o torre de más de 10 caracteres, o un código de acceso que no tiene 6 letras o números,
+- **entonces** veo el error debajo de ese campo al salir de él, el formulario no me deja escribir más del máximo permitido, y el botón de registro sigue deshabilitado hasta corregirlo.
 
 ### CA-002.4 — Confirmación de correo y de contraseña
 
@@ -66,3 +74,14 @@
 - **Dado que** me registré pero no he hecho clic en el enlace de verificación,
 - **cuando** intento iniciar sesión,
 - **entonces** el sistema me lo impide y me indica que debo verificar mi correo primero.
+
+### CA-002.7 — Opción para administradores de conjunto
+
+- **Dado que** estoy en la página de registro y administro un conjunto,
+- **cuando** elijo la opción "¿Administras un conjunto?" (tercera opción del selector de rol),
+- **entonces** el formulario se reemplaza por instrucciones para pedir la cuenta: los pasos, los documentos que acreditan el cargo (certificado de existencia y representación legal de la Alcaldía Local, cédula, acta de nombramiento, contrato y, si es una empresa, certificado de Cámara de Comercio) y un botón "Solicitar acceso" que abre el formulario de contacto con el asunto y una plantilla del mensaje ya escritos.
+- La pantalla **no muestra ningún correo** y la app **no recibe ni guarda documentos**: los documentos se piden después por correo y se eliminan tras la revisión (ver HU-018 y la Política de Privacidad, sección 2).
+- Las 3 opciones del selector son botones: se pueden alcanzar con Tab y elegir con Enter.
+
+> **Nota (2026-10-06)**: antes un Administrador de Conjunto que llegaba al registro no tenía cómo saber que su cuenta se crea por invitación ni a quién pedirla.
+

@@ -8,21 +8,32 @@ Descripción: Utilidades de seguridad — hashing de contraseñas y manejo de to
           Si los JWT se generan mal, cualquiera podría suplantar usuarios.
 """
 
+import hashlib
+import uuid
 from datetime import datetime, timedelta, timezone
 
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
+import jwt
 
 from app.config import settings
 from app.utils.ids import generar_uuid4
 
-# ¿Qué? Contexto de hashing de contraseñas usando bcrypt.
-# ¿Para qué? Proveer una interfaz unificada para hashear y verificar contraseñas.
-#            bcrypt es un algoritmo diseñado específicamente para contraseñas:
-#            es deliberadamente LENTO para dificultar ataques de fuerza bruta.
-# ¿Impacto? deprecated="auto" indica que si en el futuro se cambia el algoritmo,
-#           los hashes antiguos seguirán siendo verificables (migración gradual).
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# ¿Qué? Issue #312 (CN-008): bcrypt se usa directo y los JWT con PyJWT.
+#       Antes: passlib (sin versiones desde 2020, obligaba a quedarse en
+#       bcrypt==4.0.1) y python-jose (casi sin mantenimiento, arrastraba
+#       ecdsa, con una vulnerabilidad que nunca se va a corregir).
+# ¿Para qué? Las librerías de la parte más sensible del sistema (sesiones y
+#           contraseñas) deben seguir recibiendo parches de seguridad.
+# ¿Impacto? Los hashes ya guardados ($2b$12$...) son formato bcrypt estándar
+#           y bcrypt.checkpw los lee igual que passlib; los tokens ya emitidos
+#           son JWT HS256 estándar y PyJWT los valida igual. Ni contraseñas ni
+#           sesiones existentes se ven afectadas.
+
+# ¿Qué? bcrypt solo usa los primeros 72 bytes de la contraseña; desde
+#       bcrypt 5.0 una más larga lanza ValueError en vez de cortarse en
+#       silencio. schemas/user.py ya las rechaza al registrar/cambiar; aquí
+#       se cubre el login, que no pasa por ese validador.
+MAXIMO_BYTES_BCRYPT = 72
 
 # ¿Qué? Un hash bcrypt válido de una contraseña que nadie usa — no corresponde
 #       a ninguna cuenta real.
@@ -35,7 +46,25 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 #           aunque el mensaje de error sea idéntico en ambos casos.
 # ¿Impacto? auth_service.login_user() compara siempre contra un hash real
 #           (este, si el usuario no existe) — las dos ramas tardan lo mismo.
-DUMMY_PASSWORD_HASH = pwd_context.hash("no-corresponde-a-ninguna-cuenta-real")
+DUMMY_PASSWORD_HASH = bcrypt.hashpw(b"no-corresponde-a-ninguna-cuenta-real", bcrypt.gensalt()).decode("utf-8")
+
+
+def hash_token(token: str) -> str:
+    """Devuelve el sha256 (hex) de un token de un solo uso.
+
+    ¿Qué? Issue #373 (CN-031): los tokens de verificar correo, recuperar
+          contraseña e invitación de Admin de Conjunto se guardan en la BD
+          como este hash, nunca tal cual. El correo sigue llevando el token
+          original, y al usarlo se busca por su hash.
+    ¿Para qué? Quien logre leer la base de datos (un respaldo filtrado, una
+              inyección SQL) no puede usar esos tokens para activar cuentas
+              ajenas ni cambiarles la contraseña.
+    ¿Impacto? sha256 y no bcrypt a propósito: el token es un UUID aleatorio
+              (122 bits), no una contraseña que se pueda adivinar, así que
+              no hace falta un hash lento — y uno rápido permite buscarlo
+              directo con WHERE token = ... usando el índice.
+    """
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def hash_password(password: str) -> str:
@@ -53,7 +82,7 @@ def hash_password(password: str) -> str:
     Returns:
         Hash bcrypt de la contraseña (~60 caracteres).
     """
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -71,7 +100,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True si la contraseña coincide, False en caso contrario.
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    contrasena = plain_password.encode("utf-8")
+    if len(contrasena) > MAXIMO_BYTES_BCRYPT:
+        return False
+    try:
+        return bcrypt.checkpw(contrasena, hashed_password.encode("utf-8"))
+    except ValueError:
+        # ¿Qué? Hash guardado con un formato que bcrypt no reconoce — se
+        #       trata como contraseña incorrecta, no como un error 500.
+        return False
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
@@ -125,7 +162,9 @@ def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> 
               obtener uno nuevo sin pedir email/password de nuevo.
     ¿Impacto? Duración larga (7 días por defecto). Si es robado, el atacante puede
               generar access tokens válidos hasta que el refresh expire.
-              Por eso es importante protegerlo (httpOnly cookies en producción).
+              Por eso se protege guardándolo en una cookie httpOnly, no en el cuerpo
+              de la respuesta ni en sessionStorage del navegador (RNF-001.9, ver
+              app/routers/auth.py:_fijar_cookies_de_sesion).
 
     Args:
         data: Diccionario con los datos a incluir (mínimo {"sub": email}).
@@ -173,15 +212,32 @@ def decode_token(token: str) -> dict | None:
         Diccionario con los datos del token (payload) si es válido, None si no lo es.
     """
     try:
+        # ¿Qué? Issue #359 (CN-037): "require" rechaza un token al que le
+        #       falte cualquiera de estos tres campos.
+        # ¿Para qué? Sin "exp", PyJWT aceptaría el token para siempre; sin
+        #           "jti", nunca se podría revocar (logout, rotación del
+        #           refresh token). Los dos create_*_token de arriba siempre
+        #           los incluyen, así que ningún token real se ve afectado.
         payload = jwt.decode(
             token,
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
+            options={"require": ["exp", "type", "jti"]},
         )
-        return payload
-    except JWTError:
-        # ¿Qué? JWTError captura tokens expirados, mal formados, o con firma inválida.
+    except jwt.PyJWTError:
+        # ¿Qué? PyJWTError captura tokens expirados, mal formados, o con firma inválida.
         # ¿Para qué? Manejar todos los errores de JWT en un solo lugar.
         # ¿Impacto? Retornar None en lugar de lanzar excepción permite al caller
         #           decidir cómo manejar el error (401, redirect a login, etc.).
         return None
+
+    # ¿Qué? Issue #359 (CN-038): un "jti" que no tiene forma de UUID se
+    #       trata igual que un token inválido.
+    # ¿Impacto? Quien lee el payload (get_current_user, refresh, logout) hace
+    #           uuid.UUID(jti) sin try; revisarlo aquí, una sola vez, evita
+    #           que ese ValueError salga como un 500 en vez de un 401.
+    try:
+        uuid.UUID(str(payload["jti"]))
+    except ValueError:
+        return None
+    return payload

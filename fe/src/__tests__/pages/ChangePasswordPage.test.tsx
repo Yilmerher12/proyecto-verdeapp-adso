@@ -48,8 +48,31 @@ describe("ChangePasswordPage", () => {
     expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeDisabled();
   });
 
-  // ¿Qué? Verifica validación de contraseña nueva débil.
-  it("muestra error si la nueva contraseña es muy corta", async () => {
+  // ¿Qué? Cada regla del checklist se marca sola al cumplirse.
+  // ¿Para qué? El usuario ve en vivo qué le falta, sin pulsar "Guardar".
+  it("marca cada requisito de la contraseña nueva a medida que se cumple", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ChangePasswordPage />, {
+      authContext: { user: mockUser, isAuthenticated: true },
+    });
+    const met = (texto: string) => screen.getByText(texto).closest("li")?.getAttribute("data-met");
+
+    expect(met("8 caracteres o más")).toBe("false");
+
+    await user.type(screen.getByLabelText("Nueva contraseña"), "abc");
+    expect(met("Una minúscula")).toBe("true");
+    expect(met("Una mayúscula")).toBe("false");
+    expect(met("Un número")).toBe("false");
+    expect(met("8 caracteres o más")).toBe("false");
+
+    await user.type(screen.getByLabelText("Nueva contraseña"), "DEF123");
+    expect(met("8 caracteres o más")).toBe("true");
+    expect(met("Una mayúscula")).toBe("true");
+    expect(met("Un número")).toBe("true");
+  });
+
+  // ¿Qué? "Guardar" sigue bloqueado si la nueva no cumple las reglas.
+  it("no habilita Guardar si la nueva contraseña es muy corta", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ChangePasswordPage />, {
       authContext: { user: mockUser, isAuthenticated: true },
@@ -58,13 +81,12 @@ describe("ChangePasswordPage", () => {
     await user.type(screen.getByLabelText("Contraseña actual"), "OldPass1");
     await user.type(screen.getByLabelText("Nueva contraseña"), "Aa1");
     await user.type(screen.getByLabelText("Confirmar nueva contraseña"), "Aa1");
-    await user.click(screen.getByRole("button", { name: "Guardar" }));
 
-    expect(screen.getByText("Mínimo 8 caracteres")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeDisabled();
   });
 
-  // ¿Qué? Verifica que las contraseñas nuevas deben coincidir.
-  it("muestra error si las contraseñas nuevas no coinciden", async () => {
+  // ¿Qué? El mensaje de coincidencia cambia en vivo y Guardar sigue bloqueado si difieren.
+  it("avisa en vivo si las contraseñas coinciden y bloquea Guardar si no", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ChangePasswordPage />, {
       authContext: { user: mockUser, isAuthenticated: true },
@@ -72,10 +94,24 @@ describe("ChangePasswordPage", () => {
 
     await user.type(screen.getByLabelText("Contraseña actual"), "OldPass1");
     await user.type(screen.getByLabelText("Nueva contraseña"), "NewPass1!");
-    await user.type(screen.getByLabelText("Confirmar nueva contraseña"), "Different1");
-    await user.click(screen.getByRole("button", { name: "Guardar" }));
+    expect(screen.queryByText("Todavía no coinciden")).not.toBeInTheDocument();
 
-    expect(screen.getByText("Las contraseñas no coinciden")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Confirmar nueva contraseña"), "NewPass");
+    expect(screen.getByText("Todavía no coinciden")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Confirmar nueva contraseña"), "1!");
+    expect(screen.getByText("Las contraseñas coinciden")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Guardar" })).toBeEnabled();
+  });
+
+  // ¿Qué? Enlace de salida para quien olvidó la contraseña actual.
+  it("ofrece recuperar la contraseña por correo", () => {
+    renderWithProviders(<ChangePasswordPage />, {
+      authContext: { user: mockUser, isAuthenticated: true },
+    });
+
+    expect(screen.getByRole("link", { name: "Recupérala por correo" })).toHaveAttribute("href", "/forgot-password");
   });
 
   // ¿Qué? Verifica que changePassword() se ejecuta con datos correctos.

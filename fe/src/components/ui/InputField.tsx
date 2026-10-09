@@ -7,6 +7,7 @@
  */
 
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 
 /**
@@ -39,6 +40,17 @@ interface InputFieldProps {
    *             teclado/lector de pantalla llegan directamente al punto de entrada. */
   autoFocus?: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /** ¿Qué? Se dispara al salir del campo (perder el foco).
+   *  ¿Para qué? Permite mostrar un error de validación apenas el usuario
+   *             termina de escribir ese campo, sin esperar a que envíe
+   *             todo el formulario. */
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  /** ¿Qué? Máximo de caracteres que deja escribir el input.
+   *  ¿Para qué? Que el formulario no permita escribir más de lo que guarda la
+   *             base de datos (ver lib/validacion.ts). */
+  maxLength?: number;
+  /** ¿Qué? Tipo de teclado en el celular (ej. "numeric" para teléfono). */
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 }
 
 /**
@@ -59,10 +71,14 @@ export function InputField({
   disablePaste = false,
   autoFocus = false,
   onChange,
+  onBlur,
+  maxLength,
+  inputMode,
 }: InputFieldProps) {
   // ¿Qué? Estado para mostrar/ocultar contraseña.
   // ¿Para qué? Permitir al usuario verificar lo que escribió en campos de password.
   // ¿Impacto? Mejora la UX — evita errores de tipeo al registrarse o cambiar contraseña.
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
@@ -89,7 +105,7 @@ export function InputField({
         */}
         {icon && (
           <div
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"
             aria-hidden="true"
           >
             {icon}
@@ -104,6 +120,9 @@ export function InputField({
           autoComplete={disablePaste ? "off" : autoComplete}
           autoFocus={autoFocus}
           onChange={onChange}
+          onBlur={onBlur}
+          maxLength={maxLength}
+          inputMode={inputMode}
           aria-invalid={!!error}
           aria-describedby={error ? `${name}-error` : undefined}
           // ¿Qué? Bloquea pegar, copiar, cortar y arrastrar cuando disablePaste=true.
@@ -115,10 +134,10 @@ export function InputField({
           onCopy={disablePaste ? (e) => e.preventDefault() : undefined}
           onCut={disablePaste ? (e) => e.preventDefault() : undefined}
           onDrop={disablePaste ? (e) => e.preventDefault() : undefined}
-          className={`block w-full rounded-lg border ${icon ? "pl-10" : "px-3"} ${isPassword ? "pr-10" : icon ? "pr-3" : ""} py-2.5 text-sm transition-colors duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 dark:bg-[#1f4029] dark:text-gray-100 dark:placeholder:text-gray-500 ${
+          className={`block w-full rounded-lg border ${icon ? "pl-10" : "px-3"} ${isPassword ? "pr-10" : icon ? "pr-3" : ""} py-2.5 text-sm transition-colors duration-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 dark:bg-night-field dark:text-gray-100 dark:placeholder:text-gray-500 ${
             error
               ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400 dark:focus:ring-red-400/20"
-              : "border-gray-300 focus:border-accent-500 focus:ring-accent-500/20 dark:border-[#2a4d34] dark:focus:border-accent-400 dark:focus:ring-accent-400/20"
+              : "border-gray-300 focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-line dark:focus:border-accent-400 dark:focus:ring-accent-400/20"
           }`}
         />
         {/* ¿Qué? Botón para mostrar/ocultar contraseña usando iconos de Lucide. */}
@@ -129,7 +148,7 @@ export function InputField({
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            aria-label={showPassword ? t("common.hidePassword") : t("common.showPassword")}
           >
             {/* ¿Qué? Antes el ícono mostraba "lo que pasará si haces clic"
                 (ojo abierto cuando estaba oculta, tachado cuando ya estaba
@@ -138,9 +157,9 @@ export function InputField({
                 ojo abierto = la contraseña SÍ se ve ahora mismo; ojo
                 tachado = está oculta. */}
             {showPassword ? (
-              <Eye className="h-5 w-5" aria-hidden="true" />
+              <Eye className="icon-lg" aria-hidden="true" />
             ) : (
-              <EyeOff className="h-5 w-5" aria-hidden="true" />
+              <EyeOff className="icon-lg" aria-hidden="true" />
             )}
           </button>
         )}

@@ -77,10 +77,23 @@ jobs:
         # que ya usa close-prs.yml: una etiqueta como @v7 se puede mover a
         # otro commit, un SHA no).
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        # ¿Qué? Issue #316 (CN-030): no dejar el GITHUB_TOKEN guardado en
+        #       .git/config después de descargar el código.
+        # ¿Para qué? Por defecto queda ahí durante todo el job, al alcance de
+        #           cualquier paso posterior (incluidos los scripts de
+        #           instalación de dependencias de terceros). Ningún paso de
+        #           este workflow necesita hacer push, así que no hace falta.
+        with:
+          persist-credentials: false
 
       - name: Instalar uv
         # astral-sh/setup-uv@v10.0.1
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+        # ¿Qué? Issue #316 (CN-029): versión exacta de uv, en vez de "la más
+        #       nueva del día" — misma regla de versiones fijas que el resto
+        #       del proyecto. Dependabot no la actualiza sola: subirla a mano.
+        with:
+          version: "0.12.18"
 
       - name: Instalar dependencias exactas (uv.lock)
         # ¿Qué? --frozen falla si uv.lock no está sincronizado con
@@ -101,17 +114,15 @@ jobs:
         #           docs/gestion-proyecto/auditoria-dependencias.md) — una
         #           dependencia nueva con un CVE podía colarse en un PR sin
         #           que nadie se enterara hasta la próxima revisión manual.
-        # ¿Impacto? PYSEC-2026-1325 (antes CVE-2024-23342, paquete `ecdsa`)
-        #           es un riesgo ya evaluado y aceptado por el equipo: es un
-        #           ataque de temporización sobre firmas ECDSA, y VerdeApp
-        #           firma sus tokens con HS256 (HMAC simétrico), no con
-        #           curva elíptica — el código vulnerable nunca se ejecuta
-        #           en nuestros flujos reales. Se ignora explícitamente para
-        #           que este paso sí falle ante una vulnerabilidad NUEVA, en
-        #           vez de estar siempre en rojo por algo ya revisado.
+        # ¿Impacto? Sin excepciones: antes se ignoraba PYSEC-2026-1325
+        #           (paquete `ecdsa`, que arrastraba python-jose). Desde el
+        #           issue #312 los JWT se firman con PyJWT y `ecdsa` ya no
+        #           está instalado, así que cualquier alerta hace fallar el paso.
+        #           "pip-audit@2.10.1": versión exacta de la herramienta
+        #           (issue #316, CN-029) — antes uvx bajaba la más nueva del día.
         run: |
           uv export --no-hashes --no-dev > requirements-ci.txt
-          uvx pip-audit --requirement requirements-ci.txt -s osv --ignore-vuln PYSEC-2026-1325
+          uvx pip-audit@2.10.1 --requirement requirements-ci.txt -s osv
 
   frontend:
     name: Frontend (tsc + eslint + vitest)
@@ -124,6 +135,9 @@ jobs:
     steps:
       - name: Descargar el código del repositorio
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        # ¿Qué? Mismo motivo que en el job del backend (issue #316, CN-030).
+        with:
+          persist-credentials: false
 
       - name: Activar pnpm (Corepack)
         # ¿Qué? Mismo comando exacto que usa fe/Dockerfile — respeta la
@@ -159,13 +173,29 @@ jobs:
         #           develop sin que el pipeline los detectara.
         run: pnpm build
 
-      - name: Auditar dependencias de producción (pnpm audit)
-        # ¿Qué? Revisa solo las dependencias que de verdad llegan al
-        #       navegador del usuario (--prod excluye ESLint, Vite, Vitest,
-        #       etc., que nunca se despliegan).
-        # ¿Para qué? Ver docs/gestion-proyecto/auditoria-dependencias.md —
-        #           hoy este subconjunto está en 0 vulnerabilidades; este
-        #           paso existe para que una dependencia de producción
-        #           nueva con un CVE conocido bloquee el PR, en vez de
-        #           descubrirse en la próxima auditoría manual.
-        run: pnpm audit --prod
+      - name: Auditar dependencias (pnpm audit)
+        # ¿Qué? Revisa TODAS las dependencias del frontend: las que llegan
+        #       al navegador del usuario y también las de desarrollo (Vite,
+        #       ESLint, Vitest...), que corren en el computador de quien
+        #       programa.
+        # ¿Para qué? Antes era "pnpm audit --prod" porque las de desarrollo
+        #           arrastraban alertas ya conocidas. Desde el issue #313
+        #           están en 0, y una alerta en ellas sí afecta al equipo (ej.
+        #           la de esbuild, que en Windows permitía leer archivos a
+        #           través de "pnpm dev"). Con Dependabot proponiendo
+        #           actualizaciones cada semana, este paso es el que bloquea
+        #           un PR que traiga una versión con una alerta conocida.
+        # ¿Impacto? Si aparece una alerta nueva en una dependencia de
+        #           desarrollo, el PR queda en rojo hasta corregirla.
+        run: pnpm audit
+
+      - name: Auditar dependencias de e2e (pnpm audit)
+        # ¿Qué? Issue #405 (CN-066): lo mismo que el paso anterior, sobre la
+        #       carpeta e2e/ (Playwright), que tiene su propio lockfile.
+        # ¿Para qué? Dependabot ya propone sus actualizaciones; este paso es el
+        #           que deja en rojo un PR que traiga una alerta conocida.
+        # ¿Impacto? Se reutiliza este job (ya tiene Node y pnpm 11.0.9, la
+        #           misma versión que fija e2e/package.json). No hace falta
+        #           instalar nada: pnpm audit lee solo el lockfile.
+        working-directory: e2e
+        run: pnpm audit

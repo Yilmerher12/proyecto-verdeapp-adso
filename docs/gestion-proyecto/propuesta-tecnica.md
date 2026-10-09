@@ -15,7 +15,7 @@ El proyecto VerdeApp surge como respuesta a la deficiente gestión de residuos e
 
 ## 3. Alcance Detallado (Matriz de Delimitación)
 
-| Incluye (16 Funcionalidades)               | Exclusiones (7 explícitas)                         |
+| Incluye (16 Funcionalidades)               | Exclusiones (8 explícitas)                         |
 | ------------------------------------------ | -------------------------------------------------- |
 | 1. Registro de usuario con validación.     | 1. No incluye App móvil nativa (iOS/Android).      |
 | 2. Autenticación por roles (JWT).          | 2. No incluye pasarela de pagos.                   |
@@ -24,7 +24,7 @@ El proyecto VerdeApp surge como respuesta a la deficiente gestión de residuos e
 | 5. Notificación de llegada del reciclador. | 5. No incluye hardware de sensores IoT.            |
 | 6. Visualización de catálogo educativo.    | 6. No incluye gestión de nómina de recicladores.   |
 | 7. Buscador de puntos de acopio.           | 7. No incluye generación de reportes financieros.  |
-| 8. Filtro de búsqueda por localidad.       | —                                                  |
+| 8. Filtro de búsqueda por localidad.       | 8. No incluye calificación de los residentes al reciclador ([ver decisión](decision-calificacion-residente-reciclador.md)). |
 | 9. Dashboard para Administrador.           | —                                                  |
 | 10. Gestión de contenidos educativos.      | —                                                  |
 | 11. Gestión de directorios de acopio.      | —                                                  |

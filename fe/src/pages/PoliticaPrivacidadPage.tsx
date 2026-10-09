@@ -36,12 +36,7 @@ const RESPONSABLE = {
   telefono: "Proyecto educativo — sin línea de atención comercial",
 } as const;
 
-interface PoliticaPrivacidadPageProps {
-  /** ¿Qué? Ver LegalLayout — true cuando se muestra dentro de un Modal. */
-  embedded?: boolean;
-}
-
-export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadPageProps) {
+export function PoliticaPrivacidadPage() {
   const { t } = useTranslation();
 
   const S = <strong className="text-gray-700 dark:text-gray-300" />;
@@ -77,9 +72,8 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
   return (
     <LegalLayout
       title={t("legal.privacy.title")}
-      lastUpdated="2026-02-01"
-      version="1.0"
-      embedded={embedded}
+      lastUpdated="2026-10-06"
+      version="1.1"
     >
       <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
         <Trans
@@ -158,6 +152,17 @@ export function PoliticaPrivacidadPage({ embedded = false }: PoliticaPrivacidadP
         </ul>
         <p>
           <Trans i18nKey="legal.privacy.s2.noCollect" components={{ strong: S }} />
+        </p>
+        {/*
+          ¿Qué? Cómo se tratan los documentos de quien pide una cuenta de
+                Administrador de Conjunto (opción "¿Administras un conjunto?"
+                del registro).
+          ¿Para qué? Esa pantalla promete que los documentos no se suben a la
+                    app y se borran tras la revisión; la política debe decir
+                    lo mismo.
+        */}
+        <p>
+          <Trans i18nKey="legal.privacy.s2.adminRequest" components={{ strong: S }} />
         </p>
       </LegalSection>
 

@@ -1,8 +1,25 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
+
+from app.utils.enlaces import EnlaceAdjunto, EnlaceVideo
+
+# ¿Qué? Issue #352 — módulo y título = tamaño de su columna (String(255));
+#       el cuerpo es Text, con un máximo propio de la app.
+# ¿Impacto? Deben coincidir con CONTENIDO_* de fe/src/lib/validacion.ts.
+MODULO_MAX_LENGTH = 255
+TITULO_MAX_LENGTH = 255
+CUERPO_MAX_LENGTH = 10000
+
+# ¿Qué? Issue #358 — máximo de conjuntos por envío manual.
+# ¿Para qué? En la pantalla se eligen uno por uno en un buscador, así que
+#            nadie llega a 100 usándola; el tope solo frena una petición
+#            armada a mano con miles de ids, que obligaría al backend a
+#            buscarlos todos en la BD de una sola vez.
+# ¿Impacto? Mismo valor que CONJUNTOS_MAX_LENGTH de schemas/novedad.py.
+CONJUNTOS_MAX_LENGTH = 100
 
 
 class ContenidoEducativoBase(BaseModel):
@@ -44,16 +61,57 @@ class ContenidoEducativoBase(BaseModel):
         return v
 
 
-class ContenidoEducativoCreate(ContenidoEducativoBase):
+class _ContenidoEducativoEntrada(ContenidoEducativoBase):
+    """
+    ¿Qué? Issue #314 (CN-015): los enlaces se validan solo en lo que ENTRA
+          (crear/editar) — video solo de YouTube, guía solo https:// o un
+          archivo subido.
+    ¿Para qué? No se ponen en ContenidoEducativoBase porque de ahí también
+              hereda ContenidoEducativoResponse: un dato viejo que no
+              cumpla rompería el catálogo completo con un 500. Los máximos
+              de #352 van aquí por la misma razón.
+    """
+    modulo_categoria: str = Field(max_length=MODULO_MAX_LENGTH)
+    titulo_tema: str = Field(max_length=TITULO_MAX_LENGTH)
+    cuerpo_texto: str = Field(max_length=CUERPO_MAX_LENGTH)
+    url_video: EnlaceVideo = None
+    url_guia: EnlaceAdjunto = None
+
+
+class ContenidoEducativoCreate(_ContenidoEducativoEntrada):
     pass
 
 
-class ContenidoEducativoUpdate(ContenidoEducativoBase):
+class ContenidoEducativoUpdate(_ContenidoEducativoEntrada):
     pass
 
 
 class ContenidoEducativoResponse(ContenidoEducativoBase):
     id_contenido: UUID
     fecha_publicacion: date
+
+    model_config = {"from_attributes": True}
+
+
+# ¿Qué? Envío manual de un módulo a uno o varios conjuntos (RQF-013,
+#       Flujo C) — sin pasar por una auditoría del Reciclador.
+class EnviarContenidoRequest(BaseModel):
+    conjuntos: list[UUID] = Field(max_length=CONJUNTOS_MAX_LENGTH)
+
+    @field_validator("conjuntos")
+    @classmethod
+    def al_menos_un_conjunto(cls, v: list[UUID]) -> list[UUID]:
+        if not v:
+            raise ValueError("Elige al menos un conjunto.")
+        # ¿Para qué? Un id repetido haría que el servicio registre el envío
+        #            y notifique a los residentes de ese conjunto dos veces.
+        #            dict.fromkeys quita repetidos sin cambiar el orden.
+        return list(dict.fromkeys(v))
+
+
+class EnvioContenidoResponse(BaseModel):
+    id_conjunto_residencial: UUID
+    nombre_conjunto: str
+    created_at: datetime
 
     model_config = {"from_attributes": True}

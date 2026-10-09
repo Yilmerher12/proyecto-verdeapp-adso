@@ -15,18 +15,19 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { Alert } from "@/components/ui/Alert";
-import { API_BASE_URL } from "@/api/axios";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { obtenerAuditoria, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { tiempoRelativo } from "@/components/dashboard/NotificationFeed";
+import { tiempoRelativo } from "@/lib/notificaciones";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 interface AuditoriaResultadoModalProps {
   idAuditoria: string;
-  token: string;
   onClose: () => void;
 }
 
-export function AuditoriaResultadoModal({ idAuditoria, token, onClose }: AuditoriaResultadoModalProps) {
+export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResultadoModalProps) {
   const { t } = useTranslation();
   const [auditoria, setAuditoria] = useState<AuditoriaConjunto | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -34,11 +35,11 @@ export function AuditoriaResultadoModal({ idAuditoria, token, onClose }: Auditor
   const [imagenAmpliada, setImagenAmpliada] = useState<string | null>(null);
 
   useEffect(() => {
-    obtenerAuditoria(idAuditoria, token)
+    obtenerAuditoria(idAuditoria)
       .then(setAuditoria)
       .catch(() => setError(true))
       .finally(() => setCargando(false));
-  }, [idAuditoria, token]);
+  }, [idAuditoria]);
 
   const nivel = auditoria ? NIVELES_DESEMPENO[auditoria.nivel_desempeno] : null;
 
@@ -49,7 +50,7 @@ export function AuditoriaResultadoModal({ idAuditoria, token, onClose }: Auditor
           {t("auditoriaResultado.modalTitle")}
         </h3>
 
-        {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+        {cargando && <LoadingState message={t("common.loading")} />}
         {error && <Alert type="error" message={t("auditoriaResultado.errorLoad")} />}
 
         {auditoria && nivel && (
@@ -57,23 +58,23 @@ export function AuditoriaResultadoModal({ idAuditoria, token, onClose }: Auditor
             <p className="text-sm font-semibold text-gray-900 dark:text-white">{auditoria.nombre_conjunto}</p>
 
             <div className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold ${nivel.claseBadge}`}>
-              <nivel.icon className="h-4 w-4" />
+              <nivel.icon className="icon-md" />
               {t(`dashboards.reciclador.auditoria.niveles.${auditoria.nivel_desempeno.toLowerCase()}`)}
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {[auditoria.ruta_evidencia, auditoria.ruta_evidencia_2, auditoria.ruta_evidencia_3]
-                .filter((ruta): ruta is string => Boolean(ruta))
+                .filter((ruta): ruta is string => Boolean(enlaceAdjuntoSeguro(ruta)))
                 .map((ruta) => (
                   <button
                     key={ruta}
                     type="button"
                     onClick={() => setImagenAmpliada(ruta)}
                     aria-label={t("auditoriaResultado.evidenciaAmpliar")}
-                    className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-[#2a4d34]"
+                    className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
                   >
                     <img
-                      src={`${API_BASE_URL}${ruta}`}
+                      src={enlaceAdjuntoSeguro(ruta) ?? undefined}
                       alt={t("auditoriaResultado.evidenciaAlt")}
                       className="h-full w-full object-cover"
                     />
@@ -97,7 +98,7 @@ export function AuditoriaResultadoModal({ idAuditoria, token, onClose }: Auditor
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {t("auditoriaResultado.auditadoPor", { nombre: auditoria.nombre_reciclador })} ·{" "}
-              {new Date(auditoria.created_at).toLocaleDateString()} ({tiempoRelativo(auditoria.created_at)})
+              {formatearFechaCreacion(auditoria.created_at)} ({tiempoRelativo(auditoria.created_at)})
             </p>
           </div>
         )}
@@ -106,7 +107,7 @@ export function AuditoriaResultadoModal({ idAuditoria, token, onClose }: Auditor
       {imagenAmpliada && (
         <Modal onClose={() => setImagenAmpliada(null)} layer="stacked" wide aria-label={t("auditoriaResultado.evidenciaAlt")}>
           <img
-            src={`${API_BASE_URL}${imagenAmpliada}`}
+            src={enlaceAdjuntoSeguro(imagenAmpliada) ?? undefined}
             alt={t("auditoriaResultado.evidenciaAlt")}
             className="max-h-[80vh] w-full rounded-2xl object-contain"
           />

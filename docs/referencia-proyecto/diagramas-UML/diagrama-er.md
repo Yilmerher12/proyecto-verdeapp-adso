@@ -52,6 +52,8 @@ erDiagram
         VARCHAR password
         BOOLEAN is_active
         BOOLEAN habilitado
+        TIMESTAMP fecha_desactivacion
+        VARCHAR motivo_desactivacion
         VARCHAR locale
         INT intentos_fallidos
         TIMESTAMP bloqueado_hasta
@@ -92,6 +94,7 @@ erDiagram
         VARCHAR nombre_conjunto
         VARCHAR nit
         VARCHAR direccion
+        INT total_apartamentos
         BOOLEAN verificado
         UUID verificado_por_id FK
         VARCHAR codigo_acceso
@@ -114,6 +117,14 @@ erDiagram
         BOOLEAN activo
     }
 
+    PUNTOS_ACOPIO_COMENTARIOS {
+        UUID id_comentario PK
+        UUID id_punto_acopio FK
+        UUID id_autor FK
+        TEXT texto
+        TIMESTAMP created_at
+    }
+
     CONTENIDO_EDUCATIVO {
         UUID id_contenido PK
         VARCHAR modulo_categoria
@@ -122,6 +133,14 @@ erDiagram
         DATE fecha_publicacion
         VARCHAR url_video
         VARCHAR url_guia
+    }
+
+    CONTENIDO_EDUCATIVO_ENVIOS {
+        UUID id PK
+        UUID id_contenido FK
+        UUID id_conjunto_residencial FK
+        UUID enviado_por_id FK
+        TIMESTAMP created_at
     }
 
     RECICLADORES_CONJUNTOS {
@@ -174,6 +193,27 @@ erDiagram
         UUID resuelta_por_id FK
     }
 
+    AGENDA_CONJUNTO {
+        UUID id PK
+        UUID id_conjunto_residencial FK
+        UUID autor_id FK
+        TEXT texto
+        VARCHAR url_evidencia
+        VARCHAR estado
+        TIMESTAMP created_at
+    }
+
+    NOVEDADES_ENVIADAS {
+        UUID id PK
+        UUID autor_id FK
+        UUID id_conjunto_residencial FK
+        TEXT texto
+        VARCHAR url_imagen
+        VARCHAR estado
+        TIMESTAMP created_at
+        TIMESTAMP resuelta_at
+    }
+
     COMUNICADOS {
         UUID id_comunicado PK
         UUID id_conjunto_residencial FK
@@ -194,10 +234,16 @@ erDiagram
         VARCHAR alcance
         TEXT texto
         VARCHAR url_adjunto
+        VARCHAR url_video
         TIMESTAMP fecha_expiracion
         TIMESTAMP created_at
         TIMESTAMP fecha_edicion
         TIMESTAMP fecha_archivado
+    }
+
+    NOVEDADES_CONJUNTOS {
+        UUID id_novedad PK,FK
+        UUID id_conjunto_residencial PK,FK
     }
 
     NOTIFICACIONES {
@@ -264,6 +310,8 @@ erDiagram
     USUARIOS ||--o{ INVITACIONES_ADMIN_CONJUNTO : invita
     USUARIOS ||--o{ SOLICITUDES_DESVINCULACION : resuelve
     USUARIOS ||--o{ NOVEDADES : publica
+    NOVEDADES ||--o{ NOVEDADES_CONJUNTOS : dirige
+    CONJUNTOS_RESIDENCIALES ||--o{ NOVEDADES_CONJUNTOS : recibe
     USUARIOS ||--o{ NOTIFICACIONES : emite
     USUARIOS ||--o{ NOTIFICACIONES_DESTINATARIOS : recibe
     USUARIOS ||--o{ CONJUNTOS_RESIDENCIALES : verifica
@@ -271,6 +319,8 @@ erDiagram
 
     LOCALIDADES ||--o{ CONJUNTOS_RESIDENCIALES : contiene
     LOCALIDADES ||--o{ PUNTOS_ACOPIOS : contiene
+    PUNTOS_ACOPIOS ||--o{ PUNTOS_ACOPIO_COMENTARIOS : tiene
+    USUARIOS |o--o{ PUNTOS_ACOPIO_COMENTARIOS : escribe
     LOCALIDADES ||--o{ RECICLADORES : ubica
 
     CONJUNTOS_RESIDENCIALES ||--o{ UNIDADES : tiene
@@ -288,6 +338,12 @@ erDiagram
     ADMINISTRADORES_CONJUNTO ||--o{ SOLICITUDES_DESVINCULACION : solicita
     CONJUNTOS_RESIDENCIALES ||--o{ SOLICITUDES_DESVINCULACION : origina
 
+    CONJUNTOS_RESIDENCIALES ||--o{ AGENDA_CONJUNTO : agenda
+    USUARIOS |o--o{ AGENDA_CONJUNTO : escribe
+
+    USUARIOS |o--o{ NOVEDADES_ENVIADAS : envia
+    CONJUNTOS_RESIDENCIALES |o--o{ NOVEDADES_ENVIADAS : menciona
+
     ADMINISTRADORES_CONJUNTO ||--o{ COMUNICADOS : publica
     CONJUNTOS_RESIDENCIALES ||--o{ COMUNICADOS : recibe
 
@@ -296,6 +352,10 @@ erDiagram
 
     CONJUNTOS_RESIDENCIALES ||--o{ NOTIFICACIONES : genera
     NOTIFICACIONES ||--o{ NOTIFICACIONES_DESTINATARIOS : envia
+
+    CONTENIDO_EDUCATIVO ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : se_envia
+    CONJUNTOS_RESIDENCIALES ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : recibe
+    USUARIOS ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : envia
 ```
 
 ---
@@ -314,6 +374,7 @@ USUARIOS ── PASSWORD_RESET_TOKENS / EMAIL_VERIFICATION_TOKENS
               │
               ├── ADMINISTRADORES_CONJUNTOS ── CONJUNTOS_RESIDENCIALES
               ├── SOLICITUDES_DESVINCULACION ── CONJUNTOS_RESIDENCIALES
+              ├── AGENDA_CONJUNTO ── CONJUNTOS_RESIDENCIALES
               └── COMUNICADOS ── CONJUNTOS_RESIDENCIALES
 
 LOCALIDADES
@@ -355,7 +416,10 @@ USUARIOS (Admin_sistema) ── NOVEDADES
 
 TOKENS_REVOCADOS  (lista negra de JWT, sin relación a otras tablas)
 
-CONTENIDO_EDUCATIVO  (catálogo independiente, sin relación a otras tablas)
+CONTENIDO_EDUCATIVO
+   │
+   ▼
+CONTENIDO_EDUCATIVO_ENVIOS ── CONJUNTOS_RESIDENCIALES / USUARIOS (quién lo envió)
 ```
 
 ---
@@ -390,12 +454,14 @@ CONTENIDO_EDUCATIVO  (catálogo independiente, sin relación a otras tablas)
 | password           | VARCHAR   |
 | is_active          | BOOLEAN   |
 | habilitado         | BOOLEAN   |
+| fecha_desactivacion | TIMESTAMP |
+| motivo_desactivacion | VARCHAR  |
 | locale             | VARCHAR   |
 | intentos_fallidos  | INT       |
 | bloqueado_hasta    | TIMESTAMP |
 | foto_perfil_url    | VARCHAR   |
 
-`is_active` refleja si el correo ya fue verificado al registrarse; `habilitado` es un interruptor manual aparte, que solo el Admin Sistema puede apagar (RQF: gestión de usuarios). Una cuenta puede tener `is_active = true` y `habilitado = false` — no puede iniciar sesión de todas formas.
+`is_active` refleja si el correo ya fue verificado al registrarse; `habilitado` es un interruptor manual aparte, que solo el Admin Sistema puede apagar (RQF: gestión de usuarios). Una cuenta puede tener `is_active = true` y `habilitado = false` — no puede iniciar sesión de todas formas. Al desactivarla se guardan `fecha_desactivacion` y `motivo_desactivacion` (opcional, máx. 200 caracteres); al reactivarla se borran.
 
 ---
 
@@ -450,11 +516,14 @@ CONTENIDO_EDUCATIVO  (catálogo independiente, sin relación a otras tablas)
 | nombre_conjunto         | VARCHAR |
 | nit                     | VARCHAR |
 | direccion               | VARCHAR |
+| total_apartamentos      | INT     |
 | verificado              | BOOLEAN |
 | verificado_por_id       | UUID    |
 | codigo_acceso           | VARCHAR |
 
 `codigo_acceso` es único por conjunto — el Admin de Conjunto lo reparte fuera de la app para que un Residente demuestre que vive ahí al registrarse.
+
+`total_apartamentos` (opcional, entre 1 y 20000) lo escribe el Admin de Conjunto; con él su panel calcula cuántos apartamentos ya tienen residentes registrados y cuántos faltan (HU-044). `NULL` = todavía no definido.
 
 ---
 
@@ -485,6 +554,20 @@ CONTENIDO_EDUCATIVO  (catálogo independiente, sin relación a otras tablas)
 
 ---
 
+## puntos_acopio_comentarios
+
+| Campo            | Tipo      |
+| ---------------- | --------- |
+| id_comentario    | UUID      |
+| id_punto_acopio  | UUID      |
+| id_autor         | UUID      |
+| texto            | TEXT      |
+| created_at       | TIMESTAMP |
+
+Comentarios internos del Admin Sistema sobre un punto de acopio (RQF-011): notas y el "motivo del cambio" que se escribe al editar. Se borran con el punto (ON DELETE CASCADE); si se borra la cuenta del autor, `id_autor` queda `NULL` y el comentario se conserva (ON DELETE SET NULL).
+
+---
+
 ## contenido_educativo
 
 | Campo             | Tipo    |
@@ -498,6 +581,20 @@ CONTENIDO_EDUCATIVO  (catálogo independiente, sin relación a otras tablas)
 | url_guia          | VARCHAR |
 
 `cuerpo_texto` admite Markdown, renderizado en el frontend. `url_guia` puede ser un archivo subido (PDF/imagen) o un link externo.
+
+---
+
+## contenido_educativo_envios
+
+| Campo                   | Tipo      |
+| ------------------------ | --------- |
+| id                      | UUID      |
+| id_contenido            | UUID      |
+| id_conjunto_residencial | UUID      |
+| enviado_por_id          | UUID      |
+| created_at              | TIMESTAMP |
+
+Registra el envío manual de un módulo del catálogo a un conjunto (RQF-013, Flujo C) — el Admin Sistema decide recomendar un módulo aunque no haya habido una auditoría Regular/Mala que lo dispare automáticamente. `enviado_por_id` queda `NULL` si el usuario que lo envió se elimina después (`ON DELETE SET NULL`), para no perder el registro histórico del envío.
 
 ---
 
@@ -579,6 +676,39 @@ Solicitud de un Admin de Conjunto para dejar de administrar un conjunto (RQF-016
 
 ---
 
+## agenda_conjunto
+
+| Campo                    | Tipo      |
+| ------------------------- | --------- |
+| id                        | UUID      |
+| id_conjunto_residencial   | UUID      |
+| autor_id                  | UUID      |
+| texto                     | TEXT      |
+| url_evidencia             | VARCHAR   |
+| estado                    | VARCHAR   |
+| created_at                | TIMESTAMP |
+
+Temas privados del Admin de Conjunto para llevar al comité de un conjunto (RQF-020). `estado` es `PENDIENTE` o `EN_ESPERA`. Se borra con el conjunto (`CASCADE`); si se borra el autor, el tema queda sin autor (`SET NULL`).
+
+---
+
+## novedades_enviadas
+
+| Campo                    | Tipo      |
+| ------------------------- | --------- |
+| id                        | UUID      |
+| autor_id                  | UUID      |
+| id_conjunto_residencial   | UUID      |
+| texto                     | TEXT      |
+| url_imagen                | VARCHAR   |
+| estado                    | VARCHAR   |
+| created_at                | TIMESTAMP |
+| resuelta_at               | TIMESTAMP |
+
+Novedad que un Residente, Reciclador o Admin de Conjunto le envía al Admin Sistema (RQF-021). `estado` es `NUEVA` o `VISTA`; el Admin Sistema la ve en la bandeja "Solicitudes pendientes" junto con `solicitudes_desvinculacion`. El conjunto es opcional (un Reciclador no tiene uno solo). No confundir con `novedades` (RQF-015), que publica el Admin Sistema.
+
+---
+
 ## comunicados
 
 | Campo                    | Tipo      |
@@ -608,12 +738,24 @@ Avisos que un Admin de Conjunto publica para los residentes y/o recicladores de 
 | alcance            | VARCHAR   |
 | texto              | TEXT      |
 | url_adjunto        | VARCHAR   |
+| url_video          | VARCHAR   |
 | fecha_expiracion   | TIMESTAMP |
 | created_at         | TIMESTAMP |
 | fecha_edicion      | TIMESTAMP |
 | fecha_archivado    | TIMESTAMP |
 
-Avisos de alcance general que el Admin Sistema publica (RQF-015), no ligados a un conjunto — `alcance` decide si va a todos los usuarios o a un rol concreto. Puede archivarse manualmente antes de expirar.
+Avisos de alcance general que el Admin Sistema publica (RQF-015) — `alcance` decide si va a todos los usuarios o a un rol concreto. A qué conjuntos llega (uno o varios) se guarda en `novedades_conjuntos`: sin filas = llega a todos los conjuntos del alcance (lo de siempre); con filas = solo a esos conjuntos. No se puede cambiar después de publicar, igual que `alcance`. `url_video` guarda un enlace de YouTube opcional. Puede archivarse manualmente antes de expirar.
+
+---
+
+## novedades_conjuntos
+
+| Campo                   | Tipo |
+| ------------------------ | ---- |
+| id_novedad              | UUID |
+| id_conjunto_residencial | UUID |
+
+Tabla de asociación (RQF-015): un conjunto al que va dirigida una novedad. La llave primaria es compuesta (novedad + conjunto), así que un conjunto no se repite dentro de una misma novedad. Se borra sola si se borra la novedad o el conjunto.
 
 ---
 
@@ -715,6 +857,8 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 | Usuarios                       | Notificaciones Destinatarios     | 1:N          |
 | Usuarios                       | Conjuntos Residenciales          | 1:N (verifica) |
 | Usuarios                       | Recicladores Conjuntos           | 1:N (revoca) |
+| Usuarios                       | Puntos Acopio Comentarios        | 1:N (escribe) |
+| Puntos Acopios                 | Puntos Acopio Comentarios        | 1:N          |
 | Localidades                    | Conjuntos Residenciales          | 1:N          |
 | Localidades                    | Puntos de Acopio                 | 1:N          |
 | Localidades                    | Recicladores                     | 1:N          |
@@ -728,6 +872,10 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 | Conjuntos Residenciales        | Administradores Conjuntos        | 1:N          |
 | Administradores de Conjunto    | Solicitudes Desvinculación       | 1:N          |
 | Conjuntos Residenciales        | Solicitudes Desvinculación       | 1:N          |
+| Conjuntos Residenciales        | Agenda Conjunto                  | 1:N          |
+| Usuarios                       | Agenda Conjunto                  | 1:N (escribe) |
+| Usuarios                       | Novedades Enviadas               | 1:N (envía)  |
+| Conjuntos Residenciales        | Novedades Enviadas               | 1:N (opcional) |
 | Administradores de Conjunto    | Comunicados                      | 1:N          |
 | Conjuntos Residenciales        | Comunicados                      | 1:N          |
 | Recicladores                   | Invitaciones Reciclador Conjunto | 1:N          |
@@ -752,6 +900,8 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 * La cuenta de Administrador de Conjunto nunca se crea por registro público: solo se origina desde una `invitacion_admin_conjunto` emitida por un Admin Sistema, con token de un solo uso y fecha de expiración.
 * Un Reciclador solo puede trabajar en un conjunto tras aceptar una `invitacion_reciclador_conjunto` emitida por el Admin de Conjunto de ese conjunto.
 * Un Admin de Conjunto puede solicitar dejar de administrar un conjunto (`solicitud_desvinculacion`) — requiere aprobación del Admin Sistema, y solo puede haber una solicitud `PENDIENTE` a la vez por (administrador, conjunto).
+* Un Admin de Conjunto lleva una agenda privada de temas por cada conjunto que administra; nadie más la ve.
+* Un Residente, Reciclador o Admin de Conjunto puede enviarle novedades al Admin Sistema; este solo las marca como vistas.
 * Un Admin de Conjunto publica comunicados dirigidos a los residentes y/o recicladores de su propio conjunto; un Admin Sistema publica novedades de alcance general (todos los usuarios, o un rol específico).
 * Las notificaciones (llegada del reciclador, SHUT lleno/vaciado, revocación de acceso) se generan una sola vez por evento y se reparten a varios destinatarios, cada uno con su propio estado de lectura.
 * Un logout real invalida el token de sesión agregando su `jti` a `tokens_revocados` — no basta con que el frontend "olvide" el token.

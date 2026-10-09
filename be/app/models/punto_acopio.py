@@ -22,3 +22,6 @@ class PuntoAcopio(Base):
 
     # Puente
     localidad = relationship("Localidad", back_populates="puntos_acopio")
+    # ¿Qué? passive_deletes: la BD borra los comentarios sola (ON DELETE CASCADE)
+    #       al eliminar el punto — SQLAlchemy no necesita cargarlos antes.
+    comentarios = relationship("PuntoAcopioComentario", cascade="all, delete-orphan", passive_deletes=True)

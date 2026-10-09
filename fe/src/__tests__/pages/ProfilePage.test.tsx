@@ -1,0 +1,129 @@
+/**
+ * Archivo: __tests__/pages/ProfilePage.test.tsx
+ * Descripción: Tests del panel "Mi perfil".
+ * ¿Para qué? Issue #13 (hallazgo U8 de la auditoría) — antes "Nombre y
+ *           apellidos son obligatorios" era un solo Alert genérico que no
+ *           decía cuál de los dos campos estaba vacío. Ahora cada campo se
+ *           valida al salir de él (onBlur), con el error anclado a ese
+ *           campo — esta prueba cubre justo ese comportamiento nuevo.
+ */
+
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { vi, beforeEach } from "vitest";
+import { API_BASE_URL } from "@/api/axios";
+import { ProfilePage } from "@/pages/ProfilePage";
+import { renderWithProviders, mockUser } from "../helpers";
+
+const mockGet = vi.fn();
+const mockPut = vi.fn();
+
+vi.mock("axios", () => {
+  const instance = {
+    get: (...args: unknown[]) => mockGet(...args),
+    put: (...args: unknown[]) => mockPut(...args),
+    post: vi.fn(),
+    interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+    defaults: {},
+  };
+  return { default: { ...instance, create: () => instance } };
+});
+
+const perfil = {
+  id: 1,
+  email: "residente@example.com",
+  role_id: 2,
+  first_name: "Ana",
+  last_name: "Martínez",
+  numero_telefonico: null,
+  nombre_conjunto: "Conjunto de Prueba",
+  torre: "1",
+  apto: "402",
+  asociacion: null,
+  nombre_localidad: "Usaquén",
+  conjuntos_administrados: null,
+  mostrar_contacto_directorio: false,
+  foto_perfil_url: null,
+};
+
+function renderPage() {
+  return renderWithProviders(<ProfilePage />, {
+    authContext: { user: mockUser, isAuthenticated: true },
+  });
+}
+
+describe("ProfilePage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGet.mockResolvedValue({ data: perfil });
+    mockPut.mockResolvedValue({ data: {} });
+  });
+
+  it("marca el campo Nombre con su propio error al salir vacío, sin tocar Apellidos", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Ana Martínez");
+    await user.click(screen.getByRole("button", { name: "Editar" }));
+
+    const inputNombre = await screen.findByLabelText("Nombre");
+    await user.clear(inputNombre);
+    await user.tab();
+
+    expect(await screen.findByText("El nombre es obligatorio.")).toBeInTheDocument();
+    expect(screen.queryByText("Los apellidos son obligatorios.")).not.toBeInTheDocument();
+  });
+
+  // ¿Qué? Issue #400 (CN-048): la foto de perfil pasa por enlaceAdjuntoSeguro.
+  it("muestra la foto de perfil subida con la URL del backend", async () => {
+    mockGet.mockResolvedValue({ data: { ...perfil, foto_perfil_url: "/uploads/perfiles/ana.png" } });
+    renderPage();
+
+    expect(await screen.findByRole("img", { name: "Ana Martínez" })).toHaveAttribute(
+      "src",
+      `${API_BASE_URL}/uploads/perfiles/ana.png`
+    );
+  });
+
+  it("no pinta la foto si la ruta guardada no es segura", async () => {
+    mockGet.mockResolvedValue({ data: { ...perfil, foto_perfil_url: "/uploads/%2e%2e/api/ana.png" } });
+    renderPage();
+
+    await screen.findByText("Ana Martínez");
+    expect(screen.queryByRole("img", { name: "Ana Martínez" })).not.toBeInTheDocument();
+  });
+
+  it("guarda el perfil cuando los campos son válidos", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Ana Martínez");
+    await user.click(screen.getByRole("button", { name: "Editar" }));
+    await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() => {
+      expect(mockPut).toHaveBeenCalledWith(
+        expect.stringContaining("/users/me"),
+        expect.objectContaining({ nombre: "Ana", apellidos: "Martínez" })
+      );
+    });
+  });
+
+  // ¿Qué? Mismas reglas que el registro: antes el perfil solo revisaba que
+  //       el nombre no estuviera vacío.
+  it("no deja guardar un nombre con números", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Ana Martínez");
+    await user.click(screen.getByRole("button", { name: "Editar" }));
+
+    const inputNombre = await screen.findByLabelText("Nombre");
+    await user.clear(inputNombre);
+    await user.type(inputNombre, "Ana2");
+    await user.tab();
+
+    expect(await screen.findByText("Solo se permiten letras, espacios, apóstrofe, punto o guion")).toBeInTheDocument();
+    expect(inputNombre).toHaveAttribute("maxLength", "100");
+  });
+});

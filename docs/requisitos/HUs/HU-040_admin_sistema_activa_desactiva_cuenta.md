@@ -57,3 +57,21 @@
 - **Dado que** reviso mi propia fila en el listado (si aparezco en él),
 - **cuando** busco la opción de desactivar,
 - **entonces** no está disponible — el sistema lo rechaza si se intenta directamente por la API.
+
+### CA-040.5 — Motivo opcional al desactivar
+
+- **Dado que** presiono "Desactivar" en una cuenta,
+- **cuando** aparece la ventana de confirmación,
+- **entonces** puedo escribir un motivo opcional de hasta 200 caracteres (por ejemplo "se mudó de conjunto" o "cuenta duplicada"). Un motivo vacío o solo con espacios se guarda como "sin motivo".
+
+### CA-040.6 — La fecha y el motivo quedan a la vista
+
+- **Dado que** una cuenta está desactivada,
+- **cuando** miro la tabla o abro su perfil,
+- **entonces** veo desde cuándo está desactivada y el motivo (o "Sin motivo registrado").
+
+### CA-040.7 — Reactivar limpia el registro
+
+- **Dado que** reactivo una cuenta,
+- **cuando** se confirma,
+- **entonces** no se pide ningún motivo y la fecha y el motivo anteriores se borran, para que un dato viejo no se confunda con una desactivación futura.

@@ -49,6 +49,13 @@
 - **cuando** el sistema arma el formulario,
 - **entonces** debe sugerirme una fecha de expiración según el tipo (ej. 48 horas para Urgente, 30 días para Informativo), y debo poder cambiarla.
 
+### CA-027.3b — La fecha de expiración no puede estar vencida ni superar un año
+
+- **Dado que** estoy creando un comunicado,
+- **cuando** elijo una fecha de expiración anterior a hoy o a más de un año desde hoy,
+- **entonces** el formulario me muestra el error debajo del campo y no deja guardar; si alguien llama la API directamente, responde 422. El calendario solo ofrece fechas dentro de ese rango (issue #367).
+- **y** si es una Convocatoria, la fecha del evento sigue la misma regla: un evento pasado haría que el comunicado naciera vencido.
+
 ### CA-027.4 — Adjuntar enlace (opcional)
 
 - **Dado que** estoy creando un comunicado,

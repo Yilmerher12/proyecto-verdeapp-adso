@@ -10,9 +10,17 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
+
+from app.utils.enlaces import EnlaceAdjunto
+from app.utils.fechas import FechaEvento, FechaExpiracion
 
 from app.models.comunicado import DestinatariosComunicado, TipoComunicado
+
+# ¿Qué? Issue #352 — la columna es Text (sin límite), pero sin un máximo en
+#       la app se podía publicar un texto enorme en el feed de todos.
+# ¿Impacto? Debe coincidir con COMUNICADO_TEXTO_MAX_LENGTH de fe/src/lib/validacion.ts.
+TEXTO_MAX_LENGTH = 2000
 
 
 class CrearComunicadoRequest(BaseModel):
@@ -20,16 +28,17 @@ class CrearComunicadoRequest(BaseModel):
     id_conjunto_residencial: UUID
     destinatarios: DestinatariosComunicado
     tipo: TipoComunicado
-    texto: str
-    url_adjunto: Optional[str] = None
+    texto: str = Field(max_length=TEXTO_MAX_LENGTH)
+    url_adjunto: EnlaceAdjunto = None
     # ¿Qué? Obligatoria solo cuando tipo=CONVOCATORIA (RF: "expira al día
     #       siguiente del evento") — se valida en el service, no aquí,
     #       porque depende del valor de otro campo.
-    fecha_evento: Optional[date] = None
+    fecha_evento: FechaEvento = None
     # ¿Qué? Si no se manda, el service calcula la expiración sugerida según
     #       el tipo (CA-027.3). Si se manda, se respeta tal cual — el RF
-    #       permite que el admin la cambie.
-    fecha_expiracion: Optional[datetime] = None
+    #       permite que el admin la cambie — siempre que no esté vencida ni
+    #       supere un año (issue #367, ver utils/fechas.py).
+    fecha_expiracion: FechaExpiracion = None
 
     @field_validator("texto")
     @classmethod
@@ -47,10 +56,10 @@ class EditarComunicadoRequest(BaseModel):
               esos dos no se pueden cambiar después de publicar.
     """
     tipo: TipoComunicado
-    texto: str
-    url_adjunto: Optional[str] = None
-    fecha_evento: Optional[date] = None
-    fecha_expiracion: Optional[datetime] = None
+    texto: str = Field(max_length=TEXTO_MAX_LENGTH)
+    url_adjunto: EnlaceAdjunto = None
+    fecha_evento: FechaEvento = None
+    fecha_expiracion: FechaExpiracion = None
 
     @field_validator("texto")
     @classmethod

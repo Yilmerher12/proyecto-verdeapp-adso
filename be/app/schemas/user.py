@@ -10,16 +10,162 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_validator
 
+from app.utils.codigo_acceso import ALFABETO, LONGITUD as LONGITUD_CODIGO
+
 
 def _validate_password_strength(v: str) -> str:
     if len(v) < 8:
         raise ValueError("La contraseña debe tener al menos 8 caracteres")
+    # ¿Qué? Issue #312: bcrypt solo usa los primeros 72 bytes. Antes passlib
+    #       cortaba el resto en silencio (dos contraseñas largas que empiezan
+    #       igual valían lo mismo); bcrypt 5 lanza un error.
+    # ¿Impacto? Se mide en bytes UTF-8, no en caracteres: una tilde o una ñ
+    #           ocupan 2 bytes.
+    if len(v.encode("utf-8")) > 72:  # noqa: PLR2004
+        raise ValueError("La contraseña no puede superar 72 caracteres (menos si usa tildes o ñ)")
     if not re.search(r"[A-Z]", v):
         raise ValueError("La contraseña debe contener al menos una mayúscula")
     if not re.search(r"[a-z]", v):
         raise ValueError("La contraseña debe contener al menos una minúscula")
     if not re.search(r"\d", v):
         raise ValueError("La contraseña debe contener al menos un número")
+    return v
+
+
+# ¿Qué? Longitud mínima para nombre/apellidos, y formato del teléfono
+#       (RQF-008: solo dígitos, entre 7 y 10 caracteres).
+# ¿Para qué? Antes cada formulario (registro, editar perfil) definía su
+#           propia copia de estas reglas — o, en el caso del registro, no
+#           tenía ninguna regla en absoluto. Ahora es una sola fuente de
+#           verdad, compartida por UserCreate y UpdateProfileBody más
+#           abajo, para que registrarse y editar el perfil exijan
+#           exactamente lo mismo.
+NOMBRE_MIN_LENGTH = 2
+# ¿Qué? Máximos = tamaño de la columna en la base de datos (models/residente.py,
+#       reciclador.py, administrador_conjunto.py, unidad.py, usuario.py).
+# ¿Para qué? Rechazar aquí con un 422 claro un texto que no cabe, en vez de
+#           dejar que la base de datos falle con un 500.
+# ¿Impacto? Deben coincidir con fe/src/lib/validacion.ts.
+NOMBRE_MAX_LENGTH = 100
+APELLIDOS_MAX_LENGTH = 150
+UNIDAD_MAX_LENGTH = 10
+CORREO_MAX_LENGTH = 255
+ASOCIACION_MAX_LENGTH = 100
+TELEFONO_REGEX = re.compile(r"^\d{7,10}$")
+
+# ¿Qué? Nombres y apellidos: letras de cualquier idioma (con tildes y ñ),
+#       separadas por espacio, apóstrofe, punto o guion ("María José",
+#       "O'Connor", "Ana-Lucía", "Ma. Fernanda"). Empieza con letra.
+# ¿Para qué? Antes solo se exigía un mínimo de 2 caracteres, así que
+#           "Juan123" o "@@" pasaban como nombre.
+# ¿Impacto? [^\W\d_] = "letra": un carácter de palabra que no es dígito ni _.
+NOMBRE_REGEX = re.compile(r"^[^\W\d_](?:[^\W\d_]|[ '.\-])*$")
+
+# ¿Qué? Código de acceso del conjunto: exactamente 6 caracteres del mismo
+#       alfabeto con el que se genera (utils/codigo_acceso.py).
+# ¿Para qué? Rechazar de una vez un código que no puede existir (7 caracteres,
+#           un "0" o un símbolo), sin ir a la base de datos a compararlo.
+CODIGO_ACCESO_REGEX = re.compile(rf"^[{ALFABETO}]{{{LONGITUD_CODIGO}}}$")
+
+# ¿Qué? Issue #255 — formato de Torre/Bloque y Apartamento: letras y
+#       números, con un solo espacio o guion como separador entre partes
+#       ("12-B", "TORRE 1", "BLOQUE 12-B"), nunca repetido ni suelto al
+#       principio o final ("1----B", "-3B", "3B-").
+# ¿Para qué? Las convenciones de nombres de torres/bloques varían demasiado
+#           entre conjuntos reales como para exigir un formato más estricto
+#           — esto solo descarta lo que claramente no es un dato real
+#           (puros símbolos, "3b..a.a.s").
+UNIDAD_REGEX = re.compile(r"^[A-Za-z0-9]+(?:[ -][A-Za-z0-9]+)*$")
+
+
+def _validar_nombre_obligatorio(v: str, maximo: int = NOMBRE_MAX_LENGTH) -> str:
+    """Exige un nombre real: mínimo 2 caracteres, máximo el de la columna, y
+    solo letras con espacio, apóstrofe, punto o guion como separadores.
+
+    ¿Para qué? Antes solo había mínimo, así que "Juan123" pasaba; ahora se
+              rechazan números y símbolos sin rechazar nombres reales con
+              tilde, ñ, guion o apóstrofe ("María José", "O'Connor").
+    ¿Impacto? El mismo helper sirve para nombre (máx. 100) y apellidos
+              (máx. 150): el validador de cada campo pasa su máximo.
+    """
+    texto = (v or "").strip()
+    if not texto:
+        raise ValueError("Este campo es obligatorio.")
+    if len(texto) < NOMBRE_MIN_LENGTH:
+        raise ValueError(f"Debe tener al menos {NOMBRE_MIN_LENGTH} caracteres.")
+    if len(texto) > maximo:
+        raise ValueError(f"No puede superar {maximo} caracteres.")
+    if not NOMBRE_REGEX.match(texto):
+        raise ValueError("Solo se permiten letras, espacios, apóstrofe, punto o guion.")
+    return v
+
+
+def _validar_apellidos_obligatorio(v: str) -> str:
+    return _validar_nombre_obligatorio(v, APELLIDOS_MAX_LENGTH)
+
+
+def _validar_largo_opcional(v: Optional[str], maximo: int) -> Optional[str]:
+    """Campo opcional de texto libre (ej. asociación): solo se limita el largo."""
+    if v is not None and len(v.strip()) > maximo:
+        raise ValueError(f"No puede superar {maximo} caracteres.")
+    return v
+
+
+def _validar_codigo_acceso_opcional(v: Optional[str]) -> Optional[str]:
+    """El código se exige solo al Residente (eso lo decide auth_service), pero
+    si llega uno debe poder existir: 6 caracteres del alfabeto real.
+
+    ¿Impacto? Se normaliza aquí (sin espacios y en mayúscula), igual que ya
+              hacía auth_service antes de compararlo.
+    """
+    if v is None:
+        return v
+    texto = v.strip().upper()
+    if not texto:
+        return None
+    if not CODIGO_ACCESO_REGEX.match(texto):
+        raise ValueError(f"El código de acceso tiene {LONGITUD_CODIGO} letras o números.")
+    return texto
+
+
+def _validar_telefono_opcional(v: Optional[str]) -> Optional[str]:
+    """El teléfono sigue siendo opcional — pero si se da uno, debe ser real.
+
+    ¿Qué? Antes esta regla (RQF-008) solo existía para "editar perfil"
+          (be/app/services/user_service.py) — el registro no tenía
+          ninguna, así que se podía crear una cuenta con
+          numero_telefonico="abc!!!".
+    ¿Impacto? Vacío o None sigue pasando sin problema (campo opcional).
+              "N/A" (el valor por defecto que ya usan cuentas existentes
+              cuando no se registró ningún teléfono) también se acepta
+              tal cual, para no romper ese valor histórico.
+    """
+    if v is None:
+        return v
+    texto = v.strip()
+    if not texto or texto == "N/A":
+        return v
+    if not TELEFONO_REGEX.match(texto):
+        raise ValueError("El número telefónico tiene un formato inválido.")
+    return v
+
+
+def _validar_formato_unidad(v: Optional[str]) -> Optional[str]:
+    """Torre/Bloque y Apartamento siguen siendo opcionales aquí (la
+    obligatoriedad para Residente vive en auth_service.register_user) —
+    pero si se da un valor, no puede ser solo símbolos ni texto vacío con
+    espacios.
+
+    ¿Impacto? "TORRE 1", "12-B", "B2" pasan sin problema. "!!!", "   ",
+              "1----B", "3b..a.a.s" se rechazan.
+    """
+    if v is None:
+        return v
+    texto = v.strip()
+    if len(texto) > UNIDAD_MAX_LENGTH:
+        raise ValueError(f"No puede superar {UNIDAD_MAX_LENGTH} caracteres.")
+    if texto and not UNIDAD_REGEX.match(texto):
+        raise ValueError("Solo se permiten letras, números, y un espacio o guion como separador.")
     return v
 
 
@@ -62,12 +208,47 @@ class UserCreate(BaseModel):
     #       no aquí (mismo patrón ya usado para id_conjunto_residencial).
     codigo_acceso: Optional[str] = None
 
+    @field_validator("nombre")
+    @classmethod
+    def validate_nombre(cls, v: str) -> str:
+        return _validar_nombre_obligatorio(v)
+
     @field_validator("apellidos")
     @classmethod
     def validate_apellidos_no_vacio(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("Los apellidos son obligatorios")
+        return _validar_apellidos_obligatorio(v)
+
+    @field_validator("correo_electronico")
+    @classmethod
+    def validate_correo_largo(cls, v: str) -> str:
+        if len(v) > CORREO_MAX_LENGTH:
+            raise ValueError(f"El correo no puede superar {CORREO_MAX_LENGTH} caracteres.")
         return v
+
+    @field_validator("asociacion")
+    @classmethod
+    def validate_asociacion(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_largo_opcional(v, ASOCIACION_MAX_LENGTH)
+
+    @field_validator("codigo_acceso")
+    @classmethod
+    def validate_codigo_acceso(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_codigo_acceso_opcional(v)
+
+    @field_validator("numero_telefonico")
+    @classmethod
+    def validate_numero_telefonico(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_telefono_opcional(v)
+
+    @field_validator("torre")
+    @classmethod
+    def validate_torre(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_formato_unidad(v)
+
+    @field_validator("apto")
+    @classmethod
+    def validate_apto(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_formato_unidad(v)
 
     # ¿Qué? Antes UserCreate era el único de los 3 schemas de contraseña
     #       (registro, cambio, recuperación) sin este validador.
@@ -165,6 +346,30 @@ class UpdateProfileBody(BaseModel):
     #       Directorio general. Solo aplica al rol Reciclador, igual que
     #       "asociacion" — el endpoint la ignora para los demás roles.
     mostrar_contacto_directorio: bool = False
+
+    # ¿Qué? Mismas reglas que UserCreate (arriba) — antes esta pantalla
+    #       ("editar perfil") las revisaba a mano dentro de
+    #       user_service.actualizar_perfil() en vez de aquí, en el molde
+    #       de datos, que es el lugar correcto para esto.
+    @field_validator("nombre")
+    @classmethod
+    def validate_nombre(cls, v: str) -> str:
+        return _validar_nombre_obligatorio(v)
+
+    @field_validator("apellidos")
+    @classmethod
+    def validate_apellidos(cls, v: str) -> str:
+        return _validar_apellidos_obligatorio(v)
+
+    @field_validator("asociacion")
+    @classmethod
+    def validate_asociacion(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_largo_opcional(v, ASOCIACION_MAX_LENGTH)
+
+    @field_validator("numero_telefonico")
+    @classmethod
+    def validate_numero_telefonico(cls, v: Optional[str]) -> Optional[str]:
+        return _validar_telefono_opcional(v)
 
 
 class UpdateLocaleRequest(BaseModel):

@@ -39,40 +39,42 @@ export interface EditarComunicadoPayload {
   fecha_expiracion?: string | null;
 }
 
-function authHeaders(token: string) {
-  return { headers: { Authorization: `Bearer ${token}` } };
-}
-
 // ¿Qué? Admin Conjunto — HU-027.
-export async function crearComunicado(datos: CrearComunicadoPayload, token: string): Promise<Comunicado> {
-  const { data } = await axios.post(API_BASE, datos, authHeaders(token));
+export async function crearComunicado(datos: CrearComunicadoPayload): Promise<Comunicado> {
+  const { data } = await axios.post(API_BASE, datos);
   return data;
 }
 
+export interface PaginaDeComunicados {
+  items: Comunicado[];
+  total: number;
+}
+
 // ¿Qué? Admin Conjunto — todo lo que ha publicado, en todos sus conjuntos.
-export async function listarMisComunicados(token: string): Promise<Comunicado[]> {
-  const { data } = await axios.get(`${API_BASE}/mis-comunicados`, authHeaders(token));
+// ¿Para qué? Issue #11 — pedido de a páginas (limit/offset), igual que
+//           listarTodasLasNovedades (issue #227).
+export async function listarMisComunicados(limit: number, offset: number): Promise<PaginaDeComunicados> {
+  const { data } = await axios.get(`${API_BASE}/mis-comunicados`, { params: { limit, offset } });
   return data;
 }
 
 // ¿Qué? Admin Conjunto — HU-029.
 export async function editarComunicado(
   idComunicado: string,
-  datos: EditarComunicadoPayload,
-  token: string
+  datos: EditarComunicadoPayload
 ): Promise<Comunicado> {
-  const { data } = await axios.patch(`${API_BASE}/${idComunicado}`, datos, authHeaders(token));
+  const { data } = await axios.patch(`${API_BASE}/${idComunicado}`, datos);
   return data;
 }
 
 // ¿Qué? Admin Conjunto — HU-030.
-export async function eliminarComunicado(idComunicado: string, token: string) {
-  const { data } = await axios.delete(`${API_BASE}/${idComunicado}`, authHeaders(token));
+export async function eliminarComunicado(idComunicado: string) {
+  const { data } = await axios.delete(`${API_BASE}/${idComunicado}`);
   return data;
 }
 
 // ¿Qué? Residente/Reciclador — HU-028.
-export async function verFeedComunicados(token: string): Promise<Comunicado[]> {
-  const { data } = await axios.get(`${API_BASE}/feed`, authHeaders(token));
+export async function verFeedComunicados(): Promise<Comunicado[]> {
+  const { data } = await axios.get(`${API_BASE}/feed`);
   return data;
 }

@@ -59,3 +59,16 @@
 - **Dado que** el enlace tiene más de 1 hora, o ya se usó una vez,
 - **cuando** intento usarlo de nuevo,
 - **entonces** el sistema lo rechaza y me pide solicitar uno nuevo.
+- **y** si pedí varios enlaces, solo sirve el del último correo: al pedir uno nuevo, los anteriores dejan de servir (issue #396). Si dos peticiones intentan usar el mismo enlace al mismo tiempo, solo una lo consigue.
+
+### CA-042.5 — Se cierran las sesiones que estuvieran abiertas
+
+- **Dado que** mi cuenta tenía sesiones abiertas (mías o de alguien que consiguió entrar),
+- **cuando** restablezco mi contraseña con el enlace,
+- **entonces** todas esas sesiones quedan cerradas y hay que volver a iniciar sesión con la contraseña nueva (issue #308).
+
+### CA-042.6 — Se quita el bloqueo y se anulan los demás enlaces (issue #396)
+
+- **Dado que** mi cuenta estaba bloqueada por intentos fallidos, o tenía otros enlaces de recuperación vigentes,
+- **cuando** restablezco mi contraseña con el enlace,
+- **entonces** el bloqueo se quita y puedo entrar de inmediato con la contraseña nueva, los demás enlaces de recuperación sin usar de mi cuenta dejan de servir, y el cambio queda en el registro de auditoría (`password_changed`), igual que el cambio de contraseña desde el perfil.

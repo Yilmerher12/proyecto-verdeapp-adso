@@ -18,7 +18,7 @@ return (
     <>
         <LandingPage asBackdrop />
         <Modal onClose={() => navigate("/")} wide aria-label={t("legal.terms.title")}>
-        <TerminosDeUsoPage embedded />
+        <TerminosDeUsoPage />
         </Modal>
     </>
 );

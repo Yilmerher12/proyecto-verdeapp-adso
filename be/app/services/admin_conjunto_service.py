@@ -11,7 +11,7 @@ Descripción: Lógica de negocio del flujo de invitación de Administradores de 
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -32,12 +32,77 @@ from app.schemas.admin_conjunto import (
 )
 
 from app.utils.email import send_admin_conjunto_invitation_email
-from app.utils.security import hash_password
+from app.utils.security import hash_password, hash_token
 
 logger = logging.getLogger(__name__)
 
 # ¿Qué? Las invitaciones son válidas por 48 horas.
 HORAS_VALIDEZ_INVITACION = 48
+
+
+def nombres_con_administrador_activo(db: Session, ids_conjuntos: List[UUID]) -> List[str]:
+    """
+    ¿Qué? Nombres de los conjuntos (de la lista) que ya tienen un administrador
+          activo, o sea con fecha_desvinculacion NULL (RN-003).
+    ¿Para qué? Issue #409 — la misma revisión la necesitan tres flujos: invitar,
+              aceptar una invitación y asignar un conjunto adicional (HU-024).
+              Antes cada uno la hacía a su manera, o no la hacía.
+    ¿Impacto? Lista vacía = ninguno tiene administrador, se puede seguir.
+    """
+    return list(
+        db.execute(
+            select(ConjuntoResidencial.nombre_conjunto)
+            .join(
+                AdministradorConjuntoAsignacion,
+                AdministradorConjuntoAsignacion.id_conjunto_residencial
+                == ConjuntoResidencial.id_conjunto_residencial,
+            )
+            .where(
+                ConjuntoResidencial.id_conjunto_residencial.in_(ids_conjuntos),
+                AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+
+def nombres_con_invitacion_pendiente_de_otro(
+    db: Session, ids_conjuntos: List[UUID], excepto_correo: Optional[str] = None
+) -> List[str]:
+    """
+    ¿Qué? Nombres de los conjuntos (de la lista) incluidos en una invitación
+          pendiente, o sea sin usar y sin vencer.
+    ¿Para qué? Issue #409 — evitar que dos caminos (dos invitaciones, o una
+              invitación y una asignación adicional) prometan el mismo conjunto
+              a dos personas: la segunda en aceptar chocaría con
+              ux_admin_conjunto_activo.
+    ¿Impacto? excepto_correo: al invitar se ignora la invitación pendiente de
+              la MISMA persona (reenviarle el enlace sigue permitido). Al
+              asignar un conjunto adicional no se pasa: quien ya tiene cuenta
+              no puede tener una invitación pendiente que cuente.
+    """
+    consulta = select(InvitacionAdminConjunto.conjuntos_asignados).where(
+        InvitacionAdminConjunto.used.is_(False),
+        InvitacionAdminConjunto.expires_at > datetime.now(timezone.utc),
+    )
+    if excepto_correo is not None:
+        consulta = consulta.where(InvitacionAdminConjunto.correo_electronico != excepto_correo)
+    ids_en_pendientes = {
+        id_conjunto for fila in db.execute(consulta).scalars().all() for id_conjunto in fila.split(",")
+    }
+    ids_pedidos_y_pendientes = [i for i in ids_conjuntos if str(i) in ids_en_pendientes]
+    if not ids_pedidos_y_pendientes:
+        return []
+    return list(
+        db.execute(
+            select(ConjuntoResidencial.nombre_conjunto).where(
+                ConjuntoResidencial.id_conjunto_residencial.in_(ids_pedidos_y_pendientes)
+            )
+        )
+        .scalars()
+        .all()
+    )
 
 
 async def invitar_admin_conjunto(
@@ -70,6 +135,38 @@ async def invitar_admin_conjunto(
             detail="Ese correo ya tiene una cuenta registrada en VerdeApp.",
         )
 
+    # ¿Qué? Issue #402 (CN-060) — rechazar al INVITAR los conjuntos que ya
+    #       tienen administrador activo o que ya tienen una invitación
+    #       pendiente de OTRA persona (RN-003: un conjunto, un solo
+    #       administrador activo a la vez).
+    # ¿Para qué? Antes la invitación se creaba igual y el choque con el índice
+    #           ux_admin_conjunto_activo aparecía recién al ACEPTARLA, como un
+    #           500 genérico para la persona invitada y con la invitación
+    #           inutilizable. Así el aviso le llega al Admin Sistema, que
+    #           puede corregirlo.
+    # ¿Impacto? Una invitación pendiente del MISMO correo no cuenta: reenviar
+    #           el enlace a la misma persona (se le perdió el correo) sigue
+    #           permitido, y solo la primera aceptación puede crear la cuenta.
+    nombres_con_administrador = nombres_con_administrador_activo(db, datos.ids_conjuntos)
+    if nombres_con_administrador:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Estos conjuntos ya tienen un administrador activo: "
+            + ", ".join(nombres_con_administrador)
+            + ".",
+        )
+
+    nombres_con_invitacion_pendiente = nombres_con_invitacion_pendiente_de_otro(
+        db, datos.ids_conjuntos, excepto_correo=datos.correo_electronico
+    )
+    if nombres_con_invitacion_pendiente:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Estos conjuntos ya tienen una invitación pendiente para otra persona: "
+            + ", ".join(nombres_con_invitacion_pendiente)
+            + ".",
+        )
+
     token = str(uuid.uuid4())
     expira = datetime.now(timezone.utc) + timedelta(hours=HORAS_VALIDEZ_INVITACION)
     ids_como_texto = ",".join(str(i) for i in datos.ids_conjuntos)
@@ -78,7 +175,8 @@ async def invitar_admin_conjunto(
         # ¿Qué? Sin "id=" aquí a propósito — el modelo ya genera un UUIDv4
         #       por su cuenta (default=generar_uuid4 en el modelo).
         correo_electronico=datos.correo_electronico,
-        token=token,
+        # ¿Qué? Issue #373 (CN-031): se guarda el hash; el correo lleva el original.
+        token=hash_token(token),
         conjuntos_asignados=ids_como_texto,
         invitado_por_id=invitado_por.id_usuario,
         expires_at=expira,
@@ -129,6 +227,24 @@ def aceptar_invitacion(db: Session, datos: AceptarInvitacionAdminConjuntoRequest
               Sistema, solo la conoce el nuevo administrador.
     """
     invitacion = _obtener_invitacion_valida(db, datos.token, lanzar_error=True)
+    ids_conjuntos: List[UUID] = [UUID(i) for i in invitacion.conjuntos_asignados.split(",")]
+
+    # ¿Qué? Issue #409 — antes de crear la cuenta, comprobar que ninguno de los
+    #       conjuntos de la invitación haya conseguido administrador mientras
+    #       la invitación esperaba.
+    # ¿Para qué? Si ya lo tiene, crear el vínculo choca con ux_admin_conjunto_activo
+    #           y la persona recibía el 500 genérico de abajo, en cada intento.
+    # ¿Impacto? Va ANTES del try a propósito: el "except Exception" de abajo
+    #           convertiría este 409 en un 500. No se crea nada y la invitación
+    #           queda sin usar.
+    nombres_con_administrador = nombres_con_administrador_activo(db, ids_conjuntos)
+    if nombres_con_administrador:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Estos conjuntos ya tienen un administrador activo: "
+            + ", ".join(nombres_con_administrador)
+            + ". Pide al equipo de VerdeApp una invitación nueva.",
+        )
 
     try:
         nuevo_usuario = Usuario(
@@ -149,7 +265,6 @@ def aceptar_invitacion(db: Session, datos: AceptarInvitacionAdminConjuntoRequest
         db.add(nuevo_administrador)
         db.flush()
 
-        ids_conjuntos: List[UUID] = [UUID(i) for i in invitacion.conjuntos_asignados.split(",")]
         for id_conjunto in ids_conjuntos:
             asignacion = AdministradorConjuntoAsignacion(
                 id_administrador=nuevo_administrador.id_administrador,
@@ -177,7 +292,7 @@ def _obtener_invitacion_valida(db: Session, token: str, lanzar_error: bool):
           valida que no esté usada ni vencida.
     """
     invitacion = db.query(InvitacionAdminConjunto).filter(
-        InvitacionAdminConjunto.token == token,
+        InvitacionAdminConjunto.token == hash_token(token),
         InvitacionAdminConjunto.used.is_(False),
     ).first()
 

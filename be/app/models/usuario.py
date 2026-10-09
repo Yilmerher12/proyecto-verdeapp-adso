@@ -42,6 +42,17 @@ class Usuario(Base):
     #           por accidente al agregar esta columna.
     habilitado = Column(Boolean, nullable=False, default=True, server_default="true")
 
+    # ¿Qué? Cuándo y por qué el Admin del Sistema desactivó la cuenta.
+    # ¿Para qué? Antes solo se guardaba "habilitado = false", sin ningún
+    #           rastro de la fecha ni de la razón — al mirar una cuenta
+    #           desactivada no había forma de saber si fue por mudanza,
+    #           cuenta duplicada o un abuso. El motivo es opcional.
+    # ¿Impacto? Ambos quedan en NULL mientras la cuenta esté activa: al
+    #           reactivarla se borran, para que un dato viejo no se
+    #           confunda con una desactivación nueva.
+    fecha_desactivacion = Column(DateTime(timezone=True), nullable=True)
+    motivo_desactivacion = Column(String(200), nullable=True)
+
     # ¿Qué? Idioma preferido de la interfaz para este usuario ("es" o "en").
     # ¿Para qué? Que la preferencia de idioma siga a la persona entre dispositivos,
     #           no solo al navegador donde la eligió (eso lo cubre localStorage).
@@ -59,6 +70,20 @@ class Usuario(Base):
     #           bloqueado_hasta queda NULL mientras no haya bloqueo activo.
     intentos_fallidos = Column(Integer, nullable=False, default=0, server_default="0")
     bloqueado_hasta = Column(DateTime(timezone=True), nullable=True)
+
+    # ¿Qué? Issue #308 (CN-010): número que sube cada vez que el usuario
+    #       cambia o restablece su contraseña. Cada JWT lleva adentro la
+    #       versión vigente al momento de emitirse (claim "ver").
+    # ¿Para qué? Antes, cambiar la contraseña no cerraba las sesiones ya
+    #           abiertas: un token robado seguía sirviendo hasta 7 días.
+    #           Ahora get_current_user y /refresh rechazan cualquier token
+    #           cuya "ver" no coincida con este número.
+    # ¿Impacto? Se usa un contador y no una fecha porque el claim "iat" de
+    #           un JWT va en segundos enteros: un token emitido en el mismo
+    #           segundo del cambio quedaría mal clasificado. Los tokens
+    #           emitidos antes de esta columna no traen "ver" y cuentan
+    #           como 0, así que aplicar la migración no cierra ninguna sesión.
+    version_sesion = Column(Integer, nullable=False, default=0, server_default="0")
 
     # ¿Qué? URL pública de la foto de perfil (ej. "/uploads/perfiles/<archivo>"),
     #       igual que url_adjunto en comunicados/novedades — no la foto en sí.

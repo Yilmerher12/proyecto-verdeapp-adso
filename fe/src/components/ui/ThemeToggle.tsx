@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 /**
  * ¿Qué? Hook interno que gestiona el estado del tema (dark/light).
@@ -48,21 +49,24 @@ function useTheme() {
  */
 export function ThemeToggle() {
   const { isDark, toggle } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <button
       onClick={toggle}
-      className="cursor-pointer rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-[#2a4d34]"
-      aria-label={isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+      className="cursor-pointer rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-night-hover"
+      // ¿Qué? Textos desde i18n: antes estaban fijos en español y, con la app
+      //       en inglés, el lector de pantalla seguía leyendo "Cambiar a tema claro".
+      aria-label={isDark ? t("common.switchToLight") : t("common.switchToDark")}
       aria-pressed={isDark}
-      title={isDark ? "Tema claro" : "Tema oscuro"}
+      title={isDark ? t("common.lightTheme") : t("common.darkTheme")}
     >
       {isDark ? (
         // ¿Qué? Ícono de sol — indica que se cambiará a light mode.
-        <Sun className="h-5 w-5" aria-hidden="true" />
+        <Sun className="icon-lg" aria-hidden="true" />
       ) : (
         // ¿Qué? Ícono de luna — indica que se cambiará a dark mode.
-        <Moon className="h-5 w-5" aria-hidden="true" />
+        <Moon className="icon-lg" aria-hidden="true" />
       )}
     </button>
   );

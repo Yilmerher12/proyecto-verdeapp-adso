@@ -49,7 +49,7 @@ VerdeApp sigue una **arquitectura Cliente–Servidor** de tres capas lógicas:
 2. **Backend (FastAPI)** — lógica de negocio, expone una API REST bajo `/api/v1/`.
 3. **Base de datos (PostgreSQL)** — persistencia, solo accedida desde el backend.
 
-La comunicación es exclusivamente **HTTP + JSON**. Los tokens JWT viajan en el header `Authorization: Bearer <token>`. No hay sesiones guardadas en el servidor.
+La comunicación es exclusivamente **HTTP + JSON**. Los tokens JWT viajan en una cookie `httpOnly` que el navegador adjunta solo (RNF-001.9) — antes viajaban en el header `Authorization: Bearer <token>`, manejado a mano por el frontend. No hay sesiones guardadas en el servidor más allá de la lista de tokens revocados (ver "La excepción honesta" más abajo).
 
 ---
 
@@ -102,7 +102,7 @@ async def crear_auditoria(db, id_usuario_reciclador, ..., evidencias) -> Auditor
 
 ### Ventaja
 
-Un cambio en cómo se guarda una auditoría en la base de datos no afecta al router. Un cambio en el formato del request no afecta la lógica de negocio. Cada capa se puede probar por separado (por eso el backend tiene 245 tests sin necesitar un servidor HTTP real corriendo).
+Un cambio en cómo se guarda una auditoría en la base de datos no afecta al router. Un cambio en el formato del request no afecta la lógica de negocio. Cada capa se puede probar por separado (por eso el backend tiene más de 600 tests que no necesitan un servidor HTTP real corriendo).
 
 ---
 
@@ -182,7 +182,7 @@ async def crear_auditoria(
 
 ### Ventaja
 
-Para los 245 tests del backend, `get_db` se reemplaza por una base de datos de prueba sin tocar ni un router — FastAPI resuelve el cambio automáticamente vía `app.dependency_overrides`.
+En los tests del backend, `get_db` se reemplaza por una base de datos de prueba sin tocar ni un router — FastAPI resuelve el cambio automáticamente vía `app.dependency_overrides`.
 
 ---
 
@@ -238,7 +238,8 @@ React comparte estado global (la sesión del usuario) sin pasar props manualment
 // fe/src/context/AuthContext.tsx
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  // El token ya no vive aquí — es una cookie httpOnly que ni siquiera
+  // este componente puede leer (RNF-001.9).
   // ...login/register/logout/changePassword...
   return (
     <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -293,17 +294,17 @@ Middleware del lado del cliente HTTP que procesa toda petición o respuesta ante
 
 ```typescript
 // fe/src/api/axios.ts
-api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("access_token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+// RNF-001.9: ya no hace falta un interceptor de request que pegue el
+// token a mano — la cookie httpOnly viaja sola gracias a esto:
+const api = axios.create({ baseURL: API_BASE_URL, withCredentials: true });
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && /* había sesión activa */) {
-      sessionStorage.clear();
+    // Salvo /auth/login y /auth/logout: ahí un 401 es "contraseña
+    // incorrecta" o "ya no había sesión", no "tu sesión venció".
+    if (error.response?.status === 401 && /* había sesión activa */ && !esRutaSinRenovacion(url)) {
+      borrarSesionActiva(); // lib/sesionActiva.ts — la marca vive en localStorage
       window.location.href = "/login";
     }
     return Promise.reject(error);
@@ -533,5 +534,5 @@ Juntos, estos 14 patrones hacen que VerdeApp sea:
 - **Seguro** — DTO + JWT + guardas de rol (ver `owasp-top-10.md`)
 - **Mantenible** — Capas + Service Layer + DI + Custom Hooks
 - **Escalable** — Stateless + REST + Monorepo
-- **Testeable** — DI con overrides + 245 tests backend + 167 tests frontend
+- **Testeable** — DI con overrides + más de 600 tests de backend y más de 400 de frontend (conteo exacto: `uv run pytest -q` y `pnpm test`)
 - **Evolutivo sin perder datos** — Expand/Contract + siembra con guardas independientes

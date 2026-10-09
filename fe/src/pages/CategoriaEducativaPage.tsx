@@ -4,60 +4,32 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import { ArrowLeft, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
+import { COMPONENTES_MARKDOWN } from "@/config/contenidoEducativoMarkdown";
 import {
   listarContenido,
   type ContenidoEducativo,
 } from "@/lib/contenidoEducativoApi";
 
-// ¿Qué? Estilo de cada elemento que un admin puede escribir en Markdown
-//       (## subtítulo, listas, negrita) dentro del cuerpo del texto.
-// ¿Para qué? react-markdown no trae estilos propios — sin esto, un
-//           subtítulo se vería exactamente igual que un párrafo normal.
-// ¿Impacto? Mismos tokens de color que ya usa el resto de esta tarjeta
-//           (text-gray-600/300), para que no se sienta como un bloque
-//           aparte del resto de la página.
-const COMPONENTES_MARKDOWN = {
-  h1: (props: React.ComponentPropsWithoutRef<"h1">) => (
-    <h3 className="mt-4 text-base font-bold text-gray-900 first:mt-0 dark:text-white" {...props} />
-  ),
-  h2: (props: React.ComponentPropsWithoutRef<"h2">) => (
-    <h3 className="mt-4 text-base font-bold text-gray-900 first:mt-0 dark:text-white" {...props} />
-  ),
-  h3: (props: React.ComponentPropsWithoutRef<"h3">) => (
-    <h4 className="mt-3 text-sm font-bold text-gray-900 first:mt-0 dark:text-white" {...props} />
-  ),
-  p: (props: React.ComponentPropsWithoutRef<"p">) => (
-    <p className="mt-2 text-sm text-gray-600 first:mt-0 dark:text-gray-300" {...props} />
-  ),
-  ul: (props: React.ComponentPropsWithoutRef<"ul">) => (
-    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300" {...props} />
-  ),
-  ol: (props: React.ComponentPropsWithoutRef<"ol">) => (
-    <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300" {...props} />
-  ),
-  a: (props: React.ComponentPropsWithoutRef<"a">) => (
-    <a className="text-accent-400 underline-offset-4 transition-colors hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
-  ),
-};
-
 export function CategoriaEducativaPage() {
   const { t } = useTranslation();
   const { categoria } = useParams<{ categoria: string }>();
   const categoriaDecodificada = decodeURIComponent(categoria ?? "");
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    if (!accessToken) return;
-    listarContenido(accessToken)
+    if (!user) return;
+    listarContenido()
       .then(setContenido)
       .finally(() => setCargando(false));
-  }, [accessToken]);
+  }, [user]);
 
   const temas = contenido.filter((c) => c.modulo_categoria === categoriaDecodificada);
   // ¿Qué? Se desestructura del objeto (no se llama como función) a propósito
@@ -72,46 +44,46 @@ export function CategoriaEducativaPage() {
         onClick={() => navigate("/catalogo-educativo")}
         className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="icon-md" />
         {t("categoriaEducativa.back")}
       </button>
 
-      <div className="flex items-center gap-3 bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center gap-3 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
-          <Icono className="h-5.5 w-5.5" />
+          <Icono className="icon-lg" />
         </span>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{categoriaDecodificada}</h1>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && temas.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("categoriaEducativa.emptyForCategory")}</p>
+        <EmptyState icon={FileText} message={t("categoriaEducativa.emptyForCategory")} />
       )}
 
       <div className="space-y-4">
         {temas.map((item) => (
           <div
             key={item.id_contenido}
-            className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+            className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card"
           >
             <h2 className="text-base font-bold text-gray-900 dark:text-white">{item.titulo_tema}</h2>
             <ReactMarkdown components={COMPONENTES_MARKDOWN}>{item.cuerpo_texto}</ReactMarkdown>
 
             {item.url_video && <YoutubeEmbed url={item.url_video} titulo={item.titulo_tema} />}
 
-            {item.url_guia && (
+            {enlaceAdjuntoSeguro(item.url_guia) && (
               <a
-                // ¿Qué? Si la guía viene de un archivo subido a VerdeApp, el
-                //       backend devuelve una ruta relativa (/uploads/adjuntos/...)
-                //       que hay que completar con la URL del backend — si viene
-                //       de un link externo, ya trae http(s) y se usa tal cual.
-                href={item.url_guia.startsWith("http") ? item.url_guia : `${API_BASE_URL}${item.url_guia}`}
+                // ¿Qué? enlaceAdjuntoSeguro completa la ruta relativa de un
+                //       archivo subido (/uploads/adjuntos/...) con la URL del
+                //       backend y deja pasar solo https://; si el enlace no
+                //       es seguro devuelve null y no se pinta (issue #400).
+                href={enlaceAdjuntoSeguro(item.url_guia) ?? undefined}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-200 dark:hover:bg-[#2a4d34]"
+                className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-200 dark:hover:bg-night-hover"
               >
-                <FileText className="h-4 w-4 shrink-0" />
+                <FileText className="icon-md shrink-0" />
                 {t("categoriaEducativa.viewGuide")}
               </a>
             )}

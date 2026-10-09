@@ -16,6 +16,7 @@ from app.models.contenido_educativo import ContenidoEducativo
 from app.models.usuario import Usuario
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.punto_acopio import PuntoAcopio
+from app.models.punto_acopio_comentario import PuntoAcopioComentario
 
 # Tablas Nivel 2 y 3
 from app.models.unidad import Unidad
@@ -27,8 +28,12 @@ from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAs
 from app.models.invitacion_admin_conjunto import InvitacionAdminConjunto
 from app.models.invitacion_reciclador_conjunto import InvitacionRecicladorConjunto
 from app.models.solicitud_desvinculacion import SolicitudDesvinculacion, EstadoSolicitudDesvinculacion
+from app.models.novedad_enviada import NovedadEnviada, EstadoNovedadEnviada
+from app.models.agenda_conjunto import AgendaConjunto, EstadoAgenda
+from app.models.archivo_subido import ArchivoSubido
 from app.models.comunicado import Comunicado, TipoComunicado, DestinatariosComunicado
 from app.models.novedad import Novedad, AlcanceNovedad
+from app.models.novedad_conjunto import NovedadConjunto
 
 # 🔐 Tokens de Seguridad (¡Esenciales para que Alembic no falle!)
 from app.models.password_reset_token import PasswordResetToken
@@ -39,6 +44,9 @@ from app.models.notificacion import Notificacion, NotificacionDestinatario
 
 # Auditoría del reciclador al conjunto (RQF-009)
 from app.models.auditoria_conjunto import AuditoriaConjunto
+
+# Envío manual de un módulo del catálogo a un conjunto (RQF-013, Flujo C)
+from app.models.contenido_educativo_envio import ContenidoEducativoEnvio
 
 # Lista negra de tokens JWT invalidados por logout (RQF-007)
 from app.models.token_revocado import TokenRevocado
@@ -55,6 +63,7 @@ __all__ = [
     "Usuario",
     "ConjuntoResidencial",
     "PuntoAcopio",
+    "PuntoAcopioComentario",
     "Unidad",
     "Residente",
     "Reciclador",
@@ -65,15 +74,22 @@ __all__ = [
     "InvitacionRecicladorConjunto",
     "SolicitudDesvinculacion",
     "EstadoSolicitudDesvinculacion",
+    "NovedadEnviada",
+    "EstadoNovedadEnviada",
+    "AgendaConjunto",
+    "EstadoAgenda",
+    "ArchivoSubido",
     "Comunicado",
     "TipoComunicado",
     "DestinatariosComunicado",
     "Novedad",
     "AlcanceNovedad",
+    "NovedadConjunto",
     "PasswordResetToken",
     "EmailVerificationToken",
     "Notificacion",
     "NotificacionDestinatario",
     "AuditoriaConjunto",
     "TokenRevocado",
+    "ContenidoEducativoEnvio",
 ]

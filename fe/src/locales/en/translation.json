@@ -2,6 +2,12 @@
   "serverError": {
     "message": "Couldn't connect to the server. Check your connection — we'll retry automatically."
   },
+  "errorBoundary": {
+    "title": "Something went wrong on this screen",
+    "message": "An unexpected error occurred while showing this page. You can reload it or go back to your main dashboard.",
+    "reload": "Reload page",
+    "goHome": "Back to main dashboard"
+  },
   "appShell": {
     "ariaLabel": "VerdeApp navigation",
     "nav": {
@@ -14,8 +20,11 @@
       "puntosAcopio": "Collection Points",
       "gestionarComunicados": "My Buildings' Announcements",
       "comunicados": "Announcements",
-      "aprenderGuias": "Learn (Guides)",
-      "directorioGeneral": "General Directory"
+      "aprenderGuias": "Learn to Recycle",
+      "directorioGeneral": "General Directory",
+      "groupComunidad": "Community",
+      "groupRecursos": "Resources",
+      "groupCuenta": "Account"
     },
     "proximamente": "Coming soon",
     "notificaciones": "Notifications",
@@ -45,8 +54,16 @@
   },
   "common": {
     "loading": "Loading...",
+    "processing": "Processing, please wait",
+    "switchToLight": "Switch to light theme",
+    "switchToDark": "Switch to dark theme",
+    "lightTheme": "Light theme",
+    "darkTheme": "Dark theme",
+    "verifyingSession": "Verifying session, please wait",
     "loadError": "We couldn't load this information. Please try again later.",
+    "charCount": "{{actual}}/{{max}} characters",
     "actionError": "The action couldn't be completed. Please try again.",
+    "tooManyRequests": "You made too many requests. Wait a moment and try again.",
     "email": "Email address",
     "emailPlaceholder": "email@example.com",
     "password": "Password",
@@ -58,11 +75,20 @@
     "back": "Back",
     "or": "or",
     "close": "Close",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "edit": "Edit",
     "phone": "Phone",
     "saving": "Saving...",
     "saveError": "Could not save. Please try again.",
-    "formIncomplete": "Complete the form"
+    "formIncomplete": "Complete the form",
+    "datePast": "The date must be today or a future date.",
+    "dateTooFar": "The date can't be more than {{dias}} days from today.",
+    "pagination": {
+      "showing": "Showing {{from}}–{{to}} of {{total}}",
+      "prev": "Previous page",
+      "next": "Next page"
+    }
   },
   "auth": {
     "login": {
@@ -100,6 +126,12 @@
         "emailsMismatch": "Email addresses do not match",
         "firstNameMin": "First name must be at least 2 characters",
         "lastNameMin": "Last name must be at least 2 characters",
+        "firstNameMax": "First name cannot exceed {{max}} characters",
+        "lastNameMax": "Last name cannot exceed {{max}} characters",
+        "nameFormat": "Only letters, spaces, apostrophes, periods or hyphens are allowed",
+        "codigoAccesoFormat": "The code has {{n}} letters or numbers (no 0, O, 1, I or L)",
+        "phoneInvalid": "The phone number format is invalid.",
+        "unitFormatInvalid": "Only letters, numbers, and a single space or hyphen as a separator are allowed.",
         "passwordMin": "Minimum 8 characters",
         "passwordUppercase": "Must include at least one uppercase letter",
         "passwordLowercase": "Must include at least one lowercase letter",
@@ -114,6 +146,22 @@
       "acceptCookies": "I have read and accept the <link>Cookies Policy</link>",
       "roleResident": "Resident",
       "roleRecycler": "Recycler",
+      "roleAdminConjunto": "Do you manage a complex?",
+      "adminRequest": {
+        "heading": "Administrator accounts are created by invitation",
+        "intro": "This way nobody can give themselves the Complex Administrator role. To request yours:",
+        "step1": "Send us a request with the button below: your name, your email, your position and the details of the complex you manage.",
+        "step2": "We reply to your email and ask for the documents that prove your position. You attach them by replying to that same email.",
+        "step3": "If everything checks out, you get an invitation in your email to finish creating your account.",
+        "docsHeading": "Have these documents ready",
+        "doc1": "Certificate of existence and legal representation of the residential complex, issued by the Local Mayor's Office (at most 30 days old).",
+        "doc2": "Copy of your national ID card, both sides.",
+        "doc3": "Minutes of the assembly or board meeting where you were appointed.",
+        "doc4": "Contract signed with the complex, if you have one.",
+        "doc5": "If you manage on behalf of a company: Chamber of Commerce certificate and ID of its legal representative.",
+        "privacyNotice": "Your documents are never uploaded to VerdeApp: they travel only by email, are used solely to verify your identity and position, and are deleted after the review.",
+        "cta": "Request access"
+      },
       "fields": {
         "firstName": "First name *",
         "lastName": "Last name *",
@@ -134,7 +182,7 @@
         "apto": "Apartment",
         "aptoPlaceholder": "E.g.: 402",
         "codigoAcceso": "Building access code",
-        "codigoAccesoPlaceholder": "E.g.: AB3K9Q",
+        "codigoAccesoPlaceholder": "6 letters or numbers",
         "codigoAccesoHint": "Ask your building administrator for it (bulletin board, building group chat).",
         "operativeProfileHeading": "Operating Profile *",
         "workLocality": "Work District *",
@@ -144,7 +192,7 @@
         "email": "Email *",
         "confirmEmailField": "Confirm Email *",
         "password": "Password *",
-        "passwordPlaceholder": "Minimum 8 characters",
+        "passwordPlaceholder": "8+ characters, uppercase, lowercase and a number",
         "confirmPasswordField": "Confirm Password *",
         "confirmPasswordPlaceholder": "Repeat the password"
       },
@@ -158,7 +206,7 @@
       "genericError": "Error registering. Check your details or try a different email.",
       "success": {
         "title": "Check your inbox!",
-        "bodyPrefix": "We sent a verification link to",
+        "bodyPrefix": "We sent an email to",
         "step1": "Open your email",
         "step2": "Look for the email from VerdeApp",
         "step3": "Click \"Verify my account\"",
@@ -173,6 +221,17 @@
       "confirmPassword": "Confirm new password",
       "submit": "Change password",
       "successMessage": "Password updated successfully",
+      "requirements": {
+        "title": "Password requirements",
+        "minLength": "8 characters or more",
+        "uppercase": "One uppercase letter",
+        "lowercase": "One lowercase letter",
+        "number": "One number"
+      },
+      "passwordsMatch": "Passwords match",
+      "passwordsNoMatch": "They don't match yet",
+      "forgotHint": "Don't remember it?",
+      "forgotLink": "Recover it by email",
       "backToDashboard": "Back to dashboard",
       "validation": {
         "currentRequired": "Current password is required",
@@ -190,6 +249,10 @@
       "backToLogin": "Back to sign in",
       "successMessage": "If your email is registered, you'll receive a link to reset your password.",
       "errorDefault": "Error sending the request",
+      "confirmTitle": "Send recovery link?",
+      "confirmDescription": "An email with the link will be sent to {{email}}.",
+      "confirmButton": "Yes, send it",
+      "confirmSending": "Sending...",
       "validation": {
         "emailRequired": "Email is required"
       }
@@ -243,6 +306,8 @@
     "navAriaLabel": "Legal pages navigation",
     "backToHome": "Back to home",
     "footerCredit": "SENA educational project",
+    "version": "Version {{version}}",
+    "lastUpdated": "Last updated: {{fecha}}",
     "terms": {
       "title": "Terms of Use",
       "intro1": "These Terms of Use govern access to and use of the <strong>VerdeApp</strong> service (hereinafter, \"the Service\"), operated by <strong>{{responsable}} — {{nit}}</strong>, headquartered in {{domicilio}}.",
@@ -322,7 +387,8 @@
         "li3": "<strong>Hashed password</strong> — stored only as a bcrypt hash; never in plain text. The Controller cannot recover or view the original password.",
         "li4": "<strong>IP address and session data</strong> — automatically recorded in server logs for technical and security reasons, pursuant to Decree 1078 of 2015.",
         "li5": "<strong>Registration date and time</strong> — technical metadata automatically generated at account creation.",
-        "noCollect": "<strong>Sensitive data is not collected</strong> (Art. 5, Law 1581/2012) such as racial origin, sexual orientation, biometric data, health data, or political affiliation."
+        "noCollect": "<strong>Sensitive data is not collected</strong> (Art. 5, Law 1581/2012) such as racial origin, sexual orientation, biometric data, health data, or political affiliation.",
+        "adminRequest": "If you request a <strong>Complex Administrator</strong> account, the documents that prove your position (ID card, legal representation certificate, appointment minutes or contract) <strong>are never uploaded to or stored in VerdeApp</strong>: they are requested by email after the first contact, used solely to verify your identity and position, and deleted from the mailbox once the review is complete."
       },
       "s3": {
         "heading": "Purposes of Processing",
@@ -413,10 +479,7 @@
           "p1": "These are <strong>strictly necessary</strong> for the Service to function. Without them, users cannot log in or maintain their session. They do not require additional consent pursuant to Law 1581/2012's necessity principle.",
           "p2": "They store JWT tokens (access and refresh) securely, with the <code>HttpOnly</code>, <code>Secure</code>, and <code>SameSite=Strict</code> attributes to prevent XSS and CSRF attacks, following <strong>OWASP Top 10</strong> recommendations."
         },
-        "prefCategory": {
-          "title": "Preference Cookies",
-          "p1": "These save user settings (such as the dark/light visual theme) to personalize the experience without reconfiguring on each visit. They do not include personally identifiable data."
-        }
+        "localStorageNote": "<strong>Note on the visual theme:</strong> the theme preference (light/dark) is not stored in a cookie, but in the browser's <strong>local storage</strong> (<code>localStorage</code>). It does not appear in your browser's site cookie list, and it does not expire: it stays saved on your device until you clear this site's data."
       },
       "s3": {
         "heading": "Detailed Cookie List",
@@ -437,11 +500,6 @@
             "purpose": "Stores the refresh token that allows obtaining a new access_token without the user having to log in again.",
             "duration": "7 days",
             "type": "Functional / Authentication"
-          },
-          "theme_preference": {
-            "purpose": "Saves the user's theme preference (dark/light) to maintain it between sessions.",
-            "duration": "1 year",
-            "type": "Preferences"
           }
         }
       },
@@ -493,7 +551,7 @@
       "subtitle": "VerdeApp connects everyone involved in recycling at the residential building.",
       "step1": {
         "title": "The building joins",
-        "description": "The administrator registers the building on VerdeApp and invites the residents and the assigned recycler."
+        "description": "The administrator requests their VerdeApp account, shares the access code with the residents and invites the assigned recycler."
       },
       "step2": {
         "title": "Residents get involved",
@@ -552,83 +610,21 @@
       "label": "Message",
       "placeholder": "Write your message here..."
     },
-    "incomplete": "Complete all fields",
-    "submit": "Send Message"
-  },
-  "contact": {
-    "nav": {
-      "backToHome": "Back to home"
+    "incomplete": "Fill in all fields correctly",
+    "submit": "Send Message",
+    "charCount": "{{actual}}/{{max}} characters",
+    "errorDefault": "We couldn't send your message. Please try again later.",
+    "adminRequest": {
+      "subject": "Complex Administrator account request",
+      "messageTemplate": "Complex name:\nComplex address:\nDistrict:\nMy position at the complex:\nContact phone:"
     },
-    "title": "Contact Form",
-    "subtitle": "Send us your query, report or request. We respond within the deadlines established by Law 1581 of 2012.",
-    "eduNotice": {
-      "title": "Educational project — SENA",
-      "body": "This form is for demonstration purposes only. Messages are not sent to any real server and the data you enter is not stored. Contact emails are fictional. In a real implementation, the form would send data to POST /api/v1/contact on the backend."
-    },
-    "form": {
-      "heading": "Send a message",
-      "name": {
-        "label": "Full name",
-        "placeholder": "e.g. Ana García",
-        "error": "Name must be at least 3 characters."
-      },
-      "email": {
-        "label": "Reply email address",
-        "placeholder": "your-email@example.com",
-        "hint": "We will only use this email to reply to you. Do not send sensitive data.",
-        "error": "Enter a valid email address."
-      },
-      "subject": {
-        "label": "Subject",
-        "placeholder": "— Select a subject —",
-        "error": "Select a subject for your message.",
-        "options": {
-          "general": "General inquiry",
-          "support": "Technical support",
-          "dataRights": "Exercise rights (Law 1581/2012 — Habeas Data)",
-          "authSystem": "Authentication system",
-          "bugs": "Bug or error report",
-          "other": "Other"
-        }
-      },
-      "message": {
-        "label": "Message",
-        "placeholder": "Describe your inquiry, report or request in detail...",
-        "hint": "{{count}} / 20 minimum characters",
-        "error": "Message must be at least 20 characters."
-      },
-      "privacy": {
-        "label": "I have read and accept the",
-        "link": "Privacy and Data Protection Policy",
-        "labelSuffix": "(Law 1581 of 2012). I authorize my data to be used solely to respond to my request.",
-        "error": "You must accept the Privacy Policy to continue."
-      },
-      "submit": "Send message",
-      "submitting": "Sending...",
-      "errorBanner": "There was an error processing your message. Please try again."
-    },
-    "success": {
-      "title": "Message sent successfully",
-      "body": "(Simulation — no real email was sent.) In production, we would respond within a maximum of 10 business days for queries or 15 business days for claims, pursuant to Law 1581 of 2012.",
-      "reset": "Send another message"
-    },
-    "info": {
-      "heading": "Contact information",
-      "antiSpam": {
-        "title": "📬 Main contact channel",
-        "body": "For anti-spam reasons we do not publish email addresses. Use the form on this page to send us your message — we will reply within the legal deadlines indicated below."
-      },
-      "phone": "Phone",
-      "address": "Address",
-      "hours": "Office hours",
-      "deadlines": {
-        "title": "Response deadlines (Law 1581/2012)",
-        "queries": "Queries: 10 business days (Art. 14, Law 1581/2012)",
-        "claims": "Claims: 15 business days (Art. 15, Law 1581/2012)"
-      }
-    },
-    "footer": {
-      "credit": "SENA educational project"
+    "validation": {
+      "nameRequired": "Name is required",
+      "subjectMin": "Subject must be at least {{min}} characters",
+      "subjectMax": "Subject cannot exceed {{max}} characters",
+      "messageMin": "Message must be at least {{min}} characters",
+      "messageMax": "Message cannot exceed {{max}} characters",
+      "templateUnchanged": "Fill in the template details before sending"
     }
   },
   "dashboards": {
@@ -642,9 +638,26 @@
         "description": "Invite someone by email to administer one of your buildings.",
         "show": "+ Invite administrator"
       },
+      "pendingRequests": {
+        "title": "Pending requests",
+        "withCount": "{{count}} pending request to resolve.",
+        "withCount_other": "{{count}} pending requests to resolve.",
+        "viewButton": "View requests"
+      },
+      "totals": {
+        "title": "System totals",
+        "administradoresShort": "Building admins"
+      },
+      "conjuntoFilter": {
+        "placeholder": "Search building..."
+      },
       "loadingData": "Loading data...",
       "usersSection": {
         "title": "Registered users",
+        "totalBadge": "{{count}} total",
+        "inactiveButton": "Inactive {{count}}",
+        "noReason": "No reason recorded",
+        "noInactive": "There are no inactive accounts in this tab.",
         "tabs": {
           "residentes": "Residents",
           "recicladores": "Recyclers",
@@ -671,8 +684,42 @@
           "confirmEnableTitle": "Enable this account?",
           "confirmEnableBody": "{{correo}} will be able to log in normally again.",
           "confirmButton": "Yes, continue",
-          "updateError": "Could not update the account's status."
+          "updateError": "Could not update the account's status.",
+          "reasonLabel": "Reason (optional)",
+          "reasonPlaceholder": "For example: moved to another building, duplicate account..."
         }
+      },
+      "profilePanel": {
+        "ariaLabel": "Profile of {{nombre}}",
+        "openProfile": "View profile of {{nombre}}",
+        "readOnly": "Read only",
+        "sections": {
+          "personal": "Personal details",
+          "account": "Account",
+          "deactivated": "Deactivated account"
+        },
+        "fields": {
+          "fullName": "Full name",
+          "conjunto": "Building",
+          "unit": "Tower and apartment",
+          "association": "Association",
+          "conjuntos": "Buildings",
+          "directory": "Directory contact",
+          "emailVerified": "Email verified",
+          "language": "Language",
+          "lockout": "Login lockout",
+          "since": "Since",
+          "reason": "Reason"
+        },
+        "yes": "Yes",
+        "no": "No",
+        "visible": "Visible",
+        "hidden": "Hidden",
+        "noLockout": "Not locked",
+        "lockedUntil": "Locked until {{hora}}",
+        "disableAccount": "Deactivate account",
+        "enableAccount": "Reactivate account",
+        "editSoon": "Edit details · coming soon"
       },
       "residentsTable": {
         "headers": {
@@ -731,10 +778,41 @@
         "loading": "Loading invitations...",
         "empty": "You haven't sent any invitation yet."
       },
+      "agendaSection": {
+        "title": "Building agenda",
+        "hint": "Topics to bring to the committee. Only you can see them: they never reach the System Administrator.",
+        "showDetail": "Show agenda",
+        "hideDetail": "Hide agenda",
+        "empty": "There are no topics in this building's agenda yet.",
+        "add": "Add topic",
+        "textLabel": "Topic",
+        "textPlaceholder": "E.g. Fix the basement door, paint the hallway...",
+        "evidenceLabel": "Supporting photo (optional)",
+        "save": "Save topic",
+        "stateWaiting": "On hold",
+        "statePending": "Pending",
+        "putOnHold": "Put on hold",
+        "backToPending": "Back to pending",
+        "delete": "Delete topic",
+        "deleteTitle": "Delete this topic?",
+        "deleteWarning": "It is deleted permanently. Use it once it has been resolved in the committee.",
+        "deleteConfirm": "Yes, delete",
+        "deleting": "Deleting...",
+        "viewPhoto": "View photo",
+        "errorDefault": "The topic could not be saved. Please try again.",
+        "actionError": "The action could not be completed. Please try again."
+      },
       "myConjuntos": {
         "title": "Buildings you administer",
         "loading": "Loading your buildings...",
         "empty": "You don't have any building assigned yet. Contact the VerdeApp team."
+      },
+      "avisosSection": {
+        "title": "Notices for this building",
+        "fromRecycler": "From recyclers",
+        "fromResident": "From residents",
+        "unreadBadge_one": "{{count}} new notice",
+        "unreadBadge_other": "{{count}} new notices"
       },
       "codigoAcceso": {
         "title": "Access code",
@@ -748,8 +826,23 @@
         "confirmButton": "Yes, regenerate",
         "errorDefault": "Could not regenerate the code. Please try again."
       },
+      "coverage": {
+        "title": "Apartments registered on VerdeApp",
+        "ofTotal": "of {{total}} apartments",
+        "alreadyHaveResidents": "apartments already have residents",
+        "barAria": "{{registrados}} of {{total}} apartments registered",
+        "missing": "apartments still to register",
+        "residents": "residents with an account",
+        "explain": "An apartment counts as registered when it has at least one resident with an account. Use it in the building meeting to invite the ones still missing: you'll find the access code further down.",
+        "noTotal": "You haven't said how many apartments this building has yet, so we can't work out how many are missing. Set it in Edit.",
+        "define": "Set the number of apartments",
+        "badge": "{{pct}}% registered"
+      },
       "editForm": {
         "nit": "Tax ID (optional)",
+        "totalApartments": "Number of apartments (optional)",
+        "totalHelp": "Total apartments in the building (not residents). We use it to work out how many are still missing on VerdeApp.",
+        "totalInvalid": "Enter a whole number between 1 and {{max}}.",
         "successMessage": "Building updated successfully.",
         "errorMessage": "The change could not be saved. Please try again."
       },
@@ -782,7 +875,7 @@
       },
       "myConjuntos": {
         "title": "My authorized buildings",
-        "empty": "You're not authorized in any building yet. Once an administrator invites you and you accept, it will appear here."
+        "empty": "You don't have any authorized building yet. Once an administrator invites you and you accept, it will appear here."
       },
       "notifications": {
         "title": "Received notifications",
@@ -829,6 +922,12 @@
         "successMessage": "Audit submitted.",
         "errorDefault": "Couldn't submit the audit.",
         "errorTimeout": "The upload is taking too long — check your connection and try again.",
+        "confirmSubmit": {
+          "ariaLabel": "Confirm audit",
+          "title": "Send this audit?",
+          "warning": "You're about to rate \"{{tema}}\" as {{nivel}}. Once sent, an audit can't be edited.",
+          "confirm": "Yes, send"
+        },
         "validation": {
           "conjunto": "Select a building.",
           "nivel": "Select a performance level.",
@@ -917,7 +1016,8 @@
     "notRegistered": "Not registered",
     "emailNote": "Your email can't be changed from here.",
     "validation": {
-      "nameRequired": "First and last name are required.",
+      "firstNameRequired": "First name is required.",
+      "lastNameRequired": "Last name is required.",
       "phoneInvalid": "The phone number format is invalid."
     },
     "phonePlaceholder": "E.g.: 3001234567",
@@ -967,38 +1067,146 @@
     "viewGuide": "View support guide"
   },
   "adminContenidoEducativo": {
-    "title": "Educational content",
-    "subtitle": "Create, edit, and delete the catalog modules.",
-    "newModule": "New module",
-    "emptyState": "No modules created yet.",
-    "editAria": "Edit {{titulo}}",
-    "deleteAria": "Delete {{titulo}}",
-    "modal": {
-      "editTitle": "Edit module",
-      "deleteAriaLabel": "Confirm deletion"
-    },
-    "validation": {
-      "required": "Category, title, and content are required.",
-      "titleTooShort": "Title must be at least 5 characters long.",
-      "bodyTooShort": "Content must be at least 20 characters long."
-    },
-    "deleteError": "Could not delete. Please try again.",
-    "fields": {
-      "category": "Category",
-      "categoryPlaceholder": "E.g.: Separation at the source",
-      "titleField": "Title",
-      "titlePlaceholder": "E.g.: Color-coding for bags",
-      "content": "Content",
-      "contentMarkdownHint": "You can use ## for subheadings, **bold**, and - for lists.",
-      "videoLink": "Video link (YouTube)",
-      "guideLink": "Support guide"
-    },
-    "deleteConfirm": {
-      "title": "Delete \"{{titulo}}\"?",
-      "warning": "This action cannot be undone.",
-      "confirm": "Yes, delete"
-    }
-  },
+        "title": "Educational content",
+        "subtitle": "Create, edit and delete catalog modules, and check what was recommended to each building.",
+        "collapse": "Collapse",
+        "expandRatings": "View ratings",
+        "expandModules": "View modules",
+        "newModule": "New module",
+        "emptyState": "No modules created yet.",
+        "editAria": "Edit {{titulo}}",
+        "deleteAria": "Delete {{titulo}}",
+        "modal": {
+          "editTitle": "Edit module",
+          "deleteAriaLabel": "Confirm deletion"
+        },
+        "validation": {
+          "categoryRequired": "The category is required.",
+          "titleRequired": "The title is required.",
+          "titleTooShort": "The title must be at least 5 characters long.",
+          "bodyRequired": "The content is required.",
+          "bodyTooShort": "The content must be at least 20 characters long.",
+          "videoNotYoutube": "The video must be a YouTube link starting with https:// (for example https://youtu.be/...).",
+          "guideNotHttps": "The guide link must start with https://."
+        },
+        "deleteError": "Could not delete. Please try again.",
+        "newSection": {
+          "title": "New content",
+          "newCategory": "+ New category"
+        },
+        "catalogSection": {
+          "title": "Catalog",
+          "modules": "Modules",
+          "categories": "Categories",
+          "notRecommended": "Not recommended",
+          "notRecommendedHint": "This week there's no recommendation in {{count}} topic — you can send content by hand to vary the topics.",
+          "notRecommendedHint_other": "This week there's no recommendation in {{count}} topics — you can send content by hand to vary the topics.",
+          "allCovered": "Every topic had some recommendation this week."
+        },
+        "currentWeek": {
+          "title": "Week {{rango}}",
+          "good": "Good",
+          "regular": "Regular",
+          "bad": "Bad"
+        },
+        "tabs": {
+          "ratings": "Ratings by building",
+          "modules": "Modules"
+        },
+        "week": {
+          "prev": "Previous week",
+          "next": "Next week",
+          "mondayToSunday": "Monday to Sunday",
+          "inProgress": "In progress",
+          "closed": "Closed on Sunday the {{fecha}}",
+          "searchPlaceholder": "Search building or notes…",
+          "all": "All {{count}}",
+          "noObservations": "No notes",
+          "empty": "No ratings match those filters this week.",
+          "notified": "{{count}} resident notified",
+          "notified_other": "{{count}} residents notified",
+          "noRecommendation": "No recommendation",
+          "headers": {
+            "conjunto": "Building",
+            "tema": "Topic",
+            "nivel": "Rating",
+            "observaciones": "Notes",
+            "fecha": "Date",
+            "avisados": "Recommended content"
+          }
+        },
+        "modules": {
+          "searchPlaceholder": "Search by title or category…",
+          "categoryFilterLabel": "Filter by category",
+          "allCategories": "All categories",
+          "total": "{{count}} module",
+          "total_other": "{{count}} modules",
+          "recommendedTo": "{{count}} building",
+          "recommendedTo_other": "{{count}} buildings"
+        },
+        "ratingPanel": {
+          "ariaLabel": "Rating for {{conjunto}}",
+          "details": "Details",
+          "theme": "Topic",
+          "date": "Date",
+          "recycler": "Recycler",
+          "observations": "Notes",
+          "evidence": "Evidence",
+          "enlarge": "Enlarge photo",
+          "recommendedContent": "Recommended content",
+          "noRecommendationHint": "A Good rating doesn't generate a recommendation: there's nothing to improve on this topic."
+        },
+        "modulePanel": {
+          "ariaLabel": "Module: {{titulo}}",
+          "recommendedTo": "Recommended to {{count}} building",
+          "recommendedTo_other": "Recommended to {{count}} buildings",
+          "noneYet": "Not recommended to any building yet.",
+          "sentManually": "Sent by hand",
+          "guideImageHint": "Click the image to enlarge it."
+        },
+        "send": {
+          "title": "Send to other buildings",
+          "oneLabel": "To a specific building",
+          "severalLabel": "To several buildings",
+          "searchPlaceholder": "Search building…",
+          "button": "Send",
+          "buttonMany": "Send to {{count}} building",
+          "buttonMany_other": "Send to {{count}} buildings",
+          "error": "Could not send. Please try again."
+        },
+        "fields": {
+          "category": "Category",
+          "categoryPlaceholder": "E.g.: Source separation",
+          "categoryPlaceholderSelect": "Choose a category…",
+          "newCategoryOption": "+ New category…",
+          "newCategoryWarning": "This will create a new category in the Resident's catalog. Type it exactly like the existing ones to avoid duplicating it.",
+          "titleField": "Title",
+          "titlePlaceholder": "E.g.: Bag color code",
+          "content": "Content",
+          "contentMarkdownHint": "You can use ## for subheadings, **bold**, and - for lists.",
+          "charCount": "{{count}}/{{max}} characters · minimum 20",
+          "formatHeading": "Heading",
+          "formatBold": "Bold",
+          "formatList": "List",
+          "boldPlaceholder": "bold text",
+          "videoLink": "Video link (YouTube)",
+          "videoRecognized": "✓ YouTube link recognized",
+          "videoNotRecognized": "This link doesn't look like YouTube: the Resident won't see the video.",
+          "guideLink": "Support guide"
+        },
+        "preview": {
+          "label": "How the Resident will see it",
+          "live": "live",
+          "categoryPlaceholder": "Category",
+          "titlePlaceholder": "The title will show here",
+          "bodyPlaceholder": "The content will show here, exactly as the Resident will read it."
+        },
+        "deleteConfirm": {
+          "title": "Delete \"{{titulo}}\"?",
+          "warning": "This action cannot be undone.",
+          "confirm": "Yes, delete"
+        }
+      },
   "adminPuntosAcopio": {
     "title": "Collection points",
     "subtitle": "Register, edit, and deactivate the official collection points in the directory.",
@@ -1009,13 +1217,62 @@
     "deactivateAria": "Deactivate {{nombre}}",
     "reactivateAria": "Reactivate {{nombre}}",
     "deleteAria": "Delete {{nombre}}",
+    "mapLink": "View on map",
+    "mapAria": "View {{nombre}} on the map",
+    "noPhone": "No phone",
+    "noManager": "No manager",
+    "search": {
+      "placeholder": "Search by name or address",
+      "noResults": "No point matches your search.",
+      "status": {
+        "todos": "All",
+        "activos": "Active",
+        "baja": "Deactivated"
+      }
+    },
+    "summary": {
+      "points_one": "{{count}} point",
+      "points_other": "{{count}} points",
+      "localities_one": "{{count}} locality",
+      "localities_other": "{{count}} localities",
+      "pointsIn": "{{puntos}} in {{localidades}}",
+      "inactive_one": "{{count}} deactivated",
+      "inactive_other": "{{count}} deactivated"
+    },
+    "panel": {
+      "ariaLabel": "Details of {{nombre}}",
+      "active": "Active",
+      "dataSection": "Point details",
+      "manager": "Manager",
+      "phone": "Phone",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate",
+      "deleteForever": "Delete permanently"
+    },
+    "comments": {
+      "title": "Administrator comments",
+      "empty": "There are no comments about this point yet.",
+      "placeholder": "Write a comment about this point…",
+      "add": "Add comment",
+      "addError": "Could not save the comment. Please try again.",
+      "loadError": "Could not load the comments.",
+      "deletedAuthor": "Deleted account"
+    },
+    "form": {
+      "managerChanged": "Changed: {{antes}} → {{despues}}",
+      "changeReason": "Reason for the change",
+      "changeReasonHint": "(optional, saved in the comments)",
+      "changeReasonPlaceholder": "E.g. the previous manager left the position."
+    },
     "modal": {
       "editTitle": "Edit collection point",
       "deactivateAriaLabel": "Confirm deactivation",
       "deleteAriaLabel": "Confirm deletion"
     },
     "validation": {
-      "required": "Name, address, and locality are required."
+      "nameRequired": "Name is required.",
+      "addressRequired": "Address is required.",
+      "localityRequired": "Select a locality."
     },
     "loadError": "Could not load the list of collection points.",
     "deactivateError": "Could not deactivate. Please try again.",
@@ -1115,6 +1372,38 @@
     "successMessage": "Invitation sent to {{correo}}. Once accepted, they will be assigned to the selected buildings.",
     "errorDefault": "The invitation could not be sent. Check the details and try again."
   },
+  "novedadesEnviadas": {
+    "tabReceived": "Received",
+    "tabWrite": "Write a news item",
+    "tabMine": "My submissions",
+    "formTitle": "Tell VerdeApp something",
+    "formHint": "It reaches the System Administrator with your details (name, building and unit). You don't have to type them.",
+    "textLabel": "News item",
+    "textPlaceholder": "Tell us what happened...",
+    "imageLabel": "Attached image (optional)",
+    "conjuntoLabel": "Which building are you talking about?",
+    "conjuntoAny": "None in particular",
+    "send": "Send news item",
+    "sending": "Sending...",
+    "sentMessage": "News item sent. The System Administrator will review it.",
+    "errorDefault": "The news item could not be sent. Please try again.",
+    "mineEmpty": "You haven't sent any news items yet.",
+    "stateNew": "Sent",
+    "stateSeen": "Seen by the System Admin"
+  },
+  "solicitudesPendientes": {
+    "sectionTitle": "Pending requests",
+    "empty": "No pending requests.",
+    "emptyFiltro": "No requests of this type for now.",
+    "errorDefault": "The request could not be processed.",
+    "marcarVista": "Mark as seen",
+    "verFoto": "View photo",
+    "filtros": {
+      "todas": "All",
+      "desvinculacion": "Unlink",
+      "novedad": "News item"
+    }
+  },
   "desvinculacion": {
     "sectionTitle": "Your role as administrator",
     "solicitarButton": "Stop administering this building",
@@ -1186,8 +1475,8 @@
       "newButton": "New announcement",
       "noConjuntos": "You don't administer any building yet.",
       "emptyState": "You haven't posted any announcement yet.",
-      "editAria": "Edit announcement",
-      "deleteAria": "Delete announcement",
+      "editAria": "Edit {{resumen}}",
+      "deleteAria": "Delete {{resumen}}",
       "editTitle": "Edit announcement",
       "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
@@ -1234,20 +1523,66 @@
       "subtitle": "Post general announcements for the whole VerdeApp platform.",
       "newButton": "New item",
       "emptyState": "You haven't posted any news item yet.",
-      "editAria": "Edit news item",
-      "archiveAria": "Archive news item",
+      "editAria": "Edit {{resumen}}",
+      "archiveAria": "Archive {{resumen}}",
       "editTitle": "Edit news item",
       "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
       "archiveError": "Could not archive. Please try again.",
+      "archiveConfirm": {
+        "ariaLabel": "Confirm archiving",
+        "title": "Archive this news item?",
+        "warning": "It will stop showing in the active news feed. This action cannot be undone.",
+        "confirm": "Yes, archive"
+      },
+      "viewVideo": "Watch video",
+      "listBar": "Filters and list",
+      "collapse": "Collapse",
+      "expand": "View news",
+      "filters": {
+        "all": "All",
+        "showArchived": "Show archived",
+        "searchPlaceholder": "Search the news text…",
+        "noResults": "No news match those filters."
+      },
+      "destino": {
+        "allConjuntos": "All buildings",
+        "several": "{{count}} buildings"
+      },
+      "expiraPronto": "Expires in {{count}} day",
+      "expiraPronto_other": "Expires in {{count}} days",
+      "moreOptions": {
+        "title": "More options",
+        "hint": "image, video",
+        "show": "Show",
+        "hide": "Collapse"
+      },
+      "conjunto": {
+        "label": "Buildings",
+        "question": "who gets it?",
+        "pick": "Choose one or several",
+        "all": "All buildings",
+        "count": "{{count}} building",
+        "count_other": "{{count}} buildings",
+        "searchPlaceholder": "Search and add another building…",
+        "pickAtLeastOne": "Choose at least one building to be able to publish.",
+        "massWarning": "This is a mass notice: it will reach all buildings on the platform.",
+        "example": "E.g.: an in-person meeting is only announced to the buildings you list.",
+        "notEditable": "The buildings can't be changed after publishing.",
+        "noResults": "No results",
+        "searching": "Searching…"
+      },
       "alcanceNoEditable": "The scope can't be changed after publishing. If you made a mistake, archive it and create a new one.",
       "validation": {
-        "textoRequerido": "The news item text is required."
+        "textoRequerido": "The news item text is required.",
+        "conjuntoRequerido": "Choose at least one building, or select «All buildings».",
+        "videoNotYoutube": "The video must be a YouTube link starting with https:// (for example https://youtu.be/...)."
       },
       "fields": {
         "alcance": "Scope",
         "texto": "Message",
-        "urlAdjunto": "Attached image (optional)",
+        "urlAdjunto": "Attached image or file (optional)",
+        "urlVideo": "Video link (YouTube, optional)",
         "fechaExpiracion": "Expiration date (optional)",
         "fechaExpiracionHint": "If left blank, a system-suggested date is used."
       }

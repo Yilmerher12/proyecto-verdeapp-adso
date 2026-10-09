@@ -34,6 +34,13 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/__tests__/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    // ¿Qué? Tiempo máximo de cada test: 15 s (el valor por defecto es 5 s).
+    // ¿Para qué? Los tests de formularios que teclean mucho (RegisterPage,
+    //           AdminNovedadesPage...) pasan solos en ~1 s, pero con la suite
+    //           completa en una máquina con carga superaban los 5 s y fallaban
+    //           sin que hubiera ningún error real (visto en los issues #404 y #400).
+    // ¿Impacto? Un test colgado de verdad tarda más en fallar; ninguno se vuelve más permisivo.
+    testTimeout: 15000,
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary"],
@@ -44,6 +51,12 @@ export default defineConfig({
         "src/vite-env.d.ts",
         "src/types/**",
       ],
+      // ¿Qué? Umbral mínimo de cobertura (bootcamp de testing, semana 1:
+      //       línea base del 6 de octubre de 2026, redondeada hacia abajo).
+      // ¿Para qué? Si la cobertura baja de aquí, "pnpm test" falla — y con
+      //           él el job de frontend del CI, que bloquea el PR.
+      // ¿Impacto? Solo se sube, nunca se baja (ver docs/matriz-rotacion.md).
+      thresholds: { lines: 78, statements: 76, branches: 72, functions: 70 },
     },
   },
 });

@@ -3,17 +3,11 @@
 > Documentación técnica del frontend de VerdeApp.
 > Cada sección explica **qué se implementó**, **por qué se tomó esa decisión** y **qué impacto tiene**.
 
-> ⚠️ **Nota (2026-08-25):** este documento viene de la plantilla educativa
-> base y varias secciones (8, 16, y los fragmentos de código de ejemplo)
-> enseñan el patrón de enrutamiento de React Router usando nombres
-> genéricos, `DashboardPage.tsx` y `components/layout/AppLayout.tsx`, que
-> **no existen** en el código real. En VerdeApp el layout autenticado es
-> [`components/layout/AppShell.tsx`](src/components/layout/AppShell.tsx), y
-> en vez de un único `DashboardPage.tsx` hay 4 dashboards por rol en
-> [`pages/dashboards/`](src/pages/dashboards/) (`ResidenteDashboard.tsx`,
-> `RecicladorDashboard.tsx`, `AdminDashboard.tsx`, `AdminConjuntoDashboard.tsx`).
-> El *concepto* que enseñan esas secciones (Layout Route de React Router)
-> sigue siendo correcto — solo cambian los nombres de archivo.
+> **Actualizado (2026-10-06):** este documento nació de una plantilla educativa
+> (login, registro y un único dashboard). Se revisó sección por sección contra el
+> código real: rutas por rol, `AppShell`, sesión con cookies `httpOnly`,
+> componentes compartidos y tests. Si encuentras algo que ya no coincide con el
+> código, corrígelo en la misma rama que lo cambió.
 
 ---
 
@@ -28,11 +22,11 @@
 7. [Punto de Entrada – `main.tsx`](#7-punto-de-entrada--maintsx)
 8. [Enrutamiento – `App.tsx`](#8-enrutamiento--apptsx)
 9. [Tipos TypeScript – `types/auth.ts`](#9-tipos-typescript--typesauthts)
-10. [Capa API – Axios + Funciones de Auth](#10-capa-api--axios--funciones-de-auth)
+10. [Capa API – Axios](#10-capa-api--axios)
 11. [Contexto de Autenticación](#11-contexto-de-autenticación)
 12. [Hook `useAuth`](#12-hook-useauth)
 13. [Componentes UI Base](#13-componentes-ui-base)
-14. [Componente DataTable](#14-componente-datatable)
+14. [Componentes compartidos y patrones del proyecto](#14-componentes-compartidos-y-patrones-del-proyecto)
 15. [Layouts y Rutas Protegidas](#15-layouts-y-rutas-protegidas)
 16. [Páginas](#16-páginas)
 17. [Tests – Vitest + Testing Library](#17-tests--vitest--testing-library)
@@ -47,8 +41,10 @@ El frontend de VerdeApp requiere las siguientes herramientas instaladas:
 
 | Herramienta | Versión mínima | Verificar con    |
 | ----------- | -------------- | ---------------- |
-| Node.js     | 20 LTS         | `node --version` |
-| pnpm        | 9+             | `pnpm --version` |
+| Node.js     | 22 LTS         | `node --version` |
+| pnpm        | 11.0.9 (exacta, fijada en `package.json` → `packageManager`) | `pnpm --version` |
+
+> **¿Por qué esas versiones?** Son las mismas que usan el `Dockerfile` (`node:22-alpine`) y el CI (`.github/workflows/ci.yml`). Con otra versión de pnpm el `pnpm-lock.yaml` puede cambiar solo al instalar, y el CI (`pnpm install --frozen-lockfile`) falla.
 
 > 🖥️ **En Windows** — Se recomienda usar **PowerShell** para los comandos de este proyecto.
 
@@ -61,8 +57,9 @@ El frontend de VerdeApp requiere las siguientes herramientas instaladas:
 - En este proyecto usamos `pnpm` **siempre**. Si ves instrucciones con `npm install`, tradúcelas a `pnpm install`.
 
 ```bash
-# Instalar pnpm globalmente (si no está instalado):
-npm install -g pnpm
+# Activar pnpm con Corepack (viene incluido en Node 22) en la versión exacta del proyecto:
+corepack enable
+corepack prepare pnpm@11.0.9 --activate
 
 # Verificar instalación:
 pnpm --version
@@ -84,62 +81,40 @@ pnpm --version
 
 ```
 fe/
-├── index.html                  ← HTML base que carga Vite
+├── index.html                  ← HTML base: favicon, fuentes (Inter + Outfit) y tema inicial
 ├── package.json                ← Dependencias y scripts
-├── pnpm-lock.yaml              ← Lockfile determinístico
 ├── vite.config.ts              ← Vite + plugins + Vitest
-├── tsconfig.json               ← TypeScript base
-├── tsconfig.app.json           ← TypeScript para el código de la app
-├── tsconfig.node.json          ← TypeScript para vite.config.ts
-├── eslint.config.js            ← Linter (ESLint 9 flat config)
+├── public/
+│   ├── logos/                  ← Logo en SVG: logo, logo-white, logo-mark, logo-mark-white, favicon
+│   └── landing/                ← Fotos de fondo del hero (≤ 1920 px, comprimidas)
 └── src/
     ├── main.tsx                ← Punto de entrada: monta React en el DOM
-    ├── App.tsx                 ← Componente raíz: rutas + providers
-    ├── index.css               ← Estilos globales + TailwindCSS
-    ├── vite-env.d.ts           ← Tipos de Vite (import.meta.env)
+    ├── App.tsx                 ← Rutas (públicas, legales y protegidas por rol)
+    ├── index.css               ← Tailwind + tema: paleta, tokens night-*, escala icon-*, animaciones
+    ├── i18n.ts                 ← Configuración de react-i18next
+    ├── locales/{es,en}/        ← Textos de la interfaz (un translation.json por idioma)
     │
-    ├── types/
-    │   └── auth.ts             ← Interfaces TypeScript de toda la app
-    │
-    ├── api/
-    │   ├── axios.ts            ← Instancia Axios + interceptores
-    │   └── auth.ts             ← Funciones HTTP por endpoint
-    │
-    ├── context/
-    │   ├── authContextDef.ts   ← Crea el Context (separado del Provider)
-    │   └── AuthContext.tsx     ← Provider: estado + acciones de auth
-    │
-    ├── hooks/
-    │   └── useAuth.ts          ← Hook público para consumir el contexto
+    ├── types/                  ← Tipos compartidos (auth.ts: roles, usuario)
+    ├── api/                    ← axios.ts (instancia + interceptores) y auth.ts
+    ├── lib/                    ← Un cliente Axios por recurso (*Api.ts), fechas, eventos entre componentes
+    ├── context/                ← AuthContext (sesión del usuario)
+    ├── hooks/                  ← useAuth, usePaginacion, usePolling, useScrollReveal…
+    ├── config/                 ← Configuración visual centralizada:
+    │   ├── roleTheme.ts        ←   ícono y colores de cada rol
+    │   ├── nivelesDesempeno.ts ←   caritas y colores del semáforo de auditoría
+    │   └── categoriasEducativas.ts ← ícono de cada categoría del catálogo
     │
     ├── components/
-    │   ├── ProtectedRoute.tsx  ← Guarda rutas privadas
-    │   ├── ui/                 ← Componentes reutilizables atómicos
-    │   │   ├── Button.tsx
-    │   │   ├── InputField.tsx
-    │   │   ├── Alert.tsx
-    │   │   ├── ThemeToggle.tsx
-    │   │   └── DataTable.tsx
-    │   └── layout/             ← Estructuras de página completa
-    │       ├── AuthLayout.tsx  ← Layout para páginas sin sesión
-    │       ├── AppLayout.tsx   ← Layout para páginas con sesión
-    │       └── Navbar.tsx      ← Barra de navegación superior
+    │   ├── ui/                 ← Reutilizables: Button, InputField, Alert, Modal, ConfirmModal,
+    │   │                         EmptyState, BrandLogo, Paginacion, ThemeToggle, LanguageSwitcher…
+    │   ├── layout/             ← AppShell (sidebar + contenido con sesión), AuthLayout, LegalLayout
+    │   ├── dashboard/          ← Piezas de los paneles: notificaciones, auditorías
+    │   └── *.tsx               ← Formularios y paneles de dominio (puntos de acopio, invitaciones…)
     │
-    ├── pages/                  ← Una página por ruta
-    │   ├── LoginPage.tsx
-    │   ├── RegisterPage.tsx
-    │   ├── DashboardPage.tsx
-    │   ├── ChangePasswordPage.tsx
-    │   ├── ForgotPasswordPage.tsx
-    │   ├── ResetPasswordPage.tsx
-    │   └── DataTableDemoPage.tsx
+    ├── pages/                  ← Una página por ruta (landing, login, registro, directorio…)
+    │   └── dashboards/         ← Panel de cada rol: Residente, Reciclador, AdminConjunto, Admin
     │
-    └── __tests__/              ← Tests ordenados por tipo
-        ├── setup.ts            ← Configuración global de Vitest
-        ├── helpers.tsx         ← Utilidades y mocks compartidos
-        ├── hooks/
-        ├── components/
-        └── pages/
+    └── __tests__/              ← Tests (Vitest), en la misma estructura que src/
 ```
 
 ### ¿Por qué esta estructura?
@@ -223,6 +198,12 @@ VITE_API_URL=http://localhost:8000
 > repositorio. `.env.example` sí se versiona — sirve para que cualquier colaborador sepa
 > qué variables configurar sin ver los valores reales.
 
+Tres detalles que suelen confundir:
+
+1. **Vite lee el `.env` solo al arrancar.** Si cambias un valor, detén `pnpm dev` y vuelve a correrlo.
+2. **Las variables `VITE_` quedan escritas dentro del JavaScript** que descarga el navegador al hacer el build. Cualquiera puede leerlas, así que **nunca** van ahí contraseñas ni claves.
+3. **En Docker se fijan al construir la imagen**, no al levantar el contenedor: por eso `fe/Dockerfile` declara `ARG VITE_API_URL`. Una variable `VITE_` nueva necesita su propio `ARG` + `ENV` en el Dockerfile.
+
 ---
 
 ## 5. Configuración Base
@@ -236,7 +217,6 @@ VITE_API_URL=http://localhost:8000
  * ¿Para qué? Decirle a Vite cómo procesar el proyecto y cómo ejecutar los tests.
  * ¿Impacto? Sin esta configuración Vite no sabría transformar JSX, TypeScript ni TailwindCSS.
  */
-/// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -274,8 +254,9 @@ export default defineConfig({
 
 **Puntos clave:**
 
-1. **`/// <reference types="vitest" />`** — Esta directiva le dice a TypeScript que incluya los
-   tipos de Vitest (`describe`, `it`, `expect`, etc.) sin necesidad de importarlos en cada test.
+1. **`globals: true` + `"types": ["vitest/globals", ...]` en `tsconfig.app.json`** — Vitest deja
+   `describe`, `it`, `expect` y `vi` disponibles en cada test sin importarlos, y TypeScript conoce
+   sus tipos gracias a esa entrada de `types`.
 
 2. **Alias `@/`** — En lugar de escribir `"../../../components/ui/Button"`, se escribe
    `"@/components/ui/Button"`. Más legible y resistente a reorganizaciones de carpetas.
@@ -288,8 +269,11 @@ export default defineConfig({
 ```json
 {
   "compilerOptions": {
-    "strict": true, // Activa 8 reglas de seguridad (noImplicitAny, strictNullChecks, etc.)
-    "noUncheckedIndexedAccess": true, // arr[n] puede ser undefined — TypeScript lo advierte
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
+    "strict": true, // Activa las reglas estrictas (noImplicitAny, strictNullChecks, etc.)
+    "noUnusedLocals": true, // Variable declarada y nunca usada = error
+    "noUnusedParameters": true, // Parámetro nunca usado = error
+    "noFallthroughCasesInSwitch": true, // Un case sin break que "cae" al siguiente = error
     "paths": {
       "@/*": ["./src/*"] // Mismo alias que en vite.config.ts
     }
@@ -319,8 +303,40 @@ export default defineConfig({
 @import "tailwindcss";
 
 @theme {
-  /* Fuente principal: Inter (sans-serif). Regla del proyecto: nunca fuentes serif */
+  /* Fuentes (solo sans-serif): Inter para el texto, Outfit para los títulos */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Outfit", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Color de marca: los componentes usan accent-*, que apunta a green-*.
+     La escala green-* se redefine con la paleta "Páramo Fresco" (claro)
+     y "Bosque Andino" (oscuro) en :root y .dark, más abajo en el archivo. */
+  --color-accent-600: var(--color-green-600); /* …y así del 50 al 950 */
+
+  /* Superficies del modo oscuro: siempre con dark:, ej. dark:bg-night-card */
+  --color-night-base: #050f0a;  /* fondo raíz */
+  --color-night-page: #0a1510;  /* fondo de los paneles */
+  --color-night-card: #12231a;  /* tarjetas */
+  --color-night-panel: #0f2018; /* modales, barras fijas */
+  --color-night-inset: #0c1a12; /* zonas hundidas */
+  --color-night-field: #1a3324; /* campos de formulario */
+  --color-night-line: #23392b;  /* bordes */
+  --color-night-hover: #23392b; /* hover */
+}
+
+/* Escala de íconos: la única forma de dar tamaño a un ícono de lucide */
+@utility icon-sm { @apply size-3.5; }  /* 14px: dentro de texto pequeño */
+@utility icon-md { @apply size-4; }    /* 16px: botones y campos */
+@utility icon-lg { @apply size-5; }    /* 20px: sidebar, mensajes */
+@utility icon-xl { @apply size-8; }    /* 32px: destacado */
+@utility icon-deco { @apply size-20; } /* 80px: decorativo */
+
+@layer base {
+  /* h1-h3 usan la fuente de títulos sin tener que ponerla en cada página */
+  h1,
+  h2,
+  h3 {
+    font-family: theme(--font-display);
+  }
 }
 
 @layer base {
@@ -339,7 +355,7 @@ export default defineConfig({
 
   /* Color de fondo y texto según tema (claro / oscuro) */
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    @apply bg-gray-50 text-gray-900 dark:bg-night-base dark:text-gray-100;
     @apply min-h-screen antialiased;
     @apply transition-colors duration-200; /* Transición suave al cambiar tema */
     margin: 0;
@@ -368,7 +384,7 @@ TailwindCSS v4 cambió la forma de integrarse con bundlers:
 > En v4 ya **no existe** `tailwind.config.js`. Toda la personalización del tema va en el
 > bloque `@theme` dentro del archivo CSS.
 
-### Fuente Inter — carga desde Google Fonts
+### Fuentes Inter y Outfit — carga desde Google Fonts
 
 La fuente se declara en el CSS pero debe **cargarse** desde Google Fonts. En `index.html`:
 
@@ -377,31 +393,32 @@ La fuente se declara en el CSS pero debe **cargarse** desde Google Fonts. En `in
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-<!-- Carga Inter en 4 grosores (Regular, Medium, SemiBold, Bold) -->
+<!-- Inter (texto) en 5 grosores y Outfit (títulos) en 4 -->
 <link
-  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
   rel="stylesheet"
 />
 ```
 
 > **`display=swap`** hace que el texto sea visible inmediatamente con una fuente del sistema
-> mientras Inter carga en segundo plano. Sin esto, habría un "flash" de texto invisible.
+> mientras las fuentes cargan en segundo plano. Sin esto, habría un "flash" de texto invisible.
 
 ### Dark Mode
 
 El tema oscuro funciona con la clase CSS `dark` en el elemento `<html>`:
 
 ```html
-<html class="dark">
-  <!-- Tema oscuro activo -->
-  <html>
-    <!-- Tema claro (sin clase) -->
-  </html>
-</html>
+<html class="dark"> <!-- Tema oscuro activo -->
+<html>              <!-- Tema claro (sin clase) -->
 ```
 
 TailwindCSS genera variantes `dark:` que aplican cuando esa clase está presente.
-El componente `ThemeToggle` gestiona esta clase (ver sección 13).
+Dos piezas gestionan esa clase:
+
+- **Script en línea de `index.html`** — la aplica antes de que cargue React (primero `localStorage`, si no hay nada, la preferencia del sistema operativo). Sin él, la página se veía en claro una fracción de segundo y luego saltaba a oscuro.
+- **`ThemeToggle`** — el botón sol/luna que la cambia y guarda la elección (ver sección 13).
+
+Regla del proyecto: el modo oscuro es obligatorio desde el primer commit, y sus superficies usan los tokens `night-*`, nunca un hex a mano (`docs/requisitos/restricciones.md`).
 
 ---
 
@@ -418,6 +435,7 @@ El componente `ThemeToggle` gestiona esta clase (ver sección 13).
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";   // Carga TailwindCSS y estilos globales
+import "./i18n";        // Inicializa i18next ANTES de que se renderice cualquier componente
 import App from "./App";
 
 // ¿Qué? Obtiene el div#root de index.html y crea la raíz React.
@@ -437,16 +455,17 @@ createRoot(document.getElementById("root")!).render(
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/logos/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Carga de fuente Inter desde Google Fonts -->
+    <!-- Carga de las fuentes Inter y Outfit desde Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <title>VerdeApp</title>
+    <!-- Script en línea que aplica la clase "dark" antes del primer pintado (ver "Dark Mode") -->
   </head>
   <body>
     <div id="root"></div>
@@ -474,308 +493,175 @@ createRoot(document.getElementById("root")!).render(
 
 ## 8. Enrutamiento – `App.tsx`
 
-```typescript
-/**
- * Archivo: App.tsx
- * Descripción: Componente raíz — define el enrutamiento y los providers globales.
- * ¿Para qué? Centralizar la estructura de rutas y envolver la app con los contextos necesarios.
- * ¿Impacto? Sin App.tsx, no habría navegación ni acceso al estado de autenticación global.
- */
+`App.tsx` envuelve toda la app en 3 piezas y luego define las rutas:
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { AppLayout } from "@/components/layout/AppLayout";
-// ... imports de páginas ...
-
-function App() {
-  return (
-    <BrowserRouter>           {/* Habilita la navegación basada en la URL del navegador */}
-      <AuthProvider>          {/* Provee el estado de auth a toda la app */}
-        <Routes>
-          {/* ─── RUTAS PÚBLICAS (sin sesión requerida) ─── */}
-          <Route path="/login"            element={<LoginPage />} />
-          <Route path="/register"         element={<RegisterPage />} />
-          <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
-          <Route path="/reset-password"   element={<ResetPasswordPage />} />
-          <Route path="/demo/datatable"   element={<DataTableDemoPage />} />
-
-          {/* ─── RUTAS PROTEGIDAS (requieren sesión) ─── */}
-          {/*
-            La clave: ProtectedRoute envuelve AppLayout.
-            Si el usuario no está autenticado, ProtectedRoute redirige a /login.
-            Si está autenticado, AppLayout renderiza Navbar + <Outlet />.
-            <Outlet /> es donde React Router inserta la ruta hija activa.
-          */}
-          <Route
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/dashboard"        element={<DashboardPage />} />
-            <Route path="/change-password"  element={<ChangePasswordPage />} />
-          </Route>
-
-          {/* Redirigen / y cualquier ruta desconocida a /login */}
-          <Route path="/"  element={<Navigate to="/login" replace />} />
-          <Route path="*"  element={<Navigate to="/login" replace />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
-  );
-}
+```tsx
+<BrowserRouter>             {/* Navegación basada en la URL */}
+  <AuthProvider>            {/* Sesión del usuario para toda la app (sección 11) */}
+    <ServerErrorBanner />   {/* Aviso global si el backend no responde */}
+    <ErrorBoundary>         {/* Si un componente falla, muestra ErrorFallback en vez de pantalla en blanco */}
+      <Routes>…</Routes>
+    </ErrorBoundary>
+  </AuthProvider>
+</BrowserRouter>
 ```
 
-### El patrón Layout Route
+### Tres tipos de rutas
 
-La estructura de rutas protegidas usa un patrón de React Router v7 llamado **Layout Route**:
+| Tipo | Rutas | Cómo se protegen |
+| ---- | ----- | ---------------- |
+| **Públicas** | `/` (landing), `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/aceptar-invitacion` | No se protegen |
+| **Modales sobre la landing** | `/terminos-de-uso`, `/privacidad`, `/politica-cookies`, `/contacto` | No se protegen. Cada una pinta la landing de fondo y su contenido en un `<Modal>` |
+| **Con sesión** | Paneles por rol, perfil, directorio, catálogo, comunicados, novedades… | `ProtectedRoute` (hay sesión) + `RoleGuard` (el rol puede entrar) + `AppShell` (sidebar) |
 
+Ejemplo real de una ruta con sesión:
+
+```tsx
+<Route
+  path="/admin-conjunto/comunicados"
+  element={
+    <ProtectedRoute>                                      {/* 1. ¿Hay sesión? Si no → /login */}
+      <RoleGuard allowedRoles={[RoleId.ADMIN_CONJUNTO]}>  {/* 2. ¿Su rol puede entrar? */}
+        <AppShell>                                        {/* 3. Sidebar + contenido */}
+          <AdminConjuntoComunicadosPage />
+        </AppShell>
+      </RoleGuard>
+    </ProtectedRoute>
+  }
+/>
 ```
-Route (element=<ProtectedRoute><AppLayout /></ProtectedRoute>)
-├── Route path="/dashboard"       element=<DashboardPage />
-└── Route path="/change-password" element=<ChangePasswordPage />
-```
 
-Cuando el usuario navega a `/dashboard`:
+### `/dashboard` según el rol
 
-1. React Router evalúa la ruta padre → `ProtectedRoute` verifica si hay sesión.
-2. Si hay sesión → renderiza `AppLayout` (que incluye `Navbar`).
-3. `AppLayout` tiene un `<Outlet />` → React Router inserta `DashboardPage` ahí.
+`/dashboard` no tiene pantalla propia: `DashboardRedirect` (dentro de `App.tsx`) lee el rol del usuario en sesión y lo manda a su panel:
 
-> **Beneficio:** El `Navbar` se renderiza una sola vez en el padre y persiste al navegar
-> entre `/dashboard` y `/change-password`, sin re-montarse en cada cambio de ruta.
+| Rol | Destino | Componente |
+| --- | ------- | ---------- |
+| Administrador del Sistema | `/dashboard/admin` | `pages/dashboards/AdminDashboard.tsx` |
+| Administrador de Conjunto | `/dashboard/admin-conjunto` | `pages/dashboards/AdminConjuntoDashboard.tsx` |
+| Reciclador | `/dashboard/reciclador` | `pages/dashboards/RecicladorDashboard.tsx` |
+| Residente | `/dashboard/residente` | `pages/dashboards/ResidenteDashboard.tsx` |
+
+Así el login y cualquier enlace interno solo necesitan ir a `/dashboard`, sin saber el rol.
+
+### Rutas por rol
+
+| Ruta | Roles |
+| ---- | ----- |
+| `/change-password`, `/profile` | Todos |
+| `/directorio`, `/catalogo-educativo`, `/catalogo-educativo/:categoria` | Residente |
+| `/puntos-acopio` | Reciclador (mismo `DirectorioPage` con `soloAcopio`) |
+| `/comunicados` | Residente, Reciclador |
+| `/novedades` | Residente, Reciclador, Admin. de Conjunto |
+| `/admin-conjunto/comunicados` | Admin. de Conjunto |
+| `/admin/contenido-educativo`, `/admin/puntos-acopio`, `/admin/novedades` | Admin. del Sistema |
+
+Cualquier otra ruta (`path="*"`) redirige a `/login`.
 
 ### `replace` en `<Navigate>`
 
-```typescript
+```tsx
 <Navigate to="/login" replace />
 ```
 
-El prop `replace` evita que la redirección quede en el historial de navegación. Sin él,
-al presionar "Atrás" el usuario volvería a la ruta que causó la redirección (comportamiento
-confuso). Con `replace`, la redirección reemplaza la entrada actual en el historial.
+`replace` reemplaza la entrada actual del historial en lugar de agregar una nueva. Sin él, al presionar "Atrás" el usuario volvería a la ruta que causó la redirección, y esta lo redirigiría otra vez.
 
 ---
 
 ## 9. Tipos TypeScript – `types/auth.ts`
 
-```typescript
-/**
- * Archivo: types/auth.ts
- * Descripción: Tipos e interfaces TypeScript para el sistema de autenticación.
- * ¿Para qué? Definir los contratos de datos entre el frontend y el backend.
- * ¿Impacto? Sin estos tipos, TypeScript no puede verificar que los datos tienen
- * la forma correcta en tiempo de compilación — los errores se descubrirían en runtime.
- */
+Contratos de datos de la autenticación. Los más usados:
 
-// ── Tipos de REQUEST (lo que el frontend envía al backend) ────────────────
+```typescript
+// Roles: mismos números que la tabla roles del backend (RolId en be/app/models/rol.py)
+export const RoleId = {
+  ADMIN_SISTEMA: 1,
+  RESIDENTE: 2,
+  RECICLADOR: 3,
+  ADMIN_CONJUNTO: 4,
+} as const;
+export type RoleId = (typeof RoleId)[keyof typeof RoleId];
 
 export interface RegisterRequest {
-  email: string;
-  full_name: string;
+  rol: string;                       // "residente" | "reciclador"
+  correo_electronico: string;
   password: string;
+  nombre: string;
+  apellidos: string;
+  id_conjunto_residencial?: string;  // solo Residente (UUID)
+  codigo_acceso?: string;            // solo Residente
+  localidad_id?: number;             // solo Reciclador
+  // …torre, apto, asociacion, numero_telefonico
 }
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface ChangePasswordRequest {
-  current_password: string;
-  new_password: string;
-}
-
-export interface ForgotPasswordRequest {
-  email: string;
-}
-
-export interface ResetPasswordRequest {
-  token: string;
-  new_password: string;
-}
-
-// ── Tipos de RESPONSE (lo que el backend responde) ────────────────────────
 
 export interface UserResponse {
-  id: string;
+  id: string;          // UUID
   email: string;
-  full_name: string;
+  role_id: RoleId;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TokenResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-}
-
-export interface MessageResponse {
-  message: string;
-}
-
-// ── Tipos internos del frontend ───────────────────────────────────────────
-
-export interface AuthContextType extends AuthState {
-  login: (data: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
-  logout: () => void;
-  changePassword: (data: ChangePasswordRequest) => Promise<void>;
-  forgotPassword: (data: ForgotPasswordRequest) => Promise<void>;
-  resetPassword: (data: ResetPasswordRequest) => Promise<void>;
+  locale?: string;     // idioma preferido; AuthContext lo aplica al iniciar sesión
+  first_name: string;
+  last_name: string;
+  perfil?: { tipo: "administrador" | "residente" | "reciclador"; nombre_completo: string; /* … */ };
 }
 ```
 
 ### Convenciones de nombrado
 
-- **Sufijo `Request`** — Objetos que el frontend envía al backend.
-- **Sufijo `Response`** — Objetos que el backend devuelve al frontend.
-- `interface` para objetos con estructura fija, `type` para uniones/intersecciones.
-- Los campos siguen el `snake_case` del backend (`full_name`, `created_at`) para que
-  la desestructuración de la respuesta HTTP sea directa sin transformación.
-
-> **¿Por qué `string | null`?** En el estado inicial de la app el usuario no está
-> autenticado, así que no hay usuario ni tokens. `null` representa "ausencia de valor"
-> de forma explícita — más claro que usar `undefined` o cadenas vacías.
+- **Sufijo `Request`** — lo que el frontend envía. **Sufijo `Response`** — lo que el backend devuelve.
+- Los campos conservan el nombre del backend (`correo_electronico`, `role_id`): la respuesta HTTP se usa directo, sin transformarla.
+- **Siempre `RoleId.X`**, nunca el número a mano (`role_id === 4`): si un día cambia un número, se cambia en un solo lugar.
 
 ---
 
-## 10. Capa API – Axios + Funciones de Auth
+## 10. Capa API – Axios
 
-La capa API está dividida en dos archivos con responsabilidades distintas:
+### `api/axios.ts` — la instancia compartida
 
-- **`axios.ts`** — Configura el cliente HTTP (URL, headers, interceptores).
-- **`auth.ts`** — Define las funciones para cada endpoint específico.
-
-### `api/axios.ts` — Instancia configurada con interceptores
+Todas las peticiones salen de la misma instancia:
 
 ```typescript
-/**
- * Archivo: api/axios.ts
- * Descripción: Instancia de Axios con configuración base e interceptores.
- * ¿Para qué? Centralizar la configuración HTTP — URL base, headers, manejo de errores.
- * ¿Impacto? Sin este archivo, cada llamada HTTP definiría su propia configuración,
- * resultando en inconsistencias y código duplicado.
- */
-
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,         // VITE_API_URL (sección 4)
   headers: { "Content-Type": "application/json" },
-  timeout: 10000, // 10 segundos máx — evita esperas eternas
+  timeout: 10000,                // 10 s máximo por petición
+  withCredentials: true,         // el navegador adjunta las cookies de sesión
 });
-
-// ── Interceptor de REQUEST: inyecta el JWT automáticamente ───────────────
-// ¿Qué? Antes de enviar CADA petición, lee el token del sessionStorage.
-// ¿Para qué? Evitar que cada función en auth.ts tenga que agregar el header manualmente.
-// ¿Impacto? Si se omite, los endpoints protegidos recibirán 401 Unauthorized.
-api.interceptors.request.use(
-  (config) => {
-    const token = sessionStorage.getItem("access_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
-// ── Interceptor de RESPONSE: normaliza los mensajes de error ─────────────
-// ¿Qué? Transforma los errores de FastAPI en mensajes legibles para el usuario.
-// ¿Para qué? FastAPI/Pydantic devuelve errores en formato { detail: "..." } o
-// { detail: [{ msg: "..." }, ...] } en validaciones. El interceptor los convierte
-// en strings simples que pueden mostrarse en un <Alert>.
-// ¿Impacto? Sin esto, las páginas mostrarían "[object Object]" como mensaje de error.
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response) {
-      const data = error.response.data;
-      if (error.response.status === 422 && Array.isArray(data.detail)) {
-        // Error de validación Pydantic: array de objetos con msg
-        const messages = data.detail.map((err: { msg: string }) => err.msg);
-        error.message = messages.join(". ");
-      } else if (typeof data.detail === "string") {
-        error.message = data.detail;
-      }
-    } else if (error.request) {
-      error.message = "No se pudo conectar con el servidor";
-    }
-    return Promise.reject(error);
-  },
-);
-
-export default api;
 ```
 
-> **¿Por qué `sessionStorage` y no `localStorage`?**
->
-> - `sessionStorage`: vive mientras la pestaña está abierta (más seguro).
-> - `localStorage`: persiste días/semanas, mayor superficie de ataque.
-> - Para tokens cortos (15 min), `sessionStorage` es el balance adecuado.
-> - En producción con alta seguridad: usar cookies `HttpOnly` (no accesibles desde JS).
+**Los tokens no los toca JavaScript.** El backend los guarda en cookies `httpOnly` (el código de la página no puede leerlas, así un script malicioso no puede robarlas) y el navegador las adjunta solo gracias a `withCredentials: true`. Lo único que el frontend guarda es una marca sin valor secreto, `verdeapp:sesion-activa` (un código aleatorio distinto en cada login), en `localStorage` ([`lib/sesionActiva.ts`](src/lib/sesionActiva.ts)), para saber si vale la pena preguntar `GET /me` al recargar. Como el valor cambia en cada login, el navegador avisa a las demás pestañas, que vuelven a preguntar `GET /me` y pasan a mostrar la cuenta nueva.
 
-### `api/auth.ts` — Una función por endpoint
+El interceptor de respuesta hace 3 cosas:
+
+1. **Renueva la sesión sola.** Si una petición recibe `401` y había sesión, llama una vez a `POST /auth/refresh` y repite la petición. Si varias peticiones fallan a la vez, todas esperan la misma renovación (y entre pestañas se coordinan con `navigator.locks`).
+2. **Avisa si la sesión venció de verdad.** Si la renovación tampoco sirve, borra la marca y manda a `/login` con el aviso "tu sesión expiró". Las rutas de login, registro, refresh y logout quedan fuera de esta regla (un login fallido no es una sesión vencida).
+3. **Normaliza los errores.** Convierte las respuestas de FastAPI (`{ detail: "..." }` o la lista de errores de Pydantic) en un `error.message` legible para mostrar en un `<Alert>`, y avisa a `ServerErrorBanner` si el servidor no responde.
+
+### `api/auth.ts` y `lib/*Api.ts` — una función por endpoint
+
+`api/auth.ts` tiene los endpoints de sesión: `registerUser`, `loginUser`, `refreshToken`, `logoutUser`, `changePassword`, `forgotPassword`, `resetPassword`, `verifyEmail`, `getMe` y `updateLocale`.
+
+El resto de recursos tiene su propio cliente en `lib/`, uno por dominio: `comunicadosApi.ts`, `novedadesApi.ts`, `auditoriaConjuntoApi.ts`, `puntosAcopioApi.ts`, `contenidoEducativoApi.ts`, `adminConjuntoApi.ts`, `contactApi.ts`, etc. Las páginas nunca escriben una URL: llaman a estas funciones.
+
+Estos clientes usan el `axios` global (no la instancia `api`), pero se comportan igual: `api/axios.ts` le instala al `axios` global los mismos interceptores y `axios.defaults.withCredentials = true`.
 
 ```typescript
-/**
- * Archivo: api/auth.ts
- * Descripción: Funciones cliente HTTP para cada endpoint del backend.
- * ¿Para qué? Encapsular las llamadas HTTP con nombres descriptivos.
- * ¿Impacto? Las páginas no necesitan conocer las URLs ni los métodos HTTP.
- */
+// lib/comunicadosApi.ts
+const API_BASE = `${API_BASE_URL}/api/v1/comunicados`;
 
-const AUTH_PREFIX = "/api/v1/auth";
-const USERS_PREFIX = "/api/v1/users";
-
-export async function registerUser(data: RegisterRequest): Promise<UserResponse> {
-  const response = await api.post<UserResponse>(`${AUTH_PREFIX}/register`, data);
-  return response.data;
-}
-
-export async function loginUser(data: LoginRequest): Promise<TokenResponse> {
-  const response = await api.post<TokenResponse>(`${AUTH_PREFIX}/login`, data);
-  return response.data;
-}
-
-export async function changePassword(data: ChangePasswordRequest): Promise<MessageResponse> {
-  const response = await api.post<MessageResponse>(`${AUTH_PREFIX}/change-password`, data);
-  return response.data;
-}
-
-export async function forgotPassword(data: ForgotPasswordRequest): Promise<MessageResponse> {
-  const response = await api.post<MessageResponse>(`${AUTH_PREFIX}/forgot-password`, data);
-  return response.data;
-}
-
-export async function resetPassword(data: ResetPasswordRequest): Promise<MessageResponse> {
-  const response = await api.post<MessageResponse>(`${AUTH_PREFIX}/reset-password`, data);
-  return response.data;
-}
-
-export async function getMe(): Promise<UserResponse> {
-  const response = await api.get<UserResponse>(`${USERS_PREFIX}/me`);
-  return response.data;
+export async function listarMisComunicados(limit: number, offset: number): Promise<PaginaDeComunicados> {
+  const { data } = await axios.get(`${API_BASE}/mis-comunicados`, { params: { limit, offset } });
+  return data;   // { items, total } — ver "Paginación" en la sección 13
 }
 ```
 
-> El tipo genérico `api.post<UserResponse>(...)` le dice a TypeScript qué forma tiene
-> `response.data`. Sin ese tipo genérico, TypeScript inferiría `any`, perdiendo la
-> seguridad de tipos en todo el código que consume estas funciones.
+> El genérico (`api.get<UserResponse>(...)`) le dice a TypeScript qué forma tiene `response.data`. Sin él, sería `any` y se perdería la verificación de tipos en todo el código que lo usa.
 
 ---
 
 ## 11. Contexto de Autenticación
 
-El estado de sesión (usuario, tokens, cargando) necesita ser compartido por toda la
-aplicación. React Context API es la solución nativa de React para este patrón.
+La sesión (usuario y si todavía se está verificando) la comparte toda la app con React Context.
 
 ### ¿Por qué dos archivos?
 
@@ -785,152 +671,64 @@ context/
 └── AuthContext.tsx     ← Provider con estado, efectos y acciones
 ```
 
-**Razón técnica:** React Fast Refresh (el HMR de Vite) exige que los archivos que exportan
-componentes no exporten otras cosas al mismo nivel. Como `AuthProvider` es un componente y
-`AuthContext` no lo es, se separan para evitar advertencias durante el desarrollo.
+React Fast Refresh (la recarga en caliente de Vite) exige que un archivo que exporta componentes no exporte otras cosas. `AuthProvider` es un componente y `AuthContext` no, así que van separados.
 
-### `context/authContextDef.ts`
+### `AuthProvider` — qué guarda y qué hace
 
-```typescript
-import { createContext } from "react";
-import type { AuthContextType } from "@/types/auth";
+- **Estado:** `user` (`UserResponse | null`) e `isLoading`. `isAuthenticated` es simplemente `!!user`: los tokens no pasan por aquí (sección 10).
+- **`login`:** `POST /auth/login` (el backend deja las cookies) → marca la sesión como activa → `GET /me` → guarda el usuario y cambia el idioma al `locale` que tenga guardado.
+- **`register`:** solo `POST /auth/register`. **No** inicia sesión: la cuenta queda pendiente hasta que la persona abra el enlace de verificación que le llega al correo.
+- **`logout`:** borra la marca y el usuario. El botón "Cerrar sesión" de `AppShell` llama antes a `POST /auth/logout` para que el backend borre las cookies.
 
-// El default es undefined — obliga a consumirlo dentro de <AuthProvider>.
-// Si alguien usa useAuth() fuera del Provider, el valor será undefined
-// y el hook puede detectarlo y lanzar un error descriptivo.
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
-```
-
-### `context/AuthContext.tsx` — El Provider (resumen estructural)
-
-```typescript
-export function AuthProvider({ children }: AuthProviderProps) {
-  // Estado: usuario, tokens, indicador de carga
-  const [user, setUser] = useState<UserResponse | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(
-    () => sessionStorage.getItem("access_token"),  // Inicializar desde sessionStorage
-  );
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  const isAuthenticated = !!user && !!accessToken;
-
-  // useCallback: memoiza para evitar re-renders innecesarios en hijos
-  const saveTokens = useCallback((access: string, refresh: string) => {
-    sessionStorage.setItem("access_token", access);
-    sessionStorage.setItem("refresh_token", refresh);
-    setAccessToken(access);
-  }, []);
-
-  const clearAuth = useCallback(() => {
-    sessionStorage.removeItem("access_token");
-    sessionStorage.removeItem("refresh_token");
-    setUser(null);
-    setAccessToken(null);
-  }, []);
-
-  // Al montar: verificar si el token guardado sigue siendo válido
-  useEffect(() => {
-    const verifySession = async () => {
-      const storedToken = sessionStorage.getItem("access_token");
-      if (!storedToken) { setIsLoading(false); return; }
-      try {
-        const userData = await authApi.getMe();  // GET /me con el token guardado
-        setUser(userData);
-      } catch {
-        clearAuth();  // Token expirado — limpiar silenciosamente
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    verifySession();
-  }, [clearAuth]);
-
-  const login = useCallback(async (data: LoginRequest) => {
-    const tokens = await authApi.loginUser(data);
-    saveTokens(tokens.access_token, tokens.refresh_token);
-    const userData = await authApi.getMe();
-    setUser(userData);
-  }, [saveTokens]);
-
-  // Registro + auto-login: mejor UX (el usuario queda autenticado de inmediato)
-  const register = useCallback(async (data: RegisterRequest) => {
-    await authApi.registerUser(data);
-    await login({ email: data.email, password: data.password });
-  }, [login]);
-
-  // useMemo: evita recrear el objeto value (y sus referencias) en cada render
-  const value = useMemo<AuthContextType>(() => ({
-    user, accessToken, refreshToken, isAuthenticated, isLoading,
-    login, register, logout: clearAuth,
-    changePassword: async (d) => { await authApi.changePassword(d); },
-    forgotPassword: async (d) => { await authApi.forgotPassword(d); },
-    resetPassword:  async (d) => { await authApi.resetPassword(d);  },
-  }), [user, accessToken, refreshToken, isAuthenticated, isLoading,
-       login, register, clearAuth]);
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-```
-
-### Flujo de inicialización al cargar la app
+### Flujo al cargar la app
 
 ```
 AuthProvider monta
-  ↓ isLoading = true          → ProtectedRoute muestra spinner
-  ↓ Lee sessionStorage
-  ↓ Si hay token → GET /me
-      → 200 OK  → setUser(data)    → sesión restaurada
-      → 401/err → clearAuth()      → sesión expirada, volver al login
+  ↓ isLoading = true          → ProtectedRoute muestra el spinner
+  ↓ ¿Hay marca verdeapp:sesion-activa en localStorage?
+      No → isLoading = false  → sin sesión
+      Sí → GET /me (el navegador adjunta las cookies)
+           → 200 → setUser(data) + idioma guardado → sesión restaurada
+           → 401/403 → clearAuth()                 → volver al login
   ↓ isLoading = false         → ProtectedRoute decide redirigir o mostrar la ruta
 ```
 
-Sin este flujo, recargar la página causaría un redireccionamiento innecesario al login,
-incluso con una sesión válida.
+Sin este flujo, recargar la página mandaría al login aunque la sesión siguiera viva.
+
+Además, `AuthProvider` escucha el evento `storage` del navegador: si **otra** pestaña cierra la sesión (borra la marca), esta pestaña también queda sin usuario.
 
 ---
 
 ## 12. Hook `useAuth`
 
 ```typescript
-/**
- * Archivo: hooks/useAuth.ts
- * Descripción: Hook público que abstrae el consumo del contexto de auth.
- * ¿Para qué? Proveer una interfaz limpia y validada al contexto de autenticación.
- * ¿Impacto? Sin este hook, cada componente tendría que importar AuthContext
- * y gestionar el caso undefined manualmente.
- */
-
-import { useContext } from "react";
-import { AuthContext } from "@/context/authContextDef";
-
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-
-  // Validación defensiva: si se usa fuera de AuthProvider, el error es descriptivo
   if (context === undefined) {
-    throw new Error(
-      "useAuth debe usarse dentro de un AuthProvider. " +
-        "Verifica que <AuthProvider> envuelve el componente que llama useAuth().",
-    );
+    throw new Error("useAuth debe usarse dentro de un AuthProvider. …");
   }
-
   return context;
 }
 ```
 
-### Uso en cualquier componente
+Uso en cualquier componente dentro de `<AuthProvider>`:
 
-```typescript
-// Dentro del árbol de <AuthProvider>:
-function DashboardPage() {
-  const { user, logout } = useAuth();
-  return <h1>Hola, {user?.full_name}</h1>;
-}
+```tsx
+const { user, isLoading } = useAuth();
+return <h1>Hola, {user?.first_name}</h1>;
 ```
 
-> Este es el patrón **Custom Hook** de React. La ventaja es que los componentes no
-> saben que debajo hay un Context — solo llaman al hook. Si en el futuro se cambia
-> la implementación (p.ej. usar Zustand), solo cambia `useAuth.ts`, no los consumidores.
+> Patrón **Custom Hook**: los componentes no saben que debajo hay un Context, solo llaman al hook. Si la implementación cambiara, solo cambia `useAuth.ts`.
+
+### Otros hooks del proyecto
+
+| Hook | Para qué |
+| ---- | -------- |
+| `usePaginacion` | `limit`/`offset` de un listado paginado, junto con el componente `<Paginacion>` |
+| `usePolling` | Repetir una consulta cada cierto tiempo (20 s por defecto, ej. notificaciones) y volver a consultar al instante cuando otro componente avisa un cambio |
+| `useConjuntoBusqueda` | Búsqueda de conjuntos con espera entre teclas para los comboboxes |
+| `useAvisoTemporal` | Mostrar un aviso de éxito unos segundos y ocultarlo solo |
+| `useRestoreScroll` / `useScrollReveal` | Recordar el scroll de la landing y animar secciones al aparecer |
 
 ---
 
@@ -996,16 +794,31 @@ Puntos de accesibilidad:
 
 ```typescript
 interface AlertProps {
-  type: "success" | "error" | "info";
+  type: "success" | "error" | "info" | "warning";
   message: string;
   onClose?: () => void;
 }
 ```
 
 - `role="alert"` — Los lectores de pantalla anuncian el contenido automáticamente.
-- Tres variantes: verde (éxito), rojo (error), azul (información).
-- Si se provee `onClose`, aparece un botón `×` con `aria-label="Cerrar alerta"`.
-- Íconos SVG con `aria-hidden="true"` — puramente decorativos.
+- Cuatro variantes, cada una con su ícono de `lucide-react` (mapa de íconos por concepto): éxito `BadgeCheck`, error `OctagonX`, aviso `TriangleAlert`, info `Info`.
+- El ícono se mueve una vez al aparecer el mensaje (`icon-appear` + `icon-hop`/`icon-shake`/`icon-ring`/`icon-nudge`), salvo que el sistema pida "reducir movimiento".
+- Si se provee `onClose`, aparece un botón con el ícono `X` y `aria-label` de cerrar.
+- El ícono lleva `aria-hidden="true"`: el texto del mensaje ya comunica el tipo.
+
+### `BrandLogo.tsx` — Logo de VerdeApp
+
+```typescript
+interface BrandLogoProps {
+  variant?: "full" | "mark"; // símbolo + nombre, o solo el símbolo
+  tone?: "auto" | "light";   // light = siempre blanco (fondos oscuros)
+  className?: string;         // el alto, ej. "h-8"
+}
+```
+
+- Único lugar que decide qué SVG de `public/logos/` mostrar: ninguna página pone un `<img>` del logo a mano.
+- `tone="auto"` renderiza la versión verde y la blanca, y `dark:` esconde la que no toca, sin JavaScript.
+- Las barras superiores (sidebar, header de la landing) usan solo el símbolo (`variant="mark"`).
 
 ### `ThemeToggle.tsx` — Alternancia de tema
 
@@ -1038,96 +851,75 @@ function useTheme() {
 > tiene prioridad en la próxima carga. Así se respeta tanto la preferencia del OS como
 > la elección explícita del usuario.
 
+- El `aria-label` ("Cambiar a tema claro/oscuro") y el `title` salen de i18n (`common.switchToLight`, etc.).
+- `aria-pressed={isDark}` comunica el estado del botón al lector de pantalla.
+- El script en línea de `index.html` aplica la misma regla antes del primer pintado, para que no haya un salto de claro a oscuro (sección 6).
+
 ---
 
-## 14. Componente DataTable
+## 14. Componentes compartidos y patrones del proyecto
 
-`DataTable.tsx` es el componente más complejo del proyecto (~1220 líneas). Implementa
-una tabla de datos completa con búsqueda, ordenación, paginación, menú de acciones y
-exportación a CSV/PDF.
+Antes de escribir algo a mano en una página, revisa si ya existe aquí. La regla del proyecto (ver `CLAUDE.md`) es **reutilizar, no copiar el patrón**.
 
-### Interfaces públicas
+| Necesito… | Usa | Detalle |
+| --------- | --- | ------- |
+| Mostrar el logo | `BrandLogo` | Nunca un `<img>` a mano (sección 13) |
+| Una lista vacía | `EmptyState` | Props `icon` + `message`, con la fórmula "Todavía no hay/tienes X…" |
+| Confirmar una acción destructiva | `ConfirmModal` | `variant` (`warning`/`danger`/`primary`), `isConfirming`, `error`; `layer="stacked"` si va encima de otro modal |
+| Un modal cualquiera | `Modal` | Cierra con Escape, atrapa el foco; `wide` y `layer="stacked"` |
+| Un panel deslizable a un lado | `PanelLateral` | Detalle de un registro sin salir de la página |
+| Avisar éxito o error | `Alert` | Solo para fallos reales de guardado o de red, no para "falta un campo" |
+| Un campo de texto | `InputField` | `error` anclado al campo; `disablePaste` para campos de confirmación |
+| Elegir un conjunto | `ConjuntoCombobox` / `ConjuntoComboboxMultiple` | Buscan en el backend con `fetchOptions`, nunca cargan el catálogo completo |
+| Contar caracteres | `ContadorCaracteres` | Debajo de un `<textarea>` con `maxLength` |
+| Adjuntar una imagen | `ImagenAdjuntaField` | Revisa tipo (jpg/png/webp) y tamaño (5 MB) antes de subir, igual que el backend |
+| Agregar una guía de apoyo | `GuiaApoyoField` | Deja subir un archivo (imagen o PDF) o pegar un enlace; usado en contenido educativo y novedades |
+| Un estado de carga | `LoadingState` | Spinner + texto con `role="status"` para lectores de pantalla (`Spinner` es solo el ícono) |
 
-```typescript
-// Definición de columna — qué campo mostrar y cómo renderizarlo
-export interface ColumnDef<T> {
-  key: string; // Soporta dot-notation para campos anidados: "address.city"
-  header: string;
-  sortable?: boolean;
-  width?: string;
-  render?: (value: unknown, row: T, rowIndex: number) => ReactNode; // Renderizador custom
-}
+### Paginación
 
-// Acción en el menú de cada fila
-export interface RowAction<T> {
-  label: string;
-  icon?: ReactNode;
-  onClick: (row: T) => void;
-  variant?: "default" | "danger";
-  disabled?: (row: T) => boolean; // Función para deshabilitar condicionalmente
-}
+Los listados que pueden crecer se piden por páginas. El backend recibe `limit` y `offset` y responde `{ items, total }`; en el frontend se combinan el hook `usePaginacion` y el componente `<Paginacion>`:
 
-export interface DataTableProps<T extends Record<string, unknown>> {
-  data: T[];
-  columns: ColumnDef<T>[];
-  actions?: RowAction<T>[];
-  pageSize?: number; // Default: 10
-  pageSizeOptions?: number[]; // Default: [5, 10, 25, 50]
-  searchable?: boolean; // Default: true
-  emptyMessage?: string;
-  isLoading?: boolean; // Muestra skeleton (filas grises animadas)
-  caption?: string; // <caption> para accesibilidad
-  exportable?: boolean; // Habilita botones CSV / PDF
-  exportFilename?: string;
-}
+```tsx
+const TAMANO_PAGINA = 10;
+const [total, setTotal] = useState(0);
+const { offset, desde, hasta, pagina, totalPaginas, puedeAnterior, puedeSiguiente, irAAnterior, irASiguiente } =
+  usePaginacion(TAMANO_PAGINA, total);
+
+useEffect(() => {
+  listarMisComunicados(TAMANO_PAGINA, offset).then(({ items, total }) => {
+    setComunicados(items);
+    setTotal(total);
+  });
+}, [offset]);
+
+<Paginacion desde={desde} hasta={hasta} total={total} pagina={pagina} totalPaginas={totalPaginas}
+  puedeAnterior={puedeAnterior} puedeSiguiente={puedeSiguiente}
+  onAnterior={irAAnterior} onSiguiente={irASiguiente} />
 ```
 
-### Funcionalidades implementadas
+Ejemplo completo: `pages/AdminConjuntoComunicadosPage.tsx`.
 
-| Funcionalidad    | Implementación                                                           |
-| ---------------- | ------------------------------------------------------------------------ |
-| Búsqueda global  | Filtra todos los campos (incluye valores anidados via dot-notation)      |
-| Ordenación       | Click en encabezado: asc → desc → asc. `useMemo` para eficiencia         |
-| Paginación       | Selector de tamaño + navegación con puntos suspensivos (`…`)             |
-| Menú de acciones | `MoreVertical` button + menú `role="menu"`, cierra con `useClickOutside` |
-| Loading skeleton | Filas de gris animado cuando `isLoading=true`                            |
-| Exportar CSV     | `Blob` nativo → `<a href download>` — no requiere librería               |
-| Exportar PDF     | `jsPDF` + `jspdf-autotable`                                              |
+### Avisar a otro componente sin pasar props
 
-### Accesibilidad de la tabla
+Cuando un componente cambia algo que otro muestra (ej. se marcó una notificación como leída y el contador del sidebar debe bajar ya), se usa un evento de `window` en vez de pasar funciones por varios niveles de props:
 
-- `aria-sort="ascending|descending|none"` en columnas ordenables (WCAG 1.3.1).
-- `role="searchbox"` + `aria-label` en el campo de búsqueda.
-- `role="navigation"` + `aria-label="Paginación"` en controles de paginación.
-- `<caption>` opcional para describir la tabla a lectores de pantalla.
-- `role="menu"` + `role="menuitem"` en el menú de acciones.
+| Archivo | Evento |
+| ------- | ------ |
+| `lib/notificationEvents.ts` | Cambiaron las notificaciones → `AppShell` y el feed vuelven a consultar |
+| `lib/profileEvents.ts` | Cambió el perfil (nombre, foto) → `AppShell` actualiza el encabezado |
+| `lib/serverStatusEvents.ts` | El servidor dejó de responder o volvió → `ServerErrorBanner` |
 
-### Uso básico
+### Reglas que aplican a todo componente
 
-```typescript
-const columns: ColumnDef<User>[] = [
-  { key: "full_name", header: "Nombre", sortable: true },
-  { key: "email",     header: "Email",  sortable: true },
-  {
-    key: "is_active",
-    header: "Estado",
-    render: (value) => (
-      <span className={value ? "text-green-600" : "text-red-600"}>
-        {value ? "Activo" : "Inactivo"}
-      </span>
-    ),
-  },
-];
+- **Íconos:** solo `lucide-react`, un ícono por concepto, tamaño solo con `icon-sm`/`md`/`lg`/`xl`/`deco`.
+- **Colores:** `accent-*` para la marca y `night-*` para superficies oscuras; nunca un color concreto (`bg-green-600`) ni un hex a mano en un componente reutilizable.
+- **Clicables:** todo `<button>`, `<select>` o `<label>` que envuelve un input oculto lleva `cursor-pointer` explícito.
+- **Fechas:** siempre con `lib/dateFormat.ts` (`formatearFechaCreacion` para instantes como `created_at`, `formatearFechaUTC` para fechas elegidas a mano).
+- **Textos:** todo texto visible (incluidos `aria-label` y `title`) sale de `t("clave")`, con la clave en `es` y en `en`.
+- **Validación de formularios:** por campo al salir de él (`onBlur`), con las reglas compartidas de `lib/validacion.ts` (las mismas longitudes que la base de datos).
 
-<DataTable
-  data={users}
-  columns={columns}
-  caption="Lista de usuarios registrados"
-  exportable
-  exportFilename="usuarios"
-  isLoading={isLoading}
-/>
-```
+El detalle completo de diseño está en `docs/requisitos/restricciones.md`.
 
 ---
 
@@ -1135,129 +927,39 @@ const columns: ColumnDef<User>[] = [
 
 ### `components/layout/AuthLayout.tsx`
 
-Layout para páginas que no requieren sesión (login, registro, recuperación).
+Tarjeta centrada para pantallas sin sesión. Hoy la usan `ForgotPasswordPage` y `ResetPasswordPage`; login, registro y las páginas legales se muestran como modales sobre la landing.
 
 ```typescript
-/**
- * ¿Qué? Layout centrado para formularios de autenticación.
- * ¿Para qué? Proveer diseño consistente sin duplicar el centrado en cada página.
- * ¿Impacto? Sin este layout, LoginPage y RegisterPage tendrían CSS duplicado.
- */
 interface AuthLayoutProps {
   children: React.ReactNode;
-  title: string; // Título dentro de la tarjeta
-  subtitle?: string; // Descripción opcional debajo del título
+  title: string;
+  subtitle?: string;
+  wide?: boolean;              // tarjeta más ancha
+  notice?: React.ReactNode;    // aviso arriba de la tarjeta (ej. "tu sesión expiró")
 }
 ```
 
-Estructura visual:
+- `<main>` como landmark semántico (WCAG 2.4.1).
+- Ancho máximo en escritorio y 100 % en celular (mobile-first).
 
-```
-┌─────────────────────────────────┐
-│ [ThemeToggle]          (esquina) │
-│                                  │
-│         VerdeApp                  │  ← Logo/nombre
-│                                  │
-│  ┌─────────────────────────┐    │
-│  │  {title}                │    │  ← Tarjeta blanca
-│  │  {subtitle}             │    │
-│  │                         │    │
-│  │  {children}             │    │  ← Formulario
-│  └─────────────────────────┘    │
-└─────────────────────────────────┘
-```
+### `components/layout/AppShell.tsx`
 
-- `<main>` con landmark semántico (WCAG 2.4.1 — Bypass Blocks).
-- `w-full max-w-md` — ancho máximo en desktop, 100% en mobile (mobile-first).
+Estructura de toda pantalla con sesión: sidebar con el menú del rol, encabezado con nombre, foto, notificaciones, idioma y tema, y el contenido de la página.
 
-### `components/layout/AppLayout.tsx`
+- El menú cambia según el rol, y el color e ícono de cada rol salen de `config/roleTheme.ts`.
+- "Cerrar sesión" llama a `POST /auth/logout` (el backend borra las cookies) y luego a `logout()` del contexto.
+- Escucha los eventos de `notificationEvents` y `profileEvents` para refrescarse sin esperar al siguiente polling.
 
-Layout para páginas autenticadas con Navbar.
+### `components/ProtectedRoute.tsx` y `components/RoleGuard.tsx`
 
-```typescript
-export function AppLayout() {
-  return (
-    <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-950">
-      <Navbar />
-      {/* <Outlet /> inserta la página hija activa (Dashboard, ChangePassword, etc.) */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        <Outlet />
-      </main>
-    </div>
-  );
-}
-```
+Las dos piezas que protegen cada ruta con sesión de `App.tsx` (sección 8):
 
-### `components/layout/Navbar.tsx`
+| Componente | Pregunta | Si la respuesta es no |
+| ---------- | -------- | --------------------- |
+| `ProtectedRoute` | ¿Hay sesión? (mientras `isLoading`, muestra un spinner con `role="status"`) | `<Navigate to="/login" replace />` |
+| `RoleGuard` | ¿El rol del usuario está en `allowedRoles`? | `<Navigate to="/dashboard" replace />`, que lo lleva a su propio panel |
 
-```typescript
-/**
- * ¿Qué? Barra de navegación superior con logo, nombre del usuario y botón de logout.
- * ¿Para qué? Navegación consistente en todas las páginas autenticadas.
- * ¿Impacto? aria-label en <nav> es necesario — hay múltiples <nav> posibles (WCAG 2.4.1).
- */
-export function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();              // Limpia sessionStorage y el estado de auth
-    navigate("/login");    // Redirige al login
-  };
-
-  return (
-    <nav aria-label="Navegación principal"
-      className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-      {/* Logo — navega a dashboard si autenticado, login si no */}
-      <Link to={isAuthenticated ? "/dashboard" : "/login"}>VerdeApp</Link>
-
-      {/* Nombre del usuario (oculto en mobile) + ThemeToggle + botón de salida */}
-      <div className="flex items-center gap-3">
-        <ThemeToggle />
-        {isAuthenticated && user && (
-          <>
-            <span className="hidden sm:block">{user.full_name}</span>
-            <button onClick={handleLogout}>
-              <LogOut aria-hidden="true" /> Salir
-            </button>
-          </>
-        )}
-      </div>
-    </nav>
-  );
-}
-```
-
-### `components/ProtectedRoute.tsx`
-
-```typescript
-/**
- * ¿Qué? Componente de ruta que redirige al login si no hay sesión.
- * ¿Para qué? Centralizar la lógica de protección en un solo lugar.
- * ¿Impacto? Sin este componente, cualquier usuario podría acceder al dashboard.
- */
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Mientras el AuthProvider verifica el token guardado: mostrar spinner
-  // role="status" + aria-live="polite" — WCAG 4.1.3
-  if (isLoading) {
-    return (
-      <div role="status" aria-live="polite" aria-label="Verificando sesión, por favor espera">
-        {/* Spinner SVG animado */}
-        <p>Cargando...</p>
-      </div>
-    );
-  }
-
-  // Si no está autenticado: redirigir sin dejar rastro en el historial
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-}
-```
+> Estas guardas son de **experiencia de usuario**, no de seguridad: la seguridad real está en el backend, que rechaza con 401/403 cualquier petición sin sesión o con el rol equivocado (`get_current_user`, `require_role`).
 
 ---
 
@@ -1265,11 +967,36 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 Cada página en `pages/` sigue el mismo patrón:
 
-1. Obtiene acciones del contexto con `useAuth()`.
-2. Gestiona estado local: `formData`, `error`, `isLoading`.
-3. Valida inputs en el cliente antes de llamar a la API.
-4. Muestra `<Alert>` para éxito o error.
+1. Obtiene la sesión con `useAuth()` y los datos con su cliente de `lib/*Api.ts`.
+2. Gestiona estado local: datos, `fieldErrors`, `isLoading`.
+3. Valida cada campo al salir de él (`onBlur`) y todos juntos al enviar.
+4. Muestra `<Alert>` solo para fallos reales de guardado o de red.
 5. Navega con `useNavigate()` en caso de éxito cuando corresponde.
+
+### Paneles por rol (`pages/dashboards/`)
+
+| Panel | Qué hace el rol ahí |
+| ----- | ------------------- |
+| `ResidenteDashboard` | Reportar el estado del SHUT, ver sus notificaciones, los resultados de las auditorías de su conjunto y el contenido educativo recomendado |
+| `RecicladorDashboard` | Sus conjuntos, enviar notificaciones de recolección a residentes y administrador, registrar auditorías de separación, responder invitaciones |
+| `AdminConjuntoDashboard` | Gestionar sus conjuntos: datos, código de acceso, recicladores, avisos, auditorías y agenda del comité |
+| `AdminDashboard` | Totales, tablas de usuarios por rol, invitar Administradores de Conjunto y resolver solicitudes pendientes |
+
+### Otras páginas
+
+| Página | Ruta |
+| ------ | ---- |
+| `LandingPage` | `/` (y fondo de los modales de login, registro, legales y contacto) |
+| `ProfilePage` | `/profile` — datos, foto de perfil, idioma |
+| `DirectorioPage` | `/directorio` (Residente) y `/puntos-acopio` (Reciclador) |
+| `CatalogoEducativoPage` / `CategoriaEducativaPage` | `/catalogo-educativo` |
+| `ComunicadosFeedPage` / `AdminConjuntoComunicadosPage` | `/comunicados` / `/admin-conjunto/comunicados` |
+| `NovedadesFeedPage` / `AdminNovedadesPage` | `/novedades` / `/admin/novedades` |
+| `AdminContenidoEducativoPage` / `AdminPuntosAcopioPage` | `/admin/contenido-educativo` / `/admin/puntos-acopio` |
+| `AceptarInvitacionPage` | `/aceptar-invitacion` — termina el registro de un Administrador de Conjunto invitado |
+| `TerminosModalPage`, `PrivacidadModalPage`, `CookiesModalPage`, `ContactoModalPage` | `/terminos-de-uso`, `/privacidad`, `/politica-cookies`, `/contacto` |
+
+Abajo, el detalle de las páginas de autenticación.
 
 ### `LoginPage.tsx`
 
@@ -1300,26 +1027,17 @@ const handleSubmit = async (e: React.FormEvent) => {
 ### `RegisterPage.tsx`
 
 ```typescript
-// Campos: nombre completo, email, contraseña, confirmar contraseña
-// Validación cliente (función validate()):
-//   - nombre: mínimo 2 caracteres
-//   - password: ≥8 chars, ≥1 mayús, ≥1 minús, ≥1 número
-//   - confirmPassword: debe coincidir con password
-// En éxito: register() llama auto-login → navigate("/dashboard")
-// Los errores se muestran bajo cada campo (InputField.error prop)
-```
-
-### `DashboardPage.tsx`
-
-```typescript
-// Muestra tarjeta de perfil del usuario autenticado:
-//   - Nombre completo
-//   - Email
-//   - Estado: badge verde "Activo" / rojo "Inactivo" según is_active
-//   - Fecha de registro: toLocaleDateString("es-CO", { año/mes/día largo })
-//
-// Botón "Cambiar contraseña" → Link to="/change-password"
-// Alineado a la derecha (justify-end) — regla del proyecto
+// Selector de rol con 3 botones (Tab + Enter, aria-pressed):
+//   - Residente / Reciclador → formulario con los campos propios de cada rol
+//   - "¿Administras un conjunto?" → reemplaza el formulario por
+//     <SolicitudAdminConjuntoInfo />: pasos, documentos a tener listos y un
+//     botón "Solicitar acceso" que abre /contacto?motivo=admin-conjunto
+//     (asunto y plantilla ya escritos). No muestra correos ni recibe archivos.
+// Campos comunes: nombres, apellidos, teléfono, correo + confirmación,
+//   contraseña + confirmación, aceptación de Términos y Privacidad
+// Validación: por campo al salir de él (validarCampo); el botón sigue
+//   deshabilitado mientras falte algo o haya un formato inválido
+// En éxito: modal "revisa tu correo" — la cuenta se activa con el enlace de verificación
 ```
 
 ### `ChangePasswordPage.tsx`
@@ -1330,7 +1048,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 // En éxito:
 //   - Muestra Alert success
 //   - Resetea el formulario (todos los campos vacíos)
-// Botones: Cancelar (Link to="/dashboard") + Guardar (submit) — derecha
+// Botones: Cancelar + Guardar (submit), alineados a la derecha
 
 // Patrón de éxito — sin redirección automática (el usuario puede seguir viendo el mensaje)
 const [success, setSuccess] = useState(false);
@@ -1399,7 +1117,8 @@ const handleSubmit = async (e) => {
 // El token llega en el email de verificación enviado por el backend al registrarse:
 //   - Con Docker Compose (Mailpit): abrir http://localhost:8025 y hacer clic en el enlace.
 //   - Con Mailpit binario (sin Docker): igual, http://localhost:8025.
-//   - Sin Mailpit: copiar el enlace de los logs de uvicorn (prefijo 📧 ENLACE).
+//   - Sin Mailpit: copiar el enlace de los logs de uvicorn (línea "ENLACE (verificación) para ..."),
+//     solo con ENVIRONMENT=development.
 ```
 
 ---
@@ -1408,162 +1127,92 @@ const handleSubmit = async (e) => {
 
 ### Configuración global — `__tests__/setup.ts`
 
-```typescript
-// Se ejecuta antes de CADA archivo de tests
+Se ejecuta antes de cada archivo de tests y prepara 4 cosas:
 
-import "@testing-library/jest-dom/vitest"; // Matchers: toBeInTheDocument, toHaveValue, etc.
-import { cleanup } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
-
-// Limpia el DOM después de cada test (evita contaminación entre tests)
-afterEach(() => {
-  cleanup();
-});
-
-// Mock de window.matchMedia — jsdom no lo implementa, ThemeToggle lo usa
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
-
-// Limpiar storage después de cada test — aislamiento
-afterEach(() => {
-  sessionStorage.clear();
-  localStorage.clear();
-});
-```
-
-> **¿Por qué mockear `window.matchMedia`?** jsdom (el entorno simulado de tests) no
-> implementa todas las APIs del navegador real. `ThemeToggle` usa `window.matchMedia`
-> para leer la preferencia del sistema — sin el mock, los tests lanzarían un error.
+| Qué | Para qué |
+| --- | -------- |
+| `@testing-library/jest-dom/vitest` | Matchers como `toBeInTheDocument()` o `toHaveValue()` |
+| **Mock global de `react-i18next`** | `t("clave")` devuelve el texto real de `locales/es/translation.json` (con plurales `_one`/`_other`). Por eso los tests buscan texto en español: `getByText("Crea tu cuenta")` |
+| Mock de `window.matchMedia` | jsdom no lo implementa y `ThemeToggle` lo usa |
+| `cleanup()` + `localStorage.clear()` / `sessionStorage.clear()` después de cada test | Que un test no contamine al siguiente |
 
 ### Utilidades compartidas — `__tests__/helpers.tsx`
 
 ```typescript
-// mockUser: datos de usuario de prueba consistentes
 export const mockUser: UserResponse = {
-  id: "550e8400-e29b-41d4-a716-446655440000",
-  email: "test@nn-company.com",
-  full_name: "Test User",
+  id: "00000000-0000-7000-8000-000000000001",
+  email: "test@example.com",
+  first_name: "Test",
+  last_name: "User",
+  role_id: 2,          // Residente por defecto
   is_active: true,
-  created_at: "2026-01-01T00:00:00Z",
-  updated_at: "2026-01-01T00:00:00Z",
+  locale: "es",
 };
 
-// defaultAuthContext: todas las funciones como vi.fn() (espías de Vitest)
-export const defaultAuthContext: AuthContextType = {
-  user: null, accessToken: null, refreshToken: null,
-  isAuthenticated: false, isLoading: false,
-  login: vi.fn(), register: vi.fn(), logout: vi.fn(),
-  changePassword: vi.fn(), forgotPassword: vi.fn(), resetPassword: vi.fn(),
-};
-
-// renderWithProviders: envuelve con MemoryRouter + AuthContext.Provider
-// Evita repetir esta configuración en cada test
-export function renderWithProviders(
-  ui: ReactNode,
-  { authContext = {}, initialRoute = "/" } = {},
-) {
-  const value = { ...defaultAuthContext, ...authContext };
-  function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <MemoryRouter initialEntries={[initialRoute]}>
-        <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-      </MemoryRouter>
-    );
-  }
-  return render(ui, { wrapper: Wrapper });
-}
+// Envuelve el componente con MemoryRouter + AuthContext.Provider.
+// authContext sobrescribe solo lo que el test necesita (user, isLoading, login…).
+renderWithProviders(<RegisterPage />, { initialRoute: "/register", authContext: { user: mockUser } });
 ```
 
-> **`MemoryRouter`** (en lugar de `BrowserRouter`) se usa en tests porque no depende
-> de las APIs del navegador (`history`, `location`). Permite especificar la ruta inicial
-> con `initialEntries`.
+> **`MemoryRouter`** (en lugar de `BrowserRouter`) no depende del historial real del navegador y permite fijar la ruta inicial con `initialRoute`.
 
 ### Estructura de tests
 
-```
-__tests__/
-├── hooks/
-│   └── useAuth.test.tsx          — Error si se usa fuera de Provider; retorna contexto completo
-├── components/
-│   ├── Alert.test.tsx            — 5 tests: tipos, role=alert, cierre
-│   ├── Button.test.tsx           — 8 tests: variantes, loading, disabled, w-full
-│   ├── InputField.test.tsx       — 11 tests: label, error, aria, toggle password
-│   ├── ThemeToggle.test.tsx      — 4 tests: render, toggle clase dark, localStorage
-│   ├── ProtectedRoute.test.tsx   — 4 tests: spinner, redirige, renderiza, no muestra durante carga
-│   └── DataTable.test.tsx        — ~60 tests: búsqueda, ordenación, paginación, acciones, export
-└── pages/
-    ├── LoginPage.test.tsx        — 7 tests
-    ├── RegisterPage.test.tsx     — 6 tests
-    ├── DashboardPage.test.tsx    — 6 tests
-    ├── ChangePasswordPage.test.tsx — 7 tests
-    ├── ForgotPasswordPage.test.tsx — 6 tests
-    └── ResetPasswordPage.test.tsx  — 7 tests
-```
+Los tests viven en `src/__tests__/`, agrupados igual que el código:
 
-**Total: 80 tests** — todos pasan.
+| Carpeta | Qué prueba |
+| ------- | ---------- |
+| `api/` | Interceptores de Axios (renovación de sesión, sesión expirada) |
+| `components/` | Componentes de `components/` y `components/ui/` (`Button`, `InputField`, `ProtectedRoute`, `RoleGuard`, `LegalLayout`…) |
+| `config/` | Que cada concepto use su único ícono |
+| `context/` y `hooks/` | `AuthContext`, `useAuth`, `useRestoreScroll` |
+| `lib/` | Utilidades (`enlaceSeguro`, idioma de `<html>`) |
+| `pages/` | Una por página, incluidos los 4 dashboards |
 
-### Ejemplo de test de página
+Para ver cuántos tests hay hoy, corre `pnpm test`: el resumen final muestra el total de archivos y de tests (no se anota aquí porque cambia con cada tarjeta).
+
+### Ejemplo de test
 
 ```typescript
-// LoginPage.test.tsx — patrón estándar
-describe("LoginPage", () => {
-  it("renderiza el formulario de login", () => {
-    renderWithProviders(<LoginPage />, { initialRoute: "/login" });
-    expect(screen.getByLabelText(/correo electrónico/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /iniciar sesión/i })).toBeInTheDocument();
-  });
+// __tests__/components/RoleGuard.test.tsx (resumido)
+it("manda a /dashboard (su propio panel) a un rol sin permiso, nunca a /login", () => {
+  renderWithProviders(
+    <Routes>
+      <Route path="/login" element={<p>Página de login</p>} />
+      <Route path="/dashboard" element={<p>Redirección por rol</p>} />
+      <Route
+        path="/directorio"
+        element={
+          <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
+            <p>Contenido del residente</p>
+          </RoleGuard>
+        }
+      />
+    </Routes>,
+    {
+      initialRoute: "/directorio",
+      authContext: { isAuthenticated: true, user: { ...mockUser, role_id: RoleId.ADMIN_CONJUNTO } },
+    },
+  );
 
-  it("llama a login() con los datos del formulario", async () => {
-    const mockLogin = vi.fn().mockResolvedValue(undefined);
-    renderWithProviders(<LoginPage />, { authContext: { login: mockLogin } });
-
-    await userEvent.type(screen.getByLabelText(/correo/i), "test@test.com");
-    await userEvent.type(screen.getByLabelText(/contraseña/i), "Password1");
-    await userEvent.click(screen.getByRole("button", { name: /iniciar sesión/i }));
-
-    expect(mockLogin).toHaveBeenCalledWith({
-      email: "test@test.com",
-      password: "Password1",
-    });
-  });
-
-  it("muestra error cuando el login falla", async () => {
-    const mockLogin = vi.fn().mockRejectedValue(new Error("Credenciales inválidas"));
-    renderWithProviders(<LoginPage />, { authContext: { login: mockLogin } });
-
-    await userEvent.click(screen.getByRole("button", { name: /iniciar sesión/i }));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent("Credenciales inválidas");
-  });
+  expect(screen.getByText("Redirección por rol")).toBeInTheDocument();
+  expect(screen.queryByText("Página de login")).not.toBeInTheDocument();
 });
 ```
+
+Regla del proyecto: **toda funcionalidad nueva lleva sus pruebas antes de darse por terminada**, y un bug corregido lleva el test que habría fallado antes de la corrección.
 
 ### Comandos de testing
 
 ```bash
-# Ejecutar todos los tests (modo ci, sin watch)
+# Ejecutar todos los tests con cobertura (falla si baja del umbral de vite.config.ts)
 pnpm test
 
 # Modo interactivo — re-ejecuta al guardar archivos
 pnpm test:watch
 
-# Con reporte de cobertura
-pnpm test:coverage
-
-# Un test específico
-pnpm test -- --reporter=verbose LoginPage
+# Un solo archivo de tests
+pnpm exec vitest run src/__tests__/pages/LoginPage.test.tsx
 ```
 
 ---
@@ -1575,14 +1224,13 @@ pnpm test -- --reporter=verbose LoginPage
 pnpm dev                # Arranca servidor de desarrollo en http://localhost:5173
 
 # ── Tests ─────────────────────────────────────────────────────────────────
-pnpm test               # Ejecuta todos los tests (sin watch)
+pnpm test               # Ejecuta todos los tests + cobertura (falla si baja del umbral)
 pnpm test:watch         # Modo interactivo — ideal durante desarrollo
-pnpm test:coverage      # Tests + reporte de cobertura
 
 # ── Calidad de código ─────────────────────────────────────────────────────
 pnpm lint               # ESLint — detecta problemas
 pnpm format             # Prettier — formatea src/**/*.{ts,tsx,css,json}
-pnpm format:check       # Prettier — verifica sin cambiar (útil en CI)
+pnpm format:check       # Prettier — verifica sin cambiar (no corre en CI: varios archivos viejos aún no siguen el formato)
 
 # ── Build de producción ───────────────────────────────────────────────────
 pnpm build              # tsc -b && vite build → genera dist/
@@ -1592,8 +1240,8 @@ pnpm preview            # Sirve el build de dist/ localmente (preview local)
 ### Flujo completo de desarrollo
 
 ```bash
-# 1. Asegurarse de estar en la carpeta fe/
-cd proyecto-be-fe/fe
+# 1. Desde la raíz del repositorio, entrar a la carpeta del frontend
+cd fe
 
 # 2. Instalar dependencias (solo la primera vez o al agregar paquetes)
 pnpm install
@@ -1601,8 +1249,8 @@ pnpm install
 # 3. Crear .env si no existe
 cp .env.example .env
 
-# 4. Arrancar backend en otra terminal (necesario para la API)
-# cd ../be && source .venv/bin/activate && uvicorn app.main:app --reload
+# 4. Arrancar el backend en otra terminal (necesario para la API), desde be/
+# uv run uvicorn app.main:app --reload --port 8000
 
 # 5. Arrancar frontend
 pnpm dev
@@ -1610,8 +1258,11 @@ pnpm dev
 # 6. Durante el desarrollo: tests en modo interactivo
 pnpm test:watch
 
-# 7. Antes de hacer commit — verificar calidad
-pnpm lint && pnpm format:check && pnpm test
+# 7. Antes de hacer commit — lo mismo que revisa el CI, un comando a la vez
+pnpm exec tsc -b --noEmit
+pnpm lint
+pnpm test
+pnpm build
 ```
 
 ### Verificación del sistema completo
@@ -1619,11 +1270,13 @@ pnpm lint && pnpm format:check && pnpm test
 Para probar el flujo de autenticación de principio a fin:
 
 ```bash
-# Terminal 1 — Base de datos
-docker compose up -d
+# Terminal 1 — Base de datos + correo de prueba (desde la raíz)
+docker compose up -d verde_db verde_mailpit
 
-# Terminal 2 — Backend
-cd be && source .venv/bin/activate && uvicorn app.main:app --reload
+# Terminal 2 — Backend (desde be/)
+uv run alembic upgrade head
+uv run python -m app.seed
+uv run uvicorn app.main:app --reload --port 8000
 
 # Terminal 3 — Frontend
 cd fe && pnpm dev
@@ -1632,12 +1285,14 @@ cd fe && pnpm dev
 # 1. /register      → Crear cuenta nueva
 #    → el backend envía un email de verificación
 #    → con Mailpit (Docker): abrir http://localhost:8025 y hacer clic en "Verificar mi cuenta"
-#    → sin Mailpit: copiar el enlace de los logs de uvicorn (prefijo 📧 ENLACE)
+#    → sin Mailpit: copiar el enlace de los logs de uvicorn (línea "ENLACE (verificación) para ...")
 # 2. /verify-email?token=xxx → la página verifica el token automáticamente
 # 3. /login         → Iniciar sesión con las credenciales del registro
-# 4. /dashboard     → Ver perfil del usuario autenticado
+# 4. /dashboard     → Redirige al panel del rol (residente o reciclador)
 # 5. /change-password → Cambiar contraseña
-# 6. Logout         → Botón "Salir" en el navbar
+# 6. Logout         → "Cerrar sesión" en el sidebar
+#
+# Para los 4 roles hay cuentas de prueba sembradas por el seed: ver README.md raíz.
 # 7. /forgot-password → Solicitar recuperación de contraseña
 #    → igual que el registro: el enlace llega a Mailpit o aparece en los logs
 # 8. /reset-password?token=xxx → Restablecer contraseña
@@ -1670,9 +1325,10 @@ pnpm dev   # → http://localhost:5173
 | **Hook**                  | Función que empieza con `use` — permite usar estado y ciclo de vida en componentes funcionales |
 | **Custom Hook**           | Hook creado por el programador que encapsula lógica reutilizable                               |
 | **Interceptor**           | Función en Axios que se ejecuta antes/después de cada petición HTTP                            |
-| **Layout Route**          | Ruta de React Router que envuelve rutas hijas con UI compartida (Navbar, Layout)               |
-| **`<Outlet />`**          | Componente de React Router donde se renderiza la ruta hija activa                              |
-| **sessionStorage**        | Almacenamiento del navegador que vive solo mientras la pestaña está abierta                    |
+| **Cookie `httpOnly`**     | Cookie que JavaScript no puede leer — así viajan los tokens de sesión de VerdeApp               |
+| **`localStorage`**        | Almacenamiento del navegador que persiste entre pestañas y cierres (aquí: marca de sesión, tema, idioma) |
+| **i18n**                  | Internacionalización — los textos salen de `locales/{es,en}/translation.json` con `t("clave")`  |
+| **RoleGuard**             | Componente que deja entrar a una ruta solo a ciertos roles (sección 15)                        |
 | **`useMemo`**             | Hook que memoiza un valor — lo recalcula solo si sus dependencias cambian                      |
 | **`useCallback`**         | Hook que memoiza una función — evita recrearla en cada render                                  |
 | **`vi.fn()`**             | Función espía de Vitest — permite verificar si fue llamada y con qué argumentos                |
@@ -1682,4 +1338,4 @@ pnpm dev   # → http://localhost:5173
 | **Tree-shaking**          | Eliminación automática de código no usado durante el build de producción                       |
 | **`aria-*`**              | Atributos HTML para accesibilidad — comunican semántica a lectores de pantalla                 |
 | **WCAG**                  | Web Content Accessibility Guidelines — estándar internacional de accesibilidad web             |
-| **dot-notation**          | Acceso a propiedades anidadas con punto: `"address.city"` → `obj.address.city`                 |
+| **Paginación `limit`/`offset`** | Pedir una lista de a trozos: `limit` = cuántos, `offset` = desde cuál (sección 14)        |

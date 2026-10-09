@@ -2,6 +2,12 @@
   "serverError": {
     "message": "No se pudo conectar con el servidor. Verifica tu conexión — reintentaremos automáticamente."
   },
+  "errorBoundary": {
+    "title": "Algo salió mal en esta pantalla",
+    "message": "Ocurrió un error inesperado al mostrar esta página. Puedes recargarla o volver a tu panel principal.",
+    "reload": "Recargar página",
+    "goHome": "Volver al panel principal"
+  },
   "appShell": {
     "ariaLabel": "Navegación VerdeApp",
     "nav": {
@@ -14,8 +20,11 @@
       "puntosAcopio": "Puntos de Acopio",
       "gestionarComunicados": "Comunicados de mis Conjuntos",
       "comunicados": "Comunicados",
-      "aprenderGuias": "Aprender (Guías)",
-      "directorioGeneral": "Directorio General"
+      "aprenderGuias": "Aprende a Reciclar",
+      "directorioGeneral": "Directorio General",
+      "groupComunidad": "Comunidad",
+      "groupRecursos": "Recursos",
+      "groupCuenta": "Cuenta"
     },
     "proximamente": "Pronto",
     "notificaciones": "Notificaciones",
@@ -45,8 +54,16 @@
   },
   "common": {
     "loading": "Cargando...",
+    "processing": "Procesando, por favor espera",
+    "switchToLight": "Cambiar a tema claro",
+    "switchToDark": "Cambiar a tema oscuro",
+    "lightTheme": "Tema claro",
+    "darkTheme": "Tema oscuro",
+    "verifyingSession": "Verificando sesión, por favor espera",
     "loadError": "No se pudo cargar la información. Intenta de nuevo más tarde.",
+    "charCount": "{{actual}}/{{max}} caracteres",
     "actionError": "No se pudo completar la acción. Inténtalo de nuevo.",
+    "tooManyRequests": "Hiciste demasiadas peticiones. Espera un momento e intenta de nuevo.",
     "email": "Correo electrónico",
     "emailPlaceholder": "correo@ejemplo.com",
     "password": "Contraseña",
@@ -58,11 +75,20 @@
     "back": "Volver",
     "or": "o",
     "close": "Cerrar",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
     "edit": "Editar",
     "phone": "Teléfono",
     "saving": "Guardando...",
     "saveError": "No se pudo guardar. Intenta de nuevo.",
-    "formIncomplete": "Completa el formulario"
+    "formIncomplete": "Completa el formulario",
+    "datePast": "La fecha debe ser hoy o una fecha futura.",
+    "dateTooFar": "La fecha no puede superar {{dias}} días desde hoy.",
+    "pagination": {
+      "showing": "Mostrando {{from}}–{{to}} de {{total}}",
+      "prev": "Página anterior",
+      "next": "Página siguiente"
+    }
   },
   "auth": {
     "login": {
@@ -100,6 +126,12 @@
         "emailsMismatch": "Los correos electrónicos no coinciden",
         "firstNameMin": "El nombre debe tener al menos 2 caracteres",
         "lastNameMin": "El apellido debe tener al menos 2 caracteres",
+        "firstNameMax": "El nombre no puede superar {{max}} caracteres",
+        "lastNameMax": "Los apellidos no pueden superar {{max}} caracteres",
+        "nameFormat": "Solo se permiten letras, espacios, apóstrofe, punto o guion",
+        "codigoAccesoFormat": "El código tiene {{n}} letras o números (sin 0, O, 1, I ni L)",
+        "phoneInvalid": "El número telefónico tiene un formato inválido.",
+        "unitFormatInvalid": "Solo se permiten letras, números, y un espacio o guion como separador.",
         "passwordMin": "Mínimo 8 caracteres",
         "passwordUppercase": "Debe incluir al menos una mayúscula",
         "passwordLowercase": "Debe incluir al menos una minúscula",
@@ -114,6 +146,22 @@
       "acceptCookies": "He leído y acepto la <link>Política de cookies</link>",
       "roleResident": "Residente",
       "roleRecycler": "Reciclador",
+      "roleAdminConjunto": "¿Administras un conjunto?",
+      "adminRequest": {
+        "heading": "Las cuentas de administrador se crean por invitación",
+        "intro": "Así nadie puede darse el rol de Administrador de Conjunto por su cuenta. Para pedir la tuya:",
+        "step1": "Envíanos una solicitud con el botón de abajo: tu nombre, tu correo, tu cargo y los datos del conjunto que administras.",
+        "step2": "Te respondemos a tu correo y te pedimos los documentos que acreditan tu cargo. Los adjuntas respondiendo ese mismo correo.",
+        "step3": "Si todo está en orden, te llega una invitación a tu correo para terminar de crear tu cuenta.",
+        "docsHeading": "Ten listos estos documentos",
+        "doc1": "Certificado de existencia y representación legal de la propiedad horizontal, expedido por la Alcaldía Local (máximo 30 días).",
+        "doc2": "Copia de tu cédula de ciudadanía por ambos lados.",
+        "doc3": "Acta de la asamblea o del consejo de administración donde te nombraron.",
+        "doc4": "Contrato firmado con el conjunto, si tienes uno.",
+        "doc5": "Si administras a nombre de una empresa: certificado de Cámara de Comercio y cédula de su representante legal.",
+        "privacyNotice": "Tus documentos nunca se suben a VerdeApp: viajan solo por correo, se usan únicamente para verificar tu identidad y tu cargo, y se eliminan después de la revisión.",
+        "cta": "Solicitar acceso"
+      },
       "fields": {
         "firstName": "Nombres *",
         "lastName": "Apellidos *",
@@ -134,7 +182,7 @@
         "apto": "Apartamento",
         "aptoPlaceholder": "Ej: 402",
         "codigoAcceso": "Código de acceso del conjunto",
-        "codigoAccesoPlaceholder": "Ej: AB3K9Q",
+        "codigoAccesoPlaceholder": "6 letras o números",
         "codigoAccesoHint": "Pídeselo al administrador de tu conjunto (cartelera, grupo del conjunto).",
         "operativeProfileHeading": "Perfil Operativo *",
         "workLocality": "Localidad de Trabajo *",
@@ -144,7 +192,7 @@
         "email": "Correo Electrónico *",
         "confirmEmailField": "Confirmar Correo Electrónico *",
         "password": "Contraseña *",
-        "passwordPlaceholder": "Mínimo 8 caracteres",
+        "passwordPlaceholder": "8+ caracteres, mayúscula, minúscula y número",
         "confirmPasswordField": "Confirmar Contraseña *",
         "confirmPasswordPlaceholder": "Repite la contraseña"
       },
@@ -158,7 +206,7 @@
       "genericError": "Error al registrar. Verifica los datos o intenta con otro correo.",
       "success": {
         "title": "¡Revisa tu bandeja!",
-        "bodyPrefix": "Enviamos un enlace de verificación a",
+        "bodyPrefix": "Enviamos un correo a",
         "step1": "Abre tu correo electrónico",
         "step2": "Busca el email de VerdeApp",
         "step3": "Haz clic en \"Verificar mi cuenta\"",
@@ -173,6 +221,17 @@
       "confirmPassword": "Confirmar nueva contraseña",
       "submit": "Cambiar contraseña",
       "successMessage": "Contraseña actualizada exitosamente",
+      "requirements": {
+        "title": "Requisitos de la contraseña",
+        "minLength": "8 caracteres o más",
+        "uppercase": "Una mayúscula",
+        "lowercase": "Una minúscula",
+        "number": "Un número"
+      },
+      "passwordsMatch": "Las contraseñas coinciden",
+      "passwordsNoMatch": "Todavía no coinciden",
+      "forgotHint": "¿No la recuerdas?",
+      "forgotLink": "Recupérala por correo",
       "backToDashboard": "Volver al dashboard",
       "validation": {
         "currentRequired": "La contraseña actual es obligatoria",
@@ -190,6 +249,10 @@
       "backToLogin": "Volver al inicio de sesión",
       "successMessage": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.",
       "errorDefault": "Error al enviar la solicitud",
+      "confirmTitle": "¿Enviar enlace de recuperación?",
+      "confirmDescription": "Se enviará un correo con el enlace a {{email}}.",
+      "confirmButton": "Sí, enviar",
+      "confirmSending": "Enviando...",
       "validation": {
         "emailRequired": "El correo es obligatorio"
       }
@@ -243,6 +306,8 @@
     "navAriaLabel": "Navegación de páginas legales",
     "backToHome": "Volver al inicio",
     "footerCredit": "Proyecto educativo SENA",
+    "version": "Versión {{version}}",
+    "lastUpdated": "Última actualización: {{fecha}}",
     "terms": {
       "title": "Términos de Uso",
       "intro1": "Los presentes Términos de Uso regulan el acceso y la utilización del servicio <strong>VerdeApp</strong> (en adelante, «el Servicio»), operado por <strong>{{responsable}} — {{nit}}</strong>, con domicilio en {{domicilio}}.",
@@ -322,7 +387,8 @@
         "li3": "<strong>Contraseña hasheada</strong> — almacenada únicamente como hash bcrypt; nunca en texto plano. El Responsable no puede recuperar ni ver la contraseña original.",
         "li4": "<strong>Dirección IP y datos de sesión</strong> — registrados automáticamente en los logs del servidor por razones técnicas y de seguridad, conforme al Decreto 1078 de 2015.",
         "li5": "<strong>Fecha y hora de registro</strong> — metadato técnico generado automáticamente en la creación de la cuenta.",
-        "noCollect": "<strong>No se recolectan</strong> datos sensibles (Art. 5, Ley 1581/2012) como origen racial, orientación sexual, datos biométricos, datos de salud ni afiliación política."
+        "noCollect": "<strong>No se recolectan</strong> datos sensibles (Art. 5, Ley 1581/2012) como origen racial, orientación sexual, datos biométricos, datos de salud ni afiliación política.",
+        "adminRequest": "Si pides una cuenta de <strong>Administrador de Conjunto</strong>, los documentos que acreditan tu cargo (cédula, certificado de representación legal, acta de nombramiento o contrato) <strong>no se suben ni se guardan en VerdeApp</strong>: se piden por correo después del primer contacto, se usan únicamente para verificar tu identidad y tu cargo, y se eliminan del correo una vez termina la revisión."
       },
       "s3": {
         "heading": "Finalidad del Tratamiento",
@@ -413,10 +479,7 @@
           "p1": "Son <strong>estrictamente necesarias</strong> para que el servicio funcione. Sin ellas, el usuario no puede iniciar sesión ni mantener su sesión activa. No requieren consentimiento adicional conforme al principio de necesidad de la Ley 1581/2012.",
           "p2": "Almacenan los tokens JWT (access y refresh) de forma segura, con los atributos <code>HttpOnly</code>, <code>Secure</code> y <code>SameSite=Strict</code> para prevenir ataques XSS y CSRF, conforme a las recomendaciones del <strong>OWASP Top 10</strong>."
         },
-        "prefCategory": {
-          "title": "Cookies de Preferencias",
-          "p1": "Guardan configuraciones del usuario (como el tema visual dark/light) para personalizar la experiencia sin necesidad de reconfigurar en cada visita. No incluyen datos personales identificables."
-        }
+        "localStorageNote": "<strong>Nota sobre el tema visual:</strong> la preferencia de tema (claro/oscuro) no se guarda en una cookie, sino en el <strong>almacenamiento local del navegador</strong> (<code>localStorage</code>). No aparece en el listado de cookies del sitio que muestra tu navegador, y no tiene fecha de expiración: se mantiene guardada en tu dispositivo hasta que borres los datos de este sitio."
       },
       "s3": {
         "heading": "Listado Detallado de Cookies",
@@ -437,11 +500,6 @@
             "purpose": "Almacena el token de renovación que permite obtener un nuevo access_token sin que el usuario deba iniciar sesión nuevamente.",
             "duration": "7 días",
             "type": "Funcional / Autenticación"
-          },
-          "theme_preference": {
-            "purpose": "Guarda la preferencia de tema del usuario (dark/light) para mantenerla entre sesiones.",
-            "duration": "1 año",
-            "type": "Preferencias"
           }
         }
       },
@@ -497,7 +555,7 @@
       "subtitle": "VerdeApp conecta a todos los actores del reciclaje en el conjunto residencial.",
       "step1": {
         "title": "El conjunto se afilia",
-        "description": "El administrador registra el conjunto en VerdeApp e invita a los residentes y al reciclador asignado."
+        "description": "El administrador solicita su cuenta a VerdeApp, comparte el código de acceso con los residentes e invita al reciclador asignado."
       },
       "step2": {
         "title": "Los residentes participan",
@@ -556,83 +614,21 @@
       "label": "Mensaje",
       "placeholder": "Escribe tu mensaje aquí..."
     },
-    "incomplete": "Completa todos los campos",
-    "submit": "Enviar Mensaje"
-  },
-  "contact": {
-    "nav": {
-      "backToHome": "Volver al inicio"
+    "incomplete": "Completa todos los campos correctamente",
+    "submit": "Enviar Mensaje",
+    "charCount": "{{actual}}/{{max}} caracteres",
+    "errorDefault": "No pudimos enviar tu mensaje. Intenta de nuevo más tarde.",
+    "adminRequest": {
+      "subject": "Solicitud de cuenta de Administrador de Conjunto",
+      "messageTemplate": "Nombre del conjunto:\nDirección del conjunto:\nLocalidad:\nMi cargo en el conjunto:\nTeléfono de contacto:"
     },
-    "title": "Formulario de Contacto",
-    "subtitle": "Envíanos tu consulta, reporte o solicitud. Respondemos en los plazos establecidos por la Ley 1581 de 2012.",
-    "eduNotice": {
-      "title": "Proyecto educativo — SENA",
-      "body": "Este formulario es demostrativo. Los mensajes no se envían a ningún servidor real y los datos que ingreses no se almacenan. Los correos de contacto son ficticios. En una implementación real, el formulario enviaría los datos a POST /api/v1/contact en el backend."
-    },
-    "form": {
-      "heading": "Enviar mensaje",
-      "name": {
-        "label": "Nombre completo",
-        "placeholder": "Ej. Ana García",
-        "error": "El nombre debe tener al menos 3 caracteres."
-      },
-      "email": {
-        "label": "Correo electrónico de respuesta",
-        "placeholder": "tu-correo@ejemplo.com",
-        "hint": "Usaremos este correo únicamente para responderte. No envíes datos sensibles.",
-        "error": "Ingresa una dirección de correo electrónico válida."
-      },
-      "subject": {
-        "label": "Asunto",
-        "placeholder": "— Selecciona un asunto —",
-        "error": "Selecciona un asunto para tu mensaje.",
-        "options": {
-          "general": "Consulta general",
-          "support": "Soporte técnico",
-          "dataRights": "Ejercer derechos (Ley 1581/2012 — Habeas Data)",
-          "authSystem": "Sistema de autenticación",
-          "bugs": "Reporte de bugs o errores",
-          "other": "Otro"
-        }
-      },
-      "message": {
-        "label": "Mensaje",
-        "placeholder": "Describe detalladamente tu consulta, reporte o solicitud...",
-        "hint": "{{count}} / 20 caracteres mínimos",
-        "error": "El mensaje debe tener al menos 20 caracteres."
-      },
-      "privacy": {
-        "label": "He leído y acepto la",
-        "link": "Política de Privacidad y Tratamiento de Datos Personales",
-        "labelSuffix": "(Ley 1581 de 2012). Autorizo que mis datos sean utilizados únicamente para responder mi solicitud.",
-        "error": "Debes aceptar la Política de Privacidad para continuar."
-      },
-      "submit": "Enviar mensaje",
-      "submitting": "Enviando...",
-      "errorBanner": "Hubo un error al procesar tu mensaje. Por favor intenta de nuevo."
-    },
-    "success": {
-      "title": "Mensaje enviado correctamente",
-      "body": "(Simulación — no se envió ningún correo real.) En producción, responderíamos en un plazo máximo de 10 días hábiles para consultas o 15 días hábiles para reclamos, conforme a la Ley 1581 de 2012.",
-      "reset": "Enviar otro mensaje"
-    },
-    "info": {
-      "heading": "Información de contacto",
-      "antiSpam": {
-        "title": "📬 Canal principal de contacto",
-        "body": "Por política antispam no publicamos buzones de correo electrónico. Usa el formulario de esta página para enviarnos tu mensaje — te responderemos dentro de los plazos legales indicados abajo."
-      },
-      "phone": "Teléfono",
-      "address": "Domicilio",
-      "hours": "Horario de atención",
-      "deadlines": {
-        "title": "Plazos de respuesta (Ley 1581/2012)",
-        "queries": "Consultas: 10 días hábiles (Art. 14, Ley 1581/2012)",
-        "claims": "Reclamos: 15 días hábiles (Art. 15, Ley 1581/2012)"
-      }
-    },
-    "footer": {
-      "credit": "Proyecto educativo SENA"
+    "validation": {
+      "nameRequired": "El nombre es obligatorio",
+      "subjectMin": "El asunto debe tener al menos {{min}} caracteres",
+      "subjectMax": "El asunto no puede superar {{max}} caracteres",
+      "messageMin": "El mensaje debe tener al menos {{min}} caracteres",
+      "messageMax": "El mensaje no puede superar {{max}} caracteres",
+      "templateUnchanged": "Completa los datos de la plantilla antes de enviar"
     }
   },
   "dashboards": {
@@ -646,9 +642,23 @@
         "description": "Invita por correo a alguien para que administre uno de tus conjuntos.",
         "show": "+ Invitar administrador"
       },
+      "pendingRequests": {
+        "title": "Solicitudes pendientes",
+        "withCount": "{{count}} solicitud pendiente por resolver.",
+        "withCount_other": "{{count}} solicitudes pendientes por resolver.",
+        "viewButton": "Ver solicitudes"
+      },
+      "totals": {
+        "title": "Totales del sistema",
+        "administradoresShort": "Admin. conjunto"
+      },
+      "conjuntoFilter": {
+        "placeholder": "Buscar conjunto..."
+      },
       "loadingData": "Cargando datos...",
       "usersSection": {
         "title": "Usuarios registrados",
+        "totalBadge": "{{count}} en total",
         "tabs": {
           "residentes": "Residentes",
           "recicladores": "Recicladores",
@@ -675,8 +685,13 @@
           "confirmEnableTitle": "¿Activar esta cuenta?",
           "confirmEnableBody": "{{correo}} podrá volver a iniciar sesión con normalidad.",
           "confirmButton": "Sí, continuar",
-          "updateError": "No se pudo actualizar el estado de la cuenta."
-        }
+          "updateError": "No se pudo actualizar el estado de la cuenta.",
+          "reasonLabel": "Motivo (opcional)",
+          "reasonPlaceholder": "Por ejemplo: se mudó de conjunto, cuenta duplicada..."
+        },
+        "inactiveButton": "Inactivos {{count}}",
+        "noReason": "Sin motivo registrado",
+        "noInactive": "No hay cuentas inactivas en esta pestaña."
       },
       "residentsTable": {
         "headers": {
@@ -704,6 +719,38 @@
           "conjuntos": "Conjuntos"
         },
         "empty": "No hay administradores de conjunto registrados todavía."
+      },
+      "profilePanel": {
+        "ariaLabel": "Perfil de {{nombre}}",
+        "openProfile": "Ver perfil de {{nombre}}",
+        "readOnly": "Solo lectura",
+        "sections": {
+          "personal": "Datos personales",
+          "account": "Cuenta",
+          "deactivated": "Cuenta desactivada"
+        },
+        "fields": {
+          "fullName": "Nombre completo",
+          "conjunto": "Conjunto",
+          "unit": "Torre y apartamento",
+          "association": "Asociación",
+          "conjuntos": "Conjuntos",
+          "directory": "Contacto en el Directorio",
+          "emailVerified": "Correo verificado",
+          "language": "Idioma",
+          "lockout": "Bloqueo por intentos",
+          "since": "Desde",
+          "reason": "Motivo"
+        },
+        "yes": "Sí",
+        "no": "No",
+        "visible": "Visible",
+        "hidden": "Oculto",
+        "noLockout": "Sin bloqueo",
+        "lockedUntil": "Bloqueada hasta las {{hora}}",
+        "disableAccount": "Desactivar cuenta",
+        "enableAccount": "Reactivar cuenta",
+        "editSoon": "Editar datos · próximamente"
       }
     },
     "adminConjunto": {
@@ -735,10 +782,41 @@
         "loading": "Cargando invitaciones...",
         "empty": "Todavía no has enviado ninguna invitación."
       },
+      "agendaSection": {
+        "title": "Agenda del conjunto",
+        "hint": "Temas para llevar al comité. Solo los ves tú: no llegan al Administrador del Sistema.",
+        "showDetail": "Ver agenda",
+        "hideDetail": "Ocultar agenda",
+        "empty": "Todavía no hay temas en la agenda de este conjunto.",
+        "add": "Agregar tema",
+        "textLabel": "Tema",
+        "textPlaceholder": "Ej. Arreglar la puerta del sótano, pintar el pasillo...",
+        "evidenceLabel": "Foto de soporte (opcional)",
+        "save": "Guardar tema",
+        "stateWaiting": "En espera",
+        "statePending": "Pendiente",
+        "putOnHold": "Dejar en espera",
+        "backToPending": "Volver a pendiente",
+        "delete": "Eliminar tema",
+        "deleteTitle": "¿Eliminar este tema?",
+        "deleteWarning": "Se borra para siempre. Úsalo cuando ya lo hayas resuelto en el comité.",
+        "deleteConfirm": "Sí, eliminar",
+        "deleting": "Eliminando...",
+        "viewPhoto": "Ver foto",
+        "errorDefault": "No se pudo guardar el tema. Intenta de nuevo.",
+        "actionError": "No se pudo completar la acción. Intenta de nuevo."
+      },
       "myConjuntos": {
         "title": "Conjuntos que administras",
         "loading": "Cargando tus conjuntos...",
         "empty": "Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp."
+      },
+      "avisosSection": {
+        "title": "Avisos de este conjunto",
+        "fromRecycler": "De recicladores",
+        "fromResident": "De residentes",
+        "unreadBadge_one": "{{count}} aviso nuevo",
+        "unreadBadge_other": "{{count}} avisos nuevos"
       },
       "codigoAcceso": {
         "title": "Código de acceso",
@@ -752,8 +830,23 @@
         "confirmButton": "Sí, regenerar",
         "errorDefault": "No se pudo regenerar el código. Intenta de nuevo."
       },
+      "coverage": {
+        "title": "Apartamentos registrados en VerdeApp",
+        "ofTotal": "de {{total}} apartamentos",
+        "alreadyHaveResidents": "apartamentos ya tienen residentes",
+        "barAria": "{{registrados}} de {{total}} apartamentos registrados",
+        "missing": "apartamentos por registrar",
+        "residents": "residentes con cuenta",
+        "explain": "Un apartamento cuenta como registrado cuando tiene al menos un residente con cuenta. Úsalo en la reunión del conjunto para invitar a los que faltan: el código de acceso lo tienes más abajo.",
+        "noTotal": "Todavía no dijiste cuántos apartamentos tiene este conjunto, por eso no podemos calcular cuántos faltan. Defínelo en Editar.",
+        "define": "Definir cantidad de apartamentos",
+        "badge": "{{pct}}% registrado"
+      },
       "editForm": {
         "nit": "NIT (opcional)",
+        "totalApartments": "Cantidad de apartamentos (opcional)",
+        "totalHelp": "Total de apartamentos del conjunto (no de residentes). Con este número calculamos cuántos faltan por registrarse en VerdeApp.",
+        "totalInvalid": "Escribe un número entero entre 1 y {{max}}.",
         "successMessage": "Conjunto actualizado correctamente.",
         "errorMessage": "No se pudo guardar el cambio. Intenta de nuevo."
       },
@@ -786,7 +879,7 @@
       },
       "myConjuntos": {
         "title": "Mis conjuntos autorizados",
-        "empty": "Todavía no estás autorizado en ningún conjunto. Cuando un administrador te invite y aceptes, aparecerá aquí."
+        "empty": "Todavía no tienes ningún conjunto autorizado. Cuando un administrador te invite y aceptes, aparecerá aquí."
       },
       "notifications": {
         "title": "Notificaciones recibidas",
@@ -833,6 +926,12 @@
         "successMessage": "Auditoría enviada.",
         "errorDefault": "No se pudo enviar la auditoría.",
         "errorTimeout": "La subida está tardando demasiado — revisa tu conexión e intenta de nuevo.",
+        "confirmSubmit": {
+          "ariaLabel": "Confirmar auditoría",
+          "title": "¿Enviar esta auditoría?",
+          "warning": "Vas a calificar \"{{tema}}\" como {{nivel}}. Una vez enviada, la auditoría no se puede editar.",
+          "confirm": "Sí, enviar"
+        },
         "validation": {
           "conjunto": "Selecciona un conjunto.",
           "nivel": "Selecciona un nivel de desempeño.",
@@ -921,7 +1020,8 @@
     "notRegistered": "No registrado",
     "emailNote": "El correo no se puede cambiar desde aquí.",
     "validation": {
-      "nameRequired": "Nombre y apellidos son obligatorios.",
+      "firstNameRequired": "El nombre es obligatorio.",
+      "lastNameRequired": "Los apellidos son obligatorios.",
       "phoneInvalid": "El número telefónico tiene un formato inválido."
     },
     "phonePlaceholder": "Ej: 3001234567",
@@ -957,7 +1057,7 @@
     }
   },
   "catalogoEducativo": {
-    "title": "Aprender a reciclar",
+    "title": "Aprende a reciclar",
     "subtitle": "Elige un tema para ver sus videos y guías de apoyo.",
     "loading": "Cargando contenido...",
     "loadError": "No se pudo cargar el catálogo educativo.",
@@ -966,13 +1066,13 @@
     "temas": "temas"
   },
   "categoriaEducativa": {
-    "back": "Volver a Aprender a reciclar",
+    "back": "Volver a Aprende a reciclar",
     "emptyForCategory": "No se encontró contenido para esta categoría.",
     "viewGuide": "Ver guía de apoyo"
   },
   "adminContenidoEducativo": {
     "title": "Contenido educativo",
-    "subtitle": "Crea, edita y elimina los módulos del catálogo.",
+    "subtitle": "Crea, edita y elimina los módulos del catálogo, y revisa qué se recomendó a cada conjunto.",
     "newModule": "Nuevo módulo",
     "emptyState": "Todavía no hay módulos creados.",
     "editAria": "Editar {{titulo}}",
@@ -982,26 +1082,134 @@
       "deleteAriaLabel": "Confirmar eliminación"
     },
     "validation": {
-      "required": "Categoría, título y contenido son obligatorios.",
+      "categoryRequired": "La categoría es obligatoria.",
+      "titleRequired": "El título es obligatorio.",
       "titleTooShort": "El título debe tener al menos 5 caracteres.",
-      "bodyTooShort": "El contenido debe tener al menos 20 caracteres."
+      "bodyRequired": "El contenido es obligatorio.",
+      "bodyTooShort": "El contenido debe tener al menos 20 caracteres.",
+      "videoNotYoutube": "El video debe ser un enlace de YouTube que empiece por https:// (por ejemplo https://youtu.be/...).",
+      "guideNotHttps": "El enlace de la guía debe empezar por https://."
     },
     "deleteError": "No se pudo eliminar. Intenta de nuevo.",
+    "newSection": {
+      "title": "Nuevo contenido",
+      "newCategory": "+ Nueva categoría"
+    },
+    "catalogSection": {
+      "title": "Catálogo",
+      "modules": "Módulos",
+      "categories": "Categorías",
+      "notRecommended": "Sin recomendar",
+      "notRecommendedHint": "Esta semana no hay recomendación en {{count}} tema — puedes enviar contenido a mano para variar los temas.",
+      "notRecommendedHint_other": "Esta semana no hay recomendación en {{count}} temas — puedes enviar contenido a mano para variar los temas.",
+      "allCovered": "Todos los temas tuvieron alguna recomendación esta semana."
+    },
+    "currentWeek": {
+      "title": "Semana {{rango}}",
+      "good": "Bueno",
+      "regular": "Regular",
+      "bad": "Malo"
+    },
+    "tabs": {
+      "ratings": "Calificaciones por conjunto",
+      "modules": "Módulos"
+    },
+    "week": {
+      "prev": "Semana anterior",
+      "next": "Semana siguiente",
+      "mondayToSunday": "lunes a domingo",
+      "inProgress": "En curso",
+      "closed": "Cerrada el domingo {{fecha}}",
+      "searchPlaceholder": "Buscar conjunto u observación…",
+      "all": "Todas {{count}}",
+      "noObservations": "Sin observaciones",
+      "empty": "No hay calificaciones con esos filtros en esta semana.",
+      "notified": "Se avisó a {{count}} residente",
+      "notified_other": "Se avisó a {{count}} residentes",
+      "noRecommendation": "Sin recomendación",
+      "headers": {
+        "conjunto": "Conjunto",
+        "tema": "Tema",
+        "nivel": "Semáforo",
+        "observaciones": "Observaciones",
+        "fecha": "Fecha",
+        "avisados": "Contenido recomendado"
+      }
+    },
+    "modules": {
+      "searchPlaceholder": "Buscar por título o categoría…",
+      "categoryFilterLabel": "Filtrar por categoría",
+      "allCategories": "Todas las categorías",
+      "total": "{{count}} módulo",
+      "total_other": "{{count}} módulos",
+      "recommendedTo": "{{count}} conjunto",
+      "recommendedTo_other": "{{count}} conjuntos"
+    },
+    "ratingPanel": {
+      "ariaLabel": "Calificación de {{conjunto}}",
+      "details": "Detalle",
+      "theme": "Tema",
+      "date": "Fecha",
+      "recycler": "Reciclador",
+      "observations": "Observaciones",
+      "evidence": "Evidencia",
+      "enlarge": "Ampliar foto",
+      "recommendedContent": "Contenido recomendado",
+      "noRecommendationHint": "Una calificación Buena no genera recomendación: no hay nada que mejorar en este tema."
+    },
+    "modulePanel": {
+      "ariaLabel": "Módulo: {{titulo}}",
+      "recommendedTo": "Recomendado a {{count}} conjunto",
+      "recommendedTo_other": "Recomendado a {{count}} conjuntos",
+      "noneYet": "Todavía no se ha recomendado a ningún conjunto.",
+      "sentManually": "Enviado a mano",
+      "guideImageHint": "Clic en la imagen para ampliarla."
+    },
+    "send": {
+      "title": "Enviar a otros conjuntos",
+      "oneLabel": "A un conjunto específico",
+      "severalLabel": "A varios conjuntos",
+      "searchPlaceholder": "Buscar conjunto…",
+      "button": "Enviar",
+      "buttonMany": "Enviar a {{count}} conjunto",
+      "buttonMany_other": "Enviar a {{count}} conjuntos",
+      "error": "No se pudo enviar. Intenta de nuevo."
+    },
     "fields": {
       "category": "Categoría",
       "categoryPlaceholder": "Ej: Separación en la fuente",
+      "categoryPlaceholderSelect": "Elige una categoría…",
+      "newCategoryOption": "+ Nueva categoría…",
+      "newCategoryWarning": "Se creará una categoría nueva en el catálogo del Residente. Escríbela igual que las existentes para no duplicarla.",
       "titleField": "Título",
       "titlePlaceholder": "Ej: Código de colores de bolsas",
       "content": "Contenido",
       "contentMarkdownHint": "Puedes usar ## para subtítulos, **negrita** y - para listas.",
+      "charCount": "{{count}}/{{max}} caracteres · mínimo 20",
+      "formatHeading": "Subtítulo",
+      "formatBold": "Negrita",
+      "formatList": "Lista",
+      "boldPlaceholder": "texto en negrita",
       "videoLink": "Link de video (YouTube)",
+      "videoRecognized": "✓ Link de YouTube reconocido",
+      "videoNotRecognized": "Este link no parece de YouTube: el Residente no verá el video.",
       "guideLink": "Guía de apoyo"
+    },
+    "preview": {
+      "label": "Así lo verá el Residente",
+      "live": "en vivo",
+      "categoryPlaceholder": "Categoría",
+      "titlePlaceholder": "Aquí verás el título",
+      "bodyPlaceholder": "Aquí verás el contenido tal como lo leerá el Residente."
     },
     "deleteConfirm": {
       "title": "¿Eliminar \"{{titulo}}\"?",
       "warning": "Esta acción no se puede deshacer.",
       "confirm": "Sí, eliminar"
-    }
+    },
+    "collapse": "Recoger",
+    "expandRatings": "Ver calificaciones",
+    "expandModules": "Ver módulos"
   },
   "adminPuntosAcopio": {
     "title": "Puntos de acopio",
@@ -1013,13 +1221,62 @@
     "deactivateAria": "Dar de baja {{nombre}}",
     "reactivateAria": "Reactivar {{nombre}}",
     "deleteAria": "Eliminar {{nombre}}",
+    "mapLink": "Ver en el mapa",
+    "mapAria": "Ver {{nombre}} en el mapa",
+    "noPhone": "Sin teléfono",
+    "noManager": "Sin encargado",
+    "search": {
+      "placeholder": "Buscar por nombre o dirección",
+      "noResults": "Ningún punto coincide con tu búsqueda.",
+      "status": {
+        "todos": "Todos",
+        "activos": "Activos",
+        "baja": "De baja"
+      }
+    },
+    "summary": {
+      "points_one": "{{count}} punto",
+      "points_other": "{{count}} puntos",
+      "localities_one": "{{count}} localidad",
+      "localities_other": "{{count}} localidades",
+      "pointsIn": "{{puntos}} en {{localidades}}",
+      "inactive_one": "{{count}} de baja",
+      "inactive_other": "{{count}} de baja"
+    },
+    "panel": {
+      "ariaLabel": "Detalle de {{nombre}}",
+      "active": "Activo",
+      "dataSection": "Datos del punto",
+      "manager": "Encargado",
+      "phone": "Teléfono",
+      "deactivate": "Dar de baja",
+      "reactivate": "Reactivar",
+      "deleteForever": "Eliminar definitivamente"
+    },
+    "comments": {
+      "title": "Comentarios del administrador",
+      "empty": "Todavía no hay comentarios sobre este punto.",
+      "placeholder": "Escribe un comentario sobre este punto…",
+      "add": "Agregar comentario",
+      "addError": "No se pudo guardar el comentario. Intenta de nuevo.",
+      "loadError": "No se pudieron cargar los comentarios.",
+      "deletedAuthor": "Cuenta eliminada"
+    },
+    "form": {
+      "managerChanged": "Cambió: {{antes}} → {{despues}}",
+      "changeReason": "Motivo del cambio",
+      "changeReasonHint": "(opcional, queda en los comentarios)",
+      "changeReasonPlaceholder": "Ej: el encargado anterior dejó el cargo."
+    },
     "modal": {
       "editTitle": "Editar punto de acopio",
       "deactivateAriaLabel": "Confirmar baja",
       "deleteAriaLabel": "Confirmar eliminación"
     },
     "validation": {
-      "required": "Nombre, dirección y localidad son obligatorios."
+      "nameRequired": "El nombre es obligatorio.",
+      "addressRequired": "La dirección es obligatoria.",
+      "localityRequired": "Selecciona una localidad."
     },
     "loadError": "No se pudo cargar la lista de puntos de acopio.",
     "deactivateError": "No se pudo dar de baja. Intenta de nuevo.",
@@ -1119,6 +1376,38 @@
     "successMessage": "Invitación enviada a {{correo}}. Cuando la acepte, quedará asignado a los conjuntos seleccionados.",
     "errorDefault": "No se pudo enviar la invitación. Verifica los datos e intenta de nuevo."
   },
+  "novedadesEnviadas": {
+    "tabReceived": "Recibidas",
+    "tabWrite": "Escribir novedad",
+    "tabMine": "Mis envíos",
+    "formTitle": "Cuéntale una novedad a VerdeApp",
+    "formHint": "Le llega al Administrador del Sistema con tus datos (nombre, conjunto y unidad). No tienes que escribirlos.",
+    "textLabel": "Novedad",
+    "textPlaceholder": "Cuenta qué pasó...",
+    "imageLabel": "Imagen adjunta (opcional)",
+    "conjuntoLabel": "¿De qué conjunto hablas?",
+    "conjuntoAny": "Ninguno en particular",
+    "send": "Enviar novedad",
+    "sending": "Enviando...",
+    "sentMessage": "Novedad enviada. El Administrador del Sistema la revisará.",
+    "errorDefault": "No se pudo enviar la novedad. Intenta de nuevo.",
+    "mineEmpty": "Todavía no has enviado ninguna novedad.",
+    "stateNew": "Enviada",
+    "stateSeen": "Vista por el Admin del Sistema"
+  },
+  "solicitudesPendientes": {
+    "sectionTitle": "Solicitudes pendientes",
+    "empty": "No hay solicitudes pendientes.",
+    "emptyFiltro": "Ninguna solicitud de este tipo por ahora.",
+    "errorDefault": "No se pudo procesar la solicitud.",
+    "marcarVista": "Marcar como vista",
+    "verFoto": "Ver foto",
+    "filtros": {
+      "todas": "Todas",
+      "desvinculacion": "Desvinculación",
+      "novedad": "Novedad"
+    }
+  },
   "desvinculacion": {
     "sectionTitle": "Tu rol como administrador",
     "solicitarButton": "Dejar de administrar este conjunto",
@@ -1190,8 +1479,8 @@
       "newButton": "Nuevo comunicado",
       "noConjuntos": "No administras ningún conjunto todavía.",
       "emptyState": "Todavía no has publicado ningún comunicado.",
-      "editAria": "Editar comunicado",
-      "deleteAria": "Eliminar comunicado",
+      "editAria": "Editar {{resumen}}",
+      "deleteAria": "Eliminar {{resumen}}",
       "editTitle": "Editar comunicado",
       "creadoEl": "Creado el {{fecha}}",
       "expiraEl": "Expira el {{fecha}}",
@@ -1238,23 +1527,69 @@
       "subtitle": "Publica avisos generales para toda la plataforma VerdeApp.",
       "newButton": "Nueva novedad",
       "emptyState": "Todavía no has publicado ninguna novedad.",
-      "editAria": "Editar novedad",
-      "archiveAria": "Archivar novedad",
+      "editAria": "Editar {{resumen}}",
+      "archiveAria": "Archivar {{resumen}}",
       "editTitle": "Editar novedad",
       "creadoEl": "Creado el {{fecha}}",
       "expiraEl": "Expira el {{fecha}}",
       "archiveError": "No se pudo archivar. Intenta de nuevo.",
+      "archiveConfirm": {
+        "ariaLabel": "Confirmar archivado",
+        "title": "¿Archivar esta novedad?",
+        "warning": "Dejará de verse en el feed de novedades activas. Esta acción no se puede deshacer.",
+        "confirm": "Sí, archivar"
+      },
       "alcanceNoEditable": "El alcance no se puede cambiar después de publicar. Si te equivocaste, archívala y crea una nueva.",
       "validation": {
-        "textoRequerido": "El texto de la novedad es obligatorio."
+        "textoRequerido": "El texto de la novedad es obligatorio.",
+        "conjuntoRequerido": "Elige al menos un conjunto, o marca «Todos los conjuntos».",
+        "videoNotYoutube": "El video debe ser un enlace de YouTube que empiece por https:// (por ejemplo https://youtu.be/...)."
       },
       "fields": {
         "alcance": "Alcance",
         "texto": "Mensaje",
-        "urlAdjunto": "Imagen adjunta (opcional)",
+        "urlAdjunto": "Imagen o archivo adjunto (opcional)",
         "fechaExpiracion": "Fecha de expiración (opcional)",
-        "fechaExpiracionHint": "Si la dejas vacía, se usa una fecha sugerida por el sistema."
-      }
+        "fechaExpiracionHint": "Si la dejas vacía, se usa una fecha sugerida por el sistema.",
+        "urlVideo": "Enlace de video (YouTube, opcional)"
+      },
+      "listBar": "Filtros y lista",
+      "collapse": "Recoger",
+      "expand": "Ver novedades",
+      "filters": {
+        "all": "Todas",
+        "showArchived": "Ver archivadas",
+        "searchPlaceholder": "Buscar en el texto de la novedad…",
+        "noResults": "No hay novedades con esos filtros."
+      },
+      "destino": {
+        "allConjuntos": "Todos los conjuntos",
+        "several": "{{count}} conjuntos"
+      },
+      "expiraPronto": "Expira en {{count}} día",
+      "expiraPronto_other": "Expira en {{count}} días",
+      "moreOptions": {
+        "title": "Más opciones",
+        "hint": "imagen, video",
+        "show": "Mostrar",
+        "hide": "Recoger"
+      },
+      "conjunto": {
+        "label": "Conjuntos",
+        "question": "¿a quién le llega?",
+        "pick": "Elegir uno o varios",
+        "all": "Todos los conjuntos",
+        "count": "{{count}} conjunto",
+        "count_other": "{{count}} conjuntos",
+        "searchPlaceholder": "Buscar y agregar otro conjunto…",
+        "pickAtLeastOne": "Elige al menos un conjunto para poder publicar.",
+        "massWarning": "Es un aviso masivo: le llegará a todos los conjuntos de la plataforma.",
+        "example": "Ej.: una reunión presencial solo se avisa a los conjuntos que citas.",
+        "notEditable": "Los conjuntos no se pueden cambiar después de publicar.",
+        "noResults": "Sin resultados",
+        "searching": "Buscando…"
+      },
+      "viewVideo": "Ver video"
     },
     "feed": {
       "title": "Novedades",

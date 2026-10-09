@@ -60,6 +60,15 @@ class ConjuntoResidencial(Base):
     nit = Column(String(50), nullable=True)
     direccion = Column(String(255), nullable=False)
 
+    # ¿Qué? Cantidad total de apartamentos del conjunto, que escribe su
+    #       Admin de Conjunto (el dataset oficial de Bogotá no la trae).
+    # ¿Para qué? Con este número y los residentes ya registrados se calcula
+    #           cuántos apartamentos faltan por usar VerdeApp.
+    # ¿Impacto? NULL = todavía no se ha definido; todos los conjuntos
+    #          arrancan así. Debe coincidir con TOTAL_APARTAMENTOS_MAX del
+    #          schema y de fe/src/lib/validacion.ts.
+    total_apartamentos = Column(Integer, nullable=True)
+
     verificado = Column(Boolean, nullable=False, default=False)
 
     verificado_por_id = Column(UUID(as_uuid=True), ForeignKey("usuarios.id_usuario"), nullable=True)

@@ -62,7 +62,7 @@ describe("CatalogoEducativoPage", () => {
   it("muestra un estado vacío cuando no hay contenido", async () => {
     mockListarContenido.mockResolvedValue([]);
     renderWithProviders(<CatalogoEducativoPage />, {
-      authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+      authContext: { user: mockUser, isAuthenticated: true },
     });
 
     await waitFor(() => {
@@ -73,7 +73,7 @@ describe("CatalogoEducativoPage", () => {
   it("muestra una tarjeta por categoría, sin repetir", async () => {
     mockListarContenido.mockResolvedValue(modulos);
     renderWithProviders(<CatalogoEducativoPage />, {
-      authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+      authContext: { user: mockUser, isAuthenticated: true },
     });
 
     await waitFor(() => {
@@ -85,7 +85,7 @@ describe("CatalogoEducativoPage", () => {
   it("muestra cuántos temas tiene cada categoría", async () => {
     mockListarContenido.mockResolvedValue(modulos);
     renderWithProviders(<CatalogoEducativoPage />, {
-      authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+      authContext: { user: mockUser, isAuthenticated: true },
     });
 
     await waitFor(() => {
@@ -98,7 +98,7 @@ describe("CatalogoEducativoPage", () => {
     mockListarContenido.mockResolvedValue(modulos);
     const user = userEvent.setup();
     renderWithProviders(<CatalogoEducativoPage />, {
-      authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+      authContext: { user: mockUser, isAuthenticated: true },
     });
 
     await waitFor(() => screen.getByText("Puntos limpios y Ecopuntos"));

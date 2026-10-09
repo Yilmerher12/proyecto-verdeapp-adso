@@ -3,20 +3,20 @@ Módulo: routers/geography.py
 Descripción: Endpoints optimizados para el llenado dinámico de formularios geográficos.
 """
 
-from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import List, Optional
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_current_user, get_db, require_role
+from app.utils.limiter import limiter
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.localidad import Localidad
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.desvinculacion import ConjuntoSinAdministradorResponse
-from app.schemas.geography import LocalidadResponse, ConjuntoResponse, UnidadResponse
+from app.schemas.geography import LocalidadResponse, ConjuntoResponse
 
 router = APIRouter(
     prefix="/api/v1/geography",
@@ -28,6 +28,13 @@ router = APIRouter(
 #           registrados — sin este límite, un combobox de búsqueda podría
 #           recibir toda la lista de una sola vez.
 MAX_LIMIT_CONJUNTOS = 50
+
+# ¿Qué? Issue #403 (CN-063): largo máximo del texto de búsqueda de conjuntos.
+# ¿Para qué? Es el largo de la columna nombre_conjunto: un texto más largo no puede
+#           coincidir con ningún nombre, y sin tope alguien podía mandar un
+#           `search` de un millón de caracteres para que la base de datos lo procese.
+# ¿Impacto? Un texto más largo responde 422. Nadie escribe 255 caracteres en el buscador.
+MAX_LENGTH_BUSQUEDA = 255
 
 
 @router.get(
@@ -44,9 +51,16 @@ def get_localidades(db: Session = Depends(get_db)):
 
 @router.get("/conjuntos/todos")
 def listar_todos_los_conjuntos_verificados(
-    search: Optional[str] = Query(None, description="Filtra por nombre de conjunto (contiene, sin distinguir mayúsculas)"),
+    search: Optional[str] = Query(
+        None, max_length=MAX_LENGTH_BUSQUEDA, description="Filtra por nombre de conjunto (contiene, sin distinguir mayúsculas)"
+    ),
     id_localidad: Optional[int] = Query(None, description="Filtra por localidad, antes de buscar por nombre"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT_CONJUNTOS),
+    # ¿Qué? Issue #403 (CN-063): solo el Admin Sistema. Antes era público.
+    # ¿Para qué? Lo llaman 4 pantallas del Admin Sistema (su panel, invitar administradores,
+    #           novedades y contenido educativo); el registro usa /conjuntos/{id_localidad}.
+    # ¿Impacto? Sin sesión responde 401 y con otro rol 403.
+    _admin: Usuario = Depends(require_role(RolId.ADMIN_SISTEMA, "Solo el Administrador del Sistema puede ver todos los conjuntos.")),
     db: Session = Depends(get_db),
 ):
     """
@@ -93,7 +107,9 @@ def listar_todos_los_conjuntos_verificados(
     summary="Conjuntos verificados que hoy no tienen ningún administrador activo",
 )
 def listar_conjuntos_sin_administrador(
-    search: Optional[str] = Query(None, description="Filtra por nombre de conjunto (contiene, sin distinguir mayúsculas)"),
+    search: Optional[str] = Query(
+        None, max_length=MAX_LENGTH_BUSQUEDA, description="Filtra por nombre de conjunto (contiene, sin distinguir mayúsculas)"
+    ),
     id_localidad: Optional[int] = Query(None, description="Filtra por localidad, antes de buscar por nombre"),
     limit: int = Query(20, ge=1, le=MAX_LIMIT_CONJUNTOS),
     current_user: Usuario = Depends(get_current_user),
@@ -156,9 +172,19 @@ def listar_conjuntos_sin_administrador(
     status_code=status.HTTP_200_OK,
     summary="Obtener conjuntos residenciales VERIFICADOS, filtrados por localidad"
 )
+# ¿Qué? Issue #403 (CN-063): máximo 120 peticiones por minuto por IP.
+# ¿Para qué? Es público (el registro lo necesita antes de que la persona tenga cuenta): sin
+#           tope, un programa podía llamarlo miles de veces y saturar la base de datos.
+# ¿Impacto? El buscador del registro espera unos instantes entre teclas, así que una persona
+#           nunca llega a 120. Cuenta por IP: 120 deja que varias personas del mismo salón o
+#           red se registren a la vez. `request` lo exige slowapi.
+@limiter.limit("120/minute")
 def get_conjuntos_por_localidad(
+    request: Request,
     id_localidad: int,
-    search: Optional[str] = Query(None, description="Filtra por nombre de conjunto (contiene, sin distinguir mayúsculas)"),
+    search: Optional[str] = Query(
+        None, max_length=MAX_LENGTH_BUSQUEDA, description="Filtra por nombre de conjunto (contiene, sin distinguir mayúsculas)"
+    ),
     limit: int = Query(20, ge=1, le=MAX_LIMIT_CONJUNTOS),
     db: Session = Depends(get_db),
 ):
@@ -191,46 +217,3 @@ def get_conjuntos_por_localidad(
         stmt = stmt.where(ConjuntoResidencial.nombre_conjunto.ilike(f"%{search}%"))
     stmt = stmt.order_by(ConjuntoResidencial.nombre_conjunto).limit(limit)
     return db.execute(stmt).scalars().all()
-
-
-@router.get(
-    "/conjuntos",
-    response_model=List[ConjuntoResponse],
-    status_code=status.HTTP_200_OK,
-    summary="Obtener la lista global de conjuntos residenciales verificados"
-)
-def get_todos_los_conjuntos(db: Session = Depends(get_db)):
-    """
-    ¿Qué cambió? Igual que el endpoint anterior — se agrega el filtro
-    verificado=True. Este endpoint no se usa actualmente en ningún
-    formulario visto hasta ahora, pero se corrige por consistencia: ningún
-    endpoint de geografía debería exponer conjuntos no verificados salvo
-    "/conjuntos/todos" (de uso exclusivo del Administrador del Sistema, que
-    YA filtraba correctamente).
-    """
-    stmt = select(ConjuntoResidencial).where(ConjuntoResidencial.verificado.is_(True))
-    return db.execute(stmt).scalars().all()
-
-
-# ¿Qué? El summary decía "Endpoint adaptado para nomenclatura dinámica" —
-#       no dejaba claro, ni en Swagger ni para quien lo llamara, que esto es
-#       un placeholder que siempre responde vacío.
-# ¿Para qué? El frontend actual no usa este endpoint (las unidades se crean
-#           dinámicamente durante el registro del residente, ver
-#           auth_service.register_user), pero queda expuesto en la API.
-# ¿Impacto? Si en el futuro alguien lo conecta esperando una lista real,
-#           ahora el summary lo avisa desde la documentación interactiva,
-#           sin tener que leer el docstring.
-@router.get(
-    "/unidades/{id_conjunto_residencial}",
-    response_model=List[UnidadResponse],
-    status_code=status.HTTP_200_OK,
-    summary="[Placeholder] Siempre devuelve una lista vacía",
-)
-def get_unidades_por_conjunto(id_conjunto_residencial: UUID, db: Session = Depends(get_db)):
-    """
-    Retorna un arreglo vacío a propósito. Las unidades habitacionales ahora
-    se crean de forma dinámica durante el registro del residente — este
-    endpoint no tiene ningún consumidor en el frontend actual.
-    """
-    return []

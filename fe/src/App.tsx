@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RoleGuard } from "@/components/RoleGuard";
 import { AppShell } from "@/components/layout/AppShell";
 import { ServerErrorBanner } from "@/components/ui/ServerErrorBanner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useAuth } from "@/hooks/useAuth";
 import { RoleId } from "@/types/auth";
 
@@ -68,239 +69,246 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <ServerErrorBanner />
-        <Routes>
-          {/* 🔓 Rutas públicas base */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/aceptar-invitacion" element={<AceptarInvitacionPage />} />
-
-          {/* 🔓 Rutas legales — cada una abre su modal sobre el Landing */}
-          <Route path="/terminos-de-uso" element={<TerminosModalPage />} />
-          <Route path="/privacidad" element={<PrivacidadModalPage />} />
-          <Route path="/politica-cookies" element={<CookiesModalPage />} />
-          <Route path="/contacto" element={<ContactoModalPage />} />
-
-          {/* 🔒 Rutas Protegidas y Segregadas por Rol de Usuario */}
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
-
-          <Route
-            path="/dashboard/residente"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
+        {/* ¿Qué? ErrorBoundary externo alrededor de todas las rutas.
+            ¿Para qué? Atrapa los errores de las páginas públicas (landing,
+                       login...) y los del propio AppShell, que no quedan
+                       dentro del ErrorBoundary interno de AppShell (issue #378).
+            ¿Impacto? Sin él, esos errores seguirían dejando la app en blanco. */}
+        <ErrorBoundary>
+          <Routes>
+            {/* 🔓 Rutas públicas base */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/aceptar-invitacion" element={<AceptarInvitacionPage />} />
+  
+            {/* 🔓 Rutas legales — cada una abre su modal sobre el Landing */}
+            <Route path="/terminos-de-uso" element={<TerminosModalPage />} />
+            <Route path="/privacidad" element={<PrivacidadModalPage />} />
+            <Route path="/politica-cookies" element={<CookiesModalPage />} />
+            <Route path="/contacto" element={<ContactoModalPage />} />
+  
+            {/* 🔒 Rutas Protegidas y Segregadas por Rol de Usuario */}
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
+  
+            <Route
+              path="/dashboard/residente"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
+                    <AppShell>
+                      <ResidenteDashboard />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            <Route
+              path="/dashboard/reciclador"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.RECICLADOR]}>
+                    <AppShell>
+                      <RecicladorDashboard />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            <Route
+              path="/dashboard/admin"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
+                    <AppShell>
+                      <AdminDashboard />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            <Route
+              path="/dashboard/admin-conjunto"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.ADMIN_CONJUNTO]}>
+                    <AppShell>
+                      <AdminConjuntoDashboard />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            <Route
+              path="/change-password"
+              element={
+                <ProtectedRoute>
                   <AppShell>
-                    <ResidenteDashboard />
+                    <ChangePasswordPage />
                   </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/dashboard/reciclador"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.RECICLADOR]}>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
                   <AppShell>
-                    <RecicladorDashboard />
+                    <ProfilePage />
                   </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/dashboard/admin"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
-                  <AppShell>
-                    <AdminDashboard />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/dashboard/admin-conjunto"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.ADMIN_CONJUNTO]}>
-                  <AppShell>
-                    <AdminConjuntoDashboard />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/change-password"
-            element={
-              <ProtectedRoute>
-                <AppShell>
-                  <ChangePasswordPage />
-                </AppShell>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <AppShell>
-                  <ProfilePage />
-                </AppShell>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Directorio — Residente (tabs: recicladores + puntos de acopio) */}
-          <Route
-            path="/directorio"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
-                  <AppShell>
-                    <DirectorioPage />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Puntos de acopio — Reciclador (solo puntos de acopio) */}
-          <Route
-            path="/puntos-acopio"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.RECICLADOR]}>
-                  <AppShell>
-                    <DirectorioPage soloAcopio />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Catálogo educativo — Residente (solo lectura, RQF-004/HU-005) */}
-          <Route
-            path="/catalogo-educativo"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
-                  <AppShell>
-                    <CatalogoEducativoPage />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/catalogo-educativo/:categoria"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
-                  <AppShell>
-                    <CategoriaEducativaPage />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Gestión de contenido educativo — Admin Sistema (RQF-010) */}
-          <Route
-            path="/admin/contenido-educativo"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
-                  <AppShell>
-                    <AdminContenidoEducativoPage />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Gestión de puntos de acopio — Admin Sistema (RQF-011) */}
-          <Route
-            path="/admin/puntos-acopio"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
-                  <AppShell>
-                    <AdminPuntosAcopioPage />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Comunicados del conjunto — Admin Conjunto gestiona (RQF-014) */}
-          <Route
-            path="/admin-conjunto/comunicados"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.ADMIN_CONJUNTO]}>
-                  <AppShell>
-                    <AdminConjuntoComunicadosPage />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Comunicados del conjunto — Residente/Reciclador ven el feed (RQF-014) */}
-          <Route
-            path="/comunicados"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.RESIDENTE, RoleId.RECICLADOR]}>
-                  <AppShell>
-                    <ComunicadosFeedPage />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Novedades de la plataforma — Admin Sistema gestiona (RQF-015) */}
-          <Route
-            path="/admin/novedades"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
-                  <AppShell>
-                    <AdminNovedadesPage />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Novedades de la plataforma — Residente/Reciclador/Admin Conjunto ven el feed (RQF-015) */}
-          <Route
-            path="/novedades"
-            element={
-              <ProtectedRoute>
-                <RoleGuard allowedRoles={[RoleId.RESIDENTE, RoleId.RECICLADOR, RoleId.ADMIN_CONJUNTO]}>
-                  <AppShell>
-                    <NovedadesFeedPage />
-                  </AppShell>
-                </RoleGuard>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Catch-all global */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+                </ProtectedRoute>
+              }
+            />
+  
+            {/* Directorio — Residente (tabs: recicladores + puntos de acopio) */}
+            <Route
+              path="/directorio"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
+                    <AppShell>
+                      <DirectorioPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            {/* Puntos de acopio — Reciclador (solo puntos de acopio) */}
+            <Route
+              path="/puntos-acopio"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.RECICLADOR]}>
+                    <AppShell>
+                      <DirectorioPage soloAcopio />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            {/* Catálogo educativo — Residente (solo lectura, RQF-004/HU-005) */}
+            <Route
+              path="/catalogo-educativo"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
+                    <AppShell>
+                      <CatalogoEducativoPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/catalogo-educativo/:categoria"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.RESIDENTE]}>
+                    <AppShell>
+                      <CategoriaEducativaPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            {/* Gestión de contenido educativo — Admin Sistema (RQF-010) */}
+            <Route
+              path="/admin/contenido-educativo"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
+                    <AppShell>
+                      <AdminContenidoEducativoPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            {/* Gestión de puntos de acopio — Admin Sistema (RQF-011) */}
+            <Route
+              path="/admin/puntos-acopio"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
+                    <AppShell>
+                      <AdminPuntosAcopioPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            {/* Comunicados del conjunto — Admin Conjunto gestiona (RQF-014) */}
+            <Route
+              path="/admin-conjunto/comunicados"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.ADMIN_CONJUNTO]}>
+                    <AppShell>
+                      <AdminConjuntoComunicadosPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            {/* Comunicados del conjunto — Residente/Reciclador ven el feed (RQF-014) */}
+            <Route
+              path="/comunicados"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.RESIDENTE, RoleId.RECICLADOR]}>
+                    <AppShell>
+                      <ComunicadosFeedPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            {/* Novedades de la plataforma — Admin Sistema gestiona (RQF-015) */}
+            <Route
+              path="/admin/novedades"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
+                    <AppShell>
+                      <AdminNovedadesPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            {/* Novedades de la plataforma — Residente/Reciclador/Admin Conjunto ven el feed (RQF-015) */}
+            <Route
+              path="/novedades"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.RESIDENTE, RoleId.RECICLADOR, RoleId.ADMIN_CONJUNTO]}>
+                    <AppShell>
+                      <NovedadesFeedPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+  
+            {/* Catch-all global */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
   );

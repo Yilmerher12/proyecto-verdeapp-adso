@@ -13,7 +13,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { PasswordStrengthIndicator, getPasswordRequirementError } from "@/components/ui/PasswordStrengthIndicator";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { PasswordRequirementsChecklist } from "@/components/ui/PasswordRequirementsChecklist";
+import { getPasswordRequirementError } from "@/lib/passwordStrength";
 
 /**
  * ¿Qué? Formulario de cambio de contraseña con validación y feedback.
@@ -83,12 +85,16 @@ export function ChangePasswordPage() {
    * ¿Impacto? Si la contraseña actual es incorrecta, el backend retorna 400.
    *           Si el cambio es exitoso, el formulario se limpia y se muestra un mensaje de éxito.
    */
-  // ¿Qué? Solo revisa que los 3 campos tengan algo escrito — la fortaleza
-  //       y la coincidencia de contraseñas las sigue revisando validate()
-  //       al enviar, igual que antes.
-  // ¿Para qué? Antes se podía pulsar "Guardar" con el formulario vacío.
+  // ¿Qué? "Guardar" solo se habilita con la actual escrita, la nueva cumpliendo
+  //       las 4 reglas y la confirmación igual a la nueva.
+  // ¿Para qué? El checklist y el mensaje de coincidencia ya muestran en vivo qué
+  //            falta, así que no hace falta esperar a pulsar "Guardar" para avisar.
+  // ¿Impacto? validate() sigue corriendo al enviar como red de seguridad.
+  const passwordsMatch = formData.confirmPassword !== "" && formData.confirmPassword === formData.new_password;
   const formularioIncompleto =
-    !formData.current_password.trim() || !formData.new_password.trim() || !formData.confirmPassword.trim();
+    !formData.current_password.trim() ||
+    getPasswordRequirementError(formData.new_password) !== null ||
+    !passwordsMatch;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +121,7 @@ export function ChangePasswordPage() {
 
   return (
     <div className="mx-auto max-w-md pt-6">
-      <div className="mb-6 bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="mb-6 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
           {t("auth.changePassword.title")}
         </h1>
@@ -124,7 +130,7 @@ export function ChangePasswordPage() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-[#2a4d34] dark:bg-[#132a1c]">
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         {success && (
           <div className="mb-4">
             <Alert type="success" message={success} onClose={() => setSuccess(null)} />
@@ -145,10 +151,20 @@ export function ChangePasswordPage() {
             placeholder="••••••••"
             autoComplete="current-password"
             autoFocus
-            icon={<Lock className="h-5 w-5" />}
+            icon={<Lock className="icon-lg" />}
             error={errors.current_password}
             onChange={handleChange}
           />
+
+          {/* ¿Qué? Salida para quien olvidó su contraseña actual. */}
+          {/* ¿Para qué? Sin esto, quien no la recuerda queda atascado en este formulario. */}
+          {/* ¿Impacto? Reutiliza el flujo público de /forgot-password, sin backend nuevo. */}
+          <p className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
+            {t("auth.changePassword.forgotHint")}{" "}
+            <Link to="/forgot-password" className="cursor-pointer font-semibold text-accent-700 underline dark:text-accent-500">
+              {t("auth.changePassword.forgotLink")}
+            </Link>
+          </p>
 
           <InputField
             label={t("auth.changePassword.newPassword")}
@@ -157,7 +173,7 @@ export function ChangePasswordPage() {
             value={formData.new_password}
             placeholder={t("common.passwordPlaceholder")}
             autoComplete="new-password"
-            icon={<KeyRound className="h-5 w-5" />}
+            icon={<KeyRound className="icon-lg" />}
             error={errors.new_password}
             onChange={handleChange}
           />
@@ -166,6 +182,7 @@ export function ChangePasswordPage() {
           {/* ¿Para qué? El usuario puede ver si su nueva contraseña es suficientemente segura. */}
           {/* ¿Impacto? Misma lógica que en registro — 4 niveles de fortaleza. */}
           <PasswordStrengthIndicator password={formData.new_password} />
+          <PasswordRequirementsChecklist password={formData.new_password} />
 
           <InputField
             label={t("auth.changePassword.confirmPassword")}
@@ -174,10 +191,24 @@ export function ChangePasswordPage() {
             value={formData.confirmPassword}
             placeholder={t("common.passwordPlaceholder")}
             autoComplete="new-password"
-            icon={<ShieldCheck className="h-5 w-5" />}
+            icon={<ShieldCheck className="icon-lg" />}
             error={errors.confirmPassword}
             onChange={handleChange}
           />
+
+          {/* ¿Qué? Aviso en vivo de si la confirmación ya coincide con la nueva. */}
+          {/* ¿Para qué? Detectar un error de tipeo antes de intentar guardar. */}
+          {/* ¿Impacto? No aparece mientras la confirmación esté vacía. */}
+          {formData.confirmPassword && (
+            <p
+              role="status"
+              className={`-mt-2 mb-4 text-xs font-semibold ${
+                passwordsMatch ? "text-accent-700 dark:text-accent-500" : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {passwordsMatch ? t("auth.changePassword.passwordsMatch") : t("auth.changePassword.passwordsNoMatch")}
+            </p>
+          )}
 
           {/* ¿Qué? Botones de acción: cancelar (volver) y guardar. */}
           {/* ¿Para qué? Cancelar regresa al dashboard; guardar envía el formulario. */}

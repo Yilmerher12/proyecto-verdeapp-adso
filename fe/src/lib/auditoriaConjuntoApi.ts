@@ -45,7 +45,6 @@ export interface NuevaAuditoria {
 //           un error claro en vez de quedarse esperando sin fin.
 export async function crearAuditoria(
   datos: NuevaAuditoria,
-  token: string,
   onProgress?: (porcentaje: number) => void
 ): Promise<AuditoriaConjunto> {
   const formData = new FormData();
@@ -56,7 +55,6 @@ export async function crearAuditoria(
   for (const archivo of datos.evidencias) formData.append("evidencias", archivo);
 
   const { data } = await axios.post(API_BASE, formData, {
-    headers: { Authorization: `Bearer ${token}` },
     timeout: 30000,
     onUploadProgress: (evento) => {
       if (!onProgress || !evento.total) return;
@@ -66,19 +64,15 @@ export async function crearAuditoria(
   return data;
 }
 
-export async function listarMisAuditorias(token: string): Promise<AuditoriaConjunto[]> {
-  const { data } = await axios.get(`${API_BASE}/mias`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function listarMisAuditorias(): Promise<AuditoriaConjunto[]> {
+  const { data } = await axios.get(`${API_BASE}/mias`);
   return data;
 }
 
 // ¿Qué? Detalle completo de una auditoría — lo que abre el botón "Ver" de
 //       la notificación AUDITORIA_PUBLICADA (Residente o Admin de Conjunto).
-export async function obtenerAuditoria(idAuditoria: string, token: string): Promise<AuditoriaConjunto> {
-  const { data } = await axios.get(`${API_BASE}/${idAuditoria}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function obtenerAuditoria(idAuditoria: string): Promise<AuditoriaConjunto> {
+  const { data } = await axios.get(`${API_BASE}/${idAuditoria}`);
   return data;
 }
 
@@ -87,9 +81,26 @@ export async function obtenerAuditoria(idAuditoria: string, token: string): Prom
 //       esto queda siempre consultable. El backend resuelve solo a qué
 //       conjunto(s) pertenece: un Residente o Admin de Conjunto, sin pasar
 //       ningún id.
-export async function listarHistorial(token: string): Promise<AuditoriaConjunto[]> {
-  const { data } = await axios.get(`${API_BASE}/historial`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function listarHistorial(): Promise<AuditoriaConjunto[]> {
+  const { data } = await axios.get(`${API_BASE}/historial`);
+  return data;
+}
+
+export interface AuditoriaAdmin extends AuditoriaConjunto {
+  avisados: number;
+}
+
+export interface AuditoriasAdminResultado {
+  items: AuditoriaAdmin[];
+  total: number;
+}
+
+// ¿Qué? El Admin del Sistema ve las auditorías del reciclador sin importar
+//       a qué conjunto pertenecen (RQF-009) — con `lunes` (YYYY-MM-DD),
+//       filtra esa semana completa; sin él, trae las más recientes de
+//       cualquier semana (para cruzar "a qué conjuntos se recomendó cada
+//       módulo" sin acotar a una sola semana).
+export async function listarAuditoriasAdmin(opciones?: { lunes?: string; limit?: number }): Promise<AuditoriasAdminResultado> {
+  const { data } = await axios.get(`${API_BASE}/admin`, { params: opciones });
   return data;
 }

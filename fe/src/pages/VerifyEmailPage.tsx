@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { verifyEmail } from "@/api/auth";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 type VerifyStatus = "loading" | "success" | "error";
 
@@ -55,9 +56,17 @@ export function VerifyEmailPage() {
         : t("verifyEmail.errorMessage");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#03130b] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-night-base px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-200 dark:border-[#2a4d34] p-8 shadow-sm text-center">
+        {/* Esta página no usa AuthLayout ni AppShell: el logo va aquí directo. */}
+        <Link
+          to="/"
+          className="mb-5 flex justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+          aria-label={t("common.backToHome")}
+        >
+          <BrandLogo className="h-10" />
+        </Link>
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-200 dark:border-night-line p-8 shadow-sm text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {t("verifyEmail.title")}
           </h1>
@@ -73,9 +82,9 @@ export function VerifyEmailPage() {
           {/* ──── Estado: éxito ──── */}
           {status === "success" && (
             <div className="mt-6">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-900/30">
                 <svg
-                  className="h-7 w-7 text-green-600 dark:text-green-400"
+                  className="h-7 w-7 text-accent-600 dark:text-accent-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -114,7 +123,7 @@ export function VerifyEmailPage() {
               <div className="mt-6 flex justify-end gap-3">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#1f4029] border border-gray-300 dark:border-[#2a4d34] rounded-lg hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-night-field border border-gray-300 dark:border-night-line rounded-lg hover:bg-gray-50 dark:hover:bg-night-hover transition-colors"
                 >
                   {t("verifyEmail.goToLogin")}
                 </Link>

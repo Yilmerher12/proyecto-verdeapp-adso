@@ -12,10 +12,13 @@ Descripción: Endpoint genérico para subir el archivo adjunto de un
 """
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
-from app.dependencies import get_current_user
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, status
+from sqlalchemy.orm import Session
+from app.dependencies import get_current_user, get_db
+from app.utils.limiter import limiter
 from app.models.rol import RolId
 from app.models.usuario import Usuario
+from app.services import cuota_subidas_service
 from app.utils.imagenes import guardar_imagen_subida
 
 router = APIRouter(
@@ -29,32 +32,50 @@ router = APIRouter(
 CARPETA_ADJUNTOS = Path(__file__).parent.parent / "uploads" / "adjuntos"
 
 ROLES_PERMITIDOS = {RolId.ADMIN_CONJUNTO, RolId.ADMIN_SISTEMA}
+# ¿Qué? Issue #369: Residente y Reciclador adjuntan la foto de la novedad
+#       que le envían al Admin Sistema.
+# ¿Impacto? Solo imagen: a ellos se les ignora permitir_documentos, así no
+#           pueden subir PDF/Word/Excel que nadie les pide.
+ROLES_SOLO_IMAGEN = {RolId.RESIDENTE, RolId.RECICLADOR}
 
 
 @router.post("/adjunto", status_code=status.HTTP_201_CREATED)
+# ¿Qué? Issue #310 (CN-013): sin límite, una sesión de admin podía subir
+#       archivos en bucle hasta llenar el disco del servidor. 30/minuto no
+#       estorba a quien sube varios adjuntos seguidos para un comunicado.
+@limiter.limit("30/minute")
 async def subir_adjunto(
+    request: Request,
     archivo: UploadFile,
     permitir_documentos: bool = Query(
         False,
         description="La guía de apoyo del contenido educativo y los adjuntos de comunicados admiten PDF/Word/Excel además de imagen; novedades no lo pide y sigue aceptando solo imagen.",
     ),
     current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
-    ¿Qué? Solo el Administrador de Conjunto (comunicados) y el
-          Administrador del Sistema (novedades, contenido educativo)
-          pueden usar este endpoint.
+    ¿Qué? El Administrador de Conjunto (comunicados, agenda) y el
+          Administrador del Sistema (novedades, contenido educativo) suben
+          cualquier tipo permitido; Residente y Reciclador, solo imagen
+          (foto de la novedad enviada).
     ¿Impacto? Devuelve {"url": "/uploads/adjuntos/<archivo>"} — esa URL es
              la que el frontend guarda como url_adjunto/url_guia,
              exactamente igual que si hubiera sido un link externo.
     """
-    if current_user.id_rol not in ROLES_PERMITIDOS:
+    if current_user.id_rol in ROLES_SOLO_IMAGEN:
+        permitir_documentos = False
+    elif current_user.id_rol not in ROLES_PERMITIDOS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permiso para subir archivos adjuntos.",
         )
 
+    # ¿Qué? Issue #395 (CN-046): cuota por usuario antes de guardar, y registro del dueño después.
+    # ¿Impacto? Una subida rechazada por formato o tamaño (400) no se cuenta: no escribió nada en disco.
+    cuota_subidas_service.verificar_cuota(db, current_user)
     url = await guardar_imagen_subida(
         archivo, CARPETA_ADJUNTOS, "/uploads/adjuntos", permitir_documentos=permitir_documentos
     )
+    cuota_subidas_service.registrar_subida(db, current_user, url)
     return {"url": url}

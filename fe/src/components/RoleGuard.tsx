@@ -1,9 +1,16 @@
+/**
+ * Archivo: components/RoleGuard.tsx
+ * Descripción: Deja pasar a una ruta solo a los roles indicados.
+ * ¿Para qué? Va dentro de ProtectedRoute (que ya exige sesión) en cada ruta
+ *           de App.tsx que es exclusiva de uno o varios roles.
+ * ¿Impacto? El backend igual rechaza la petición con 403 (require_role); esto
+ *           evita que la persona vea una pantalla que no le corresponde.
+ */
+
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-// Asumimos que tu hook de autenticación se exporta desde authContext.tsx o un archivo useAuth.ts
-// Ajusta esta importación según la estructura real de tus hooks
 import { useAuth } from "@/hooks/useAuth";
-import { RoleId } from "@/types/auth";
+import type { RoleId } from "@/types/auth";
 
 interface RoleGuardProps {
   children: ReactNode;
@@ -17,12 +24,12 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
     return <Navigate to="/login" replace />;
   }
 
-  // Si el rol del usuario no está en la lista de permitidos, lo mandamos para su propia zona.
+  // ¿Qué? Un rol sin permiso vuelve a SU panel vía /dashboard (DashboardRedirect
+  //       en App.tsx decide el destino según el rol).
+  // ¿Impacto? Antes había un if por rol y faltaba el de Admin. de Conjunto:
+  //           con sesión activa, lo mandaba a /login.
   if (!allowedRoles.includes(user.role_id)) {
-    if (user.role_id === RoleId.ADMIN_SISTEMA) return <Navigate to="/dashboard/admin" replace />;
-    if (user.role_id === RoleId.RESIDENTE) return <Navigate to="/dashboard/residente" replace />;
-    if (user.role_id === RoleId.RECICLADOR) return <Navigate to="/dashboard/reciclador" replace />;
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

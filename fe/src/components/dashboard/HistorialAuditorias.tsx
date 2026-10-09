@@ -16,40 +16,39 @@ import { History } from "lucide-react";
 import { listarHistorial, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 
-interface HistorialAuditoriasProps {
-  token: string;
-}
-
-export function HistorialAuditorias({ token }: HistorialAuditoriasProps) {
+export function HistorialAuditorias() {
   const { t } = useTranslation();
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [cargando, setCargando] = useState(true);
   const [idAbierta, setIdAbierta] = useState<string | null>(null);
 
   useEffect(() => {
-    listarHistorial(token)
+    listarHistorial()
       .then(setAuditorias)
       .catch(() => setAuditorias([]))
       .finally(() => setCargando(false));
-  }, [token]);
+  }, []);
 
   // ¿Qué? El nombre del conjunto solo se muestra por fila si hay más de
   //       uno en la lista — un Admin puede administrar varios conjuntos,
   //       un Residente siempre ve el mismo, así que repetirlo ahí sobra.
   const variosConjuntos = new Set(auditorias.map((a) => a.id_conjunto_residencial)).size > 1;
 
-  if (cargando) return null;
-
   return (
-    <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] shadow-sm p-5">
+    <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
       <div className="mb-4 flex items-center gap-2">
-        <History className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+        <History className="icon-md text-gray-500 dark:text-gray-400" />
         <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
       </div>
 
-      {auditorias.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("auditoriaResultado.historialEmpty")}</p>
+      {cargando ? (
+        <LoadingState message={t("common.loading")} />
+      ) : auditorias.length === 0 ? (
+        <EmptyState icon={History} message={t("auditoriaResultado.historialEmpty")} />
       ) : (
         <ul className="divide-y divide-gray-50 dark:divide-gray-800">
           {auditorias.map((a) => {
@@ -58,7 +57,7 @@ export function HistorialAuditorias({ token }: HistorialAuditoriasProps) {
               <li key={a.id_auditoria}>
                 <button
                   onClick={() => setIdAbierta(a.id_auditoria)}
-                  className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#0d2116]/60"
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-night-inset/60"
                 >
                   <div className="min-w-0">
                     <p className="text-sm text-gray-800 dark:text-gray-200">
@@ -66,13 +65,13 @@ export function HistorialAuditorias({ token }: HistorialAuditoriasProps) {
                       {a.tema_educativo}
                     </p>
                     <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(a.created_at).toLocaleDateString()}
+                      {formatearFechaCreacion(a.created_at)}
                     </p>
                   </div>
                   <span
                     className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold ${nivel.claseBadge}`}
                   >
-                    <nivel.icon className="h-3.5 w-3.5" />
+                    <nivel.icon className="icon-sm" />
                     {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
                   </span>
                 </button>
@@ -83,7 +82,7 @@ export function HistorialAuditorias({ token }: HistorialAuditoriasProps) {
       )}
 
       {idAbierta && (
-        <AuditoriaResultadoModal idAuditoria={idAbierta} token={token} onClose={() => setIdAbierta(null)} />
+        <AuditoriaResultadoModal idAuditoria={idAbierta} onClose={() => setIdAbierta(null)} />
       )}
     </div>
   );

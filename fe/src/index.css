@@ -62,6 +62,12 @@
 @theme inline {
   /* Fuentes — solo sans-serif, sin serifas nunca */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* ¿Qué? Fuente de títulos: Outfit (geométrica, combina con el logotipo).
+     ¿Para qué? Darle identidad a VerdeApp en encabezados sin tocar el texto
+     de formularios, tablas y mensajes, que sigue en Inter por legibilidad.
+     ¿Impacto? Se aplica sola a h1-h3 (ver @layer base); en cualquier otro
+     elemento se usa con la clase font-display. */
+  --font-display: "Outfit", ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   /* ── Token de acento: VerdeApp = green (verde bosque de la marca) ────── */
   /* ¿Qué? Antes apuntaba a emerald (verde azulado), el acento por defecto */
@@ -83,6 +89,63 @@
   --color-accent-800: var(--color-green-800);
   --color-accent-900: var(--color-green-900);
   --color-accent-950: var(--color-green-950);
+
+  /* ── Superficies del modo oscuro (paleta "Bosque Andino") ────────────── */
+  /* ¿Qué? Un token por papel: se usan siempre con el prefijo dark:, ej.     */
+  /*       dark:bg-night-card, dark:border-night-line.                       */
+  /* ¿Para qué? Antes estos 8 colores estaban escritos a mano como           */
+  /*       dark:bg-[#12231a] en 50 archivos (536 veces).                     */
+  /* ¿Impacto? Cambiar una superficie del modo oscuro es tocar una línea.    */
+  --color-night-base: #050f0a;  /* fondo raíz (auth, legales, shell, footer) */
+  --color-night-page: #0a1510;  /* fondo del área de contenido de los paneles */
+  --color-night-card: #12231a;  /* tarjetas */
+  --color-night-panel: #0f2018; /* modales, tarjeta de login, barras fijas */
+  --color-night-inset: #0c1a12; /* zonas hundidas: filas en hover, botón secundario */
+  --color-night-field: #1a3324; /* campos de formulario */
+  --color-night-line: #23392b;  /* bordes */
+  --color-night-hover: #23392b; /* fondo al pasar el mouse (mismo tono que el borde) */
+}
+
+/* ============================================================================
+   Paleta de marca
+   ¿Qué? Redefine la escala green-* y los grises claros de Tailwind con la paleta
+         de VerdeApp: "Páramo Fresco" en modo claro y "Bosque Andino" en modo oscuro.
+   ¿Para qué? Que el verde de marca deje de ser el genérico de Tailwind, y que el
+              modo oscuro tenga su propia escala (sidebar verde, más claro que el
+              fondo) en vez de solo oscurecer la del modo claro.
+   ¿Impacto? Todo lo que use green-*, accent-* o gray-50/100/200 cambia de tono
+             sin tocar componentes. Las superficies del modo oscuro son los tokens
+             night-* definidos arriba (fondo, tarjetas, campos, bordes…).
+   ============================================================================ */
+:root {
+  --color-green-50: #eaf7f1;
+  --color-green-100: #c9ebda;
+  --color-green-200: #a0ddbf;
+  --color-green-300: #6fcba0;
+  --color-green-400: #3fb585;
+  --color-green-500: #1f9f70;
+  --color-green-600: #16825d;
+  --color-green-700: #126749;
+  --color-green-800: #0f5238;
+  --color-green-900: #0b3f2e;
+  --color-green-950: #06201a;
+  --color-gray-50: #f4f8f7;
+  --color-gray-100: #e9f0ef;
+  --color-gray-200: #edf2f1;
+}
+
+.dark {
+  --color-green-50: #eef6f0;
+  --color-green-100: #d6ead9;
+  --color-green-200: #add4b4;
+  --color-green-300: #7fba8b;
+  --color-green-400: #4f9c62;
+  --color-green-500: #2f8049;
+  --color-green-600: #1f6a3b;
+  --color-green-700: #185530;
+  --color-green-800: #134327;
+  --color-green-900: #0f2e20;
+  --color-green-950: #0a2016;
 }
 
 /* ¿Qué? Estilos base aplicados al body y al root de la app. */
@@ -93,6 +156,13 @@
   *::before,
   *::after {
     border-color: theme(--color-gray-200);
+  }
+
+  /* Títulos de página, sección y tarjeta: fuente de marca (--font-display). */
+  h1,
+  h2,
+  h3 {
+    font-family: theme(--font-display);
   }
 
   html {
@@ -168,7 +238,7 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-[#03130b] dark:text-gray-100;
+    @apply bg-gray-50 text-gray-900 dark:bg-night-base dark:text-gray-100;
     @apply min-h-screen antialiased;
     @apply transition-colors duration-200;
     margin: 0;
@@ -282,4 +352,170 @@
       opacity: 1;
     }
   }
+}
+
+/* ¿Qué? Cursor parpadeante del efecto de máquina de escribir del Hero
+   (ver LandingPage.tsx — "VerdeApp" + el eslogan se escriben letra por
+   letra).
+   ¿Para qué? Sin esto, el cursor se quedaría fijo mientras dura cada
+   pausa entre letras — no se leería como un cursor de texto real.
+   ¿Impacto? Esta regla es un respaldo: LandingPage.tsx ya decide en
+   JavaScript no escribir letra por letra si el sistema operativo pidió
+   "reducir movimiento" (el cursor ni siquiera se monta en ese caso), pero
+   dejar también la guarda aquí evita que esta animación específica quede
+   como la única excepción a la convención del resto del archivo. */
+@keyframes caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-caret-blink {
+      animation: caret-blink 1s step-end infinite;
+    }
+  }
+}
+
+/* ============================================================================
+   Animaciones de íconos (lucide)
+   ¿Qué? Clases que se ponen en el propio <Icon className="...">:
+         - icon-draw: el ícono se redibuja trazo por trazo (sidebar, botones).
+         - icon-hop (salta), icon-shake (niega), icon-ring (suena/tiembla),
+           icon-nudge (crece un poco): movimiento según lo que significa.
+         Por defecto se disparan al pasar el mouse por el elemento clicable que
+         contiene al ícono (a, button, label). Con icon-appear se disparan UNA vez
+         al aparecer (mensajes de éxito/error/aviso).
+   ¿Para qué? Regla del proyecto: solo se anima lo que se puede tocar o lo que
+              aparece para avisar algo — no hay íconos moviéndose de adorno.
+   ¿Impacto? Todo va dentro de prefers-reduced-motion: no-preference, igual que el
+             resto de animaciones de este archivo: quien pidió "reducir
+             movimiento" en su sistema ve los íconos quietos.
+   ============================================================================ */
+@keyframes icon-draw {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes icon-hop {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: translateY(-4px);
+  }
+  70% {
+    transform: translateY(1px);
+  }
+}
+@keyframes icon-shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20%,
+  60% {
+    transform: translateX(-3px);
+  }
+  40%,
+  80% {
+    transform: translateX(3px);
+  }
+}
+@keyframes icon-ring {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: rotate(-12deg);
+  }
+  40% {
+    transform: rotate(10deg);
+  }
+  60% {
+    transform: rotate(-6deg);
+  }
+  80% {
+    transform: rotate(3deg);
+  }
+}
+@keyframes icon-nudge {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Los íconos de lucide miden 24×24: ningún trazo pasa de 100 unidades, así
+       que un dasharray de 100 sirve para todos sin medir cada uno. */
+    :is(a, button, label):hover > .icon-draw > *,
+    :is(a, button, label):hover .icon-draw > * {
+      stroke-dasharray: 100;
+      animation: icon-draw 0.6s ease-out;
+    }
+    :is(a, button, label):hover .icon-hop,
+    .icon-appear.icon-hop {
+      animation: icon-hop 0.6s ease-in-out;
+    }
+    :is(a, button, label):hover .icon-shake,
+    .icon-appear.icon-shake {
+      animation: icon-shake 0.5s ease-in-out;
+    }
+    :is(a, button, label):hover .icon-ring,
+    .icon-appear.icon-ring {
+      transform-origin: 50% 20%;
+      animation: icon-ring 0.7s ease-in-out;
+    }
+    :is(a, button, label):hover .icon-nudge,
+    .icon-appear.icon-nudge {
+      animation: icon-nudge 0.5s ease-in-out;
+    }
+  }
+}
+
+/* ============================================================================
+   Escala de tamaños de íconos
+   ¿Qué? Los 5 únicos tamaños permitidos para un ícono de lucide:
+         icon-sm   14px — dentro de texto pequeño (chips, flechas de tabla)
+         icon-md   16px — botones, campos, junto al título de una sección
+         icon-lg   20px — navegación (sidebar), campana, mensajes, caritas
+         icon-xl   32px — destacado: encabezado del dashboard, estado vacío, modal
+         icon-deco 80px — decorativo (marca de agua del dashboard)
+   ¿Para qué? Antes había 12 tamaños distintos (h-2.5 a h-20), varios usados
+              una sola vez y puestos a ojo. Un nombre por uso evita que alguien
+              vuelva a escribir h-4.5 a mano.
+   ¿Impacto? Cambiar el tamaño de un uso (ej. todos los íconos de botón) es
+             tocar una línea aquí. En el <Icon> se usa la clase en lugar de
+             h-* y w-* (ver docs/requisitos/restricciones.md).
+   ============================================================================ */
+@utility icon-sm {
+  @apply size-3.5;
+}
+@utility icon-md {
+  @apply size-4;
+}
+@utility icon-lg {
+  @apply size-5;
+}
+@utility icon-xl {
+  @apply size-8;
+}
+@utility icon-deco {
+  @apply size-20;
 }

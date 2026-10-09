@@ -7,9 +7,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import axios from "axios";
 import * as authApi from "@/api/auth";
 import { AuthContext } from "@/context/authContextDef";
 import i18n from "@/i18n";
+import {
+  alCerrarSesionEnOtraPestana,
+  alIniciarSesionEnOtraPestana,
+  borrarSesionActiva,
+  haySesionActiva,
+  marcarSesionActiva,
+} from "@/lib/sesionActiva";
 import type {
   AuthContextType,
   ChangePasswordRequest,
@@ -24,29 +32,27 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// ¿Qué? RNF-001.9: el token de sesión vive en una cookie httpOnly — por
+//       diseño, JavaScript no puede leer su valor bajo ninguna
+//       circunstancia (esa es justo la protección contra XSS). La marca de
+//       lib/sesionActiva.ts NO es una credencial ni un secreto: solo dice
+//       "la última vez que se supo, este navegador tenía una sesión
+//       iniciada", para poder decidir sin adivinar si vale la pena llamar a
+//       getMe() al abrir la app, y para que axios.ts distinga un 401 de "la
+//       sesión venció" de un 401 de "nunca hubo sesión".
+// ¿Impacto? Aunque un script malicioso la leyera o la modificara, no
+//           obtiene ningún token ni gana ningún acceso — en el peor caso,
+//           la app llama a getMe() una vez de más o de menos.
+
 export function AuthProvider({ children }: AuthProviderProps) {
   // El estado ahora maneja directamente el tipo UserResponse corregido
   const [user, setUser] = useState<UserResponse | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(() =>
-    sessionStorage.getItem("access_token"),
-  );
-  const [refreshToken, setRefreshToken] = useState<string | null>(() =>
-    sessionStorage.getItem("refresh_token"),
-  );
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const isAuthenticated = !!user && !!accessToken;
-
-  const saveTokens = useCallback((access: string, refresh: string) => {
-    sessionStorage.setItem("access_token", access);
-    sessionStorage.setItem("refresh_token", refresh);
-    setAccessToken(access);
-    setRefreshToken(refresh);
-  }, []);
+  const isAuthenticated = !!user;
 
   const clearAuth = useCallback(() => {
-    sessionStorage.removeItem("access_token");
-    sessionStorage.removeItem("refresh_token");
+    borrarSesionActiva();
     // ¿Qué? También se borra la posición de scroll guardada del Landing.
     // ¿Para qué? AppShell hace un recargue completo hacia "/" al cerrar
     //           sesión, y el Landing (useRestoreScroll) restaura esta clave
@@ -56,15 +62,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     //           recordar un scroll viejo que no tenía nada que ver con la
     //           sesión que se acaba de cerrar.
     sessionStorage.removeItem("landing-scroll-y");
-    setAccessToken(null);
-    setRefreshToken(null);
     setUser(null);
   }, []);
 
   useEffect(() => {
     const verifySession = async () => {
-      const storedToken = sessionStorage.getItem("access_token");
-      if (!storedToken) {
+      const huboSesion = haySesionActiva();
+      if (!huboSesion) {
         setIsLoading(false);
         return;
       }
@@ -86,8 +90,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         //           al abrir la app, el usuario ya no pierde una sesión que
         //           seguía siendo válida — solo se cierra sesión de verdad
         //           cuando el servidor confirma que el token no sirve.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const status = (err as any)?.response?.status;
+        // ¿Qué? axios.isAxiosError es el type guard real que expone la
+        //       librería para distinguir un AxiosError de cualquier otro
+        //       valor lanzado — antes se forzaba con "as any" para leer
+        //       ".response.status" sin que TypeScript revisara nada.
+        const status = axios.isAxiosError(err) ? err.response?.status : undefined;
         if (status === 401 || status === 403) {
           clearAuth();
         }
@@ -99,43 +106,71 @@ export function AuthProvider({ children }: AuthProviderProps) {
     verifySession();
   }, [clearAuth]);
 
+  // ¿Qué? Si otra pestaña cierra sesión (o su sesión vence), esta también
+  //       queda sin usuario, y ProtectedRoute la manda al login.
+  // ¿Para qué? Las pestañas comparten las cookies: cuando una cierra sesión,
+  //           los tokens ya quedaron revocados para todas. Sin esto, esta
+  //           pestaña seguiría mostrando datos de una sesión que ya no existe.
+  // ¿Impacto? Solo setUser(null): una pestaña en una página pública (el
+  //           landing) se queda donde está.
+  useEffect(() => alCerrarSesionEnOtraPestana(() => setUser(null)), []);
+
+  // ¿Qué? Si otra pestaña inicia sesión (con la misma cuenta u otra), esta
+  //       vuelve a preguntarle al backend quién es y actualiza `user`.
+  // ¿Para qué? Las cookies son compartidas: si la otra pestaña entró con otra
+  //           cuenta, esta ya habla con el backend como esa cuenta, pero seguía
+  //           dibujando la anterior (issue #404). Con `user` nuevo, las rutas
+  //           protegidas mandan a cada rol a su panel solas.
+  // ¿Impacto? El catch vacío es a propósito: si getMe() falla con 401, el
+  //           interceptor de axios ya cierra la sesión local; cualquier otro
+  //           fallo deja la pantalla como estaba, igual que verifySession().
+  useEffect(
+    () =>
+      alIniciarSesionEnOtraPestana(() => {
+        authApi
+          .getMe()
+          .then(async (userData) => {
+            setUser(userData);
+            if (userData.locale) await i18n.changeLanguage(userData.locale);
+          })
+          .catch(() => {});
+      }),
+    [],
+  );
+
   /**
    * Acción de Login adaptada
    * Sincroniza las credenciales y el estado expandido del perfil para el Dashboard.
    */
-  const login = useCallback(
-    async (data: LoginRequest) => {
-      const tokens = await authApi.loginUser(data);
-      saveTokens(tokens.access_token, tokens.refresh_token);
-      
-      const userData = await authApi.getMe();
-      setUser(userData);
-      
-      if (userData.locale) {
-        await i18n.changeLanguage(userData.locale);
-      }
-      return userData;
-    },
-    [saveTokens],
-  );
+  const login = useCallback(async (data: LoginRequest) => {
+    // ¿Qué? El backend ya deja el access y el refresh token guardados como
+    //       cookies httpOnly en esta misma respuesta — no hay nada que
+    //       leer ni guardar aquí (RNF-001.9).
+    await authApi.loginUser(data);
+    marcarSesionActiva();
+
+    const userData = await authApi.getMe();
+    setUser(userData);
+
+    if (userData.locale) {
+      await i18n.changeLanguage(userData.locale);
+    }
+    return userData;
+  }, []);
 
   /**
    * Acción de Registro adaptada
    * Recibe la estructura de datos unificada del formulario por pasos de Figma.
    */
-  const register = useCallback(
-    async (data: RegisterRequest) => {
-      await authApi.registerUser(data);
-      try {
-        await login({ email: data.email, password: data.password });
-      } catch (loginErr) {
-        const err = new Error(loginErr instanceof Error ? loginErr.message : String(loginErr));
-        (err as Error & { requiresEmailVerification: boolean }).requiresEmailVerification = true;
-        throw err;
-      }
-    },
-    [login],
-  );
+  // ¿Qué? Issue #373: antes, tras registrar se intentaba un login
+  //       automático que fallaba a propósito (la cuenta aún no está
+  //       verificada) y ese fallo era la señal de "sí se registró".
+  // ¿Para qué? El backend ahora responde lo mismo aunque el correo ya
+  //           tuviera cuenta, así que ese truco ya no distingue nada: si la
+  //           petición no da error, el registro quedó recibido y punto.
+  const register = useCallback(async (data: RegisterRequest) => {
+    await authApi.registerUser(data);
+  }, []);
 
   const logout = useCallback(() => {
     clearAuth();
@@ -156,8 +191,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value = useMemo<AuthContextType>(
     () => ({
       user,
-      accessToken,
-      refreshToken,
       isAuthenticated,
       isLoading,
       login,
@@ -169,8 +202,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }),
     [
       user,
-      accessToken,
-      refreshToken,
       isAuthenticated,
       isLoading,
       login,

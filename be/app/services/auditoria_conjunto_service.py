@@ -4,13 +4,13 @@ Descripción: Lógica de negocio de la auditoría del Reciclador al conjunto
              (RQF-009) — validaciones y guardado de la foto de evidencia.
 """
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from uuid import UUID
 
 from fastapi import HTTPException, UploadFile, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
@@ -23,7 +23,12 @@ from app.models.rol import RolId
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.schemas.auditoria_conjunto import NivelDesempeno
-from app.services.notificaciones_helpers import admins_del_conjunto, reciclador_esta_presente, residentes_del_conjunto
+from app.services.notificaciones_helpers import (
+    admins_del_conjunto,
+    crear_notificacion,
+    reciclador_esta_presente,
+    residentes_del_conjunto,
+)
 from app.utils.imagenes import guardar_imagen_subida
 
 # ¿Qué? Carpeta donde quedan las fotos de evidencia, servida luego como
@@ -146,6 +151,7 @@ async def crear_auditoria(
     db.flush()  # ¿Para qué? Necesitamos auditoria.id_auditoria antes de crear la notificación.
 
     _notificar_auditoria_publicada(db, auditoria)
+    _notificar_recomendacion_si_corresponde(db, auditoria)
 
     db.commit()
     db.refresh(auditoria)
@@ -171,16 +177,54 @@ def _notificar_auditoria_publicada(db: Session, auditoria: AuditoriaConjunto) ->
     if not destinatarios:
         return
 
-    notif = Notificacion(
+    crear_notificacion(
+        db,
         tipo="AUDITORIA_PUBLICADA",
-        id_conjunto_residencial=auditoria.id_conjunto_residencial,
-        id_referencia=auditoria.id_auditoria,
         mensaje="El reciclador auditó la separación de residuos de tu conjunto.",
+        destinatarios=destinatarios,
+        id_conjunto=auditoria.id_conjunto_residencial,
+        id_referencia=auditoria.id_auditoria,
     )
-    db.add(notif)
-    db.flush()
-    for id_usuario in destinatarios:
-        db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=id_usuario))
+
+
+# ¿Qué? Niveles de desempeño que disparan una recomendación (ver
+#       ORDEN_NIVELES_SELECCIONABLES en fe/src/config/nivelesDesempeno.ts).
+_NIVELES_CON_RECOMENDACION = {"REGULAR", "DEFICIENTE"}
+
+
+def _notificar_recomendacion_si_corresponde(db: Session, auditoria: AuditoriaConjunto) -> None:
+    """
+    ¿Qué? Issue #4 (RQF-013) — si la calificación fue Regular o Malo, avisa
+          a los Residentes del conjunto (no al Admin de Conjunto: solo el
+          Residente puede entrar al catálogo educativo, "Aprender") que
+          hay contenido educativo recomendado sobre el tema calificado.
+    ¿Para qué? "tema_educativo" ya se guarda con el mismo texto que
+              "contenido_educativo.modulo_categoria" a propósito (ver
+              models/auditoria_conjunto.py) — no hace falta ningún
+              algoritmo para encontrar el contenido relacionado, es una
+              comparación directa de texto que ya hace el frontend al
+              abrir /catalogo-educativo/:categoria.
+    ¿Impacto? Un desempeño Bueno no genera esta notificación — no hay nada
+              que recomendar si ya se hizo bien. El mensaje se deja corto a
+              propósito (sin repetir el tema ni el nivel, ya visibles al
+              abrir la recomendación) — decisión del 2026-09-14 para que la
+              tarjeta de notificación no se vea con tanto texto.
+    """
+    if auditoria.nivel_desempeno not in _NIVELES_CON_RECOMENDACION:
+        return
+
+    destinatarios = residentes_del_conjunto(db, auditoria.id_conjunto_residencial)
+    if not destinatarios:
+        return
+
+    crear_notificacion(
+        db,
+        tipo="CONTENIDO_RECOMENDADO",
+        mensaje="El reciclador recomienda contenido educativo para tu conjunto.",
+        destinatarios=destinatarios,
+        id_conjunto=auditoria.id_conjunto_residencial,
+        id_referencia=auditoria.id_auditoria,
+    )
 
 
 def _pertenece_al_conjunto(db: Session, current_user: Usuario, id_conjunto: UUID) -> bool:
@@ -284,6 +328,10 @@ def listar_historial(db: Session, current_user: Usuario) -> list[AuditoriaConjun
     if not ids_conjuntos:
         return []
 
+    # ¿Qué? Issue #2 (hallazgo B2 de la auditoría) — auditoria.conjunto y
+    #       auditoria.reciclador son lazy="select" (default de SQLAlchemy):
+    #       _a_response() (routers/auditoria_conjunto.py) los lee por cada
+    #       fila, disparando 2 consultas extra por auditoría sin selectinload.
     stmt = (
         select(AuditoriaConjunto)
         .where(AuditoriaConjunto.id_conjunto_residencial.in_(ids_conjuntos))
@@ -297,9 +345,72 @@ def listar_historial(db: Session, current_user: Usuario) -> list[AuditoriaConjun
         #       ID ya no sirve como desempate — ver orden_interno en el
         #       modelo.
         .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
+        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
         .limit(50)
     )
     return list(db.execute(stmt).scalars().all())
+
+
+def _contar_avisados(db: Session, ids_auditoria: list[UUID]) -> dict[UUID, int]:
+    """¿Qué? Cuántos residentes fueron avisados con "contenido recomendado"
+    a raíz de cada auditoría (ver _notificar_recomendacion_si_corresponde) —
+    una consulta agrupada, no una por auditoría, para no repetir N veces la
+    misma vuelta a la base de datos."""
+    if not ids_auditoria:
+        return {}
+    stmt = (
+        select(Notificacion.id_referencia, func.count(NotificacionDestinatario.id_usuario))
+        .join(NotificacionDestinatario, NotificacionDestinatario.id_notificacion == Notificacion.id)
+        .where(
+            Notificacion.tipo == "CONTENIDO_RECOMENDADO",
+            Notificacion.id_referencia.in_(ids_auditoria),
+        )
+        .group_by(Notificacion.id_referencia)
+    )
+    return dict(db.execute(stmt).all())
+
+
+def listar_admin(
+    db: Session, lunes: date | None, limit: int, offset: int
+) -> tuple[list[AuditoriaConjunto], int, dict[UUID, int]]:
+    """
+    ¿Qué? RQF-009 — el Admin del Sistema ve las auditorías del reciclador
+          sin importar a qué conjunto pertenecen, a diferencia de
+          listar_historial (acotado al conjunto de quien pregunta).
+    ¿Para qué? Con `lunes`, se acota a esa semana completa: desde la
+              medianoche UTC de ese lunes hasta la medianoche UTC del lunes
+              siguiente (sin exigirlo) — misma convención UTC que ya usa el
+              resto de la app para fechas (ver formatearFechaUTC en
+              fe/src/lib/dateFormat.ts), sin sumarle conversión de huso
+              horario aparte. Sin `lunes`, trae las más recientes de
+              cualquier semana — así el catálogo educativo puede armar "a
+              qué conjuntos se le recomendó este módulo" sin acotarlo a una
+              sola semana.
+    ¿Impacto? El tercer valor devuelto es cuántos residentes fueron
+              avisados por cada auditoría (ver _contar_avisados) — siempre
+              0 para nivel BUENA, nunca un error de datos.
+    """
+    condiciones = []
+    if lunes is not None:
+        desde = datetime(lunes.year, lunes.month, lunes.day, tzinfo=timezone.utc)
+        condiciones.append(AuditoriaConjunto.created_at >= desde)
+        condiciones.append(AuditoriaConjunto.created_at < desde + timedelta(days=7))
+
+    total = db.execute(
+        select(func.count()).select_from(AuditoriaConjunto).where(*condiciones)
+    ).scalar_one()
+
+    stmt = (
+        select(AuditoriaConjunto)
+        .where(*condiciones)
+        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
+        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
+        .limit(limit)
+        .offset(offset)
+    )
+    auditorias = list(db.execute(stmt).scalars().all())
+    avisados_por_auditoria = _contar_avisados(db, [a.id_auditoria for a in auditorias])
+    return auditorias, total, avisados_por_auditoria
 
 
 def listar_mias(db: Session, id_usuario_reciclador: UUID) -> list[AuditoriaConjunto]:
@@ -312,5 +423,6 @@ def listar_mias(db: Session, id_usuario_reciclador: UUID) -> list[AuditoriaConju
         select(AuditoriaConjunto)
         .where(AuditoriaConjunto.id_reciclador == reciclador.id_reciclador)
         .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
+        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
     )
     return list(db.execute(stmt).scalars().all())

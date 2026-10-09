@@ -8,7 +8,14 @@ Descripción: Schemas para el panel propio del Administrador de Conjunto.
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+# ¿Qué? Issue #352 — tamaño de la columna nit (String(50)).
+# ¿Impacto? Debe coincidir con NIT_MAX_LENGTH de fe/src/lib/validacion.ts.
+NIT_MAX_LENGTH = 50
+# ¿Qué? Tope razonable de apartamentos de un conjunto — evita un typo como 1200000.
+# ¿Impacto? Debe coincidir con TOTAL_APARTAMENTOS_MAX de fe/src/lib/validacion.ts.
+TOTAL_APARTAMENTOS_MAX = 20000
 
 
 class ConjuntoAdministradoResponse(BaseModel):
@@ -28,6 +35,13 @@ class ConjuntoAdministradoResponse(BaseModel):
     #       registrarse. Todo conjunto ya tiene uno desde que se creó
     #       (ver default en el modelo), nunca es None.
     codigo_acceso: str
+    # ¿Qué? Cuántos apartamentos tiene el conjunto (lo define su Admin) y
+    #       cuántos de ellos ya tienen al menos un residente con cuenta
+    #       activa. Se cuentan APARTAMENTOS, no cuentas: dos residentes en
+    #       el mismo apartamento cuentan una vez.
+    total_apartamentos: Optional[int] = None
+    apartamentos_registrados: int = 0
+    residentes_registrados: int = 0
 
 
 class CodigoAccesoResponse(BaseModel):
@@ -37,7 +51,8 @@ class CodigoAccesoResponse(BaseModel):
 
 class EditarConjuntoRequest(BaseModel):
     """
-    ¿Qué? Único dato editable de un conjunto por su propio administrador: el NIT.
+    ¿Qué? Datos editables de un conjunto por su propio administrador: el NIT
+          y la cantidad total de apartamentos.
     ¿Para qué? Issue #180: nombre y dirección vienen ya verificados desde el
               dataset oficial de Bogotá (ver seed.py) — un Admin de Conjunto
               no debería poder sobreescribir ese dato institucional sin
@@ -45,4 +60,7 @@ class EditarConjuntoRequest(BaseModel):
               oficial no lo trae (queda NULL al importar), así que dejarlo
               editable es la única forma de completarlo con el dato real.
     """
-    nit: Optional[str] = None
+    nit: Optional[str] = Field(default=None, max_length=NIT_MAX_LENGTH)
+    # ¿Qué? Opcional: si no viene en la petición no se toca; si viene como
+    #       null se borra (vuelve a "sin definir").
+    total_apartamentos: Optional[int] = Field(default=None, ge=1, le=TOTAL_APARTAMENTOS_MAX)

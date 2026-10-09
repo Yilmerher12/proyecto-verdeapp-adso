@@ -14,39 +14,37 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.conjunto_residencial import ConjuntoResidencial
-from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.solicitud_desvinculacion import EstadoSolicitudDesvinculacion, SolicitudDesvinculacion
 from app.models.usuario import Usuario
 from app.schemas.desvinculacion import (
     AdministradorConjuntoResumenResponse,
     SolicitudDesvinculacionResponse,
 )
+from app.services.admin_conjunto_service import (
+    nombres_con_administrador_activo,
+    nombres_con_invitacion_pendiente_de_otro,
+)
+from app.services.notificaciones_helpers import crear_notificacion
 
 
 def _crear_notificacion(
     db: Session, id_conjunto: UUID, id_usuario_destino: UUID, tipo: str, mensaje: str
 ) -> None:
     """
-    ¿Qué? Crea una notificación de una sola persona, reutilizando el mismo
-          modelo Notificacion/NotificacionDestinatario que ya usa el flujo
-          de SHUT lleno/vacío (be/app/routers/notificaciones.py).
-    ¿Para qué? No hace falta pasar por ese router (sus reglas son para
-              Residente/Reciclador) — aquí el emisor siempre es el
-              Admin Sistema y el destinatario siempre se conoce de antemano.
+    ¿Qué? Notifica a una sola persona — aquí el emisor siempre es el Admin
+          Sistema y el destinatario siempre se conoce de antemano, a
+          diferencia del flujo de SHUT lleno/vacío que sí necesita
+          calcular una lista de destinatarios.
+    ¿Para qué? Mantiene la firma corta (un solo id_usuario_destino, no una
+              lista) en los 3 call sites de este archivo, delegando el
+              guardado real a crear_notificacion (notificaciones_helpers.py).
     """
-    notif = Notificacion(
-        tipo=tipo,
-        id_conjunto_residencial=id_conjunto,
-        mensaje=mensaje,
-    )
-    db.add(notif)
-    db.flush()
-    db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=id_usuario_destino))
+    crear_notificacion(db, tipo=tipo, mensaje=mensaje, destinatarios=[id_usuario_destino], id_conjunto=id_conjunto)
 
 
 def solicitar_desvinculacion(
@@ -92,8 +90,11 @@ def solicitar_desvinculacion(
     return solicitud
 
 
-def listar_solicitudes_pendientes(db: Session) -> List[SolicitudDesvinculacionResponse]:
-    """CA-023.1: el Admin Sistema ve todas las solicitudes pendientes, con el conjunto y quién la pidió."""
+def listar_solicitudes_pendientes(db: Session, ids: Optional[List[UUID]] = None) -> List[SolicitudDesvinculacionResponse]:
+    """
+    CA-023.1: el Admin Sistema ve todas las solicitudes pendientes, con el conjunto y quién la pidió.
+    ¿Qué? Issue #399: con `ids` solo trae esas (las de la página de la bandeja unificada).
+    """
     stmt = (
         select(SolicitudDesvinculacion, ConjuntoResidencial, AdministradorConjunto)
         .join(
@@ -107,6 +108,8 @@ def listar_solicitudes_pendientes(db: Session) -> List[SolicitudDesvinculacionRe
         .where(SolicitudDesvinculacion.estado == EstadoSolicitudDesvinculacion.PENDIENTE)
         .order_by(SolicitudDesvinculacion.created_at)
     )
+    if ids is not None:
+        stmt = stmt.where(SolicitudDesvinculacion.id.in_(ids))
     filas = db.execute(stmt).all()
     return [
         SolicitudDesvinculacionResponse(
@@ -180,9 +183,28 @@ def resolver_solicitud(
     db.commit()
 
 
-def buscar_administradores(db: Session, query: Optional[str]) -> List[AdministradorConjuntoResumenResponse]:
-    """CA-024.1: busca Admin de Conjunto ya existentes en la plataforma, por nombre, apellidos o correo."""
-    stmt = select(AdministradorConjunto).join(Usuario, AdministradorConjunto.id_usuario == Usuario.id_usuario)
+def buscar_administradores(
+    db: Session, query: Optional[str], limit: int = 20
+) -> List[AdministradorConjuntoResumenResponse]:
+    """CA-024.1: busca Admin de Conjunto ya existentes en la plataforma, por nombre, apellidos o correo.
+
+    ¿Qué? Issue #227 — antes traía TODOS los Admin de Conjunto que
+          coincidieran, sin ningún tope. Mismo criterio que ya usa
+          ConjuntoCombobox/geography.py: si hay más de `limit` resultados,
+          se espera que la persona afine la búsqueda, no que se le mande
+          todo de una vez.
+    """
+    # ¿Qué? Issue #2 (hallazgo B1 de la auditoría) — admin.usuario y
+    #       admin.conjuntos son lazy="select" (default de SQLAlchemy):
+    #       sin selectinload, cada fila de la página dispara 1-2 consultas
+    #       extra al armar la respuesta más abajo. Mismo patrón ya
+    #       corregido en conjunto_panel.py (issue #219).
+    stmt = (
+        select(AdministradorConjunto)
+        .join(Usuario, AdministradorConjunto.id_usuario == Usuario.id_usuario)
+        .options(selectinload(AdministradorConjunto.usuario), selectinload(AdministradorConjunto.conjuntos))
+        .limit(limit)
+    )
 
     if query and query.strip():
         patron = f"%{query.strip().upper()}%"
@@ -231,16 +253,24 @@ def asignar_conjunto_adicional(db: Session, id_administrador: UUID, id_conjunto:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El conjunto no existe.")
 
     # RN-003: un conjunto no puede tener dos administradores activos.
-    ya_tiene_admin = db.execute(
-        select(AdministradorConjuntoAsignacion).where(
-            AdministradorConjuntoAsignacion.id_conjunto_residencial == id_conjunto,
-            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
-        )
-    ).scalar_one_or_none()
-    if ya_tiene_admin:
+    # ¿Qué? Issue #409 — 409 (antes 400): es el mismo caso que al invitar
+    #       (admin_conjunto_service.py), y debe responder igual en los dos.
+    if nombres_con_administrador_activo(db, [id_conjunto]):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Este conjunto ya tiene un administrador activo.",
+        )
+    # ¿Qué? Issue #409 — tampoco se asigna un conjunto que ya está prometido en
+    #       una invitación pendiente de otra persona.
+    # ¿Para qué? Si se asignara, la persona invitada chocaría con
+    #           ux_admin_conjunto_activo al aceptar y su invitación quedaría
+    #           inutilizable. Así el Admin Sistema lo sabe antes.
+    # ¿Impacto? Hay que esperar a que esa invitación se acepte o venza (48 h).
+    if nombres_con_invitacion_pendiente_de_otro(db, [id_conjunto]):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Este conjunto tiene una invitación pendiente para otra persona. "
+            "Espera a que la acepte o venza antes de asignarlo.",
         )
 
     db.add(

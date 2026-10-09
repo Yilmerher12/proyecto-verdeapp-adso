@@ -1,11 +1,20 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, Clock, Megaphone, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { Modal } from "@/components/ui/Modal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
+import { Alert } from "@/components/ui/Alert";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
+import { COMUNICADO_TEXTO_MAX_LENGTH, DIAS_MAX_EXPIRACION, rangoFechaAviso, validarFechaAviso } from "@/lib/validacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
+import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
 import {
   crearComunicado,
   editarComunicado,
@@ -15,6 +24,9 @@ import {
   type DestinatariosComunicado,
   type TipoComunicado,
 } from "@/lib/comunicadosApi";
+
+// ¿Qué? Issue #11 — mismo tamaño de página que ya usa Novedades (issue #227).
+const TAMANO_PAGINA = 8;
 
 interface FormState {
   id_conjunto_residencial: string | "";
@@ -39,34 +51,11 @@ const FORM_VACIO: FormState = {
 const TIPOS: TipoComunicado[] = ["INFORMATIVO", "URGENTE", "CONVOCATORIA", "MANTENIMIENTO", "RECICLAJE"];
 const DESTINATARIOS: DestinatariosComunicado[] = ["RESIDENTES", "RECICLADORES", "AMBOS"];
 
-// ¿Qué? Muestra la fecha en UTC, no en la zona horaria del navegador.
-// ¿Para qué? Para Convocatoria, el backend calcula la expiración como
-//           "medianoche UTC del día siguiente al evento" — si se muestra
-//           en hora local de Bogotá (UTC-5), esa medianoche UTC cae la
-//           noche ANTERIOR en hora local, y la fecha mostrada retrocede
-//           un día respecto a la que el admin realmente eligió.
-function formatearFechaUTC(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { timeZone: "UTC" });
-}
-
-// ¿Qué? "created_at" es un instante real (con hora), no una fecha elegida a
-//       mano como "fecha_expiracion" — aquí SÍ se muestra en la zona horaria
-//       del navegador (igual que en el feed que ven los residentes), porque
-//       no aplica el mismo truco de "medianoche UTC" de arriba.
-function formatearFechaCreacion(iso: string): string {
-  return new Date(iso).toLocaleDateString();
-}
-
-// ¿Qué? Igual que formatearFechaUTC, pero en formato YYYY-MM-DD (lo que
-//       espera un <input type="date">) — se usa para precargar la fecha
-//       de expiración actual al abrir el formulario de edición, con el
-//       mismo criterio de UTC para no mostrar un día distinto al real.
-function isoToDateInputUTC(iso: string): string {
-  const d = new Date(iso);
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+// ¿Qué? Issue #7 (hallazgo F2 de la auditoría) — un comunicado no tiene
+//       título, solo texto libre; se usa un recorte corto como el nombre
+//       que distingue cada fila en los aria-label de editar/eliminar.
+function resumirTexto(texto: string): string {
+  return texto.length > 40 ? `${texto.slice(0, 40)}…` : texto;
 }
 
 // ¿Qué? Color por tipo — Urgente en rojo para que salte a la vista, igual
@@ -76,7 +65,7 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
   URGENTE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
   MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  RECICLAJE: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
 };
 
 /**
@@ -88,10 +77,11 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
  */
 export function AdminConjuntoComunicadosPage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
 
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
+  const [total, setTotal] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -99,22 +89,28 @@ export function AdminConjuntoComunicadosPage() {
   const [editando, setEditando] = useState<Comunicado | null>(null);
   const [form, setForm] = useState<FormState>(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
+  // ¿Qué? Issue #367 — error de cada campo de fecha, mostrado debajo del campo al salir de él.
+  const [errorFechaEvento, setErrorFechaEvento] = useState<string | null>(null);
+  const [errorFechaExpiracion, setErrorFechaExpiracion] = useState<string | null>(null);
 
   const [aEliminar, setAEliminar] = useState<Comunicado | null>(null);
 
+  const paginacion = usePaginacion(TAMANO_PAGINA, total);
+
   const cargar = () => {
-    if (!accessToken) return;
+    if (!user) return;
     setCargando(true);
-    Promise.all([obtenerMisConjuntos(accessToken), listarMisComunicados(accessToken)])
-      .then(([listaConjuntos, listaComunicados]) => {
+    Promise.all([obtenerMisConjuntos(), listarMisComunicados(TAMANO_PAGINA, paginacion.offset)])
+      .then(([listaConjuntos, paginaComunicados]) => {
         setConjuntos(listaConjuntos);
-        setComunicados(listaComunicados);
+        setComunicados(paginaComunicados.items);
+        setTotal(paginaComunicados.total);
       })
       .catch((err) => console.error("Error cargando comunicados", err))
       .finally(() => setCargando(false));
   };
 
-  useEffect(cargar, [accessToken]);
+  useEffect(cargar, [user, paginacion.offset]);
 
   const abrirCrear = () => {
     setForm({ ...FORM_VACIO, id_conjunto_residencial: conjuntos[0]?.id_conjunto_residencial ?? "" });
@@ -140,7 +136,15 @@ export function AdminConjuntoComunicadosPage() {
     setCreando(false);
     setEditando(null);
     setErrorMsg(null);
+    setErrorFechaEvento(null);
+    setErrorFechaExpiracion(null);
   };
+
+  const mensajeFecha = (valor: string): string | null => {
+    const motivo = validarFechaAviso(valor);
+    return motivo ? t(`common.${motivo}`, { dias: DIAS_MAX_EXPIRACION }) : null;
+  };
+  const rangoFecha = rangoFechaAviso();
 
   // ¿Qué? Mismas condiciones que ya revisaba "guardar" al hacer clic, pero
   //       calculadas ANTES, para deshabilitar el botón en vez de dejar que
@@ -151,7 +155,7 @@ export function AdminConjuntoComunicadosPage() {
     (form.tipo === "CONVOCATORIA" && !form.fecha_evento);
 
   const guardar = async () => {
-    if (!accessToken) return;
+    if (!user) return;
     if (!form.texto.trim()) {
       setErrorMsg(t("comunicados.admin.validation.textoRequerido"));
       return;
@@ -164,6 +168,13 @@ export function AdminConjuntoComunicadosPage() {
       setErrorMsg(t("comunicados.admin.validation.fechaEventoRequerida"));
       return;
     }
+    // ¿Qué? Un comunicado vencido al editarlo trae su fecha pasada precargada:
+    //       aquí se le pide al admin una fecha nueva antes de guardar.
+    const errorEvento = form.tipo === "CONVOCATORIA" ? mensajeFecha(form.fecha_evento) : null;
+    const errorExpiracion = mensajeFecha(form.fecha_expiracion);
+    setErrorFechaEvento(errorEvento);
+    setErrorFechaExpiracion(errorExpiracion);
+    if (errorEvento || errorExpiracion) return;
 
     setGuardando(true);
     setErrorMsg(null);
@@ -171,45 +182,38 @@ export function AdminConjuntoComunicadosPage() {
 
     try {
       if (editando) {
-        await editarComunicado(
-          editando.id_comunicado,
-          {
-            tipo: form.tipo,
-            texto: form.texto.trim(),
-            url_adjunto: form.url_adjunto.trim() || null,
-            fecha_evento: form.tipo === "CONVOCATORIA" ? form.fecha_evento : null,
-            fecha_expiracion: fechaExpiracion,
-          },
-          accessToken
-        );
+        await editarComunicado(editando.id_comunicado, {
+          tipo: form.tipo,
+          texto: form.texto.trim(),
+          url_adjunto: form.url_adjunto.trim() || null,
+          fecha_evento: form.tipo === "CONVOCATORIA" ? form.fecha_evento : null,
+          fecha_expiracion: fechaExpiracion,
+        });
       } else {
-        await crearComunicado(
-          {
-            id_conjunto_residencial: form.id_conjunto_residencial as string,
-            destinatarios: form.destinatarios,
-            tipo: form.tipo,
-            texto: form.texto.trim(),
-            url_adjunto: form.url_adjunto.trim() || null,
-            fecha_evento: form.tipo === "CONVOCATORIA" ? form.fecha_evento : null,
-            fecha_expiracion: fechaExpiracion,
-          },
-          accessToken
-        );
+        await crearComunicado({
+          id_conjunto_residencial: form.id_conjunto_residencial as string,
+          destinatarios: form.destinatarios,
+          tipo: form.tipo,
+          texto: form.texto.trim(),
+          url_adjunto: form.url_adjunto.trim() || null,
+          fecha_evento: form.tipo === "CONVOCATORIA" ? form.fecha_evento : null,
+          fecha_expiracion: fechaExpiracion,
+        });
       }
       cerrarFormulario();
       cargar();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.detail || t("common.saveError"));
+      setErrorMsg(err.message || t("common.saveError"));
     } finally {
       setGuardando(false);
     }
   };
 
   const confirmarEliminar = async () => {
-    if (!accessToken || !aEliminar) return;
+    if (!user || !aEliminar) return;
     try {
-      await eliminarComunicado(aEliminar.id_comunicado, accessToken);
+      await eliminarComunicado(aEliminar.id_comunicado);
       setAEliminar(null);
       cargar();
     } catch {
@@ -219,7 +223,7 @@ export function AdminConjuntoComunicadosPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
-      <div className="flex items-center justify-between bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="flex items-center justify-between bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.admin.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.subtitle")}</p>
@@ -227,31 +231,28 @@ export function AdminConjuntoComunicadosPage() {
         <button
           onClick={abrirCrear}
           disabled={conjuntos.length === 0}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="icon-md" />
           {t("comunicados.admin.newButton")}
         </button>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && conjuntos.length === 0 && (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.noConjuntos")}</p>
       )}
 
       {!cargando && comunicados.length === 0 && conjuntos.length > 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.emptyState")}</p>
-        </div>
+        <EmptyState icon={Megaphone} message={t("comunicados.admin.emptyState")} />
       )}
 
       <div className="space-y-3">
         {comunicados.map((item) => (
           <div
             key={item.id_comunicado}
-            className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-[#2a4d34] dark:bg-[#132a1c]"
+            className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -259,7 +260,7 @@ export function AdminConjuntoComunicadosPage() {
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIPO_ESTILO[item.tipo]}`}>
                     {t(`comunicados.tipos.${item.tipo}`)}
                   </span>
-                  <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#1f4029] dark:text-gray-300">
+                  <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-field dark:text-gray-300">
                     {item.nombre_conjunto}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -270,24 +271,24 @@ export function AdminConjuntoComunicadosPage() {
                   )}
                 </div>
                 <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
-                {item.url_adjunto && (
+                {enlaceAdjuntoSeguro(item.url_adjunto) && (
                   <a
-                    href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
+                    href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 transition-colors hover:text-green-800 dark:text-green-400"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
                   >
-                    <Paperclip className="h-3.5 w-3.5" />
+                    <Paperclip className="icon-sm" />
                     {t("comunicados.viewAttachment")}
                   </a>
                 )}
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-[#2a4d34] dark:text-gray-400">
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-night-line dark:text-gray-400">
                   <span className="inline-flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
+                    <Clock className="icon-sm" />
                     {t("comunicados.admin.creadoEl", { fecha: formatearFechaCreacion(item.created_at) })}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <CalendarClock className="h-3.5 w-3.5" />
+                    <CalendarClock className="icon-sm" />
                     {t("comunicados.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
                   </span>
                 </div>
@@ -295,23 +296,39 @@ export function AdminConjuntoComunicadosPage() {
               <div className="flex shrink-0 gap-2">
                 <button
                   onClick={() => abrirEditar(item)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34]"
-                  aria-label={t("comunicados.admin.editAria")}
+                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+                  aria-label={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="icon-md" />
                 </button>
                 <button
                   onClick={() => setAEliminar(item)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-[#2a4d34] dark:hover:bg-red-900/20"
-                  aria-label={t("comunicados.admin.deleteAria")}
+                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
+                  aria-label={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="icon-md" />
                 </button>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {!cargando && total > 0 && (
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm">
+          <Paginacion
+            desde={paginacion.desde}
+            hasta={paginacion.hasta}
+            total={total}
+            pagina={paginacion.pagina}
+            totalPaginas={paginacion.totalPaginas}
+            puedeAnterior={paginacion.puedeAnterior}
+            puedeSiguiente={paginacion.puedeSiguiente}
+            onAnterior={paginacion.irAAnterior}
+            onSiguiente={paginacion.irASiguiente}
+          />
+        </div>
+      )}
 
       {(creando || editando) && (
         <Modal
@@ -325,11 +342,7 @@ export function AdminConjuntoComunicadosPage() {
               {editando ? t("comunicados.admin.editTitle") : t("comunicados.admin.newButton")}
             </h2>
 
-            {errorMsg && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
             {!editando && (
               <>
@@ -341,7 +354,7 @@ export function AdminConjuntoComunicadosPage() {
                     id="comunicado-conjunto"
                     value={form.id_conjunto_residencial}
                     onChange={(e) => setForm({ ...form, id_conjunto_residencial: e.target.value })}
-                    className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                    className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
                   >
                     {conjuntos.map((c) => (
                       <option key={c.id_conjunto_residencial} value={c.id_conjunto_residencial}>
@@ -374,8 +387,8 @@ export function AdminConjuntoComunicadosPage() {
                         onClick={() => setForm({ ...form, destinatarios: d })}
                         className={`flex-1 cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                           form.destinatarios === d
-                            ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                            : "border-gray-200 text-gray-600 hover:border-green-300 dark:border-[#2a4d34] dark:text-gray-300"
+                            ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                            : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-night-line dark:text-gray-300"
                         }`}
                       >
                         {t(`comunicados.destinatarios.${d}`)}
@@ -387,7 +400,7 @@ export function AdminConjuntoComunicadosPage() {
             )}
 
             {editando && (
-              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-[#1f4029]/60">
+              <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-night-field/60">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {t("comunicados.admin.fields.conjunto")} · {t("comunicados.admin.fields.destinatarios")}
                 </p>
@@ -406,7 +419,7 @@ export function AdminConjuntoComunicadosPage() {
                 id="comunicado-tipo"
                 value={form.tipo}
                 onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoComunicado })}
-                className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
               >
                 {TIPOS.map((tipo) => (
                   <option key={tipo} value={tipo}>
@@ -425,9 +438,21 @@ export function AdminConjuntoComunicadosPage() {
                   id="comunicado-fecha-evento"
                   type="date"
                   value={form.fecha_evento}
+                  min={rangoFecha.min}
+                  max={rangoFecha.max}
                   onChange={(e) => setForm({ ...form, fecha_evento: e.target.value })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                  onBlur={() => setErrorFechaEvento(mensajeFecha(form.fecha_evento))}
+                  aria-invalid={!!errorFechaEvento}
+                  aria-describedby={errorFechaEvento ? "comunicado-fecha-evento-error" : undefined}
+                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                    errorFechaEvento ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                  }`}
                 />
+                {errorFechaEvento && (
+                  <p id="comunicado-fecha-evento-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                    {errorFechaEvento}
+                  </p>
+                )}
               </div>
             )}
 
@@ -439,16 +464,18 @@ export function AdminConjuntoComunicadosPage() {
                 id="comunicado-texto"
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
+                maxLength={COMUNICADO_TEXTO_MAX_LENGTH}
+                aria-describedby="comunicado-texto-contador"
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
               />
+              <ContadorCaracteres id="comunicado-texto-contador" actual={form.texto.length} max={COMUNICADO_TEXTO_MAX_LENGTH} />
             </div>
 
             <ImagenAdjuntaField
               label={t("comunicados.admin.fields.urlAdjunto")}
               value={form.url_adjunto}
               onChange={(url) => setForm({ ...form, url_adjunto: url })}
-              token={accessToken || ""}
               permitirDocumentos
             />
 
@@ -460,23 +487,35 @@ export function AdminConjuntoComunicadosPage() {
                 id="comunicado-fecha-expiracion"
                 type="date"
                 value={form.fecha_expiracion}
+                min={rangoFecha.min}
+                max={rangoFecha.max}
                 onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 dark:border-[#2a4d34] dark:bg-[#1f4029] dark:text-white"
+                onBlur={() => setErrorFechaExpiracion(mensajeFecha(form.fecha_expiracion))}
+                aria-invalid={!!errorFechaExpiracion}
+                aria-describedby={errorFechaExpiracion ? "comunicado-fecha-expiracion-error" : undefined}
+                className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                  errorFechaExpiracion ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                }`}
               />
+              {errorFechaExpiracion && (
+                <p id="comunicado-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                  {errorFechaExpiracion}
+                </p>
+              )}
               <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
             <div className="flex gap-2 pt-2">
               <button
                 onClick={cerrarFormulario}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-[#2a4d34] dark:text-gray-300 dark:hover:bg-[#2a4d34] transition-colors"
+                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-green-700 py-2.5 text-sm font-semibold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
               >
                 {guardando
                   ? t("common.saving")
@@ -490,33 +529,16 @@ export function AdminConjuntoComunicadosPage() {
       )}
 
       {aEliminar && (
-        <Modal onClose={() => setAEliminar(null)} aria-label={t("comunicados.admin.deleteConfirm.ariaLabel")}>
-          <div className="p-6 sm:p-8 max-w-sm mx-auto text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/20">
-              <AlertTriangle className="h-6 w-6 text-red-500 dark:text-red-400" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              {t("comunicados.admin.deleteConfirm.title")}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {t("comunicados.admin.deleteConfirm.warning")}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setAEliminar(null)}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-[#2a4d34] px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a4d34] transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={confirmarEliminar}
-                className="flex-1 cursor-pointer rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-              >
-                {t("comunicados.admin.deleteConfirm.confirm")}
-              </button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmModal
+          icon={Trash2}
+          variant="danger"
+          ariaLabel={t("comunicados.admin.deleteConfirm.ariaLabel")}
+          title={t("comunicados.admin.deleteConfirm.title")}
+          description={t("comunicados.admin.deleteConfirm.warning")}
+          confirmLabel={t("comunicados.admin.deleteConfirm.confirm")}
+          onConfirm={confirmarEliminar}
+          onClose={() => setAEliminar(null)}
+        />
       )}
     </div>
   );

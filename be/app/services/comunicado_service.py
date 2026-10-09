@@ -15,14 +15,13 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.comunicado import Comunicado, DestinatariosComunicado, TipoComunicado
 from app.models.conjunto_residencial import ConjuntoResidencial
-from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
 from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.residente import Residente
@@ -30,6 +29,7 @@ from app.models.rol import RolId
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
 from app.schemas.comunicado import ComunicadoResponse, CrearComunicadoRequest, EditarComunicadoRequest
+from app.services.notificaciones_helpers import crear_notificacion, recicladores_del_conjunto, residentes_del_conjunto
 
 # ¿Qué? Expiración sugerida por tipo (RF, tabla "Tipos de comunicado").
 _EXPIRACION_POR_TIPO = {
@@ -100,27 +100,6 @@ def _a_response(comunicado: Comunicado, nombre_conjunto: str) -> ComunicadoRespo
     )
 
 
-def _residentes_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
-    stmt = (
-        select(Residente.id_usuario)
-        .join(Unidad, Residente.id_unidad == Unidad.id_unidad)
-        .where(Unidad.id_conjunto_residencial == id_conjunto)
-    )
-    return [r[0] for r in db.execute(stmt).all()]
-
-
-def _recicladores_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
-    stmt = (
-        select(Reciclador.id_usuario)
-        .join(RecicladorConjunto, Reciclador.id_reciclador == RecicladorConjunto.id_reciclador)
-        .where(
-            RecicladorConjunto.id_conjunto_residencial == id_conjunto,
-            RecicladorConjunto.fecha_revocacion.is_(None),
-        )
-    )
-    return [r[0] for r in db.execute(stmt).all()]
-
-
 def _notificar_comunicado(db: Session, comunicado: Comunicado, tipo: str, mensaje: str) -> None:
     """
     ¿Qué? Notifica a los destinatarios elegidos del comunicado (CA-031.2:
@@ -132,24 +111,22 @@ def _notificar_comunicado(db: Session, comunicado: Comunicado, tipo: str, mensaj
               editar_comunicado / CA-029.2), así que la misma lógica de
               "a quién le llega" sirve para ambos casos.
     """
-    destinatarios_ids: set[int] = set()
+    destinatarios_ids: set[UUID] = set()
     if comunicado.destinatarios in (DestinatariosComunicado.RESIDENTES, DestinatariosComunicado.AMBOS):
-        destinatarios_ids.update(_residentes_del_conjunto(db, comunicado.id_conjunto_residencial))
+        destinatarios_ids.update(residentes_del_conjunto(db, comunicado.id_conjunto_residencial))
     if comunicado.destinatarios in (DestinatariosComunicado.RECICLADORES, DestinatariosComunicado.AMBOS):
-        destinatarios_ids.update(_recicladores_del_conjunto(db, comunicado.id_conjunto_residencial))
+        destinatarios_ids.update(recicladores_del_conjunto(db, comunicado.id_conjunto_residencial))
 
     if not destinatarios_ids:
         return
 
-    notif = Notificacion(
+    crear_notificacion(
+        db,
         tipo=tipo,
-        id_conjunto_residencial=comunicado.id_conjunto_residencial,
         mensaje=mensaje,
+        destinatarios=destinatarios_ids,
+        id_conjunto=comunicado.id_conjunto_residencial,
     )
-    db.add(notif)
-    db.flush()
-    for uid in destinatarios_ids:
-        db.add(NotificacionDestinatario(id_notificacion=notif.id, id_usuario=uid))
 
 
 def crear_comunicado(db: Session, administrador: AdministradorConjunto, datos: CrearComunicadoRequest) -> ComunicadoResponse:
@@ -179,12 +156,32 @@ def crear_comunicado(db: Session, administrador: AdministradorConjunto, datos: C
     return _a_response(comunicado, conjunto.nombre_conjunto)
 
 
-def listar_mis_comunicados(db: Session, administrador: AdministradorConjunto) -> List[ComunicadoResponse]:
+def listar_mis_comunicados(
+    db: Session, administrador: AdministradorConjunto, limit: int, offset: int
+) -> tuple[List[ComunicadoResponse], int]:
     """
     ¿Qué? Todo lo que el Admin Conjunto ha publicado, en TODOS los
           conjuntos que administra — activos y ya vencidos, porque sigue
           siendo su historial y debe poder gestionarlo (editar/eliminar).
+    ¿Para qué? Issue #11 (hallazgo U4 de la auditoría) — antes traía todo
+              el historial de una sola vez, igual que le pasaba a
+              Novedades antes de la issue #227. Mismo patrón de
+              limit/offset + total.
     """
+    condiciones = (
+        AdministradorConjuntoAsignacion.id_administrador == administrador.id_administrador,
+        AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
+    )
+
+    total = db.execute(
+        select(func.count(Comunicado.id_comunicado))
+        .join(
+            AdministradorConjuntoAsignacion,
+            AdministradorConjuntoAsignacion.id_conjunto_residencial == Comunicado.id_conjunto_residencial,
+        )
+        .where(*condiciones)
+    ).scalar_one()
+
     stmt = (
         select(Comunicado, ConjuntoResidencial.nombre_conjunto)
         .join(ConjuntoResidencial, Comunicado.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial)
@@ -192,14 +189,14 @@ def listar_mis_comunicados(db: Session, administrador: AdministradorConjunto) ->
             AdministradorConjuntoAsignacion,
             AdministradorConjuntoAsignacion.id_conjunto_residencial == Comunicado.id_conjunto_residencial,
         )
-        .where(
-            AdministradorConjuntoAsignacion.id_administrador == administrador.id_administrador,
-            AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
-        )
+        .where(*condiciones)
         .order_by(Comunicado.created_at.desc())
+        .limit(limit)
+        .offset(offset)
     )
     filas = db.execute(stmt).all()
-    return [_a_response(comunicado, nombre) for comunicado, nombre in filas]
+    items = [_a_response(comunicado, nombre) for comunicado, nombre in filas]
+    return items, total
 
 
 def editar_comunicado(

@@ -23,32 +23,45 @@ El sistema debe implementar un panel de auditoría cualitativa donde el 'Recicla
 
 ## Entradas
 
-| Campo           | Tipo   | Obligatorio | Validaciones                                                                 |
-| --------------- | ------ | ----------- | ---------------------------------------------------------------------------- |
-| `conjunto_id`   | Número | Sí          | Debe ser un ID de conjunto válido en la base de datos.                       |
-| `calificacion`  | Enum   | Sí          | Valores permitidos: `ROJO`, `AMARILLO`, `VERDE`                              |
-| `observaciones` | Texto  | No          | Máximo 255 caracteres.                                                       |
+> **Corrección (2026-09-24, issue #284)**: la nota de Endpoints (más abajo) ya se había actualizado, pero las tablas de Entradas, Proceso y Salidas seguían con el diseño original (campos `conjunto_id`/`calificacion`/`observaciones`, tabla `historial_semaforo`, respuesta con mensaje). Se actualizaron a lo que hace el código real: `crear_auditoria` en `be/app/routers/auditoria_conjunto.py` y `be/app/services/auditoria_conjunto_service.py`.
+
+La petición es un formulario (`multipart/form-data`), porque lleva fotos.
+
+| Campo                     | Tipo     | Obligatorio | Validaciones                                                                 |
+| ------------------------- | -------- | ----------- | ---------------------------------------------------------------------------- |
+| `id_conjunto_residencial` | UUID     | Sí          | El reciclador debe estar autorizado en ese conjunto y haber avisado su llegada (RQF-006). |
+| `nivel_desempeno`         | Texto    | Sí          | `BUENA`, `REGULAR` o `DEFICIENTE` (en pantalla: Bueno / Regular / Malo). La BD también admite `EXCELENTE`, que solo tienen auditorías viejas. |
+| `tema_educativo`          | Texto    | Sí          | Categoría del contenido educativo relacionada con lo observado. No puede ir vacío. Máximo 255 caracteres. |
+| `descripcion`             | Texto    | No          | Observaciones libres. Máximo 255 caracteres (HU-010, issue #352).         |
+| `evidencias`              | Archivos | Sí          | Entre 1 y 3 fotos (JPG, PNG o WEBP, máximo 5 MB cada una, validadas por contenido real). |
 
 ---
 
 ## Proceso
 
-1. El usuario con rol **Reciclador**, tras realizar la recolección, ingresa al panel de auditoría en la aplicación.
-2. Selecciona el `conjunto_id` y asigna un color del semáforo basado en la calidad de separación de los residuos. Opcionalmente, añade una observación.
-3. El frontend (React) envía una petición `POST` al backend con estos datos.
-4. El backend (FastAPI) valida que el reciclador tenga permisos sobre ese conjunto y guarda el registro en la base de datos PostgreSQL (tabla `historial_semaforo`) con la fecha y hora actual.
-5. El usuario con rol **Residente** ingresa a su panel y realiza una petición `GET` para consultar el historial de su conjunto.
-6. El backend retorna la lista de calificaciones históricas.
-7. El frontend renderiza el historial utilizando indicadores visuales (Rojo, Amarillo, Verde).
+1. El **Reciclador**, con su llegada avisada en el conjunto, presiona "Auditar ahora" en su panel.
+2. Elige el nivel (Bueno / Regular / Malo), el tema, una descripción opcional y de 1 a 3 fotos.
+3. El frontend envía `POST /api/v1/auditorias-conjunto` como formulario.
+4. El backend valida que el reciclador esté autorizado y presente, que no haya auditado ese conjunto en las últimas 24 horas (RN-002) y que las fotos sean imágenes reales. Guarda las fotos en `be/app/uploads/evidencias-auditoria/` y el registro en la tabla `auditorias_conjunto`.
+5. Si el nivel es Regular o Malo, se recomienda contenido educativo a los residentes (RQF-013).
+6. El **Residente** (o el Admin de Conjunto) consulta `GET /api/v1/auditorias-conjunto/historial` y ve el historial de su conjunto, de la más reciente a la más antigua.
+7. El frontend muestra cada auditoría con su color de semáforo (`fe/src/config/nivelesDesempeno.ts`).
+8. En el panel del **Admin de Conjunto**, el historial se muestra por separado dentro del acordeón de cada conjunto que administra, agrupado por semana (lunes a domingo, UTC), con una barra Bueno/Regular/Malo por semana para comparar de un vistazo (`fe/src/components/dashboard/HistorialAuditoriasSemanal.tsx`). Las auditorías de distintos conjuntos nunca se mezclan en una misma barra. El Residente sigue viendo la lista simple del paso 6.
 
 ---
 
 ## Salidas
 
-| Escenario           | Código HTTP | Respuesta                                                                                                    |
-| ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Registro exitoso    | 201         | `{"message": "Calificación registrada exitosamente."}`                                                       |
-| Consulta exitosa    | 200         | JSON con historial: `[{"fecha": "...", "calificacion": "VERDE", "observaciones": "..."}]`                    |
+| Escenario                                | Código HTTP | Respuesta                                                                                  |
+| ---------------------------------------- | ----------- | ------------------------------------------------------------------------------------------ |
+| Registro exitoso                         | 201         | La auditoría creada: `id_auditoria`, `id_conjunto_residencial`, `nombre_conjunto`, `nivel_desempeno`, `tema_educativo`, `descripcion`, `ruta_evidencia` (y `ruta_evidencia_2`/`_3` si hay), `created_at`, entre otros |
+| Consulta de historial                    | 200         | Lista de auditorías con esos mismos campos                                                 |
+| Otro rol intenta auditar                 | 403         | `{"detail": "Solo un Reciclador puede auditar un conjunto."}`                              |
+| No autorizado en el conjunto             | 403         | `{"detail": "No estás autorizado en ese conjunto."}`                                       |
+| Sin avisar su llegada                    | 400         | `{"detail": "Debes avisar tu llegada a este conjunto antes de poder auditarlo."}`          |
+| Ya auditó hace menos de 24 h (RN-002)    | 400         | `{"detail": "Ya auditaste este conjunto hace menos de 24 horas."}`                         |
+| Cantidad de fotos fuera de rango         | 400         | `{"detail": "Debes adjuntar entre 1 y 3 fotos de evidencia."}`                             |
+| Tema vacío                               | 400         | `{"detail": "Selecciona un tema."}`                                                        |
 
 ---
 
@@ -62,6 +75,15 @@ El sistema debe implementar un panel de auditoría cualitativa donde el 'Recicla
 | GET    | `/api/v1/auditorias-conjunto/historial`   | Sí (Residente, Admin de Conjunto) | Obtiene el historial de auditorías del conjunto |
 | GET    | `/api/v1/auditorias-conjunto/mias`        | Sí (Reciclador) | Historial de las auditorías que el reciclador mismo envió |
 | GET    | `/api/v1/auditorias-conjunto/{id}`        | Sí (Residente, Admin de Conjunto, o el Reciclador que la envió) | Detalle de una auditoría puntual |
+| GET    | `/api/v1/auditorias-conjunto/admin`       | Sí (Admin Sistema) | Lista todas las auditorías de todos los conjuntos, filtrables por la semana (parámetro `lunes`, formato `YYYY-MM-DD` — devuelve `[lunes, lunes+7)`); cada ítem incluye `avisados` (cuántos Residentes recibieron la recomendación automática de RQF-013 por esa auditoría) |
+
+<!-- ¿Qué? `GET /admin` se agregó junto con el rediseño de RQF-010 (pestaña
+     "Calificaciones por conjunto" del panel de Contenido educativo) — el
+     Admin Sistema necesitaba ver, semana a semana, el semáforo de TODOS los
+     conjuntos en un solo lugar, no conjunto por conjunto como ya permitía
+     `/historial`. ¿Para qué? Decidir a qué conjuntos conviene enviarles
+     contenido educativo a mano (RQF-013, Flujo C) cuando su calificación fue
+     Regular o Malo. ¿Impacto? Nuevo — no reemplaza ningún endpoint existente. -->
 
 ---
 

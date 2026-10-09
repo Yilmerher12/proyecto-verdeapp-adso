@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Megaphone, Paperclip } from "lucide-react";
+import { TriangleAlert, Megaphone, Paperclip } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE_URL } from "@/api/axios";
+import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { verFeedComunicados, type Comunicado, type TipoComunicado } from "@/lib/comunicadosApi";
+import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { Alert } from "@/components/ui/Alert";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingState } from "@/components/ui/LoadingState";
 
 // ¿Qué? Mismo criterio de color que en el panel del Admin de Conjunto —
 //       Urgente en rojo para que salte a la vista de inmediato (CA-028.2).
@@ -13,7 +16,7 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
   URGENTE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
   MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  RECICLAJE: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
 };
 
 /**
@@ -25,78 +28,74 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
  */
 export function ComunicadosFeedPage() {
   const { t } = useTranslation();
-  const { accessToken } = useAuth();
+  const { user } = useAuth();
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!accessToken) return;
-    verFeedComunicados(accessToken)
+    if (!user) return;
+    verFeedComunicados()
       .then(setComunicados)
       .catch(() => setError(true))
       .finally(() => setCargando(false));
-  }, [accessToken]);
+  }, [user]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pt-6">
-      <div className="bg-white dark:bg-[#132a1c] rounded-2xl border border-gray-100 dark:border-[#2a4d34] p-6 shadow-sm">
+      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.feed.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.subtitle")}</p>
       </div>
 
-      {cargando && <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.loading")}</p>}
+      {cargando && <LoadingState message={t("common.loading")} />}
 
       {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
 
       {!cargando && !error && comunicados.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 py-16 text-center dark:border-[#2a4d34]">
-          <Megaphone className="h-8 w-8 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.empty")}</p>
-        </div>
+        <EmptyState icon={Megaphone} message={t("comunicados.feed.empty")} />
       )}
 
       <div className="space-y-4">
         {comunicados.map((item) => (
           <article
             key={item.id_comunicado}
-            className={`rounded-2xl border bg-white p-5 dark:bg-[#132a1c] ${
+            className={`rounded-2xl border bg-white p-5 dark:bg-night-card ${
               item.tipo === "URGENTE"
                 ? "border-red-200 dark:border-red-800/40"
-                : "border-gray-100 dark:border-[#2a4d34]"
+                : "border-gray-100 dark:border-night-line"
             }`}
           >
             <div className="flex flex-wrap items-center gap-2">
-              {item.tipo === "URGENTE" && <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />}
+              {item.tipo === "URGENTE" && <TriangleAlert className="icon-md text-red-600 dark:text-red-400" />}
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIPO_ESTILO[item.tipo]}`}>
                 {t(`comunicados.tipos.${item.tipo}`)}
               </span>
-              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-[#0d2116] dark:text-gray-300">
+              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-inset dark:text-gray-300">
                 {item.nombre_conjunto}
               </span>
               {item.editado && (
                 <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
               )}
               <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-                {new Date(item.created_at).toLocaleDateString()}
+                {formatearFechaCreacion(item.created_at)}
               </span>
             </div>
 
             <p className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
 
-            {item.url_adjunto && (
+            {enlaceAdjuntoSeguro(item.url_adjunto) && (
               <a
-                // ¿Qué? Si el adjunto viene de un archivo subido a VerdeApp,
-                //       el backend devuelve una ruta relativa
-                //       (/uploads/adjuntos/...) que hay que completar con la
-                //       URL del backend — si viene de un link externo viejo,
-                //       ya trae http(s) y se usa tal cual.
-                href={item.url_adjunto.startsWith("http") ? item.url_adjunto : `${API_BASE_URL}${item.url_adjunto}`}
+                // ¿Qué? enlaceAdjuntoSeguro completa la ruta relativa de un
+                //       archivo subido (/uploads/adjuntos/...) con la URL del
+                //       backend y deja pasar solo https://; si el enlace no
+                //       es seguro devuelve null y no se pinta (issue #400).
+                href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 transition-colors hover:text-green-800 dark:text-green-400"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
               >
-                <Paperclip className="h-3.5 w-3.5" />
+                <Paperclip className="icon-sm" />
                 {t("comunicados.viewAttachment")}
               </a>
             )}

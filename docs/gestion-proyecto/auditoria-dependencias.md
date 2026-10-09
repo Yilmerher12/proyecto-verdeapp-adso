@@ -121,3 +121,82 @@ A partir de ahora, `.github/workflows/ci.yml` corre esta misma auditoría en **c
 - **Frontend:** `pnpm audit --prod` — revisa solo las dependencias que de verdad llegan al navegador del usuario, sin bloquear el PR por las de desarrollo (ESLint, Vite, Vitest) ya documentadas arriba como riesgo aceptado.
 
 Ambos pasos son bloqueantes: si aparece una vulnerabilidad nueva en ese subconjunto, el Pull Request no se puede mezclar hasta resolverla. La auditoría manual completa (incluyendo dependencias de desarrollo) sigue siendo útil hacerla de vez en cuando, como se recomienda arriba, pero ya no es la única red de seguridad.
+
+---
+
+## Actualización — riesgo de `ecdsa` eliminado (2026-09-24, issue #312)
+
+El riesgo aceptado de `ecdsa` (`PYSEC-2026-1325`, antes `CVE-2024-23342`) ya no existe: el paquete dejó de estar instalado. El informe de seguridad Cyber Neo (hallazgo CN-008) marcó además que las librerías de autenticación estaban sin mantenimiento, así que se reemplazaron:
+
+| Antes | Ahora | Motivo |
+|---|---|---|
+| `python-jose[cryptography]==3.5.0` | `pyjwt==2.15.0` | python-jose casi no recibe mantenimiento y arrastraba `ecdsa` |
+| `passlib[bcrypt]==1.7.4` | `bcrypt==5.0.0` (directo) | passlib no publica versiones desde 2020 y obligaba a quedarse en `bcrypt==4.0.1` |
+| `ecdsa==0.19.2`, `cryptography==50.0.0` | — | No las usaba ningún archivo de `be/app/` |
+| `pytest==9.0.2` (dev) | `pytest==9.1.1` | CVE-2025-71176 (directorio temporal predecible, solo desarrollo) |
+
+El CI ya no ignora ninguna vulnerabilidad (se quitó `--ignore-vuln PYSEC-2026-1325`). `pip-audit` sobre las dependencias de producción: **No known vulnerabilities found**.
+
+---
+
+## Actualización — frontend en 0 alertas (2026-09-24, issue #313)
+
+El informe de seguridad Cyber Neo (hallazgo CN-009) encontró 24 alertas en el frontend (14 altas, 8 moderadas, 2 bajas), todas en dependencias **de desarrollo** (las herramientas para programar, probar y compilar, que no llegan a la app del usuario). La más relevante para el equipo era la de `esbuild` (GHSA-g7r4-m6w7-qqqr), que en **Windows** permitía leer archivos del equipo a través del servidor de `pnpm dev`.
+
+**Qué se hizo:**
+
+1. Todas las dependencias (de producción y de desarrollo) subieron a su **última versión dentro de la misma versión mayor**, siempre con versión exacta (sin `^` ni `~`): React 19.3.0, axios 1.20.0, react-router-dom 7.18.4, Tailwind 4.3.3, typescript-eslint 8.70.1, ESLint 9.39.5, jsdom 28.1.0, entre otras.
+2. `pnpm update --depth Infinity` volvió a resolver las dependencias internas, que el lockfile mantenía en sus versiones viejas.
+3. Se quitaron las **12 reglas de `overrides`** de `fe/pnpm-workspace.yaml`. Con las herramientas actualizadas ya no hacían falta, y dos de ellas se habían vuelto el problema: `undici: 7.28.0` y `brace-expansion 1.1.13` clavaban versiones que ya eran vulnerables. Se verificó paquete por paquete que ninguno quedó en una versión más vieja que la que exigía su regla anterior.
+4. Se quitó el bloque `pnpm.onlyBuiltDependencies` de `fe/package.json` (pnpm 11 ya no lo lee; la regla real está en `allowBuilds`).
+
+**Resultado:** `pnpm audit` (producción + desarrollo): **No known vulnerabilities found**. `esbuild` quedó en 0.28.2.
+
+**Lo que quedó fuera a propósito:**
+
+- **Saltos de versión mayor** (Vite 8, Vitest 5, ESLint 10, TypeScript 7, jsdom 30, @vitejs/plugin-react 6, @testing-library/jest-dom 7): no corrigen ninguna alerta adicional y pueden romper compatibilidad. Se evalúan en una tarjeta aparte.
+- **`eslint-plugin-react-hooks` se mantiene en 7.0.1**: la 7.1.1 trae reglas nuevas de estilo de React que marcan 15 avisos en 11 archivos, varios de ellos del rediseño de dashboards en curso. No es un tema de seguridad; se hace en una tarjeta aparte cuando ese rediseño termine.
+
+---
+
+## Actualización — CI con versiones fijas y Dependabot (2026-09-24, issue #316)
+
+Cierra los hallazgos CN-021, CN-029 y CN-030 del informe de seguridad Cyber Neo:
+
+- **Herramientas del CI con versión exacta:** `setup-uv` instala `uv` 0.12.18 (antes, la más nueva del día) y la auditoría usa `uvx pip-audit@2.10.1` (antes, sin versión). Así el CI se comporta igual en cada ejecución y no descarga sin control una versión nueva, que podría venir con errores o comprometida.
+- **Token de GitHub:** los dos pasos `actions/checkout` usan `persist-credentials: false`, para no dejar el `GITHUB_TOKEN` guardado en `.git/config` al alcance de los pasos siguientes.
+- **Dependabot** (`.github/dependabot.yml`): cada lunes abre un PR agrupado hacia `develop` por ecosistema (`uv` en `/be`, pnpm en `/fe`, `github-actions`, imágenes de los Dockerfile y de `docker-compose.yml`). Solo propone versiones menores y parches; en Docker, solo parches. Así la regla de versiones exactas ya no significa "versiones que se quedan viejas": las actualizaciones llegan solas y el CI las prueba antes de aceptarlas. `eslint-plugin-react-hooks` se excluye temporalmente (ver la sección del issue #313).
+
+La auditoría manual completa sigue recomendándose de vez en cuando, pero ahora hay tres capas: el CI (bloquea alertas nuevas), Dependabot (propone las actualizaciones) y esta revisión manual.
+
+---
+
+## Seguimiento — tiempo de espera en Dependabot y auditoría completa del frontend (2026-09-24)
+
+Dos ajustes posteriores al issue #316:
+
+- **`cooldown` de 7 días en Dependabot:** no propone una versión hasta que lleve una semana publicada. Protege contra el caso que ninguna auditoría puede detectar a tiempo: una versión **maliciosa recién publicada** (por ejemplo, porque le robaron la cuenta al autor de la librería). Mientras nadie la reporta, `pip-audit` y `pnpm audit` la dan por buena; en la práctica, la comunidad suele descubrirla y retirarla en pocos días.
+- **El CI audita también las dependencias de desarrollo del frontend:** `pnpm audit` en vez de `pnpm audit --prod`. Desde el issue #313 están en 0, y una alerta en ellas sí afecta al equipo (la de `esbuild` permitía leer archivos en Windows a través de `pnpm dev`). Con esto, un PR de Dependabot que traiga una versión con una alerta **ya conocida** queda en rojo, tanto en el backend como en el frontend.
+
+---
+
+## Actualización — alertas nuevas en `source-map-js` y `mako` (2026-10-06)
+
+El CI del PR de la opción "¿Administras un conjunto?" quedó en rojo sin que ese PR tocara dependencias: entre un PR y otro se publicaron dos alertas nuevas sobre versiones que ya estaban en los lockfiles. El CI hizo justo lo que debe hacer: bloquear.
+
+- **Frontend — `source-map-js` 1.2.1 → 1.2.2** (GHSA-68fv-2mgg-jv7q, alta: un source map armado a propósito puede congelar el proceso). Llega como dependencia indirecta de Tailwind, PostCSS, Vite y jsdom; todos aceptan la 1.2.2 dentro de su rango, así que bastó con `pnpm update source-map-js --depth Infinity` (solo cambia `fe/pnpm-lock.yaml`, sin overrides).
+- **Backend — `mako` 1.4.1 → 1.4.3** (CVE-2026-102991). Llega como dependencia de `alembic` (plantillas de migraciones); se corrigió con `uv lock --upgrade-package mako` (solo cambia `be/uv.lock`).
+
+Verificado: `pnpm audit` y `pip-audit` en 0, y las suites completas de backend (602) y frontend (407) en verde.
+
+---
+
+## Actualización — `e2e/` entra a Dependabot y al CI (2026-10-07, issue #405, CN-066)
+
+La carpeta `e2e/` (pruebas con Playwright, `@playwright/test` 1.63.0) tiene su propio `package.json` y `pnpm-lock.yaml`, pero ni Dependabot ni el CI la vigilaban: una alerta nueva en esa dependencia no habría avisado a nadie.
+
+- **Dependabot** (`.github/dependabot.yml`): bloque `npm` para `/e2e`, con las mismas reglas que `/fe` (lunes, `cooldown` de 7 días, un PR agrupado hacia `develop`, sin saltos de versión mayor).
+- **CI** (`.github/workflows/ci.yml`): paso `pnpm audit` con `working-directory: e2e`, dentro del job `frontend` (ya trae Node y pnpm 11.0.9). `pnpm audit` solo lee el lockfile, así que no hace falta instalar nada.
+- **Reportes de Playwright:** `playwright-report/` y `test-results/` no se suben como artefacto, porque las trazas pueden contener las credenciales de las cuentas de prueba (quedó escrito en el `README.md` raíz, sección de pruebas).
+
+Verificado: `pnpm audit` en `e2e/` da 0 vulnerabilidades (también sobre una copia solo con `package.json` y `pnpm-lock.yaml`, sin `node_modules`).

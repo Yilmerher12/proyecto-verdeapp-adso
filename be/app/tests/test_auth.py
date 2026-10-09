@@ -4,17 +4,35 @@ Descripción: Tests de integración para los endpoints de autenticación y usuar
 """
 
 import io
+import json
+import logging
+import re
+import threading
+import time
+import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import jwt
+import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.main import app as fastapi_app
 from app.models.conjunto_residencial import ConjuntoResidencial
+from app.models.email_verification_token import EmailVerificationToken
+from app.models.password_reset_token import PasswordResetToken
+from app.models.token_revocado import TokenRevocado
 from app.models.usuario import Usuario
+from app.services import auth_service
+from app.services.auth_service import revocar_jti
+from app.utils.audit_log import redactar_correo
+from app.utils.security import decode_token, hash_token
 from app.tests.conftest import (
+    TestSessionLocal,
     TEST_USER_EMAIL,
     TEST_USER_NOMBRE,
     TEST_USER_APELLIDOS,
@@ -32,6 +50,8 @@ def _generar_imagen_real_perfil() -> bytes:
 
 
 IMAGEN_VALIDA_PERFIL = _generar_imagen_real_perfil()
+
+MENSAJE_REGISTRO = "Registro recibido. Revisa tu correo para activar tu cuenta."
 
 
 def _payload_residente(
@@ -54,19 +74,58 @@ def _payload_residente(
     }
 
 
+@pytest.fixture()
+def correos_enviados(monkeypatch) -> list[tuple[str, dict]]:
+    """Reemplaza los envíos de correo de auth_service y anota cada llamada.
+
+    ¿Qué? Issue #373: los tokens ya no se pueden leer de la BD (solo queda
+          su hash), así que el token original se toma de aquí, igual que lo
+          recibiría la persona en su correo.
+    """
+    enviados: list[tuple[str, dict]] = []
+
+    def falso(nombre: str):
+        async def enviar(**kwargs) -> None:
+            enviados.append((nombre, kwargs))
+        return enviar
+
+    for nombre in ("send_verification_email", "send_password_reset_email", "send_duplicate_registration_email"):
+        monkeypatch.setattr(auth_service, nombre, falso(nombre))
+    return enviados
+
+
 class TestRegister:
     """Tests para el endpoint de registro de usuarios (Residente y Reciclador)."""
 
     URL = "/api/v1/auth/register"
 
     def test_register_residente_success(
-        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+        self, client: TestClient, db: Session, conjunto_verificado: ConjuntoResidencial, correos_enviados
     ) -> None:
         response = client.post(self.URL, json=_payload_residente(conjunto_verificado))
         assert response.status_code == 201
-        data = response.json()
-        assert data["email"] == "nuevo.residente@verdeapp.com"
-        assert data["is_active"] is False
+        assert response.json() == {"message": MENSAJE_REGISTRO}
+
+        usuario = db.query(Usuario).filter(Usuario.correo_electronico == "nuevo.residente@verdeapp.com").one()
+        assert usuario.is_active is False
+        assert [nombre for nombre, _ in correos_enviados] == ["send_verification_email"]
+
+    def test_register_guarda_el_token_hasheado_y_el_original_verifica(
+        self, client: TestClient, db: Session, conjunto_verificado: ConjuntoResidencial, correos_enviados
+    ) -> None:
+        """Issue #373 (CN-031): en la BD queda el sha256; el del correo sí sirve."""
+        client.post(self.URL, json=_payload_residente(conjunto_verificado))
+        token_original = correos_enviados[0][1]["token"]
+
+        guardado = db.query(EmailVerificationToken).one()
+        assert guardado.token != token_original
+        assert guardado.token == hash_token(token_original)
+
+        response = client.post("/api/v1/auth/verify-email", json={"token": token_original})
+        assert response.status_code == 200
+        # Usar el hash leído de la BD como si fuera el token no debe servir.
+        db.expire_all()
+        assert client.post("/api/v1/auth/verify-email", json={"token": guardado.token}).status_code == 400
 
     def test_register_residente_sin_codigo_acceso(
         self, client: TestClient, conjunto_verificado: ConjuntoResidencial
@@ -77,6 +136,54 @@ class TestRegister:
         response = client.post(self.URL, json=payload)
         assert response.status_code == 400
         assert "código de acceso" in response.json()["detail"].lower()
+
+    def test_register_residente_sin_torre(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #254: antes, sin torre, se guardaba el texto "None" en vez
+        de rechazar el registro."""
+        payload = _payload_residente(conjunto_verificado, email="sin.torre@verdeapp.com")
+        del payload["torre"]
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "torre" in response.json()["detail"].lower()
+
+    def test_register_residente_sin_apto(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #254: mismo caso que la torre, para el apartamento."""
+        payload = _payload_residente(conjunto_verificado, email="sin.apto@verdeapp.com")
+        del payload["apto"]
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "apartamento" in response.json()["detail"].lower()
+
+    def test_register_residente_torre_solo_simbolos(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: "!!!" no es un nombre real de torre."""
+        payload = _payload_residente(conjunto_verificado, email="torre.simbolos@verdeapp.com")
+        payload["torre"] = "!!!"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_residente_torre_guiones_repetidos(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: guiones repetidos ("1----B") tampoco son un dato real."""
+        payload = _payload_residente(conjunto_verificado, email="torre.guiones@verdeapp.com")
+        payload["torre"] = "1----B"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_residente_apto_con_guion_valido(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        """Issue #255: el guion sigue permitido como separador legítimo."""
+        payload = _payload_residente(conjunto_verificado, email="apto.guion@verdeapp.com")
+        payload["apto"] = "12-B"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 201
 
     def test_register_residente_codigo_acceso_incorrecto(
         self, client: TestClient, conjunto_verificado: ConjuntoResidencial
@@ -108,14 +215,77 @@ class TestRegister:
         assert "afiliado" in response.json()["detail"].lower()
 
     def test_register_duplicate_email(
-        self, client: TestClient, test_user: object, conjunto_verificado: ConjuntoResidencial
+        self,
+        client: TestClient,
+        db: Session,
+        test_user: Usuario,
+        conjunto_verificado: ConjuntoResidencial,
+        correos_enviados,
     ) -> None:
+        """Issue #373 (CN-026): misma respuesta que un registro nuevo, no se
+        toca la cuenta existente y al dueño le llega un aviso."""
+        password_antes = test_user.password
+        response = client.post(
+            self.URL,
+            json=_payload_residente(conjunto_verificado, email=TEST_USER_EMAIL, password="OtraClave999"),
+        )
+        assert response.status_code == 201
+        assert response.json() == {"message": MENSAJE_REGISTRO}
+
+        db.refresh(test_user)
+        assert test_user.password == password_antes
+        assert correos_enviados == [("send_duplicate_registration_email", {"email": TEST_USER_EMAIL})]
+
+    def test_register_duplicate_email_igual_valida_el_codigo_de_acceso(
+        self, client: TestClient, test_user: Usuario, conjunto_verificado: ConjuntoResidencial, correos_enviados
+    ) -> None:
+        """Issue #373: con un correo existente, un código malo da el mismo
+        400 que con uno nuevo — si no, la diferencia delataría el correo."""
+        payload = _payload_residente(conjunto_verificado, email=TEST_USER_EMAIL)
+        payload["codigo_acceso"] = "ZZZZZZ"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 400
+        assert "no es válido" in response.json()["detail"].lower()
+        assert correos_enviados == []
+
+    def test_register_duplicate_email_condicion_de_carrera(
+        self,
+        client: TestClient,
+        db: Session,
+        test_user: Usuario,
+        conjunto_verificado: ConjuntoResidencial,
+        monkeypatch,
+        correos_enviados,
+    ) -> None:
+        """Issue #215 (b9 del diagnóstico): el pre-chequeo de register_user()
+        revisa si el correo ya existe ANTES de insertar — pero entre ese
+        chequeo y el INSERT real se puede colar otra petición con el mismo
+        correo. test_register_duplicate_email de arriba solo prueba el
+        pre-chequeo normal; este test fuerza el choque real contra el
+        UNIQUE de correo_electronico, ocultándole al pre-chequeo que
+        test_user ya existe (así se ve exactamente lo que vería una
+        petición que llega en esa ventana de carrera)."""
+        ejecutar_de_verdad = db.execute
+
+        def ejecutar_ocultando_al_duplicado(statement, *args, **kwargs):
+            descripciones = getattr(statement, "column_descriptions", None)
+            if descripciones and descripciones[0].get("entity") is Usuario:
+                class _SinResultado:
+                    def scalar_one_or_none(self) -> None:
+                        return None
+
+                return _SinResultado()
+            return ejecutar_de_verdad(statement, *args, **kwargs)
+
+        monkeypatch.setattr(db, "execute", ejecutar_ocultando_al_duplicado)
+
         response = client.post(
             self.URL,
             json=_payload_residente(conjunto_verificado, email=TEST_USER_EMAIL),
         )
-        assert response.status_code == 400
-        assert "ya está registrado" in response.json()["detail"]
+        assert response.status_code == 201
+        assert response.json() == {"message": MENSAJE_REGISTRO}
+        assert correos_enviados == [("send_duplicate_registration_email", {"email": TEST_USER_EMAIL})]
 
     def test_register_reciclador_success(self, client: TestClient, localidad_test) -> None:
         response = client.post(
@@ -132,6 +302,110 @@ class TestRegister:
             },
         )
         assert response.status_code == 201
+
+    def test_register_reciclador_localidad_inexistente(
+        self, client: TestClient, db: Session, correos_enviados
+    ) -> None:
+        """Issue #397 (CN-047): antes la llave foránea fallaba, se tomaba por
+        "correo duplicado" y salía un éxito falso con aviso falso."""
+        response = client.post(
+            self.URL,
+            json={
+                "rol": "reciclador",
+                "correo_electronico": "reciclador.sinlocalidad@verdeapp.com",
+                "password": "RecyPass123",
+                "nombre": "Carlos",
+                "apellidos": "Ramírez",
+                "numero_telefonico": "3009998888",
+                "localidad_id": 9999,
+            },
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"] == "La localidad no existe."
+        assert correos_enviados == []
+        assert db.query(Usuario).filter(Usuario.correo_electronico == "reciclador.sinlocalidad@verdeapp.com").count() == 0
+
+    def test_register_cuenta_sin_verificar_vencida_se_reemplaza(
+        self,
+        client: TestClient,
+        db: Session,
+        unverified_user: Usuario,
+        conjunto_verificado: ConjuntoResidencial,
+        correos_enviados,
+    ) -> None:
+        """Issue #397 (CN-050): sin enlace vigente, el dueño real puede
+        registrarse; la cuenta vieja se borra y la nueva lleva SU contraseña."""
+        id_viejo = unverified_user.id_usuario
+        db.add(EmailVerificationToken(
+            id_usuario=id_viejo,
+            token=hash_token("token-viejo"),
+            expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
+        ))
+        db.flush()
+
+        response = client.post(
+            self.URL,
+            json=_payload_residente(conjunto_verificado, email=UNVERIFIED_USER_EMAIL, password="ClaveDelDueno1"),
+        )
+        assert response.status_code == 201
+
+        db.expire_all()
+        usuario = db.query(Usuario).filter(Usuario.correo_electronico == UNVERIFIED_USER_EMAIL).one()
+        assert usuario.id_usuario != id_viejo
+        assert usuario.is_active is False
+        assert [nombre for nombre, _ in correos_enviados] == ["send_verification_email"]
+        # El token viejo ya no existe y el nuevo sí activa la cuenta.
+        assert db.query(EmailVerificationToken).filter(EmailVerificationToken.token == hash_token("token-viejo")).count() == 0
+        token_nuevo = correos_enviados[0][1]["token"]
+        assert client.post("/api/v1/auth/verify-email", json={"token": token_nuevo}).status_code == 200
+        login = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": UNVERIFIED_USER_EMAIL, "password": "ClaveDelDueno1"},
+        )
+        assert login.status_code == 200
+
+    def test_register_cuenta_sin_verificar_con_enlace_vigente_no_se_reemplaza(
+        self,
+        client: TestClient,
+        db: Session,
+        unverified_user: Usuario,
+        conjunto_verificado: ConjuntoResidencial,
+        correos_enviados,
+    ) -> None:
+        """Issue #397: mientras haya un enlace vigente, el registro pendiente
+        de su dueño se respeta (si no, cualquiera lo reemplazaría)."""
+        db.add(EmailVerificationToken(
+            id_usuario=unverified_user.id_usuario,
+            token=hash_token("token-vigente"),
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        ))
+        db.flush()
+        password_antes = unverified_user.password
+
+        response = client.post(
+            self.URL,
+            json=_payload_residente(conjunto_verificado, email=UNVERIFIED_USER_EMAIL, password="ClaveAtacante1"),
+        )
+        assert response.status_code == 201
+
+        db.refresh(unverified_user)
+        assert unverified_user.password == password_antes
+        assert correos_enviados == [("send_duplicate_registration_email", {"email": UNVERIFIED_USER_EMAIL})]
+
+    def test_register_duplicado_avisa_maximo_una_vez_por_hora(
+        self, client: TestClient, test_user: Usuario, conjunto_verificado: ConjuntoResidencial, correos_enviados
+    ) -> None:
+        """Issue #397 (CN-051): el segundo intento contra el mismo correo da la
+        misma respuesta pero no manda otro aviso."""
+        for _ in range(3):
+            response = client.post(self.URL, json=_payload_residente(conjunto_verificado, email=TEST_USER_EMAIL))
+            assert response.status_code == 201
+        assert correos_enviados == [("send_duplicate_registration_email", {"email": TEST_USER_EMAIL})]
+
+        # Pasada la hora, vuelve a avisar.
+        auth_service._ultimo_aviso_duplicado[TEST_USER_EMAIL.lower()] -= auth_service.SEGUNDOS_ENTRE_AVISOS_DUPLICADO
+        client.post(self.URL, json=_payload_residente(conjunto_verificado, email=TEST_USER_EMAIL))
+        assert len(correos_enviados) == 2
 
     def test_register_missing_required_field(self, client: TestClient) -> None:
         response = client.post(
@@ -154,6 +428,8 @@ class TestRegister:
                 "password": "TestPass123",
                 "nombre": "Sin",
                 "apellidos": "Conjunto",
+                "torre": "TORRE 1",
+                "apto": "101",
             },
         )
         assert response.status_code == 400
@@ -167,6 +443,83 @@ class TestRegister:
         response = client.post(self.URL, json=payload)
         assert response.status_code == 422
 
+    def test_register_nombre_muy_corto(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email="nombrecorto@verdeapp.com")
+        payload["nombre"] = "A"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_telefono_invalido(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email="telefonoinvalido@verdeapp.com")
+        payload["numero_telefonico"] = "abc123!!"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    # ¿Qué? Reglas de nombre: solo letras con espacio, apóstrofe, punto o
+    #       guion como separadores; máximo = tamaño de la columna.
+    @pytest.mark.parametrize(
+        ("campo", "valor"),
+        [
+            ("nombre", "Juan123"),
+            ("nombre", "@@"),
+            ("nombre", "-Ana"),
+            ("nombre", "A" * 101),
+            ("apellidos", "Pérez 2"),
+            ("apellidos", "P" * 151),
+        ],
+    )
+    def test_register_nombre_o_apellidos_invalidos(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial, campo: str, valor: str
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email="nombre.invalido@verdeapp.com")
+        payload[campo] = valor
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize(
+        ("nombre", "apellidos", "apto"),
+        [("María José", "Pérez-López", "401"), ("Ma. Fernanda", "O'Connor", "402"), ("Ñusta", "Güiza", "403")],
+    )
+    def test_register_nombres_reales_con_tilde_guion_o_apostrofe(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial, nombre: str, apellidos: str, apto: str
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email=f"real.{apto}@verdeapp.com")
+        payload["nombre"] = nombre
+        payload["apellidos"] = apellidos
+        payload["apto"] = apto
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 201
+
+    @pytest.mark.parametrize("campo", ["torre", "apto"])
+    def test_register_unidad_demasiado_larga(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial, campo: str
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email="unidad.larga@verdeapp.com")
+        payload[campo] = "12345678901"
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize("codigo", ["AB3K9QX", "AB3K9", "AB0K9Q", "AB-K9Q"])
+    def test_register_codigo_acceso_con_formato_imposible(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial, codigo: str
+    ) -> None:
+        """Un código que no puede existir (largo, 0/O/1/I/L, símbolos) se rechaza con 422."""
+        payload = _payload_residente(conjunto_verificado, email="codigo.formato@verdeapp.com")
+        payload["codigo_acceso"] = codigo
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
+    def test_register_correo_demasiado_largo(
+        self, client: TestClient, conjunto_verificado: ConjuntoResidencial
+    ) -> None:
+        payload = _payload_residente(conjunto_verificado, email=("a" * 250) + "@verdeapp.com")
+        response = client.post(self.URL, json=payload)
+        assert response.status_code == 422
+
 
 class TestLogin:
     """Tests para el endpoint de inicio de sesión."""
@@ -174,16 +527,60 @@ class TestLogin:
     URL = "/api/v1/auth/login"
 
     def test_login_success(self, client: TestClient, test_user: object) -> None:
+        """RNF-001.9: los tokens ya no viajan en el cuerpo de la respuesta,
+        sino como cookies httpOnly — se revisan ahí, no en response.json()."""
         response = client.post(
             self.URL,
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
         assert response.status_code == 200
-        data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
-        assert data["token_type"] == "bearer"
-        assert len(data["access_token"]) > 0
+        assert len(response.cookies.get("access_token") or "") > 0
+        assert len(response.cookies.get("refresh_token") or "") > 0
+
+        # ¿Qué? httpx no expone los atributos de la cookie (HttpOnly,
+        #       SameSite) por separado — hay que revisar la cabecera cruda.
+        set_cookie_headers = response.headers.get_list("set-cookie")
+        access_cookie = next(h for h in set_cookie_headers if h.startswith("access_token="))
+        assert "httponly" in access_cookie.lower()
+        assert "samesite=strict" in access_cookie.lower()
+
+    def test_refresh_token_solo_viaja_a_las_rutas_de_auth(self, client: TestClient, test_user: object) -> None:
+        """Issue #403 (CN-063): el refresh_token (7 días) solo lo leen /auth/refresh y /auth/logout."""
+        response = client.post(
+            self.URL,
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        cabeceras = response.headers.get_list("set-cookie")
+        refresh = next(h for h in cabeceras if h.startswith("refresh_token=") and "max-age=0" not in h.lower())
+        access = next(h for h in cabeceras if h.startswith("access_token="))
+        assert "path=/api/v1/auth" in refresh.lower()
+        # El access_token sigue valiendo para todo el backend.
+        assert re.search(r"path=/(;|$)", access.lower())
+        assert {c.path for c in client.cookies.jar if c.name == "refresh_token"} == {"/api/v1/auth"}
+
+    def test_login_borra_la_cookie_refresh_token_vieja_de_ruta_raiz(self, client: TestClient, test_user: object) -> None:
+        """Issue #403: si el navegador conservaba la de antes (ruta "/"), el servidor leería esa y no la nueva."""
+        response = client.post(
+            self.URL,
+            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+        )
+        borradas = [
+            h for h in response.headers.get_list("set-cookie") if h.startswith("refresh_token=") and "max-age=0" in h.lower()
+        ]
+        assert len(borradas) == 1
+        assert re.search(r"path=/(;|$)", borradas[0].lower())
+
+    def test_el_token_de_acceso_ya_no_lleva_nombre_ni_apellidos(self, client: TestClient, test_user: object) -> None:
+        """Issue #403 (CN-063): el contenido de un JWT no está cifrado; el nombre sale de /users/me."""
+        sesion = _iniciar_sesion(client)
+        for token in (sesion["access_token"], sesion["refresh_token"]):
+            payload = decode_token(token)
+            assert payload["sub"] == TEST_USER_EMAIL
+            assert "first_name" not in payload
+            assert "last_name" not in payload
+        # El saludo de la app sigue funcionando: el nombre viene de /users/me.
+        me = client.get("/api/v1/users/me")
+        assert me.json()["first_name"] == TEST_USER_NOMBRE
 
     def test_login_wrong_password(self, client: TestClient, test_user: object) -> None:
         response = client.post(
@@ -208,6 +605,8 @@ class TestLogin:
         )
         assert response.status_code == 403
         assert "verificada" in response.json()["detail"].lower()
+        # Issue #403: el mensaje no nombra herramientas de desarrollo (Mailpit).
+        assert "mailpit" not in response.json()["detail"].lower()
 
     def test_login_disabled_user(self, client: TestClient, test_user, db) -> None:
         """habilitado es distinto de is_active — una cuenta YA verificada
@@ -226,10 +625,12 @@ class TestLogin:
         response = client.post(self.URL, json={"password": "TestPass123"})
         assert response.status_code == 422
 
-    def test_bloqueo_tras_5_intentos_fallidos_devuelve_403(
+    def test_bloqueo_tras_5_intentos_fallidos_responde_igual_que_credenciales_malas(
         self, client: TestClient, db: Session, test_user: Usuario
     ) -> None:
-        """CA-001.5 / RN-003 de RQF-001 — 5 fallos seguidos bloquean la cuenta 15 min."""
+        """CA-001.5 / RN-003 de RQF-001 — 5 fallos seguidos bloquean la cuenta 15 min.
+        Issue #373 (CN-026): la cuenta bloqueada responde lo mismo que un
+        correo inexistente, para no revelar que el correo tiene cuenta."""
         payload_malo = {"correo_electronico": TEST_USER_EMAIL, "password": "ContraseñaIncorrecta1"}
         for _ in range(5):
             respuesta = client.post(self.URL, json=payload_malo)
@@ -238,8 +639,12 @@ class TestLogin:
         # Ni siquiera con la contraseña CORRECTA debería entrar ahora.
         payload_bueno = {"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
         bloqueado = client.post(self.URL, json=payload_bueno)
-        assert bloqueado.status_code == 403
-        assert "intentos" in bloqueado.json()["detail"].lower()
+        inexistente = client.post(
+            self.URL, json={"correo_electronico": "fantasma@verdeapp.com", "password": TEST_USER_PASSWORD}
+        )
+        assert bloqueado.status_code == inexistente.status_code == 401
+        assert bloqueado.json() == inexistente.json()
+        assert "15 minutos" in bloqueado.json()["detail"]
 
         db.refresh(test_user)
         assert test_user.bloqueado_hasta is not None
@@ -272,6 +677,42 @@ class TestLogin:
         )
         assert respuesta.status_code == 200
 
+    def test_un_fallo_despues_de_un_bloqueo_vencido_no_bloquea_de_nuevo(
+        self, client: TestClient, db: Session, test_user: Usuario
+    ) -> None:
+        """Issue #396 (CN-026): al vencer el bloqueo el conteo empieza de nuevo.
+        Antes el contador seguía en 5 y el primer fallo siguiente (el 6.º)
+        bloqueaba otros 15 minutos."""
+        test_user.intentos_fallidos = 5
+        test_user.bloqueado_hasta = datetime.now(timezone.utc) - timedelta(minutes=1)
+        db.commit()
+
+        respuesta = client.post(
+            self.URL, json={"correo_electronico": TEST_USER_EMAIL, "password": "ContraseñaIncorrecta1"}
+        )
+        assert respuesta.status_code == 401
+
+        db.refresh(test_user)
+        assert test_user.intentos_fallidos == 1
+        assert test_user.bloqueado_hasta is None
+
+    def test_el_contador_se_suma_en_la_base_y_no_desde_un_valor_viejo(
+        self, client: TestClient, db: Session, test_user: Usuario
+    ) -> None:
+        """Issue #396 (CN-026): dos fallos simultáneos deben contar los dos.
+        Se simula dejando en memoria el valor viejo (0) mientras la BD ya está
+        en 3 por otro intento: con "leer, sumar 1 y escribir" quedaría en 1."""
+        assert test_user.intentos_fallidos == 0  # carga el valor viejo en memoria
+        db.execute(
+            text("UPDATE usuarios SET intentos_fallidos = 3 WHERE id_usuario = :id"),
+            {"id": test_user.id_usuario},
+        )
+
+        client.post(self.URL, json={"correo_electronico": TEST_USER_EMAIL, "password": "ContraseñaIncorrecta1"})
+
+        db.refresh(test_user)
+        assert test_user.intentos_fallidos == 4
+
     def test_supera_el_limite_de_intentos_devuelve_429_limpio(self, client: TestClient) -> None:
         """OWASP A04 — antes, app.state.limiter nunca se registraba en main.py,
         así que RateLimitExceeded no tenía un exception_handler asociado y se
@@ -298,65 +739,95 @@ class TestRefresh:
     URL = "/api/v1/auth/refresh"
 
     def test_refresh_success(self, client: TestClient, test_user: object) -> None:
-        """Refresh con token válido → 200 + nuevos tokens.
+        """Refresh con sesión válida (cookie) → 200 + nuevas cookies.
 
-        ¿Qué? No se compara que el nuevo refresh_token sea distinto al
-              anterior. create_refresh_token() genera el JWT a partir de
-              {sub, role_id, exp} — si login y refresh ocurren en el mismo
-              segundo (como pasa siempre en un test), "exp" calculado es
-              idéntico, y el JWT firmado también sale idéntico. No es un
-              fallo de seguridad: en un escenario real, login y refresh
-              nunca ocurren en el mismo segundo exacto.
+        ¿Qué? El mismo TestClient guarda la cookie que dejó el login y la
+              reenvía sola en la siguiente petición, igual que haría un
+              navegador real — no hace falta extraer ni reenviar nada a mano.
         """
-        login_response = client.post(
+        client.post(
             "/api/v1/auth/login",
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
-        refresh_token = login_response.json()["refresh_token"]
 
-        response = client.post(self.URL, json={"refresh_token": refresh_token})
+        response = client.post(self.URL)
 
         assert response.status_code == 200
-        data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
+        assert len(response.cookies.get("access_token") or "") > 0
+        assert len(response.cookies.get("refresh_token") or "") > 0
+
+    def test_refresh_token_solo_sirve_una_vez(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Issue #308 (CN-010): rotación — el refresh token usado queda
+        revocado, y el nuevo que se entregó sí funciona."""
+        sesion = _iniciar_sesion(client)
+
+        primera = client.post(self.URL, json={"refresh_token": sesion["refresh_token"]})
+        assert primera.status_code == 200
+
+        segunda = client.post(self.URL, json={"refresh_token": sesion["refresh_token"]})
+        assert segunda.status_code == 401
+
+        nuevo = primera.cookies.get("refresh_token")
+        assert client.post(self.URL, json={"refresh_token": nuevo}).status_code == 200
 
     def test_refresh_invalid_token(self, client: TestClient) -> None:
+        """Sin cookie de sesión, el refresh_token del cuerpo es la vía alterna."""
         response = client.post(self.URL, json={"refresh_token": "token.invalido.falso"})
+        assert response.status_code == 401
+
+    def test_refresh_sin_sesion_y_sin_body_rechaza_con_401(self, client: TestClient) -> None:
+        response = client.post(self.URL)
         assert response.status_code == 401
 
     def test_refresh_with_access_token_rejected(
         self, client: TestClient, test_user: object
     ) -> None:
+        """Un access_token explícito en el body (no la cookie) debe rechazarse
+        igual si se pasa como si fuera un refresh_token."""
         login_response = client.post(
             "/api/v1/auth/login",
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
-        access_token = login_response.json()["access_token"]
+        access_token = login_response.cookies.get("access_token")
         response = client.post(self.URL, json={"refresh_token": access_token})
         assert response.status_code == 401
 
     def test_refresh_for_inactive_user(self, client: TestClient, test_user, db) -> None:
-        login_response = client.post(
+        client.post(
             "/api/v1/auth/login",
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
-        refresh_token = login_response.json()["refresh_token"]
         test_user.is_active = False
         db.commit()
-        response = client.post(self.URL, json={"refresh_token": refresh_token})
+        response = client.post(self.URL)
         assert response.status_code == 403
 
     def test_refresh_for_disabled_user(self, client: TestClient, test_user, db) -> None:
-        login_response = client.post(
+        client.post(
             "/api/v1/auth/login",
             json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
         )
-        refresh_token = login_response.json()["refresh_token"]
         test_user.habilitado = False
         db.commit()
-        response = client.post(self.URL, json={"refresh_token": refresh_token})
+        response = client.post(self.URL)
         assert response.status_code == 403
+
+
+def _iniciar_sesion(client: TestClient) -> dict[str, str]:
+    """Inicia sesión y devuelve los valores de las cookies que dejó el
+    login — ya no vienen en el cuerpo de la respuesta (RNF-001.9).
+    Cada llamada es una sesión distinta (como otro navegador), con su
+    propio "jti"."""
+    respuesta = client.post(
+        "/api/v1/auth/login",
+        json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
+    )
+    return {
+        "access_token": respuesta.cookies.get("access_token"),
+        "refresh_token": respuesta.cookies.get("refresh_token"),
+    }
 
 
 class TestLogout:
@@ -364,19 +835,12 @@ class TestLogout:
 
     URL = "/api/v1/auth/logout"
 
-    def _login(self, client: TestClient) -> dict[str, str]:
-        respuesta = client.post(
-            "/api/v1/auth/login",
-            json={"correo_electronico": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD},
-        )
-        return respuesta.json()
-
     def test_logout_invalida_el_access_token(
         self, client: TestClient, test_user: object
     ) -> None:
         """CA-008.x / RN-001 de RQF-007: tras el logout, el MISMO access token
         ya no debe servir para acceder a un endpoint protegido."""
-        tokens = self._login(client)
+        tokens = _iniciar_sesion(client)
         headers = {"Authorization": f"Bearer {tokens['access_token']}"}
 
         logout_response = client.post(
@@ -391,7 +855,7 @@ class TestLogout:
         self, client: TestClient, test_user: object
     ) -> None:
         """El refresh token de la misma sesión también queda inservible."""
-        tokens = self._login(client)
+        tokens = _iniciar_sesion(client)
         headers = {"Authorization": f"Bearer {tokens['access_token']}"}
 
         client.post(self.URL, json={"refresh_token": tokens["refresh_token"]}, headers=headers)
@@ -400,6 +864,18 @@ class TestLogout:
             "/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]}
         )
         assert refresh_response.status_code == 401
+
+    def test_logout_borra_la_cookie_refresh_token_nueva_y_la_vieja(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Issue #403 (CN-063): borra la de ruta /api/v1/auth y la de antes del cambio (ruta "/")."""
+        _iniciar_sesion(client)
+        response = client.post(self.URL)
+        borradas = [
+            h.lower() for h in response.headers.get_list("set-cookie") if h.startswith("refresh_token=") and "max-age=0" in h.lower()
+        ]
+        assert any("path=/api/v1/auth" in h for h in borradas)
+        assert any(re.search(r"path=/(;|$)", h) for h in borradas)
 
     def test_logout_no_auth(self, client: TestClient) -> None:
         response = client.post(self.URL, json={"refresh_token": "token.invalido.falso"})
@@ -410,8 +886,8 @@ class TestLogout:
     ) -> None:
         """Cerrar sesión en un dispositivo NO cierra sesión en otro — cada
         token tiene su propio "jti" (ver app/models/token_revocado.py)."""
-        sesion_1 = self._login(client)
-        sesion_2 = self._login(client)
+        sesion_1 = _iniciar_sesion(client)
+        sesion_2 = _iniciar_sesion(client)
 
         headers_1 = {"Authorization": f"Bearer {sesion_1['access_token']}"}
         headers_2 = {"Authorization": f"Bearer {sesion_2['access_token']}"}
@@ -420,6 +896,91 @@ class TestLogout:
 
         assert client.get("/api/v1/users/me", headers=headers_1).status_code == 401
         assert client.get("/api/v1/users/me", headers=headers_2).status_code == 200
+
+
+class TestRevocacionAtomica:
+    """Issue #359 (CN-036): dos revocaciones del mismo jti a la vez."""
+
+    def test_dos_revocaciones_simultaneas_solo_una_gana(self) -> None:
+        """¿Qué? Dos sesiones de BD reales (no la sesión compartida del
+        fixture `db`, que no permite concurrencia) intentan revocar el mismo
+        jti al mismo tiempo — es lo que pasa con dos /refresh simultáneos.
+        ¿Impacto? Con el "preguntar y después guardar" de antes, las dos
+        podían pasar la pregunta; ahora la BD deja ganar solo a una."""
+        jti = str(uuid.uuid4())
+        exp = int(time.time()) + 60
+        barrera = threading.Barrier(2)
+        resultados: list[bool] = []
+
+        def revocar() -> None:
+            with TestSessionLocal() as sesion:
+                barrera.wait()
+                resultados.append(revocar_jti(sesion, jti, exp))
+                sesion.commit()
+
+        hilos = [threading.Thread(target=revocar) for _ in range(2)]
+        try:
+            for hilo in hilos:
+                hilo.start()
+            for hilo in hilos:
+                hilo.join(timeout=10)
+            assert sorted(resultados) == [False, True]
+        finally:
+            # ¿Para qué? Estas sesiones sí hacen commit (no pasan por el
+            #           rollback del fixture `db`), así que se limpia a mano.
+            with TestSessionLocal() as sesion:
+                sesion.query(TokenRevocado).filter_by(jti=uuid.UUID(jti)).delete()
+                sesion.commit()
+
+
+def _token_a_mano(**campos) -> str:
+    """Firma con la clave real un token con exactamente estos campos — para
+    probar payloads que create_access_token nunca produciría."""
+    return jwt.encode(campos, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+class TestValidacionDelToken:
+    """Issue #359 (CN-037 y CN-038): campos obligatorios y jti mal formado."""
+
+    def _base(self, test_user, tipo: str) -> dict:
+        return {
+            "sub": TEST_USER_EMAIL,
+            "type": tipo,
+            "ver": test_user.version_sesion,
+            "exp": int(time.time()) + 600,
+            "jti": str(uuid.uuid4()),
+        }
+
+    @pytest.mark.parametrize("campo", ["exp", "jti", "type"])
+    def test_access_token_sin_campo_obligatorio_da_401(self, client: TestClient, test_user, campo: str) -> None:
+        payload = self._base(test_user, "access")
+        del payload[campo]
+        headers = {"Authorization": f"Bearer {_token_a_mano(**payload)}"}
+        assert client.get("/api/v1/users/me", headers=headers).status_code == 401
+
+    @pytest.mark.parametrize("campo", ["exp", "jti"])
+    def test_refresh_token_sin_campo_obligatorio_da_401(self, client: TestClient, test_user, campo: str) -> None:
+        payload = self._base(test_user, "refresh")
+        del payload[campo]
+        response = client.post("/api/v1/auth/refresh", json={"refresh_token": _token_a_mano(**payload)})
+        assert response.status_code == 401
+
+    def test_access_token_con_jti_que_no_es_uuid_da_401(self, client: TestClient, test_user) -> None:
+        """Antes, uuid.UUID("no-es-uuid") lanzaba ValueError → 500."""
+        payload = {**self._base(test_user, "access"), "jti": "no-es-uuid"}
+        headers = {"Authorization": f"Bearer {_token_a_mano(**payload)}"}
+        assert client.get("/api/v1/users/me", headers=headers).status_code == 401
+
+    def test_refresh_token_con_jti_que_no_es_uuid_da_401(self, client: TestClient, test_user) -> None:
+        payload = {**self._base(test_user, "refresh"), "jti": "no-es-uuid"}
+        response = client.post("/api/v1/auth/refresh", json={"refresh_token": _token_a_mano(**payload)})
+        assert response.status_code == 401
+
+    def test_token_completo_hecho_a_mano_si_funciona(self, client: TestClient, test_user) -> None:
+        """Control: el mismo token con los tres campos pasa — así los 401 de
+        arriba son por el campo que falta, no por otra cosa del token."""
+        headers = {"Authorization": f"Bearer {_token_a_mano(**self._base(test_user, 'access'))}"}
+        assert client.get("/api/v1/users/me", headers=headers).status_code == 200
 
 
 class TestChangePassword:
@@ -471,6 +1032,72 @@ class TestChangePassword:
         )
         assert response.status_code == 422
 
+    def test_change_password_de_mas_de_72_bytes_devuelve_422(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        """Issue #312: bcrypt solo usa 72 bytes; "ñ" ocupa 2, así que 40 "ñ"
+        (80 bytes) se pasan aunque sean solo 40 caracteres."""
+        response = client.post(
+            self.URL,
+            json={"current_password": TEST_USER_PASSWORD, "new_password": "Aa1" + "ñ" * 40},
+            headers=auth_headers,
+        )
+        assert response.status_code == 422
+        assert "72" in response.text
+
+    def test_login_con_contrasena_de_mas_de_72_bytes_devuelve_401_no_500(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Issue #312: el login no pasa por el validador de fortaleza, y
+        bcrypt 5 lanza ValueError con más de 72 bytes — verify_password debe
+        tratarlo como contraseña incorrecta."""
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"correo_electronico": TEST_USER_EMAIL, "password": "A" * 100},
+        )
+        assert response.status_code == 401
+
+    def test_change_password_cierra_las_demas_sesiones(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Issue #308 (CN-010): otra sesión abierta (otro navegador) deja de
+        servir, tanto su access token como su refresh token."""
+        otra_sesion = _iniciar_sesion(client)
+        mi_sesion = _iniciar_sesion(client)
+
+        response = client.post(
+            self.URL,
+            json={"current_password": TEST_USER_PASSWORD, "new_password": "NewSecure456"},
+            headers={"Authorization": f"Bearer {mi_sesion['access_token']}"},
+        )
+        assert response.status_code == 200
+
+        headers_otra = {"Authorization": f"Bearer {otra_sesion['access_token']}"}
+        assert client.get("/api/v1/users/me", headers=headers_otra).status_code == 401
+        refresh = client.post(
+            "/api/v1/auth/refresh", json={"refresh_token": otra_sesion["refresh_token"]}
+        )
+        assert refresh.status_code == 401
+
+    def test_change_password_mantiene_la_sesion_de_quien_la_cambia(
+        self, client: TestClient, test_user: object
+    ) -> None:
+        """Issue #308: la respuesta trae cookies nuevas, y con ellas la
+        sesión de quien cambió la contraseña sigue funcionando."""
+        mi_sesion = _iniciar_sesion(client)
+
+        response = client.post(
+            self.URL,
+            json={"current_password": TEST_USER_PASSWORD, "new_password": "NewSecure456"},
+            headers={"Authorization": f"Bearer {mi_sesion['access_token']}"},
+        )
+        assert response.status_code == 200
+
+        nuevo_access = response.cookies.get("access_token")
+        assert nuevo_access and nuevo_access != mi_sesion["access_token"]
+        headers_nuevos = {"Authorization": f"Bearer {nuevo_access}"}
+        assert client.get("/api/v1/users/me", headers=headers_nuevos).status_code == 200
+
 
 class TestForgotPassword:
     """Tests para el endpoint de solicitud de recuperación de contraseña."""
@@ -478,16 +1105,43 @@ class TestForgotPassword:
     URL = "/api/v1/auth/forgot-password"
 
     def test_forgot_password_existing_email(
-        self, client: TestClient, test_user: object
+        self, client: TestClient, db: Session, test_user: object, correos_enviados
     ) -> None:
         response = client.post(self.URL, json={"email": TEST_USER_EMAIL})
         assert response.status_code == 200
         assert "registrado" in response.json()["message"].lower()
 
-    def test_forgot_password_nonexistent_email(self, client: TestClient) -> None:
+        # Issue #373 (CN-031): en la BD queda el hash; el del correo restablece.
+        nombre, datos = correos_enviados[0]
+        assert nombre == "send_password_reset_email"
+        guardado = db.query(PasswordResetToken).one()
+        assert guardado.token == hash_token(datos["token"])
+
+        reset = client.post(
+            "/api/v1/auth/reset-password", json={"token": datos["token"], "new_password": "NuevaClave456"}
+        )
+        assert reset.status_code == 200
+
+    def test_pedir_otro_enlace_anula_el_anterior(
+        self, client: TestClient, test_user: object, correos_enviados
+    ) -> None:
+        """Issue #396 (CN-053): solo sirve el enlace del último correo pedido."""
+        client.post(self.URL, json={"email": TEST_USER_EMAIL})
+        client.post(self.URL, json={"email": TEST_USER_EMAIL})
+        token_viejo = correos_enviados[0][1]["token"]
+        token_nuevo = correos_enviados[1][1]["token"]
+
+        url_reset = "/api/v1/auth/reset-password"
+        viejo = client.post(url_reset, json={"token": token_viejo, "new_password": "NuevaClave456"})
+        assert viejo.status_code == 400
+        nuevo = client.post(url_reset, json={"token": token_nuevo, "new_password": "NuevaClave456"})
+        assert nuevo.status_code == 200
+
+    def test_forgot_password_nonexistent_email(self, client: TestClient, correos_enviados) -> None:
         response = client.post(self.URL, json={"email": "fantasma@verdeapp.com"})
         assert response.status_code == 200
         assert "registrado" in response.json()["message"].lower()
+        assert correos_enviados == []
 
     def test_forgot_password_invalid_email_format(self, client: TestClient) -> None:
         response = client.post(self.URL, json={"email": "no-es-un-correo"})
@@ -510,6 +1164,80 @@ class TestResetPassword:
             json={"correo_electronico": TEST_USER_EMAIL, "password": new_password},
         )
         assert login_response.status_code == 200
+
+    def test_reset_password_cierra_las_sesiones_abiertas(
+        self, client: TestClient, valid_reset_token: str
+    ) -> None:
+        """Issue #308 (CN-010): restablecer la contraseña saca a cualquier
+        sesión que ya estuviera abierta, incluido su refresh token."""
+        sesion = _iniciar_sesion(client)
+
+        response = client.post(
+            self.URL, json={"token": valid_reset_token, "new_password": "ResetPass789"}
+        )
+        assert response.status_code == 200
+
+        headers = {"Authorization": f"Bearer {sesion['access_token']}"}
+        assert client.get("/api/v1/users/me", headers=headers).status_code == 401
+        refresh = client.post(
+            "/api/v1/auth/refresh", json={"refresh_token": sesion["refresh_token"]}
+        )
+        assert refresh.status_code == 401
+
+    def test_reset_password_no_se_puede_usar_dos_veces(
+        self, client: TestClient, valid_reset_token: str
+    ) -> None:
+        """Issue #396 (CN-053): el segundo uso del mismo enlace falla."""
+        primero = client.post(self.URL, json={"token": valid_reset_token, "new_password": "ResetPass789"})
+        assert primero.status_code == 200
+        segundo = client.post(self.URL, json={"token": valid_reset_token, "new_password": "OtraClave789"})
+        assert segundo.status_code == 400
+
+    def test_reset_password_anula_los_demas_enlaces(
+        self, client: TestClient, db: Session, test_user: Usuario, valid_reset_token: str
+    ) -> None:
+        """Issue #396 (CN-053): al usar un enlace, otro enlace vigente del mismo usuario deja de servir."""
+        otro_token = str(uuid.uuid4())
+        db.add(
+            PasswordResetToken(
+                id_usuario=test_user.id_usuario,
+                token=hash_token(otro_token),
+                expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            )
+        )
+        db.commit()
+
+        usado = client.post(self.URL, json={"token": valid_reset_token, "new_password": "ResetPass789"})
+        assert usado.status_code == 200
+        otro = client.post(self.URL, json={"token": otro_token, "new_password": "OtraClave789"})
+        assert otro.status_code == 400
+
+    def test_reset_password_quita_el_bloqueo_y_queda_en_el_registro(
+        self,
+        client: TestClient,
+        db: Session,
+        test_user: Usuario,
+        valid_reset_token: str,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Issue #396 (CN-026): quien restablece la contraseña por correo no
+        debe seguir bloqueado, y el cambio queda en el registro de auditoría."""
+        caplog.set_level(logging.INFO, logger="verdeapp.audit")
+        test_user.intentos_fallidos = 5
+        test_user.bloqueado_hasta = datetime.now(timezone.utc) + timedelta(minutes=15)
+        db.commit()
+
+        response = client.post(self.URL, json={"token": valid_reset_token, "new_password": "ResetPass789"})
+        assert response.status_code == 200
+
+        db.refresh(test_user)
+        assert test_user.intentos_fallidos == 0
+        assert test_user.bloqueado_hasta is None
+
+        eventos = [json.loads(r.getMessage()) for r in caplog.records if r.name == "verdeapp.audit"]
+        [cambio] = [e for e in eventos if e["event"] == "password_changed"]
+        assert cambio["email"] == redactar_correo(TEST_USER_EMAIL)
+        assert "ResetPass789" not in str(eventos)
 
     def test_reset_password_invalid_token(self, client: TestClient) -> None:
         response = client.post(
@@ -618,6 +1346,20 @@ class TestUpdateProfile:
         )
         assert response.status_code == 422
 
+    @pytest.mark.parametrize(
+        "body",
+        [
+            {"nombre": "Juan123", "apellidos": "Nombre"},
+            {"nombre": "Juan", "apellidos": "N" * 151},
+            {"nombre": "Juan", "apellidos": "Nombre", "asociacion": "A" * 101},
+        ],
+    )
+    def test_update_profile_datos_invalidos(
+        self, client: TestClient, auth_headers: dict[str, str], body: dict
+    ) -> None:
+        response = client.put(self.URL, json=body, headers=auth_headers)
+        assert response.status_code == 422
+
     def test_update_profile_invalid_phone(
         self, client: TestClient, auth_headers: dict[str, str]
     ) -> None:
@@ -626,8 +1368,7 @@ class TestUpdateProfile:
             json={"nombre": "Nombre", "apellidos": "Apellido", "numero_telefonico": "abc123"},
             headers=auth_headers,
         )
-        assert response.status_code == 400
-        assert "formato inválido" in response.json()["detail"]
+        assert response.status_code == 422
 
     def test_update_profile_no_auth(self, client: TestClient) -> None:
         response = client.put(
@@ -806,7 +1547,24 @@ class TestEmailVerification:
         )
 
         assert login_response.status_code == 200
-        assert "access_token" in login_response.json()
+        assert login_response.cookies.get("access_token")
+
+    def test_verify_email_anula_los_demas_enlaces(
+        self, client: TestClient, db: Session, unverified_user: Usuario, valid_verification_token: str
+    ) -> None:
+        """Issue #396 (CN-053): al verificar con un enlace, otro enlace vigente de la misma cuenta deja de servir."""
+        otro_token = str(uuid.uuid4())
+        db.add(
+            EmailVerificationToken(
+                id_usuario=unverified_user.id_usuario,
+                token=hash_token(otro_token),
+                expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+            )
+        )
+        db.commit()
+
+        assert client.post(self.URL, json={"token": valid_verification_token}).status_code == 200
+        assert client.post(self.URL, json={"token": otro_token}).status_code == 400
 
     def test_verify_email_invalid_token(self, client: TestClient) -> None:
         response = client.post(self.URL, json={"token": "token-falso-inexistente"})
@@ -845,6 +1603,15 @@ class TestUpdateLocale:
         client.patch(self.URL, json={"locale": "en"}, headers=auth_headers)
         get_response = client.get("/api/v1/users/me", headers=auth_headers)
         assert get_response.json()["locale"] == "en"
+
+    def test_update_locale_returns_real_name(
+        self, client: TestClient, auth_headers: dict[str, str]
+    ) -> None:
+        """Issue #268 — la respuesta no debe traer el nombre falso "Usuario VerdeApp"."""
+        response = client.patch(self.URL, json={"locale": "en"}, headers=auth_headers)
+        body = response.json()
+        assert body["first_name"] == TEST_USER_NOMBRE
+        assert body["last_name"] == TEST_USER_APELLIDOS
 
     def test_update_locale_invalid_value(
         self, client: TestClient, auth_headers: dict[str, str]

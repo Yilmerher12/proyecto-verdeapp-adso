@@ -32,6 +32,8 @@ class Usuario {
     +string password
     +bool is_active
     +bool habilitado
+    +datetime fecha_desactivacion
+    +string motivo_desactivacion
     +string locale
     +int intentos_fallidos
     +datetime bloqueado_hasta
@@ -142,6 +144,34 @@ class SolicitudDesvinculacion {
     +rechazar()
 }
 
+class AgendaConjunto {
+    +UUID id
+    +UUID id_conjunto_residencial
+    +UUID autor_id
+    +string texto
+    +string url_evidencia
+    +string estado
+    +datetime created_at
+
+    +agregarTema()
+    +cambiarEstado()
+    +eliminar()
+}
+
+class NovedadEnviada {
+    +UUID id
+    +UUID autor_id
+    +UUID id_conjunto_residencial
+    +string texto
+    +string url_imagen
+    +string estado
+    +datetime created_at
+    +datetime resuelta_at
+
+    +enviar()
+    +marcarComoVista()
+}
+
 class Comunicado {
     +UUID id_comunicado
     +UUID id_conjunto_residencial
@@ -166,6 +196,7 @@ class Novedad {
     +string alcance
     +string texto
     +string url_adjunto
+    +string url_video
     +datetime fecha_expiracion
     +datetime created_at
     +datetime fecha_edicion
@@ -174,6 +205,11 @@ class Novedad {
     +publicar()
     +editar()
     +archivar()
+}
+
+class NovedadConjunto {
+    +UUID id_novedad
+    +UUID id_conjunto_residencial
 }
 
 class Notificacion {
@@ -242,6 +278,7 @@ class ConjuntoResidencial {
     +string nombre_conjunto
     +string nit
     +string direccion
+    +int total_apartamentos
     +bool verificado
     +UUID verificado_por_id
     +string codigo_acceso
@@ -264,6 +301,14 @@ class PuntoAcopio {
     +bool activo
 }
 
+class PuntoAcopioComentario {
+    +UUID id_comentario
+    +UUID id_punto_acopio
+    +UUID id_autor
+    +string texto
+    +datetime created_at
+}
+
 class ContenidoEducativo {
     +UUID id_contenido
     +string modulo_categoria
@@ -272,6 +317,14 @@ class ContenidoEducativo {
     +date fecha_publicacion
     +string url_video
     +string url_guia
+}
+
+class ContenidoEducativoEnvio {
+    +UUID id
+    +UUID id_contenido
+    +UUID id_conjunto_residencial
+    +UUID enviado_por_id
+    +datetime created_at
 }
 
 Role "1" --> "*" Usuario
@@ -283,12 +336,16 @@ Usuario "1" --> "*" EmailVerificationToken
 Usuario "1" --> "*" InvitacionAdminConjunto : invita
 Usuario "1" --> "*" SolicitudDesvinculacion : resuelve
 Usuario "1" --> "*" Novedad : publica
+Novedad "1" --> "*" NovedadConjunto : dirige
+ConjuntoResidencial "1" --> "*" NovedadConjunto : recibe
 Usuario "1" --> "*" Notificacion : emite
 Usuario "1" --> "*" NotificacionDestinatario
 Usuario "1" --> "*" ConjuntoResidencial : verifica
 
 Localidad "1" --> "*" ConjuntoResidencial
 Localidad "1" --> "*" PuntoAcopio
+PuntoAcopio "1" --> "*" PuntoAcopioComentario : tiene
+Usuario "1" --> "*" PuntoAcopioComentario : escribe
 Localidad "1" --> "*" Reciclador
 
 ConjuntoResidencial "1" --> "*" Unidad
@@ -308,6 +365,12 @@ ConjuntoResidencial "1" --> "*" AdministradorConjuntoAsignacion
 AdministradorConjunto "1" --> "*" SolicitudDesvinculacion
 ConjuntoResidencial "1" --> "*" SolicitudDesvinculacion
 
+ConjuntoResidencial "1" --> "*" AgendaConjunto
+Usuario "0..1" --> "*" AgendaConjunto : escribe
+
+Usuario "0..1" --> "*" NovedadEnviada : envia
+ConjuntoResidencial "0..1" --> "*" NovedadEnviada
+
 AdministradorConjunto "1" --> "*" Comunicado
 ConjuntoResidencial "1" --> "*" Comunicado
 
@@ -317,6 +380,10 @@ InvitacionRecicladorConjunto "*" --> "1" ConjuntoResidencial
 ConjuntoResidencial "1" --> "*" Notificacion
 ConjuntoResidencial "1" --> "*" AuditoriaConjunto
 Notificacion "1" --> "*" NotificacionDestinatario
+
+ContenidoEducativo "1" --> "*" ContenidoEducativoEnvio
+ConjuntoResidencial "1" --> "*" ContenidoEducativoEnvio : recibe
+Usuario "1" --> "*" ContenidoEducativoEnvio : envia
 ```
 
 ---
@@ -362,6 +429,7 @@ Representa a la persona que gestiona uno o varios conjuntos residenciales por co
 * Administrar los conjuntos que tiene asignados y publicar comunicados dirigidos a ellos.
 * Invitar recicladores a trabajar en sus conjuntos.
 * Solicitar desvincularse de un conjunto que ya no administra (`SolicitudDesvinculacion`).
+* Llevar una agenda privada de temas para el comité de cada conjunto (`AgendaConjunto`).
 
 ---
 
@@ -392,6 +460,18 @@ Representa la solicitud de autorización que un Admin_conjunto envía a un Recic
 ## SolicitudDesvinculacion
 
 Representa la solicitud que un Admin_conjunto envía para dejar de administrar un conjunto (RQF-016). Requiere aprobación del Admin_sistema — evita que un conjunto quede sin administrador sin aviso previo. Un índice único parcial impide más de una solicitud `PENDIENTE` a la vez para el mismo (administrador, conjunto).
+
+---
+
+## AgendaConjunto
+
+Representa un tema de la agenda **privada** del Admin_conjunto para un conjunto (RQF-020) — algo que le pidieron y quiere llevar al comité, con foto opcional. Su `estado` es `PENDIENTE` o `EN_ESPERA`; cuando el comité lo resuelve, se elimina. Nunca genera notificaciones ni la ve nadie más.
+
+---
+
+## NovedadEnviada
+
+Representa una novedad que un Residente, Reciclador o Admin_conjunto le **envía** al Admin_sistema (RQF-021) — la dirección contraria a `Novedad`. Su `estado` es `NUEVA` o `VISTA`: el Admin_sistema la recibe en la bandeja "Solicitudes pendientes" (junto con las `SolicitudDesvinculacion`) y solo la marca como vista; no se aprueba ni se rechaza.
 
 ---
 
@@ -449,9 +529,21 @@ Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autori
 
 ---
 
+## PuntoAcopioComentario
+
+Nota interna del Admin Sistema sobre un punto de acopio (RQF-011), con autor y fecha — incluye el "motivo del cambio" que se escribe al editar el punto. Solo la ve el Admin Sistema. Se borra junto con el punto; si se borra la cuenta del autor, `id_autor` queda `NULL` y el comentario se conserva.
+
+---
+
 ## ContenidoEducativo
 
 Representa los módulos educativos publicados en la plataforma — texto, video y guía descargable, organizados por módulo/categoría.
+
+---
+
+## ContenidoEducativoEnvio
+
+Registra que el Admin Sistema envió un módulo del catálogo a mano a un conjunto puntual (RQF-013, Flujo C) — independiente de la recomendación automática que dispara una auditoría Regular/Mala. `enviado_por_id` queda `NULL` si el usuario que lo envió se elimina después, para no perder el historial del envío.
 
 ---
 
@@ -479,6 +571,8 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 | Usuario                     | ConjuntoResidencial               | 1 : N (verifica) |
 | Localidad                   | ConjuntoResidencial               | 1 : N    |
 | Localidad                   | PuntoAcopio                       | 1 : N    |
+| PuntoAcopio                 | PuntoAcopioComentario             | 1 : N    |
+| Usuario                     | PuntoAcopioComentario             | 1 : N (escribe) |
 | Localidad                   | Reciclador                        | 1 : N    |
 | ConjuntoResidencial         | Unidad                            | 1 : N    |
 | Unidad                      | Residente                         | 1 : N    |
@@ -490,6 +584,10 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 | ConjuntoResidencial         | AdministradorConjuntoAsignacion   | 1 : N    |
 | AdministradorConjunto       | SolicitudDesvinculacion           | 1 : N    |
 | ConjuntoResidencial         | SolicitudDesvinculacion           | 1 : N    |
+| ConjuntoResidencial         | AgendaConjunto                    | 1 : N    |
+| Usuario                     | AgendaConjunto                    | 1 : N (escribe) |
+| Usuario                     | NovedadEnviada                    | 1 : N (envía) |
+| ConjuntoResidencial         | NovedadEnviada                    | 1 : N (opcional) |
 | AdministradorConjunto       | Comunicado                        | 1 : N    |
 | ConjuntoResidencial         | Comunicado                        | 1 : N    |
 | Reciclador                  | InvitacionRecicladorConjunto      | 1 : N    |

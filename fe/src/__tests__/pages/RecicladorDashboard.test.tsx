@@ -21,6 +21,7 @@ vi.mock("axios", () => {
     delete: (...args: unknown[]) => mockDelete(...args),
     patch: vi.fn(),
     interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+    defaults: {},
   };
   return { default: { ...instance, create: () => instance } };
 });
@@ -42,7 +43,7 @@ function mockRespuestasVacias() {
 
 function renderPage() {
   return renderWithProviders(<RecicladorDashboard />, {
-    authContext: { user: mockUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: mockUser, isAuthenticated: true },
   });
 }
 
@@ -60,21 +61,45 @@ describe("RecicladorDashboard", () => {
     expect(screen.getByText("Test User")).toBeInTheDocument();
   });
 
+  it("muestra un aviso de error si falla la carga (issue #223, f9 del diagnóstico)", async () => {
+    mockGet.mockRejectedValue(new Error("Network Error"));
+    renderPage();
+    expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
+  it("si falla una de las 5 cargas, pinta las otras y avisa del error (issue #406)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("mis-notificaciones")) return Promise.reject(new Error("Network Error"));
+      if (url.includes("mis-invitaciones")) {
+        return Promise.resolve({
+          data: [
+            {
+              id: "inv-1",
+              nombre_conjunto: "Conjunto Los Alpes",
+              direccion_conjunto: "Cra 10 # 20-30",
+              invitado_por_nombre: "Ana Admin",
+              estado: "PENDIENTE",
+              expires_at: "2026-09-01T00:00:00Z",
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
+
+    expect(await screen.findByText("Conjunto Los Alpes")).toBeInTheDocument();
+    expect(screen.getByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
+  });
+
   it("carga invitaciones, conjuntos y notificaciones al montar", async () => {
     renderPage();
     await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/reciclador-conjunto/mis-invitaciones"));
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/reciclador-conjunto/mis-invitaciones"),
-        expect.anything()
+        expect.stringContaining("/reciclador-conjunto/mis-conjuntos-autorizados")
       );
-      expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/reciclador-conjunto/mis-conjuntos-autorizados"),
-        expect.anything()
-      );
-      expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/notificaciones/mis-notificaciones"),
-        expect.anything()
-      );
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/mis-notificaciones"));
     });
   });
 
@@ -82,7 +107,7 @@ describe("RecicladorDashboard", () => {
     renderPage();
     await waitFor(() => {
       expect(
-        screen.getByText("Todavía no estás autorizado en ningún conjunto. Cuando un administrador te invite y aceptes, aparecerá aquí.")
+        screen.getByText("Todavía no tienes ningún conjunto autorizado. Cuando un administrador te invite y aceptes, aparecerá aquí.")
       ).toBeInTheDocument();
     });
     expect(screen.queryByRole("button", { name: "Llegué al conjunto" })).not.toBeInTheDocument();
@@ -116,8 +141,7 @@ describe("RecicladorDashboard", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/reciclador-conjunto/invitaciones/inv-1/responder"),
-        { aceptar: true },
-        expect.anything()
+        { aceptar: true }
       );
     });
   });
@@ -140,10 +164,39 @@ describe("RecicladorDashboard", () => {
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
         expect.stringContaining("/notificaciones/enviar"),
-        { tipo: "LLEGADA_RECICLADOR", id_conjunto_residencial: 1 },
-        expect.anything()
+        { tipo: "LLEGADA_RECICLADOR", id_conjunto_residencial: 1 }
       );
     });
+  });
+
+  // ¿Qué? Issue #414: el motivo exacto del rechazo sale DENTRO del modal.
+  async function abrirModalLlegada() {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole("button", { name: "Llegué al conjunto" }));
+    await user.click(screen.getByRole("button", { name: "Enviar aviso" }));
+  }
+
+  it("si el backend rechaza el aviso, muestra su motivo exacto dentro del modal", async () => {
+    mockPost.mockRejectedValue({
+      response: { status: 400, data: { detail: "Ya enviaste este aviso a este conjunto hace menos de 5 minutos." } },
+    });
+    await abrirModalLlegada();
+
+    const alerta = await screen.findByRole("alert");
+    expect(alerta).toHaveTextContent("Ya enviaste este aviso a este conjunto hace menos de 5 minutos.");
+    expect(screen.getByText("¿A qué conjunto notificas?")).toBeInTheDocument();
+  });
+
+  it("si el rechazo no trae motivo, muestra el aviso genérico dentro del modal", async () => {
+    mockPost.mockRejectedValue(new Error("Network Error"));
+    await abrirModalLlegada();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No se pudo completar la acción. Inténtalo de nuevo.");
   });
 
   it("muestra el aviso de auditoría pendiente y envía la auditoría con evidencia", async () => {
@@ -177,6 +230,11 @@ describe("RecicladorDashboard", () => {
     await user.upload(inputArchivo, archivo);
 
     await user.click(screen.getByRole("button", { name: "Enviar auditoría" }));
+
+    // ¿Qué? Issue #9 — enviar ya no dispara la petición directo, primero
+    //       pide confirmar (ConfirmModal apilado sobre el formulario).
+    expect(screen.getByText("¿Enviar esta auditoría?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Sí, enviar" }));
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(

@@ -11,10 +11,10 @@ Descripción: Endpoints del flujo de invitación, desvinculación y reasignació
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db, require_role
 from app.models.usuario import Usuario
 from app.models.rol import RolId
 from app.schemas.admin_conjunto import (
@@ -28,33 +28,42 @@ from app.schemas.desvinculacion import (
     ResolverSolicitudDesvinculacionRequest,
     SolicitudDesvinculacionResponse,
 )
-from app.schemas.user import MessageResponse, TokenResponse
-from app.services import admin_conjunto_service, desvinculacion_service
-from app.utils.security import create_access_token, create_refresh_token
+from app.schemas.solicitud_unificada import (
+    PaginaDeSolicitudesResponse,
+    ResolverSolicitudUnificadaRequest,
+    TipoSolicitud,
+)
+from app.schemas.user import MessageResponse
+from app.services import admin_conjunto_service, desvinculacion_service, novedad_enviada_service
+from app.utils.audit_log import log_accion_admin, redactar_correo
+from app.utils.limiter import limiter
 
 router = APIRouter(prefix="/api/v1/admin-conjunto", tags=["admin-conjunto"])
 
 
 # Solo el Administrador del Sistema puede invitar — esto evita que cualquiera
 # se autoasigne el rol de Administrador de Conjunto.
-def _verificar_es_admin_sistema(current_user: Usuario) -> None:
-    if current_user.id_rol != RolId.ADMIN_SISTEMA:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Administrador del Sistema puede invitar administradores de conjunto.",
-        )
+# ¿Qué? Issue #216 — ver el mismo comentario en admin.py.
+_requiere_admin_sistema = require_role(
+    RolId.ADMIN_SISTEMA, "Solo un Administrador del Sistema puede invitar administradores de conjunto."
+)
 
 
 @router.post("/invitar", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 async def invitar_admin_conjunto(
     datos: InvitarAdminConjuntoRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """Solo el Administrador del Sistema puede usar esta ruta."""
-    _verificar_es_admin_sistema(current_user)
     await admin_conjunto_service.invitar_admin_conjunto(
         db=db, datos=datos, invitado_por=current_user
+    )
+    log_accion_admin(
+        current_user.correo_electronico,
+        "admin_conjunto_invitado",
+        invitado=redactar_correo(datos.correo_electronico),
+        conjuntos=datos.ids_conjuntos,
     )
     return MessageResponse(
         message=f"Invitación enviada a {datos.correo_electronico}."
@@ -62,7 +71,11 @@ async def invitar_admin_conjunto(
 
 
 @router.get("/invitacion", response_model=InvitacionInfoResponse)
-def consultar_invitacion(token: str, db: Session = Depends(get_db)):
+# ¿Qué? Issue #398 (CN-057): máximo 10 consultas por minuto desde una misma IP.
+# ¿Para qué? Era el único endpoint público con token de un solo uso sin límite
+#           (los demás ya lo tenían desde el issue #310).
+@limiter.limit("10/minute")
+def consultar_invitacion(request: Request, token: str, db: Session = Depends(get_db)):
     """
     Ruta pública: la persona invitada todavía no tiene cuenta, así que
     no puede autenticarse. Solo necesita el token que recibió por correo.
@@ -70,38 +83,43 @@ def consultar_invitacion(token: str, db: Session = Depends(get_db)):
     return admin_conjunto_service.consultar_invitacion(db=db, token=token)
 
 
-@router.post("/aceptar", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/aceptar", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
+# ¿Qué? Issue #310 (CN-013): ruta pública — sin límite se podían probar
+#       tokens de invitación al azar sin freno.
+@limiter.limit("5/minute")
 def aceptar_invitacion(
+    request: Request,
     datos: AceptarInvitacionAdminConjuntoRequest,
     db: Session = Depends(get_db),
 ):
     """
     Ruta pública protegida por el token de invitación (no por sesión,
     porque la persona todavía no tiene cuenta). Al aceptar, se crea su
-    cuenta y se le entrega sesión iniciada de una vez (igual de cómodo
-    que registrarse normalmente).
+    cuenta; después inicia sesión normal desde /login.
+
+    ¿Qué? Issue #311 (CN-028): antes devolvía access_token y refresh_token
+          en el cuerpo JSON — el único flujo que dejaba tokens al alcance
+          de JavaScript, contra RNF-001.9 (solo cookies httpOnly).
+    ¿Para qué? AceptarInvitacionPage.tsx nunca usó esos tokens: muestra
+              "Ir a iniciar sesión" al terminar. Se quitan en vez de pasarlos
+              a cookies, que dejarían una sesión abierta mientras la
+              pantalla pide iniciar sesión.
+    ¿Impacto? El flujo que ve la persona invitada no cambia.
     """
-    nuevo_usuario = admin_conjunto_service.aceptar_invitacion(db=db, datos=datos)
-
-    access_token = create_access_token(data={
-        "sub": nuevo_usuario.correo_electronico,
-        "role_id": nuevo_usuario.id_rol,
-    })
-    refresh_token = create_refresh_token(data={
-        "sub": nuevo_usuario.correo_electronico,
-        "role_id": nuevo_usuario.id_rol,
-    })
-
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+    usuario = admin_conjunto_service.aceptar_invitacion(db=db, datos=datos)
+    # ¿Qué? Issue #401: crea una cuenta de administrador sin sesión previa; la
+    #       línea lleva solo su correo (log_accion_admin lo redacta), nunca el
+    #       token de invitación.
+    log_accion_admin(usuario.correo_electronico, "admin_conjunto_invitacion_aceptada")
+    return MessageResponse(message="Cuenta creada. Ya puedes iniciar sesión.")
 
 
 @router.get("/solicitudes-desvinculacion", response_model=List[SolicitudDesvinculacionResponse])
 def listar_solicitudes_desvinculacion(
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-023 (CA-023.1): solicitudes de desvinculación pendientes de resolver."""
-    _verificar_es_admin_sistema(current_user)
     return desvinculacion_service.listar_solicitudes_pendientes(db)
 
 
@@ -109,11 +127,10 @@ def listar_solicitudes_desvinculacion(
 def resolver_solicitud_desvinculacion(
     id_solicitud: UUID,
     datos: ResolverSolicitudDesvinculacionRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-023 (CA-023.2, CA-023.3): aprueba o rechaza una solicitud de desvinculación."""
-    _verificar_es_admin_sistema(current_user)
     desvinculacion_service.resolver_solicitud(
         db=db,
         id_solicitud=id_solicitud,
@@ -121,32 +138,94 @@ def resolver_solicitud_desvinculacion(
         motivo_rechazo=datos.motivo_rechazo,
         resuelta_por=current_user,
     )
+    # ¿Qué? Issue #376: sin motivo_rechazo — texto libre (ver log_accion_admin).
+    log_accion_admin(
+        current_user.correo_electronico,
+        "desvinculacion_aprobada" if datos.aprobar else "desvinculacion_rechazada",
+        solicitud=id_solicitud,
+    )
     mensaje = "Solicitud aprobada. El conjunto quedó desvinculado." if datos.aprobar else "Solicitud rechazada."
+    return MessageResponse(message=mensaje)
+
+
+# ¿Qué? Issue #372 (CN-042): tope de filas por página de la bandeja, igual que comunicados y novedades.
+MAX_LIMIT_SOLICITUDES = 100
+
+
+@router.get("/solicitudes", response_model=PaginaDeSolicitudesResponse)
+def listar_solicitudes(
+    tipo: Optional[TipoSolicitud] = Query(default=None),
+    limit: int = Query(10, ge=1, le=MAX_LIMIT_SOLICITUDES),
+    offset: int = Query(0, ge=0),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+):
+    """
+    ¿Qué? Bandeja unificada "Solicitudes pendientes": junta desvinculación
+          (solicitudes_desvinculacion, sin tocarla) con las novedades que
+          envían Residentes, Recicladores y Admins de Conjunto
+          (novedades_enviadas), filtrable por `tipo`. Paginado.
+    ¿Para qué? El Admin Sistema resuelve todo desde un solo lugar, sin
+              importar que por dentro sean 2 tablas distintas.
+    """
+    items, total = novedad_enviada_service.listar_unificadas(db, tipo, limit=limit, offset=offset)
+    return {"items": items, "total": total}
+
+
+@router.post("/solicitudes/{tipo}/{id_solicitud}/resolver", response_model=MessageResponse)
+def resolver_solicitud(
+    tipo: TipoSolicitud,
+    id_solicitud: UUID,
+    datos: ResolverSolicitudUnificadaRequest,
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+):
+    """Aprueba o rechaza una solicitud de la bandeja unificada, sea cual sea su tipo."""
+    novedad_enviada_service.resolver_unificada(
+        db=db,
+        tipo=tipo,
+        id_solicitud=id_solicitud,
+        aprobar=datos.aprobar,
+        motivo_rechazo=datos.motivo_rechazo,
+        resuelta_por=current_user,
+    )
+    log_accion_admin(
+        current_user.correo_electronico,
+        "solicitud_aprobada" if datos.aprobar else "solicitud_rechazada",
+        tipo=tipo,
+        solicitud=id_solicitud,
+    )
+    mensaje = "Solicitud aprobada." if datos.aprobar else "Solicitud rechazada."
     return MessageResponse(message=mensaje)
 
 
 @router.get("/listar", response_model=List[AdministradorConjuntoResumenResponse])
 def listar_administradores_conjunto(
     query: Optional[str] = None,
-    current_user: Usuario = Depends(get_current_user),
+    limit: int = Query(20, ge=1, le=50),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-024 (CA-024.1): busca Administradores de Conjunto ya existentes, por nombre/apellidos/correo."""
-    _verificar_es_admin_sistema(current_user)
-    return desvinculacion_service.buscar_administradores(db, query)
+    return desvinculacion_service.buscar_administradores(db, query, limit=limit)
 
 
 @router.post("/asignar-conjunto-adicional", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 def asignar_conjunto_adicional(
     datos: AsignarConjuntoAdicionalRequest,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ):
     """RQF-016 / HU-024 (CA-024.2, CA-024.3): vincula un conjunto sin administrador a un Admin Conjunto existente."""
-    _verificar_es_admin_sistema(current_user)
     desvinculacion_service.asignar_conjunto_adicional(
         db=db,
         id_administrador=datos.id_administrador,
         id_conjunto=datos.id_conjunto_residencial,
+    )
+    log_accion_admin(
+        current_user.correo_electronico,
+        "conjunto_asignado",
+        administrador=datos.id_administrador,
+        conjunto=datos.id_conjunto_residencial,
     )
     return MessageResponse(message="Conjunto asignado correctamente.")

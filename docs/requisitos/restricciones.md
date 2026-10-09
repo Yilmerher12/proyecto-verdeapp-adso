@@ -39,11 +39,11 @@ No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `pyproject.toml
 
 | Tecnología      | Versión fijada |
 | ---------------- | --------------- |
-| React            | 19.2.4           |
+| React            | 19.3.0           |
 | TypeScript       | 5.9.3 (modo estricto)|
 | Vite             | 7.3.6             |
-| TailwindCSS      | 4.1.18            |
-| React Router     | 7.18.2            |
+| TailwindCSS      | 4.3.3             |
+| React Router     | 7.18.4            |
 | react-markdown   | 10.1.0            |
 
 ### Base de datos
@@ -64,10 +64,50 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 
 ## Diseño Visual
 
-- Prohibidos los degradados (`gradient`) en la interfaz — colores sólidos únicamente.
-- Tipografía exclusivamente sans-serif.
+- Prohibidos los degradados (`gradient`) en la interfaz — colores sólidos únicamente. Para oscurecer una foto de fondo y dar contraste al texto encima, se usa una capa de un solo color con opacidad (ej. `bg-accent-950/75`, como en el hero de la landing), nunca un degradado.
+- Tipografía exclusivamente sans-serif. Dos fuentes, ambas de Google Fonts: **Outfit** para títulos (`h1`–`h3`, aplicada sola desde `fe/src/index.css`; en otro elemento, clase `font-display`) e **Inter** para todo lo demás (texto, formularios, tablas, botones). No se agregan más fuentes.
 - Los botones de acción principal van alineados a la derecha en formularios y modales.
-- Iconografía: únicamente `lucide-react` — no mezclar con otras librerías de íconos.
+- Iconografía: únicamente `lucide-react` — no mezclar con otras librerías de íconos. Tampoco se usan emojis ni caracteres sueltos (📬, ↗, ✓…) como íconos en la interfaz, y se importa cada ícono con su nombre actual en lucide (ej. `LoaderCircle`, no el alias viejo `Loader2`).
+- Imágenes en `fe/public/`: solo las que usa el código (una imagen sin referencias se borra; queda en el historial de git). Las fotos de fondo van a máximo 1920 px de ancho y comprimidas (JPEG calidad ~75): una pantalla Full HD no muestra más, y el resto solo alarga la carga.
+- Ícono por concepto (un concepto = un ícono en toda la app; si aparece un concepto nuevo, se agrega a esta tabla):
+
+  | Concepto | Ícono (`lucide-react`) |
+  | --- | --- |
+  | Roles | Residente `UserRound` · Reciclador `HardHat` · Admin. de Conjunto `UserCog` · Administrador `ShieldUser` (definidos solo en `fe/src/config/roleTheme.ts`) |
+  | Conjunto residencial | `Building` |
+  | Activar / desactivar | Usuario `UserCheck` / `UserX` · Punto de acopio `MapPin` / `MapPinOff` |
+  | Mensajes | Éxito `BadgeCheck` · Error `OctagonX` · Aviso `TriangleAlert` · Info `Info` |
+  | Comunicados / novedades | `Megaphone` / `Newspaper` |
+  | Puntos de acopio / directorio / localidad | `Warehouse` / `MapPinned` / `Map` (una dirección concreta sigue con `MapPin`) |
+  | Seguridad (cambiar contraseña) | `KeyRound` |
+  | Semáforo de auditoría | Caritas `Smile` / `Meh` / `Frown` (definidas en `fe/src/config/nivelesDesempeno.ts`) |
+
+- Tamaño de íconos: solo 5, con una clase por uso definida en `fe/src/index.css` — nunca `h-*`/`w-*` sueltos en un ícono:
+
+  | Clase | Tamaño | Uso |
+  | --- | --- | --- |
+  | `icon-sm` | 14 px | Dentro de texto pequeño: chips, flechas de tabla, requisitos de contraseña |
+  | `icon-md` | 16 px | Botones, campos, junto al título de una sección |
+  | `icon-lg` | 20 px | Navegación (sidebar), campana, mensajes, caritas del semáforo, modales |
+  | `icon-xl` | 32 px | Destacado: encabezado del dashboard, estado vacío, tarjetas de rol del registro |
+  | `icon-deco` | 80 px | Decorativo: marca de agua del dashboard |
+
+- Animación de íconos: solo en lo que se puede tocar (sidebar, botones, selector del semáforo) o en lo que aparece para avisar (mensajes). Se usan las clases `icon-draw`, `icon-hop`, `icon-shake`, `icon-ring`, `icon-nudge` y `icon-appear` de `fe/src/index.css`, que ya respetan `prefers-reduced-motion`. No se agregan librerías de animación.
+- Paleta de marca: "Páramo Fresco" en modo claro y "Bosque Andino" en modo oscuro, definidas como escala `green-*` (y `accent-*` apuntando a ella) en `fe/src/index.css`. Los botones principales usan `accent-*`; no hay un color de acento distinto (ni azul ni amarillo) para botones. Los paneles no llevan imagen de fondo: el área de contenido es un color sólido.
+- Texto secundario y metadatos (fechas, contadores, ayudas): siempre `text-gray-500 dark:text-gray-400`. Nunca `text-gray-400` en modo claro (2.60 de contraste) ni la pareja invertida `text-gray-400 dark:text-gray-500`, que falla en los dos modos. Verde de marca como texto pequeño sobre fondo verde oscuro: `accent-300` (ver `docs/gestion-proyecto/auditoria-contraste-paleta-nueva.md`).
+- Ningún color escrito a mano en componentes (`bg-[#12231a]`, `border-[#23392b]`…): todo color sale de un token de `fe/src/index.css`. Las superficies del modo oscuro tienen su propio token (siempre con `dark:`):
+
+  | Token | Uso |
+  | --- | --- |
+  | `night-base` | Fondo raíz (auth, legales, shell, footer) |
+  | `night-page` | Fondo del área de contenido de los paneles |
+  | `night-card` | Tarjetas |
+  | `night-panel` | Modales, tarjeta de login, barras fijas |
+  | `night-inset` | Zonas hundidas: filas en hover, botón secundario |
+  | `night-field` | Campos de formulario |
+  | `night-line` | Bordes |
+  | `night-hover` | Fondo al pasar el mouse |
+- Logo: solo en SVG, en `fe/public/logos/` (`logo`, `logo-white`, `logo-mark`, `logo-mark-white` y `favicon`). Ninguna página pone un `<img>` del logo a mano: siempre se usa el componente `BrandLogo` (`fe/src/components/ui/BrandLogo.tsx`), que elige la versión según el fondo y el modo oscuro. No se usan PNG ni íconos de `lucide-react` (como `Leaf`) en lugar del logo.
 - El color de marca (`accent-*`) es el único acento de color permitido en componentes reutilizables; los colores por rol (sidebar, badges) viven centralizados en `fe/src/config/roleTheme.ts`, no repetidos por archivo.
 - Todo componente nuevo debe soportar modo claro y modo oscuro (`dark:`) desde el primer commit — no se agrega como una tarea aparte después.
 
@@ -96,4 +136,5 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 - Toda credencial (contraseñas de base de datos, `SECRET_KEY`, credenciales de correo) vive en `.env`, nunca en el código ni en el repositorio. `.env.example` es obligatorio y debe mantenerse con valores de ejemplo funcionales (no reales).
 - CORS restringido explícitamente al dominio del frontend — nunca `allow_origins=["*"]`.
 - Límite de intentos de inicio de sesión (rate limiting) para mitigar fuerza bruta.
+- Toda regla de un formulario se repite en el backend (schema de Pydantic): el frontend solo guía al usuario, el backend es el que protege, porque cualquiera puede llamar a la API sin pasar por el formulario. Todo campo de texto tiene un máximo igual al tamaño de su columna en la base de datos, en los dos lados (`maxLength` en el input, validación en el schema), para que un texto largo se rechace con 422 y nunca llegue a la base de datos como un error 500. Nombres y apellidos: solo letras con espacio, apóstrofe, punto o guion (`fe/src/lib/validacion.ts` / `be/app/schemas/user.py`).
 - Ningún endpoint que modifique o consulte datos sensibles queda sin autenticación — cualquier excepción debe justificarse explícitamente en el código, como ya se documentó en el incidente de `admin.py` corregido en este proyecto.

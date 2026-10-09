@@ -27,7 +27,7 @@ describe("ImagenAdjuntaField", () => {
   });
 
   it("muestra el botón de seleccionar cuando no hay imagen", () => {
-    render(<ImagenAdjuntaField label="Imagen" value="" onChange={vi.fn()} token="token" />);
+    render(<ImagenAdjuntaField label="Imagen" value="" onChange={vi.fn()} />);
     expect(screen.getByText("Seleccionar imagen")).toBeInTheDocument();
   });
 
@@ -36,14 +36,12 @@ describe("ImagenAdjuntaField", () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
 
-    const { container } = render(
-      <ImagenAdjuntaField label="Imagen" value="" onChange={onChange} token="token-123" />
-    );
+    const { container } = render(<ImagenAdjuntaField label="Imagen" value="" onChange={onChange} />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(input, crearArchivoImagen());
 
     await waitFor(() => {
-      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), "token-123", { permitirDocumentos: false });
+      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), { permitirDocumentos: false });
       expect(onChange).toHaveBeenCalledWith("/uploads/adjuntos/abc123.png");
     });
   });
@@ -56,9 +54,7 @@ describe("ImagenAdjuntaField", () => {
     //       vez de elegirlo del selector), se dispara el evento a mano.
     const onChange = vi.fn();
 
-    const { container } = render(
-      <ImagenAdjuntaField label="Imagen" value="" onChange={onChange} token="token" />
-    );
+    const { container } = render(<ImagenAdjuntaField label="Imagen" value="" onChange={onChange} />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     const archivo = crearArchivoImagen("documento.pdf", "application/pdf");
     Object.defineProperty(input, "files", { value: [archivo] });
@@ -73,9 +69,7 @@ describe("ImagenAdjuntaField", () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
 
-    const { container } = render(
-      <ImagenAdjuntaField label="Imagen" value="" onChange={onChange} token="token" />
-    );
+    const { container } = render(<ImagenAdjuntaField label="Imagen" value="" onChange={onChange} />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(input, crearArchivoImagen("grande.png", "image/png", 6 * 1024 * 1024));
 
@@ -87,13 +81,25 @@ describe("ImagenAdjuntaField", () => {
     mockSubirAdjunto.mockRejectedValue(new Error("falló"));
     const user = userEvent.setup();
 
-    const { container } = render(
-      <ImagenAdjuntaField label="Imagen" value="" onChange={vi.fn()} token="token" />
-    );
+    const { container } = render(<ImagenAdjuntaField label="Imagen" value="" onChange={vi.fn()} />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(input, crearArchivoImagen());
 
     expect(await screen.findByText("No se pudo subir la imagen. Intenta de nuevo.")).toBeInTheDocument();
+  });
+
+  it("si el servidor da el motivo (cuota de subidas, demasiados píxeles), lo muestra en vez del mensaje genérico", async () => {
+    mockSubirAdjunto.mockRejectedValue({
+      response: { status: 429, data: { detail: "Llegaste al máximo de 5 archivos subidos en un día. Intenta de nuevo mañana." } },
+    });
+    const user = userEvent.setup();
+
+    const { container } = render(<ImagenAdjuntaField label="Imagen" value="" onChange={vi.fn()} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, crearArchivoImagen());
+
+    expect(await screen.findByText("Llegaste al máximo de 5 archivos subidos en un día. Intenta de nuevo mañana.")).toBeInTheDocument();
+    expect(screen.queryByText("No se pudo subir la imagen. Intenta de nuevo.")).not.toBeInTheDocument();
   });
 
   it("muestra la vista previa y permite quitar la imagen ya elegida", async () => {
@@ -101,12 +107,7 @@ describe("ImagenAdjuntaField", () => {
     const user = userEvent.setup();
 
     render(
-      <ImagenAdjuntaField
-        label="Imagen"
-        value="/uploads/adjuntos/existente.png"
-        onChange={onChange}
-        token="token"
-      />
+      <ImagenAdjuntaField label="Imagen" value="/uploads/adjuntos/existente.png" onChange={onChange} />
     );
 
     expect(screen.getByRole("img")).toBeInTheDocument();
@@ -124,22 +125,20 @@ describe("ImagenAdjuntaField", () => {
     const user = userEvent.setup();
 
     const { container } = render(
-      <ImagenAdjuntaField label="Adjunto" value="" onChange={onChange} token="token" permitirDocumentos />
+      <ImagenAdjuntaField label="Adjunto" value="" onChange={onChange} permitirDocumentos />
     );
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(input, crearArchivoImagen("circular.pdf", "application/pdf"));
 
     await waitFor(() => {
-      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), "token", { permitirDocumentos: true });
+      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), { permitirDocumentos: true });
       expect(onChange).toHaveBeenCalledWith("/uploads/adjuntos/circular.pdf");
     });
   });
 
   it("sin permitirDocumentos, sigue rechazando un PDF (Novedades no cambia)", async () => {
     const onChange = vi.fn();
-    const { container } = render(
-      <ImagenAdjuntaField label="Adjunto" value="" onChange={onChange} token="token" />
-    );
+    const { container } = render(<ImagenAdjuntaField label="Adjunto" value="" onChange={onChange} />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     const archivo = crearArchivoImagen("documento.pdf", "application/pdf");
     Object.defineProperty(input, "files", { value: [archivo] });
@@ -149,13 +148,21 @@ describe("ImagenAdjuntaField", () => {
     expect(mockSubirAdjunto).not.toHaveBeenCalled();
   });
 
+  // ¿Qué? Issue #400 (CN-048): un valor guardado con una ruta insegura (aquí
+  //       "..", escrito en forma codificada) no se pinta como miniatura.
+  it("no pinta la miniatura si la ruta guardada no es segura", () => {
+    render(<ImagenAdjuntaField label="Imagen" value="/uploads/%2e%2e/api/foto.png" onChange={vi.fn()} />);
+
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(screen.getByText("foto.png")).toBeInTheDocument();
+  });
+
   it("con permitirDocumentos, muestra el nombre del archivo (no una miniatura) para un PDF ya guardado", () => {
     render(
       <ImagenAdjuntaField
         label="Adjunto"
         value="/uploads/adjuntos/circular.pdf"
         onChange={vi.fn()}
-        token="token"
         permitirDocumentos
       />
     );

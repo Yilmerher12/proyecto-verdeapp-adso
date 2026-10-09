@@ -75,8 +75,11 @@ Otro ejemplo, en `auditoria_conjunto_service.py::obtener_por_id` (agregado en es
 
 ```python
 # be/app/utils/security.py
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 ```
+
+> **Issue #312 (2026-09-24):** antes esto se hacía con `passlib` (`CryptContext`), sin mantenimiento desde 2020. Ahora se usa `bcrypt` directo. bcrypt solo usa los primeros 72 bytes de la contraseña, así que `schemas/user.py` rechaza las más largas en vez de cortarlas en silencio.
 
 bcrypt es deliberadamente **lento** — a diferencia de SHA-256 (rápido, pensado para hashes de integridad, no de contraseñas), un atacante con una GPU no puede probar miles de millones de combinaciones por segundo contra un hash bcrypt.
 
@@ -254,9 +257,25 @@ if not user or not verify_password(login_data.password, password_hash):
 
 Las dos ramas ahora tardan lo mismo — no queda ninguna señal de temporización que un atacante pueda medir.
 
+### Agregado después (2026-10-05): los otros caminos que revelaban correos (issue #373)
+
+El login ya no revelaba nada, pero otros tres lugares sí:
+
+1. **Cuenta bloqueada (CN-026)**: respondía 403 "Demasiados intentos fallidos". Bastaba fallar 5 veces con un correo ajeno para saber si tenía cuenta. Ahora responde el mismo 401 que una contraseña incorrecta, con una línea extra para el dueño real: *"Si fallaste varias veces, espera 15 minutos e intenta de nuevo."*
+2. **Registro (CN-026)**: respondía "El correo ya está registrado.". Ahora responde siempre "Registro recibido. Revisa tu correo..." y, si el correo ya tenía cuenta, no crea nada y le manda al dueño un correo de aviso. Las validaciones del Residente (conjunto, código de acceso) corren antes de mirar el correo, y bcrypt corre en los dos caminos: ni el mensaje, ni las validaciones, ni el tiempo distinguen un caso del otro.
+3. **Recuperar contraseña (CN-027)**: el mensaje ya era genérico, pero si el correo existía se esperaba a que saliera el correo por SMTP antes de responder. La diferencia de tiempo delataba el correo. Ahora el correo sale con `BackgroundTasks`, después de responder.
+
+Además (**CN-031**), los tokens de un solo uso (verificar correo, recuperar contraseña, invitación de Admin de Conjunto) ya no se guardan tal cual: la BD guarda su `sha256` (`hash_token` en `be/app/utils/security.py`) y el token original solo viaja en el correo. Si alguien lee la base de datos, no puede usar esos tokens. Se usa sha256 y no bcrypt porque el token es un UUID aleatorio, no una contraseña que se pueda adivinar.
+
 ### Agregado después (2026-08-28): logout que invalida el token de verdad (HU-008/RQF-007)
 
 Otro hueco de sesión encontrado: "cerrar sesión" solo borraba el token del navegador (`sessionStorage`) — el servidor nunca se enteraba, así que ese mismo `access_token`, si alguien lo hubiera copiado antes, seguía siendo válido hasta expirar solo (15 minutos). Se agregó un `jti` único a cada token y una tabla `tokens_revocados`: al cerrar sesión (`POST /api/v1/auth/logout`), el `jti` del access y del refresh token se guarda ahí, y `get_current_user`/`refresh_access_token` los rechazan con 401 aunque no hayan expirado. Verificado con curl reutilizando el token exacto de una sesión recién cerrada.
+
+### Agregado después (2026-09-23): cambiar la contraseña cierra las demás sesiones (issue #308)
+
+El informe de seguridad Cyber Neo (hallazgo CN-010) encontró el siguiente hueco: cambiar o restablecer la contraseña solo guardaba el hash nuevo. Un token robado seguía sirviendo hasta 7 días (lo que dura el refresh token), aunque la víctima ya hubiera cambiado su contraseña, que es justo lo primero que hace alguien que sospecha que le entraron a la cuenta. Además, `/refresh` entregaba un par nuevo sin revocar el refresh token usado, así que un mismo refresh token se podía reutilizar sin límite.
+
+Se agregó `usuarios.version_sesion`, un contador que sube con cada cambio o restablecimiento de contraseña. Cada JWT lleva la versión vigente (claim `ver`), y `get_current_user`/`refresh_access_token` rechazan los que no coinciden. `/change-password` le entrega cookies nuevas a quien hizo el cambio: se cierran las otras sesiones, pero no la suya. Y `/refresh` ahora rota: el refresh token usado pasa a `tokens_revocados` (ver RQF-019, RN-005 y RN-006).
 
 ---
 
@@ -294,6 +313,56 @@ Conectado en `login_user()` (éxito y las 2 razones de fallo: credenciales invá
 **¿Por qué el correo redactado (`re***@correo.com`)?** Un archivo de logs es, en el fondo, un archivo de texto más. Si el servidor se compromete, los logs no deben revelar el correo completo de nadie — la redacción deja lo suficiente para diagnosticar sin exponer el dato completo.
 
 > **Alcance de esta primera versión**: se conectó en login y cambio de contraseña, los dos eventos de mayor impacto de seguridad. Extenderlo a los `_verificar_es_*` de cada router (registrar cada acceso denegado por rol) es un buen siguiente paso, no incluido aún.
+
+### Agregado después (2026-09-23): los eventos no llegaban a ningún lado (issue #309)
+
+El informe de seguridad Cyber Neo (hallazgos CN-012 y CN-011) encontró dos problemas encadenados:
+
+1. **El registro de auditoría se descartaba en silencio.** La app nunca configuraba el logging de Python (`logging.basicConfig`), así que el logger raíz quedaba en su nivel por defecto (`WARNING`) y todo `logger.info()` se perdía, incluidos los eventos de `audit_log.py`. El módulo existía, pero no dejaba ningún rastro. Se agregó `basicConfig(level=INFO)` en `be/app/main.py`.
+2. **Arreglar el punto 1 abría un hueco.** `be/app/utils/email.py` escribía en el log el enlace completo de recuperación de contraseña, verificación e invitación de admin (con su token) cuando el envío fallaba o no había backend de correo, en cualquier entorno. Mientras nada se registraba, no se notaba. Ahora ese bloque vive una sola vez en `_enviar()` (antes estaba copiado 12 veces), y el enlace solo se escribe con `ENVIRONMENT=development`. En `production` queda "falló el envío a `ye***@gmail.com`".
+
+También se completó el "siguiente paso" de la nota de arriba: `require_role()` y `require_admin_conjunto()` (`be/app/dependencies.py`), que desde el issue #216 reemplazan a los `_verificar_es_*`, llaman a `log_acceso_denegado` en cada 403. Y el envío SMTP hace `starttls()` antes de `login()` cuando hay un servidor con usuario (CN-023); Mailpit no tiene usuario y sigue igual.
+
+### Agregado después (2026-10-05): acciones de los administradores (issue #376)
+
+El mismo hallazgo CN-012 señaló que las acciones de administración no dejaban rastro: si un Admin desactivaba una cuenta o regeneraba un código de acceso, después no había forma de saber quién lo hizo ni cuándo. Se agregó una función más:
+
+```python
+def log_accion_admin(correo_admin: str, accion: str, **detalles) -> None: ...
+```
+
+Una sola función para todas las acciones (en vez de una por acción): todas anotan lo mismo, quién, qué y sobre qué. Se llama desde el router, justo después de que la acción termina bien; si la acción falla (403, 404...), el error sale antes y no se anota nada.
+
+| Rol | Acción (`action`) | Qué se anota además |
+|---|---|---|
+| Admin Sistema | `usuario_habilitado` / `usuario_deshabilitado` | correo del usuario, redactado |
+| Admin Sistema | `admin_conjunto_invitado` | correo invitado (redactado) y conjuntos |
+| Admin Sistema | `desvinculacion_aprobada` / `desvinculacion_rechazada` | id de la solicitud |
+| Admin Sistema | `solicitud_aprobada` / `solicitud_rechazada` | tipo e id de la solicitud |
+| Admin Sistema | `conjunto_asignado` | id del administrador y del conjunto |
+| Admin Sistema | `punto_acopio_eliminado` | id del punto (es el único rastro: se borra para siempre) |
+| Admin Sistema | `punto_acopio_creado` / `_editado` / `_dado_de_baja` / `_reactivado` | id del punto |
+| Admin Sistema | `contenido_educativo_creado` / `_editado` / `_eliminado` | id del módulo |
+| Admin Sistema | `contenido_educativo_enviado` | id del módulo y conjuntos destino |
+| Admin Sistema | `novedad_creada` / `_editada` / `_archivada` | id de la novedad |
+| Admin Conjunto | `comunicado_creado` / `_editado` / `_eliminado` | id del comunicado (y conjunto al crear) |
+| Admin Conjunto | `conjunto_editado` / `desvinculacion_solicitada` | id del conjunto |
+| Admin Conjunto (invitado) | `admin_conjunto_invitacion_aceptada` | solo el correo de la cuenta nueva, redactado |
+| Admin Conjunto | `codigo_acceso_regenerado` | id del conjunto |
+| Admin Conjunto | `reciclador_invitado` | correo del reciclador (redactado) y conjunto |
+| Admin Conjunto | `reciclador_revocado` | id del reciclador y del conjunto |
+
+```json
+{"timestamp": "2026-10-05T14:00:00+00:00", "event": "admin_action", "admin": "ad***@verdeapp.com", "action": "usuario_deshabilitado", "usuario": "re***@verdeapp.com"}
+```
+
+**Lo que nunca se anota:** contraseñas, tokens, el **código de acceso nuevo** (con él cualquiera que lea el log podría registrarse en ese conjunto) ni los **textos libres** (motivos al desactivar, rechazar o desvincular; texto de comunicados y novedades; NIT), que pueden traer datos personales.
+
+### Agregado después (2026-10-07): lo que había quedado sin anotar (issue #401)
+
+- El contenido que antes se había dejado fuera (comunicados, novedades, puntos de acopio, contenido educativo) ahora también se anota: es lo que un administrador publica a nombre de la plataforma y conviene poder responder "¿quién lo cambió?". La agenda interna del conjunto sigue sin anotarse (nunca sale de su panel).
+- **Toda línea del log lleva la IP de origen** (`"ip"`). El middleware de `main.py` la guarda en una variable de contexto (`ip_de_origen`) y `_registrar` la lee, así ningún router tiene que pasarla. Detrás de un proxy sería la IP del proxy, igual que en el rate limiter (ver `utils/limiter.py`).
+- Tres eventos nuevos de cuenta, solo con el correo redactado: `register_requested` (se anota igual si la cuenta se creó o el correo ya existía, porque la respuesta es la misma), `email_verified` y `logout`.
 
 ---
 

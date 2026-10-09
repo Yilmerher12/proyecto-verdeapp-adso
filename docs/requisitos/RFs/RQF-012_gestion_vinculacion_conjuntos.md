@@ -61,7 +61,7 @@ El nombre del RF quedó como "Invitación y Vinculación Inicial" por su alcance
 5. El Admin de Conjunto puede volver a invitar al mismo reciclador más adelante (Flujo B); el historial de la revocación anterior no lo impide.
 
 ### Flujo D — Admin de Conjunto gestiona los datos de su propio conjunto (HU-044)
-1. El Admin de Conjunto edita el NIT de un conjunto que administra — nombre y dirección **no** son editables porque vienen ya verificados desde el dataset oficial de la Alcaldía de Bogotá (issue #180).
+1. El Admin de Conjunto edita el NIT y la cantidad de apartamentos de un conjunto que administra — nombre y dirección **no** son editables porque vienen ya verificados desde el dataset oficial de la Alcaldía de Bogotá (issue #180). Con la cantidad de apartamentos, su panel muestra cuántos apartamentos ya tienen residentes registrados y cuántos faltan (se cuentan apartamentos con al menos un residente con cuenta activa).
 2. El Admin de Conjunto puede regenerar el `código de acceso` de su conjunto — el código que reparte fuera de la app (cartelera, grupo del conjunto) para que un Residente demuestre que vive ahí al registrarse. Regenerarlo invalida el código anterior de inmediato.
 
 ---
@@ -73,7 +73,8 @@ El nombre del RF quedó como "Invitación y Vinculación Inicial" por su alcance
 - RN-003: El enlace de invitación para un nuevo Admin de Conjunto es de un solo uso y expira si no se acepta a tiempo.
 - RN-004: Un reciclador solo queda autorizado en un conjunto después de aceptar explícitamente la invitación — nunca de forma automática.
 - RN-005: Solo el Admin de Conjunto que administra ese conjunto puede revocar el acceso de un reciclador ahí — igual que RN-002 para invitar. La revocación es un soft-delete (se conserva el historial), nunca borra el vínculo.
-- RN-006: El Admin de Conjunto solo puede editar el NIT de un conjunto que administra — nombre y dirección son de solo lectura, verificados desde el dataset oficial. Solo puede regenerar el código de acceso de sus propios conjuntos.
+- RN-006: El Admin de Conjunto solo puede editar el NIT y la cantidad de apartamentos (entero entre 1 y 20000, opcional) de un conjunto que administra — nombre y dirección son de solo lectura, verificados desde el dataset oficial. Solo puede regenerar el código de acceso de sus propios conjuntos.
+- RN-007 (issue #398, CN-056 y CN-057): `POST /api/v1/reciclador-conjunto/invitar` acepta máximo 20 peticiones por hora desde una misma IP (la siguiente responde 429), y un conjunto no puede tener más de 20 invitaciones a recicladores pendientes (sin responder ni vencer) a la vez; la siguiente responde 400. Sin esto, un Admin de Conjunto podía probar correos sin freno (el 404 "no existe ningún Reciclador" frente al 201 revela qué correos son de recicladores) y cada acierto manda un correo. `GET /api/v1/admin-conjunto/invitacion` (pública, con token) acepta máximo 10 consultas por minuto desde una misma IP. **Implementado (2026-10-07).**
 
 ---
 
@@ -86,4 +87,4 @@ El nombre del RF quedó como "Invitación y Vinculación Inicial" por su alcance
 | [HU-020](../HUs/HU-020_admin_conjunto_invita_reciclador.md) | Admin de Conjunto invita a un reciclador a su conjunto |
 | [HU-021](../HUs/HU-021_reciclador_responde_invitacion.md) | Reciclador acepta o rechaza la invitación a un conjunto |
 | [HU-038](../HUs/HU-038_admin_conjunto_revoca_reciclador.md) | Admin de Conjunto revoca el acceso de un reciclador |
-| [HU-044](../HUs/HU-044_admin_conjunto_gestiona_datos_propio_conjunto.md) | Admin de Conjunto edita el NIT y regenera el código de acceso de su conjunto |
+| [HU-044](../HUs/HU-044_admin_conjunto_gestiona_datos_propio_conjunto.md) | Admin de Conjunto edita el NIT y la cantidad de apartamentos, y regenera el código de acceso de su conjunto |

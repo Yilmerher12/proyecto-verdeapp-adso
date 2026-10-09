@@ -21,11 +21,3 @@ class ConjuntoResponse(BaseModel):
     direccion: str
 
     model_config = ConfigDict(from_attributes=True)
-
-class UnidadResponse(BaseModel):
-    id_unidad: UUID
-    id_conjunto_residencial: UUID
-    torre: str
-    apto: str
-
-    model_config = ConfigDict(from_attributes=True)

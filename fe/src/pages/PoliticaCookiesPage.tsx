@@ -26,20 +26,14 @@ interface CookieEntry {
 const SERVICE_COOKIES: readonly CookieEntry[] = [
   { name: "access_token" },
   { name: "refresh_token" },
-  { name: "theme_preference" },
 ] as const;
 
-interface PoliticaCookiesPageProps {
-  /** ¿Qué? Ver LegalLayout — true cuando se muestra dentro de un Modal. */
-  embedded?: boolean;
-}
-
-export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPageProps) {
+export function PoliticaCookiesPage() {
   const { t } = useTranslation();
 
   const S = <strong className="text-gray-700 dark:text-gray-300" />;
   const C = (
-    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1 text-xs text-accent-700 dark:text-accent-300" />
+    <code className="rounded bg-gray-100 dark:bg-night-inset px-1 text-xs text-accent-700 dark:text-accent-300" />
   );
   // ¿Qué? Antes eran <a href="..."> planos.
   // ¿Para qué? Un <a> hacia una ruta interna hace una recarga completa de
@@ -71,9 +65,8 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
   return (
     <LegalLayout
       title={t("legal.cookies.title")}
-      lastUpdated="2026-02-01"
-      version="1.0"
-      embedded={embedded}
+      lastUpdated="2026-09-11"
+      version="1.1"
     >
       <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
         <Trans i18nKey="legal.cookies.intro1" components={{ strong: S }} />
@@ -93,7 +86,7 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
         <p>{t("legal.cookies.s2.p1")}</p>
 
         <div className="mt-4 space-y-4">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-[#2a4d34] dark:bg-[#132a1c] p-4">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-night-line dark:bg-night-panel p-4">
             <h3 className="mb-1 text-sm font-semibold text-accent-400">
               {t("legal.cookies.s2.authCategory.title")}
             </h3>
@@ -108,11 +101,10 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
             </p>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-[#2a4d34] dark:bg-[#132a1c] p-4">
-            <h3 className="mb-1 text-sm font-semibold text-accent-400">
-              {t("legal.cookies.s2.prefCategory.title")}
-            </h3>
-            <p>{t("legal.cookies.s2.prefCategory.p1")}</p>
+          <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-night-line dark:bg-night-panel p-4">
+            <p>
+              <Trans i18nKey="legal.cookies.s2.localStorageNote" components={{ strong: S, code: C }} />
+            </p>
           </div>
         </div>
       </LegalSection>
@@ -122,9 +114,9 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
           <Trans i18nKey="legal.cookies.s3.intro" components={{ strong: S }} />
         </p>
 
-        <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a4d34]">
+        <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-night-line">
           <table className="w-full text-sm">
-            <thead className="bg-gray-100 dark:bg-[#132a1c]">
+            <thead className="bg-gray-100 dark:bg-night-panel">
               <tr>
                 {(["name", "purpose", "duration", "type"] as const).map((header) => (
                   <th
@@ -141,10 +133,10 @@ export function PoliticaCookiesPage({ embedded = false }: PoliticaCookiesPagePro
               {SERVICE_COOKIES.map((cookie) => (
                 <tr
                   key={cookie.name}
-                  className="bg-white dark:bg-[#03130b] hover:bg-gray-50 dark:hover:bg-[#132a1c] transition-colors"
+                  className="bg-white dark:bg-night-base hover:bg-gray-50 dark:hover:bg-night-panel transition-colors"
                 >
                   <td className="px-4 py-3">
-                    <code className="rounded bg-gray-100 dark:bg-[#0d2116] px-1.5 py-0.5 text-xs text-accent-700 dark:text-accent-300">
+                    <code className="rounded bg-gray-100 dark:bg-night-inset px-1.5 py-0.5 text-xs text-accent-700 dark:text-accent-300">
                       {cookie.name}
                     </code>
                   </td>

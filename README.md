@@ -35,10 +35,10 @@ El proyecto utiliza una estructura de arquitectura limpia y desacoplada, facilit
 | Gestor de Paquetes (Backend)  | uv                      | —                        | Resuelve e instala las dependencias exactas de `pyproject.toml`/`uv.lock` — reemplazó a pip + requirements.txt por resolución más rápida y reproducible. |
 | Persistencia / ORM            | PostgreSQL & SQLAlchemy | 17-alpine / 2.0+         | Motor relacional robusto con consultas tipadas y transacciones atómicas.          |
 | Control de BD                 | Alembic                 | 1.18+                    | El esquema (tablas y cambios futuros) se crea y versiona con migraciones de Alembic al arrancar el backend; los datos de prueba se siembran aparte con `be/app/seed.py`. |
-| Seguridad                     | python-jose & bcrypt    | 3.5+ / 4.0+              | Cifrado de contraseñas en hash y tokens de sesión (JWT) con claims de roles inyectados. |
-| Frontend Core                 | React & TypeScript      | 19.2 / 5.9+              | Interfaz reactiva basada en componentes modulares y tipado seguro.                |
+| Seguridad                     | PyJWT & bcrypt          | 2.15 / 5.0               | Cifrado de contraseñas en hash y tokens de sesión (JWT) con claims de roles inyectados. |
+| Frontend Core                 | React & TypeScript      | 19.3 / 5.9+              | Interfaz reactiva basada en componentes modulares y tipado seguro.                |
 | Empaquetador Frontend         | Vite                    | 7.3+                     | Servidor de desarrollo con recarga instantánea (HMR) y build de producción optimizado. |
-| Estilos UI                    | TailwindCSS             | 4.1+                     | Paradigma Utility-First para diseño adaptivo y consistente con Figma.             |
+| Estilos UI                    | TailwindCSS             | 4.3+                     | Paradigma Utility-First para diseño adaptivo y consistente con Figma.             |
 | Gestor de Paquetes (Frontend) | pnpm (Corepack)         | 11.0.9                   | Resolución eficiente de dependencias mediante almacenamiento enlazado.            |
 | Infraestructura               | Docker & Docker Compose | 24+ / 2.20+              | Contenedores herméticos que aseguran el funcionamiento idéntico en cualquier PC.  |
 | Servidor Web FE               | Nginx                   | 1.27-alpine              | Servidor de alto rendimiento para la distribución de los estáticos del Frontend.  |
@@ -105,6 +105,8 @@ Una vez encendido, la aplicación está disponible en:
 | API / documentación | http://localhost:8000/docs |
 | Bandeja de correos (Mailpit) | http://localhost:8025 |
 | Base de datos | `localhost:5433` |
+
+> 🔒 Estos puertos solo aceptan conexiones desde tu propio computador (`docker-compose.yml` los publica en `127.0.0.1`). Nadie más en tu misma red wifi puede entrar a tu base de datos ni a tu bandeja de Mailpit. Si alguna vez necesitas abrir la app desde tu celular en la misma red, eso se hace a propósito y por separado; no es el comportamiento por defecto.
 
 Para apagar todo cuando termines:
 
@@ -187,6 +189,111 @@ Una vez encendido, la aplicación está disponible en:
 | API / documentación | http://localhost:8000/docs |
 | Bandeja de correos (Mailpit) | http://localhost:8025 |
 | Base de datos | `localhost:5433` |
+
+---
+
+## 🔁 Reiniciar todo desde cero (presentación / demo)
+
+<!--
+  ¿Qué? Pasos para dejar el proyecto exactamente como recién clonado: base
+        de datos vacía + migraciones + seed (4 usuarios de prueba,
+        localidades, conjuntos reales), sin fotos ni adjuntos viejos.
+  ¿Para qué? Antes de una sustentación o demo, o cuando la base quedó en un
+            estado raro después de pruebas manuales. Antes solo existía un
+            "Caso especial" dentro de "Actualizar Migraciones", que servía
+            solo para el Método B y no limpiaba las fotos (issue #368).
+  ¿Impacto? Borra TODOS los datos: usuarios creados a mano, comunicados,
+            auditorías, fotos, todo. No hay forma de recuperarlos.
+-->
+
+> ⚠️ **Esto borra todos los datos** (usuarios que creaste, comunicados, auditorías, fotos subidas). Al terminar solo quedan los datos del seed: las 4 [cuentas de prueba](#-usuarios-de-prueba-precargados), las localidades y los conjuntos reales de Bogotá.
+
+Sigue solo el caso del método con el que corres el proyecto.
+
+### Si usas el Método A (todo con Docker) — recomendado para la sustentación
+
+Desde la raíz del proyecto:
+
+```bash
+docker compose down -v
+```
+
+```bash
+docker compose up -d --build
+```
+
+- El primero apaga todos los servicios y, con `-v`, borra sus volúmenes: la base de datos (`db_data`) y las fotos y adjuntos subidos (`be_uploads`).
+- El segundo vuelve a levantar todo. Al arrancar, el backend aplica las migraciones y siembra los datos solo (ver el `CMD` de `be/Dockerfile`) — no hay que correr nada más.
+
+Espera a que `docker compose ps` muestre los 4 servicios como `Up` o `healthy` antes de abrir http://localhost:3000.
+
+### Si usas el Método B (backend y frontend en consola)
+
+Antes de empezar, apaga el backend (`Ctrl + C` en la terminal donde corre `uvicorn`). El frontend puede seguir encendido.
+
+**1. Borrar la base de datos y volver a levantarla vacía** (desde la raíz del proyecto):
+
+```bash
+docker compose down verde_db
+```
+
+```bash
+docker volume rm proyecto-verdeapp-adso_db_data
+```
+
+```bash
+docker compose up -d verde_db
+```
+
+> El nombre del volumen depende de la carpeta donde clonaste el repo (`<carpeta>_db_data`). Si el comando falla con "no such volume", revisa el nombre real con `docker volume ls`.
+
+**2. Esperar a que la base de datos esté lista.** Corre este comando hasta que `verde_db` aparezca como `healthy` (con el volumen nuevo, Postgres tarda unos segundos en iniciar; si sigues antes, el siguiente paso falla con `connection to server ... failed`):
+
+```bash
+docker ps
+```
+
+**3. Recrear la base de datos de pruebas** (`pytest` usa una base aparte, `verdeapp_test_db`, que también se borró con el volumen):
+
+```bash
+docker exec verde_db psql -U verde_user -d verdeapp_db -c "CREATE DATABASE verdeapp_test_db OWNER verde_user;"
+```
+
+**4. Borrar las fotos y adjuntos viejos** (en el Método B se guardan en `be/app/uploads/`, no en un volumen de Docker). Desde la raíz del proyecto, en PowerShell:
+
+```powershell
+Remove-Item -Recurse -Force be/app/uploads/adjuntos
+```
+
+```powershell
+Remove-Item -Recurse -Force be/app/uploads/evidencias-auditoria
+```
+
+```powershell
+Remove-Item -Recurse -Force be/app/uploads/perfiles
+```
+
+> Si alguna carpeta no existe (nadie subió nada de ese tipo), PowerShell muestra un error que se puede ignorar. El backend vuelve a crear cada carpeta la próxima vez que alguien sube un archivo. No borres el archivo `be/app/uploads/.gitkeep`.
+
+**5. Aplicar las migraciones y sembrar los datos** — desde `be/` (desde la raíz, `uv` no encuentra `alembic`):
+
+```bash
+cd be
+```
+
+```bash
+uv run alembic upgrade head
+```
+
+```bash
+uv run python -m app.seed
+```
+
+**6. Encender de nuevo el backend:**
+
+```bash
+uv run uvicorn app.main:app --reload --port 8000
+```
 
 ---
 
@@ -302,25 +409,7 @@ Es seguro correrlo aunque no haya nada nuevo — si ya estás al día, no hace n
 
 ### Caso especial — reiniciar la base de datos desde cero
 
-Solo hace falta si tu base de datos quedó en un estado raro (por ejemplo, después de haber probado algo manual directamente sobre ella, o un conflicto de migraciones que no se resuelve con `upgrade head`). Esto **borra todos los datos** — conjuntos, usuarios, todo — y vuelve a dejar la base exactamente como quedaría si acabaras de clonar el repo:
-
-```bash
-# 1. Apagar y borrar el contenedor + volumen de la base de datos (con Docker corriendo)
-docker compose down verde_db
-docker volume rm proyecto-verdeapp-adso_db_data
-
-# 2. Volver a levantar el contenedor, ya vacío
-docker compose up -d verde_db
-
-# 3. Aplicar todas las migraciones desde cero
-cd be
-uv run alembic upgrade head
-
-# 4. Sembrar los datos base (roles, localidades, usuarios de prueba, conjuntos reales)
-uv run python -m app.seed
-```
-
-> El nombre del volumen (`proyecto-verdeapp-adso_db_data`) depende del nombre de la carpeta donde clonaste el repo — Docker Compose lo arma como `<carpeta>_db_data`. Si tu carpeta se llama distinto, verifica el nombre real con `docker volume ls` antes de borrarlo.
+Solo hace falta si tu base de datos quedó en un estado raro (por ejemplo, después de haber probado algo manual directamente sobre ella, o un conflicto de migraciones que no se resuelve con `upgrade head`). Los pasos completos, para el Método A y el Método B, están en [🔁 Reiniciar todo desde cero](#-reiniciar-todo-desde-cero-presentación--demo).
 
 ---
 
@@ -335,7 +424,7 @@ Cada vez que se siembra la base de datos (`uv run python -m app.seed`, o automá
 | Reciclador | `reciclador.prueba@verdeapp.com` | `AdminVerde2026*` |
 | Residente | `residente.prueba@verdeapp.com` | `AdminVerde2026*` |
 
-> ⚠️ **Importante:** Administrador del Sistema y Administrador de Conjunto **no tienen registro público** — solo existen estas cuentas sembradas (el Admin de Conjunto se crea normalmente por invitación del Admin del Sistema, ver [HU-018](docs/requisitos/HUs/HU-018_admin_sistema_invita_admin_conjunto.md)). Si olvidas estas credenciales en un equipo nuevo (p. ej. en el SENA), no hay forma de crear otra cuenta de esos dos roles desde la interfaz — hay que volver a esta tabla.
+> ⚠️ **Importante:** Administrador del Sistema y Administrador de Conjunto **no tienen registro público** — solo existen estas cuentas sembradas (el Admin de Conjunto se crea normalmente por invitación del Admin del Sistema, ver [HU-018](docs/requisitos/HUs/HU-018_admin_sistema_invita_admin_conjunto.md); en el registro, la opción "¿Administras un conjunto?" explica cómo pedir esa invitación, ver [HU-002](docs/requisitos/HUs/HU-002_registro_de_cuenta.md) CA-002.7). Si olvidas estas credenciales en un equipo nuevo (p. ej. en el SENA), no hay forma de crear otra cuenta de esos dos roles desde la interfaz — hay que volver a esta tabla.
 >
 > Residente y Reciclador sí tienen registro público (`/register`), así que para esos dos roles siempre puedes crear una cuenta nueva si lo necesitas.
 
@@ -353,30 +442,35 @@ verde-app/
 ├── scripts/                 # Utilidades Bash (start.sh, stop.sh) para automatizar contenedores
 ├── be/                      # Backend (Python + FastAPI)
 │   ├── app/                 # Código fuente principal de la API
-│   │   ├── data/            # Datos abiertos usados por el seed (ver seed.py)
+│   │   ├── data/            # CSV de conjuntos residenciales reales de Bogotá (lo usa seed.py)
 │   │   ├── models/          # Entidades e imperativos relacionales de SQLAlchemy
 │   │   ├── routers/         # Controladores de endpoints divididos por recursos
 │   │   ├── schemas/         # Modelos de validación estricta de Pydantic (DTOs)
 │   │   ├── services/        # Lógica de negocio pura encapsulada
 │   │   ├── tests/           # Entorno de pruebas automatizadas (pytest)
-│   │   ├── utils/           # Helpers de infraestructura (Seguridad, utilidades)
+│   │   ├── uploads/         # Imágenes subidas por los usuarios, servidas en /uploads
+│   │   ├── utils/           # Helpers de infraestructura (seguridad, correo, imágenes, logs)
+│   │   ├── seed.py          # Siembra roles, localidades, cuentas de prueba y conjuntos reales
 │   │   ├── database.py      # Configuración de la sesión y conexión con la BD
 │   │   ├── dependencies.py  # Inyección de dependencias (Autenticación, Sesión DB)
 │   │   └── main.py          # Punto de entrada y configuración central de FastAPI
 │   ├── .env.example         # Plantilla de variables de entorno (Sin datos sensibles)
-│   ├── alembic.ini          # Configuración de Alembic — el esquema se versiona con migraciones reales
+│   ├── alembic/versions/    # Migraciones: el esquema solo cambia por aquí, nunca con create_all()
+│   ├── alembic.ini          # Configuración de Alembic
 │   ├── Dockerfile           # Instrucciones de empaquetado para la imagen Docker
 │   ├── pyproject.toml       # Manifiesto de dependencias (lo lee uv)
 │   └── uv.lock              # Versiones EXACTAS resueltas de cada dependencia
 ├── fe/                      # Frontend (React + TypeScript + Vite)
 │   ├── src/                 # Código fuente de la interfaz
 │   │   ├── __tests__/       # Entorno de pruebas del Frontend
-│   │   ├── api/             # Instancias y configuraciones de clientes Axios/Fetch
-│   │   ├── components/      # Componentes UI reutilizables (Botones, Formularios)
+│   │   ├── api/             # Instancia de Axios (cookies de sesión, renovación) y endpoints de auth
+│   │   ├── components/      # Componentes UI reutilizables (ui/), layouts (layout/) y piezas de los paneles
+│   │   ├── config/          # Ícono y color de cada rol, semáforo de auditorías, categorías educativas
 │   │   ├── context/         # Proveedores de estado global (Context API)
 │   │   ├── hooks/           # Ganchos personalizados (Lógica reutilizable)
-│   │   ├── locales/         # Archivos de internacionalización
-│   │   ├── pages/           # Vistas principales de la aplicación
+│   │   ├── lib/             # Un cliente por recurso (*Api.ts), fechas, validaciones, eventos entre componentes
+│   │   ├── locales/         # Textos de la interfaz en español e inglés
+│   │   ├── pages/           # Una vista por ruta; dashboards/ tiene el panel de cada rol
 │   │   └── types/           # Definiciones estrictas de interfaces TypeScript
 │   ├── .env.example         # Plantilla de variables de entorno del Frontend
 │   ├── Dockerfile           # Instrucciones de empaquetado para la imagen Docker
@@ -384,6 +478,10 @@ verde-app/
 │   ├── package.json         # Manifiesto de dependencias y scripts de Node.js
 │   ├── pnpm-lock.yaml       # Árbol de dependencias bloqueado (Instalaciones exactas)
 │   └── vite.config.ts       # Configuración del empaquetador Vite
+├── e2e/                     # Pruebas E2E con Playwright (navegador real contra front + back + BD)
+│   ├── tests/               # Un archivo *.spec.js por flujo probado
+│   └── playwright.config.js # URL del frontend y cómo levantarlo
+├── docs/                    # Requisitos (HU/RF/RNF), conceptos, UML y gestión del proyecto
 ├── .gitignore               # Reglas de exclusión de Git (Ignora credenciales y cachés)
 ├── docker-compose.yml       # Archivo maestro de orquestación de contenedores Docker
 ├── LICENSE                  # Licencia del proyecto (CC BY-NC-SA 4.0)
@@ -425,10 +523,11 @@ El proyecto usa dos ramas permanentes y ramas de trabajo temporales:
 | `docs/` | Solo documentación, sin cambios de código |
 | `chore/` | Mantenimiento (dependencias, configuración) sin efecto funcional |
 | `content/` | Cambios de contenido (textos, datos de ejemplo) sin lógica nueva |
+| `test/` | Solo pruebas (ej. los retos semanales del bootcamp de testing: `test/semana-01`) |
 
 **Flujo normal:** crear la rama desde `develop` → hacer el cambio → abrir un Pull Request hacia `develop` → esperar a que el CI (pruebas automáticas) pase en verde → fusionar. `main` solo recibe código a través de `develop`, cuando se prepara una entrega.
 
-**Mensajes de commit:** siguen [Conventional Commits](https://www.conventionalcommits.org/) — `tipo: descripción en español`, por ejemplo `fix: bloquear reportes repetidos sin espera` o `docs: actualizar diagramas UML`. El tipo (`feat`, `fix`, `docs`, `chore`) coincide con el prefijo de la rama.
+**Mensajes de commit:** siguen [Conventional Commits](https://www.conventionalcommits.org/) — `tipo: descripción en español`, por ejemplo `fix: bloquear reportes repetidos sin espera` o `docs: actualizar diagramas UML`. El tipo (`feat`, `fix`, `docs`, `chore`, `test`) coincide con el prefijo de la rama.
 
 ---
 
@@ -445,6 +544,7 @@ Toda la documentación vive en `docs/`, en Markdown, versionada junto con el có
 | [`docs/conceptos/`](docs/conceptos/) | Explicación pedagógica de OWASP Top 10, accesibilidad (ARIA/WCAG) y patrones de arquitectura, con evidencia real de archivo y línea |
 | [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Diagrama de clases y catálogo de casos de uso |
 | [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance |
+| [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md) | Bootcamp de testing: capa de cada integrante por semana y cobertura registrada |
 
 Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implementar`) que se actualiza cada vez que su funcionalidad cambia de verdad — es la fuente de verdad más confiable sobre qué tan avanzado está el proyecto, más que cualquier resumen (incluido este README).
 
@@ -454,15 +554,27 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 | Métrica | Avance |
 |---|---|
-| Historias de Usuario | 42 / 44 implementadas |
-| Requisitos Funcionales | 18 / 19 implementados |
+| Historias de Usuario | 48 / 48 implementadas |
+| Requisitos Funcionales | 21 / 21 implementados |
 | Requisitos No Funcionales | 4 / 6 completos (2 parciales — de naturaleza continua: se miden, no se "terminan") |
-| Pruebas backend (pytest) | 327 |
-| Pruebas frontend (vitest) | 210 |
+| Pruebas backend (pytest) | 604 (6 de octubre de 2026; conteo de hoy: `uv run pytest -q` desde `be/`) |
+| Pruebas frontend (vitest) | Más de 410 (conteo de hoy: `pnpm test` desde `fe/`) |
 
-Pendiente por implementar, documentado con su alcance completo antes de programarlo:
+---
 
-* **RQF-013 — Recomendación de contenido educativo por auditoría** ([issue #4](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/4)): al publicarse una auditoría con resultado negativo, recomendar automáticamente módulos educativos relacionados a los residentes del conjunto.
+## 🧪 Pruebas y cobertura
+
+| Tipo | Dónde | Comando |
+|---|---|---|
+| API e integración (BD real `verdeapp_test_db`) | `be/app/tests/` | `uv run pytest` desde `be/` |
+| Componentes React | `fe/src/__tests__/` | `pnpm test` desde `fe/` |
+| E2E (navegador real) | `e2e/tests/` | `pnpm test` desde `e2e/` |
+
+**Cobertura**: `uv run pytest` y `pnpm test` (en `fe/`) miden siempre qué porcentaje del código ejecutan las pruebas, y **fallan** si baja del umbral configurado (`fail_under` en `be/pyproject.toml`, `thresholds` en `fe/vite.config.ts`). El CI corre esos mismos comandos, así que un PR que baje la cobertura queda en rojo. El umbral solo sube; su historial está en [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md).
+
+**E2E, primera vez** (desde `e2e/`): `pnpm install` y luego `pnpm exec playwright install chromium` (descarga el navegador). Antes de `pnpm test`, el backend y la BD deben estar encendidos (Método B); el frontend lo levanta Playwright solo. `pnpm codegen` abre un navegador que graba lo que haces y lo convierte en código de test.
+
+**E2E y el CI**: las carpetas `e2e/playwright-report/` y `e2e/test-results/` **no se suben como artefacto** del CI (ya están en `.gitignore`). Las trazas de Playwright guardan paso a paso lo que hizo el navegador, y pueden incluir el correo y la contraseña de las cuentas de prueba. Si algún día el CI sube esos reportes, hay que revisar primero qué contienen. Las dependencias de `e2e/` las vigilan Dependabot y un paso `pnpm audit` del CI, igual que las de `fe/`.
 
 ---
 

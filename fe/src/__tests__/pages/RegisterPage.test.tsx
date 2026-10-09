@@ -11,6 +11,7 @@
 
 import { createEvent, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Route, Routes, useLocation } from "react-router-dom";
 import axios from "axios";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { renderWithProviders } from "../helpers";
@@ -154,53 +155,105 @@ describe("RegisterPage", () => {
     ).toBeDisabled();
   });
 
-  it("muestra error si la contraseña es muy corta", async () => {
+  // ¿Qué? Antes estos 5 tests llenaban un dato inválido y recién veían el
+  //       error DESPUÉS de hacer clic en "Registrar Cuenta". Ahora el botón
+  //       ya no se habilita mientras un campo tenga formato inválido, así
+  //       que ese clic ya no es posible (el botón ni se llama "Registrar
+  //       Cuenta" en ese estado) — el aviso aparece solo con salir del
+  //       campo (blur), sin necesidad de intentar enviar el formulario.
+  it("muestra error si la contraseña es muy corta, apenas se sale del campo", async () => {
     const user = userEvent.setup();
     renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
 
+    // ¿Qué? Al escribir "Ab1" y luego pasar a Confirmar Contraseña, el
+    //       campo de contraseña pierde el foco (blur) y se valida solo.
     await llenarCamposComunes(user, { password: "Ab1", confirmPassword: "Ab1" });
-
-    await user.click(screen.getByText("Reciclador"));
-    await waitFor(() => screen.getByText("Localidad de Trabajo *"));
-    const selects = screen.getAllByRole("combobox");
-    await user.selectOptions(selects[0], "1");
-
-    await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
 
     // ¿Qué? Mismo texto que usan ChangePasswordPage/ResetPasswordPage — las
     //       4 pantallas que piden contraseña comparten a propósito las
     //       claves auth.register.validation.* (ver PasswordStrengthIndicator.tsx).
     expect(screen.getByText("Mínimo 8 caracteres")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Completa los campos y acepta los términos" }),
+    ).toBeDisabled();
   });
 
-  it("muestra error si las contraseñas no coinciden", async () => {
+  it("muestra error si las contraseñas no coinciden, apenas se sale del campo", async () => {
     const user = userEvent.setup();
     renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
 
     await llenarCamposComunes(user, { confirmPassword: "Password2" });
+    // ¿Qué? Confirmar Contraseña queda con el foco al terminar
+    //       llenarCamposComunes — hay que salir de él para que se valide.
     await user.click(screen.getByText("Reciclador"));
-    await waitFor(() => screen.getByText("Localidad de Trabajo *"));
-    const selects = screen.getAllByRole("combobox");
-    await user.selectOptions(selects[0], "1");
-
-    await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
 
     expect(screen.getByText("Las contraseñas no coinciden")).toBeInTheDocument();
   });
 
-  it("muestra error si los correos no coinciden", async () => {
+  it("muestra error si los correos no coinciden, apenas se sale del campo", async () => {
     const user = userEvent.setup();
     renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
 
     await llenarCamposComunes(user, { confirmEmail: "otro@correo.com" });
+
+    expect(screen.getByText("Los correos electrónicos no coinciden")).toBeInTheDocument();
+  });
+
+  it("muestra error si el nombre es muy corto, apenas se sale del campo", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await llenarCamposComunes(user, { nombre: "A" });
+
+    expect(screen.getByText("El nombre debe tener al menos 2 caracteres")).toBeInTheDocument();
+  });
+
+  it("no permite escribir letras ni símbolos en el campo de teléfono", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    const telefono = screen.getByLabelText("Teléfono");
+    await user.type(telefono, "abc123!!");
+
+    // ¿Qué? Cada tecla que no es un dígito se descarta antes de guardarse
+    //       en el estado — no basta con rechazar el valor después.
+    expect(telefono).toHaveValue("123");
+  });
+
+  it("muestra error de teléfono inválido apenas se sale del campo, aunque ya no se puedan teclear letras", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await llenarCamposComunes(user);
+    await user.type(screen.getByLabelText("Teléfono"), "abc123!!");
+    await user.click(screen.getByText("Reciclador"));
+
+    expect(screen.getByText("El número telefónico tiene un formato inválido.")).toBeInTheDocument();
+  });
+
+  it("mantiene el botón deshabilitado si algún campo tiene formato inválido, aunque ninguno esté vacío", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await llenarCamposComunes(user);
+    await user.type(screen.getByLabelText("Teléfono"), "123");
     await user.click(screen.getByText("Reciclador"));
     await waitFor(() => screen.getByText("Localidad de Trabajo *"));
     const selects = screen.getAllByRole("combobox");
     await user.selectOptions(selects[0], "1");
 
-    await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
+    expect(
+      screen.getByRole("button", { name: "Completa los campos y acepta los términos" }),
+    ).toBeDisabled();
+  });
 
-    expect(screen.getByText("Los correos electrónicos no coinciden")).toBeInTheDocument();
+  it("desactiva la validación nativa del navegador (noValidate)", () => {
+    const { container } = renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    // ¿Qué? Sin esto, Chrome mostraba sus propios globos de aviso (ej. en
+    //       los campos de correo) en vez de los mensajes en rojo del
+    //       formulario — inconsistentes con el diseño de la app.
+    expect(container.querySelector("form")).toHaveAttribute("novalidate");
   });
 
   it("bloquea el pegado en el campo Confirmar Correo Electrónico", () => {
@@ -268,6 +321,33 @@ describe("RegisterPage", () => {
         }),
       );
     });
+    expect(await screen.findByText("¡Revisa tu bandeja!")).toBeInTheDocument();
+  });
+
+  // ¿Qué? Issue #373: el modal de éxito sale solo si register() no falla;
+  //       un error real del backend se muestra tal cual, sin modal.
+  it("muestra el error del backend y no el modal de éxito si el registro falla", async () => {
+    const registerMock = vi.fn().mockRejectedValue(new Error("El código de acceso no es válido para este conjunto."));
+    const user = userEvent.setup();
+
+    renderWithProviders(<RegisterPage />, {
+      initialRoute: "/register",
+      authContext: { register: registerMock },
+    });
+
+    await user.click(screen.getByText("Reciclador"));
+    await waitFor(() => screen.getByText("Localidad de Trabajo *"));
+    await llenarCamposComunes(user, {
+      nombre: "Carlos",
+      apellidos: "Ramírez",
+      email: "carlos@correo.com",
+      confirmEmail: "carlos@correo.com",
+    });
+    await user.selectOptions(screen.getAllByRole("combobox")[0], "1");
+    await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
+
+    expect(await screen.findByText("El código de acceso no es válido para este conjunto.")).toBeInTheDocument();
+    expect(screen.queryByText("¡Revisa tu bandeja!")).not.toBeInTheDocument();
   });
 
   it("mantiene el botón deshabilitado para Residente si falta Conjunto/Torre/Apto", async () => {
@@ -313,7 +393,7 @@ describe("RegisterPage", () => {
     await user.type(screen.getByPlaceholderText("Ej: 402"), "101");
     // ¿Qué? Issue #168 — el código de acceso ahora es obligatorio para
     //       Residente, igual que torre/apto.
-    await user.type(screen.getByPlaceholderText("Ej: AB3K9Q"), "ab3k9q");
+    await user.type(screen.getByPlaceholderText("6 letras o números"), "ab3k9q");
 
     await user.click(screen.getByRole("button", { name: "Registrar Cuenta" }));
 
@@ -347,5 +427,169 @@ describe("RegisterPage", () => {
     await user.type(screen.getByPlaceholderText("Ej: 402"), "101");
 
     expect(screen.getByRole("button", { name: "Completa los campos y acepta los términos" })).toBeDisabled();
+  });
+
+  it("muestra error si el número de unidad es solo símbolos, apenas se sale del campo", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+    await llenarCamposComunes(user);
+
+    // ¿Qué? El campo de número de unidad está deshabilitado hasta elegir
+    //       un conjunto residencial.
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.selectOptions(comboboxes[0], "1");
+    const buscadorConjunto = screen.getByPlaceholderText("Escribe el nombre de tu conjunto...");
+    await user.type(buscadorConjunto, "TORRES");
+    const opcionConjunto = await screen.findByText("TORRES DE ARANJUEZ");
+    await user.click(opcionConjunto);
+
+    await user.type(screen.getByPlaceholderText("Ej: 3, B"), "!!!");
+    await user.click(screen.getByPlaceholderText("Ej: 402")); // blur -> valida numero_bloque
+
+    expect(
+      screen.getByText("Solo se permiten letras, números, y un espacio o guion como separador."),
+    ).toBeInTheDocument();
+  });
+
+  it("mantiene el botón deshabilitado para Residente si el número de unidad tiene guiones repetidos", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await llenarCamposComunes(user);
+
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.selectOptions(comboboxes[0], "1");
+    const buscadorConjunto = screen.getByPlaceholderText("Escribe el nombre de tu conjunto...");
+    await user.type(buscadorConjunto, "TORRES");
+    const opcionConjunto = await screen.findByText("TORRES DE ARANJUEZ");
+    await user.click(opcionConjunto);
+
+    await user.type(screen.getByPlaceholderText("Ej: 3, B"), "1----B");
+    await user.type(screen.getByPlaceholderText("Ej: 402"), "101");
+    await user.type(screen.getByPlaceholderText("6 letras o números"), "ab3k9q");
+
+    expect(
+      screen.getByRole("button", { name: "Completa los campos y acepta los términos" }),
+    ).toBeDisabled();
+  });
+
+  // ¿Qué? Reglas nuevas de nombre y código de acceso (lib/validacion.ts).
+  it("muestra error al salir del campo Nombres si tiene números", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await user.type(screen.getByLabelText("Nombres *"), "Juan123");
+    await user.tab();
+
+    expect(await screen.findByText("Solo se permiten letras, espacios, apóstrofe, punto o guion")).toBeInTheDocument();
+    expect(screen.getByLabelText("Nombres *")).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("acepta nombres reales con tilde, guion y apóstrofe", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    await user.type(screen.getByLabelText("Nombres *"), "María-José");
+    await user.type(screen.getByLabelText("Apellidos *"), "O'Connor");
+    await user.tab();
+
+    expect(screen.queryByText("Solo se permiten letras, espacios, apóstrofe, punto o guion")).not.toBeInTheDocument();
+  });
+
+  it("limita cada campo al máximo de la base de datos", () => {
+    renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+    expect(screen.getByLabelText("Nombres *")).toHaveAttribute("maxLength", "100");
+    expect(screen.getByLabelText("Apellidos *")).toHaveAttribute("maxLength", "150");
+    expect(screen.getByPlaceholderText("Ej: 3, B")).toHaveAttribute("maxLength", "10");
+    expect(screen.getByPlaceholderText("Ej: 402")).toHaveAttribute("maxLength", "10");
+    expect(screen.getByPlaceholderText("6 letras o números")).toHaveAttribute("maxLength", "6");
+  });
+
+  // ¿Qué? Opción "¿Administras un conjunto?": no es un rol registrable, así
+  //       que reemplaza el formulario por las instrucciones para pedir la
+  //       cuenta (solo se crea por invitación).
+  describe("opción ¿Administras un conjunto?", () => {
+    // ¿Qué? Muestra la ruta + query a la que se llegó, para comprobar a
+    //       dónde lleva el botón "Solicitar acceso".
+    function DestinoContacto() {
+      const { pathname, search } = useLocation();
+      return <p>destino:{pathname}{search}</p>;
+    }
+
+    function renderConRutas() {
+      return renderWithProviders(
+        <Routes>
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/contacto" element={<DestinoContacto />} />
+        </Routes>,
+        { initialRoute: "/register" },
+      );
+    }
+
+    it("las 3 opciones de rol son botones alcanzables con el teclado y marcan cuál está elegida", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+      const residente = screen.getByRole("button", { name: "Residente" });
+      const reciclador = screen.getByRole("button", { name: "Reciclador" });
+      const admin = screen.getByRole("button", { name: "¿Administras un conjunto?" });
+      expect(residente).toHaveAttribute("aria-pressed", "true");
+      expect(reciclador).toHaveAttribute("aria-pressed", "false");
+      expect(admin).toHaveAttribute("aria-pressed", "false");
+
+      reciclador.focus();
+      await user.keyboard("{Enter}");
+      expect(reciclador).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByText("Perfil Operativo *")).toBeInTheDocument();
+    });
+
+    it("al elegirla oculta el formulario y muestra las instrucciones y los documentos", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+      await user.click(screen.getByRole("button", { name: "¿Administras un conjunto?" }));
+
+      expect(screen.getByText("Las cuentas de administrador se crean por invitación")).toBeInTheDocument();
+      expect(screen.getByText(/Certificado de existencia y representación legal/)).toBeInTheDocument();
+      expect(screen.getByText(/Copia de tu cédula/)).toBeInTheDocument();
+      expect(screen.getByText(/nunca se suben a VerdeApp/)).toBeInTheDocument();
+      expect(screen.queryByLabelText("Nombres *")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Contraseña *")).not.toBeInTheDocument();
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Registrar Cuenta|Completa los campos/ })).not.toBeInTheDocument();
+    });
+
+    it("no muestra ningún correo electrónico en pantalla", async () => {
+      const user = userEvent.setup();
+      const { container } = renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+      await user.click(screen.getByRole("button", { name: "¿Administras un conjunto?" }));
+
+      expect(container.textContent).not.toMatch(/\S+@\S+\.\S+/);
+      expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
+    });
+
+    it("el botón Solicitar acceso lleva al formulario de contacto con el motivo de la solicitud", async () => {
+      const user = userEvent.setup();
+      renderConRutas();
+
+      await user.click(screen.getByRole("button", { name: "¿Administras un conjunto?" }));
+      await user.click(screen.getByRole("button", { name: "Solicitar acceso" }));
+
+      expect(screen.getByText("destino:/contacto?motivo=admin-conjunto")).toBeInTheDocument();
+    });
+
+    it("al volver a Residente el formulario reaparece con lo que ya se había escrito", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+      await user.type(screen.getByLabelText("Nombres *"), "Juan");
+      await user.click(screen.getByRole("button", { name: "¿Administras un conjunto?" }));
+      await user.click(screen.getByRole("button", { name: "Residente" }));
+
+      expect(screen.getByLabelText("Nombres *")).toHaveValue("Juan");
+      expect(screen.getByText("Ubicación de Residencia *")).toBeInTheDocument();
+    });
   });
 });

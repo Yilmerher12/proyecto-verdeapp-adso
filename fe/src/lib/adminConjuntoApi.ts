@@ -47,21 +47,15 @@ export interface AdministradorConjuntoResumen {
 
 /**
  * ¿Qué? El Administrador del Sistema invita a alguien por correo.
- * ¿Para qué? Solo manda correo + ids de conjuntos. Requiere el token de
- *           sesión del Administrador del Sistema (axios ya debe llevar
- *           el header Authorization configurado globalmente, igual que
- *           en el resto de la app).
+ * ¿Para qué? Solo manda correo + ids de conjuntos. Requiere sesión del
+ *           Administrador del Sistema — la cookie httpOnly viaja sola en
+ *           cada petición (RNF-001.9, ver api/axios.ts).
  */
 export async function invitarAdministradorConjunto(
     correo_electronico: string,
-    ids_conjuntos: string[],
-    token: string
+    ids_conjuntos: string[]
 ) {
-const { data } = await axios.post(
-    `${API_BASE}/invitar`,
-    { correo_electronico, ids_conjuntos },
-    { headers: { Authorization: `Bearer ${token}` } }
-);
+const { data } = await axios.post(`${API_BASE}/invitar`, { correo_electronico, ids_conjuntos });
     return data;
 }
 
@@ -93,10 +87,8 @@ const { data } = await axios.post(`${API_BASE}/aceptar`, payload);
 }
 
 // ¿Qué? RQF-016 (HU-023, CA-023.1): solicitudes de desvinculación pendientes de resolver.
-export async function listarSolicitudesDesvinculacion(token: string): Promise<SolicitudDesvinculacion[]> {
-    const { data } = await axios.get(`${API_BASE}/solicitudes-desvinculacion`, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
+export async function listarSolicitudesDesvinculacion(): Promise<SolicitudDesvinculacion[]> {
+    const { data } = await axios.get(`${API_BASE}/solicitudes-desvinculacion`);
     return data;
 }
 
@@ -107,14 +99,57 @@ export async function listarSolicitudesDesvinculacion(token: string): Promise<So
 export async function resolverSolicitudDesvinculacion(
     idSolicitud: string,
     aprobar: boolean,
-    motivoRechazo: string | undefined,
-    token: string
+    motivoRechazo: string | undefined
 ) {
-    const { data } = await axios.post(
-        `${API_BASE}/solicitudes-desvinculacion/${idSolicitud}/resolver`,
-        { aprobar, motivo_rechazo: motivoRechazo || null },
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const { data } = await axios.post(`${API_BASE}/solicitudes-desvinculacion/${idSolicitud}/resolver`, {
+        aprobar,
+        motivo_rechazo: motivoRechazo || null,
+    });
+    return data;
+}
+
+// ¿Qué? Bandeja unificada — junta desvinculación con las novedades que
+//       envían los demás roles, filtrable por tipo.
+export type TipoSolicitudUnificada = "DESVINCULACION" | "NOVEDAD";
+
+export interface SolicitudUnificada {
+    id: string;
+    tipo: TipoSolicitudUnificada;
+    titulo: string;
+    origen: string;
+    nombre_conjunto: string;
+    detalle: string;
+    url_evidencia: string | null;
+    estado: string;
+    created_at: string;
+}
+
+export interface PaginaDeSolicitudes {
+    items: SolicitudUnificada[];
+    total: number;
+}
+
+// ¿Qué? Issue #372 (CN-042) — la bandeja se pide de a páginas (limit/offset);
+//       sin `tipo` trae las de los 2 tipos.
+export async function listarSolicitudesUnificadas(
+    limit: number,
+    offset: number,
+    tipo?: TipoSolicitudUnificada
+): Promise<PaginaDeSolicitudes> {
+    const { data } = await axios.get(`${API_BASE}/solicitudes`, { params: { limit, offset, tipo } });
+    return data;
+}
+
+export async function resolverSolicitudUnificada(
+    tipo: TipoSolicitudUnificada,
+    idSolicitud: string,
+    aprobar: boolean,
+    motivoRechazo: string | undefined
+) {
+    const { data } = await axios.post(`${API_BASE}/solicitudes/${tipo}/${idSolicitud}/resolver`, {
+        aprobar,
+        motivo_rechazo: motivoRechazo || null,
+    });
     return data;
 }
 
@@ -124,40 +159,31 @@ export async function resolverSolicitudDesvinculacion(
 //           `idLocalidad` acota primero por localidad, igual que ya hace
 //           el endpoint hermano /conjuntos/todos (InvitarAdminConjuntoForm).
 export async function listarConjuntosSinAdministrador(
-    token: string,
     search: string = "",
     limit: number = 20,
     idLocalidad?: number
 ): Promise<ConjuntoSinAdministrador[]> {
     const { data } = await axios.get(`${API_BASE_URL}/api/v1/geography/conjuntos/sin-administrador`, {
         params: { search: search || undefined, limit, id_localidad: idLocalidad || undefined },
-        headers: { Authorization: `Bearer ${token}` },
     });
     return data;
 }
 
 // ¿Qué? RQF-016 (HU-024, CA-024.1): busca Admin de Conjunto ya existentes en la plataforma.
 export async function buscarAdministradoresConjunto(
-    query: string,
-    token: string
+    query: string
 ): Promise<AdministradorConjuntoResumen[]> {
     const { data } = await axios.get(`${API_BASE}/listar`, {
         params: query ? { query } : {},
-        headers: { Authorization: `Bearer ${token}` },
     });
     return data;
 }
 
 // ¿Qué? RQF-016 (HU-024, CA-024.3): vincula un conjunto sin administrador a un Admin Conjunto existente.
-export async function asignarConjuntoAdicional(
-    idAdministrador: string,
-    idConjuntoResidencial: string,
-    token: string
-) {
-    const { data } = await axios.post(
-        `${API_BASE}/asignar-conjunto-adicional`,
-        { id_administrador: idAdministrador, id_conjunto_residencial: idConjuntoResidencial },
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
+export async function asignarConjuntoAdicional(idAdministrador: string, idConjuntoResidencial: string) {
+    const { data } = await axios.post(`${API_BASE}/asignar-conjunto-adicional`, {
+        id_administrador: idAdministrador,
+        id_conjunto_residencial: idConjuntoResidencial,
+    });
     return data;
 }

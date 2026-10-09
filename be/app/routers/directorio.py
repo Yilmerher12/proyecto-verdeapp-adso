@@ -19,6 +19,13 @@ router = APIRouter(
     tags=["directorio"],
 )
 
+# ¿Qué? Issue #227 — tope máximo de filas por respuesta. Estos dos
+#       listados ya vienen naturalmente acotados (el de Recicladores se
+#       fuerza a la localidad del Residente que consulta; el de Puntos de
+#       Acopio es infraestructura física que crece muy despacio), pero un
+#       tope explícito evita que crezcan sin control si eso cambia.
+MAX_LIMIT_DIRECTORIO = 100
+
 
 def _localidad_del_residente(db: Session, id_usuario) -> Optional[int]:
     """
@@ -40,6 +47,7 @@ def _localidad_del_residente(db: Session, id_usuario) -> Optional[int]:
 @router.get("/recicladores", response_model=List[RecicladorDirectorioResponse])
 def listar_recicladores(
     localidad_id: Optional[int] = Query(None),
+    limit: int = Query(50, ge=1, le=MAX_LIMIT_DIRECTORIO),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
@@ -61,7 +69,7 @@ def listar_recicladores(
     if localidad_id:
         stmt = stmt.where(Reciclador.localidad_id == localidad_id)
 
-    stmt = stmt.order_by(Reciclador.nombre, Reciclador.apellidos)
+    stmt = stmt.order_by(Reciclador.nombre, Reciclador.apellidos).limit(limit)
     rows = db.execute(stmt).all()
 
     # ¿Qué? El teléfono solo se incluye si el reciclador activó
@@ -86,6 +94,7 @@ def listar_recicladores(
 @router.get("/puntos-acopio", response_model=List[PuntoAcopioDirectorioResponse])
 def listar_puntos_acopio(
     localidad_id: Optional[int] = Query(None),
+    limit: int = Query(50, ge=1, le=MAX_LIMIT_DIRECTORIO),
     db: Session = Depends(get_db),
     _: Usuario = Depends(get_current_user),
 ):
@@ -106,7 +115,7 @@ def listar_puntos_acopio(
     if localidad_id:
         stmt = stmt.where(PuntoAcopio.id_localidad == localidad_id)
 
-    stmt = stmt.order_by(Localidad.nombre_localidad, PuntoAcopio.nombre)
+    stmt = stmt.order_by(Localidad.nombre_localidad, PuntoAcopio.nombre).limit(limit)
     rows = db.execute(stmt).all()
 
     return [

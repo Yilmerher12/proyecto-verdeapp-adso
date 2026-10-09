@@ -177,6 +177,8 @@ Un lector de pantalla ahora anuncia *"Bueno, botón de radio, seleccionado, 1 de
 
 Era el único `<nav>` de la app sin etiquetar — `AppShell.tsx`, `AuthLayout.tsx` y `LandingPage.tsx` ya lo hacían bien. Se agregó `aria-label={t("legal.navAriaLabel")}` por consistencia.
 
+> **Nota (2026-09-27)**: ese `<nav>` ya no existe. Pertenecía al modo "página completa" de `LegalLayout`, que ninguna ruta usaba (los documentos legales siempre se abren en un `Modal`) y se eliminó. La clave `legal.navAriaLabel` se conserva porque `AuthLayout.tsx` la sigue usando.
+
 ---
 
 ## Re-auditoría (2026-09-08) — pantallas construidas después de esta auditoría
@@ -245,7 +247,7 @@ que se revela, en ambos botones.
 
 ```tsx
 <button aria-busy={enviando} disabled={enviando}>
-  {enviando && <Loader2 aria-hidden="true" className="animate-spin" />}
+  {enviando && <LoaderCircle aria-hidden="true" className="animate-spin" />}
   {enviando ? "Enviando..." : "Enviar"}
 </button>
 ```

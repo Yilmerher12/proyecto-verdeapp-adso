@@ -18,6 +18,7 @@ vi.mock("axios", () => {
   const instance = {
     get: (...args: unknown[]) => mockGet(...args),
     interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+    defaults: {},
   };
   return { default: { ...instance, create: () => instance } };
 });
@@ -50,7 +51,7 @@ function mockRespuestas({ nombreLocalidad }: { nombreLocalidad: string | null })
 
 function renderPage() {
   return renderWithProviders(<DirectorioPage />, {
-    authContext: { user: residenteUser, isAuthenticated: true, accessToken: "token" },
+    authContext: { user: residenteUser, isAuthenticated: true },
   });
 }
 

@@ -24,41 +24,43 @@ export type PuntoAcopioPayload = {
   id_localidad: number;
   nombre_encargado: string | null;
   telefono_contacto: string | null;
+  // ¿Qué? Solo al editar: por qué se hace el cambio. El backend lo guarda
+  //       como un comentario del punto, no como un campo del punto.
+  motivo_cambio?: string | null;
 };
 
-function authHeaders(token: string) {
-  return { headers: { Authorization: `Bearer ${token}` } };
+export interface ComentarioPunto {
+  id_comentario: string;
+  texto: string;
+  created_at: string;
+  autor: string | null;
 }
 
-export async function listarPuntosAcopio(token: string): Promise<PuntoAcopioAdmin[]> {
-  const { data } = await axios.get(API_BASE, authHeaders(token));
+export async function listarPuntosAcopio(): Promise<PuntoAcopioAdmin[]> {
+  const { data } = await axios.get(API_BASE);
   return data;
 }
 
-export async function crearPuntoAcopio(
-  payload: PuntoAcopioPayload,
-  token: string
-): Promise<PuntoAcopioAdmin> {
-  const { data } = await axios.post(API_BASE, payload, authHeaders(token));
+export async function crearPuntoAcopio(payload: PuntoAcopioPayload): Promise<PuntoAcopioAdmin> {
+  const { data } = await axios.post(API_BASE, payload);
   return data;
 }
 
 export async function editarPuntoAcopio(
   id: string,
-  payload: PuntoAcopioPayload,
-  token: string
+  payload: PuntoAcopioPayload
 ): Promise<PuntoAcopioAdmin> {
-  const { data } = await axios.put(`${API_BASE}/${id}`, payload, authHeaders(token));
+  const { data } = await axios.put(`${API_BASE}/${id}`, payload);
   return data;
 }
 
-export async function darDeBajaPuntoAcopio(id: string, token: string): Promise<void> {
-  await axios.delete(`${API_BASE}/${id}`, authHeaders(token));
+export async function darDeBajaPuntoAcopio(id: string): Promise<void> {
+  await axios.delete(`${API_BASE}/${id}`);
 }
 
 // ¿Qué? El contrapeso de darDeBajaPuntoAcopio — vuelve a marcarlo activo.
-export async function reactivarPuntoAcopio(id: string, token: string): Promise<PuntoAcopioAdmin> {
-  const { data } = await axios.post(`${API_BASE}/${id}/reactivar`, {}, authHeaders(token));
+export async function reactivarPuntoAcopio(id: string): Promise<PuntoAcopioAdmin> {
+  const { data } = await axios.post(`${API_BASE}/${id}/reactivar`, {});
   return data;
 }
 
@@ -67,6 +69,16 @@ export async function reactivarPuntoAcopio(id: string, token: string): Promise<P
 //           conserva como historial). Esto es para limpiar un registro
 //           que nunca debió existir (una prueba, un duplicado). El
 //           backend solo lo permite si el punto ya está dado de baja.
-export async function eliminarPuntoAcopioDefinitivo(id: string, token: string): Promise<void> {
-  await axios.delete(`${API_BASE}/${id}/definitivo`, authHeaders(token));
+export async function eliminarPuntoAcopioDefinitivo(id: string): Promise<void> {
+  await axios.delete(`${API_BASE}/${id}/definitivo`);
+}
+
+export async function listarComentarios(id: string): Promise<ComentarioPunto[]> {
+  const { data } = await axios.get(`${API_BASE}/${id}/comentarios`);
+  return data;
+}
+
+export async function agregarComentario(id: string, texto: string): Promise<ComentarioPunto> {
+  const { data } = await axios.post(`${API_BASE}/${id}/comentarios`, { texto });
+  return data;
 }

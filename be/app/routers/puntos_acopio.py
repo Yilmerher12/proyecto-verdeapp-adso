@@ -11,39 +11,38 @@ Descripción: Endpoints de gestión de puntos de acopio, exclusivos del Admin
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_current_user, get_db
+from app.dependencies import get_db, require_role
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.puntos_acopio import (
+    ComentarioCreate,
+    ComentarioResponse,
     PuntoAcopioAdminResponse,
     PuntoAcopioCreate,
     PuntoAcopioUpdate,
 )
 from app.services import puntos_acopio_service as service
+from app.utils.audit_log import log_accion_admin
 
 router = APIRouter(
     prefix="/api/v1/admin/puntos-acopio",
     tags=["admin-puntos-acopio"],
 )
 
-
-def _verificar_es_admin_sistema(current_user: Usuario) -> None:
-    if current_user.id_rol != RolId.ADMIN_SISTEMA:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo un Administrador del Sistema puede gestionar los puntos de acopio.",
-        )
+# ¿Qué? Issue #216 — ver el mismo comentario en admin.py.
+_requiere_admin_sistema = require_role(
+    RolId.ADMIN_SISTEMA, "Solo un Administrador del Sistema puede gestionar los puntos de acopio."
+)
 
 
 @router.get("", response_model=list[PuntoAcopioAdminResponse], summary="Listar todos los puntos de acopio")
 def listar(
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> list[dict]:
-    _verificar_es_admin_sistema(current_user)
     return service.listar_todos(db)
 
 
@@ -55,11 +54,12 @@ def listar(
 )
 def crear(
     data: PuntoAcopioCreate,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> dict:
-    _verificar_es_admin_sistema(current_user)
-    return service.crear(db, data)
+    punto = service.crear(db, data)
+    log_accion_admin(current_user.correo_electronico, "punto_acopio_creado", punto_acopio=punto["id_punto_acopio"])
+    return punto
 
 
 @router.put(
@@ -70,11 +70,13 @@ def crear(
 def editar(
     id_punto_acopio: UUID,
     data: PuntoAcopioUpdate,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> dict:
-    _verificar_es_admin_sistema(current_user)
-    return service.editar(db, id_punto_acopio, data)
+    punto = service.editar(db, id_punto_acopio, data, current_user)
+    # ¿Qué? Issue #401: sin motivo_cambio — es texto libre (ver log_accion_admin).
+    log_accion_admin(current_user.correo_electronico, "punto_acopio_editado", punto_acopio=id_punto_acopio)
+    return punto
 
 
 @router.delete(
@@ -84,11 +86,11 @@ def editar(
 )
 def dar_de_baja(
     id_punto_acopio: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> None:
-    _verificar_es_admin_sistema(current_user)
     service.dar_de_baja(db, id_punto_acopio)
+    log_accion_admin(current_user.correo_electronico, "punto_acopio_dado_de_baja", punto_acopio=id_punto_acopio)
 
 
 @router.post(
@@ -98,11 +100,12 @@ def dar_de_baja(
 )
 def reactivar(
     id_punto_acopio: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> dict:
-    _verificar_es_admin_sistema(current_user)
-    return service.reactivar(db, id_punto_acopio)
+    punto = service.reactivar(db, id_punto_acopio)
+    log_accion_admin(current_user.correo_electronico, "punto_acopio_reactivado", punto_acopio=id_punto_acopio)
+    return punto
 
 
 @router.delete(
@@ -112,8 +115,38 @@ def reactivar(
 )
 def eliminar_definitivamente(
     id_punto_acopio: UUID,
-    current_user: Usuario = Depends(get_current_user),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> None:
-    _verificar_es_admin_sistema(current_user)
     service.eliminar_definitivamente(db, id_punto_acopio)
+    # ¿Qué? Issue #376: el punto se borra para siempre de la BD — esta línea
+    #       es el único rastro de que existió y de quién lo eliminó.
+    log_accion_admin(current_user.correo_electronico, "punto_acopio_eliminado", punto_acopio=id_punto_acopio)
+
+
+@router.get(
+    "/{id_punto_acopio}/comentarios",
+    response_model=list[ComentarioResponse],
+    summary="Listar los comentarios internos de un punto de acopio",
+)
+def listar_comentarios(
+    id_punto_acopio: UUID,
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    return service.listar_comentarios(db, id_punto_acopio)
+
+
+@router.post(
+    "/{id_punto_acopio}/comentarios",
+    response_model=ComentarioResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Agregar un comentario interno a un punto de acopio",
+)
+def agregar_comentario(
+    id_punto_acopio: UUID,
+    data: ComentarioCreate,
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+) -> dict:
+    return service.agregar_comentario(db, id_punto_acopio, current_user, data.texto)

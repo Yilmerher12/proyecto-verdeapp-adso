@@ -47,6 +47,10 @@ class Novedad(Base):
     #       Comunicados, en vez de subida real de archivos.
     url_adjunto = Column(String(500), nullable=True)
 
+    # ¿Qué? Enlace de video (YouTube) opcional — mismo patrón y mismo
+    #       nombre de columna que ya usa ContenidoEducativo.url_video.
+    url_video = Column(String(500), nullable=True)
+
     fecha_expiracion = Column(TIMESTAMP(timezone=True), nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
 
@@ -64,3 +68,20 @@ class Novedad(Base):
     fecha_archivado = Column(TIMESTAMP(timezone=True), nullable=True)
 
     admin_sistema = relationship("Usuario")
+    # ¿Qué? A qué conjuntos llega la novedad (uno o varios). SIN filas aquí =
+    #       llega a TODOS los conjuntos del alcance elegido (el comportamiento
+    #       de siempre, así que las novedades anteriores no cambian). CON
+    #       filas = solo a esos conjuntos — el alcance sigue siendo por ROL,
+    #       esto solo lo estrecha más.
+    # ¿Para qué? Que el Admin Sistema controle a quién le llega un aviso: una
+    #           reunión presencial no debe salir masiva a todos los conjuntos.
+    #           Un Comunicado (RQF-014) ya hace algo parecido, pero lo publica
+    #           el Admin de Conjunto para SU conjunto, no el Admin Sistema.
+    # ¿Impacto? A propósito NO es editable después de publicar (igual que
+    #           `alcance`, ver EditarNovedadRequest) — a quién llega se
+    #           decide al publicar.
+    destinos = relationship(
+        "NovedadConjunto",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
