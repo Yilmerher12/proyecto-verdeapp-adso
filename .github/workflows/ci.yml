@@ -3,7 +3,8 @@
 # ============================================================================
 # ¿Qué? Corre automáticamente los tests y el linter del backend y del
 #       frontend cada vez que se abre o actualiza un Pull Request hacia
-#       develop o main (y también si alguien hace push directo a esas ramas).
+#       develop, stg o main (y también si alguien hace push directo a esas
+#       ramas).
 # ¿Para qué? Antes, esto dependía de que alguien corriera pytest/ruff/tsc/
 #           eslint/vitest a mano antes de aprobar un PR. Con esto, GitHub lo
 #           hace solo, en un servidor temporal, y muestra ✅ o ❌ directo en
@@ -14,11 +15,13 @@
 
 name: CI
 
+#       stg es la rama intermedia entre develop y main: el PR develop → stg
+#       tiene que pasar este mismo CI antes de poder llegar a main.
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [develop, stg, main]
   push:
-    branches: [develop, main]
+    branches: [develop, stg, main]
 
 # ¿Qué? Principio de mínimo privilegio (igual que en close-prs.yml) — este
 #       workflow solo necesita LEER el código, nunca escribir nada.

@@ -100,7 +100,7 @@ Ver `docs/requisitos/restricciones.md` para el detalle completo (versiones fijad
 
 ## Modelo de ramas y flujo de trabajo en Git
 
-`main` (estable, se etiqueta por entrega) ← `develop` (integración) ← una rama por tarjeta, siempre creada desde `develop` actualizado, nunca directo sobre `develop`/`main`. Prefijo según el tipo de cambio: `feat/`, `fix/`, `docs/`, `chore/`, `content/`, `test/`. Commits en Conventional Commits, en español (`feat: agregar filtro por localidad...`), el tipo coincide con el prefijo de la rama. PR siempre hacia `develop`, nunca hacia `main` directo.
+`main` (estable, se etiqueta por entrega) ← `stg` (verificación previa a producción) ← `develop` (integración) ← una rama por tarjeta, siempre creada desde `develop` actualizado, nunca directo sobre `develop`/`stg`/`main`. `stg` solo recibe PR de `develop`, y `main` solo recibe PR de `stg`; un error hallado en `stg` se corrige en una rama desde `develop`, nunca directo en `stg`. Prefijo según el tipo de cambio: `feat/`, `fix/`, `docs/`, `chore/`, `content/`, `test/`. Commits en Conventional Commits, en español (`feat: agregar filtro por localidad...`), el tipo coincide con el prefijo de la rama. PR siempre hacia `develop`, nunca hacia `main` directo.
 
 ## Cómo trabajar en este proyecto con Claude Code
 
