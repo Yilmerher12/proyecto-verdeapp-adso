@@ -510,9 +510,10 @@ Queda estrictamente restringido el uso de npm o yarn en el directorio frontend. 
 
 ## 🌿 Modelo de Ramas y Commits
 
-El proyecto usa dos ramas permanentes y ramas de trabajo temporales:
+El proyecto usa tres ramas permanentes y ramas de trabajo temporales:
 
 * **`main`** — versión estable, la que se etiqueta para cada entrega (ej. `v1.0.0`). Nunca se trabaja directo aquí.
+* **`stg`** (staging) — rama intermedia de verificación. Recibe una copia de `develop` y ahí se prueba ese conjunto exacto de cambios antes de pasarlo a `main`. Nunca se trabaja directo aquí.
 * **`develop`** — rama de integración. Todo el trabajo en curso se fusiona aquí primero.
 * **Ramas de trabajo** — una por cada tarjeta/tarea, siempre creada a partir de `develop`, nunca directo sobre `develop` o `main`. El prefijo indica el tipo de cambio:
 
@@ -525,7 +526,13 @@ El proyecto usa dos ramas permanentes y ramas de trabajo temporales:
 | `content/` | Cambios de contenido (textos, datos de ejemplo) sin lógica nueva |
 | `test/` | Solo pruebas (ej. los retos semanales del bootcamp de testing: `test/semana-01`) |
 
-**Flujo normal:** crear la rama desde `develop` → hacer el cambio → abrir un Pull Request hacia `develop` → esperar a que el CI (pruebas automáticas) pase en verde → fusionar. `main` solo recibe código a través de `develop`, cuando se prepara una entrega.
+**Flujo normal:** crear la rama desde `develop` → hacer el cambio → abrir un Pull Request hacia `develop` → esperar a que el CI (pruebas automáticas) pase en verde → fusionar. `main` solo recibe código a través de `stg`, y `stg` solo recibe código de `develop`:
+
+```
+rama de trabajo → develop → stg → main
+```
+
+**Flujo de entrega:** cuando se prepara una entrega se abre un Pull Request de `develop` hacia `stg`, se prueba ahí el conjunto completo (CI en verde y revisión manual con las 4 cuentas de prueba) y, si todo está bien, se abre un Pull Request de `stg` hacia `main` y se etiqueta la versión. Si en `stg` aparece un error, **no se corrige en `stg`**: se arregla en una rama de trabajo desde `develop` y se vuelve a pasar a `stg`, para que `stg` y `develop` nunca queden distintas.
 
 **Mensajes de commit:** siguen [Conventional Commits](https://www.conventionalcommits.org/) — `tipo: descripción en español`, por ejemplo `fix: bloquear reportes repetidos sin espera` o `docs: actualizar diagramas UML`. El tipo (`feat`, `fix`, `docs`, `chore`, `test`) coincide con el prefijo de la rama.
 
