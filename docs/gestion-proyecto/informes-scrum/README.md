@@ -14,6 +14,12 @@ Cada semana un integrante del equipo hace de **Scrum Master**. Los roles rotan e
 2. Nombrar la copia `semana-NN_nombre.md`, donde `NN` es el número de la semana con dos dígitos y `nombre` es el Scrum Master de esa semana (por ejemplo `semana-02_yilmer.md`).
 3. Llenar cada sección. Los datos objetivos (rama, PR, archivos tocados) salen del repositorio con `git log` y `gh pr list`. Los bloqueos y cómo se sintió cada persona se le preguntan al compañero durante la semana.
 
+## De dónde salen los datos del informe
+
+Cada integrante deja un comentario de cierre en su issue al terminar la semana, con la plantilla [`_cierre-de-issue.md`](_cierre-de-issue.md). El Scrum Master lee esos comentarios para llenar el informe: de ahí salen lo completado, los bloqueos y las dificultades de cada persona.
+
+Si una tarjeta no se terminó, el Scrum Master de la semana siguiente decide con el grupo quién la continúa y la reasigna en el tablero. La rotación del Scrum Master no cambia por eso.
+
 ## Qué se reporta
 
 Cualquier tarjeta del tablero, no solo las HU. Hoy las 48 HU de `docs/requisitos/HUs/` están implementadas, así que el trabajo de la semana suele ser de otro tipo: diseño, pruebas, seguridad, mantenimiento. Cada tarjeta se identifica con su tipo: `HU`, `diseño`, `tests`, `seguridad` o `chore`.

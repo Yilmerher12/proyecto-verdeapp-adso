@@ -1,5 +1,7 @@
 # Cálculo de Horas — VerdeApp
 
+> 📌 **Método vigente**: hoy la capacidad mínima del equipo es de 2 horas por día (10 por semana por integrante) y las tarjetas se miden en tamaños XS a XL. Ver [`prioridad-y-tamano.md`](prioridad-y-tamano.md).
+
 > ⚠️ **Nota sobre la numeración**: las historias de este documento usan la
 > numeración de la planificación temprana del proyecto (HU01–HU11), de
 > cuando existían 11 historias generales. Después se redactaron en detalle

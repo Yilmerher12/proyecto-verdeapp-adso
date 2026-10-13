@@ -48,6 +48,15 @@ title: ""
 
 <!-- Pruebas automáticas que se agregan y pasos a mano con la cuenta de cada rol. -->
 
+## Importancia, complejidad y tamaño
+
+<!-- Cómo se deciden: docs/gestion-proyecto/prioridad-y-tamano.md -->
+
+- **Importancia:** Alta / Media / Baja
+- **Complejidad:** Alta / Media / Baja
+- **Prioridad:** Must (P0) / Should (P1) / Could (P2)
+- **Tamaño:** XS / S / M / L / XL (horas estimadas: )
+
 ## Dependencias
 
 <!-- Tarjetas que deben ir antes o que esta bloquea. Si no hay, escribe "Ninguna". -->
