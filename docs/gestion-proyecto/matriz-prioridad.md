@@ -1,5 +1,7 @@
 # Matriz de Prioridad — VerdeApp
 
+> 📌 **Método vigente**: cómo se aplican hoy estos criterios a las tarjetas del tablero (campos `Priority` y `Size`) está en [`prioridad-y-tamano.md`](prioridad-y-tamano.md).
+
 > ⚠️ **Nota sobre la numeración**: esta tabla usa la numeración de la
 > planificación temprana del proyecto (HU01–HU11). Después se redactaron en
 > detalle como 44 historias independientes en `docs/requisitos/HUs/`, y

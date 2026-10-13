@@ -51,6 +51,15 @@ Archivo `docs/gestion-proyecto/investigacion-<tema>.md` con: pregunta, hallazgos
 - [ ] La recomendación explica por qué se descartan las otras alternativas
 - [ ] La documentación afectada quedó actualizada en la misma rama
 
+## Importancia, complejidad y tamaño
+
+<!-- Cómo se deciden: docs/gestion-proyecto/prioridad-y-tamano.md -->
+
+- **Importancia:** Alta / Media / Baja
+- **Complejidad:** Alta / Media / Baja
+- **Prioridad:** Must (P0) / Should (P1) / Could (P2)
+- **Tamaño:** XS / S / M / L / XL (horas estimadas: )
+
 ## Dependencias
 
 <!-- Tarjetas que deben ir antes o que esta bloquea. Si no hay, escribe "Ninguna". -->
