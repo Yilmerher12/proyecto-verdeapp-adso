@@ -47,7 +47,7 @@ from app.utils.security import create_access_token, hash_password, hash_token
 #           REAL de desarrollo (verdeapp_db), donde viven los conjuntos,
 #           residentes y vistas SQL reales.
 # ¿Impacto? Esta BD de test se puede borrar y recrear sin ningún riesgo.
-TEST_DATABASE_URL = "postgresql://verde_user:verde_password@localhost:5433/verdeapp_test_db"
+TEST_DATABASE_URL = "postgresql+psycopg2://verde_user:verde_password@localhost:5433/verdeapp_test_db"
 
 test_engine = create_engine(TEST_DATABASE_URL, pool_pre_ping=True)
 

@@ -58,3 +58,13 @@ def test_rechaza_arrancar_sin_environment(monkeypatch: pytest.MonkeyPatch) -> No
 def test_rechaza_un_algoritmo_distinto_de_hs256() -> None:
     with pytest.raises(ValidationError):
         _settings(ALGORITHM="none")
+
+
+def test_database_url_sin_driver_usa_psycopg2() -> None:
+    """SQLAlchemy 2.1 usaría psycopg (v3) por defecto, que no está instalado."""
+    assert _settings().DATABASE_URL == "postgresql+psycopg2://u:p@localhost/db"
+
+
+def test_database_url_con_driver_explicito_se_respeta() -> None:
+    url = "postgresql+psycopg://u:p@localhost/db"
+    assert _settings(DATABASE_URL=url).DATABASE_URL == url
