@@ -16,9 +16,9 @@
       "crearNovedades": "Crear Novedades",
       "contenidoEducativo": "Contenido Educativo",
       "miPerfil": "Mi Perfil",
-      "novedades": "Novedades",
+      "novedades": "Novedades VerdeApp",
       "puntosAcopio": "Puntos de Acopio",
-      "gestionarComunicados": "Comunicados de mis Conjuntos",
+      "gestionarComunicados": "Comunicados",
       "comunicados": "Comunicados",
       "aprenderGuias": "Aprende a Reciclar",
       "directorioGeneral": "Directorio General",
@@ -1592,7 +1592,7 @@
       "viewVideo": "Ver video"
     },
     "feed": {
-      "title": "Novedades",
+      "title": "Novedades VerdeApp",
       "subtitle": "Avisos generales de la plataforma VerdeApp.",
       "empty": "No hay novedades activas por ahora."
     }

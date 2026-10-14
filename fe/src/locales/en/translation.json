@@ -16,9 +16,9 @@
       "crearNovedades": "Post Updates",
       "contenidoEducativo": "Educational Content",
       "miPerfil": "My Profile",
-      "novedades": "News",
+      "novedades": "VerdeApp News",
       "puntosAcopio": "Collection Points",
-      "gestionarComunicados": "My Buildings' Announcements",
+      "gestionarComunicados": "Announcements",
       "comunicados": "Announcements",
       "aprenderGuias": "Learn to Recycle",
       "directorioGeneral": "General Directory",
@@ -1588,7 +1588,7 @@
       }
     },
     "feed": {
-      "title": "News",
+      "title": "VerdeApp News",
       "subtitle": "General announcements from the VerdeApp platform.",
       "empty": "No active news right now."
     }
