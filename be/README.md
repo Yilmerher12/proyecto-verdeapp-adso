@@ -179,19 +179,19 @@ de producción — ver el `Dockerfile`, que usa `uv sync --no-dev`).
 # pyproject.toml (resumen)
 [project]
 dependencies = [
-    "fastapi==0.135.1",              # El framework web — maneja rutas, requests, responses
-    "uvicorn[standard]==0.42.0",     # Servidor ASGI que ejecuta FastAPI
+    "fastapi==0.142.2",              # El framework web — maneja rutas, requests, responses
+    "uvicorn[standard]==0.54.0",     # Servidor ASGI que ejecuta FastAPI
     "python-multipart==0.0.22",      # Necesario para leer form data (como el login)
-    "sqlalchemy==2.0.48",            # ORM — permite manejar la BD con clases Python
-    "alembic==1.18.4",               # Migraciones versionadas de la BD
-    "psycopg2-binary==2.9.11",       # Driver que conecta Python con PostgreSQL
-    "pydantic==2.12.5",              # Validación de datos con tipos Python
+    "sqlalchemy==2.1.3",            # ORM — permite manejar la BD con clases Python
+    "alembic==1.20.0",               # Migraciones versionadas de la BD
+    "psycopg2-binary==2.9.13",       # Driver que conecta Python con PostgreSQL
+    "pydantic==2.13.5",              # Validación de datos con tipos Python
     "pydantic-settings==2.13.1",     # Leer y validar variables de entorno
     "email-validator==2.3.0",        # Validar formato de emails (lo usa Pydantic)
-    "pyjwt==2.15.0",                 # Crear y verificar tokens JWT (HS256)
+    "pyjwt==2.15.1",                 # Crear y verificar tokens JWT (HS256)
     "bcrypt==5.0.0",                 # Hashear y verificar contraseñas
-    "resend==2.25.0",                # SDK del servicio de envío de emails Resend
-    "slowapi==0.1.9",                # Rate limiting — limita peticiones por IP (OWASP A04)
+    "resend==2.49.1",                # SDK del servicio de envío de emails Resend
+    "slowapi==0.1.10",               # Rate limiting — limita peticiones por IP (OWASP A04)
     # + pines de seguridad de dependencias transitivas con CVEs conocidos
     # (pygments, requests) — ver pyproject.toml para el detalle.
     # Issue #312: antes se usaban python-jose y passlib (sin mantenimiento),
@@ -201,10 +201,10 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest==9.1.1",           # Framework de testing
-    "pytest-asyncio==1.3.0",   # Soporte para funciones async en tests
+    "pytest-asyncio==1.4.0",   # Soporte para funciones async en tests
     "httpx==0.28.1",           # Cliente HTTP para llamar a la API en los tests
-    "pytest-cov==7.0.0",       # Medir cobertura de código
-    "ruff==0.15.7",            # Linter y formateador ultrarrápido
+    "pytest-cov==7.1.0",       # Medir cobertura de código
+    "ruff==0.16.10",           # Linter y formateador ultrarrápido
 ]
 ```
 

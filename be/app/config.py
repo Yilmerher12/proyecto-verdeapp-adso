@@ -34,6 +34,23 @@ class Settings(BaseSettings):
     # ¿Impacto? Si es incorrecta, ninguna operación de lectura/escritura a la BD funcionará.
     DATABASE_URL: str
 
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def usar_driver_psycopg2(cls, v: str) -> str:
+        """Fuerza el driver psycopg2 en las URLs "postgresql://" sin driver explícito.
+
+        ¿Qué? Convierte "postgresql://..." en "postgresql+psycopg2://...".
+        ¿Para qué? Desde SQLAlchemy 2.1, una URL sin driver usa psycopg (v3) en
+                   vez de psycopg2, y el proyecto instala psycopg2-binary. Sin
+                   esto, el backend y Alembic fallan con "No module named 'psycopg'".
+        ¿Impacto? Los be/.env, docker-compose.yml y el CI siguen con la URL de
+                  siempre: nadie del equipo tiene que editar su .env. Una URL que
+                  ya trae driver (ej. "postgresql+psycopg://") se respeta tal cual.
+        """
+        if v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+psycopg2://", 1)
+        return v
+
     # ────────────────────────────
     # 🔐 JWT y Seguridad
     # ────────────────────────────
