@@ -28,10 +28,10 @@ Este documento fija seis categorías de restricciones para VerdeApp: tecnología
 | Tecnología   | Versión fijada  |
 | ------------ | ---------------- |
 | Python       | 3.12              |
-| FastAPI      | 0.135.1           |
-| SQLAlchemy   | 2.0.48 (ORM 2.0, no el estilo 1.x)|
-| Alembic      | 1.18.4 (migraciones versionadas — nunca `Base.metadata.create_all()`)|
-| Pydantic     | 2.12.5             |
+| FastAPI      | 0.142.2           |
+| SQLAlchemy   | 2.1.3 (ORM 2.0, no el estilo 1.x)|
+| Alembic      | 1.20.0 (migraciones versionadas — nunca `Base.metadata.create_all()`)|
+| Pydantic     | 2.13.5             |
 
 No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `pyproject.toml` — toda dependencia va con `==`, reforzado además por `uv.lock`, que fija también las dependencias transitivas.
 
@@ -56,7 +56,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 
 - **Python**: entorno virtual (`.venv`), nunca instalar paquetes en el Python global de la máquina.
 - **Node.js**: **pnpm** como único gestor de paquetes del frontend — no `npm install` ni `yarn add`. La versión de pnpm queda fijada en `packageManager` dentro de `package.json`.
-- **Linting y formato backend**: `ruff` (lint + formato en una sola herramienta).
+- **Linting y formato backend**: `ruff` (lint + formato en una sola herramienta). Las reglas de lint están fijadas a mano en `be/pyproject.toml` (`[tool.ruff.lint]`), porque ruff cambia su lista por defecto entre versiones; para exigir reglas nuevas se agregan ahí en una tarjeta aparte.
 - **Linting y formato frontend**: `eslint` + `prettier`.
 - **Testing**: `pytest` en el backend, `vitest` en el frontend — toda funcionalidad nueva debe llevar sus pruebas correspondientes antes de considerarse terminada.
 
