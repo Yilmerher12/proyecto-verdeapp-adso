@@ -579,7 +579,7 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 **Cobertura**: `uv run pytest` y `pnpm test` (en `fe/`) miden siempre qué porcentaje del código ejecutan las pruebas, y **fallan** si baja del umbral configurado (`fail_under` en `be/pyproject.toml`, `thresholds` en `fe/vite.config.ts`). El CI corre esos mismos comandos, así que un PR que baje la cobertura queda en rojo. El umbral solo sube; su historial está en [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md).
 
-**E2E, primera vez** (desde `e2e/`): `pnpm install` y luego `pnpm exec playwright install chromium` (descarga el navegador). Antes de `pnpm test`, el backend y la BD deben estar encendidos (Método B); el frontend lo levanta Playwright solo. `pnpm codegen` abre un navegador que graba lo que haces y lo convierte en código de test.
+**E2E, primera vez** (desde `e2e/`): `pnpm install`, luego `pnpm exec playwright install chromium` (descarga el navegador) y copia `e2e/.env.example` como `e2e/.env` (las cuentas de prueba que leen los tests; ese archivo no se sube a Git). Antes de `pnpm test`, el backend y la BD deben estar encendidos (Método B); el frontend lo levanta Playwright solo. `pnpm codegen` abre un navegador que graba lo que haces y lo convierte en código de test.
 
 **E2E y el CI**: las carpetas `e2e/playwright-report/` y `e2e/test-results/` **no se suben como artefacto** del CI (ya están en `.gitignore`). Las trazas de Playwright guardan paso a paso lo que hizo el navegador, y pueden incluir el correo y la contraseña de las cuentas de prueba. Si algún día el CI sube esos reportes, hay que revisar primero qué contienen. Las dependencias de `e2e/` las vigilan Dependabot y un paso `pnpm audit` del CI, igual que las de `fe/`.
 
