@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
@@ -11,7 +11,7 @@ import { LandingPage } from "@/pages/LandingPage";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { HardHat, MailCheck, Map as MapIcon } from "lucide-react";
+import { ArrowLeft, HardHat, MailCheck, Map as MapIcon } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { TerminosDeUsoPage } from "@/pages/TerminosDeUsoPage";
@@ -41,9 +41,9 @@ type DocumentoLegal = "terminos" | "privacidad" | null;
 // ¿Para qué? "admin_conjunto" no se envía nunca al backend: al elegirlo, el
 //           formulario se reemplaza por SolicitudAdminConjuntoInfo.
 const OPCIONES_ROL = [
-  { rol: "residente", Icon: ROLE_THEME[RoleId.RESIDENTE].Icon, etiqueta: "auth.register.roleResident" },
-  { rol: "reciclador", Icon: ROLE_THEME[RoleId.RECICLADOR].Icon, etiqueta: "auth.register.roleRecycler" },
-  { rol: "admin_conjunto", Icon: ROLE_THEME[RoleId.ADMIN_CONJUNTO].Icon, etiqueta: "auth.register.roleAdminConjunto" },
+  { rol: "residente", Icon: ROLE_THEME[RoleId.RESIDENTE].Icon, etiqueta: "auth.register.roleResident", descripcion: "auth.register.roleResidentDesc" },
+  { rol: "reciclador", Icon: ROLE_THEME[RoleId.RECICLADOR].Icon, etiqueta: "auth.register.roleRecycler", descripcion: "auth.register.roleRecyclerDesc" },
+  { rol: "admin_conjunto", Icon: ROLE_THEME[RoleId.ADMIN_CONJUNTO].Icon, etiqueta: "auth.register.roleAdminConjunto", descripcion: "auth.register.roleAdminConjuntoDesc" },
 ] as const;
 
 // ¿Qué? Campos que se revisan tanto en tiempo real (al salir del campo)
@@ -99,8 +99,17 @@ export function RegisterPage() {
 
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  const [formData, setFormData] = useState({
-    rol: "residente",
+  // ¿Qué? El rol sale de la dirección (`/register?rol=residente`), no de un
+  //       estado del formulario. Sin `rol` o con uno que no existe, vale null
+  //       y se muestra la pantalla de elegir.
+  // ¿Para qué? Así cada rol se puede abrir directo, y el botón "atrás" del
+  //           navegador vuelve a la pantalla anterior.
+  // ¿Impacto? En la dirección solo viaja el rol, nunca un dato personal.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rolParam = searchParams.get("rol");
+  const rolElegido = OPCIONES_ROL.find((o) => o.rol === rolParam)?.rol ?? null;
+
+  const [campos, setFormData] = useState({
     nombre: "",
     apellidos: "",
     numero_telefonico: "",
@@ -116,6 +125,8 @@ export function RegisterPage() {
     password: "",
     confirmPassword: "",
   });
+  // ¿Para qué? El resto del archivo sigue leyendo `formData.rol` como antes.
+  const formData = { ...campos, rol: rolElegido ?? "residente" };
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -431,43 +442,64 @@ export function RegisterPage() {
 
       <Modal onClose={() => navigate("/")} wide closeOnBackdrop={false}>
         <div className="p-8 max-w-2xl mx-auto overflow-y-auto max-h-[90vh] animate-fade-in">
-          <div className="text-center mb-8">
+          <div className="relative text-center mb-8">
+            {/*
+              ¿Qué? Flecha para volver a la pantalla de elegir rol, en la
+                    esquina izquierda del encabezado (la X de cerrar queda a
+                    la derecha, así que no se pisan).
+              ¿Para qué? Antes era un enlace de texto pequeño que no parecía
+                        botón y era difícil de presionar en celular. Ahora mide
+                        44 px (tamaño táctil mínimo) sin añadir una fila nueva.
+              ¿Impacto? Sin texto visible, así que lleva aria-label (lector de
+                       pantalla) y title (aviso al pasar el mouse).
+            */}
+            {rolElegido && (
+              <button
+                type="button"
+                onClick={() => setSearchParams({})}
+                aria-label={t("auth.register.changeRole")}
+                title={t("auth.register.changeRole")}
+                className="absolute left-0 top-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-accent-700 transition-colors hover:bg-accent-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:border-night-line dark:text-accent-400 dark:hover:bg-accent-900/20"
+              >
+                <ArrowLeft className="icon-md" aria-hidden="true" />
+              </button>
+            )}
             <div className="mb-3 flex justify-center">
               <BrandLogo variant="mark" className="h-12" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("auth.register.title")}</h2>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">{t("auth.register.subtitle")}</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
+              {t(rolElegido ? "auth.register.subtitle" : "auth.register.chooseRoleSubtitle")}
+            </p>
           </div>
 
           {/*
-            ¿Qué? Selector de rol con 3 opciones. La tercera no es un rol que
-                  se pueda registrar: muestra cómo pedir la cuenta de
-                  Administrador de Conjunto (solo se crea por invitación).
-            ¿Para qué? Antes eran <div> con onClick: no se podían alcanzar con
-                      Tab ni elegir con Enter. Como <button> sí, y aria-pressed
-                      le dice al lector de pantalla cuál está elegido.
-            ¿Impacto? Va FUERA del <form> para que elegir la tercera opción
-                     pueda reemplazar el formulario completo.
+            ¿Qué? Primer paso: elegir el rol. Hasta que haya un `?rol=` válido
+                  en la dirección, solo se muestran estas 3 tarjetas.
+            ¿Para qué? Antes el formulario de Residente aparecía ya lleno de
+                      campos y el rol venía elegido por defecto: quien no sabía
+                      qué rol era el suyo veía campos que no le correspondían.
+            ¿Impacto? La tercera tarjeta no es un rol registrable: lleva a las
+                     instrucciones para pedir la cuenta de Administrador de
+                     Conjunto (solo se crea por invitación). Son <button> para
+                     que se alcancen con Tab y se elijan con Enter.
           */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
-            {OPCIONES_ROL.map(({ rol, Icon, etiqueta }) => {
-              const elegido = formData.rol === rol;
-              return (
+          {!rolElegido ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+              {OPCIONES_ROL.map(({ rol, Icon, etiqueta, descripcion }) => (
                 <button
                   key={rol}
                   type="button"
-                  aria-pressed={elegido}
-                  onClick={() => setFormData(p => ({ ...p, rol }))}
-                  className={`flex flex-col items-center justify-start p-2 sm:p-4 border-2 text-center cursor-pointer rounded-2xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${elegido ? "border-accent-600 bg-accent-50/50 dark:bg-accent-900/20 shadow-sm" : "border-gray-200 dark:border-night-line hover:border-accent-300"}`}
+                  onClick={() => setSearchParams({ rol })}
+                  className="flex cursor-pointer flex-col items-center justify-start rounded-2xl border-2 border-gray-200 p-4 text-center transition-all hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:border-night-line"
                 >
-                  <Icon className={`icon-xl mb-2 ${elegido ? "text-accent-600" : "text-gray-400"}`}/>
-                  <span className={`text-xs sm:text-base leading-tight font-semibold ${elegido ? "text-accent-800 dark:text-accent-400" : "text-gray-500 dark:text-gray-400"}`}>{t(etiqueta)}</span>
+                  <Icon className="icon-xl mb-2 text-accent-600 dark:text-accent-400" aria-hidden="true" />
+                  <span className="text-base font-semibold leading-tight text-gray-900 dark:text-white">{t(etiqueta)}</span>
+                  <span className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t(descripcion)}</span>
                 </button>
-              );
-            })}
-          </div>
-
-          {formData.rol === "admin_conjunto" ? (
+              ))}
+            </div>
+          ) : formData.rol === "admin_conjunto" ? (
             <SolicitudAdminConjuntoInfo />
           ) : (
             /*

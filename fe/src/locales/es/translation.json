@@ -148,6 +148,11 @@
       "roleResident": "Residente",
       "roleRecycler": "Reciclador",
       "roleAdminConjunto": "¿Administras un conjunto?",
+      "roleResidentDesc": "Vivo en un conjunto y quiero separar mejor mis residuos",
+      "roleRecyclerDesc": "Recojo material y quiero unirme a un conjunto",
+      "roleAdminConjuntoDesc": "Administro un conjunto y quiero pedir mi cuenta",
+      "chooseRoleSubtitle": "Elige tu rol para mostrarte lo que necesitas",
+      "changeRole": "Cambiar de rol",
       "adminRequest": {
         "heading": "Las cuentas de administrador se crean por invitación",
         "intro": "Así nadie puede darse el rol de Administrador de Conjunto por su cuenta. Para pedir la tuya:",
