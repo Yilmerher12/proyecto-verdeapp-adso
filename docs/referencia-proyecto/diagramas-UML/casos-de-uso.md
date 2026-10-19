@@ -591,7 +591,7 @@ Permite al Admin_conjunto llevar, por cada conjunto que administra, una lista pr
 
 ### Flujo Principal
 
-1. El Admin_conjunto abre "Agenda del conjunto" en el acordeón de uno de sus conjuntos.
+1. El Admin_conjunto abre la opción "Agenda" del menú y elige uno de sus conjuntos.
 2. Agrega un tema (texto y foto opcional); queda como Pendiente.
 3. Después del comité, deja en espera los temas aplazados y elimina los resueltos.
 

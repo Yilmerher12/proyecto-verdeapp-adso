@@ -16,6 +16,7 @@ import {
   Newspaper,
   User,
   Bell,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
@@ -204,6 +205,7 @@ export function AppShell({ children }: AppShellProps) {
       return [
         ...commonStart,
         { icon: Megaphone, label: t("appShell.nav.gestionarComunicados"), href: "/admin-conjunto/comunicados", enabled: true, group: "comunidad" as GrupoNav },
+        { icon: ClipboardList, label: t("appShell.nav.agenda"), href: "/admin-conjunto/agenda", enabled: true, group: "comunidad" as GrupoNav },
         { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true, group: "comunidad" as GrupoNav },
         { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true, group: "cuenta" as GrupoNav },
         ...commonEnd,

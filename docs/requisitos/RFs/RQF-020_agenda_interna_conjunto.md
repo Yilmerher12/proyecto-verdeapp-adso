@@ -39,14 +39,14 @@ La agenda es **privada**: solo la ve el Admin de Conjunto que administra ese con
 
 ### Flujo A — Agregar un tema
 
-1. El Admin de Conjunto abre su panel principal y, dentro del acordeón de uno de sus conjuntos, abre "Agenda del conjunto".
-2. Escribe el tema y, si quiere, sube una foto de soporte (usa el mismo campo de imagen adjunta que los comunicados).
-3. Al guardar, el tema queda en estado **Pendiente**, arriba en la lista.
+1. El Admin de Conjunto abre la opción **Agenda** del menú lateral (`/admin-conjunto/agenda`). Si administra más de un conjunto, elige el conjunto en las pestañas de arriba.
+2. Presiona "Agregar tema", escribe el tema y, si quiere, sube una foto de soporte (usa el mismo campo de imagen adjunta que los comunicados).
+3. Al guardar, el tema queda en estado **Pendiente**, arriba en la columna "Por tratar".
 
 ### Flujo B — Dejar un tema en espera o volverlo a pendiente
 
 1. Desde la lista, el Admin de Conjunto presiona "Dejar en espera" en un tema pendiente (o "Volver a pendiente" en uno en espera).
-2. El tema cambia de estado y de lugar: primero se listan los pendientes y después los que están en espera.
+2. El tema cambia de estado y de columna: los pendientes se ven en "Por tratar" y los aplazados en "En espera".
 
 ### Flujo C — Eliminar un tema resuelto
 
@@ -87,7 +87,7 @@ La agenda es **privada**: solo la ve el Admin de Conjunto que administra ese con
 | PATCH  | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda/{id_item}` | Sí (Admin de Conjunto)     | Cambia el estado del tema          |
 | DELETE | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda/{id_item}` | Sí (Admin de Conjunto)     | Elimina el tema                    |
 
-Código: `be/app/routers/conjunto_panel.py`, `be/app/services/agenda_conjunto_service.py`, `be/app/models/agenda_conjunto.py`; interfaz en `SeccionAgenda` de `fe/src/pages/dashboards/AdminConjuntoDashboard.tsx`.
+Código: `be/app/routers/conjunto_panel.py`, `be/app/services/agenda_conjunto_service.py`, `be/app/models/agenda_conjunto.py`; interfaz en `fe/src/pages/AdminConjuntoAgendaPage.tsx` (ruta `/admin-conjunto/agenda`, opción "Agenda" del menú del Admin de Conjunto).
 
 ---
 
