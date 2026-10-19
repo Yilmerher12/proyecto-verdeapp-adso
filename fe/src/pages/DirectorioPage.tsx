@@ -352,7 +352,7 @@ function TarjetaReciclador({
           <HardHat className="icon-lg text-teal-700 dark:text-teal-400" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-gray-900 dark:text-white">
+          <p className="line-clamp-2 break-words font-semibold text-gray-900 dark:text-white">
             {r.nombre} {r.apellidos}
           </p>
           {r.nombre_localidad && (
@@ -375,7 +375,7 @@ function TarjetaReciclador({
           <div className="flex gap-2">
             <a
               href={callLink(r.numero_telefonico)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+              className="touch-target-h flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
             >
               <Phone className="icon-sm" />
               {t("directorio.call")}
@@ -384,7 +384,7 @@ function TarjetaReciclador({
               href={waLink(r.numero_telefonico)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600"
+              className="touch-target-h flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600"
             >
               <MessageCircle className="icon-sm" />
               WhatsApp
@@ -425,7 +425,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
           <Warehouse className="icon-lg text-accent-700 dark:text-accent-400" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
+          <p className="line-clamp-2 break-words font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
           <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-night-inset dark:text-gray-300">
             <MapIcon className="icon-sm" />
             {p.nombre_localidad}
@@ -440,7 +440,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
           <button
             type="button"
             onClick={copiarDireccion}
-            className="shrink-0 cursor-pointer rounded-md p-1 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-night-hover dark:hover:text-gray-300"
+            className="touch-area relative shrink-0 cursor-pointer rounded-md p-1 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-night-hover dark:hover:text-gray-300"
             aria-label={t("directorio.copyAddress")}
             title={t("directorio.copyAddress")}
           >

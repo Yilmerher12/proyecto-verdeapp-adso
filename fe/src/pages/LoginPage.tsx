@@ -167,7 +167,7 @@ export function LoginPage() {
             <div className="flex justify-end pt-1">
               <Link
                 to="/forgot-password"
-                className="text-xs font-semibold text-accent-600 transition-colors hover:text-accent-700 dark:text-accent-400"
+                className="touch-target-h inline-flex items-center text-xs font-semibold text-accent-600 transition-colors hover:text-accent-700 dark:text-accent-400"
               >
                 {t("auth.login.forgotPassword")}
               </Link>

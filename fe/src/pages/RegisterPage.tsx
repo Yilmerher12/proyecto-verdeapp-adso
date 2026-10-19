@@ -736,7 +736,7 @@ export function RegisterPage() {
                   id="terms"
                   checked={acceptedTerms}
                   onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-night-line text-accent-600 focus:ring-accent-500 accent-accent-600 cursor-pointer"
+                  className="mt-0.5 h-5 w-5 rounded border-gray-300 dark:border-night-line text-accent-600 focus:ring-accent-500 accent-accent-600 cursor-pointer sm:mt-1 sm:h-4 sm:w-4"
                 />
                 <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
                   {t("auth.register.termsPrefix")}{" "}

@@ -283,7 +283,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             to="/"
-            className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+            className="touch-target inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
             aria-label={t("landing.nav.homeAriaLabel")}
           >
             {/* Barra superior: solo el símbolo; el nombre ya lo muestra el hero. */}
@@ -304,7 +304,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
             <li>
               <Link
                 to="/register"
-                className="rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300"
+                className="touch-target-h inline-flex items-center rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300"
               >
                 {t("landing.nav.register")}
               </Link>
@@ -554,7 +554,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
                 <li key={to}>
                   <Link
                     to={to}
-                    className="rounded text-xs text-gray-500 transition-colors hover:text-accent-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:text-gray-400 dark:hover:text-accent-400"
+                    className="touch-target-h inline-flex items-center rounded text-xs text-gray-500 transition-colors hover:text-accent-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:text-gray-400 dark:hover:text-accent-400"
                   >
                     {label}
                   </Link>

@@ -147,7 +147,7 @@ export function InputField({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="touch-target absolute right-1 top-1/2 flex -translate-y-1/2 cursor-pointer items-center justify-center text-gray-500 transition-colors hover:text-gray-700 sm:right-3 dark:text-gray-400 dark:hover:text-gray-200"
             aria-label={showPassword ? t("common.hidePassword") : t("common.showPassword")}
           >
             {/* ¿Qué? Antes el ícono mostraba "lo que pasará si haces clic"

@@ -54,7 +54,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="cursor-pointer rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-night-hover"
+      className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-night-hover"
       // ¿Qué? Textos desde i18n: antes estaban fijos en español y, con la app
       //       en inglés, el lector de pantalla seguía leyendo "Cambiar a tema claro".
       aria-label={isDark ? t("common.switchToLight") : t("common.switchToDark")}

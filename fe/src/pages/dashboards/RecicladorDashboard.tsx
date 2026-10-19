@@ -319,7 +319,7 @@ export function RecicladorDashboard() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-5">
+    <div className="px-0 py-6 sm:p-6 max-w-5xl mx-auto space-y-5">
       {/* Header — el símbolo de reciclaje de fondo es solo un detalle tenue,
           para que este panel se sienta del Reciclador, sin estorbar la
           lectura del texto encima. */}
@@ -383,7 +383,7 @@ export function RecicladorDashboard() {
                 </p>
                 <button
                   onClick={() => setConjuntoParaAuditar(c.id_conjunto_residencial)}
-                  className="shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
+                  className="touch-target-h shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
                 >
                   {t("dashboards.reciclador.auditoria.bannerAction")}
                 </button>

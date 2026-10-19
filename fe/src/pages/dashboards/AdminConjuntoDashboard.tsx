@@ -184,7 +184,7 @@ function SeccionCobertura({ conjunto, onDefinir }: { conjunto: ConjuntoAdministr
           <button
             type="button"
             onClick={onDefinir}
-            className="cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600"
+            className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600"
           >
             {t("dashboards.adminConjunto.coverage.define")}
           </button>
@@ -269,7 +269,7 @@ function SeccionCodigoAcceso({
           <button
             type="button"
             onClick={copiarCodigo}
-            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-white dark:border-night-line dark:text-gray-300 dark:hover:bg-night-field"
+            className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-white dark:border-night-line dark:text-gray-300 dark:hover:bg-night-field"
             aria-label={t(
               copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
             )}
@@ -279,7 +279,7 @@ function SeccionCodigoAcceso({
           <button
             type="button"
             onClick={() => setConfirmando(true)}
-            className="cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="touch-target-h cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("dashboards.adminConjunto.codigoAcceso.regenerateButton")}
           </button>
@@ -450,7 +450,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             onClick={() => setMostrarDetalle((v) => !v)}
             aria-expanded={mostrarDetalle}
             aria-controls={`recicladores-detalle-${idConjunto}`}
-            className="cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-night-panel dark:text-gray-300 dark:border-night-line dark:hover:bg-night-field"
+            className="touch-target-h cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-night-panel dark:text-gray-300 dark:border-night-line dark:hover:bg-night-field"
           >
             {mostrarDetalle
               ? t("dashboards.adminConjunto.recyclersSection.hideDetail")
@@ -461,7 +461,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             onClick={() => setMostrarFormulario((v) => !v)}
             aria-expanded={mostrarFormulario}
             aria-controls={`recicladores-invitar-${idConjunto}`}
-            className="cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+            className="touch-target-h cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
           >
             {t("dashboards.adminConjunto.recyclersSection.invite")}
           </button>
@@ -557,7 +557,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
                     <button
                       type="button"
                       onClick={() => setARevocar(r)}
-                      className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
+                      className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
                       aria-label={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
                     >
                       <UserX className="icon-sm" />
@@ -685,7 +685,7 @@ function SeccionDesvinculacion({
           <button
             type="button"
             onClick={() => setMostrarFormulario(true)}
-            className="cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="touch-target-h cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("desvinculacion.solicitarButton")}
           </button>
@@ -718,7 +718,7 @@ function SeccionDesvinculacion({
               type="button"
               onClick={handleSolicitar}
               disabled={enviando}
-              className="cursor-pointer text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="touch-target-h cursor-pointer text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               {enviando ? t("desvinculacion.sending") : t("desvinculacion.submit")}
             </button>
@@ -728,7 +728,7 @@ function SeccionDesvinculacion({
                 setMostrarFormulario(false);
                 setError(null);
               }}
-              className="cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+              className="touch-target-h cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
             >
               {t("common.cancel")}
             </button>
@@ -895,7 +895,7 @@ export function AdminConjuntoDashboard() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
+    <div className="px-0 py-6 sm:p-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
       {/* TARJETA DE PERFIL — el maletín de fondo es solo un detalle tenue,
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}
@@ -905,12 +905,19 @@ export function AdminConjuntoDashboard() {
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
             <RolIcon className="icon-xl text-amber-600 dark:text-amber-400" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("dashboards.adminConjunto.title")}</h1>
-            <p className="text-gray-600 dark:text-gray-300">
+          {/* ¿Qué? min-w-0 + break-words, y título más chico en celular.
+              ¿Para qué? Sin min-w-0 la columna de texto no se encogía por
+                        debajo de su contenido y el título "Panel de
+                        Administrador de Conjunto" y el correo se salían de la
+                        tarjeta (overflow-hidden) a 375 px: se leía
+                        "Administrador d…" (issue #454).
+              ¿Impacto? Desde `sm` el título vuelve a text-2xl. */}
+          <div className="min-w-0">
+            <h1 className="break-words text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">{t("dashboards.adminConjunto.title")}</h1>
+            <p className="break-words text-gray-600 dark:text-gray-300">
               {t("dashboards.common.welcomePrefix")} <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
             </p>
-            <p className="text-xs text-accent-700 dark:text-accent-400 font-semibold mt-1 tracking-wide">
+            <p className="mt-1 break-all text-xs font-semibold tracking-wide text-accent-700 dark:text-accent-400">
               {user?.email}
             </p>
           </div>
@@ -1102,7 +1109,7 @@ export function AdminConjuntoDashboard() {
                       <button
                         type="button"
                         onClick={() => iniciarEdicion(c)}
-                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+                        className="touch-target-h flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
                       >
                         <Pencil className="icon-sm" /> {t("common.edit")}
                       </button>
