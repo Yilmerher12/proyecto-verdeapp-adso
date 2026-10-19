@@ -1,18 +1,19 @@
 """
 Módulo: services/agenda_conjunto_service.py
 Descripción: Lógica de la agenda interna del Admin de Conjunto — crear,
-             listar, cambiar de estado (pendiente / en espera) y borrar.
+             listar, archivar / restaurar y borrar.
 ¿Para qué? Privada del Admin de Conjunto: sin aprobación ni notificaciones.
 """
 
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.administrador_conjunto import AdministradorConjunto
-from app.models.agenda_conjunto import AgendaConjunto
+from app.models.agenda_conjunto import AgendaConjunto, EstadoAgenda
 from app.schemas.agenda_conjunto import CambiarEstadoAgendaRequest, CrearAgendaItemRequest
 
 
@@ -32,15 +33,37 @@ def _obtener_item(db: Session, id_conjunto: UUID, id_item: UUID) -> AgendaConjun
 
 
 def listar(db: Session, administrador: AdministradorConjunto, id_conjunto: UUID) -> list[AgendaConjunto]:
-    """¿Qué? Temas de la agenda: primero los PENDIENTES, luego los EN_ESPERA; más reciente primero."""
+    """¿Qué? Los temas PENDIENTES ("Por tratar"), el más reciente primero. Los archivados salen aparte, paginados."""
     _verificar_conjunto_propio(administrador, id_conjunto)
-    # ¿Qué? "PENDIENTE" > "EN_ESPERA" alfabéticamente, por eso estado.desc() deja primero los pendientes.
     stmt = (
         select(AgendaConjunto)
-        .where(AgendaConjunto.id_conjunto_residencial == id_conjunto)
-        .order_by(AgendaConjunto.estado.desc(), AgendaConjunto.created_at.desc())
+        .where(
+            AgendaConjunto.id_conjunto_residencial == id_conjunto,
+            AgendaConjunto.estado == EstadoAgenda.PENDIENTE.value,
+        )
+        .order_by(AgendaConjunto.created_at.desc(), AgendaConjunto.id)
     )
     return list(db.scalars(stmt).all())
+
+
+def listar_archivadas(
+    db: Session, administrador: AdministradorConjunto, id_conjunto: UUID, limit: int, offset: int
+) -> tuple[list[AgendaConjunto], int]:
+    """¿Qué? Una página del historial (temas ARCHIVADOS, el último archivado primero) + cuántos hay en total."""
+    _verificar_conjunto_propio(administrador, id_conjunto)
+    donde = (
+        AgendaConjunto.id_conjunto_residencial == id_conjunto,
+        AgendaConjunto.estado == EstadoAgenda.ARCHIVADA.value,
+    )
+    total = db.scalar(select(func.count()).select_from(AgendaConjunto).where(*donde))
+    stmt = (
+        select(AgendaConjunto)
+        .where(*donde)
+        .order_by(AgendaConjunto.archivado_en.desc(), AgendaConjunto.id)
+        .limit(limit)
+        .offset(offset)
+    )
+    return list(db.scalars(stmt).all()), total
 
 
 def crear(
@@ -65,13 +88,15 @@ def cambiar_estado(
     _verificar_conjunto_propio(administrador, id_conjunto)
     item = _obtener_item(db, id_conjunto, id_item)
     item.estado = data.estado
+    # ¿Qué? La fecha de archivado se pone al archivar y se borra al restaurar el tema.
+    item.archivado_en = datetime.now(timezone.utc) if data.estado == EstadoAgenda.ARCHIVADA.value else None
     db.commit()
     db.refresh(item)
     return item
 
 
 def eliminar(db: Session, administrador: AdministradorConjunto, id_conjunto: UUID, id_item: UUID) -> None:
-    """¿Qué? Se borra cuando el tema ya se resolvió en el comité."""
+    """¿Qué? Borra el tema para siempre (pendiente o archivado). Lo normal al resolverlo es archivarlo."""
     _verificar_conjunto_propio(administrador, id_conjunto)
     db.delete(_obtener_item(db, id_conjunto, id_item))
     db.commit()

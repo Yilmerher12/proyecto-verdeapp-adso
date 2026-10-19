@@ -6,7 +6,7 @@ Descripción: Schemas de la agenda interna del Admin de Conjunto — temas por
 """
 
 from datetime import datetime
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -27,7 +27,7 @@ class CrearAgendaItemRequest(BaseModel):
 
 
 class CambiarEstadoAgendaRequest(BaseModel):
-    estado: Literal["PENDIENTE", "EN_ESPERA"]
+    estado: Literal["PENDIENTE", "ARCHIVADA"]
 
 
 class AgendaItemResponse(BaseModel):
@@ -36,3 +36,10 @@ class AgendaItemResponse(BaseModel):
     url_evidencia: Optional[str] = None
     estado: str
     created_at: datetime
+    archivado_en: Optional[datetime] = None
+
+
+class PaginaDeAgendaResponse(BaseModel):
+    """¿Qué? Una página del historial de archivados + cuántos hay en total, para pintar la paginación."""
+    items: List[AgendaItemResponse]
+    total: int

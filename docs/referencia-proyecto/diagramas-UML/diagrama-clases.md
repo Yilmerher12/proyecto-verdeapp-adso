@@ -152,9 +152,11 @@ class AgendaConjunto {
     +string url_evidencia
     +string estado
     +datetime created_at
+    +datetime archivado_en
 
     +agregarTema()
-    +cambiarEstado()
+    +archivar()
+    +restaurar()
     +eliminar()
 }
 
@@ -465,7 +467,7 @@ Representa la solicitud que un Admin_conjunto envía para dejar de administrar u
 
 ## AgendaConjunto
 
-Representa un tema de la agenda **privada** del Admin_conjunto para un conjunto (RQF-020) — algo que le pidieron y quiere llevar al comité, con foto opcional. Su `estado` es `PENDIENTE` o `EN_ESPERA`; cuando el comité lo resuelve, se elimina. Nunca genera notificaciones ni la ve nadie más.
+Representa un tema de la agenda **privada** del Admin_conjunto para un conjunto (RQF-020) — algo que le pidieron y quiere llevar al comité, con foto opcional. Su `estado` es `PENDIENTE` o `ARCHIVADA`; cuando el comité lo resuelve, se archiva (queda como historial y se puede restaurar) en vez de borrarse. Nunca genera notificaciones ni la ve nadie más.
 
 ---
 

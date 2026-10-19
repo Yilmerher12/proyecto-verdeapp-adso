@@ -7,7 +7,7 @@ Descripción: Endpoints del panel propio del Administrador de Conjunto.
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from typing import List
@@ -22,7 +22,12 @@ from app.models.usuario import Usuario
 from app.models.solicitud_desvinculacion import EstadoSolicitudDesvinculacion, SolicitudDesvinculacion
 from app.schemas.conjunto_panel import CodigoAccesoResponse, ConjuntoAdministradoResponse, EditarConjuntoRequest
 from app.schemas.desvinculacion import SolicitarDesvinculacionRequest
-from app.schemas.agenda_conjunto import AgendaItemResponse, CambiarEstadoAgendaRequest, CrearAgendaItemRequest
+from app.schemas.agenda_conjunto import (
+    AgendaItemResponse,
+    CambiarEstadoAgendaRequest,
+    CrearAgendaItemRequest,
+    PaginaDeAgendaResponse,
+)
 from app.schemas.user import MessageResponse
 from app.services import agenda_conjunto_service, desvinculacion_service
 from app.utils.audit_log import log_accion_admin
@@ -268,8 +273,30 @@ def listar_agenda(
     administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
-    """Agenda interna de uno de mis conjuntos — temas para llevar al comité; nunca sale de mi panel."""
+    """Agenda interna de uno de mis conjuntos — los temas por tratar; nunca sale de mi panel."""
     return agenda_conjunto_service.listar(db, administrador, id_conjunto_residencial)
+
+
+# ¿Qué? Tope de filas por página del historial, igual que "Mis envíos" de novedades.
+MAX_LIMIT_ARCHIVADAS = 100
+
+
+@router.get(
+    "/mis-conjuntos/{id_conjunto_residencial}/agenda/archivadas",
+    response_model=PaginaDeAgendaResponse,
+)
+def listar_agenda_archivada(
+    id_conjunto_residencial: UUID,
+    limit: int = Query(10, ge=1, le=MAX_LIMIT_ARCHIVADAS),
+    offset: int = Query(0, ge=0),
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
+    db: Session = Depends(get_db),
+):
+    """Historial de la agenda de uno de mis conjuntos: los temas archivados. Paginado."""
+    items, total = agenda_conjunto_service.listar_archivadas(
+        db, administrador, id_conjunto_residencial, limit=limit, offset=offset
+    )
+    return {"items": items, "total": total}
 
 
 @router.post(
@@ -298,7 +325,7 @@ def cambiar_estado_item_agenda(
     administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
-    """Deja un tema en espera, o lo vuelve a pendiente."""
+    """Archiva un tema (ya se resolvió) o lo vuelve a pendiente."""
     return agenda_conjunto_service.cambiar_estado(db, administrador, id_conjunto_residencial, id_item, datos)
 
 
@@ -312,6 +339,6 @@ def eliminar_item_agenda(
     administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
-    """Borra un tema que ya se resolvió en el comité."""
+    """Borra un tema para siempre (pendiente o archivado)."""
     agenda_conjunto_service.eliminar(db, administrador, id_conjunto_residencial, id_item)
     return MessageResponse(message="Tema eliminado de la agenda.")
