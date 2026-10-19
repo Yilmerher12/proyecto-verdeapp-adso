@@ -459,8 +459,12 @@ export function AdminContenidoEducativoPage() {
   };
 
   const [aEliminar, setAEliminar] = useState<ContenidoEducativo | null>(null);
+  // ¿Qué? true mientras corre la acción de la confirmación (issue #458).
+  // ¿Para qué? Antes no pasaba nada visible mientras tardaba y se podía confirmar dos veces.
+  const [eliminando, setEliminando] = useState(false);
   const confirmarEliminar = async () => {
     if (!user || !aEliminar) return;
+    setEliminando(true);
     try {
       await eliminarContenido(aEliminar.id_contenido);
       setAEliminar(null);
@@ -468,6 +472,8 @@ export function AdminContenidoEducativoPage() {
       cargarContenido();
     } catch {
       setErrorMsg(t(`${p}.deleteError`));
+    } finally {
+      setEliminando(false);
     }
   };
 
@@ -1322,6 +1328,7 @@ export function AdminContenidoEducativoPage() {
           description={t(`${p}.deleteConfirm.warning`)}
           confirmLabel={t(`${p}.deleteConfirm.confirm`)}
           onConfirm={confirmarEliminar}
+          isConfirming={eliminando}
           onClose={() => setAEliminar(null)}
         />
       )}

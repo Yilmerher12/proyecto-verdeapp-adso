@@ -19,13 +19,23 @@ const API_BASE = `${API_BASE_URL}/api/v1/uploads`;
  */
 export async function subirAdjunto(
   archivo: File,
-  opciones?: { permitirDocumentos?: boolean }
+  opciones?: { permitirDocumentos?: boolean; onProgress?: (porcentaje: number) => void }
 ): Promise<string> {
   const formData = new FormData();
   formData.append("archivo", archivo);
   const url = opciones?.permitirDocumentos
     ? `${API_BASE}/adjunto?permitir_documentos=true`
     : `${API_BASE}/adjunto`;
-  const response = await axios.post<{ url: string }>(url, formData);
+  // ¿Qué? `onProgress` recibe el porcentaje real de la subida (0 a 100).
+  // ¿Para qué? Issue #458: la barra de progreso de las subidas. Sin esto solo
+  //           se veía un círculo girando, igual con una subida que avanza que
+  //           con una que se colgó.
+  // ¿Impacto? Es opcional: quien no lo pasa sigue funcionando igual.
+  const response = await axios.post<{ url: string }>(url, formData, {
+    onUploadProgress: (evento) => {
+      if (!opciones?.onProgress || !evento.total) return;
+      opciones.onProgress(Math.round((evento.loaded / evento.total) * 100));
+    },
+  });
   return response.data.url;
 }

@@ -904,6 +904,7 @@
         "submitIncomplete": "Completa el formulario",
         "sending": "Enviando...",
         "sendingProgress": "Enviando... {{porcentaje}}%",
+        "uploadingPhotos": "Subiendo las fotos…",
         "successMessage": "Auditoría enviada.",
         "errorDefault": "No se pudo enviar la auditoría.",
         "errorTimeout": "La subida está tardando demasiado — revisa tu conexión e intenta de nuevo.",
@@ -996,7 +997,8 @@
       "change": "Cambiar foto de perfil",
       "invalidType": "La foto debe ser JPG, PNG o WEBP.",
       "tooLarge": "La foto no puede superar 5 MB.",
-      "uploadError": "No se pudo subir la foto. Intenta de nuevo."
+      "uploadError": "No se pudo subir la foto. Intenta de nuevo.",
+      "uploading": "Subiendo foto…"
     },
     "notRegistered": "No registrado",
     "emailNote": "El correo no se puede cambiar desde aquí.",

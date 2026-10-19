@@ -192,6 +192,8 @@ Librería para la solución 1, si se prefiere una (no es necesaria): `browser-im
 ## 7. Hallazgos aparte (no son parte de esta tarjeta)
 
 1. **Posible error al adjuntar fotos en la auditoría.** En `AuditoriaConjuntoForm.tsx` (líneas 315-318) se llama `agregarFotos(e.target.files)` y enseguida `e.target.value = ""`. En Chromium, esa lista de archivos es "viva": al borrar el valor queda **vacía** antes de que React la lea (comprobado con un script de 6 líneas: tenía 1 archivo y quedó en 0). En la medición **ninguna foto se pudo adjuntar** hasta que se desactivó ese borrado; el formulario se quedaba en "Completa el formulario". **Hay que confirmarlo a mano** en Chrome (escritorio y celular): elegir una foto en "Auditar ahora" y ver si aparece la miniatura. Si falla, el Reciclador **no puede auditar**. La corrección es copiar los archivos a un arreglo antes de borrar el valor. Los otros campos de archivo del proyecto leen `files?.[0]` (un `File`, no la lista) y no tienen el problema.
+
+   > **Actualización (2026-10-19):** el equipo lo confirmó a mano en Chrome (la miniatura no aparecía) y **se corrigió en la rama de #458**: ahora se copian los archivos a un arreglo antes de vaciar el campo. Hay una prueba que imita la lista "viva" de Chrome y se comprobó con 3 fotos seguidas en un Chromium real, sin ningún parche.
 2. **El servidor valida la regla de la llegada después de recibir las fotos** (sección 2.4) y el botón "Auditar ahora" no la comprueba antes.
 
 ## 8. Recomendación

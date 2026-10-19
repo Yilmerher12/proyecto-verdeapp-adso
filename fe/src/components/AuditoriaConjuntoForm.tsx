@@ -12,7 +12,9 @@
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Camera, ClipboardCheck, LoaderCircle, Plus, X } from "lucide-react";
+import { Camera, ClipboardCheck, Plus, X } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
@@ -75,9 +77,9 @@ export function AuditoriaConjuntoForm({
     return () => urls.forEach((url) => URL.revokeObjectURL(url));
   }, [evidencias]);
 
-  const agregarFotos = (archivos: FileList | null) => {
-    if (!archivos || archivos.length === 0) return;
-    setEvidencias((prev) => [...prev, ...Array.from(archivos)].slice(0, MAXIMO_FOTOS));
+  const agregarFotos = (archivos: File[]) => {
+    if (archivos.length === 0) return;
+    setEvidencias((prev) => [...prev, ...archivos].slice(0, MAXIMO_FOTOS));
   };
 
   const quitarFoto = (indice: number) => {
@@ -313,8 +315,16 @@ export function AuditoriaConjuntoForm({
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
                 onChange={(e) => {
-                  agregarFotos(e.target.files);
+                  // ¿Qué? Se copian los archivos a un arreglo ANTES de vaciar el campo.
+                  // ¿Para qué? En Chrome `e.target.files` es una lista "viva": al hacer
+                  //           `value = ""` queda vacía. React ejecuta la función de
+                  //           `setEvidencias` más tarde, y para entonces ya no había
+                  //           archivos: la foto nunca se adjuntaba y el botón se quedaba
+                  //           en "Completa el formulario" (error hallado en #459).
+                  // ¿Impacto? Sin la copia, el Reciclador no podía enviar ninguna auditoría.
+                  const archivos = Array.from(e.target.files ?? []);
                   e.target.value = "";
+                  agregarFotos(archivos);
                 }}
               />
             </label>
@@ -328,6 +338,17 @@ export function AuditoriaConjuntoForm({
         {error && (
           <div className="mb-4">
             <Alert type="error" message={error} onClose={() => setError(null)} />
+          </div>
+        )}
+
+        {/* ¿Qué? Barra de progreso de la subida de las fotos.
+            ¿Para qué? Issue #458: el porcentaje ya salía solo como texto dentro del
+                      botón; la barra muestra de un vistazo cuánto falta, sobre todo
+                      con 3 fotos de varios MB y mala conexión.
+            ¿Impacto? Solo se ve mientras se envía. */}
+        {enviando && (
+          <div className="mb-4">
+            <ProgressBar value={progreso} label={t("dashboards.reciclador.auditoria.uploadingPhotos")} />
           </div>
         )}
 
@@ -345,7 +366,7 @@ export function AuditoriaConjuntoForm({
             disabled={enviando || formularioIncompleto}
             className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {enviando && <LoaderCircle className="icon-md animate-spin" />}
+            {enviando && <Spinner size="sm" tone="current" />}
             {enviando
               ? // ¿Qué? Antes solo decía "Enviando..." sin ningún número.
                 // ¿Para qué? Una subida que de verdad avanza (pero lento, por

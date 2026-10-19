@@ -62,6 +62,10 @@ export function AppShell({ children }: AppShellProps) {
   // ¿Impacto? En tableta y escritorio sigue abierto, como antes.
   const [collapsed, setCollapsed] = useState(() => esCelular());
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  // ¿Qué? true mientras se avisa al servidor que cierre la sesión (issue #458).
+  // ¿Para qué? Con mala conexión esa petición puede tardar hasta 10 s y el botón
+  //           "Sí, cerrar sesión" no mostraba nada ni impedía tocarlo dos veces.
+  const [cerrandoSesion, setCerrandoSesion] = useState(false);
   const [noLeidas, setNoLeidas] = useState(0);
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState<string | null>(null);
   // ¿Qué? La ruta guardada (/uploads/perfiles/...) ya completa y revisada.
@@ -113,6 +117,7 @@ export function AppShell({ children }: AppShellProps) {
     //           responde (sin red, caído), el usuario igual debe poder
     //           salir de su sesión en este navegador — no tiene sentido
     //           bloquear el logout local por un problema de red.
+    setCerrandoSesion(true);
     try {
       await authApi.logoutUser();
     } catch {
@@ -467,6 +472,7 @@ export function AppShell({ children }: AppShellProps) {
             description={t("appShell.confirmarLogout.mensaje")}
             confirmLabel={t("appShell.confirmarLogout.confirmar")}
             onConfirm={handleLogout}
+            isConfirming={cerrandoSesion}
             onClose={() => setShowLogoutConfirm(false)}
           />
         )}

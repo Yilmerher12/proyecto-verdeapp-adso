@@ -4,7 +4,7 @@
  *              pendientes, conjuntos autorizados y envío de notificaciones.
  */
 
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
 import { RecicladorDashboard } from "@/pages/dashboards/RecicladorDashboard";
@@ -248,5 +248,49 @@ describe("RecicladorDashboard", () => {
     expect(formData.get("nivel_desempeno")).toBe("BUENA");
     expect(formData.get("tema_educativo")).toBe("Separación en la fuente y código de colores");
     expect(formData.get("evidencias")).toBeInstanceOf(File);
+  });
+
+  // ¿Qué? En Chrome, `input.files` es una lista "viva": al hacer `input.value = ""` queda vacía.
+  //       El formulario leía esa lista DESPUÉS de vaciar el campo (React ejecuta la función
+  //       de `setEvidencias` más tarde), así que nunca agregaba la foto y el botón se quedaba
+  //       en "Completa el formulario".
+  // ¿Para qué? Es un error real que se encontró en #459: en jsdom no se nota porque ahí la lista
+  //           no es viva. Esta prueba imita el comportamiento de Chrome.
+  // ¿Impacto? Si alguien vuelve a leer la lista después de vaciar el campo, esta prueba falla.
+  it("adjunta la foto aunque el navegador vacíe la lista de archivos al limpiar el campo (Chrome)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
+      if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+      if (url.includes("/auditorias-conjunto/mias")) return Promise.resolve({ data: [] });
+      if (url.includes("/contenido-educativo")) {
+        return Promise.resolve({
+          data: [{ id_contenido: 1, modulo_categoria: "Separación en la fuente y código de colores" }],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Ya puedes calificar la separación de residuos de Conjunto Los Alpes.");
+    await user.click(screen.getByRole("button", { name: "Auditar ahora" }));
+    await user.click(screen.getByRole("radio", { name: "Bueno" }));
+    await user.selectOptions(await screen.findByRole("combobox"), "Separación en la fuente y código de colores");
+
+    const archivo = new File(["contenido"], "evidencia.jpg", { type: "image/jpeg" });
+    const input = screen.getByLabelText(/JPG, PNG o WEBP/) as HTMLInputElement;
+    const listaViva: File[] = [archivo];
+    Object.defineProperty(input, "files", { get: () => listaViva, configurable: true });
+    Object.defineProperty(input, "value", {
+      get: () => "",
+      set: () => {
+        listaViva.length = 0; // lo que hace Chrome al vaciar el campo
+      },
+      configurable: true,
+    });
+    fireEvent.change(input);
+
+    expect(await screen.findByAltText("evidencia.jpg")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Enviar auditoría" })).toBeEnabled();
   });
 });

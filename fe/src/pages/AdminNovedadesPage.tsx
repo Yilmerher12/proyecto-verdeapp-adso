@@ -143,6 +143,9 @@ export function AdminNovedadesPage() {
   //       directo al clic, sin confirmar, a diferencia de eliminar un
   //       comunicado (misma acción conceptual, otra pantalla).
   const [aArchivar, setAArchivar] = useState<Novedad | null>(null);
+  // ¿Qué? true mientras corre la acción de la confirmación (issue #458).
+  // ¿Para qué? Antes no pasaba nada visible mientras tardaba y se podía confirmar dos veces.
+  const [archivando, setArchivando] = useState(false);
 
   const paginacion = usePaginacion(TAMANO_PAGINA, total);
   const { reiniciar, offset } = paginacion;
@@ -295,6 +298,7 @@ export function AdminNovedadesPage() {
 
   const confirmarArchivar = async () => {
     if (!user || !aArchivar) return;
+    setArchivando(true);
     try {
       await archivarNovedad(aArchivar.id_novedad);
       setAArchivar(null);
@@ -302,6 +306,8 @@ export function AdminNovedadesPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setErrorMsg(err.message || t("novedades.admin.archiveError"));
+    } finally {
+      setArchivando(false);
     }
   };
 
@@ -803,6 +809,7 @@ export function AdminNovedadesPage() {
           description={t("novedades.admin.archiveConfirm.warning")}
           confirmLabel={t("novedades.admin.archiveConfirm.confirm")}
           onConfirm={confirmarArchivar}
+          isConfirming={archivando}
           onClose={() => setAArchivar(null)}
         />
       )}

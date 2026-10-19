@@ -7,6 +7,7 @@ import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Spinner } from "@/components/ui/Spinner";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
 import { PuntoAcopioForm } from "@/components/PuntoAcopioForm";
@@ -75,6 +76,11 @@ export function AdminPuntosAcopioPage() {
 
   const [aDarDeBaja, setADarDeBaja] = useState<PuntoAcopioAdmin | null>(null);
   const [aEliminar, setAEliminar] = useState<PuntoAcopioAdmin | null>(null);
+  // ¿Qué? true mientras corre dar de baja / eliminar, y el id del punto que se está reactivando.
+  // ¿Para qué? Issue #458: estas acciones no mostraban nada mientras tardaban
+  //           y se podían tocar dos veces.
+  const [confirmando, setConfirmando] = useState(false);
+  const [reactivandoId, setReactivandoId] = useState<string | null>(null);
 
   // ¿Qué? Búsqueda y filtro de estado — se aplican en el navegador: el backend
   //       ya devuelve la lista completa (incluidos los dados de baja).
@@ -155,6 +161,7 @@ export function AdminPuntosAcopioPage() {
 
   const confirmarDarDeBaja = async () => {
     if (!aDarDeBaja) return;
+    setConfirmando(true);
     try {
       await darDeBajaPuntoAcopio(aDarDeBaja.id_punto_acopio);
       setADarDeBaja(null);
@@ -162,20 +169,26 @@ export function AdminPuntosAcopioPage() {
     } catch {
       setADarDeBaja(null);
       setErrorAccion(t("adminPuntosAcopio.deactivateError"));
+    } finally {
+      setConfirmando(false);
     }
   };
 
   const reactivar = async (item: PuntoAcopioAdmin) => {
+    setReactivandoId(item.id_punto_acopio);
     try {
       await reactivarPuntoAcopio(item.id_punto_acopio);
       cargar();
     } catch {
       setErrorAccion(t("adminPuntosAcopio.reactivateError"));
+    } finally {
+      setReactivandoId(null);
     }
   };
 
   const confirmarEliminar = async () => {
     if (!aEliminar) return;
+    setConfirmando(true);
     try {
       await eliminarPuntoAcopioDefinitivo(aEliminar.id_punto_acopio);
       setAEliminar(null);
@@ -183,6 +196,8 @@ export function AdminPuntosAcopioPage() {
     } catch {
       setAEliminar(null);
       setErrorAccion(t("adminPuntosAcopio.deleteError"));
+    } finally {
+      setConfirmando(false);
     }
   };
 
@@ -301,10 +316,12 @@ export function AdminPuntosAcopioPage() {
           <>
             <button
               onClick={() => reactivar(item)}
-              className={`${botonAccion} text-accent-600 hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-900/20`}
+              disabled={reactivandoId === item.id_punto_acopio}
+              aria-busy={reactivandoId === item.id_punto_acopio}
+              className={`${botonAccion} disabled:cursor-not-allowed disabled:opacity-60 text-accent-600 hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-900/20`}
               aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
             >
-              <MapPin className="icon-md icon-draw" />
+              {reactivandoId === item.id_punto_acopio ? <Spinner size="sm" /> : <MapPin className="icon-md icon-draw" />}
             </button>
             <button
               onClick={() => setAEliminar(item)}
@@ -464,6 +481,7 @@ export function AdminPuntosAcopioPage() {
           onGuardar={guardarEdicion}
           onDarDeBaja={setADarDeBaja}
           onReactivar={reactivar}
+          reactivando={reactivandoId !== null && reactivandoId === seleccionadoId}
           onEliminar={setAEliminar}
         />
       )}
@@ -477,6 +495,7 @@ export function AdminPuntosAcopioPage() {
           description={t("adminPuntosAcopio.deactivateConfirm.warning")}
           confirmLabel={t("adminPuntosAcopio.deactivateConfirm.confirm")}
           onConfirm={confirmarDarDeBaja}
+          isConfirming={confirmando}
           onClose={() => setADarDeBaja(null)}
         />
       )}
@@ -490,6 +509,7 @@ export function AdminPuntosAcopioPage() {
           description={t("adminPuntosAcopio.deleteConfirm.warning")}
           confirmLabel={t("adminPuntosAcopio.deleteConfirm.confirm")}
           onConfirm={confirmarEliminar}
+          isConfirming={confirmando}
           onClose={() => setAEliminar(null)}
         />
       )}

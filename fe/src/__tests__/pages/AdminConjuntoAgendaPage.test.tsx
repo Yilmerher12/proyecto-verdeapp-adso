@@ -156,6 +156,27 @@ describe("AdminConjuntoAgendaPage", () => {
       expect(screen.queryByText("Tema archivado. Lo encuentras en Archivadas.")).not.toBeInTheDocument();
     });
 
+    // ¿Qué? Issue #458: mientras el servidor responde, el botón se desactiva y muestra que trabaja.
+    // ¿Para qué? Con mala conexión el archivado puede tardar; antes el botón no cambiaba y se podía tocar dos veces.
+    it("mientras archiva, el botón queda desactivado y marcado como ocupado (no se puede tocar dos veces)", async () => {
+      mockAgenda([conjuntoUno], { "c-1": [temaPendiente] });
+      let terminar: (valor: unknown) => void = () => {};
+      mockPatch.mockImplementation(() => new Promise((resolver) => { terminar = resolver; }));
+      const user = userEvent.setup();
+      renderPage();
+
+      const boton = await screen.findByRole("button", { name: "Archivar" });
+      await user.click(boton);
+
+      await waitFor(() => expect(boton).toBeDisabled());
+      expect(boton).toHaveAttribute("aria-busy", "true");
+      await user.click(boton);
+      expect(mockPatch).toHaveBeenCalledTimes(1);
+
+      terminar({ data: {} });
+      expect(await screen.findByText("Tema archivado. Lo encuentras en Archivadas.")).toBeInTheDocument();
+    });
+
     it("muestra un aviso si falla el archivado y no ofrece deshacer", async () => {
       mockAgenda([conjuntoUno], { "c-1": [temaPendiente] });
       mockPatch.mockRejectedValue(new Error("fallo"));
