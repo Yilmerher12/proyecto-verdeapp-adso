@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, ClipboardList, Clock, Plus, Trash2 } from "lucide-react";
+import { Archive, Check, ClipboardList, Plus, Trash2, Undo2, X } from "lucide-react";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { DESVINCULACION_MOTIVO_MAX_LENGTH } from "@/lib/validacion";
@@ -9,10 +9,12 @@ import {
   crearItemAgenda,
   eliminarItemAgenda,
   listarAgenda,
+  listarAgendaArchivada,
   obtenerMisConjuntos,
   type ConjuntoAdministrado,
   type ItemAgenda,
 } from "@/lib/conjuntoPanelApi";
+import { usePaginacion } from "@/hooks/usePaginacion";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
@@ -20,27 +22,51 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Modal } from "@/components/ui/Modal";
+import { Paginacion } from "@/components/ui/Paginacion";
+
+// ¿Qué? Issue #435 — temas del historial por página, igual que "Mis envíos" de novedades.
+const TAMANO_PAGINA = 10;
+
+// ¿Qué? Color de cada nota; se reparte por turnos para que no todas se vean iguales.
+//       Mismos matices que ya usan los tipos de comunicado, con su versión oscura.
+const COLORES_NOTA = [
+  "border-amber-100 bg-amber-50 dark:border-amber-900/30 dark:bg-amber-900/20",
+  "border-accent-100 bg-accent-50 dark:border-accent-900/30 dark:bg-accent-900/20",
+  "border-blue-100 bg-blue-50 dark:border-blue-900/30 dark:bg-blue-900/20",
+  "border-purple-100 bg-purple-50 dark:border-purple-900/30 dark:bg-purple-900/20",
+];
+
+type Vista = "porTratar" | "archivadas";
 
 /**
- * ¿Qué? Agenda interna del Admin de Conjunto (RQF-020, HU-046): los temas
- *       que le piden y quiere llevar al comité, en dos columnas — "Por
- *       tratar" y "En espera" — con una pestaña por cada conjunto que administra.
- * ¿Para qué? Antes vivía escondida dentro del acordeón de cada conjunto en
- *           el Panel principal; como opción propia del menú se encuentra
- *           sin buscar y se ve de un vistazo qué queda por tratar.
- * ¿Impacto? Es la misma funcionalidad y los mismos endpoints de siempre (por
- *          conjunto, privada, sin fecha de caducidad). Nunca llega al Admin
- *          Sistema. Las agendas de todos los conjuntos se cargan juntas para
- *          que cada pestaña muestre su contador sin otra petición.
+ * ¿Qué? Agenda interna del Admin de Conjunto (RQF-020, HU-046): los temas que
+ *       le piden y quiere llevar al comité, como notas. "Por tratar" son los
+ *       pendientes; al resolverlos se ARCHIVAN y pasan a "Archivadas", que
+ *       hace de historial. Una pestaña por cada conjunto que administra.
+ * ¿Para qué? Antes los temas resueltos se borraban y los aplazados quedaban
+ *           "en espera"; ahora nada se pierde sin querer: se archiva, y se
+ *           puede devolver a "Por tratar".
+ * ¿Impacto? Privada: nunca llega al Admin Sistema. Los pendientes de todos
+ *          los conjuntos se cargan juntos para que cada pestaña muestre su
+ *          contador; el historial se pide por páginas solo del conjunto activo.
  */
 export function AdminConjuntoAgendaPage() {
   const { t } = useTranslation();
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
-  const [agendas, setAgendas] = useState<Record<string, ItemAgenda[]>>({});
+  const [pendientes, setPendientes] = useState<Record<string, ItemAgenda[]>>({});
   const [idConjunto, setIdConjunto] = useState("");
+  const [vista, setVista] = useState<Vista>("porTratar");
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [archivadas, setArchivadas] = useState<ItemAgenda[]>([]);
+  const [totalArchivadas, setTotalArchivadas] = useState(0);
+  const paginacion = usePaginacion(TAMANO_PAGINA, totalArchivadas);
+  const { offset, pagina, irAAnterior, reiniciar } = paginacion;
+
+  // ¿Qué? Último tema archivado, para ofrecer "Deshacer" en el aviso.
+  const [recienArchivado, setRecienArchivado] = useState<ItemAgenda | null>(null);
 
   const [agregando, setAgregando] = useState(false);
   const [texto, setTexto] = useState("");
@@ -52,7 +78,7 @@ export function AdminConjuntoAgendaPage() {
   const [borrando, setBorrando] = useState(false);
   const [errorBorrar, setErrorBorrar] = useState<string | null>(null);
 
-  const cargar = useCallback(() => {
+  const cargarPendientes = useCallback(() => {
     obtenerMisConjuntos()
       .then(async (lista) => {
         const listas = await Promise.all(lista.map((c) => listarAgenda(c.id_conjunto_residencial)));
@@ -61,7 +87,7 @@ export function AdminConjuntoAgendaPage() {
           porConjunto[c.id_conjunto_residencial] = listas[i];
         });
         setConjuntos(lista);
-        setAgendas(porConjunto);
+        setPendientes(porConjunto);
         // ¿Qué? Si el conjunto elegido ya no existe (o aún no hay ninguno elegido) se vuelve al primero.
         setIdConjunto((actual) =>
           lista.some((c) => c.id_conjunto_residencial === actual) ? actual : (lista[0]?.id_conjunto_residencial ?? "")
@@ -72,13 +98,41 @@ export function AdminConjuntoAgendaPage() {
       .finally(() => setCargando(false));
   }, []);
 
-  useEffect(() => {
-    cargar();
-  }, [cargar]);
+  const cargarArchivadas = useCallback(() => {
+    if (!idConjunto) return;
+    listarAgendaArchivada(idConjunto, TAMANO_PAGINA, offset)
+      .then((p) => {
+        setArchivadas(p.items);
+        setTotalArchivadas(p.total);
+      })
+      .catch(() => setErrorCarga(true));
+  }, [idConjunto, offset]);
 
-  const items = agendas[idConjunto] ?? [];
-  const porTratar = items.filter((i) => i.estado === "PENDIENTE");
-  const enEspera = items.filter((i) => i.estado === "EN_ESPERA");
+  useEffect(() => {
+    cargarPendientes();
+  }, [cargarPendientes]);
+
+  useEffect(() => {
+    cargarArchivadas();
+  }, [cargarArchivadas]);
+
+  // ¿Qué? Si se vació la última página del historial (se restauró o borró su único tema), se retrocede una.
+  useEffect(() => {
+    if (archivadas.length === 0 && totalArchivadas > 0 && pagina > 0) irAAnterior();
+  }, [archivadas, totalArchivadas, pagina, irAAnterior]);
+
+  const recargarTodo = () => {
+    cargarPendientes();
+    cargarArchivadas();
+  };
+
+  const elegirConjunto = (id: string) => {
+    setIdConjunto(id);
+    reiniciar();
+    setRecienArchivado(null);
+  };
+
+  const porTratar = pendientes[idConjunto] ?? [];
 
   const cerrarFormulario = () => {
     setAgregando(false);
@@ -93,7 +147,8 @@ export function AdminConjuntoAgendaPage() {
     try {
       await crearItemAgenda(idConjunto, { texto: texto.trim(), url_evidencia: urlEvidencia || null });
       cerrarFormulario();
-      cargar();
+      setVista("porTratar");
+      cargarPendientes();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setErrorGuardar(err.message || t("agenda.errorDefault"));
@@ -102,14 +157,33 @@ export function AdminConjuntoAgendaPage() {
     }
   };
 
-  const alternarEstado = async (item: ItemAgenda) => {
+  const cambiarEstado = async (item: ItemAgenda, estado: ItemAgenda["estado"]) => {
     setError(null);
     try {
-      await cambiarEstadoItemAgenda(idConjunto, item.id, item.estado === "PENDIENTE" ? "EN_ESPERA" : "PENDIENTE");
-      cargar();
+      await cambiarEstadoItemAgenda(idConjunto, item.id, estado);
+      recargarTodo();
+      return true;
     } catch {
       setError(t("agenda.actionError"));
+      return false;
     }
+  };
+
+  const archivar = async (item: ItemAgenda) => {
+    if (await cambiarEstado(item, "ARCHIVADA")) setRecienArchivado(item);
+  };
+
+  // ¿Qué? Al restaurar un tema el aviso de "archivado" ya no aplica, se quita.
+  const restaurar = async (item: ItemAgenda) => {
+    setRecienArchivado(null);
+    await cambiarEstado(item, "PENDIENTE");
+  };
+
+  const deshacerArchivado = async () => {
+    if (!recienArchivado) return;
+    const item = recienArchivado;
+    setRecienArchivado(null);
+    await cambiarEstado(item, "PENDIENTE");
   };
 
   const confirmarBorrar = async () => {
@@ -118,8 +192,9 @@ export function AdminConjuntoAgendaPage() {
     setErrorBorrar(null);
     try {
       await eliminarItemAgenda(idConjunto, aBorrar.id);
+      if (recienArchivado?.id === aBorrar.id) setRecienArchivado(null);
       setABorrar(null);
-      cargar();
+      recargarTodo();
     } catch {
       setErrorBorrar(t("agenda.actionError"));
     } finally {
@@ -127,77 +202,114 @@ export function AdminConjuntoAgendaPage() {
     }
   };
 
-  const tarjeta = (item: ItemAgenda) => {
+  const botonBorrar = (item: ItemAgenda) => (
+    <button
+      type="button"
+      onClick={() => setABorrar(item)}
+      aria-label={t("agenda.delete")}
+      className="cursor-pointer rounded-lg border border-gray-200 bg-white/60 p-1.5 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:bg-transparent dark:hover:bg-red-900/20"
+    >
+      <Trash2 className="icon-sm" />
+    </button>
+  );
+
+  const nota = (item: ItemAgenda, indice: number) => {
     const urlFoto = enlaceAdjuntoSeguro(item.url_evidencia);
     return (
       <li
         key={item.id}
-        className="space-y-3 rounded-2xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
+        className={`flex flex-col gap-3 rounded-2xl border p-4 shadow-sm ${COLORES_NOTA[indice % COLORES_NOTA.length]}`}
       >
-        <div className="flex items-start gap-3">
-          {urlFoto && (
-            <a
-              href={urlFoto}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={t("agenda.viewPhoto")}
-              className="shrink-0 cursor-pointer"
-            >
-              <img
-                src={urlFoto}
-                alt=""
-                className="h-16 w-16 rounded-xl border border-gray-200 object-cover dark:border-night-line"
-              />
-            </a>
-          )}
-          <div className="min-w-0 flex-1">
-            <span className="text-[11px] text-gray-500 dark:text-gray-400">{formatearFechaCreacion(item.created_at)}</span>
-            <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-gray-800 dark:text-gray-200">{item.texto}</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
+        <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+          {formatearFechaCreacion(item.created_at)}
+        </span>
+        {urlFoto && (
+          <a
+            href={urlFoto}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t("agenda.viewPhoto")}
+            className="block cursor-pointer"
+          >
+            <img
+              src={urlFoto}
+              alt=""
+              className="h-32 w-full rounded-xl border border-gray-200 object-cover dark:border-night-line"
+            />
+          </a>
+        )}
+        <p className="flex-1 whitespace-pre-wrap break-words text-sm text-gray-800 dark:text-gray-200">{item.texto}</p>
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => alternarEstado(item)}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
+            onClick={() => archivar(item)}
+            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
           >
-            {item.estado === "PENDIENTE" && <Clock className="icon-sm" />}
-            {item.estado === "PENDIENTE" ? t("agenda.putOnHold") : t("agenda.backToPending")}
+            <Archive className="icon-sm" />
+            {t("agenda.archive")}
           </button>
-          <button
-            type="button"
-            onClick={() => setABorrar(item)}
-            aria-label={t("agenda.delete")}
-            className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
-          >
-            <Trash2 className="icon-sm" />
-          </button>
+          {botonBorrar(item)}
         </div>
       </li>
     );
   };
 
-  const columna = (titulo: string, lista: ItemAgenda[], vacio: string, iconoVacio: typeof Clock) => (
-    <section
-      aria-label={titulo}
-      className="space-y-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-night-line dark:bg-night-inset/40"
-    >
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-gray-900 dark:text-white">{titulo}</h2>
-        <span className="rounded-full bg-accent-100 px-2.5 py-0.5 text-xs font-bold text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
-          {lista.length}
-        </span>
-      </div>
-      {lista.length === 0 ? <EmptyState icon={iconoVacio} message={vacio} /> : <ul className="space-y-3">{lista.map(tarjeta)}</ul>}
-    </section>
-  );
+  const filaArchivada = (item: ItemAgenda) => {
+    const urlFoto = enlaceAdjuntoSeguro(item.url_evidencia);
+    return (
+      <li
+        key={item.id}
+        className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
+      >
+        {urlFoto ? (
+          <a href={urlFoto} target="_blank" rel="noopener noreferrer" aria-label={t("agenda.viewPhoto")} className="shrink-0 cursor-pointer">
+            <img src={urlFoto} alt="" className="h-14 w-14 rounded-xl border border-gray-200 object-cover dark:border-night-line" />
+          </a>
+        ) : (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-night-field dark:text-gray-400">
+            <Archive className="icon-md" />
+          </div>
+        )}
+        <div className="min-w-0 flex-1 basis-60">
+          <span className="text-[11px] text-gray-500 dark:text-gray-400">
+            {t("agenda.createdOn", { fecha: formatearFechaCreacion(item.created_at) })}
+            {item.archivado_en && ` · ${t("agenda.archivedOn", { fecha: formatearFechaCreacion(item.archivado_en) })}`}
+          </span>
+          <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300">{item.texto}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => restaurar(item)}
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
+          >
+            <Undo2 className="icon-sm" />
+            {t("agenda.restore")}
+          </button>
+          {botonBorrar(item)}
+        </div>
+      </li>
+    );
+  };
+
+  const boton = (activo: boolean) =>
+    `flex cursor-pointer items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors ${
+      activo
+        ? "bg-white text-accent-800 shadow-sm dark:bg-night-card dark:text-accent-400"
+        : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+    }`;
+
+  const contador = (activo: boolean) =>
+    `rounded-full px-2 py-0.5 text-[11px] ${
+      activo ? "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400" : "bg-gray-200 text-gray-600 dark:bg-night-field dark:text-gray-300"
+    }`;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("agenda.title")}</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("agenda.subtitle")}</p>
+          <p className="mt-1 max-w-xl text-sm text-gray-500 dark:text-gray-400">{t("agenda.subtitle")}</p>
         </div>
         <button
           type="button"
@@ -212,6 +324,30 @@ export function AdminConjuntoAgendaPage() {
 
       {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
 
+      {recienArchivado && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-800 dark:border-accent-900/40 dark:bg-accent-900/20 dark:text-accent-300"
+        >
+          <span className="flex-1">{t("agenda.archivedToast")}</span>
+          <button
+            type="button"
+            onClick={deshacerArchivado}
+            className="cursor-pointer rounded-lg border border-accent-300 bg-white px-3 py-1 text-xs font-semibold text-accent-800 transition-colors hover:bg-accent-100 dark:border-accent-800 dark:bg-transparent dark:text-accent-300 dark:hover:bg-accent-900/30"
+          >
+            {t("agenda.undo")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setRecienArchivado(null)}
+            aria-label={t("common.close")}
+            className="cursor-pointer rounded-lg p-1 transition-colors hover:bg-accent-100 dark:hover:bg-accent-900/30"
+          >
+            <X className="icon-sm" />
+          </button>
+        </div>
+      )}
+
       {cargando ? (
         <LoadingState message={t("common.loading")} />
       ) : errorCarga ? (
@@ -220,42 +356,88 @@ export function AdminConjuntoAgendaPage() {
         <EmptyState icon={ClipboardList} message={t("agenda.noConjuntos")} />
       ) : (
         <>
-          {conjuntos.length > 1 && (
-            <div role="tablist" aria-label={t("agenda.conjuntoTabs")} className="flex flex-wrap gap-2">
-              {conjuntos.map((c) => {
-                const activo = c.id_conjunto_residencial === idConjunto;
-                const pendientes = (agendas[c.id_conjunto_residencial] ?? []).filter((i) => i.estado === "PENDIENTE").length;
-                return (
-                  <button
-                    key={c.id_conjunto_residencial}
-                    type="button"
-                    role="tab"
-                    aria-selected={activo}
-                    onClick={() => setIdConjunto(c.id_conjunto_residencial)}
-                    className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
-                      activo
-                        ? "border-accent-700 bg-accent-700 text-white"
-                        : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
-                    }`}
-                  >
-                    {c.nombre_conjunto}
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[11px] ${
-                        activo ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600 dark:bg-night-field dark:text-gray-300"
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {conjuntos.length > 1 ? (
+              <div role="tablist" aria-label={t("agenda.conjuntoTabs")} className="flex flex-wrap gap-2">
+                {conjuntos.map((c) => {
+                  const activo = c.id_conjunto_residencial === idConjunto;
+                  const cuantos = (pendientes[c.id_conjunto_residencial] ?? []).length;
+                  return (
+                    <button
+                      key={c.id_conjunto_residencial}
+                      type="button"
+                      role="tab"
+                      aria-selected={activo}
+                      onClick={() => elegirConjunto(c.id_conjunto_residencial)}
+                      className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
+                        activo
+                          ? "border-accent-700 bg-accent-700 text-white"
+                          : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
                       }`}
                     >
-                      {pendientes}
-                    </span>
-                  </button>
-                );
-              })}
+                      {c.nombre_conjunto}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] ${
+                          activo ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600 dark:bg-night-field dark:text-gray-300"
+                        }`}
+                      >
+                        {cuantos}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <span />
+            )}
+
+            <div
+              role="tablist"
+              aria-label={t("agenda.viewTabs")}
+              className="inline-flex gap-1 rounded-xl bg-gray-100 p-1 dark:bg-night-inset"
+            >
+              <button type="button" role="tab" aria-selected={vista === "porTratar"} onClick={() => setVista("porTratar")} className={boton(vista === "porTratar")}>
+                {t("agenda.pendingTitle")}
+                <span className={contador(vista === "porTratar")}>{porTratar.length}</span>
+              </button>
+              <button type="button" role="tab" aria-selected={vista === "archivadas"} onClick={() => setVista("archivadas")} className={boton(vista === "archivadas")}>
+                {t("agenda.archivedTitle")}
+                <span className={contador(vista === "archivadas")}>{totalArchivadas}</span>
+              </button>
+            </div>
+          </div>
+
+          {vista === "porTratar" ? (
+            porTratar.length === 0 ? (
+              <EmptyState icon={ClipboardList} message={t("agenda.emptyPending")} />
+            ) : (
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{porTratar.map(nota)}</ul>
+            )
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t("agenda.archivedHint")}</p>
+              {archivadas.length === 0 ? (
+                <EmptyState icon={Archive} message={t("agenda.emptyArchived")} />
+              ) : (
+                <>
+                  <ul className="space-y-3">{archivadas.map(filaArchivada)}</ul>
+                  <div className="rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-night-line dark:bg-night-card">
+                    <Paginacion
+                      desde={paginacion.desde}
+                      hasta={paginacion.hasta}
+                      total={totalArchivadas}
+                      pagina={paginacion.pagina}
+                      totalPaginas={paginacion.totalPaginas}
+                      puedeAnterior={paginacion.puedeAnterior}
+                      puedeSiguiente={paginacion.puedeSiguiente}
+                      onAnterior={paginacion.irAAnterior}
+                      onSiguiente={paginacion.irASiguiente}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {columna(t("agenda.pendingTitle"), porTratar, t("agenda.emptyPending"), ClipboardList)}
-            {columna(t("agenda.waitingTitle"), enEspera, t("agenda.emptyWaiting"), Clock)}
-          </div>
         </>
       )}
 

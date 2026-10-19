@@ -687,8 +687,9 @@ Solicitud de un Admin de Conjunto para dejar de administrar un conjunto (RQF-016
 | url_evidencia             | VARCHAR   |
 | estado                    | VARCHAR   |
 | created_at                | TIMESTAMP |
+| archivado_en              | TIMESTAMP |
 
-Temas privados del Admin de Conjunto para llevar al comité de un conjunto (RQF-020). `estado` es `PENDIENTE` o `EN_ESPERA`. Se borra con el conjunto (`CASCADE`); si se borra el autor, el tema queda sin autor (`SET NULL`).
+Temas privados del Admin de Conjunto para llevar al comité de un conjunto (RQF-020). `estado` es `PENDIENTE` o `ARCHIVADA`; `archivado_en` solo tiene valor mientras está archivado. Se borra con el conjunto (`CASCADE`); si se borra el autor, el tema queda sin autor (`SET NULL`).
 
 ---
 

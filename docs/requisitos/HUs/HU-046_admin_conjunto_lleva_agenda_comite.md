@@ -26,7 +26,7 @@
 ## Historia
 
 **Como** Administrador de Conjunto,
-**quiero** anotar los temas que me piden en el conjunto (con una foto si hace falta) y marcarlos como pendientes o en espera,
+**quiero** anotar los temas que me piden en el conjunto (con una foto si hace falta) y archivarlos cuando se resuelven,
 **para** no olvidar nada y llevarlos organizados a la reunión del comité.
 
 ---
@@ -37,7 +37,7 @@
 
 - **Dado que** administro un conjunto,
 - **cuando** abro la opción "Agenda" del menú, elijo el conjunto (si administro más de uno), escribo un tema (máximo 1000 caracteres) y lo guardo,
-- **entonces** el tema aparece en la columna "Por tratar" como **Pendiente**. La foto de soporte es opcional.
+- **entonces** el tema aparece como una nota en "Por tratar", en estado **Pendiente**. La foto de soporte es opcional.
 
 ### CA-046.2 — La agenda es privada
 
@@ -45,17 +45,23 @@
 - **cuando** otro usuario usa la app (residente, reciclador, otro Admin de Conjunto o el Administrador del Sistema),
 - **entonces** nadie más ve esos temas ni recibe notificaciones por ellos.
 
-### CA-046.3 — Dejar en espera o volver a pendiente
+### CA-046.3 — Archivar un tema resuelto o devolverlo a Por tratar
 
-- **Dado que** un tema se aplazó en el comité,
-- **cuando** presiono "Dejar en espera",
-- **entonces** el tema queda **En espera** y pasa a la columna "En espera"; con "Volver a pendiente" regresa a "Por tratar".
+- **Dado que** un tema ya se resolvió en el comité,
+- **cuando** presiono "Archivar",
+- **entonces** el tema sale de "Por tratar" y pasa a la vista "Archivadas", con su fecha de archivado; la pantalla me ofrece "Deshacer". Desde "Archivadas", "Volver a por tratar" lo devuelve a la lista.
 
-### CA-046.4 — Eliminar un tema resuelto
+### CA-046.4 — Eliminar un tema
 
-- **Dado que** un tema ya se resolvió,
-- **cuando** presiono "Eliminar tema",
+- **Dado que** ya no quiero un tema ni como historial,
+- **cuando** presiono "Eliminar tema" (en "Por tratar" o en "Archivadas"),
 - **entonces** el sistema me pide confirmar y, si confirmo, el tema se borra para siempre.
+
+### CA-046.7 — Historial de archivadas
+
+- **Dado que** archivé temas de un conjunto,
+- **cuando** abro la vista "Archivadas",
+- **entonces** veo el historial de ese conjunto, el último archivado primero, de a 10 por página, con el total en el contador. Cada conjunto tiene su propio historial.
 
 ### CA-046.5 — Solo mis conjuntos
 
@@ -67,4 +73,4 @@
 
 - **Dado que** el conjunto todavía no tiene temas,
 - **cuando** abro la agenda,
-- **entonces** veo el mensaje "Todavía no hay temas en la agenda de este conjunto."
+- **entonces** veo el mensaje "Todavía no hay temas por tratar en este conjunto." (y, en "Archivadas", "Todavía no has archivado ningún tema en este conjunto.")

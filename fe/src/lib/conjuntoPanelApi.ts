@@ -61,14 +61,27 @@ export interface ItemAgenda {
   id: string;
   texto: string;
   url_evidencia: string | null;
-  estado: "PENDIENTE" | "EN_ESPERA";
+  estado: "PENDIENTE" | "ARCHIVADA";
   created_at: string;
+  archivado_en: string | null;
+}
+
+export interface PaginaDeAgenda {
+  items: ItemAgenda[];
+  total: number;
 }
 
 // ¿Qué? Agenda interna del Admin de Conjunto, por conjunto — temas para
 //       llevar al comité (texto + foto opcional). Nunca llega al Admin Sistema.
+//       Devuelve solo los temas por tratar; los archivados se piden aparte.
 export async function listarAgenda(idConjunto: string): Promise<ItemAgenda[]> {
   const { data } = await axios.get(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda`);
+  return data;
+}
+
+// ¿Qué? Issue #435 — el historial (temas archivados) se pide de a páginas (limit/offset).
+export async function listarAgendaArchivada(idConjunto: string, limit: number, offset: number): Promise<PaginaDeAgenda> {
+  const { data } = await axios.get(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda/archivadas`, { params: { limit, offset } });
   return data;
 }
 
