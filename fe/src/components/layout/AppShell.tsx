@@ -166,7 +166,10 @@ export function AppShell({ children }: AppShellProps) {
   //           de comunidad, recursos de consulta, cuenta propia) ayuda a
   //           ubicarse más rápido, sin agregar ninguna opción nueva.
   // ¿Impacto? "principal" nunca lleva encabezado (es un ancla, no una
-  //           categoría) — los otros 3 grupos sí, y solo se muestran si
+  //           categoría). También aloja "Puntos de Acopio" (Admin del Sistema
+  //           y Reciclador): es un lugar físico de uso operativo, no un
+  //           recurso de consulta, así que va suelto bajo "Panel Principal".
+  //           Los otros 3 grupos sí llevan encabezado, y solo se muestran si
   //           el rol tiene al menos una opción en ese grupo (ver
   //           GRUPOS_NAV más abajo).
   type GrupoNav = "principal" | "comunidad" | "recursos" | "cuenta";
@@ -185,7 +188,7 @@ export function AppShell({ children }: AppShellProps) {
         ...commonStart,
         { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: "/admin/novedades", enabled: true, group: "comunidad" as GrupoNav },
         { icon: BookOpen, label: t("appShell.nav.contenidoEducativo"), href: "/admin/contenido-educativo", enabled: true, group: "recursos" as GrupoNav },
-        { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true, group: "recursos" as GrupoNav },
+        { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true, group: "principal" as GrupoNav },
         ...commonEnd,
       ];
     }
@@ -195,7 +198,7 @@ export function AppShell({ children }: AppShellProps) {
         ...commonStart,
         { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true, group: "comunidad" as GrupoNav },
         { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true, group: "comunidad" as GrupoNav },
-        { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true, group: "recursos" as GrupoNav },
+        { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true, group: "principal" as GrupoNav },
         { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true, group: "cuenta" as GrupoNav },
         ...commonEnd,
       ];
