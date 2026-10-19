@@ -234,10 +234,11 @@ Permite crear una nueva cuenta dentro del sistema.
 
 ### Flujo Principal
 
-1. El usuario diligencia el formulario.
-2. El sistema valida la información.
-3. El sistema registra la cuenta.
-4. Se envía un correo electrónico de validación.
+1. El usuario elige su rol en la primera pantalla del registro.
+2. El usuario diligencia el formulario de ese rol.
+3. El sistema valida la información.
+4. El sistema registra la cuenta.
+5. Se envía un correo electrónico de validación.
 
 ---
 

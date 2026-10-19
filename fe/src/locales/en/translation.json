@@ -148,6 +148,11 @@
       "roleResident": "Resident",
       "roleRecycler": "Recycler",
       "roleAdminConjunto": "Do you manage a complex?",
+      "roleResidentDesc": "I live in a residential complex and want to sort my waste better",
+      "roleRecyclerDesc": "I collect recyclable material and want to join a complex",
+      "roleAdminConjuntoDesc": "I manage a complex and want to request my account",
+      "chooseRoleSubtitle": "Choose your role so we can show you what you need",
+      "changeRole": "Change role",
       "adminRequest": {
         "heading": "Administrator accounts are created by invitation",
         "intro": "This way nobody can give themselves the Complex Administrator role. To request yours:",
