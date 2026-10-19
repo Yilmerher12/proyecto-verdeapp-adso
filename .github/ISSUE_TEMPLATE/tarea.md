@@ -57,6 +57,31 @@ title: ""
 - **Prioridad:** Must (P0) / Should (P1) / Could (P2)
 - **Tamaño:** XS / S / M / L / XL (horas estimadas: )
 
+## Guía para quien lo trabaje
+
+<!--
+  Corta: máximo 5 líneas por parte. Si el issue es pequeño, solo las 3 primeras.
+  Escríbela para alguien que no conoce el tema, con ejemplos del propio proyecto.
+-->
+
+**En palabras sencillas:** <!-- Qué se quiere lograr, sin términos técnicos. -->
+
+**Por dónde empezar:**
+
+1. Abre tu sesión de IA en el proyecto y pásale este issue (debe seguir el `CLAUDE.md`).
+2.
+3. Al terminar la semana, deja el comentario de cierre (`docs/gestion-proyecto/informes-scrum/_cierre-de-issue.md`).
+
+**Cómo saber que quedó bien:** <!-- Qué mirar en pantalla o en las pruebas. -->
+
+<!-- Opcionales, solo en issues grandes: -->
+
+**Contexto: por qué importa ahora:** <!-- Para qué sirve esto en el proyecto y qué se acerca (feria, entrega). -->
+
+**Conceptos que necesitas:** <!-- Definiciones cortas de los términos nuevos, con un ejemplo del proyecto. -->
+
+**Qué no hacer:** <!-- Límites para no salirse del alcance. -->
+
 ## Dependencias
 
 <!-- Tarjetas que deben ir antes o que esta bloquea. Si no hay, escribe "Ninguna". -->
