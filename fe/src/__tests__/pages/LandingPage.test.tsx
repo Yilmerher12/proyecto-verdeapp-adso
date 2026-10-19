@@ -49,4 +49,37 @@ describe("LandingPage — hero", () => {
     expect(screen.queryByText("Cambiando el mundo")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Cambiando el mundo")).not.toBeInTheDocument();
   });
+
+  // ¿Qué? El hero ya no ocupa el 100% del alto de la pantalla.
+  // ¿Para qué? Si lo ocupa todo, no asoma la siguiente sección y el visitante
+  //           no sabe que puede bajar (issue #453).
+  // ¿Impacto? Si alguien vuelve a poner `min-h-screen`, esta prueba falla.
+  it("no ocupa toda la pantalla, para que asome la sección de abajo", () => {
+    renderWithProviders(<LandingPage />, { initialRoute: "/" });
+
+    const hero = screen.getByRole("region", { name: "VerdeApp" });
+    expect(hero).not.toHaveClass("min-h-screen");
+    expect(hero.className).toContain("min-h-[75svh]");
+  });
+
+  it("lleva los botones a login y registro, con jerarquía distinta", () => {
+    renderWithProviders(<LandingPage />, { initialRoute: "/" });
+
+    const registro = screen.getByRole("link", { name: /Unirse a VerdeApp/ });
+    const login = screen.getByRole("link", { name: "Ya tengo cuenta" });
+    expect(registro).toHaveAttribute("href", "/register");
+    expect(login).toHaveAttribute("href", "/login");
+    // El principal va relleno de blanco; el secundario solo con borde.
+    expect(registro).toHaveClass("bg-white");
+    expect(login).not.toHaveClass("bg-white");
+  });
+
+  // ¿Qué? En modo oscuro el botón principal usa verde claro, no blanco puro.
+  // ¿Impacto? Si se quitan las clases `dark:`, el botón vuelve a encandilar de noche.
+  it("adapta los colores de los botones al modo oscuro", () => {
+    renderWithProviders(<LandingPage />, { initialRoute: "/" });
+
+    expect(screen.getByRole("link", { name: /Unirse a VerdeApp/ })).toHaveClass("dark:bg-accent-300", "dark:text-accent-950");
+    expect(screen.getByRole("link", { name: "Ya tengo cuenta" })).toHaveClass("dark:border-accent-200", "dark:text-accent-50");
+  });
 });
