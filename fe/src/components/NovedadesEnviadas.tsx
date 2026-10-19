@@ -23,19 +23,38 @@ import { usePaginacion } from "@/hooks/usePaginacion";
 // ¿Qué? Issue #399 — novedades por página en "Mis envíos".
 const TAMANO_PAGINA = 10;
 
+// ¿Qué? Motivos de consulta de "Soporte técnico": los comunes a los 3 roles y
+//       los propios de cada uno. Cada clave tiene su texto en
+//       novedadesEnviadas.motivos.<clave> (es y en). "otros" va siempre al final.
+// ¿Para qué? Que la persona elija qué le pasa en vez de escribirlo desde cero;
+//           solo con "otros" tiene que explicar con sus palabras.
+// ¿Impacto? La lista vive aquí, no en la base de datos: nadie la edita desde la
+//          app. El motivo no es un campo aparte: se guarda dentro del texto de la
+//          novedad, así la bandeja del Admin Sistema y "Mis envíos" siguen igual.
+const MOTIVOS_COMUNES = ["login", "notificaciones", "cuenta", "falla", "informacion", "sugerencia"];
+const MOTIVOS_POR_ROL: Record<number, string[]> = {
+  [RoleId.RESIDENTE]: ["residenteUnidad", "residenteShut"],
+  [RoleId.RECICLADOR]: ["recicladorConjunto", "recicladorAuditoria"],
+  [RoleId.ADMIN_CONJUNTO]: ["adminDatos", "adminCodigo", "adminApartamentos"],
+};
+const MOTIVO_OTROS = "otros";
+
 /**
- * ¿Qué? Formulario para ENVIARLE una novedad (texto + imagen opcional) al
+ * ¿Qué? Formulario para ENVIARLE una consulta de soporte (un motivo de una
+ *       lista + comentario solo con "Otros" + imagen opcional) al
  *       Administrador del Sistema — lo usan Residente, Reciclador y Admin
- *       de Conjunto, el mismo para los tres.
+ *       de Conjunto, la lista de motivos cambia según el rol.
  * ¿Para qué? Canal de abajo hacia arriba: el nombre, el conjunto y la
  *           unidad salen de la cuenta, nadie los escribe. Le llega al
  *           Admin Sistema en "Solicitudes pendientes".
  * ¿Impacto? Solo un Admin de Conjunto con más de un conjunto ve el selector
- *          de conjunto (para decir de cuál habla).
+ *          de conjunto (para decir de cuál habla). Con "Otros" el comentario
+ *          es obligatorio; con los demás motivos está bloqueado.
  */
 export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [motivo, setMotivo] = useState("");
   const [texto, setTexto] = useState("");
   const [urlImagen, setUrlImagen] = useState("");
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
@@ -45,6 +64,11 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
   const [exito, setExito] = useState(false);
 
   const esAdminConjunto = user?.role_id === RoleId.ADMIN_CONJUNTO;
+  const motivos = [...(MOTIVOS_POR_ROL[user?.role_id ?? 0] ?? []), ...MOTIVOS_COMUNES, MOTIVO_OTROS];
+  const esOtros = motivo === MOTIVO_OTROS;
+  // ¿Qué? El texto que se envía: el motivo tal cual, o "Otros: " + el comentario.
+  const prefijoOtros = `${t("novedadesEnviadas.motivos.otros")}: `;
+  const faltaAlgo = !motivo || (esOtros && !texto.trim());
 
   useEffect(() => {
     if (!esAdminConjunto) return;
@@ -59,10 +83,11 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
     setExito(false);
     try {
       await enviarNovedad({
-        texto: texto.trim(),
+        texto: esOtros ? `${prefijoOtros}${texto.trim()}` : t(`novedadesEnviadas.motivos.${motivo}`),
         url_imagen: urlImagen || null,
         id_conjunto_residencial: idConjunto || null,
       });
+      setMotivo("");
       setTexto("");
       setUrlImagen("");
       setExito(true);
@@ -119,28 +144,72 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
         </div>
       )}
 
+      <fieldset className="space-y-2">
+        <legend className="mb-2 text-xs font-bold text-gray-600 dark:text-gray-400">
+          {t("novedadesEnviadas.motivoLegend")}
+        </legend>
+        <div className="grid gap-2 md:grid-cols-2">
+          {motivos.map((clave) => (
+            <div key={clave} className="relative">
+              <input
+                type="radio"
+                id={`motivo-${clave}`}
+                name="motivo"
+                value={clave}
+                checked={motivo === clave}
+                onChange={() => {
+                  setMotivo(clave);
+                  setExito(false);
+                }}
+                className="peer sr-only"
+              />
+              <label
+                htmlFor={`motivo-${clave}`}
+                className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm text-gray-800 transition-colors hover:bg-gray-50 peer-checked:border-accent-700 peer-checked:bg-accent-50 peer-focus-visible:ring-2 peer-focus-visible:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-200 dark:hover:bg-night-hover dark:peer-checked:border-accent-500 dark:peer-checked:bg-accent-900/20"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                    motivo === clave
+                      ? "border-accent-700 bg-accent-700 dark:border-accent-500 dark:bg-accent-500"
+                      : "border-gray-400 dark:border-gray-500"
+                  }`}
+                >
+                  {motivo === clave && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                </span>
+                {t(`novedadesEnviadas.motivos.${clave}`)}
+              </label>
+            </div>
+          ))}
+        </div>
+      </fieldset>
+
       <div>
         <label
           htmlFor="novedad-texto"
           className="text-xs font-bold text-gray-600 dark:text-gray-400"
         >
-          {t("novedadesEnviadas.textLabel")}
+          {esOtros ? t("novedadesEnviadas.textLabelRequired") : t("novedadesEnviadas.textLabel")}
         </label>
         <textarea
           id="novedad-texto"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          maxLength={DESVINCULACION_MOTIVO_MAX_LENGTH}
+          disabled={!esOtros}
+          maxLength={DESVINCULACION_MOTIVO_MAX_LENGTH - prefijoOtros.length}
           rows={4}
           aria-describedby="novedad-contador"
-          placeholder={t("novedadesEnviadas.textPlaceholder")}
-          className="mt-1 w-full rounded-xl border border-gray-200 bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+          placeholder={esOtros ? t("novedadesEnviadas.textPlaceholder") : t("novedadesEnviadas.textPlaceholderOff")}
+          className="mt-1 w-full rounded-xl border border-gray-200 bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:border-night-line dark:bg-night-field dark:text-white dark:disabled:bg-night-inset dark:disabled:text-gray-500"
         />
-        <ContadorCaracteres
-          id="novedad-contador"
-          actual={texto.length}
-          max={DESVINCULACION_MOTIVO_MAX_LENGTH}
-        />
+        <div className="mt-1 flex items-start justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+          <span>{esOtros ? t("novedadesEnviadas.textHelpOn") : t("novedadesEnviadas.textHelpOff")}</span>
+          <ContadorCaracteres
+            id="novedad-contador"
+            actual={texto.length}
+            max={DESVINCULACION_MOTIVO_MAX_LENGTH - prefijoOtros.length}
+          />
+        </div>
       </div>
 
       <ImagenAdjuntaField
@@ -149,15 +218,22 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
         onChange={setUrlImagen}
       />
 
-      <button
-        type="button"
-        onClick={enviar}
-        disabled={enviando || !texto.trim()}
-        className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <Send className="icon-sm" />
-        {enviando ? t("novedadesEnviadas.sending") : t("novedadesEnviadas.send")}
-      </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={enviar}
+          disabled={enviando || faltaAlgo}
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Send className="icon-sm" />
+          {enviando ? t("novedadesEnviadas.sending") : t("novedadesEnviadas.send")}
+        </button>
+        {faltaAlgo && (
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {motivo ? t("novedadesEnviadas.needComment") : t("novedadesEnviadas.needMotivo")}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

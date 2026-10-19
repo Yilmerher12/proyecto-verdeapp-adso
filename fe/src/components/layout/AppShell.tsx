@@ -227,7 +227,9 @@ export function AppShell({ children }: AppShellProps) {
 
   const GRUPOS_NAV: { id: GrupoNav; labelKey: string | null }[] = [
     { id: "principal", labelKey: null },
-    { id: "comunidad", labelKey: "appShell.nav.groupComunidad" },
+    // ¿Qué? "comunidad" ya no lleva encabezado: sus opciones (Comunicados, Agenda,
+    //       Soporte técnico) se entienden solas y el rótulo "Comunidad" no aportaba.
+    { id: "comunidad", labelKey: null },
     { id: "recursos", labelKey: "appShell.nav.groupRecursos" },
     { id: "cuenta", labelKey: "appShell.nav.groupCuenta" },
   ];

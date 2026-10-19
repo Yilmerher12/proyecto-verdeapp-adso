@@ -27,18 +27,30 @@
 ## Historia
 
 **Como** Residente, Reciclador o Administrador de Conjunto,
-**quiero** escribirle una novedad al Administrador del Sistema desde la app,
+**quiero** enviarle una consulta de soporte al Administrador del Sistema desde la app, eligiendo un motivo,
 **para** contarle un problema o algo que pasó sin tener que buscar otro medio de contacto.
 
 ---
 
 ## Criterios de aceptación
 
-### CA-047.1 — Enviar una novedad
+### CA-047.1 — Enviar una consulta eligiendo un motivo
 
 - **Dado que** inicié sesión como Residente, Reciclador o Admin de Conjunto,
-- **cuando** abro Novedades → "Escribir novedad", escribo el texto (máximo 1000 caracteres) y presiono "Enviar novedad",
-- **entonces** el sistema la guarda y me muestra "Novedad enviada. El Administrador del Sistema la revisará." No tengo que escribir mi nombre, rol, conjunto ni unidad: el sistema los toma de mi cuenta.
+- **cuando** abro Soporte técnico → "Escribir novedad", elijo un motivo de la lista "¿Sobre qué es tu consulta?" y presiono "Enviar consulta",
+- **entonces** el sistema la guarda y me muestra "Consulta enviada. El Administrador del Sistema la revisará." No tengo que escribir nada más, ni mi nombre, rol, conjunto ni unidad: el sistema los toma de mi cuenta.
+
+### CA-047.7 — Otros activa el comentario
+
+- **Dado que** ninguno de los motivos describe mi caso,
+- **cuando** elijo **Otros**,
+- **entonces** se activa el campo "Comentario", que es **obligatorio** (máximo 1000 caracteres contando el prefijo "Otros: "): el botón "Enviar consulta" no se habilita hasta que lo escribo. Con cualquier otro motivo el comentario está bloqueado.
+
+### CA-047.8 — La lista cambia según mi rol
+
+- **Dado que** soy Residente, Reciclador o Admin de Conjunto,
+- **cuando** abro el formulario,
+- **entonces** veo los motivos propios de mi rol, los comunes a los tres roles y **Otros** al final, sin los motivos de los otros roles.
 
 ### CA-047.2 — Imagen opcional
 
