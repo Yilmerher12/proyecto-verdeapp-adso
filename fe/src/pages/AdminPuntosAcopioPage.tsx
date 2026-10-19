@@ -230,7 +230,7 @@ export function AdminPuntosAcopioPage() {
   ];
 
   const botonAccion =
-    "cursor-pointer rounded-lg border border-gray-200 p-2 transition-colors dark:border-night-line";
+    "touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 transition-colors dark:border-night-line";
 
   const renderFila = (item: PuntoAcopioAdmin) => (
     <div
@@ -361,7 +361,7 @@ export function AdminPuntosAcopioPage() {
                   type="button"
                   onClick={() => cambiarEstado(id)}
                   aria-pressed={filtroEstado === id}
-                  className={`cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`touch-target-h cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                     filtroEstado === id
                       ? "bg-accent-700 text-white"
                       : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-night-line dark:bg-night-field dark:text-gray-200 dark:hover:bg-night-hover"

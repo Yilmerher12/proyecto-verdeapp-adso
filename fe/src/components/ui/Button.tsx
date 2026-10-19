@@ -60,8 +60,8 @@ export function Button({
   // ¿Qué? Clases CSS según el tamaño elegido.
   // ¿Para qué? Permitir botones de diferentes tamaños según el contexto.
   const sizeClasses = {
-    sm: "px-3 py-1.5 text-xs",
-    md: "px-4 py-2.5 text-sm",
+    sm: "touch-target-h px-3 py-1.5 text-xs",
+    md: "touch-target-h px-4 py-2.5 text-sm",
     lg: "px-6 py-3 text-base",
   };
 

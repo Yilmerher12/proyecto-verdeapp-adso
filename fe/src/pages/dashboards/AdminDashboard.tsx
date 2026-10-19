@@ -347,7 +347,7 @@ export function AdminDashboard() {
         <button
           type="button"
           onClick={() => ordenarPor(columna)}
-          className="flex cursor-pointer items-center gap-1 transition-colors hover:text-gray-800 dark:hover:text-gray-200"
+          className="touch-target-h flex cursor-pointer items-center gap-1 transition-colors hover:text-gray-800 dark:hover:text-gray-200"
           aria-label={ariaLabel}
         >
           {label}
@@ -442,7 +442,7 @@ export function AdminDashboard() {
   const colSpanActivo = tab === "recicladores" ? 5 : tab === "administradores" ? 6 : 6;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-5">
+    <div className="px-0 py-6 sm:p-6 max-w-6xl mx-auto space-y-5">
       {/* ¿Qué? Antes llevaba también un ícono grande (Shield) muy tenue de
           fondo, encima de la foto del panel.
           ¿Para qué? Con la foto de hoja detrás de todo el panel, ese
@@ -482,7 +482,7 @@ export function AdminDashboard() {
           las acciones y los números del sistema, y debajo el detalle de
           los usuarios. (Antes la tabla iba arriba, a pedido del profesor;
           se volvió a invertir por decisión del equipo tras probar el panel.) */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
           <div className="flex items-center gap-2">
             <UserPlus className="icon-md text-accent-600" />
@@ -492,14 +492,14 @@ export function AdminDashboard() {
             <button
               type="button"
               onClick={() => setMostrarModalInvitar(true)}
-              className="cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600"
+              className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600"
             >
               {t("dashboards.admin.inviteSection.show")}
             </button>
             <button
               type="button"
               onClick={() => setMostrarModalAsignar(true)}
-              className="cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+              className="touch-target-h cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
             >
               {t("desvinculacion.asignarAdicional.openButton")}
             </button>
@@ -524,7 +524,7 @@ export function AdminDashboard() {
           <button
             type="button"
             onClick={() => setMostrarModalSolicitudes(true)}
-            className="cursor-pointer self-start rounded-xl bg-accent-50 px-3 py-1.5 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+            className="touch-target-h cursor-pointer self-start rounded-xl bg-accent-50 px-3 py-1.5 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
           >
             {t("dashboards.admin.pendingRequests.viewButton")}
           </button>
@@ -591,8 +591,8 @@ export function AdminDashboard() {
         {usuariosAbierto && (
         <div id="usuarios-registrados-body">
         <div className="px-5 py-4 border-t border-b border-gray-100 dark:border-night-line space-y-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-night-line dark:bg-night-inset/60">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-night-line dark:bg-night-inset/60">
               {(
                 [
                   { id: "residentes" as TabUsuarios, label: t("dashboards.admin.usersSection.tabs.residentes"), icon: <ResidenteIcon className="icon-sm" /> },
@@ -604,7 +604,7 @@ export function AdminDashboard() {
                   key={id}
                   type="button"
                   onClick={() => cambiarTab(id)}
-                  className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     tab === id
                       ? "bg-accent-700 text-white shadow-sm"
                       : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
@@ -625,7 +625,7 @@ export function AdminDashboard() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder={t("dashboards.admin.usersSection.searchPlaceholder")}
-                className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 sm:w-48"
+                className="touch-target-h w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 lg:w-48"
               />
             </div>
           </div>
@@ -637,7 +637,7 @@ export function AdminDashboard() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="flex items-center gap-1.5 sm:w-64">
               <Building className="icon-sm shrink-0 text-accent-600" />
-              <div className="flex-1 [&_input]:!mt-0 [&_input]:!py-1.5 [&_input]:!text-xs">
+              <div className="flex-1 [&_input]:!mt-0 [&_input]:!py-1.5 [&_input]:!text-xs [&_input]:touch-target-h">
                 <ConjuntoCombobox
                   value={conjuntoSeleccionado}
                   onChange={cambiarConjunto}
@@ -651,7 +651,7 @@ export function AdminDashboard() {
               type="button"
               onClick={alternarInactivos}
               aria-pressed={soloInactivos}
-              className={`flex cursor-pointer items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              className={`touch-target-h flex cursor-pointer items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                 soloInactivos
                   ? "border-red-300 bg-red-50 text-red-700 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-300"
                   : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-hover"
@@ -799,7 +799,7 @@ export function AdminDashboard() {
                 type="button"
                 onClick={() => setPagina((p) => Math.max(0, p - 1))}
                 disabled={pagina === 0}
-                className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
+                className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
                 aria-label={t("dashboards.admin.usersSection.pagination.prev")}
               >
                 <ChevronLeft className="icon-md" />
@@ -811,7 +811,7 @@ export function AdminDashboard() {
                 type="button"
                 onClick={() => setPagina((p) => (p + 1 < totalPaginas ? p + 1 : p))}
                 disabled={pagina + 1 >= totalPaginas}
-                className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
+                className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
                 aria-label={t("dashboards.admin.usersSection.pagination.next")}
               >
                 <ChevronRight className="icon-md" />

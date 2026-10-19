@@ -144,7 +144,7 @@ export function LanguageSwitcher() {
             // ¿Impacto? Un usuario con lector de pantalla escucha "Español, seleccionado" o
             //            "English, no seleccionado" — sin esto, no sabría cuál está activo.
             aria-pressed={isActive}
-            className={`cursor-pointer rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${
+            className={`touch-target flex cursor-pointer items-center justify-center rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${
               isActive
                 ? "bg-white text-accent-700 shadow-sm dark:bg-night-hover dark:text-accent-400"
                 : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"

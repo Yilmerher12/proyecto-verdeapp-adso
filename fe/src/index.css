@@ -519,3 +519,48 @@
 @utility icon-deco {
   @apply size-20;
 }
+
+/* ============================================================================
+   Área táctil mínima en celular (RNF-003.3)
+   ¿Qué? `touch-target` da al control un área de al menos 44x44 px, y
+         `touch-target-h` solo de 44 px de alto (para botones anchos). Ambas
+         aplican solo por debajo de 640 px (el breakpoint `sm` de Tailwind).
+   ¿Para qué? Un dedo toca un área de unos 40-44 px; en la revisión de #454 se
+              midieron botones de 19x19 (ojo de contraseña), 24 px de alto
+              (ES/EN) y 28 px de alto ("Copiar dirección") que se fallaban o
+              tocaban el vecino. Un control de <a> o <button> en línea
+              necesita además `inline-flex items-center`, porque min-height no
+              afecta a los elementos en línea.
+   ¿Impacto? En tableta y escritorio el control conserva su tamaño de siempre;
+             no hace falta tocar cada media query a mano.
+   ============================================================================ */
+@utility touch-target {
+  @media (max-width: 639px) {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+}
+@utility touch-target-h {
+  @media (max-width: 639px) {
+    min-height: 2.75rem;
+  }
+}
+
+/* ¿Qué? `touch-area` amplía el área táctil de un control pequeño (un ícono de
+         22-28 px) a 44x44 px en celular SIN cambiar cómo se ve: agrega un
+         área invisible de 12 px alrededor, con ::after.
+   ¿Para qué? Algunos botones, como el de cambiar la foto de perfil, no pueden
+              crecer sin tapar otra cosa. Esta es la forma de hacerlos fáciles
+              de tocar sin mover el diseño.
+   ¿Impacto? El control debe estar posicionado (`relative` o `absolute`); si
+             no, el área invisible se va a otro lugar. En tableta y escritorio
+             no hace nada. */
+@utility touch-area {
+  @media (max-width: 639px) {
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -0.75rem;
+    }
+  }
+}

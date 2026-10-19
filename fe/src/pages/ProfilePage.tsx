@@ -292,7 +292,7 @@ export function ProfilePage() {
               disabled={subiendoFoto}
               aria-label={t("profile.photo.change")}
               title={t("profile.photo.change")}
-              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-night-card"
+              className="touch-area absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-night-card"
             >
               {subiendoFoto ? <LoaderCircle className="icon-sm animate-spin" /> : <Camera className="icon-sm" />}
             </button>
@@ -382,7 +382,7 @@ export function ProfilePage() {
             {canEdit && !editando && (
               <button
                 onClick={iniciarEdicion}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
+                className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
               >
                 <Pencil className="icon-sm" />
                 {t("common.edit")}

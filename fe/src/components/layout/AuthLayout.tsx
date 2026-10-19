@@ -68,25 +68,25 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
         >
           <Link
             to="/terminos-de-uso"
-            className="text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+            className="touch-target-h inline-flex items-center text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
           >
             {t("landing.footer.terms")}
           </Link>
           <Link
             to="/privacidad"
-            className="text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+            className="touch-target-h inline-flex items-center text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
           >
             {t("landing.footer.privacy")}
           </Link>
           <Link
             to="/politica-cookies"
-            className="text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+            className="touch-target-h inline-flex items-center text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
           >
             {t("landing.footer.cookies")}
           </Link>
           <Link
             to="/contacto"
-            className="text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+            className="touch-target-h inline-flex items-center text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
           >
             {t("landing.footer.contact")}
           </Link>

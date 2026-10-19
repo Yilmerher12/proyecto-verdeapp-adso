@@ -185,7 +185,7 @@ export function PuntoAcopioPanel({
                       href={googleMapsUrl(punto.direccion, punto.nombre_localidad)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="cursor-pointer text-xs font-semibold text-accent-700 underline dark:text-accent-400"
+                      className="touch-target-h cursor-pointer text-xs font-semibold text-accent-700 underline dark:text-accent-400"
                     >
                       {t(`${p}.mapLink`)}
                     </a>
