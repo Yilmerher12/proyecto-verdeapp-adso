@@ -355,102 +355,16 @@ describe("AdminConjuntoDashboard", () => {
     });
   });
 
-  describe("agenda del conjunto", () => {
-    const tema = {
-      id: "t-1",
-      texto: "Arreglar la puerta del sótano.",
-      url_evidencia: "/uploads/adjuntos/puerta.jpg",
-      estado: "PENDIENTE",
-      created_at: "2026-09-22T10:00:00Z",
-    };
-
-    function mockConAgenda(items: unknown[]) {
-      mockGet.mockImplementation((url: string) => {
-        // ¿Qué? "/agenda" se revisa primero: su URL también contiene "/mis-conjuntos".
-        if (url.includes("/agenda")) return Promise.resolve({ data: items });
-        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
-        return Promise.resolve({ data: [] });
-      });
-    }
-
-    async function abrirAgenda(user: ReturnType<typeof userEvent.setup>) {
-      await screen.findByText("Conjunto Los Alpes");
-      await user.click(screen.getByRole("button", { name: "Ver agenda" }));
-    }
-
-    it("lista los temas al desplegar la agenda, con su foto", async () => {
-      mockConAgenda([tema]);
-      const user = userEvent.setup();
-      renderPage();
-      await abrirAgenda(user);
-
-      expect(await screen.findByText("Arreglar la puerta del sótano.")).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: "Ver foto" })).toHaveAttribute("href", expect.stringContaining("/uploads/adjuntos/puerta.jpg"));
+  it("ya no muestra la agenda dentro del acordeón del conjunto (ahora vive en su propia opción del menú)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+      return Promise.resolve({ data: [] });
     });
+    renderPage();
 
-    it("muestra el estado vacío si no hay temas", async () => {
-      mockConAgenda([]);
-      const user = userEvent.setup();
-      renderPage();
-      await abrirAgenda(user);
-
-      expect(await screen.findByText("Todavía no hay temas en la agenda de este conjunto.")).toBeInTheDocument();
-    });
-
-    it("agrega un tema nuevo (el botón se habilita solo con texto)", async () => {
-      mockConAgenda([]);
-      mockPost.mockResolvedValue({ data: {} });
-      const user = userEvent.setup();
-      renderPage();
-      await abrirAgenda(user);
-
-      await user.click(await screen.findByRole("button", { name: "+ Agregar tema" }));
-      const guardar = screen.getByRole("button", { name: "Guardar tema" });
-      expect(guardar).toBeDisabled();
-
-      await user.type(screen.getByLabelText("Tema"), "Pintar el pasillo.");
-      expect(guardar).toBeEnabled();
-      await user.click(guardar);
-
-      await waitFor(() => {
-        expect(mockPost).toHaveBeenCalledWith(
-          expect.stringContaining("/conjunto-panel/mis-conjuntos/1/agenda"),
-          { texto: "Pintar el pasillo.", url_evidencia: null }
-        );
-      });
-    });
-
-    it("deja un tema en espera", async () => {
-      mockConAgenda([tema]);
-      mockPatch.mockResolvedValue({ data: {} });
-      const user = userEvent.setup();
-      renderPage();
-      await abrirAgenda(user);
-
-      await user.click(await screen.findByRole("button", { name: "Dejar en espera" }));
-
-      await waitFor(() => {
-        expect(mockPatch).toHaveBeenCalledWith(
-          expect.stringContaining("/conjunto-panel/mis-conjuntos/1/agenda/t-1"),
-          { estado: "EN_ESPERA" }
-        );
-      });
-    });
-
-    it("borra un tema con confirmación", async () => {
-      mockConAgenda([tema]);
-      mockDelete.mockResolvedValue({ data: {} });
-      const user = userEvent.setup();
-      renderPage();
-      await abrirAgenda(user);
-
-      await user.click(await screen.findByRole("button", { name: "Eliminar tema" }));
-      await user.click(await screen.findByRole("button", { name: "Sí, eliminar" }));
-
-      await waitFor(() => {
-        expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining("/conjunto-panel/mis-conjuntos/1/agenda/t-1"));
-      });
-    });
+    await screen.findByText("Conjunto Los Alpes");
+    expect(screen.queryByText("Agenda del conjunto")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver agenda" })).not.toBeInTheDocument();
   });
 
   describe("historial de auditorías por conjunto", () => {

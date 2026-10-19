@@ -36,8 +36,8 @@
 ### CA-046.1 — Agregar un tema
 
 - **Dado que** administro un conjunto,
-- **cuando** abro "Agenda del conjunto" en el acordeón de ese conjunto, escribo un tema (máximo 1000 caracteres) y lo guardo,
-- **entonces** el tema aparece en la lista como **Pendiente**. La foto de soporte es opcional.
+- **cuando** abro la opción "Agenda" del menú, elijo el conjunto (si administro más de uno), escribo un tema (máximo 1000 caracteres) y lo guardo,
+- **entonces** el tema aparece en la columna "Por tratar" como **Pendiente**. La foto de soporte es opcional.
 
 ### CA-046.2 — La agenda es privada
 
@@ -49,7 +49,7 @@
 
 - **Dado que** un tema se aplazó en el comité,
 - **cuando** presiono "Dejar en espera",
-- **entonces** el tema queda **En espera** y pasa después de los pendientes; con "Volver a pendiente" regresa al grupo de arriba.
+- **entonces** el tema queda **En espera** y pasa a la columna "En espera"; con "Volver a pendiente" regresa a "Por tratar".
 
 ### CA-046.4 — Eliminar un tema resuelto
 
