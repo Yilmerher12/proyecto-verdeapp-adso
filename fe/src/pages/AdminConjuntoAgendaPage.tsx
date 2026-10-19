@@ -23,6 +23,7 @@ import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Modal } from "@/components/ui/Modal";
 import { Paginacion } from "@/components/ui/Paginacion";
+import { Spinner } from "@/components/ui/Spinner";
 
 // ¿Qué? Issue #435 — temas del historial por página, igual que "Mis envíos" de novedades.
 const TAMANO_PAGINA = 10;
@@ -76,6 +77,10 @@ export function AdminConjuntoAgendaPage() {
 
   const [aBorrar, setABorrar] = useState<ItemAgenda | null>(null);
   const [borrando, setBorrando] = useState(false);
+  // ¿Qué? Id del tema cuyo estado se está cambiando (archivar, restaurar o deshacer).
+  // ¿Para qué? Issue #458: antes el botón no mostraba nada mientras tardaba y se
+  //           podía tocar dos veces.
+  const [cambiandoId, setCambiandoId] = useState<string | null>(null);
   const [errorBorrar, setErrorBorrar] = useState<string | null>(null);
 
   const cargarPendientes = useCallback(() => {
@@ -159,6 +164,7 @@ export function AdminConjuntoAgendaPage() {
 
   const cambiarEstado = async (item: ItemAgenda, estado: ItemAgenda["estado"]) => {
     setError(null);
+    setCambiandoId(item.id);
     try {
       await cambiarEstadoItemAgenda(idConjunto, item.id, estado);
       recargarTodo();
@@ -166,6 +172,8 @@ export function AdminConjuntoAgendaPage() {
     } catch {
       setError(t("agenda.actionError"));
       return false;
+    } finally {
+      setCambiandoId(null);
     }
   };
 
@@ -243,9 +251,11 @@ export function AdminConjuntoAgendaPage() {
           <button
             type="button"
             onClick={() => archivar(item)}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
+            disabled={cambiandoId === item.id}
+            aria-busy={cambiandoId === item.id}
+            className="disabled:cursor-not-allowed disabled:opacity-60 flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
           >
-            <Archive className="icon-sm" />
+            {cambiandoId === item.id ? <Spinner size="sm" /> : <Archive className="icon-sm" />}
             {t("agenda.archive")}
           </button>
           {botonBorrar(item)}
@@ -281,9 +291,11 @@ export function AdminConjuntoAgendaPage() {
           <button
             type="button"
             onClick={() => restaurar(item)}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
+            disabled={cambiandoId === item.id}
+            aria-busy={cambiandoId === item.id}
+            className="disabled:cursor-not-allowed disabled:opacity-60 flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
           >
-            <Undo2 className="icon-sm" />
+            {cambiandoId === item.id ? <Spinner size="sm" /> : <Undo2 className="icon-sm" />}
             {t("agenda.restore")}
           </button>
           {botonBorrar(item)}
@@ -333,7 +345,8 @@ export function AdminConjuntoAgendaPage() {
           <button
             type="button"
             onClick={deshacerArchivado}
-            className="cursor-pointer rounded-lg border border-accent-300 bg-white px-3 py-1 text-xs font-semibold text-accent-800 transition-colors hover:bg-accent-100 dark:border-accent-800 dark:bg-transparent dark:text-accent-300 dark:hover:bg-accent-900/30"
+            disabled={cambiandoId !== null}
+            className="disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer rounded-lg border border-accent-300 bg-white px-3 py-1 text-xs font-semibold text-accent-800 transition-colors hover:bg-accent-100 dark:border-accent-800 dark:bg-transparent dark:text-accent-300 dark:hover:bg-accent-900/30"
           >
             {t("agenda.undo")}
           </button>

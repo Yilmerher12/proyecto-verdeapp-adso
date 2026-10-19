@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { MapPin, MapPinOff, Pencil, Trash2, Warehouse } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Spinner } from "@/components/ui/Spinner";
 import { PanelLateral } from "@/components/ui/PanelLateral";
 import { PuntoAcopioForm } from "@/components/PuntoAcopioForm";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
@@ -47,6 +48,8 @@ interface PuntoAcopioPanelProps {
   onGuardar: (payload: PuntoAcopioPayload) => Promise<boolean>;
   onDarDeBaja: (punto: PuntoAcopioAdmin) => void;
   onReactivar: (punto: PuntoAcopioAdmin) => void;
+  /** ¿Qué? true mientras se reactiva el punto (issue #458): deshabilita el botón y muestra el spinner. */
+  reactivando?: boolean;
   onEliminar: (punto: PuntoAcopioAdmin) => void;
 }
 
@@ -72,6 +75,7 @@ export function PuntoAcopioPanel({
   onGuardar,
   onDarDeBaja,
   onReactivar,
+  reactivando = false,
   onEliminar,
 }: PuntoAcopioPanelProps) {
   const { t } = useTranslation();
@@ -270,9 +274,11 @@ export function PuntoAcopioPanel({
                 <button
                   type="button"
                   onClick={() => onReactivar(punto)}
-                  className={`${botonSecundario} border-accent-200 text-accent-700 hover:bg-accent-50 dark:border-accent-900/40 dark:text-accent-400 dark:hover:bg-accent-900/20`}
+                  disabled={reactivando}
+                  aria-busy={reactivando}
+                  className={`${botonSecundario} disabled:cursor-not-allowed disabled:opacity-60 border-accent-200 text-accent-700 hover:bg-accent-50 dark:border-accent-900/40 dark:text-accent-400 dark:hover:bg-accent-900/20`}
                 >
-                  <MapPin className="icon-md icon-draw" />
+                  {reactivando ? <Spinner size="sm" /> : <MapPin className="icon-md icon-draw" />}
                   {t(`${p}.panel.reactivate`)}
                 </button>
                 <button

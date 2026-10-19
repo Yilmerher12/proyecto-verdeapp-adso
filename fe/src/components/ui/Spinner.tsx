@@ -1,31 +1,39 @@
 /**
  * Archivo: components/ui/Spinner.tsx
- * Descripción: Ícono de carga animado, reutilizable.
- * ¿Para qué? El mismo SVG ya vivía copiado a mano en Button.tsx y en
- *           ProtectedRoute.tsx, cada uno con su propio tamaño/color — se
- *           extrae acá para que cualquier estado de carga nuevo (los
- *           paneles, por ejemplo) use el mismo dibujo en vez de uno
- *           distinto por archivo.
- * ¿Impacto? Button.tsx y ProtectedRoute.tsx no se tocaron — sus spinners
- *           ya funcionan y no había necesidad de arriesgarlos en este
- *           cambio. Este componente es para los casos NUEVOS.
+ * Descripción: Ícono de carga animado, reutilizable. Es el ÚNICO dibujo de
+ *              "cargando" de la aplicación.
+ * ¿Para qué? Antes había 7 versiones distintas: el SVG de Button.tsx, el de
+ *           ProtectedRoute.tsx, un círculo con borde en VerifyEmailPage.tsx y
+ *           el `LoaderCircle` de lucide-react en 4 sitios, cada una con su
+ *           propio tamaño y color (issue #458, RNF-004.3).
+ * ¿Impacto? Cambiar cómo se ve el indicador de carga de toda la aplicación es
+ *           tocar este archivo. `tone="current"` toma el color del texto que
+ *           lo rodea (para botones de relleno, donde el texto es blanco);
+ *           `tone="accent"` usa el verde de marca (para fondos claros).
  */
 
 const TAMANOS = {
   sm: "h-4 w-4",
   md: "h-6 w-6",
   lg: "h-8 w-8",
+  xl: "h-12 w-12",
+} as const;
+
+const TONOS = {
+  accent: "text-accent-600 dark:text-accent-400",
+  current: "",
 } as const;
 
 interface SpinnerProps {
   size?: keyof typeof TAMANOS;
+  tone?: keyof typeof TONOS;
   className?: string;
 }
 
-export function Spinner({ size = "sm", className = "" }: SpinnerProps) {
+export function Spinner({ size = "sm", tone = "accent", className = "" }: SpinnerProps) {
   return (
     <svg
-      className={`animate-spin text-accent-600 dark:text-accent-400 ${TAMANOS[size]} ${className}`}
+      className={`animate-spin ${TONOS[tone]} ${TAMANOS[size]} ${className}`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

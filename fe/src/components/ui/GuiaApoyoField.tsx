@@ -9,7 +9,9 @@
  */
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FileText, LoaderCircle, Upload, X } from "lucide-react";
+import { FileText, Upload, X } from "lucide-react";
+import { Spinner } from "./Spinner";
+import { ProgressBar } from "./ProgressBar";
 import { motivoDelServidor } from "@/api/axios";
 import { subirAdjunto } from "@/lib/uploadsApi";
 import { ENLACE_MAX_LENGTH } from "@/lib/validacion";
@@ -30,6 +32,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(false);
+  const [progreso, setProgreso] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   // ¿Qué? Si ya hay un valor guardado, se infiere el modo desde su forma
   //       (un archivo subido por VerdeApp siempre empieza con /uploads/).
@@ -51,8 +54,9 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
     }
 
     setSubiendo(true);
+    setProgreso(undefined);
     try {
-      const url = await subirAdjunto(archivo, { permitirDocumentos: true });
+      const url = await subirAdjunto(archivo, { permitirDocumentos: true, onProgress: setProgreso });
       onChange(url);
     } catch (err) {
       setError(motivoDelServidor(err) ?? t("guiaApoyo.errorSubida"));
@@ -151,7 +155,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
         <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-line dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
           {subiendo ? (
             <>
-              <LoaderCircle className="icon-md animate-spin" />
+              <Spinner size="sm" tone="current" />
               {t("guiaApoyo.subiendo")}
             </>
           ) : (
@@ -170,6 +174,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           />
         </label>
       )}
+      {subiendo && <ProgressBar value={progreso} label={t("guiaApoyo.subiendo")} className="mt-2" />}
       {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );

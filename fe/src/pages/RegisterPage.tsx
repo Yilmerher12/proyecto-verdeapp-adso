@@ -130,10 +130,14 @@ export function RegisterPage() {
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // ¿Qué? Mientras llegan las localidades, el desplegable dice "Cargando…" y está desactivado.
+  // ¿Para qué? Issue #458: con mala conexión quedaba vacío sin avisar nada.
+  const [cargandoLocalidades, setCargandoLocalidades] = useState(true);
   useEffect(() => {
     axios.get(`${API_BASE_URL}/api/v1/geography/localidades`)
       .then(res => setLocalidades(res.data))
-      .catch(err => console.error("Error cargando localidades", err));
+      .catch(err => console.error("Error cargando localidades", err))
+      .finally(() => setCargandoLocalidades(false));
   }, []);
 
   // ¿Qué? Al cambiar de localidad, se descarta el conjunto ya elegido —
@@ -560,8 +564,8 @@ export function RegisterPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.locality")}</label>
-                      <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
-                        <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
+                      <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} disabled={cargandoLocalidades} aria-busy={cargandoLocalidades} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
+                        <option value="">{cargandoLocalidades ? t("common.loading") : t("auth.register.fields.selectPlaceholder")}</option>
                         {localidades.map(loc => (
                           <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
                         ))}
@@ -649,8 +653,8 @@ export function RegisterPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.workLocality")}</label>
-                      <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
-                        <option value="">{t("auth.register.fields.selectYourLocality")}</option>
+                      <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} disabled={cargandoLocalidades} aria-busy={cargandoLocalidades} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
+                        <option value="">{cargandoLocalidades ? t("common.loading") : t("auth.register.fields.selectYourLocality")}</option>
                         {localidades.map(loc => (
                           <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
                         ))}

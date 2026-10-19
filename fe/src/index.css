@@ -564,3 +564,26 @@
     }
   }
 }
+
+/* ============================================================================
+   Barra de progreso indeterminada (components/ui/ProgressBar.tsx)
+   ¿Qué? Un tramo que va y viene, para cuando aún no se sabe el porcentaje.
+   ¿Para qué? Es el estado de la barra entre que se toca "enviar" y que el
+              navegador reporta el primer avance de la subida.
+   ¿Impacto? Con "reducir movimiento" activado en el sistema no se anima: la
+             barra queda llena y más tenue.
+   ============================================================================ */
+@keyframes barra-indeterminada {
+  0% { margin-left: -40%; }
+  100% { margin-left: 100%; }
+}
+.animate-barra-indeterminada {
+  animation: barra-indeterminada 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-barra-indeterminada {
+    animation: none;
+    width: 100%;
+    opacity: 0.6;
+  }
+}

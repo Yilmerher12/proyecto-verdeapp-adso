@@ -17,6 +17,7 @@ import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
 import { Modal } from "@/components/ui/Modal";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface ConfirmModalProps {
   /** ¿Qué? Ícono dentro del círculo de color, arriba del título (ej: TriangleAlert, Trash2, UserX). */
@@ -110,8 +111,14 @@ export function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isConfirming}
-            className={`flex-1 cursor-pointer rounded-xl ${estilo.boton} px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60`}
+            aria-busy={isConfirming}
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl ${estilo.boton} px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60`}
           >
+            {/* ¿Qué? Spinner mientras la acción está en curso (issue #458).
+                ¿Para qué? Antes solo cambiaba el texto, y muchas pantallas ni
+                          siquiera pasaban isConfirming: la acción tardaba y nada
+                          avisaba, ni impedía tocar el botón dos veces. */}
+            {isConfirming && <Spinner size="sm" tone="current" />}
             {isConfirming ? (confirmingLabel ?? confirmLabel) : confirmLabel}
           </button>
         </div>

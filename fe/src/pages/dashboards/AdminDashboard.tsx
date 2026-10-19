@@ -8,6 +8,7 @@ import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Spinner } from "@/components/ui/Spinner";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -152,6 +153,11 @@ export function AdminDashboard() {
   //       liviana (limit=1) a cada uno de los 3 listados que ya existen,
   //       solo para leer su "total"; no hace falta un endpoint nuevo.
   const [totales, setTotales] = useState<{ residentes: number; recicladores: number; administradores: number } | null>(null);
+  // ¿Qué? true hasta que termina la primera petición de totales (con éxito o con error).
+  // ¿Para qué? Issue #458: mientras llegan los números se ve un spinner en vez de un guion
+  //           que parece un dato vacío. Si la petición falla, el guion se queda: no es "cargando".
+  // ¿Impacto? Solo aplica a la primera carga; las actualizaciones posteriores no parpadean.
+  const [cargandoTotales, setCargandoTotales] = useState(true);
   // ¿Qué? Cuántas cuentas inactivas hay en cada pestaña — para el botón
   //       "Inactivos" y el numerito rojo de cada pestaña.
   const [inactivos, setInactivos] = useState<Record<TabUsuarios, number> | null>(null);
@@ -171,7 +177,8 @@ export function AdminDashboard() {
         setTotales({ residentes: res.data.total, recicladores: rec.data.total, administradores: adm.data.total });
         setInactivos({ residentes: resI.data.total, recicladores: recI.data.total, administradores: admI.data.total });
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setCargandoTotales(false));
   }, [user, version]);
 
   // ¿Qué? Conjuntos verificados para el combobox — igual que
@@ -441,6 +448,17 @@ export function AdminDashboard() {
   // ¿Qué? +2 en cada caso por las columnas nuevas de Estado y Acciones.
   const colSpanActivo = tab === "recicladores" ? 5 : tab === "administradores" ? 6 : 6;
 
+  // ¿Qué? Lo que se ve en lugar de cada total mientras no hay número: un spinner
+  //       si la primera petición sigue en curso, o el guion si ya terminó sin datos.
+  const indicadorTotal = cargandoTotales ? (
+    <span role="status" className="inline-flex items-center justify-center">
+      <Spinner size="sm" />
+      <span className="sr-only">{t("common.loading")}</span>
+    </span>
+  ) : (
+    "—"
+  );
+
   return (
     <div className="px-0 py-6 sm:p-6 max-w-6xl mx-auto space-y-5">
       {/* ¿Qué? Antes llevaba también un ícono grande (Shield) muy tenue de
@@ -546,15 +564,15 @@ export function AdminDashboard() {
               una segunda línea en vez de desbordarse. */}
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.residentes : "—"}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.residentes : indicadorTotal}</p>
               <p className="break-words text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.admin.usersSection.tabs.residentes")}</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.recicladores : "—"}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.recicladores : indicadorTotal}</p>
               <p className="break-words text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.admin.usersSection.tabs.recicladores")}</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.administradores : "—"}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.administradores : indicadorTotal}</p>
               <p className="break-words text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.admin.totals.administradoresShort")}</p>
             </div>
           </div>

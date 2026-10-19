@@ -94,6 +94,9 @@ export function AdminConjuntoComunicadosPage() {
   const [errorFechaExpiracion, setErrorFechaExpiracion] = useState<string | null>(null);
 
   const [aEliminar, setAEliminar] = useState<Comunicado | null>(null);
+  // ¿Qué? true mientras corre la acción de la confirmación (issue #458).
+  // ¿Para qué? Antes no pasaba nada visible mientras tardaba y se podía confirmar dos veces.
+  const [eliminando, setEliminando] = useState(false);
 
   const paginacion = usePaginacion(TAMANO_PAGINA, total);
 
@@ -212,12 +215,15 @@ export function AdminConjuntoComunicadosPage() {
 
   const confirmarEliminar = async () => {
     if (!user || !aEliminar) return;
+    setEliminando(true);
     try {
       await eliminarComunicado(aEliminar.id_comunicado);
       setAEliminar(null);
       cargar();
     } catch {
       setErrorMsg(t("comunicados.admin.deleteError"));
+    } finally {
+      setEliminando(false);
     }
   };
 
@@ -537,6 +543,7 @@ export function AdminConjuntoComunicadosPage() {
           description={t("comunicados.admin.deleteConfirm.warning")}
           confirmLabel={t("comunicados.admin.deleteConfirm.confirm")}
           onConfirm={confirmarEliminar}
+          isConfirming={eliminando}
           onClose={() => setAEliminar(null)}
         />
       )}
