@@ -96,7 +96,7 @@ Código: `be/app/routers/conjunto_panel.py`, `be/app/services/agenda_conjunto_se
 - RN-001: Solo el Admin de Conjunto que administra el conjunto puede ver o modificar su agenda. Cada endpoint verifica el conjunto contra los conjuntos del administrador en sesión (403 si no es suyo), y cada tema se verifica contra su conjunto (404 si el tema es de otro conjunto).
 - RN-002: La agenda es privada: no genera notificaciones y no la ven residentes, recicladores ni el Administrador del Sistema.
 - RN-003: Un tema solo tiene dos estados: `PENDIENTE` (al crearlo) y `EN_ESPERA`. La lista muestra primero los pendientes y, dentro de cada grupo, del más reciente al más antiguo.
-- RN-004: Los temas no caducan solos: el comité no tiene una fecha fija que la app pueda conocer. Se eliminan a mano cuando se resuelven.
+- RN-004: Los temas no caducan solos: el comité no tiene una fecha fija que la app pueda conocer. Se eliminan a mano cuando se resuelven. **Pendiente de cambiar**: la investigación del [Issue #438](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/438) (ver [`investigacion-reporte-historial-agenda.md`](../../gestion-proyecto/investigacion-reporte-historial-agenda.md)) recomienda reemplazar este borrado permanente por un archivado con fecha (replicando el patrón de `Novedad.fecha_archivado`), para poder descargar el historial completo más adelante — todavía no implementado.
 - RN-005: Si se borra el conjunto, se borran sus temas (`ON DELETE CASCADE`). Si se borra la cuenta del autor, el tema se conserva sin autor (`ON DELETE SET NULL`).
 - RN-006: `url_evidencia` se valida con `EnlaceAdjunto`, igual que los comunicados: solo archivo subido a VerdeApp (`/uploads/...`) o `https://`; otro formato responde 422 — issue #369 (hallazgo CN-041 de Cyber Neo).
 
@@ -107,3 +107,4 @@ Código: `be/app/routers/conjunto_panel.py`, `be/app/services/agenda_conjunto_se
 | HU      | Descripción                                                    |
 | ------- | ----------------------------------------------------------------|
 | [HU-046](../HUs/HU-046_admin_conjunto_lleva_agenda_comite.md) | Admin de Conjunto lleva la agenda de temas para el comité |
+| [HU-049](../HUs/HU-049_admin_conjunto_descarga_historial_agenda.md) | Admin de Conjunto descarga el historial de la agenda (por implementar) |
