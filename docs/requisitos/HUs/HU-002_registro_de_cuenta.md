@@ -35,7 +35,10 @@
 
 - **Dado que** estoy en la página de registro,
 - **cuando** elijo el rol "Residente" o "Reciclador",
-- **entonces** el formulario debe mostrar los campos adicionales propios de ese rol (ubicación y unidad para Residente; localidad de trabajo para Reciclador).
+- **entonces** el formulario debe mostrar solo los campos propios de ese rol (ubicación y unidad para Residente; localidad de trabajo para Reciclador), sin el selector de roles.
+- El registro **empieza preguntando el rol** (issue #455): una pantalla con 3 opciones, cada una con una frase corta que explica para quién es. Hasta que el rol está elegido no se ve ningún campo del formulario.
+- Cada rol se abre directo con su dirección: `/register?rol=residente`, `/register?rol=reciclador` o `/register?rol=admin_conjunto`. Una dirección con un rol que no existe lleva a la pantalla de elegir. En la dirección solo viaja el rol, nunca un dato personal.
+- Desde el formulario hay un botón con flecha (esquina superior izquierda, "Cambiar de rol" como nombre accesible) que vuelve a la pantalla de elegir. Mide 44 px para que se pueda presionar bien en celular. Lo que ya se escribió se conserva mientras no se recargue la página.
 
 ### CA-002.2 — Correo obligatorio y único
 
@@ -78,10 +81,10 @@
 ### CA-002.7 — Opción para administradores de conjunto
 
 - **Dado que** estoy en la página de registro y administro un conjunto,
-- **cuando** elijo la opción "¿Administras un conjunto?" (tercera opción del selector de rol),
-- **entonces** el formulario se reemplaza por instrucciones para pedir la cuenta: los pasos, los documentos que acreditan el cargo (certificado de existencia y representación legal de la Alcaldía Local, cédula, acta de nombramiento, contrato y, si es una empresa, certificado de Cámara de Comercio) y un botón "Solicitar acceso" que abre el formulario de contacto con el asunto y una plantilla del mensaje ya escritos.
+- **cuando** elijo la opción "¿Administras un conjunto?" (tercera opción de la pantalla de elegir rol),
+- **entonces** en lugar del formulario veo las instrucciones para pedir la cuenta: los pasos, los documentos que acreditan el cargo (certificado de existencia y representación legal de la Alcaldía Local, cédula, acta de nombramiento, contrato y, si es una empresa, certificado de Cámara de Comercio) y un botón "Solicitar acceso" que abre el formulario de contacto con el asunto y una plantilla del mensaje ya escritos.
 - La pantalla **no muestra ningún correo** y la app **no recibe ni guarda documentos**: los documentos se piden después por correo y se eliminan tras la revisión (ver HU-018 y la Política de Privacidad, sección 2).
-- Las 3 opciones del selector son botones: se pueden alcanzar con Tab y elegir con Enter.
+- Las 3 opciones de la pantalla de elegir rol son botones: se pueden alcanzar con Tab y elegir con Enter.
 
 > **Nota (2026-10-06)**: antes un Administrador de Conjunto que llegaba al registro no tenía cómo saber que su cuenta se crea por invitación ni a quién pedirla.
 

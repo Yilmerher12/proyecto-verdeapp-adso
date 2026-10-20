@@ -12,7 +12,7 @@ from app.utils.ids import generar_uuid4
 
 class EstadoAgenda(StrEnum):
     PENDIENTE = "PENDIENTE"
-    EN_ESPERA = "EN_ESPERA"
+    ARCHIVADA = "ARCHIVADA"
 
 
 class AgendaConjunto(Base):
@@ -21,13 +21,13 @@ class AgendaConjunto(Base):
           (ej. "pintar el pasillo", "arreglar la puerta del sótano"), con
           foto de soporte opcional.
     ¿Para qué? Que el Admin de Conjunto no olvide lo que le piden y lo lleve
-              al comité: ahí se discuten los temas, se borran los resueltos
-              y se dejan "en espera" los que se aplazan.
+              al comité: ahí se discuten los temas y los resueltos se
+              archivan (quedan como historial, no se borran).
     ¿Impacto? Es privada del Admin de Conjunto — nunca llega al Admin
               Sistema ni a nadie más. Sin fecha de caducidad a propósito: el
-              comité no tiene fecha fija que la app pueda saber. Se borra
-              con el conjunto (CASCADE); si se borra el autor, el tema se
-              conserva sin autor (SET NULL).
+              comité no tiene fecha fija que la app pueda saber, y tampoco
+              caducan los archivados. Se borra con el conjunto (CASCADE); si
+              se borra el autor, el tema se conserva sin autor (SET NULL).
     """
     __tablename__ = "agenda_conjunto"
 
@@ -53,5 +53,9 @@ class AgendaConjunto(Base):
         server_default=func.now(),
         nullable=False,
     )
+    # ¿Qué? Cuándo se archivó; NULL mientras el tema está PENDIENTE.
+    # ¿Para qué? Mostrar "Archivado el..." y ordenar el historial del más
+    #           reciente al más antiguo.
+    archivado_en = Column(TIMESTAMP(timezone=True), nullable=True)
 
     autor = relationship("Usuario", lazy="joined")

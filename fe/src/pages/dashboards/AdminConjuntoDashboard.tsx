@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
-import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown, ClipboardList, ImageIcon, Trash2 } from "lucide-react";
+import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -33,7 +33,6 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
-import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import {
   CORREO_MAX_LENGTH,
   CORREO_REGEX,
@@ -41,15 +40,6 @@ import {
   NIT_MAX_LENGTH,
   TOTAL_APARTAMENTOS_MAX,
 } from "@/lib/validacion";
-import {
-  listarAgenda,
-  crearItemAgenda,
-  cambiarEstadoItemAgenda,
-  eliminarItemAgenda,
-  type ItemAgenda,
-} from "@/lib/conjuntoPanelApi";
-import { formatearFechaCreacion } from "@/lib/dateFormat";
-import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -194,252 +184,11 @@ function SeccionCobertura({ conjunto, onDefinir }: { conjunto: ConjuntoAdministr
           <button
             type="button"
             onClick={onDefinir}
-            className="cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600"
+            className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600"
           >
             {t("dashboards.adminConjunto.coverage.define")}
           </button>
         </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * ¿Qué? Agenda interna de UN conjunto: temas (texto + foto opcional) que el
- *       Admin de Conjunto lleva al comité — ej. "pintar el pasillo",
- *       "arreglar la puerta del sótano".
- * ¿Para qué? Que no se le olvide lo que le piden. En el comité abre su
- *           agenda, discute los temas y va borrando los resueltos o los
- *           deja "en espera".
- * ¿Impacto? Privada: nunca llega al Admin Sistema. Sin fecha de caducidad
- *          a propósito (el comité no tiene fecha fija que la app pueda
- *          saber). Colapsada por defecto, igual que SeccionRecicladores.
- */
-function SeccionAgenda({ idConjunto }: { idConjunto: string }) {
-  const { t } = useTranslation();
-  const [items, setItems] = useState<ItemAgenda[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [errorCarga, setErrorCarga] = useState(false);
-  const [mostrarDetalle, setMostrarDetalle] = useState(false);
-  const [agregando, setAgregando] = useState(false);
-  const [texto, setTexto] = useState("");
-  const [urlEvidencia, setUrlEvidencia] = useState("");
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [aBorrar, setABorrar] = useState<ItemAgenda | null>(null);
-  const [borrando, setBorrando] = useState(false);
-  const [errorBorrar, setErrorBorrar] = useState<string | null>(null);
-
-  const cargar = useCallback(() => {
-    setCargando(true);
-    listarAgenda(idConjunto)
-      .then((data) => {
-        setItems(data);
-        setErrorCarga(false);
-      })
-      .catch(() => setErrorCarga(true))
-      .finally(() => setCargando(false));
-  }, [idConjunto]);
-
-  useEffect(() => {
-    cargar();
-  }, [cargar]);
-
-  const guardar = async () => {
-    setGuardando(true);
-    setError(null);
-    try {
-      await crearItemAgenda(idConjunto, { texto: texto.trim(), url_evidencia: urlEvidencia || null });
-      setAgregando(false);
-      setTexto("");
-      setUrlEvidencia("");
-      cargar();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || t("dashboards.adminConjunto.agendaSection.errorDefault"));
-    } finally {
-      setGuardando(false);
-    }
-  };
-
-  const alternarEstado = async (item: ItemAgenda) => {
-    setError(null);
-    try {
-      await cambiarEstadoItemAgenda(idConjunto, item.id, item.estado === "PENDIENTE" ? "EN_ESPERA" : "PENDIENTE");
-      cargar();
-    } catch {
-      setError(t("dashboards.adminConjunto.agendaSection.actionError"));
-    }
-  };
-
-  const confirmarBorrar = async () => {
-    if (!aBorrar) return;
-    setBorrando(true);
-    setErrorBorrar(null);
-    try {
-      await eliminarItemAgenda(idConjunto, aBorrar.id);
-      setABorrar(null);
-      cargar();
-    } catch {
-      setErrorBorrar(t("dashboards.adminConjunto.agendaSection.actionError"));
-    } finally {
-      setBorrando(false);
-    }
-  };
-
-  return (
-    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-night-inset/40">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <ClipboardList className="icon-md text-accent-600" />
-          <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.agendaSection.title")}</h5>
-          {!cargando && (
-            <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
-              {items.length}
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => setMostrarDetalle((v) => !v)}
-          aria-expanded={mostrarDetalle}
-          className="cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-night-panel dark:text-gray-300 dark:border-night-line dark:hover:bg-night-field"
-        >
-          {mostrarDetalle
-            ? t("dashboards.adminConjunto.agendaSection.hideDetail")
-            : t("dashboards.adminConjunto.agendaSection.showDetail")}
-        </button>
-      </div>
-
-      {mostrarDetalle && (
-        <div className="mt-3 space-y-3">
-          <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.agendaSection.hint")}</p>
-
-          {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
-
-          {agregando ? (
-            <div className="space-y-3 rounded-lg bg-white p-3 dark:bg-night-card">
-              <div>
-                <label htmlFor={`agenda-texto-${idConjunto}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
-                  {t("dashboards.adminConjunto.agendaSection.textLabel")}
-                </label>
-                <textarea
-                  id={`agenda-texto-${idConjunto}`}
-                  value={texto}
-                  onChange={(e) => setTexto(e.target.value)}
-                  maxLength={DESVINCULACION_MOTIVO_MAX_LENGTH}
-                  rows={2}
-                  aria-describedby={`agenda-contador-${idConjunto}`}
-                  placeholder={t("dashboards.adminConjunto.agendaSection.textPlaceholder")}
-                  className="mt-1 w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
-                />
-                <ContadorCaracteres id={`agenda-contador-${idConjunto}`} actual={texto.length} max={DESVINCULACION_MOTIVO_MAX_LENGTH} />
-              </div>
-              <ImagenAdjuntaField
-                label={t("dashboards.adminConjunto.agendaSection.evidenceLabel")}
-                value={urlEvidencia}
-                onChange={setUrlEvidencia}
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={guardar}
-                  disabled={guardando || !texto.trim()}
-                  className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Check className="icon-sm" />
-                  {guardando ? t("common.saving") : t("dashboards.adminConjunto.agendaSection.save")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAgregando(false)}
-                  className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-                >
-                  {t("common.cancel")}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAgregando(true)}
-              className="cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
-            >
-              + {t("dashboards.adminConjunto.agendaSection.add")}
-            </button>
-          )}
-
-          {cargando ? (
-            <LoadingState message={t("common.loading")} />
-          ) : errorCarga ? (
-            <Alert type="error" message={t("common.loadError")} />
-          ) : items.length === 0 ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.agendaSection.empty")}</p>
-          ) : (
-            <ul className="space-y-2">
-              {items.map((item) => (
-                <li key={item.id} className="rounded-lg bg-white p-3 dark:bg-night-card">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {item.estado === "EN_ESPERA" && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                        <Clock className="icon-sm" />
-                        {t("dashboards.adminConjunto.agendaSection.stateWaiting")}
-                      </span>
-                    )}
-                    <span className="text-[11px] text-gray-400">{formatearFechaCreacion(item.created_at)}</span>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-800 dark:text-gray-200">{item.texto}</p>
-                  {enlaceAdjuntoSeguro(item.url_evidencia) && (
-                    <a
-                      href={enlaceAdjuntoSeguro(item.url_evidencia) ?? undefined}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-accent-700 hover:text-accent-800 dark:text-accent-400"
-                    >
-                      <ImageIcon className="icon-sm" />
-                      {t("dashboards.adminConjunto.agendaSection.viewPhoto")}
-                    </a>
-                  )}
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => alternarEstado(item)}
-                      className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-                    >
-                      {item.estado === "PENDIENTE"
-                        ? t("dashboards.adminConjunto.agendaSection.putOnHold")
-                        : t("dashboards.adminConjunto.agendaSection.backToPending")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setABorrar(item)}
-                      aria-label={t("dashboards.adminConjunto.agendaSection.delete")}
-                      className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
-                    >
-                      <Trash2 className="icon-sm" />
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {aBorrar && (
-        <ConfirmModal
-          icon={Trash2}
-          variant="danger"
-          ariaLabel={t("dashboards.adminConjunto.agendaSection.deleteTitle")}
-          title={t("dashboards.adminConjunto.agendaSection.deleteTitle")}
-          description={t("dashboards.adminConjunto.agendaSection.deleteWarning")}
-          error={errorBorrar}
-          isConfirming={borrando}
-          confirmLabel={t("dashboards.adminConjunto.agendaSection.deleteConfirm")}
-          confirmingLabel={t("dashboards.adminConjunto.agendaSection.deleting")}
-          onConfirm={confirmarBorrar}
-          onClose={() => setABorrar(null)}
-        />
       )}
     </div>
   );
@@ -520,7 +269,7 @@ function SeccionCodigoAcceso({
           <button
             type="button"
             onClick={copiarCodigo}
-            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-white dark:border-night-line dark:text-gray-300 dark:hover:bg-night-field"
+            className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-white dark:border-night-line dark:text-gray-300 dark:hover:bg-night-field"
             aria-label={t(
               copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
             )}
@@ -530,7 +279,7 @@ function SeccionCodigoAcceso({
           <button
             type="button"
             onClick={() => setConfirmando(true)}
-            className="cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="touch-target-h cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("dashboards.adminConjunto.codigoAcceso.regenerateButton")}
           </button>
@@ -701,7 +450,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             onClick={() => setMostrarDetalle((v) => !v)}
             aria-expanded={mostrarDetalle}
             aria-controls={`recicladores-detalle-${idConjunto}`}
-            className="cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-night-panel dark:text-gray-300 dark:border-night-line dark:hover:bg-night-field"
+            className="touch-target-h cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-night-panel dark:text-gray-300 dark:border-night-line dark:hover:bg-night-field"
           >
             {mostrarDetalle
               ? t("dashboards.adminConjunto.recyclersSection.hideDetail")
@@ -712,7 +461,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             onClick={() => setMostrarFormulario((v) => !v)}
             aria-expanded={mostrarFormulario}
             aria-controls={`recicladores-invitar-${idConjunto}`}
-            className="cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+            className="touch-target-h cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
           >
             {t("dashboards.adminConjunto.recyclersSection.invite")}
           </button>
@@ -808,7 +557,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
                     <button
                       type="button"
                       onClick={() => setARevocar(r)}
-                      className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
+                      className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
                       aria-label={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
                     >
                       <UserX className="icon-sm" />
@@ -936,7 +685,7 @@ function SeccionDesvinculacion({
           <button
             type="button"
             onClick={() => setMostrarFormulario(true)}
-            className="cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="touch-target-h cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("desvinculacion.solicitarButton")}
           </button>
@@ -969,7 +718,7 @@ function SeccionDesvinculacion({
               type="button"
               onClick={handleSolicitar}
               disabled={enviando}
-              className="cursor-pointer text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="touch-target-h cursor-pointer text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               {enviando ? t("desvinculacion.sending") : t("desvinculacion.submit")}
             </button>
@@ -979,7 +728,7 @@ function SeccionDesvinculacion({
                 setMostrarFormulario(false);
                 setError(null);
               }}
-              className="cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+              className="touch-target-h cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
             >
               {t("common.cancel")}
             </button>
@@ -1146,7 +895,7 @@ export function AdminConjuntoDashboard() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
+    <div className="px-0 py-6 sm:p-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
       {/* TARJETA DE PERFIL — el maletín de fondo es solo un detalle tenue,
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}
@@ -1156,12 +905,19 @@ export function AdminConjuntoDashboard() {
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
             <RolIcon className="icon-xl text-amber-600 dark:text-amber-400" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("dashboards.adminConjunto.title")}</h1>
-            <p className="text-gray-600 dark:text-gray-300">
+          {/* ¿Qué? min-w-0 + break-words, y título más chico en celular.
+              ¿Para qué? Sin min-w-0 la columna de texto no se encogía por
+                        debajo de su contenido y el título "Panel de
+                        Administrador de Conjunto" y el correo se salían de la
+                        tarjeta (overflow-hidden) a 375 px: se leía
+                        "Administrador d…" (issue #454).
+              ¿Impacto? Desde `sm` el título vuelve a text-2xl. */}
+          <div className="min-w-0">
+            <h1 className="break-words text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">{t("dashboards.adminConjunto.title")}</h1>
+            <p className="break-words text-gray-600 dark:text-gray-300">
               {t("dashboards.common.welcomePrefix")} <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
             </p>
-            <p className="text-xs text-accent-700 dark:text-accent-400 font-semibold mt-1 tracking-wide">
+            <p className="mt-1 break-all text-xs font-semibold tracking-wide text-accent-700 dark:text-accent-400">
               {user?.email}
             </p>
           </div>
@@ -1353,7 +1109,7 @@ export function AdminConjuntoDashboard() {
                       <button
                         type="button"
                         onClick={() => iniciarEdicion(c)}
-                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+                        className="touch-target-h flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
                       >
                         <Pencil className="icon-sm" /> {t("common.edit")}
                       </button>
@@ -1381,7 +1137,6 @@ export function AdminConjuntoDashboard() {
                           onRegenerado={cargarConjuntos}
                         />
                         <SeccionRecicladores idConjunto={c.id_conjunto_residencial} />
-                        <SeccionAgenda idConjunto={c.id_conjunto_residencial} />
                         <SeccionDesvinculacion
                           idConjunto={c.id_conjunto_residencial}
                           tieneSolicitudPendiente={c.tiene_solicitud_pendiente}

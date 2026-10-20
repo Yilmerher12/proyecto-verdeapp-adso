@@ -40,33 +40,122 @@ describe("Novedades enviadas al Admin Sistema", () => {
     mockConjuntos.mockResolvedValue([]);
   });
 
-  it("envía una novedad: el botón se habilita solo con texto", async () => {
+  const LOGIN = "No puedo iniciar sesión o recuperar mi contraseña";
+
+  async function abrirFormulario(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("tab", { name: "Escribir novedad" }));
+  }
+
+  it("envía un motivo de la lista sin escribir nada (el botón se habilita al elegirlo)", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("tab", { name: "Escribir novedad" }));
-    const enviar = screen.getByRole("button", { name: "Enviar novedad" });
+    await abrirFormulario(user);
+    const enviar = screen.getByRole("button", { name: "Enviar consulta" });
     expect(enviar).toBeDisabled();
+    expect(screen.getByText("Elige un motivo para poder enviar.")).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText("Novedad"), "El contenedor del sótano está desbordado.");
+    await user.click(screen.getByRole("radio", { name: LOGIN }));
+    expect(enviar).toBeEnabled();
+    await user.click(enviar);
+
+    await waitFor(() => {
+      expect(mockEnviar).toHaveBeenCalledWith({ texto: LOGIN, url_imagen: null, id_conjunto_residencial: null });
+    });
+    expect(await screen.findByText("Consulta enviada. El Administrador del Sistema la revisará.")).toBeInTheDocument();
+  });
+
+  it("el comentario está bloqueado con cualquier motivo que no sea Otros", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await abrirFormulario(user);
+    expect(screen.getByLabelText("Comentario")).toBeDisabled();
+    await user.click(screen.getByRole("radio", { name: LOGIN }));
+    expect(screen.getByLabelText("Comentario")).toBeDisabled();
+    expect(screen.getByText("Se activa solo cuando eliges Otros.")).toBeInTheDocument();
+  });
+
+  it("con Otros se activa el comentario y es obligatorio para enviar", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await abrirFormulario(user);
+    await user.click(screen.getByRole("radio", { name: "Otros" }));
+    const comentario = screen.getByLabelText("Comentario (obligatorio con Otros)");
+    const enviar = screen.getByRole("button", { name: "Enviar consulta" });
+    expect(comentario).toBeEnabled();
+    expect(enviar).toBeDisabled();
+    expect(screen.getByText("Con Otros, el comentario es obligatorio.")).toBeInTheDocument();
+
+    await user.type(comentario, "El mapa se queda en blanco.");
     expect(enviar).toBeEnabled();
     await user.click(enviar);
 
     await waitFor(() => {
       expect(mockEnviar).toHaveBeenCalledWith({
-        texto: "El contenedor del sótano está desbordado.",
+        texto: "Otros: El mapa se queda en blanco.",
         url_imagen: null,
         id_conjunto_residencial: null,
       });
     });
-    expect(await screen.findByText("Novedad enviada. El Administrador del Sistema la revisará.")).toBeInTheDocument();
+  });
+
+  it("al volver de Otros a otro motivo se envía el motivo, no el comentario", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await abrirFormulario(user);
+    await user.click(screen.getByRole("radio", { name: "Otros" }));
+    await user.type(screen.getByLabelText("Comentario (obligatorio con Otros)"), "algo");
+    await user.click(screen.getByRole("radio", { name: LOGIN }));
+    await user.click(screen.getByRole("button", { name: "Enviar consulta" }));
+
+    await waitFor(() => {
+      expect(mockEnviar).toHaveBeenCalledWith(expect.objectContaining({ texto: LOGIN }));
+    });
+  });
+
+  it("tras enviar, el formulario queda limpio", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await abrirFormulario(user);
+    await user.click(screen.getByRole("radio", { name: LOGIN }));
+    await user.click(screen.getByRole("button", { name: "Enviar consulta" }));
+
+    await screen.findByText("Consulta enviada. El Administrador del Sistema la revisará.");
+    expect(screen.getByRole("radio", { name: LOGIN })).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "Enviar consulta" })).toBeDisabled();
+  });
+
+  describe("la lista de motivos cambia según el rol", () => {
+    const RESIDENTE = "Mi conjunto, torre o apartamento no es el correcto";
+    const RECICLADOR = "No puedo enviar una auditoría o mis fotos no se suben";
+    const ADMIN = "Los datos de mi conjunto están mal (NIT, dirección o total de apartamentos)";
+
+    it.each([
+      ["Residente", RoleId.RESIDENTE, RESIDENTE, [RECICLADOR, ADMIN]],
+      ["Reciclador", RoleId.RECICLADOR, RECICLADOR, [RESIDENTE, ADMIN]],
+      ["Admin de Conjunto", RoleId.ADMIN_CONJUNTO, ADMIN, [RESIDENTE, RECICLADOR]],
+    ])("%s ve los suyos, los comunes y Otros, pero no los de otros roles", async (_rol, roleId, propio, ajenos) => {
+      const user = userEvent.setup();
+      renderPage(roleId);
+
+      await abrirFormulario(user);
+      expect(screen.getByRole("radio", { name: propio })).toBeInTheDocument();
+      expect(screen.getByRole("radio", { name: LOGIN })).toBeInTheDocument();
+      ajenos.forEach((ajeno) => expect(screen.queryByRole("radio", { name: ajeno })).not.toBeInTheDocument());
+      const radios = screen.getAllByRole("radio");
+      expect(radios[radios.length - 1]).toHaveAccessibleName("Otros");
+    });
   });
 
   it("un Residente no ve el selector de conjunto", async () => {
     const user = userEvent.setup();
     renderPage(RoleId.RESIDENTE);
 
-    await user.click(screen.getByRole("tab", { name: "Escribir novedad" }));
+    await abrirFormulario(user);
     expect(screen.queryByLabelText("¿De qué conjunto hablas?")).not.toBeInTheDocument();
   });
 
@@ -78,10 +167,10 @@ describe("Novedades enviadas al Admin Sistema", () => {
     const user = userEvent.setup();
     renderPage(RoleId.ADMIN_CONJUNTO);
 
-    await user.click(screen.getByRole("tab", { name: "Escribir novedad" }));
+    await abrirFormulario(user);
     await user.selectOptions(await screen.findByLabelText("¿De qué conjunto hablas?"), "c-2");
-    await user.type(screen.getByLabelText("Novedad"), "Rayaron una pared.");
-    await user.click(screen.getByRole("button", { name: "Enviar novedad" }));
+    await user.click(screen.getByRole("radio", { name: LOGIN }));
+    await user.click(screen.getByRole("button", { name: "Enviar consulta" }));
 
     await waitFor(() => {
       expect(mockEnviar).toHaveBeenCalledWith(expect.objectContaining({ id_conjunto_residencial: "c-2" }));
@@ -93,9 +182,9 @@ describe("Novedades enviadas al Admin Sistema", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("tab", { name: "Escribir novedad" }));
-    await user.type(screen.getByLabelText("Novedad"), "Hola");
-    await user.click(screen.getByRole("button", { name: "Enviar novedad" }));
+    await abrirFormulario(user);
+    await user.click(screen.getByRole("radio", { name: LOGIN }));
+    await user.click(screen.getByRole("button", { name: "Enviar consulta" }));
 
     expect(await screen.findByText("Servidor caído")).toBeInTheDocument();
   });

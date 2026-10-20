@@ -13,6 +13,7 @@
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/react";
 import { Search, X } from "lucide-react";
 import { useConjuntoBusqueda } from "@/hooks/useConjuntoBusqueda";
+import { Spinner } from "@/components/ui/Spinner";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 
 interface ConjuntoComboboxMultipleProps {
@@ -84,7 +85,10 @@ export function ConjuntoComboboxMultiple({
             />
           </div>
           <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-night-line dark:bg-night-field">
-            {loading && <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{loadingLabel}</div>}
+            {loading && <div role="status" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+              <Spinner size="sm" />
+              {loadingLabel}
+            </div>}
             {!loading && options.length === 0 && (
               <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{emptyLabel}</div>
             )}

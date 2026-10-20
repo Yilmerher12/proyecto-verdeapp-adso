@@ -45,7 +45,7 @@ export function Paginacion({
           type="button"
           onClick={onAnterior}
           disabled={!puedeAnterior}
-          className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
+          className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
           aria-label={t("common.pagination.prev")}
         >
           <ChevronLeft className="icon-md" />
@@ -57,7 +57,7 @@ export function Paginacion({
           type="button"
           onClick={onSiguiente}
           disabled={!puedeSiguiente}
-          className="cursor-pointer rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
+          className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
           aria-label={t("common.pagination.next")}
         >
           <ChevronRight className="icon-md" />

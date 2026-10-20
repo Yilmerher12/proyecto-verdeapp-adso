@@ -44,10 +44,21 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 
 ### Flujo A — Enviar una novedad (Residente, Reciclador o Admin de Conjunto)
 
-1. El usuario abre la pestaña **Novedades** del menú lateral y elige la sub-pestaña **"Escribir novedad"**.
-2. Escribe la novedad y, de forma opcional, adjunta una imagen.
-3. Si es un Admin de Conjunto con más de un conjunto, elige de cuál conjunto habla (o "Ninguno en particular").
-4. Al enviarla, el sistema guarda la novedad en estado **NUEVA**, con el conjunto que corresponde (RN-003), y muestra "Novedad enviada. El Administrador del Sistema la revisará."
+1. El usuario abre la opción **Soporte técnico** del menú lateral y elige la sub-pestaña **"Escribir novedad"**.
+2. Elige **un motivo** de la lista "¿Sobre qué es tu consulta?". La lista tiene motivos propios de su rol, motivos comunes a los tres roles y, al final, **Otros** (ver "Motivos de consulta" abajo).
+3. Con **Otros** se activa el campo **Comentario**, que pasa a ser obligatorio; con cualquier otro motivo el comentario queda bloqueado. De forma opcional adjunta una imagen.
+4. Si es un Admin de Conjunto con más de un conjunto, elige de cuál conjunto habla (o "Ninguno en particular").
+5. Al presionar "Enviar consulta", el sistema guarda la novedad en estado **NUEVA**, con el conjunto que corresponde (RN-003), y muestra "Consulta enviada. El Administrador del Sistema la revisará."
+
+**Motivos de consulta.** El motivo **no es un campo aparte**: la pantalla arma el `texto` de la novedad con el motivo elegido (o `Otros: <comentario>` con Otros). Por eso la bandeja del Administrador del Sistema y "Mis envíos" muestran el motivo dentro del texto, sin cambios. La lista está fija en la aplicación (`fe/src/components/NovedadesEnviadas.tsx` y las claves `novedadesEnviadas.motivos` de `es` y `en`); nadie la edita desde la app.
+
+| Rol | Motivos propios |
+| --- | --- |
+| Residente | Mi conjunto, torre o apartamento no es el correcto · Mi reporte de SHUT lleno o libre no se registró bien |
+| Reciclador | No veo un conjunto en el que me autorizaron o no me llegó la invitación · No puedo enviar una auditoría o mis fotos no se suben |
+| Admin de Conjunto | Los datos de mi conjunto están mal (NIT, dirección o total de apartamentos) · Necesito ayuda con el código de acceso o con las invitaciones a recicladores · Los apartamentos registrados o el avance de mi conjunto no coinciden |
+
+Motivos comunes a los tres: no puedo iniciar sesión o recuperar mi contraseña · no me llegan los correos o las notificaciones · un dato de mi cuenta está mal · algo no carga o la aplicación muestra un error · la información de un punto de acopio o del contenido educativo es incorrecta · tengo una sugerencia para mejorar VerdeApp.
 
 ### Flujo B — Ver mis envíos
 
@@ -78,7 +89,7 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 
 | Escenario                                      | Código HTTP | Respuesta                                                          |
 | ----------------------------------------------- | ----------- | -------------------------------------------------------------------- |
-| Novedad enviada                                 | 201         | `{"message": "Novedad enviada. El Administrador del Sistema la revisará."}` |
+| Novedad enviada                                 | 201         | `{"message": "Novedad enviada. El Administrador del Sistema la revisará."}` (el servicio no cambió; la pantalla muestra "Consulta enviada. El Administrador del Sistema la revisará.") |
 | Mis envíos                                      | 200         | `{items, total}`, con `items` = (`id`, `texto`, `url_imagen`, `estado`, `nombre_conjunto`, `created_at`) |
 | Ya tengo 10 novedades sin ver (RN-009)           | 409         | `{"detail": "Ya tienes 10 novedades sin revisar. Espera a que el Administrador del Sistema las revise para enviar más."}` |
 | El Admin Sistema intenta enviar una novedad     | 403         | `{"detail": "Tu rol no puede enviar novedades."}`                    |

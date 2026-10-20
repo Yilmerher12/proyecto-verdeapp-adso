@@ -7,7 +7,7 @@
   ¿Para qué? Responder las 7 preguntas del issue con una recomendación
              concreta antes de abrir cualquier tarjeta de implementación,
              y dejar registrado que la funcionalidad de la que depende
-             (archivar en vez de borrar) todavía no existe.
+             (archivar en vez de borrar) ya quedó construida en el issue #435.
   ¿Impacto? Sin esto, la primera tarjeta de implementación tendría que
             volver a investigar lo mismo, y se corre el riesgo de repetir
             el caso de jspdf: una librería agregada sin justificación
@@ -22,27 +22,19 @@
 
 ## Contexto
 
-Cuando el comité del conjunto revisa un tema de la agenda y lo resuelve, hoy se borra para siempre ([RQF-020](../requisitos/RFs/RQF-020_agenda_interna_conjunto.md), RN-004). El equipo quiere cambiar eso: en vez de borrar, archivar el tema con su fecha de archivado (una tarjeta aparte, referida en el issue como "Issue B"). Una vez eso exista, el Admin de Conjunto necesita poder descargar ese historial (pendientes + archivados) para anexarlo al acta del comité.
+Cuando el comité del conjunto revisa un tema de la agenda y lo resuelve, el Admin de Conjunto lo **archiva**: el tema sale de "Por tratar" y queda en el historial "Archivadas" con su fecha de archivado ([RQF-020](../requisitos/RFs/RQF-020_agenda_interna_conjunto.md), RN-003 y RN-004; issue #435). El Admin de Conjunto necesita poder descargar ese historial (pendientes + archivados) para anexarlo al acta del comité.
 
 Esta investigación responde **cómo** se debería construir esa descarga. No programa nada ni instala ninguna dependencia — eso queda para las tarjetas de implementación que se listan al final.
 
-### Hallazgo que cambia el orden de las tarjetas
+### Estado del archivado (actualizado al mezclar `develop`)
 
-**El "Issue B" todavía no existe en el código ni, hasta donde pude confirmar, como issue abierto en el tablero.** Hoy:
+Cuando se escribió esta investigación (2026-10-19) el archivado todavía no existía y los temas se borraban para siempre. **El issue #435 ya lo construyó** y está en `develop`, así que la descarga ya no está bloqueada. Hoy:
 
-- [`AgendaConjunto`](../../be/app/models/agenda_conjunto.py) no tiene ninguna columna de fecha de archivado — solo `id`, `id_conjunto_residencial`, `autor_id`, `texto`, `url_evidencia`, `estado` (`PENDIENTE`/`EN_ESPERA`) y `created_at`.
-- `eliminar()` en [`agenda_conjunto_service.py`](../../be/app/services/agenda_conjunto_service.py) hace `db.delete(...)` + `db.commit()` — borrado físico real, no soft-delete.
+- [`AgendaConjunto`](../../be/app/models/agenda_conjunto.py) tiene la columna `archivado_en` (TIMESTAMP, nullable; NULL mientras el tema está pendiente) y solo dos estados: `PENDIENTE` y `ARCHIVADA`. El estado `EN_ESPERA` ya no existe.
+- Archivar y restaurar se hacen con `PATCH` de estado (`cambiar_estado()` en [`agenda_conjunto_service.py`](../../be/app/services/agenda_conjunto_service.py)): al pasar a `ARCHIVADA` se pone `archivado_en`, y al volver a `PENDIENTE` se borra. A diferencia de `Novedad`, un tema archivado **sí se puede restaurar**.
+- Hay un `GET` aparte para el historial ("Archivadas") y el `DELETE` sigue existiendo para borrar un tema para siempre.
 
-Esto significa que **la tarjeta #438 no se puede implementar todavía**: no hay nada que "archivar" en la base de datos. La primera tarjeta que debe nacer de esta investigación es la que agrega el archivado (ver [Issues de implementación](#issues-de-implementación-que-nacerían-de-esto)).
-
-La buena noticia es que no hay que diseñar ese archivado desde cero: **ya existe el mismo patrón, implementado y probado, en otro módulo.**
-
-| | `Novedad` (ya implementado) | `AgendaConjunto` (a replicar) |
-| --- | --- | --- |
-| Columna | `fecha_archivado` (TIMESTAMP, nullable) — [`novedad.py:27`](../../be/app/models/novedad.py) | Agregar `fecha_archivado` igual |
-| Regla | "activa → archivada, sin vuelta atrás" | Mismo criterio: un tema resuelto no se reabre |
-| Servicio | `archivar_novedad()` pone `fecha_archivado = datetime.now(timezone.utc)`, 400 si ya estaba archivada — [`novedad_service.py:239`](../../be/app/services/novedad_service.py) | Reemplazar `eliminar()` por un `archivar()` equivalente |
-| Endpoint | `POST /{id_novedad}/archivar` — [`novedades.py:86`](../../be/app/routers/novedades.py) | `POST .../agenda/{id_item}/archivar` en vez de `DELETE` |
+La descarga puede apoyarse en `archivado_en` para la columna "Archivado" y para filtrar por rango de fechas.
 
 ---
 
@@ -97,7 +89,7 @@ Mockup de cómo se vería el contenido (no es código, es la maqueta de datos):
 | Arreglar la puerta del sótano, no cierra bien desde la mudanza del torre 3 | Archivado | 03/09/2026 | 17/09/2026 | admin.conjunto.prueba@verdeapp.com | [ver foto](/uploads/adjuntos/puerta-sotano.jpg) |
 | Pintar el pasillo del tercer piso, hay humedad visible | Pendiente | 20/09/2026 | — | admin.conjunto.prueba@verdeapp.com | — |
 | Revisar la fuga de agua cerca del parqueadero de visitantes | Archivado | 25/09/2026 | 28/09/2026 | admin.conjunto.prueba@verdeapp.com | [ver foto](/uploads/adjuntos/fuga-parqueadero.jpg) |
-| Cambiar la cerradura de la puerta peatonal | En espera | 01/10/2026 | — | admin.conjunto.prueba@verdeapp.com | — |
+| Cambiar la cerradura de la puerta peatonal | Pendiente | 01/10/2026 | — | admin.conjunto.prueba@verdeapp.com | — |
 | Coordinar fumigación de zonas comunes con la empresa del conjunto | Pendiente | 10/10/2026 | — | admin.conjunto.prueba@verdeapp.com | — |
 
 Esto responde la pregunta 3 del issue (contenido): texto, estado, fecha de creación, fecha de archivado (solo si aplica), autor, y la foto **solo como enlace**, no incrustada — ver razón en Privacidad más abajo.
@@ -125,11 +117,11 @@ No se recomienda Excel como formato propio (ver Alternativas comparadas).
 
 ### 3. Contenido
 
-Texto del tema, estado (`PENDIENTE`/`EN_ESPERA`/archivado), fecha de creación, fecha de archivado (cuando exista, una vez se construya el "Issue B"), autor (correo, vía `autor_id` → `usuarios`), y la foto de evidencia **solo como enlace** (no incrustada en el PDF) — ver ejemplo arriba.
+Texto del tema, estado (`PENDIENTE`/`ARCHIVADA`), fecha de creación, fecha de archivado (`archivado_en`, vacía mientras el tema está pendiente), autor (correo, vía `autor_id` → `usuarios`), y la foto de evidencia **solo como enlace** (no incrustada en el PDF) — ver ejemplo arriba.
 
 ### 4. Criterio para elegir el rango
 
-Filtros por **fecha** (desde/hasta, sobre `created_at` o `fecha_archivado` según convenga) y por **estado**. El conjunto nunca es un filtro que elija el usuario: cada endpoint de agenda ya está restringido al conjunto del Admin en sesión (RN-001 de RQF-020) y el reporte debe seguir esa misma regla, no agregar una forma nueva de pedir datos de un conjunto ajeno.
+Filtros por **fecha** (desde/hasta, sobre `created_at` o `archivado_en` según convenga) y por **estado**. El conjunto nunca es un filtro que elija el usuario: cada endpoint de agenda ya está restringido al conjunto del Admin en sesión (RN-001 de RQF-020) y el reporte debe seguir esa misma regla, no agregar una forma nueva de pedir datos de un conjunto ajeno.
 
 ### 5. Privacidad
 
@@ -149,7 +141,7 @@ Se recomienda un tope duro, por ejemplo 500 notas por reporte: si el rango de fe
 
 ## Recomendación
 
-1. No implementar el reporte todavía — primero construir el archivado (el "Issue B" referido en el issue #438), replicando el patrón ya probado de `Novedad.fecha_archivado`.
+1. El archivado (el "Issue B" referido en el issue #438) ya está construido (issue #435), así que el reporte se puede empezar cuando el equipo lo priorice.
 2. Implementar primero la descarga en **CSV** (stdlib, sin dependencia nueva, menor riesgo).
 3. Implementar después la descarga en **PDF** con **`fpdf2==2.8.9`**, generada en el backend.
 4. No agregar Excel como formato propio ni usar WeasyPrint — ninguna de las dos se justifica frente a las opciones de arriba, y WeasyPrint además es frágil de instalar en Windows.
@@ -161,16 +153,15 @@ Se recomienda un tope duro, por ejemplo 500 notas por reporte: si el rango de fe
 
 | # | Título propuesto | Depende de |
 | --- | --- | --- |
-| 1 | Archivar temas de la agenda en vez de borrarlos (el "Issue B" del issue #438) — agregar `fecha_archivado` a `AgendaConjunto`, replicando el patrón de `Novedad` | Ninguna |
-| 2 | Admin de Conjunto descarga el historial de la agenda en CSV | Issue 1 de esta lista |
-| 3 | Admin de Conjunto descarga el historial de la agenda en PDF | Issue 1 y 2 de esta lista |
+| 1 | Admin de Conjunto descarga el historial de la agenda en CSV | Ninguna (el archivado ya existe, issue #435) |
+| 2 | Admin de Conjunto descarga el historial de la agenda en PDF | Issue 1 de esta lista |
 
 ---
 
 ## Documentación actualizada en esta rama
 
 - Este documento.
-- [RQF-020](../requisitos/RFs/RQF-020_agenda_interna_conjunto.md) — se agregó una nota señalando que el borrado permanente (RN-004) está pendiente de cambiar por archivado, con referencia a esta investigación.
-- [HU-049](../requisitos/HUs/HU-049_admin_conjunto_descarga_historial_agenda.md) — historia de usuario nueva propuesta para la descarga (Estado: Por implementar, bloqueada por el archivado).
+- [RQF-020](../requisitos/RFs/RQF-020_agenda_interna_conjunto.md) — se agregó la fila de HU-049 a su tabla de historias derivadas (RN-003 y RN-004 quedan como las dejó el issue #435).
+- [HU-049](../requisitos/HUs/HU-049_admin_conjunto_descarga_historial_agenda.md) — historia de usuario nueva propuesta para la descarga (Estado: Por implementar).
 - Índice [`historias-de-usuario.md`](../requisitos/HUs/historias-de-usuario.md) — fila nueva para HU-049.
 - `restricciones.md` **no se tocó todavía**: `fpdf2` se agrega ahí solo cuando la tarjeta de implementación del PDF (issue 3 de la tabla de arriba) realmente instale la dependencia, no antes — para no repetir el caso de `jspdf`, que quedó fijado en la documentación de dependencias sin usarse nunca en código real.

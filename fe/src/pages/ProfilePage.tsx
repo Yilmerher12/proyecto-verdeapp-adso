@@ -14,12 +14,13 @@ import {
   Pencil,
   BadgeCheck,
   Camera,
-  LoaderCircle,
   Eye,
   EyeOff,
   X,
 } from "lucide-react";
 import { RoleId } from "@/types/auth";
+import { Spinner } from "@/components/ui/Spinner";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { notificarFotoPerfilActualizada } from "@/lib/profileEvents";
 import {
@@ -96,6 +97,7 @@ export function ProfilePage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [progresoFoto, setProgresoFoto] = useState<number | undefined>(undefined);
   const [errorFoto, setErrorFoto] = useState<string | null>(null);
   const inputFotoRef = useRef<HTMLInputElement>(null);
 
@@ -137,8 +139,13 @@ export function ProfilePage() {
     const formData = new FormData();
     formData.append("archivo", archivo);
     setSubiendoFoto(true);
+    setProgresoFoto(undefined);
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/users/me/foto-perfil`, formData);
+      await axios.post(`${API_BASE_URL}/api/v1/users/me/foto-perfil`, formData, {
+        onUploadProgress: (evento) => {
+          if (evento.total) setProgresoFoto(Math.round((evento.loaded / evento.total) * 100));
+        },
+      });
       cargarPerfil();
       notificarFotoPerfilActualizada();
     } catch {
@@ -292,9 +299,9 @@ export function ProfilePage() {
               disabled={subiendoFoto}
               aria-label={t("profile.photo.change")}
               title={t("profile.photo.change")}
-              className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-night-card"
+              className="touch-area absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-night-card"
             >
-              {subiendoFoto ? <LoaderCircle className="icon-sm animate-spin" /> : <Camera className="icon-sm" />}
+              {subiendoFoto ? <Spinner size="sm" tone="current" /> : <Camera className="icon-sm" />}
             </button>
             <input
               ref={inputFotoRef}
@@ -305,6 +312,9 @@ export function ProfilePage() {
               onChange={(e) => subirFoto(e.target.files?.[0])}
             />
           </div>
+          {subiendoFoto && (
+            <ProgressBar value={progresoFoto} label={t("profile.photo.uploading")} className="-mt-2 mb-4 max-w-[16rem]" />
+          )}
           {errorFoto && (
             <p className="-mt-2 mb-4 max-w-[16rem] text-xs text-red-600 dark:text-red-400">{errorFoto}</p>
           )}
@@ -382,7 +392,7 @@ export function ProfilePage() {
             {canEdit && !editando && (
               <button
                 onClick={iniciarEdicion}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
+                className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
               >
                 <Pencil className="icon-sm" />
                 {t("common.edit")}

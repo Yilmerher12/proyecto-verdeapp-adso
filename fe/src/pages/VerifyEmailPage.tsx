@@ -11,6 +11,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { verifyEmail } from "@/api/auth";
 import { BrandLogo } from "@/components/ui/BrandLogo";
+import { Spinner } from "@/components/ui/Spinner";
 
 type VerifyStatus = "loading" | "success" | "error";
 
@@ -74,7 +75,7 @@ export function VerifyEmailPage() {
           {/* ──── Estado: cargando ──── */}
           {status === "loading" && (
             <div className="mt-6">
-              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-accent-600 border-t-transparent" />
+              <Spinner size="xl" className="mx-auto" />
               <p className="mt-4 text-gray-600 dark:text-gray-400">{t("verifyEmail.verifying")}</p>
             </div>
           )}

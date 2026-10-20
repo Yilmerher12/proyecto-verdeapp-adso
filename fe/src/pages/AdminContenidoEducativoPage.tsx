@@ -459,8 +459,12 @@ export function AdminContenidoEducativoPage() {
   };
 
   const [aEliminar, setAEliminar] = useState<ContenidoEducativo | null>(null);
+  // ¿Qué? true mientras corre la acción de la confirmación (issue #458).
+  // ¿Para qué? Antes no pasaba nada visible mientras tardaba y se podía confirmar dos veces.
+  const [eliminando, setEliminando] = useState(false);
   const confirmarEliminar = async () => {
     if (!user || !aEliminar) return;
+    setEliminando(true);
     try {
       await eliminarContenido(aEliminar.id_contenido);
       setAEliminar(null);
@@ -468,6 +472,8 @@ export function AdminContenidoEducativoPage() {
       cargarContenido();
     } catch {
       setErrorMsg(t(`${p}.deleteError`));
+    } finally {
+      setEliminando(false);
     }
   };
 
@@ -507,7 +513,7 @@ export function AdminContenidoEducativoPage() {
   const idVideoReconocido = REGEX_VIDEO_YOUTUBE.test(form.url_video || "");
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 p-6">
+    <div className="mx-auto max-w-6xl space-y-5 px-0 py-6 sm:p-6">
       <div className="flex items-center gap-4 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
           <BookOpen className="icon-xl text-accent-700 dark:text-accent-400" />
@@ -530,14 +536,14 @@ export function AdminContenidoEducativoPage() {
             <button
               type="button"
               onClick={() => abrirCrear()}
-              className="cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600"
+              className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600"
             >
               {t(`${p}.newModule`)}
             </button>
             <button
               type="button"
               onClick={() => abrirCrear(NUEVA_CATEGORIA)}
-              className="cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+              className="touch-target-h cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
             >
               {t(`${p}.newSection.newCategory`)}
             </button>
@@ -602,14 +608,14 @@ export function AdminContenidoEducativoPage() {
           onClick={() => setPanelExpandido((v) => !v)}
           className="flex flex-wrap cursor-pointer items-center justify-between gap-2 px-5 py-4"
         >
-          <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-night-line dark:bg-night-inset/60">
+          <div className="flex flex-wrap rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-night-line dark:bg-night-inset/60">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setTab("cal");
               }}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 tab === "cal" ? "bg-accent-700 text-white shadow-sm" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
@@ -622,7 +628,7 @@ export function AdminContenidoEducativoPage() {
                 e.stopPropagation();
                 setTab("mod");
               }}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 tab === "mod" ? "bg-accent-700 text-white shadow-sm" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
@@ -638,7 +644,7 @@ export function AdminContenidoEducativoPage() {
               setPanelExpandido((v) => !v);
             }}
             aria-expanded={panelExpandido}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-night-inset/60 dark:hover:text-gray-200"
+            className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-night-inset/60 dark:hover:text-gray-200"
           >
             {panelExpandido ? t(`${p}.collapse`) : tab === "cal" ? t(`${p}.expandRatings`) : t(`${p}.expandModules`)}
             <ChevronDown className={`icon-sm transition-transform ${panelExpandido ? "rotate-180" : ""}`} />
@@ -653,7 +659,7 @@ export function AdminContenidoEducativoPage() {
                   type="button"
                   onClick={() => cambiarSemana(-7)}
                   aria-label={t(`${p}.week.prev`)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
+                  className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
                 >
                   <ChevronLeft className="icon-md" />
                 </button>
@@ -666,7 +672,7 @@ export function AdminContenidoEducativoPage() {
                   onClick={() => cambiarSemana(7)}
                   disabled={semana >= semanaActual}
                   aria-label={t(`${p}.week.next`)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
+                  className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
                 >
                   <ChevronRight className="icon-md" />
                 </button>
@@ -687,7 +693,7 @@ export function AdminContenidoEducativoPage() {
                   onChange={(e) => setBuscarCal(e.target.value)}
                   placeholder={t(`${p}.week.searchPlaceholder`)}
                   aria-label={t(`${p}.week.searchPlaceholder`)}
-                  className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 sm:w-56"
+                  className="touch-target-h w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 sm:w-56"
                 />
               </div>
             </div>
@@ -699,7 +705,7 @@ export function AdminContenidoEducativoPage() {
                   type="button"
                   onClick={() => setNivelFiltro(nivel)}
                   aria-pressed={nivelFiltro === nivel}
-                  className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                  className={`touch-target-h cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                     nivelFiltro === nivel
                       ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
                       : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
@@ -788,7 +794,7 @@ export function AdminContenidoEducativoPage() {
                   onChange={(e) => setBuscarMod(e.target.value)}
                   placeholder={t(`${p}.modules.searchPlaceholder`)}
                   aria-label={t(`${p}.modules.searchPlaceholder`)}
-                  className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 sm:w-56"
+                  className="touch-target-h w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 sm:w-56"
                 />
               </div>
               <select
@@ -1322,6 +1328,7 @@ export function AdminContenidoEducativoPage() {
           description={t(`${p}.deleteConfirm.warning`)}
           confirmLabel={t(`${p}.deleteConfirm.confirm`)}
           onConfirm={confirmarEliminar}
+          isConfirming={eliminando}
           onClose={() => setAEliminar(null)}
         />
       )}

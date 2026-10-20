@@ -5,8 +5,8 @@
   ¿Para qué? Dejar escrito, desde el punto de vista del Admin de Conjunto,
              qué debe poder hacer una vez exista la descarga del
              historial de la agenda.
-  ¿Impacto? Issue #438. Bloqueada por una tarjeta previa (archivar temas
-            en vez de borrarlos) que todavía no existe — ver
+  ¿Impacto? Issue #438. Se apoya en el archivado de temas (issue #435),
+            que ya existe — ver
             docs/gestion-proyecto/investigacion-reporte-historial-agenda.md.
 -->
 
@@ -20,7 +20,7 @@
 | **Título**         | Admin de Conjunto descarga el historial de la agenda         |
 | **Módulo**         | Administración / Conjuntos                                   |
 | **Prioridad**      | Baja                                                          |
-| **Estado**         | Por implementar — bloqueada por el archivado de temas (ver RQF-020, RN-004) |
+| **Estado**         | Por implementar |
 | **RF asociados**   | RQF-020                                                      |
 
 ---

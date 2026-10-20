@@ -1,4 +1,11 @@
+import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
+
+// ¿Qué? Carga las variables de "e2e/.env" (credenciales de las cuentas de prueba).
+// ¿Para qué? Que los tests las lean con process.env y no las lleven escritas.
+// ¿Impacto? Si el archivo no existe (por ejemplo en el CI, que trae las variables
+//           por su cuenta) no hace nada y no falla.
+if (existsSync(".env")) process.loadEnvFile();
 
 // ¿Qué? Puerto del frontend (el mismo de "pnpm dev" en fe/).
 // ¿Para qué? Si el 5173 está ocupado, se cambia con la variable FRONT_PORT

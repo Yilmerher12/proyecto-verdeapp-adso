@@ -143,6 +143,9 @@ export function AdminNovedadesPage() {
   //       directo al clic, sin confirmar, a diferencia de eliminar un
   //       comunicado (misma acción conceptual, otra pantalla).
   const [aArchivar, setAArchivar] = useState<Novedad | null>(null);
+  // ¿Qué? true mientras corre la acción de la confirmación (issue #458).
+  // ¿Para qué? Antes no pasaba nada visible mientras tardaba y se podía confirmar dos veces.
+  const [archivando, setArchivando] = useState(false);
 
   const paginacion = usePaginacion(TAMANO_PAGINA, total);
   const { reiniciar, offset } = paginacion;
@@ -295,6 +298,7 @@ export function AdminNovedadesPage() {
 
   const confirmarArchivar = async () => {
     if (!user || !aArchivar) return;
+    setArchivando(true);
     try {
       await archivarNovedad(aArchivar.id_novedad);
       setAArchivar(null);
@@ -302,6 +306,8 @@ export function AdminNovedadesPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setErrorMsg(err.message || t("novedades.admin.archiveError"));
+    } finally {
+      setArchivando(false);
     }
   };
 
@@ -370,7 +376,7 @@ export function AdminNovedadesPage() {
                     type="button"
                     onClick={() => cambiarAlcanceFiltro(a)}
                     aria-pressed={alcanceFiltro === a}
-                    className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                    className={`touch-target-h cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                       alcanceFiltro === a
                         ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
                         : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
@@ -391,7 +397,7 @@ export function AdminNovedadesPage() {
                   aria-checked={verArchivadas}
                   aria-labelledby="novedades-ver-archivadas"
                   onClick={cambiarVerArchivadas}
-                  className={`relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full transition-colors ${
+                  className={`touch-area relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full transition-colors ${
                     verArchivadas ? "bg-accent-600" : "bg-gray-300 dark:bg-night-hover"
                   }`}
                 >
@@ -412,7 +418,7 @@ export function AdminNovedadesPage() {
                 placeholder={t("novedades.admin.filters.searchPlaceholder")}
                 aria-label={t("novedades.admin.filters.searchPlaceholder")}
                 maxLength={100}
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200"
+                className="touch-target-h w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200"
               />
             </div>
 
@@ -506,14 +512,14 @@ export function AdminNovedadesPage() {
                         <div className="flex shrink-0 gap-2">
                           <button
                             onClick={() => abrirEditar(item)}
-                            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+                            className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
                             aria-label={t("novedades.admin.editAria", { resumen: resumirTexto(item.texto) })}
                           >
                             <Pencil className="icon-md" />
                           </button>
                           <button
                             onClick={() => setAArchivar(item)}
-                            className="cursor-pointer rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-night-line dark:hover:bg-amber-900/20"
+                            className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-night-line dark:hover:bg-amber-900/20"
                             aria-label={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
                           >
                             <Archive className="icon-md" />
@@ -578,7 +584,7 @@ export function AdminNovedadesPage() {
                       role="radio"
                       aria-checked={form.alcance === a}
                       onClick={() => setForm({ ...form, alcance: a })}
-                      className={`cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
+                      className={`touch-target-h cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                         form.alcance === a
                           ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
                           : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-night-line dark:text-gray-300"
@@ -628,7 +634,7 @@ export function AdminNovedadesPage() {
                       role="radio"
                       aria-checked={form.modoConjunto === modo}
                       onClick={() => setForm({ ...form, modoConjunto: modo })}
-                      className={`cursor-pointer rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
+                      className={`touch-target-h cursor-pointer rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
                         form.modoConjunto === modo
                           ? "border-indigo-600 bg-indigo-100 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-200"
                           : "border-gray-200 bg-white text-gray-500 hover:border-indigo-300 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
@@ -803,6 +809,7 @@ export function AdminNovedadesPage() {
           description={t("novedades.admin.archiveConfirm.warning")}
           confirmLabel={t("novedades.admin.archiveConfirm.confirm")}
           onConfirm={confirmarArchivar}
+          isConfirming={archivando}
           onClose={() => setAArchivar(null)}
         />
       )}

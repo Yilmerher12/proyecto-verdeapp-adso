@@ -16,6 +16,7 @@ import {
   Newspaper,
   User,
   Bell,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
@@ -44,9 +45,27 @@ interface AppShellProps {
 // del menú, y la marca de agua del banner de bienvenida de cada dashboard.
 // El verde oscuro de modo oscuro es el mismo que ya usamos en el landing page.
 
+// ¿Qué? true si la pantalla es de celular (menos de 640 px).
+// ¿Para qué? Decidir si el menú arranca colapsado y si se cierra al navegar.
+// ¿Impacto? `matchMedia` no existe en algunos entornos de prueba: sin él se
+//           asume escritorio (menú abierto), el comportamiento de siempre.
+function esCelular() {
+  return typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(max-width: 639px)").matches;
+}
+
 export function AppShell({ children }: AppShellProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  // ¿Qué? En celular (menos de 640 px, el breakpoint `sm`) el menú arranca
+  //       colapsado: solo la franja del logo y el botón de menú.
+  // ¿Para qué? Abierto ocupaba entre el 65% y el 75% del alto de la pantalla y
+  //           empujaba el contenido hacia abajo (en el Reciclador empezaba en
+  //           y=600 de 812) (issue #454).
+  // ¿Impacto? En tableta y escritorio sigue abierto, como antes.
+  const [collapsed, setCollapsed] = useState(() => esCelular());
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  // ¿Qué? true mientras se avisa al servidor que cierre la sesión (issue #458).
+  // ¿Para qué? Con mala conexión esa petición puede tardar hasta 10 s y el botón
+  //           "Sí, cerrar sesión" no mostraba nada ni impedía tocarlo dos veces.
+  const [cerrandoSesion, setCerrandoSesion] = useState(false);
   const [noLeidas, setNoLeidas] = useState(0);
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState<string | null>(null);
   // ¿Qué? La ruta guardada (/uploads/perfiles/...) ya completa y revisada.
@@ -57,6 +76,19 @@ export function AppShell({ children }: AppShellProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { t } = useTranslation();
+
+  // ¿Qué? En celular, el menú se cierra al cambiar de página.
+  // ¿Para qué? Antes, tocar una opción dejaba el menú abierto encima del
+  //           contenido y había que cerrarlo a mano en cada página.
+  // ¿Impacto? En escritorio no hace nada: ahí el usuario decide si lo deja
+  //           abierto o colapsado. Se ajusta el estado durante el render
+  //           (patrón de React para "reaccionar a un cambio") y no en un
+  //           useEffect, que dibujaría primero el menú abierto un instante.
+  const [rutaVista, setRutaVista] = useState(pathname);
+  if (rutaVista !== pathname) {
+    setRutaVista(pathname);
+    if (esCelular()) setCollapsed(true);
+  }
 
   const handleLogout = async () => {
     // ¿Qué? Antes esto llamaba a logout() (que además de borrar el token
@@ -85,6 +117,7 @@ export function AppShell({ children }: AppShellProps) {
     //           responde (sin red, caído), el usuario igual debe poder
     //           salir de su sesión en este navegador — no tiene sentido
     //           bloquear el logout local por un problema de red.
+    setCerrandoSesion(true);
     try {
       await authApi.logoutUser();
     } catch {
@@ -165,7 +198,10 @@ export function AppShell({ children }: AppShellProps) {
   //           de comunidad, recursos de consulta, cuenta propia) ayuda a
   //           ubicarse más rápido, sin agregar ninguna opción nueva.
   // ¿Impacto? "principal" nunca lleva encabezado (es un ancla, no una
-  //           categoría) — los otros 3 grupos sí, y solo se muestran si
+  //           categoría). También aloja "Puntos de Acopio" (Admin del Sistema
+  //           y Reciclador): es un lugar físico de uso operativo, no un
+  //           recurso de consulta, así que va suelto bajo "Panel Principal".
+  //           Los otros 3 grupos sí llevan encabezado, y solo se muestran si
   //           el rol tiene al menos una opción en ese grupo (ver
   //           GRUPOS_NAV más abajo).
   type GrupoNav = "principal" | "comunidad" | "recursos" | "cuenta";
@@ -184,7 +220,7 @@ export function AppShell({ children }: AppShellProps) {
         ...commonStart,
         { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: "/admin/novedades", enabled: true, group: "comunidad" as GrupoNav },
         { icon: BookOpen, label: t("appShell.nav.contenidoEducativo"), href: "/admin/contenido-educativo", enabled: true, group: "recursos" as GrupoNav },
-        { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true, group: "recursos" as GrupoNav },
+        { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true, group: "principal" as GrupoNav },
         ...commonEnd,
       ];
     }
@@ -194,7 +230,7 @@ export function AppShell({ children }: AppShellProps) {
         ...commonStart,
         { icon: Megaphone, label: t("appShell.nav.comunicados"), href: "/comunicados", enabled: true, group: "comunidad" as GrupoNav },
         { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true, group: "comunidad" as GrupoNav },
-        { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true, group: "recursos" as GrupoNav },
+        { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/puntos-acopio", enabled: true, group: "principal" as GrupoNav },
         { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true, group: "cuenta" as GrupoNav },
         ...commonEnd,
       ];
@@ -204,6 +240,7 @@ export function AppShell({ children }: AppShellProps) {
       return [
         ...commonStart,
         { icon: Megaphone, label: t("appShell.nav.gestionarComunicados"), href: "/admin-conjunto/comunicados", enabled: true, group: "comunidad" as GrupoNav },
+        { icon: ClipboardList, label: t("appShell.nav.agenda"), href: "/admin-conjunto/agenda", enabled: true, group: "comunidad" as GrupoNav },
         { icon: Newspaper, label: t("appShell.nav.novedades"), href: "/novedades", enabled: true, group: "comunidad" as GrupoNav },
         { icon: User, label: t("appShell.nav.miPerfil"), href: "/profile", enabled: true, group: "cuenta" as GrupoNav },
         ...commonEnd,
@@ -225,7 +262,9 @@ export function AppShell({ children }: AppShellProps) {
 
   const GRUPOS_NAV: { id: GrupoNav; labelKey: string | null }[] = [
     { id: "principal", labelKey: null },
-    { id: "comunidad", labelKey: "appShell.nav.groupComunidad" },
+    // ¿Qué? "comunidad" ya no lleva encabezado: sus opciones (Comunicados, Agenda,
+    //       Soporte técnico) se entienden solas y el rótulo "Comunidad" no aportaba.
+    { id: "comunidad", labelKey: null },
     { id: "recursos", labelKey: "appShell.nav.groupRecursos" },
     { id: "cuenta", labelKey: "appShell.nav.groupCuenta" },
   ];
@@ -289,7 +328,7 @@ export function AppShell({ children }: AppShellProps) {
           <button
             type="button"
             onClick={() => setCollapsed((prev) => !prev)}
-            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-accent-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
+            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-accent-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
             aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
           >
             {collapsed ? <Menu className="icon-lg" /> : <X className="icon-lg" />}
@@ -312,7 +351,12 @@ export function AppShell({ children }: AppShellProps) {
                 </div>
               )}
               <div className="min-w-0 flex-1 overflow-hidden">
-                <p className="truncate text-sm font-bold text-white">
+                {/* ¿Qué? El nombre puede ocupar hasta 2 líneas (antes truncate).
+                    ¿Para qué? "ADMINISTRADOR DEL SISTEMA" se cortaba con "…"
+                              aunque el menú tiene alto de sobra (issue #454).
+                    ¿Impacto? Con más de 2 líneas sí se corta, y title muestra
+                             el nombre completo al pasar el mouse. */}
+                <p className="line-clamp-2 break-words text-sm font-bold leading-snug text-white" title={displayName}>
                   {displayName}
                 </p>
                 <span className={`flex min-w-0 items-center gap-1.5 text-xs font-medium mt-0.5 ${roleMeta.sidebarAccentText}`}>
@@ -428,6 +472,7 @@ export function AppShell({ children }: AppShellProps) {
             description={t("appShell.confirmarLogout.mensaje")}
             confirmLabel={t("appShell.confirmarLogout.confirmar")}
             onConfirm={handleLogout}
+            isConfirming={cerrandoSesion}
             onClose={() => setShowLogoutConfirm(false)}
           />
         )}
@@ -450,7 +495,7 @@ export function AppShell({ children }: AppShellProps) {
           {/* Campana de notificaciones */}
           <button
             onClick={() => navigate(roleMeta.dashboardHref)}
-            className="relative cursor-pointer rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-night-hover dark:hover:text-gray-200"
+            className="touch-target relative flex cursor-pointer items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-night-hover dark:hover:text-gray-200"
             aria-label={
               noLeidas > 0
                 ? t("appShell.notificacionesConNoLeidas", { count: noLeidas })
@@ -474,7 +519,13 @@ export function AppShell({ children }: AppShellProps) {
             ¿Impacto? Contraste tarjeta/fondo depende solo de los dos colores
             sólidos (claro: gray-200, oscuro: night-page). */}
         <main className="relative flex-1 overflow-y-auto bg-gray-200 dark:bg-night-page">
-          <div className="relative z-10 mx-auto max-w-7xl px-6 pb-6">
+          {/* ¿Qué? 16 px de margen lateral en celular (24 px desde `sm`).
+              ¿Para qué? Con 24 px del contenedor + 24 px de la página, las
+                        tarjetas ocupaban solo el 74% del ancho de un celular
+                        de 375 px (issue #454). Las páginas con su propio
+                        `p-6` usan `px-0 sm:px-6` para no sumarlos.
+              ¿Impacto? Tableta y escritorio quedan igual que antes. */}
+          <div className="relative z-10 mx-auto max-w-7xl px-4 pb-6 sm:px-6">
             {/* ¿Qué? ErrorBoundary solo alrededor de la página, no del sidebar.
                 ¿Para qué? Si una página falla al dibujarse, el menú lateral
                            sigue funcionando para ir a otra (issue #378).

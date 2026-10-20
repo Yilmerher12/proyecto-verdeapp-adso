@@ -234,10 +234,11 @@ Permite crear una nueva cuenta dentro del sistema.
 
 ### Flujo Principal
 
-1. El usuario diligencia el formulario.
-2. El sistema valida la información.
-3. El sistema registra la cuenta.
-4. Se envía un correo electrónico de validación.
+1. El usuario elige su rol en la primera pantalla del registro.
+2. El usuario diligencia el formulario de ese rol.
+3. El sistema valida la información.
+4. El sistema registra la cuenta.
+5. Se envía un correo electrónico de validación.
 
 ---
 
@@ -591,9 +592,9 @@ Permite al Admin_conjunto llevar, por cada conjunto que administra, una lista pr
 
 ### Flujo Principal
 
-1. El Admin_conjunto abre "Agenda del conjunto" en el acordeón de uno de sus conjuntos.
+1. El Admin_conjunto abre la opción "Agenda" del menú y elige uno de sus conjuntos.
 2. Agrega un tema (texto y foto opcional); queda como Pendiente.
-3. Después del comité, deja en espera los temas aplazados y elimina los resueltos.
+3. Después del comité, archiva los temas resueltos (quedan en el historial "Archivadas") y, si hace falta, elimina los que ya no quiere.
 
 ---
 
