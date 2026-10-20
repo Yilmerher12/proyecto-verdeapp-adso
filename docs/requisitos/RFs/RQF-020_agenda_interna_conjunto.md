@@ -110,3 +110,4 @@ Código: `be/app/routers/conjunto_panel.py`, `be/app/services/agenda_conjunto_se
 | HU      | Descripción                                                    |
 | ------- | ----------------------------------------------------------------|
 | [HU-046](../HUs/HU-046_admin_conjunto_lleva_agenda_comite.md) | Admin de Conjunto lleva la agenda de temas para el comité |
+| [HU-049](../HUs/HU-049_admin_conjunto_descarga_historial_agenda.md) | Admin de Conjunto descarga el historial de la agenda (por implementar) |
