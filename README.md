@@ -313,6 +313,20 @@ uv run uvicorn app.main:app --reload --port 8000
 
 Suele pasar si dejaste corriendo una instancia anterior del proyecto, u otro programa en tu máquina ya usa ese puerto (por ejemplo, un PostgreSQL instalado localmente compite por el `5432`, por eso VerdeApp usa `5433`). Revisa qué proceso lo tiene ocupado y ciérralo, o apaga los contenedores anteriores con `docker compose down` antes de volver a encender.
 
+**`pnpm dev` termina con `Port 5173 is already in use`**
+
+Otro programa (casi siempre un `pnpm dev` anterior que dejaste abierto) tiene el puerto `5173`. Vite ya no se pasa solo al `5174`: antes lo hacía y el login fallaba con un error que el navegador muestra como "CORS", porque el backend solo acepta los orígenes `:5173` y `:3000` (`ALLOWED_ORIGINS` en `be/app/main.py`). Libera el puerto y vuelve a correr `pnpm dev`. En Windows (PowerShell), primero mira qué proceso lo usa; el número que sale al final de la línea es el PID:
+
+```powershell
+netstat -ano | findstr :5173
+```
+
+Luego ciérralo con ese número (reemplaza `1234`):
+
+```powershell
+taskkill /PID 1234 /F
+```
+
 **`uv` o `pnpm` no se reconocen como comando**
 
 Significa que no están instalados, o que instalaste una versión distinta a la que espera el proyecto. Revisa la tabla de la sección "🛠️ Stack Tecnológico y Control de Versiones" más arriba para la versión exacta, e instálalos siguiendo la documentación oficial de cada herramienta.
