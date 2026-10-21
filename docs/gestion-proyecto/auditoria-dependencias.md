@@ -209,3 +209,14 @@ El paso `pnpm audit` del CI dejó en rojo el PR de la investigación #437 con 2 
 
 - **Qué se hizo:** `pnpm update follow-redirects --depth Infinity` en `fe/`. Solo cambió `fe/pnpm-lock.yaml` (1.16.0 a 1.16.1, la versión corregida). `axios` sigue en 1.20.0, que ya declaraba `follow-redirects ^1.16.0`, y `package.json` no cambió. No se agregó ninguna regla de `overrides` (se quitaron a propósito en el issue #313).
 - **Verificado:** `pnpm audit` en `fe/`: **No known vulnerabilities found**. 516 pruebas del frontend y `pnpm build` pasan.
+
+---
+
+## Actualización — Pillow 13.0.0 y certifi 2026.10.19 en el backend (2026-10-21, issue #437)
+
+El paso `pip-audit` del CI dejó en rojo el PR de la investigación #437 con 11 alertas en 2 paquetes: `pillow` 12.3.0 (9 alertas, `CVE-2026-112395` y otras, todas corregidas solo en 13.0.0, publicada el 2026-10-16) y `certifi` 2026.7.22 (`PYSEC-2026-4320`, corregida en 2026.10.19). El PR no tocaba dependencias: las alertas se publicaron después de fijar esas versiones.
+
+- **Qué se hizo:** `pillow==12.3.0` pasó a `pillow==13.0.0` en `be/pyproject.toml` (es un salto de versión mayor, con versión exacta como pide `restricciones.md`), y `uv lock --upgrade-package pillow --upgrade-package certifi` actualizó `be/uv.lock`. `certifi` es una dependencia indirecta (no está en `pyproject.toml`); ningún otro paquete cambió.
+- **Riesgo del salto mayor:** el proyecto solo usa la parte básica de Pillow (`Image.open`, `.verify()`, `.width`/`.height`, `Image.MAX_IMAGE_PIXELS`, `DecompressionBombError`, `UnidentifiedImageError`, `Image.new(...).save(...)` en las pruebas), todo en `app/utils/imagenes.py` y sus pruebas.
+- **Verificado:** `pip-audit` con el mismo comando del CI: **No known vulnerabilities found**. 718 pruebas del backend pasan (cobertura 96.82%, umbral 96%) y `ruff` queda limpio.
+- **Pendiente para las tarjetas del reporte de la agenda:** `fpdf2` depende de Pillow; al instalarla hay que comprobar que su versión es compatible con Pillow 13.
