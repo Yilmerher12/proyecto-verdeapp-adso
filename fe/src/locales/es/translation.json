@@ -1493,7 +1493,23 @@
     "deleting": "Eliminando...",
     "viewPhoto": "Ver foto",
     "errorDefault": "No se pudo guardar el tema. Intenta de nuevo.",
-    "actionError": "No se pudo completar la acción. Intenta de nuevo."
+    "actionError": "No se pudo completar la acción. Intenta de nuevo.",
+    "download": {
+      "button": "Descargar historial",
+      "title": "Descargar historial de la agenda",
+      "description": "Se descarga un archivo CSV con los temas de este conjunto, listo para abrir en Excel y anexar al acta del comité.",
+      "stateLabel": "Temas a incluir",
+      "stateAll": "Todos (por tratar y archivados)",
+      "statePending": "Solo por tratar",
+      "stateArchived": "Solo archivados",
+      "fromLabel": "Desde",
+      "toLabel": "Hasta",
+      "rangeHint": "Los temas archivados se buscan por su fecha de archivado y los que siguen por tratar, por su fecha de creación. Deja las fechas vacías para incluir todo. Máximo 500 temas por archivo.",
+      "rangeError": "La fecha \"Hasta\" no puede ser anterior a la fecha \"Desde\".",
+      "confirm": "Descargar CSV",
+      "downloading": "Descargando...",
+      "error": "No se pudo descargar el historial. Intenta de nuevo."
+    }
   },
   "comunicados": {
     "editedBadge": "Editado",
