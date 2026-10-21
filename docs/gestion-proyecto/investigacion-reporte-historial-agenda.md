@@ -165,3 +165,5 @@ Se recomienda un tope duro, por ejemplo 500 notas por reporte: si el rango de fe
 - [HU-049](../requisitos/HUs/HU-049_admin_conjunto_descarga_historial_agenda.md) — historia de usuario nueva propuesta para la descarga (Estado: Por implementar).
 - Índice [`historias-de-usuario.md`](../requisitos/HUs/historias-de-usuario.md) — fila nueva para HU-049.
 - `restricciones.md` **no se tocó todavía**: `fpdf2` se agrega ahí solo cuando la tarjeta de implementación del PDF (issue 3 de la tabla de arriba) realmente instale la dependencia, no antes — para no repetir el caso de `jspdf`, que quedó fijado en la documentación de dependencias sin usarse nunca en código real.
+
+> **Actualización (2026-10-21, issue #480):** `fpdf2==2.8.9` ya se instaló en `be/pyproject.toml` y quedó anotada en `restricciones.md`. Lo que se decidió sobre los caracteres que la fuente estándar no dibuja (opción de cambiarlos por su versión simple, sin incluir una fuente) está en `HU-049` y `RQF-020` (RN-007).

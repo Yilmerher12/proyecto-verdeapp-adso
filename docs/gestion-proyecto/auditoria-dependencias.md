@@ -220,3 +220,14 @@ El paso `pip-audit` del CI dejó en rojo el PR de la investigación #437 con 11 
 - **Riesgo del salto mayor:** el proyecto solo usa la parte básica de Pillow (`Image.open`, `.verify()`, `.width`/`.height`, `Image.MAX_IMAGE_PIXELS`, `DecompressionBombError`, `UnidentifiedImageError`, `Image.new(...).save(...)` en las pruebas), todo en `app/utils/imagenes.py` y sus pruebas.
 - **Verificado:** `pip-audit` con el mismo comando del CI: **No known vulnerabilities found**. 718 pruebas del backend pasan (cobertura 96.82%, umbral 96%) y `ruff` queda limpio.
 - **Pendiente para las tarjetas del reporte de la agenda:** `fpdf2` depende de Pillow; al instalarla hay que comprobar que su versión es compatible con Pillow 13.
+
+---
+
+## Actualización — `fpdf2` y `pypdf` entran al backend (2026-10-21, issue #480)
+
+Para el PDF del historial de la agenda se agregaron dos dependencias, ambas con versión exacta y de más de una semana de publicadas (misma regla de espera que usa Dependabot):
+
+- **`fpdf2==2.8.9`** (producción, LGPL-3.0, publicada el 2026-09-29): trae `defusedxml` 0.7.1 y `fonttools` 4.67.0 como dependencias indirectas. Es puro Python y exige `Pillow>=8.3.2` sin tope superior; se probó con Pillow 13.0.0 (tablas, enlaces y varias páginas) y funciona.
+- **`pypdf==6.20.1`** (solo desarrollo, BSD-3-Clause, publicada el 2026-10-12): lee el PDF generado en las pruebas. No se eligió la 6.21.2 porque salió el mismo día de la revisión.
+
+**Verificado:** `pip-audit` con el mismo comando del CI (dependencias de producción) y también sobre producción más desarrollo: **No known vulnerabilities found**.

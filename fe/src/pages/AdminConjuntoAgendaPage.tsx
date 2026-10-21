@@ -4,11 +4,12 @@ import { Archive, Check, ClipboardList, Download, Plus, Trash2, Undo2, X } from 
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { descargarArchivo } from "@/lib/descargarArchivo";
+import { rangoDelPeriodo, type PeriodoDescarga, type RangoFechas } from "@/lib/periodosDescarga";
 import { DESVINCULACION_MOTIVO_MAX_LENGTH } from "@/lib/validacion";
 import {
   cambiarEstadoItemAgenda,
   crearItemAgenda,
-  descargarHistorialAgendaCsv,
+  descargarHistorialAgenda,
   eliminarItemAgenda,
   listarAgenda,
   listarAgendaArchivada,
@@ -16,6 +17,7 @@ import {
   obtenerMisConjuntos,
   type ConjuntoAdministrado,
   type FiltroDescargaAgenda,
+  type FormatoDescargaAgenda,
   type ItemAgenda,
 } from "@/lib/conjuntoPanelApi";
 import { usePaginacion } from "@/hooks/usePaginacion";
@@ -44,7 +46,7 @@ const COLORES_NOTA = [
 
 type Vista = "porTratar" | "archivadas";
 
-const FILTRO_DESCARGA_INICIAL: FiltroDescargaAgenda = { estado: "TODOS", desde: "", hasta: "" };
+const SIN_FECHAS: RangoFechas = { desde: "", hasta: "" };
 
 /**
  * ¿Qué? Agenda interna del Admin de Conjunto (RQF-020, HU-046): los temas que
@@ -90,12 +92,16 @@ export function AdminConjuntoAgendaPage() {
   const [cambiandoId, setCambiandoId] = useState<string | null>(null);
   const [errorBorrar, setErrorBorrar] = useState<string | null>(null);
 
-  // ¿Qué? Issue #479 — descarga del historial en CSV: ventana con los filtros.
+  // ¿Qué? Issues #479 y #480 — descarga del historial (CSV o PDF): ventana con los filtros y el formato.
   const [descargaAbierta, setDescargaAbierta] = useState(false);
-  const [filtroDescarga, setFiltroDescarga] = useState<FiltroDescargaAgenda>(FILTRO_DESCARGA_INICIAL);
+  const [formatoDescarga, setFormatoDescarga] = useState<FormatoDescargaAgenda>("csv");
+  const [periodoDescarga, setPeriodoDescarga] = useState<PeriodoDescarga>("TODO");
+  const [fechasDescarga, setFechasDescarga] = useState<RangoFechas>(SIN_FECHAS);
+  const [estadoDescarga, setEstadoDescarga] = useState<FiltroDescargaAgenda["estado"]>("TODOS");
   const [errorRango, setErrorRango] = useState<string | null>(null);
   const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
   const [bajando, setBajando] = useState(false);
+  const [descargado, setDescargado] = useState(false);
 
   const cargarPendientes = useCallback(() => {
     obtenerMisConjuntos()
@@ -176,31 +182,45 @@ export function AdminConjuntoAgendaPage() {
     }
   };
 
+  // ¿Qué? "Temas" ya viene con lo que se está viendo: "Archivadas" en esa pestaña, "Por tratar" en la otra.
+  // ¿Para qué? Quien descarga desde una pestaña casi siempre quiere lo que ve; si quiere otra cosa, lo cambia.
+  const abrirDescarga = () => {
+    setEstadoDescarga(vista === "archivadas" ? "ARCHIVADA" : "PENDIENTE");
+    setDescargado(false);
+    setDescargaAbierta(true);
+  };
+
   const cerrarDescarga = () => {
     setDescargaAbierta(false);
-    setFiltroDescarga(FILTRO_DESCARGA_INICIAL);
+    setFormatoDescarga("csv");
+    setPeriodoDescarga("TODO");
+    setFechasDescarga(SIN_FECHAS);
     setErrorRango(null);
     setErrorDescarga(null);
   };
 
   // ¿Qué? El rango al revés se avisa en el campo "Hasta" al salir de él, no con un aviso genérico.
-  const mensajeRango = (f: FiltroDescargaAgenda) =>
+  const mensajeRango = (f: RangoFechas) =>
     f.desde && f.hasta && f.desde > f.hasta ? t("agenda.download.rangeError") : null;
 
+  // ¿Qué? Con "Personalizado", "Descargar" espera las dos fechas y que no estén al revés; con los demás
+  //       períodos nunca hay nada que completar. Las fechas del período se calculan en lib/periodosDescarga.ts.
+  const rango = rangoDelPeriodo(periodoDescarga, fechasDescarga);
+  const faltanFechas = periodoDescarga === "PERSONALIZADO" && (!fechasDescarga.desde || !fechasDescarga.hasta);
+  const fechasAlReves = periodoDescarga === "PERSONALIZADO" && !!mensajeRango(fechasDescarga);
+
   const descargar = async () => {
-    const mensaje = mensajeRango(filtroDescarga);
-    setErrorRango(mensaje);
-    if (mensaje) return;
     setBajando(true);
     setErrorDescarga(null);
     try {
-      const archivo = await descargarHistorialAgendaCsv(idConjunto, filtroDescarga);
+      const archivo = await descargarHistorialAgenda(idConjunto, { estado: estadoDescarga, ...rango }, formatoDescarga);
       const conjunto = conjuntos.find((c) => c.id_conjunto_residencial === idConjunto);
       descargarArchivo(
         archivo,
-        nombreArchivoHistorialAgenda(conjunto?.nombre_conjunto ?? "conjunto", filtroDescarga.desde, filtroDescarga.hasta)
+        nombreArchivoHistorialAgenda(conjunto?.nombre_conjunto ?? "conjunto", rango.desde, rango.hasta, formatoDescarga)
       );
       cerrarDescarga();
+      setDescargado(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setErrorDescarga(err.message || t("agenda.download.error"));
@@ -373,7 +393,7 @@ export function AdminConjuntoAgendaPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => setDescargaAbierta(true)}
+            onClick={abrirDescarga}
             disabled={!idConjunto}
             className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
           >
@@ -393,6 +413,7 @@ export function AdminConjuntoAgendaPage() {
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
+      {descargado && <Alert type="success" message={t("agenda.download.success")} onClose={() => setDescargado(false)} />}
 
       {recienArchivado && (
         <div
@@ -564,14 +585,93 @@ export function AdminConjuntoAgendaPage() {
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("agenda.download.description")}</p>
             </div>
             {errorDescarga && <Alert type="error" message={errorDescarga} onClose={() => setErrorDescarga(null)} />}
+            {/* ¿Qué? Formato: dos opciones pegadas (CSV o PDF) en vez de un desplegable — son solo dos y así se ven a la vez.
+                ¿Para qué? Botones de radio nativos: el teclado (flechas) y el lector de pantalla funcionan solos. */}
+            <fieldset>
+              <legend className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("agenda.download.formatLabel")}
+              </legend>
+              <div className="inline-flex overflow-hidden rounded-lg border border-gray-300 dark:border-night-line">
+                {(["csv", "pdf"] as const).map((formato) => (
+                  <label
+                    key={formato}
+                    className={`has-focus-visible:ring-2 has-focus-visible:ring-inset has-focus-visible:ring-accent-500 flex cursor-pointer items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-colors ${
+                      formato === "pdf" ? "border-l border-gray-300 dark:border-night-line" : ""
+                    } ${
+                      formatoDescarga === formato
+                        ? "bg-accent-700 text-white"
+                        : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="agenda-descarga-formato"
+                      value={formato}
+                      checked={formatoDescarga === formato}
+                      onChange={() => setFormatoDescarga(formato)}
+                      className="sr-only"
+                    />
+                    {/* ¿Qué? El visto marca la opción elegida además del color (RNF-005.2: no depender solo del color). */}
+                    {formatoDescarga === formato && <Check className="icon-sm" aria-hidden="true" />}
+                    {t(formato === "csv" ? "agenda.download.formatCsv" : "agenda.download.formatPdf")}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <div>
+              <label htmlFor="agenda-descarga-periodo" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t("agenda.download.periodLabel")}
+              </label>
+              <select
+                id="agenda-descarga-periodo"
+                value={periodoDescarga}
+                onChange={(e) => {
+                  setPeriodoDescarga(e.target.value as PeriodoDescarga);
+                  setErrorRango(null);
+                }}
+                className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+              >
+                <option value="TODO">{t("agenda.download.periodAll")}</option>
+                <option value="ESTE_MES">{t("agenda.download.periodThisMonth")}</option>
+                <option value="MES_PASADO">{t("agenda.download.periodLastMonth")}</option>
+                <option value="PERSONALIZADO">{t("agenda.download.periodCustom")}</option>
+              </select>
+              {periodoDescarga !== "TODO" && (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("agenda.download.dateRuleHint")}</p>
+              )}
+            </div>
+            {periodoDescarga === "PERSONALIZADO" && (
+              <div>
+                <div className="grid gap-x-4 sm:grid-cols-2">
+                  <InputField
+                    label={t("agenda.download.fromLabel")}
+                    name="agenda-descarga-desde"
+                    type="date"
+                    value={fechasDescarga.desde}
+                    onChange={(e) => setFechasDescarga({ ...fechasDescarga, desde: e.target.value })}
+                    onBlur={() => setErrorRango(mensajeRango(fechasDescarga))}
+                  />
+                  <InputField
+                    label={t("agenda.download.toLabel")}
+                    name="agenda-descarga-hasta"
+                    type="date"
+                    value={fechasDescarga.hasta}
+                    onChange={(e) => setFechasDescarga({ ...fechasDescarga, hasta: e.target.value })}
+                    onBlur={() => setErrorRango(mensajeRango(fechasDescarga))}
+                    error={errorRango ?? undefined}
+                  />
+                </div>
+                {faltanFechas && <p className="-mt-2 text-xs text-gray-500 dark:text-gray-400">{t("agenda.download.customHint")}</p>}
+              </div>
+            )}
             <div>
               <label htmlFor="agenda-descarga-estado" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t("agenda.download.stateLabel")}
               </label>
               <select
                 id="agenda-descarga-estado"
-                value={filtroDescarga.estado}
-                onChange={(e) => setFiltroDescarga({ ...filtroDescarga, estado: e.target.value as FiltroDescargaAgenda["estado"] })}
+                value={estadoDescarga}
+                onChange={(e) => setEstadoDescarga(e.target.value as FiltroDescargaAgenda["estado"])}
                 className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-gray-100"
               >
                 <option value="TODOS">{t("agenda.download.stateAll")}</option>
@@ -579,26 +679,7 @@ export function AdminConjuntoAgendaPage() {
                 <option value="ARCHIVADA">{t("agenda.download.stateArchived")}</option>
               </select>
             </div>
-            <div className="grid gap-x-4 sm:grid-cols-2">
-              <InputField
-                label={t("agenda.download.fromLabel")}
-                name="agenda-descarga-desde"
-                type="date"
-                value={filtroDescarga.desde}
-                onChange={(e) => setFiltroDescarga({ ...filtroDescarga, desde: e.target.value })}
-                onBlur={() => setErrorRango(mensajeRango(filtroDescarga))}
-              />
-              <InputField
-                label={t("agenda.download.toLabel")}
-                name="agenda-descarga-hasta"
-                type="date"
-                value={filtroDescarga.hasta}
-                onChange={(e) => setFiltroDescarga({ ...filtroDescarga, hasta: e.target.value })}
-                onBlur={() => setErrorRango(mensajeRango(filtroDescarga))}
-                error={errorRango ?? undefined}
-              />
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t("agenda.download.rangeHint")}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t("agenda.download.limitHint")}</p>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -610,7 +691,7 @@ export function AdminConjuntoAgendaPage() {
               <button
                 type="button"
                 onClick={descargar}
-                disabled={bajando}
+                disabled={bajando || faltanFechas || fechasAlReves}
                 aria-busy={bajando}
                 className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
               >

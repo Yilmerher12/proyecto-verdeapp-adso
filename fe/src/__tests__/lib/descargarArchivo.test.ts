@@ -46,6 +46,11 @@ describe("nombreArchivoHistorialAgenda", () => {
     );
   });
 
+  it("termina en .pdf cuando el formato es PDF y en .csv si no se dice", () => {
+    expect(nombreArchivoHistorialAgenda("Torres", "2026-10-01", "2026-10-31", "pdf")).toBe("historial-agenda-torres-2026-10-01_2026-10-31.pdf");
+    expect(nombreArchivoHistorialAgenda("Torres", "2026-10-01", "2026-10-31")).toBe("historial-agenda-torres-2026-10-01_2026-10-31.csv");
+  });
+
   it("sin fechas usa 'inicio' y 'hoy', igual que el backend", () => {
     expect(nombreArchivoHistorialAgenda("Torres de Prueba", "", "")).toBe("historial-agenda-torres-de-prueba-inicio_hoy.csv");
   });

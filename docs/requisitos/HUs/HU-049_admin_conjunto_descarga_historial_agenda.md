@@ -20,7 +20,7 @@
 | **Título**         | Admin de Conjunto descarga el historial de la agenda         |
 | **Módulo**         | Administración / Conjuntos                                   |
 | **Prioridad**      | Baja                                                          |
-| **Estado**         | Parcial — CSV implementado (issue #479); PDF por implementar (issue #480) |
+| **Estado**         | Implementada |
 | **RF asociados**   | RQF-020                                                      |
 
 ---
@@ -41,7 +41,7 @@
 - **cuando** pido descargar el historial indicando un rango de fechas,
 - **entonces** recibo un archivo CSV con los temas de ese rango: texto, estado, fecha de creación, fecha de archivado (si aplica), autor y foto.
 
-> **Implementado (2026-10-21, issue #479)**: botón "Descargar historial" en la Agenda (`/admin-conjunto/agenda`), con estado (todos, por tratar o archivados) y fechas opcionales. Detalles de lo construido:
+> **Implementado (2026-10-21, issue #479)**: botón "Descargar agenda" en la Agenda (`/admin-conjunto/agenda`), con el estado de los temas (todos, por tratar o archivadas) y el período (todo el historial, este mes, mes pasado o personalizado; solo "Personalizado" muestra los campos de fecha, y mientras falte alguna o estén al revés el botón "Descargar" queda deshabilitado con el motivo escrito). Al abrir la ventana, "Temas" viene con lo que se está viendo: "Por tratar" en esa pestaña y "Archivadas" en la otra. Al terminar, la pantalla avisa "Archivo descargado." Detalles de lo construido:
 >
 > - **Qué fecha filtra:** un tema archivado entra si su fecha de **archivado** cae en el rango; uno por tratar entra si su fecha de **creación** cae en el rango. Las fechas se leen en **hora de Bogotá** y salen en el archivo como `dd/mm/aaaa` en esa misma hora.
 > - **Autor:** nombre y apellidos del administrador (no el correo); vacío si su cuenta ya se borró.
@@ -56,7 +56,14 @@
 - **cuando** pido el historial en formato PDF,
 - **entonces** recibo un documento con la misma información que el CSV, con la foto de evidencia como enlace (no incrustada).
 
-> **Por implementar** (issue #480): reutiliza el mismo filtro, el tope de 500 temas y la validación de conjunto del CSV.
+> **Implementado (2026-10-21, issue #480)**: en la ventana "Descargar agenda" hay un selector **Formato** de dos opciones pegadas, "CSV (Excel)" y "PDF" (botones de radio nativos, accesibles con teclado); el PDF usa el mismo filtro, el tope de 500 temas y la validación de conjunto que el CSV, porque ambos salen de la misma consulta (siempre traen los mismos temas). Detalles:
+>
+> - **Hoja:** A4 horizontal, con título (nombre del conjunto), qué temas incluye, el rango pedido, el total, la fecha de generación y "Página X de Y". El encabezado de la tabla se repite en cada página.
+> - **Tabla:** las mismas 6 columnas del CSV (tema, estado, creado, archivado, autor y foto), con fechas en hora de Bogotá. La foto es un texto "Ver foto" con enlace completo, no incrustada; en una copia impresa no se puede pulsar, y el enlace solo abre fuera de la máquina del servidor cuando el sistema está publicado.
+> - **Caracteres:** el PDF usa la fuente estándar, que no dibuja comillas curvas, raya larga, euro ni emoji: las comillas y rayas se cambian por su versión simple (`"`, `-`), `€` por `EUR` y lo que no tenga equivalente sale como `?`. El CSV conserva el texto exacto.
+> - **Celdas sin dato:** en el PDF llevan un guion (`-`), porque una celda vacía en papel parece un error (ej. "Archivado" de un tema por tratar); en el CSV quedan vacías, para que Excel pueda ordenar y filtrar la columna de fechas.
+> - **Sin temas en el rango:** PDF válido con la tabla vacía y la línea "No hay temas en este rango."
+> - **Nombre:** `historial-agenda-<conjunto>-<desde>_<hasta>.pdf`. No se guarda en el servidor: se arma en cada descarga.
 
 ### CA-049.3 — Solo mis conjuntos
 
