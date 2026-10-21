@@ -886,7 +886,6 @@
         "conjuntoLabel": "Conjunto",
         "nivelLabel": "Nivel de desempeño",
         "niveles": {
-          "excelente": "Bueno",
           "buena": "Bueno",
           "regular": "Regular",
           "deficiente": "Malo"

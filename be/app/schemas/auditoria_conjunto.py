@@ -9,10 +9,15 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-# ¿Qué? Los 4 niveles de desempeño acordados (issue #5) — escala simple,
-#       cada uno con su propio color/ícono en el frontend, pero siempre
-#       respaldado por una foto de evidencia (ver AuditoriaConjunto.ruta_evidencia).
-NivelDesempeno = Literal["EXCELENTE", "BUENA", "REGULAR", "DEFICIENTE"]
+# ¿Qué? Los 3 niveles de desempeño (en pantalla: Bueno / Regular / Malo) —
+#       escala simple, cada uno con su propio color/ícono en el frontend,
+#       pero siempre respaldado por una foto de evidencia (ver
+#       AuditoriaConjunto.ruta_evidencia).
+# ¿Para qué? Antes había un cuarto nivel, EXCELENTE, que se unificó con BUENA
+#           (2026-08-27) pero siguió aceptado en el código. Se retiró y la
+#           migración que lo acompaña convierte las filas viejas a BUENA.
+# ¿Impacto? Una fila con otro valor haría fallar la respuesta de la API.
+NivelDesempeno = Literal["BUENA", "REGULAR", "DEFICIENTE"]
 
 # ¿Qué? Issue #352 — el tema es String(255); la descripción es Text, con el
 #       máximo de 255 que pide HU-010. Los aplica el router (llega como Form).

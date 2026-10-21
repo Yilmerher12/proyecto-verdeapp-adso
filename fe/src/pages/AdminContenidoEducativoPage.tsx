@@ -101,7 +101,7 @@ function destinatariosAutoDe(modulo: ContenidoEducativo, auditorias: AuditoriaAd
   const vistos = new Set<string>();
   const out: Destinatario[] = [];
   const ordenadas = [...auditorias]
-    .filter((a) => a.tema_educativo === modulo.modulo_categoria && a.nivel_desempeno !== "BUENA" && a.nivel_desempeno !== "EXCELENTE")
+    .filter((a) => a.tema_educativo === modulo.modulo_categoria && a.nivel_desempeno !== "BUENA")
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
   for (const a of ordenadas) {
     if (vistos.has(a.id_conjunto_residencial)) continue;
@@ -235,7 +235,7 @@ export function AdminContenidoEducativoPage() {
       .filter((a) => !nivelFiltro || a.nivel_desempeno === nivelFiltro)
       .filter((a) => !q || `${a.nombre_conjunto} ${a.tema_educativo} ${a.descripcion ?? ""}`.toLowerCase().includes(q))
       .sort((a, b) => {
-        const orden: Record<string, number> = { DEFICIENTE: 0, REGULAR: 1, BUENA: 2, EXCELENTE: 2 };
+        const orden: Record<string, number> = { DEFICIENTE: 0, REGULAR: 1, BUENA: 2 };
         return (orden[a.nivel_desempeno] ?? 3) - (orden[b.nivel_desempeno] ?? 3) || (a.created_at < b.created_at ? 1 : -1);
       });
   }, [calSemana, nivelFiltro, buscarCal]);
@@ -257,7 +257,7 @@ export function AdminContenidoEducativoPage() {
   const categoriasAuditables = useMemo(() => categorias.filter((c) => !CATEGORIAS_NO_AUDITABLES.has(c)), [categorias]);
   const sinRecomendar = useMemo(() => {
     const conRecomendacion = new Set(
-      calSemanaActual.filter((a) => a.nivel_desempeno !== "BUENA" && a.nivel_desempeno !== "EXCELENTE").map((a) => a.tema_educativo)
+      calSemanaActual.filter((a) => a.nivel_desempeno !== "BUENA").map((a) => a.tema_educativo)
     );
     return categoriasAuditables.filter((c) => !conRecomendacion.has(c)).length;
   }, [categoriasAuditables, calSemanaActual]);
@@ -581,7 +581,7 @@ export function AdminContenidoEducativoPage() {
           </div>
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "BUENA" || a.nivel_desempeno === "EXCELENTE").length}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "BUENA").length}</p>
               <p className="text-[11px] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.good`)}</p>
             </div>
             <div className="text-center">

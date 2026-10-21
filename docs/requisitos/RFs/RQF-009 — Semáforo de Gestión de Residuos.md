@@ -17,7 +17,7 @@
 
 ## Descripción
 
-El sistema debe implementar un panel de auditoría cualitativa donde el 'Reciclador' pueda calificar la gestión de residuos del conjunto (Rojo: Malo, Amarillo: Regular, Verde: Excelente), permitiendo al 'Residente' visualizar este historial para fomentar la mejora continua.
+El sistema debe implementar un panel de auditoría cualitativa donde el 'Reciclador' pueda calificar la gestión de residuos del conjunto (Rojo: Malo, Amarillo: Regular, Verde: Bueno), permitiendo al 'Residente' visualizar este historial para fomentar la mejora continua.
 
 ---
 
@@ -30,7 +30,7 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
 | Campo                     | Tipo     | Obligatorio | Validaciones                                                                 |
 | ------------------------- | -------- | ----------- | ---------------------------------------------------------------------------- |
 | `id_conjunto_residencial` | UUID     | Sí          | El reciclador debe estar autorizado en ese conjunto y haber avisado su llegada (RQF-006). |
-| `nivel_desempeno`         | Texto    | Sí          | `BUENA`, `REGULAR` o `DEFICIENTE` (en pantalla: Bueno / Regular / Malo). La BD también admite `EXCELENTE`, que solo tienen auditorías viejas. |
+| `nivel_desempeno`         | Texto    | Sí          | `BUENA`, `REGULAR` o `DEFICIENTE` (en pantalla: Bueno / Regular / Malo). El nivel `EXCELENTE` se retiró (2026-10-21); la migración `b1c2d3e4f5a6` convirtió las filas viejas a `BUENA`. |
 | `tema_educativo`          | Texto    | Sí          | Categoría del contenido educativo relacionada con lo observado. No puede ir vacío. Máximo 255 caracteres. |
 | `descripcion`             | Texto    | No          | Observaciones libres. Máximo 255 caracteres (HU-010, issue #352).         |
 | `evidencias`              | Archivos | Sí          | Entre 1 y 3 fotos (JPG, PNG o WEBP, máximo 5 MB cada una, validadas por contenido real). |
@@ -67,7 +67,7 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
 
 ## Endpoints asociados
 
-> **Nota (2026-08-28)**: los endpoints y el nombre de la calificación cambiaron durante la implementación real — se documentan aquí actualizados. La tabla ya no se llama `historial_semaforo`, es `auditorias_conjunto`; la calificación no es un enum `ROJO/AMARILLO/VERDE` sino `EXCELENTE/BUENA/REGULAR/DEFICIENTE` en la base de datos (el reciclador solo puede elegir entre 3 al calificar: Bueno/Regular/Malo — ver `docs/conceptos/patrones-arquitectonicos.md` y `fe/src/config/nivelesDesempeno.ts`).
+> **Nota (2026-08-28)**: los endpoints y el nombre de la calificación cambiaron durante la implementación real — se documentan aquí actualizados. La tabla ya no se llama `historial_semaforo`, es `auditorias_conjunto`; la calificación no es un enum `ROJO/AMARILLO/VERDE` sino `BUENA/REGULAR/DEFICIENTE` en la base de datos (en pantalla: Bueno/Regular/Malo; el cuarto nivel `EXCELENTE` que existía al inicio se retiró el 2026-10-21 — ver `docs/conceptos/patrones-arquitectonicos.md` y `fe/src/config/nivelesDesempeno.ts`).
 
 | Método | Ruta                                      | Auth requerida | Descripción                                      |
 | ------ | ----------------------------------------- | -------------- | ------------------------------------------------ |
