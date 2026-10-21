@@ -200,3 +200,12 @@ La carpeta `e2e/` (pruebas con Playwright, `@playwright/test` 1.63.0) tiene su p
 - **Reportes de Playwright:** `playwright-report/` y `test-results/` no se suben como artefacto, porque las trazas pueden contener las credenciales de las cuentas de prueba (quedó escrito en el `README.md` raíz, sección de pruebas).
 
 Verificado: `pnpm audit` en `e2e/` da 0 vulnerabilidades (también sobre una copia solo con `package.json` y `pnpm-lock.yaml`, sin `node_modules`).
+
+---
+
+## Actualización — `follow-redirects` 1.16.1 en el lockfile del frontend (2026-10-21, issue #437)
+
+El paso `pnpm audit` del CI dejó en rojo el PR de la investigación #437 con 2 alertas altas (GHSA-q3jh-wrc6-jgq8 y GHSA-8r9p-f939-6h3c) en `follow-redirects` 1.16.0, que llega como dependencia indirecta de `axios` (`.>axios>follow-redirects`). El PR no tocaba dependencias: la alerta se publicó después de que el lockfile quedó fijado en 1.16.0.
+
+- **Qué se hizo:** `pnpm update follow-redirects --depth Infinity` en `fe/`. Solo cambió `fe/pnpm-lock.yaml` (1.16.0 a 1.16.1, la versión corregida). `axios` sigue en 1.20.0, que ya declaraba `follow-redirects ^1.16.0`, y `package.json` no cambió. No se agregó ninguna regla de `overrides` (se quitaron a propósito en el issue #313).
+- **Verificado:** `pnpm audit` en `fe/`: **No known vulnerabilities found**. 516 pruebas del frontend y `pnpm build` pasan.
