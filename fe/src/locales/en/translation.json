@@ -882,7 +882,6 @@
         "conjuntoLabel": "Building",
         "nivelLabel": "Performance level",
         "niveles": {
-          "excelente": "Good",
           "buena": "Good",
           "regular": "Fair",
           "deficiente": "Poor"

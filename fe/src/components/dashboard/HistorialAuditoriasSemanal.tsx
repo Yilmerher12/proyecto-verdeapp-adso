@@ -21,17 +21,10 @@ import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResulta
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import { formatearFechaCreacion, lunesUTC, rangoSemanaUTC } from "@/lib/dateFormat";
 
-type NivelContable = "BUENA" | "REGULAR" | "DEFICIENTE";
-
-// ¿Qué? EXCELENTE es un nivel retirado (solo lo tienen auditorías viejas) —
-//       la propia etiqueta ya lo muestra como "Bueno" (ver nivelesDesempeno.ts),
-//       así que se cuenta junto con BUENA en la barra de la semana.
-const contarComo = (n: NivelDesempeno): NivelContable => (n === "EXCELENTE" ? "BUENA" : n);
-
 interface Semana {
   lunes: string;
   auditorias: AuditoriaConjunto[];
-  conteo: Record<NivelContable, number>;
+  conteo: Record<NivelDesempeno, number>;
 }
 
 function agruparPorSemana(auditorias: AuditoriaConjunto[]): Semana[] {
@@ -45,8 +38,8 @@ function agruparPorSemana(auditorias: AuditoriaConjunto[]): Semana[] {
   return [...porLunes.entries()]
     .sort(([a], [b]) => (a < b ? 1 : -1))
     .map(([lunes, lista]) => {
-      const conteo: Record<NivelContable, number> = { BUENA: 0, REGULAR: 0, DEFICIENTE: 0 };
-      lista.forEach((a) => conteo[contarComo(a.nivel_desempeno)]++);
+      const conteo: Record<NivelDesempeno, number> = { BUENA: 0, REGULAR: 0, DEFICIENTE: 0 };
+      lista.forEach((a) => conteo[a.nivel_desempeno]++);
       return { lunes, auditorias: lista, conteo };
     });
 }

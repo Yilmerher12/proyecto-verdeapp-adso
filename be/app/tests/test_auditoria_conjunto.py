@@ -647,7 +647,7 @@ class TestListarHistorial:
         client.post(
             "/api/v1/auditorias-conjunto",
             headers=headers_otro,
-            data={**_payload_valido(conjunto_verificado.id_conjunto_residencial), "nivel_desempeno": "EXCELENTE"},
+            data={**_payload_valido(conjunto_verificado.id_conjunto_residencial), "nivel_desempeno": "BUENA"},
             files=_archivo_valido(),
         )
 
@@ -655,8 +655,8 @@ class TestListarHistorial:
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
-        # ¿Qué? La más reciente (EXCELENTE, enviada segunda) debe ir primero.
-        assert data[0]["nivel_desempeno"] == "EXCELENTE"
+        # ¿Qué? La más reciente (BUENA, enviada segunda) debe ir primero.
+        assert data[0]["nivel_desempeno"] == "BUENA"
         assert data[1]["nivel_desempeno"] == "DEFICIENTE"
 
     def test_admin_de_conjunto_ve_el_mismo_historial(

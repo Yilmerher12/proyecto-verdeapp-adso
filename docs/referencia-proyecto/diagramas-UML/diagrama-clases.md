@@ -497,7 +497,7 @@ Representa los avisos automáticos del sistema (llegada del reciclador, SHUT lle
 
 ## AuditoriaConjunto
 
-Representa la calificación de desempeño que un Reciclador registra tras visitar un conjunto (RQF-009/RQF-013): un nivel (`EXCELENTE`, `BUENA`, `REGULAR`, `DEFICIENTE`), un tema educativo relacionado, y hasta 3 fotos de evidencia (solo la primera es obligatoria). `orden_interno` es un contador autoincremental aparte de la UUID (que no es ordenable) — permite mostrar el historial de auditorías de un conjunto en el orden real en que ocurrieron.
+Representa la calificación de desempeño que un Reciclador registra tras visitar un conjunto (RQF-009/RQF-013): un nivel (`BUENA`, `REGULAR`, `DEFICIENTE`), un tema educativo relacionado, y hasta 3 fotos de evidencia (solo la primera es obligatoria). `orden_interno` es un contador autoincremental aparte de la UUID (que no es ordenable) — permite mostrar el historial de auditorías de un conjunto en el orden real en que ocurrieron.
 
 ---
 

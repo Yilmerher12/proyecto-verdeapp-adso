@@ -6,7 +6,7 @@ import { API_BASE_URL } from "@/api/axios";
 //           la consulta del historial en un solo lugar.
 const API_BASE = `${API_BASE_URL}/api/v1/auditorias-conjunto`;
 
-export type NivelDesempeno = "EXCELENTE" | "BUENA" | "REGULAR" | "DEFICIENTE";
+export type NivelDesempeno = "BUENA" | "REGULAR" | "DEFICIENTE";
 
 export interface AuditoriaConjunto {
   id_auditoria: string;
