@@ -104,6 +104,23 @@ export interface FiltroDescargaAgenda {
 
 export type FormatoDescargaAgenda = "csv" | "pdf";
 
+export interface ConteoDescargaAgenda {
+  total: number;
+  // ¿Qué? Tope de temas por archivo que fija el backend; la pantalla no lo repite a mano.
+  maximo: number;
+}
+
+// ¿Qué? Cuántos temas traería la descarga con estos filtros (HU-049), sin bajar el archivo.
+// ¿Para qué? Que la ventana "Descargar agenda" lo muestre antes de pulsar "Descargar".
+// ¿Impacto? El backend cuenta con la misma condición que el CSV y el PDF, así que el número
+//           coincide con las filas del archivo.
+export async function contarHistorialAgenda(idConjunto: string, filtro: FiltroDescargaAgenda): Promise<ConteoDescargaAgenda> {
+  const { data } = await axios.get(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda/historial/conteo`, {
+    params: { estado: filtro.estado, desde: filtro.desde || undefined, hasta: filtro.hasta || undefined },
+  });
+  return data;
+}
+
 // ¿Qué? Issues #479 y #480 (HU-049) — historial de la agenda en CSV (para Excel) o PDF (documento).
 // ¿Para qué? Un enlace normal no manda el token de la sesión, así que el archivo se pide
 //           por axios como bloque de bytes (responseType "blob") y luego se baja con

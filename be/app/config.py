@@ -177,6 +177,13 @@ class Settings(BaseSettings):
     #           y las peticiones del frontend serán bloqueadas por CORS.
     FRONTEND_URL: str = "http://localhost:5173"
 
+    # ¿Qué? URL pública del backend (ej. "https://verdeapp.com"), sin nada después del dominio.
+    # ¿Para qué? Armar los enlaces de las fotos en el CSV y el PDF de la agenda (HU-049). Si
+    #           está vacía, se usa la dirección con la que llegó la petición (request.base_url).
+    # ¿Impacto? Detrás de un proxy esa dirección es la interna (ej. "http://verde_be:8000") y
+    #           los enlaces quedarían rotos fuera del servidor. En desarrollo se deja vacía.
+    API_PUBLIC_URL: str = ""
+
     # ────────────────────────────
     # 🌍 Entorno de ejecución
     # ────────────────────────────

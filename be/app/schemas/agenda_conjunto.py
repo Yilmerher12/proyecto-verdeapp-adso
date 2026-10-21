@@ -39,6 +39,13 @@ class AgendaItemResponse(BaseModel):
     archivado_en: Optional[datetime] = None
 
 
+class ConteoDescargaResponse(BaseModel):
+    """¿Qué? Cuántos temas entrarían a la descarga y cuántos admite un archivo.
+    ¿Para qué? La ventana "Descargar agenda" avisa antes de descargar si el rango se pasa del máximo."""
+    total: int
+    maximo: int
+
+
 class PaginaDeAgendaResponse(BaseModel):
     """¿Qué? Una página del historial de archivados + cuántos hay en total, para pintar la paginación."""
     items: List[AgendaItemResponse]

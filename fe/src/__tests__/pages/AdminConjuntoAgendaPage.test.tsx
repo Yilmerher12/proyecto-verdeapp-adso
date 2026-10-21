@@ -381,14 +381,21 @@ describe("AdminConjuntoAgendaPage", () => {
   describe("Descargar agenda (issues #479 y #480, HU-049)", () => {
     const archivoCsv = new Blob(["Tema;Estado"], { type: "text/csv" });
 
-    // ¿Qué? "/agenda/historial/csv|pdf" se atiende antes que las demás rutas de agenda (su URL también contiene "/agenda").
-    function mockAgendaConCsv(respuestaCsv: () => Promise<unknown>) {
+    // ¿Qué? "/agenda/historial/csv|pdf|conteo" se atiende antes que las demás rutas de agenda (su URL también contiene "/agenda").
+    //       El conteo (issue de la ventana "Se descargarán N temas") responde por separado de la descarga.
+    function mockAgendaConCsv(
+      respuestaCsv: () => Promise<unknown>,
+      respuestaConteo: (config?: unknown) => Promise<unknown> = () => Promise.resolve({ data: { total: 3, maximo: 500 } })
+    ) {
       mockAgenda([conjuntoUno]);
       const base = mockGet.getMockImplementation()!;
-      mockGet.mockImplementation((url: string, config?: unknown) =>
-        url.includes("/agenda/historial/") ? respuestaCsv() : base(url, config)
-      );
+      mockGet.mockImplementation((url: string, config?: unknown) => {
+        if (url.includes("/agenda/historial/conteo")) return respuestaConteo(config);
+        return url.includes("/agenda/historial/") ? respuestaCsv() : base(url, config);
+      });
     }
+
+    const pedidosDeConteo = () => mockGet.mock.calls.filter(([url]) => String(url).includes("/agenda/historial/conteo"));
 
     const abrirVentana = async (user: ReturnType<typeof userEvent.setup>) => {
       await user.click(await screen.findByRole("button", { name: "Descargar agenda" }));
@@ -396,7 +403,7 @@ describe("AdminConjuntoAgendaPage", () => {
     };
 
     const pedidoDeDescarga = () =>
-      mockGet.mock.calls.find(([url]) => String(url).includes("/agenda/historial/")) as [string, { params: Record<string, unknown> }] | undefined;
+      mockGet.mock.calls.find(([url]) => /\/agenda\/historial\/(csv|pdf)/.test(String(url))) as [string, { params: Record<string, unknown> }] | undefined;
 
     it("viene con CSV elegido y ofrece también PDF, como dos opciones pegadas", async () => {
       mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }));
@@ -586,6 +593,104 @@ describe("AdminConjuntoAgendaPage", () => {
       await user.click(within(ventana).getByRole("button", { name: "Descargar" }));
 
       expect(await within(ventana).findByText("No se pudo descargar el historial. Intenta de nuevo.")).toBeInTheDocument();
+    });
+
+    describe("conteo antes de descargar", () => {
+      it("muestra cuántos temas se van a descargar, con el singular cuando es uno", async () => {
+        mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }), () => Promise.resolve({ data: { total: 87, maximo: 500 } }));
+        const user = userEvent.setup();
+        renderPage();
+
+        const ventana = await abrirVentana(user);
+
+        expect(await within(ventana).findByText("Se descargarán 87 temas.")).toBeInTheDocument();
+        expect(within(ventana).getByRole("button", { name: "Descargar" })).toBeEnabled();
+        expect(pedidosDeConteo()[0][1]).toEqual({ params: { estado: "PENDIENTE", desde: undefined, hasta: undefined } });
+      });
+
+      it("dice 'Se descargará 1 tema.' en singular", async () => {
+        mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }), () => Promise.resolve({ data: { total: 1, maximo: 500 } }));
+        const user = userEvent.setup();
+        renderPage();
+
+        const ventana = await abrirVentana(user);
+
+        expect(await within(ventana).findByText("Se descargará 1 tema.")).toBeInTheDocument();
+      });
+
+      it("mientras espera avisa 'Contando temas...' y al cambiar varios filtros seguidos pide un solo conteo", async () => {
+        mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }), () => Promise.resolve({ data: { total: 5, maximo: 500 } }));
+        const user = userEvent.setup();
+        renderPage();
+
+        const ventana = await abrirVentana(user);
+        expect(within(ventana).getByText("Contando temas...")).toBeInTheDocument();
+        await user.selectOptions(within(ventana).getByLabelText("Período"), "ESTE_MES");
+        await user.selectOptions(within(ventana).getByLabelText("Temas"), "ARCHIVADA");
+
+        expect(await within(ventana).findByText("Se descargarán 5 temas.")).toBeInTheDocument();
+        const { desde, hasta } = rangoDelPeriodo("ESTE_MES", { desde: "", hasta: "" });
+        expect(pedidosDeConteo()).toHaveLength(1);
+        expect(pedidosDeConteo()[0][1]).toEqual({ params: { estado: "ARCHIVADA", desde, hasta } });
+      });
+
+      it("si pasa del máximo escribe el motivo y deshabilita 'Descargar'", async () => {
+        mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }), () => Promise.resolve({ data: { total: 620, maximo: 500 } }));
+        const user = userEvent.setup();
+        renderPage();
+
+        const ventana = await abrirVentana(user);
+
+        expect(
+          await within(ventana).findByText("Son 620 temas y el máximo por archivo es 500. Elige un período más corto o un solo tipo de temas.")
+        ).toBeInTheDocument();
+        expect(within(ventana).getByRole("button", { name: "Descargar" })).toBeDisabled();
+      });
+
+      it("al acotar el período vuelve a habilitar 'Descargar'", async () => {
+        mockAgendaConCsv(
+          () => Promise.resolve({ data: archivoCsv }),
+          (config) =>
+            Promise.resolve({ data: { total: (config as { params: { desde?: string } }).params.desde ? 20 : 620, maximo: 500 } })
+        );
+        const user = userEvent.setup();
+        renderPage();
+
+        const ventana = await abrirVentana(user);
+        expect(await within(ventana).findByText(/Son 620 temas/)).toBeInTheDocument();
+        await user.selectOptions(within(ventana).getByLabelText("Período"), "ESTE_MES");
+
+        expect(await within(ventana).findByText("Se descargarán 20 temas.")).toBeInTheDocument();
+        expect(within(ventana).getByRole("button", { name: "Descargar" })).toBeEnabled();
+      });
+
+      it("con fechas incompletas o al revés no pide conteo", async () => {
+        mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }));
+        const user = userEvent.setup();
+        renderPage();
+
+        const ventana = await abrirVentana(user);
+        await user.selectOptions(within(ventana).getByLabelText("Período"), "PERSONALIZADO");
+        await user.type(within(ventana).getByLabelText("Desde"), "2026-10-31");
+        await user.type(within(ventana).getByLabelText("Hasta"), "2026-10-01");
+        await new Promise((r) => setTimeout(r, 600));
+
+        expect(pedidosDeConteo()).toHaveLength(0);
+        expect(within(ventana).queryByText(/Se descargar/)).not.toBeInTheDocument();
+      });
+
+      it("si el conteo falla no muestra nada ni bloquea la descarga", async () => {
+        mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }), () => Promise.reject(new Error("")));
+        const user = userEvent.setup();
+        renderPage();
+
+        const ventana = await abrirVentana(user);
+        await waitFor(() => expect(pedidosDeConteo()).toHaveLength(1));
+        await waitFor(() => expect(within(ventana).queryByText("Contando temas...")).not.toBeInTheDocument());
+
+        expect(within(ventana).queryByText(/Se descargar/)).not.toBeInTheDocument();
+        expect(within(ventana).getByRole("button", { name: "Descargar" })).toBeEnabled();
+      });
     });
 
     it("cancelar cierra la ventana sin pedir nada", async () => {

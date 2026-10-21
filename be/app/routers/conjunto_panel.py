@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 from typing import List, Literal
 
+from app.config import settings
 from app.dependencies import get_db, require_admin_conjunto
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
@@ -26,6 +27,7 @@ from app.schemas.desvinculacion import SolicitarDesvinculacionRequest
 from app.schemas.agenda_conjunto import (
     AgendaItemResponse,
     CambiarEstadoAgendaRequest,
+    ConteoDescargaResponse,
     CrearAgendaItemRequest,
     PaginaDeAgendaResponse,
 )
@@ -300,6 +302,31 @@ def listar_agenda_archivada(
     return {"items": items, "total": total}
 
 
+def _url_publica(request: Request) -> str:
+    """¿Qué? La dirección con la que se completan los enlaces de las fotos de las descargas.
+    ¿Para qué? Detrás de un proxy, request.base_url es la dirección interna y el enlace queda roto
+              fuera del servidor; API_PUBLIC_URL (opcional) da la dirección pública real.
+    ¿Impacto? Con la variable vacía todo queda como antes (la dirección de la petición)."""
+    return settings.API_PUBLIC_URL or str(request.base_url)
+
+
+@router.get(
+    "/mis-conjuntos/{id_conjunto_residencial}/agenda/historial/conteo",
+    response_model=ConteoDescargaResponse,
+)
+def contar_historial_agenda(
+    id_conjunto_residencial: UUID,
+    estado: Literal["PENDIENTE", "ARCHIVADA", "TODOS"] = "TODOS",
+    desde: date | None = None,
+    hasta: date | None = None,
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
+    db: Session = Depends(get_db),
+):
+    """Cuántos temas traería la descarga con estos filtros (HU-049), para avisarlo antes de descargar."""
+    total = agenda_conjunto_service.contar_descarga(db, administrador, id_conjunto_residencial, estado, desde, hasta)
+    return {"total": total, "maximo": agenda_conjunto_service.MAX_FILAS_DESCARGA}
+
+
 @router.get("/mis-conjuntos/{id_conjunto_residencial}/agenda/historial/csv")
 def descargar_historial_agenda_csv(
     id_conjunto_residencial: UUID,
@@ -312,7 +339,7 @@ def descargar_historial_agenda_csv(
 ):
     """Descarga los temas de la agenda de uno de mis conjuntos en CSV (HU-049). Máximo 500 temas."""
     contenido, nombre = agenda_conjunto_service.exportar_csv(
-        db, administrador, id_conjunto_residencial, estado, desde, hasta, base_url=str(request.base_url)
+        db, administrador, id_conjunto_residencial, estado, desde, hasta, base_url=_url_publica(request)
     )
     return Response(
         content=contenido,
@@ -333,7 +360,7 @@ def descargar_historial_agenda_pdf(
 ):
     """Descarga los temas de la agenda de uno de mis conjuntos en PDF (HU-049): los mismos que el CSV. Máximo 500 temas."""
     contenido, nombre = agenda_conjunto_service.exportar_pdf(
-        db, administrador, id_conjunto_residencial, estado, desde, hasta, base_url=str(request.base_url)
+        db, administrador, id_conjunto_residencial, estado, desde, hasta, base_url=_url_publica(request)
     )
     return Response(
         content=contenido,
