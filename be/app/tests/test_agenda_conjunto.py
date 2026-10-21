@@ -3,10 +3,19 @@ Módulo: tests/test_agenda_conjunto.py
 Descripción: Pruebas de la agenda interna del Admin de Conjunto — crear,
              listar, dejar en espera y borrar. Nunca llega al Admin Sistema.
 """
+import csv
+import io
+from datetime import datetime, timezone
+from uuid import UUID
+
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import update
+from sqlalchemy.orm import Session
 
+from app.models.agenda_conjunto import AgendaConjunto
 from app.models.conjunto_residencial import ConjuntoResidencial
+from app.tests.conftest import ADMIN_CONJUNTO_APELLIDOS, ADMIN_CONJUNTO_EMAIL, ADMIN_CONJUNTO_NOMBRE
 
 BASE = "/api/v1/conjunto-panel/mis-conjuntos"
 BASE_ADMIN = "/api/v1/admin-conjunto"
@@ -146,3 +155,167 @@ class TestHistorialArchivado:
 
     def test_con_rol_incorrecto_devuelve_403(self, client: TestClient, auth_headers, conjunto_verificado):
         assert client.get(_url(conjunto_verificado, "/archivadas"), headers=auth_headers).status_code == 403
+
+
+class TestDescargaCsv:
+    """HU-049 (issue #479): descarga del historial de la agenda en CSV."""
+
+    def _csv(self, client, headers, conjunto, consulta: str = ""):
+        return client.get(_url(conjunto, f"/historial/csv{consulta}"), headers=headers)
+
+    def _filas(self, response) -> list[list[str]]:
+        return list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
+
+    def _crear(self, client, headers, conjunto, texto: str, url_evidencia: str | None = None) -> str:
+        return client.post(_url(conjunto), headers=headers, json={"texto": texto, "url_evidencia": url_evidencia}).json()["id"]
+
+    def _archivar(self, client, headers, conjunto, id_item: str) -> None:
+        client.patch(_url(conjunto, f"/{id_item}"), headers=headers, json={"estado": "ARCHIVADA"})
+
+    def _fechar(self, db: Session, id_item: str, creado: datetime, archivado: datetime | None = None) -> None:
+        db.execute(update(AgendaConjunto).where(AgendaConjunto.id == UUID(id_item)).values(created_at=creado, archivado_en=archivado))
+        db.commit()
+
+    def test_descarga_un_csv_listo_para_excel_en_espanol(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        id_item = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Arreglar la puerta del sótano")
+        self._archivar(client, admin_conjunto_auth_headers, conjunto_verificado, id_item)
+
+        response = self._csv(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("text/csv")
+        assert response.headers["content-disposition"].startswith("attachment; filename=")
+        # ¿Qué? El BOM y el ";" son lo que hace que Excel en español muestre columnas y tildes bien.
+        assert response.content.startswith(b"\xef\xbb\xbf")
+        filas = self._filas(response)
+        assert filas[0] == ["Tema", "Estado", "Creado", "Archivado", "Autor", "Foto"]
+        assert filas[1][0] == "Arreglar la puerta del sótano"
+        assert filas[1][1] == "Archivado"
+        assert filas[1][2] != "" and filas[1][3] != ""
+
+    def test_el_autor_sale_con_nombre_y_no_con_el_correo(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Tema")
+
+        response = self._csv(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        assert self._filas(response)[1][4] == f"{ADMIN_CONJUNTO_NOMBRE} {ADMIN_CONJUNTO_APELLIDOS}"
+        assert ADMIN_CONJUNTO_EMAIL not in response.content.decode("utf-8-sig")
+
+    def test_sin_temas_devuelve_solo_los_encabezados(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        response = self._csv(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        assert response.status_code == 200
+        assert self._filas(response) == [["Tema", "Estado", "Creado", "Archivado", "Autor", "Foto"]]
+
+    def test_filtra_por_estado(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Sigue pendiente")
+        resuelto = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Ya resuelto")
+        self._archivar(client, admin_conjunto_auth_headers, conjunto_verificado, resuelto)
+
+        def textos(consulta: str) -> list[str]:
+            return [f[0] for f in self._filas(self._csv(client, admin_conjunto_auth_headers, conjunto_verificado, consulta))[1:]]
+
+        assert textos("?estado=PENDIENTE") == ["Sigue pendiente"]
+        assert textos("?estado=ARCHIVADA") == ["Ya resuelto"]
+        assert sorted(textos("?estado=TODOS")) == ["Sigue pendiente", "Ya resuelto"]
+        assert sorted(textos("")) == ["Sigue pendiente", "Ya resuelto"]
+
+    def test_rechaza_un_estado_invalido(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        assert self._csv(client, admin_conjunto_auth_headers, conjunto_verificado, "?estado=HECHO").status_code == 422
+
+    def test_un_archivado_entra_por_su_fecha_de_archivado_y_un_pendiente_por_su_fecha_de_creacion(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        resuelto = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "A: creado el 3, archivado el 17")
+        self._archivar(client, admin_conjunto_auth_headers, conjunto_verificado, resuelto)
+        self._fechar(db, resuelto, datetime(2026, 9, 3, 15, tzinfo=timezone.utc), datetime(2026, 9, 17, 15, tzinfo=timezone.utc))
+        pendiente = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "B: pendiente creado el 20")
+        self._fechar(db, pendiente, datetime(2026, 9, 20, 15, tzinfo=timezone.utc))
+        viejo = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "C: pendiente creado el 5")
+        self._fechar(db, viejo, datetime(2026, 9, 5, 15, tzinfo=timezone.utc))
+
+        response = self._csv(client, admin_conjunto_auth_headers, conjunto_verificado, "?desde=2026-09-15&hasta=2026-09-30")
+
+        assert [f[0] for f in self._filas(response)[1:]] == ["A: creado el 3, archivado el 17", "B: pendiente creado el 20"]
+
+    def test_los_limites_del_rango_se_leen_en_hora_de_bogota(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Creado el domingo 18 oct a las 9:00 p. m. en Bogotá = lunes 19 oct 02:00 en UTC."""
+        id_item = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Domingo en la noche")
+        self._fechar(db, id_item, datetime(2026, 10, 19, 2, 0, tzinfo=timezone.utc))
+
+        hasta_domingo = self._csv(client, admin_conjunto_auth_headers, conjunto_verificado, "?hasta=2026-10-18")
+        desde_lunes = self._csv(client, admin_conjunto_auth_headers, conjunto_verificado, "?desde=2026-10-19")
+
+        filas = self._filas(hasta_domingo)
+        assert [f[0] for f in filas[1:]] == ["Domingo en la noche"]
+        assert filas[1][2] == "18/10/2026"
+        assert len(self._filas(desde_lunes)) == 1
+
+    def test_rechaza_un_rango_al_reves(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        response = self._csv(client, admin_conjunto_auth_headers, conjunto_verificado, "?desde=2026-10-31&hasta=2026-10-01")
+
+        assert response.status_code == 400
+
+    def test_con_mas_de_500_temas_pide_acotar_el_rango(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        db.add_all(
+            [AgendaConjunto(id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial, texto=f"Tema {n}") for n in range(500)]
+        )
+        db.commit()
+        assert self._csv(client, admin_conjunto_auth_headers, conjunto_verificado).status_code == 200
+
+        db.add(AgendaConjunto(id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial, texto="Uno de más"))
+        db.commit()
+        response = self._csv(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        assert response.status_code == 400
+        assert "500" in response.json()["detail"]
+
+    def test_la_foto_sale_como_enlace_completo(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Con foto subida", "/uploads/adjuntos/pasillo.jpg")
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Con foto externa", "https://ejemplo.com/foto.jpg")
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Sin foto")
+
+        fotos = {f[0]: f[5] for f in self._filas(self._csv(client, admin_conjunto_auth_headers, conjunto_verificado))[1:]}
+
+        assert fotos["Con foto subida"] == "http://testserver/uploads/adjuntos/pasillo.jpg"
+        assert fotos["Con foto externa"] == "https://ejemplo.com/foto.jpg"
+        assert fotos["Sin foto"] == ""
+
+    @pytest.mark.parametrize("texto", ["=1+1", "+57 300", "-2", "@SUMA(1)"])
+    def test_un_texto_que_parece_formula_se_entrega_como_texto(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, texto
+    ):
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, texto)
+
+        assert self._filas(self._csv(client, admin_conjunto_auth_headers, conjunto_verificado))[1][0] == "'" + texto
+
+    def test_el_nombre_del_archivo_lleva_el_conjunto_y_el_rango_sin_datos_personales(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        response = self._csv(client, admin_conjunto_auth_headers, conjunto_verificado, "?desde=2026-10-01&hasta=2026-10-31")
+
+        assert 'filename="historial-agenda-torres-de-prueba-2026-10-01_2026-10-31.csv"' in response.headers["content-disposition"]
+
+    def test_no_incluye_los_temas_de_otro_conjunto(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado, conjunto_verificado_sin_admin
+    ):
+        db.add(AgendaConjunto(id_conjunto_residencial=conjunto_verificado_sin_admin.id_conjunto_residencial, texto="De otro conjunto"))
+        db.commit()
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Mío")
+
+        assert [f[0] for f in self._filas(self._csv(client, admin_conjunto_auth_headers, conjunto_verificado))[1:]] == ["Mío"]
+
+    def test_conjunto_ajeno_devuelve_403_y_no_genera_archivo(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado_sin_admin):
+        response = self._csv(client, admin_conjunto_auth_headers, conjunto_verificado_sin_admin)
+
+        assert response.status_code == 403
+        assert "text/csv" not in response.headers["content-type"]
+
+    def test_con_rol_incorrecto_devuelve_403(self, client: TestClient, auth_headers, conjunto_verificado):
+        assert self._csv(client, auth_headers, conjunto_verificado).status_code == 403

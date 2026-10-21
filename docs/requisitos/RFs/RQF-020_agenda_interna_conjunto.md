@@ -53,6 +53,12 @@ La agenda es **privada**: solo la ve el Admin de Conjunto que administra ese con
 1. El Admin de Conjunto presiona "Eliminar tema", en "Por tratar" o en "Archivadas".
 2. El sistema pide confirmación (`ConfirmModal`): el tema se borra para siempre y no queda en el historial. Lo normal al resolver un tema es archivarlo, no eliminarlo.
 
+### Flujo D — Descargar el historial en CSV (HU-049, issue #479)
+
+1. En la Agenda, el Admin de Conjunto presiona "Descargar historial" (junto a "Agregar tema") y elige el estado (todos, por tratar o archivados) y, si quiere, un rango de fechas.
+2. Presiona "Descargar CSV": el navegador baja `historial-agenda-<conjunto>-<desde>_<hasta>.csv`, que se abre en Excel con una fila por tema (tema, estado, creado, archivado, autor y foto).
+3. Si el rango trae más de 500 temas, el sistema lo avisa en la misma ventana y pide acotar las fechas.
+
 ---
 
 ## Entradas
@@ -63,6 +69,7 @@ La agenda es **privada**: solo la ve el Admin de Conjunto que administra ese con
 | `url_evidencia` | Texto  | No          | Máximo 500 caracteres. Archivo subido a VerdeApp (`/uploads/...`) o `https://` (RN-006) |
 | `estado`        | Texto  | Sí (Flujo B)| Solo `PENDIENTE` o `ARCHIVADA`                                        |
 | `limit`, `offset` | Número | No (historial) | `limit` de 1 a 100 (por defecto 10) y `offset` mínimo 0 en la lista de archivadas |
+| `estado`, `desde`, `hasta` | Texto y fechas | No (descarga CSV) | `estado`: `PENDIENTE`, `ARCHIVADA` o `TODOS` (por defecto `TODOS`). `desde` y `hasta`: `AAAA-MM-DD` en hora de Bogotá, ambas opcionales; `desde` no puede ser posterior a `hasta` (RN-007) |
 
 ---
 
@@ -75,6 +82,8 @@ La agenda es **privada**: solo la ve el Admin de Conjunto que administra ese con
 | Tema creado                          | 201         | El tema creado                                    |
 | Estado cambiado                      | 200         | El tema actualizado (`archivado_en` con fecha al archivar, `null` al restaurar) |
 | Tema eliminado                       | 200         | `{"message": "Tema eliminado de la agenda."}`     |
+| Descargar historial (CSV)            | 200         | Archivo `text/csv` como descarga (`Content-Disposition: attachment`); sin temas en el rango trae solo los encabezados |
+| Rango con más de 500 temas o `desde` posterior a `hasta` | 400 | `{"detail": "El rango tiene N temas y el máximo por descarga es 500. Acota las fechas."}` (o el aviso del rango al revés) |
 | Conjunto que no administra           | 403         | `{"detail": "No tienes permiso sobre este conjunto."}` |
 | Tema que no existe o es de otro conjunto | 404     | `{"detail": "El tema no existe."}`                |
 
@@ -89,6 +98,7 @@ La agenda es **privada**: solo la ve el Admin de Conjunto que administra ese con
 | POST   | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda`           | Sí (Admin de Conjunto)     | Agrega un tema                     |
 | PATCH  | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda/{id_item}` | Sí (Admin de Conjunto)     | Archiva el tema o lo vuelve a pendiente |
 | DELETE | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda/{id_item}` | Sí (Admin de Conjunto)     | Elimina el tema                    |
+| GET    | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda/historial/csv?estado=&desde=&hasta=` | Sí (Admin de Conjunto) | Descarga el historial en CSV (máximo 500 temas) |
 
 Código: `be/app/routers/conjunto_panel.py`, `be/app/services/agenda_conjunto_service.py`, `be/app/models/agenda_conjunto.py`; interfaz en `fe/src/pages/AdminConjuntoAgendaPage.tsx` (ruta `/admin-conjunto/agenda`, opción "Agenda" del menú del Admin de Conjunto).
 
@@ -102,6 +112,7 @@ Código: `be/app/routers/conjunto_panel.py`, `be/app/services/agenda_conjunto_se
 - RN-004: Los temas no caducan solos, ni pendientes ni archivados: el comité no tiene una fecha fija que la app pueda conocer. Al resolverlos se archivan; solo se eliminan a mano si ya no se quieren ni como historial.
 - RN-005: Si se borra el conjunto, se borran sus temas (`ON DELETE CASCADE`). Si se borra la cuenta del autor, el tema se conserva sin autor (`ON DELETE SET NULL`).
 - RN-006: `url_evidencia` se valida con `EnlaceAdjunto`, igual que los comunicados: solo archivo subido a VerdeApp (`/uploads/...`) o `https://`; otro formato responde 422 — issue #369 (hallazgo CN-041 de Cyber Neo).
+- RN-007: La descarga del historial (HU-049, issue #479) cumple las reglas del conjunto propio (RN-001: 403 si el conjunto no es del administrador) y además: tope de **500 temas** por archivo (400 si el rango trae más); `desde` no puede ser posterior a `hasta` (400); un archivado entra por su fecha de archivado y uno por tratar por su fecha de creación; las fechas se leen en hora de Bogotá (UTC-5, sin horario de verano); el autor sale como nombre y apellidos, no el correo; la foto sale como enlace completo; el CSV usa `;` y UTF-8 con BOM (para Excel en español); un texto que empieza con `=`, `+`, `-` o `@` lleva una comilla simple delante. No se registra quién descarga.
 
 ---
 
@@ -110,4 +121,4 @@ Código: `be/app/routers/conjunto_panel.py`, `be/app/services/agenda_conjunto_se
 | HU      | Descripción                                                    |
 | ------- | ----------------------------------------------------------------|
 | [HU-046](../HUs/HU-046_admin_conjunto_lleva_agenda_comite.md) | Admin de Conjunto lleva la agenda de temas para el comité |
-| [HU-049](../HUs/HU-049_admin_conjunto_descarga_historial_agenda.md) | Admin de Conjunto descarga el historial de la agenda (por implementar) |
+| [HU-049](../HUs/HU-049_admin_conjunto_descarga_historial_agenda.md) | Admin de Conjunto descarga el historial de la agenda (CSV implementado; PDF por implementar) |

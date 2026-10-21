@@ -95,6 +95,53 @@ export async function cambiarEstadoItemAgenda(idConjunto: string, idItem: string
   return data;
 }
 
+export interface FiltroDescargaAgenda {
+  estado: "TODOS" | ItemAgenda["estado"];
+  // ¿Qué? Fechas "AAAA-MM-DD" (hora de Bogotá, la que ve el usuario); vacías = sin límite.
+  desde: string;
+  hasta: string;
+}
+
+// ¿Qué? Issue #479 (HU-049) — historial de la agenda en CSV.
+// ¿Para qué? Un enlace normal no manda el token de la sesión, así que el archivo se pide
+//           por axios como bloque de bytes (responseType "blob") y luego se baja con
+//           descargarArchivo.
+// ¿Impacto? Con responseType "blob" el cuerpo del error (400 por pasar de 500 temas) también
+//           llega como Blob: se lee aquí para que el mensaje del backend llegue a la pantalla.
+export async function descargarHistorialAgendaCsv(idConjunto: string, filtro: FiltroDescargaAgenda): Promise<Blob> {
+  try {
+    const { data } = await axios.get(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda/historial/csv`, {
+      params: { estado: filtro.estado, desde: filtro.desde || undefined, hasta: filtro.hasta || undefined },
+      responseType: "blob",
+    });
+    return data;
+  } catch (error) {
+    const cuerpo = (error as { response?: { data?: unknown } }).response?.data;
+    if (cuerpo instanceof Blob) {
+      try {
+        const detail = JSON.parse(await cuerpo.text()).detail;
+        if (typeof detail === "string") (error as Error).message = detail;
+      } catch {
+        // El cuerpo no era JSON: se deja el mensaje que ya traía el error.
+      }
+    }
+    throw error;
+  }
+}
+
+// ¿Qué? Mismo nombre que arma el backend: historial-agenda-<conjunto>-<desde>_<hasta>.csv.
+// ¿Para qué? Con credenciales el navegador no deja leer la cabecera Content-Disposition,
+//           así que la pantalla arma el nombre sola. Sin datos personales y solo ASCII.
+export function nombreArchivoHistorialAgenda(nombreConjunto: string, desde: string, hasta: string): string {
+  const slug = nombreConjunto
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `historial-agenda-${slug}-${desde || "inicio"}_${hasta || "hoy"}.csv`;
+}
+
 export async function eliminarItemAgenda(idConjunto: string, idItem: string) {
   const { data } = await axios.delete(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda/${idItem}`);
   return data;

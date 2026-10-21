@@ -20,7 +20,7 @@
 | **Título**         | Admin de Conjunto descarga el historial de la agenda         |
 | **Módulo**         | Administración / Conjuntos                                   |
 | **Prioridad**      | Baja                                                          |
-| **Estado**         | Por implementar |
+| **Estado**         | Parcial — CSV implementado (issue #479); PDF por implementar (issue #480) |
 | **RF asociados**   | RQF-020                                                      |
 
 ---
@@ -39,13 +39,24 @@
 
 - **Dado que** administro un conjunto y tiene temas en su agenda,
 - **cuando** pido descargar el historial indicando un rango de fechas,
-- **entonces** recibo un archivo CSV con los temas de ese rango: texto, estado, fecha de creación, fecha de archivado (si aplica) y autor.
+- **entonces** recibo un archivo CSV con los temas de ese rango: texto, estado, fecha de creación, fecha de archivado (si aplica), autor y foto.
+
+> **Implementado (2026-10-21, issue #479)**: botón "Descargar historial" en la Agenda (`/admin-conjunto/agenda`), con estado (todos, por tratar o archivados) y fechas opcionales. Detalles de lo construido:
+>
+> - **Qué fecha filtra:** un tema archivado entra si su fecha de **archivado** cae en el rango; uno por tratar entra si su fecha de **creación** cae en el rango. Las fechas se leen en **hora de Bogotá** y salen en el archivo como `dd/mm/aaaa` en esa misma hora.
+> - **Autor:** nombre y apellidos del administrador (no el correo); vacío si su cuenta ya se borró.
+> - **Foto:** enlace completo (`http://.../uploads/...`), no el relativo que guarda la base de datos.
+> - **Para Excel en español:** separador `;` y UTF-8 con BOM. Un texto que empieza con `=`, `+`, `-` o `@` se entrega con una comilla simple delante para que Excel no lo calcule como fórmula.
+> - **Orden:** del más antiguo al más reciente, como un acta.
+> - **Nombre del archivo:** `historial-agenda-<conjunto>-<desde>_<hasta>.csv` (`inicio` y `hoy` si no se eligió fecha), sin datos personales.
 
 ### CA-049.2 — Descargar el historial en PDF
 
 - **Dado que** administro un conjunto,
 - **cuando** pido el historial en formato PDF,
 - **entonces** recibo un documento con la misma información que el CSV, con la foto de evidencia como enlace (no incrustada).
+
+> **Por implementar** (issue #480): reutiliza el mismo filtro, el tope de 500 temas y la validación de conjunto del CSV.
 
 ### CA-049.3 — Solo mis conjuntos
 

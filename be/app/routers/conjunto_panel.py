@@ -5,12 +5,13 @@ Descripción: Endpoints del panel propio del Administrador de Conjunto.
           nunca los de otro administrador, ni los de todo el sistema.
 """
 
+from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
-from typing import List
+from typing import List, Literal
 
 from app.dependencies import get_db, require_admin_conjunto
 from app.models.administrador_conjunto import AdministradorConjunto
@@ -297,6 +298,27 @@ def listar_agenda_archivada(
         db, administrador, id_conjunto_residencial, limit=limit, offset=offset
     )
     return {"items": items, "total": total}
+
+
+@router.get("/mis-conjuntos/{id_conjunto_residencial}/agenda/historial/csv")
+def descargar_historial_agenda_csv(
+    id_conjunto_residencial: UUID,
+    request: Request,
+    estado: Literal["PENDIENTE", "ARCHIVADA", "TODOS"] = "TODOS",
+    desde: date | None = None,
+    hasta: date | None = None,
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
+    db: Session = Depends(get_db),
+):
+    """Descarga los temas de la agenda de uno de mis conjuntos en CSV (HU-049). Máximo 500 temas."""
+    contenido, nombre = agenda_conjunto_service.exportar_csv(
+        db, administrador, id_conjunto_residencial, estado, desde, hasta, base_url=str(request.base_url)
+    )
+    return Response(
+        content=contenido,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{nombre}"'},
+    )
 
 
 @router.post(
