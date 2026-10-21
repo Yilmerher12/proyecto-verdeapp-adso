@@ -285,6 +285,12 @@ CONTACT_EMAIL=contacto@verdeapp.local
 # URL del frontend (se usa para construir los enlaces en los emails)
 FRONTEND_URL=http://localhost:5173
 
+# URL pública del backend (opcional). Con ella se arman los enlaces de las fotos en
+# las descargas de la agenda (CSV y PDF). Vacía en desarrollo: se usa la dirección de
+# la petición. Al publicar detrás de un proxy, el dominio público (ej. https://verdeapp.com),
+# porque la dirección que ve el backend es la interna y los enlaces quedarían rotos.
+API_PUBLIC_URL=
+
 # Entorno de ejecución
 # En "production", Swagger UI (/docs) queda desactivado por seguridad
 ENVIRONMENT=development
@@ -319,6 +325,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # opcional — con default
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7     # opcional — con default
     RESEND_API_KEY: str = ""               # opcional — si vacío, simula emails
+    API_PUBLIC_URL: str = ""               # opcional — si vacío, los enlaces de fotos usan la dirección de la petición
     ENVIRONMENT: Literal["development", "production"]  # obligatorio — sin default: si falta, no arranca
 
     model_config = SettingsConfigDict(

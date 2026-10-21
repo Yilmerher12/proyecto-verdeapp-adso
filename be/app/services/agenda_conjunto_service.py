@@ -186,6 +186,29 @@ def _nombre_archivo(nombre_conjunto: str, desde: date | None, hasta: date | None
     return f"historial-agenda-{slug}-{desde or 'inicio'}_{hasta or 'hoy'}.{extension}"
 
 
+def contar_descarga(
+    db: Session,
+    administrador: AdministradorConjunto,
+    id_conjunto: UUID,
+    estado: str,
+    desde: date | None,
+    hasta: date | None,
+) -> int:
+    """¿Qué? Cuántos temas entrarían a la descarga con estos filtros, sin armar el archivo.
+    ¿Para qué? La ventana "Descargar agenda" muestra el número antes de descargar. Usa la misma
+              validación y la misma condición (_condicion_descarga) que el CSV y el PDF, así el
+              número nunca difiere de las filas del archivo.
+    ¿Impacto? No aplica el tope de 500: devuelve el total real y la pantalla decide qué hacer con él.
+              Solo _filas_de_la_descarga lanza el 400 por pasar del tope."""
+    _verificar_conjunto_propio(administrador, id_conjunto)
+    if desde and hasta and desde > hasta:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail='La fecha "desde" no puede ser posterior a la fecha "hasta".'
+        )
+    donde = _condicion_descarga(id_conjunto, estado, desde, hasta)
+    return db.scalar(select(func.count()).select_from(AgendaConjunto).where(donde))
+
+
 def _filas_de_la_descarga(
     db: Session,
     administrador: AdministradorConjunto,
@@ -200,20 +223,14 @@ def _filas_de_la_descarga(
     ¿Para qué? El CSV y el PDF salen de aquí, así SIEMPRE traen los mismos temas: mismo filtro de
               fechas en hora de Bogotá, mismo tope de 500 y misma validación de conjunto propio.
     ¿Impacto? Sin temas devuelve una lista vacía (el archivo trae solo los encabezados)."""
-    _verificar_conjunto_propio(administrador, id_conjunto)
-    if desde and hasta and desde > hasta:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail='La fecha "desde" no puede ser posterior a la fecha "hasta".'
-        )
-
-    donde = _condicion_descarga(id_conjunto, estado, desde, hasta)
-    total = db.scalar(select(func.count()).select_from(AgendaConjunto).where(donde))
+    total = contar_descarga(db, administrador, id_conjunto, estado, desde, hasta)
     if total > MAX_FILAS_DESCARGA:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"El rango tiene {total} temas y el máximo por descarga es {MAX_FILAS_DESCARGA}. Acota las fechas.",
         )
 
+    donde = _condicion_descarga(id_conjunto, estado, desde, hasta)
     # ¿Qué? El autor sale como nombre y apellidos (no el correo) del administrador; vacío si su cuenta ya se borró.
     stmt = (
         select(AgendaConjunto, AdministradorConjunto.nombre, AdministradorConjunto.apellidos)

@@ -8,6 +8,7 @@ import { rangoDelPeriodo, type PeriodoDescarga, type RangoFechas } from "@/lib/p
 import { DESVINCULACION_MOTIVO_MAX_LENGTH } from "@/lib/validacion";
 import {
   cambiarEstadoItemAgenda,
+  contarHistorialAgenda,
   crearItemAgenda,
   descargarHistorialAgenda,
   eliminarItemAgenda,
@@ -16,6 +17,7 @@ import {
   nombreArchivoHistorialAgenda,
   obtenerMisConjuntos,
   type ConjuntoAdministrado,
+  type ConteoDescargaAgenda,
   type FiltroDescargaAgenda,
   type FormatoDescargaAgenda,
   type ItemAgenda,
@@ -34,6 +36,10 @@ import { Spinner } from "@/components/ui/Spinner";
 
 // ¿Qué? Issue #435 — temas del historial por página, igual que "Mis envíos" de novedades.
 const TAMANO_PAGINA = 10;
+
+// ¿Qué? Milisegundos que la ventana "Descargar agenda" espera, desde el último cambio de filtro, antes de contar.
+// ¿Para qué? Si el usuario cambia el período y luego los temas, se pide el conteo una sola vez.
+const ESPERA_CONTEO_MS = 400;
 
 // ¿Qué? Color de cada nota; se reparte por turnos para que no todas se vean iguales.
 //       Mismos matices que ya usan los tipos de comunicado, con su versión oscura.
@@ -102,6 +108,9 @@ export function AdminConjuntoAgendaPage() {
   const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
   const [bajando, setBajando] = useState(false);
   const [descargado, setDescargado] = useState(false);
+  // ¿Qué? Último conteo recibido, con la clave de los filtros con que se pidió; "datos" es null si falló.
+  // ¿Para qué? Si la clave ya no coincide con los filtros actuales, el número es viejo y no se muestra.
+  const [conteo, setConteo] = useState<{ clave: string; datos: ConteoDescargaAgenda | null } | null>(null);
 
   const cargarPendientes = useCallback(() => {
     obtenerMisConjuntos()
@@ -187,6 +196,7 @@ export function AdminConjuntoAgendaPage() {
   const abrirDescarga = () => {
     setEstadoDescarga(vista === "archivadas" ? "ARCHIVADA" : "PENDIENTE");
     setDescargado(false);
+    setConteo(null);
     setDescargaAbierta(true);
   };
 
@@ -208,6 +218,36 @@ export function AdminConjuntoAgendaPage() {
   const rango = rangoDelPeriodo(periodoDescarga, fechasDescarga);
   const faltanFechas = periodoDescarga === "PERSONALIZADO" && (!fechasDescarga.desde || !fechasDescarga.hasta);
   const fechasAlReves = periodoDescarga === "PERSONALIZADO" && !!mensajeRango(fechasDescarga);
+
+  // ¿Qué? Cuántos temas se van a descargar, pedido al backend cuando el usuario deja de cambiar los filtros.
+  // ¿Para qué? Avisar el número (y el tope de archivo) ANTES de pulsar "Descargar", no con un 400 después.
+  // ¿Impacto? No se pide con fechas incompletas o al revés (no hay nada válido que contar). El setConteo corre
+  //           dentro del temporizador y la respuesta de un filtro anterior se descarta (vigente), así que un
+  //           conteo lento nunca pisa al del filtro actual.
+  const puedeContar = descargaAbierta && !faltanFechas && !fechasAlReves;
+  const claveConteo = `${idConjunto}|${estadoDescarga}|${rango.desde}|${rango.hasta}`;
+  useEffect(() => {
+    if (!puedeContar) return;
+    let vigente = true;
+    const temporizador = setTimeout(() => {
+      const recibir = (datos: ConteoDescargaAgenda | null) => {
+        if (vigente) setConteo({ clave: claveConteo, datos });
+      };
+      contarHistorialAgenda(idConjunto, { estado: estadoDescarga, desde: rango.desde, hasta: rango.hasta })
+        .then(recibir)
+        .catch(() => recibir(null));
+    }, ESPERA_CONTEO_MS);
+    return () => {
+      vigente = false;
+      clearTimeout(temporizador);
+    };
+  }, [puedeContar, claveConteo, idConjunto, estadoDescarga, rango.desde, rango.hasta]);
+
+  // ¿Qué? Solo vale el conteo pedido con los filtros de ahora; si falló no se muestra nada ni se bloquea
+  //       la descarga (el backend igual valida el tope).
+  const conteoVigente = conteo?.clave === claveConteo ? conteo.datos : null;
+  const contando = puedeContar && conteo?.clave !== claveConteo;
+  const pasaDelMaximo = !!conteoVigente && conteoVigente.total > conteoVigente.maximo;
 
   const descargar = async () => {
     setBajando(true);
@@ -680,6 +720,20 @@ export function AdminConjuntoAgendaPage() {
               </select>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">{t("agenda.download.limitHint")}</p>
+            {/* ¿Qué? Región "polite": el lector de pantalla anuncia el número cuando llega, sin interrumpir.
+                ¿Para qué? Si pasa del máximo, el motivo queda escrito junto al botón apagado (no solo en gris). */}
+            <p
+              aria-live="polite"
+              className={`min-h-5 text-sm font-medium ${
+                pasaDelMaximo ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"
+              }`}
+            >
+              {contando && t("agenda.download.counting")}
+              {conteoVigente &&
+                (pasaDelMaximo
+                  ? t("agenda.download.overLimit", { total: conteoVigente.total, max: conteoVigente.maximo })
+                  : t("agenda.download.count", { count: conteoVigente.total }))}
+            </p>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -691,7 +745,7 @@ export function AdminConjuntoAgendaPage() {
               <button
                 type="button"
                 onClick={descargar}
-                disabled={bajando || faltanFechas || fechasAlReves}
+                disabled={bajando || faltanFechas || fechasAlReves || pasaDelMaximo}
                 aria-busy={bajando}
                 className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
               >

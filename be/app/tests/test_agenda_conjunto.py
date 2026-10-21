@@ -14,6 +14,7 @@ from pypdf import PdfReader
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.models.agenda_conjunto import AgendaConjunto
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.tests.conftest import ADMIN_CONJUNTO_APELLIDOS, ADMIN_CONJUNTO_EMAIL, ADMIN_CONJUNTO_NOMBRE
@@ -289,6 +290,31 @@ class TestDescargaCsv:
         assert fotos["Con foto externa"] == "https://ejemplo.com/foto.jpg"
         assert fotos["Sin foto"] == ""
 
+    @pytest.mark.parametrize("publica", ["https://verdeapp.com", "https://verdeapp.com/"])
+    def test_con_api_public_url_la_foto_usa_esa_direccion(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, monkeypatch, publica
+    ):
+        # ¿Qué? Detrás de un proxy request.base_url es la dirección interna; la variable da la pública.
+        #       Con barra final no debe salir "//" entre el dominio y "/uploads".
+        monkeypatch.setattr(settings, "API_PUBLIC_URL", publica)
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Con foto subida", "/uploads/adjuntos/pasillo.jpg")
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Con foto externa", "https://ejemplo.com/foto.jpg")
+
+        fotos = {f[0]: f[5] for f in self._filas(self._csv(client, admin_conjunto_auth_headers, conjunto_verificado))[1:]}
+
+        assert fotos["Con foto subida"] == "https://verdeapp.com/uploads/adjuntos/pasillo.jpg"
+        assert fotos["Con foto externa"] == "https://ejemplo.com/foto.jpg"
+
+    def test_con_api_public_url_vacia_la_foto_usa_la_direccion_de_la_peticion(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, monkeypatch
+    ):
+        monkeypatch.setattr(settings, "API_PUBLIC_URL", "")
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Con foto subida", "/uploads/adjuntos/pasillo.jpg")
+
+        filas = self._filas(self._csv(client, admin_conjunto_auth_headers, conjunto_verificado))
+
+        assert filas[1][5] == "http://testserver/uploads/adjuntos/pasillo.jpg"
+
     @pytest.mark.parametrize("texto", ["=1+1", "+57 300", "-2", "@SUMA(1)"])
     def test_un_texto_que_parece_formula_se_entrega_como_texto(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado, texto
@@ -321,6 +347,81 @@ class TestDescargaCsv:
 
     def test_con_rol_incorrecto_devuelve_403(self, client: TestClient, auth_headers, conjunto_verificado):
         assert self._csv(client, auth_headers, conjunto_verificado).status_code == 403
+
+
+class TestConteoDescarga:
+    """HU-049: cuántos temas traería la descarga, antes de descargar."""
+
+    def _conteo(self, client, headers, conjunto, consulta: str = ""):
+        return client.get(_url(conjunto, f"/historial/conteo{consulta}"), headers=headers)
+
+    def _crear(self, client, headers, conjunto, texto: str) -> str:
+        return client.post(_url(conjunto), headers=headers, json={"texto": texto}).json()["id"]
+
+    def _archivar(self, client, headers, conjunto, id_item: str) -> None:
+        client.patch(_url(conjunto, f"/{id_item}"), headers=headers, json={"estado": "ARCHIVADA"})
+
+    def test_sin_temas_responde_cero_y_el_maximo(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        response = self._conteo(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        assert response.status_code == 200
+        assert response.json() == {"total": 0, "maximo": 500}
+
+    def test_coincide_con_las_filas_del_csv_y_del_pdf_para_el_mismo_filtro(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        # ¿Qué? La garantía de la tarjeta: el número de la ventana nunca difiere de lo que se descarga.
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Pendiente uno")
+        self._archivar(client, admin_conjunto_auth_headers, conjunto_verificado, self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Resuelto dos"))
+        self._archivar(client, admin_conjunto_auth_headers, conjunto_verificado, self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Resuelto tres"))
+
+        for consulta, esperado in [
+            ("", 3),
+            ("?estado=PENDIENTE", 1),
+            ("?estado=ARCHIVADA", 2),
+            ("?desde=2020-01-01&hasta=2099-12-31", 3),
+            ("?desde=2099-01-01", 0),
+        ]:
+            total = self._conteo(client, admin_conjunto_auth_headers, conjunto_verificado, consulta).json()["total"]
+            csv_ = client.get(_url(conjunto_verificado, f"/historial/csv{consulta}"), headers=admin_conjunto_auth_headers)
+            filas_csv = list(csv.reader(io.StringIO(csv_.content.decode("utf-8-sig")), delimiter=";"))[1:]
+            pdf = client.get(_url(conjunto_verificado, f"/historial/pdf{consulta}"), headers=admin_conjunto_auth_headers)
+            texto_pdf = "\n".join(p.extract_text() for p in PdfReader(io.BytesIO(pdf.content)).pages)
+            assert total == len(filas_csv) == esperado
+            assert f"{total} tema" in texto_pdf
+
+    def test_con_mas_de_500_temas_responde_200_con_el_total_real(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        db.add_all(
+            [AgendaConjunto(id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial, texto=f"Tema {n}") for n in range(501)]
+        )
+        db.commit()
+
+        response = self._conteo(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        assert response.status_code == 200
+        assert response.json() == {"total": 501, "maximo": 500}
+
+    def test_no_cuenta_los_temas_de_otro_conjunto(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado, conjunto_verificado_sin_admin
+    ):
+        db.add(AgendaConjunto(id_conjunto_residencial=conjunto_verificado_sin_admin.id_conjunto_residencial, texto="Ajeno"))
+        db.commit()
+
+        assert self._conteo(client, admin_conjunto_auth_headers, conjunto_verificado).json()["total"] == 0
+
+    def test_rechaza_un_rango_al_reves_y_un_estado_invalido(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        assert self._conteo(client, admin_conjunto_auth_headers, conjunto_verificado, "?desde=2026-10-31&hasta=2026-10-01").status_code == 400
+        assert self._conteo(client, admin_conjunto_auth_headers, conjunto_verificado, "?estado=OTRO").status_code == 422
+
+    def test_conjunto_ajeno_devuelve_403(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado_sin_admin):
+        assert self._conteo(client, admin_conjunto_auth_headers, conjunto_verificado_sin_admin).status_code == 403
+
+    def test_con_rol_incorrecto_devuelve_403(self, client: TestClient, auth_headers, conjunto_verificado):
+        assert self._conteo(client, auth_headers, conjunto_verificado).status_code == 403
 
 
 class TestDescargaPdf:

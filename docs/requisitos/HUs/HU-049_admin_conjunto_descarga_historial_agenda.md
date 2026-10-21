@@ -45,7 +45,7 @@
 >
 > - **Qué fecha filtra:** un tema archivado entra si su fecha de **archivado** cae en el rango; uno por tratar entra si su fecha de **creación** cae en el rango. Las fechas se leen en **hora de Bogotá** y salen en el archivo como `dd/mm/aaaa` en esa misma hora.
 > - **Autor:** nombre y apellidos del administrador (no el correo); vacío si su cuenta ya se borró.
-> - **Foto:** enlace completo (`http://.../uploads/...`), no el relativo que guarda la base de datos.
+> - **Foto:** enlace completo (`http://.../uploads/...`), no el relativo que guarda la base de datos. La dirección base es la variable opcional `API_PUBLIC_URL` del backend (ej. `https://verdeapp.com`); si está vacía se usa la de la petición, que detrás de un proxy es la interna y dejaría el enlace roto fuera del servidor.
 > - **Para Excel en español:** separador `;` y UTF-8 con BOM. Un texto que empieza con `=`, `+`, `-` o `@` se entrega con una comilla simple delante para que Excel no lo calcule como fórmula.
 > - **Orden:** del más antiguo al más reciente, como un acta.
 > - **Nombre del archivo:** `historial-agenda-<conjunto>-<desde>_<hasta>.csv` (`inicio` y `hoy` si no se eligió fecha), sin datos personales.
@@ -76,6 +76,8 @@
 - **Dado que** pido un historial cuyo rango de fechas supera el límite definido (ver investigación, pregunta 7),
 - **cuando** confirmo la descarga,
 - **entonces** el sistema responde 400 pidiéndome acotar el rango, en vez de generar un archivo muy grande.
+
+> **Implementado**: además del 400 del backend, la ventana "Descargar agenda" avisa **antes** de descargar. Muestra "Se descargarán N temas." (el número viene de `GET .../agenda/historial/conteo`, que cuenta con la misma condición que el CSV y el PDF, así que coincide con las filas del archivo) y lo pide cuando el usuario termina de elegir, no en cada cambio. Si N pasa de 500, escribe el motivo ("Son N temas y el máximo por archivo es 500...") y deja deshabilitado "Descargar". Si el conteo falla, no bloquea: el 400 del backend sigue protegiendo.
 
 ### CA-049.5 — Sin temas en el rango
 
