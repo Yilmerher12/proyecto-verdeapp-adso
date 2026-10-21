@@ -321,6 +321,27 @@ def descargar_historial_agenda_csv(
     )
 
 
+@router.get("/mis-conjuntos/{id_conjunto_residencial}/agenda/historial/pdf")
+def descargar_historial_agenda_pdf(
+    id_conjunto_residencial: UUID,
+    request: Request,
+    estado: Literal["PENDIENTE", "ARCHIVADA", "TODOS"] = "TODOS",
+    desde: date | None = None,
+    hasta: date | None = None,
+    administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
+    db: Session = Depends(get_db),
+):
+    """Descarga los temas de la agenda de uno de mis conjuntos en PDF (HU-049): los mismos que el CSV. Máximo 500 temas."""
+    contenido, nombre = agenda_conjunto_service.exportar_pdf(
+        db, administrador, id_conjunto_residencial, estado, desde, hasta, base_url=str(request.base_url)
+    )
+    return Response(
+        content=contenido,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{nombre}"'},
+    )
+
+
 @router.post(
     "/mis-conjuntos/{id_conjunto_residencial}/agenda",
     response_model=AgendaItemResponse,

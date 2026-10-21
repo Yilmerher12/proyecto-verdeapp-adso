@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { vi, beforeEach, describe, it, expect } from "vitest";
 import { AdminConjuntoAgendaPage } from "@/pages/AdminConjuntoAgendaPage";
 import { RoleId } from "@/types/auth";
+import { rangoDelPeriodo } from "@/lib/periodosDescarga";
 import { renderWithProviders, mockUser } from "../helpers";
 
 const mockGet = vi.fn();
@@ -377,33 +378,77 @@ describe("AdminConjuntoAgendaPage", () => {
     });
   });
 
-  describe("Descargar historial (issue #479, HU-049)", () => {
+  describe("Descargar agenda (issues #479 y #480, HU-049)", () => {
     const archivoCsv = new Blob(["Tema;Estado"], { type: "text/csv" });
 
-    // ¿Qué? "/agenda/historial/csv" se atiende antes que las demás rutas de agenda (su URL también contiene "/agenda").
+    // ¿Qué? "/agenda/historial/csv|pdf" se atiende antes que las demás rutas de agenda (su URL también contiene "/agenda").
     function mockAgendaConCsv(respuestaCsv: () => Promise<unknown>) {
       mockAgenda([conjuntoUno]);
       const base = mockGet.getMockImplementation()!;
       mockGet.mockImplementation((url: string, config?: unknown) =>
-        url.includes("/agenda/historial/csv") ? respuestaCsv() : base(url, config)
+        url.includes("/agenda/historial/") ? respuestaCsv() : base(url, config)
       );
     }
 
     const abrirVentana = async (user: ReturnType<typeof userEvent.setup>) => {
-      await user.click(await screen.findByRole("button", { name: "Descargar historial" }));
+      await user.click(await screen.findByRole("button", { name: "Descargar agenda" }));
       return screen.findByRole("dialog");
     };
 
-    it("pide el CSV con el estado y las fechas elegidos y lo baja con un nombre sin datos personales", async () => {
+    const pedidoDeDescarga = () =>
+      mockGet.mock.calls.find(([url]) => String(url).includes("/agenda/historial/")) as [string, { params: Record<string, unknown> }] | undefined;
+
+    it("viene con CSV elegido y ofrece también PDF, como dos opciones pegadas", async () => {
       mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }));
       const user = userEvent.setup();
       renderPage();
 
       const ventana = await abrirVentana(user);
-      await user.selectOptions(within(ventana).getByLabelText("Temas a incluir"), "ARCHIVADA");
+
+      expect(within(ventana).getByRole("radio", { name: "CSV (Excel)" })).toBeChecked();
+      expect(within(ventana).getByRole("radio", { name: "PDF" })).not.toBeChecked();
+    });
+
+    it("el período viene en 'Todo el historial' y las fechas solo aparecen con 'Personalizado'", async () => {
+      mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }));
+      const user = userEvent.setup();
+      renderPage();
+
+      const ventana = await abrirVentana(user);
+      expect(within(ventana).getByLabelText("Período")).toHaveValue("TODO");
+      expect(within(ventana).queryByLabelText("Desde")).not.toBeInTheDocument();
+
+      await user.selectOptions(within(ventana).getByLabelText("Período"), "PERSONALIZADO");
+
+      expect(within(ventana).getByLabelText("Desde")).toBeInTheDocument();
+      expect(within(ventana).getByLabelText("Hasta")).toBeInTheDocument();
+    });
+
+    it("'Temas' viene con lo que se está viendo: Por tratar en esa pestaña y Archivadas en la otra", async () => {
+      mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }));
+      const user = userEvent.setup();
+      renderPage();
+
+      let ventana = await abrirVentana(user);
+      expect(within(ventana).getByLabelText("Temas")).toHaveValue("PENDIENTE");
+      await user.click(within(ventana).getByRole("button", { name: "Cancelar" }));
+
+      await user.click(screen.getByRole("tab", { name: /Archivadas/ }));
+      ventana = await abrirVentana(user);
+      expect(within(ventana).getByLabelText("Temas")).toHaveValue("ARCHIVADA");
+    });
+
+    it("pide el CSV con el estado y las fechas elegidos, lo baja con un nombre sin datos personales y avisa que se descargó", async () => {
+      mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }));
+      const user = userEvent.setup();
+      renderPage();
+
+      const ventana = await abrirVentana(user);
+      await user.selectOptions(within(ventana).getByLabelText("Temas"), "ARCHIVADA");
+      await user.selectOptions(within(ventana).getByLabelText("Período"), "PERSONALIZADO");
       await user.type(within(ventana).getByLabelText("Desde"), "2026-10-01");
       await user.type(within(ventana).getByLabelText("Hasta"), "2026-10-31");
-      await user.click(within(ventana).getByRole("button", { name: "Descargar CSV" }));
+      await user.click(within(ventana).getByRole("button", { name: "Descargar" }));
 
       await waitFor(() => {
         expect(mockGet).toHaveBeenCalledWith(
@@ -415,19 +460,59 @@ describe("AdminConjuntoAgendaPage", () => {
         expect(mockDescargarArchivo).toHaveBeenCalledWith(archivoCsv, "historial-agenda-quintas-de-aranjuez-2026-10-01_2026-10-31.csv");
       });
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(await screen.findByText("Archivo descargado.")).toBeInTheDocument();
     });
 
-    it("sin fechas pide todos los temas y no manda límites", async () => {
+    it("con formato PDF pide el PDF con los mismos filtros y lo baja con extensión .pdf", async () => {
+      const archivoPdf = new Blob(["%PDF-1.3"], { type: "application/pdf" });
+      mockAgendaConCsv(() => Promise.resolve({ data: archivoPdf }));
+      const user = userEvent.setup();
+      renderPage();
+
+      const ventana = await abrirVentana(user);
+      await user.click(within(ventana).getByRole("radio", { name: "PDF" }));
+      await user.selectOptions(within(ventana).getByLabelText("Período"), "PERSONALIZADO");
+      await user.type(within(ventana).getByLabelText("Desde"), "2026-10-01");
+      await user.type(within(ventana).getByLabelText("Hasta"), "2026-10-15");
+      await user.click(within(ventana).getByRole("button", { name: "Descargar" }));
+
+      await waitFor(() => {
+        expect(mockGet).toHaveBeenCalledWith(
+          expect.stringContaining("/conjunto-panel/mis-conjuntos/c-1/agenda/historial/pdf"),
+          { params: { estado: "PENDIENTE", desde: "2026-10-01", hasta: "2026-10-15" }, responseType: "blob" }
+        );
+      });
+      await waitFor(() => {
+        expect(mockDescargarArchivo).toHaveBeenCalledWith(archivoPdf, "historial-agenda-quintas-de-aranjuez-2026-10-01_2026-10-15.pdf");
+      });
+      expect(mockGet).not.toHaveBeenCalledWith(expect.stringContaining("/historial/csv"), expect.anything());
+    });
+
+    it("'Este mes' manda las fechas de ese mes sin que haya que escribirlas", async () => {
       mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }));
       const user = userEvent.setup();
       renderPage();
 
       const ventana = await abrirVentana(user);
-      await user.click(within(ventana).getByRole("button", { name: "Descargar CSV" }));
+      await user.selectOptions(within(ventana).getByLabelText("Período"), "ESTE_MES");
+      await user.click(within(ventana).getByRole("button", { name: "Descargar" }));
+
+      const { desde, hasta } = rangoDelPeriodo("ESTE_MES", { desde: "", hasta: "" });
+      await waitFor(() => expect(pedidoDeDescarga()?.[1].params).toEqual({ estado: "PENDIENTE", desde, hasta }));
+      expect(desde).toMatch(/^\d{4}-\d{2}-01$/);
+    });
+
+    it("con 'Todo el historial' no manda límites de fecha", async () => {
+      mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }));
+      const user = userEvent.setup();
+      renderPage();
+
+      const ventana = await abrirVentana(user);
+      await user.click(within(ventana).getByRole("button", { name: "Descargar" }));
 
       await waitFor(() => {
         expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/agenda/historial/csv"), {
-          params: { estado: "TODOS", desde: undefined, hasta: undefined },
+          params: { estado: "PENDIENTE", desde: undefined, hasta: undefined },
           responseType: "blob",
         });
       });
@@ -436,19 +521,41 @@ describe("AdminConjuntoAgendaPage", () => {
       });
     });
 
-    it("avisa en el campo 'Hasta' si el rango está al revés y no pide nada", async () => {
+    it("con 'Personalizado', 'Descargar' espera las dos fechas y explica por qué", async () => {
       mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }));
       const user = userEvent.setup();
       renderPage();
 
       const ventana = await abrirVentana(user);
+      await user.selectOptions(within(ventana).getByLabelText("Período"), "PERSONALIZADO");
+      const descargar = within(ventana).getByRole("button", { name: "Descargar" });
+
+      expect(descargar).toBeDisabled();
+      expect(within(ventana).getByText("Elige las dos fechas para descargar.")).toBeInTheDocument();
+
+      await user.type(within(ventana).getByLabelText("Desde"), "2026-10-01");
+      expect(descargar).toBeDisabled();
+
+      await user.type(within(ventana).getByLabelText("Hasta"), "2026-10-31");
+      expect(descargar).toBeEnabled();
+      expect(within(ventana).queryByText("Elige las dos fechas para descargar.")).not.toBeInTheDocument();
+    });
+
+    it("avisa en el campo 'Hasta' si el rango está al revés y no deja descargar", async () => {
+      mockAgendaConCsv(() => Promise.resolve({ data: archivoCsv }));
+      const user = userEvent.setup();
+      renderPage();
+
+      const ventana = await abrirVentana(user);
+      await user.selectOptions(within(ventana).getByLabelText("Período"), "PERSONALIZADO");
       await user.type(within(ventana).getByLabelText("Desde"), "2026-10-31");
       await user.type(within(ventana).getByLabelText("Hasta"), "2026-10-01");
-      await user.click(within(ventana).getByRole("button", { name: "Descargar CSV" }));
+      await user.tab();
 
       expect(await within(ventana).findByText('La fecha "Hasta" no puede ser anterior a la fecha "Desde".')).toBeInTheDocument();
       expect(within(ventana).getByLabelText("Hasta")).toHaveAttribute("aria-invalid", "true");
-      expect(mockGet).not.toHaveBeenCalledWith(expect.stringContaining("/agenda/historial/csv"), expect.anything());
+      expect(within(ventana).getByRole("button", { name: "Descargar" })).toBeDisabled();
+      expect(pedidoDeDescarga()).toBeUndefined();
       expect(mockDescargarArchivo).not.toHaveBeenCalled();
     });
 
@@ -462,11 +569,12 @@ describe("AdminConjuntoAgendaPage", () => {
       renderPage();
 
       const ventana = await abrirVentana(user);
-      await user.click(within(ventana).getByRole("button", { name: "Descargar CSV" }));
+      await user.click(within(ventana).getByRole("button", { name: "Descargar" }));
 
       expect(await within(ventana).findByText(detail)).toBeInTheDocument();
       expect(mockDescargarArchivo).not.toHaveBeenCalled();
       expect(screen.getByRole("dialog")).toBeInTheDocument();
+      expect(screen.queryByText("Archivo descargado.")).not.toBeInTheDocument();
     });
 
     it("muestra un mensaje genérico si falla sin respuesta del servidor", async () => {
@@ -475,7 +583,7 @@ describe("AdminConjuntoAgendaPage", () => {
       renderPage();
 
       const ventana = await abrirVentana(user);
-      await user.click(within(ventana).getByRole("button", { name: "Descargar CSV" }));
+      await user.click(within(ventana).getByRole("button", { name: "Descargar" }));
 
       expect(await within(ventana).findByText("No se pudo descargar el historial. Intenta de nuevo.")).toBeInTheDocument();
     });
@@ -489,7 +597,7 @@ describe("AdminConjuntoAgendaPage", () => {
       await user.click(within(ventana).getByRole("button", { name: "Cancelar" }));
 
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-      expect(mockGet).not.toHaveBeenCalledWith(expect.stringContaining("/agenda/historial/csv"), expect.anything());
+      expect(pedidoDeDescarga()).toBeUndefined();
     });
   });
 });

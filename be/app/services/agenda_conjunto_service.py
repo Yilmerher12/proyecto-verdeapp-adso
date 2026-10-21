@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.agenda_conjunto import AgendaConjunto, EstadoAgenda
 from app.schemas.agenda_conjunto import CambiarEstadoAgendaRequest, CrearAgendaItemRequest
+from app.utils.pdf_agenda import construir_pdf_historial
 
 # ¿Qué? Tope de temas por descarga (issue #479).
 # ¿Para qué? Que un rango enorme no arme un archivo arbitrariamente grande en memoria.
@@ -174,15 +175,18 @@ def _enlace_completo(url: str | None, base_url: str) -> str:
     return base_url.rstrip("/") + url if url.startswith("/") else url
 
 
-def _nombre_archivo(administrador: AdministradorConjunto, id_conjunto: UUID, desde: date | None, hasta: date | None) -> str:
-    """¿Qué? historial-agenda-<conjunto>-<desde>_<hasta>.csv: sin datos personales, solo ASCII."""
-    nombre = next(c.nombre_conjunto for c in administrador.conjuntos if c.id_conjunto_residencial == id_conjunto)
-    ascii_ = unicodedata.normalize("NFKD", nombre).encode("ascii", "ignore").decode().lower()
+def _nombre_conjunto(administrador: AdministradorConjunto, id_conjunto: UUID) -> str:
+    return next(c.nombre_conjunto for c in administrador.conjuntos if c.id_conjunto_residencial == id_conjunto)
+
+
+def _nombre_archivo(nombre_conjunto: str, desde: date | None, hasta: date | None, extension: str) -> str:
+    """¿Qué? historial-agenda-<conjunto>-<desde>_<hasta>.<extensión>: sin datos personales, solo ASCII."""
+    ascii_ = unicodedata.normalize("NFKD", nombre_conjunto).encode("ascii", "ignore").decode().lower()
     slug = re.sub(r"[^a-z0-9]+", "-", ascii_).strip("-")
-    return f"historial-agenda-{slug}-{desde or 'inicio'}_{hasta or 'hoy'}.csv"
+    return f"historial-agenda-{slug}-{desde or 'inicio'}_{hasta or 'hoy'}.{extension}"
 
 
-def exportar_csv(
+def _filas_de_la_descarga(
     db: Session,
     administrador: AdministradorConjunto,
     id_conjunto: UUID,
@@ -190,11 +194,12 @@ def exportar_csv(
     desde: date | None,
     hasta: date | None,
     base_url: str,
-) -> tuple[bytes, str]:
-    """¿Qué? El historial de la agenda como CSV listo para Excel en español: separador ";" y
-          UTF-8 con BOM (sin el BOM Excel muestra mal las tildes). Más antiguo primero, como un acta.
-    ¿Para qué? Que el Admin de Conjunto anexe el historial al acta del comité sin copiar a mano.
-    ¿Impacto? Devuelve (contenido, nombre del archivo). Sin temas en el rango, el archivo trae solo los encabezados."""
+) -> list[tuple[str, str, str, str, str, str]]:
+    """¿Qué? Los temas de la descarga, más antiguo primero (como un acta), ya como texto:
+          (tema, estado, creado, archivado, autor, enlace de la foto).
+    ¿Para qué? El CSV y el PDF salen de aquí, así SIEMPRE traen los mismos temas: mismo filtro de
+              fechas en hora de Bogotá, mismo tope de 500 y misma validación de conjunto propio.
+    ¿Impacto? Sin temas devuelve una lista vacía (el archivo trae solo los encabezados)."""
     _verificar_conjunto_propio(administrador, id_conjunto)
     if desde and hasta and desde > hasta:
         raise HTTPException(
@@ -216,19 +221,80 @@ def exportar_csv(
         .where(donde)
         .order_by(AgendaConjunto.created_at.asc(), AgendaConjunto.id)
     )
+    return [
+        (
+            tema.texto,
+            "Archivado" if tema.estado == EstadoAgenda.ARCHIVADA.value else "Pendiente",
+            _fecha(tema.created_at),
+            _fecha(tema.archivado_en),
+            f"{nombre} {apellidos}".strip() if nombre else "",
+            _enlace_completo(tema.url_evidencia, base_url),
+        )
+        for tema, nombre, apellidos in db.execute(stmt).all()
+    ]
+
+
+def exportar_csv(
+    db: Session,
+    administrador: AdministradorConjunto,
+    id_conjunto: UUID,
+    estado: str,
+    desde: date | None,
+    hasta: date | None,
+    base_url: str,
+) -> tuple[bytes, str]:
+    """¿Qué? El historial de la agenda como CSV listo para Excel en español: separador ";" y
+          UTF-8 con BOM (sin el BOM Excel muestra mal las tildes).
+    ¿Para qué? Que el Admin de Conjunto anexe el historial al acta del comité sin copiar a mano.
+    ¿Impacto? Devuelve (contenido, nombre del archivo). Sin temas en el rango, el archivo trae solo los encabezados."""
+    filas = _filas_de_la_descarga(db, administrador, id_conjunto, estado, desde, hasta, base_url)
     buffer = io.StringIO()
     escritor = csv.writer(buffer, delimiter=";", lineterminator="\r\n")
     escritor.writerow(ENCABEZADOS_CSV)
-    for tema, nombre, apellidos in db.execute(stmt).all():
-        autor = f"{nombre} {apellidos}".strip() if nombre else ""
-        escritor.writerow(
-            [
-                _celda_segura(tema.texto),
-                "Archivado" if tema.estado == EstadoAgenda.ARCHIVADA.value else "Pendiente",
-                _fecha(tema.created_at),
-                _fecha(tema.archivado_en),
-                _celda_segura(autor),
-                _celda_segura(_enlace_completo(tema.url_evidencia, base_url)),
-            ]
-        )
-    return buffer.getvalue().encode("utf-8-sig"), _nombre_archivo(administrador, id_conjunto, desde, hasta)
+    for fila in filas:
+        escritor.writerow([_celda_segura(celda) for celda in fila])
+    nombre = _nombre_archivo(_nombre_conjunto(administrador, id_conjunto), desde, hasta, "csv")
+    return buffer.getvalue().encode("utf-8-sig"), nombre
+
+
+_TEXTO_ESTADO = {
+    EstadoAgenda.PENDIENTE.value: "solo por tratar",
+    EstadoAgenda.ARCHIVADA.value: "solo archivados",
+}
+
+
+def _texto_del_rango(desde: date | None, hasta: date | None) -> str:
+    if desde and hasta:
+        return f"Del {desde:%d/%m/%Y} al {hasta:%d/%m/%Y}"
+    if desde:
+        return f"Desde el {desde:%d/%m/%Y}"
+    if hasta:
+        return f"Hasta el {hasta:%d/%m/%Y}"
+    return "Todo el historial"
+
+
+def exportar_pdf(
+    db: Session,
+    administrador: AdministradorConjunto,
+    id_conjunto: UUID,
+    estado: str,
+    desde: date | None,
+    hasta: date | None,
+    base_url: str,
+) -> tuple[bytes, str]:
+    """¿Qué? El historial de la agenda como PDF presentable (HU-049, issue #480): los mismos temas
+          que el CSV (ver _filas_de_la_descarga), en una hoja A4 horizontal.
+    ¿Para qué? Para anexarlo al acta del comité o mandarlo por WhatsApp o correo: se abre igual en
+              cualquier celular o computador, sin Excel.
+    ¿Impacto? Devuelve (contenido, nombre del archivo). No se guarda en ningún lado: se arma en
+              cada descarga."""
+    filas = _filas_de_la_descarga(db, administrador, id_conjunto, estado, desde, hasta, base_url)
+    nombre_conjunto = _nombre_conjunto(administrador, id_conjunto)
+    contenido = construir_pdf_historial(
+        nombre_conjunto=nombre_conjunto,
+        estado_texto=_TEXTO_ESTADO.get(estado, "por tratar y archivados"),
+        rango_texto=_texto_del_rango(desde, hasta),
+        generado_el=datetime.now(HUSO_BOGOTA).strftime("%d/%m/%Y"),
+        filas=filas,
+    )
+    return contenido, _nombre_archivo(nombre_conjunto, desde, hasta, "pdf")

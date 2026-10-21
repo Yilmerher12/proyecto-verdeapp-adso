@@ -10,12 +10,14 @@ from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
+from pypdf import PdfReader
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.models.agenda_conjunto import AgendaConjunto
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.tests.conftest import ADMIN_CONJUNTO_APELLIDOS, ADMIN_CONJUNTO_EMAIL, ADMIN_CONJUNTO_NOMBRE
+from app.utils.pdf_agenda import texto_para_pdf
 
 BASE = "/api/v1/conjunto-panel/mis-conjuntos"
 BASE_ADMIN = "/api/v1/admin-conjunto"
@@ -319,3 +321,195 @@ class TestDescargaCsv:
 
     def test_con_rol_incorrecto_devuelve_403(self, client: TestClient, auth_headers, conjunto_verificado):
         assert self._csv(client, auth_headers, conjunto_verificado).status_code == 403
+
+
+class TestDescargaPdf:
+    """HU-049 (issue #480): descarga del historial de la agenda en PDF."""
+
+    def _pdf(self, client, headers, conjunto, consulta: str = ""):
+        return client.get(_url(conjunto, f"/historial/pdf{consulta}"), headers=headers)
+
+    def _csv(self, client, headers, conjunto, consulta: str = ""):
+        return client.get(_url(conjunto, f"/historial/csv{consulta}"), headers=headers)
+
+    def _lector(self, response) -> PdfReader:
+        return PdfReader(io.BytesIO(response.content))
+
+    def _texto(self, response) -> str:
+        return "\n".join(pagina.extract_text() for pagina in self._lector(response).pages)
+
+    def _crear(self, client, headers, conjunto, texto: str, url_evidencia: str | None = None) -> str:
+        return client.post(_url(conjunto), headers=headers, json={"texto": texto, "url_evidencia": url_evidencia}).json()["id"]
+
+    def _archivar(self, client, headers, conjunto, id_item: str) -> None:
+        client.patch(_url(conjunto, f"/{id_item}"), headers=headers, json={"estado": "ARCHIVADA"})
+
+    def test_descarga_un_pdf_horizontal_con_el_encabezado_y_la_tabla(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        id_item = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Arreglar la puerta del sótano")
+        self._archivar(client, admin_conjunto_auth_headers, conjunto_verificado, id_item)
+
+        response = self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        assert response.status_code == 200
+        assert response.content.startswith(b"%PDF-")
+        assert response.headers["content-type"] == "application/pdf"
+        assert response.headers["content-disposition"].startswith('attachment; filename="historial-agenda-torres-de-prueba-')
+        assert response.headers["content-disposition"].endswith('.pdf"')
+        lector = self._lector(response)
+        assert len(lector.pages) == 1
+        assert lector.pages[0].mediabox.width > lector.pages[0].mediabox.height  # hoja horizontal
+        texto = self._texto(response)
+        for esperado in ["Historial de la agenda - TORRES DE PRUEBA", "Todo el historial", "1 tema", "Página 1 de 1"]:
+            assert esperado in texto
+        for columna in ["Tema", "Estado", "Creado", "Archivado", "Autor", "Foto"]:
+            assert columna in texto
+        assert "Arreglar la puerta del sótano" in texto
+        assert "Archivado" in texto
+        assert f"{ADMIN_CONJUNTO_NOMBRE} {ADMIN_CONJUNTO_APELLIDOS}" in texto
+        assert ADMIN_CONJUNTO_EMAIL not in texto
+
+    def test_trae_los_mismos_temas_que_el_csv_para_el_mismo_filtro(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Pendiente uno")
+        resuelto = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Resuelto dos")
+        self._archivar(client, admin_conjunto_auth_headers, conjunto_verificado, resuelto)
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Pendiente tres")
+
+        for consulta in ["", "?estado=PENDIENTE", "?estado=ARCHIVADA", "?desde=2020-01-01&hasta=2099-12-31"]:
+            filas_csv = list(
+                csv.reader(
+                    io.StringIO(self._csv(client, admin_conjunto_auth_headers, conjunto_verificado, consulta).content.decode("utf-8-sig")),
+                    delimiter=";",
+                )
+            )[1:]
+            texto_pdf = self._texto(self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado, consulta))
+            assert f"{len(filas_csv)} tema" in texto_pdf
+            assert all(fila[0] in texto_pdf for fila in filas_csv)
+            for fila in ["Pendiente uno", "Resuelto dos", "Pendiente tres"]:
+                assert (fila in texto_pdf) == any(f[0] == fila for f in filas_csv)
+
+    def test_el_rango_y_el_estado_se_describen_en_el_encabezado(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        response = self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado, "?estado=ARCHIVADA&desde=2026-10-01&hasta=2026-10-31")
+
+        texto = self._texto(response)
+        assert "solo archivados" in texto
+        assert "Del 01/10/2026 al 31/10/2026" in texto
+        assert "historial-agenda-torres-de-prueba-2026-10-01_2026-10-31.pdf" in response.headers["content-disposition"]
+
+    def test_la_foto_sale_como_enlace_y_no_incrustada(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Con foto", "/uploads/adjuntos/pasillo.jpg")
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Sin foto")
+
+        response = self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        pagina = self._lector(response).pages[0]
+        enlaces = [anotacion.get_object()["/A"]["/URI"] for anotacion in pagina.get("/Annots", [])]
+        assert enlaces == ["http://testserver/uploads/adjuntos/pasillo.jpg"]
+        assert "Ver foto" in self._texto(response)
+        assert len(pagina.images) == 0
+
+    def test_sin_temas_devuelve_un_pdf_valido_solo_con_los_encabezados(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        response = self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        assert response.status_code == 200
+        texto = self._texto(response)
+        assert "0 temas" in texto
+        assert "No hay temas en este rango." in texto
+        assert "Tema" in texto and "Foto" in texto
+
+    def test_las_celdas_sin_dato_llevan_un_guion_en_el_pdf_y_quedan_vacias_en_el_csv(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Un tema por tratar no tiene fecha de archivado ni foto: en papel una celda vacía parece un error."""
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Tema por tratar")
+
+        linea = next(
+            texto for texto in self._texto(self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado)).splitlines() if "Tema por tratar" in texto
+        )
+        fila_csv = list(
+            csv.reader(io.StringIO(self._csv(client, admin_conjunto_auth_headers, conjunto_verificado).content.decode("utf-8-sig")), delimiter=";")
+        )[1]
+
+        assert linea.endswith(f"Pendiente {fila_csv[2]} - {ADMIN_CONJUNTO_NOMBRE} {ADMIN_CONJUNTO_APELLIDOS} -")
+        assert fila_csv[3] == "" and fila_csv[5] == ""
+
+    def test_con_muchos_temas_usa_varias_paginas_y_repite_el_encabezado(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        db.add_all(
+            [AgendaConjunto(id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial, texto=f"Tema numero {n}") for n in range(120)]
+        )
+        db.commit()
+
+        lector = self._lector(self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado))
+
+        assert len(lector.pages) > 1
+        assert all("Estado" in pagina.extract_text() for pagina in lector.pages)
+        assert f"Página 2 de {len(lector.pages)}" in lector.pages[1].extract_text()
+
+    def test_los_caracteres_que_la_fuente_no_soporta_no_rompen_la_descarga(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Pegar de WhatsApp o Word trae comillas curvas, rayas y emoji: antes habrían dado 500."""
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "Cobrar “cuota” de 5€ — urgente \U0001F600 ¿cuándo? Ñandú")
+
+        response = self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        assert response.status_code == 200
+        assert 'Cobrar "cuota" de 5EUR - urgente ? ¿cuándo? Ñandú' in self._texto(response).replace("\n", " ")
+
+    def test_una_palabra_larguisima_no_rompe_la_descarga(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        self._crear(client, admin_conjunto_auth_headers, conjunto_verificado, "x" * 900)
+
+        assert self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado).status_code == 200
+
+    def test_con_mas_de_500_temas_pide_acotar_el_rango(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        db.add_all(
+            [AgendaConjunto(id_conjunto_residencial=conjunto_verificado.id_conjunto_residencial, texto=f"Tema {n}") for n in range(501)]
+        )
+        db.commit()
+
+        response = self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado)
+
+        assert response.status_code == 400
+        assert "500" in response.json()["detail"]
+
+    def test_rechaza_un_rango_al_reves_y_un_estado_invalido(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        assert self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado, "?desde=2026-10-31&hasta=2026-10-01").status_code == 400
+        assert self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado, "?estado=HECHO").status_code == 422
+
+    def test_conjunto_ajeno_devuelve_403_y_no_genera_archivo(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado_sin_admin):
+        response = self._pdf(client, admin_conjunto_auth_headers, conjunto_verificado_sin_admin)
+
+        assert response.status_code == 403
+        assert "pdf" not in response.headers["content-type"]
+
+    def test_con_rol_incorrecto_devuelve_403(self, client: TestClient, auth_headers, conjunto_verificado):
+        assert self._pdf(client, auth_headers, conjunto_verificado).status_code == 403
+
+
+class TestTextoParaPdf:
+    @pytest.mark.parametrize(
+        "original, esperado",
+        [
+            ("Ñandú ¿cómo? ¡sí!", "Ñandú ¿cómo? ¡sí!"),
+            ("“hola” ‘x’", "\"hola\" 'x'"),
+            ("a–b—c", "a-b-c"),
+            ("1€", "1EUR"),
+            ("punto… • lista", "punto... - lista"),
+            ("emoji \U0001F600", "emoji ?"),
+            ("a\tb\r\nc", "a b\nc"),
+            ("sin​espacio", "sinespacio"),
+        ],
+    )
+    def test_cambia_lo_que_la_fuente_no_soporta_y_deja_lo_demas(self, original, esperado):
+        assert texto_para_pdf(original) == esperado
