@@ -26,8 +26,6 @@ import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
 import type { NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { DesvinculacionAprobadaBanner } from "@/components/dashboard/DesvinculacionAprobadaBanner";
-import { HistorialAuditoriasSemanal } from "@/components/dashboard/HistorialAuditoriasSemanal";
-import { listarHistorial, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -767,17 +765,6 @@ export function AdminConjuntoDashboard() {
   //           vista inicial (issue #166) — ahora solo se ve el primero.
   const [abiertos, setAbiertos] = useState<Record<string, boolean>>({});
   const [solicitandoConjunto, setSolicitandoConjunto] = useState(false);
-  // ¿Qué? Historial de auditorías de TODOS los conjuntos que administra,
-  //       pedido una sola vez aquí y filtrado por conjunto más abajo — así
-  //       HistorialAuditoriasSemanal nunca mezcla auditorías de un conjunto
-  //       con las de otro.
-  const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
-
-  useEffect(() => {
-    listarHistorial()
-      .then(setAuditorias)
-      .catch(() => setAuditorias([]));
-  }, []);
 
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [cargandoNotifs, setCargandoNotifs] = useState(true);
@@ -1177,11 +1164,6 @@ export function AdminConjuntoDashboard() {
                           idConjunto={c.id_conjunto_residencial}
                           tieneSolicitudPendiente={c.tiene_solicitud_pendiente}
                           onSolicitudEnviada={cargarConjuntos}
-                        />
-                        {/* Historial de auditorías de ESTE conjunto — log histórico,
-                            sin urgencia, va al final del acordeón. */}
-                        <HistorialAuditoriasSemanal
-                          auditorias={auditorias.filter((a) => a.id_conjunto_residencial === c.id_conjunto_residencial)}
                         />
                       </>
                     )}

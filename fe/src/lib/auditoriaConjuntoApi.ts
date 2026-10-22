@@ -86,6 +86,50 @@ export async function listarHistorial(): Promise<AuditoriaConjunto[]> {
   return data;
 }
 
+// ¿Qué? Conteos de auditorías de UN conjunto por semana y por tema (issue #486).
+// ¿Para qué? La gráfica de desempeño solo dibuja estos números: el backend ya
+//           los cuenta (sin el tope de 50 de /historial) y con la semana de
+//           lunes a domingo en hora de Bogotá.
+// ¿Impacto? `lunes` es una fecha de calendario (YYYY-MM-DD), no un instante:
+//           no se convierte de zona horaria.
+export interface SemanaDesempeno {
+  lunes: string;
+  bueno: number;
+  regular: number;
+  malo: number;
+}
+
+export interface TemaDesempeno {
+  tema: string;
+  bueno: number;
+  regular: number;
+  malo: number;
+}
+
+export interface DesempenoConjunto {
+  id_conjunto_residencial: string;
+  total: number;
+  semanas: SemanaDesempeno[];
+  temas: TemaDesempeno[];
+}
+
+// ¿Qué? Sin `idConjunto` el backend usa el único conjunto del usuario (el caso
+//       del Residente); un Admin de Conjunto con varios debe mandarlo (si no, 422).
+export async function obtenerDesempeno(idConjunto?: string, semanas?: number): Promise<DesempenoConjunto> {
+  const { data } = await axios.get(`${API_BASE}/desempeno`, {
+    params: { id_conjunto: idConjunto, semanas },
+  });
+  return data;
+}
+
+// ¿Qué? Las auditorías de una semana (el `lunes` de una SemanaDesempeno), más recientes primero.
+export async function listarAuditoriasDeSemana(lunes: string, idConjunto?: string): Promise<AuditoriaConjunto[]> {
+  const { data } = await axios.get(`${API_BASE}/desempeno/semana`, {
+    params: { lunes, id_conjunto: idConjunto },
+  });
+  return data;
+}
+
 export interface AuditoriaAdmin extends AuditoriaConjunto {
   avisados: number;
 }

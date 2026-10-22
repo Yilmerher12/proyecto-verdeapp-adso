@@ -41,6 +41,8 @@ Los componentes de formulario e interactivos deben incluir atributos ARIA correc
 
 Ningún estado del sistema (error, éxito, fortaleza de una contraseña) debe comunicarse únicamente mediante color. Debe acompañarse siempre de texto o un ícono (WCAG 1.4.1). Verificado en el indicador de fortaleza de contraseña, que combina color con una etiqueta de texto.
 
+> **Estado real (2026-10-22, issue #487)**: **Corregido en el semáforo por semana.** La barra semanal anterior (`HistorialAuditoriasSemanal`, tres tramos de color sin texto ni ícono) incumplía este requisito y se retiró. La página "Desempeño" del Admin de Conjunto la reemplaza: cada tramo de la gráfica lleva su número, la leyenda trae color + ícono (carita) + nombre, cada semana es un botón con su descripción completa para lector de pantalla y "Ver como tabla" da los mismos números. Verificado en el navegador, en claro y oscuro, con teclado (Tab, Enter, Espacio) y en celular (375 px).
+
 ### RNF-005.3 — Estructura semántica de la página
 
 El layout principal debe usar elementos HTML semánticos (`<nav>`, `<main>`, `<header>`) con `aria-label` donde el propósito no sea obvio por el contexto, para que la navegación por landmarks funcione con lectores de pantalla. Verificado en `AppShell.tsx`.

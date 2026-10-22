@@ -47,6 +47,7 @@ No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `pyproject.toml
 | TailwindCSS      | 4.3.3             |
 | React Router     | 7.18.4            |
 | react-markdown   | 10.1.0            |
+| recharts         | 3.10.1 (solo la gráfica de desempeño semanal; se carga bajo demanda con `React.lazy`, nunca en la primera carga; licencia MIT) |
 
 ### Base de datos
 
@@ -83,6 +84,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | Puntos de acopio / directorio / localidad | `Warehouse` / `MapPinned` / `Map` (una dirección concreta sigue con `MapPin`) |
   | Seguridad (cambiar contraseña) | `KeyRound` |
   | Semáforo de auditoría | Caritas `Smile` / `Meh` / `Frown` (definidas en `fe/src/config/nivelesDesempeno.ts`) |
+  | Desempeño semanal (menú y gráfica) | `ChartColumn` · alternar gráfica/tabla `Table2` / lista `List` |
 
 - Tamaño de íconos: solo 5, con una clase por uso definida en `fe/src/index.css` — nunca `h-*`/`w-*` sueltos en un ícono:
 

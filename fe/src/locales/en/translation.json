@@ -20,6 +20,7 @@
       "puntosAcopio": "Collection Points",
       "gestionarComunicados": "Announcements",
       "agenda": "Agenda",
+      "desempeno": "Performance",
       "comunicados": "Announcements",
       "aprenderGuias": "Learn to Recycle",
       "directorioGeneral": "General Directory",
@@ -976,6 +977,65 @@
     "errorLoad": "Couldn't load the audit.",
     "historialTitle": "Audit history",
     "historialEmpty": "No audits recorded yet."
+  },
+  "desempeno": {
+    "title": "Performance",
+    "subtitle": "How waste separation is going in your complex, week by week.",
+    "conjuntoTabs": "Complex",
+    "periodoLabel": "Period",
+    "periodoOpcion": "Last {{semanas}} weeks",
+    "noConjuntos": "You don't have any complexes assigned yet.",
+    "errorCarga": "Couldn't load the performance.",
+    "resumen": {
+      "auditorias": "Audits in the period",
+      "bueno": "Rated Good",
+      "buenoDetalle": "{{buenas}} of {{total}}",
+      "temaReforzar": "Topic to reinforce",
+      "temaReforzarDetalle": "Fair or Poor: {{cantidad}} of {{total}}",
+      "sinTemaReforzar": "None for now",
+      "ultimaAuditoria": "Latest audit",
+      "sinDato": "—"
+    },
+    "grafica": {
+      "titulo": "Audits per week",
+      "ayuda": "Each bar is one week (Monday to Sunday). The number inside each color is how many audits it has. Tap a bar to see its details.",
+      "leyenda": "Performance levels",
+      "verComoTabla": "View as table",
+      "verComoGrafica": "View as chart",
+      "enCurso": "current",
+      "rango": "{{desde}} to {{hasta}}",
+      "hastaLinea": "to {{hasta}}",
+      "descripcionBarra": "Week of {{desde}} to {{hasta}}: Good {{bueno}}, Fair {{regular}}, Poor {{malo}}",
+      "descripcionBarraEnCurso": "Current week, {{desde}} to {{hasta}}: Good {{bueno}}, Fair {{regular}}, Poor {{malo}}",
+      "tablaSemana": "Week",
+      "tablaTotal": "Total",
+      "tablaCaption": "Audits per week and level"
+    },
+    "pocosDatos": "There aren't enough audits yet to show the chart. It will appear once the complex has at least {{minimo}} audits in the last {{semanas}} weeks. Meanwhile, see the list below.",
+    "temas": {
+      "titulo": "Topics in the period",
+      "pista": "Sorted by how many audits were Fair or Poor. With little data this is a hint, not a conclusion.",
+      "regularOMalo": "Fair or Poor: {{cantidad}} of {{total}}",
+      "sinRegularNiMalo": "No Fair or Poor ({{total}})",
+      "columnaTema": "Topic",
+      "columnaRegularOMalo": "Fair or Poor",
+      "tablaCaption": "Audits per topic and level",
+      "verComoTabla": "View as table",
+      "verComoLista": "View as list",
+      "vacio": "There are no rated topics in this period yet."
+    },
+    "semana": {
+      "titulo": "Week of {{desde}} to {{hasta}}",
+      "tituloEnCurso": "Week of {{desde}} to {{hasta}} (current)",
+      "tituloPeriodo": "Audits in the period",
+      "cantidad_one": "{{count}} audit",
+      "cantidad_other": "{{count}} audits",
+      "vacia": "There are no audits this week yet.",
+      "vaciaPeriodo": "There are no audits in this period yet.",
+      "verDetalle": "View details",
+      "verDetalleDe": "View details of the audit on {{tema}}",
+      "errorCarga": "Couldn't load the audits."
+    }
   },
   "profile": {
     "title": "My profile",

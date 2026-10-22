@@ -20,6 +20,7 @@
       "puntosAcopio": "Puntos de Acopio",
       "gestionarComunicados": "Comunicados",
       "agenda": "Agenda",
+      "desempeno": "Desempeño",
       "comunicados": "Comunicados",
       "aprenderGuias": "Aprende a Reciclar",
       "directorioGeneral": "Directorio General",
@@ -980,6 +981,65 @@
     "errorLoad": "No se pudo cargar la auditoría.",
     "historialTitle": "Historial de auditorías",
     "historialEmpty": "Todavía no hay auditorías registradas."
+  },
+  "desempeno": {
+    "title": "Desempeño",
+    "subtitle": "Cómo va la separación de residuos de tu conjunto, semana a semana.",
+    "conjuntoTabs": "Conjunto",
+    "periodoLabel": "Período",
+    "periodoOpcion": "Últimas {{semanas}} semanas",
+    "noConjuntos": "Todavía no tienes conjuntos asignados.",
+    "errorCarga": "No se pudo cargar el desempeño.",
+    "resumen": {
+      "auditorias": "Auditorías del período",
+      "bueno": "Calificadas Bueno",
+      "buenoDetalle": "{{buenas}} de {{total}}",
+      "temaReforzar": "Tema a reforzar",
+      "temaReforzarDetalle": "Regular o Malo: {{cantidad}} de {{total}}",
+      "sinTemaReforzar": "Ninguno por ahora",
+      "ultimaAuditoria": "Última auditoría",
+      "sinDato": "—"
+    },
+    "grafica": {
+      "titulo": "Auditorías por semana",
+      "ayuda": "Cada barra es una semana (lunes a domingo). El número dentro de cada color es la cantidad de auditorías. Toca una barra para ver su detalle.",
+      "leyenda": "Niveles de desempeño",
+      "verComoTabla": "Ver como tabla",
+      "verComoGrafica": "Ver como gráfica",
+      "enCurso": "en curso",
+      "rango": "{{desde}} al {{hasta}}",
+      "hastaLinea": "al {{hasta}}",
+      "descripcionBarra": "Semana del {{desde}} al {{hasta}}: Bueno {{bueno}}, Regular {{regular}}, Malo {{malo}}",
+      "descripcionBarraEnCurso": "Semana en curso, del {{desde}} al {{hasta}}: Bueno {{bueno}}, Regular {{regular}}, Malo {{malo}}",
+      "tablaSemana": "Semana",
+      "tablaTotal": "Total",
+      "tablaCaption": "Auditorías por semana y nivel"
+    },
+    "pocosDatos": "Todavía no hay suficientes auditorías para mostrar la gráfica. Aparecerá cuando el conjunto tenga al menos {{minimo}} auditorías en las últimas {{semanas}} semanas. Mientras tanto, mira la lista de abajo.",
+    "temas": {
+      "titulo": "Temas del período",
+      "pista": "Ordenados por cuántas auditorías salieron Regular o Malo. Con pocos datos es una pista, no una conclusión.",
+      "regularOMalo": "Regular o Malo: {{cantidad}} de {{total}}",
+      "sinRegularNiMalo": "Sin Regular ni Malo ({{total}})",
+      "columnaTema": "Tema",
+      "columnaRegularOMalo": "Regular o Malo",
+      "tablaCaption": "Auditorías por tema y nivel",
+      "verComoTabla": "Ver como tabla",
+      "verComoLista": "Ver como lista",
+      "vacio": "Todavía no hay temas calificados en este período."
+    },
+    "semana": {
+      "titulo": "Semana del {{desde}} al {{hasta}}",
+      "tituloEnCurso": "Semana del {{desde}} al {{hasta}} (en curso)",
+      "tituloPeriodo": "Auditorías del período",
+      "cantidad_one": "{{count}} auditoría",
+      "cantidad_other": "{{count}} auditorías",
+      "vacia": "Todavía no hay auditorías en esta semana.",
+      "vaciaPeriodo": "Todavía no hay auditorías en este período.",
+      "verDetalle": "Ver detalle",
+      "verDetalleDe": "Ver detalle de la auditoría de {{tema}}",
+      "errorCarga": "No se pudieron cargar las auditorías."
+    }
   },
   "profile": {
     "title": "Mi perfil",
