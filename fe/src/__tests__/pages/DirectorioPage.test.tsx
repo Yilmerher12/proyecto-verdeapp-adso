@@ -111,4 +111,21 @@ describe("DirectorioPage", () => {
     await user.click(screen.getByRole("button", { name: "Recicladores" }));
     expect(screen.getByText("Tu localidad: Usaquén")).toBeInTheDocument();
   });
+
+  it("el panel de ECA aclara que son los puntos del dataset de 2020 y enlaza al inventario de la UAESP", async () => {
+    mockRespuestas({ nombreLocalidad: "Usaquén" });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Puntos de Acopio" }));
+
+    // ¿Qué? El panel ya no afirma que Bogotá solo tiene ECA en 6 de 20 localidades.
+    expect(await screen.findByText(/de marzo de 2020\. No son todas las ECA de Bogotá/)).toBeInTheDocument();
+    expect(screen.queryByText(/6 de sus 20/)).not.toBeInTheDocument();
+
+    expect(screen.getByRole("link", { name: /Ver fuente/ })).toHaveAttribute(
+      "href",
+      expect.stringContaining("Listado_Inventario_inicial_ECA_y_Bodegas_PR.pdf")
+    );
+  });
 });

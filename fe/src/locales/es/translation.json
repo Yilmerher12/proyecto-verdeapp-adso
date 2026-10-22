@@ -1111,7 +1111,7 @@
       "titulo": "¿Qué es una ECA?",
       "descripcion": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen en sus rutas.",
       "paraQueSirve": "Si necesitas entregar materiales reciclables por tu cuenta, aquí puedes ubicar el punto más cercano a tu localidad.",
-      "fuenteTexto": "Fuente: Datos Abiertos Bogotá (UAESP), dataset \"Aprovechamiento ECAS\". Bogotá solo tiene ECA registrada en 6 de sus 20 localidades.",
+      "fuenteTexto": "Los puntos que ves vienen del dataset \"Aprovechamiento ECAS\" de Datos Abiertos Bogotá (UAESP), de marzo de 2020. No son todas las ECA de Bogotá: el inventario de la UAESP registra muchas más.",
       "fuenteLink": "Ver fuente"
     }
   },

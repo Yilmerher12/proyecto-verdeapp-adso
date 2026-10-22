@@ -69,13 +69,14 @@ el futuro se agrega un mapa.
 - Se reemplazaron los 40 registros inventados de `seed_data.sql` por estos
   9, mapeados a su `id_localidad` real (ver `docs/gestion-proyecto/` o la
   tabla `localidades` para la numeración).
-- Las 14 localidades sin ECA registrada quedan sin ningún punto de acopio
-  en el directorio — es el dato real, no un error ni algo pendiente de
-  completar.
+- Las 14 localidades sin ECA en este dataset quedan sin ningún punto de
+  acopio en el directorio. No significa que no tengan ECA: es lo que
+  trae el dataset de 2020 (ver la actualización de abajo).
 - El aviso visible en el Directorio ya existe (panel "¿Qué es una ECA?",
-  `infoPuntos` en `fe/src/locales/{es,en}/translation.json`). Su texto "solo 6
-  de 20 localidades" describe este dataset de 2020, no la ciudad (ver la
-  actualización de abajo).
+  `infoPuntos` en `fe/src/locales/{es,en}/translation.json`). Desde el
+  issue #499 aclara que los puntos son los de este dataset de marzo de 2020
+  y no todas las ECA de la ciudad, y su enlace "Ver fuente" lleva al
+  inventario de la UAESP (el enlace al dataset de Datos Abiertos daba 404).
 
 ---
 

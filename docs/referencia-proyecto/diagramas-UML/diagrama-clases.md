@@ -527,7 +527,7 @@ Representa apartamentos o unidades habitacionales (torre + apto) dentro de un co
 
 ## PuntoAcopio
 
-Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — dato abierto de la UAESP, cubre 6 de 20 localidades de Bogotá. `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive.
+Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — dato abierto de la UAESP (dataset de marzo de 2020: 9 puntos en 6 de las 20 localidades; no son todas las ECA de Bogotá). `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive.
 
 ---
 
