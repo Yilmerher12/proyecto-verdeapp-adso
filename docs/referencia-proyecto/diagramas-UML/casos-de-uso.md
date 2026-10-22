@@ -631,7 +631,7 @@ Permite que un Residente, Reciclador o Admin_conjunto le envíe una novedad al A
 1. El usuario abre Novedades → "Escribir novedad", escribe el texto y lo envía.
 2. El sistema la guarda como NUEVA con los datos de la cuenta del autor.
 3. El Admin_sistema la ve en "Solicitudes pendientes" y la marca como vista.
-4. El autor ve en "Mis envíos" que fue vista.
+4. El autor ve en "Historial de novedades" que fue vista.
 
 ### Flujo Alternativo
 

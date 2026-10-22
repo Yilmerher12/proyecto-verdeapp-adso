@@ -50,7 +50,7 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 4. Si es un Admin de Conjunto con más de un conjunto, elige de cuál conjunto habla (o "Ninguno en particular").
 5. Al presionar "Enviar consulta", el sistema guarda la novedad en estado **NUEVA**, con el conjunto que corresponde (RN-003), y muestra "Consulta enviada. El Administrador del Sistema la revisará."
 
-**Motivos de consulta.** El motivo **no es un campo aparte**: la pantalla arma el `texto` de la novedad con el motivo elegido (o `Otros: <comentario>` con Otros). Por eso la bandeja del Administrador del Sistema y "Mis envíos" muestran el motivo dentro del texto, sin cambios. La lista está fija en la aplicación (`fe/src/components/NovedadesEnviadas.tsx` y las claves `novedadesEnviadas.motivos` de `es` y `en`); nadie la edita desde la app.
+**Motivos de consulta.** El motivo **no es un campo aparte**: la pantalla arma el `texto` de la novedad con el motivo elegido (o `Otros: <comentario>` con Otros). Por eso la bandeja del Administrador del Sistema y "Historial de novedades" muestran el motivo dentro del texto, sin cambios. La lista está fija en la aplicación (`fe/src/components/NovedadesEnviadas.tsx` y las claves `novedadesEnviadas.motivos` de `es` y `en`); nadie la edita desde la app.
 
 | Rol | Motivos propios |
 | --- | --- |
@@ -60,9 +60,9 @@ El Administrador del Sistema recibe esas novedades en la bandeja **"Solicitudes 
 
 Motivos comunes a los tres: no puedo iniciar sesión o recuperar mi contraseña · no me llegan los correos o las notificaciones · un dato de mi cuenta está mal · algo no carga o la aplicación muestra un error · la información de un punto de acopio o del contenido educativo es incorrecta · tengo una sugerencia para mejorar VerdeApp.
 
-### Flujo B — Ver mis envíos
+### Flujo B — Ver el historial de novedades
 
-1. En la sub-pestaña **"Mis envíos"**, el autor ve sus novedades, de la más reciente a la más antigua, con su estado: "Enviada" (NUEVA) o "Vista por el Admin del Sistema" (VISTA). Se muestra de a 10 por página.
+1. En la sub-pestaña **"Historial de novedades"**, el autor ve sus novedades, de la más reciente a la más antigua, con su estado: "Enviada" (NUEVA) o "Vista por el Admin del Sistema" (VISTA). Se muestra de a 10 por página.
 
 ### Flujo C — Revisar la bandeja (Administrador del Sistema)
 
@@ -90,7 +90,7 @@ Motivos comunes a los tres: no puedo iniciar sesión o recuperar mi contraseña 
 | Escenario                                      | Código HTTP | Respuesta                                                          |
 | ----------------------------------------------- | ----------- | -------------------------------------------------------------------- |
 | Novedad enviada                                 | 201         | `{"message": "Novedad enviada. El Administrador del Sistema la revisará."}` (el servicio no cambió; la pantalla muestra "Consulta enviada. El Administrador del Sistema la revisará.") |
-| Mis envíos                                      | 200         | `{items, total}`, con `items` = (`id`, `texto`, `url_imagen`, `estado`, `nombre_conjunto`, `created_at`) |
+| Historial de novedades                          | 200         | `{items, total}`, con `items` = (`id`, `texto`, `url_imagen`, `estado`, `nombre_conjunto`, `created_at`) |
 | Ya tengo 10 novedades sin ver (RN-009)           | 409         | `{"detail": "Ya tienes 10 novedades sin revisar. Espera a que el Administrador del Sistema las revise para enviar más."}` |
 | El Admin Sistema intenta enviar una novedad     | 403         | `{"detail": "Tu rol no puede enviar novedades."}`                    |
 | Admin de Conjunto elige un conjunto que no es suyo | 403      | `{"detail": "No tienes permiso sobre este conjunto."}`               |
@@ -124,7 +124,7 @@ Código: `be/app/routers/novedades_enviadas.py`, `be/app/routers/admin_conjunto.
 - RN-006: Si se borra la cuenta del autor o el conjunto, la novedad se conserva sin ese dato (`ON DELETE SET NULL`); en la bandeja aparece como "Usuario eliminado".
 - RN-007: `url_imagen` solo acepta una imagen subida a VerdeApp, con el formato exacto que genera la subida (`/uploads/adjuntos/<uuid>.jpg|png|webp`); cualquier otro formato, incluido un enlace `https://` externo, responde 422 (issue #399, hallazgo CN-049: la pantalla solo sube archivos, pero la API se podía llamar a mano con un enlace externo que el Admin Sistema abre desde su bandeja). El frontend aplica la misma regla al mostrar el enlace (`fe/src/lib/enlaceSeguro.ts`), así un dato viejo con otro formato no se muestra. Corregido en el issue #369 (hallazgo CN-041): antes un enlace como `@sitio-malo.com` llevaba al Administrador del Sistema a otro sitio. Desde el issue #400 (hallazgo CN-052), una ruta `/uploads/...` tampoco puede contener `..`, `%2e` ni `%2f`, en el backend ni en el frontend.
 - RN-008: Corregido en el issue #372 (hallazgos CN-042/044/045): el envío acepta máximo 10 novedades por minuto (la siguiente responde 429); la bandeja se entrega paginada (`limit` de 1 a 100, por defecto 10, y `offset`); un `tipo` distinto de `DESVINCULACION` o `NOVEDAD` responde 422 al listar y al resolver; y si la cuenta del autor no tiene su perfil de Residente o de Admin de Conjunto, el envío responde 404 con un mensaje claro en vez de un error 500.
-- RN-009: Issue #399 (hallazgo CN-054): cada cuenta puede tener como máximo **10 novedades en estado NUEVA** a la vez (la 11.ª responde 409). No cuenta el tiempo: cuando el Administrador del Sistema marca alguna como vista, el autor vuelve a poder enviar. La bandeja y "Mis envíos" cortan la página en la base de datos (`LIMIT/OFFSET`, con `UNION ALL` de las dos tablas en la bandeja) y cargan los datos del autor, la unidad y el conjunto en consultas fijas, así que el número de consultas no crece con la cantidad de novedades.
+- RN-009: Issue #399 (hallazgo CN-054): cada cuenta puede tener como máximo **10 novedades en estado NUEVA** a la vez (la 11.ª responde 409). No cuenta el tiempo: cuando el Administrador del Sistema marca alguna como vista, el autor vuelve a poder enviar. La bandeja y "Historial de novedades" cortan la página en la base de datos (`LIMIT/OFFSET`, con `UNION ALL` de las dos tablas en la bandeja) y cargan los datos del autor, la unidad y el conjunto en consultas fijas, así que el número de consultas no crece con la cantidad de novedades.
 
 ---
 

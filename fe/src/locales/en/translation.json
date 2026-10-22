@@ -1432,9 +1432,9 @@
     "errorDefault": "The invitation could not be sent. Check the details and try again."
   },
   "novedadesEnviadas": {
-    "tabReceived": "Support notices",
+    "tabReceived": "System notices",
     "tabWrite": "Write a news item",
-    "tabMine": "My submissions",
+    "tabMine": "News history",
     "formTitle": "Tell the VerdeApp team",
     "formHint": "Choose the reason for your request. It reaches the System Administrator with your details (name, building and unit): you don't have to type them.",
     "motivoLegend": "What is your request about?",

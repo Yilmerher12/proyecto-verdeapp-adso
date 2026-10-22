@@ -1436,9 +1436,9 @@
     "errorDefault": "No se pudo enviar la invitación. Verifica los datos e intenta de nuevo."
   },
   "novedadesEnviadas": {
-    "tabReceived": "Avisos de soporte",
+    "tabReceived": "Avisos del sistema",
     "tabWrite": "Escribir novedad",
-    "tabMine": "Mis envíos",
+    "tabMine": "Historial de novedades",
     "formTitle": "Cuéntale al equipo de VerdeApp",
     "formHint": "Elige el motivo de tu consulta. Le llega al Administrador del Sistema con tus datos (nombre, conjunto y unidad): no tienes que escribirlos.",
     "motivoLegend": "¿Sobre qué es tu consulta?",

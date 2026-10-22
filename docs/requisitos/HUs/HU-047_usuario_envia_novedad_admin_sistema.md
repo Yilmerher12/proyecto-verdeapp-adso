@@ -65,10 +65,10 @@
 - **cuando** escribo una novedad,
 - **entonces** puedo elegir de cuál conjunto hablo, o "Ninguno en particular". Si administro uno solo, la novedad queda asociada a ese conjunto sin preguntarme.
 
-### CA-047.4 — Ver mis envíos y su estado
+### CA-047.4 — Ver el historial de novedades y su estado
 
 - **Dado que** ya envié novedades,
-- **cuando** abro "Mis envíos",
+- **cuando** abro "Historial de novedades",
 - **entonces** veo mis novedades de la más reciente a la más antigua, cada una con su estado: "Enviada" o "Vista por el Admin del Sistema".
 - **y** si todavía no envié ninguna, veo "Todavía no has enviado ninguna novedad."
 - **y** la lista se muestra de a 10 por página, con la paginación debajo (issue #399).

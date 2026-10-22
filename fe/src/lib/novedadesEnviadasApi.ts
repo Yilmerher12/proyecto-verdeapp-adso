@@ -29,7 +29,7 @@ export interface PaginaDeNovedadesEnviadas {
   total: number;
 }
 
-// ¿Qué? Issue #399 — "Mis envíos" se pide de a páginas (limit/offset), igual
+// ¿Qué? Issue #399 — "Historial de novedades" se pide de a páginas (limit/offset), igual
 //       que la bandeja del Admin Sistema y los comunicados.
 export async function misNovedadesEnviadas(
   limit: number,

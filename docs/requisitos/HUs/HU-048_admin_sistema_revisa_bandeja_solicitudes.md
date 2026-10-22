@@ -58,7 +58,7 @@
 
 - **Dado que** leí una novedad,
 - **cuando** presiono "Marcar como vista",
-- **entonces** sale de la bandeja y su autor la ve como "Vista por el Admin del Sistema" en "Mis envíos". Una novedad no se aprueba ni se rechaza.
+- **entonces** sale de la bandeja y su autor la ve como "Vista por el Admin del Sistema" en "Historial de novedades". Una novedad no se aprueba ni se rechaza.
 
 ### CA-048.5 — Resolver una desvinculación
 
