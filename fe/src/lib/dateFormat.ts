@@ -39,16 +39,31 @@ export function isoToDateInputUTC(iso: string): string {
 }
 
 // ¿Qué? El lunes (en UTC) de la semana que contiene esta fecha, en formato
-//       YYYY-MM-DD — mismo criterio UTC del resto de este archivo, para que
-//       coincida con cómo el backend recorta la semana
-//       (GET /auditorias-conjunto/admin?lunes=, RQF-009).
+//       YYYY-MM-DD. Son cuentas de calendario: sirve para moverse entre lunes
+//       ya elegidos, no para saber qué semana es "hoy" en Colombia (para eso,
+//       lunesBogota).
 // ¿Para qué? El panel de "Calificaciones por conjunto" navega semana a
-//           semana; este lunes es justo lo que se manda como parámetro.
+//           semana; este lunes es justo lo que se manda como parámetro
+//           (GET /auditorias-conjunto/admin?lunes=, RQF-009).
 export function lunesUTC(fecha: Date = new Date()): string {
   const dia = fecha.getUTCDay(); // 0 domingo .. 6 sábado
   const offset = (dia + 6) % 7; // lunes = 0 días de diferencia
   const lunes = new Date(Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth(), fecha.getUTCDate() - offset));
   return isoToDateInputUTC(lunes.toISOString());
+}
+
+// ¿Qué? El lunes de la semana en curso EN HORA DE BOGOTÁ (UTC-5, sin horario de
+//       verano), en formato YYYY-MM-DD. Se resta el desfase al instante y luego se
+//       usa lunesUTC, que solo hace cuentas de calendario.
+// ¿Para qué? El backend corta la semana de las auditorías en hora de Bogotá (issue
+//           #486): el domingo a las 9:00 p. m. en Bogotá ya es lunes en UTC, y con
+//           lunesUTC() la pantalla del Admin del Sistema daría por empezada la semana
+//           siguiente cinco horas antes que el servidor.
+// ¿Impacto? Es solo para decidir "cuál es la semana de hoy". Navegar de una semana a otra
+//           sigue siendo cuenta de calendario (lunesUTC con fechas ya elegidas).
+const DESFASE_BOGOTA_MS = -5 * 60 * 60 * 1000;
+export function lunesBogota(ahora: Date = new Date()): string {
+  return lunesUTC(new Date(ahora.getTime() + DESFASE_BOGOTA_MS));
 }
 
 // ¿Qué? El domingo que le corresponde a un lunes dado (mismo par que usa

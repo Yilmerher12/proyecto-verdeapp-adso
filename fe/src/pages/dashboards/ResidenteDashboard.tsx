@@ -18,7 +18,7 @@ import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias"
 import { PanelDesempeno } from "@/components/desempeno/PanelDesempeno";
 import { SEMANAS_POR_DEFECTO } from "@/config/desempeno";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
-import { obtenerAuditoria } from "@/lib/auditoriaConjuntoApi";
+import { listarHistorial, obtenerAuditoria } from "@/lib/auditoriaConjuntoApi";
 import { obtenerContenido } from "@/lib/contenidoEducativoApi";
 
 interface EstadoShut {
@@ -277,7 +277,7 @@ export function ResidenteDashboard() {
         <PanelDesempeno semanas={SEMANAS_POR_DEFECTO} />
       </section>
 
-      <HistorialAuditorias />
+      <HistorialAuditorias cargar={listarHistorial} />
     </div>
   );
 }

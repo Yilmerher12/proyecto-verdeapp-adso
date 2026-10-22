@@ -14,7 +14,6 @@ import {
   PackageCheck,
   DoorOpen,
   ClipboardList,
-  History,
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
@@ -22,16 +21,14 @@ import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
 import type { NotificacionItem } from "@/lib/notificaciones";
-import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
+import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
 import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
-import { listarMisAuditorias, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
-import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { formatearFechaCreacion } from "@/lib/dateFormat";
+import { listarMisAuditorias, listarUltimasAuditorias } from "@/lib/auditoriaConjuntoApi";
 
 // ¿Qué? Cada cuántos días se le vuelve a sugerir al reciclador auditar el
 //       mismo conjunto. Ver issue #5: se decidió semanal porque no todos
@@ -147,7 +144,11 @@ export function RecicladorDashboard() {
   //       notificación que se ve apagado (bloqueado) en vez de abrir el modal.
   const [avisoBoton, mostrarAvisoBoton] = useAvisoTemporal<string>();
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
-  const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
+  // ¿Qué? Fecha (ISO) de la última auditoría de este reciclador en cada conjunto, por id de conjunto.
+  // ¿Para qué? Calcular el aviso "necesita auditoría" sin depender de la lista paginada del historial.
+  const [ultimasAuditorias, setUltimasAuditorias] = useState<Record<string, string>>({});
+  // ¿Qué? Sube al enviar una auditoría; HistorialAuditorias vuelve a pedir su página al cambiar.
+  const [versionHistorial, setVersionHistorial] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(false);
   const [errorAccion, setErrorAccion] = useState(false);
@@ -163,7 +164,6 @@ export function RecicladorDashboard() {
   // Formulario de auditoría (RQF-009)
   const [conjuntoParaAuditar, setConjuntoParaAuditar] = useState<string | null>(null);
   const [feedbackAuditoria, mostrarFeedbackAuditoria] = useAvisoTemporal<string>();
-  const [auditoriaAbierta, setAuditoriaAbierta] = useState<string | null>(null);
 
   // ¿Qué? Issue #406 — allSettled en vez de all: cada una de las 5 peticiones
   //       guarda su resultado por separado.
@@ -178,16 +178,18 @@ export function RecicladorDashboard() {
       axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-invitaciones`),
       axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-conjuntos-autorizados`),
       axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`),
-      listarMisAuditorias(),
+      listarUltimasAuditorias(),
       // ¿Qué? Estado de presencia por conjunto — issue de "control de
       //       notificaciones del reciclador según si está en el conjunto".
       axios.get(`${API_BASE_URL}/api/v1/notificaciones/mi-estado-reciclador`),
     ])
-      .then(([resInv, resConj, resNotifs, misAuditorias, resEstado]) => {
+      .then(([resInv, resConj, resNotifs, ultimas, resEstado]) => {
         if (resInv.status === "fulfilled") setInvitaciones(resInv.value.data);
         if (resConj.status === "fulfilled") setConjuntosAutorizados(resConj.value.data);
         if (resNotifs.status === "fulfilled") setNotificaciones(resNotifs.value.data);
-        if (misAuditorias.status === "fulfilled") setAuditorias(misAuditorias.value);
+        if (ultimas.status === "fulfilled") {
+          setUltimasAuditorias(Object.fromEntries(ultimas.value.map((u) => [u.id_conjunto_residencial, u.ultima_auditoria])));
+        }
         if (resEstado.status === "fulfilled") setEstadoReciclador(resEstado.value.data);
         // ¿Qué? Antes un .catch(() => {}) vacío no dejaba ningún rastro de que
         //       algo falló — el dashboard se quedaba tal cual, sin avisar.
@@ -195,7 +197,7 @@ export function RecicladorDashboard() {
         //           corre cada 20s (polling), el aviso desaparece solo en
         //           cuanto una siguiente carga sí funcione.
         setErrorCarga(
-          [resInv, resConj, resNotifs, misAuditorias, resEstado].some((r) => r.status === "rejected")
+          [resInv, resConj, resNotifs, ultimas, resEstado].some((r) => r.status === "rejected")
         );
       })
       .finally(() => setCargando(false));
@@ -301,9 +303,8 @@ export function RecicladorDashboard() {
   //           corriendo en segundo plano), se calcula al cargar el panel —
   //           mismo resultado para el usuario, sin infraestructura nueva.
   const necesitaAuditoria = (idConjunto: string): boolean => {
-    const delConjunto = auditorias.filter((a) => a.id_conjunto_residencial === idConjunto);
-    if (delConjunto.length === 0) return true;
-    const masReciente = delConjunto[0].created_at; // el backend ya las ordena más reciente primero
+    const masReciente = ultimasAuditorias[idConjunto];
+    if (!masReciente) return true;
     const dias = (Date.now() - new Date(masReciente).getTime()) / (1000 * 60 * 60 * 24);
     return dias >= DIAS_ENTRE_AUDITORIAS;
   };
@@ -315,6 +316,7 @@ export function RecicladorDashboard() {
   const alEnviarAuditoria = () => {
     setConjuntoParaAuditar(null);
     mostrarFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
+    setVersionHistorial((v) => v + 1);
     cargarDatos();
   };
 
@@ -538,61 +540,14 @@ export function RecicladorDashboard() {
         )}
       </div>
 
-      {/* ¿Qué? Historial de las auditorías que YO envié — antes el
-             reciclador no tenía forma de volver a ver una auditoría
-             pasada, a diferencia de Residente/Admin de Conjunto que sí
-             tienen esta misma sección para las de su conjunto.
-          ¿Para qué? Reutiliza los datos que ya se cargan para calcular el
-                    aviso de "auditoría pendiente" (auditorias, arriba) —
-                    no dispara una petición nueva. */}
-      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <History className="icon-md text-gray-500 dark:text-gray-400" />
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
-        </div>
-
-        {cargando ? (
-          <LoadingState message={t("common.loading")} />
-        ) : auditorias.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("auditoriaResultado.historialEmpty")}</p>
-        ) : (
-          <ul className="divide-y divide-gray-50 dark:divide-gray-800">
-            {auditorias.map((a) => {
-              const nivel = NIVELES_DESEMPENO[a.nivel_desempeno];
-              return (
-                <li key={a.id_auditoria}>
-                  <button
-                    onClick={() => setAuditoriaAbierta(a.id_auditoria)}
-                    className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-night-inset/60"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm text-gray-800 dark:text-gray-200">
-                        {a.nombre_conjunto} — {a.tema_educativo}
-                      </p>
-                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        {formatearFechaCreacion(a.created_at)}
-                      </p>
-                    </div>
-                    <span
-                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold ${nivel.claseBadge}`}
-                    >
-                      <nivel.icon className="icon-sm" />
-                      {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        {auditoriaAbierta && (
-          <AuditoriaResultadoModal
-            idAuditoria={auditoriaAbierta}
-            onClose={() => setAuditoriaAbierta(null)}
-          />
-        )}
-      </div>
+      {/* ¿Qué? Historial de las auditorías que YO envié, de a páginas — antes el
+             reciclador no tenía forma de volver a ver una auditoría pasada, a
+             diferencia de Residente/Admin de Conjunto que sí tienen esta misma
+             sección para las de su conjunto.
+          ¿Para qué? Es el mismo componente del Residente (HistorialAuditorias), con
+                    otra fuente de datos. El aviso de "auditoría pendiente" ya no sale
+                    de esta lista sino de ultimasAuditorias (una fecha por conjunto). */}
+      <HistorialAuditorias cargar={listarMisAuditorias} mostrarSiempreElConjunto recargar={versionHistorial} />
 
       {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) */}
       {cargando ? (

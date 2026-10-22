@@ -48,3 +48,11 @@
 - **Dado que** mi conjunto nunca ha sido calificado,
 - **cuando** entro a la sección,
 - **entonces** debo ver un mensaje indicando que todavía no hay calificaciones registradas.
+
+### CA-011.4 — Muchas calificaciones
+
+- **Dado que** mi conjunto tiene más de 10 calificaciones,
+- **cuando** entro a la sección,
+- **entonces** veo las 10 más recientes y, debajo, "Mostrando 1–10 de N" con flechas para pasar de página; ninguna calificación se queda fuera de la lista.
+
+> **Implementado**: antes la lista traía solo las 50 más recientes y cortaba el resto sin avisar. Ahora `GET /auditorias-conjunto/historial` recibe `limit` y `offset` y responde `{items, total}` (ver RQF-009). Con 10 calificaciones o menos no se muestra la barra de páginas.

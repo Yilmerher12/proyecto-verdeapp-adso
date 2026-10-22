@@ -291,7 +291,7 @@ def obtener_por_id(db: Session, current_user: Usuario, id_auditoria: UUID) -> Au
     return auditoria
 
 
-def _conjuntos_del_usuario(db: Session, current_user: Usuario) -> list[int]:
+def _conjuntos_del_usuario(db: Session, current_user: Usuario) -> list[UUID]:
     """
     ¿Qué? A qué conjunto(s) pertenece quien pregunta — un Residente vive en
           uno solo; un Admin de Conjunto puede administrar varios a la vez.
@@ -320,41 +320,57 @@ def _conjuntos_del_usuario(db: Session, current_user: Usuario) -> list[int]:
     return []
 
 
-def listar_historial(db: Session, current_user: Usuario) -> list[AuditoriaConjunto]:
+def _pagina_de_auditorias(
+    db: Session, condiciones: list, limit: int, offset: int
+) -> tuple[list[AuditoriaConjunto], int]:
     """
-    ¿Qué? Todas las auditorías de el/los conjunto(s) del usuario en sesión,
-          más recientes primero — a diferencia de la notificación
+    ¿Qué? Una página de auditorías (más recientes primero) y cuántas hay en total
+          con esas condiciones.
+    ¿Para qué? Lo comparten las listas de auditorías que pueden crecer
+              (listar_historial del Residente y listar_mias del Reciclador): la
+              pantalla pide de a pocas y muestra "de la X a la Y de Z", en vez de
+              un tope fijo que cortaba el resto sin avisar.
+    ¿Impacto? Se desempata por orden_interno (contador interno siempre creciente,
+              nunca expuesto en la API) además de created_at: dentro de una misma
+              transacción, NOW() de Postgres devuelve el mismo valor para varias
+              inserciones seguidas, así que created_at solo no basta, y sin un
+              orden estable una auditoría podría repetirse o saltarse al cambiar
+              de página. selectinload evita 2 consultas extra por auditoría
+              (conjunto y reciclador), que _a_response() lee por cada fila.
+    """
+    total = db.execute(select(func.count()).select_from(AuditoriaConjunto).where(*condiciones)).scalar_one()
+    stmt = (
+        select(AuditoriaConjunto)
+        .where(*condiciones)
+        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
+        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
+        .limit(limit)
+        .offset(offset)
+    )
+    return list(db.execute(stmt).scalars().all()), total
+
+
+def listar_historial(
+    db: Session, current_user: Usuario, limit: int, offset: int
+) -> tuple[list[AuditoriaConjunto], int]:
+    """
+    ¿Qué? Las auditorías de el/los conjunto(s) del usuario en sesión, más recientes
+          primero y de a páginas — a diferencia de la notificación
           AUDITORIA_PUBLICADA (que se pierde al marcarla leída), esto queda
           siempre consultable.
     ¿Para qué? Issue #5: un Residente o Admin de Conjunto debe poder volver
               a ver auditorías pasadas, no solo la más reciente que le avisó
               una notificación.
+    ¿Impacto? Antes devolvía como máximo las 50 más recientes, sin avisar que
+              faltaban las demás. El segundo valor es el total, para que la
+              pantalla sepa cuántas páginas hay.
     """
     ids_conjuntos = _conjuntos_del_usuario(db, current_user)
     if not ids_conjuntos:
-        return []
-
-    # ¿Qué? Issue #2 (hallazgo B2 de la auditoría) — auditoria.conjunto y
-    #       auditoria.reciclador son lazy="select" (default de SQLAlchemy):
-    #       _a_response() (routers/auditoria_conjunto.py) los lee por cada
-    #       fila, disparando 2 consultas extra por auditoría sin selectinload.
-    stmt = (
-        select(AuditoriaConjunto)
-        .where(AuditoriaConjunto.id_conjunto_residencial.in_(ids_conjuntos))
-        # ¿Qué? Se desempata por orden_interno (contador interno siempre
-        #       creciente, nunca expuesto en la API) además de created_at
-        #       — dentro de una misma transacción, NOW() de Postgres
-        #       devuelve el mismo valor para varias inserciones seguidas,
-        #       así que created_at solo no basta para el orden. Antes se
-        #       usaba id_auditoria para esto (funcionaba porque UUIDv7
-        #       ordena cronológicamente), pero con UUIDv4 (issue #167) el
-        #       ID ya no sirve como desempate — ver orden_interno en el
-        #       modelo.
-        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
-        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
-        .limit(50)
+        return [], 0
+    return _pagina_de_auditorias(
+        db, [AuditoriaConjunto.id_conjunto_residencial.in_(ids_conjuntos)], limit, offset
     )
-    return list(db.execute(stmt).scalars().all())
 
 
 SEMANAS_POR_DEFECTO = 8
@@ -382,7 +398,7 @@ def _resolver_conjunto(db: Session, current_user: Usuario, id_conjunto: UUID | N
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No perteneces a ningún conjunto.")
     if len(ids_conjuntos) > 1:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Administras varios conjuntos: indica cuál con id_conjunto.",
         )
     return ids_conjuntos[0]
@@ -466,7 +482,7 @@ def auditorias_de_semana(
     """
     id_conjunto = _resolver_conjunto(db, current_user, id_conjunto)
     if lunes.weekday() != 0:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="La fecha debe ser un lunes.")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="La fecha debe ser un lunes.")
 
     desde = _inicio_dia_bogota(lunes)
     stmt = (
@@ -509,11 +525,12 @@ def listar_admin(
           sin importar a qué conjunto pertenecen, a diferencia de
           listar_historial (acotado al conjunto de quien pregunta).
     ¿Para qué? Con `lunes`, se acota a esa semana completa: desde la
-              medianoche UTC de ese lunes hasta la medianoche UTC del lunes
-              siguiente (sin exigirlo) — misma convención UTC que ya usa el
-              resto de la app para fechas (ver formatearFechaUTC en
-              fe/src/lib/dateFormat.ts), sin sumarle conversión de huso
-              horario aparte. Sin `lunes`, trae las más recientes de
+              medianoche de Bogotá de ese lunes hasta la medianoche de Bogotá
+              del lunes siguiente (sin exigirlo) — la misma semana que ya usan
+              el desempeño del Admin de Conjunto y del Residente
+              (desempeno_semanal). Antes se cortaba en UTC: una auditoría del
+              domingo a las 9:00 p. m. en Bogotá ya es lunes en UTC y caía en
+              la semana siguiente. Sin `lunes`, trae las más recientes de
               cualquier semana — así el catálogo educativo puede armar "a
               qué conjuntos se le recomendó este módulo" sin acotarlo a una
               sola semana.
@@ -523,7 +540,7 @@ def listar_admin(
     """
     condiciones = []
     if lunes is not None:
-        desde = datetime(lunes.year, lunes.month, lunes.day, tzinfo=timezone.utc)
+        desde = _inicio_dia_bogota(lunes)
         condiciones.append(AuditoriaConjunto.created_at >= desde)
         condiciones.append(AuditoriaConjunto.created_at < desde + timedelta(days=7))
 
@@ -544,16 +561,34 @@ def listar_admin(
     return auditorias, total, avisados_por_auditoria
 
 
-def listar_mias(db: Session, id_usuario_reciclador: UUID) -> list[AuditoriaConjunto]:
-    """¿Qué? Auditorías ya enviadas por este reciclador, más recientes primero.
-    ¿Para qué? El frontend las usa para saber cuándo fue la última auditoría
-              de cada conjunto y así mostrar (o no) el aviso de "ya puedes
-              auditar de nuevo" (ver issue #5: cadencia semanal)."""
+def listar_mias(
+    db: Session, id_usuario_reciclador: UUID, limit: int, offset: int
+) -> tuple[list[AuditoriaConjunto], int]:
+    """¿Qué? Auditorías ya enviadas por este reciclador, más recientes primero y de a páginas.
+    ¿Para qué? Es su historial en el panel. Antes devolvía todas, sin tope, y
+              además servía para calcular el aviso "ya puedes auditar de
+              nuevo": ese cálculo ahora usa ultimas_por_conjunto, porque con
+              páginas la lista ya no trae la última auditoría de cada conjunto."""
     reciclador = _obtener_reciclador(db, id_usuario_reciclador)
-    stmt = (
-        select(AuditoriaConjunto)
-        .where(AuditoriaConjunto.id_reciclador == reciclador.id_reciclador)
-        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
-        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
+    return _pagina_de_auditorias(
+        db, [AuditoriaConjunto.id_reciclador == reciclador.id_reciclador], limit, offset
     )
-    return list(db.execute(stmt).scalars().all())
+
+
+def ultimas_por_conjunto(db: Session, id_usuario_reciclador: UUID) -> list[tuple[UUID, datetime]]:
+    """
+    ¿Qué? Por cada conjunto que este reciclador ya auditó, la fecha de su última auditoría.
+    ¿Para qué? El panel del Reciclador muestra el aviso "este conjunto necesita
+              auditoría" cuando la última tiene 7 días o más (cadencia semanal,
+              issue #5). Una consulta agrupada devuelve una fila por conjunto
+              (no una por auditoría), así que no crece con el historial.
+    ¿Impacto? Un conjunto nunca auditado no aparece: la pantalla lo trata como
+              "necesita auditoría". Solo cuenta las auditorías de este reciclador.
+    """
+    reciclador = _obtener_reciclador(db, id_usuario_reciclador)
+    filas = db.execute(
+        select(AuditoriaConjunto.id_conjunto_residencial, func.max(AuditoriaConjunto.created_at))
+        .where(AuditoriaConjunto.id_reciclador == reciclador.id_reciclador)
+        .group_by(AuditoriaConjunto.id_conjunto_residencial)
+    ).all()
+    return [(id_conjunto, ultima) for id_conjunto, ultima in filas]

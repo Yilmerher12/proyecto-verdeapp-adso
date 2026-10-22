@@ -64,8 +64,29 @@ export async function crearAuditoria(
   return data;
 }
 
-export async function listarMisAuditorias(): Promise<AuditoriaConjunto[]> {
-  const { data } = await axios.get(`${API_BASE}/mias`);
+// ¿Qué? Una página de auditorías con el total que hay (limit/offset en el servidor).
+// ¿Para qué? Las listas que pueden crecer ya no traen todo ni se cortan en un tope fijo.
+export interface PaginaAuditorias {
+  items: AuditoriaConjunto[];
+  total: number;
+}
+
+// ¿Qué? Las auditorías que el Reciclador ya envió, de a páginas, más recientes primero.
+export async function listarMisAuditorias(limit: number, offset: number): Promise<PaginaAuditorias> {
+  const { data } = await axios.get(`${API_BASE}/mias`, { params: { limit, offset } });
+  return data;
+}
+
+export interface UltimaAuditoria {
+  id_conjunto_residencial: string;
+  ultima_auditoria: string;
+}
+
+// ¿Qué? Por cada conjunto que el Reciclador ya auditó, la fecha de su última auditoría.
+// ¿Para qué? El aviso "este conjunto necesita auditoría" (a los 7 días): con la lista paginada
+//           ya no basta con mirar la primera página, que puede no incluir ese conjunto.
+export async function listarUltimasAuditorias(): Promise<UltimaAuditoria[]> {
+  const { data } = await axios.get(`${API_BASE}/mias/ultimas`);
   return data;
 }
 
@@ -76,19 +97,19 @@ export async function obtenerAuditoria(idAuditoria: string): Promise<AuditoriaCo
   return data;
 }
 
-// ¿Qué? Todas las auditorías de el/los conjunto(s) del usuario en sesión —
+// ¿Qué? Las auditorías de el/los conjunto(s) del usuario en sesión, de a páginas —
 //       a diferencia de la notificación (que se pierde al marcarla leída),
 //       esto queda siempre consultable. El backend resuelve solo a qué
 //       conjunto(s) pertenece: un Residente o Admin de Conjunto, sin pasar
 //       ningún id.
-export async function listarHistorial(): Promise<AuditoriaConjunto[]> {
-  const { data } = await axios.get(`${API_BASE}/historial`);
+export async function listarHistorial(limit: number, offset: number): Promise<PaginaAuditorias> {
+  const { data } = await axios.get(`${API_BASE}/historial`, { params: { limit, offset } });
   return data;
 }
 
 // ¿Qué? Conteos de auditorías de UN conjunto por semana y por tema (issue #486).
 // ¿Para qué? La gráfica de desempeño solo dibuja estos números: el backend ya
-//           los cuenta (sin el tope de 50 de /historial) y con la semana de
+//           los cuenta (sin depender de una página de /historial) y con la semana de
 //           lunes a domingo en hora de Bogotá.
 // ¿Impacto? `lunes` es una fecha de calendario (YYYY-MM-DD), no un instante:
 //           no se convierte de zona horaria.

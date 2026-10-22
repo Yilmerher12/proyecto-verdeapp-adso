@@ -99,10 +99,11 @@ class TestListado:
         self, client: TestClient, admin_sistema_auth_headers, db, reciclador_test, conjunto_verificado
     ):
         reciclador = db.query(Reciclador).filter_by(id_usuario=reciclador_test.id_usuario).one()
-        # Semana del lunes 14 al domingo 20 de septiembre de 2026.
-        dentro = _crear_auditoria(db, reciclador, conjunto_verificado, creado=datetime(2026, 9, 20, 23, 59, tzinfo=timezone.utc))
-        justo_fuera = _crear_auditoria(db, reciclador, conjunto_verificado, creado=datetime(2026, 9, 21, 0, 0, tzinfo=timezone.utc))
-        antes = _crear_auditoria(db, reciclador, conjunto_verificado, creado=datetime(2026, 9, 13, 23, 59, tzinfo=timezone.utc))
+        # ¿Qué? Semana del lunes 14 al domingo 20 de septiembre de 2026, en hora de Bogotá (UTC-5):
+        #       empieza el lunes 14 a las 05:00 UTC y termina el lunes 21 a las 05:00 UTC.
+        dentro = _crear_auditoria(db, reciclador, conjunto_verificado, creado=datetime(2026, 9, 21, 4, 59, tzinfo=timezone.utc))
+        justo_fuera = _crear_auditoria(db, reciclador, conjunto_verificado, creado=datetime(2026, 9, 21, 5, 0, tzinfo=timezone.utc))
+        antes = _crear_auditoria(db, reciclador, conjunto_verificado, creado=datetime(2026, 9, 14, 4, 59, tzinfo=timezone.utc))
 
         response = client.get(URL, headers=admin_sistema_auth_headers, params={"lunes": "2026-09-14"})
         assert response.status_code == 200
@@ -110,6 +111,22 @@ class TestListado:
         assert str(dentro.id_auditoria) in ids
         assert str(justo_fuera.id_auditoria) not in ids
         assert str(antes.id_auditoria) not in ids
+
+    def test_domingo_9pm_en_bogota_cuenta_en_la_semana_de_ese_domingo(
+        self, client: TestClient, admin_sistema_auth_headers, db, reciclador_test, conjunto_verificado
+    ):
+        """¿Qué? Domingo 20 de septiembre a las 21:00 en Bogotá es lunes 21 a las 02:00 en UTC.
+        Cortada en UTC caía en la semana siguiente; en hora de Bogotá es de la semana del domingo."""
+        reciclador = db.query(Reciclador).filter_by(id_usuario=reciclador_test.id_usuario).one()
+        domingo_noche = _crear_auditoria(
+            db, reciclador, conjunto_verificado, creado=datetime(2026, 9, 21, 2, 0, tzinfo=timezone.utc)
+        )
+
+        de_su_semana = client.get(URL, headers=admin_sistema_auth_headers, params={"lunes": "2026-09-14"}).json()
+        de_la_siguiente = client.get(URL, headers=admin_sistema_auth_headers, params={"lunes": "2026-09-21"}).json()
+
+        assert str(domingo_noche.id_auditoria) in {i["id_auditoria"] for i in de_su_semana["items"]}
+        assert str(domingo_noche.id_auditoria) not in {i["id_auditoria"] for i in de_la_siguiente["items"]}
 
     def test_incluye_conjunto_tema_y_nombre_del_reciclador(
         self, client: TestClient, admin_sistema_auth_headers, db, reciclador_test, conjunto_verificado

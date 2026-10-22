@@ -47,6 +47,22 @@ class AuditoriaConjuntoResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# ¿Qué? Una página de auditorías con el total que hay en la base de datos.
+# ¿Para qué? Las listas que pueden crecer (historial del Residente, "mis
+#           auditorías" del Reciclador) se piden de a pocas con limit/offset; el
+#           total permite mostrar "de la X a la Y de Z" y cuántas páginas hay.
+class AuditoriasListResponse(BaseModel):
+    items: list[AuditoriaConjuntoResponse]
+    total: int
+
+
+# ¿Qué? La fecha de la última auditoría que este reciclador hizo en un conjunto.
+# ¿Para qué? El aviso "este conjunto necesita auditoría" del panel del Reciclador.
+class UltimaAuditoriaConjuntoResponse(BaseModel):
+    id_conjunto_residencial: UUID
+    ultima_auditoria: datetime
+
+
 # ¿Qué? Vista del Admin del Sistema sobre las auditorías (RQF-009) — igual a
 #       la de arriba, más cuántos residentes fueron avisados con
 #       "contenido recomendado" a raíz de esta auditoría.
