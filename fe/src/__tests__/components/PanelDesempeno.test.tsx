@@ -4,7 +4,6 @@
  *              gráfica, tabla alternativa, auditorías de la semana, ranking de
  *              temas y el aviso cuando hay pocos datos.
  */
-import { cloneElement, type ReactElement } from "react";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -22,17 +21,6 @@ vi.mock("@/lib/auditoriaConjuntoApi", () => ({
   listarAuditoriasDeSemana: (...args: unknown[]) => mockListarSemana(...args),
   obtenerAuditoria: (...args: unknown[]) => mockObtenerAuditoria(...args),
 }));
-
-// ¿Qué? ResponsiveContainer mide su contenedor y en jsdom mide 0, así que no dibujaría nada.
-// ¿Para qué? Se reemplaza por un tamaño fijo; el resto de recharts es el real.
-vi.mock("recharts", async (importOriginal) => {
-  const original = await importOriginal<typeof import("recharts")>();
-  return {
-    ...original,
-    ResponsiveContainer: ({ children }: { children: ReactElement<{ width?: number; height?: number }> }) =>
-      cloneElement(children, { width: 640, height: 300 }),
-  };
-});
 
 const auditoria = (id: string, tema: string, nivel: AuditoriaConjunto["nivel_desempeno"], creada: string): AuditoriaConjunto => ({
   id_auditoria: id,

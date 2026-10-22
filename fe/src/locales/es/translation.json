@@ -934,6 +934,9 @@
     },
     "residente": {
       "title": "Panel del Residente",
+      "desempeno": {
+        "title": "Desempeño de mi conjunto"
+      },
       "shutBanner": {
         "title": "El SHUT está lleno",
         "reportedAt": "Reportado {{time}}",

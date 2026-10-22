@@ -101,6 +101,21 @@ Object.defineProperty(window, "ResizeObserver", {
   value: ResizeObserverMock,
 });
 
+// ¿Qué? ResponsiveContainer de recharts con un tamaño fijo (640 x 300).
+// ¿Para qué? Mide su contenedor y en jsdom mide 0, así que la gráfica de
+//           desempeño semanal no dibujaría nada (la usan la página del Admin de
+//           Conjunto y el panel del Residente). El resto de recharts es el real.
+// ¿Impacto? Sin este mock, las pruebas que buscan las barras de la gráfica no
+//           las encuentran.
+vi.mock("recharts", async (importOriginal) => {
+  const original = await importOriginal<typeof import("recharts")>();
+  return {
+    ...original,
+    ResponsiveContainer: ({ children }: { children: React.ReactElement<{ width?: number; height?: number }> }) =>
+      React.cloneElement(children, { width: 640, height: 300 }),
+  };
+});
+
 // ¿Qué? Limpieza de sessionStorage y localStorage después de cada test.
 // ¿Para qué? La marca de sesión (lib/sesionActiva.ts) vive en localStorage y
 //           el aviso de sesión vencida en sessionStorage.

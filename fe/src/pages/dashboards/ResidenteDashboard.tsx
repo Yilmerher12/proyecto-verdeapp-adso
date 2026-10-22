@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
-import { TriangleAlert, Bell, BadgeCheck } from "lucide-react";
+import { TriangleAlert, Bell, BadgeCheck, ChartColumn } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import axios from "axios";
@@ -15,6 +15,8 @@ import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
 import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
+import { PanelDesempeno } from "@/components/desempeno/PanelDesempeno";
+import { SEMANAS_POR_DEFECTO } from "@/config/desempeno";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { obtenerAuditoria } from "@/lib/auditoriaConjuntoApi";
 import { obtenerContenido } from "@/lib/contenidoEducativoApi";
@@ -263,6 +265,17 @@ export function ResidenteDashboard() {
           />
         </>
       )}
+
+      {/* Desempeño semanal del conjunto (HU-053, issue #488) — el mismo panel que ve el
+          Admin de Conjunto en su página "Desempeño". Sin `idConjunto`: el backend usa
+          el único conjunto del Residente. Período fijo, sin selector. */}
+      <section aria-labelledby="residente-desempeno-titulo" className="space-y-4">
+        <h2 id="residente-desempeno-titulo" className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-white">
+          <ChartColumn className="icon-md text-gray-500 dark:text-gray-400" aria-hidden="true" />
+          {t("dashboards.residente.desempeno.title")}
+        </h2>
+        <PanelDesempeno semanas={SEMANAS_POR_DEFECTO} />
+      </section>
 
       <HistorialAuditorias />
     </div>
