@@ -627,6 +627,10 @@
       "subject": "Solicitud de cuenta de Administrador de Conjunto",
       "messageTemplate": "Nombre del conjunto:\nDirección del conjunto:\nLocalidad:\nMi cargo en el conjunto:\nTeléfono de contacto:"
     },
+    "otroConjunto": {
+      "subject": "Solicitud para administrar otro conjunto",
+      "messageTemplate": "Mi correo en VerdeApp:\nNombre del conjunto que quiero administrar:\nDirección del conjunto:\nLocalidad:\nMi cargo en ese conjunto:\nTeléfono de contacto:"
+    },
     "validation": {
       "nameRequired": "El nombre es obligatorio",
       "subjectMin": "El asunto debe tener al menos {{min}} caracteres",
@@ -791,6 +795,17 @@
         "title": "Conjuntos que administras",
         "loading": "Cargando tus conjuntos...",
         "empty": "Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp."
+      },
+      "otroConjunto": {
+        "tileTitle": "Solicitar otro conjunto",
+        "tileHelp": "Pide que te asignen otro conjunto.",
+        "modalTitle": "Solicitar otro conjunto",
+        "heading": "Solicitar otro conjunto",
+        "intro": "Para administrar otro conjunto, el equipo de VerdeApp primero verifica tu cargo en él. Así se hace:",
+        "step1": "Envíanos una solicitud con el botón de abajo: el nombre y la dirección del conjunto que quieres administrar y tu cargo en él.",
+        "step2": "Te respondemos a tu correo y te pedimos los documentos que acreditan tu cargo en ese conjunto. Los adjuntas respondiendo ese mismo correo.",
+        "step3": "Si todo está en orden, el conjunto se asigna a tu cuenta y aparece en este panel. No necesitas crear otra cuenta.",
+        "cta": "Solicitar acceso"
       },
       "avisosSection": {
         "title": "Avisos de este conjunto",

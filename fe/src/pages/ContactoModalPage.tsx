@@ -8,7 +8,7 @@ import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { enviarMensajeContacto } from "@/lib/contactApi";
-import { MOTIVO_SOLICITUD_ADMIN } from "@/components/SolicitudAdminConjuntoInfo";
+import { MOTIVO_SOLICITUD_ADMIN, MOTIVO_SOLICITUD_OTRO_CONJUNTO } from "@/components/SolicitudAdminConjuntoInfo";
 import {
   CONTACTO_ASUNTO_MAX_LENGTH,
   CONTACTO_ASUNTO_MIN_LENGTH,
@@ -23,6 +23,12 @@ import {
 type Campo = "name" | "email" | "subject" | "message";
 const CAMPOS: Campo[] = ["name", "email", "subject", "message"];
 const FORM_VACIO: Record<Campo, string> = { name: "", email: "", subject: "", message: "" };
+
+// ¿Qué? Motivo de la URL → grupo de textos (asunto y plantilla) del archivo de idiomas.
+const CLAVE_POR_MOTIVO = new Map([
+  [MOTIVO_SOLICITUD_ADMIN, "contactoModal.adminRequest"],
+  [MOTIVO_SOLICITUD_OTRO_CONJUNTO, "contactoModal.otroConjunto"],
+]);
 
 /**
  * ¿Qué? Ruta /contacto — Landing de fondo + modal con el formulario de contacto.
@@ -42,12 +48,16 @@ export function ContactoModalPage() {
   //           asunto y los mismos datos, sin que la persona adivine qué poner.
   // ¿Impacto? Nada personal viaja en la URL: solo el motivo.
   const [searchParams] = useSearchParams();
-  const esSolicitudAdmin = searchParams.get("motivo") === MOTIVO_SOLICITUD_ADMIN;
-  const plantillaAdmin = t("contactoModal.adminRequest.messageTemplate");
+  // ¿Qué? Cada motivo conocido trae su asunto y su plantilla (issue #491 sumó
+  //       "otro-conjunto", para quien ya tiene cuenta). Un Map y no un objeto,
+  //       para que un ?motivo=toString no encuentre propiedades heredadas.
+  const claveMotivo = CLAVE_POR_MOTIVO.get(searchParams.get("motivo") ?? "");
+  const esSolicitudAdmin = claveMotivo !== undefined;
+  const plantillaAdmin = claveMotivo ? t(`${claveMotivo}.messageTemplate`) : "";
 
   const [formData, setFormData] = useState(() =>
-    esSolicitudAdmin
-      ? { ...FORM_VACIO, subject: t("contactoModal.adminRequest.subject"), message: plantillaAdmin }
+    claveMotivo
+      ? { ...FORM_VACIO, subject: t(`${claveMotivo}.subject`), message: plantillaAdmin }
       : FORM_VACIO,
   );
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Campo, string>>>({});

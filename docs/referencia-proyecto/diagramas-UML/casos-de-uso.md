@@ -407,6 +407,12 @@ Cubre cómo alguien se convierte en Admin_conjunto por primera vez, cómo un Adm
 4. El vínculo no se borra — queda marcado como revocado (con fecha y quién lo hizo), y el reciclador recibe una notificación.
 5. El Admin_conjunto puede volver a invitar al mismo reciclador más adelante; el historial de la revocación anterior no lo impide.
 
+### Flujo E (pedir otro conjunto desde el panel, HU-051)
+
+1. El Admin_conjunto presiona "Solicitar otro conjunto" en su panel principal, debajo de la lista de sus conjuntos.
+2. Lee el paso a paso y los documentos que debe tener listos (los mismos del registro; no se suben a la aplicación).
+3. Presiona "Solicitar acceso" y llega al formulario de contacto con el asunto y la plantilla ya escritos; el resto sigue por correo y el Admin_sistema le asigna el conjunto.
+
 ---
 
 ## RQF013 - Recomendar Contenido Educativo por Auditoría
