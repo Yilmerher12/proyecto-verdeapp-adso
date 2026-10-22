@@ -566,6 +566,28 @@
 }
 
 /* ============================================================================
+   Elementos clicables que se reconocen a simple vista (issue #501)
+   ¿Qué? `focus-ring` dibuja el foco con teclado (anillo verde de 2 px, solo con
+         :focus-visible: el clic con mouse no lo muestra). `link-text` es el
+         enlace de texto: verde de marca, negrita, subrayado siempre visible y
+         el mismo foco.
+   ¿Para qué? Antes cada enlace llevaba el color a mano y casi ninguno tenía
+              subrayado: solo cambiaba de color, y un color no se distingue del
+              texto vecino sin pasar el mouse (en celular no hay mouse). El
+              `Button` tenía además un anillo al 20% de opacidad, casi invisible.
+   ¿Impacto? Todo enlace de texto usa `link-text` y todo control propio con
+             foco personalizado usa `focus-ring` (ver "Elementos clicables" en
+             docs/requisitos/restricciones.md). Un control sin clases de foco
+             conserva el contorno por defecto del navegador, que sí se ve.
+   ============================================================================ */
+@utility focus-ring {
+  @apply focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:outline-none dark:focus-visible:ring-accent-400;
+}
+@utility link-text {
+  @apply focus-ring cursor-pointer font-semibold text-accent-700 underline underline-offset-2 transition-colors hover:text-accent-800 dark:text-accent-400 dark:hover:text-accent-300;
+}
+
+/* ============================================================================
    Barra de progreso indeterminada (components/ui/ProgressBar.tsx)
    ¿Qué? Un tramo que va y viene, para cuando aún no se sabe el porcentaje.
    ¿Para qué? Es el estado de la barra entre que se toca "enviar" y que el

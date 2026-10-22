@@ -285,6 +285,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
             to="/"
             className="touch-target inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
             aria-label={t("landing.nav.homeAriaLabel")}
+            title={t("landing.nav.homeAriaLabel")}
           >
             {/* Barra superior: solo el símbolo; el nombre ya lo muestra el hero. */}
             <BrandLogo variant="mark" tone="light" className="h-9" />
@@ -554,7 +555,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
                 <li key={to}>
                   <Link
                     to={to}
-                    className="touch-target-h inline-flex items-center rounded text-xs text-gray-500 transition-colors hover:text-accent-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:text-gray-400 dark:hover:text-accent-400"
+                    className="focus-ring touch-target-h inline-flex items-center rounded text-xs text-gray-500 underline underline-offset-2 transition-colors hover:text-accent-600 dark:text-gray-400 dark:hover:text-accent-400"
                   >
                     {label}
                   </Link>

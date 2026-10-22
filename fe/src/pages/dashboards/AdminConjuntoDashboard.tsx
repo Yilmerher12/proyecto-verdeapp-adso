@@ -269,13 +269,16 @@ function SeccionCodigoAcceso({
             aria-label={t(
               copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
             )}
+            title={t(
+              copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
+            )}
           >
             {copiado ? <Check className="icon-md text-accent-600" /> : <Copy className="icon-md" />}
           </button>
           <button
             type="button"
             onClick={() => setConfirmando(true)}
-            className="touch-target-h cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 dark:border-amber-800/50 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("dashboards.adminConjunto.codigoAcceso.regenerateButton")}
           </button>
@@ -457,7 +460,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             onClick={() => setMostrarFormulario((v) => !v)}
             aria-expanded={mostrarFormulario}
             aria-controls={`recicladores-invitar-${idConjunto}`}
-            className="touch-target-h cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 border border-accent-300 dark:border-accent-700 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
           >
             {t("dashboards.adminConjunto.recyclersSection.invite")}
           </button>
@@ -555,6 +558,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
                       onClick={() => setARevocar(r)}
                       className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
                       aria-label={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
+                      title={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
                     >
                       <UserX className="icon-sm" />
                     </button>
@@ -681,7 +685,7 @@ function SeccionDesvinculacion({
           <button
             type="button"
             onClick={() => setMostrarFormulario(true)}
-            className="touch-target-h cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-300 dark:border-red-800/50 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("desvinculacion.solicitarButton")}
           </button>
@@ -724,7 +728,7 @@ function SeccionDesvinculacion({
                 setMostrarFormulario(false);
                 setError(null);
               }}
-              className="touch-target-h cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+              className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 dark:border-night-line dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
             >
               {t("common.cancel")}
             </button>
@@ -1031,7 +1035,7 @@ export function AdminConjuntoDashboard() {
                     </span>
                   )}
                   <ChevronDown
-                    className={`icon-sm shrink-0 text-gray-400 transition-transform ${abierto ? "rotate-180" : ""}`}
+                    className={`icon-sm shrink-0 text-gray-500 transition-transform dark:text-gray-400 ${abierto ? "rotate-180" : ""}`}
                     aria-hidden="true"
                   />
                 </button>
@@ -1103,7 +1107,7 @@ export function AdminConjuntoDashboard() {
                       <button
                         type="button"
                         onClick={cancelarEdicion}
-                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-xl transition-colors dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
+                        className="focus-ring flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 dark:border-night-line px-4 py-2 rounded-xl transition-colors dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
                       >
                         <X className="icon-md" /> {t("common.cancel")}
                       </button>
@@ -1131,7 +1135,7 @@ export function AdminConjuntoDashboard() {
                       <button
                         type="button"
                         onClick={() => iniciarEdicion(c)}
-                        className="touch-target-h flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+                        className="focus-ring touch-target-h flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 border border-accent-300 dark:border-accent-700 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
                       >
                         <Pencil className="icon-sm" /> {t("common.edit")}
                       </button>

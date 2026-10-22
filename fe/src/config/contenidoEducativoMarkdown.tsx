@@ -30,6 +30,6 @@ export const COMPONENTES_MARKDOWN = {
     <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300" {...props} />
   ),
   a: (props: React.ComponentPropsWithoutRef<"a">) => (
-    <a className="text-accent-400 underline-offset-4 transition-colors hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
+    <a className="link-text" target="_blank" rel="noopener noreferrer" {...props} />
   ),
 };

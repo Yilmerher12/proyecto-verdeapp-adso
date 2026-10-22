@@ -282,7 +282,7 @@ export function AdminConjuntoComunicadosPage() {
                     href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
+                    className="link-text mt-2 inline-flex items-center gap-1.5 text-xs"
                   >
                     <Paperclip className="icon-sm" />
                     {t("comunicados.viewAttachment")}
@@ -304,6 +304,7 @@ export function AdminConjuntoComunicadosPage() {
                   onClick={() => abrirEditar(item)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
                   aria-label={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
+                  title={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Pencil className="icon-md" />
                 </button>
@@ -311,6 +312,7 @@ export function AdminConjuntoComunicadosPage() {
                   onClick={() => setAEliminar(item)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
                   aria-label={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
+                  title={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Trash2 className="icon-md" />
                 </button>

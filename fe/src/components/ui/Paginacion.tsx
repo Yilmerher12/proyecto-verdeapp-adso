@@ -47,6 +47,7 @@ export function Paginacion({
           disabled={!puedeAnterior}
           className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
           aria-label={t("common.pagination.prev")}
+          title={t("common.pagination.prev")}
         >
           <ChevronLeft className="icon-md" />
         </button>
@@ -59,6 +60,7 @@ export function Paginacion({
           disabled={!puedeSiguiente}
           className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
           aria-label={t("common.pagination.next")}
+          title={t("common.pagination.next")}
         >
           <ChevronRight className="icon-md" />
         </button>

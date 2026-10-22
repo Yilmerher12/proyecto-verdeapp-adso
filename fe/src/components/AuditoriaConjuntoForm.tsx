@@ -249,7 +249,7 @@ export function AuditoriaConjuntoForm({
             id="auditoria-tema"
             value={tema}
             onChange={(e) => setTema(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+            className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
           >
             <option value="">{t("dashboards.reciclador.auditoria.temaPlaceholder")}</option>
             {temas.map((cat) => (
@@ -295,6 +295,7 @@ export function AuditoriaConjuntoForm({
                     type="button"
                     onClick={() => quitarFoto(i)}
                     aria-label={t("dashboards.reciclador.auditoria.evidenciaQuitar")}
+                    title={t("dashboards.reciclador.auditoria.evidenciaQuitar")}
                     className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 p-0.5 text-white transition-colors hover:bg-black/80"
                   >
                     <X className="icon-sm" />

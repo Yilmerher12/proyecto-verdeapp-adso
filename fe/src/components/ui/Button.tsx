@@ -51,11 +51,11 @@ export function Button({
     //       texto normal); accent-700 llega a 4.94:1. Verificado con la fórmula
     //       oficial de contraste WCAG durante la auditoría RNF-003.
     primary:
-      "bg-accent-700 text-white hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800 focus:ring-accent-500/20",
+      "bg-accent-700 text-white hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800",
     secondary:
-      "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-line dark:hover:bg-night-hover focus:ring-gray-500/20",
+      "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-line dark:hover:bg-night-hover",
     danger:
-      "bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 focus:ring-red-500/20",
+      "bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600",
   };
 
   // ¿Qué? Clases CSS según el tamaño elegido.
@@ -81,7 +81,7 @@ export function Button({
       disabled={disabled || isLoading}
       aria-busy={isLoading}
       aria-label={isLoading ? t("common.processing") : undefined}
-      className={`inline-flex cursor-pointer items-center justify-center rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""}`}
+      className={`inline-flex cursor-pointer items-center justify-center rounded-lg font-medium transition-colors duration-200 focus-ring disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""}`}
     >
       {/* ¿Qué? Spinner SVG animado que aparece durante la carga. */}
       {/* ¿Para qué? Feedback visual de que la acción está procesándose. */}

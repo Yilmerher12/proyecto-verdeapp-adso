@@ -46,7 +46,7 @@ export function PoliticaCookiesPage() {
   const privacyLink = (
     <Link
       to="/privacidad"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
   // ¿Qué? Antes esto era un mailto: hacia un correo inventado
@@ -58,7 +58,7 @@ export function PoliticaCookiesPage() {
   const emailLink = (
     <Link
       to="/contacto"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
 

@@ -57,6 +57,7 @@ export function YoutubeEmbed({ url, titulo }: YoutubeEmbedProps) {
             onClick={() => setReproduciendo(true)}
             className="group relative h-full w-full cursor-pointer"
             aria-label={`Reproducir video: ${titulo}`}
+            title={`Reproducir video: ${titulo}`}
           >
             <img
               src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`}
@@ -76,10 +77,10 @@ export function YoutubeEmbed({ url, titulo }: YoutubeEmbedProps) {
           href={`https://www.youtube.com/watch?v=${id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="touch-target-h flex w-fit items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-accent-600 dark:text-gray-400 dark:hover:text-accent-500"
+          className="link-text touch-target-h flex w-fit items-center gap-1.5 text-xs"
         >
-          <ExternalLink className="icon-sm shrink-0" />
           Ver en YouTube
+          <ExternalLink className="icon-sm shrink-0" aria-hidden="true" />
         </a>
       )}
     </div>

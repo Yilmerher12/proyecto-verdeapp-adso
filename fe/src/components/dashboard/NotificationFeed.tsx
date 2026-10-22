@@ -89,12 +89,12 @@ export function NotificationFeed({
         </div>
         <div className="flex items-center gap-3">
           {noLeidas > 0 && (
-            <button onClick={onMarkAllRead} className="cursor-pointer text-xs font-medium text-accent-700 transition-colors hover:text-accent-600 dark:text-accent-500 dark:hover:text-accent-400">
+            <button onClick={onMarkAllRead} className="link-text text-xs">
               {t("notificationFeed.markAllRead")}
             </button>
           )}
           {notifications.some((n) => n.leida) && (
-            <button onClick={onClearRead} className="cursor-pointer text-xs font-medium text-gray-500 transition-colors hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400">
+            <button onClick={onClearRead} className="focus-ring cursor-pointer rounded text-xs font-medium text-gray-500 underline underline-offset-2 transition-colors hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">
               {t("notificationFeed.clearRead")}
             </button>
           )}

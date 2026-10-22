@@ -332,6 +332,7 @@ export function AppShell({ children }: AppShellProps) {
             onClick={() => setCollapsed((prev) => !prev)}
             className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-accent-100/70 transition-colors hover:bg-white/10 hover:text-white sm:hidden"
             aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
+            title={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
           >
             {collapsed ? <Menu className="icon-lg" /> : <X className="icon-lg" />}
           </button>
@@ -486,6 +487,7 @@ export function AppShell({ children }: AppShellProps) {
           className="hidden sm:flex h-9 w-full shrink-0 cursor-pointer items-center justify-center border-t border-white/10
             text-accent-100/50 hover:bg-white/5 hover:text-white transition-colors"
           aria-label={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
+          title={collapsed ? t("appShell.expandirMenu") : t("appShell.colapsarMenu")}
         >
           {collapsed ? <ChevronsRight className="icon-md" /> : <ChevronsLeft className="icon-md" />}
         </button>
@@ -499,6 +501,11 @@ export function AppShell({ children }: AppShellProps) {
             onClick={() => navigate(roleMeta.dashboardHref)}
             className="touch-target relative flex cursor-pointer items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-night-hover dark:hover:text-gray-200"
             aria-label={
+              noLeidas > 0
+                ? t("appShell.notificacionesConNoLeidas", { count: noLeidas })
+                : t("appShell.notificaciones")
+            }
+            title={
               noLeidas > 0
                 ? t("appShell.notificacionesConNoLeidas", { count: noLeidas })
                 : t("appShell.notificaciones")

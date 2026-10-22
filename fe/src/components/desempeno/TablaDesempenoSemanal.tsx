@@ -49,7 +49,7 @@ export function TablaDesempenoSemanal({ semanas, seleccionada, onSeleccionar }: 
                     type="button"
                     onClick={() => onSeleccionar(semana.lunes)}
                     aria-pressed={activa}
-                    className={`cursor-pointer rounded-md px-1 text-left text-gray-800 underline-offset-2 hover:underline dark:text-gray-200 ${
+                    className={`focus-ring cursor-pointer rounded-md px-1 text-left text-gray-800 underline decoration-gray-500 underline-offset-2 hover:decoration-accent-600 dark:text-gray-200 dark:decoration-gray-400 ${
                       activa ? "font-bold" : ""
                     }`}
                   >

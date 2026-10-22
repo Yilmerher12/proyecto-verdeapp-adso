@@ -414,7 +414,7 @@ export function AdminDashboard() {
         type="button"
         onClick={() => setPerfilAbierto(correo)}
         aria-label={t("dashboards.admin.profilePanel.openProfile", { nombre })}
-        className="cursor-pointer text-left underline decoration-gray-200 underline-offset-4 transition-colors hover:text-accent-700 hover:decoration-accent-600 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:decoration-night-line dark:hover:text-accent-400"
+        className="focus-ring cursor-pointer rounded text-left underline decoration-gray-500 underline-offset-4 transition-colors hover:text-accent-700 hover:decoration-accent-600 dark:decoration-gray-400 dark:hover:text-accent-400"
       >
         {nombre}
       </button>
@@ -542,7 +542,7 @@ export function AdminDashboard() {
           <button
             type="button"
             onClick={() => setMostrarModalSolicitudes(true)}
-            className="touch-target-h cursor-pointer self-start rounded-xl bg-accent-50 px-3 py-1.5 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+            className="focus-ring touch-target-h cursor-pointer self-start rounded-xl border border-accent-300 bg-accent-50 px-3 py-1.5 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 dark:border-accent-700 dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
           >
             {t("dashboards.admin.pendingRequests.viewButton")}
           </button>
@@ -602,7 +602,7 @@ export function AdminDashboard() {
                 })}
               </span>
             )}
-            <ChevronDown className={`icon-md text-gray-400 transition-transform ${usuariosAbierto ? "rotate-180" : ""}`} aria-hidden="true" />
+            <ChevronDown className={`icon-md text-gray-500 transition-transform dark:text-gray-400 ${usuariosAbierto ? "rotate-180" : ""}`} aria-hidden="true" />
           </span>
         </button>
 
@@ -819,6 +819,7 @@ export function AdminDashboard() {
                 disabled={pagina === 0}
                 className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
                 aria-label={t("dashboards.admin.usersSection.pagination.prev")}
+                title={t("dashboards.admin.usersSection.pagination.prev")}
               >
                 <ChevronLeft className="icon-md" />
               </button>
@@ -831,6 +832,7 @@ export function AdminDashboard() {
                 disabled={pagina + 1 >= totalPaginas}
                 className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
                 aria-label={t("dashboards.admin.usersSection.pagination.next")}
+                title={t("dashboards.admin.usersSection.pagination.next")}
               >
                 <ChevronRight className="icon-md" />
               </button>
