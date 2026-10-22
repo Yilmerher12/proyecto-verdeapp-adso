@@ -102,6 +102,20 @@ describe("AppShell — grupo de Puntos de Acopio", () => {
     expect(Array.from(gruposRecursos.querySelectorAll("a")).map((a) => a.textContent)).toEqual(["Contenido Educativo"]);
   });
 
+  // ¿Qué? Issue #487: "Desempeño" es solo del Admin de Conjunto, junto a Agenda.
+  it("Admin de Conjunto: tiene la opción Desempeño y los demás roles no", () => {
+    const admin = renderComo(RoleId.ADMIN_CONJUNTO);
+    const enlaceDesempeno = Array.from(admin.container.querySelectorAll("nav a")).find((a) => a.textContent === "Desempeño");
+    expect(enlaceDesempeno).toHaveAttribute("href", "/admin-conjunto/desempeno");
+    admin.unmount();
+
+    for (const rol of [RoleId.RESIDENTE, RoleId.RECICLADOR, RoleId.ADMIN_SISTEMA]) {
+      const otro = renderComo(rol);
+      expect(enlacesDelMenu(otro.container)).not.toContain("Desempeño");
+      otro.unmount();
+    }
+  });
+
   it("Residente: el menú no cambia, Directorio General sigue en Recursos", () => {
     const { container, getByText } = renderComo(RoleId.RESIDENTE);
 

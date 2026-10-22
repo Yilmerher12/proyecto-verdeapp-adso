@@ -552,41 +552,20 @@ describe("AdminConjuntoDashboard", () => {
     });
   });
 
-  describe("historial de auditorías por conjunto", () => {
-    const auditoria = (id: string, idConjunto: number, tema: string) => ({
-      id_auditoria: id,
-      id_conjunto_residencial: idConjunto,
-      nombre_conjunto: "x",
-      nivel_desempeno: "BUENA",
-      tema_educativo: tema,
-      descripcion: null,
-      ruta_evidencia: "/x.jpg",
-      ruta_evidencia_2: null,
-      ruta_evidencia_3: null,
-      created_at: "2026-09-22T10:00:00Z",
-      nombre_reciclador: "Juan",
-    });
-
-    it("muestra dentro de cada conjunto solo las auditorías de ESE conjunto", async () => {
+  describe("historial de auditorías", () => {
+    // ¿Qué? Issue #487: el historial semanal salió del acordeón; ahora vive en la
+    //       página "Desempeño" (AdminConjuntoDesempenoPage).
+    it("ya no pide el historial ni lo muestra dentro del conjunto", async () => {
       mockGet.mockImplementation((url: string) => {
-        // ¿Qué? "/historial" se revisa primero: la lista mezcla auditorías de 2 conjuntos.
-        if (url.includes("/auditorias-conjunto/historial")) {
-          return Promise.resolve({
-            data: [auditoria("a1", 1, "Tema del conjunto uno"), auditoria("a2", 2, "Tema del conjunto dos")],
-          });
-        }
-        if (url.includes("/conjunto-panel/mis-conjuntos")) {
-          return Promise.resolve({
-            data: [conjunto, { ...conjunto, id_conjunto_residencial: 2, nombre_conjunto: "Conjunto Capellanía" }],
-          });
-        }
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
         return Promise.resolve({ data: [] });
       });
       renderPage();
 
-      // ¿Qué? Solo el primer conjunto viene desplegado: ve su tema y NO el del otro.
-      expect(await screen.findByText("Tema del conjunto uno")).toBeInTheDocument();
-      expect(screen.queryByText("Tema del conjunto dos")).not.toBeInTheDocument();
+      await screen.findByText("AB3K9Q");
+      expect(screen.queryByText("Historial de auditorías")).not.toBeInTheDocument();
+      const urlsPedidas = mockGet.mock.calls.map(([url]) => String(url));
+      expect(urlsPedidas.some((url) => url.includes("/auditorias-conjunto/historial"))).toBe(false);
     });
   });
 

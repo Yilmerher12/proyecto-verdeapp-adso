@@ -58,7 +58,17 @@ export function domingoDeLunesUTC(lunesIso: string): Date {
   return new Date(Date.UTC(y, m - 1, d + 6));
 }
 
-const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+// ¿Qué? "14 sep" — día y mes corto de una fecha de calendario (YYYY-MM-DD),
+//       en el idioma pedido. Se calcula en UTC a propósito: la fecha ya viene
+//       elegida (el lunes de una semana de Bogotá), no es un instante que haya
+//       que convertir de zona horaria.
+// ¿Para qué? Rotular las semanas del desempeño ("14 sep al 20 sep", issue #487).
+export function formatearDiaMes(fechaIso: string, locale?: string): string {
+  const [y, m, d] = fechaIso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(locale, { day: "numeric", month: "short", timeZone: "UTC" });
+}
+
+const MESES_CORTOS =["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 // ¿Qué? "14–20 sep" o, si la semana cruza de mes, "28 ago – 3 sep".
 export function rangoSemanaUTC(lunesIso: string): string {

@@ -43,6 +43,7 @@ import { AdminContenidoEducativoPage } from "@/pages/AdminContenidoEducativoPage
 import { AdminPuntosAcopioPage } from "@/pages/AdminPuntosAcopioPage";
 import { AdminConjuntoComunicadosPage } from "@/pages/AdminConjuntoComunicadosPage";
 import { AdminConjuntoAgendaPage } from "@/pages/AdminConjuntoAgendaPage";
+import { AdminConjuntoDesempenoPage } from "@/pages/AdminConjuntoDesempenoPage";
 import { ComunicadosFeedPage } from "@/pages/ComunicadosFeedPage";
 import { AdminNovedadesPage } from "@/pages/AdminNovedadesPage";
 import { NovedadesFeedPage } from "@/pages/NovedadesFeedPage";
@@ -272,6 +273,20 @@ function App() {
                   <RoleGuard allowedRoles={[RoleId.ADMIN_CONJUNTO]}>
                     <AppShell>
                       <AdminConjuntoAgendaPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Desempeño semanal del conjunto — Admin de Conjunto (RQF-009, HU-052) */}
+            <Route
+              path="/admin-conjunto/desempeno"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.ADMIN_CONJUNTO]}>
+                    <AppShell>
+                      <AdminConjuntoDesempenoPage />
                     </AppShell>
                   </RoleGuard>
                 </ProtectedRoute>

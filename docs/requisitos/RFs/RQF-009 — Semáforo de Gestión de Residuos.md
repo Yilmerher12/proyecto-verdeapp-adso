@@ -11,7 +11,7 @@
 | **Módulo** | Auditoría / Calificaciones                 |
 | **Prioridad** | Baja (Opcional)                            |
 | **Estado** | Implementado                               |
-| **Usuarios** | reciclador, residente                      |
+| **Usuarios** | reciclador, residente, admin de conjunto   |
 
 ---
 
@@ -46,7 +46,7 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
 5. Si el nivel es Regular o Malo, se recomienda contenido educativo a los residentes (RQF-013).
 6. El **Residente** (o el Admin de Conjunto) consulta `GET /api/v1/auditorias-conjunto/historial` y ve el historial de su conjunto, de la más reciente a la más antigua.
 7. El frontend muestra cada auditoría con su color de semáforo (`fe/src/config/nivelesDesempeno.ts`).
-8. En el panel del **Admin de Conjunto**, el historial se muestra por separado dentro del acordeón de cada conjunto que administra, agrupado por semana (lunes a domingo, UTC), con una barra Bueno/Regular/Malo por semana para comparar de un vistazo (`fe/src/components/dashboard/HistorialAuditoriasSemanal.tsx`). Las auditorías de distintos conjuntos nunca se mezclan en una misma barra. El Residente sigue viendo la lista simple del paso 6.
+8. El **Admin de Conjunto** ve el desempeño semanal de su conjunto en la página "Desempeño" del menú (`/admin-conjunto/desempeno`, HU-052, issue #487): tarjetas de resumen, una gráfica de barras apiladas con una barra por semana (lunes a domingo, hora de Bogotá), la lista de auditorías de la semana que se toca, el ranking "Temas del período" y un botón "Ver como tabla". Pide los datos a `GET /auditorias-conjunto/desempeno` y `/desempeno/semana` (issue #486); con menos de 4 auditorías en el período avisa en vez de dibujar la gráfica. La gráfica usa `recharts`, cargada bajo demanda (`fe/src/pages/AdminConjuntoDesempenoPage.tsx` y `fe/src/components/desempeno/`). La barra semanal que vivía dentro del acordeón de cada conjunto (`HistorialAuditoriasSemanal.tsx`, semanas en UTC) se retiró. El Residente sigue viendo la lista simple del paso 6.
 
 ---
 
@@ -93,8 +93,8 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
      semanal del Admin de Conjunto y del Residente (investigación #437).
      ¿Impacto? Las semanas se cortan en hora de Bogotá (UTC-5), de lunes a
      domingo: una auditoría del domingo 9 p. m. cuenta en esa semana y no en
-     la siguiente, a diferencia de la barra actual del paso 8 (UTC), que
-     quitará la tarjeta "Página Desempeño" (#487). Permisos: el Residente
+     la siguiente, a diferencia de la barra del acordeón (UTC) que
+     reemplazó la página "Desempeño" (#487, paso 8). Permisos: el Residente
      solo su conjunto y el Admin de Conjunto solo los de asignación activa;
      conjunto ajeno, Reciclador y Admin del Sistema responden 403. -->
 
