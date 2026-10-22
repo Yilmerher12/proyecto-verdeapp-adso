@@ -231,3 +231,13 @@ Para el PDF del historial de la agenda se agregaron dos dependencias, ambas con 
 - **`pypdf==6.20.1`** (solo desarrollo, BSD-3-Clause, publicada el 2026-10-12): lee el PDF generado en las pruebas. No se eligió la 6.21.2 porque salió el mismo día de la revisión.
 
 **Verificado:** `pip-audit` con el mismo comando del CI (dependencias de producción) y también sobre producción más desarrollo: **No known vulnerabilities found**.
+
+---
+
+## Actualización — `pypdf` 6.21.1 en el backend (2026-10-22, issue #504)
+
+La revisión de seguridad del 2026-10-22 (`pip-audit` sobre las dependencias del backend) encontró 4 vulnerabilidades en `pypdf` 6.20.1: `CVE-2026-113786`, `CVE-2026-113789`, `CVE-2026-113790` y `CVE-2026-113791`, todas corregidas en 6.21.1. El CI no la habría detectado: su paso `pip-audit` usa `--no-dev` y `pypdf` es solo de desarrollo.
+
+- **Qué se hizo:** `pypdf==6.20.1` pasó a `pypdf==6.21.1` en `be/pyproject.toml` (versión exacta) y `uv lock --upgrade-package pypdf` actualizó `be/uv.lock`. Ningún otro paquete cambió.
+- **Excepción a la espera de 7 días:** la 6.21.1 se publicó el 2026-10-17 (5 días antes), menos de la semana que exige el `cooldown` de Dependabot. Se adopta igual porque corrige vulnerabilidades conocidas y solo se usa en las pruebas. La 6.21.2 (2026-10-21) sigue descartada por ser demasiado nueva.
+- **Verificado:** `pip-audit@2.10.1` sobre producción más desarrollo (`uv export --no-hashes`, `-s osv`): **No known vulnerabilities found**. 817 pruebas del backend pasan (cobertura 97.07%, umbral 96%) y `ruff` queda limpio.
