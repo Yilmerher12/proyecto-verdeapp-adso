@@ -223,7 +223,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
           type="button"
           onClick={enviar}
           disabled={enviando || faltaAlgo}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
           <Send className="icon-sm" />
           {enviando ? t("novedadesEnviadas.sending") : t("novedadesEnviadas.send")}
@@ -281,7 +281,7 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
                 className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                   n.estado === "VISTA"
                     ? "bg-gray-100 text-gray-600 dark:bg-night-field dark:text-gray-300"
-                    : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200"
                 }`}
               >
                 {n.estado === "VISTA"

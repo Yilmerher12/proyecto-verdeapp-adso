@@ -86,7 +86,7 @@ export function AdminConjuntoDesempenoPage() {
                     onClick={() => setIdConjunto(c.id_conjunto_residencial)}
                     className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
                       activo
-                        ? "border-accent-700 bg-accent-700 text-white"
+                        ? "border-accent-700 bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                         : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
                     }`}
                   >

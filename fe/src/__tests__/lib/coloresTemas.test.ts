@@ -14,6 +14,7 @@
  */
 
 import ts from "typescript";
+import { ROLE_THEME } from "@/config/roleTheme";
 
 const archivos = import.meta.glob(["/src/**/*.tsx", "!/src/__tests__/**"], {
   query: "?raw",
@@ -63,10 +64,49 @@ describe("Coherencia entre tema claro y oscuro (issue #503)", () => {
     expect(malas).toEqual([]);
   });
 
+  // ¿Qué? En el tema oscuro el acento es el menta (accent-300) con texto oscuro.
+  // ¿Para qué? Un botón sólido verde con texto blanco y sin pareja oscura queda
+  //           como verde oscuro sobre verde oscuro (1.86:1 contra la tarjeta): el
+  //           problema que originó el rediseño del tema oscuro (issue #503).
+  // ¿Impacto? Todo botón nuevo con bg-accent-700 + text-white debe traer su pareja.
+  it("todo botón verde sólido con texto blanco trae su pareja menta en oscuro", () => {
+    const malas = todas
+      .filter(
+        ({ clases }) =>
+          clases.some((c) => /^bg-accent-(600|700)$/.test(c)) &&
+          clases.includes("text-white") &&
+          !clases.some((c) => /^dark:(hover:)?bg-accent-/.test(c)) &&
+          !clases.includes("h-20"), // el avatar de perfil es la excepción
+      )
+      .map(({ lugar }) => lugar);
+    expect(malas).toEqual([]);
+  });
+
+  it("los fondos de estado en oscuro son translúcidos (X-400/10), no bloques oscuros sólidos", () => {
+    const malas = todas
+      .flatMap(({ lugar, clases }) =>
+        clases
+          .filter((c) => /^dark:(hover:)?bg-(amber|red|purple|indigo|teal|blue|yellow)-(900|950)/.test(c))
+          .map((c) => `${lugar} ${c}`),
+      );
+    expect(malas).toEqual([]);
+  });
+
   it("el borde de un control es border-edge, no un gris suelto (WCAG 1.4.11)", () => {
     const malas = todas
       .filter(({ clases }) => clases.includes("border-gray-300"))
       .map(({ lugar }) => `${lugar} border-gray-300 (usar border-edge dark:border-night-edge)`);
     expect(malas).toEqual([]);
+  });
+
+  // ¿Qué? Los 4 roles comparten el mismo acento; el rol se distingue por ícono y nombre.
+  // ¿Para qué? Con colores por rol (pizarra, lima, naranja, cielo) el tema oscuro no
+  //           combinaba: el acento único es menta (decisión del issue #503).
+  // ¿Impacto? Si alguien vuelve a darle un color propio a un rol, esta prueba falla.
+  it("los 4 roles usan el mismo acento de sidebar y de badge", () => {
+    const temas = Object.values(ROLE_THEME);
+    for (const clave of ["sidebarAccentText", "sidebarActiveNav", "badgeText", "badgeBg"] as const) {
+      expect(new Set(temas.map((t) => t[clave])).size).toBe(1);
+    }
   });
 });

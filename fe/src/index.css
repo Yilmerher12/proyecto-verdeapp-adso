@@ -96,14 +96,19 @@
   /* ¿Para qué? Antes estos 8 colores estaban escritos a mano como           */
   /*       dark:bg-[#12231a] en 50 archivos (536 veces).                     */
   /* ¿Impacto? Cambiar una superficie del modo oscuro es tocar una línea.    */
-  --color-night-base: #050f0a;  /* fondo raíz (auth, legales, shell, footer) */
-  --color-night-page: #0a1510;  /* fondo del área de contenido de los paneles */
-  --color-night-card: #12231a;  /* tarjetas */
-  --color-night-panel: #0f2018; /* modales, tarjeta de login, barras fijas */
-  --color-night-inset: #0c1a12; /* zonas hundidas: filas en hover, botón secundario */
-  --color-night-field: #1a3324; /* campos de formulario */
-  --color-night-line: #2e4a3a;  /* bordes decorativos (tarjetas, divisiones) */
-  --color-night-hover: #23392b; /* fondo al pasar el mouse */
+  /* Issue #503 (rediseño del tema oscuro): antes todas las capas eran verdes  */
+  /* oscuros casi iguales (1.0 a 1.27:1 entre vecinas: sidebar, encabezado y   */
+  /* tarjetas se confundían). Ahora son verdes casi neutros, cada capa un paso */
+  /* más clara que la de abajo, y la separación la da el borde (night-line).   */
+  /* Orden de abajo hacia arriba: base < page < inset < card < panel.          */
+  --color-night-base: #050a08;  /* fondo raíz y sidebar (la capa más baja) */
+  --color-night-page: #101a15;  /* fondo del área de contenido y del encabezado */
+  --color-night-inset: #131f19; /* zonas hundidas: botón secundario, filas */
+  --color-night-card: #1a2b22;  /* tarjetas */
+  --color-night-panel: #20352a; /* modales, panel lateral, tarjeta de login (encima de todo) */
+  --color-night-field: #223a2d; /* campos de formulario */
+  --color-night-line: #3a5a47;  /* bordes decorativos (1.94:1 sobre la tarjeta) */
+  --color-night-hover: #243d30; /* fondo al pasar el mouse */
 
   /* ── Borde de los controles (issue #503) ───────────────────────────────── */
   /* ¿Qué? `edge` (modo claro) y `night-edge` (modo oscuro) son el borde de los  */
@@ -113,10 +118,10 @@
   /*       border-gray-200 (1.13:1) o border-gray-300 (1.47:1) en claro y      */
   /*       night-line (1.1-1.3:1) en oscuro: los campos "se perdían".          */
   /* ¿Impacto? Medido: edge 3.4:1 sobre blanco y 3.2:1 sobre gray-50;          */
-  /*       night-edge 3.4:1 sobre night-field y 4.1:1 sobre night-card.        */
+  /*       night-edge 3.3:1 sobre night-field y 4.0:1 sobre night-card.        */
   /*       Los bordes decorativos siguen siendo gray-100/200 y night-line.     */
   --color-edge: #7f8f8a;
-  --color-night-edge: #548a6b;
+  --color-night-edge: #5a8f72;
 }
 
 /* ============================================================================
@@ -154,17 +159,26 @@
 }
 
 .dark {
-  --color-green-50: #eef6f0;
-  --color-green-100: #d6ead9;
-  --color-green-200: #add4b4;
-  --color-green-300: #7fba8b;
-  --color-green-400: #4f9c62;
-  --color-green-500: #2f8049;
-  --color-green-600: #1f6a3b;
-  --color-green-700: #185530;
-  --color-green-800: #134327;
-  --color-green-900: #0f2e20;
-  --color-green-950: #0a2016;
+  /* ¿Qué? Escala de marca del modo oscuro con un MENTA como acento (300 = el
+     verde claro que ya tenía el botón "Unirse a VerdeApp" del Landing).
+     ¿Para qué? Antes 300 a 700 eran verdes apagados (#7fba8b a #185530): el
+     acento era tan oscuro como las capas y nada se destacaba (botón principal
+     1.86:1 sobre la tarjeta). El menta (300) da 8.6:1 sobre la tarjeta.
+     ¿Impacto? Los botones principales pasan a menta con texto oscuro en el modo
+     oscuro (ver Button.tsx); los enlaces y el ítem activo usan 300 y 400.
+     500 a 950 siguen siendo los verdes profundos de los fondos con alpha
+     (dark:bg-accent-900/20). */
+  --color-green-50: #eefaf2;
+  --color-green-100: #d4f1de;
+  --color-green-200: #b0e6c5;
+  --color-green-300: #86d6a6;
+  --color-green-400: #5fbf86;
+  --color-green-500: #3ea46c;
+  --color-green-600: #2d8456;
+  --color-green-700: #226a45;
+  --color-green-800: #1a5038;
+  --color-green-900: #123527;
+  --color-green-950: #0a2018;
 }
 
 /* ¿Qué? Estilos base aplicados al body y al root de la app. */

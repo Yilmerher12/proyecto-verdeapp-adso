@@ -148,7 +148,7 @@ export function AsignarConjuntoAdicionalForm() {
         <button
           type="submit"
           disabled={buscando}
-          className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
           {t("desvinculacion.asignarAdicional.searchButton")}
         </button>
@@ -173,7 +173,7 @@ export function AsignarConjuntoAdicionalForm() {
               onClick={() => seleccionarAdministrador(admin)}
               className={`w-full cursor-pointer text-left rounded-xl border px-4 py-3 transition-colors ${
                 seleccionado?.id_administrador === admin.id_administrador
-                  ? "border-accent-500 bg-accent-50 dark:bg-accent-900/20"
+                  ? "border-accent-500 bg-accent-50 dark:bg-accent-300/10"
                   : "border-gray-200 hover:border-accent-300 dark:border-night-line dark:hover:border-accent-700"
               }`}
             >
@@ -249,7 +249,7 @@ export function AsignarConjuntoAdicionalForm() {
                 type="button"
                 onClick={asignar}
                 disabled={!conjuntoElegido || asignando}
-                className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 h-fit mt-1"
+                className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 h-fit mt-1 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
               </button>

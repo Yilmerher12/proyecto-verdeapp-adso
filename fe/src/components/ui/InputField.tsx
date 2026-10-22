@@ -171,7 +171,7 @@ export function InputField({
       {error && (
         <p
           id={`${name}-error`}
-          className="animate-fade-in mt-1 text-sm text-red-600 dark:text-red-400"
+          className="animate-fade-in mt-1 text-sm text-red-600 dark:text-red-300"
           role="alert"
         >
           {error}

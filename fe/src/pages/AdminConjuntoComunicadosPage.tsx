@@ -61,11 +61,11 @@ function resumirTexto(texto: string): string {
 // ¿Qué? Color por tipo — Urgente en rojo para que salte a la vista, igual
 //       que en el feed que ven residentes/recicladores.
 const TIPO_ESTILO: Record<TipoComunicado, string> = {
-  INFORMATIVO: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  URGENTE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
+  INFORMATIVO: "bg-blue-100 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300",
+  URGENTE: "bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300",
+  CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300",
+  MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
 };
 
 /**
@@ -237,7 +237,7 @@ export function AdminConjuntoComunicadosPage() {
         <button
           onClick={abrirCrear}
           disabled={conjuntos.length === 0}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
           <Plus className="icon-md" />
           {t("comunicados.admin.newButton")}
@@ -310,7 +310,7 @@ export function AdminConjuntoComunicadosPage() {
                 </button>
                 <button
                   onClick={() => setAEliminar(item)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
+                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-400/15"
                   aria-label={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
                   title={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
                 >
@@ -395,7 +395,7 @@ export function AdminConjuntoComunicadosPage() {
                         onClick={() => setForm({ ...form, destinatarios: d })}
                         className={`flex-1 cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                           form.destinatarios === d
-                            ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                            ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
                             : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-night-line dark:text-gray-300"
                         }`}
                       >
@@ -457,7 +457,7 @@ export function AdminConjuntoComunicadosPage() {
                   }`}
                 />
                 {errorFechaEvento && (
-                  <p id="comunicado-fecha-evento-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                  <p id="comunicado-fecha-evento-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                     {errorFechaEvento}
                   </p>
                 )}
@@ -506,7 +506,7 @@ export function AdminConjuntoComunicadosPage() {
                 }`}
               />
               {errorFechaExpiracion && (
-                <p id="comunicado-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                <p id="comunicado-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                   {errorFechaExpiracion}
                 </p>
               )}
@@ -523,7 +523,7 @@ export function AdminConjuntoComunicadosPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {guardando
                   ? t("common.saving")

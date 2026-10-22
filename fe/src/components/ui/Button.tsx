@@ -51,7 +51,7 @@ export function Button({
     //       texto normal); accent-700 llega a 4.94:1. Verificado con la fórmula
     //       oficial de contraste WCAG durante la auditoría RNF-003.
     primary:
-      "bg-accent-700 text-white hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800",
+      "bg-accent-700 text-white hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200",
     secondary:
       "bg-white text-gray-700 border border-edge hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-edge dark:hover:bg-night-hover",
     danger:

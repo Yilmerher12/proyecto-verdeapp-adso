@@ -91,7 +91,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           onClick={() => cambiarModo("archivo")}
           className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "archivo"
-              ? "bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400"
+              ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-400"
               : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
           }`}
         >
@@ -104,7 +104,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           onClick={() => cambiarModo("link")}
           className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "link"
-              ? "bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-400"
+              ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-400"
               : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
           }`}
         >
@@ -131,7 +131,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
             }`}
           />
           {errorEnlace && (
-            <p id="guia-apoyo-enlace-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+            <p id="guia-apoyo-enlace-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
               {errorEnlace}
             </p>
           )}
@@ -145,7 +145,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           <button
             type="button"
             onClick={() => onChange("")}
-            className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-400/15"
           >
             <X className="icon-sm" />
             {t("guiaApoyo.quitar")}
@@ -175,7 +175,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
         </label>
       )}
       {subiendo && <ProgressBar value={progreso} label={t("guiaApoyo.subiendo")} className="mt-2" />}
-      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{error}</p>}
     </div>
   );
 }

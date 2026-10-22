@@ -36,8 +36,8 @@ const FILTROS: { id: TipoSolicitudUnificada | "TODAS"; labelKey: string }[] = [
 const TAMANO_PAGINA = 5;
 
 const CLASE_TIPO: Record<string, string> = {
-  DESVINCULACION: "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400",
-  NOVEDAD: "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
+  DESVINCULACION: "bg-purple-50 text-purple-700 dark:bg-purple-400/10 dark:text-purple-300",
+  NOVEDAD: "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200",
 };
 
 /**
@@ -155,7 +155,7 @@ export function SolicitudesPendientes({
           <ClipboardList className="icon-md text-accent-600" />
           <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("solicitudesPendientes.sectionTitle")}</h3>
           {totalTodas > 0 && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-200">
               {totalTodas}
             </span>
           )}
@@ -172,7 +172,7 @@ export function SolicitudesPendientes({
               aria-pressed={filtro === id}
               className={`cursor-pointer rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
                 filtro === id
-                  ? "bg-accent-700 text-white"
+                  ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                   : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-field"
               }`}
             >
@@ -199,7 +199,7 @@ export function SolicitudesPendientes({
           {solicitudes.map((s) => (
             <div
               key={s.id}
-              className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-800/30 dark:bg-amber-900/10"
+              className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-300/30 dark:bg-amber-400/10"
             >
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
                 <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${CLASE_TIPO[s.tipo]}`}>
@@ -280,7 +280,7 @@ export function SolicitudesPendientes({
                   <button
                     onClick={() => aprobar(s)}
                     disabled={procesandoId === s.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                   >
                     <BadgeCheck className="icon-sm icon-hop" />
                     {t("desvinculacion.adminSistema.approve")}
@@ -288,7 +288,7 @@ export function SolicitudesPendientes({
                   <button
                     onClick={() => setRechazandoId(s.id)}
                     disabled={procesandoId === s.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400/30 dark:bg-transparent dark:hover:bg-red-400/15"
                   >
                     <OctagonX className="icon-sm icon-shake" />
                     {t("desvinculacion.adminSistema.reject")}

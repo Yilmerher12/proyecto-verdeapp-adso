@@ -51,13 +51,13 @@ export function ConjuntoComboboxMultiple({
           {value.map((c) => (
             <span
               key={c.id_conjunto_residencial}
-              className="inline-flex items-center gap-1 rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-800 dark:bg-accent-900/30 dark:text-accent-300"
+              className="inline-flex items-center gap-1 rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-800 dark:bg-accent-300/10 dark:text-accent-300"
             >
               {c.nombre_conjunto}
               <button
                 type="button"
                 onClick={() => quitar(c.id_conjunto_residencial)}
-                className="cursor-pointer rounded-full transition-colors hover:bg-accent-100 dark:hover:bg-accent-900/50"
+                className="cursor-pointer rounded-full transition-colors hover:bg-accent-100 dark:hover:bg-accent-300/15"
                 aria-label={`Quitar ${c.nombre_conjunto}`}
                 title={`Quitar ${c.nombre_conjunto}`}
               >

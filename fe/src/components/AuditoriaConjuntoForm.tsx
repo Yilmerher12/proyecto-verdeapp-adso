@@ -365,7 +365,7 @@ export function AuditoriaConjuntoForm({
             type="button"
             onClick={intentarEnviar}
             disabled={enviando || formularioIncompleto}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
           >
             {enviando && <Spinner size="sm" tone="current" />}
             {enviando

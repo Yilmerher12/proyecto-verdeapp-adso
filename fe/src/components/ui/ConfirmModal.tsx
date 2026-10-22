@@ -50,19 +50,19 @@ interface ConfirmModalProps {
 
 const ESTILOS_VARIANTE = {
   warning: {
-    circulo: "bg-amber-50 dark:bg-amber-900/20",
-    icono: "text-amber-600 dark:text-amber-400",
-    boton: "bg-amber-600 hover:bg-amber-700",
+    circulo: "bg-amber-50 dark:bg-amber-400/10",
+    icono: "text-amber-600 dark:text-amber-200",
+    boton: "bg-amber-600 hover:bg-amber-700 dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200",
   },
   danger: {
-    circulo: "bg-red-50 dark:bg-red-900/20",
-    icono: "text-red-500 dark:text-red-400",
+    circulo: "bg-red-50 dark:bg-red-400/10",
+    icono: "text-red-500 dark:text-red-300",
     boton: "bg-red-500 hover:bg-red-600",
   },
   primary: {
-    circulo: "bg-accent-50 dark:bg-accent-900/20",
+    circulo: "bg-accent-50 dark:bg-accent-300/10",
     icono: "text-accent-600 dark:text-accent-400",
-    boton: "bg-accent-700 hover:bg-accent-800",
+    boton: "bg-accent-700 hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200",
   },
 } as const;
 

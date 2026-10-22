@@ -517,7 +517,7 @@ export function AdminContenidoEducativoPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-0 py-6 sm:p-6">
       <div className="flex items-center gap-4 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
           <BookOpen className="icon-xl text-accent-700 dark:text-accent-400" />
         </div>
         <div>
@@ -538,7 +538,7 @@ export function AdminContenidoEducativoPage() {
             <button
               type="button"
               onClick={() => abrirCrear()}
-              className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600"
+              className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
             >
               {t(`${p}.newModule`)}
             </button>
@@ -618,7 +618,7 @@ export function AdminContenidoEducativoPage() {
                 setTab("cal");
               }}
               className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                tab === "cal" ? "bg-accent-700 text-white shadow-sm" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                tab === "cal" ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
               <FileText className="icon-sm" />
@@ -631,7 +631,7 @@ export function AdminContenidoEducativoPage() {
                 setTab("mod");
               }}
               className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                tab === "mod" ? "bg-accent-700 text-white shadow-sm" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                tab === "mod" ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
               <BookOpen className="icon-sm" />
@@ -684,7 +684,7 @@ export function AdminContenidoEducativoPage() {
               <span
                 className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${
                   semana === semanaActual
-                    ? "bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                    ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
                     : "bg-gray-100 text-gray-500 dark:bg-night-inset dark:text-gray-400"
                 }`}
               >
@@ -711,7 +711,7 @@ export function AdminContenidoEducativoPage() {
                   aria-pressed={nivelFiltro === nivel}
                   className={`touch-target-h cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                     nivelFiltro === nivel
-                      ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                      ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
                       : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
                   }`}
                 >
@@ -852,7 +852,7 @@ export function AdminContenidoEducativoPage() {
                       className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:hover:bg-night-inset/40"
                     >
                       <div className="flex min-w-0 items-start gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
                           <Icono className="icon-lg" />
                         </span>
                         <div className="min-w-0">
@@ -863,7 +863,7 @@ export function AdminContenidoEducativoPage() {
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         {nRecomendados > 0 && (
-                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
                             {t(`${p}.modules.recommendedTo`, { count: nRecomendados })}
                           </span>
                         )}
@@ -883,7 +883,7 @@ export function AdminContenidoEducativoPage() {
                             e.stopPropagation();
                             setAEliminar(item);
                           }}
-                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
+                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-400/15"
                           aria-label={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
                           title={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
                         >
@@ -1069,7 +1069,7 @@ export function AdminContenidoEducativoPage() {
                         );
                       })()
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:bg-purple-900/20 dark:text-purple-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:bg-purple-400/10 dark:text-purple-300">
                         <Send className="icon-sm" />
                         {t(`${p}.modulePanel.sentManually`)}
                       </span>
@@ -1165,10 +1165,10 @@ export function AdminContenidoEducativoPage() {
                       placeholder={t(`${p}.fields.categoryPlaceholder`)}
                       className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
                     />
-                    <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{t(`${p}.fields.newCategoryWarning`)}</p>
+                    <p className="mt-1 text-xs text-amber-600 dark:text-amber-200">{t(`${p}.fields.newCategoryWarning`)}</p>
                   </div>
                 )}
-                {fieldErrors.categoria && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.categoria}</p>}
+                {fieldErrors.categoria && <p className="mt-1 text-sm text-red-600 dark:text-red-300">{fieldErrors.categoria}</p>}
               </div>
 
               <InputField
@@ -1223,7 +1223,7 @@ export function AdminContenidoEducativoPage() {
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMarkdownHint`)}</p>
                 {fieldErrors.cuerpo_texto && (
-                  <p id="contenido-cuerpo-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                  <p id="contenido-cuerpo-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                     {fieldErrors.cuerpo_texto}
                   </p>
                 )}
@@ -1249,11 +1249,11 @@ export function AdminContenidoEducativoPage() {
                   }`}
                 />
                 {fieldErrors.url_video ? (
-                  <p id="contenido-url-video-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                  <p id="contenido-url-video-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                     {fieldErrors.url_video}
                   </p>
                 ) : form.url_video?.trim() && (
-                  <p className={`mt-1 text-xs font-semibold ${idVideoReconocido ? "text-accent-600 dark:text-accent-400" : "text-amber-600 dark:text-amber-400"}`}>
+                  <p className={`mt-1 text-xs font-semibold ${idVideoReconocido ? "text-accent-600 dark:text-accent-400" : "text-amber-600 dark:text-amber-200"}`}>
                     {idVideoReconocido ? t(`${p}.fields.videoRecognized`) : t(`${p}.fields.videoNotRecognized`)}
                   </p>
                 )}
@@ -1277,7 +1277,7 @@ export function AdminContenidoEducativoPage() {
                 <button
                   onClick={guardar}
                   disabled={guardando || formularioIncompleto}
-                  className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                  className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                 >
                   {guardando ? t("common.saving") : formularioIncompleto ? t("common.formIncomplete") : t("common.save")}
                 </button>
@@ -1297,7 +1297,7 @@ export function AdminContenidoEducativoPage() {
                   const Icono = categoriaEfectiva ? ICONOS_CATEGORIAS[categoriaEfectiva] ?? ICONO_CATEGORIA_DEFAULT : BookOpen;
                   return (
                     <div className="mb-3 flex items-center gap-2">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
                         <Icono className="icon-md" />
                       </span>
                       <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">

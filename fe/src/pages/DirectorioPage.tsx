@@ -179,7 +179,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                 onClick={() => setTab(id)}
                 className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   tab === id
-                    ? "bg-accent-700 text-white shadow-sm"
+                    ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                     : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                 }`}
               >
@@ -307,7 +307,7 @@ function InfoBanner({
   fuenteLinkLabel?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-800/30 dark:bg-accent-900/10">
+    <div className="rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-300/40 dark:bg-accent-300/10">
       <div className="flex gap-3">
         <Info className="icon-lg mt-0.5 shrink-0 text-accent-600 dark:text-accent-400" />
         <div className="space-y-1.5 text-sm">
@@ -350,8 +350,8 @@ function TarjetaReciclador({
   return (
     <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
       <div className="mb-3 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-900/30">
-          <HardHat className="icon-lg text-teal-700 dark:text-teal-400" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-400/15">
+          <HardHat className="icon-lg text-teal-700 dark:text-teal-300" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 break-words font-semibold text-gray-900 dark:text-white">
@@ -367,7 +367,7 @@ function TarjetaReciclador({
       </div>
 
       {r.asociacion && (
-        <span className="mb-4 inline-flex w-fit items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 dark:bg-teal-900/20 dark:text-teal-400">
+        <span className="mb-4 inline-flex w-fit items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 dark:bg-teal-400/10 dark:text-teal-300">
           {r.asociacion}
         </span>
       )}
@@ -386,7 +386,7 @@ function TarjetaReciclador({
               href={waLink(r.numero_telefonico)}
               target="_blank"
               rel="noopener noreferrer"
-              className="touch-target-h flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600"
+              className="touch-target-h flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
             >
               <MessageCircle className="icon-sm" />
               WhatsApp
@@ -423,7 +423,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
       <div className="mb-3 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-900/30">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-300/10">
           <Warehouse className="icon-lg text-accent-700 dark:text-accent-400" />
         </div>
         <div className="min-w-0 flex-1">

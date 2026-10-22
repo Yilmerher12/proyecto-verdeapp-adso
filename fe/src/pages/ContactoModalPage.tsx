@@ -140,7 +140,7 @@ export function ContactoModalPage() {
       <Modal onClose={() => navigate("/")} wide aria-label={t("contactoModal.title")}>
         <div className="max-h-[85vh] overflow-y-auto p-6 sm:p-8">
           <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
               <MessageSquare className="icon-xl text-accent-600 dark:text-accent-400" />
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
@@ -216,7 +216,7 @@ export function ContactoModalPage() {
                 />
                 <div className="flex items-start justify-between gap-2">
                   {fieldErrors.message ? (
-                    <p id="message-error" className="animate-fade-in text-sm text-red-600 dark:text-red-400" role="alert">
+                    <p id="message-error" className="animate-fade-in text-sm text-red-600 dark:text-red-300" role="alert">
                       {fieldErrors.message}
                     </p>
                   ) : (

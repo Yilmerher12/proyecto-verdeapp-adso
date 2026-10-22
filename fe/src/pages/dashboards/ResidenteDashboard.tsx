@@ -146,8 +146,8 @@ export function ResidenteDashboard() {
       <div className="relative overflow-hidden bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
-            <RolIcon className="icon-xl text-accent-600 dark:text-accent-400" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
+            <RolIcon className="icon-xl text-accent-700 dark:text-accent-300" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.residente.title")}</h1>
@@ -164,18 +164,18 @@ export function ResidenteDashboard() {
 
       {/* Banner estado SHUT */}
       {!cargando && estadoShut.lleno && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/40 dark:bg-amber-900/10">
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-300/30 dark:bg-amber-400/10">
           <TriangleAlert className="icon-lg mt-0.5 shrink-0 text-amber-700 icon-appear icon-ring" />
           <div>
-            <p className="text-sm font-semibold text-amber-900 dark:text-amber-400">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
               {t("dashboards.residente.shutBanner.title")}
             </p>
             {estadoShut.created_at && (
-              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-500">
+              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-200">
                 {t("dashboards.residente.shutBanner.reportedAt", { time: tiempoRelativo(estadoShut.created_at) })}
               </p>
             )}
-            <p className="mt-1 text-xs text-amber-700 dark:text-amber-500">
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-200">
               {t("dashboards.residente.shutBanner.warning")}
             </p>
           </div>
@@ -223,8 +223,8 @@ export function ResidenteDashboard() {
             disabled={enviando || feedbackOk || estadoShut.lleno}
             className={`shrink-0 flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
               feedbackOk || estadoShut.lleno
-                ? "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400"
-                : "bg-amber-700 text-white hover:bg-amber-600"
+                ? "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+                : "bg-amber-700 text-white hover:bg-amber-600 dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200"
             }`}
           >
             {feedbackOk || estadoShut.lleno ? (
@@ -257,7 +257,7 @@ export function ResidenteDashboard() {
             notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
             emptyMessage={t("dashboards.residente.notifications.empty")}
             accentBg="bg-accent-700"
-            accentHighlight="bg-accent-50/60 hover:bg-accent-50 dark:bg-accent-900/10 dark:hover:bg-accent-900/20"
+            accentHighlight="bg-accent-50/60 hover:bg-accent-50 dark:bg-accent-300/10 dark:hover:bg-accent-300/15"
             onMarkRead={marcarLeida}
             onMarkAllRead={marcarTodasLeidas}
             onClearRead={limpiarLeidas}

@@ -149,7 +149,7 @@ export function PuntoAcopioForm({
             ))}
           </select>
           {fieldErrors.id_localidad && (
-            <p id="acopio-localidad-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+            <p id="acopio-localidad-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
               {fieldErrors.id_localidad}
             </p>
           )}
@@ -224,7 +224,7 @@ export function PuntoAcopioForm({
           type="button"
           onClick={guardar}
           disabled={guardando || formularioIncompleto}
-          className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
           {guardando ? t("common.saving") : formularioIncompleto ? t("common.formIncomplete") : t("common.save")}
         </button>
