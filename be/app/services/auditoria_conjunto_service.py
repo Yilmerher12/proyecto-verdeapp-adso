@@ -4,12 +4,12 @@ Descripción: Lógica de negocio de la auditoría del Reciclador al conjunto
              (RQF-009) — validaciones y guardado de la foto de evidencia.
 """
 import asyncio
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from uuid import UUID
 
 from fastapi import HTTPException, UploadFile, status
-from sqlalchemy import func, select
+from sqlalchemy import Date, cast, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.administrador_conjunto import AdministradorConjunto
@@ -22,7 +22,13 @@ from app.models.residente import Residente
 from app.models.rol import RolId
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
-from app.schemas.auditoria_conjunto import NivelDesempeno
+from app.schemas.auditoria_conjunto import (
+    DesempenoConjuntoResponse,
+    NivelDesempeno,
+    SemanaDesempeno,
+    TemaDesempeno,
+)
+from app.services.agenda_conjunto_service import HUSO_BOGOTA
 from app.services.notificaciones_helpers import (
     admins_del_conjunto,
     crear_notificacion,
@@ -347,6 +353,131 @@ def listar_historial(db: Session, current_user: Usuario) -> list[AuditoriaConjun
         .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
         .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
         .limit(50)
+    )
+    return list(db.execute(stmt).scalars().all())
+
+
+SEMANAS_POR_DEFECTO = 8
+SEMANAS_PERMITIDAS = (4, 8, 12)
+
+# ¿Qué? Nivel guardado en la BD → campo del schema de desempeño.
+_CAMPO_POR_NIVEL = {"BUENA": "bueno", "REGULAR": "regular", "DEFICIENTE": "malo"}
+
+
+def _resolver_conjunto(db: Session, current_user: Usuario, id_conjunto: UUID | None) -> UUID:
+    """
+    ¿Qué? Qué conjunto consultar para el desempeño: el pedido (si el usuario
+          pertenece a él) o, sin pedir ninguno, el único que tiene.
+    ¿Impacto? Conjunto ajeno, Reciclador y Admin del Sistema responden 403
+             (no tienen ninguno que resolver). Un Admin de Conjunto con
+             varios conjuntos debe elegir: 422, nunca se adivina uno.
+    """
+    if id_conjunto is not None:
+        if not _pertenece_al_conjunto(db, current_user, id_conjunto):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No perteneces a ese conjunto.")
+        return id_conjunto
+
+    ids_conjuntos = _conjuntos_del_usuario(db, current_user)
+    if not ids_conjuntos:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No perteneces a ningún conjunto.")
+    if len(ids_conjuntos) > 1:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Administras varios conjuntos: indica cuál con id_conjunto.",
+        )
+    return ids_conjuntos[0]
+
+
+def _inicio_dia_bogota(dia: date) -> datetime:
+    return datetime.combine(dia, time.min, tzinfo=HUSO_BOGOTA)
+
+
+def desempeno_semanal(
+    db: Session, current_user: Usuario, id_conjunto: UUID | None, semanas: int
+) -> DesempenoConjuntoResponse:
+    """
+    ¿Qué? Cuántas auditorías Bueno/Regular/Malo tuvo un conjunto en cada una
+          de las últimas `semanas` semanas (la en curso incluida) y por tema.
+    ¿Para qué? Las semanas se cortan en hora de Bogotá, de lunes a domingo:
+              una auditoría del domingo 9 p. m. ya es lunes en UTC y caería
+              en la semana siguiente. Se cuenta en la BD (GROUP BY), así que
+              pasadas las 50 auditorías no se pierde ninguna.
+    ¿Impacto? Las semanas sin auditorías salen en cero (la barra vacía se
+             ve) y la más antigua va primero. El mínimo de datos para
+             mostrar la gráfica lo decide la pantalla con `total`.
+    """
+    id_conjunto = _resolver_conjunto(db, current_user, id_conjunto)
+
+    hoy = datetime.now(HUSO_BOGOTA).date()
+    lunes_actual = hoy - timedelta(days=hoy.weekday())
+    lunes_inicial = lunes_actual - timedelta(weeks=semanas - 1)
+    en_ventana = (
+        AuditoriaConjunto.id_conjunto_residencial == id_conjunto,
+        AuditoriaConjunto.created_at >= _inicio_dia_bogota(lunes_inicial),
+        AuditoriaConjunto.created_at < _inicio_dia_bogota(lunes_actual + timedelta(weeks=1)),
+    )
+
+    # ¿Qué? date_trunc('week') en Postgres devuelve el lunes de esa semana.
+    # ¿Para qué? Se agrupa por el nombre del label para que Postgres vea la
+    #           misma expresión en SELECT y GROUP BY.
+    semana_bogota = cast(
+        func.date_trunc("week", func.timezone("America/Bogota", AuditoriaConjunto.created_at)), Date
+    ).label("semana")
+    filas_semana = db.execute(
+        select(semana_bogota, AuditoriaConjunto.nivel_desempeno, func.count())
+        .where(*en_ventana)
+        .group_by(semana_bogota, AuditoriaConjunto.nivel_desempeno)
+    ).all()
+    filas_tema = db.execute(
+        select(AuditoriaConjunto.tema_educativo, AuditoriaConjunto.nivel_desempeno, func.count())
+        .where(*en_ventana)
+        .group_by(AuditoriaConjunto.tema_educativo, AuditoriaConjunto.nivel_desempeno)
+    ).all()
+
+    por_semana = {
+        lunes_inicial + timedelta(weeks=i): SemanaDesempeno(lunes=lunes_inicial + timedelta(weeks=i))
+        for i in range(semanas)
+    }
+    por_tema: dict[str, TemaDesempeno] = {}
+    total = 0
+    for lunes, nivel, cantidad in filas_semana:
+        setattr(por_semana[lunes], _CAMPO_POR_NIVEL[nivel], cantidad)
+        total += cantidad
+    for tema, nivel, cantidad in filas_tema:
+        por_tema.setdefault(tema, TemaDesempeno(tema=tema))
+        setattr(por_tema[tema], _CAMPO_POR_NIVEL[nivel], cantidad)
+
+    return DesempenoConjuntoResponse(
+        id_conjunto_residencial=id_conjunto,
+        total=total,
+        semanas=list(por_semana.values()),
+        temas=sorted(por_tema.values(), key=lambda t: t.tema),
+    )
+
+
+def auditorias_de_semana(
+    db: Session, current_user: Usuario, id_conjunto: UUID | None, lunes: date
+) -> list[AuditoriaConjunto]:
+    """
+    ¿Qué? Las auditorías de UNA semana de Bogotá (lunes a domingo) de un
+          conjunto, más recientes primero — lo que se abre al tocar una barra.
+    ¿Impacto? `lunes` debe ser lunes de verdad (422 si no): así el detalle
+             siempre coincide con una barra de desempeno_semanal().
+    """
+    id_conjunto = _resolver_conjunto(db, current_user, id_conjunto)
+    if lunes.weekday() != 0:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="La fecha debe ser un lunes.")
+
+    desde = _inicio_dia_bogota(lunes)
+    stmt = (
+        select(AuditoriaConjunto)
+        .where(
+            AuditoriaConjunto.id_conjunto_residencial == id_conjunto,
+            AuditoriaConjunto.created_at >= desde,
+            AuditoriaConjunto.created_at < desde + timedelta(days=7),
+        )
+        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
+        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
     )
     return list(db.execute(stmt).scalars().all())
 
