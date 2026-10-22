@@ -794,8 +794,7 @@
       },
       "avisosSection": {
         "title": "Avisos de este conjunto",
-        "fromRecycler": "De recicladores",
-        "fromResident": "De residentes",
+        "empty": "Todavía no hay avisos de este conjunto. Aparecerán aquí los de recicladores y residentes.",
         "unreadBadge_one": "{{count}} aviso nuevo",
         "unreadBadge_other": "{{count}} avisos nuevos"
       },
@@ -831,11 +830,7 @@
         "successMessage": "Conjunto actualizado correctamente.",
         "errorMessage": "No se pudo guardar el cambio. Intenta de nuevo."
       },
-      "nitLabel": "NIT: {{nit}}",
-      "notifications": {
-        "title": "Actividad del conjunto",
-        "empty": "No hay actividad aún. Las notificaciones de recicladores y residentes aparecerán aquí."
-      }
+      "nitLabel": "NIT: {{nit}}"
     },
     "reciclador": {
       "title": "Panel del Reciclador",
@@ -953,6 +948,10 @@
       "hoursAgo": "hace {{count}}h",
       "daysAgo": "hace {{count}}d"
     }
+  },
+  "desvinculacionAprobada": {
+    "bannerTitle": "Desvinculación aprobada",
+    "gotIt": "Entendido"
   },
   "auditoriaResultado": {
     "bannerTitle": "Nueva auditoría de tu conjunto",

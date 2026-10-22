@@ -23,6 +23,10 @@ export interface NotificacionItem {
   // ¿Qué? Puede ser null — las novedades de plataforma (RQF-015) no
   //       pertenecen a ningún conjunto residencial.
   nombre_conjunto: string | null;
+  // ¿Qué? Issue #436 — id del conjunto de la notificación (null en las de
+  //       plataforma). Es lo que se compara para repartir los avisos entre los
+  //       conjuntos del Admin: el nombre puede repetirse, el id no.
+  id_conjunto_residencial: string | null;
   leida: boolean;
   created_at: string;
 }

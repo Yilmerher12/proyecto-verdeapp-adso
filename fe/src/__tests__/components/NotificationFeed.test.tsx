@@ -16,6 +16,7 @@ const notificacionNoLeida: NotificacionItem = {
   mensaje: "El SHUT está lleno",
   id_referencia: null,
   nombre_conjunto: "AGRUPACION QUINTAS DE ARANJUEZ",
+  id_conjunto_residencial: "c-1",
   leida: false,
   created_at: new Date().toISOString(),
 };

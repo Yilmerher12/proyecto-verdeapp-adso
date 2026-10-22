@@ -20,6 +20,14 @@ class NotificacionResponse(BaseModel):
     #       de toda la plataforma, no de un conjunto — esas notificaciones
     #       no tienen id_conjunto_residencial.
     nombre_conjunto: Optional[str] = None
+    # ¿Qué? Issue #436 — el id del conjunto de la notificación, además de su nombre.
+    # ¿Para qué? El panel del Admin de Conjunto repartía los avisos entre sus
+    #           conjuntos comparando nombres: dos conjuntos con el mismo
+    #           nombre mezclaban sus avisos y sus contadores. Con el id se
+    #           comparan por identificador.
+    # ¿Impacto? Cambio aditivo (campo nuevo, sin migración): quien no lo lea
+    #           no se entera. NULL en las novedades de plataforma (RQF-015).
+    id_conjunto_residencial: Optional[UUID] = None
     leida: bool
     created_at: datetime
 

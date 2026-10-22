@@ -61,3 +61,4 @@
 | HU-047 | [Residente, Reciclador o Admin de Conjunto envía una novedad al Admin Sistema](HU-047_usuario_envia_novedad_admin_sistema.md) | [RQF-021](../RFs/RQF-021_novedades_enviadas_admin_sistema.md) |
 | HU-048 | [Admin Sistema revisa la bandeja unificada de solicitudes pendientes](HU-048_admin_sistema_revisa_bandeja_solicitudes.md) | [RQF-021](../RFs/RQF-021_novedades_enviadas_admin_sistema.md) |
 | HU-049 | [Admin de Conjunto descarga el historial de la agenda](HU-049_admin_conjunto_descarga_historial_agenda.md) | [RQF-020](../RFs/RQF-020_agenda_interna_conjunto.md) |
+| HU-050 | [Administrador de Conjunto ve los avisos de cada uno de sus conjuntos](HU-050_admin_conjunto_ve_avisos_de_cada_conjunto.md) | [RQF-003](../RFs/RQF-003_alerta_shut_bidireccional.md), [RQF-006](../RFs/RQF-006_notificacion_llegada_reciclador.md) |

@@ -75,6 +75,9 @@ El "estado del SHUT" no es una columna aparte: es el tipo del **último** aviso 
 | ------ | --------------------------------- | -------------- | ------------------------------------------------ |
 | POST   | `/api/v1/notificaciones/enviar`   | Sí             | Emite la alerta (`tipo=SHUT_LLENO` o `SHUT_LIBRE`) |
 | GET    | `/api/v1/notificaciones/estado-shut` | Sí (Residente) | Consulta si el SHUT de su conjunto está lleno o no |
+| GET    | `/api/v1/notificaciones/mis-notificaciones` | Sí | Lista las últimas 30 notificaciones del usuario. Cada una trae `nombre_conjunto` y, desde el issue #436, `id_conjunto_residencial` (`null` en las novedades de la plataforma) |
+| POST   | `/api/v1/notificaciones/marcar-todas-leidas?id_conjunto_residencial=` | Sí | Marca como leídas las del usuario; con el parámetro opcional, solo las de ese conjunto (issue #436, HU-050) |
+| DELETE | `/api/v1/notificaciones/limpiar-leidas?id_conjunto_residencial=` | Sí | Quita del feed las ya leídas; con el parámetro opcional, solo las de ese conjunto (issue #436, HU-050) |
 
 ---
 
@@ -82,3 +85,11 @@ El "estado del SHUT" no es una columna aparte: es el tipo del **último** aviso 
 
 - RN-001: Un residente no puede enviar la alerta "SHUT Lleno" si el estado actual del SHUT ya es "lleno". **Implementado (2026-08-29).**
 - RN-002: Las notificaciones solo deben llegar a los usuarios del rol opuesto que pertenezcan estrictamente al mismo conjunto residencial, más el Admin de Conjunto de ese conjunto (corregido 2026-09-24: el código siempre incluyó al Admin de Conjunto, ver `admins_del_conjunto`). **Implementado.**
+
+---
+
+## Historias de usuario derivadas
+
+| HU      | Descripción                                                    |
+| ------- | ----------------------------------------------------------------|
+| [HU-050](../HUs/HU-050_admin_conjunto_ve_avisos_de_cada_conjunto.md) | Administrador de Conjunto ve los avisos de cada uno de sus conjuntos (los de SHUT y llegada llegan a su panel; ver RN-002) |
