@@ -33,7 +33,7 @@ Este documento fija seis categorías de restricciones para VerdeApp: tecnología
 | Alembic      | 1.20.0 (migraciones versionadas — nunca `Base.metadata.create_all()`)|
 | Pydantic     | 2.13.5             |
 | fpdf2        | 2.8.9 (genera el PDF del historial de la agenda, issue #480; licencia LGPL-3.0, se usa como librería sin modificarla; puro Python, no necesita programas de sistema en Windows) |
-| pypdf        | 6.20.1 (solo en las pruebas: lee el PDF generado para comprobar su contenido; licencia BSD-3-Clause) |
+| pypdf        | 6.21.1 (solo en las pruebas: lee el PDF generado para comprobar su contenido; licencia BSD-3-Clause) |
 
 No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `pyproject.toml` — toda dependencia va con `==`, reforzado además por `uv.lock`, que fija también las dependencias transitivas.
 
