@@ -71,4 +71,4 @@
 
 - **Dado que** el equipo de VerdeApp publicó una novedad general (RQF-015),
 - **cuando** quiero leerla,
-- **entonces** la encuentro en Soporte técnico → "Avisos de soporte", que no cambia con esta historia.
+- **entonces** la encuentro en Soporte técnico → "Avisos del sistema", que no cambia con esta historia.

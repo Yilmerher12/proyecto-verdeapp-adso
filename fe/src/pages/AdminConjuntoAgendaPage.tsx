@@ -34,7 +34,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { Spinner } from "@/components/ui/Spinner";
 
-// ¿Qué? Issue #435 — temas del historial por página, igual que "Mis envíos" de novedades.
+// ¿Qué? Issue #435 — temas del historial por página, igual que "Historial de novedades".
 const TAMANO_PAGINA = 10;
 
 // ¿Qué? Milisegundos que la ventana "Descargar agenda" espera, desde el último cambio de filtro, antes de contar.

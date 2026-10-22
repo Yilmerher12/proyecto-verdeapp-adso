@@ -31,7 +31,7 @@ class CrearNovedadEnviadaRequest(BaseModel):
 
 
 class NovedadEnviadaResponse(BaseModel):
-    """¿Qué? Una novedad, tal como la ve su autor en "Mis envíos"."""
+    """¿Qué? Una novedad, tal como la ve su autor en "Historial de novedades"."""
     id: UUID
     texto: str
     url_imagen: Optional[str] = None
@@ -41,6 +41,6 @@ class NovedadEnviadaResponse(BaseModel):
 
 
 class PaginaDeNovedadesEnviadasResponse(BaseModel):
-    """¿Qué? Issue #399: una página de "Mis envíos" + cuántas hay en total, para pintar la paginación."""
+    """¿Qué? Issue #399: una página de "Historial de novedades" + cuántas hay en total, para pintar la paginación."""
     items: List[NovedadEnviadaResponse]
     total: int

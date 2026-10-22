@@ -20,7 +20,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
 
-// ¿Qué? Issue #399 — novedades por página en "Mis envíos".
+// ¿Qué? Issue #399 — novedades por página en "Historial de novedades".
 const TAMANO_PAGINA = 10;
 
 // ¿Qué? Motivos de consulta de "Soporte técnico": los comunes a los 3 roles y
@@ -30,7 +30,7 @@ const TAMANO_PAGINA = 10;
 //           solo con "otros" tiene que explicar con sus palabras.
 // ¿Impacto? La lista vive aquí, no en la base de datos: nadie la edita desde la
 //          app. El motivo no es un campo aparte: se guarda dentro del texto de la
-//          novedad, así la bandeja del Admin Sistema y "Mis envíos" siguen igual.
+//          novedad, así la bandeja del Admin Sistema y "Historial de novedades" siguen igual.
 const MOTIVOS_COMUNES = ["login", "notificaciones", "cuenta", "falla", "informacion", "sugerencia"];
 const MOTIVOS_POR_ROL: Record<number, string[]> = {
   [RoleId.RESIDENTE]: ["residenteUnidad", "residenteShut"],

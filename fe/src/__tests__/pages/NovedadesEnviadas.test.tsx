@@ -2,7 +2,7 @@
  * Archivo: __tests__/pages/NovedadesEnviadas.test.tsx
  * Descripción: Tests de las novedades que Residente, Reciclador y Admin de
  *              Conjunto le ENVÍAN al Admin Sistema, desde las pestañas
- *              "Escribir novedad" y "Mis envíos" de la página de Novedades.
+ *              "Escribir novedad" e "Historial de novedades" de la página de Novedades.
  */
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -189,7 +189,7 @@ describe("Novedades enviadas al Admin Sistema", () => {
     expect(await screen.findByText("Servidor caído")).toBeInTheDocument();
   });
 
-  it("Mis envíos lista lo enviado con su estado", async () => {
+  it("Historial de novedades lista lo enviado con su estado", async () => {
     mockMias.mockResolvedValue({
       items: [
         { id: "n-1", texto: "Pared rayada.", url_imagen: null, estado: "VISTA", nombre_conjunto: "Quintas", created_at: "2026-09-22T10:00:00Z" },
@@ -200,7 +200,7 @@ describe("Novedades enviadas al Admin Sistema", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("tab", { name: "Mis envíos" }));
+    await user.click(screen.getByRole("tab", { name: "Historial de novedades" }));
 
     expect(await screen.findByText("Pared rayada.")).toBeInTheDocument();
     expect(screen.getByText("Vista por el Admin del Sistema")).toBeInTheDocument();
@@ -208,7 +208,7 @@ describe("Novedades enviadas al Admin Sistema", () => {
     expect(mockMias).toHaveBeenCalledWith(10, 0);
   });
 
-  it("Mis envíos pide la página siguiente con el offset correcto", async () => {
+  it("Historial de novedades pide la página siguiente con el offset correcto", async () => {
     const item = (id: string) => ({
       id, texto: `Novedad ${id}`, url_imagen: null, estado: "NUEVA", nombre_conjunto: null, created_at: "2026-09-22T10:00:00Z",
     });
@@ -218,7 +218,7 @@ describe("Novedades enviadas al Admin Sistema", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("tab", { name: "Mis envíos" }));
+    await user.click(screen.getByRole("tab", { name: "Historial de novedades" }));
     expect(await screen.findByText("Novedad primera")).toBeInTheDocument();
     expect(screen.getByText("Mostrando 1–10 de 12")).toBeInTheDocument();
 
@@ -228,11 +228,11 @@ describe("Novedades enviadas al Admin Sistema", () => {
     expect(mockMias).toHaveBeenLastCalledWith(10, 10);
   });
 
-  it("Mis envíos muestra el estado vacío", async () => {
+  it("Historial de novedades muestra el estado vacío", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("tab", { name: "Mis envíos" }));
+    await user.click(screen.getByRole("tab", { name: "Historial de novedades" }));
     expect(await screen.findByText("Todavía no has enviado ninguna novedad.")).toBeInTheDocument();
   });
 });

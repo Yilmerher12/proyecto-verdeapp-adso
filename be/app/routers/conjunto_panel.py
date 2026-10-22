@@ -280,7 +280,7 @@ def listar_agenda(
     return agenda_conjunto_service.listar(db, administrador, id_conjunto_residencial)
 
 
-# ¿Qué? Tope de filas por página del historial, igual que "Mis envíos" de novedades.
+# ¿Qué? Tope de filas por página del historial, igual que "Historial de novedades".
 MAX_LIMIT_ARCHIVADAS = 100
 
 
