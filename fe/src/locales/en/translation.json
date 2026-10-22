@@ -623,6 +623,10 @@
       "subject": "Complex Administrator account request",
       "messageTemplate": "Complex name:\nComplex address:\nDistrict:\nMy position at the complex:\nContact phone:"
     },
+    "otroConjunto": {
+      "subject": "Request to manage another complex",
+      "messageTemplate": "My email in VerdeApp:\nName of the complex I want to manage:\nComplex address:\nDistrict:\nMy position at that complex:\nContact phone:"
+    },
     "validation": {
       "nameRequired": "Name is required",
       "subjectMin": "Subject must be at least {{min}} characters",
@@ -787,6 +791,17 @@
         "title": "Buildings you administer",
         "loading": "Loading your buildings...",
         "empty": "You don't have any building assigned yet. Contact the VerdeApp team."
+      },
+      "otroConjunto": {
+        "tileTitle": "Request another complex",
+        "tileHelp": "Ask to be assigned another complex.",
+        "modalTitle": "Request another complex",
+        "heading": "Request another complex",
+        "intro": "To manage another complex, the VerdeApp team first verifies your position in it. Here is how:",
+        "step1": "Send us a request with the button below: the name and address of the complex you want to manage and your position in it.",
+        "step2": "We reply to your email and ask for the documents that prove your position in that complex. You attach them by replying to that same email.",
+        "step3": "If everything is in order, the complex is assigned to your account and appears in this panel. You don't need to create another account.",
+        "cta": "Request access"
       },
       "avisosSection": {
         "title": "Notices for this building",

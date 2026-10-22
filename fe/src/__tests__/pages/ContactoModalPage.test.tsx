@@ -119,6 +119,35 @@ describe("ContactoModalPage", () => {
       });
     });
 
+    // ¿Qué? Issue #491 — quien YA tiene cuenta y pide otro conjunto desde su panel.
+    it("con ?motivo=otro-conjunto trae su propio asunto y su propia plantilla", () => {
+      renderWithProviders(<ContactoModalPage />, { initialRoute: "/contacto?motivo=otro-conjunto" });
+
+      expect(screen.getByLabelText("Asunto")).toHaveValue("Solicitud para administrar otro conjunto");
+      expect(screen.getByLabelText("Mensaje")).toHaveValue(
+        "Mi correo en VerdeApp:\nNombre del conjunto que quiero administrar:\nDirección del conjunto:\nLocalidad:\nMi cargo en ese conjunto:\nTeléfono de contacto:"
+      );
+    });
+
+    it("con ?motivo=otro-conjunto tampoco deja enviar la plantilla sin llenar", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<ContactoModalPage />, { initialRoute: "/contacto?motivo=otro-conjunto" });
+
+      await user.type(screen.getByLabelText("Nombre completo"), "Laura Gómez");
+      await user.type(screen.getByLabelText("Correo electrónico"), "laura@ejemplo.com");
+      await user.click(screen.getByLabelText("Mensaje"));
+      await user.tab();
+
+      expect(screen.getByText("Completa los datos de la plantilla antes de enviar")).toBeInTheDocument();
+      expect(enviarMock).not.toHaveBeenCalled();
+    });
+
+    it("un motivo heredado de los objetos (toString) no se toma como motivo válido", () => {
+      renderWithProviders(<ContactoModalPage />, { initialRoute: "/contacto?motivo=toString" });
+
+      expect(screen.getByLabelText("Asunto")).toHaveValue("");
+    });
+
     it("sin motivo el formulario empieza vacío", () => {
       renderWithProviders(<ContactoModalPage />, { initialRoute: "/contacto?motivo=otra-cosa" });
 
