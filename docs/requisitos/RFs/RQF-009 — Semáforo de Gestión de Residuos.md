@@ -74,6 +74,8 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
 | POST   | `/api/v1/auditorias-conjunto`             | Sí (Reciclador)| Registra una nueva auditoría para el conjunto, con 1 a 3 fotos de evidencia |
 | GET    | `/api/v1/auditorias-conjunto/historial`   | Sí (Residente, Admin de Conjunto) | Obtiene el historial de auditorías del conjunto |
 | GET    | `/api/v1/auditorias-conjunto/mias`        | Sí (Reciclador) | Historial de las auditorías que el reciclador mismo envió |
+| GET    | `/api/v1/auditorias-conjunto/desempeno`   | Sí (Residente, Admin de Conjunto) | Conteo de auditorías de UN conjunto por semana (Bueno/Regular/Malo) y por tema. Parámetros: `id_conjunto` (opcional si el usuario tiene un solo conjunto; con varios responde 422) y `semanas` (4, 8 o 12; por defecto 8; otro valor responde 422). Incluye la semana en curso, las semanas sin auditorías salen en cero y la más antigua va primero. Responde `id_conjunto_residencial`, `total`, `semanas` y `temas` |
+| GET    | `/api/v1/auditorias-conjunto/desempeno/semana` | Sí (Residente, Admin de Conjunto) | Auditorías de una semana concreta de un conjunto, más recientes primero, con el mismo formato que `/historial`. Parámetros: `lunes` (`YYYY-MM-DD`, debe ser lunes; si no, 422) e `id_conjunto` (misma regla de arriba) |
 | GET    | `/api/v1/auditorias-conjunto/{id}`        | Sí (Residente, Admin de Conjunto, o el Reciclador que la envió) | Detalle de una auditoría puntual |
 | GET    | `/api/v1/auditorias-conjunto/admin`       | Sí (Admin Sistema) | Lista todas las auditorías de todos los conjuntos, filtrables por la semana (parámetro `lunes`, formato `YYYY-MM-DD` — devuelve `[lunes, lunes+7)`); cada ítem incluye `avisados` (cuántos Residentes recibieron la recomendación automática de RQF-013 por esa auditoría) |
 
@@ -84,6 +86,17 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
      `/historial`. ¿Para qué? Decidir a qué conjuntos conviene enviarles
      contenido educativo a mano (RQF-013, Flujo C) cuando su calificación fue
      Regular o Malo. ¿Impacto? Nuevo — no reemplaza ningún endpoint existente. -->
+
+<!-- ¿Qué? `GET /desempeno` y `GET /desempeno/semana` (issue #486). Cuentan
+     en la base de datos (GROUP BY), así que pasadas las 50 auditorías que
+     corta `/historial` no se pierde ninguna. ¿Para qué? Alimentar la gráfica
+     semanal del Admin de Conjunto y del Residente (investigación #437).
+     ¿Impacto? Las semanas se cortan en hora de Bogotá (UTC-5), de lunes a
+     domingo: una auditoría del domingo 9 p. m. cuenta en esa semana y no en
+     la siguiente, a diferencia de la barra actual del paso 8 (UTC), que
+     quitará la tarjeta "Página Desempeño" (#487). Permisos: el Residente
+     solo su conjunto y el Admin de Conjunto solo los de asignación activa;
+     conjunto ajeno, Reciclador y Admin del Sistema responden 403. -->
 
 ---
 

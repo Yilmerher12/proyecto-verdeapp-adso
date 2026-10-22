@@ -21,6 +21,7 @@ from app.schemas.auditoria_conjunto import (
     AuditoriaConjuntoResponse,
     AuditoriasAdminListResponse,
     DESCRIPCION_MAX_LENGTH,
+    DesempenoConjuntoResponse,
     NivelDesempeno,
     TEMA_MAX_LENGTH,
 )
@@ -135,6 +136,47 @@ def listar_admin(
         for a in auditorias
     ]
     return AuditoriasAdminListResponse(items=items, total=total)
+
+
+# ¿Qué? Las dos rutas de desempeño NO usan _requiere_*: aceptan cualquier
+#       sesión y el servicio responde 403 a quien no pertenece al conjunto
+#       (Reciclador y Admin del Sistema nunca pertenecen a uno).
+# ¿Impacto? Deben declararse ANTES de /{id_auditoria}; si no, FastAPI
+#           interpretaría "desempeno" como un id de auditoría.
+@router.get(
+    "/desempeno",
+    response_model=DesempenoConjuntoResponse,
+    summary="Residente o Admin de Conjunto ve el desempeño semanal de un conjunto (conteos por semana y tema)",
+)
+def desempeno_semanal(
+    id_conjunto: Optional[UUID] = Query(None, description="Opcional si el usuario tiene un solo conjunto"),
+    semanas: int = Query(service.SEMANAS_POR_DEFECTO, description="4, 8 o 12"),
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DesempenoConjuntoResponse:
+    # ¿Qué? Se valida a mano porque Literal[4, 8, 12] en un Query no convierte
+    #       el texto "4" a número y rechazaba hasta los valores válidos.
+    if semanas not in service.SEMANAS_PERMITIDAS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="semanas debe ser 4, 8 o 12.",
+        )
+    return service.desempeno_semanal(db, current_user, id_conjunto, semanas)
+
+
+@router.get(
+    "/desempeno/semana",
+    response_model=list[AuditoriaConjuntoResponse],
+    summary="Residente o Admin de Conjunto ve las auditorías de una semana (lunes a domingo, hora de Bogotá)",
+)
+def auditorias_de_semana(
+    lunes: date = Query(..., description="Lunes de la semana a consultar (AAAA-MM-DD)"),
+    id_conjunto: Optional[UUID] = Query(None, description="Opcional si el usuario tiene un solo conjunto"),
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[AuditoriaConjuntoResponse]:
+    auditorias = service.auditorias_de_semana(db, current_user, id_conjunto, lunes)
+    return [_a_response(a) for a in auditorias]
 
 
 @router.get(

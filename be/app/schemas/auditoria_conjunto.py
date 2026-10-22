@@ -3,7 +3,7 @@ Módulo: schemas/auditoria_conjunto.py
 Descripción: Esquemas de validación para la auditoría del Reciclador al
              conjunto (RQF-009).
 """
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal, Optional
 from uuid import UUID
 
@@ -59,3 +59,29 @@ class AuditoriaAdminResponse(AuditoriaConjuntoResponse):
 class AuditoriasAdminListResponse(BaseModel):
     items: list[AuditoriaAdminResponse]
     total: int
+
+
+# ¿Qué? Issue #486 — conteos de auditorías de UN conjunto por semana y por
+#       tema, para la gráfica de desempeño (Admin de Conjunto y Residente).
+# ¿Para qué? Que la base de datos cuente (GROUP BY) y la pantalla solo dibuje:
+#           el historial viejo corta en 50 auditorías mezclando conjuntos.
+# ¿Impacto? `lunes` es el lunes de la semana en hora de Bogotá, no en UTC.
+class SemanaDesempeno(BaseModel):
+    lunes: date
+    bueno: int = 0
+    regular: int = 0
+    malo: int = 0
+
+
+class TemaDesempeno(BaseModel):
+    tema: str
+    bueno: int = 0
+    regular: int = 0
+    malo: int = 0
+
+
+class DesempenoConjuntoResponse(BaseModel):
+    id_conjunto_residencial: UUID
+    total: int
+    semanas: list[SemanaDesempeno]
+    temas: list[TemaDesempeno]
