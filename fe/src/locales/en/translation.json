@@ -930,6 +930,9 @@
     },
     "residente": {
       "title": "Resident Panel",
+      "desempeno": {
+        "title": "My complex's performance"
+      },
       "shutBanner": {
         "title": "The waste room is full",
         "reportedAt": "Reported {{time}}",

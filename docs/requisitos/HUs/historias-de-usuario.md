@@ -64,3 +64,4 @@
 | HU-050 | [Administrador de Conjunto ve los avisos de cada uno de sus conjuntos](HU-050_admin_conjunto_ve_avisos_de_cada_conjunto.md) | [RQF-003](../RFs/RQF-003_alerta_shut_bidireccional.md), [RQF-006](../RFs/RQF-006_notificacion_llegada_reciclador.md) |
 | HU-051 | [Admin de Conjunto pide que le asignen otro conjunto desde su panel](HU-051_admin_conjunto_solicita_otro_conjunto.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
 | HU-052 | [Admin de Conjunto ve el desempeño semanal de su conjunto](HU-052_admin_conjunto_ve_desempeno_semanal.md) | [RQF-009](<../RFs/RQF-009 — Semáforo de Gestión de Residuos.md>) |
+| HU-053 | [Residente ve el desempeño semanal de su conjunto](HU-053_residente_ve_desempeno_semanal.md) | [RQF-009](<../RFs/RQF-009 — Semáforo de Gestión de Residuos.md>) |

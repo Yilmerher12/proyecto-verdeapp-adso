@@ -26,6 +26,20 @@ vi.mock("axios", () => {
   return { default: { ...instance, create: () => instance } };
 });
 
+// ¿Qué? Respuesta de relleno para las peticiones que cada prueba no mira.
+// ¿Para qué? Desde el issue #488 el panel también pide el desempeño semanal, que es un
+//           objeto (no una lista): contestarle [] como a las demás lo rompería.
+const DESEMPENO_VACIO = {
+  id_conjunto_residencial: "c1",
+  total: 0,
+  semanas: [{ lunes: "2026-10-19", bueno: 0, regular: 0, malo: 0 }],
+  temas: [],
+};
+
+function respuestaPorDefecto(url: string) {
+  return { data: url.endsWith("/auditorias-conjunto/desempeno") ? DESEMPENO_VACIO : [] };
+}
+
 function renderPage() {
   return renderWithProviders(<ResidenteDashboard />, {
     authContext: { user: mockUser, isAuthenticated: true },
@@ -39,7 +53,7 @@ describe("ResidenteDashboard", () => {
       if (url.includes("estado-shut")) {
         return Promise.resolve({ data: { lleno: false, created_at: null } });
       }
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     mockPost.mockResolvedValue({ data: {} });
     mockDelete.mockResolvedValue({ data: {} });
@@ -75,7 +89,7 @@ describe("ResidenteDashboard", () => {
           ],
         });
       }
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     renderPage();
 
@@ -105,7 +119,7 @@ describe("ResidenteDashboard", () => {
       if (url.includes("estado-shut")) {
         return Promise.resolve({ data: { lleno: true, created_at: "2026-08-24T10:00:00Z" } });
       }
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     renderPage();
     await waitFor(() => {
@@ -175,7 +189,7 @@ describe("ResidenteDashboard", () => {
           },
         });
       }
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     const user = userEvent.setup();
     renderPage();
@@ -235,7 +249,7 @@ describe("ResidenteDashboard", () => {
           },
         });
       }
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     const user = userEvent.setup();
     renderPage();
@@ -245,5 +259,80 @@ describe("ResidenteDashboard", () => {
 
     expect(await screen.findByText("Resultado de la auditoría")).toBeInTheDocument();
     expect(screen.getAllByText("Bueno").length).toBeGreaterThan(0);
+  });
+
+  // ¿Qué? HU-053 (issue #488): el Residente ve el mismo panel de desempeño que el Admin de
+  //       Conjunto (PanelDesempeno, ya probado a fondo en PanelDesempeno.test.tsx), sin selector.
+  describe("desempeño semanal de mi conjunto", () => {
+    const semana = (lunes: string, bueno = 0, regular = 0, malo = 0) => ({ lunes, bueno, regular, malo });
+    const DESEMPENO = {
+      id_conjunto_residencial: "c1",
+      total: 6,
+      semanas: [
+        semana("2026-09-28"),
+        semana("2026-10-05", 1),
+        semana("2026-10-12", 1, 1),
+        semana("2026-10-19", 2, 0, 1),
+      ],
+      temas: [{ tema: "Cantidad de basura generada", bueno: 2, regular: 2, malo: 2 }],
+    };
+
+    function responderDesempeno(datos: unknown) {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });
+        if (url.endsWith("/auditorias-conjunto/desempeno")) return Promise.resolve({ data: datos });
+        return Promise.resolve({ data: [] });
+      });
+    }
+
+    it("muestra la sección con la gráfica de su conjunto, sin selector de conjunto", async () => {
+      responderDesempeno(DESEMPENO);
+      renderPage();
+
+      expect(screen.getByRole("heading", { name: "Desempeño de mi conjunto" })).toBeInTheDocument();
+      // ¿Qué? Plazo de 5 s: es la primera prueba de este archivo que descarga la gráfica (carga bajo demanda)
+      //       y con la cobertura activa la importación de recharts tarda más que el 1 s por defecto.
+      expect(
+        await screen.findByRole("button", { name: /^Semana en curso, del .*: Bueno 2, Regular 0, Malo 1$/ }, { timeout: 5000 }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("region", { name: "Temas del período" })).toBeInTheDocument();
+      // ¿Qué? Dos botones: uno para la gráfica y otro para el ranking de temas.
+      expect(screen.getAllByRole("button", { name: "Ver como tabla" })).toHaveLength(2);
+      expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Período")).not.toBeInTheDocument();
+    });
+
+    it("pide el desempeño sin id_conjunto y con 8 semanas: el backend resuelve su único conjunto", async () => {
+      responderDesempeno(DESEMPENO);
+      renderPage();
+
+      await screen.findByRole("button", { name: /^Semana en curso/ });
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/auditorias-conjunto/desempeno"),
+        { params: { id_conjunto: undefined, semanas: 8 } },
+      );
+    });
+
+    it("con menos de 4 auditorías avisa que faltan datos y la lista de auditorías sigue visible", async () => {
+      responderDesempeno({ ...DESEMPENO, total: 2, semanas: [semana("2026-10-12", 1), semana("2026-10-19", 1)] });
+      renderPage();
+
+      expect(await screen.findByText(/Todavía no hay suficientes auditorías para mostrar la gráfica/)).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^Semana/ })).not.toBeInTheDocument();
+      expect(screen.getByText("Historial de auditorías")).toBeInTheDocument();
+    });
+
+    it("si falla el desempeño lo avisa en su sección y el resto del panel sigue funcionando", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });
+        if (url.endsWith("/auditorias-conjunto/desempeno")) return Promise.reject(new Error("falló"));
+        return Promise.resolve({ data: [] });
+      });
+      renderPage();
+
+      expect(await screen.findByText("No se pudo cargar el desempeño.")).toBeInTheDocument();
+      expect(screen.getByText("Historial de auditorías")).toBeInTheDocument();
+      expect(screen.getByText("Panel del Residente")).toBeInTheDocument();
+    });
   });
 });
