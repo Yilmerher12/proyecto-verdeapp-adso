@@ -37,7 +37,10 @@ const DESEMPENO_VACIO = {
 };
 
 function respuestaPorDefecto(url: string) {
-  return { data: url.endsWith("/auditorias-conjunto/desempeno") ? DESEMPENO_VACIO : [] };
+  if (url.endsWith("/auditorias-conjunto/desempeno")) return { data: DESEMPENO_VACIO };
+  // ¿Qué? El historial de auditorías llega paginado ({items, total}), no como arreglo.
+  if (url.endsWith("/auditorias-conjunto/historial")) return { data: { items: [], total: 0 } };
+  return { data: [] };
 }
 
 function renderPage() {
@@ -219,19 +222,22 @@ describe("ResidenteDashboard", () => {
       if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });
       if (url.includes("/auditorias-conjunto/historial")) {
         return Promise.resolve({
-          data: [
-            {
-              id_auditoria: 7,
-              id_conjunto_residencial: 1,
-              nombre_conjunto: "Conjunto Los Alpes",
-              nivel_desempeno: "BUENA",
-              tema_educativo: "Economía circular y aprovechamiento",
-              descripcion: null,
-              ruta_evidencia: "/uploads/evidencias-auditoria/foto7.jpg",
-              created_at: "2026-08-20T10:00:00Z",
-              nombre_reciclador: "Carlos Gómez",
-            },
-          ],
+          data: {
+            items: [
+              {
+                id_auditoria: 7,
+                id_conjunto_residencial: 1,
+                nombre_conjunto: "Conjunto Los Alpes",
+                nivel_desempeno: "BUENA",
+                tema_educativo: "Economía circular y aprovechamiento",
+                descripcion: null,
+                ruta_evidencia: "/uploads/evidencias-auditoria/foto7.jpg",
+                created_at: "2026-08-20T10:00:00Z",
+                nombre_reciclador: "Carlos Gómez",
+              },
+            ],
+            total: 1,
+          },
         });
       }
       if (url.includes("/auditorias-conjunto/7")) {
@@ -281,7 +287,7 @@ describe("ResidenteDashboard", () => {
       mockGet.mockImplementation((url: string) => {
         if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });
         if (url.endsWith("/auditorias-conjunto/desempeno")) return Promise.resolve({ data: datos });
-        return Promise.resolve({ data: [] });
+        return Promise.resolve(respuestaPorDefecto(url));
       });
     }
 
@@ -326,7 +332,7 @@ describe("ResidenteDashboard", () => {
       mockGet.mockImplementation((url: string) => {
         if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });
         if (url.endsWith("/auditorias-conjunto/desempeno")) return Promise.reject(new Error("falló"));
-        return Promise.resolve({ data: [] });
+        return Promise.resolve(respuestaPorDefecto(url));
       });
       renderPage();
 

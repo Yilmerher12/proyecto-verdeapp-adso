@@ -20,10 +20,12 @@ from app.schemas.auditoria_conjunto import (
     AuditoriaAdminResponse,
     AuditoriaConjuntoResponse,
     AuditoriasAdminListResponse,
+    AuditoriasListResponse,
     DESCRIPCION_MAX_LENGTH,
     DesempenoConjuntoResponse,
     NivelDesempeno,
     TEMA_MAX_LENGTH,
+    UltimaAuditoriaConjuntoResponse,
 )
 from app.services import auditoria_conjunto_service as service
 
@@ -84,33 +86,52 @@ async def crear_auditoria(
 
 @router.get(
     "/mias",
-    response_model=list[AuditoriaConjuntoResponse],
-    summary="Reciclador ve las auditorías que ya envió",
+    response_model=AuditoriasListResponse,
+    summary="Reciclador ve, de a páginas, las auditorías que ya envió",
 )
 def listar_mias(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(_requiere_reciclador),
     db: Session = Depends(get_db),
-) -> list[AuditoriaConjuntoResponse]:
-    auditorias = service.listar_mias(db, current_user.id_usuario)
-    return [_a_response(a) for a in auditorias]
+) -> AuditoriasListResponse:
+    auditorias, total = service.listar_mias(db, current_user.id_usuario, limit, offset)
+    return AuditoriasListResponse(items=[_a_response(a) for a in auditorias], total=total)
+
+
+@router.get(
+    "/mias/ultimas",
+    response_model=list[UltimaAuditoriaConjuntoResponse],
+    summary="Reciclador ve la fecha de su última auditoría en cada conjunto que ya auditó",
+)
+def ultimas_mias(
+    current_user: Usuario = Depends(_requiere_reciclador),
+    db: Session = Depends(get_db),
+) -> list[UltimaAuditoriaConjuntoResponse]:
+    return [
+        UltimaAuditoriaConjuntoResponse(id_conjunto_residencial=id_conjunto, ultima_auditoria=ultima)
+        for id_conjunto, ultima in service.ultimas_por_conjunto(db, current_user.id_usuario)
+    ]
 
 
 @router.get(
     "/historial",
-    response_model=list[AuditoriaConjuntoResponse],
-    summary="Residente o Admin de Conjunto ve el historial de auditorías de su(s) conjunto(s)",
+    response_model=AuditoriasListResponse,
+    summary="Residente o Admin de Conjunto ve, de a páginas, el historial de auditorías de su(s) conjunto(s)",
 )
 def listar_historial(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> list[AuditoriaConjuntoResponse]:
+) -> AuditoriasListResponse:
     if current_user.id_rol not in (RolId.RESIDENTE, RolId.ADMIN_CONJUNTO):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo un Residente o Admin de Conjunto puede ver este historial.",
         )
-    auditorias = service.listar_historial(db, current_user)
-    return [_a_response(a) for a in auditorias]
+    auditorias, total = service.listar_historial(db, current_user, limit, offset)
+    return AuditoriasListResponse(items=[_a_response(a) for a in auditorias], total=total)
 
 
 @router.get(
@@ -158,7 +179,7 @@ def desempeno_semanal(
     #       el texto "4" a número y rechazaba hasta los valores válidos.
     if semanas not in service.SEMANAS_PERMITIDAS:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="semanas debe ser 4, 8 o 12.",
         )
     return service.desempeno_semanal(db, current_user, id_conjunto, semanas)

@@ -33,11 +33,18 @@ const conjuntoAutorizado = {
   nombre_localidad: "Suba",
 };
 
+// ¿Qué? Respuesta de relleno para las peticiones que cada prueba no mira.
+// ¿Para qué? El historial de auditorías llega paginado ({items, total}); las demás listas, como arreglo vacío.
+//           "/mias/ultimas" (una fecha por conjunto) también es un arreglo vacío.
+function respuestaPorDefecto(url: string) {
+  return { data: url.endsWith("/auditorias-conjunto/mias") ? { items: [], total: 0 } : [] };
+}
+
 function mockRespuestasVacias() {
   mockGet.mockImplementation((url: string) => {
     if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
     if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [] });
-    return Promise.resolve({ data: [] });
+    return Promise.resolve(respuestaPorDefecto(url));
   });
 }
 
@@ -84,7 +91,7 @@ describe("RecicladorDashboard", () => {
           ],
         });
       }
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     renderPage();
 
@@ -130,7 +137,7 @@ describe("RecicladorDashboard", () => {
         });
       }
       if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [] });
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     const user = userEvent.setup();
     renderPage();
@@ -150,7 +157,7 @@ describe("RecicladorDashboard", () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
       if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     const user = userEvent.setup();
     renderPage();
@@ -173,7 +180,7 @@ describe("RecicladorDashboard", () => {
   async function abrirModalLlegada() {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     const user = userEvent.setup();
     renderPage();
@@ -203,13 +210,12 @@ describe("RecicladorDashboard", () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
       if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
-      if (url.includes("/auditorias-conjunto/mias")) return Promise.resolve({ data: [] });
       if (url.includes("/contenido-educativo")) {
         return Promise.resolve({
           data: [{ id_contenido: 1, modulo_categoria: "Separación en la fuente y código de colores" }],
         });
       }
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     mockPost.mockResolvedValue({ data: { id_auditoria: 1 } });
     const user = userEvent.setup();
@@ -261,13 +267,12 @@ describe("RecicladorDashboard", () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
       if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
-      if (url.includes("/auditorias-conjunto/mias")) return Promise.resolve({ data: [] });
       if (url.includes("/contenido-educativo")) {
         return Promise.resolve({
           data: [{ id_contenido: 1, modulo_categoria: "Separación en la fuente y código de colores" }],
         });
       }
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     const user = userEvent.setup();
     renderPage();
@@ -292,5 +297,94 @@ describe("RecicladorDashboard", () => {
 
     expect(await screen.findByAltText("evidencia.jpg")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Enviar auditoría" })).toBeEnabled();
+  });
+
+  // ¿Qué? El aviso "ya puedes calificar" sale de la fecha de la última auditoría de cada conjunto
+  //       (GET /auditorias-conjunto/mias/ultimas), no de la lista paginada del historial.
+  // ¿Para qué? Con la lista paginada, la auditoría más reciente de un conjunto puede quedar fuera
+  //           de la primera página y el panel avisaría "pendiente" aunque se auditó hace poco.
+  describe("aviso de auditoría pendiente", () => {
+    const haceDias = (dias: number) => new Date(Date.now() - dias * 24 * 60 * 60 * 1000).toISOString();
+    const AVISO = "Ya puedes calificar la separación de residuos de Conjunto Los Alpes.";
+
+    function mockConUltima(ultima: string | null) {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+        if (url.endsWith("/auditorias-conjunto/mias/ultimas")) {
+          return Promise.resolve({
+            data: ultima ? [{ id_conjunto_residencial: 1, ultima_auditoria: ultima }] : [],
+          });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+    }
+
+    it("no avisa un conjunto auditado hace menos de 7 días", async () => {
+      mockConUltima(haceDias(2));
+      renderPage();
+
+      // ¿Qué? El conjunto ya se pintó (terminó la carga), y aun así el aviso no está.
+      await screen.findAllByText("Conjunto Los Alpes");
+      await waitFor(() => {
+        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias/ultimas"));
+      });
+      expect(screen.queryByText(AVISO)).not.toBeInTheDocument();
+    });
+
+    it("avisa un conjunto cuya última auditoría tiene 7 días o más", async () => {
+      mockConUltima(haceDias(8));
+      renderPage();
+
+      expect(await screen.findByText(AVISO)).toBeInTheDocument();
+    });
+
+    it("avisa un conjunto que nunca se ha auditado", async () => {
+      mockConUltima(null);
+      renderPage();
+
+      expect(await screen.findByText(AVISO)).toBeInTheDocument();
+    });
+  });
+
+  describe("historial de auditorías enviadas", () => {
+    const auditoria = (n: number) => ({
+      id_auditoria: `a${n}`,
+      id_conjunto_residencial: 1,
+      nombre_conjunto: "Conjunto Los Alpes",
+      nivel_desempeno: "BUENA",
+      tema_educativo: `Tema número ${n}`,
+      descripcion: null,
+      ruta_evidencia: "/x.jpg",
+      ruta_evidencia_2: null,
+      ruta_evidencia_3: null,
+      created_at: "2026-10-20T10:00:00Z",
+      nombre_reciclador: "Juan",
+    });
+
+    it("pide el historial de a 10 y pasa a la página siguiente con el offset correcto", async () => {
+      mockGet.mockImplementation((url: string, config?: { params?: { limit: number; offset: number } }) => {
+        if (url.endsWith("/auditorias-conjunto/mias")) {
+          const desde = config?.params?.offset ?? 0;
+          const items = Array.from({ length: Math.min(10, 25 - desde) }, (_, i) => auditoria(desde + i + 1));
+          return Promise.resolve({ data: { items, total: 25 } });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup();
+      renderPage();
+
+      expect(await screen.findByText("Conjunto Los Alpes — Tema número 1")).toBeInTheDocument();
+      expect(screen.getByText("Mostrando 1–10 de 25")).toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias"), {
+        params: { limit: 10, offset: 0 },
+      });
+
+      await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+
+      expect(await screen.findByText("Conjunto Los Alpes — Tema número 11")).toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias"), {
+        params: { limit: 10, offset: 10 },
+      });
+    });
   });
 });

@@ -37,9 +37,9 @@ vi.mock("axios", () => {
   return { default: { ...instance, create: () => instance } };
 });
 
-// ¿Qué? Hoy fijo (lunes 21 de septiembre de 2026, 10am UTC) — la página
-//       calcula la semana en curso con la hora real del sistema
-//       (lunesUTC()); sin fijarla, cada corrida navegaría una semana
+// ¿Qué? Hoy fijo (lunes 21 de septiembre de 2026, 10am UTC = 5am en Bogotá) — la
+//       página calcula la semana en curso con la hora real del sistema
+//       (lunesBogota()); sin fijarla, cada corrida navegaría una semana
 //       distinta y las aserciones de "semana en curso"/"deshabilitar
 //       siguiente" dejarían de ser confiables.
 const HOY_FIJO = new Date("2026-09-21T10:00:00Z");
@@ -179,6 +179,23 @@ describe("AdminContenidoEducativoPage", () => {
         expect(mockGet).toHaveBeenCalledWith(
           expect.stringContaining("/auditorias-conjunto/admin"),
           expect.objectContaining({ params: expect.objectContaining({ lunes: SEMANA_ACTUAL }) })
+        );
+      });
+    });
+
+    // ¿Qué? Domingo 20 de septiembre a las 9 p. m. en Bogotá = lunes 21 a las 2 a. m. en UTC.
+    // ¿Para qué? El backend corta la semana en hora de Bogotá: ese domingo todavía es de la semana
+    //           del 14 al 20, así que la pantalla no debe dar por empezada la del 21.
+    it("el domingo en la noche (hora de Bogotá) la semana en curso sigue siendo la que termina ese domingo", async () => {
+      vi.setSystemTime(new Date("2026-09-21T02:00:00Z"));
+      renderPage();
+
+      await screen.findByText("14–20 sep");
+      expect(screen.getByRole("button", { name: "Semana siguiente" })).toBeDisabled();
+      await waitFor(() => {
+        expect(mockGet).toHaveBeenCalledWith(
+          expect.stringContaining("/auditorias-conjunto/admin"),
+          expect.objectContaining({ params: expect.objectContaining({ lunes: "2026-09-14" }) })
         );
       });
     });

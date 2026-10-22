@@ -38,7 +38,7 @@ import axios from "axios";
 import { COMPONENTES_MARKDOWN } from "@/config/contenidoEducativoMarkdown";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT, CATEGORIAS_NO_AUDITABLES } from "@/config/categoriasEducativas";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { domingoDeLunesUTC, formatearFechaCreacion, lunesUTC, rangoSemanaUTC } from "@/lib/dateFormat";
+import { domingoDeLunesUTC, formatearFechaCreacion, lunesBogota, lunesUTC, rangoSemanaUTC } from "@/lib/dateFormat";
 import {
   crearContenido,
   editarContenido,
@@ -185,7 +185,8 @@ export function AdminContenidoEducativoPage() {
   }, [user]);
 
   // ---------- Semana en curso (tarjeta de resumen — siempre la de HOY, sin importar qué semana se esté navegando) ----------
-  const semanaActual = useMemo(() => lunesUTC(), []);
+  // ¿Qué? La semana de hoy en hora de Bogotá, igual que la corta el backend (listar_admin).
+  const semanaActual = useMemo(() => lunesBogota(), []);
   const [calSemanaActual, setCalSemanaActual] = useState<AuditoriaAdmin[]>([]);
   useEffect(() => {
     if (!user) return;
