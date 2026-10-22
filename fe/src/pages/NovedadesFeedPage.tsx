@@ -134,7 +134,7 @@ export function NovedadesFeedPage() {
                     href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
+                    className="link-text mt-3 inline-flex items-center gap-1.5 text-xs"
                   >
                     <Paperclip className="icon-sm" />
                     {t("comunicados.viewAttachment")}

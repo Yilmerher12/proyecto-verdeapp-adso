@@ -152,6 +152,7 @@ export function Modal({
             hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-night-hover dark:hover:text-gray-300
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
           aria-label={t("common.close")}
+          title={t("common.close")}
         >
           <X className="icon-lg" />
         </button>

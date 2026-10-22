@@ -43,7 +43,7 @@ export function PoliticaPrivacidadPage() {
   const rightsLink = (
     <a
       href="#derechos"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
   // ¿Qué? Antes era un <a href="..."> plano.
@@ -57,7 +57,7 @@ export function PoliticaPrivacidadPage() {
   const emailLink = (
     <Link
       to="/contacto"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
   const sicLink = (
@@ -65,7 +65,7 @@ export function PoliticaPrivacidadPage() {
       href="https://www.sic.gov.co"
       target="_blank"
       rel="noopener noreferrer"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
 
@@ -114,7 +114,7 @@ export function PoliticaPrivacidadPage() {
               </strong>{" "}
               <Link
                 to="/contacto"
-                className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+                className="link-text rounded"
               >
                 {t("legal.privacy.s1.contactValue")}
               </Link>
@@ -305,7 +305,7 @@ export function PoliticaPrivacidadPage() {
               href="https://www.sic.gov.co"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+              className="link-text rounded"
             >
               www.sic.gov.co
             </a>

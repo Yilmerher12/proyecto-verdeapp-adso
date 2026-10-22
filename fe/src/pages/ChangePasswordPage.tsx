@@ -161,7 +161,7 @@ export function ChangePasswordPage() {
           {/* ¿Impacto? Reutiliza el flujo público de /forgot-password, sin backend nuevo. */}
           <p className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
             {t("auth.changePassword.forgotHint")}{" "}
-            <Link to="/forgot-password" className="cursor-pointer font-semibold text-accent-700 underline dark:text-accent-500">
+            <Link to="/forgot-password" className="link-text">
               {t("auth.changePassword.forgotLink")}
             </Link>
           </p>

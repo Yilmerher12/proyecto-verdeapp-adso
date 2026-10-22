@@ -59,6 +59,7 @@ export function ConjuntoComboboxMultiple({
                 onClick={() => quitar(c.id_conjunto_residencial)}
                 className="cursor-pointer rounded-full transition-colors hover:bg-accent-100 dark:hover:bg-accent-900/50"
                 aria-label={`Quitar ${c.nombre_conjunto}`}
+                title={`Quitar ${c.nombre_conjunto}`}
               >
                 <X className="icon-sm" aria-hidden="true" />
               </button>

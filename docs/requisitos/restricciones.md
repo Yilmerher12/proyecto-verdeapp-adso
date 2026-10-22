@@ -85,6 +85,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | Seguridad (cambiar contraseña) | `KeyRound` |
   | Semáforo de auditoría | Caritas `Smile` / `Meh` / `Frown` (definidas en `fe/src/config/nivelesDesempeno.ts`) |
   | Desempeño semanal (menú y gráfica) | `ChartColumn` · alternar gráfica/tabla `Table2` / lista `List` |
+  | Ampliar una imagen / abrir algo en otra pestaña | `Maximize2` / `ExternalLink` (siempre dentro de `InsigniaAccionImagen` o junto al texto del enlace) |
 
 - Tamaño de íconos: solo 5, con una clase por uso definida en `fe/src/index.css` — nunca `h-*`/`w-*` sueltos en un ícono:
 
@@ -97,6 +98,21 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | `icon-deco` | 80 px | Decorativo: marca de agua del dashboard |
 
 - Animación de íconos: solo en lo que se puede tocar (sidebar, botones, selector del semáforo) o en lo que aparece para avisar (mensajes). Se usan las clases `icon-draw`, `icon-hop`, `icon-shake`, `icon-ring`, `icon-nudge` y `icon-appear` de `fe/src/index.css`, que ya respetan `prefers-reduced-motion`. No se agregan librerías de animación.
+- Elementos clicables (issue #501): lo que se puede tocar se reconoce **a simple vista, sin pasar el mouse** (en celular no hay mouse). El `cursor-pointer` solo ayuda a quien tiene mouse; esta regla es la que cuenta:
+
+  | Elemento | Cómo se ve | Cómo se escribe |
+  | --- | --- | --- |
+  | Botón primario | Fondo verde sólido, texto blanco | `Button` (variante `primary`) |
+  | Botón secundario / de acción | Borde visible, nunca solo un fondo suave: un fondo suave sin borde se lee como una etiqueta o chip | `Button` (variante `secondary`) o, en un botón hecho a mano, `border` del mismo tono (`border-accent-300`, `border-red-300`, `border-gray-300`) |
+  | Botón peligroso | Rojo (sólido o con borde rojo) | `Button` (variante `danger`) |
+  | Enlace dentro de un texto, o suelto como texto | Verde de marca, negrita y **subrayado siempre visible** (el color solo no basta: no se distingue del texto vecino). Si abre otra pestaña lleva `ExternalLink` | clase `link-text` (definida en `fe/src/index.css`) |
+  | Enlaces de pie de página | Gris con subrayado | `underline underline-offset-2` junto al gris del pie |
+  | Nombre de una fila que abre su detalle | Subrayado visible (`decoration-gray-500`, no `gray-200`: casi no se ve) | clases a mano, con `focus-ring` |
+  | Botón de solo ícono | Nombre accesible **y** pista visible: `aria-label` y `title` con el mismo texto. Si hay espacio, mejor con texto | `aria-label` + `title` |
+  | Imagen que abre algo (ampliar, abrir en otra pestaña) | Insignia en la esquina, siempre visible (no solo al pasar el mouse) | `InsigniaAccionImagen` dentro de un control `relative` |
+  | Lo que no se toca | No imita nada de lo anterior: sin subrayado, sin borde de botón, sin color de enlace | |
+
+  Foco con teclado: todo control con foco propio usa la clase `focus-ring` (anillo verde sólido de 2 px, solo con `:focus-visible`). Nunca se quita el contorno (`outline-none`) sin ese reemplazo; un control sin clases de foco conserva el contorno por defecto del navegador, que sí se ve. Todo botón, `<select>` y `<label>` clicable lleva además `cursor-pointer`. Lo comprueba `fe/src/__tests__/lib/elementosClicables.test.ts` (botones de solo ícono sin `title`, enlaces de texto sin subrayado, imágenes clicables sin insignia).
 - Paleta de marca: "Páramo Fresco" en modo claro y "Bosque Andino" en modo oscuro, definidas como escala `green-*` (y `accent-*` apuntando a ella) en `fe/src/index.css`. Los botones principales usan `accent-*`; no hay un color de acento distinto (ni azul ni amarillo) para botones. Los paneles no llevan imagen de fondo: el área de contenido es un color sólido.
 - Texto secundario y metadatos (fechas, contadores, ayudas): siempre `text-gray-500 dark:text-gray-400`. Nunca `text-gray-400` en modo claro (2.60 de contraste) ni la pareja invertida `text-gray-400 dark:text-gray-500`, que falla en los dos modos. Verde de marca como texto pequeño sobre fondo verde oscuro: `accent-300` (ver `docs/gestion-proyecto/auditoria-contraste-paleta-nueva.md`).
 - Ningún color escrito a mano en componentes (`bg-[#12231a]`, `border-[#23392b]`…): todo color sale de un token de `fe/src/index.css`. Las superficies del modo oscuro tienen su propio token (siempre con `dark:`):

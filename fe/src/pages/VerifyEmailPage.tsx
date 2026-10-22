@@ -64,6 +64,7 @@ export function VerifyEmailPage() {
           to="/"
           className="mb-5 flex justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
           aria-label={t("common.backToHome")}
+          title={t("common.backToHome")}
         >
           <BrandLogo className="h-10" />
         </Link>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Archive, Check, ClipboardList, Download, Plus, Trash2, Undo2, X } from "lucide-react";
+import { Archive, Check, ClipboardList, Download, ExternalLink, Plus, Trash2, Undo2, X } from "lucide-react";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { descargarArchivo } from "@/lib/descargarArchivo";
@@ -28,6 +28,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
+import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
 import { InputField } from "@/components/ui/InputField";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Modal } from "@/components/ui/Modal";
@@ -322,6 +323,7 @@ export function AdminConjuntoAgendaPage() {
       type="button"
       onClick={() => setABorrar(item)}
       aria-label={t("agenda.delete")}
+      title={t("agenda.delete")}
       className="cursor-pointer rounded-lg border border-gray-200 bg-white/60 p-1.5 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:bg-transparent dark:hover:bg-red-900/20"
     >
       <Trash2 className="icon-sm" />
@@ -344,13 +346,15 @@ export function AdminConjuntoAgendaPage() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={t("agenda.viewPhoto")}
-            className="block cursor-pointer"
+            title={t("agenda.viewPhoto")}
+            className="focus-ring relative block cursor-pointer rounded-xl"
           >
             <img
               src={urlFoto}
               alt=""
               className="h-32 w-full rounded-xl border border-gray-200 object-cover dark:border-night-line"
             />
+            <InsigniaAccionImagen icono={ExternalLink} />
           </a>
         )}
         <p className="flex-1 whitespace-pre-wrap break-words text-sm text-gray-800 dark:text-gray-200">{item.texto}</p>
@@ -379,8 +383,16 @@ export function AdminConjuntoAgendaPage() {
         className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
       >
         {urlFoto ? (
-          <a href={urlFoto} target="_blank" rel="noopener noreferrer" aria-label={t("agenda.viewPhoto")} className="shrink-0 cursor-pointer">
+          <a
+            href={urlFoto}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t("agenda.viewPhoto")}
+            title={t("agenda.viewPhoto")}
+            className="focus-ring relative shrink-0 cursor-pointer rounded-xl"
+          >
             <img src={urlFoto} alt="" className="h-14 w-14 rounded-xl border border-gray-200 object-cover dark:border-night-line" />
+            <InsigniaAccionImagen icono={ExternalLink} />
           </a>
         ) : (
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-500 dark:bg-night-field dark:text-gray-400">
@@ -473,6 +485,7 @@ export function AdminConjuntoAgendaPage() {
             type="button"
             onClick={() => setRecienArchivado(null)}
             aria-label={t("common.close")}
+            title={t("common.close")}
             className="cursor-pointer rounded-lg p-1 transition-colors hover:bg-accent-100 dark:hover:bg-accent-900/30"
           >
             <X className="icon-sm" />

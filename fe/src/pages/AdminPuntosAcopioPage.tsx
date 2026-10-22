@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, MapPin, MapPinOff, Pencil, Plus, Search, Trash2, Warehouse } from "lucide-react";
+import { ChevronDown, ExternalLink, MapPin, MapPinOff, Pencil, Plus, Search, Trash2, Warehouse } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
@@ -259,7 +259,7 @@ export function AdminPuntosAcopioPage() {
           <button
             type="button"
             onClick={() => abrirPanel(item, false)}
-            className="cursor-pointer truncate text-left text-sm font-bold text-gray-900 hover:underline dark:text-white"
+            className="focus-ring cursor-pointer truncate text-left text-sm font-bold text-gray-900 underline decoration-gray-500 underline-offset-4 hover:text-accent-700 dark:text-white dark:decoration-gray-400 dark:hover:text-accent-400"
           >
             {item.nombre}
           </button>
@@ -276,9 +276,10 @@ export function AdminPuntosAcopioPage() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={t("adminPuntosAcopio.mapAria", { nombre: item.nombre })}
-            className="cursor-pointer font-semibold text-accent-700 underline dark:text-accent-400"
+            className="link-text inline-flex items-center gap-1"
           >
             {t("adminPuntosAcopio.mapLink")}
+            <ExternalLink className="icon-sm" aria-hidden="true" />
           </a>
         </p>
       </div>
@@ -301,6 +302,7 @@ export function AdminPuntosAcopioPage() {
           onClick={() => abrirPanel(item, true)}
           className={`${botonAccion} text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-night-hover`}
           aria-label={t("adminPuntosAcopio.editAria", { nombre: item.nombre })}
+          title={t("adminPuntosAcopio.editAria", { nombre: item.nombre })}
         >
           <Pencil className="icon-md" />
         </button>
@@ -309,6 +311,7 @@ export function AdminPuntosAcopioPage() {
             onClick={() => setADarDeBaja(item)}
             className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`}
             aria-label={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
+            title={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
           >
             <MapPinOff className="icon-md icon-draw" />
           </button>
@@ -320,6 +323,7 @@ export function AdminPuntosAcopioPage() {
               aria-busy={reactivandoId === item.id_punto_acopio}
               className={`${botonAccion} disabled:cursor-not-allowed disabled:opacity-60 text-accent-600 hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-900/20`}
               aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
+              title={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
             >
               {reactivandoId === item.id_punto_acopio ? <Spinner size="sm" /> : <MapPin className="icon-md icon-draw" />}
             </button>
@@ -327,6 +331,7 @@ export function AdminPuntosAcopioPage() {
               onClick={() => setAEliminar(item)}
               className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`}
               aria-label={t("adminPuntosAcopio.deleteAria", { nombre: item.nombre })}
+              title={t("adminPuntosAcopio.deleteAria", { nombre: item.nombre })}
             >
               <Trash2 className="icon-md" />
             </button>
@@ -436,7 +441,7 @@ export function AdminPuntosAcopioPage() {
                   </span>
                 )}
                 <ChevronDown
-                  className={`icon-md ml-auto text-gray-400 transition-transform ${abierta ? "rotate-180" : ""}`}
+                  className={`icon-md ml-auto text-gray-500 transition-transform dark:text-gray-400 ${abierta ? "rotate-180" : ""}`}
                   aria-hidden="true"
                 />
               </button>

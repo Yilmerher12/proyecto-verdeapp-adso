@@ -22,6 +22,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
 import { PanelLateral } from "@/components/ui/PanelLateral";
+import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -660,6 +661,7 @@ export function AdminContenidoEducativoPage() {
                   type="button"
                   onClick={() => cambiarSemana(-7)}
                   aria-label={t(`${p}.week.prev`)}
+                  title={t(`${p}.week.prev`)}
                   className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
                 >
                   <ChevronLeft className="icon-md" />
@@ -673,6 +675,7 @@ export function AdminContenidoEducativoPage() {
                   onClick={() => cambiarSemana(7)}
                   disabled={semana >= semanaActual}
                   aria-label={t(`${p}.week.next`)}
+                  title={t(`${p}.week.next`)}
                   className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
                 >
                   <ChevronRight className="icon-md" />
@@ -758,7 +761,7 @@ export function AdminContenidoEducativoPage() {
                           className="cursor-pointer hover:bg-gray-50 dark:hover:bg-night-inset/40 transition-colors"
                         >
                           <td className="px-5 py-3">
-                            <button type="button" className="cursor-pointer text-left font-semibold text-gray-900 underline decoration-gray-200 underline-offset-4 hover:text-accent-700 hover:decoration-accent-600 dark:text-white dark:decoration-night-line">
+                            <button type="button" className="focus-ring cursor-pointer rounded text-left font-semibold text-gray-900 underline decoration-gray-500 underline-offset-4 hover:text-accent-700 hover:decoration-accent-600 dark:text-white dark:decoration-gray-400">
                               {a.nombre_conjunto}
                             </button>
                             <p className="text-xs text-gray-500 dark:text-gray-400">{a.nombre_reciclador}</p>
@@ -871,6 +874,7 @@ export function AdminContenidoEducativoPage() {
                           }}
                           className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
                           aria-label={t(`${p}.editAria`, { titulo: item.titulo_tema })}
+                          title={t(`${p}.editAria`, { titulo: item.titulo_tema })}
                         >
                           <Pencil className="icon-md" />
                         </button>
@@ -881,6 +885,7 @@ export function AdminContenidoEducativoPage() {
                           }}
                           className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
                           aria-label={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
+                          title={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
                         >
                           <Trash2 className="icon-md" />
                         </button>
@@ -940,10 +945,12 @@ export function AdminContenidoEducativoPage() {
                     key={ruta}
                     type="button"
                     onClick={() => setFotoAmpliada(ruta)}
-                    className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
+                    className="focus-ring relative aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
                     aria-label={t(`${p}.ratingPanel.enlarge`)}
+                    title={t(`${p}.ratingPanel.enlarge`)}
                   >
                     <img src={enlaceAdjuntoSeguro(ruta) ?? undefined} alt="" className="h-full w-full object-cover" />
+                    <InsigniaAccionImagen icono={Maximize2} />
                   </button>
                 ))}
             </div>
@@ -1013,15 +1020,14 @@ export function AdminContenidoEducativoPage() {
                     onClick={() => setFotoAmpliada(moduloAbiertoObj.url_guia!)}
                     className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-gray-100 dark:border-night-line"
                     aria-label={t(`${p}.ratingPanel.enlarge`)}
+                    title={t(`${p}.ratingPanel.enlarge`)}
                   >
                     <img
                       src={enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) ?? undefined}
                       alt=""
                       className="max-h-64 w-full object-cover"
                     />
-                    <span className="pointer-events-none absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity group-hover:opacity-100">
-                      <Maximize2 className="icon-sm" />
-                    </span>
+                    <InsigniaAccionImagen icono={Maximize2} />
                   </button>
                   <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.modulePanel.guideImageHint`)}</p>
                 </div>

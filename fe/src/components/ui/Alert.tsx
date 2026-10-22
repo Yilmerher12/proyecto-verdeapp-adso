@@ -80,6 +80,7 @@ export function Alert({ type, message, onClose }: AlertProps) {
           onClick={onClose}
           className={`shrink-0 cursor-pointer transition-colors ${closeClasses[type]}`}
           aria-label={t("common.close")}
+          title={t("common.close")}
         >
           {/* ¿Qué? Ícono X decorativo — la acción ya está descrita por aria-label del botón. */}
           <X className="icon-lg" aria-hidden="true" />

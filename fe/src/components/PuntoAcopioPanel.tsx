@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MapPin, MapPinOff, Pencil, Trash2, Warehouse } from "lucide-react";
+import { ExternalLink, MapPin, MapPinOff, Pencil, Trash2, Warehouse } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Spinner } from "@/components/ui/Spinner";
@@ -189,9 +189,10 @@ export function PuntoAcopioPanel({
                       href={googleMapsUrl(punto.direccion, punto.nombre_localidad)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="touch-target-h cursor-pointer text-xs font-semibold text-accent-700 underline dark:text-accent-400"
+                      className="link-text touch-target-h inline-flex items-center gap-1 text-xs"
                     >
                       {t(`${p}.mapLink`)}
+                      <ExternalLink className="icon-sm" aria-hidden="true" />
                     </a>
                   </>
                 }

@@ -217,7 +217,7 @@ export function SolicitudesPendientes({
                   href={enlaceAdjuntoSeguro(s.url_evidencia) ?? undefined}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-accent-700 hover:text-accent-800 dark:text-accent-400"
+                  className="link-text mt-2 inline-flex items-center gap-1 text-xs"
                 >
                   <ImageIcon className="icon-sm" />
                   {t("solicitudesPendientes.verFoto")}

@@ -479,7 +479,7 @@ export function AdminNovedadesPage() {
                               href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
+                              className="link-text inline-flex items-center gap-1.5 text-xs"
                             >
                               <Paperclip className="icon-sm" />
                               {t("comunicados.viewAttachment")}
@@ -490,7 +490,7 @@ export function AdminNovedadesPage() {
                               href={enlaceAdjuntoSeguro(item.url_video) ?? undefined}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
+                              className="link-text inline-flex items-center gap-1.5 text-xs"
                             >
                               <Video className="icon-sm" />
                               {t("novedades.admin.viewVideo")}
@@ -514,6 +514,7 @@ export function AdminNovedadesPage() {
                             onClick={() => abrirEditar(item)}
                             className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
                             aria-label={t("novedades.admin.editAria", { resumen: resumirTexto(item.texto) })}
+                            title={t("novedades.admin.editAria", { resumen: resumirTexto(item.texto) })}
                           >
                             <Pencil className="icon-md" />
                           </button>
@@ -521,6 +522,7 @@ export function AdminNovedadesPage() {
                             onClick={() => setAArchivar(item)}
                             className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-night-line dark:hover:bg-amber-900/20"
                             aria-label={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
+                            title={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
                           >
                             <Archive className="icon-md" />
                           </button>
