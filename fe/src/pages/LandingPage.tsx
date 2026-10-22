@@ -74,22 +74,22 @@ function PasoCard({
           aria-hidden="true"
           className="absolute top-9 left-[calc(50%+2.75rem)] right-[calc(-50%+1.25rem)] hidden items-center sm:flex"
         >
-          <div className="h-0.5 flex-1 bg-accent-200 dark:bg-accent-800" />
+          <div className="h-0.5 flex-1 bg-accent-200 dark:bg-night-line" />
           <ArrowRight className="icon-md -ml-1 shrink-0 text-accent-600 dark:text-accent-400" />
         </div>
       )}
 
-      <div className="relative mb-6 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-2 border-accent-600 bg-white dark:border-accent-500 dark:bg-accent-900">
+      <div className="relative mb-6 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-2 border-accent-600 bg-white dark:border-accent-300 dark:bg-night-card">
         <Icon className="icon-xl text-accent-700 dark:text-accent-300" aria-hidden="true" />
         <span
           aria-hidden="true"
-          className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent-600 text-xs font-bold text-white dark:bg-accent-500 dark:text-accent-950"
+          className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent-600 text-xs font-bold text-white dark:bg-accent-300 dark:text-accent-950"
         >
           {numero}
         </span>
       </div>
 
-      <article className="w-full flex-1 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-accent-800 dark:bg-accent-900">
+      <article className="w-full flex-1 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-night-line dark:bg-night-card">
         <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{titulo}</h3>
         <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{descripcion}</p>
       </article>
@@ -120,21 +120,18 @@ function PilarCard({
     <div
       ref={ref}
       style={{ transitionDelay: visible ? `${index * 120}ms` : "0ms" }}
-      className={`text-left transition-all duration-700 ease-out ${
+      className={`text-left transition-all duration-700 ease-out dark:rounded-2xl dark:border dark:border-night-line dark:bg-night-card dark:p-6 ${
         visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
       }`}
     >
       <div className="mb-4 flex items-center gap-3">
-        <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-          style={{ background: "rgba(255,255,255,0.08)" }}
-        >
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 dark:bg-accent-300/10">
           <Icon className="icon-lg text-accent-300" aria-hidden="true" />
         </div>
         <span className="text-[10px] font-bold tracking-widest text-accent-300">{numero}</span>
       </div>
       <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
-      <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+      <p className="text-sm leading-relaxed text-white/60 dark:text-gray-400">
         {descripcion}
       </p>
     </div>
@@ -273,12 +270,11 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-accent-950">
+    <div className="min-h-screen bg-white dark:bg-night-page">
 
       {/* ── HEADER ── */}
       <header
-        className="fixed left-0 right-0 top-0 z-50 backdrop-blur-md"
-        style={{ background: "rgba(5,46,22,0.58)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+        className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-accent-950/60 backdrop-blur-md dark:border-night-line dark:bg-night-base/80"
       >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
@@ -293,7 +289,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
           <ul className="m-0 flex list-none items-center gap-2 p-0">
             <li><LanguageSwitcher /></li>
-            <li><ThemeToggle /></li>
+            <li><ThemeToggle onDark /></li>
             <li className="hidden sm:block">
               <Link
                 to="/login"
@@ -305,7 +301,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
             <li>
               <Link
                 to="/register"
-                className="touch-target-h inline-flex items-center rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300"
+                className="touch-target-h inline-flex items-center rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {t("landing.nav.register")}
               </Link>
@@ -349,7 +345,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
                 4.97 (mínimo 4.5). Oscuro: "Verde" accent-50 7.30, "App"
                 accent-300 3.56, texto blanco 8.04. Si se baja más la
                 opacidad, "App" vuelve a verse lavado. */}
-            <div className="absolute inset-0 bg-accent-950/60 dark:bg-accent-950/75" />
+            <div className="absolute inset-0 bg-accent-950/60 dark:bg-night-base/75" />
             <div
               className="absolute inset-0 opacity-15"
               style={{
@@ -456,7 +452,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
           {/* En modo claro la foto se asoma con un velo blanco; en modo oscuro
               se asoma igual, pero con un velo verde oscuro — así el efecto de
               "la foto sigue el scroll" se ve en los dos temas, no solo en claro. */}
-          <div className="absolute inset-0 bg-white/90 dark:bg-accent-950/90" aria-hidden="true" />
+          <div className="absolute inset-0 bg-white/90 dark:bg-night-page/90" aria-hidden="true" />
 
           <div className="relative mx-auto max-w-5xl">
             <div className="mb-14 text-center">
@@ -499,7 +495,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
         {/* Fondo sólido del verde de marca (antes un degradado). En modo
             oscuro accent-900 ya es la versión "de noche" de la paleta. */}
         <section
-          className="relative overflow-hidden bg-accent-900 px-6 py-16 sm:py-20"
+          className="relative overflow-hidden bg-accent-900 px-6 py-16 dark:bg-night-inset sm:py-20"
           aria-labelledby="pilares-heading"
         >
           <div className="relative mx-auto max-w-5xl">
@@ -537,7 +533,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
           fondo de "Pilares" (verde accent-900) —
           si usan un tono parecido, las dos secciones se leen como una sola,
           sin ningún corte entre ellas. */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-white/10 dark:bg-night-base">
+      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-night-line dark:bg-night-base">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <BrandLogo className="h-7" />
@@ -548,7 +544,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
           <nav
             aria-label={t("landing.footer.legalAriaLabel")}
-            className="mt-4 border-t border-gray-100 pt-4 dark:border-accent-900"
+            className="mt-4 border-t border-gray-100 pt-4 dark:border-night-line"
           >
             <ul className="m-0 flex list-none flex-wrap justify-center gap-x-5 gap-y-1 p-0">
               {enlacesFooter.map(({ to, label }) => (

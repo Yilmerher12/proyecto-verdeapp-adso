@@ -290,7 +290,7 @@ export function AdminPuntosAcopioPage() {
           <p className="font-semibold text-gray-700 dark:text-gray-200">{item.telefono_contacto}</p>
         ) : (
           item.activo && (
-            <span className="mt-0.5 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10.5px] font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+            <span className="mt-0.5 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10.5px] font-semibold text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
               {t("adminPuntosAcopio.noPhone")}
             </span>
           )
@@ -309,7 +309,7 @@ export function AdminPuntosAcopioPage() {
         {item.activo ? (
           <button
             onClick={() => setADarDeBaja(item)}
-            className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`}
+            className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-400/15`}
             aria-label={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
             title={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
           >
@@ -321,7 +321,7 @@ export function AdminPuntosAcopioPage() {
               onClick={() => reactivar(item)}
               disabled={reactivandoId === item.id_punto_acopio}
               aria-busy={reactivandoId === item.id_punto_acopio}
-              className={`${botonAccion} disabled:cursor-not-allowed disabled:opacity-60 text-accent-600 hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-900/20`}
+              className={`${botonAccion} disabled:cursor-not-allowed disabled:opacity-60 text-accent-600 hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-300/15`}
               aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
               title={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
             >
@@ -329,7 +329,7 @@ export function AdminPuntosAcopioPage() {
             </button>
             <button
               onClick={() => setAEliminar(item)}
-              className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`}
+              className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-400/15`}
               aria-label={t("adminPuntosAcopio.deleteAria", { nombre: item.nombre })}
               title={t("adminPuntosAcopio.deleteAria", { nombre: item.nombre })}
             >
@@ -355,7 +355,7 @@ export function AdminPuntosAcopioPage() {
             setErrorMsg(null);
             setCreando(true);
           }}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
           <Plus className="icon-md" />
           {t("adminPuntosAcopio.newPoint")}
@@ -366,14 +366,14 @@ export function AdminPuntosAcopioPage() {
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 dark:border-night-line dark:bg-night-card">
             <div className="relative min-w-[200px] flex-1">
-              <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 type="search"
                 value={busqueda}
                 onChange={(e) => cambiarBusqueda(e.target.value)}
                 aria-label={t("adminPuntosAcopio.search.placeholder")}
                 placeholder={t("adminPuntosAcopio.search.placeholder")}
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full rounded-xl border border-edge bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
             </div>
             <div className="flex gap-1.5">
@@ -385,7 +385,7 @@ export function AdminPuntosAcopioPage() {
                   aria-pressed={filtroEstado === id}
                   className={`touch-target-h cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                     filtroEstado === id
-                      ? "bg-accent-700 text-white"
+                      ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                       : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-night-line dark:bg-night-field dark:text-gray-200 dark:hover:bg-night-hover"
                   }`}
                 >
@@ -432,7 +432,7 @@ export function AdminPuntosAcopioPage() {
                 className="flex w-full cursor-pointer items-center gap-2.5 rounded-2xl px-4 py-3.5 text-left"
               >
                 <span className="text-sm font-bold text-gray-900 dark:text-white">{grupo.nombre}</span>
-                <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-800 dark:bg-accent-900/30 dark:text-accent-300">
+                <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-800 dark:bg-accent-300/10 dark:text-accent-300">
                   {grupo.puntos.length}
                 </span>
                 {deBaja > 0 && (

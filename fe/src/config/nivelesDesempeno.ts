@@ -34,8 +34,8 @@ export const NIVELES_DESEMPENO: Record<NivelDesempeno, NivelDesempenoConfig> = {
   BUENA: {
     icon: Smile,
     claseSeleccionado:
-      "border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-600",
-    claseBadge: "bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400",
+      "border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-400/10 dark:text-teal-300 dark:border-teal-600",
+    claseBadge: "bg-teal-50 text-teal-700 dark:bg-teal-400/10 dark:text-teal-300",
     claseRelleno: "fill-teal-700",
     claseNumeroRelleno: "fill-white",
     claseMuestra: "bg-teal-700",
@@ -43,8 +43,8 @@ export const NIVELES_DESEMPENO: Record<NivelDesempeno, NivelDesempenoConfig> = {
   REGULAR: {
     icon: Meh,
     claseSeleccionado:
-      "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-600",
-    claseBadge: "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
+      "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200 dark:border-amber-600",
+    claseBadge: "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200",
     claseRelleno: "fill-amber-400",
     claseNumeroRelleno: "fill-gray-900",
     claseMuestra: "bg-amber-400",
@@ -52,8 +52,8 @@ export const NIVELES_DESEMPENO: Record<NivelDesempeno, NivelDesempenoConfig> = {
   DEFICIENTE: {
     icon: Frown,
     claseSeleccionado:
-      "border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 dark:border-red-600",
-    claseBadge: "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400",
+      "border-red-500 bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300 dark:border-red-600",
+    claseBadge: "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300",
     claseRelleno: "fill-red-600",
     claseNumeroRelleno: "fill-white",
     claseMuestra: "bg-red-600",

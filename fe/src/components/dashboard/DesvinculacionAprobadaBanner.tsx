@@ -39,7 +39,7 @@ export function DesvinculacionAprobadaBanner({ notificaciones, onMarcarLeida }: 
             <button
               type="button"
               onClick={() => onMarcarLeida(n.id)}
-              className="shrink-0 cursor-pointer rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-800"
+              className="shrink-0 cursor-pointer rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
             >
               {t("desvinculacionAprobada.gotIt")}
             </button>

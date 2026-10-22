@@ -51,13 +51,13 @@ export function ConjuntoComboboxMultiple({
           {value.map((c) => (
             <span
               key={c.id_conjunto_residencial}
-              className="inline-flex items-center gap-1 rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-800 dark:bg-accent-900/30 dark:text-accent-300"
+              className="inline-flex items-center gap-1 rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-800 dark:bg-accent-300/10 dark:text-accent-300"
             >
               {c.nombre_conjunto}
               <button
                 type="button"
                 onClick={() => quitar(c.id_conjunto_residencial)}
-                className="cursor-pointer rounded-full transition-colors hover:bg-accent-100 dark:hover:bg-accent-900/50"
+                className="cursor-pointer rounded-full transition-colors hover:bg-accent-100 dark:hover:bg-accent-300/15"
                 aria-label={`Quitar ${c.nombre_conjunto}`}
                 title={`Quitar ${c.nombre_conjunto}`}
               >
@@ -74,11 +74,11 @@ export function ConjuntoComboboxMultiple({
         <div className="relative">
           <div className="relative">
             <Search
-              className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"
               aria-hidden="true"
             />
             <ComboboxInput
-              className="w-full rounded-xl border border-gray-300 bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+              className="w-full rounded-xl border border-edge bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
               displayValue={() => ""}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}

@@ -129,14 +129,14 @@ export function ImagenAdjuntaField({
           <button
             type="button"
             onClick={quitar}
-            className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-400/15"
           >
             <X className="icon-sm" />
             {t("imagenAdjunta.quitar")}
           </button>
         </div>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-line dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-edge bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-edge dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
           {subiendo ? (
             <>
               <Spinner size="sm" tone="current" />
@@ -159,7 +159,7 @@ export function ImagenAdjuntaField({
         </label>
       )}
       {subiendo && <ProgressBar value={progreso} label={t("imagenAdjunta.subiendo")} className="mt-2" />}
-      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{error}</p>}
     </div>
   );
 }

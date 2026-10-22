@@ -387,8 +387,8 @@ export function AdminDashboard() {
       <span
         className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
           habilitado
-            ? "bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
-            : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+            ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+            : "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300"
         }`}
       >
         {habilitado
@@ -468,8 +468,8 @@ export function AdminDashboard() {
           — se quitó, dejando solo la foto (retroalimentación directa). */}
       <div className="relative overflow-hidden bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
-            <AdminIcon className="icon-xl text-accent-700 dark:text-accent-400" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
+            <AdminIcon className="icon-xl text-accent-700 dark:text-accent-300" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.admin.title")}</h1>
@@ -510,7 +510,7 @@ export function AdminDashboard() {
             <button
               type="button"
               onClick={() => setMostrarModalInvitar(true)}
-              className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600"
+              className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
             >
               {t("dashboards.admin.inviteSection.show")}
             </button>
@@ -529,7 +529,7 @@ export function AdminDashboard() {
             <ClipboardList className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.pendingRequests.title")}</h3>
             {solicitudesPendientes > 0 && (
-              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-200">
                 {solicitudesPendientes}
               </span>
             )}
@@ -542,7 +542,7 @@ export function AdminDashboard() {
           <button
             type="button"
             onClick={() => setMostrarModalSolicitudes(true)}
-            className="focus-ring touch-target-h cursor-pointer self-start rounded-xl border border-accent-300 bg-accent-50 px-3 py-1.5 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 dark:border-accent-700 dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+            className="focus-ring touch-target-h cursor-pointer self-start rounded-xl border border-accent-300 bg-accent-50 px-3 py-1.5 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
           >
             {t("dashboards.admin.pendingRequests.viewButton")}
           </button>
@@ -624,7 +624,7 @@ export function AdminDashboard() {
                   onClick={() => cambiarTab(id)}
                   className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     tab === id
-                      ? "bg-accent-700 text-white shadow-sm"
+                      ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                       : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                   }`}
                 >
@@ -638,12 +638,12 @@ export function AdminDashboard() {
             </div>
 
             <div className="relative">
-              <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder={t("dashboards.admin.usersSection.searchPlaceholder")}
-                className="touch-target-h w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 lg:w-48"
+                className="touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 lg:w-48"
               />
             </div>
           </div>
@@ -671,7 +671,7 @@ export function AdminDashboard() {
               aria-pressed={soloInactivos}
               className={`touch-target-h flex cursor-pointer items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
                 soloInactivos
-                  ? "border-red-300 bg-red-50 text-red-700 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-300"
+                  ? "border-red-300 bg-red-50 text-red-700 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-300"
                   : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-hover"
               }`}
             >
@@ -771,7 +771,7 @@ export function AdminDashboard() {
                       <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
                       {celdaNombre(r.Correo, r.Nombre_Completo)}
                       <td className="px-5 py-3">
-                        <span className="rounded-full bg-accent-50 dark:bg-accent-900/20 px-2.5 py-0.5 text-xs font-semibold text-accent-700 dark:text-accent-400">
+                        <span className="rounded-full bg-accent-50 dark:bg-accent-300/10 px-2.5 py-0.5 text-xs font-semibold text-accent-700 dark:text-accent-400">
                           {r.Asociacion}
                         </span>
                       </td>
@@ -918,7 +918,7 @@ export function AdminDashboard() {
                 onChange={(e) => setMotivo(e.target.value)}
                 placeholder={t("dashboards.admin.usersSection.status.reasonPlaceholder")}
                 rows={3}
-                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="mt-1.5 w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
             </div>
           )}

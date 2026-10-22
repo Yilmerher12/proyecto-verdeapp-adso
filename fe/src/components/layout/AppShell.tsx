@@ -296,8 +296,8 @@ export function AppShell({ children }: AppShellProps) {
           visual entre barra lateral y contenido. */}
       <aside
         className={`
-          flex min-w-0 shrink-0 flex-col border-r border-white/10
-          bg-accent-900
+          flex min-w-0 shrink-0 flex-col border-r border-white/10 dark:border-night-line
+          bg-accent-900 dark:bg-night-base
           transition-[width] duration-200 ease-in-out text-accent-50
           overflow-hidden
           ${collapsed ? "sm:w-16 h-16 sm:h-screen" : "sm:w-64 h-auto sm:h-screen"}
@@ -495,7 +495,7 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* Área de contenido */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-night-line dark:bg-night-card">
+        <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-night-line dark:bg-night-page">
           {/* Campana de notificaciones */}
           <button
             onClick={() => navigate(roleMeta.dashboardHref)}

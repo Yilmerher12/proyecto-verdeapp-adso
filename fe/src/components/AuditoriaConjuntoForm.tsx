@@ -184,7 +184,7 @@ export function AuditoriaConjuntoForm({
               id="auditoria-conjunto"
               value={idConjunto}
               onChange={(e) => setIdConjunto(e.target.value)}
-              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+              className="w-full cursor-pointer rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
             >
               <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
               {conjuntos.map((c) => (
@@ -249,7 +249,7 @@ export function AuditoriaConjuntoForm({
             id="auditoria-tema"
             value={tema}
             onChange={(e) => setTema(e.target.value)}
-            className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+            className="w-full cursor-pointer rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
           >
             <option value="">{t("dashboards.reciclador.auditoria.temaPlaceholder")}</option>
             {temas.map((cat) => (
@@ -272,7 +272,7 @@ export function AuditoriaConjuntoForm({
             aria-describedby="auditoria-descripcion-contador"
             rows={2}
             placeholder={t("dashboards.reciclador.auditoria.descripcionPlaceholder")}
-            className="w-full resize-none rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+            className="w-full resize-none rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
           />
           <ContadorCaracteres
             id="auditoria-descripcion-contador"
@@ -306,7 +306,7 @@ export function AuditoriaConjuntoForm({
           )}
 
           {evidencias.length < MAXIMO_FOTOS ? (
-            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition-colors hover:border-accent-400 dark:border-night-line dark:text-gray-300">
+            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-edge px-4 py-3 text-sm text-gray-600 transition-colors hover:border-accent-400 dark:border-night-edge dark:text-gray-300">
               {evidencias.length === 0 ? <Camera className="icon-md shrink-0" /> : <Plus className="icon-md shrink-0" />}
               {evidencias.length === 0
                 ? t("dashboards.reciclador.auditoria.evidenciaHint")
@@ -365,7 +365,7 @@ export function AuditoriaConjuntoForm({
             type="button"
             onClick={intentarEnviar}
             disabled={enviando || formularioIncompleto}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
           >
             {enviando && <Spinner size="sm" tone="current" />}
             {enviando

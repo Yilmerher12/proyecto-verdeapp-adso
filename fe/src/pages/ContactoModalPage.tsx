@@ -140,7 +140,7 @@ export function ContactoModalPage() {
       <Modal onClose={() => navigate("/")} wide aria-label={t("contactoModal.title")}>
         <div className="max-h-[85vh] overflow-y-auto p-6 sm:p-8">
           <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
               <MessageSquare className="icon-xl text-accent-600 dark:text-accent-400" />
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
@@ -211,12 +211,12 @@ export function ContactoModalPage() {
                   aria-describedby={fieldErrors.message ? "message-error message-count" : "message-count"}
                   placeholder={t("contactoModal.message.placeholder")}
                   className={`block w-full rounded-xl border bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-accent-400 focus:border-accent-500 focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:bg-night-field dark:text-white dark:placeholder:text-gray-500 dark:hover:border-accent-500 ${
-                    fieldErrors.message ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-night-line"
+                    fieldErrors.message ? "border-red-500 dark:border-red-500" : "border-edge dark:border-night-edge"
                   }`}
                 />
                 <div className="flex items-start justify-between gap-2">
                   {fieldErrors.message ? (
-                    <p id="message-error" className="animate-fade-in text-sm text-red-600 dark:text-red-400" role="alert">
+                    <p id="message-error" className="animate-fade-in text-sm text-red-600 dark:text-red-300" role="alert">
                       {fieldErrors.message}
                     </p>
                   ) : (

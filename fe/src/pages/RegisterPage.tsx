@@ -384,8 +384,8 @@ export function RegisterPage() {
         <LandingPage asBackdrop />
         <Modal onClose={() => navigate("/")}>
           <div className="p-6 sm:p-8 text-center max-w-sm mx-auto">
-            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-accent-50 ring-8 ring-accent-50 dark:bg-accent-900/20 dark:ring-accent-900/20">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-800/40">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-accent-50 ring-8 ring-accent-50 dark:bg-accent-300/10 dark:ring-accent-900/20">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-300/10">
                 <MailCheck className="icon-xl text-accent-600 dark:text-accent-400" strokeWidth={2} />
               </div>
             </div>
@@ -398,14 +398,14 @@ export function RegisterPage() {
               <span className="font-semibold text-gray-700 dark:text-gray-300">{formData.email}</span>.
             </p>
 
-            <div className="text-left bg-accent-50 dark:bg-accent-900/20 rounded-xl p-4 mb-6 space-y-3">
+            <div className="text-left bg-accent-50 dark:bg-accent-300/10 rounded-xl p-4 mb-6 space-y-3">
               {[
                 t("auth.register.success.step1"),
                 t("auth.register.success.step2"),
                 t("auth.register.success.step3"),
               ].map((step, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-700 text-white text-xs font-bold">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-700 text-white text-xs font-bold dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200">
                     {i + 1}
                   </span>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{step}</p>
@@ -463,7 +463,7 @@ export function RegisterPage() {
                 onClick={() => setSearchParams({})}
                 aria-label={t("auth.register.changeRole")}
                 title={t("auth.register.changeRole")}
-                className="absolute left-0 top-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-accent-700 transition-colors hover:bg-accent-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:border-night-line dark:text-accent-400 dark:hover:bg-accent-900/20"
+                className="absolute left-0 top-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-accent-700 transition-colors hover:bg-accent-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:border-night-line dark:text-accent-400 dark:hover:bg-accent-300/15"
               >
                 <ArrowLeft className="icon-md" aria-hidden="true" />
               </button>
@@ -564,7 +564,7 @@ export function RegisterPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.locality")}</label>
-                      <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} disabled={cargandoLocalidades} aria-busy={cargandoLocalidades} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
+                      <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} disabled={cargandoLocalidades} aria-busy={cargandoLocalidades} className="w-full cursor-pointer p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
                         <option value="">{cargandoLocalidades ? t("common.loading") : t("auth.register.fields.selectPlaceholder")}</option>
                         {localidades.map(loc => (
                           <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
@@ -590,7 +590,7 @@ export function RegisterPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-night-line">
                     <div>
                       <label htmlFor="prefijo_unidad" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitType")}</label>
-                      <select id="prefijo_unidad" name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-night-inset">
+                      <select id="prefijo_unidad" name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full cursor-pointer p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-night-inset">
                         <option value="TORRE">{t("auth.register.fields.unitTypeTower")}</option>
                         <option value="INTERIOR">{t("auth.register.fields.unitTypeInterior")}</option>
                         <option value="BLOQUE">{t("auth.register.fields.unitTypeBlock")}</option>
@@ -600,13 +600,13 @@ export function RegisterPage() {
 
                     <div>
                       <label htmlFor="numero_bloque" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitNumber")}</label>
-                      <input id="numero_bloque" type="text" name="numero_bloque" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.numero_bloque} aria-describedby={fieldErrors.numero_bloque ? "numero_bloque-error" : undefined} placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
+                      <input id="numero_bloque" type="text" name="numero_bloque" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.numero_bloque} aria-describedby={fieldErrors.numero_bloque ? "numero_bloque-error" : undefined} placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
                       {fieldErrors.numero_bloque && <p id="numero_bloque-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.numero_bloque}</p>}
                     </div>
 
                     <div>
                       <label htmlFor="apto" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
-                      <input id="apto" type="text" name="apto" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.apto} aria-describedby={fieldErrors.apto ? "apto-error" : undefined} placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
+                      <input id="apto" type="text" name="apto" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.apto} aria-describedby={fieldErrors.apto ? "apto-error" : undefined} placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
                       {fieldErrors.apto && <p id="apto-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.apto}</p>}
                     </div>
                   </div>
@@ -635,7 +635,7 @@ export function RegisterPage() {
                       aria-invalid={!!fieldErrors.codigo_acceso}
                       aria-describedby={fieldErrors.codigo_acceso ? "codigo_acceso-error" : undefined}
                       disabled={!formData.id_conjunto_residencial}
-                      className="w-full p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase tracking-widest font-mono"
+                      className="w-full p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase tracking-widest font-mono"
                     />
                     {fieldErrors.codigo_acceso && <p id="codigo_acceso-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.codigo_acceso}</p>}
                     <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("auth.register.fields.codigoAccesoHint")}</p>
@@ -644,7 +644,7 @@ export function RegisterPage() {
               )}
 
               {formData.rol === "reciclador" && (
-                <div className="space-y-4 p-5 bg-accent-50/30 dark:bg-accent-900/10 border border-accent-100 dark:border-accent-900/40 rounded-2xl">
+                <div className="space-y-4 p-5 bg-accent-50/30 dark:bg-accent-300/10 border border-accent-100 dark:border-accent-300/40 rounded-2xl">
                   <div className="flex items-center gap-2 mb-2">
                     <HardHat className="icon-lg text-accent-600" />
                     <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("auth.register.fields.operativeProfileHeading")}</h3>
@@ -653,7 +653,7 @@ export function RegisterPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.workLocality")}</label>
-                      <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} disabled={cargandoLocalidades} aria-busy={cargandoLocalidades} className="w-full cursor-pointer p-2.5 border border-gray-300 dark:border-night-line rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
+                      <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} disabled={cargandoLocalidades} aria-busy={cargandoLocalidades} className="w-full cursor-pointer p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
                         <option value="">{cargandoLocalidades ? t("common.loading") : t("auth.register.fields.selectYourLocality")}</option>
                         {localidades.map(loc => (
                           <option key={loc.id_localidad} value={loc.id_localidad}>{loc.nombre_localidad}</option>
@@ -740,7 +740,7 @@ export function RegisterPage() {
                   id="terms"
                   checked={acceptedTerms}
                   onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  className="mt-0.5 h-5 w-5 rounded border-gray-300 dark:border-night-line text-accent-600 focus:ring-accent-500 accent-accent-600 cursor-pointer sm:mt-1 sm:h-4 sm:w-4"
+                  className="mt-0.5 h-5 w-5 rounded border-edge dark:border-night-edge text-accent-600 focus:ring-accent-500 accent-accent-600 cursor-pointer sm:mt-1 sm:h-4 sm:w-4"
                 />
                 <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
                   {t("auth.register.termsPrefix")}{" "}

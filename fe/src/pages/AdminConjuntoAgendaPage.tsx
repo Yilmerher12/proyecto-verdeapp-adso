@@ -45,10 +45,10 @@ const ESPERA_CONTEO_MS = 400;
 // ¿Qué? Color de cada nota; se reparte por turnos para que no todas se vean iguales.
 //       Mismos matices que ya usan los tipos de comunicado, con su versión oscura.
 const COLORES_NOTA = [
-  "border-amber-100 bg-amber-50 dark:border-amber-900/30 dark:bg-amber-900/20",
-  "border-accent-100 bg-accent-50 dark:border-accent-900/30 dark:bg-accent-900/20",
-  "border-blue-100 bg-blue-50 dark:border-blue-900/30 dark:bg-blue-900/20",
-  "border-purple-100 bg-purple-50 dark:border-purple-900/30 dark:bg-purple-900/20",
+  "border-amber-100 bg-amber-50 dark:border-amber-300/30 dark:bg-amber-400/10",
+  "border-accent-100 bg-accent-50 dark:border-accent-300/40 dark:bg-accent-300/10",
+  "border-blue-100 bg-blue-50 dark:border-blue-400/30 dark:bg-blue-400/10",
+  "border-purple-100 bg-purple-50 dark:border-purple-400/30 dark:bg-purple-400/10",
 ];
 
 type Vista = "porTratar" | "archivadas";
@@ -324,7 +324,7 @@ export function AdminConjuntoAgendaPage() {
       onClick={() => setABorrar(item)}
       aria-label={t("agenda.delete")}
       title={t("agenda.delete")}
-      className="cursor-pointer rounded-lg border border-gray-200 bg-white/60 p-1.5 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:bg-transparent dark:hover:bg-red-900/20"
+      className="cursor-pointer rounded-lg border border-gray-200 bg-white/60 p-1.5 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:bg-transparent dark:hover:bg-red-400/15"
     >
       <Trash2 className="icon-sm" />
     </button>
@@ -432,7 +432,7 @@ export function AdminConjuntoAgendaPage() {
 
   const contador = (activo: boolean) =>
     `rounded-full px-2 py-0.5 text-[11px] ${
-      activo ? "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400" : "bg-gray-200 text-gray-600 dark:bg-night-field dark:text-gray-300"
+      activo ? "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400" : "bg-gray-200 text-gray-600 dark:bg-night-field dark:text-gray-300"
     }`;
 
   return (
@@ -456,7 +456,7 @@ export function AdminConjuntoAgendaPage() {
             type="button"
             onClick={() => setAgregando(true)}
             disabled={!idConjunto}
-            className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
           >
             <Plus className="icon-md" />
             {t("agenda.add")}
@@ -470,14 +470,14 @@ export function AdminConjuntoAgendaPage() {
       {recienArchivado && (
         <div
           role="status"
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-800 dark:border-accent-900/40 dark:bg-accent-900/20 dark:text-accent-300"
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-800 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-300"
         >
           <span className="flex-1">{t("agenda.archivedToast")}</span>
           <button
             type="button"
             onClick={deshacerArchivado}
             disabled={cambiandoId !== null}
-            className="disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer rounded-lg border border-accent-300 bg-white px-3 py-1 text-xs font-semibold text-accent-800 transition-colors hover:bg-accent-100 dark:border-accent-800 dark:bg-transparent dark:text-accent-300 dark:hover:bg-accent-900/30"
+            className="disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer rounded-lg border border-accent-300 bg-white px-3 py-1 text-xs font-semibold text-accent-800 transition-colors hover:bg-accent-100 dark:border-accent-300/40 dark:bg-transparent dark:text-accent-300 dark:hover:bg-accent-300/15"
           >
             {t("agenda.undo")}
           </button>
@@ -486,7 +486,7 @@ export function AdminConjuntoAgendaPage() {
             onClick={() => setRecienArchivado(null)}
             aria-label={t("common.close")}
             title={t("common.close")}
-            className="cursor-pointer rounded-lg p-1 transition-colors hover:bg-accent-100 dark:hover:bg-accent-900/30"
+            className="cursor-pointer rounded-lg p-1 transition-colors hover:bg-accent-100 dark:hover:bg-accent-300/15"
           >
             <X className="icon-sm" />
           </button>
@@ -516,7 +516,7 @@ export function AdminConjuntoAgendaPage() {
                       onClick={() => elegirConjunto(c.id_conjunto_residencial)}
                       className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
                         activo
-                          ? "border-accent-700 bg-accent-700 text-white"
+                          ? "border-accent-700 bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                           : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
                       }`}
                     >
@@ -603,7 +603,7 @@ export function AdminConjuntoAgendaPage() {
                 rows={3}
                 aria-describedby="agenda-contador"
                 placeholder={t("agenda.textPlaceholder")}
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="mt-1 w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               <ContadorCaracteres id="agenda-contador" actual={texto.length} max={DESVINCULACION_MOTIVO_MAX_LENGTH} />
             </div>
@@ -620,7 +620,7 @@ export function AdminConjuntoAgendaPage() {
                 type="button"
                 onClick={guardar}
                 disabled={guardando || !texto.trim()}
-                className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 <Check className="icon-sm" />
                 {guardando ? t("common.saving") : t("agenda.save")}
@@ -644,15 +644,15 @@ export function AdminConjuntoAgendaPage() {
               <legend className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t("agenda.download.formatLabel")}
               </legend>
-              <div className="inline-flex overflow-hidden rounded-lg border border-gray-300 dark:border-night-line">
+              <div className="inline-flex overflow-hidden rounded-lg border border-edge dark:border-night-edge">
                 {(["csv", "pdf"] as const).map((formato) => (
                   <label
                     key={formato}
                     className={`has-focus-visible:ring-2 has-focus-visible:ring-inset has-focus-visible:ring-accent-500 flex cursor-pointer items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-colors ${
-                      formato === "pdf" ? "border-l border-gray-300 dark:border-night-line" : ""
+                      formato === "pdf" ? "border-l border-edge dark:border-night-edge" : ""
                     } ${
                       formatoDescarga === formato
-                        ? "bg-accent-700 text-white"
+                        ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                         : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
                     }`}
                   >
@@ -682,7 +682,7 @@ export function AdminConjuntoAgendaPage() {
                   setPeriodoDescarga(e.target.value as PeriodoDescarga);
                   setErrorRango(null);
                 }}
-                className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+                className="block w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
               >
                 <option value="TODO">{t("agenda.download.periodAll")}</option>
                 <option value="ESTE_MES">{t("agenda.download.periodThisMonth")}</option>
@@ -725,7 +725,7 @@ export function AdminConjuntoAgendaPage() {
                 id="agenda-descarga-estado"
                 value={estadoDescarga}
                 onChange={(e) => setEstadoDescarga(e.target.value as FiltroDescargaAgenda["estado"])}
-                className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+                className="block w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
               >
                 <option value="TODOS">{t("agenda.download.stateAll")}</option>
                 <option value="PENDIENTE">{t("agenda.download.statePending")}</option>
@@ -738,7 +738,7 @@ export function AdminConjuntoAgendaPage() {
             <p
               aria-live="polite"
               className={`min-h-5 text-sm font-medium ${
-                pasaDelMaximo ? "text-red-600 dark:text-red-400" : "text-gray-700 dark:text-gray-300"
+                pasaDelMaximo ? "text-red-600 dark:text-red-300" : "text-gray-700 dark:text-gray-300"
               }`}
             >
               {contando && t("agenda.download.counting")}
@@ -760,7 +760,7 @@ export function AdminConjuntoAgendaPage() {
                 onClick={descargar}
                 disabled={bajando || faltanFechas || fechasAlReves || pasaDelMaximo}
                 aria-busy={bajando}
-                className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {bajando ? <Spinner size="sm" /> : <Download className="icon-sm" />}
                 {bajando ? t("agenda.download.downloading") : t("agenda.download.confirm")}

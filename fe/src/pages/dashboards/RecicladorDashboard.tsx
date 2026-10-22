@@ -102,25 +102,25 @@ const ACCIONES_META = [
     tipo: "LLEGADA_RECICLADOR",
     key: "llegada",
     icon: Truck,
-    color: "bg-accent-900 hover:bg-teal-800 dark:bg-accent-800 text-white",   // teal bosque — llegada activa
+    color: "bg-accent-900 hover:bg-teal-800 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200",   // teal bosque — llegada activa
   },
   {
     tipo: "SHUT_LLENO",
     key: "shutLleno",
     icon: TriangleAlert,
-    color: "bg-amber-700 hover:bg-amber-600 text-white",  // ámbar tierra — advertencia cálida
+    color: "bg-amber-700 hover:bg-amber-600 text-white dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200",  // ámbar tierra — advertencia cálida
   },
   {
     tipo: "SHUT_LIBRE",
     key: "shutLibre",
     icon: PackageCheck,
-    color: "bg-accent-900 hover:bg-accent-800 dark:bg-accent-800 dark:hover:bg-accent-700 text-white",  // verde bosque — despejado, natural
+    color: "bg-accent-900 hover:bg-accent-800 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200",  // verde bosque — despejado, natural
   },
   {
     tipo: "FINALIZACION_RECICLADOR",
     key: "finalizacion",
     icon: DoorOpen,
-    color: "bg-indigo-700 hover:bg-indigo-600 text-white",  // índigo — distinto de las otras 3, "ya me voy"
+    color: "bg-indigo-700 hover:bg-indigo-600 text-white dark:border dark:border-night-edge dark:bg-night-field dark:hover:bg-night-hover",  // índigo — distinto de las otras 3, "ya me voy"
   },
 ] as const;
 
@@ -326,10 +326,10 @@ export function RecicladorDashboard() {
           para que este panel se sienta del Reciclador, sin estorbar la
           lectura del texto encima. */}
       <div className="relative overflow-hidden bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
+        <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-teal-900/30">
-            <RolIcon className="icon-xl text-teal-600 dark:text-teal-400" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
+            <RolIcon className="icon-xl text-accent-700 dark:text-accent-300" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.title")}</h1>
@@ -351,14 +351,14 @@ export function RecicladorDashboard() {
 
       {/* Feedback de notificación enviada */}
       {feedbackOk && (
-        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
           <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
           {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
         </div>
       )}
 
       {feedbackAuditoria && (
-        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
           <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
           {feedbackAuditoria}
         </div>
@@ -367,9 +367,9 @@ export function RecicladorDashboard() {
       {/* Aviso de auditoría pendiente (RQF-009) — solo aparece cuando aplica,
           no ocupa espacio permanente en la barra lateral. */}
       {!cargando && conjuntosPendientesAuditoria.length > 0 && (
-        <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-800/30 dark:bg-teal-900/10">
+        <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-400/30 dark:bg-teal-400/10">
           <div className="mb-3 flex items-center gap-2">
-            <ClipboardList className="icon-md text-teal-700 dark:text-teal-400" />
+            <ClipboardList className="icon-md text-teal-700 dark:text-teal-300" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">
               {t("dashboards.reciclador.auditoria.bannerTitle")}
             </h2>
@@ -385,7 +385,7 @@ export function RecicladorDashboard() {
                 </p>
                 <button
                   onClick={() => setConjuntoParaAuditar(c.id_conjunto_residencial)}
-                  className="touch-target-h shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
+                  className="touch-target-h shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                 >
                   {t("dashboards.reciclador.auditoria.bannerAction")}
                 </button>
@@ -463,7 +463,7 @@ export function RecicladorDashboard() {
         {avisoBoton && (
           <p
             role="status"
-            className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+            className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
             {avisoBoton}
           </p>
         )}
@@ -475,7 +475,7 @@ export function RecicladorDashboard() {
           <div className="mb-4 flex items-center gap-2">
             <Mail className="icon-md text-amber-600" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-200">
               {invitaciones.length}
             </span>
           </div>
@@ -483,7 +483,7 @@ export function RecicladorDashboard() {
             {invitaciones.map((inv) => (
               <div
                 key={inv.id}
-                className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-800/30 dark:bg-amber-900/10 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-300/30 dark:bg-amber-400/10 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-white text-sm">{inv.nombre_conjunto}</p>
@@ -494,7 +494,7 @@ export function RecicladorDashboard() {
                   <button
                     onClick={() => responderInvitacion(inv.id, true)}
                     disabled={procesandoId === inv.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                   >
                     <BadgeCheck className="icon-sm icon-hop" />
                     {t("dashboards.reciclador.invitations.accept")}
@@ -502,7 +502,7 @@ export function RecicladorDashboard() {
                   <button
                     onClick={() => responderInvitacion(inv.id, false)}
                     disabled={procesandoId === inv.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400/30 dark:bg-transparent dark:hover:bg-red-400/15"
                   >
                     <OctagonX className="icon-sm icon-shake" />
                     {t("dashboards.reciclador.invitations.reject")}
@@ -560,7 +560,7 @@ export function RecicladorDashboard() {
           notifications={notificaciones}
           emptyMessage={t("dashboards.reciclador.notifications.empty")}
           accentBg="bg-amber-700"
-          accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
+          accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-400/10 dark:hover:bg-amber-400/15"
           onMarkRead={marcarLeida}
           onMarkAllRead={marcarTodasLeidas}
           onClearRead={limpiarLeidas}
@@ -593,7 +593,7 @@ export function RecicladorDashboard() {
                   onClick={() => setConjuntoSeleccionado(c.id_conjunto_residencial)}
                   className={`w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                     conjuntoSeleccionado === c.id_conjunto_residencial
-                      ? "border-accent-500 bg-accent-50 dark:bg-accent-900/20"
+                      ? "border-accent-500 bg-accent-50 dark:bg-accent-300/10"
                       : "border-gray-200 hover:border-accent-300 dark:border-night-line dark:hover:border-accent-700"
                   }`}
                 >
@@ -609,13 +609,13 @@ export function RecicladorDashboard() {
                 ¿Para qué? Evita un clic para nada y un error genérico.
                 ¿Impacto? Solo lectura — no cambia el flujo de envío en sí. */}
             {motivoModal && (
-              <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+              <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
                 {motivoModal}
               </p>
             )}
 
             {errorEnvio && (
-              <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 dark:bg-red-900/20 dark:text-red-400">
+              <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 dark:bg-red-400/10 dark:text-red-300">
                 {errorEnvio}
               </p>
             )}
@@ -630,7 +630,7 @@ export function RecicladorDashboard() {
               <button
                 onClick={enviarNotificacion}
                 disabled={!conjuntoSeleccionado || enviandoNotif || !!motivoModal}
-                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {enviandoNotif ? t("dashboards.reciclador.modal.sending") : t("dashboards.reciclador.modal.submit")}
               </button>

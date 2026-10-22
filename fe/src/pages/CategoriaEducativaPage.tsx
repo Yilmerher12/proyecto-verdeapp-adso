@@ -49,7 +49,7 @@ export function CategoriaEducativaPage() {
       </button>
 
       <div className="flex items-center gap-3 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
           <Icono className="icon-lg" />
         </span>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{categoriaDecodificada}</h1>

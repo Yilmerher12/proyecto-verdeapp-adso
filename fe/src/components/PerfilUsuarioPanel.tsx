@@ -93,7 +93,7 @@ export function PerfilUsuarioPanel({
     <PanelLateral onClose={onClose} aria-label={t(`${p}.ariaLabel`, { nombre: nombreCompleto })} cerrarConEscape={cerrarConEscape}>
       <div className="flex items-center gap-4 border-b border-gray-100 p-5 pr-14 dark:border-night-line">
         <div
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-100 text-lg font-bold text-accent-800 dark:bg-accent-900/30 dark:text-accent-300"
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-100 text-lg font-bold text-accent-800 dark:bg-accent-300/10 dark:text-accent-300"
           aria-hidden="true"
         >
           {iniciales}
@@ -102,14 +102,14 @@ export function PerfilUsuarioPanel({
           <h2 className="break-words text-base font-bold text-gray-900 dark:text-white">{nombreCompleto}</h2>
           {perfil && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
-              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
                 {t(CLAVE_ROL[perfil.role_id] ?? "roles.residente")}
               </span>
               <span
                 className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                   perfil.habilitado
-                    ? "bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
-                    : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                    ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+                    : "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300"
                 }`}
               >
                 {perfil.habilitado ? t("dashboards.admin.usersSection.status.active") : t("dashboards.admin.usersSection.status.inactive")}
@@ -136,7 +136,7 @@ export function PerfilUsuarioPanel({
       {perfil && (
         <>
           {!perfil.habilitado && (
-            <section className="border-b border-red-100 bg-red-50 p-5 dark:border-red-900/30 dark:bg-red-900/20">
+            <section className="border-b border-red-100 bg-red-50 p-5 dark:border-red-400/30 dark:bg-red-400/10">
               <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">{t(`${p}.sections.deactivated`)}</h3>
               <dl className="grid grid-cols-[130px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm text-red-900 dark:text-red-200">
                 <Fila etiqueta={t(`${p}.fields.since`)} valor={perfil.fecha_desactivacion ? formatoFecha(perfil.fecha_desactivacion) : "—"} />

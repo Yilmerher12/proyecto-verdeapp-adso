@@ -203,7 +203,7 @@ export function ChangePasswordPage() {
             <p
               role="status"
               className={`-mt-2 mb-4 text-xs font-semibold ${
-                passwordsMatch ? "text-accent-700 dark:text-accent-500" : "text-red-600 dark:text-red-400"
+                passwordsMatch ? "text-accent-700 dark:text-accent-500" : "text-red-600 dark:text-red-300"
               }`}
             >
               {passwordsMatch ? t("auth.changePassword.passwordsMatch") : t("auth.changePassword.passwordsNoMatch")}

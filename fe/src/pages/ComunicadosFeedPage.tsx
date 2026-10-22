@@ -12,11 +12,11 @@ import { LoadingState } from "@/components/ui/LoadingState";
 // ¿Qué? Mismo criterio de color que en el panel del Admin de Conjunto —
 //       Urgente en rojo para que salte a la vista de inmediato (CA-028.2).
 const TIPO_ESTILO: Record<TipoComunicado, string> = {
-  INFORMATIVO: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  URGENTE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
+  INFORMATIVO: "bg-blue-100 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300",
+  URGENTE: "bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300",
+  CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300",
+  MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
 };
 
 /**
@@ -62,12 +62,12 @@ export function ComunicadosFeedPage() {
             key={item.id_comunicado}
             className={`rounded-2xl border bg-white p-5 dark:bg-night-card ${
               item.tipo === "URGENTE"
-                ? "border-red-200 dark:border-red-800/40"
+                ? "border-red-200 dark:border-red-400/30"
                 : "border-gray-100 dark:border-night-line"
             }`}
           >
             <div className="flex flex-wrap items-center gap-2">
-              {item.tipo === "URGENTE" && <TriangleAlert className="icon-md text-red-600 dark:text-red-400" />}
+              {item.tipo === "URGENTE" && <TriangleAlert className="icon-md text-red-600 dark:text-red-300" />}
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIPO_ESTILO[item.tipo]}`}>
                 {t(`comunicados.tipos.${item.tipo}`)}
               </span>

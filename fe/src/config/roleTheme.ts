@@ -25,8 +25,7 @@ export interface RoleTheme {
   label: string;
   Icon: LucideIcon;
   dashboardHref: string;
-  /** Color del texto/ícono de acento en el sidebar — un solo valor, porque el
-   *  sidebar ahora es siempre verde de marca (no cambia entre modo claro/oscuro). */
+  /** Color del texto/ícono de acento en el sidebar (verde de marca; en oscuro, menta). */
   sidebarAccentText: string;
   /** Fondo + texto del ítem de menú activo en el sidebar. */
   sidebarActiveNav: string;
@@ -36,48 +35,54 @@ export interface RoleTheme {
   badgeBg: string;
 }
 
+// ¿Qué? Los 4 roles comparten UN solo acento (verde de marca en claro, menta
+//       en oscuro). El rol se distingue por su ícono y su nombre, no por color.
+// ¿Para qué? Antes cada rol tenía un tinte propio (pizarra, lima, naranja, cielo)
+//           que no tenía nada que ver con la paleta verde y "no combinaba":
+//           con el tema oscuro rediseñado (issue #503) el menta es el único
+//           acento de toda la app.
+// ¿Impacto? Si algún día se quiere un color por rol, se cambia aquí una sola vez:
+//           los 4 apuntan a las mismas constantes.
+const ACENTO_SIDEBAR = "text-accent-200 dark:text-accent-300";
+const NAV_ACTIVO = "bg-white/15 text-white font-semibold dark:bg-accent-300/15 dark:text-accent-300";
+const BADGE_TEXTO = "text-accent-800 dark:text-accent-300";
+const BADGE_FONDO = "bg-accent-50 dark:bg-accent-300/10";
+
 export const ROLE_THEME: Record<RoleId, RoleTheme> = {
   [RoleId.ADMIN_SISTEMA]: {
     label: "Administrador",
     Icon: ShieldUser,
     dashboardHref: "/dashboard/admin",
-    // ¿Qué? Tintes suaves y apagados, uno por rol: pizarra (Administrador),
-    //       lima (Residente), naranja (Reciclador) y cielo (Admin. de Conjunto).
-    // ¿Para qué? Antes los 4 roles eran verdes/amarillos vecinos (emerald,
-    //           lime, teal, amber) y en pantalla casi no se distinguían.
-    // ¿Impacto? Se distinguen a simple vista solo en el chip y el ítem activo
-    //           del sidebar y en el badge del perfil, sin recolorear los
-    //           dashboards ni salirse de la paleta de marca.
-    sidebarAccentText: "text-slate-300",
-    sidebarActiveNav: "bg-slate-400/20 text-slate-100 font-semibold",
-    badgeText: "text-slate-700 dark:text-slate-400",
-    badgeBg: "bg-slate-50 dark:bg-slate-900/30",
+    sidebarAccentText: ACENTO_SIDEBAR,
+    sidebarActiveNav: NAV_ACTIVO,
+    badgeText: BADGE_TEXTO,
+    badgeBg: BADGE_FONDO,
   },
   [RoleId.RESIDENTE]: {
     label: "Residente",
     Icon: UserRound,
     dashboardHref: "/dashboard/residente",
-    sidebarAccentText: "text-lime-400",
-    sidebarActiveNav: "bg-lime-400/20 text-lime-100 font-semibold",
-    badgeText: "text-lime-700 dark:text-lime-400",
-    badgeBg: "bg-lime-50 dark:bg-lime-900/30",
+    sidebarAccentText: ACENTO_SIDEBAR,
+    sidebarActiveNav: NAV_ACTIVO,
+    badgeText: BADGE_TEXTO,
+    badgeBg: BADGE_FONDO,
   },
   [RoleId.RECICLADOR]: {
     label: "Reciclador",
     Icon: HardHat,
     dashboardHref: "/dashboard/reciclador",
-    sidebarAccentText: "text-orange-300",
-    sidebarActiveNav: "bg-orange-400/20 text-orange-100 font-semibold",
-    badgeText: "text-orange-700 dark:text-orange-400",
-    badgeBg: "bg-orange-50 dark:bg-orange-900/30",
+    sidebarAccentText: ACENTO_SIDEBAR,
+    sidebarActiveNav: NAV_ACTIVO,
+    badgeText: BADGE_TEXTO,
+    badgeBg: BADGE_FONDO,
   },
   [RoleId.ADMIN_CONJUNTO]: {
     label: "Admin. de Conjunto",
     Icon: UserCog,
     dashboardHref: "/dashboard/admin-conjunto",
-    sidebarAccentText: "text-sky-300",
-    sidebarActiveNav: "bg-sky-400/20 text-sky-100 font-semibold",
-    badgeText: "text-sky-700 dark:text-sky-400",
-    badgeBg: "bg-sky-50 dark:bg-sky-900/30",
+    sidebarAccentText: ACENTO_SIDEBAR,
+    sidebarActiveNav: NAV_ACTIVO,
+    badgeText: BADGE_TEXTO,
+    badgeBg: BADGE_FONDO,
   },
 };

@@ -271,7 +271,7 @@ export function ProfilePage() {
 
       {/* Success banner */}
       {exito && (
-        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
           <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
           {t("profile.updateSuccess")}
         </div>
@@ -316,7 +316,7 @@ export function ProfilePage() {
             <ProgressBar value={progresoFoto} label={t("profile.photo.uploading")} className="-mt-2 mb-4 max-w-[16rem]" />
           )}
           {errorFoto && (
-            <p className="-mt-2 mb-4 max-w-[16rem] text-xs text-red-600 dark:text-red-400">{errorFoto}</p>
+            <p className="-mt-2 mb-4 max-w-[16rem] text-xs text-red-600 dark:text-red-300">{errorFoto}</p>
           )}
 
           {/* Nombre completo */}
@@ -508,7 +508,7 @@ export function ProfilePage() {
                       type="checkbox"
                       checked={formMostrarContacto}
                       onChange={(e) => setFormMostrarContacto(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-night-line"
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-accent-600 focus:ring-accent-500 dark:border-night-edge"
                     />
                     <span>
                       <span className="block text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -549,7 +549,7 @@ export function ProfilePage() {
                 <button
                   onClick={guardarPerfil}
                   disabled={guardando}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                 >
                   <BadgeCheck className="icon-md icon-hop" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}

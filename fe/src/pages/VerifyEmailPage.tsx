@@ -84,7 +84,7 @@ export function VerifyEmailPage() {
           {/* ──── Estado: éxito ──── */}
           {status === "success" && (
             <div className="mt-6">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-900/30">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-300/10">
                 <svg
                   className="h-7 w-7 text-accent-600 dark:text-accent-400"
                   fill="none"
@@ -99,7 +99,7 @@ export function VerifyEmailPage() {
               <div className="mt-6 flex justify-end">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-medium text-white bg-accent-700 hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800 rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-white bg-accent-700 hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200 rounded-lg transition-colors"
                 >
                   {t("landing.nav.login")}
                 </Link>
@@ -110,9 +110,9 @@ export function VerifyEmailPage() {
           {/* ──── Estado: error ──── */}
           {status === "error" && (
             <div className="mt-6">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-400/15">
                 <svg
-                  className="h-7 w-7 text-red-600 dark:text-red-400"
+                  className="h-7 w-7 text-red-600 dark:text-red-300"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -125,13 +125,13 @@ export function VerifyEmailPage() {
               <div className="mt-6 flex justify-end gap-3">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-night-field border border-gray-300 dark:border-night-line rounded-lg hover:bg-gray-50 dark:hover:bg-night-hover transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-night-field border border-edge dark:border-night-edge rounded-lg hover:bg-gray-50 dark:hover:bg-night-hover transition-colors"
                 >
                   {t("verifyEmail.goToLogin")}
                 </Link>
                 <Link
                   to="/register"
-                  className="px-4 py-2 text-sm font-medium text-white bg-accent-700 hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800 rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-white bg-accent-700 hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200 rounded-lg transition-colors"
                 >
                   {t("auth.register.submit")}
                 </Link>

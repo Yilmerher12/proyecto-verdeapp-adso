@@ -65,9 +65,9 @@ export function CatalogoEducativoPage() {
             <button
               key={categoria}
               onClick={() => navigate(`/catalogo-educativo/${encodeURIComponent(categoria)}`)}
-              className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-gray-100 bg-white p-5 text-left transition-colors hover:border-accent-200 hover:bg-accent-50/40 dark:border-night-line dark:bg-night-card dark:hover:border-accent-800 dark:hover:bg-accent-900/10"
+              className="group flex cursor-pointer items-start gap-4 rounded-2xl border border-gray-100 bg-white p-5 text-left transition-colors hover:border-accent-200 hover:bg-accent-50/40 dark:border-night-line dark:bg-night-card dark:hover:border-accent-800 dark:hover:bg-accent-300/15"
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
                 <Icono className="icon-lg" />
               </span>
               <span className="min-w-0 flex-1">

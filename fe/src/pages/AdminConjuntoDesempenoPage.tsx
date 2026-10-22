@@ -54,7 +54,7 @@ export function AdminConjuntoDesempenoPage() {
             id="desempeno-periodo"
             value={semanas}
             onChange={(e) => setSemanas(Number(e.target.value))}
-            className="block cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+            className="block cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
           >
             {PERIODOS_SEMANAS.map((n) => (
               <option key={n} value={n}>
@@ -86,7 +86,7 @@ export function AdminConjuntoDesempenoPage() {
                     onClick={() => setIdConjunto(c.id_conjunto_residencial)}
                     className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
                       activo
-                        ? "border-accent-700 bg-accent-700 text-white"
+                        ? "border-accent-700 bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                         : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
                     }`}
                   >

@@ -50,7 +50,7 @@ export function SolicitudAdminConjuntoInfo({ variante = "registro" }: { variante
       className={
         esOtroConjunto
           ? "space-y-5"
-          : "space-y-5 p-5 bg-accent-50/30 dark:bg-accent-900/10 border border-accent-100 dark:border-accent-900/40 rounded-2xl"
+          : "space-y-5 p-5 bg-accent-50/30 dark:bg-accent-300/10 border border-accent-100 dark:border-accent-300/40 rounded-2xl"
       }
     >
       <div className="flex items-center gap-2">
@@ -62,7 +62,7 @@ export function SolicitudAdminConjuntoInfo({ variante = "registro" }: { variante
       <ol className="space-y-3">
         {PASOS.map((paso, i) => (
           <li key={paso} className="flex items-start gap-3">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-700 text-white text-xs font-bold">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-700 text-white text-xs font-bold dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200">
               {i + 1}
             </span>
             <p className="text-sm text-gray-600 dark:text-gray-400">{t(`${claves}.${paso}`)}</p>

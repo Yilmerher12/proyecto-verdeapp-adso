@@ -325,7 +325,7 @@ export function AdminNovedadesPage() {
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
       <div className="flex items-center justify-between gap-3 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
             <Newspaper className="icon-lg" />
           </span>
           <div className="min-w-0">
@@ -335,7 +335,7 @@ export function AdminNovedadesPage() {
         </div>
         <button
           onClick={abrirCrear}
-          className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
+          className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
           <Plus className="icon-md" />
           {t("novedades.admin.newButton")}
@@ -378,7 +378,7 @@ export function AdminNovedadesPage() {
                     aria-pressed={alcanceFiltro === a}
                     className={`touch-target-h cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                       alcanceFiltro === a
-                        ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                        ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
                         : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
                     }`}
                   >
@@ -411,14 +411,14 @@ export function AdminNovedadesPage() {
             </div>
 
             <div className="relative">
-              <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 placeholder={t("novedades.admin.filters.searchPlaceholder")}
                 aria-label={t("novedades.admin.filters.searchPlaceholder")}
                 maxLength={100}
-                className="touch-target-h w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200"
+                className="touch-target-h w-full rounded-lg border border-edge bg-white py-2 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               />
             </div>
 
@@ -444,17 +444,17 @@ export function AdminNovedadesPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                          <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-400/15 dark:text-purple-300">
                             {t(`novedades.alcances.${item.alcance}`)}
                           </span>
                           <span
                             title={item.conjuntos.map((c) => c.nombre_conjunto).join(", ") || undefined}
-                            className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                            className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300"
                           >
                             {etiquetaDestino(item)}
                           </span>
                           {dias !== null && (
-                            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                            <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
                               {t("novedades.admin.expiraPronto", { count: dias })}
                             </span>
                           )}
@@ -520,7 +520,7 @@ export function AdminNovedadesPage() {
                           </button>
                           <button
                             onClick={() => setAArchivar(item)}
-                            className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-night-line dark:hover:bg-amber-900/20"
+                            className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 text-amber-600 transition-colors hover:bg-amber-50 dark:border-night-line dark:hover:bg-amber-400/15"
                             aria-label={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
                             title={t("novedades.admin.archiveAria", { resumen: resumirTexto(item.texto) })}
                           >
@@ -588,7 +588,7 @@ export function AdminNovedadesPage() {
                       onClick={() => setForm({ ...form, alcance: a })}
                       className={`touch-target-h cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                         form.alcance === a
-                          ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                          ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
                           : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-night-line dark:text-gray-300"
                       }`}
                     >
@@ -615,7 +615,7 @@ export function AdminNovedadesPage() {
             )}
 
             {!editando && (
-              <div className="space-y-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-900/50 dark:bg-indigo-900/10">
+              <div className="space-y-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-400/30 dark:bg-indigo-400/10">
                 <div className="flex items-center justify-between gap-2">
                   <span id="novedad-conjunto-label" className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
                     {t("novedades.admin.conjunto.label")} <span className="text-red-500">*</span>{" "}
@@ -638,7 +638,7 @@ export function AdminNovedadesPage() {
                       onClick={() => setForm({ ...form, modoConjunto: modo })}
                       className={`touch-target-h cursor-pointer rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
                         form.modoConjunto === modo
-                          ? "border-indigo-600 bg-indigo-100 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-200"
+                          ? "border-indigo-600 bg-indigo-100 text-indigo-900 dark:bg-indigo-400/15 dark:text-indigo-200"
                           : "border-gray-200 bg-white text-gray-500 hover:border-indigo-300 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
                       }`}
                     >
@@ -659,13 +659,13 @@ export function AdminNovedadesPage() {
                       emptyLabel={t("novedades.admin.conjunto.noResults")}
                     />
                     {form.conjuntos.length === 0 && (
-                      <p role="status" className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                      <p role="status" className="text-[11px] font-semibold text-amber-700 dark:text-amber-200">
                         {t("novedades.admin.conjunto.pickAtLeastOne")}
                       </p>
                     )}
                   </div>
                 ) : (
-                  <div role="status" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold leading-snug text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
+                  <div role="status" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold leading-snug text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
                     <TriangleAlert className="icon-sm mt-px shrink-0 icon-appear icon-ring" />
                     {t("novedades.admin.conjunto.massWarning")}
                   </div>
@@ -686,7 +686,7 @@ export function AdminNovedadesPage() {
                 maxLength={NOVEDAD_TEXTO_MAX_LENGTH}
                 aria-describedby="novedad-texto-contador"
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               <ContadorCaracteres id="novedad-texto-contador" actual={form.texto.length} max={NOVEDAD_TEXTO_MAX_LENGTH} />
             </div>
@@ -708,11 +708,11 @@ export function AdminNovedadesPage() {
                 className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                   errorFechaExpiracion
                     ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                    : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                    : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
                 }`}
               />
               {errorFechaExpiracion && (
-                <p id="novedad-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                <p id="novedad-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                   {errorFechaExpiracion}
                 </p>
               )}
@@ -766,11 +766,11 @@ export function AdminNovedadesPage() {
                       className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                         errorVideo
                           ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                          : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                          : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
                       }`}
                     />
                     {errorVideo && (
-                      <p id="novedad-url-video-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                      <p id="novedad-url-video-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                         {errorVideo}
                       </p>
                     )}
@@ -789,7 +789,7 @@ export function AdminNovedadesPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {guardando
                   ? t("common.saving")

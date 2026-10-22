@@ -50,9 +50,9 @@ import {
 function BadgeEstado({ estado }: { estado: string }) {
   const { t } = useTranslation();
   const estilos: Record<string, string> = {
-    PENDIENTE: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    ACEPTADA: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
-    RECHAZADA: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    PENDIENTE: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+    ACEPTADA: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
+    RECHAZADA: "bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300",
   };
   const etiquetas: Record<string, string> = {
     PENDIENTE: t("dashboards.adminConjunto.estado.pendiente"),
@@ -107,7 +107,7 @@ function SeccionAvisosConjunto({
         notifications={notificaciones}
         emptyMessage={t("dashboards.adminConjunto.avisosSection.empty")}
         accentBg="bg-amber-700"
-        accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
+        accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-400/10 dark:hover:bg-amber-400/15"
         onMarkRead={onMarkRead}
         onMarkAllRead={onMarkAllRead}
         onClearRead={onClearRead}
@@ -172,13 +172,13 @@ function SeccionCobertura({ conjunto, onDefinir }: { conjunto: ConjuntoAdministr
         </>
       ) : (
         <div className="mt-3 space-y-3">
-          <p className="rounded-lg bg-amber-50 p-3 text-xs leading-relaxed text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <p className="rounded-lg bg-amber-50 p-3 text-xs leading-relaxed text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
             {t("dashboards.adminConjunto.coverage.noTotal")}
           </p>
           <button
             type="button"
             onClick={onDefinir}
-            className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600"
+            className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
           >
             {t("dashboards.adminConjunto.coverage.define")}
           </button>
@@ -245,7 +245,7 @@ function SeccionCodigoAcceso({
   return (
     // ¿Qué? Va como PRIMER bloque del conjunto desplegado (issue #491), por eso
     //       lleva margen abajo y un borde de acento: es lo que más se reparte.
-    <div className="mb-4 rounded-xl border border-accent-200 bg-accent-50/60 p-4 dark:border-accent-900/40 dark:bg-accent-900/10">
+    <div className="mb-4 rounded-xl border border-accent-200 bg-accent-50/60 p-4 dark:border-accent-300/40 dark:bg-accent-300/10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -278,7 +278,7 @@ function SeccionCodigoAcceso({
           <button
             type="button"
             onClick={() => setConfirmando(true)}
-            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 dark:border-amber-800/50 dark:bg-amber-900/10 dark:text-amber-400 dark:hover:bg-amber-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200 dark:hover:bg-amber-400/15 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("dashboards.adminConjunto.codigoAcceso.regenerateButton")}
           </button>
@@ -438,7 +438,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
           <Users className="icon-md text-accent-600" />
           <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.recyclersSection.title")}</h5>
           {!cargandoAutorizados && (
-            <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
+            <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
               {autorizados.length}
             </span>
           )}
@@ -460,7 +460,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
             onClick={() => setMostrarFormulario((v) => !v)}
             aria-expanded={mostrarFormulario}
             aria-controls={`recicladores-invitar-${idConjunto}`}
-            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 border border-accent-300 dark:border-accent-700 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 border border-accent-300 dark:border-accent-300/40 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
           >
             {t("dashboards.adminConjunto.recyclersSection.invite")}
           </button>
@@ -476,7 +476,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
         >
           <div className="flex-1">
             <div className="relative">
-              <Mail className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Mail className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 type="email"
                 placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
@@ -491,12 +491,12 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
                 aria-invalid={!!errorCorreo}
                 aria-describedby={errorCorreo ? `recicladores-correo-error-${idConjunto}` : undefined}
                 className={`w-full pl-9 p-2.5 border rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:bg-night-field dark:text-white ${
-                  errorCorreo ? "border-red-500 dark:border-red-400" : "border-gray-200 dark:border-night-line"
+                  errorCorreo ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
                 }`}
               />
             </div>
             {errorCorreo && (
-              <p id={`recicladores-correo-error-${idConjunto}`} role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+              <p id={`recicladores-correo-error-${idConjunto}`} role="alert" className="mt-1 text-xs text-red-600 dark:text-red-300">
                 {errorCorreo}
               </p>
             )}
@@ -504,7 +504,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
           <button
             type="submit"
             disabled={enviando || !correoNuevo.trim()}
-            className="flex cursor-pointer items-center justify-center gap-1.5 bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex cursor-pointer items-center justify-center gap-1.5 bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
           >
             <Send className="icon-sm" />
             {enviando ? t("dashboards.adminConjunto.recyclersSection.sending") : t("dashboards.adminConjunto.recyclersSection.inviteButton")}
@@ -539,7 +539,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
               {autorizados.map((r) => (
                 <div
                   key={r.id_reciclador}
-                  className="flex items-center justify-between gap-3 bg-accent-50 dark:bg-accent-900/10 rounded-lg px-3 py-2"
+                  className="flex items-center justify-between gap-3 bg-accent-50 dark:bg-accent-300/10 rounded-lg px-3 py-2"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
@@ -549,14 +549,14 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {r.asociacion && (
-                      <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-semibold text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
+                      <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
                         {r.asociacion}
                       </span>
                     )}
                     <button
                       type="button"
                       onClick={() => setARevocar(r)}
-                      className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
+                      className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-night-line dark:hover:bg-red-400/15"
                       aria-label={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
                       title={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
                     >
@@ -677,7 +677,7 @@ function SeccionDesvinculacion({
       </p>
 
       {tieneSolicitudPendiente ? (
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 px-2.5 py-1 rounded-full">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 dark:bg-amber-400/10 dark:text-amber-200 px-2.5 py-1 rounded-full">
           <Clock className="icon-sm" /> {t("desvinculacion.pendingBadge")}
         </span>
       ) : !mostrarFormulario ? (
@@ -685,7 +685,7 @@ function SeccionDesvinculacion({
           <button
             type="button"
             onClick={() => setMostrarFormulario(true)}
-            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-300 dark:border-red-800/50 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-colors"
+            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-300 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-300 dark:hover:bg-red-400/15 px-3 py-1.5 rounded-lg transition-colors"
           >
             {t("desvinculacion.solicitarButton")}
           </button>
@@ -705,14 +705,14 @@ function SeccionDesvinculacion({
             aria-describedby={`desvinculacion-motivo-contador-${idConjunto}`}
             placeholder={t("desvinculacion.motivoPlaceholder")}
             rows={2}
-            className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
+            className="w-full p-2.5 border border-edge rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
           />
           <ContadorCaracteres
             id={`desvinculacion-motivo-contador-${idConjunto}`}
             actual={motivo.length}
             max={DESVINCULACION_MOTIVO_MAX_LENGTH}
           />
-          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="text-xs text-red-600 dark:text-red-300">{error}</p>}
           <div className="flex gap-2">
             <button
               type="button"
@@ -728,7 +728,7 @@ function SeccionDesvinculacion({
                 setMostrarFormulario(false);
                 setError(null);
               }}
-              className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 dark:border-night-line dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+              className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-edge dark:border-night-edge dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
             >
               {t("common.cancel")}
             </button>
@@ -919,10 +919,10 @@ export function AdminConjuntoDashboard() {
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}
       <div className="relative overflow-hidden bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-amber-900/5 dark:text-white/5" aria-hidden="true" />
+        <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/30">
-            <RolIcon className="icon-xl text-amber-600 dark:text-amber-400" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
+            <RolIcon className="icon-xl text-accent-700 dark:text-accent-300" />
           </div>
           {/* ¿Qué? min-w-0 + break-words, y título más chico en celular.
               ¿Para qué? Sin min-w-0 la columna de texto no se encogía por
@@ -1018,7 +1018,7 @@ export function AdminConjuntoDashboard() {
                     </p>
                   </div>
                   {c.total_apartamentos ? (
-                    <span className="shrink-0 rounded-full bg-accent-100 px-2.5 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
+                    <span className="shrink-0 rounded-full bg-accent-100 px-2.5 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
                       {t("dashboards.adminConjunto.coverage.badge", {
                         pct: Math.min(100, Math.round((c.apartamentos_registrados / c.total_apartamentos) * 100)),
                       })}
@@ -1028,7 +1028,7 @@ export function AdminConjuntoDashboard() {
                     <span
                       role="img"
                       aria-label={t("dashboards.adminConjunto.avisosSection.unreadBadge", { count: avisosSinLeer })}
-                      className="flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      className="flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-400/15 dark:text-red-300"
                     >
                       <Bell className="icon-sm" aria-hidden="true" />
                       <span aria-hidden="true">{avisosSinLeer}</span>
@@ -1065,7 +1065,7 @@ export function AdminConjuntoDashboard() {
                         value={formEdicion.nit}
                         onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
                         maxLength={NIT_MAX_LENGTH}
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
+                        className="w-full p-2.5 border border-edge rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
                       />
                     </div>
                     <div>
@@ -1083,14 +1083,14 @@ export function AdminConjuntoDashboard() {
                         aria-invalid={!!errorTotal}
                         aria-describedby={`total-ayuda-${c.id_conjunto_residencial}`}
                         className={`w-40 p-2.5 border rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:bg-night-field dark:text-white ${
-                          errorTotal ? "border-red-500 dark:border-red-400" : "border-gray-200 dark:border-night-line"
+                          errorTotal ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
                         }`}
                       />
                       <p id={`total-ayuda-${c.id_conjunto_residencial}`} className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         {t("dashboards.adminConjunto.editForm.totalHelp")}
                       </p>
                       {errorTotal && (
-                        <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+                        <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-300">
                           {errorTotal}
                         </p>
                       )}
@@ -1100,14 +1100,14 @@ export function AdminConjuntoDashboard() {
                         type="button"
                         onClick={() => guardarEdicion(c.id_conjunto_residencial)}
                         disabled={guardando}
-                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-white bg-accent-700 hover:bg-accent-800 px-4 py-2 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-white bg-accent-700 hover:bg-accent-800 px-4 py-2 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-60 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                       >
                         <Check className="icon-md" /> {t("common.save")}
                       </button>
                       <button
                         type="button"
                         onClick={cancelarEdicion}
-                        className="focus-ring flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 dark:border-night-line px-4 py-2 rounded-xl transition-colors dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
+                        className="focus-ring flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-edge dark:border-night-edge px-4 py-2 rounded-xl transition-colors dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
                       >
                         <X className="icon-md" /> {t("common.cancel")}
                       </button>
@@ -1135,7 +1135,7 @@ export function AdminConjuntoDashboard() {
                       <button
                         type="button"
                         onClick={() => iniciarEdicion(c)}
-                        className="focus-ring touch-target-h flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 border border-accent-300 dark:border-accent-700 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-900/20 dark:text-accent-400 dark:hover:bg-accent-900/30"
+                        className="focus-ring touch-target-h flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 border border-accent-300 dark:border-accent-300/40 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
                       >
                         <Pencil className="icon-sm" /> {t("common.edit")}
                       </button>
@@ -1190,9 +1190,9 @@ export function AdminConjuntoDashboard() {
       <button
         type="button"
         onClick={() => setSolicitandoConjunto(true)}
-        className="touch-target-h flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-5 py-4 text-left transition-colors hover:bg-accent-50 dark:border-night-line dark:bg-night-inset/40 dark:hover:bg-night-hover"
+        className="touch-target-h flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed border-edge bg-gray-50 px-5 py-4 text-left transition-colors hover:bg-accent-50 dark:border-night-edge dark:bg-night-inset/40 dark:hover:bg-night-hover"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
           <Plus className="icon-md" />
         </span>
         <span className="min-w-0 flex-1">

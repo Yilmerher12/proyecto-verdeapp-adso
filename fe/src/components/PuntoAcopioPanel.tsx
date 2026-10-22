@@ -129,7 +129,7 @@ export function PuntoAcopioPanel({
   return (
     <PanelLateral onClose={onClose} aria-label={t(`${p}.panel.ariaLabel`, { nombre: punto.nombre })} cerrarConEscape={cerrarConEscape}>
       <div className="flex items-center gap-4 border-b border-gray-100 p-5 pr-14 dark:border-night-line">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-300">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-300">
           <Warehouse className="icon-lg" />
         </div>
         <div className="min-w-0">
@@ -138,13 +138,13 @@ export function PuntoAcopioPanel({
             <span
               className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                 punto.activo
-                  ? "bg-accent-100 text-accent-800 dark:bg-accent-900/30 dark:text-accent-300"
+                  ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-300"
                   : "bg-gray-100 text-gray-600 dark:bg-night-hover dark:text-gray-300"
               }`}
             >
               {punto.activo ? t(`${p}.panel.active`) : t(`${p}.inactiveBadge`)}
             </span>
-            <span className="rounded-full bg-accent-50 px-2.5 py-0.5 text-[11px] font-semibold text-accent-800 dark:bg-accent-900/20 dark:text-accent-300">
+            <span className="rounded-full bg-accent-50 px-2.5 py-0.5 text-[11px] font-semibold text-accent-800 dark:bg-accent-300/10 dark:text-accent-300">
               {punto.nombre_localidad}
             </span>
           </div>
@@ -236,7 +236,7 @@ export function PuntoAcopioPanel({
                 rows={2}
                 aria-label={t(`${p}.comments.placeholder`)}
                 placeholder={t(`${p}.comments.placeholder`)}
-                className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full resize-none rounded-xl border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               {errorEnvio && <Alert type="error" message={t(`${p}.comments.addError`)} onClose={() => setErrorEnvio(false)} />}
               <div className="flex justify-end">
@@ -244,7 +244,7 @@ export function PuntoAcopioPanel({
                   type="button"
                   onClick={enviarComentario}
                   disabled={enviando || !nuevoComentario.trim()}
-                  className="cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                 >
                   {enviando ? t("common.saving") : t(`${p}.comments.add`)}
                 </button>
@@ -256,7 +256,7 @@ export function PuntoAcopioPanel({
             <button
               type="button"
               onClick={() => setEditando(true)}
-              className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600"
+              className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
             >
               <Pencil className="icon-md" />
               {t("common.edit")}
@@ -265,7 +265,7 @@ export function PuntoAcopioPanel({
               <button
                 type="button"
                 onClick={() => onDarDeBaja(punto)}
-                className={`${botonSecundario} border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20`}
+                className={`${botonSecundario} border-red-200 text-red-600 hover:bg-red-50 dark:border-red-400/30 dark:text-red-300 dark:hover:bg-red-400/15`}
               >
                 <MapPinOff className="icon-md icon-draw" />
                 {t(`${p}.panel.deactivate`)}
@@ -277,7 +277,7 @@ export function PuntoAcopioPanel({
                   onClick={() => onReactivar(punto)}
                   disabled={reactivando}
                   aria-busy={reactivando}
-                  className={`${botonSecundario} disabled:cursor-not-allowed disabled:opacity-60 border-accent-200 text-accent-700 hover:bg-accent-50 dark:border-accent-900/40 dark:text-accent-400 dark:hover:bg-accent-900/20`}
+                  className={`${botonSecundario} disabled:cursor-not-allowed disabled:opacity-60 border-accent-200 text-accent-700 hover:bg-accent-50 dark:border-accent-300/40 dark:text-accent-400 dark:hover:bg-accent-300/15`}
                 >
                   {reactivando ? <Spinner size="sm" /> : <MapPin className="icon-md icon-draw" />}
                   {t(`${p}.panel.reactivate`)}
@@ -285,7 +285,7 @@ export function PuntoAcopioPanel({
                 <button
                   type="button"
                   onClick={() => onEliminar(punto)}
-                  className={`${botonSecundario} border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20`}
+                  className={`${botonSecundario} border-red-200 text-red-600 hover:bg-red-50 dark:border-red-400/30 dark:text-red-300 dark:hover:bg-red-400/15`}
                 >
                   <Trash2 className="icon-md" />
                   {t(`${p}.panel.deleteForever`)}

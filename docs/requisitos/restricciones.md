@@ -103,7 +103,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | Elemento | Cómo se ve | Cómo se escribe |
   | --- | --- | --- |
   | Botón primario | Fondo verde sólido, texto blanco | `Button` (variante `primary`) |
-  | Botón secundario / de acción | Borde visible, nunca solo un fondo suave: un fondo suave sin borde se lee como una etiqueta o chip | `Button` (variante `secondary`) o, en un botón hecho a mano, `border` del mismo tono (`border-accent-300`, `border-red-300`, `border-gray-300`) |
+  | Botón secundario / de acción | Borde visible, nunca solo un fondo suave: un fondo suave sin borde se lee como una etiqueta o chip | `Button` (variante `secondary`) o, en un botón hecho a mano, `border` del mismo tono (`border-accent-300`, `border-red-300` o, para el gris, `border-edge dark:border-night-edge`) |
   | Botón peligroso | Rojo (sólido o con borde rojo) | `Button` (variante `danger`) |
   | Enlace dentro de un texto, o suelto como texto | Verde de marca, negrita y **subrayado siempre visible** (el color solo no basta: no se distingue del texto vecino). Si abre otra pestaña lleva `ExternalLink` | clase `link-text` (definida en `fe/src/index.css`) |
   | Enlaces de pie de página | Gris con subrayado | `underline underline-offset-2` junto al gris del pie |
@@ -114,19 +114,44 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 
   Foco con teclado: todo control con foco propio usa la clase `focus-ring` (anillo verde sólido de 2 px, solo con `:focus-visible`). Nunca se quita el contorno (`outline-none`) sin ese reemplazo; un control sin clases de foco conserva el contorno por defecto del navegador, que sí se ve. Todo botón, `<select>` y `<label>` clicable lleva además `cursor-pointer`. Lo comprueba `fe/src/__tests__/lib/elementosClicables.test.ts` (botones de solo ícono sin `title`, enlaces de texto sin subrayado, imágenes clicables sin insignia).
 - Paleta de marca: "Páramo Fresco" en modo claro y "Bosque Andino" en modo oscuro, definidas como escala `green-*` (y `accent-*` apuntando a ella) en `fe/src/index.css`. Los botones principales usan `accent-*`; no hay un color de acento distinto (ni azul ni amarillo) para botones. Los paneles no llevan imagen de fondo: el área de contenido es un color sólido.
+- Tema oscuro (issue #503): las capas son verdes casi neutros, cada una un paso más clara que la de abajo (`night-base` < `night-page` < `night-inset` < `night-card` < `night-panel`), y la separación la da el borde `night-line`. El **único acento** es el menta (`accent-300`, el verde claro del botón "Unirse a VerdeApp"): botones principales, ítem activo del menú, enlaces, números destacados y foco. **Los 4 roles comparten ese acento**: el rol se distingue por su ícono y su nombre, no por color (`fe/src/config/roleTheme.ts`, los 4 apuntan a las mismas constantes). Nada de verde oscuro sobre verde oscuro: un botón sólido nuevo lleva siempre su pareja menta.
 - Texto secundario y metadatos (fechas, contadores, ayudas): siempre `text-gray-500 dark:text-gray-400`. Nunca `text-gray-400` en modo claro (2.60 de contraste) ni la pareja invertida `text-gray-400 dark:text-gray-500`, que falla en los dos modos. Verde de marca como texto pequeño sobre fondo verde oscuro: `accent-300` (ver `docs/gestion-proyecto/auditoria-contraste-paleta-nueva.md`).
 - Ningún color escrito a mano en componentes (`bg-[#12231a]`, `border-[#23392b]`…): todo color sale de un token de `fe/src/index.css`. Las superficies del modo oscuro tienen su propio token (siempre con `dark:`):
 
   | Token | Uso |
   | --- | --- |
-  | `night-base` | Fondo raíz (auth, legales, shell, footer) |
-  | `night-page` | Fondo del área de contenido de los paneles |
+  | `night-base` | Fondo raíz y sidebar (la capa más baja: auth, legales, shell, footer) |
+  | `night-page` | Fondo del área de contenido de los paneles y del encabezado |
   | `night-card` | Tarjetas |
-  | `night-panel` | Modales, tarjeta de login, barras fijas |
+  | `night-panel` | Modales, panel lateral y tarjeta de login (encima de las tarjetas) |
   | `night-inset` | Zonas hundidas: filas en hover, botón secundario |
   | `night-field` | Campos de formulario |
-  | `night-line` | Bordes |
+  | `night-line` | Bordes decorativos (tarjetas, divisiones): 1.94:1 sobre la tarjeta |
+  | `night-edge` | Borde de los controles: campos y botones secundarios (3.3:1 sobre el campo) |
   | `night-hover` | Fondo al pasar el mouse |
+
+- Equivalencias entre el modo claro y el oscuro (issue #503). **Esta tabla es la única fuente**: cada papel tiene el mismo trabajo en los dos modos, y un componente nuevo copia la pareja de aquí en vez de inventar la suya. Los contrastes están medidos (ver `docs/gestion-proyecto/auditoria-coherencia-temas.md`):
+
+  | Papel | Modo claro | Modo oscuro |
+  | --- | --- | --- |
+  | Fondo raíz (auth, legales, footer) y sidebar | `bg-gray-50`; el sidebar es `bg-accent-900` (verde de marca) | `night-base` (sidebar y raíz, la capa más baja) |
+  | Fondo del área de contenido y encabezado | `bg-gray-200` (contenido), `bg-white` (encabezado) | `night-page` (los dos; los separa el borde `night-line`) |
+  | Tarjeta | `bg-white` | `night-card` |
+  | Modal, panel lateral, barra fija | `bg-white` | `night-panel` |
+  | Zona hundida, botón secundario | `bg-white` / `bg-gray-100` | `night-inset` |
+  | Campo de formulario | `bg-white` | `night-field` |
+  | Fondo al pasar el mouse | `hover:bg-gray-50` | `night-hover` |
+  | Borde decorativo | `border-gray-100` o `border-gray-200` | `night-line` |
+  | **Borde de un control** (campo, botón secundario) | `border-edge` | `dark:border-night-edge` |
+  | Texto principal | `text-gray-900` | `dark:text-white` o `dark:text-gray-100` |
+  | Texto secundario | `text-gray-500` | `dark:text-gray-400` |
+  | Acción principal (botón sólido) | `bg-accent-700` con texto blanco | **menta**: `dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200` (8.6:1 sobre la tarjeta; antes el botón era verde oscuro, 1.86:1 sobre la tarjeta) |
+  | Ítem activo del menú, números destacados | `bg-white/15 text-white` en el sidebar verde | `dark:bg-accent-300/15 dark:text-accent-300` |
+  | Enlace de texto | `accent-700` (`link-text`) | `accent-400` (`link-text`) |
+  | Éxito, aviso, error | texto `-700` sobre fondo `-50` (`accent`, `amber`, `red`) | fondo translúcido `-400/10`, borde `-300/30` o `-400/30`, texto `amber-200` (aviso), `red-300` (error) o `accent-300` (éxito); nunca `-900` sólido (se ve marrón o sucio sobre el verde) |
+  | Colores de categoría (tipo de comunicado, de aviso, auditoría: `purple`, `indigo`, `teal`) | texto `-700` sobre fondo `-50` | fondo translúcido `-400/10` y texto `-300` |
+
+  Los colores de categoría son los únicos de Tailwind concretos permitidos fuera de los estados de éxito, aviso y error: cada categoría usa siempre su pareja de arriba y nunca el color solo (siempre lleva texto o ícono). Una prueba (`fe/src/__tests__/lib/coloresTemas.test.ts`) falla si aparece un color escrito a mano (`bg-[#…]`), un `text-gray-400` sin su pareja oscura, o un `border-gray-300` suelto en lugar de `border-edge`.
 - Logo: solo en SVG, en `fe/public/logos/` (`logo`, `logo-white`, `logo-mark`, `logo-mark-white` y `favicon`). Ninguna página pone un `<img>` del logo a mano: siempre se usa el componente `BrandLogo` (`fe/src/components/ui/BrandLogo.tsx`), que elige la versión según el fondo y el modo oscuro. No se usan PNG ni íconos de `lucide-react` (como `Leaf`) en lugar del logo.
 - El color de marca (`accent-*`) es el único acento de color permitido en componentes reutilizables; los colores por rol (sidebar, badges) viven centralizados en `fe/src/config/roleTheme.ts`, no repetidos por archivo.
 - Todo componente nuevo debe soportar modo claro y modo oscuro (`dark:`) desde el primer commit — no se agrega como una tarea aparte después.
