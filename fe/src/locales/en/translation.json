@@ -1107,7 +1107,7 @@
       "titulo": "What is an ECA?",
       "descripcion": "An Estación de Clasificación y Aprovechamiento (ECA) is the formal site, regulated by UAESP (Bogotá's public utilities authority), where organized professional recyclers weigh and sort what they collect on their routes.",
       "paraQueSirve": "If you need to drop off recyclable materials on your own, you can find the nearest point here.",
-      "fuenteTexto": "Source: Bogotá Open Data (UAESP), \"Aprovechamiento ECAS\" dataset. Bogotá only has a registered ECA in 6 of its 20 districts.",
+      "fuenteTexto": "The points you see come from the \"Aprovechamiento ECAS\" dataset of Bogotá Open Data (UAESP), from March 2020. They are not all of Bogotá's ECAs: the UAESP inventory lists many more.",
       "fuenteLink": "View source"
     }
   },

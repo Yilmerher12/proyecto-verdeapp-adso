@@ -41,7 +41,8 @@ interface DirectorioPageProps {
 // ¿Para qué? Que el link del "Ver fuente" y el de la documentación de
 //           soporte (docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md)
 //           apunten siempre al mismo lugar si algún día cambia.
-const FUENTE_ECA_URL = "https://datosabiertos.bogota.gov.co/dataset/data_set_aprovechamiento_ecas";
+const FUENTE_ECA_URL =
+  "https://www.uaesp.gov.co/sites/default/files/archivos-adjuntos/Listado_Inventario_inicial_ECA_y_Bodegas_PR.pdf";
 
 export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const { t } = useTranslation();
@@ -225,9 +226,10 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           ¿Para qué? El de Recicladores explica qué es y para qué le sirve
           al residente (directorio propio, sin fuente externa). El de
           Puntos de Acopio, además, tiene que aclarar la procedencia del
-          dato (UAESP) y por qué solo cubre 6 de 20 localidades — sin esto,
-          alguien podría pensar que faltan datos por cargar, cuando en
-          realidad es la cobertura real de las ECA en Bogotá. */}
+          dato (dataset UAESP de marzo de 2020) y que no son todas las ECA
+          de la ciudad — sin esto, alguien podría tomar los 9 puntos como
+          el total real de Bogotá. El enlace lleva al inventario de la
+          UAESP, que lista muchas más (su cifra exacta no está clara). */}
       {tab === "recicladores" && !soloAcopio ? (
         <InfoBanner
           titulo={t("directorio.infoRecicladores.titulo")}

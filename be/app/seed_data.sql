@@ -97,10 +97,12 @@ ON CONFLICT DO NOTHING;
 --           que recogen en sus rutas. Fuente completa, con la fila cruda
 --           tal cual se descargó, en:
 --           docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md
--- ¿Impacto? Bogotá solo tiene ECAs registradas en 6 de sus 20 localidades
---           (Kennedy, Usaquén, Engativá, Fontibón, Mártires, Puente Aranda)
---           — las otras 14 quedan sin ningún punto en el directorio. Es
---           correcto que se vea así: es la realidad, no un dato faltante.
+-- ¿Impacto? Este dataset (marzo de 2020) solo trae ECAs en 6 de las 20
+--           localidades (Kennedy, Usaquén, Engativá, Fontibón, Mártires,
+--           Puente Aranda) — las otras 14 quedan sin ningún punto en el
+--           directorio. No es la cobertura real de la ciudad: el inventario
+--           de la UAESP lista muchas más (ver la investigación #460 en
+--           docs/gestion-proyecto/investigacion-tipos-puntos-acopio.md).
 -- ¿Qué? Los 9 puntos de acopio reales se siembran desde Python (mismo
 --       motivo que el superadmin: puntos_acopios.id_punto_acopio ahora es
 --       UUIDv4, generado en Python, no en este .sql estático).
