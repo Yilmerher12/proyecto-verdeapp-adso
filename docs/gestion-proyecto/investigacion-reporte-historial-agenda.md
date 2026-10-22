@@ -47,7 +47,7 @@ La descarga puede apoyarse en `archivado_en` para la columna "Archivado" y para 
 
 ### Cómo se descargan archivos hoy en VerdeApp
 
-No existe generación de PDF/CSV/Excel hoy, ni en backend ni en frontend. Lo único que existe es **servir un archivo ya subido** desde `/uploads/` ([`be/app/main.py:122-149`](../../be/app/main.py)):
+Cuando se escribió esta investigación no existía generación de PDF/CSV/Excel, ni en backend ni en frontend (el PDF se agregó después, issue #480, en `be/app/utils/pdf_agenda.py`). Lo único que existe es **servir un archivo ya subido** desde `/uploads/` ([`be/app/main.py:122-149`](../../be/app/main.py)):
 
 - `_DOCUMENTOS_DESCARGABLES = (".pdf", ".docx", ".xlsx")` activa un middleware que agrega `Content-Disposition: attachment` a esas extensiones, para forzar la descarga en vez de abrir el archivo en una pestaña nueva (issue #403).
 - El frontend solo renderiza un `<a href="{API_BASE_URL}/uploads/adjuntos/archivo.pdf">` — no genera nada en el navegador (ver por ejemplo `AdminConjuntoComunicadosPage.test.tsx:114`).
@@ -63,10 +63,10 @@ Esto responde directamente la pregunta 2 del issue: el precedente de la aplicaci
 | Librería | Versión (oct. 2026) | Licencia | Dependencias de sistema | Complejidad de la API |
 | --- | --- | --- | --- | --- |
 | **fpdf2** | 2.8.9 | LGPL-3.0 | Ninguna (puro Python; solo depende de Pillow, defusedxml y fontTools, todas también puro Python) | Baja — `cell()`/`multi_cell()` y una clase `Table` para tablas simples |
-| **ReportLab** | 4.5.1 | BSD | Ninguna | Alta — dibujo por coordenadas tipo canvas, pensado para layouts complejos |
+| **ReportLab** | 5.0.1 | BSD | Ninguna | Alta — dibujo por coordenadas tipo canvas, pensado para layouts complejos |
 | **WeasyPrint** | 70.0 | BSD | **Pango, Cairo, GDK-Pixbuf** (GTK) | Media (HTML/CSS a PDF) pero la instalación en Windows es el problema |
 
-**WeasyPrint queda descartado** para este proyecto: necesita librerías de sistema (Pango/GTK) que en Windows requieren instalar MSYS2 o copiar DLLs a mano — justo el tipo de fricción que un integrante del equipo ya reportó en este chat para correr el proyecto en su máquina. El equipo desarrolla en Windows (ver `README.md`, comandos en PowerShell); agregar una dependencia así de frágil para generar un reporte no se justifica.
+**WeasyPrint queda descartado** para este proyecto: necesita librerías de sistema (Pango/GTK) que en Windows requieren instalar MSYS2 o copiar DLLs a mano — justo el tipo de fricción que no conviene sumar a un proyecto que se instala en máquinas de aprendices. El equipo desarrolla en Windows (ver `README.md`, comandos en PowerShell); agregar una dependencia así de frágil para generar un reporte no se justifica.
 
 Entre `fpdf2` y ReportLab, **`fpdf2` es la recomendación**: el reporte que pide el issue es una tabla simple (texto, fechas, autor, estado, enlace a foto) — no necesita el control de bajo nivel de ReportLab, que es una API más grande y más difícil de mantener para el equipo. `fpdf2` no tiene dependencias de sistema (relevante otra vez en Windows) y su API de tablas es directa de aprender.
 
@@ -164,6 +164,6 @@ Se recomienda un tope duro, por ejemplo 500 notas por reporte: si el rango de fe
 - [RQF-020](../requisitos/RFs/RQF-020_agenda_interna_conjunto.md) — se agregó la fila de HU-049 a su tabla de historias derivadas (RN-003 y RN-004 quedan como las dejó el issue #435).
 - [HU-049](../requisitos/HUs/HU-049_admin_conjunto_descarga_historial_agenda.md) — historia de usuario nueva propuesta para la descarga (Estado: Por implementar).
 - Índice [`historias-de-usuario.md`](../requisitos/HUs/historias-de-usuario.md) — fila nueva para HU-049.
-- `restricciones.md` **no se tocó todavía**: `fpdf2` se agrega ahí solo cuando la tarjeta de implementación del PDF (issue 3 de la tabla de arriba) realmente instale la dependencia, no antes — para no repetir el caso de `jspdf`, que quedó fijado en la documentación de dependencias sin usarse nunca en código real.
+- `restricciones.md` **no se tocó todavía**: `fpdf2` se agrega ahí solo cuando la tarjeta de implementación del PDF (issue 2 de la tabla de arriba) realmente instale la dependencia, no antes — para no repetir el caso de `jspdf`, que quedó fijado en la documentación de dependencias sin usarse nunca en código real.
 
 > **Actualización (2026-10-21, issue #480):** `fpdf2==2.8.9` ya se instaló en `be/pyproject.toml` y quedó anotada en `restricciones.md`. Lo que se decidió sobre los caracteres que la fuente estándar no dibuja (opción de cambiarlos por su versión simple, sin incluir una fuente) está en `HU-049` y `RQF-020` (RN-007).
