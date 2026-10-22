@@ -8,6 +8,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { AdminConjuntoDashboard } from "@/pages/dashboards/AdminConjuntoDashboard";
 import { RoleId } from "@/types/auth";
 import { renderWithProviders, mockUser } from "../helpers";
@@ -365,6 +366,89 @@ describe("AdminConjuntoDashboard", () => {
     await screen.findByText("Conjunto Los Alpes");
     expect(screen.queryByText("Agenda del conjunto")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ver agenda" })).not.toBeInTheDocument();
+  });
+
+  // ¿Qué? Issue #491 — "Solicitar otro conjunto" y el código de acceso arriba.
+  describe("solicitar otro conjunto y código de acceso", () => {
+    function mockUnConjunto() {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+        return Promise.resolve({ data: [] });
+      });
+    }
+
+    function DestinoContacto() {
+      const { pathname, search } = useLocation();
+      return <p>destino:{pathname}{search}</p>;
+    }
+
+    it("muestra la fila Solicitar otro conjunto debajo de la lista de conjuntos", async () => {
+      mockUnConjunto();
+      renderPage();
+
+      const nombre = await screen.findByText("Conjunto Los Alpes");
+      const fila = screen.getByRole("button", { name: /Solicitar otro conjunto/ });
+      expect(nombre.compareDocumentPosition(fila) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(screen.getByText("Pide que te asignen otro conjunto.")).toBeInTheDocument();
+    });
+
+    it("la fila se ve también si el administrador todavía no tiene conjuntos", async () => {
+      renderPage();
+
+      expect(await screen.findByRole("button", { name: /Solicitar otro conjunto/ })).toBeInTheDocument();
+    });
+
+    it("al pulsarla abre el paso a paso, con los documentos y el texto de quien ya tiene cuenta", async () => {
+      mockUnConjunto();
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("button", { name: /Solicitar otro conjunto/ }));
+
+      const ventana = await screen.findByRole("dialog", { name: "Solicitar otro conjunto" });
+      expect(within(ventana).getByText(/el conjunto se asigna a tu cuenta/)).toBeInTheDocument();
+      expect(within(ventana).getByText(/Certificado de existencia y representación legal/)).toBeInTheDocument();
+      expect(within(ventana).getByText(/nunca se suben a VerdeApp/)).toBeInTheDocument();
+      // ¿Qué? Es el texto del registro ("terminar de crear tu cuenta"): aquí no aplica.
+      expect(within(ventana).queryByText(/terminar de crear tu cuenta/)).not.toBeInTheDocument();
+    });
+
+    it("se puede cerrar la ventana", async () => {
+      mockUnConjunto();
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("button", { name: /Solicitar otro conjunto/ }));
+      await user.click(await screen.findByRole("button", { name: "Cerrar" }));
+
+      expect(screen.queryByRole("dialog", { name: "Solicitar otro conjunto" })).not.toBeInTheDocument();
+    });
+
+    it("Solicitar acceso lleva al contacto con el motivo otro-conjunto", async () => {
+      mockUnConjunto();
+      const user = userEvent.setup();
+      renderWithProviders(
+        <Routes>
+          <Route path="/" element={<AdminConjuntoDashboard />} />
+          <Route path="/contacto" element={<DestinoContacto />} />
+        </Routes>,
+        { authContext: { user: adminConjuntoUser, isAuthenticated: true } },
+      );
+
+      await user.click(await screen.findByRole("button", { name: /Solicitar otro conjunto/ }));
+      await user.click(await screen.findByRole("button", { name: "Solicitar acceso" }));
+
+      expect(screen.getByText("destino:/contacto?motivo=otro-conjunto")).toBeInTheDocument();
+    });
+
+    it("el código de acceso queda como primer bloque del conjunto, antes de la cobertura", async () => {
+      mockUnConjunto();
+      renderPage();
+
+      const codigo = await screen.findByText("AB3K9Q");
+      const cobertura = screen.getByText("Apartamentos registrados en VerdeApp");
+      expect(codigo.compareDocumentPosition(cobertura) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
   });
 
   describe("historial de auditorías por conjunto", () => {

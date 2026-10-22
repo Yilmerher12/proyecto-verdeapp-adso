@@ -71,6 +71,7 @@
 - **Dado que** administro un conjunto,
 - **cuando** presiono "Regenerar código de acceso",
 - **entonces** el sistema genera uno nuevo y lo muestra de inmediato.
+- **y** en el panel principal el código de acceso es el **primer bloque** del conjunto desplegado, antes del NIT y de la cobertura (issue #491).
 
 ### CA-044.4 — El código anterior deja de servir
 

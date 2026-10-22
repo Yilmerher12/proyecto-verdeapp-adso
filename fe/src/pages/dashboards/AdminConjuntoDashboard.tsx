@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
-import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown } from "lucide-react";
+import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -31,6 +31,8 @@ import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Modal } from "@/components/ui/Modal";
+import { SolicitudAdminConjuntoInfo } from "@/components/SolicitudAdminConjuntoInfo";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
 import {
@@ -249,7 +251,9 @@ function SeccionCodigoAcceso({
   };
 
   return (
-    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-night-inset/40">
+    // ¿Qué? Va como PRIMER bloque del conjunto desplegado (issue #491), por eso
+    //       lleva margen abajo y un borde de acento: es lo que más se reparte.
+    <div className="mb-4 rounded-xl border border-accent-200 bg-accent-50/60 p-4 dark:border-accent-900/40 dark:bg-accent-900/10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -768,6 +772,7 @@ export function AdminConjuntoDashboard() {
   //           abiertos a la vez empujaba el resto del panel fuera de la
   //           vista inicial (issue #166) — ahora solo se ve el primero.
   const [abiertos, setAbiertos] = useState<Record<string, boolean>>({});
+  const [solicitandoConjunto, setSolicitandoConjunto] = useState(false);
   // ¿Qué? Historial de auditorías de TODOS los conjuntos que administra,
   //       pedido una sola vez aquí y filtrado por conjunto más abajo — así
   //       HistorialAuditoriasSemanal nunca mezcla auditorías de un conjunto
@@ -1098,6 +1103,15 @@ export function AdminConjuntoDashboard() {
                   </div>
                 ) : (
                   <>
+                    {/* Código de acceso: primer bloque del conjunto — lo que más se reparte (issue #491). */}
+                    {user && (
+                      <SeccionCodigoAcceso
+                        idConjunto={c.id_conjunto_residencial}
+                        codigoAcceso={c.codigo_acceso}
+                        onRegenerado={cargarConjuntos}
+                      />
+                    )}
+
                     {/* Nombre, dirección y localidad ya se ven en el encabezado del
                         acordeón — aquí solo queda el NIT (lo único editable) y el botón. */}
                     <div className="flex items-center justify-between gap-2">
@@ -1131,11 +1145,6 @@ export function AdminConjuntoDashboard() {
                     */}
                     {user && (
                       <>
-                        <SeccionCodigoAcceso
-                          idConjunto={c.id_conjunto_residencial}
-                          codigoAcceso={c.codigo_acceso}
-                          onRegenerado={cargarConjuntos}
-                        />
                         <SeccionRecicladores idConjunto={c.id_conjunto_residencial} />
                         <SeccionDesvinculacion
                           idConjunto={c.id_conjunto_residencial}
@@ -1159,6 +1168,42 @@ export function AdminConjuntoDashboard() {
           </div>
         )}
       </div>
+
+      {/* ¿Qué? Fila aparte, debajo de la lista, para pedir que le asignen otro
+                conjunto (issue #491).
+          ¿Para qué? Es una acción ocasional: va con borde punteado y sin color
+                    lleno para parecer "un conjunto más por agregar" y no competir
+                    con las acciones de todos los días (copiar el código). */}
+      <button
+        type="button"
+        onClick={() => setSolicitandoConjunto(true)}
+        className="touch-target-h flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-5 py-4 text-left transition-colors hover:bg-accent-50 dark:border-night-line dark:bg-night-inset/40 dark:hover:bg-night-hover"
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
+          <Plus className="icon-md" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-bold text-accent-800 dark:text-accent-400">
+            {t("dashboards.adminConjunto.otroConjunto.tileTitle")}
+          </span>
+          <span className="block text-sm text-gray-600 dark:text-gray-400">
+            {t("dashboards.adminConjunto.otroConjunto.tileHelp")}
+          </span>
+        </span>
+        <ChevronRight className="icon-md shrink-0 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+      </button>
+
+      {solicitandoConjunto && (
+        <Modal
+          onClose={() => setSolicitandoConjunto(false)}
+          wide
+          aria-label={t("dashboards.adminConjunto.otroConjunto.modalTitle")}
+        >
+          <div className="p-6 sm:p-8">
+            <SolicitudAdminConjuntoInfo variante="otroConjunto" />
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
