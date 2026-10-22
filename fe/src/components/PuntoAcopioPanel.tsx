@@ -236,7 +236,7 @@ export function PuntoAcopioPanel({
                 rows={2}
                 aria-label={t(`${p}.comments.placeholder`)}
                 placeholder={t(`${p}.comments.placeholder`)}
-                className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full resize-none rounded-xl border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               {errorEnvio && <Alert type="error" message={t(`${p}.comments.addError`)} onClose={() => setErrorEnvio(false)} />}
               <div className="flex justify-end">

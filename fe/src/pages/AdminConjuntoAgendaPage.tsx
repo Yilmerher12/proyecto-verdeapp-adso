@@ -603,7 +603,7 @@ export function AdminConjuntoAgendaPage() {
                 rows={3}
                 aria-describedby="agenda-contador"
                 placeholder={t("agenda.textPlaceholder")}
-                className="mt-1 w-full rounded-xl border border-gray-200 bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="mt-1 w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               <ContadorCaracteres id="agenda-contador" actual={texto.length} max={DESVINCULACION_MOTIVO_MAX_LENGTH} />
             </div>
@@ -644,12 +644,12 @@ export function AdminConjuntoAgendaPage() {
               <legend className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {t("agenda.download.formatLabel")}
               </legend>
-              <div className="inline-flex overflow-hidden rounded-lg border border-gray-300 dark:border-night-line">
+              <div className="inline-flex overflow-hidden rounded-lg border border-edge dark:border-night-edge">
                 {(["csv", "pdf"] as const).map((formato) => (
                   <label
                     key={formato}
                     className={`has-focus-visible:ring-2 has-focus-visible:ring-inset has-focus-visible:ring-accent-500 flex cursor-pointer items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-colors ${
-                      formato === "pdf" ? "border-l border-gray-300 dark:border-night-line" : ""
+                      formato === "pdf" ? "border-l border-edge dark:border-night-edge" : ""
                     } ${
                       formatoDescarga === formato
                         ? "bg-accent-700 text-white"
@@ -682,7 +682,7 @@ export function AdminConjuntoAgendaPage() {
                   setPeriodoDescarga(e.target.value as PeriodoDescarga);
                   setErrorRango(null);
                 }}
-                className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+                className="block w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
               >
                 <option value="TODO">{t("agenda.download.periodAll")}</option>
                 <option value="ESTE_MES">{t("agenda.download.periodThisMonth")}</option>
@@ -725,7 +725,7 @@ export function AdminConjuntoAgendaPage() {
                 id="agenda-descarga-estado"
                 value={estadoDescarga}
                 onChange={(e) => setEstadoDescarga(e.target.value as FiltroDescargaAgenda["estado"])}
-                className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+                className="block w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
               >
                 <option value="TODOS">{t("agenda.download.stateAll")}</option>
                 <option value="PENDIENTE">{t("agenda.download.statePending")}</option>

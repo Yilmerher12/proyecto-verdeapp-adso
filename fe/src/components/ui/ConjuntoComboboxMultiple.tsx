@@ -74,11 +74,11 @@ export function ConjuntoComboboxMultiple({
         <div className="relative">
           <div className="relative">
             <Search
-              className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"
               aria-hidden="true"
             />
             <ComboboxInput
-              className="w-full rounded-xl border border-gray-300 bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+              className="w-full rounded-xl border border-edge bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
               displayValue={() => ""}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}

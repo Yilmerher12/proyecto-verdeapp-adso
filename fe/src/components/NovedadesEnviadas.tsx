@@ -132,7 +132,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
             id="novedad-conjunto"
             value={idConjunto}
             onChange={(e) => setIdConjunto(e.target.value)}
-            className="mt-1 w-full cursor-pointer rounded-xl border border-gray-200 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+            className="mt-1 w-full cursor-pointer rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
           >
             <option value="">{t("novedadesEnviadas.conjuntoAny")}</option>
             {conjuntos.map((c) => (
@@ -200,7 +200,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
           rows={4}
           aria-describedby="novedad-contador"
           placeholder={esOtros ? t("novedadesEnviadas.textPlaceholder") : t("novedadesEnviadas.textPlaceholderOff")}
-          className="mt-1 w-full rounded-xl border border-gray-200 bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:border-night-line dark:bg-night-field dark:text-white dark:disabled:bg-night-inset dark:disabled:text-gray-500"
+          className="mt-1 w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:border-night-edge dark:bg-night-field dark:text-white dark:disabled:bg-night-inset dark:disabled:text-gray-500"
         />
         <div className="mt-1 flex items-start justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
           <span>{esOtros ? t("novedadesEnviadas.textHelpOn") : t("novedadesEnviadas.textHelpOff")}</span>

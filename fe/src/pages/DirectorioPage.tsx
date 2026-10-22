@@ -209,7 +209,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
               onChange={(e) =>
                 setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value))
               }
-              className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200"
+              className="cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
             >
               <option value="">{t("directorio.allLocalities")}</option>
               {localidades.map((l) => (
@@ -314,7 +314,7 @@ function InfoBanner({
           <p className="font-semibold text-accent-900 dark:text-accent-200">{titulo}</p>
           <p className="text-accent-800/90 dark:text-accent-300/90">{descripcion}</p>
           <p className="text-accent-800/90 dark:text-accent-300/90">{paraQueSirve}</p>
-          <p className="text-xs text-accent-700/80 dark:text-accent-400/80">
+          <p className="text-xs text-accent-800 dark:text-accent-300">
             {fuenteTexto}
             {fuenteHref && fuenteLinkLabel && (
               <>
@@ -437,7 +437,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
 
       <div className="space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
         <p className="flex items-start gap-1.5">
-          <MapPin className="icon-sm mt-0.5 shrink-0 text-gray-400" />
+          <MapPin className="icon-sm mt-0.5 shrink-0 text-gray-500 dark:text-gray-400" />
           <span className="flex-1">{p.direccion}</span>
           <button
             type="button"
@@ -455,7 +455,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
         </p>
         {p.telefono_contacto && (
           <p className="flex items-center gap-1.5">
-            <Phone className="icon-sm shrink-0 text-gray-400" />
+            <Phone className="icon-sm shrink-0 text-gray-500 dark:text-gray-400" />
             {p.telefono_contacto}
           </p>
         )}

@@ -125,7 +125,7 @@ export function VerifyEmailPage() {
               <div className="mt-6 flex justify-end gap-3">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-night-field border border-gray-300 dark:border-night-line rounded-lg hover:bg-gray-50 dark:hover:bg-night-hover transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-night-field border border-edge dark:border-night-edge rounded-lg hover:bg-gray-50 dark:hover:bg-night-hover transition-colors"
                 >
                   {t("verifyEmail.goToLogin")}
                 </Link>

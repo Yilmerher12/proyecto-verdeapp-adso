@@ -136,7 +136,7 @@ export function PuntoAcopioForm({
             className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
               fieldErrors.id_localidad
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-line"
+                : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
             }`}
           >
             <option value="" disabled>
@@ -207,7 +207,7 @@ export function PuntoAcopioForm({
             maxLength={1000}
             rows={2}
             placeholder={t("adminPuntosAcopio.form.changeReasonPlaceholder")}
-            className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
+            className="w-full resize-none rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
           />
         </div>
       )}

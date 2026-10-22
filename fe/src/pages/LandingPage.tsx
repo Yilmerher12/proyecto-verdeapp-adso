@@ -293,7 +293,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
           <ul className="m-0 flex list-none items-center gap-2 p-0">
             <li><LanguageSwitcher /></li>
-            <li><ThemeToggle /></li>
+            <li><ThemeToggle onDark /></li>
             <li className="hidden sm:block">
               <Link
                 to="/login"

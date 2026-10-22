@@ -127,7 +127,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
             className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
               errorEnlace
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
             }`}
           />
           {errorEnlace && (
@@ -152,7 +152,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           </button>
         </div>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-line dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-edge bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-edge dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
           {subiendo ? (
             <>
               <Spinner size="sm" tone="current" />

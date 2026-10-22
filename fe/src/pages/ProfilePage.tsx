@@ -508,7 +508,7 @@ export function ProfilePage() {
                       type="checkbox"
                       checked={formMostrarContacto}
                       onChange={(e) => setFormMostrarContacto(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-night-line"
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-accent-600 focus:ring-accent-500 dark:border-night-edge"
                     />
                     <span>
                       <span className="block text-sm font-medium text-gray-800 dark:text-gray-200">

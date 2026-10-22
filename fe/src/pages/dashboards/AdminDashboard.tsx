@@ -638,12 +638,12 @@ export function AdminDashboard() {
             </div>
 
             <div className="relative">
-              <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder={t("dashboards.admin.usersSection.searchPlaceholder")}
-                className="touch-target-h w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 lg:w-48"
+                className="touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 lg:w-48"
               />
             </div>
           </div>
@@ -918,7 +918,7 @@ export function AdminDashboard() {
                 onChange={(e) => setMotivo(e.target.value)}
                 placeholder={t("dashboards.admin.usersSection.status.reasonPlaceholder")}
                 rows={3}
-                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="mt-1.5 w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
             </div>
           )}

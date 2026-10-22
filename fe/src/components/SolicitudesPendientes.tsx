@@ -205,7 +205,7 @@ export function SolicitudesPendientes({
                 <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${CLASE_TIPO[s.tipo]}`}>
                   {t(`solicitudesPendientes.filtros.${s.tipo === "DESVINCULACION" ? "desvinculacion" : "novedad"}`)}
                 </span>
-                <span className="text-xs text-gray-400">{formatearFechaCreacion(s.created_at)}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(s.created_at)}</span>
               </div>
               <p className="font-semibold text-gray-900 dark:text-white text-sm">{s.titulo}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -237,7 +237,7 @@ export function SolicitudesPendientes({
                     aria-describedby={`motivo-rechazo-contador-${s.id}`}
                     placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}
                     rows={2}
-                    className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
+                    className="w-full p-2.5 border border-edge rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
                   />
                   <ContadorCaracteres
                     id={`motivo-rechazo-contador-${s.id}`}

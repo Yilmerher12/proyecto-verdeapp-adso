@@ -411,14 +411,14 @@ export function AdminNovedadesPage() {
             </div>
 
             <div className="relative">
-              <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 placeholder={t("novedades.admin.filters.searchPlaceholder")}
                 aria-label={t("novedades.admin.filters.searchPlaceholder")}
                 maxLength={100}
-                className="touch-target-h w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200"
+                className="touch-target-h w-full rounded-lg border border-edge bg-white py-2 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               />
             </div>
 
@@ -686,7 +686,7 @@ export function AdminNovedadesPage() {
                 maxLength={NOVEDAD_TEXTO_MAX_LENGTH}
                 aria-describedby="novedad-texto-contador"
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               <ContadorCaracteres id="novedad-texto-contador" actual={form.texto.length} max={NOVEDAD_TEXTO_MAX_LENGTH} />
             </div>
@@ -708,7 +708,7 @@ export function AdminNovedadesPage() {
                 className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                   errorFechaExpiracion
                     ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                    : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                    : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
                 }`}
               />
               {errorFechaExpiracion && (
@@ -766,7 +766,7 @@ export function AdminNovedadesPage() {
                       className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                         errorVideo
                           ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                          : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                          : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
                       }`}
                     />
                     {errorVideo && (

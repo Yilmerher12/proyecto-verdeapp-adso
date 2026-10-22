@@ -54,7 +54,7 @@ export function AdminConjuntoDesempenoPage() {
             id="desempeno-periodo"
             value={semanas}
             onChange={(e) => setSemanas(Number(e.target.value))}
-            className="block cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+            className="block cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
           >
             {PERIODOS_SEMANAS.map((n) => (
               <option key={n} value={n}>

@@ -87,7 +87,7 @@ export function PoliticaCookiesPage() {
 
         <div className="mt-4 space-y-4">
           <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-night-line dark:bg-night-panel p-4">
-            <h3 className="mb-1 text-sm font-semibold text-accent-400">
+            <h3 className="mb-1 text-sm font-semibold text-accent-700 dark:text-accent-400">
               {t("legal.cookies.s2.authCategory.title")}
             </h3>
             <p>

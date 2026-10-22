@@ -362,7 +362,7 @@ export function AdminConjuntoComunicadosPage() {
                     id="comunicado-conjunto"
                     value={form.id_conjunto_residencial}
                     onChange={(e) => setForm({ ...form, id_conjunto_residencial: e.target.value })}
-                    className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                    className="w-full cursor-pointer rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
                   >
                     {conjuntos.map((c) => (
                       <option key={c.id_conjunto_residencial} value={c.id_conjunto_residencial}>
@@ -427,7 +427,7 @@ export function AdminConjuntoComunicadosPage() {
                 id="comunicado-tipo"
                 value={form.tipo}
                 onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoComunicado })}
-                className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full cursor-pointer rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               >
                 {TIPOS.map((tipo) => (
                   <option key={tipo} value={tipo}>
@@ -453,7 +453,7 @@ export function AdminConjuntoComunicadosPage() {
                   aria-invalid={!!errorFechaEvento}
                   aria-describedby={errorFechaEvento ? "comunicado-fecha-evento-error" : undefined}
                   className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    errorFechaEvento ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                    errorFechaEvento ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
                   }`}
                 />
                 {errorFechaEvento && (
@@ -475,7 +475,7 @@ export function AdminConjuntoComunicadosPage() {
                 maxLength={COMUNICADO_TEXTO_MAX_LENGTH}
                 aria-describedby="comunicado-texto-contador"
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               <ContadorCaracteres id="comunicado-texto-contador" actual={form.texto.length} max={COMUNICADO_TEXTO_MAX_LENGTH} />
             </div>
@@ -502,7 +502,7 @@ export function AdminConjuntoComunicadosPage() {
                 aria-invalid={!!errorFechaExpiracion}
                 aria-describedby={errorFechaExpiracion ? "comunicado-fecha-expiracion-error" : undefined}
                 className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                  errorFechaExpiracion ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                  errorFechaExpiracion ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
                 }`}
               />
               {errorFechaExpiracion && (

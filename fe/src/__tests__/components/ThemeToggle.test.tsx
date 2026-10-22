@@ -75,4 +75,19 @@ describe("ThemeToggle", () => {
     await user.click(screen.getByRole("button"));
     expect(localStorage.getItem("theme")).toBe("light");
   });
+
+  // ¿Qué? Sobre una barra que es oscura en los dos modos (la del Landing) el
+  //       botón usa texto claro, no el gris del modo claro.
+  // ¿Para qué? Issue #503: con `text-gray-600` la luna casi no se veía sobre el
+  //           verde oscuro de esa barra en modo claro.
+  // ¿Impacto? Si se pierde `onDark`, el botón vuelve a desaparecer en el Landing.
+  it("con onDark usa texto claro; sin onDark, el gris del modo claro", () => {
+    const { rerender } = render(<ThemeToggle onDark />);
+    expect(screen.getByRole("button")).toHaveClass("text-white/80");
+    expect(screen.getByRole("button")).not.toHaveClass("text-gray-600");
+
+    rerender(<ThemeToggle />);
+    expect(screen.getByRole("button")).toHaveClass("text-gray-600");
+    expect(screen.getByRole("button")).not.toHaveClass("text-white/80");
+  });
 });

@@ -476,7 +476,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
         >
           <div className="flex-1">
             <div className="relative">
-              <Mail className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Mail className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 type="email"
                 placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
@@ -491,7 +491,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
                 aria-invalid={!!errorCorreo}
                 aria-describedby={errorCorreo ? `recicladores-correo-error-${idConjunto}` : undefined}
                 className={`w-full pl-9 p-2.5 border rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:bg-night-field dark:text-white ${
-                  errorCorreo ? "border-red-500 dark:border-red-400" : "border-gray-200 dark:border-night-line"
+                  errorCorreo ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
                 }`}
               />
             </div>
@@ -705,7 +705,7 @@ function SeccionDesvinculacion({
             aria-describedby={`desvinculacion-motivo-contador-${idConjunto}`}
             placeholder={t("desvinculacion.motivoPlaceholder")}
             rows={2}
-            className="w-full p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
+            className="w-full p-2.5 border border-edge rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
           />
           <ContadorCaracteres
             id={`desvinculacion-motivo-contador-${idConjunto}`}
@@ -728,7 +728,7 @@ function SeccionDesvinculacion({
                 setMostrarFormulario(false);
                 setError(null);
               }}
-              className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 dark:border-night-line dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
+              className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-edge dark:border-night-edge dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
             >
               {t("common.cancel")}
             </button>
@@ -1065,7 +1065,7 @@ export function AdminConjuntoDashboard() {
                         value={formEdicion.nit}
                         onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
                         maxLength={NIT_MAX_LENGTH}
-                        className="w-full p-2.5 border border-gray-200 rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
+                        className="w-full p-2.5 border border-edge rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
                       />
                     </div>
                     <div>
@@ -1083,7 +1083,7 @@ export function AdminConjuntoDashboard() {
                         aria-invalid={!!errorTotal}
                         aria-describedby={`total-ayuda-${c.id_conjunto_residencial}`}
                         className={`w-40 p-2.5 border rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:bg-night-field dark:text-white ${
-                          errorTotal ? "border-red-500 dark:border-red-400" : "border-gray-200 dark:border-night-line"
+                          errorTotal ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
                         }`}
                       />
                       <p id={`total-ayuda-${c.id_conjunto_residencial}`} className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -1107,7 +1107,7 @@ export function AdminConjuntoDashboard() {
                       <button
                         type="button"
                         onClick={cancelarEdicion}
-                        className="focus-ring flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-300 dark:border-night-line px-4 py-2 rounded-xl transition-colors dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
+                        className="focus-ring flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-edge dark:border-night-edge px-4 py-2 rounded-xl transition-colors dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
                       >
                         <X className="icon-md" /> {t("common.cancel")}
                       </button>
@@ -1190,7 +1190,7 @@ export function AdminConjuntoDashboard() {
       <button
         type="button"
         onClick={() => setSolicitandoConjunto(true)}
-        className="touch-target-h flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-5 py-4 text-left transition-colors hover:bg-accent-50 dark:border-night-line dark:bg-night-inset/40 dark:hover:bg-night-hover"
+        className="touch-target-h flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed border-edge bg-gray-50 px-5 py-4 text-left transition-colors hover:bg-accent-50 dark:border-night-edge dark:bg-night-inset/40 dark:hover:bg-night-hover"
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
           <Plus className="icon-md" />

@@ -53,9 +53,9 @@ export function Button({
     primary:
       "bg-accent-700 text-white hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800",
     secondary:
-      "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-line dark:hover:bg-night-hover",
+      "bg-white text-gray-700 border border-edge hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-edge dark:hover:bg-night-hover",
     danger:
-      "bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600",
+      "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700",
   };
 
   // ¿Qué? Clases CSS según el tamaño elegido.

@@ -366,14 +366,14 @@ export function AdminPuntosAcopioPage() {
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 dark:border-night-line dark:bg-night-card">
             <div className="relative min-w-[200px] flex-1">
-              <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 type="search"
                 value={busqueda}
                 onChange={(e) => cambiarBusqueda(e.target.value)}
                 aria-label={t("adminPuntosAcopio.search.placeholder")}
                 placeholder={t("adminPuntosAcopio.search.placeholder")}
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full rounded-xl border border-edge bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
             </div>
             <div className="flex gap-1.5">

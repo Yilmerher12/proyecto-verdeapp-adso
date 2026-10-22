@@ -691,13 +691,13 @@ export function AdminContenidoEducativoPage() {
                 {semana === semanaActual ? t(`${p}.week.inProgress`) : t(`${p}.week.closed`, { fecha: domingoDeLunesUTC(semana).getUTCDate() })}
               </span>
               <div className="relative ml-auto">
-                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
                 <input
                   value={buscarCal}
                   onChange={(e) => setBuscarCal(e.target.value)}
                   placeholder={t(`${p}.week.searchPlaceholder`)}
                   aria-label={t(`${p}.week.searchPlaceholder`)}
-                  className="touch-target-h w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 sm:w-56"
+                  className="touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 sm:w-56"
                 />
               </div>
             </div>
@@ -792,20 +792,20 @@ export function AdminContenidoEducativoPage() {
           <div>
             <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-night-line">
               <div className="relative">
-                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
                 <input
                   value={buscarMod}
                   onChange={(e) => setBuscarMod(e.target.value)}
                   placeholder={t(`${p}.modules.searchPlaceholder`)}
                   aria-label={t(`${p}.modules.searchPlaceholder`)}
-                  className="touch-target-h w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 sm:w-56"
+                  className="touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 sm:w-56"
                 />
               </div>
               <select
                 value={categoriaFiltro}
                 onChange={(e) => setCategoriaFiltro(e.target.value)}
                 aria-label={t(`${p}.modules.categoryFilterLabel`)}
-                className="cursor-pointer rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200"
+                className="cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               >
                 <option value="">{t(`${p}.modules.allCategories`)}</option>
                 {categorias.map((c) => (
@@ -975,7 +975,7 @@ export function AdminContenidoEducativoPage() {
                       className="mb-1.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white px-3 py-2 text-left text-sm text-gray-800 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-200 dark:hover:bg-night-inset"
                     >
                       {m.titulo_tema}
-                      <Eye className="icon-sm shrink-0 text-gray-400" />
+                      <Eye className="icon-sm shrink-0 text-gray-500 dark:text-gray-400" />
                     </button>
                   ))}
               </>
@@ -1144,7 +1144,7 @@ export function AdminContenidoEducativoPage() {
                   onChange={(e) => setCategoriaSeleccion(e.target.value)}
                   onBlur={() => validarCampo("categoria")}
                   className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    fieldErrors.categoria ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-line"
+                    fieldErrors.categoria ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
                   }`}
                 >
                   <option value="">{t(`${p}.fields.categoryPlaceholderSelect`)}</option>
@@ -1163,7 +1163,7 @@ export function AdminContenidoEducativoPage() {
                       onBlur={() => validarCampo("categoria")}
                       maxLength={CONTENIDO_MODULO_MAX_LENGTH}
                       placeholder={t(`${p}.fields.categoryPlaceholder`)}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
+                      className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
                     />
                     <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{t(`${p}.fields.newCategoryWarning`)}</p>
                   </div>
@@ -1218,7 +1218,7 @@ export function AdminContenidoEducativoPage() {
                     fieldErrors.cuerpo_texto ? "contenido-cuerpo-error contenido-cuerpo-contador" : "contenido-cuerpo-contador"
                   }
                   className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-line"
+                    fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
                   }`}
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMarkdownHint`)}</p>
@@ -1245,7 +1245,7 @@ export function AdminContenidoEducativoPage() {
                   className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                     fieldErrors.url_video
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                      : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                      : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
                   }`}
                 />
                 {fieldErrors.url_video ? (
