@@ -302,57 +302,158 @@ describe("AdminConjuntoDashboard", () => {
     });
   });
 
-  describe("avisos del conjunto, por rol", () => {
-    const avisoReciclador = {
-      id: "n1",
-      tipo: "LLEGADA_RECICLADOR",
-      mensaje: "Juan Pérez avisó su llegada al SHUT.",
+  describe("avisos por conjunto (issue #436)", () => {
+    // ¿Qué? Dos conjuntos con EXACTAMENTE el mismo nombre y distinto id: antes el
+    //       panel repartía los avisos por nombre y los mezclaba.
+    const gemeloA = { ...conjunto, id_conjunto_residencial: 1 };
+    const gemeloB = { ...conjunto, id_conjunto_residencial: 2 };
+
+    const aviso = (id: string, idConjunto: number | null, extra: object = {}) => ({
+      id,
+      tipo: "SHUT_LLENO",
+      mensaje: `Mensaje ${id}`,
       id_referencia: null,
       nombre_conjunto: "Conjunto Los Alpes",
+      id_conjunto_residencial: idConjunto,
       leida: false,
       created_at: new Date().toISOString(),
-    };
-    const avisoResidente = {
-      id: "n2",
-      tipo: "SHUT_LLENO",
-      mensaje: "Torre 3, Apto 402 avisó que el SHUT está lleno.",
-      id_referencia: null,
-      nombre_conjunto: "Conjunto Los Alpes",
-      leida: true,
-      created_at: new Date().toISOString(),
-    };
-
-    it("separa los avisos del conjunto en 'De recicladores' y 'De residentes'", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
-        if (url.includes("/mis-notificaciones")) return Promise.resolve({ data: [avisoReciclador, avisoResidente] });
-        return Promise.resolve({ data: [] });
-      });
-      renderPage();
-
-      await screen.findByText("Conjunto Los Alpes");
-      // ¿Qué? El mismo aviso también aparece en NotificationFeed, arriba del
-      //       todo (feed global) — se busca el bloque "Avisos de este
-      //       conjunto" y se mira SOLO adentro de él, para no chocar con esa
-      //       segunda copia.
-      const bloqueAvisos = (await screen.findByText("Avisos de este conjunto")).closest("div")!;
-      expect(within(bloqueAvisos).getByText("Juan Pérez avisó su llegada al SHUT.")).toBeInTheDocument();
-      expect(within(bloqueAvisos).getByText("Torre 3, Apto 402 avisó que el SHUT está lleno.")).toBeInTheDocument();
-      expect(within(bloqueAvisos).getByText("De recicladores")).toBeInTheDocument();
-      expect(within(bloqueAvisos).getByText("De residentes")).toBeInTheDocument();
-      // ¿Qué? Solo avisoReciclador está sin leer — el badge cuenta 1, no 2.
-      expect(screen.getByText("1 aviso nuevo")).toBeInTheDocument();
+      ...extra,
     });
 
-    it("no muestra la sección de avisos si el conjunto no tiene ninguno", async () => {
+    function mockPanel(conjuntos: object[], notificaciones: object[]) {
       mockGet.mockImplementation((url: string) => {
-        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: conjuntos });
+        if (url.includes("/mis-notificaciones")) return Promise.resolve({ data: notificaciones });
         return Promise.resolve({ data: [] });
       });
+    }
+
+    it("cada conjunto muestra solo sus avisos y su propio contador, aunque tengan el mismo nombre", async () => {
+      mockPanel([gemeloA, gemeloB], [aviso("a1", 1), aviso("a2", 1), aviso("b1", 2)]);
+      const user = userEvent.setup();
       renderPage();
 
-      await screen.findByText("Conjunto Los Alpes");
-      expect(screen.queryByText("Avisos de este conjunto")).not.toBeInTheDocument();
+      // ¿Qué? Solo el primer conjunto viene desplegado: ve sus 2 avisos y NO el del otro.
+      expect(await screen.findByText("Mensaje a1")).toBeInTheDocument();
+      expect(screen.getByText("Mensaje a2")).toBeInTheDocument();
+      expect(screen.queryByText("Mensaje b1")).not.toBeInTheDocument();
+
+      const [cabeceraA, cabeceraB] = screen.getAllByRole("button", { name: /Conjunto Los Alpes/ });
+      expect(within(cabeceraA).getByRole("img", { name: "2 avisos nuevos" })).toBeInTheDocument();
+      expect(within(cabeceraB).getByRole("img", { name: "1 aviso nuevo" })).toBeInTheDocument();
+
+      await user.click(cabeceraB);
+      expect(await screen.findByText("Mensaje b1")).toBeInTheDocument();
+    });
+
+    it("ya no hay una lista general de avisos arriba del panel", async () => {
+      mockPanel([gemeloA, gemeloB], [aviso("b1", 2)]);
+      renderPage();
+
+      await screen.findAllByRole("button", { name: /Conjunto Los Alpes/ });
+      expect(screen.queryByText("Actividad del conjunto")).not.toBeInTheDocument();
+      // ¿Qué? El aviso es del segundo conjunto, que está cerrado: no aparece en ningún lado.
+      expect(screen.queryByText("Mensaje b1")).not.toBeInTheDocument();
+    });
+
+    it("sin avisos no muestra contador y sí un mensaje de lista vacía", async () => {
+      mockPanel([conjunto], []);
+      renderPage();
+
+      expect(await screen.findByText(/Todavía no hay avisos de este conjunto/)).toBeInTheDocument();
+      expect(screen.queryByRole("img", { name: /aviso/ })).not.toBeInTheDocument();
+    });
+
+    it("'Marcar leídas' solo marca los avisos de ese conjunto", async () => {
+      mockPanel([gemeloA, gemeloB], [aviso("a1", 1), aviso("b1", 2)]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByText("Mensaje a1");
+      await user.click(screen.getByRole("button", { name: "Marcar leídas" }));
+
+      expect(mockPost).toHaveBeenCalledWith(
+        expect.stringContaining("/notificaciones/marcar-todas-leidas"),
+        {},
+        { params: { id_conjunto_residencial: 1 } },
+      );
+      const [cabeceraA, cabeceraB] = screen.getAllByRole("button", { name: /Conjunto Los Alpes/ });
+      await waitFor(() => expect(within(cabeceraA).queryByRole("img", { name: /aviso/ })).not.toBeInTheDocument());
+      // ¿Qué? El otro conjunto conserva su aviso sin leer.
+      expect(within(cabeceraB).getByRole("img", { name: "1 aviso nuevo" })).toBeInTheDocument();
+    });
+
+    it("'Limpiar leídas' solo quita los avisos leídos de ese conjunto", async () => {
+      mockPanel(
+        [gemeloA, gemeloB],
+        [aviso("a1", 1, { leida: true }), aviso("a2", 1), aviso("b1", 2, { leida: true })],
+      );
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByText("Mensaje a1");
+      await user.click(screen.getByRole("button", { name: "Limpiar leídas" }));
+
+      expect(mockDelete).toHaveBeenCalledWith(
+        expect.stringContaining("/notificaciones/limpiar-leidas"),
+        { params: { id_conjunto_residencial: 1 } },
+      );
+      await waitFor(() => expect(screen.queryByText("Mensaje a1")).not.toBeInTheDocument());
+      expect(screen.getByText("Mensaje a2")).toBeInTheDocument();
+      // ¿Qué? El aviso leído del otro conjunto no se tocó: se ve al desplegarlo.
+      await user.click(screen.getAllByRole("button", { name: /Conjunto Los Alpes/ })[1]);
+      expect(await screen.findByText("Mensaje b1")).toBeInTheDocument();
+    });
+
+    it("marcar un aviso como leído sigue funcionando al hacer clic en él", async () => {
+      mockPanel([conjunto], [aviso("a1", 1)]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByText("Mensaje a1"));
+
+      expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/a1/leer"), {});
+    });
+
+    it("el aviso de auditoría se ve en su banner y no cuenta en el contador del conjunto", async () => {
+      mockPanel(
+        [conjunto],
+        [aviso("au1", 1, { tipo: "AUDITORIA_PUBLICADA", mensaje: "El reciclador auditó tu conjunto.", id_referencia: "aud-1" })],
+      );
+      renderPage();
+
+      expect(await screen.findByText("El reciclador auditó tu conjunto.")).toBeInTheDocument();
+      expect(screen.queryByRole("img", { name: /aviso/ })).not.toBeInTheDocument();
+    });
+
+    it("la desvinculación aprobada de un conjunto que ya no administra se ve en un banner arriba", async () => {
+      mockPanel(
+        [conjunto],
+        [
+          aviso("d1", 99, { tipo: "DESVINCULACION_APROBADA", mensaje: "Tu desvinculación de Torres del Sur fue aprobada." }),
+        ],
+      );
+      const user = userEvent.setup();
+      renderPage();
+
+      expect(await screen.findByText("Tu desvinculación de Torres del Sur fue aprobada.")).toBeInTheDocument();
+      expect(screen.getByText("Desvinculación aprobada")).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Entendido" }));
+
+      expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/d1/leer"), {});
+      await waitFor(() => expect(screen.queryByText("Desvinculación aprobada")).not.toBeInTheDocument());
+    });
+
+    it("un aviso de desvinculación de un conjunto que sí administra va dentro de ese conjunto, no en el banner", async () => {
+      mockPanel(
+        [conjunto],
+        [aviso("d2", 1, { tipo: "DESVINCULACION_RECHAZADA", mensaje: "Tu solicitud fue rechazada." })],
+      );
+      renderPage();
+
+      expect(await screen.findByText("Tu solicitud fue rechazada.")).toBeInTheDocument();
+      expect(screen.queryByText("Desvinculación aprobada")).not.toBeInTheDocument();
     });
   });
 

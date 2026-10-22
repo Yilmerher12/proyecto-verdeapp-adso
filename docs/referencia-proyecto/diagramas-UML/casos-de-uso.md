@@ -81,10 +81,10 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 | ------ | -------------------------------------------------------- | ------------------------------------ |
 | RQF001 | Validar Usuario                                          | Residente, Reciclador, Admin_sistema |
 | RQF002 | Registrar usuarios                                       | Residente, Reciclador                |
-| RQF003 | Alertar máxima capacidad SHUT                            | Residente, Reciclador                |
+| RQF003 | Alertar máxima capacidad SHUT                            | Residente, Reciclador, Admin_conjunto |
 | RQF004 | Visualizar catálogo educativo                            | Residente                            |
 | RQF005 | Visualizar directorio de recicladores y puntos de acopio | Residente                            |
-| RQF006 | Notificar llegada al conjunto residencial                | Reciclador                           |
+| RQF006 | Notificar llegada al conjunto residencial                | Reciclador, Admin_conjunto           |
 | RQF007 | Cerrar sesión                                            | Residente, Reciclador, Admin_sistema, Admin_conjunto |
 | RQF008 | Actualizar perfil                                        | Residente, Reciclador, Admin_conjunto |
 | RQF009 | Visualizar gestión de residuos del conjunto              | Residente, Reciclador                |
@@ -178,6 +178,8 @@ flowchart TB
 
     AdminConjunto --> RQF001
     AdminConjunto --> RQF002
+    AdminConjunto --> RQF003
+    AdminConjunto --> RQF006
     AdminConjunto --> RQF007
     AdminConjunto --> RQF008
     AdminConjunto --> RQF012
@@ -248,6 +250,7 @@ Permite crear una nueva cuenta dentro del sistema.
 
 * Residente
 * Reciclador
+* Admin_conjunto (recibe los avisos, no los envía)
 
 ### Descripción
 
@@ -258,6 +261,11 @@ Permite reportar que el SHUT ha alcanzado su capacidad máxima.
 1. El usuario genera la alerta.
 2. El sistema registra la novedad.
 3. El sistema notifica a los responsables correspondientes.
+
+### Flujo Alternativo (Admin_conjunto, HU-050)
+
+1. El Admin_conjunto ve el aviso dentro de la pestaña del conjunto donde ocurrió, con un contador de avisos sin leer en la cabecera de ese conjunto.
+2. Marca ese aviso como leído, o usa "Marcar leídas" y "Limpiar leídas", que solo afectan a los avisos de ese conjunto.
 
 ---
 
@@ -287,13 +295,14 @@ Permite consultar el listado de recicladores y puntos de acopio registrados.
 
 ## RQF006 - Notificar Llegada al Conjunto Residencial
 
-### Actor
+### Actores
 
 * Reciclador
+* Admin_conjunto (recibe los avisos, no los envía)
 
 ### Descripción
 
-Permite informar que el reciclador ha llegado al conjunto residencial para realizar la recolección.
+Permite informar que el reciclador ha llegado al conjunto residencial para realizar la recolección. El Admin_conjunto ve ese aviso dentro de la pestaña de su conjunto (mismo flujo que RQF003, HU-050).
 
 ---
 

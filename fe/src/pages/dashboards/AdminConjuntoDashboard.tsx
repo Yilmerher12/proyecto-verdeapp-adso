@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
-import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown, Bell, ChevronRight, Plus } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -23,8 +23,9 @@ import {
   type RecicladorAutorizado,
 } from "@/lib/recicladorConjuntoApi";
 import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
-import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
+import type { NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
+import { DesvinculacionAprobadaBanner } from "@/components/dashboard/DesvinculacionAprobadaBanner";
 import { HistorialAuditoriasSemanal } from "@/components/dashboard/HistorialAuditoriasSemanal";
 import { listarHistorial, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
@@ -67,59 +68,52 @@ function BadgeEstado({ estado }: { estado: string }) {
   );
 }
 
-// ¿Qué? A qué rol pertenece cada tipo de notificación, visto desde el
-//       Admin de Conjunto — SHUT_LLENO solo lo puede avisar un Residente;
-//       los otros 3 solo un Reciclador autorizado (ver test_notificaciones.py).
-// ¿Para qué? Separar "De recicladores" / "De residentes" en SeccionAvisosConjunto
-//           sin tener que adivinar el rol a partir del texto del mensaje.
-const TIPOS_DE_RECICLADOR = new Set(["LLEGADA_RECICLADOR", "SHUT_LIBRE", "FINALIZACION_RECICLADOR"]);
-const TIPOS_DE_RESIDENTE = new Set(["SHUT_LLENO"]);
-
 /**
- * ¿Qué? Avisos recientes de UN conjunto específico, separados por quién los
- *       mandó (Reciclador / Residente).
- * ¿Para qué? Antes todos los avisos de todos los conjuntos vivían juntos en
- *           NotificationFeed, arriba del todo — un Admin que administra más
- *           de un conjunto no podía saber, a simple vista, cuáles avisos
- *           eran de cuál conjunto. Esto filtra lo mismo que ya llegó al
- *           panel (misma polling de "notificaciones"), sin pedirlo de nuevo.
- * ¿Impacto? Es de solo lectura — marcar como leída sigue siendo cosa de
- *           NotificationFeed, arriba. Si no hay avisos para este conjunto,
- *           no se muestra nada (no ocupa espacio con un estado vacío).
+ * ¿Qué? Avisos de UN conjunto, con sus propias acciones (marcar leído, marcar
+ *       todos y limpiar leídos) que solo afectan a ese conjunto.
+ * ¿Para qué? Issue #436 — antes todos los avisos de todos los conjuntos vivían
+ *           mezclados en una lista general arriba del todo, y un Admin con
+ *           más de un conjunto no sabía de un vistazo qué pasó en cuál.
+ * ¿Impacto? Reutiliza NotificationFeed (la misma lista que usan los otros
+ *           paneles). Recibe los avisos ya filtrados por id de conjunto: aquí
+ *           no se vuelve a comparar nada, para que dos conjuntos con el mismo
+ *           nombre no mezclen los suyos.
  */
 function SeccionAvisosConjunto({
-  nombreConjunto,
   notificaciones,
+  cargando,
+  onMarkRead,
+  onMarkAllRead,
+  onClearRead,
 }: {
-  nombreConjunto: string;
   notificaciones: NotificacionItem[];
+  cargando: boolean;
+  onMarkRead: (id: string) => void;
+  onMarkAllRead: () => void;
+  onClearRead: () => void;
 }) {
   const { t } = useTranslation();
-  const propias = notificaciones.filter((n) => n.nombre_conjunto === nombreConjunto);
-  const deReciclador = propias.filter((n) => TIPOS_DE_RECICLADOR.has(n.tipo)).slice(0, 3);
-  const deResidente = propias.filter((n) => TIPOS_DE_RESIDENTE.has(n.tipo)).slice(0, 3);
 
-  if (deReciclador.length === 0 && deResidente.length === 0) return null;
-
-  const grupo = (titulo: string, color: string, items: NotificacionItem[]) => (
-    <div>
-      <p className={`mb-1 text-[11px] font-bold uppercase tracking-wide ${color}`}>{titulo}</p>
-      <ul className="space-y-1">
-        {items.map((n) => (
-          <li key={n.id} className="flex items-center justify-between gap-2 text-xs text-gray-600 dark:text-gray-400">
-            <span className="truncate">{n.mensaje}</span>
-            <span className="shrink-0 text-gray-400">{tiempoRelativo(n.created_at)}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  if (cargando) {
+    return (
+      <div className="mt-4">
+        <LoadingState message={t("common.loading")} />
+      </div>
+    );
+  }
 
   return (
-    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-night-inset/40 space-y-3">
-      <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.avisosSection.title")}</h5>
-      {deReciclador.length > 0 && grupo(t("dashboards.adminConjunto.avisosSection.fromRecycler"), "text-teal-700 dark:text-teal-400", deReciclador)}
-      {deResidente.length > 0 && grupo(t("dashboards.adminConjunto.avisosSection.fromResident"), "text-amber-700 dark:text-amber-400", deResidente)}
+    <div className="mt-4">
+      <NotificationFeed
+        title={t("dashboards.adminConjunto.avisosSection.title")}
+        notifications={notificaciones}
+        emptyMessage={t("dashboards.adminConjunto.avisosSection.empty")}
+        accentBg="bg-amber-700"
+        accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
+        onMarkRead={onMarkRead}
+        onMarkAllRead={onMarkAllRead}
+        onClearRead={onClearRead}
+      />
     </div>
   );
 }
@@ -837,20 +831,33 @@ export function AdminConjuntoDashboard() {
     }
   };
 
-  const marcarTodasLeidas = async () => {
+  // ¿Qué? Issue #436 — "marcar todos" y "limpiar leídos" actúan solo sobre
+  //       los avisos del conjunto desde donde se pidió (parámetro
+  //       id_conjunto_residencial del backend), no sobre los de todos.
+  // ¿Impacto? Sin él, marcar todos en un conjunto marcaría también los de los
+  //           otros conjuntos del mismo Admin.
+  const marcarTodasLeidas = async (idConjunto: string) => {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`, {});
-      setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+      await axios.post(
+        `${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`,
+        {},
+        { params: { id_conjunto_residencial: idConjunto } },
+      );
+      setNotificaciones((prev) =>
+        prev.map((n) => (n.id_conjunto_residencial === idConjunto ? { ...n, leida: true } : n)),
+      );
       notificarNotificacionesActualizadas();
     } catch {
       setErrorAccionNotif(true);
     }
   };
 
-  const limpiarLeidas = async () => {
+  const limpiarLeidas = async (idConjunto: string) => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`);
-      setNotificaciones((prev) => prev.filter((n) => !n.leida));
+      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, {
+        params: { id_conjunto_residencial: idConjunto },
+      });
+      setNotificaciones((prev) => prev.filter((n) => !(n.id_conjunto_residencial === idConjunto && n.leida)));
     } catch {
       setErrorAccionNotif(true);
     }
@@ -863,6 +870,22 @@ export function AdminConjuntoDashboard() {
   }, [cargarConjuntos]);
 
   usePolling(cargarNotificaciones, { enabled: !!user });
+
+  // ¿Qué? Avisos de "desvinculación aprobada" sin leer de conjuntos que el Admin
+  //       ya no administra (por eso no tienen pestaña donde mostrarse).
+  // ¿Para qué? Issue #436 — ver DesvinculacionAprobadaBanner.
+  // ¿Impacto? Mientras los conjuntos cargan (o fallan) no se calcula: sin la
+  //           lista, todos los avisos parecerían de un conjunto ajeno y el
+  //           banner parpadearía con avisos que sí tienen pestaña.
+  const desvinculacionesAprobadas =
+    cargando || errorConjuntos
+      ? []
+      : notificaciones.filter(
+          (n) =>
+            n.tipo === "DESVINCULACION_APROBADA" &&
+            !n.leida &&
+            !conjuntos.some((c) => c.id_conjunto_residencial === n.id_conjunto_residencial),
+        );
 
   const iniciarEdicion = (c: ConjuntoAdministrado) => {
     setEditandoId(c.id_conjunto_residencial);
@@ -929,24 +952,20 @@ export function AdminConjuntoDashboard() {
         </div>
       </div>
 
-      {/* Actividad reciente (resultado de auditoría + notificaciones) — es
-          la información más urgente de este panel (avisos que requieren
-          reacción), así que va primero, justo después del encabezado. Antes
-          vivía al final, debajo de "Mis conjuntos", que por sí sola ya podía
-          medir más que una pantalla completa (issue #166). */}
+      {/* Avisos que requieren reacción (resultado de auditoría y desvinculación
+          aprobada) — van primero, justo después del encabezado (issue #166).
+          Issue #436: ya no hay una lista general de avisos aquí; los de cada
+          conjunto viven dentro de su pestaña, en "Mis conjuntos". */}
       {!cargandoNotifs && (
-        <AuditoriaResultadoBanner
-          notificaciones={notificaciones}
-          onMarcarLeida={marcarLeida}
-        />
-      )}
-
-      {cargandoNotifs ? (
-        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
-          <LoadingState message={t("common.loading")} />
-        </div>
-      ) : (
         <>
+          <AuditoriaResultadoBanner
+            notificaciones={notificaciones}
+            onMarcarLeida={marcarLeida}
+          />
+          <DesvinculacionAprobadaBanner
+            notificaciones={desvinculacionesAprobadas}
+            onMarcarLeida={marcarLeida}
+          />
           {errorNotifs && <Alert type="error" message={t("common.loadError")} />}
           {errorAccionNotif && (
             <Alert
@@ -955,16 +974,6 @@ export function AdminConjuntoDashboard() {
               onClose={() => setErrorAccionNotif(false)}
             />
           )}
-          <NotificationFeed
-            title={t("dashboards.adminConjunto.notifications.title")}
-            notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
-            emptyMessage={t("dashboards.adminConjunto.notifications.empty")}
-            accentBg="bg-amber-700"
-            accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
-            onMarkRead={marcarLeida}
-            onMarkAllRead={marcarTodasLeidas}
-            onClearRead={limpiarLeidas}
-          />
         </>
       )}
 
@@ -988,9 +997,16 @@ export function AdminConjuntoDashboard() {
           <div className="space-y-4">
             {conjuntos.map((c, i) => {
               const abierto = abiertos[c.id_conjunto_residencial] ?? i === 0;
-              const avisosSinLeer = notificaciones.filter(
-                (n) => n.nombre_conjunto === c.nombre_conjunto && !n.leida
-              ).length;
+              // ¿Qué? Se reparten por id, no por nombre (issue #436): dos conjuntos con
+              //       el mismo nombre mezclarían sus avisos y sus contadores.
+              // ¿Impacto? "AUDITORIA_PUBLICADA" sale de la cuenta porque no se muestra
+              //           dentro del conjunto (la muestra AuditoriaResultadoBanner,
+              //           arriba), y dejarla contar daría un número sin avisos que
+              //           mostrar al abrir el conjunto.
+              const avisosDelConjunto = notificaciones.filter(
+                (n) => n.id_conjunto_residencial === c.id_conjunto_residencial && n.tipo !== "AUDITORIA_PUBLICADA",
+              );
+              const avisosSinLeer = avisosDelConjunto.filter((n) => !n.leida).length;
               return (
               <div
                 key={c.id_conjunto_residencial}
@@ -1018,8 +1034,13 @@ export function AdminConjuntoDashboard() {
                     </span>
                   ) : null}
                   {avisosSinLeer > 0 && (
-                    <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                      {t("dashboards.adminConjunto.avisosSection.unreadBadge", { count: avisosSinLeer })}
+                    <span
+                      role="img"
+                      aria-label={t("dashboards.adminConjunto.avisosSection.unreadBadge", { count: avisosSinLeer })}
+                      className="flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    >
+                      <Bell className="icon-sm" aria-hidden="true" />
+                      <span aria-hidden="true">{avisosSinLeer}</span>
                     </span>
                   )}
                   <ChevronDown
@@ -1133,7 +1154,13 @@ export function AdminConjuntoDashboard() {
                     <SeccionCobertura conjunto={c} onDefinir={() => iniciarEdicion(c)} />
 
                     {/* Avisos de este conjunto, separados por rol — ver SeccionAvisosConjunto arriba. */}
-                    <SeccionAvisosConjunto nombreConjunto={c.nombre_conjunto} notificaciones={notificaciones} />
+                    <SeccionAvisosConjunto
+                      notificaciones={avisosDelConjunto}
+                      cargando={cargandoNotifs}
+                      onMarkRead={marcarLeida}
+                      onMarkAllRead={() => marcarTodasLeidas(c.id_conjunto_residencial)}
+                      onClearRead={() => limpiarLeidas(c.id_conjunto_residencial)}
+                    />
 
                     {/*
                       ¿Qué? Sección nueva de Recicladores Autorizados,

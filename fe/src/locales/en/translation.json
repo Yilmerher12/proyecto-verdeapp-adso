@@ -805,8 +805,7 @@
       },
       "avisosSection": {
         "title": "Notices for this building",
-        "fromRecycler": "From recyclers",
-        "fromResident": "From residents",
+        "empty": "There are no notices for this building yet. Notices from recyclers and residents will appear here.",
         "unreadBadge_one": "{{count}} new notice",
         "unreadBadge_other": "{{count}} new notices"
       },
@@ -842,11 +841,7 @@
         "successMessage": "Building updated successfully.",
         "errorMessage": "The change could not be saved. Please try again."
       },
-      "nitLabel": "Tax ID: {{nit}}",
-      "notifications": {
-        "title": "Building activity",
-        "empty": "No activity yet. Notifications from recyclers and residents will appear here."
-      }
+      "nitLabel": "Tax ID: {{nit}}"
     },
     "reciclador": {
       "title": "Recycler Panel",
@@ -964,6 +959,10 @@
       "hoursAgo": "{{count}}h ago",
       "daysAgo": "{{count}}d ago"
     }
+  },
+  "desvinculacionAprobada": {
+    "bannerTitle": "Unlink request approved",
+    "gotIt": "Got it"
   },
   "auditoriaResultado": {
     "bannerTitle": "New audit of your building",

@@ -4,10 +4,10 @@ Descripción: Endpoints de notificaciones (RQF-003, RQF-006, RQF-007).
 ¿Para qué? Issue #218 — este router solo recibe la petición HTTP y responde;
            las reglas de negocio reales viven en services/notificaciones_service.py.
 """
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, get_current_user
@@ -70,20 +70,24 @@ def marcar_leida(
 
 @router.post("/marcar-todas-leidas", status_code=status.HTTP_200_OK)
 def marcar_todas_leidas(
+    # ¿Qué? Issue #436: si llega, solo se marcan las de ese conjunto.
+    id_conjunto_residencial: Optional[UUID] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    marcadas = service.marcar_todas_leidas(db, current_user)
+    marcadas = service.marcar_todas_leidas(db, current_user, id_conjunto_residencial)
     return {"ok": True, "marcadas": marcadas}
 
 
 @router.delete("/limpiar-leidas", status_code=status.HTTP_200_OK)
 def limpiar_leidas(
+    id_conjunto_residencial: Optional[UUID] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    """Elimina del feed del usuario todas las notificaciones que ya leyó."""
-    eliminadas = service.limpiar_leidas(db, current_user)
+    """Elimina del feed del usuario las notificaciones que ya leyó (solo las
+    de un conjunto, si se indica `id_conjunto_residencial`)."""
+    eliminadas = service.limpiar_leidas(db, current_user, id_conjunto_residencial)
     return {"ok": True, "eliminadas": eliminadas}
 
 
