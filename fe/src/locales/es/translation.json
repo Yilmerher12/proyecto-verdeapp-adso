@@ -1640,6 +1640,7 @@
     "actionError": "No se pudo completar la acción. Intenta de nuevo.",
     "download": {
       "button": "Descargar agenda",
+      "noTopics": "Todavía no hay temas para descargar. Agrega uno y podrás bajar el historial.",
       "title": "Descargar agenda",
       "description": "Descarga un archivo con los temas de este conjunto para anexar al acta del comité.",
       "formatLabel": "Formato",

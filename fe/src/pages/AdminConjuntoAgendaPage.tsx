@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Archive, Check, ClipboardList, Download, ExternalLink, Plus, Trash2, Undo2, X } from "lucide-react";
+import { Archive, Check, ClipboardList, Download, ExternalLink, Info, Plus, Trash2, Undo2, X } from "lucide-react";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { descargarArchivo } from "@/lib/descargarArchivo";
@@ -22,6 +22,7 @@ import {
   type FormatoDescargaAgenda,
   type ItemAgenda,
 } from "@/lib/conjuntoPanelApi";
+import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -109,6 +110,8 @@ export function AdminConjuntoAgendaPage() {
   const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
   const [bajando, setBajando] = useState(false);
   const [descargado, setDescargado] = useState(false);
+  // ¿Qué? Aviso que explica por qué "Descargar agenda" no abre la ventana cuando no hay temas.
+  const [avisoSinTemas, mostrarAvisoSinTemas] = useAvisoTemporal<boolean>();
   // ¿Qué? Último conteo recibido, con la clave de los filtros con que se pidió; "datos" es null si falló.
   // ¿Para qué? Si la clave ya no coincide con los filtros actuales, el número es viejo y no se muestra.
   const [conteo, setConteo] = useState<{ clave: string; datos: ConteoDescargaAgenda | null } | null>(null);
@@ -168,6 +171,9 @@ export function AdminConjuntoAgendaPage() {
   };
 
   const porTratar = pendientes[idConjunto] ?? [];
+  // ¿Qué? El conjunto elegido no tiene ningún tema, ni por tratar ni archivado.
+  // ¿Para qué? Desactivar "Descargar agenda": el archivo saldría vacío y la ventana no tendría qué ofrecer.
+  const sinTemas = porTratar.length === 0 && totalArchivadas === 0;
 
   const cerrarFormulario = () => {
     setAgregando(false);
@@ -442,26 +448,15 @@ export function AdminConjuntoAgendaPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("agenda.title")}</h1>
           <p className="mt-1 max-w-xl text-sm text-gray-500 dark:text-gray-400">{t("agenda.subtitle")}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={abrirDescarga}
-            disabled={!idConjunto}
-            className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-          >
-            <Download className="icon-md" />
-            {t("agenda.download.button")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setAgregando(true)}
-            disabled={!idConjunto}
-            className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-          >
-            <Plus className="icon-md" />
-            {t("agenda.add")}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setAgregando(true)}
+          disabled={!idConjunto}
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+        >
+          <Plus className="icon-md" />
+          {t("agenda.add")}
+        </button>
       </div>
 
       {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
@@ -536,21 +531,42 @@ export function AdminConjuntoAgendaPage() {
               <span />
             )}
 
-            <div
-              role="tablist"
-              aria-label={t("agenda.viewTabs")}
-              className="inline-flex gap-1 rounded-xl bg-gray-100 p-1 dark:bg-night-inset"
-            >
-              <button type="button" role="tab" aria-selected={vista === "porTratar"} onClick={() => setVista("porTratar")} className={boton(vista === "porTratar")}>
-                {t("agenda.pendingTitle")}
-                <span className={contador(vista === "porTratar")}>{porTratar.length}</span>
-              </button>
-              <button type="button" role="tab" aria-selected={vista === "archivadas"} onClick={() => setVista("archivadas")} className={boton(vista === "archivadas")}>
-                {t("agenda.archivedTitle")}
-                <span className={contador(vista === "archivadas")}>{totalArchivadas}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                role="tablist"
+                aria-label={t("agenda.viewTabs")}
+                className="inline-flex gap-1 rounded-xl bg-gray-100 p-1 dark:bg-night-inset"
+              >
+                <button type="button" role="tab" aria-selected={vista === "porTratar"} onClick={() => setVista("porTratar")} className={boton(vista === "porTratar")}>
+                  {t("agenda.pendingTitle")}
+                  <span className={contador(vista === "porTratar")}>{porTratar.length}</span>
+                </button>
+                <button type="button" role="tab" aria-selected={vista === "archivadas"} onClick={() => setVista("archivadas")} className={boton(vista === "archivadas")}>
+                  {t("agenda.archivedTitle")}
+                  <span className={contador(vista === "archivadas")}>{totalArchivadas}</span>
+                </button>
+              </div>
+              {/* ¿Qué? Junto a las pestañas porque descarga lo que ellas muestran.
+                  ¿Para qué? Sin temas se ve apagado pero SÍ reacciona al clic: un `disabled` de HTML lo ignora y
+                  no explicaría nada, tampoco en celular (no hay "pasar el mouse"). Se muestra el motivo.
+                  ¿Impacto? Mismo patrón que los botones apagados del panel del Reciclador. */}
+              <button
+                type="button"
+                onClick={sinTemas ? () => mostrarAvisoSinTemas(true) : abrirDescarga}
+                aria-disabled={sinTemas}
+                className={`flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors dark:border-night-line dark:bg-transparent dark:text-gray-300 ${
+                  sinTemas
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer hover:bg-gray-50 dark:hover:bg-night-hover"
+                }`}
+              >
+                <Download className="icon-md" />
+                {t("agenda.download.button")}
               </button>
             </div>
           </div>
+
+          {avisoSinTemas && <Alert type="info" message={t("agenda.download.noTopics")} />}
 
           {vista === "porTratar" ? (
             porTratar.length === 0 ? (
@@ -560,7 +576,12 @@ export function AdminConjuntoAgendaPage() {
             )
           ) : (
             <div className="space-y-3">
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t("agenda.archivedHint")}</p>
+              {/* ¿Qué? El texto va dentro de una tarjeta, como el resto de la página.
+                  ¿Para qué? Suelto sobre el fondo, y en letra pequeña, se perdía y no parecía parte de nada. */}
+              <p className="flex items-start gap-2 rounded-xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm dark:border-night-line dark:bg-night-card dark:text-gray-300">
+                <Info className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
+                {t("agenda.archivedHint")}
+              </p>
               {archivadas.length === 0 ? (
                 <EmptyState icon={Archive} message={t("agenda.emptyArchived")} />
               ) : (

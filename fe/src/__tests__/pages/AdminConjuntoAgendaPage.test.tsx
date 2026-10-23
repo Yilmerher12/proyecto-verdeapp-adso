@@ -387,7 +387,8 @@ describe("AdminConjuntoAgendaPage", () => {
       respuestaCsv: () => Promise<unknown>,
       respuestaConteo: (config?: unknown) => Promise<unknown> = () => Promise.resolve({ data: { total: 3, maximo: 500 } })
     ) {
-      mockAgenda([conjuntoUno]);
+      // ¿Qué? Lleva un tema por tratar: sin temas el botón "Descargar agenda" queda desactivado (issue #517).
+      mockAgenda([conjuntoUno], { "c-1": [temaPendiente] });
       const base = mockGet.getMockImplementation()!;
       mockGet.mockImplementation((url: string, config?: unknown) => {
         if (url.includes("/agenda/historial/conteo")) return respuestaConteo(config);
@@ -396,6 +397,42 @@ describe("AdminConjuntoAgendaPage", () => {
     }
 
     const pedidosDeConteo = () => mockGet.mock.calls.filter(([url]) => String(url).includes("/agenda/historial/conteo"));
+
+    it("deja el botón junto a las pestañas Por tratar y Archivadas, y 'Agregar' en el encabezado (issue #517)", async () => {
+      mockAgenda([conjuntoUno], { "c-1": [temaPendiente] });
+      renderPage();
+
+      const descargar = await screen.findByRole("button", { name: "Descargar agenda" });
+      const pestanas = screen.getByRole("tablist", { name: "Vista" });
+      expect(descargar.parentElement).toBe(pestanas.parentElement);
+      expect(screen.getByRole("button", { name: "Agregar tema" }).parentElement).toContainElement(
+        screen.getByRole("heading", { level: 1 })
+      );
+    });
+
+    it("sin ningún tema el botón se ve apagado y, al pulsarlo, explica el motivo en vez de abrir la ventana (issue #517)", async () => {
+      mockAgenda([conjuntoUno]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByText("Todavía no hay temas por tratar en este conjunto.");
+      const boton = screen.getByRole("button", { name: "Descargar agenda" });
+      expect(boton).toHaveAttribute("aria-disabled", "true");
+
+      await user.click(boton);
+
+      expect(screen.getByText("Todavía no hay temas para descargar. Agrega uno y podrás bajar el historial.")).toBeInTheDocument();
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("deja descargar si solo hay temas archivados (issue #517)", async () => {
+      mockAgenda([conjuntoUno], {}, { "c-1": [temaArchivado] });
+      renderPage();
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: "Descargar agenda" })).toHaveAttribute("aria-disabled", "false")
+      );
+    });
 
     const abrirVentana = async (user: ReturnType<typeof userEvent.setup>) => {
       await user.click(await screen.findByRole("button", { name: "Descargar agenda" }));
