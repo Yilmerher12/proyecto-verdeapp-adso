@@ -1479,6 +1479,11 @@
       "EN_REVISION": "En revisión",
       "RESUELTA": "Resuelta"
     },
+    "prioridad": {
+      "ALTA": "Prioridad alta",
+      "MEDIA": "Prioridad media",
+      "BAJA": "Prioridad baja"
+    },
     "respuestaTitulo": "Respuesta del Administrador del Sistema ({{fecha}})"
   },
   "bandejaAdmin": {

@@ -1475,6 +1475,11 @@
       "EN_REVISION": "Under review",
       "RESUELTA": "Resolved"
     },
+    "prioridad": {
+      "ALTA": "High priority",
+      "MEDIA": "Medium priority",
+      "BAJA": "Low priority"
+    },
     "respuestaTitulo": "System Administrator's reply ({{fecha}})"
   },
   "bandejaAdmin": {

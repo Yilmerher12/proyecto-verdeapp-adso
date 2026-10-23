@@ -47,6 +47,13 @@ const CLASE_ESTADO: Record<NovedadEnviada["estado"], string> = {
   RESUELTA: "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300",
 };
 
+// ¿Qué? Issue #520: color de la etiqueta de prioridad (la misma que ve el Admin Sistema en su bandeja).
+const CLASE_PRIORIDAD: Record<NovedadEnviada["prioridad"], string> = {
+  ALTA: "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300",
+  MEDIA: "bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200",
+  BAJA: "bg-gray-100 text-gray-600 dark:bg-night-field dark:text-gray-300",
+};
+
 /**
  * ¿Qué? Formulario para ENVIARLE una consulta de soporte (un motivo de una
  *       lista + comentario solo con "Otros" + imagen opcional) al
@@ -289,6 +296,9 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
             <div className="flex flex-wrap items-center gap-2">
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CLASE_ESTADO[n.estado]}`}>
                 {t(`novedadesEnviadas.estado.${n.estado}`)}
+              </span>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CLASE_PRIORIDAD[n.prioridad]}`}>
+                {t(`novedadesEnviadas.prioridad.${n.prioridad}`)}
               </span>
               <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
                 {formatearFechaCreacion(n.created_at)}

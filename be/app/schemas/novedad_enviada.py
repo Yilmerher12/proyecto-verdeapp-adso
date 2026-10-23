@@ -51,6 +51,8 @@ class NovedadEnviadaResponse(BaseModel):
     texto: str
     url_imagen: Optional[str] = None
     estado: str
+    # ¿Qué? Issue #520: el autor la ve (no la elige: la calcula el backend por el motivo).
+    prioridad: str
     nombre_conjunto: Optional[str] = None
     respuesta: Optional[str] = None
     respondida_at: Optional[datetime] = None
