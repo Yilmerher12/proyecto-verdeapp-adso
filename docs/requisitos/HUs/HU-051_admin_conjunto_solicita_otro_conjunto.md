@@ -58,7 +58,7 @@
 
 - **Dado que** despliego uno de mis conjuntos,
 - **cuando** miro su contenido,
-- **entonces** el **código de acceso** es el primer bloque, antes del NIT y de la cobertura, con sus botones de copiar y de generar un código nuevo (HU-044).
+- **entonces** el **código de acceso** está en la primera fila, junto a la cobertura (a su derecha en pantallas anchas, debajo de ella en celular), con sus botones de copiar y de generar un código nuevo (HU-044).
 
 ---
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
-import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown, Bell, ChevronRight, Plus } from "lucide-react";
+import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown, Bell, ChevronRight, Plus, RefreshCw } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -104,6 +104,7 @@ function SeccionAvisosConjunto({
     <div className="mt-4">
       <NotificationFeed
         title={t("dashboards.adminConjunto.avisosSection.title")}
+        description={t("dashboards.adminConjunto.avisosSection.description")}
         notifications={notificaciones}
         emptyMessage={t("dashboards.adminConjunto.avisosSection.empty")}
         accentBg="bg-amber-700"
@@ -122,9 +123,11 @@ function SeccionAvisosConjunto({
  * ¿Para qué? Que el Admin de Conjunto vea cuántos faltan por usar VerdeApp y
  *           pueda invitarlos (por ejemplo en la reunión del conjunto).
  * ¿Impacto? Si todavía no definió el total (todos los conjuntos arrancan así),
- *          solo muestra los registrados y un botón para definirlo.
+ *          muestra los registrados y le indica que lo defina con "Editar datos del
+ *          conjunto" (issue #513): ya no hay un segundo botón para eso aquí, así la
+ *          cantidad de apartamentos se edita en un solo lugar.
  */
-function SeccionCobertura({ conjunto, onDefinir }: { conjunto: ConjuntoAdministrado; onDefinir: () => void }) {
+function SeccionCobertura({ conjunto }: { conjunto: ConjuntoAdministrado }) {
   const { t } = useTranslation();
   const { total_apartamentos: total, apartamentos_registrados: registrados, residentes_registrados: residentes } = conjunto;
   const tieneTotal = total !== null && total > 0;
@@ -133,22 +136,28 @@ function SeccionCobertura({ conjunto, onDefinir }: { conjunto: ConjuntoAdministr
   const faltan = tieneTotal ? Math.max(0, total - registrados) : 0;
 
   return (
-    <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-night-line dark:bg-night-inset/40">
+    // ¿Qué? Columna con mt-auto en el texto de abajo: la tarjeta comparte fila con el
+    //       código de acceso y, si es más alta, el espacio sobrante queda repartido
+    //       (cifras arriba, explicación abajo) y no como un hueco al final.
+    <div className="flex w-full flex-col rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-night-line dark:bg-night-inset/40">
       <div className="mb-2 flex items-center gap-2">
         <Building className="icon-md text-accent-600" />
         <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.coverage.title")}</h5>
       </div>
-      <div className="flex flex-wrap items-baseline gap-2">
-        <span className="text-4xl font-bold leading-none text-accent-700 dark:text-accent-400">{registrados}</span>
-        <span className="text-base text-gray-500 dark:text-gray-400">
-          {tieneTotal
-            ? t("dashboards.adminConjunto.coverage.ofTotal", { total })
-            : t("dashboards.adminConjunto.coverage.alreadyHaveResidents")}
-        </span>
-      </div>
+      {/* ¿Qué? Las cifras van en el medio (my-auto) y no pegadas al título.
+          ¿Para qué? Con tarjetas de la misma altura en la fila, el espacio sobrante
+                    queda repartido arriba y abajo de las cifras, no como un hueco al final. */}
+      <div className="my-auto py-4">
+        <div className="flex flex-wrap items-baseline gap-2">
+          <span className="text-4xl font-bold leading-none text-accent-700 dark:text-accent-400">{registrados}</span>
+          <span className="text-base text-gray-500 dark:text-gray-400">
+            {tieneTotal
+              ? t("dashboards.adminConjunto.coverage.ofTotal", { total })
+              : t("dashboards.adminConjunto.coverage.alreadyHaveResidents")}
+          </span>
+        </div>
 
-      {tieneTotal ? (
-        <>
+        {tieneTotal && (
           <div
             role="img"
             aria-label={t("dashboards.adminConjunto.coverage.barAria", { registrados, total })}
@@ -156,33 +165,28 @@ function SeccionCobertura({ conjunto, onDefinir }: { conjunto: ConjuntoAdministr
           >
             <div className="h-full rounded-full bg-accent-700" style={{ width: `${porcentaje}%` }} />
           </div>
-          <div className="mt-3 flex flex-wrap gap-6">
+        )}
+
+        <div className="mt-4 flex flex-wrap gap-6">
+          {tieneTotal && (
             <div>
               <div className="text-xl font-bold text-gray-800 dark:text-white">{faltan}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.coverage.missing")}</div>
             </div>
-            <div>
-              <div className="text-xl font-bold text-gray-800 dark:text-white">{residentes}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.coverage.residents")}</div>
-            </div>
+          )}
+          <div>
+            <div className="text-xl font-bold text-gray-800 dark:text-white">{residentes}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.coverage.residents")}</div>
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-            {t("dashboards.adminConjunto.coverage.explain")}
-          </p>
-        </>
-      ) : (
-        <div className="mt-3 space-y-3">
-          <p className="rounded-lg bg-amber-50 p-3 text-xs leading-relaxed text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
-            {t("dashboards.adminConjunto.coverage.noTotal")}
-          </p>
-          <button
-            type="button"
-            onClick={onDefinir}
-            className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-          >
-            {t("dashboards.adminConjunto.coverage.define")}
-          </button>
         </div>
+      </div>
+
+      {tieneTotal ? (
+        <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.coverage.explain")}</p>
+      ) : (
+        <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
+          {t("dashboards.adminConjunto.coverage.noTotal")}
+        </p>
       )}
     </div>
   );
@@ -243,47 +247,47 @@ function SeccionCodigoAcceso({
   };
 
   return (
-    // ¿Qué? Va como PRIMER bloque del conjunto desplegado (issue #491), por eso
-    //       lleva margen abajo y un borde de acento: es lo que más se reparte.
-    <div className="mb-4 rounded-xl border border-accent-200 bg-accent-50/60 p-4 dark:border-accent-300/40 dark:bg-accent-300/10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <KeyRound className="icon-md text-accent-600" />
-            <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">
-              {t("dashboards.adminConjunto.codigoAcceso.title")}
-            </h5>
-          </div>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {t("dashboards.adminConjunto.codigoAcceso.description")}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-mono text-base font-bold tracking-widest text-gray-900 dark:border-night-line dark:bg-night-panel dark:text-white">
-            {codigoAcceso}
-          </span>
-          <button
-            type="button"
-            onClick={copiarCodigo}
-            className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-white dark:border-night-line dark:text-gray-300 dark:hover:bg-night-field"
-            aria-label={t(
-              copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
-            )}
-            title={t(
-              copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
-            )}
-          >
-            {copiado ? <Check className="icon-md text-accent-600" /> : <Copy className="icon-md" />}
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirmando(true)}
-            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200 dark:hover:bg-amber-400/15 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            {t("dashboards.adminConjunto.codigoAcceso.regenerateButton")}
-          </button>
-        </div>
+    // ¿Qué? Borde de acento: es lo que más se reparte (issue #491). Issue #513: tarjeta
+    //       angosta con todo repartido de arriba abajo (título, código con el botón de
+    //       copiar dentro de su caja, explicación corta y "Regenerar" al fondo, a todo
+    //       el ancho), en vez de una franja de todo el ancho con un vacío en medio.
+    <div className="flex w-full flex-col gap-3 rounded-xl border border-accent-200 bg-accent-50/60 p-4 dark:border-accent-300/40 dark:bg-accent-300/10">
+      <div className="flex items-center gap-2">
+        <KeyRound className="icon-md text-accent-600" />
+        <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">
+          {t("dashboards.adminConjunto.codigoAcceso.title")}
+        </h5>
       </div>
+      {/* ¿Qué? El código y su texto van en el medio (my-auto), igual que las cifras de la cobertura. */}
+      <div className="my-auto flex flex-col gap-2 py-2">
+      <div className="relative rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-center font-mono text-xl font-bold tracking-widest text-gray-900 dark:border-night-line dark:bg-night-panel dark:text-white">
+        {codigoAcceso}
+        <button
+          type="button"
+          onClick={copiarCodigo}
+          className="touch-target focus-ring absolute right-1 top-1/2 flex -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-night-field"
+          aria-label={t(
+            copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
+          )}
+          title={t(
+            copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
+          )}
+        >
+          {copiado ? <Check className="icon-md text-accent-600" /> : <Copy className="icon-md" />}
+        </button>
+      </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        {t("dashboards.adminConjunto.codigoAcceso.description")}
+      </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => setConfirmando(true)}
+        className="focus-ring touch-target-h flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100 hover:text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200 dark:hover:bg-amber-400/15"
+      >
+        <RefreshCw className="icon-sm" aria-hidden="true" />
+        {t("dashboards.adminConjunto.codigoAcceso.regenerateButton")}
+      </button>
 
       {confirmando && (
         <ConfirmModal
@@ -671,7 +675,9 @@ function SeccionDesvinculacion({
     // ¿Qué? Mismo criterio que en SeccionRecicladores — fondo propio en vez
     //       de solo un borde arriba, para que se vea como un bloque aparte
     //       (issue #166).
-    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-night-inset/40">
+    // ¿Qué? Issue #513 — sin recuadro de fondo, solo una línea de separación: es la
+    //       acción que casi nunca se usa y no debe pesar lo mismo que los avisos.
+    <div className="mt-6 border-t border-gray-100 pt-4 dark:border-night-line">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {t("desvinculacion.sectionTitle")}
       </p>
@@ -1003,6 +1009,11 @@ export function AdminConjuntoDashboard() {
                 key={c.id_conjunto_residencial}
                 className="overflow-hidden border border-gray-200 dark:border-night-line rounded-xl"
               >
+                {/* ¿Qué? La cabecera es solo para abrir y cerrar el conjunto, a todo el ancho.
+                    ¿Para qué? Issue #513 — el botón de editar estuvo aquí dentro y dejaba la
+                              cabecera cortada, y seguía visible con el conjunto cerrado.
+                    ¿Impacto? "Editar datos del conjunto" vive ahora justo debajo, dentro del
+                              conjunto abierto (ver más abajo). */}
                 <button
                   type="button"
                   onClick={() => setAbiertos((prev) => ({ ...prev, [c.id_conjunto_residencial]: !abierto }))}
@@ -1011,7 +1022,7 @@ export function AdminConjuntoDashboard() {
                 >
                   <Building className="icon-md shrink-0 text-accent-600" aria-hidden="true" />
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-gray-800 dark:text-white">{c.nombre_conjunto}</h4>
+                    <h4 id={`conjunto-nombre-${c.id_conjunto_residencial}`} className="font-bold text-gray-800 dark:text-white">{c.nombre_conjunto}</h4>
                     <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
                       <MapPin className="icon-sm" />
                       {c.direccion} — {c.nombre_localidad}
@@ -1043,7 +1054,20 @@ export function AdminConjuntoDashboard() {
                 {abierto && (
                 <div className="px-4 pb-4">
                 {editandoId === c.id_conjunto_residencial ? (
-                  <div className="space-y-3">
+                  <div>
+                    {/* ¿Qué? Issue #513 — formulario con título, etiquetas arriba de cada campo, los dos
+                              campos del mismo ancho (dos columnas desde `sm`, apilados en celular) y los
+                              botones al final, separados por una línea.
+                        ¿Para qué? Antes la etiqueta de la cantidad quedaba en la misma línea que su campo
+                                  (se veía pegado), el NIT era ancho y la cantidad angosta, y los botones
+                                  flotaban justo debajo del texto de ayuda. */}
+                    <h5 className="flex items-center gap-2 text-base font-bold text-gray-800 dark:text-white">
+                      <Pencil className="icon-md text-accent-600" aria-hidden="true" />
+                      {t("dashboards.adminConjunto.editForm.title")}
+                    </h5>
+                    <p className="mb-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {t("dashboards.adminConjunto.editForm.optionalHint")}
+                    </p>
                     {/*
                       ¿Qué? Antes este formulario también dejaba editar
                             nombre_conjunto y direccion.
@@ -1057,19 +1081,20 @@ export function AdminConjuntoDashboard() {
                                 oficial no lo trae — es el único dato que
                                 de verdad falta completar.
                     */}
+                    <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label htmlFor={`nit-${c.id_conjunto_residencial}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
+                      <label htmlFor={`nit-${c.id_conjunto_residencial}`} className="block text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
                       <input
                         id={`nit-${c.id_conjunto_residencial}`}
                         type="text"
                         value={formEdicion.nit}
                         onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
                         maxLength={NIT_MAX_LENGTH}
-                        className="w-full p-2.5 border border-edge rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
+                        className="w-full p-2.5 border border-edge rounded-xl mt-1.5 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
                       />
                     </div>
                     <div>
-                      <label htmlFor={`total-${c.id_conjunto_residencial}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                      <label htmlFor={`total-${c.id_conjunto_residencial}`} className="block text-xs font-bold text-gray-600 dark:text-gray-400">
                         {t("dashboards.adminConjunto.editForm.totalApartments")}
                       </label>
                       <input
@@ -1082,7 +1107,7 @@ export function AdminConjuntoDashboard() {
                         onChange={(e) => setFormEdicion((p) => ({ ...p, total: e.target.value }))}
                         aria-invalid={!!errorTotal}
                         aria-describedby={`total-ayuda-${c.id_conjunto_residencial}`}
-                        className={`w-40 p-2.5 border rounded-xl mt-1 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:bg-night-field dark:text-white ${
+                        className={`w-full p-2.5 border rounded-xl mt-1.5 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:bg-night-field dark:text-white ${
                           errorTotal ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
                         }`}
                       />
@@ -1095,7 +1120,15 @@ export function AdminConjuntoDashboard() {
                         </p>
                       )}
                     </div>
-                    <div className="flex gap-2 pt-2">
+                    </div>
+                    <div className="mt-5 flex justify-end gap-2 border-t border-gray-100 pt-4 dark:border-night-line">
+                      <button
+                        type="button"
+                        onClick={cancelarEdicion}
+                        className="focus-ring flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-edge dark:border-night-edge px-4 py-2 rounded-xl transition-colors dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
+                      >
+                        <X className="icon-md" /> {t("common.cancel")}
+                      </button>
                       <button
                         type="button"
                         onClick={() => guardarEdicion(c.id_conjunto_residencial)}
@@ -1104,45 +1137,55 @@ export function AdminConjuntoDashboard() {
                       >
                         <Check className="icon-md" /> {t("common.save")}
                       </button>
-                      <button
-                        type="button"
-                        onClick={cancelarEdicion}
-                        className="focus-ring flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-edge dark:border-night-edge px-4 py-2 rounded-xl transition-colors dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
-                      >
-                        <X className="icon-md" /> {t("common.cancel")}
-                      </button>
                     </div>
                   </div>
                 ) : (
                   <>
-                    {/* Código de acceso: primer bloque del conjunto — lo que más se reparte (issue #491). */}
-                    {user && (
-                      <SeccionCodigoAcceso
-                        idConjunto={c.id_conjunto_residencial}
-                        codigoAcceso={c.codigo_acceso}
-                        onRegenerado={cargarConjuntos}
-                      />
-                    )}
-
-                    {/* Nombre, dirección y localidad ya se ven en el encabezado del
-                        acordeón — aquí solo queda el NIT (lo único editable) y el botón. */}
-                    <div className="flex items-center justify-between gap-2">
-                      {c.nit ? (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.nitLabel", { nit: c.nit })}</p>
-                      ) : (
-                        <span />
-                      )}
+                    {/* ¿Qué? Issue #513 — los dos datos que se editan (NIT y cantidad de
+                              apartamentos) y el único botón para editarlos, juntos y justo debajo
+                              del nombre del conjunto.
+                        ¿Para qué? Antes el botón estaba entre el código y la cobertura (parecía
+                                  editar la cobertura) y la cantidad de apartamentos se definía
+                                  desde otro botón aparte.
+                        ¿Impacto? Nombre, dirección y localidad ya se ven en la cabecera. */}
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {t("dashboards.adminConjunto.datos.nit", {
+                          valor: c.nit || t("dashboards.adminConjunto.datos.sinDefinir"),
+                        })}
+                        <span aria-hidden="true"> · </span>
+                        {t("dashboards.adminConjunto.datos.apartamentos", {
+                          valor: c.total_apartamentos || t("dashboards.adminConjunto.datos.sinDefinir"),
+                        })}
+                      </p>
                       <button
                         type="button"
                         onClick={() => iniciarEdicion(c)}
-                        className="focus-ring touch-target-h flex cursor-pointer items-center gap-1 text-sm font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 border border-accent-300 dark:border-accent-300/40 px-3 py-1.5 rounded-xl transition-colors dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
+                        aria-describedby={`conjunto-nombre-${c.id_conjunto_residencial}`}
+                        className="focus-ring touch-target-h flex cursor-pointer items-center gap-1.5 rounded-xl border border-accent-300 bg-accent-50 px-3 py-1.5 text-sm font-semibold text-accent-700 transition-colors hover:bg-accent-100 hover:text-accent-800 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
                       >
-                        <Pencil className="icon-sm" /> {t("common.edit")}
+                        <Pencil className="icon-sm" aria-hidden="true" />
+                        {t("dashboards.adminConjunto.editButton")}
                       </button>
                     </div>
 
-                    {/* Cuántos apartamentos del conjunto ya usan VerdeApp — ver SeccionCobertura arriba. */}
-                    <SeccionCobertura conjunto={c} onDefinir={() => iniciarEdicion(c)} />
+                    {/* ¿Qué? Primera fila: la cobertura (más ancha, es la cifra que se mira)
+                              y el código de acceso a su derecha (angosto, lo que se reparte).
+                              En celular se apilan, con la cobertura primero. */}
+                    <div className="grid gap-4 lg:grid-cols-5">
+                      <div className={`flex ${user ? "lg:col-span-3" : "lg:col-span-5"}`}>
+                        <SeccionCobertura conjunto={c} />
+                      </div>
+                      {user && (
+                        <div className="flex lg:col-span-2">
+                          <SeccionCodigoAcceso
+                            idConjunto={c.id_conjunto_residencial}
+                            codigoAcceso={c.codigo_acceso}
+                            onRegenerado={cargarConjuntos}
+                          />
+                        </div>
+                      )}
+                    </div>
 
                     {/* Avisos de este conjunto, separados por rol — ver SeccionAvisosConjunto arriba. */}
                     <SeccionAvisosConjunto
