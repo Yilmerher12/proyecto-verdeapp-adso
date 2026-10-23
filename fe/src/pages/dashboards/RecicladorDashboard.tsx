@@ -23,7 +23,7 @@ import { RoleId } from "@/types/auth";
 import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
 import type { NotificacionItem } from "@/lib/notificaciones";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
-import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
+import { notificarNotificacionesActualizadas, onCambioDesdeCampanita } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -204,7 +204,9 @@ export function RecicladorDashboard() {
       .finally(() => setCargando(false));
   };
 
-  usePolling(cargarDatos, { enabled: !!user });
+  // ¿Qué? Issue #516 — se actualiza también al instante cuando se marca o limpia algo
+  //       desde el menú de la campanita (ver ResidenteDashboard.tsx).
+  usePolling(cargarDatos, { enabled: !!user, onExternalTrigger: onCambioDesdeCampanita });
 
   const responderInvitacion = async (id: string, aceptar: boolean) => {
     setProcesandoId(id);

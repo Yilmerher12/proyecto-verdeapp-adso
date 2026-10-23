@@ -17,9 +17,9 @@ import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResult
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { PanelDesempeno } from "@/components/desempeno/PanelDesempeno";
 import { SEMANAS_POR_DEFECTO } from "@/config/desempeno";
-import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
-import { listarHistorial, obtenerAuditoria } from "@/lib/auditoriaConjuntoApi";
-import { obtenerContenido } from "@/lib/contenidoEducativoApi";
+import { notificarNotificacionesActualizadas, onCambioDesdeCampanita } from "@/lib/notificationEvents";
+import { listarHistorial } from "@/lib/auditoriaConjuntoApi";
+import { rutaDeContenidoRecomendado } from "@/lib/contenidoRecomendado";
 
 interface EstadoShut {
   lleno: boolean;
@@ -62,7 +62,11 @@ export function ResidenteDashboard() {
     setCargando(false);
   };
 
-  usePolling(cargarDatos, { enabled: !!user });
+  // ¿Qué? Issue #516 — además del polling de 20 s, se actualiza al instante cuando
+  //       se marca o limpia algo desde el menú de la campanita.
+  // ¿Para qué? Con la lista también en el panel, sin esto el panel seguiría mostrando
+  //           como "nueva" una notificación que ya se leyó desde la campanita.
+  usePolling(cargarDatos, { enabled: !!user, onExternalTrigger: onCambioDesdeCampanita });
 
   const reportarShutLleno = async () => {
     setEnviando(true);
@@ -116,23 +120,12 @@ export function ResidenteDashboard() {
   //       recomendado lleva directo a la categoría de "Aprender" que
   //       corresponde, sin pasos intermedios ("entre menos clicks tenga
   //       que hacer el usuario, mejor").
-  // ¿Para qué? tema_educativo se guarda igual que modulo_categoria a
-  //           propósito (ver models/auditoria_conjunto.py) — se pide la
-  //           auditoría por su id_referencia solo para leer ese texto.
-  //           CONTENIDO_RECOMENDADO_MANUAL (RQF-013, Flujo C) es la misma idea, pero
-  //           sin auditoría de por medio: el Admin del Sistema envió el
-  //           módulo a mano, así que id_referencia apunta directo al
-  //           módulo (id_contenido), no a una auditoría.
+  // ¿Para qué? Issue #516 — cómo se calcula la ruta vive en lib/contenidoRecomendado.ts,
+  //           porque el menú de la campanita hace lo mismo con esta notificación.
   const irAContenidoRecomendado = async (notif: NotificacionItem) => {
-    if (!notif.id_referencia) return;
     try {
-      if (notif.tipo === "CONTENIDO_RECOMENDADO") {
-        const auditoria = await obtenerAuditoria(notif.id_referencia);
-        navigate(`/catalogo-educativo/${encodeURIComponent(auditoria.tema_educativo)}`);
-      } else if (notif.tipo === "CONTENIDO_RECOMENDADO_MANUAL") {
-        const contenido = await obtenerContenido(notif.id_referencia);
-        navigate(`/catalogo-educativo/${encodeURIComponent(contenido.modulo_categoria)}`);
-      }
+      const ruta = await rutaDeContenidoRecomendado(notif);
+      if (ruta) navigate(ruta);
     } catch {
       setErrorAccion(true);
     }
