@@ -182,8 +182,6 @@ export function ResidenteDashboard() {
         </div>
       )}
 
-      {!cargando && errorCarga && <Alert type="error" message={t("common.loadError")} />}
-
       {/* Resultado de auditoría del reciclador (RQF-009) — aparte del feed normal */}
       {!cargando && (
         <AuditoriaResultadoBanner
@@ -192,13 +190,22 @@ export function ResidenteDashboard() {
         />
       )}
 
-      {/* Acción: reportar SHUT lleno */}
-      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
+      {/* ¿Qué? Issue #514 — el aviso de error de carga va después de los dos
+              avisos de arriba (SHUT lleno y resultado de auditoría), no en medio.
+          ¿Para qué? Los tres son "lo que pasó" y así quedan juntos, seguidos de
+                    lo que el Residente puede hacer (el botón de abajo). */}
+      {!cargando && errorCarga && <Alert type="error" message={t("common.loadError")} />}
+
+      {/* Acción: reportar SHUT lleno — con título real (h2) como los demás bloques */}
+      <section
+        aria-labelledby="residente-reporte-titulo"
+        className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+            <h2 id="residente-reporte-titulo" className="text-sm font-bold text-gray-900 dark:text-white">
               {t("dashboards.residente.reportSection.title")}
-            </p>
+            </h2>
             <p className="mt-1 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
               {t("dashboards.residente.reportSection.description")}
             </p>
@@ -240,7 +247,7 @@ export function ResidenteDashboard() {
             )}
           </button>
         </div>
-      </div>
+      </section>
 
       {/* Actividad reciente (notificaciones recibidas) */}
       {cargando ? (
@@ -266,18 +273,33 @@ export function ResidenteDashboard() {
         </>
       )}
 
-      {/* Desempeño semanal del conjunto (HU-053, issue #488) — el mismo panel que ve el
-          Admin de Conjunto en su página "Desempeño". Sin `idConjunto`: el backend usa
-          el único conjunto del Residente. Período fijo, sin selector. */}
-      <section aria-labelledby="residente-desempeno-titulo" className="space-y-4">
-        <h2 id="residente-desempeno-titulo" className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-white">
-          <ChartColumn className="icon-md text-gray-500 dark:text-gray-400" aria-hidden="true" />
-          {t("dashboards.residente.desempeno.title")}
-        </h2>
-        <PanelDesempeno semanas={SEMANAS_POR_DEFECTO} />
-      </section>
+      {/* ¿Qué? Issue #514 — "Mi conjunto" agrupa lo de consulta: el desempeño y las
+              auditorías anteriores (Historial). Su encabezado es una tarjeta, igual
+              que los demás bloques del panel.
+          ¿Para qué? Antes eran dos títulos sueltos sobre el fondo ("Mi conjunto" y
+                    "Desempeño de mi conjunto"): parecían desconectados de las
+                    tarjetas y se iban a ver mal si cambia el fondo del panel.
+          ¿Impacto? Un solo título (h2) para todo el grupo. El Desempeño sigue siendo
+                    el mismo panel que ve el Admin de Conjunto (HU-053, issue #488),
+                    sin `idConjunto`: el backend usa el único conjunto del Residente,
+                    con período fijo y sin selector. */}
+      <section aria-labelledby="residente-mi-conjunto-titulo" className="space-y-5">
+        <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-300/10">
+            <ChartColumn className="icon-md text-accent-700 dark:text-accent-300" aria-hidden="true" />
+          </div>
+          <div>
+            <h2 id="residente-mi-conjunto-titulo" className="text-base font-bold text-gray-900 dark:text-white">
+              {t("dashboards.residente.miConjunto.title")}
+            </h2>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t("dashboards.residente.miConjunto.subtitle")}</p>
+          </div>
+        </div>
 
-      <HistorialAuditorias cargar={listarHistorial} />
+        <PanelDesempeno semanas={SEMANAS_POR_DEFECTO} />
+
+        <HistorialAuditorias cargar={listarHistorial} />
+      </section>
     </div>
   );
 }

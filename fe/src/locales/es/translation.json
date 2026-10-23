@@ -934,8 +934,9 @@
     },
     "residente": {
       "title": "Panel del Residente",
-      "desempeno": {
-        "title": "Desempeño de mi conjunto"
+      "miConjunto": {
+        "title": "Mi conjunto",
+        "subtitle": "Cómo va la separación de residuos y las auditorías anteriores."
       },
       "shutBanner": {
         "title": "El SHUT está lleno",
@@ -1018,7 +1019,7 @@
       "tablaTotal": "Total",
       "tablaCaption": "Auditorías por semana y nivel"
     },
-    "pocosDatos": "Todavía no hay suficientes auditorías para mostrar la gráfica. Aparecerá cuando el conjunto tenga al menos {{minimo}} auditorías en las últimas {{semanas}} semanas. Mientras tanto, mira la lista de abajo.",
+    "pocosDatos": "Todavía no hay suficientes auditorías para mostrar la gráfica. Aparecerá con al menos {{minimo}} auditorías en las últimas {{semanas}} semanas. Mientras tanto, mira la lista de abajo.",
     "temas": {
       "titulo": "Temas del período",
       "pista": "Ordenados por cuántas auditorías salieron Regular o Malo. Con pocos datos es una pista, no una conclusión.",

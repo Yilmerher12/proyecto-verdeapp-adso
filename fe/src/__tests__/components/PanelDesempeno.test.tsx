@@ -264,7 +264,7 @@ describe("PanelDesempeno", () => {
       renderWithProviders(<PanelDesempeno idConjunto="c1" semanas={8} />);
 
       expect(
-        await screen.findByText(/Todavía no hay suficientes auditorías para mostrar la gráfica\. Aparecerá cuando el conjunto tenga al menos 4 auditorías en las últimas 8 semanas/),
+        await screen.findByText(/Todavía no hay suficientes auditorías para mostrar la gráfica\. Aparecerá con al menos 4 auditorías en las últimas 8 semanas/),
       ).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /^Semana/ })).not.toBeInTheDocument();
       expect(screen.queryByRole("region", { name: "Temas del período" })).not.toBeInTheDocument();
