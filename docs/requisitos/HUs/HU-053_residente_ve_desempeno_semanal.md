@@ -1,8 +1,10 @@
 # HU-053 — Residente ve el desempeño semanal de su conjunto
 
 <!--
-  ¿Qué? Historia de usuario de la sección "Desempeño de mi conjunto" del panel del
-        Residente (issue #488).
+  ¿Qué? Historia de usuario del desempeño semanal dentro de la sección "Mi conjunto"
+        del panel del Residente (issue #488). Issue #514: esa sección tiene una
+        tarjeta de título y agrupa el desempeño y el historial de auditorías; antes
+        el desempeño tenía su propio título "Desempeño de mi conjunto".
   ¿Para qué? Dejar escrito cómo un Residente ve, semana a semana, cómo va la
              separación de residuos de su conjunto, igual que el Admin de Conjunto
              (HU-052) pero sin elegir conjunto ni período.
@@ -41,7 +43,7 @@
 
 - **Dado que** inicié sesión como Residente,
 - **cuando** abro mi panel principal,
-- **entonces** veo la sección "Desempeño de mi conjunto", arriba de la lista de auditorías, con la gráfica de las últimas 8 semanas de mi conjunto.
+- **entonces** veo la sección "Mi conjunto", con el desempeño arriba de la lista de auditorías (el historial), con la gráfica de las últimas 8 semanas de mi conjunto.
 - **y** no hay selector de conjunto ni de período: un Residente pertenece a un solo conjunto y el período es fijo (8 semanas).
 
 ### CA-053.2 — Lo mismo que ve el Admin de Conjunto

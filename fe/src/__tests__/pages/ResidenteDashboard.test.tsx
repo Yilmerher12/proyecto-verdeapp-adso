@@ -68,6 +68,75 @@ describe("ResidenteDashboard", () => {
     expect(screen.getByText("Test User")).toBeInTheDocument();
   });
 
+  // ¿Qué? Issue #514: orden de los bloques — primero lo que pasó (avisos), luego lo que el
+  //       Residente puede hacer, luego la actividad, y al final lo de consulta.
+  // ¿Impacto? Si alguien reordena el panel sin querer, esta prueba falla.
+  it("muestra los bloques en orden: avisos, reportar, actividad reciente y mi conjunto", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("estado-shut")) {
+        return Promise.resolve({ data: { lleno: true, created_at: "2026-08-24T10:00:00Z" } });
+      }
+      if (url.includes("mis-notificaciones")) {
+        return Promise.resolve({
+          data: [
+            {
+              id: 5,
+              tipo: "AUDITORIA_PUBLICADA",
+              mensaje: "El reciclador auditó la separación de residuos de tu conjunto.",
+              id_referencia: 42,
+              nombre_conjunto: "Conjunto Los Alpes",
+              leida: false,
+              created_at: "2026-08-27T10:00:00Z",
+            },
+          ],
+        });
+      }
+      return Promise.resolve(respuestaPorDefecto(url));
+    });
+    renderPage();
+
+    const titulos = [
+      await screen.findByText("El SHUT está lleno"),
+      await screen.findByText("Nueva auditoría de tu conjunto"),
+      screen.getByRole("heading", { name: "Reportar SHUT lleno" }),
+      screen.getByRole("heading", { name: "Actividad reciente" }),
+      screen.getByRole("heading", { name: "Mi conjunto" }),
+      screen.getByRole("heading", { name: "Historial de auditorías" }),
+    ];
+    for (let i = 0; i < titulos.length - 1; i++) {
+      expect(titulos[i].compareDocumentPosition(titulos[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
+  it("el aviso de error de carga va después del aviso de auditoría y antes de reportar", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("estado-shut")) return Promise.reject(new Error("Network Error"));
+      if (url.includes("mis-notificaciones")) {
+        return Promise.resolve({
+          data: [
+            {
+              id: 5,
+              tipo: "AUDITORIA_PUBLICADA",
+              mensaje: "El reciclador auditó la separación de residuos de tu conjunto.",
+              id_referencia: 42,
+              nombre_conjunto: "Conjunto Los Alpes",
+              leida: false,
+              created_at: "2026-08-27T10:00:00Z",
+            },
+          ],
+        });
+      }
+      return Promise.resolve(respuestaPorDefecto(url));
+    });
+    renderPage();
+
+    const auditoria = await screen.findByText("Nueva auditoría de tu conjunto");
+    const error = screen.getByText("No se pudo cargar la información. Intenta de nuevo más tarde.");
+    const reportar = screen.getByRole("heading", { name: "Reportar SHUT lleno" });
+    expect(auditoria.compareDocumentPosition(error) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(error.compareDocumentPosition(reportar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("muestra un aviso de error si falla la carga (issue #223, f9 del diagnóstico)", async () => {
     mockGet.mockRejectedValue(new Error("Network Error"));
     renderPage();
@@ -295,7 +364,7 @@ describe("ResidenteDashboard", () => {
       responderDesempeno(DESEMPENO);
       renderPage();
 
-      expect(screen.getByRole("heading", { name: "Desempeño de mi conjunto" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Mi conjunto" })).toBeInTheDocument();
       // ¿Qué? Plazo de 5 s: es la primera prueba de este archivo que descarga la gráfica (carga bajo demanda)
       //       y con la cobertura activa la importación de recharts tarda más que el 1 s por defecto.
       expect(

@@ -930,8 +930,9 @@
     },
     "residente": {
       "title": "Resident Panel",
-      "desempeno": {
-        "title": "My complex's performance"
+      "miConjunto": {
+        "title": "My complex",
+        "subtitle": "How waste separation is going and past audits."
       },
       "shutBanner": {
         "title": "The waste room is full",
@@ -1014,7 +1015,7 @@
       "tablaTotal": "Total",
       "tablaCaption": "Audits per week and level"
     },
-    "pocosDatos": "There aren't enough audits yet to show the chart. It will appear once the complex has at least {{minimo}} audits in the last {{semanas}} weeks. Meanwhile, see the list below.",
+    "pocosDatos": "There aren't enough audits yet to show the chart. It will appear with at least {{minimo}} audits in the last {{semanas}} weeks. Meanwhile, see the list below.",
     "temas": {
       "titulo": "Topics in the period",
       "pista": "Sorted by how many audits were Fair or Poor. With little data this is a hint, not a conclusion.",
