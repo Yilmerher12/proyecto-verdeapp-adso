@@ -29,8 +29,9 @@ const TAMANO_PAGINA = 10;
 // ¿Para qué? Que la persona elija qué le pasa en vez de escribirlo desde cero;
 //           solo con "otros" tiene que explicar con sus palabras.
 // ¿Impacto? La lista vive aquí, no en la base de datos: nadie la edita desde la
-//          app. El motivo no es un campo aparte: se guarda dentro del texto de la
-//          novedad, así la bandeja del Admin Sistema y "Historial de novedades" siguen igual.
+//          app. El motivo viaja como texto (lo que lee el Admin Sistema) y también como
+//          clave (`motivo`), de donde el backend saca la prioridad: al sumar un motivo
+//          aquí hay que sumarlo en PRIORIDAD_POR_MOTIVO de be/app/models/novedad_enviada.py.
 const MOTIVOS_COMUNES = ["login", "notificaciones", "cuenta", "falla", "informacion", "sugerencia"];
 const MOTIVOS_POR_ROL: Record<number, string[]> = {
   [RoleId.RESIDENTE]: ["residenteUnidad", "residenteShut"],
@@ -38,6 +39,13 @@ const MOTIVOS_POR_ROL: Record<number, string[]> = {
   [RoleId.ADMIN_CONJUNTO]: ["adminDatos", "adminCodigo", "adminApartamentos"],
 };
 const MOTIVO_OTROS = "otros";
+
+// ¿Qué? Issue #512: color de la etiqueta de estado en "Historial de novedades".
+const CLASE_ESTADO: Record<NovedadEnviada["estado"], string> = {
+  NUEVA: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  EN_REVISION: "bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300",
+  RESUELTA: "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300",
+};
 
 /**
  * ¿Qué? Formulario para ENVIARLE una consulta de soporte (un motivo de una
@@ -84,6 +92,8 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
     try {
       await enviarNovedad({
         texto: esOtros ? `${prefijoOtros}${texto.trim()}` : t(`novedadesEnviadas.motivos.${motivo}`),
+        // ¿Qué? Issue #512: la clave del motivo; el backend calcula la prioridad con ella.
+        motivo,
         url_imagen: urlImagen || null,
         id_conjunto_residencial: idConjunto || null,
       });
@@ -277,16 +287,8 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
             className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                  n.estado === "VISTA"
-                    ? "bg-gray-100 text-gray-600 dark:bg-night-field dark:text-gray-300"
-                    : "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200"
-                }`}
-              >
-                {n.estado === "VISTA"
-                  ? t("novedadesEnviadas.stateSeen")
-                  : t("novedadesEnviadas.stateNew")}
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CLASE_ESTADO[n.estado]}`}>
+                {t(`novedadesEnviadas.estado.${n.estado}`)}
               </span>
               <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
                 {formatearFechaCreacion(n.created_at)}
@@ -301,6 +303,16 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
                 alt=""
                 className="mt-2 h-20 w-20 rounded-xl border border-gray-200 object-cover dark:border-night-line"
               />
+            )}
+            {n.respuesta && (
+              <div className="mt-3 rounded-xl bg-gray-50 p-3 dark:bg-night-field">
+                <p className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                  {t("novedadesEnviadas.respuestaTitulo", {
+                    fecha: formatearFechaCreacion(n.respondida_at ?? n.created_at),
+                  })}
+                </p>
+                <p className="mt-1 whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">{n.respuesta}</p>
+              </div>
             )}
           </li>
         ))}

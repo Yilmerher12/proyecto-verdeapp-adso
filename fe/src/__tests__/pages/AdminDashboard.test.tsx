@@ -604,20 +604,24 @@ describe("AdminDashboard", () => {
       ) {
         return Promise.resolve({ data: { items: [], total: 0 } });
       }
-      if (url.includes("/admin-conjunto/solicitudes")) {
+      if (url.includes("/novedades-enviadas/soporte")) {
+        return Promise.resolve({ data: { total: 0, items: [] } });
+      }
+      if (url.includes("/admin-conjunto/solicitudes-desvinculacion")) {
         return Promise.resolve({
-          data: { total: 1, items: [
+          data: [
             {
               id: "s-1",
-              tipo: "DESVINCULACION",
-              titulo: "Dejar de administrar Conjunto Los Alpes",
-              origen: "Admin de Conjunto · Pedro Gómez",
+              id_conjunto_residencial: "c-1",
               nombre_conjunto: "Conjunto Los Alpes",
-              detalle: "",
+              id_administrador: "a-1",
+              nombre_administrador: "Pedro",
+              apellidos_administrador: "Gómez",
+              motivo: null,
               estado: "PENDIENTE",
               created_at: new Date().toISOString(),
             },
-          ] },
+          ],
         });
       }
       return Promise.resolve({ data: [] });
@@ -625,10 +629,11 @@ describe("AdminDashboard", () => {
     const user = userEvent.setup();
     renderPage();
 
-    // ¿Qué? El número de pendientes llega apenas carga (SolicitudesPendientes
-    //       avisa por onCountChange) gracias a la instancia oculta (con
-    //       "hidden", no deja de renderizarse) — antes de que el usuario
-    //       abra el modal, la solicitud ya está en el DOM pero no visible.
+    // ¿Qué? El número de pendientes (soporte + desvinculaciones) llega apenas
+    //       carga (BandejaAdminSistema avisa por onCountChange) gracias a la
+    //       instancia oculta (con "hidden", no deja de renderizarse) — antes
+    //       de que el usuario abra el modal, la solicitud ya está en el DOM
+    //       pero no visible.
     expect(await screen.findByText("1 solicitud pendiente por resolver.")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 

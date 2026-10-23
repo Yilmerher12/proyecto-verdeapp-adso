@@ -1470,21 +1470,57 @@
     "sentMessage": "Request sent. The System Administrator will review it.",
     "errorDefault": "The request could not be sent. Please try again.",
     "mineEmpty": "You haven't sent any news items yet.",
-    "stateNew": "Sent",
-    "stateSeen": "Seen by the System Admin"
+    "estado": {
+      "NUEVA": "Sent",
+      "EN_REVISION": "Under review",
+      "RESUELTA": "Resolved"
+    },
+    "respuestaTitulo": "System Administrator's reply ({{fecha}})"
   },
-  "solicitudesPendientes": {
-    "sectionTitle": "Pending requests",
-    "empty": "No pending requests.",
-    "emptyFiltro": "No requests of this type for now.",
-    "errorDefault": "The request could not be processed.",
-    "marcarVista": "Mark as seen",
-    "verFoto": "View photo",
-    "filtros": {
-      "todas": "All",
-      "desvinculacion": "Unlink",
-      "novedad": "News item"
+  "bandejaAdmin": {
+    "sectionTitle": "Technical support and unlinking",
+    "pestanas": {
+      "soporte": "Technical support",
+      "desvinculaciones": "Unlinking requests"
     }
+  },
+  "soporteAdmin": {
+    "estadoLabel": "Status",
+    "prioridadLabel": "Priority",
+    "filtroEstado": {
+      "pendientes": "Pending",
+      "nueva": "New",
+      "enRevision": "Under review",
+      "resuelta": "Resolved"
+    },
+    "filtroPrioridad": {
+      "todas": "All"
+    },
+    "prioridad": {
+      "ALTA": "High",
+      "MEDIA": "Medium",
+      "BAJA": "Low"
+    },
+    "estado": {
+      "NUEVA": "New",
+      "EN_REVISION": "Under review",
+      "RESUELTA": "Resolved"
+    },
+    "empty": "There are no pending support requests yet.",
+    "emptyFiltro": "No request matches these filters for now.",
+    "errorDefault": "The request could not be updated.",
+    "verFoto": "View photo",
+    "responder": "Reply",
+    "cambiarRespuesta": "Change reply",
+    "enviarRespuesta": "Send reply",
+    "respuestaLabel": "Reply to the person who sent the request",
+    "respuestaPlaceholder": "Write the reply",
+    "respuestaEnviada": "Reply sent ({{fecha}})",
+    "marcarEnRevision": "Mark as under review",
+    "marcarResuelta": "Mark as resolved",
+    "reabrir": "Reopen",
+    "cambiarPrioridad": "Change the priority",
+    "prioridadOpcion": "{{prioridad}} priority"
   },
   "desvinculacion": {
     "sectionTitle": "Your role as administrator",

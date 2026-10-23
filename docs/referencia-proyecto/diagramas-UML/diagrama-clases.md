@@ -166,12 +166,18 @@ class NovedadEnviada {
     +UUID id_conjunto_residencial
     +string texto
     +string url_imagen
+    +string motivo
+    +string prioridad
     +string estado
+    +string respuesta
+    +datetime respondida_at
     +datetime created_at
     +datetime resuelta_at
 
     +enviar()
-    +marcarComoVista()
+    +cambiarEstado()
+    +cambiarPrioridad()
+    +responder()
 }
 
 class Comunicado {
@@ -473,7 +479,7 @@ Representa un tema de la agenda **privada** del Admin_conjunto para un conjunto 
 
 ## NovedadEnviada
 
-Representa una novedad que un Residente, Reciclador o Admin_conjunto le **envía** al Admin_sistema (RQF-021) — la dirección contraria a `Novedad`. Su `estado` es `NUEVA` o `VISTA`: el Admin_sistema la recibe en la bandeja "Solicitudes pendientes" (junto con las `SolicitudDesvinculacion`) y solo la marca como vista; no se aprueba ni se rechaza.
+Representa una consulta de soporte que un Residente, Reciclador o Admin_conjunto le **envía** al Admin_sistema (RQF-021) — la dirección contraria a `Novedad`. Su `estado` es `NUEVA`, `EN_REVISION` o `RESUELTA`, y su `prioridad` (`ALTA`, `MEDIA` o `BAJA`) la calcula el sistema según el `motivo` elegido. El Admin_sistema la atiende en la pestaña "Soporte técnico" (las `SolicitudDesvinculacion` van en su propia pestaña "Desvinculaciones"): cambia su estado, corrige la prioridad y le responde al autor, que ve la respuesta en su historial; una consulta no se aprueba ni se rechaza.
 
 ---
 

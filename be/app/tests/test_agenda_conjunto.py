@@ -21,7 +21,6 @@ from app.tests.conftest import ADMIN_CONJUNTO_APELLIDOS, ADMIN_CONJUNTO_EMAIL, A
 from app.utils.pdf_agenda import texto_para_pdf
 
 BASE = "/api/v1/conjunto-panel/mis-conjuntos"
-BASE_ADMIN = "/api/v1/admin-conjunto"
 
 
 def _url(conjunto: ConjuntoResidencial, extra: str = "") -> str:
@@ -75,7 +74,7 @@ class TestCrearYListar:
         self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_auth_headers, conjunto_verificado
     ):
         client.post(_url(conjunto_verificado), headers=admin_conjunto_auth_headers, json={"texto": "Privado"})
-        assert client.get(f"{BASE_ADMIN}/solicitudes", headers=admin_sistema_auth_headers).json()["items"] == []
+        assert client.get("/api/v1/novedades-enviadas/soporte", headers=admin_sistema_auth_headers).json()["items"] == []
 
 
 class TestEstadoYBorrar:
