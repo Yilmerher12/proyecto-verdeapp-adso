@@ -49,6 +49,7 @@
 > - **Para Excel en español:** separador `;` y UTF-8 con BOM. Un texto que empieza con `=`, `+`, `-` o `@` se entrega con una comilla simple delante para que Excel no lo calcule como fórmula.
 > - **Orden:** del más antiguo al más reciente, como un acta.
 > - **Nombre del archivo:** `historial-agenda-<conjunto>-<desde>_<hasta>.csv` (`inicio` y `hoy` si no se eligió fecha), sin datos personales.
+> - **Dónde está el botón (issue #517):** junto a las pestañas "Por tratar" y "Archivadas", porque descarga lo que ellas muestran; "Agregar tema" queda solo en el encabezado, como acción principal. Si el conjunto elegido no tiene ningún tema (ni por tratar ni archivado), el botón está desactivado.
 
 ### CA-049.2 — Descargar el historial en PDF
 

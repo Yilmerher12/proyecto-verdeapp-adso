@@ -1642,6 +1642,7 @@
     "actionError": "The action could not be completed. Please try again.",
     "download": {
       "button": "Download agenda",
+      "noTopics": "There are no topics to download yet. Add one and you can download the history.",
       "title": "Download agenda",
       "description": "Downloads a file with this building's topics to attach to the committee minutes.",
       "formatLabel": "Format",
