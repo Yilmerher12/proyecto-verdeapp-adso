@@ -82,8 +82,8 @@
 
 - **Dado que** estoy en la página de registro y administro un conjunto,
 - **cuando** elijo la opción "¿Administras un conjunto?" (tercera opción de la pantalla de elegir rol),
-- **entonces** en lugar del formulario veo las instrucciones para pedir la cuenta: los pasos, los documentos que acreditan el cargo (certificado de existencia y representación legal de la Alcaldía Local, cédula, acta de nombramiento, contrato y, si es una empresa, certificado de Cámara de Comercio) y un botón "Solicitar acceso" que abre el formulario de contacto con el asunto y una plantilla del mensaje ya escritos.
-- La pantalla **no muestra ningún correo** y la app **no recibe ni guarda documentos**: los documentos se piden después por correo y se eliminan tras la revisión (ver HU-018 y la Política de Privacidad, sección 2).
+- **entonces** en lugar del formulario veo las instrucciones para pedir la cuenta, en dos pasos: (1) enviar un correo a la cuenta del equipo (`administradorverdeapp@gmail.com`) con el asunto "Administrador Conjunto", mis datos (nombre y apellido, correo, número de contacto, nombre y dirección del conjunto) y **dos documentos** adjuntos: el certificado de representación legal de la propiedad horizontal (expedido por la Alcaldía Local, vigente) y la copia de mi cédula (ampliada al 150 %); y (2) recibir la autorización de ingreso por correo cuando el equipo verifique mis datos.
+- No hay botón: la dirección del equipo es un **enlace** que abre mi correo con el asunto y los datos a escribir ya puestos, y un ícono permite **copiarla** (issue #457; es la única pantalla de la app que muestra un correo, porque pide documentos adjuntos y el formulario de contacto no puede llevarlos). La app **no recibe ni guarda documentos**: viajan solo por correo y se eliminan tras la revisión (ver HU-018 y la Política de Privacidad, sección 2).
 - Las 3 opciones de la pantalla de elegir rol son botones: se pueden alcanzar con Tab y elegir con Enter.
 
 > **Nota (2026-10-06)**: antes un Administrador de Conjunto que llegaba al registro no tenía cómo saber que su cuenta se crea por invitación ni a quién pedirla.

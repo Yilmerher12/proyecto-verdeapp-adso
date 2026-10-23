@@ -44,15 +44,15 @@
 
 - **Dado que** presiono esa fila,
 - **cuando** se abre la ventana,
-- **entonces** veo tres pasos escritos para quien **ya tiene cuenta** (el tercero dice que el conjunto se asigna a mi cuenta y aparece en el panel), la lista de documentos que debo tener listos y el aviso de que los documentos nunca se suben a VerdeApp.
+- **entonces** veo dos pasos escritos para quien **ya tiene cuenta** (el segundo dice que el conjunto se asigna a mi cuenta y aparece en el panel), los dos documentos que debo adjuntar y el aviso de que los documentos nunca se suben a VerdeApp.
 - **y** la lista de documentos y el aviso de privacidad son **los mismos** que ve quien se registra (RQF-012, `auth.register.adminRequest.*`): al corregirlos, cambian en los dos lugares.
 
-### CA-051.3 — Solicitar acceso
+### CA-051.3 — Enviar el correo
 
 - **Dado que** leí el paso a paso,
-- **cuando** presiono "Solicitar acceso",
-- **entonces** voy al formulario de contacto (`/contacto?motivo=otro-conjunto`) con el asunto "Solicitud para administrar otro conjunto" y una plantilla del mensaje con los datos que necesita el equipo (mi correo en VerdeApp, nombre y dirección del conjunto, localidad, mi cargo y mi teléfono).
-- **y** no puedo enviar la plantilla sin completarla.
+- **cuando** presiono la dirección `administradorverdeapp@gmail.com` (o la copio con el ícono de al lado),
+- **entonces** se abre mi correo con el asunto "Otro conjunto" y el cuerpo ya empezado (mi correo en VerdeApp, nombre y apellido, número de contacto, nombre y dirección del conjunto que quiero administrar); solo falta adjuntar los dos documentos y enviar.
+- **y** no hay botón "Solicitar acceso": ya no se pasa por el formulario de contacto (que no puede llevar adjuntos).
 
 ### CA-051.4 — El código de acceso a la mano
 
