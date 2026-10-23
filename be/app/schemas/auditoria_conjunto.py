@@ -70,6 +70,13 @@ class UltimaAuditoriaConjuntoResponse(BaseModel):
 #           nunca dispara esa notificación) — nunca es un error de datos.
 class AuditoriaAdminResponse(AuditoriaConjuntoResponse):
     avisados: int = 0
+    # ¿Qué? Localidad de Bogotá a la que pertenece el conjunto auditado.
+    # ¿Para qué? La tabla "Calificaciones por conjunto" del Admin Sistema filtra primero por
+    #           localidad y después por conjunto, para no buscar entre todos los conjuntos de Bogotá.
+    # ¿Impacto? Solo lo usa esta vista; el Residente, el Admin de Conjunto y el Reciclador
+    #           siguen recibiendo AuditoriaConjuntoResponse sin estos dos campos.
+    id_localidad: int
+    nombre_localidad: str
 
 
 class AuditoriasAdminListResponse(BaseModel):

@@ -66,6 +66,15 @@ export function lunesBogota(ahora: Date = new Date()): string {
   return lunesUTC(new Date(ahora.getTime() + DESFASE_BOGOTA_MS));
 }
 
+// ¿Qué? El día (YYYY-MM-DD) que marcaba el reloj de Bogotá en ese instante.
+// ¿Para qué? Filtrar las auditorías "desde / hasta" con el mismo día con que el backend
+//           las asigna a una semana (hora de Bogotá), no con el del navegador.
+// ¿Impacto? Una auditoría del domingo a las 9:00 p. m. en Bogotá es lunes en UTC: sin este
+//           desfase, el filtro "hasta el domingo" la dejaría por fuera.
+export function fechaBogota(iso: string): string {
+  return isoToDateInputUTC(new Date(new Date(iso).getTime() + DESFASE_BOGOTA_MS).toISOString());
+}
+
 // ¿Qué? El domingo que le corresponde a un lunes dado (mismo par que usa
 //       el backend para el límite superior de la semana).
 export function domingoDeLunesUTC(lunesIso: string): Date {

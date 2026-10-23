@@ -145,6 +145,17 @@ class TestListado:
         assert fila["nivel_desempeno"] == "DEFICIENTE"
         assert fila["descripcion"] == "Escombros junto al SHUT."
 
+    def test_incluye_la_localidad_del_conjunto(
+        self, client: TestClient, admin_sistema_auth_headers, db, reciclador_test, conjunto_verificado, localidad_test
+    ):
+        reciclador = db.query(Reciclador).filter_by(id_usuario=reciclador_test.id_usuario).one()
+        auditoria = _crear_auditoria(db, reciclador, conjunto_verificado, creado=datetime(2026, 9, 18, tzinfo=timezone.utc))
+
+        response = client.get(URL, headers=admin_sistema_auth_headers)
+        fila = next(f for f in response.json()["items"] if f["id_auditoria"] == str(auditoria.id_auditoria))
+        assert fila["id_localidad"] == localidad_test.id_localidad
+        assert fila["nombre_localidad"] == localidad_test.nombre_localidad
+
     def test_avisados_cuenta_los_destinatarios_de_la_notificacion(
         self, client: TestClient, admin_sistema_auth_headers, db, reciclador_test, conjunto_verificado, test_user
     ):

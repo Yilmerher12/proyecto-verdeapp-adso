@@ -79,7 +79,7 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
 | GET    | `/api/v1/auditorias-conjunto/desempeno`   | Sí (Residente, Admin de Conjunto) | Conteo de auditorías de UN conjunto por semana (Bueno/Regular/Malo) y por tema. Parámetros: `id_conjunto` (opcional si el usuario tiene un solo conjunto; con varios responde 422) y `semanas` (4, 8 o 12; por defecto 8; otro valor responde 422). Incluye la semana en curso, las semanas sin auditorías salen en cero y la más antigua va primero. Responde `id_conjunto_residencial`, `total`, `semanas` y `temas` |
 | GET    | `/api/v1/auditorias-conjunto/desempeno/semana` | Sí (Residente, Admin de Conjunto) | Auditorías de una semana concreta de un conjunto, más recientes primero, con el mismo formato que `/historial`. Parámetros: `lunes` (`YYYY-MM-DD`, debe ser lunes; si no, 422) e `id_conjunto` (misma regla de arriba) |
 | GET    | `/api/v1/auditorias-conjunto/{id}`        | Sí (Residente, Admin de Conjunto, o el Reciclador que la envió) | Detalle de una auditoría puntual |
-| GET    | `/api/v1/auditorias-conjunto/admin`       | Sí (Admin Sistema) | Lista todas las auditorías de todos los conjuntos, filtrables por la semana (parámetro `lunes`, formato `YYYY-MM-DD` — devuelve `[lunes, lunes+7)` en hora de Bogotá); cada ítem incluye `avisados` (cuántos Residentes recibieron la recomendación automática de RQF-013 por esa auditoría) |
+| GET    | `/api/v1/auditorias-conjunto/admin`       | Sí (Admin Sistema) | Lista todas las auditorías de todos los conjuntos, filtrables por la semana (parámetro `lunes`, formato `YYYY-MM-DD` — devuelve `[lunes, lunes+7)` en hora de Bogotá); cada ítem incluye `avisados` (cuántos Residentes recibieron la recomendación automática de RQF-013 por esa auditoría), `id_localidad` y `nombre_localidad` (la localidad del conjunto auditado) |
 
 <!-- ¿Qué? `GET /admin` se agregó junto con el rediseño de RQF-010 (pestaña
      "Calificaciones por conjunto" del panel de Contenido educativo) — el
@@ -88,6 +88,20 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
      `/historial`. ¿Para qué? Decidir a qué conjuntos conviene enviarles
      contenido educativo a mano (RQF-013, Flujo C) cuando su calificación fue
      Regular o Malo. ¿Impacto? Nuevo — no reemplaza ningún endpoint existente. -->
+
+<!-- ¿Qué? Filtros de la pestaña "Calificaciones por conjunto" (issue #518): conjunto,
+     rango de fechas "desde / hasta" dentro de la semana, nivel, búsqueda por texto y
+     orden (peor calificación primero por defecto, más recientes o conjunto A–Z), más el botón "Limpiar filtros". Siempre visibles: búsqueda, localidad, conjunto y nivel;
+     fechas y orden van plegados en "Más filtros" (el botón muestra cuántos hay activos), y
+     sin calificaciones esa semana los controles se desactivan. ¿Para qué? Con muchos conjuntos el Admin
+     Sistema necesita llegar a las calificaciones de uno solo o de unos días. ¿Impacto?
+     También se filtra por localidad (primero la localidad, luego solo sus conjuntos en
+     el selector de conjunto), por eso `GET /admin` ahora devuelve `id_localidad` y
+     `nombre_localidad` de cada auditoría (sin migración: el dato ya está en el conjunto).
+     Los filtros se aplican en el frontend; el filtro por fecha usa el día de Bogotá
+     (igual que la semana). Como el endpoint entrega como máximo 200 por
+     página, el frontend pide página tras página (`offset`) hasta traer las `total` de la
+     semana: antes una semana con más de 100 auditorías se veía incompleta, sin aviso. -->
 
 <!-- ¿Qué? Paginación de `/historial` y `/mias`, y semana de Bogotá en `/admin`.
      ¿Para qué? `/historial` entregaba como máximo las 50 auditorías más recientes

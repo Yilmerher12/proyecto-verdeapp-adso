@@ -153,6 +153,8 @@ export async function listarAuditoriasDeSemana(lunes: string, idConjunto?: strin
 
 export interface AuditoriaAdmin extends AuditoriaConjunto {
   avisados: number;
+  id_localidad: number;
+  nombre_localidad: string;
 }
 
 export interface AuditoriasAdminResultado {
@@ -165,7 +167,24 @@ export interface AuditoriasAdminResultado {
 //       filtra esa semana completa; sin él, trae las más recientes de
 //       cualquier semana (para cruzar "a qué conjuntos se recomendó cada
 //       módulo" sin acotar a una sola semana).
-export async function listarAuditoriasAdmin(opciones?: { lunes?: string; limit?: number }): Promise<AuditoriasAdminResultado> {
+export async function listarAuditoriasAdmin(opciones?: { lunes?: string; limit?: number; offset?: number }): Promise<AuditoriasAdminResultado> {
   const { data } = await axios.get(`${API_BASE}/admin`, { params: opciones });
   return data;
+}
+
+// ¿Qué? Trae TODAS las auditorías de una semana, pidiendo página tras página.
+// ¿Para qué? El backend entrega máximo 100 por defecto (200 como tope) y devuelve
+//           `total`; antes la página guardaba solo la primera página y una semana
+//           con más auditorías se veía incompleta, sin ningún aviso. Con los filtros
+//           por conjunto y fecha, una auditoría que faltaba parecía no existir.
+// ¿Impacto? Se detiene si una página llega vacía, aunque `total` diga que faltan:
+//           nunca queda en un ciclo infinito si los datos cambian mientras se piden.
+const AUDITORIAS_POR_PAGINA = 200;
+export async function listarAuditoriasAdminDeSemana(lunes: string): Promise<AuditoriaAdmin[]> {
+  const todas: AuditoriaAdmin[] = [];
+  for (;;) {
+    const { items, total } = await listarAuditoriasAdmin({ lunes, limit: AUDITORIAS_POR_PAGINA, offset: todas.length });
+    todas.push(...items);
+    if (items.length === 0 || todas.length >= total) return todas;
+  }
 }

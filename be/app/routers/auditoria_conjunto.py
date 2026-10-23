@@ -153,6 +153,8 @@ def listar_admin(
         AuditoriaAdminResponse(
             **_a_response(a).model_dump(),
             avisados=avisados_por_auditoria.get(a.id_auditoria, 0),
+            id_localidad=a.conjunto.id_localidad,
+            nombre_localidad=a.conjunto.localidad.nombre_localidad,
         )
         for a in auditorias
     ]
