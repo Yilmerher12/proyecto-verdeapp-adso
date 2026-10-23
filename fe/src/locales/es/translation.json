@@ -1474,21 +1474,57 @@
     "sentMessage": "Consulta enviada. El Administrador del Sistema la revisará.",
     "errorDefault": "No se pudo enviar la consulta. Intenta de nuevo.",
     "mineEmpty": "Todavía no has enviado ninguna novedad.",
-    "stateNew": "Enviada",
-    "stateSeen": "Vista por el Admin del Sistema"
+    "estado": {
+      "NUEVA": "Enviada",
+      "EN_REVISION": "En revisión",
+      "RESUELTA": "Resuelta"
+    },
+    "respuestaTitulo": "Respuesta del Administrador del Sistema ({{fecha}})"
   },
-  "solicitudesPendientes": {
-    "sectionTitle": "Solicitudes pendientes",
-    "empty": "No hay solicitudes pendientes.",
-    "emptyFiltro": "Ninguna solicitud de este tipo por ahora.",
-    "errorDefault": "No se pudo procesar la solicitud.",
-    "marcarVista": "Marcar como vista",
-    "verFoto": "Ver foto",
-    "filtros": {
-      "todas": "Todas",
-      "desvinculacion": "Desvinculación",
-      "novedad": "Novedad"
+  "bandejaAdmin": {
+    "sectionTitle": "Soporte técnico y desvinculaciones",
+    "pestanas": {
+      "soporte": "Soporte técnico",
+      "desvinculaciones": "Desvinculaciones"
     }
+  },
+  "soporteAdmin": {
+    "estadoLabel": "Estado",
+    "prioridadLabel": "Prioridad",
+    "filtroEstado": {
+      "pendientes": "Pendientes",
+      "nueva": "Nuevas",
+      "enRevision": "En revisión",
+      "resuelta": "Resueltas"
+    },
+    "filtroPrioridad": {
+      "todas": "Todas"
+    },
+    "prioridad": {
+      "ALTA": "Alta",
+      "MEDIA": "Media",
+      "BAJA": "Baja"
+    },
+    "estado": {
+      "NUEVA": "Nueva",
+      "EN_REVISION": "En revisión",
+      "RESUELTA": "Resuelta"
+    },
+    "empty": "Todavía no hay consultas de soporte pendientes.",
+    "emptyFiltro": "Ninguna consulta coincide con estos filtros por ahora.",
+    "errorDefault": "No se pudo actualizar la consulta.",
+    "verFoto": "Ver foto",
+    "responder": "Responder",
+    "cambiarRespuesta": "Cambiar respuesta",
+    "enviarRespuesta": "Enviar respuesta",
+    "respuestaLabel": "Respuesta para quien envió la consulta",
+    "respuestaPlaceholder": "Escribe la respuesta",
+    "respuestaEnviada": "Respuesta enviada ({{fecha}})",
+    "marcarEnRevision": "Marcar en revisión",
+    "marcarResuelta": "Marcar como resuelta",
+    "reabrir": "Reabrir",
+    "cambiarPrioridad": "Cambiar la prioridad",
+    "prioridadOpcion": "Prioridad {{prioridad}}"
   },
   "desvinculacion": {
     "sectionTitle": "Tu rol como administrador",

@@ -702,11 +702,15 @@ Temas privados del Admin de Conjunto para llevar al comité de un conjunto (RQF-
 | id_conjunto_residencial   | UUID      |
 | texto                     | TEXT      |
 | url_imagen                | VARCHAR   |
+| motivo                    | VARCHAR   |
+| prioridad                 | VARCHAR   |
 | estado                    | VARCHAR   |
+| respuesta                 | TEXT      |
+| respondida_at             | TIMESTAMP |
 | created_at                | TIMESTAMP |
 | resuelta_at               | TIMESTAMP |
 
-Novedad que un Residente, Reciclador o Admin de Conjunto le envía al Admin Sistema (RQF-021). `estado` es `NUEVA` o `VISTA`; el Admin Sistema la ve en la bandeja "Solicitudes pendientes" junto con `solicitudes_desvinculacion`. El conjunto es opcional (un Reciclador no tiene uno solo). No confundir con `novedades` (RQF-015), que publica el Admin Sistema.
+Consulta de soporte que un Residente, Reciclador o Admin de Conjunto le envía al Admin Sistema (RQF-021). `estado` es `NUEVA`, `EN_REVISION` o `RESUELTA`. `prioridad` es `ALTA`, `MEDIA` o `BAJA` y la calcula el backend según `motivo` (la clave del motivo que el autor eligió en el formulario; es `NULL` en las filas anteriores a esa columna, que quedaron en `MEDIA`); el Admin Sistema puede corregirla. `respuesta` y `respondida_at` guardan lo que el Admin Sistema le contesta al autor. El Admin Sistema la atiende en la pestaña "Soporte técnico" de su bandeja; las desvinculaciones (`solicitudes_desvinculacion`) van en la pestaña "Desvinculaciones". El conjunto es opcional (un Reciclador no tiene uno solo). No confundir con `novedades` (RQF-015), que publica el Admin Sistema.
 
 ---
 

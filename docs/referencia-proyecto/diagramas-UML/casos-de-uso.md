@@ -51,7 +51,7 @@ Usuario responsable de:
 * Consultar, buscar, filtrar y ordenar los usuarios registrados de cada rol, y activar o desactivar cualquier cuenta.
 * Supervisar el funcionamiento general del sistema.
 * Aprobar o rechazar solicitudes de desvinculación de un Admin_conjunto, y asignarle conjuntos adicionales.
-* Revisar la bandeja "Solicitudes pendientes" (desvinculaciones y novedades que le envían los usuarios) y marcar las novedades como vistas (RQF-021).
+* Atender "Soporte técnico" (consultas que le envían los usuarios: cambiar estado y prioridad y responder al autor) y revisar las desvinculaciones en su propia pestaña (RQF-021).
 * Cambiar el idioma de la interfaz (español/inglés).
 * Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
 
@@ -624,16 +624,16 @@ Permite al Admin_conjunto llevar, por cada conjunto que administra, una lista pr
 
 ### Descripción
 
-Permite que un Residente, Reciclador o Admin_conjunto le envíe una novedad al Admin_sistema (texto e imagen opcional). El Admin_sistema la recibe en la bandeja "Solicitudes pendientes", junto con las solicitudes de desvinculación (RQF016).
+Permite que un Residente, Reciclador o Admin_conjunto le envíe una consulta de soporte al Admin_sistema (motivo, comentario e imagen opcionales). El Admin_sistema la recibe en la pestaña "Soporte técnico" de su bandeja; las solicitudes de desvinculación (RQF016) van en la pestaña "Desvinculaciones".
 
 ### Flujo Principal
 
-1. El usuario abre Novedades → "Escribir novedad", escribe el texto y lo envía.
-2. El sistema la guarda como NUEVA con los datos de la cuenta del autor.
-3. El Admin_sistema la ve en "Solicitudes pendientes" y la marca como vista.
-4. El autor ve en "Historial de novedades" que fue vista.
+1. El usuario abre Soporte técnico → "Escribir novedad", elige el motivo y lo envía.
+2. El sistema la guarda como NUEVA, con los datos de la cuenta del autor y una prioridad calculada según el motivo.
+3. El Admin_sistema la ve en "Soporte técnico", puede marcarla en revisión, corregir su prioridad y escribirle una respuesta al autor.
+4. El autor recibe una notificación y ve en "Historial de novedades" el estado y la respuesta.
 
 ### Flujo Alternativo
 
-1. El Admin_sistema filtra la bandeja por tipo (Desvinculación o Novedad).
-2. Las desvinculaciones se aprueban o rechazan con el flujo de RQF016.
+1. El Admin_sistema filtra "Soporte técnico" por estado (pendientes, nuevas, en revisión o resueltas) y por prioridad.
+2. Las desvinculaciones se aprueban o rechazan en su propia pestaña, con el flujo de RQF016.
