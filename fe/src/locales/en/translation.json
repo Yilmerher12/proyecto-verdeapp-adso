@@ -857,7 +857,7 @@
       "sendSection": {
         "title": "Send notification",
         "subtitle": "Notify residents and the building administrator.",
-        "noConjuntos": "You don't have any authorized buildings yet. Accept an invitation to be able to send notifications."
+        "noConjuntos": "The buttons turn on once you have an authorized building."
       },
       "invitations": {
         "title": "Pending invitations",
@@ -871,7 +871,8 @@
       },
       "notifications": {
         "title": "Received notifications",
-        "empty": "You have no notifications. When a resident reports the waste room is full, it will appear here."
+        "empty": "You have no notifications. When a resident reports the waste room is full, it will appear here.",
+        "emptyWithoutConjuntos": "You have no notifications. Resident notices (such as waste room full) come from the buildings where you are authorized."
       },
       "modal": {
         "title": "Which building are you notifying?",

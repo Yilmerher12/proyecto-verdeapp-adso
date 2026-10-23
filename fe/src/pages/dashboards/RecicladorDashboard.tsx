@@ -6,6 +6,7 @@ import { usePolling } from "@/hooks/usePolling";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import {
   Mail,
+  Info,
   BadgeCheck,
   OctagonX,
   Building,
@@ -309,6 +310,11 @@ export function RecicladorDashboard() {
     return dias >= DIAS_ENTRE_AUDITORIAS;
   };
 
+  // ¿Qué? "Sin conjuntos" solo cuando la carga ya terminó.
+  // ¿Para qué? Mientras carga, la lista está vacía por defecto; sin esperar, a todo
+  //           Reciclador le saldría un instante el aviso de "no tienes conjuntos".
+  const sinConjuntos = !cargando && conjuntosAutorizados.length === 0;
+
   const conjuntosPendientesAuditoria = conjuntosAutorizados.filter((c) =>
     necesitaAuditoria(c.id_conjunto_residencial)
   );
@@ -349,127 +355,15 @@ export function RecicladorDashboard() {
         <Alert type="error" message={t("common.actionError")} onClose={() => setErrorAccion(false)} />
       )}
 
-      {/* Feedback de notificación enviada */}
-      {feedbackOk && (
-        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
-          <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
-          {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
-        </div>
-      )}
-
-      {feedbackAuditoria && (
-        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
-          <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
-          {feedbackAuditoria}
-        </div>
-      )}
-
-      {/* Aviso de auditoría pendiente (RQF-009) — solo aparece cuando aplica,
-          no ocupa espacio permanente en la barra lateral. */}
-      {!cargando && conjuntosPendientesAuditoria.length > 0 && (
-        <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-400/30 dark:bg-teal-400/10">
-          <div className="mb-3 flex items-center gap-2">
-            <ClipboardList className="icon-md text-teal-700 dark:text-teal-300" />
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white">
-              {t("dashboards.reciclador.auditoria.bannerTitle")}
-            </h2>
-          </div>
-          <div className="space-y-2">
-            {conjuntosPendientesAuditoria.map((c) => (
-              <div
-                key={c.id_conjunto_residencial}
-                className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-night-card sm:flex-row sm:items-center sm:justify-between"
-              >
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {t("dashboards.reciclador.auditoria.bannerSubtitle", { conjunto: c.nombre_conjunto })}
-                </p>
-                <button
-                  onClick={() => setConjuntoParaAuditar(c.id_conjunto_residencial)}
-                  className="touch-target-h shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                >
-                  {t("dashboards.reciclador.auditoria.bannerAction")}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Acciones de notificación */}
-      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
-        <p className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</p>
-        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-          {t("dashboards.reciclador.sendSection.subtitle")}
-        </p>
-        {conjuntosAutorizados.length === 0 && !cargando ? (
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {t("dashboards.reciclador.sendSection.noConjuntos")}
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
-            {/* ¿Qué? Cuando el reciclador solo tiene UN conjunto asignado ya
-                sabemos, sin abrir el modal, si ese botón se puede usar ahora
-                mismo (¿ya avisó llegada? ¿el SHUT ya está en ese estado?).
-                ¿Para qué? Se ve apagado para que no parezca la acción normal,
-                pero SÍ reacciona al clic — un botón con `disabled` de HTML
-                ignora el clic por completo, así que en vez de eso mostramos
-                el motivo (ver avisoBoton, debajo de la grilla). Esto también
-                funciona en celular, donde no existe el "pasar el mouse" que
-                haría falta para ver un `title`.
-                ¿Impacto? Con 2+ conjuntos no se puede saber cuál elegirá,
-                así que el botón queda habilitado y el aviso llega al abrir
-                el modal y elegir el conjunto (motivoModal, arriba). */}
-            {ACCIONES.map(({ tipo, label, icon: Icon, color }) => {
-              const motivo =
-                conjuntosAutorizados.length === 1
-                  ? motivoBloqueo(tipo, estadoDe(conjuntosAutorizados[0].id_conjunto_residencial), t)
-                  : null;
-              return (
-                <button
-                  key={tipo}
-                  onClick={() => {
-                    if (motivo) {
-                      mostrarAvisoBoton(motivo);
-                    } else {
-                      abrirModal(tipo);
-                    }
-                  }}
-                  aria-disabled={!!motivo}
-                  aria-label={label}
-                  aria-describedby={motivo ? `notif-motivo-${tipo}` : undefined}
-                  title={motivo ?? undefined}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${color} ${
-                    motivo ? "cursor-not-allowed opacity-40" : "cursor-pointer"
-                  }`}
-                >
-                  <Icon className={"icon-md shrink-0 icon-draw"} />
-                  {label}
-                  {/* ¿Qué? Texto oculto SOLO para lectores de pantalla, con
-                      el motivo del bloqueo. ¿Para qué? Antes, poner `title`
-                      en el botón hacía que el lector de pantalla anunciara
-                      el motivo EN VEZ del nombre del botón ("Llegué al
-                      conjunto") — con `aria-label` de vuelta y esto como
-                      descripción aparte, anuncia ambas cosas, en orden. */}
-                  {motivo && (
-                    <span id={`notif-motivo-${tipo}`} className="sr-only">
-                      {motivo}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-        {avisoBoton && (
-          <p
-            role="status"
-            className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
-            {avisoBoton}
-          </p>
-        )}
-      </div>
-
-      {/* Invitaciones pendientes */}
+      {/* Invitaciones pendientes.
+          ¿Qué? Issue #515 — van primero, antes de los botones de aviso.
+          ¿Para qué? Un Reciclador nuevo no tiene conjuntos hasta que acepta una
+                    invitación: sin ella los botones de aviso no sirven. Solo se
+                    muestra cuando hay invitaciones, así que no ocupa lugar el resto
+                    del tiempo.
+          ¿Impacto? Orden del panel: invitaciones, avisos, auditoría pendiente, mis
+                    conjuntos, notificaciones recibidas e historial (lo de consulta,
+                    al final). */}
       {!cargando && invitaciones.length > 0 && (
         <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
@@ -514,6 +408,149 @@ export function RecicladorDashboard() {
         </div>
       )}
 
+      {/* Acciones de notificación.
+          ¿Qué? Issue #515 — es lo que el Reciclador más usa (avisar que llegó, SHUT
+                lleno/libre, que se va), así que va arriba, justo después de las
+                invitaciones. Antes iba debajo del aviso de auditoría pendiente, que
+                crece con cada conjunto sin auditar y empujaba los botones hacia abajo.
+          ¿Para qué? El título pasa de párrafo a h2 (como los demás bloques) y el
+                    mensaje "Notificación enviada" aparece aquí mismo, debajo de los
+                    botones, donde el Reciclador está mirando; antes salía arriba de
+                    todo el panel. */}
+      <section
+        aria-labelledby="reciclador-avisos-titulo"
+        className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
+      >
+        <h2 id="reciclador-avisos-titulo" className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</h2>
+        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+          {t("dashboards.reciclador.sendSection.subtitle")}
+        </p>
+        {/* ¿Qué? Sin conjuntos autorizados los 4 botones se muestran apagados, con un
+                aviso corto encima (mismo estilo que el motivo de un botón bloqueado).
+            ¿Para qué? Antes, en su lugar salía una línea gris suelta que contradecía
+                      el subtítulo ("avisa a los residentes…" y debajo "aún no puedes").
+                      Ahora el Reciclador nuevo ve qué va a poder hacer y por qué todavía
+                      no, y el bloque no cambia de forma cuando acepta su primera
+                      invitación. Cómo conseguir un conjunto se explica en "Mis conjuntos".
+            ¿Impacto? Los botones siguen sin abrir nada (abrirModal no hace nada sin
+                      conjuntos); `aria-describedby` apunta al aviso para lectores de pantalla. */}
+        {sinConjuntos && (
+          <p
+            id="reciclador-sin-conjuntos"
+            className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200"
+          >
+            <Info className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
+            {t("dashboards.reciclador.sendSection.noConjuntos")}
+          </p>
+        )}
+        {/* ¿Qué? 1 columna en celular, 2×2 en tableta y 4 en una fila en escritorio ancho.
+            ¿Para qué? Con `lg:grid-cols-3` los 4 botones dejaban el cuarto solo en una segunda fila. */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {/* ¿Qué? Cuando el reciclador solo tiene UN conjunto asignado ya
+              sabemos, sin abrir el modal, si ese botón se puede usar ahora
+              mismo (¿ya avisó llegada? ¿el SHUT ya está en ese estado?).
+              ¿Para qué? Se ve apagado para que no parezca la acción normal,
+              pero SÍ reacciona al clic — un botón con `disabled` de HTML
+              ignora el clic por completo, así que en vez de eso mostramos
+              el motivo (ver avisoBoton, debajo de la grilla). Esto también
+              funciona en celular, donde no existe el "pasar el mouse" que
+              haría falta para ver un `title`.
+              ¿Impacto? Con 2+ conjuntos no se puede saber cuál elegirá,
+              así que el botón queda habilitado y el aviso llega al abrir
+              el modal y elegir el conjunto (motivoModal, arriba). */}
+          {ACCIONES.map(({ tipo, label, icon: Icon, color }) => {
+            const motivo =
+              conjuntosAutorizados.length === 1
+                ? motivoBloqueo(tipo, estadoDe(conjuntosAutorizados[0].id_conjunto_residencial), t)
+                : null;
+            return (
+              <button
+                key={tipo}
+                onClick={() => {
+                  if (motivo) {
+                    mostrarAvisoBoton(motivo);
+                  } else {
+                    abrirModal(tipo);
+                  }
+                }}
+                aria-disabled={!!motivo || sinConjuntos}
+                aria-label={label}
+                aria-describedby={motivo ? `notif-motivo-${tipo}` : sinConjuntos ? "reciclador-sin-conjuntos" : undefined}
+                title={motivo ?? undefined}
+                className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${color} ${
+                  motivo || sinConjuntos ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+                }`}
+              >
+                <Icon className={"icon-md shrink-0 icon-draw"} />
+                {label}
+                {/* ¿Qué? Texto oculto SOLO para lectores de pantalla, con
+                    el motivo del bloqueo. ¿Para qué? Antes, poner `title`
+                    en el botón hacía que el lector de pantalla anunciara
+                    el motivo EN VEZ del nombre del botón ("Llegué al
+                    conjunto") — con `aria-label` de vuelta y esto como
+                    descripción aparte, anuncia ambas cosas, en orden. */}
+                {motivo && (
+                  <span id={`notif-motivo-${tipo}`} className="sr-only">
+                    {motivo}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {avisoBoton && (
+          <p
+            role="status"
+            className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
+            {avisoBoton}
+          </p>
+        )}
+        {feedbackOk && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
+            <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
+            {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
+          </div>
+        )}
+      </section>
+
+      {feedbackAuditoria && (
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
+          <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
+          {feedbackAuditoria}
+        </div>
+      )}
+
+      {/* Aviso de auditoría pendiente (RQF-009) — solo aparece cuando aplica,
+          no ocupa espacio permanente en la barra lateral. */}
+      {!cargando && conjuntosPendientesAuditoria.length > 0 && (
+        <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-400/30 dark:bg-teal-400/10">
+          <div className="mb-3 flex items-center gap-2">
+            <ClipboardList className="icon-md text-teal-700 dark:text-teal-300" />
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">
+              {t("dashboards.reciclador.auditoria.bannerTitle")}
+            </h2>
+          </div>
+          <div className="space-y-2">
+            {conjuntosPendientesAuditoria.map((c) => (
+              <div
+                key={c.id_conjunto_residencial}
+                className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-night-card sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  {t("dashboards.reciclador.auditoria.bannerSubtitle", { conjunto: c.nombre_conjunto })}
+                </p>
+                <button
+                  onClick={() => setConjuntoParaAuditar(c.id_conjunto_residencial)}
+                  className="touch-target-h shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+                >
+                  {t("dashboards.reciclador.auditoria.bannerAction")}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Mis conjuntos autorizados */}
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-2">
@@ -540,15 +577,6 @@ export function RecicladorDashboard() {
         )}
       </div>
 
-      {/* ¿Qué? Historial de las auditorías que YO envié, de a páginas — antes el
-             reciclador no tenía forma de volver a ver una auditoría pasada, a
-             diferencia de Residente/Admin de Conjunto que sí tienen esta misma
-             sección para las de su conjunto.
-          ¿Para qué? Es el mismo componente del Residente (HistorialAuditorias), con
-                    otra fuente de datos. El aviso de "auditoría pendiente" ya no sale
-                    de esta lista sino de ultimasAuditorias (una fecha por conjunto). */}
-      <HistorialAuditorias cargar={listarMisAuditorias} mostrarSiempreElConjunto recargar={versionHistorial} />
-
       {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) */}
       {cargando ? (
         <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
@@ -558,7 +586,7 @@ export function RecicladorDashboard() {
         <NotificationFeed
           title={t("dashboards.reciclador.notifications.title")}
           notifications={notificaciones}
-          emptyMessage={t("dashboards.reciclador.notifications.empty")}
+          emptyMessage={t(sinConjuntos ? "dashboards.reciclador.notifications.emptyWithoutConjuntos" : "dashboards.reciclador.notifications.empty")}
           accentBg="bg-amber-700"
           accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-400/10 dark:hover:bg-amber-400/15"
           onMarkRead={marcarLeida}
@@ -566,6 +594,15 @@ export function RecicladorDashboard() {
           onClearRead={limpiarLeidas}
         />
       )}
+
+      {/* ¿Qué? Historial de las auditorías que YO envié, de a páginas — antes el
+             reciclador no tenía forma de volver a ver una auditoría pasada, a
+             diferencia de Residente/Admin de Conjunto que sí tienen esta misma
+             sección para las de su conjunto.
+          ¿Para qué? Es el mismo componente del Residente (HistorialAuditorias), con
+                    otra fuente de datos. El aviso de "auditoría pendiente" ya no sale
+                    de esta lista sino de ultimasAuditorias (una fecha por conjunto). */}
+      <HistorialAuditorias cargar={listarMisAuditorias} mostrarSiempreElConjunto recargar={versionHistorial} />
 
       {/* Modal: seleccionar conjunto para enviar notificación */}
       {/* ¿Qué? Antes era un <div> armado a mano — no cerraba con Escape, no

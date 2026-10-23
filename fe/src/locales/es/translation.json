@@ -861,7 +861,7 @@
       "sendSection": {
         "title": "Enviar notificación",
         "subtitle": "Avisa a los residentes y al administrador del conjunto.",
-        "noConjuntos": "Aún no tienes conjuntos autorizados. Acepta una invitación para poder enviar notificaciones."
+        "noConjuntos": "Los botones se activan cuando tengas un conjunto autorizado."
       },
       "invitations": {
         "title": "Invitaciones pendientes",
@@ -875,7 +875,8 @@
       },
       "notifications": {
         "title": "Notificaciones recibidas",
-        "empty": "No tienes notificaciones. Cuando un residente reporte el SHUT lleno, aparecerá aquí."
+        "empty": "No tienes notificaciones. Cuando un residente reporte el SHUT lleno, aparecerá aquí.",
+        "emptyWithoutConjuntos": "No tienes notificaciones. Los avisos de los residentes (como SHUT lleno) llegan de los conjuntos donde estés autorizado."
       },
       "modal": {
         "title": "¿A qué conjunto notificas?",
