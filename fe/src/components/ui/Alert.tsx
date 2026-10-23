@@ -12,8 +12,8 @@ import { BadgeCheck, Info, OctagonX, TriangleAlert, X, type LucideIcon } from "l
 const ICONO_POR_TIPO: Record<AlertProps["type"], { icon: LucideIcon; anim: string }> = {
   success: { icon: BadgeCheck, anim: "icon-hop" },
   error: { icon: OctagonX, anim: "icon-shake" },
-  warning: { icon: TriangleAlert, anim: "icon-ring" },
-  info: { icon: Info, anim: "icon-nudge" },
+  warning: { icon: TriangleAlert, anim: "icon-shake" },
+  info: { icon: Info, anim: "icon-hop" },
 };
 
 /**

@@ -97,7 +97,15 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | `icon-xl` | 32 px | Destacado: encabezado del dashboard, estado vacío, tarjetas de rol del registro |
   | `icon-deco` | 80 px | Decorativo: marca de agua del dashboard |
 
-- Animación de íconos: solo en lo que se puede tocar (sidebar, botones, selector del semáforo) o en lo que aparece para avisar (mensajes). Se usan las clases `icon-draw`, `icon-hop`, `icon-shake`, `icon-ring`, `icon-nudge` y `icon-appear` de `fe/src/index.css`, que ya respetan `prefers-reduced-motion`. No se agregan librerías de animación.
+- Animación de íconos (estándar de **3**, issue #502): solo se anima lo que se puede tocar o lo que aparece para avisar; nunca un ícono de adorno. Clases de `fe/src/index.css`, todas dentro de `prefers-reduced-motion: no-preference`:
+
+  | Caso | Clase | Cuándo se mueve |
+  | --- | --- | --- |
+  | Algo que se toca: ítem del menú, botón, enlace o etiqueta con ícono (incluidas las caritas del semáforo) | `icon-draw` (se redibuja el trazo) | al pasar el mouse **o enfocar con el teclado**; es la única que se usa en lo tocable |
+  | Mensaje bueno o neutro que aparece (éxito, información) | `icon-appear icon-hop` (salta) | una vez, al aparecer |
+  | Mensaje que pide atención (error, advertencia) | `icon-appear icon-shake` (sacude) | una vez, al aparecer |
+
+  `icon-hop` e `icon-shake` siempre van junto a `icon-appear` (no reaccionan al mouse: un ícono dentro de un botón usa `icon-draw`). Antes también existían `icon-ring` e `icon-nudge`; se borraron. Con "reducir movimiento" ningún ícono se mueve y las flechas de los acordeones cambian de posición sin girar. **Excepción documentada:** el `Spinner` (`animate-spin`) sigue girando: no se cuenta como ícono animado sino como indicador de que algo está cargando, y sin el giro dejaría de significar "trabajando". Una prueba (`fe/src/__tests__/lib/animacionesIconos.test.ts`) falla si aparece `icon-ring` o `icon-nudge`, un `icon-hop` o `icon-shake` sin `icon-appear`, un `icon-draw` junto a `icon-appear`, o una animación de ícono fuera de `no-preference`. No se agregan librerías de animación.
 - Elementos clicables (issue #501): lo que se puede tocar se reconoce **a simple vista, sin pasar el mouse** (en celular no hay mouse). El `cursor-pointer` solo ayuda a quien tiene mouse; esta regla es la que cuenta:
 
   | Elemento | Cómo se ve | Cómo se escribe |

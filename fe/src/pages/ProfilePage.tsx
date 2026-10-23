@@ -551,7 +551,7 @@ export function ProfilePage() {
                   disabled={guardando}
                   className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                 >
-                  <BadgeCheck className="icon-md icon-hop" />
+                  <BadgeCheck className="icon-md icon-draw" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}
                 </button>
               </div>

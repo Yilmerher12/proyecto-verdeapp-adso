@@ -250,7 +250,7 @@ export function SolicitudesPendientes({
                       disabled={procesandoId === s.id || !motivoRechazo.trim()}
                       className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <OctagonX className="icon-sm icon-shake" />
+                      <OctagonX className="icon-sm icon-draw" />
                       {t("desvinculacion.adminSistema.rejectModal.confirm")}
                     </button>
                     <button
@@ -282,7 +282,7 @@ export function SolicitudesPendientes({
                     disabled={procesandoId === s.id}
                     className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                   >
-                    <BadgeCheck className="icon-sm icon-hop" />
+                    <BadgeCheck className="icon-sm icon-draw" />
                     {t("desvinculacion.adminSistema.approve")}
                   </button>
                   <button
@@ -290,7 +290,7 @@ export function SolicitudesPendientes({
                     disabled={procesandoId === s.id}
                     className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400/30 dark:bg-transparent dark:hover:bg-red-400/15"
                   >
-                    <OctagonX className="icon-sm icon-shake" />
+                    <OctagonX className="icon-sm icon-draw" />
                     {t("desvinculacion.adminSistema.reject")}
                   </button>
                 </div>

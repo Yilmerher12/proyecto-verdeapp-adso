@@ -165,7 +165,7 @@ export function ResidenteDashboard() {
       {/* Banner estado SHUT */}
       {!cargando && estadoShut.lleno && (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-300/30 dark:bg-amber-400/10">
-          <TriangleAlert className="icon-lg mt-0.5 shrink-0 text-amber-700 icon-appear icon-ring" />
+          <TriangleAlert className="icon-lg mt-0.5 shrink-0 text-amber-700 icon-appear icon-shake" />
           <div>
             <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
               {t("dashboards.residente.shutBanner.title")}

@@ -412,7 +412,7 @@ export function AppShell({ children }: AppShellProps) {
                           >
                             {/* Animación al pasar el mouse: comunicados "suena", novedades
                                 crece, el resto se redibuja (ver index.css). */}
-                            <Icon className={`icon-lg shrink-0 ${Icon === Megaphone ? "icon-ring" : Icon === Newspaper ? "icon-nudge" : "icon-draw"}`} />
+                            <Icon className={"icon-lg shrink-0 icon-draw"} />
                             {!collapsed && <span className="min-w-0 truncate">{label}</span>}
                           </NavLink>
                         </li>
