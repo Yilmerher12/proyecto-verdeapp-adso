@@ -66,8 +66,8 @@ El nombre del RF quedó como "Invitación y Vinculación Inicial" por su alcance
 
 ### Flujo E — Admin de Conjunto pide que le asignen otro conjunto (HU-051)
 1. En su panel principal, debajo de la lista de conjuntos, el Admin de Conjunto presiona la fila **"Solicitar otro conjunto"** (se ve aunque aún no tenga conjuntos).
-2. Se abre el paso a paso: tres pasos escritos para quien ya tiene cuenta, los documentos que debe tener listos y el aviso de que no se suben a VerdeApp. Los documentos y el aviso son los mismos del registro (`auth.register.adminRequest.*`), para corregirlos en un solo lugar.
-3. Al presionar "Solicitar acceso" va a `/contacto?motivo=otro-conjunto`, con el asunto "Solicitud para administrar otro conjunto" y una plantilla del mensaje que no se puede enviar sin completar.
+2. Se abre el paso a paso: dos pasos escritos para quien ya tiene cuenta, los dos documentos que debe adjuntar (certificado de representación legal de la propiedad horizontal y cédula) y el aviso de que no se suben a VerdeApp. Los documentos y el aviso son los mismos del registro (`auth.register.adminRequest.*`), para corregirlos en un solo lugar.
+3. La dirección del equipo (`administradorverdeapp@gmail.com`) es un enlace que abre su correo con el asunto "Otro conjunto" y el cuerpo ya empezado, y un ícono permite copiarla. No hay botón: el formulario de contacto no puede llevar adjuntos (issue #457).
 4. El resto sigue por correo, fuera de la app: el equipo verifica el cargo y el Administrador del Sistema asigna el conjunto (HU-024). La app no crea ninguna solicitud.
 
 ---

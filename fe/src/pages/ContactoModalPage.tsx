@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
@@ -8,7 +8,6 @@ import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { enviarMensajeContacto } from "@/lib/contactApi";
-import { MOTIVO_SOLICITUD_ADMIN, MOTIVO_SOLICITUD_OTRO_CONJUNTO } from "@/components/SolicitudAdminConjuntoInfo";
 import {
   CONTACTO_ASUNTO_MAX_LENGTH,
   CONTACTO_ASUNTO_MIN_LENGTH,
@@ -24,12 +23,6 @@ type Campo = "name" | "email" | "subject" | "message";
 const CAMPOS: Campo[] = ["name", "email", "subject", "message"];
 const FORM_VACIO: Record<Campo, string> = { name: "", email: "", subject: "", message: "" };
 
-// ¿Qué? Motivo de la URL → grupo de textos (asunto y plantilla) del archivo de idiomas.
-const CLAVE_POR_MOTIVO = new Map([
-  [MOTIVO_SOLICITUD_ADMIN, "contactoModal.adminRequest"],
-  [MOTIVO_SOLICITUD_OTRO_CONJUNTO, "contactoModal.otroConjunto"],
-]);
-
 /**
  * ¿Qué? Ruta /contacto — Landing de fondo + modal con el formulario de contacto.
  * ¿Para qué? A diferencia de Términos/Privacidad/Cookies (documentos legales
@@ -41,25 +34,7 @@ export function ContactoModalPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // ¿Qué? Si se llega desde la opción "¿Administras un conjunto?" del
-  //       registro (?motivo=admin-conjunto), el asunto y una plantilla del
-  //       mensaje ya vienen escritos en el idioma activo.
-  // ¿Para qué? Que todas las solicitudes lleguen al equipo con el mismo
-  //           asunto y los mismos datos, sin que la persona adivine qué poner.
-  // ¿Impacto? Nada personal viaja en la URL: solo el motivo.
-  const [searchParams] = useSearchParams();
-  // ¿Qué? Cada motivo conocido trae su asunto y su plantilla (issue #491 sumó
-  //       "otro-conjunto", para quien ya tiene cuenta). Un Map y no un objeto,
-  //       para que un ?motivo=toString no encuentre propiedades heredadas.
-  const claveMotivo = CLAVE_POR_MOTIVO.get(searchParams.get("motivo") ?? "");
-  const esSolicitudAdmin = claveMotivo !== undefined;
-  const plantillaAdmin = claveMotivo ? t(`${claveMotivo}.messageTemplate`) : "";
-
-  const [formData, setFormData] = useState(() =>
-    claveMotivo
-      ? { ...FORM_VACIO, subject: t(`${claveMotivo}.subject`), message: plantillaAdmin }
-      : FORM_VACIO,
-  );
+  const [formData, setFormData] = useState(FORM_VACIO);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Campo, string>>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
@@ -87,11 +62,6 @@ export function ContactoModalPage() {
         : [CONTACTO_MENSAJE_MIN_LENGTH, CONTACTO_MENSAJE_MAX_LENGTH];
     if (valor.length < min) return t(`contactoModal.validation.${campo}Min`, { min });
     if (valor.length > max) return t(`contactoModal.validation.${campo}Max`, { max });
-    // ¿Qué? La plantilla ya supera el mínimo de caracteres, así que sin esta
-    //       revisión se podía enviar tal cual, sin ningún dato del conjunto.
-    if (campo === "message" && esSolicitudAdmin && valor === plantillaAdmin.trim()) {
-      return t("contactoModal.validation.templateUnchanged");
-    }
     return "";
   };
 
@@ -202,7 +172,7 @@ export function ContactoModalPage() {
                 <textarea
                   id="message"
                   name="message"
-                  rows={esSolicitudAdmin ? 6 : 4}
+                  rows={4}
                   value={formData.message}
                   onChange={handleChange}
                   onBlur={() => validarCampo("message")}

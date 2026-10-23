@@ -54,7 +54,10 @@ export function PoliticaCookiesPage() {
   //       que definía la constante CONTACTO_EMAIL — un dominio que no
   //       existe, en ningún caso). Ahora enlaza al formulario de contacto
   //       real de la app — el profesor pidió que ningún link muestre un
-  //       correo, por seguridad.
+  //       correo, por seguridad. Única excepción: la pantalla para pedir la
+  //       cuenta de Administrador de Conjunto (SolicitudAdminConjuntoInfo),
+  //       que pide documentos adjuntos y el formulario no puede llevarlos
+  //       (issue #457).
   const emailLink = (
     <Link
       to="/contacto"

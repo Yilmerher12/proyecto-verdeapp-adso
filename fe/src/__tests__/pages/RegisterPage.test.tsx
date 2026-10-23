@@ -11,7 +11,6 @@
 
 import { createEvent, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Route, Routes, useLocation } from "react-router-dom";
 import axios from "axios";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { renderWithProviders } from "../helpers";
@@ -589,23 +588,6 @@ describe("RegisterPage", () => {
   //       que reemplaza el formulario por las instrucciones para pedir la
   //       cuenta (solo se crea por invitación).
   describe("opción ¿Administras un conjunto?", () => {
-    // ¿Qué? Muestra la ruta + query a la que se llegó, para comprobar a
-    //       dónde lleva el botón "Solicitar acceso".
-    function DestinoContacto() {
-      const { pathname, search } = useLocation();
-      return <p>destino:{pathname}{search}</p>;
-    }
-
-    function renderConRutas() {
-      return renderWithProviders(
-        <Routes>
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/contacto" element={<DestinoContacto />} />
-        </Routes>,
-        { initialRoute: "/register" },
-      );
-    }
-
     it("al elegirla oculta el formulario y muestra las instrucciones y los documentos", async () => {
       const user = userEvent.setup();
       renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
@@ -613,8 +595,8 @@ describe("RegisterPage", () => {
       await user.click(screen.getByRole("button", { name: /¿Administras un conjunto\?/ }));
 
       expect(screen.getByText("Las cuentas de administrador se crean por invitación")).toBeInTheDocument();
-      expect(screen.getByText(/Certificado de existencia y representación legal/)).toBeInTheDocument();
-      expect(screen.getByText(/Copia de tu cédula/)).toBeInTheDocument();
+      expect(screen.getByText(/Certificado de Representación Legal de la Propiedad Horizontal/)).toBeInTheDocument();
+      expect(screen.getByText(/Copia de tu cédula de ciudadanía, ampliada al 150 %/)).toBeInTheDocument();
       expect(screen.getByText(/nunca se suben a VerdeApp/)).toBeInTheDocument();
       expect(screen.queryByLabelText("Nombres *")).not.toBeInTheDocument();
       expect(screen.queryByLabelText("Contraseña *")).not.toBeInTheDocument();
@@ -622,24 +604,44 @@ describe("RegisterPage", () => {
       expect(screen.queryByRole("button", { name: /Registrar Cuenta|Completa los campos/ })).not.toBeInTheDocument();
     });
 
-    it("no muestra ningún correo electrónico en pantalla", async () => {
+    // ¿Qué? Issue #457 — son dos documentos y dos pasos, y se pide por correo directo.
+    it("pide solo dos documentos, en dos pasos, y no tiene botón de solicitar acceso", async () => {
       const user = userEvent.setup();
-      const { container } = renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+      renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
 
       await user.click(screen.getByRole("button", { name: /¿Administras un conjunto\?/ }));
 
-      expect(container.textContent).not.toMatch(/\S+@\S+\.\S+/);
-      expect(container.querySelector('a[href^="mailto:"]')).toBeNull();
+      expect(screen.getByText("Envía tus documentos por correo")).toBeInTheDocument();
+      expect(screen.getByText("Recibe tu autorización de ingreso")).toBeInTheDocument();
+      expect(screen.queryByText(/Acta de la asamblea|Contrato firmado|Cámara de Comercio/)).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Solicitar acceso" })).not.toBeInTheDocument();
     });
 
-    it("el botón Solicitar acceso lleva al formulario de contacto con el motivo de la solicitud", async () => {
+    it("muestra el correo del equipo como enlace que abre el correo con el asunto y los datos a escribir", async () => {
       const user = userEvent.setup();
-      renderConRutas();
+      renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
 
       await user.click(screen.getByRole("button", { name: /¿Administras un conjunto\?/ }));
-      await user.click(screen.getByRole("button", { name: "Solicitar acceso" }));
 
-      expect(screen.getByText("destino:/contacto?motivo=admin-conjunto")).toBeInTheDocument();
+      const enlace = screen.getByRole("link", { name: "administradorverdeapp@gmail.com" });
+      const href = enlace.getAttribute("href") ?? "";
+      expect(href.startsWith("mailto:administradorverdeapp@gmail.com?")).toBe(true);
+      const params = new URLSearchParams(href.slice(href.indexOf("?") + 1));
+      expect(params.get("subject")).toBe("Administrador Conjunto");
+      expect(params.get("body")).toBe(
+        "Nombre y apellido:\nCorreo electrónico:\nNúmero de contacto:\nNombre del conjunto:\nDirección del conjunto:",
+      );
+    });
+
+    it("el ícono de copiar deja el correo en el portapapeles y lo avisa", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<RegisterPage />, { initialRoute: "/register" });
+
+      await user.click(screen.getByRole("button", { name: /¿Administras un conjunto\?/ }));
+      await user.click(screen.getByRole("button", { name: "Copiar correo" }));
+
+      expect(await navigator.clipboard.readText()).toBe("administradorverdeapp@gmail.com");
+      expect(screen.getByRole("status")).toHaveTextContent("Correo copiado");
     });
 
     it("al volver a Residente el formulario reaparece con lo que ya se había escrito", async () => {

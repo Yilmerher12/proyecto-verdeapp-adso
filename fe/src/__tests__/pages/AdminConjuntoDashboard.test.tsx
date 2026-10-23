@@ -8,7 +8,6 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
-import { Route, Routes, useLocation } from "react-router-dom";
 import { AdminConjuntoDashboard } from "@/pages/dashboards/AdminConjuntoDashboard";
 import { RoleId } from "@/types/auth";
 import { renderWithProviders, mockUser } from "../helpers";
@@ -555,11 +554,6 @@ describe("AdminConjuntoDashboard", () => {
       });
     }
 
-    function DestinoContacto() {
-      const { pathname, search } = useLocation();
-      return <p>destino:{pathname}{search}</p>;
-    }
-
     it("muestra la fila Solicitar otro conjunto debajo de la lista de conjuntos", async () => {
       mockUnConjunto();
       renderPage();
@@ -585,10 +579,11 @@ describe("AdminConjuntoDashboard", () => {
 
       const ventana = await screen.findByRole("dialog", { name: "Solicitar otro conjunto" });
       expect(within(ventana).getByText(/el conjunto se asigna a tu cuenta/)).toBeInTheDocument();
-      expect(within(ventana).getByText(/Certificado de existencia y representación legal/)).toBeInTheDocument();
+      expect(within(ventana).getByText(/Certificado de Representación Legal de la Propiedad Horizontal/)).toBeInTheDocument();
+      expect(within(ventana).getByText(/Copia de tu cédula de ciudadanía, ampliada al 150 %/)).toBeInTheDocument();
       expect(within(ventana).getByText(/nunca se suben a VerdeApp/)).toBeInTheDocument();
-      // ¿Qué? Es el texto del registro ("terminar de crear tu cuenta"): aquí no aplica.
-      expect(within(ventana).queryByText(/terminar de crear tu cuenta/)).not.toBeInTheDocument();
+      // ¿Qué? Es el texto del registro ("autorización de registro"): aquí no aplica.
+      expect(within(ventana).queryByText(/autorización de registro/)).not.toBeInTheDocument();
     });
 
     it("se puede cerrar la ventana", async () => {
@@ -602,21 +597,22 @@ describe("AdminConjuntoDashboard", () => {
       expect(screen.queryByRole("dialog", { name: "Solicitar otro conjunto" })).not.toBeInTheDocument();
     });
 
-    it("Solicitar acceso lleva al contacto con el motivo otro-conjunto", async () => {
+    it("pide el correo con el asunto Otro conjunto, sin botón, y con el ícono de copiar", async () => {
       mockUnConjunto();
       const user = userEvent.setup();
-      renderWithProviders(
-        <Routes>
-          <Route path="/" element={<AdminConjuntoDashboard />} />
-          <Route path="/contacto" element={<DestinoContacto />} />
-        </Routes>,
-        { authContext: { user: adminConjuntoUser, isAuthenticated: true } },
-      );
+      renderPage();
 
       await user.click(await screen.findByRole("button", { name: /Solicitar otro conjunto/ }));
-      await user.click(await screen.findByRole("button", { name: "Solicitar acceso" }));
+      const ventana = await screen.findByRole("dialog", { name: "Solicitar otro conjunto" });
 
-      expect(screen.getByText("destino:/contacto?motivo=otro-conjunto")).toBeInTheDocument();
+      expect(within(ventana).queryByRole("button", { name: "Solicitar acceso" })).not.toBeInTheDocument();
+      const href = within(ventana).getByRole("link", { name: "administradorverdeapp@gmail.com" }).getAttribute("href") ?? "";
+      const params = new URLSearchParams(href.slice(href.indexOf("?") + 1));
+      expect(params.get("subject")).toBe("Otro conjunto");
+      expect(params.get("body")).toContain("Mi correo en VerdeApp:");
+
+      await user.click(within(ventana).getByRole("button", { name: "Copiar correo" }));
+      expect(await navigator.clipboard.readText()).toBe("administradorverdeapp@gmail.com");
     });
 
     // ¿Qué? Issue #513 — la cobertura va primero (es la cifra que se mira) y el código de
