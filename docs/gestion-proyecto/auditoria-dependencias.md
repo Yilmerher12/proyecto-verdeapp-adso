@@ -241,3 +241,13 @@ La revisión de seguridad del 2026-10-22 (`pip-audit` sobre las dependencias del
 - **Qué se hizo:** `pypdf==6.20.1` pasó a `pypdf==6.21.1` en `be/pyproject.toml` (versión exacta) y `uv lock --upgrade-package pypdf` actualizó `be/uv.lock`. Ningún otro paquete cambió.
 - **Excepción a la espera de 7 días:** la 6.21.1 se publicó el 2026-10-17 (5 días antes), menos de la semana que exige el `cooldown` de Dependabot. Se adopta igual porque corrige vulnerabilidades conocidas y solo se usa en las pruebas. La 6.21.2 (2026-10-21) sigue descartada por ser demasiado nueva.
 - **Verificado:** `pip-audit@2.10.1` sobre producción más desarrollo (`uv export --no-hashes`, `-s osv`): **No known vulnerabilities found**. 817 pruebas del backend pasan (cobertura 97.07%, umbral 96%) y `ruff` queda limpio.
+
+---
+
+## Actualización — `zod` 4.6.7 en el lockfile del frontend (2026-10-23)
+
+El paso `pnpm audit` del CI quedó en rojo en `develop`, justo después de mergear el PR #536 (la investigación del chat de soporte), con 1 alerta alta: GHSA-mrhx-c7xc-m3w5 ("Zod can exhaust memory while validating oversized constrained collections"), en `zod` anterior a 4.6.6. El PR no tocaba dependencias y su CI había pasado unos 50 minutos antes: la alerta se publicó entre uno y otro. `zod` 4.6.5 llega como dependencia indirecta de `eslint-plugin-react-hooks` (`.>eslint-plugin-react-hooks>zod` y `.>eslint-plugin-react-hooks>zod-validation-error>zod`) y el proyecto no lo usa directamente.
+
+- **Qué se hizo:** `pnpm update zod --depth Infinity` en `fe/`. Solo cambió `fe/pnpm-lock.yaml` (`zod` 4.6.5 a 4.6.7, y las referencias de `zod-validation-error`). `package.json` no cambió y no se agregó ninguna regla de `overrides` (se quitaron a propósito en el issue #313). `eslint-plugin-react-hooks` 7.0.1 y `zod-validation-error` aceptan `zod` 4.x dentro de su rango.
+- **Versión elegida:** la 4.6.7, publicada el 2026-10-12 (11 días antes), así que cumple la espera de 7 días del `cooldown` de Dependabot. La 4.6.6 también corrige la alerta, pero la 4.6.7 es la última.
+- **Verificado:** `pnpm audit` en `fe/`: **No known vulnerabilities found**. `pnpm lint` y `pnpm build` pasan, y las 684 pruebas del frontend también.
