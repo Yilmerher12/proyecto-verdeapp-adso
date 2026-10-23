@@ -1186,6 +1186,23 @@
       "notified": "Se avisó a {{count}} residente",
       "notified_other": "Se avisó a {{count}} residentes",
       "noRecommendation": "Sin recomendación",
+      "filters": {
+        "localidad": "Localidad",
+        "allLocalidades": "Todas las localidades",
+        "conjunto": "Conjunto",
+        "allConjuntos": "Todos los conjuntos",
+        "more": "Más filtros",
+        "noData": "Sin calificaciones",
+        "from": "Desde",
+        "to": "Hasta",
+        "clear": "Limpiar filtros"
+      },
+      "sort": {
+        "label": "Ordenar por",
+        "criticas": "Peor calificación primero",
+        "recientes": "Más recientes",
+        "conjunto": "Conjunto (A–Z)"
+      },
       "headers": {
         "conjunto": "Conjunto",
         "tema": "Tema",

@@ -1185,6 +1185,23 @@
           "notified": "{{count}} resident notified",
           "notified_other": "{{count}} residents notified",
           "noRecommendation": "No recommendation",
+          "filters": {
+            "localidad": "District",
+            "allLocalidades": "All districts",
+            "conjunto": "Building",
+            "allConjuntos": "All buildings",
+            "more": "More filters",
+            "noData": "No ratings",
+            "from": "From",
+            "to": "To",
+            "clear": "Clear filters"
+          },
+          "sort": {
+            "label": "Sort by",
+            "criticas": "Worst rating first",
+            "recientes": "Most recent",
+            "conjunto": "Building (A–Z)"
+          },
           "headers": {
             "conjunto": "Building",
             "tema": "Topic",

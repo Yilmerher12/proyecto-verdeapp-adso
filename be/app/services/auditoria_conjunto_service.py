@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
 from app.models.auditoria_conjunto import AuditoriaConjunto
+from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
 from app.models.reciclador_conjunto import RecicladorConjunto
@@ -552,7 +553,10 @@ def listar_admin(
         select(AuditoriaConjunto)
         .where(*condiciones)
         .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
-        .options(selectinload(AuditoriaConjunto.conjunto), selectinload(AuditoriaConjunto.reciclador))
+        .options(
+            selectinload(AuditoriaConjunto.conjunto).selectinload(ConjuntoResidencial.localidad),
+            selectinload(AuditoriaConjunto.reciclador),
+        )
         .limit(limit)
         .offset(offset)
     )
