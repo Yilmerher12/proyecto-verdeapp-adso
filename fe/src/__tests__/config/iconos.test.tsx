@@ -33,8 +33,8 @@ describe("Íconos de mensajes (Alert)", () => {
   it.each([
     ["success", "lucide-badge-check", "icon-hop"],
     ["error", "lucide-octagon-x", "icon-shake"],
-    ["warning", "lucide-triangle-alert", "icon-ring"],
-    ["info", "lucide-info", "icon-nudge"],
+    ["warning", "lucide-triangle-alert", "icon-shake"],
+    ["info", "lucide-info", "icon-hop"],
   ] as const)("tipo %s usa %s y se anima al aparecer", (type, clase, anim) => {
     const { container } = render(<Alert type={type} message="x" />);
     const icono = container.querySelector("svg");

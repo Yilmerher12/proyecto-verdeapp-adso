@@ -417,19 +417,26 @@
 }
 
 /* ============================================================================
-   Animaciones de íconos (lucide)
+   Animaciones de íconos (lucide) — estándar de 3 (issue #502)
    ¿Qué? Clases que se ponen en el propio <Icon className="...">:
-         - icon-draw: el ícono se redibuja trazo por trazo (sidebar, botones).
-         - icon-hop (salta), icon-shake (niega), icon-ring (suena/tiembla),
-           icon-nudge (crece un poco): movimiento según lo que significa.
-         Por defecto se disparan al pasar el mouse por el elemento clicable que
-         contiene al ícono (a, button, label). Con icon-appear se disparan UNA vez
-         al aparecer (mensajes de éxito/error/aviso).
-   ¿Para qué? Regla del proyecto: solo se anima lo que se puede tocar o lo que
-              aparece para avisar algo — no hay íconos moviéndose de adorno.
+         - icon-draw: el ícono se redibuja trazo por trazo. Es la ÚNICA para lo
+           que se puede tocar (menú, botones, enlaces, etiquetas): se dispara al
+           pasar el mouse O al enfocar con el teclado.
+         - icon-hop (salta): mensaje que aparece y es bueno o neutro (éxito,
+           información). Va siempre junto a icon-appear.
+         - icon-shake (sacude): mensaje que aparece y pide atención (error,
+           advertencia). Va siempre junto a icon-appear.
+         icon-appear NO anima por sí sola: hace que hop/shake se disparen UNA vez,
+         al aparecer el mensaje.
+   ¿Para qué? Antes había 5 (con icon-ring e icon-nudge) y se usaban sin regla: el
+              menú animaba cada ítem distinto y un ícono de aviso dentro de un
+              botón reaccionaba al mouse como si fuera un aviso. Regla: solo se
+              anima lo que se puede tocar (draw) o lo que aparece para avisar
+              (hop o shake); nunca un ícono de adorno.
    ¿Impacto? Todo va dentro de prefers-reduced-motion: no-preference, igual que el
              resto de animaciones de este archivo: quien pidió "reducir
-             movimiento" en su sistema ve los íconos quietos.
+             movimiento" en su sistema ve los íconos quietos. Hop y shake NO se
+             disparan con el mouse: un ícono dentro de un botón usa icon-draw.
    ============================================================================ */
 @keyframes icon-draw {
   from {
@@ -465,60 +472,37 @@
     transform: translateX(3px);
   }
 }
-@keyframes icon-ring {
-  0%,
-  100% {
-    transform: none;
-  }
-  20% {
-    transform: rotate(-12deg);
-  }
-  40% {
-    transform: rotate(10deg);
-  }
-  60% {
-    transform: rotate(-6deg);
-  }
-  80% {
-    transform: rotate(3deg);
-  }
-}
-@keyframes icon-nudge {
-  0%,
-  100% {
-    transform: none;
-  }
-  50% {
-    transform: scale(1.15);
-  }
-}
 
 @layer utilities {
   @media (prefers-reduced-motion: no-preference) {
     /* Los íconos de lucide miden 24×24: ningún trazo pasa de 100 unidades, así
        que un dasharray de 100 sirve para todos sin medir cada uno. */
-    :is(a, button, label):hover > .icon-draw > *,
-    :is(a, button, label):hover .icon-draw > * {
+    :is(a, button, label):is(:hover, :focus-visible) > .icon-draw > *,
+    :is(a, button, label):is(:hover, :focus-visible) .icon-draw > * {
       stroke-dasharray: 100;
       animation: icon-draw 0.6s ease-out;
     }
-    :is(a, button, label):hover .icon-hop,
     .icon-appear.icon-hop {
       animation: icon-hop 0.6s ease-in-out;
     }
-    :is(a, button, label):hover .icon-shake,
     .icon-appear.icon-shake {
       animation: icon-shake 0.5s ease-in-out;
     }
-    :is(a, button, label):hover .icon-ring,
-    .icon-appear.icon-ring {
-      transform-origin: 50% 20%;
-      animation: icon-ring 0.7s ease-in-out;
-    }
-    :is(a, button, label):hover .icon-nudge,
-    .icon-appear.icon-nudge {
-      animation: icon-nudge 0.5s ease-in-out;
-    }
+  }
+}
+
+/* ¿Qué? Con "reducir movimiento" las flechas de los acordeones (ChevronDown
+         con `transition-transform` y `rotate-180`) cambian de posición sin girar.
+   ¿Para qué? Es el único movimiento de ícono que no pasa por las clases de
+              arriba, y el criterio del issue #502 es que con esa preferencia
+              ningún ícono se mueva.
+   ¿Impacto? Va SIN @layer a propósito: una regla sin capa le gana a las
+             utilidades de Tailwind. El Spinner (`animate-spin`) queda fuera: es
+             un indicador de que algo está cargando, no un ícono animado, y
+             quitarle el giro lo deja sin significado. */
+@media (prefers-reduced-motion: reduce) {
+  .transition-transform {
+    transition: none;
   }
 }
 

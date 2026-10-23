@@ -802,7 +802,7 @@ interface AlertProps {
 
 - `role="alert"` — Los lectores de pantalla anuncian el contenido automáticamente.
 - Cuatro variantes, cada una con su ícono de `lucide-react` (mapa de íconos por concepto): éxito `BadgeCheck`, error `OctagonX`, aviso `TriangleAlert`, info `Info`.
-- El ícono se mueve una vez al aparecer el mensaje (`icon-appear` + `icon-hop`/`icon-shake`/`icon-ring`/`icon-nudge`), salvo que el sistema pida "reducir movimiento".
+- El ícono se mueve una vez al aparecer el mensaje (`icon-appear` + `icon-hop` para éxito e información, `icon-shake` para error y aviso), salvo que el sistema pida "reducir movimiento".
 - Si se provee `onClose`, aparece un botón con el ícono `X` y `aria-label` de cerrar.
 - El ícono lleva `aria-hidden="true"`: el texto del mensaje ya comunica el tipo.
 
