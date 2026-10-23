@@ -26,7 +26,7 @@ import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
 import type { NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { DesvinculacionAprobadaBanner } from "@/components/dashboard/DesvinculacionAprobadaBanner";
-import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
+import { notificarNotificacionesActualizadas, onCambioDesdeCampanita } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -866,7 +866,9 @@ export function AdminConjuntoDashboard() {
     cargarConjuntos();
   }, [cargarConjuntos]);
 
-  usePolling(cargarNotificaciones, { enabled: !!user });
+  // ¿Qué? Issue #516 — se actualiza también al instante cuando se marca o limpia algo
+  //       desde el menú de la campanita (ver ResidenteDashboard.tsx).
+  usePolling(cargarNotificaciones, { enabled: !!user, onExternalTrigger: onCambioDesdeCampanita });
 
   // ¿Qué? Avisos de "desvinculación aprobada" sin leer de conjuntos que el Admin
   //       ya no administra (por eso no tienen pestaña donde mostrarse).

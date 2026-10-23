@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
@@ -15,7 +15,6 @@ import {
   Megaphone,
   Newspaper,
   User,
-  Bell,
   ClipboardList,
   ChartColumn,
 } from "lucide-react";
@@ -31,7 +30,8 @@ import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { onNotificacionesActualizadas } from "@/lib/notificationEvents";
+import { onCualquierCambioDeNotificaciones } from "@/lib/notificationEvents";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { onFotoPerfilActualizada } from "@/lib/profileEvents";
 import { borrarSesionActiva } from "@/lib/sesionActiva";
 
@@ -74,7 +74,6 @@ export function AppShell({ children }: AppShellProps) {
   //           inicial del nombre en vez de una imagen rota.
   const urlFotoPerfilSegura = enlaceAdjuntoSeguro(fotoPerfilUrl);
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const { t } = useTranslation();
 
@@ -141,7 +140,7 @@ export function AppShell({ children }: AppShellProps) {
   //       dashboards al marcar notificaciones como leídas.
   // ¿Para qué? Para que el número baje al instante en vez de esperar
   //           hasta 20s al siguiente ciclo de polling.
-  usePolling(fetchCount, { enabled: !!user, onExternalTrigger: onNotificacionesActualizadas });
+  usePolling(fetchCount, { enabled: !!user, onExternalTrigger: onCualquierCambioDeNotificaciones });
 
   // ¿Qué? Trae la foto de perfil para el círculo de esta tarjeta lateral.
   // ¿Para qué? Este círculo lee su nombre/rol del token de sesión (JWT,
@@ -496,28 +495,9 @@ export function AppShell({ children }: AppShellProps) {
       {/* Área de contenido */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-night-line dark:bg-night-page">
-          {/* Campana de notificaciones */}
-          <button
-            onClick={() => navigate(roleMeta.dashboardHref)}
-            className="touch-target relative flex cursor-pointer items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-night-hover dark:hover:text-gray-200"
-            aria-label={
-              noLeidas > 0
-                ? t("appShell.notificacionesConNoLeidas", { count: noLeidas })
-                : t("appShell.notificaciones")
-            }
-            title={
-              noLeidas > 0
-                ? t("appShell.notificacionesConNoLeidas", { count: noLeidas })
-                : t("appShell.notificaciones")
-            }
-          >
-            <Bell className="icon-lg" aria-hidden="true" />
-            {noLeidas > 0 && (
-              <span aria-hidden="true" className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-700 text-[9px] font-bold text-white">
-                {noLeidas > 9 ? "9+" : noLeidas}
-              </span>
-            )}
-          </button>
+          {/* ¿Qué? Campana de notificaciones: abre un menú con la lista (issue #516). Antes
+                    llevaba al panel principal, donde estaban mezcladas con otros bloques. */}
+          <NotificationBell noLeidas={noLeidas} dashboardHref={roleMeta.dashboardHref} />
           <LanguageSwitcher />
           <ThemeToggle />
         </header>

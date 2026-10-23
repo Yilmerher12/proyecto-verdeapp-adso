@@ -72,3 +72,10 @@
 - **Dado que** el equipo de VerdeApp publicó una novedad general (RQF-015),
 - **cuando** quiero leerla,
 - **entonces** la encuentro en Soporte técnico → "Avisos del sistema", que no cambia con esta historia.
+
+### CA-050.7 — Todas las notificaciones, en la campanita
+
+- **Dado que** tengo notificaciones (las de un conjunto y las de toda la plataforma, como una novedad o la respuesta a una consulta de soporte),
+- **cuando** toco la campanita del encabezado,
+- **entonces** se abre un menú con todas, cada una con su ícono, el conjunto (o "VerdeApp" si es de la plataforma), cuándo ocurrió y si es nueva o leída; desde ahí puedo marcarlas como leídas, marcar todas y limpiar las leídas (issue #516).
+- **y** el número rojo de la campanita cuenta todas las no leídas, también las que no pertenecen a ninguno de mis conjuntos.

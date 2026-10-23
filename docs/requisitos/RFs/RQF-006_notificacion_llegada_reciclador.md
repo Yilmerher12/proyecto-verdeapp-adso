@@ -45,7 +45,7 @@ El sistema debe enviar una notificación de 'Llegada al conjunto' a los Resident
 3. El frontend envía `POST /api/v1/notificaciones/enviar` con `tipo=LLEGADA_RECICLADOR` y el `id_conjunto_residencial`.
 4. El backend valida el token del reciclador, que esté autorizado en ese conjunto, que no esté ya marcado como presente (RN-004) y que no haya avisado otra llegada allí en las últimas 2 horas (RN-003).
 5. El backend obtiene los **Residentes** y el **Admin de Conjunto** de ese conjunto.
-6. Se guarda una notificación en la base de datos para cada uno de ellos (tabla de notificaciones). No hay envío por Firebase ni WebSockets: la app de cada usuario consulta sus notificaciones cada cierto tiempo (`fe/src/hooks/usePolling.ts`) y la muestra en la campana.
+6. Se guarda una notificación en la base de datos para cada uno de ellos (tabla de notificaciones). No hay envío por Firebase ni WebSockets: la app de cada usuario consulta cada cierto tiempo cuántas tiene sin leer (`fe/src/hooks/usePolling.ts`) y lo muestra en la campana; al tocarla se abre el menú con la lista (issue #516).
 7. Esa misma notificación queda como registro de la llegada: el backend la usa para saber si el reciclador está presente.
 8. Mientras el reciclador está marcado como presente en ese conjunto (ver RN-004), puede usar `SHUT_LLENO`/`SHUT_LIBRE` (RQF-003) y, al terminar, enviar `FINALIZACION_RECICLADOR` con el mismo botón "Enviar notificación" — el backend le avisa a los mismos residentes/administrador que el reciclador ya se retiró, y lo vuelve a marcar como "no presente" (puede avisar una nueva llegada).
 

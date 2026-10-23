@@ -30,6 +30,7 @@
     "proximamente": "Pronto",
     "notificaciones": "Notificaciones",
     "notificacionesConNoLeidas": "Notificaciones, {{count}} sin leer",
+    "notificacionesVacias": "Todavía no tienes notificaciones.",
     "expandirMenu": "Expandir menú",
     "colapsarMenu": "Colapsar menú",
     "cerrarSesion": "Cerrar sesión",
@@ -966,6 +967,8 @@
   "notificationFeed": {
     "platformLabel": "VerdeApp",
     "markReadHint": "Presiona para marcar como leída",
+    "new": "Nueva",
+    "read": "Leída",
     "markAllRead": "Marcar leídas",
     "clearRead": "Limpiar leídas",
     "showLess": "Ver menos",
