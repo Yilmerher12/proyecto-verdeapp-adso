@@ -39,6 +39,8 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
 
 interface NotificationFeedProps {
   title: string;
+  /** Frase corta bajo el título que explica qué avisos salen en esta lista (opcional). */
+  description?: string;
   notifications: NotificacionItem[];
   emptyMessage: string;
   /** Color del contador y el punto de "no leída" — el acento del rol (ej: "bg-accent-600" / "bg-amber-500"). */
@@ -62,6 +64,7 @@ interface NotificationFeedProps {
 
 export function NotificationFeed({
   title,
+  description,
   notifications,
   emptyMessage,
   accentBg,
@@ -77,7 +80,7 @@ export function NotificationFeed({
 
   return (
     <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm">
-      <div className="flex items-center justify-between px-5 pt-5 pb-3">
+      <div className={`flex items-center justify-between px-5 pt-5 ${description ? "pb-2" : "pb-3"}`}>
         <div className="flex items-center gap-2">
           <Clock className="icon-md text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h2>
@@ -100,6 +103,10 @@ export function NotificationFeed({
           )}
         </div>
       </div>
+
+      {/* ¿Qué? Mismo tamaño y color que el mensaje de lista vacía (text-sm), a propósito:
+                con dos tamaños distintos se leían como dos textos sueltos (issue #513). */}
+      {description && <p className="px-5 pb-3 text-sm leading-relaxed text-gray-500 dark:text-gray-400">{description}</p>}
 
       {notifications.length === 0 ? (
         <p className="px-5 pb-5 text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</p>

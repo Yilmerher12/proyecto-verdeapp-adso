@@ -43,14 +43,14 @@
 ### CA-044.1 — Editar el NIT
 
 - **Dado que** administro un conjunto,
-- **cuando** edito su NIT desde mi panel,
+- **cuando** edito su NIT con el botón "Editar datos del conjunto" (issue #513), que está dentro del conjunto desplegado, justo debajo de su nombre y al lado del NIT y la cantidad de apartamentos que edita,
 - **entonces** el cambio se guarda de inmediato (el NIT admite máximo 50 caracteres, el tamaño de su columna; issue #352).
 - **y** si la petición no trae el campo NIT (por ejemplo, solo cambia la cantidad de apartamentos), el NIT guardado no se toca; solo se borra cuando llega vacío o `null` a propósito (issue #402). La pantalla siempre manda los dos campos, así que esto solo afecta a quien llame a la API directamente.
 
 ### CA-044.1b — Definir la cantidad de apartamentos
 
 - **Dado que** administro un conjunto,
-- **cuando** escribo en "Editar" la cantidad de apartamentos (un número entero entre 1 y 20000; opcional),
+- **cuando** escribo en "Editar datos del conjunto" la cantidad de apartamentos (un número entero entre 1 y 20000; opcional),
 - **entonces** se guarda junto con el NIT; si edito solo el NIT, la cantidad no se borra. Todos los conjuntos arrancan sin cantidad definida.
 
 ### CA-044.1c — Apartamentos registrados y cuántos faltan
@@ -58,7 +58,7 @@
 - **Dado que** administro un conjunto,
 - **cuando** abro mi panel,
 - **entonces** veo cuántos de sus apartamentos ya tienen al menos un residente con cuenta activa, contra el total que definí, con una barra de avance y cuántos faltan. Se cuentan apartamentos, no cuentas (dos residentes en el mismo apartamento cuentan una vez) y las cuentas inactivas no cuentan.
-- **y** si todavía no definí la cantidad, veo solo cuántos apartamentos ya tienen residentes y un botón para definirla.
+- **y** si todavía no definí la cantidad, veo solo cuántos apartamentos ya tienen residentes y un aviso que me manda a definirla con "Editar datos del conjunto", el único botón desde donde se edita (issue #513).
 
 ### CA-044.2 — Nombre y dirección son de solo lectura
 
@@ -71,7 +71,7 @@
 - **Dado que** administro un conjunto,
 - **cuando** presiono "Regenerar código de acceso",
 - **entonces** el sistema genera uno nuevo y lo muestra de inmediato.
-- **y** en el panel principal el código de acceso es el **primer bloque** del conjunto desplegado, antes del NIT y de la cobertura (issue #491).
+- **y** en el panel principal el código de acceso está en la primera fila del conjunto desplegado (issue #491), como una tarjeta angosta a la derecha de la cobertura que en celular queda debajo de ella (issue #513).
 
 ### CA-044.4 — El código anterior deja de servir
 

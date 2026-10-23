@@ -806,13 +806,14 @@
       },
       "avisosSection": {
         "title": "Notices for this building",
-        "empty": "There are no notices for this building yet. Notices from recyclers and residents will appear here.",
+        "description": "Reports from residents and recyclers, and VerdeApp's replies to your requests.",
+        "empty": "There are no notices for this building yet.",
         "unreadBadge_one": "{{count}} new notice",
         "unreadBadge_other": "{{count}} new notices"
       },
       "codigoAcceso": {
         "title": "Access code",
-        "description": "Share it with your residents (bulletin board, building group chat) — they need it to register.",
+        "description": "Share it with your residents so they can register.",
         "copyAria": "Copy access code",
         "copiedAria": "Code copied",
         "regenerateButton": "Regenerate",
@@ -829,20 +830,26 @@
         "barAria": "{{registrados}} of {{total}} apartments registered",
         "missing": "apartments still to register",
         "residents": "residents with an account",
-        "explain": "An apartment counts as registered when it has at least one resident with an account. Use it in the building meeting to invite the ones still missing: you'll find the access code further down.",
-        "noTotal": "You haven't said how many apartments this building has yet, so we can't work out how many are missing. Set it in Edit.",
-        "define": "Set the number of apartments",
+        "explain": "An apartment counts as registered if it has at least one resident with an account.",
+        "noTotal": "Set the building's apartments with «Edit building details» to see how many are missing.",
         "badge": "{{pct}}% registered"
       },
       "editForm": {
         "nit": "Tax ID (optional)",
         "totalApartments": "Number of apartments (optional)",
-        "totalHelp": "Total apartments in the building (not residents). We use it to work out how many are still missing on VerdeApp.",
+        "title": "Edit building details",
+        "optionalHint": "Both details are optional.",
+        "totalHelp": "Apartments in the building, not residents. Used to work out how many are still missing.",
         "totalInvalid": "Enter a whole number between 1 and {{max}}.",
         "successMessage": "Building updated successfully.",
         "errorMessage": "The change could not be saved. Please try again."
       },
-      "nitLabel": "Tax ID: {{nit}}"
+      "editButton": "Edit building details",
+      "datos": {
+        "nit": "Tax ID: {{valor}}",
+        "apartamentos": "Apartments in the building: {{valor}}",
+        "sinDefinir": "not set"
+      }
     },
     "reciclador": {
       "title": "Recycler Panel",
@@ -1549,7 +1556,7 @@
   "desvinculacion": {
     "sectionTitle": "Your role as administrator",
     "solicitarButton": "Stop administering this building",
-    "clarification": "This doesn't affect authorized recyclers or residents — it only transfers the administration of this building to someone else.",
+    "clarification": "This sends a request to the VerdeApp team. They review it and we'll let you know the answer; until then you keep administering the building.",
     "pendingBadge": "Unlink request pending",
     "motivoLabel": "Reason (optional)",
     "motivoPlaceholder": "E.g.: Contract ended",

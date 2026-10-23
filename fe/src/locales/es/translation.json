@@ -810,13 +810,14 @@
       },
       "avisosSection": {
         "title": "Avisos de este conjunto",
-        "empty": "Todavía no hay avisos de este conjunto. Aparecerán aquí los de recicladores y residentes.",
+        "description": "Reportes de residentes y recicladores, y respuestas de VerdeApp a tus solicitudes.",
+        "empty": "Todavía no hay avisos de este conjunto.",
         "unreadBadge_one": "{{count}} aviso nuevo",
         "unreadBadge_other": "{{count}} avisos nuevos"
       },
       "codigoAcceso": {
         "title": "Código de acceso",
-        "description": "Compártelo con tus residentes (cartelera, grupo del conjunto) — lo necesitan para registrarse.",
+        "description": "Compártelo con tus residentes para que se registren.",
         "copyAria": "Copiar código de acceso",
         "copiedAria": "Código copiado",
         "regenerateButton": "Regenerar",
@@ -833,20 +834,26 @@
         "barAria": "{{registrados}} de {{total}} apartamentos registrados",
         "missing": "apartamentos por registrar",
         "residents": "residentes con cuenta",
-        "explain": "Un apartamento cuenta como registrado cuando tiene al menos un residente con cuenta. Úsalo en la reunión del conjunto para invitar a los que faltan: el código de acceso lo tienes más abajo.",
-        "noTotal": "Todavía no dijiste cuántos apartamentos tiene este conjunto, por eso no podemos calcular cuántos faltan. Defínelo en Editar.",
-        "define": "Definir cantidad de apartamentos",
+        "explain": "Un apartamento cuenta como registrado si tiene al menos un residente con cuenta.",
+        "noTotal": "Define los apartamentos del conjunto con «Editar datos del conjunto» para ver cuántos faltan.",
         "badge": "{{pct}}% registrado"
       },
       "editForm": {
         "nit": "NIT (opcional)",
         "totalApartments": "Cantidad de apartamentos (opcional)",
-        "totalHelp": "Total de apartamentos del conjunto (no de residentes). Con este número calculamos cuántos faltan por registrarse en VerdeApp.",
+        "title": "Editar datos del conjunto",
+        "optionalHint": "Los dos datos son opcionales.",
+        "totalHelp": "Apartamentos del conjunto, no residentes. Sirve para calcular cuántos faltan por registrarse.",
         "totalInvalid": "Escribe un número entero entre 1 y {{max}}.",
         "successMessage": "Conjunto actualizado correctamente.",
         "errorMessage": "No se pudo guardar el cambio. Intenta de nuevo."
       },
-      "nitLabel": "NIT: {{nit}}"
+      "editButton": "Editar datos del conjunto",
+      "datos": {
+        "nit": "NIT: {{valor}}",
+        "apartamentos": "Apartamentos del conjunto: {{valor}}",
+        "sinDefinir": "sin definir"
+      }
     },
     "reciclador": {
       "title": "Panel del Reciclador",
@@ -1553,7 +1560,7 @@
   "desvinculacion": {
     "sectionTitle": "Tu rol como administrador",
     "solicitarButton": "Dejar de administrar este conjunto",
-    "clarification": "Esto no afecta a los recicladores autorizados ni a los residentes — solo transfiere la administración de este conjunto a otra persona.",
+    "clarification": "Esto envía una solicitud al equipo de VerdeApp. Ellos la revisan y te avisamos la respuesta; mientras tanto sigues administrando el conjunto.",
     "pendingBadge": "Solicitud de desvinculación pendiente",
     "motivoLabel": "Motivo (opcional)",
     "motivoPlaceholder": "Ej: Fin de contrato",
