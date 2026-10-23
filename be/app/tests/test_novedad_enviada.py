@@ -89,6 +89,11 @@ class TestMisEnvios:
         assert lista[0]["estado"] == "NUEVA"
         assert lista[0]["nombre_conjunto"]
 
+    def test_el_autor_ve_la_prioridad_calculada(self, client: TestClient, auth_headers):
+        """Issue #520: la prioridad (por el motivo) llega al historial de quien envió."""
+        client.post(BASE, headers=auth_headers, json={"texto": "x", "motivo": "login"})
+        assert client.get(f"{BASE}/mias", headers=auth_headers).json()["items"][0]["prioridad"] == "ALTA"
+
     def test_paginado_con_total(self, client: TestClient, auth_headers):
         """Issue #399: `limit` y `offset` parten la lista; el total sigue siendo el de todas."""
         for i in range(3):
@@ -202,6 +207,32 @@ class TestAtenderUnaConsulta:
         [aviso] = db.query(Notificacion).filter(Notificacion.tipo == "RESPUESTA_SOPORTE").all()
         assert str(aviso.id_referencia) == id_novedad
         assert len(aviso.destinatarios) == 1
+
+    def test_cambiar_el_estado_sin_respuesta_le_avisa_al_autor(
+        self, client: TestClient, db, admin_sistema_auth_headers, auth_headers
+    ):
+        """Issue #520: antes solo avisaba cuando había respuesta."""
+        id_novedad = self._crear(client, auth_headers, admin_sistema_auth_headers)
+        client.patch(f"{SOPORTE}/{id_novedad}", headers=admin_sistema_auth_headers, json={"estado": "EN_REVISION"})
+        [aviso] = db.query(Notificacion).filter(Notificacion.tipo == "ESTADO_SOPORTE").all()
+        assert str(aviso.id_referencia) == id_novedad
+        assert "En revisión" in aviso.mensaje
+        assert len(aviso.destinatarios) == 1
+
+    def test_responder_avisa_una_sola_vez(self, client: TestClient, db, admin_sistema_auth_headers, auth_headers):
+        """Con respuesta el estado también cambia (RESUELTA), pero el autor recibe un solo aviso."""
+        id_novedad = self._crear(client, auth_headers, admin_sistema_auth_headers)
+        client.patch(f"{SOPORTE}/{id_novedad}", headers=admin_sistema_auth_headers, json={"respuesta": "Listo."})
+        assert db.query(Notificacion).filter(Notificacion.tipo == "RESPUESTA_SOPORTE").count() == 1
+        assert db.query(Notificacion).filter(Notificacion.tipo == "ESTADO_SOPORTE").count() == 0
+
+    def test_no_avisa_si_el_estado_no_cambia_ni_con_solo_prioridad(
+        self, client: TestClient, db, admin_sistema_auth_headers, auth_headers
+    ):
+        id_novedad = self._crear(client, auth_headers, admin_sistema_auth_headers)
+        client.patch(f"{SOPORTE}/{id_novedad}", headers=admin_sistema_auth_headers, json={"estado": "NUEVA"})
+        client.patch(f"{SOPORTE}/{id_novedad}", headers=admin_sistema_auth_headers, json={"prioridad": "ALTA"})
+        assert db.query(Notificacion).filter(Notificacion.tipo == "ESTADO_SOPORTE").count() == 0
 
     def test_las_resueltas_se_ven_con_el_filtro(self, client: TestClient, admin_sistema_auth_headers, auth_headers):
         id_novedad = self._crear(client, auth_headers, admin_sistema_auth_headers)

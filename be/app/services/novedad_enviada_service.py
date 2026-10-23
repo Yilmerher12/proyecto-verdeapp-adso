@@ -39,6 +39,14 @@ MAX_NOVEDADES_NUEVAS_POR_AUTOR = 10
 _PERFIL_INCOMPLETO = "Tu perfil está incompleto. Contacta al administrador para completarlo."
 
 
+# ¿Qué? Cómo se nombra cada estado en el aviso al autor (son los mismos nombres de "Historial de novedades").
+_NOMBRE_ESTADO = {
+    EstadoNovedadEnviada.NUEVA: "Enviada",
+    EstadoNovedadEnviada.EN_REVISION: "En revisión",
+    EstadoNovedadEnviada.RESUELTA: "Resuelta",
+}
+
+
 def _conjunto_del_autor(usuario: Usuario, id_pedido: Optional[UUID]) -> Optional[UUID]:
     """¿Qué? Residente: el de su unidad. Admin de Conjunto: el que eligió (debe ser suyo), o el único que tiene. Reciclador: ninguno."""
     if usuario.id_rol == RolId.RESIDENTE:
@@ -179,8 +187,8 @@ def listar_soporte(
 
 def actualizar_soporte(db: Session, id_novedad: UUID, data: ActualizarSoporteRequest, admin: Usuario) -> NovedadEnviada:
     """
-    ¿Qué? Cambia estado, prioridad y/o respuesta de una consulta; si trae respuesta,
-          le avisa al autor con una notificación.
+    ¿Qué? Cambia estado, prioridad y/o respuesta de una consulta; si trae respuesta
+          o cambia el estado, le avisa al autor con una notificación.
     ¿Impacto? Escribir una respuesta sin indicar estado la deja RESUELTA. `resuelta_at`
               solo tiene fecha mientras el estado es RESUELTA.
     """
@@ -189,6 +197,7 @@ def actualizar_soporte(db: Session, id_novedad: UUID, data: ActualizarSoporteReq
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La consulta no existe.")
     ahora = datetime.now(timezone.utc)
     nuevo_estado = data.estado or (EstadoNovedadEnviada.RESUELTA if data.respuesta else None)
+    estado_cambio = nuevo_estado is not None and nuevo_estado.value != novedad.estado
     if nuevo_estado:
         novedad.estado = nuevo_estado.value
         novedad.resuelta_at = ahora if nuevo_estado == EstadoNovedadEnviada.RESUELTA else None
@@ -206,6 +215,18 @@ def actualizar_soporte(db: Session, id_novedad: UUID, data: ActualizarSoporteReq
                 id_referencia=novedad.id,
                 id_emisor=admin.id_usuario,
             )
+    # ¿Qué? Issue #520: un cambio de estado SIN respuesta también se le avisa al autor.
+    # ¿Para qué? Con respuesta ya recibe el aviso de arriba; sin él, un NUEVA → EN_REVISION pasaba en silencio.
+    # ¿Impacto? Cambiar solo la prioridad no avisa (el autor no la elige ni la usa para decidir nada).
+    elif estado_cambio and novedad.autor_id:
+        crear_notificacion(
+            db,
+            tipo="ESTADO_SOPORTE",
+            mensaje=f"Tu consulta de soporte técnico pasó a: {_NOMBRE_ESTADO[nuevo_estado]}.",
+            destinatarios=[novedad.autor_id],
+            id_referencia=novedad.id,
+            id_emisor=admin.id_usuario,
+        )
     db.commit()
     db.refresh(novedad)
     return novedad

@@ -44,6 +44,7 @@ def _a_respuesta(n) -> NovedadEnviadaResponse:
         texto=n.texto,
         url_imagen=n.url_imagen,
         estado=n.estado,
+        prioridad=n.prioridad,
         nombre_conjunto=n.conjunto.nombre_conjunto if n.conjunto else None,
         respuesta=n.respuesta,
         respondida_at=n.respondida_at,

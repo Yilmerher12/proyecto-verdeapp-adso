@@ -71,8 +71,8 @@ Motivos comunes a los tres: no puedo iniciar sesión o recuperar mi contraseña 
 
 ### Flujo B — Ver el historial de novedades
 
-1. En la sub-pestaña **"Historial de novedades"**, el autor ve sus novedades, de la más reciente a la más antigua, con su estado: "Enviada" (NUEVA), "En revisión" (EN_REVISION) o "Resuelta" (RESUELTA). Si el Administrador del Sistema le respondió, debajo del texto ve la respuesta con su fecha. Se muestra de a 10 por página.
-2. Cuando llega una respuesta, el autor recibe además una notificación ("El Administrador del Sistema respondió tu consulta de soporte técnico.").
+1. En la sub-pestaña **"Historial de novedades"**, el autor ve sus novedades, de la más reciente a la más antigua, con su estado: "Enviada" (NUEVA), "En revisión" (EN_REVISION) o "Resuelta" (RESUELTA), y su prioridad ("Prioridad alta", "media" o "baja", issue #520). Si el Administrador del Sistema le respondió, debajo del texto ve la respuesta con su fecha. Se muestra de a 10 por página.
+2. Cuando llega una respuesta, el autor recibe además una notificación ("El Administrador del Sistema respondió tu consulta de soporte técnico."). Desde el issue #520 también recibe una cuando el estado cambia sin respuesta ("Tu consulta de soporte técnico pasó a: En revisión.").
 
 ### Flujo C — Atender el soporte técnico (Administrador del Sistema)
 
@@ -103,7 +103,7 @@ Motivos comunes a los tres: no puedo iniciar sesión o recuperar mi contraseña 
 | Escenario                                      | Código HTTP | Respuesta                                                          |
 | ----------------------------------------------- | ----------- | -------------------------------------------------------------------- |
 | Novedad enviada                                 | 201         | `{"message": "Novedad enviada. El Administrador del Sistema la revisará."}` (el servicio no cambió; la pantalla muestra "Consulta enviada. El Administrador del Sistema la revisará.") |
-| Historial de novedades                          | 200         | `{items, total}`, con `items` = (`id`, `texto`, `url_imagen`, `estado`, `nombre_conjunto`, `respuesta`, `respondida_at`, `created_at`) |
+| Historial de novedades                          | 200         | `{items, total}`, con `items` = (`id`, `texto`, `url_imagen`, `estado`, `prioridad`, `nombre_conjunto`, `respuesta`, `respondida_at`, `created_at`) |
 | Ya tengo 10 novedades sin resolver (RN-009)      | 409         | `{"detail": "Ya tienes 10 novedades sin revisar. Espera a que el Administrador del Sistema las revise para enviar más."}` |
 | El Admin Sistema intenta enviar una novedad     | 403         | `{"detail": "Tu rol no puede enviar novedades."}`                    |
 | Admin de Conjunto elige un conjunto que no es suyo | 403      | `{"detail": "No tienes permiso sobre este conjunto."}`               |
@@ -135,13 +135,15 @@ Código: `be/app/routers/novedades_enviadas.py`, `be/app/services/novedad_enviad
 - RN-001: Solo pueden enviar novedades el Residente, el Reciclador y el Admin de Conjunto. El Administrador del Sistema no (403): él es quien las recibe.
 - RN-002: El autor sale siempre de la sesión: nadie escribe su nombre, rol ni unidad a mano.
 - RN-003: El conjunto de la novedad se toma así: **Residente**, el de su unidad; **Admin de Conjunto**, el que eligió (debe ser uno de los suyos; si tiene uno solo, ese); **Reciclador**, ninguno (puede trabajar en varios conjuntos).
-- RN-004: Una novedad no se aprueba ni se rechaza: el Administrador del Sistema cambia su **estado** (NUEVA → EN_REVISION → RESUELTA) y puede reabrir una resuelta. Escribir una respuesta sin indicar estado la deja RESUELTA y le avisa al autor con una notificación (`RESPUESTA_SOPORTE`). La acción se anota en el registro de auditoría sin el texto de la respuesta (issue #376).
+- RN-004: Una novedad no se aprueba ni se rechaza: el Administrador del Sistema cambia su **estado** (NUEVA → EN_REVISION → RESUELTA) y puede reabrir una resuelta. Escribir una respuesta sin indicar estado la deja RESUELTA y le avisa al autor con una notificación (`RESPUESTA_SOPORTE`). Si cambia el estado sin respuesta, el aviso es `ESTADO_SOPORTE` (issue #520); con respuesta no se envían los dos, solo el de la respuesta, y cambiar solo la prioridad no avisa. La acción se anota en el registro de auditoría sin el texto de la respuesta (issue #376).
 - RN-005: "Soporte técnico" muestra por defecto lo pendiente (NUEVA y EN_REVISION); con el filtro de estado se ve también lo resuelto. Se ordena por prioridad (Alta, Media, Baja) y, dentro de cada una, de la más reciente a la más antigua.
 - RN-006: Si se borra la cuenta del autor o el conjunto, la novedad se conserva sin ese dato (`ON DELETE SET NULL`); en la bandeja aparece como "Usuario eliminado".
 - RN-007: `url_imagen` solo acepta una imagen subida a VerdeApp, con el formato exacto que genera la subida (`/uploads/adjuntos/<uuid>.jpg|png|webp`); cualquier otro formato, incluido un enlace `https://` externo, responde 422 (issue #399, hallazgo CN-049: la pantalla solo sube archivos, pero la API se podía llamar a mano con un enlace externo que el Admin Sistema abre desde su bandeja). El frontend aplica la misma regla al mostrar el enlace (`fe/src/lib/enlaceSeguro.ts`), así un dato viejo con otro formato no se muestra. Corregido en el issue #369 (hallazgo CN-041): antes un enlace como `@sitio-malo.com` llevaba al Administrador del Sistema a otro sitio. Desde el issue #400 (hallazgo CN-052), una ruta `/uploads/...` tampoco puede contener `..`, `%2e` ni `%2f`, en el backend ni en el frontend.
 - RN-008: Corregido en el issue #372 (hallazgos CN-042/044/045): el envío acepta máximo 10 novedades por minuto (la siguiente responde 429); la bandeja se entrega paginada (`limit` de 1 a 100, por defecto 10, y `offset`); un `estado` o una `prioridad` inválidos responden 422 al listar (issue #512: antes era un `tipo` de la bandeja unificada); y si la cuenta del autor no tiene su perfil de Residente o de Admin de Conjunto, el envío responde 404 con un mensaje claro en vez de un error 500.
 - RN-009: Issue #399 (hallazgo CN-054): cada cuenta puede tener como máximo **10 novedades sin resolver (NUEVA o EN_REVISION)** a la vez (la 11.ª responde 409). No cuenta el tiempo: cuando el Administrador del Sistema resuelve alguna, el autor vuelve a poder enviar. "Soporte técnico" y "Historial de novedades" cortan la página en la base de datos (`LIMIT/OFFSET`) y cargan los datos del autor, la unidad y el conjunto en consultas fijas, así que el número de consultas no crece con la cantidad de novedades.
 - RN-010: Issue #512: la prioridad la calcula el backend con el `motivo` (tabla del Flujo A) y el autor no puede elegirla; el Administrador del Sistema la corrige con el selector. Las novedades anteriores a este cambio quedaron en MEDIA y sin motivo, y las que estaban VISTA pasaron a RESUELTA.
+
+- RN-011: Issue #520: por ahora **solo el Administrador del Sistema atiende** las consultas; el Admin de Conjunto no gestiona las de su conjunto. Queda pendiente decidir qué consultas le tocan (los Recicladores no tienen conjunto en la novedad, RN-003), cómo las escala al Admin Sistema y qué columna nueva hace falta; se hará en una tarjeta aparte.
 
 ---
 

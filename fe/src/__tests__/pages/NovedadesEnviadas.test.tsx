@@ -195,11 +195,11 @@ describe("Novedades enviadas al Admin Sistema", () => {
     mockMias.mockResolvedValue({
       items: [
         {
-          id: "n-1", texto: "Pared rayada.", url_imagen: null, estado: "RESUELTA", nombre_conjunto: "Quintas",
+          id: "n-1", texto: "Pared rayada.", url_imagen: null, estado: "RESUELTA", prioridad: "BAJA", nombre_conjunto: "Quintas",
           respuesta: "Ya mandamos a pintarla.", respondida_at: "2026-09-24T10:00:00Z", created_at: "2026-09-22T10:00:00Z",
         },
-        { id: "n-2", texto: "Punto cerrado.", url_imagen: null, estado: "NUEVA", nombre_conjunto: null, respuesta: null, respondida_at: null, created_at: "2026-09-23T10:00:00Z" },
-        { id: "n-3", texto: "Sin sonido.", url_imagen: null, estado: "EN_REVISION", nombre_conjunto: null, respuesta: null, respondida_at: null, created_at: "2026-09-23T11:00:00Z" },
+        { id: "n-2", texto: "Punto cerrado.", url_imagen: null, estado: "NUEVA", prioridad: "ALTA", nombre_conjunto: null, respuesta: null, respondida_at: null, created_at: "2026-09-23T10:00:00Z" },
+        { id: "n-3", texto: "Sin sonido.", url_imagen: null, estado: "EN_REVISION", prioridad: "MEDIA", nombre_conjunto: null, respuesta: null, respondida_at: null, created_at: "2026-09-23T11:00:00Z" },
       ],
       total: 3,
     });
@@ -212,6 +212,10 @@ describe("Novedades enviadas al Admin Sistema", () => {
     expect(screen.getByText("Resuelta")).toBeInTheDocument();
     expect(screen.getByText("Enviada")).toBeInTheDocument();
     expect(screen.getByText("En revisión")).toBeInTheDocument();
+    // ¿Qué? Issue #520: cada novedad muestra su prioridad.
+    expect(screen.getByText("Prioridad baja")).toBeInTheDocument();
+    expect(screen.getByText("Prioridad alta")).toBeInTheDocument();
+    expect(screen.getByText("Prioridad media")).toBeInTheDocument();
     // ¿Qué? Issue #512: el autor ve la respuesta del Admin Sistema solo en la que la tiene.
     expect(screen.getByText("Ya mandamos a pintarla.")).toBeInTheDocument();
     expect(screen.getAllByText(/Respuesta del Administrador del Sistema/)).toHaveLength(1);
@@ -220,7 +224,7 @@ describe("Novedades enviadas al Admin Sistema", () => {
 
   it("Historial de novedades pide la página siguiente con el offset correcto", async () => {
     const item = (id: string) => ({
-      id, texto: `Novedad ${id}`, url_imagen: null, estado: "NUEVA", nombre_conjunto: null, created_at: "2026-09-22T10:00:00Z",
+      id, texto: `Novedad ${id}`, url_imagen: null, estado: "NUEVA", prioridad: "MEDIA", nombre_conjunto: null, created_at: "2026-09-22T10:00:00Z",
     });
     mockMias.mockImplementation((_limit: number, offset: number) =>
       Promise.resolve({ items: [item(offset === 0 ? "primera" : "segunda")], total: 12 })

@@ -69,9 +69,16 @@
 
 - **Dado que** ya envié novedades,
 - **cuando** abro "Historial de novedades",
-- **entonces** veo mis novedades de la más reciente a la más antigua, cada una con su estado: "Enviada" o "Vista por el Admin del Sistema".
+- **entonces** veo mis novedades de la más reciente a la más antigua, cada una con su estado ("Enviada", "En revisión" o "Resuelta") y su prioridad ("Prioridad alta", "media" o "baja", que calcula el sistema según el motivo; yo no la elijo).
+- **y** si el Administrador del Sistema me respondió, veo la respuesta con su fecha debajo del texto.
 - **y** si todavía no envié ninguna, veo "Todavía no has enviado ninguna novedad."
 - **y** la lista se muestra de a 10 por página, con la paginación debajo (issue #399).
+
+### CA-047.9 — Aviso cuando cambia mi consulta (issue #520)
+
+- **Dado que** envié una consulta,
+- **cuando** el Administrador del Sistema le cambia el estado (por ejemplo, de "Enviada" a "En revisión") o me responde,
+- **entonces** recibo una notificación. Si cambia el estado y además responde, recibo un solo aviso (el de la respuesta). Si solo cambia la prioridad, no recibo aviso.
 
 ### CA-047.5 — El Administrador del Sistema no envía novedades
 
@@ -81,7 +88,13 @@
 
 ### CA-047.6 — Tope de novedades sin revisar
 
-- **Dado que** ya tengo 10 novedades en estado "Enviada" (el Administrador del Sistema aún no las marca como vistas),
+- **Dado que** ya tengo 10 novedades sin resolver ("Enviada" o "En revisión"),
 - **cuando** intento enviar otra,
 - **entonces** el sistema responde 409 y me muestra "Ya tienes 10 novedades sin revisar. Espera a que el Administrador del Sistema las revise para enviar más."
-- **y** apenas el Administrador del Sistema marca alguna como vista, puedo volver a enviar (issue #399).
+- **y** apenas el Administrador del Sistema resuelve alguna, puedo volver a enviar (issue #399).
+
+---
+
+## Fuera de alcance (decisión del issue #520)
+
+El Administrador de Conjunto **todavía no gestiona** las consultas de los Residentes y Recicladores de su conjunto: todas las atiende el Administrador del Sistema. Hacer que el Admin de Conjunto las vea, cambie su estado, responda o las escale al Admin del Sistema requiere decidir qué consultas le tocan (los Recicladores no tienen un conjunto guardado en la novedad, RN-003 de RQF-021) y una columna nueva; queda para una tarjeta aparte.

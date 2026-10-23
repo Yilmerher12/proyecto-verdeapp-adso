@@ -11,6 +11,7 @@ export interface NovedadEnviada {
   texto: string;
   url_imagen: string | null;
   estado: EstadoSoporte;
+  prioridad: PrioridadSoporte;
   nombre_conjunto: string | null;
   respuesta: string | null;
   respondida_at: string | null;
