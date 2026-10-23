@@ -35,7 +35,7 @@ El sistema debe permitir que un Residente, un Reciclador o un Admin de Conjunto 
 
 El Administrador del Sistema recibe esas novedades en la pestaña **"Soporte técnico"** de la bandeja de su panel. La otra pestaña, **"Desvinculaciones"**, trae las solicitudes de los Admins de Conjunto (RQF-016); son cosas de distinta naturaleza (una decisión de sí o no, sin prioridad ni respuesta) y por eso tienen cada una su lugar. Cada consulta de soporte tiene una **prioridad** (Alta, Media o Baja), que el sistema calcula según el motivo que eligió el autor, y un **estado** (Nueva, En revisión o Resuelta). El Administrador del Sistema puede corregir la prioridad, cambiar el estado y **responderle al autor**, que ve la respuesta en su historial.
 
-**No confundir** con las Novedades de RQF-015: esas las publica el Administrador del Sistema hacia los usuarios. Las de este RF van en la dirección contraria.
+**No confundir** con las Novedades de RQF-015: esas las publica el Administrador del Sistema hacia los usuarios. Las de este RF van en la dirección contraria. La comparación completa está en [Novedades y novedades enviadas](../../conceptos/novedades-y-novedades-enviadas.md).
 
 **Imagen adjunta (issue #369):** los 3 roles pueden subir la imagen con el endpoint de subida (`be/app/routers/uploads.py`). El Residente y el Reciclador solo pueden subir imagen (jpg/png/webp), nunca PDF/Word/Excel.
 
