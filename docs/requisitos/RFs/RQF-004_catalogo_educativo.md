@@ -40,7 +40,8 @@ Sin parámetros de entrada — la petición trae el catálogo completo, sin filt
 3. El backend consulta la tabla `contenido_educativo` y devuelve todo el catálogo, ordenado del módulo más reciente al más antiguo.
 4. El frontend agrupa los módulos por `modulo_categoria` y dibuja una tarjeta por categoría, con un dibujo fijo propio de cada una, el título de su lección más reciente y un "Video destacado".
 5. Arriba muestra "Tu semana": con la misma consulta del historial de auditorías del conjunto (`listarHistorial`) toma la última auditoría y, si salió Regular o Malo, recomienda la lección cuya categoría tiene el nombre del tema de esa auditoría. No hay endpoint nuevo.
-6. Si el usuario entra a una categoría específica, el frontend filtra la lista ya cargada — no hace una segunda petición al backend — y dibuja cada módulo como un muro: video, "De qué trata" y una tarjeta por párrafo (regla en `fe/src/lib/muroLeccion.ts`).
+6. Si el usuario entra a una categoría específica, el frontend filtra la lista ya cargada — no hace una segunda petición de contenido al backend — y dibuja cada módulo como un muro: video, "De qué trata" y una tarjeta por párrafo (regla en `fe/src/lib/muroLeccion.ts`).
+7. Lecciones vistas: al cargar el catálogo el frontend hace `GET /api/v1/contenido-educativo/vistos` para saber cuáles módulos ya abrió el Residente (cada categoría dice "Visto" si todos los suyos lo están, y una barra muestra "N de M lecciones vistas"). Al abrir una categoría hace `POST /api/v1/contenido-educativo/vistos` con los ids de sus módulos. Si alguna de las dos llamadas falla, las páginas se ven igual, sin la marca.
 
 ---
 
@@ -62,6 +63,8 @@ Sin parámetros de entrada — la petición trae el catálogo completo, sin filt
 | Método | Ruta                             | Auth requerida        | Descripción                     |
 | ------ | --------------------------------- | ---------------------- | -------------------------------- |
 | GET    | `/api/v1/contenido-educativo`     | Sí (cualquier usuario) | Lista todo el catálogo educativo |
+| GET    | `/api/v1/contenido-educativo/vistos` | Sí (solo Residente) | Ids de los módulos que el Residente ya abrió. Cualquier otro rol recibe 403 |
+| POST   | `/api/v1/contenido-educativo/vistos` | Sí (solo Residente) | Recibe `{"ids": [...]}` (máximo 100) y los marca como vistos. Es idempotente: repetir un id no duplica nada, y un id que no existe se ignora. Devuelve todos los ids vistos |
 
 ---
 
@@ -69,3 +72,4 @@ Sin parámetros de entrada — la petición trae el catálogo completo, sin filt
 
 - RN-001: El catálogo educativo es de acceso exclusivo de lectura para los usuarios finales. No pueden crear, editar ni eliminar contenido.
 - RN-002: Ninguna imagen escrita dentro del texto de un módulo se muestra al Residente. Solo se pinta el video y, para el enlace de la guía, lo que permite `enlaceAdjuntoSeguro`.
+- RN-003: Las lecciones vistas se guardan una vez por Residente y módulo (tabla `contenido_educativo_vistos`). "Visto" significa que el Residente abrió la lección, no que reprodujo el video completo. Si el módulo se elimina, sus marcas se eliminan con él; si se edita, se mantienen.

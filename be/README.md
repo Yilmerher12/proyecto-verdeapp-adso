@@ -470,7 +470,7 @@ una contraseña olvidada. Al usarse, activa `Usuario.is_active` (ver flujo de re
 
 ### 8.4 El resto de tablas
 
-Las 3 tablas de arriba son las de autenticación. El dominio de VerdeApp suma 25 más, cada una con su archivo en `app/models/`:
+Las 3 tablas de arriba son las de autenticación. El dominio de VerdeApp suma 26 más, cada una con su archivo en `app/models/`:
 
 | Grupo | Tablas |
 | ----- | ------ |
@@ -478,7 +478,7 @@ Las 3 tablas de arriba son las de autenticación. El dominio de VerdeApp suma 25
 | Conjuntos | `localidades`, `conjuntos_residenciales`, `unidades`, `administradores_conjuntos` (asignación admin ↔ conjunto), `recicladores_conjuntos`, `agenda_conjunto` |
 | Invitaciones y solicitudes | `invitaciones_admin_conjunto`, `invitaciones_reciclador_conjunto`, `solicitudes_desvinculacion` |
 | Operación | `auditorias_conjunto`, `notificaciones`, `notificaciones_destinatarios`, `comunicados` |
-| Contenido y novedades | `contenido_educativo`, `contenido_educativo_envios`, `novedades`, `novedades_conjuntos`, `novedades_enviadas` |
+| Contenido y novedades | `contenido_educativo`, `contenido_educativo_envios`, `contenido_educativo_vistos`, `novedades`, `novedades_conjuntos`, `novedades_enviadas` |
 | Directorio | `puntos_acopios`, `puntos_acopio_comentarios` |
 | Seguridad | `tokens_revocados` (lista negra de tokens invalidados al cerrar sesión, HU-008/RQF-007) |
 
@@ -1083,7 +1083,7 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 | `directorio.py`             | `/api/v1/directorio`            |     2     | Directorio público de recicladores y puntos de acopio                              |
 | `notificaciones.py`         | `/api/v1/notificaciones`        |     8     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, etc.)      |
 | `auditoria_conjunto.py`     | `/api/v1/auditorias-conjunto`   |     5     | Semáforo de auditoría del Reciclador — registro, historiales e historial global del Admin Sistema por semana (RQF-009) |
-| `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     7     | Catálogo de contenido educativo — lectura para todos, gestión y envío manual a conjuntos solo Admin Sistema (RQF-004/010/013) |
+| `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     9     | Catálogo de contenido educativo — lectura para todos, gestión y envío manual a conjuntos solo Admin Sistema, lecciones vistas solo Residente (RQF-004/010/013) |
 | `comunicados.py`            | `/api/v1/comunicados`           |     5     | Comunicados del conjunto — publica Admin de Conjunto, ven Residente/Reciclador (RQF-014) |
 | `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
 | `novedades_enviadas.py`     | `/api/v1/novedades-enviadas`    |     2     | Novedades que los usuarios le envían al Admin Sistema y su historial propio (RQF-021) |

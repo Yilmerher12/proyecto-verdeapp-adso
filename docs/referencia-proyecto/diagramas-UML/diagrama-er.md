@@ -143,6 +143,12 @@ erDiagram
         TIMESTAMP created_at
     }
 
+    CONTENIDO_EDUCATIVO_VISTOS {
+        UUID id_usuario PK, FK
+        UUID id_contenido PK, FK
+        TIMESTAMP visto_at
+    }
+
     RECICLADORES_CONJUNTOS {
         UUID id PK
         UUID id_reciclador FK
@@ -360,6 +366,8 @@ erDiagram
     CONTENIDO_EDUCATIVO ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : se_envia
     CONJUNTOS_RESIDENCIALES ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : recibe
     USUARIOS ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : envia
+    CONTENIDO_EDUCATIVO ||--o{ CONTENIDO_EDUCATIVO_VISTOS : se_abre
+    USUARIOS ||--o{ CONTENIDO_EDUCATIVO_VISTOS : abre
 ```
 
 ---
@@ -424,6 +432,8 @@ CONTENIDO_EDUCATIVO
    │
    ▼
 CONTENIDO_EDUCATIVO_ENVIOS ── CONJUNTOS_RESIDENCIALES / USUARIOS (quién lo envió)
+
+CONTENIDO_EDUCATIVO ──▶ CONTENIDO_EDUCATIVO_VISTOS ◀── USUARIOS (qué Residente abrió qué módulo)
 ```
 
 ---
@@ -599,6 +609,18 @@ Comentarios internos del Admin Sistema sobre un punto de acopio (RQF-011): notas
 | created_at              | TIMESTAMP |
 
 Registra el envío manual de un módulo del catálogo a un conjunto (RQF-013, Flujo C) — el Admin Sistema decide recomendar un módulo aunque no haya habido una auditoría Regular/Mala que lo dispare automáticamente. `enviado_por_id` queda `NULL` si el usuario que lo envió se elimina después (`ON DELETE SET NULL`), para no perder el registro histórico del envío.
+
+---
+
+## contenido_educativo_vistos
+
+| Campo        | Tipo      |
+| ------------ | --------- |
+| id_usuario   | UUID      |
+| id_contenido | UUID      |
+| visto_at     | TIMESTAMP |
+
+Los módulos que cada Residente ya abrió en "Aprende a reciclar" (HU-005). La clave primaria es compuesta (`id_usuario`, `id_contenido`): una fila por Residente y módulo, así que abrir la misma lección otra vez no duplica nada. "Visto" significa que abrió la lección, no que reprodujo el video completo. Si se elimina el usuario o el módulo, sus filas se eliminan con él (`ON DELETE CASCADE`). `id_contenido` tiene un índice propio para que el borrado de un módulo no recorra toda la tabla.
 
 ---
 

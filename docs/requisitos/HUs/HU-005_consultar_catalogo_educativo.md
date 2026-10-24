@@ -35,7 +35,7 @@
 
 - **Dado que** entro a la sección "Educación",
 - **cuando** la página carga,
-- **entonces** debo ver una tarjeta por categoría, con su dibujo, su nombre y el título de su lección más reciente, y un "Video destacado" cuando algún módulo tiene video.
+- **entonces** debo ver una tarjeta por categoría, con su dibujo, su nombre, el título de su lección más reciente y si ya la vi ("Visto" o "Sin ver"), y un "Video destacado" cuando algún módulo tiene video.
 
 ### CA-005.2 — Abrir un módulo
 
@@ -60,3 +60,12 @@
 - **Dado que** mi conjunto tiene una auditoría,
 - **cuando** entro a "Aprende a reciclar",
 - **entonces** debo ver arriba cómo salió el conjunto en la última auditoría y, si fue Regular o Malo y existe una categoría con el nombre del tema, la lección recomendada con un botón "Ver lección". Si salió Bueno me felicita, y si no hay auditorías el bloque lo dice. Si la consulta falla, el resto del catálogo se ve igual.
+
+### CA-005.6 — Lecciones vistas y avance
+
+- **Dado que** abro una categoría de "Aprende a reciclar",
+- **cuando** la página carga,
+- **entonces** todos sus módulos quedan marcados como vistos para mí en el servidor (se mantienen si cambio de equipo o de navegador), y el encabezado de la categoría muestra "Visto".
+- **Y** en el catálogo cada categoría dice "Visto" solo si todos sus módulos están vistos, y una tarjeta de avance dice "N de M lecciones vistas" con una barra de progreso.
+- **Y** si no se puede consultar o guardar lo visto, las páginas se ven igual, sin la marca y sin mensaje de error.
+- Solo un Residente tiene lecciones vistas: los demás roles reciben 403 en esos endpoints. Cada Residente ve únicamente las suyas.

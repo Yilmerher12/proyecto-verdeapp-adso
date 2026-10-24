@@ -40,6 +40,19 @@ export async function obtenerContenido(id: string): Promise<ContenidoEducativo> 
   return data;
 }
 
+// ¿Qué? Lecciones vistas del Residente en sesión: los ids de los módulos que ya abrió.
+export async function listarVistos(): Promise<string[]> {
+  const { data } = await axios.get<{ ids: string[] }>(`${API_BASE}/vistos`);
+  return data.ids;
+}
+
+// ¿Qué? Marca como vistos los módulos que el Residente acaba de abrir y devuelve
+//       todos los que lleva vistos. Es idempotente: repetirlo no cambia nada.
+export async function marcarVistos(ids: string[]): Promise<string[]> {
+  const { data } = await axios.post<{ ids: string[] }>(`${API_BASE}/vistos`, { ids });
+  return data.ids;
+}
+
 export async function listarEnvios(id: string): Promise<EnvioContenido[]> {
   const { data } = await axios.get(`${API_BASE}/${id}/envios`);
   return data;

@@ -1140,6 +1140,13 @@
     "temas": "temas",
     "categoriesTitle": "Categorías de aprendizaje",
     "viewLesson": "Ver lección",
+    "seen": "Visto",
+    "notSeen": "Sin ver",
+    "progress": {
+      "title": "Tu avance",
+      "of": "de {{total}} lecciones vistas",
+      "hint": "Una lección cuenta como vista cuando la abres."
+    },
     "featuredTitle": "Video destacado",
     "featuredCta": "Ver video y guía"
   },
@@ -1147,6 +1154,7 @@
     "back": "Volver a Aprende a reciclar",
     "emptyForCategory": "No se encontró contenido para esta categoría.",
     "viewGuide": "Ver guía de apoyo",
+    "seen": "Visto",
     "keepLearning": "Sigue aprendiendo",
     "lessonCount_one": "{{count}} lección",
     "lessonCount_other": "{{count}} lecciones",

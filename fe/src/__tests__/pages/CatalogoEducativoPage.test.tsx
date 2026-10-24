@@ -1,22 +1,24 @@
 /**
  * Archivo: __tests__/pages/CatalogoEducativoPage.test.tsx
  * Descripción: Tests de "Aprende a reciclar" (HU-005): tarjetas por categoría con
- *              dibujo, video destacado y bloque "Tu semana".
- * ¿Para qué? La página junta dos fuentes (contenido y la última auditoría) y debe
- *            seguir sirviendo aunque la segunda falle.
+ *              dibujo, marca "Visto", avance, video destacado y bloque "Tu semana".
+ * ¿Para qué? La página junta tres fuentes (contenido, lecciones vistas y la última
+ *            auditoría) y debe seguir sirviendo aunque una de las dos últimas falle.
  */
 
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { vi, beforeEach } from "vitest";
 import { CatalogoEducativoPage } from "@/pages/CatalogoEducativoPage";
 import { renderWithProviders, mockUser } from "../helpers";
 import type { ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 
 const mockListarContenido = vi.fn();
+const mockListarVistos = vi.fn();
 const mockListarHistorial = vi.fn();
 
 vi.mock("@/lib/contenidoEducativoApi", () => ({
   listarContenido: (...args: unknown[]) => mockListarContenido(...args),
+  listarVistos: (...args: unknown[]) => mockListarVistos(...args),
 }));
 
 vi.mock("@/lib/auditoriaConjuntoApi", () => ({
@@ -71,6 +73,7 @@ describe("CatalogoEducativoPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockListarContenido.mockResolvedValue(modulos);
+    mockListarVistos.mockResolvedValue([]);
     mockListarHistorial.mockResolvedValue({ items: [], total: 0 });
   });
 
@@ -116,13 +119,43 @@ describe("CatalogoEducativoPage", () => {
     expect(tarjeta.querySelector("svg[viewBox='0 0 320 150']")).not.toBeNull();
   });
 
-  it("no muestra marcas de lección vista ni avance (eso llega en otra tarjeta)", async () => {
-    renderPagina();
+  describe("lecciones vistas", () => {
+    it("una categoría con todos sus módulos vistos dice Visto, y las demás Sin ver", async () => {
+      mockListarVistos.mockResolvedValue([modulos[0].id_contenido, modulos[1].id_contenido]);
+      renderPagina();
 
-    await screen.findByText("Dónde llevar escombros");
-    expect(screen.queryByText("Visto")).not.toBeInTheDocument();
-    expect(screen.queryByText("Sin ver")).not.toBeInTheDocument();
-    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+      const vista = await tarjetaDe("Separación en la fuente y código de colores");
+      await waitFor(() => expect(within(vista).getByText("Visto")).toBeInTheDocument());
+      const pendiente = await tarjetaDe("Puntos limpios y Ecopuntos");
+      expect(within(pendiente).getByText("Sin ver")).toBeInTheDocument();
+    });
+
+    it("una categoría con solo algunos módulos vistos todavía dice Sin ver", async () => {
+      mockListarVistos.mockResolvedValue([modulos[0].id_contenido]);
+      renderPagina();
+
+      const tarjeta = await tarjetaDe("Separación en la fuente y código de colores");
+      await waitFor(() => expect(within(tarjeta).getByText("Sin ver")).toBeInTheDocument());
+    });
+
+    it("muestra el avance con su barra", async () => {
+      mockListarVistos.mockResolvedValue([modulos[0].id_contenido]);
+      renderPagina();
+
+      const barra = await screen.findByRole("progressbar", { name: "Tu avance" });
+      await waitFor(() => expect(barra).toHaveAttribute("aria-valuenow", "1"));
+      expect(barra).toHaveAttribute("aria-valuemin", "0");
+      expect(barra).toHaveAttribute("aria-valuemax", "3");
+      expect(screen.getByText(/de 3 lecciones vistas/)).toBeInTheDocument();
+    });
+
+    it("si no se pueden consultar las vistas, el catálogo se ve igual", async () => {
+      mockListarVistos.mockRejectedValue(new Error("falló"));
+      renderPagina();
+
+      expect(await screen.findByText("Dónde llevar escombros")).toBeInTheDocument();
+      expect(screen.getAllByText("Sin ver")).toHaveLength(2);
+    });
   });
 
   describe("video destacado", () => {

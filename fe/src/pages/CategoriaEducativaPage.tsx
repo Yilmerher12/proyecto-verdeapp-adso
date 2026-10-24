@@ -1,23 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, ChevronRight, FileText } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
 import { MuroLeccion } from "@/components/educativo/MuroLeccion";
-import { listarContenido, type ContenidoEducativo } from "@/lib/contenidoEducativoApi";
+import { listarContenido, marcarVistos, type ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 
 /**
  * ¿Qué? Una categoría de "Aprende a reciclar" como un muro: cada lección con su
  *       video, "De qué trata" y una tarjeta por párrafo, y al final otras
  *       categorías para seguir aprendiendo.
  * ¿Para qué? Antes era una lista de módulos con el texto seguido, sin imágenes y
- *           con el espacio muy apretado.
- * ¿Impacto? Solo usa el contenido que ya devuelve el catálogo: no guarda nada en
- *           el servidor. El texto de cada módulo se parte en tarjetas con
- *           lib/muroLeccion.ts y se dibuja con MuroLeccion.
+ *           con el espacio muy apretado. Aquí también se deja constancia de que
+ *           el Residente abrió la lección ("Visto").
+ * ¿Impacto? Al cargar, los módulos de la categoría se marcan como vistos en el
+ *           servidor. Si esa llamada falla, la página se ve igual: solo no queda
+ *           la marca, y se reintenta la próxima vez que abra la categoría. El
+ *           texto de cada módulo se parte en tarjetas con lib/muroLeccion.ts y se
+ *           dibuja con MuroLeccion.
  */
 export function CategoriaEducativaPage() {
   const { t } = useTranslation();
@@ -26,13 +29,21 @@ export function CategoriaEducativaPage() {
   const { user } = useAuth();
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [visto, setVisto] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     listarContenido()
-      .then(setContenido)
+      .then((lista) => {
+        setContenido(lista);
+        const ids = lista.filter((c) => c.modulo_categoria === categoriaDecodificada).map((c) => c.id_contenido);
+        if (ids.length === 0) return;
+        marcarVistos(ids)
+          .then(() => setVisto(true))
+          .catch(() => setVisto(false));
+      })
       .finally(() => setCargando(false));
-  }, [user]);
+  }, [user, categoriaDecodificada]);
 
   const temas = contenido.filter((c) => c.modulo_categoria === categoriaDecodificada);
   const otras = useMemo(() => {
@@ -64,6 +75,12 @@ export function CategoriaEducativaPage() {
         </h1>
         {temas.length > 0 && (
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+            {visto && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-3 py-1 font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+                <Check className="icon-sm" aria-hidden="true" />
+                {t("categoriaEducativa.seen")}
+              </span>
+            )}
             <span>
               {t("categoriaEducativa.lessonCount", { count: temas.length })} ·{" "}
               {t("categoriaEducativa.videoCount", { count: conVideo })} ·{" "}

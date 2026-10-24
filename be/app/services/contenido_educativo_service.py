@@ -12,11 +12,13 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.contenido_educativo import ContenidoEducativo
 from app.models.contenido_educativo_envio import ContenidoEducativoEnvio
+from app.models.contenido_educativo_visto import ContenidoEducativoVisto
 from app.schemas.contenido_educativo import (
     ContenidoEducativoCreate,
     ContenidoEducativoUpdate,
@@ -150,3 +152,33 @@ def enviar_a_conjuntos(
     for envio in envios:
         db.refresh(envio)
     return envios
+
+
+def marcar_vistos(db: Session, id_usuario: UUID, ids: list[UUID]) -> list[UUID]:
+    """
+    ¿Qué? Marca como vistos los módulos que el Residente abrió y devuelve todos
+          los que lleva vistos.
+    ¿Para qué? "Visto" y el avance de "Aprende a reciclar" (módulo = lección).
+    ¿Impacto? Es idempotente: ON CONFLICT DO NOTHING hace que abrir otra vez la
+              misma lección no duplique ni cambie la fecha. Los ids que no existen
+              se ignoran en vez de fallar, porque un módulo pudo borrarse justo
+              mientras el Residente tenía abierta la página.
+    """
+    if ids:
+        existentes = db.execute(
+            select(ContenidoEducativo.id_contenido).where(ContenidoEducativo.id_contenido.in_(ids))
+        ).scalars().all()
+        if existentes:
+            db.execute(
+                pg_insert(ContenidoEducativoVisto)
+                .values([{"id_usuario": id_usuario, "id_contenido": i} for i in existentes])
+                .on_conflict_do_nothing()
+            )
+            db.commit()
+    return listar_vistos(db, id_usuario)
+
+
+def listar_vistos(db: Session, id_usuario: UUID) -> list[UUID]:
+    """Ids de los módulos que este Residente ya abrió."""
+    stmt = select(ContenidoEducativoVisto.id_contenido).where(ContenidoEducativoVisto.id_usuario == id_usuario)
+    return list(db.execute(stmt).scalars().all())
