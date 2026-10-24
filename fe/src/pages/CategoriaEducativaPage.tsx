@@ -1,26 +1,29 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import ReactMarkdown from "react-markdown";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, ChevronRight, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
-import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
-import { COMPONENTES_MARKDOWN } from "@/config/contenidoEducativoMarkdown";
-import {
-  listarContenido,
-  type ContenidoEducativo,
-} from "@/lib/contenidoEducativoApi";
+import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
+import { MuroLeccion } from "@/components/educativo/MuroLeccion";
+import { listarContenido, type ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 
+/**
+ * ¿Qué? Una categoría de "Aprende a reciclar" como un muro: cada lección con su
+ *       video, "De qué trata" y una tarjeta por párrafo, y al final otras
+ *       categorías para seguir aprendiendo.
+ * ¿Para qué? Antes era una lista de módulos con el texto seguido, sin imágenes y
+ *           con el espacio muy apretado.
+ * ¿Impacto? Solo usa el contenido que ya devuelve el catálogo: no guarda nada en
+ *           el servidor. El texto de cada módulo se parte en tarjetas con
+ *           lib/muroLeccion.ts y se dibuja con MuroLeccion.
+ */
 export function CategoriaEducativaPage() {
   const { t } = useTranslation();
   const { categoria } = useParams<{ categoria: string }>();
   const categoriaDecodificada = decodeURIComponent(categoria ?? "");
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
   const [cargando, setCargando] = useState(true);
 
@@ -32,28 +35,43 @@ export function CategoriaEducativaPage() {
   }, [user]);
 
   const temas = contenido.filter((c) => c.modulo_categoria === categoriaDecodificada);
-  // ¿Qué? Se desestructura del objeto (no se llama como función) a propósito
-  //       — ESLint marca como error asignar el RESULTADO DE UNA FUNCIÓN a una
-  //       variable con mayúscula inicial usada como JSX ("static-components"),
-  //       aunque el ícono elegido sea siempre una referencia estable.
-  const Icono = ICONOS_CATEGORIAS[categoriaDecodificada] ?? ICONO_CATEGORIA_DEFAULT;
+  const otras = useMemo(() => {
+    const nombres = Array.from(new Set(contenido.map((c) => c.modulo_categoria))).filter(
+      (n) => n !== categoriaDecodificada
+    );
+    return nombres.slice(0, 2).map((nombre) => ({ nombre, modulo: contenido.find((c) => c.modulo_categoria === nombre)! }));
+  }, [contenido, categoriaDecodificada]);
+
+  const conVideo = temas.filter((c) => c.url_video).length;
+  const conGuia = temas.filter((c) => c.url_guia).length;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pt-6">
-      <button
-        onClick={() => navigate("/catalogo-educativo")}
-        className="touch-target-h flex cursor-pointer items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+    <div className="mx-auto max-w-6xl space-y-9 pt-6 pb-12">
+      <Link
+        to="/catalogo-educativo"
+        className="link-text touch-target-h flex w-fit items-center gap-1.5 text-sm font-semibold"
       >
-        <ArrowLeft className="icon-md" />
+        <ArrowLeft className="icon-sm" aria-hidden="true" />
         {t("categoriaEducativa.back")}
-      </button>
+      </Link>
 
-      <div className="flex items-center gap-3 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
-          <Icono className="icon-lg" />
+      <header className="space-y-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
+          {categoriaDecodificada}
         </span>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{categoriaDecodificada}</h1>
-      </div>
+        <h1 className="max-w-3xl text-3xl font-bold leading-tight text-gray-900 dark:text-white">
+          {temas.length === 1 ? temas[0].titulo_tema : categoriaDecodificada}
+        </h1>
+        {temas.length > 0 && (
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+            <span>
+              {t("categoriaEducativa.lessonCount", { count: temas.length })} ·{" "}
+              {t("categoriaEducativa.videoCount", { count: conVideo })} ·{" "}
+              {t("categoriaEducativa.guideCount", { count: conGuia })}
+            </span>
+          </div>
+        )}
+      </header>
 
       {cargando && <LoadingState message={t("common.loading")} />}
 
@@ -61,35 +79,37 @@ export function CategoriaEducativaPage() {
         <EmptyState icon={FileText} message={t("categoriaEducativa.emptyForCategory")} />
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-14">
         {temas.map((item) => (
-          <div
-            key={item.id_contenido}
-            className="rounded-2xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card"
-          >
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">{item.titulo_tema}</h2>
-            <ReactMarkdown components={COMPONENTES_MARKDOWN}>{item.cuerpo_texto}</ReactMarkdown>
-
-            {item.url_video && <YoutubeEmbed url={item.url_video} titulo={item.titulo_tema} />}
-
-            {enlaceAdjuntoSeguro(item.url_guia) && (
-              <a
-                // ¿Qué? enlaceAdjuntoSeguro completa la ruta relativa de un
-                //       archivo subido (/uploads/adjuntos/...) con la URL del
-                //       backend y deja pasar solo https://; si el enlace no
-                //       es seguro devuelve null y no se pinta (issue #400).
-                href={enlaceAdjuntoSeguro(item.url_guia) ?? undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-200 dark:hover:bg-night-hover"
-              >
-                <FileText className="icon-md shrink-0" />
-                {t("categoriaEducativa.viewGuide")}
-              </a>
-            )}
-          </div>
+          <MuroLeccion key={item.id_contenido} modulo={item} mostrarTitulo={temas.length > 1} />
         ))}
       </div>
+
+      {otras.length > 0 && (
+        <section aria-labelledby="titulo-sigue" className="space-y-5">
+          <h2 id="titulo-sigue" className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t("categoriaEducativa.keepLearning")}
+          </h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {otras.map(({ nombre, modulo }) => (
+              <Link
+                key={nombre}
+                to={`/catalogo-educativo/${encodeURIComponent(nombre)}`}
+                className="group flex overflow-hidden rounded-3xl border border-gray-100 bg-white transition-transform hover:-translate-y-0.5 dark:border-night-line dark:bg-night-card"
+              >
+                <span className="block w-36 shrink-0 bg-accent-50 dark:bg-accent-300/10" aria-hidden="true">
+                  <IlustracionCategoria categoria={nombre} />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 p-5">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{nombre}</span>
+                  <span className="text-base font-bold leading-snug text-gray-900 dark:text-white">{modulo.titulo_tema}</span>
+                </span>
+                <ChevronRight className="icon-md my-auto mr-4 shrink-0 text-accent-700 dark:text-accent-400" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

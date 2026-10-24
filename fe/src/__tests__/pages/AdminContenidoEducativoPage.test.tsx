@@ -619,6 +619,52 @@ describe("AdminContenidoEducativoPage", () => {
       });
     });
 
+    describe("texto como muro", () => {
+      async function abrirFormularioNuevo(user: ReturnType<typeof userEvent.setup>) {
+        mockGet.mockImplementation((url: string) => {
+          if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+          return Promise.resolve(respuestaPorDefecto(url));
+        });
+        renderPage();
+        await irAModulos(user);
+        await screen.findByText("Código de colores");
+        await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
+      }
+
+      it("explica cómo escribir el texto para que el muro quede bien", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+
+        expect(screen.getByText(/Cada párrafo \(separado por una línea en blanco\) será una tarjeta del muro/)).toBeInTheDocument();
+      });
+
+      it("la vista previa dibuja el muro: 'De qué trata' y una tarjeta con su título", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+
+        await user.type(
+          screen.getByLabelText("Contenido *"),
+          "Los tres colores de bolsa se usan en toda la ciudad.\n\nBolsa blanca: material limpio y seco."
+        );
+
+        expect(await screen.findByText("De qué trata")).toBeInTheDocument();
+        expect(screen.getByRole("heading", { level: 3, name: "Bolsa blanca" })).toBeInTheDocument();
+      });
+
+      it("una imagen escrita en el texto no se pinta en la vista previa", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+
+        await user.type(
+          screen.getByLabelText("Contenido *"),
+          "Introducción del tema.\n\n![rastreo](https://sitio-malo.com/pixel.png)\n\nBolsa blanca: material limpio y seco."
+        );
+
+        expect(await screen.findByRole("heading", { level: 3, name: "Bolsa blanca" })).toBeInTheDocument();
+        expect(document.querySelector("img[src*='sitio-malo']")).toBeNull();
+      });
+    });
+
     it("no deja guardar un video que no es de YouTube y muestra el error en el campo (issue #314)", async () => {
       mockGet.mockImplementation((url: string) => {
         if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });

@@ -32,6 +32,7 @@ import { Alert } from "@/components/ui/Alert";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
+import { MuroLeccion } from "@/components/educativo/MuroLeccion";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
@@ -1403,6 +1404,7 @@ export function AdminContenidoEducativoPage() {
                   }`}
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMarkdownHint`)}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMuroHint`)}</p>
                 {fieldErrors.cuerpo_texto && (
                   <p id="contenido-cuerpo-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                     {fieldErrors.cuerpo_texto}
@@ -1465,42 +1467,31 @@ export function AdminContenidoEducativoPage() {
               </div>
             </div>
 
-            {/* ¿Qué? Vista previa en vivo — exactamente los mismos componentes
-                que usa CategoriaEducativaPage.tsx (lo que ve el Residente),
-                para que esto no sea "una aproximación" sino el resultado real. */}
+            {/* ¿Qué? Vista previa en vivo — el mismo componente (MuroLeccion) que usa
+                CategoriaEducativaPage.tsx (lo que ve el Residente), en una sola columna por ser angosta. */}
             <aside className="border-t border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-panel sm:p-8 md:border-l md:border-t-0">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.preview.label`)}</span>
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase text-gray-500 dark:bg-night-inset dark:text-gray-400">{t(`${p}.preview.live`)}</span>
               </div>
-              <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-night-line dark:bg-night-card">
-                {(() => {
-                  const Icono = categoriaEfectiva ? ICONOS_CATEGORIAS[categoriaEfectiva] ?? ICONO_CATEGORIA_DEFAULT : BookOpen;
-                  return (
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
-                        <Icono className="icon-md" />
-                      </span>
-                      <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">
-                        {categoriaEfectiva || t(`${p}.preview.categoryPlaceholder`)}
-                      </span>
-                    </div>
-                  );
-                })()}
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">{form.titulo_tema || t(`${p}.preview.titlePlaceholder`)}</h3>
-                {form.cuerpo_texto.trim() ? (
-                  <ReactMarkdown components={COMPONENTES_MARKDOWN}>{form.cuerpo_texto}</ReactMarkdown>
-                ) : (
-                  <p className="mt-2 text-sm italic text-gray-500 dark:text-gray-400">{t(`${p}.preview.bodyPlaceholder`)}</p>
-                )}
-                {form.url_video?.trim() && idVideoReconocido && <YoutubeEmbed url={form.url_video} titulo={form.titulo_tema || t(`${p}.preview.titlePlaceholder`)} />}
-                {form.url_guia?.trim() && (
-                  <p className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 dark:border-night-line dark:text-gray-200">
-                    <FileText className="icon-md shrink-0" />
-                    {t("categoriaEducativa.viewGuide")}
-                  </p>
-                )}
-              </div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">
+                {categoriaEfectiva || t(`${p}.preview.categoryPlaceholder`)}
+              </p>
+              {form.cuerpo_texto.trim() ? (
+                <MuroLeccion
+                  compacto
+                  mostrarTitulo
+                  modulo={{
+                    modulo_categoria: categoriaEfectiva,
+                    titulo_tema: form.titulo_tema || t(`${p}.preview.titlePlaceholder`),
+                    cuerpo_texto: form.cuerpo_texto,
+                    url_video: idVideoReconocido ? form.url_video?.trim() || null : null,
+                    url_guia: form.url_guia?.trim() || null,
+                  }}
+                />
+              ) : (
+                <p className="text-sm italic text-gray-500 dark:text-gray-400">{t(`${p}.preview.bodyPlaceholder`)}</p>
+              )}
             </aside>
           </div>
         </Modal>

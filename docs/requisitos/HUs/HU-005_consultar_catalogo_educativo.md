@@ -35,13 +35,13 @@
 
 - **Dado que** entro a la sección "Educación",
 - **cuando** la página carga,
-- **entonces** debo ver la lista de módulos educativos disponibles, cada uno con un título.
+- **entonces** debo ver una tarjeta por categoría, con su dibujo, su nombre y el título de su lección más reciente, y un "Video destacado" cuando algún módulo tiene video.
 
 ### CA-005.2 — Abrir un módulo
 
 - **Dado que** estoy viendo la lista de módulos,
 - **cuando** selecciono uno,
-- **entonces** debo ver su contenido completo (texto e imágenes).
+- **entonces** debo ver cada lección como un muro: su video, "De qué trata" y una tarjeta corta por cada párrafo del texto. Las imágenes escritas dentro del texto no se muestran.
 
 ### CA-005.3 — Solo lectura
 
@@ -54,3 +54,9 @@
 - **Dado que** todavía no hay módulos educativos publicados,
 - **cuando** entro a la sección "Educación",
 - **entonces** debo ver un mensaje indicando que aún no hay contenido disponible, en vez de una lista vacía sin explicación.
+
+### CA-005.5 — Tu semana
+
+- **Dado que** mi conjunto tiene una auditoría,
+- **cuando** entro a "Aprende a reciclar",
+- **entonces** debo ver arriba cómo salió el conjunto en la última auditoría y, si fue Regular o Malo y existe una categoría con el nombre del tema, la lección recomendada con un botón "Ver lección". Si salió Bueno me felicita, y si no hay auditorías el bloque lo dice. Si la consulta falla, el resto del catálogo se ve igual.

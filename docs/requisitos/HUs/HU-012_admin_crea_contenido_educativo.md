@@ -56,3 +56,9 @@
 - **Dado que** no tengo el rol admin_sistema,
 - **cuando** intento acceder a esta función,
 - **entonces** el sistema debe negarme el acceso.
+
+### CA-012.5 — Vista previa y ayuda para escribir el texto
+
+- **Dado que** estoy escribiendo un módulo,
+- **cuando** miro la vista previa en vivo,
+- **entonces** debo ver la lección con el mismo muro que verá el Residente (categoría arriba, "De qué trata" y una tarjeta por párrafo), y debajo del campo de contenido debo tener una ayuda que explique cómo escribir los títulos de las tarjetas ("Título: texto").

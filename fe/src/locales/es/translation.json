@@ -1132,17 +1132,43 @@
   },
   "catalogoEducativo": {
     "title": "Aprende a reciclar",
-    "subtitle": "Elige un tema para ver sus videos y guías de apoyo.",
+    "subtitle": "Guías y videos para separar bien los residuos en tu conjunto, paso a paso.",
     "loading": "Cargando contenido...",
     "loadError": "No se pudo cargar el catálogo educativo.",
     "emptyState": "Todavía no hay contenido educativo publicado.",
     "tema": "tema",
-    "temas": "temas"
+    "temas": "temas",
+    "categoriesTitle": "Categorías de aprendizaje",
+    "viewLesson": "Ver lección",
+    "featuredTitle": "Video destacado",
+    "featuredCta": "Ver video y guía"
   },
   "categoriaEducativa": {
     "back": "Volver a Aprende a reciclar",
     "emptyForCategory": "No se encontró contenido para esta categoría.",
-    "viewGuide": "Ver guía de apoyo"
+    "viewGuide": "Ver guía de apoyo",
+    "keepLearning": "Sigue aprendiendo",
+    "lessonCount_one": "{{count}} lección",
+    "lessonCount_other": "{{count}} lecciones",
+    "videoCount_one": "{{count}} video",
+    "videoCount_other": "{{count}} videos",
+    "guideCount_one": "{{count}} guía",
+    "guideCount_other": "{{count}} guías"
+  },
+  "tuSemana": {
+    "ariaLabel": "Tu semana",
+    "title": "Tu semana",
+    "lastAudit": "Última auditoría",
+    "noAudit": "Todavía no hay una auditoría de tu conjunto. Cuando el reciclador califique la separación de residuos, la verás aquí.",
+    "result": "En la última auditoría, tu conjunto salió {{nivel}} en «{{tema}}».",
+    "needsReinforcement": "Por eso te recomendamos esta lección.",
+    "keepItUp": "¡Sigue así! Tu conjunto separa bien este tema.",
+    "recommended": "Recomendado para ti",
+    "view": "Ver lección"
+  },
+  "leccionMuro": {
+    "about": "De qué trata",
+    "openGuide": "Abrir la guía oficial"
   },
   "adminContenidoEducativo": {
     "title": "Contenido educativo",
@@ -1284,7 +1310,8 @@
       "videoLink": "Link de video (YouTube)",
       "videoRecognized": "✓ Link de YouTube reconocido",
       "videoNotRecognized": "Este link no parece de YouTube: el Residente no verá el video.",
-      "guideLink": "Guía de apoyo"
+      "guideLink": "Guía de apoyo",
+      "contentMuroHint": "Cada párrafo (separado por una línea en blanco) será una tarjeta del muro. Empieza el párrafo con un título corto y dos puntos (por ejemplo, «Bolsa blanca: ...»). El primer párrafo sin título es la introducción."
     },
     "preview": {
       "label": "Así lo verá el Residente",

@@ -1128,17 +1128,43 @@
   },
   "catalogoEducativo": {
     "title": "Learn to recycle",
-    "subtitle": "Choose a topic to see its videos and support guides.",
+    "subtitle": "Guides and videos to separate waste properly in your complex, step by step.",
     "loading": "Loading content...",
     "loadError": "Could not load the educational catalog.",
     "emptyState": "No educational content published yet.",
     "tema": "topic",
-    "temas": "topics"
+    "temas": "topics",
+    "categoriesTitle": "Learning categories",
+    "viewLesson": "View lesson",
+    "featuredTitle": "Featured video",
+    "featuredCta": "Watch the video and guide"
   },
   "categoriaEducativa": {
     "back": "Back to Learn to recycle",
     "emptyForCategory": "No content was found for this category.",
-    "viewGuide": "View support guide"
+    "viewGuide": "View support guide",
+    "keepLearning": "Keep learning",
+    "lessonCount_one": "{{count}} lesson",
+    "lessonCount_other": "{{count}} lessons",
+    "videoCount_one": "{{count}} video",
+    "videoCount_other": "{{count}} videos",
+    "guideCount_one": "{{count}} guide",
+    "guideCount_other": "{{count}} guides"
+  },
+  "tuSemana": {
+    "ariaLabel": "Your week",
+    "title": "Your week",
+    "lastAudit": "Latest audit",
+    "noAudit": "There is no audit for your complex yet. When the recycler rates the waste separation, you will see it here.",
+    "result": "In the latest audit, your complex was rated {{nivel}} on “{{tema}}”.",
+    "needsReinforcement": "That is why we recommend this lesson.",
+    "keepItUp": "Keep it up! Your complex separates this topic well.",
+    "recommended": "Recommended for you",
+    "view": "View lesson"
+  },
+  "leccionMuro": {
+    "about": "What it is about",
+    "openGuide": "Open the official guide"
   },
   "adminContenidoEducativo": {
         "title": "Educational content",
@@ -1283,7 +1309,8 @@
           "videoLink": "Video link (YouTube)",
           "videoRecognized": "✓ YouTube link recognized",
           "videoNotRecognized": "This link doesn't look like YouTube: the Resident won't see the video.",
-          "guideLink": "Support guide"
+          "guideLink": "Support guide",
+          "contentMuroHint": "Each paragraph (separated by a blank line) becomes a card on the wall. Start the paragraph with a short title and a colon (for example, “White bag: ...”). The first paragraph without a title is the introduction."
         },
         "preview": {
           "label": "How the Resident will see it",
