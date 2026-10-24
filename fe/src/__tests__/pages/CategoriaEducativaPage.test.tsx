@@ -2,11 +2,11 @@
  * Archivo: __tests__/pages/CategoriaEducativaPage.test.tsx
  * Descripción: Tests de una categoría de "Aprende a reciclar" dibujada como muro.
  * ¿Para qué? Verificar que filtra por categoría (decodificando la URL), que parte el
- *            texto en tarjetas y que solo pinta enlaces seguros y ninguna imagen
- *            escrita dentro del texto.
+ *            texto en tarjetas, que solo pinta enlaces seguros y ninguna imagen
+ *            escrita dentro del texto, y que marca la lección como vista.
  */
 
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { vi, beforeEach } from "vitest";
 import { CategoriaEducativaPage } from "@/pages/CategoriaEducativaPage";
@@ -14,9 +14,11 @@ import { renderWithProviders, mockUser } from "../helpers";
 import type { ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 
 const mockListarContenido = vi.fn();
+const mockMarcarVistos = vi.fn();
 
 vi.mock("@/lib/contenidoEducativoApi", () => ({
   listarContenido: (...args: unknown[]) => mockListarContenido(...args),
+  marcarVistos: (...args: unknown[]) => mockMarcarVistos(...args),
 }));
 
 const modulos: ContenidoEducativo[] = [
@@ -56,6 +58,7 @@ describe("CategoriaEducativaPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockListarContenido.mockResolvedValue(modulos);
+    mockMarcarVistos.mockResolvedValue([]);
   });
 
   it("muestra el nombre de la categoría decodificado de la URL y el título de la lección", async () => {
@@ -157,11 +160,29 @@ describe("CategoriaEducativaPage", () => {
     );
   });
 
-  it("no marca nada como visto ni muestra la etiqueta (eso llega en otra tarjeta)", async () => {
-    renderConRuta("Puntos limpios y Ecopuntos");
+  describe("lecciones vistas", () => {
+    it("al abrir la categoría marca sus módulos como vistos y muestra Visto", async () => {
+      renderConRuta("Puntos limpios y Ecopuntos");
 
-    await screen.findByRole("heading", { level: 1, name: "Dónde llevar escombros" });
-    expect(screen.queryByText("Visto")).not.toBeInTheDocument();
+      await waitFor(() => expect(mockMarcarVistos).toHaveBeenCalledWith([modulos[0].id_contenido]));
+      expect(await screen.findByText("Visto")).toBeInTheDocument();
+    });
+
+    it("si no se puede guardar lo visto, la página se ve igual, sin la marca", async () => {
+      mockMarcarVistos.mockRejectedValue(new Error("falló"));
+      renderConRuta("Puntos limpios y Ecopuntos");
+
+      expect(await screen.findByRole("heading", { level: 1, name: "Dónde llevar escombros" })).toBeInTheDocument();
+      await waitFor(() => expect(mockMarcarVistos).toHaveBeenCalled());
+      expect(screen.queryByText("Visto")).not.toBeInTheDocument();
+    });
+
+    it("una categoría sin contenido no marca nada", async () => {
+      renderConRuta("Categoría inexistente");
+
+      expect(await screen.findByText("No se encontró contenido para esta categoría.")).toBeInTheDocument();
+      expect(mockMarcarVistos).not.toHaveBeenCalled();
+    });
   });
 
   it("con varias lecciones, cada una lleva su título y el encabezado es la categoría", async () => {

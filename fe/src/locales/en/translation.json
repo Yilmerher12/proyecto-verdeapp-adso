@@ -1136,6 +1136,13 @@
     "temas": "topics",
     "categoriesTitle": "Learning categories",
     "viewLesson": "View lesson",
+    "seen": "Seen",
+    "notSeen": "Not seen",
+    "progress": {
+      "title": "Your progress",
+      "of": "of {{total}} lessons seen",
+      "hint": "A lesson counts as seen when you open it."
+    },
     "featuredTitle": "Featured video",
     "featuredCta": "Watch the video and guide"
   },
@@ -1143,6 +1150,7 @@
     "back": "Back to Learn to recycle",
     "emptyForCategory": "No content was found for this category.",
     "viewGuide": "View support guide",
+    "seen": "Seen",
     "keepLearning": "Keep learning",
     "lessonCount_one": "{{count}} lesson",
     "lessonCount_other": "{{count}} lessons",

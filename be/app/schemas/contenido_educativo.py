@@ -21,6 +21,11 @@ CUERPO_MAX_LENGTH = 10000
 # ¿Impacto? Mismo valor que CONJUNTOS_MAX_LENGTH de schemas/novedad.py.
 CONJUNTOS_MAX_LENGTH = 100
 
+# ¿Qué? Máximo de módulos que se marcan como vistos en una sola petición.
+# ¿Para qué? Una categoría tiene unos pocos módulos; el tope solo frena una
+#            petición armada a mano con miles de ids.
+VISTOS_MAX_LENGTH = 100
+
 
 class ContenidoEducativoBase(BaseModel):
     modulo_categoria: str
@@ -115,3 +120,17 @@ class EnvioContenidoResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ¿Qué? Lecciones vistas por el Residente (HU-005): los módulos que ya abrió.
+class VistosRequest(BaseModel):
+    ids: list[UUID] = Field(max_length=VISTOS_MAX_LENGTH)
+
+    @field_validator("ids")
+    @classmethod
+    def sin_repetidos(cls, v: list[UUID]) -> list[UUID]:
+        return list(dict.fromkeys(v))
+
+
+class VistosResponse(BaseModel):
+    ids: list[UUID]
