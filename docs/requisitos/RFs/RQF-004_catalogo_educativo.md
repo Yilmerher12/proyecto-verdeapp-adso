@@ -38,8 +38,9 @@ Sin parámetros de entrada — la petición trae el catálogo completo, sin filt
 1. El usuario navega a la sección "Aprende a Reciclar" (antes "Educación").
 2. El frontend hace una petición `GET` a `/api/v1/contenido-educativo`.
 3. El backend consulta la tabla `contenido_educativo` y devuelve todo el catálogo, ordenado del módulo más reciente al más antiguo.
-4. El frontend agrupa los módulos por `modulo_categoria` y renderiza el contenido.
-5. Si el usuario entra a una categoría específica, el frontend filtra la lista ya cargada — no hace una segunda petición al backend.
+4. El frontend agrupa los módulos por `modulo_categoria` y dibuja una tarjeta por categoría, con un dibujo fijo propio de cada una, el título de su lección más reciente y un "Video destacado".
+5. Arriba muestra "Tu semana": con la misma consulta del historial de auditorías del conjunto (`listarHistorial`) toma la última auditoría y, si salió Regular o Malo, recomienda la lección cuya categoría tiene el nombre del tema de esa auditoría. No hay endpoint nuevo.
+6. Si el usuario entra a una categoría específica, el frontend filtra la lista ya cargada — no hace una segunda petición al backend — y dibuja cada módulo como un muro: video, "De qué trata" y una tarjeta por párrafo (regla en `fe/src/lib/muroLeccion.ts`).
 
 ---
 
@@ -67,3 +68,4 @@ Sin parámetros de entrada — la petición trae el catálogo completo, sin filt
 ## Reglas de negocio
 
 - RN-001: El catálogo educativo es de acceso exclusivo de lectura para los usuarios finales. No pueden crear, editar ni eliminar contenido.
+- RN-002: Ninguna imagen escrita dentro del texto de un módulo se muestra al Residente. Solo se pinta el video y, para el enlace de la guía, lo que permite `enlaceAdjuntoSeguro`.
