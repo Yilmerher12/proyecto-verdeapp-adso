@@ -164,6 +164,8 @@ uv run python -m app.seed
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
+> **Datos de demostración (opcional, para presentar el proyecto):** después del seed normal, `uv run python -m app.seed_demo` agrega 3 conjuntos con residentes, recicladores, 8 semanas de auditorías con fotos, comunicados, novedades, soporte y agenda, para que ningún panel se vea vacío. Los usuarios inventados terminan en `@demo.verdeapp.com` y comparten la contraseña de las cuentas de prueba. Las fechas son relativas al día en que se corre, así que conviene correrlo justo antes de presentar. Las fotos viven en `be/app/data/demo/fotos/`. Si ya hay usuarios `@demo.verdeapp.com`, no hace nada.
+
 > En ejecuciones siguientes normalmente solo hace falta encender uvicorn (uv usa el entorno correcto solo). Repetir `uv run python -m app.seed` no hace daño, pero solo es necesario si empezaste con una base de datos nueva (ej: borraste el volumen de Docker):
 > ```powershell
 > uv run uvicorn app.main:app --reload --port 8000
