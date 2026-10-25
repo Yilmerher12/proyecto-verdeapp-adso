@@ -17,6 +17,7 @@ uv sync                                              # instalar dependencias (pr
 uv run alembic upgrade head                          # aplicar migraciones pendientes
 uv run alembic revision --autogenerate -m "mensaje"  # generar una migración nueva (revisar el archivo generado a mano — ver Arquitectura)
 uv run python -m app.seed                            # sembrar roles/localidades/usuarios de prueba/conjuntos reales (idempotente)
+uv run python -m app.seed_demo                       # datos de demostración para presentar el proyecto (después de app.seed; idempotente, fotos en app/data/demo/fotos/)
 uv run python -m app.purgar_tokens                   # borrar tokens vencidos de las 4 tablas (manual; ver be/README.md)
 uv run python -m app.limpiar_adjuntos --simular      # listar los adjuntos que nadie usa (sin --simular los borra)
 uv run uvicorn app.main:app --reload --port 8000     # levantar el servidor de desarrollo
