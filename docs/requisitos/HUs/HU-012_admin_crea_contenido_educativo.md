@@ -62,3 +62,10 @@
 - **Dado que** estoy escribiendo un módulo,
 - **cuando** miro la vista previa en vivo,
 - **entonces** debo ver la lección con el mismo muro que verá el Residente (categoría arriba, "De qué trata" y una tarjeta por párrafo), y debajo del campo de contenido debo tener una ayuda que explique cómo escribir los títulos de las tarjetas ("Título: texto").
+
+### CA-012.6 — Portada e imágenes dentro del texto
+
+- **Dado que** estoy escribiendo un módulo,
+- **cuando** elijo una imagen de portada o uso "Insertar imagen" encima del campo de contenido,
+- **entonces** la imagen se sube a VerdeApp (JPG, PNG o WEBP de hasta 5 MB), la portada se ve en miniatura con "Quitar imagen", y la otra se escribe en el texto en su propia línea, donde está el cursor. La vista previa las muestra como las verá el Residente. Si la subida falla, veo un aviso y mi texto no cambia.
+- **Y** el sistema no acepta imágenes de otro sitio: la portada y las imágenes del texto solo pueden ser archivos subidos a VerdeApp (el servidor responde 422 si no).

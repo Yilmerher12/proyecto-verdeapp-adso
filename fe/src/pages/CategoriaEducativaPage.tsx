@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
 import { MuroLeccion } from "@/components/educativo/MuroLeccion";
+import { imagenPropiaSegura } from "@/lib/enlaceSeguro";
 import { listarContenido, marcarVistos, type ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 
 /**
@@ -108,22 +109,29 @@ export function CategoriaEducativaPage() {
             {t("categoriaEducativa.keepLearning")}
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {otras.map(({ nombre, modulo }) => (
-              <Link
-                key={nombre}
-                to={`/catalogo-educativo/${encodeURIComponent(nombre)}`}
-                className="group flex overflow-hidden rounded-3xl border border-gray-100 bg-white transition-transform hover:-translate-y-0.5 dark:border-night-line dark:bg-night-card"
-              >
-                <span className="block w-36 shrink-0 bg-accent-50 dark:bg-accent-300/10" aria-hidden="true">
-                  <IlustracionCategoria categoria={nombre} />
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 p-5">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{nombre}</span>
-                  <span className="text-base font-bold leading-snug text-gray-900 dark:text-white">{modulo.titulo_tema}</span>
-                </span>
-                <ChevronRight className="icon-md my-auto mr-4 shrink-0 text-accent-700 dark:text-accent-400" aria-hidden="true" />
-              </Link>
-            ))}
+            {otras.map(({ nombre, modulo }) => {
+              const portada = imagenPropiaSegura(contenido.find((c) => c.modulo_categoria === nombre && c.url_imagen)?.url_imagen);
+              return (
+                <Link
+                  key={nombre}
+                  to={`/catalogo-educativo/${encodeURIComponent(nombre)}`}
+                  className="group flex overflow-hidden rounded-3xl border border-gray-100 bg-white transition-transform hover:-translate-y-0.5 dark:border-night-line dark:bg-night-card"
+                >
+                  <span className="block w-36 shrink-0 bg-accent-50 dark:bg-accent-300/10" aria-hidden="true">
+                    {portada ? (
+                      <img src={portada} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <IlustracionCategoria categoria={nombre} />
+                    )}
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 p-5">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{nombre}</span>
+                    <span className="text-base font-bold leading-snug text-gray-900 dark:text-white">{modulo.titulo_tema}</span>
+                  </span>
+                  <ChevronRight className="icon-md my-auto mr-4 shrink-0 text-accent-700 dark:text-accent-400" aria-hidden="true" />
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}

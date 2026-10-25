@@ -35,13 +35,13 @@
 
 - **Dado que** entro a la sección "Educación",
 - **cuando** la página carga,
-- **entonces** debo ver una tarjeta por categoría, con su dibujo, su nombre, el título de su lección más reciente y si ya la vi ("Visto" o "Sin ver"), y un "Video destacado" cuando algún módulo tiene video.
+- **entonces** debo ver una tarjeta por categoría, con su imagen (la portada del módulo o, si no tiene, un dibujo fijo de la categoría), su nombre, el título de su lección más reciente y si ya la vi ("Visto" o "Sin ver"), y un "Video destacado" cuando algún módulo tiene video.
 
 ### CA-005.2 — Abrir un módulo
 
 - **Dado que** estoy viendo la lista de módulos,
 - **cuando** selecciono uno,
-- **entonces** debo ver cada lección como un muro: su video, "De qué trata" y una tarjeta corta por cada párrafo del texto. Las imágenes escritas dentro del texto no se muestran.
+- **entonces** debo ver cada lección como un muro: su video, "De qué trata" y una tarjeta corta por cada párrafo del texto. Si el módulo tiene imágenes subidas por el Administrador, se ven dentro de su tarjeta; una imagen que no sea de VerdeApp nunca se muestra.
 
 ### CA-005.3 — Solo lectura
 

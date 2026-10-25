@@ -1319,7 +1319,13 @@
       "videoRecognized": "✓ Link de YouTube reconocido",
       "videoNotRecognized": "Este link no parece de YouTube: el Residente no verá el video.",
       "guideLink": "Guía de apoyo",
-      "contentMuroHint": "Cada párrafo (separado por una línea en blanco) será una tarjeta del muro. Empieza el párrafo con un título corto y dos puntos (por ejemplo, «Bolsa blanca: ...»). El primer párrafo sin título es la introducción."
+      "contentMuroHint": "Cada párrafo (separado por una línea en blanco) será una tarjeta del muro. Empieza el párrafo con un título corto y dos puntos (por ejemplo, «Bolsa blanca: ...»). El primer párrafo sin título es la introducción. Una imagen en su propia línea se pega a la tarjeta que viene después.",
+      "insertImage": "Insertar imagen",
+      "insertingImage": "Subiendo...",
+      "insertImageError": "No se pudo subir la imagen. Intenta de nuevo.",
+      "imageAltDefault": "descripción de la imagen",
+      "coverImage": "Imagen de portada (opcional)",
+      "coverImageHint": "Se ve en la tarjeta de la categoría. Mejor una imagen ancha (16:9), propia o de uso libre. JPG, PNG o WEBP de hasta 5 MB. Sin imagen se usa el dibujo de la categoría."
     },
     "preview": {
       "label": "Así lo verá el Residente",

@@ -49,6 +49,7 @@ def crear_contenido(db: Session, data: ContenidoEducativoCreate) -> ContenidoEdu
         cuerpo_texto=data.cuerpo_texto,
         url_video=data.url_video,
         url_guia=data.url_guia,
+        url_imagen=data.url_imagen,
         fecha_publicacion=date.today(),
     )
     db.add(contenido)
@@ -66,6 +67,7 @@ def editar_contenido(
     contenido.cuerpo_texto = data.cuerpo_texto
     contenido.url_video = data.url_video
     contenido.url_guia = data.url_guia
+    contenido.url_imagen = data.url_imagen
     db.commit()
     db.refresh(contenido)
     return contenido

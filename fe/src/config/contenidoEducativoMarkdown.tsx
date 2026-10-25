@@ -9,10 +9,11 @@
  *           en un solo lugar en vez de mantener dos copias iguales.
  * ¿Impacto? react-markdown no trae estilos propios — sin esto, un subtítulo
  *           se vería exactamente igual que un párrafo normal.
- *           Las imágenes (![...](...)) no se pintan: una imagen de otro sitio
+ *           Las imágenes (![...](...)) no se pintan aquí: una imagen de otro sitio
  *           haría que el navegador del Residente pida esa dirección sin que
- *           nadie la haya revisado (sirve para rastrearlo). Las imágenes
- *           propias de las lecciones llegan con su propio campo, validado.
+ *           nadie la haya revisado (sirve para rastrearlo). Las imágenes propias
+ *           de las lecciones las dibuja MuroLeccion, ya revisadas con
+ *           imagenPropiaSegura.
  */
 export const COMPONENTES_MARKDOWN = {
   h1: (props: React.ComponentPropsWithoutRef<"h1">) => (

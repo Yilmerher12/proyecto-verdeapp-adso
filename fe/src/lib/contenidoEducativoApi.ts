@@ -13,6 +13,8 @@ export interface ContenidoEducativo {
   cuerpo_texto: string;
   url_video: string | null;
   url_guia: string | null;
+  // ¿Qué? Imagen de portada opcional que sube el Administrador del Sistema.
+  url_imagen: string | null;
   fecha_publicacion: string;
 }
 

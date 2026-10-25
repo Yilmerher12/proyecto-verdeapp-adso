@@ -1,10 +1,11 @@
+import re
 from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.utils.enlaces import EnlaceAdjunto, EnlaceVideo
+from app.utils.enlaces import EnlaceAdjunto, EnlaceVideo, ImagenPropia, validar_imagen_propia
 
 # ¿Qué? Issue #352 — módulo y título = tamaño de su columna (String(255));
 #       el cuerpo es Text, con un máximo propio de la app.
@@ -26,6 +27,9 @@ CONJUNTOS_MAX_LENGTH = 100
 #            petición armada a mano con miles de ids.
 VISTOS_MAX_LENGTH = 100
 
+# ¿Qué? Una imagen escrita en el texto en formato Markdown: ![descripción](enlace).
+_IMAGEN_EN_TEXTO = re.compile(r"!\[[^\]]*\]\(\s*([^)\s]*)[^)]*\)")
+
 
 class ContenidoEducativoBase(BaseModel):
     modulo_categoria: str
@@ -33,6 +37,7 @@ class ContenidoEducativoBase(BaseModel):
     cuerpo_texto: str
     url_video: Optional[str] = None
     url_guia: Optional[str] = None
+    url_imagen: Optional[str] = None
 
     @field_validator("modulo_categoria")
     @classmethod
@@ -81,6 +86,20 @@ class _ContenidoEducativoEntrada(ContenidoEducativoBase):
     cuerpo_texto: str = Field(max_length=CUERPO_MAX_LENGTH)
     url_video: EnlaceVideo = None
     url_guia: EnlaceAdjunto = None
+    url_imagen: ImagenPropia = None
+
+    # ¿Qué? Las imágenes que el Administrador pone DENTRO del texto (una por
+    #       tarjeta del muro) solo pueden ser archivos que subió esta misma app.
+    # ¿Para qué? Un ![](https://sitio-malo/pixel.png) dejaría que un tercero vea
+    #           quién abre la lección (rastreo) o mostrar contenido ajeno.
+    # ¿Impacto? Misma regla que url_imagen; se revisa solo en lo que ENTRA, así
+    #           que un texto viejo que no cumpla no rompe el catálogo.
+    @field_validator("cuerpo_texto")
+    @classmethod
+    def imagenes_del_texto_son_propias(cls, v: str) -> str:
+        for enlace in _IMAGEN_EN_TEXTO.findall(v):
+            validar_imagen_propia(enlace)
+        return v
 
 
 class ContenidoEducativoCreate(_ContenidoEducativoEntrada):

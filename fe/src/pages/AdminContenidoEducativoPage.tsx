@@ -9,6 +9,7 @@ import {
   Eye,
   FileText,
   Heading2,
+  ImagePlus,
   List as ListIcon,
   Bold,
   ChevronDown,
@@ -32,11 +33,13 @@ import { Alert } from "@/components/ui/Alert";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
+import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { MuroLeccion } from "@/components/educativo/MuroLeccion";
+import { subirAdjunto } from "@/lib/uploadsApi";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
-import { API_BASE_URL } from "@/api/axios";
+import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import axios from "axios";
 import { COMPONENTES_MARKDOWN } from "@/config/contenidoEducativoMarkdown";
@@ -74,6 +77,7 @@ const FORM_VACIO: ContenidoEducativoPayload = {
   cuerpo_texto: "",
   url_video: "",
   url_guia: "",
+  url_imagen: "",
 };
 
 const NUEVA_CATEGORIA = "__nueva__";
@@ -411,6 +415,9 @@ export function AdminContenidoEducativoPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imagenTextoRef = useRef<HTMLInputElement>(null);
+  const [subiendoImagenTexto, setSubiendoImagenTexto] = useState(false);
+  const [errorImagenTexto, setErrorImagenTexto] = useState<string | null>(null);
 
   const abrirCrear = (categoriaPrevia?: string) => {
     setForm(FORM_VACIO);
@@ -428,6 +435,7 @@ export function AdminContenidoEducativoPage() {
       cuerpo_texto: item.cuerpo_texto,
       url_video: item.url_video ?? "",
       url_guia: item.url_guia ?? "",
+      url_imagen: item.url_imagen ?? "",
     });
     setCategoriaSeleccion(item.modulo_categoria);
     setNuevaCategoriaTexto("");
@@ -509,6 +517,7 @@ export function AdminContenidoEducativoPage() {
       cuerpo_texto: form.cuerpo_texto,
       url_video: form.url_video?.trim() || null,
       url_guia: form.url_guia?.trim() || null,
+      url_imagen: form.url_imagen?.trim() || null,
     };
     try {
       if (editando) {
@@ -575,6 +584,30 @@ export function AdminContenidoEducativoPage() {
       ta.focus();
       ta.setSelectionRange(cursorFinal, cursorFinal);
     });
+  };
+
+  // ¿Qué? Sube una imagen y la escribe en el texto como ![descripción](enlace), en su propia línea.
+  // ¿Para qué? Cada imagen del muro va pegada a la tarjeta que viene justo después (ver
+  //           lib/muroLeccion.ts); el Administrador no tiene que escribir el enlace a mano.
+  // ¿Impacto? Se inserta donde está el cursor. Es la misma subida de imágenes de la guía de apoyo.
+  const insertarImagenEnTexto = async (archivo: File | undefined) => {
+    if (!archivo) return;
+    setErrorImagenTexto(null);
+    setSubiendoImagenTexto(true);
+    try {
+      const url = await subirAdjunto(archivo);
+      const ta = textareaRef.current;
+      const posicion = ta ? ta.selectionStart : form.cuerpo_texto.length;
+      const antes = form.cuerpo_texto.slice(0, posicion).replace(/\s+$/, "");
+      const despues = form.cuerpo_texto.slice(posicion).replace(/^\s+/, "");
+      const imagen = `![${t(`${p}.fields.imageAltDefault`)}](${url})`;
+      actualizarCampo("cuerpo_texto", `${antes}${antes ? "\n\n" : ""}${imagen}\n\n${despues}`);
+    } catch (err) {
+      setErrorImagenTexto(motivoDelServidor(err) ?? t(`${p}.fields.insertImageError`));
+    } finally {
+      setSubiendoImagenTexto(false);
+      if (imagenTextoRef.current) imagenTextoRef.current.value = "";
+    }
   };
 
   const idVideoReconocido = REGEX_VIDEO_YOUTUBE.test(form.url_video || "");
@@ -1386,6 +1419,18 @@ export function AdminContenidoEducativoPage() {
                     <ListIcon className="icon-sm" />
                     {t(`${p}.fields.formatList`)}
                   </button>
+                  <label className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
+                    <ImagePlus className="icon-sm" />
+                    {subiendoImagenTexto ? t(`${p}.fields.insertingImage`) : t(`${p}.fields.insertImage`)}
+                    <input
+                      ref={imagenTextoRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={subiendoImagenTexto}
+                      onChange={(e) => insertarImagenEnTexto(e.target.files?.[0])}
+                    />
+                  </label>
                 </div>
                 <textarea
                   id="contenido-cuerpo"
@@ -1405,6 +1450,11 @@ export function AdminContenidoEducativoPage() {
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMarkdownHint`)}</p>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMuroHint`)}</p>
+                {errorImagenTexto && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
+                    {errorImagenTexto}
+                  </p>
+                )}
                 {fieldErrors.cuerpo_texto && (
                   <p id="contenido-cuerpo-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                     {fieldErrors.cuerpo_texto}
@@ -1450,6 +1500,15 @@ export function AdminContenidoEducativoPage() {
                 onBlurEnlace={() => validarCampo("url_guia")}
               />
 
+              <div>
+                <ImagenAdjuntaField
+                  label={t(`${p}.fields.coverImage`)}
+                  value={form.url_imagen ?? ""}
+                  onChange={(url) => actualizarCampo("url_imagen", url)}
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.coverImageHint`)}</p>
+              </div>
+
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={cerrarFormulario}
@@ -1487,6 +1546,7 @@ export function AdminContenidoEducativoPage() {
                     cuerpo_texto: form.cuerpo_texto,
                     url_video: idVideoReconocido ? form.url_video?.trim() || null : null,
                     url_guia: form.url_guia?.trim() || null,
+                    url_imagen: form.url_imagen?.trim() || null,
                   }}
                 />
               ) : (

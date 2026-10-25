@@ -17,6 +17,7 @@ Uso, desde be/:
 """
 
 import argparse
+import re
 import time
 from datetime import timedelta
 from pathlib import Path
@@ -48,6 +49,7 @@ COLUMNAS_CON_ADJUNTOS = [
     Comunicado.url_adjunto,
     Novedad.url_adjunto,
     ContenidoEducativo.url_guia,
+    ContenidoEducativo.url_imagen,
     NovedadEnviada.url_imagen,
     AgendaConjunto.url_evidencia,
 ]
@@ -66,6 +68,11 @@ COLUMNAS_SIN_ADJUNTOS = [
     ArchivoSubido.ruta,
 ]
 
+# ¿Qué? Una imagen subida y escrita DENTRO de un texto (Markdown): ![](/uploads/adjuntos/<uuid>.png).
+# ¿Para qué? El texto de un módulo educativo puede traer una imagen por tarjeta del muro.
+# ¿Impacto? Sin esto, esas imágenes no figurarían como "en uso" y la limpieza las borraría.
+_IMAGEN_EN_TEXTO = re.compile(r"/uploads/adjuntos/([0-9a-f-]{36}\.(?:jpg|png|webp))")
+
 
 def nombres_en_uso(db: Session) -> set[str]:
     """Nombres de archivo (sin carpeta) que alguna fila referencia."""
@@ -73,6 +80,8 @@ def nombres_en_uso(db: Session) -> set[str]:
     for columna in COLUMNAS_CON_ADJUNTOS:
         for ruta in db.scalars(select(columna).where(columna.is_not(None))):
             nombres.add(ruta.rsplit("/", 1)[-1])
+    for texto in db.scalars(select(ContenidoEducativo.cuerpo_texto)):
+        nombres.update(_IMAGEN_EN_TEXTO.findall(texto))
     return nombres
 
 

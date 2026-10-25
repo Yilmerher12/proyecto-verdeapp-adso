@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 import { API_BASE_URL } from "@/api/axios";
-import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
+import { enlaceAdjuntoSeguro, imagenPropiaSegura } from "@/lib/enlaceSeguro";
 
 describe("enlaceAdjuntoSeguro", () => {
   it("completa un archivo subido a VerdeApp con la URL del backend", () => {
@@ -36,5 +36,25 @@ describe("enlaceAdjuntoSeguro", () => {
 
   it("no rechaza un %2f dentro de un enlace https:// externo", () => {
     expect(enlaceAdjuntoSeguro("https://ejemplo.com/ruta%2fcodificada")).toBe("https://ejemplo.com/ruta%2fcodificada");
+  });
+});
+
+describe("imagenPropiaSegura", () => {
+  it("completa una imagen subida a VerdeApp con la URL del backend", () => {
+    expect(imagenPropiaSegura("/uploads/adjuntos/f.png")).toBe(`${API_BASE_URL}/uploads/adjuntos/f.png`);
+  });
+
+  // ¿Qué? A diferencia de enlaceAdjuntoSeguro, un https:// de otro sitio NO es una imagen válida:
+  //       permitiría saber quién abre una lección (rastreo).
+  it.each([
+    null,
+    "",
+    "https://sitio-externo.com/pixel.png",
+    "http://sitio-malo.com/pixel.png",
+    "/uploads/evidencias-auditoria/f.png",
+    "/uploads/adjuntos/../secreto.png",
+    "/uploads/adjuntos/%2e%2e/secreto.png",
+  ])("rechaza %s", (url) => {
+    expect(imagenPropiaSegura(url)).toBeNull();
   });
 });

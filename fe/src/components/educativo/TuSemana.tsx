@@ -18,6 +18,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import { lunesBogota, rangoSemanaUTC } from "@/lib/dateFormat";
+import { imagenPropiaSegura } from "@/lib/enlaceSeguro";
 import { listarHistorial, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import type { ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 
@@ -68,6 +69,10 @@ export function TuSemana({ contenido }: { contenido: ContenidoEducativo[] }) {
   const recomendado = necesitaRefuerzo
     ? contenido.find((c) => c.modulo_categoria === auditoria.tema_educativo)
     : undefined;
+  // ¿Qué? La portada de la categoría recomendada: la primera de sus módulos que tenga una.
+  const portadaRecomendada = imagenPropiaSegura(
+    recomendado && contenido.find((c) => c.modulo_categoria === recomendado.modulo_categoria && c.url_imagen)?.url_imagen
+  );
 
   return (
     <section aria-label={t("tuSemana.ariaLabel")} className={envoltorio}>
@@ -95,7 +100,11 @@ export function TuSemana({ contenido }: { contenido: ContenidoEducativo[] }) {
           className="flex flex-wrap items-center gap-4 rounded-b-3xl border-t border-gray-100 bg-accent-50 px-6 py-4 transition-colors hover:bg-accent-100 dark:border-night-line dark:bg-accent-300/10 dark:hover:bg-accent-300/15"
         >
           <span className="h-20 w-32 shrink-0 overflow-hidden rounded-2xl bg-white dark:bg-night-card">
-            <IlustracionCategoria categoria={recomendado.modulo_categoria} />
+            {portadaRecomendada ? (
+              <img src={portadaRecomendada} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <IlustracionCategoria categoria={recomendado.modulo_categoria} />
+            )}
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
