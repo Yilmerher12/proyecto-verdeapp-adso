@@ -25,7 +25,7 @@ vi.mock("@/lib/auditoriaConjuntoApi", () => ({
   listarHistorial: (...args: unknown[]) => mockListarHistorial(...args),
 }));
 
-const base = { url_video: null, url_guia: null, fecha_publicacion: "2026-08-18" };
+const base = { url_video: null, url_guia: null, url_imagen: null, fecha_publicacion: "2026-08-18" };
 const modulos: ContenidoEducativo[] = [
   {
     ...base,
@@ -111,6 +111,29 @@ describe("CatalogoEducativoPage", () => {
     expect(tarjeta.querySelector("img")).toBeNull();
   });
 
+  it("usa la imagen de portada del módulo cuando la tiene y el dibujo de la categoría cuando no", async () => {
+    mockListarContenido.mockResolvedValue([
+      { ...modulos[2], url_imagen: "/uploads/adjuntos/0b9c1a0e-3f4d-4c52-9b57-6f1f2a3b4c5d.png" },
+      modulos[0],
+    ]);
+    renderPagina();
+
+    const conImagen = await tarjetaDe("Puntos limpios y Ecopuntos");
+    expect(conImagen.querySelector("img")?.getAttribute("src")).toMatch(/\/uploads\/adjuntos\/0b9c1a0e.*\.png$/);
+    expect(conImagen.querySelector("svg[viewBox='0 0 320 150']")).toBeNull();
+    const sinImagen = await tarjetaDe("Separación en la fuente y código de colores");
+    expect(sinImagen.querySelector("svg[viewBox='0 0 320 150']")).not.toBeNull();
+  });
+
+  it("una imagen de portada que no es de la app no se pinta", async () => {
+    mockListarContenido.mockResolvedValue([{ ...modulos[2], url_imagen: "https://sitio-malo.com/pixel.png" }]);
+    renderPagina();
+
+    const tarjeta = await tarjetaDe("Puntos limpios y Ecopuntos");
+    expect(tarjeta.querySelector("img")).toBeNull();
+    expect(tarjeta.querySelector("svg[viewBox='0 0 320 150']")).not.toBeNull();
+  });
+
   it("una categoría sin dibujo propio usa el genérico", async () => {
     mockListarContenido.mockResolvedValue([{ ...modulos[2], modulo_categoria: "Una categoría nueva" }]);
     renderPagina();
@@ -186,6 +209,18 @@ describe("CatalogoEducativoPage", () => {
       const recomendada = screen.getByText("Recomendado para ti").closest("a")!;
       expect(recomendada).toHaveAttribute("href", `/catalogo-educativo/${encodeURIComponent("Puntos limpios y Ecopuntos")}`);
       expect(within(recomendada).getByText("Dónde llevar escombros")).toBeInTheDocument();
+    });
+
+    it("la lección recomendada usa la portada del módulo cuando la tiene", async () => {
+      mockListarHistorial.mockResolvedValue(auditoria("REGULAR"));
+      mockListarContenido.mockResolvedValue([
+        { ...modulos[2], url_imagen: "/uploads/adjuntos/0b9c1a0e-3f4d-4c52-9b57-6f1f2a3b4c5d.png" },
+        modulos[0],
+      ]);
+      renderPagina();
+
+      const recomendada = (await screen.findByText("Recomendado para ti")).closest("a")!;
+      expect(recomendada.querySelector("img")?.getAttribute("src")).toMatch(/\/uploads\/adjuntos\/0b9c1a0e.*\.png$/);
     });
 
     it("con una auditoría Buena felicita y no recomienda nada", async () => {

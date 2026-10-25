@@ -133,6 +133,7 @@ erDiagram
         DATE fecha_publicacion
         VARCHAR url_video
         VARCHAR url_guia
+        VARCHAR url_imagen
     }
 
     CONTENIDO_EDUCATIVO_ENVIOS {
@@ -593,8 +594,9 @@ Comentarios internos del Admin Sistema sobre un punto de acopio (RQF-011): notas
 | fecha_publicacion | DATE    |
 | url_video         | VARCHAR |
 | url_guia          | VARCHAR |
+| url_imagen        | VARCHAR |
 
-`cuerpo_texto` admite Markdown, renderizado en el frontend. `url_guia` puede ser un archivo subido (PDF/imagen) o un link externo.
+`cuerpo_texto` admite Markdown, renderizado en el frontend. `url_guia` puede ser un archivo subido (PDF/imagen) o un link externo. `url_imagen` es la portada opcional del módulo y solo puede ser una imagen subida a VerdeApp (`/uploads/adjuntos/...`); las imágenes escritas dentro de `cuerpo_texto` siguen la misma regla.
 
 ---
 

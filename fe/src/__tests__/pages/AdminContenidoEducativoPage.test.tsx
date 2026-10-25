@@ -52,6 +52,7 @@ const moduloExistente: ContenidoEducativo = {
   cuerpo_texto: "Blanco, negro y verde. Separa bien tus residuos en casa.",
   url_video: null,
   url_guia: null,
+  url_imagen: null,
   fecha_publicacion: "2026-08-18",
 };
 
@@ -662,6 +663,102 @@ describe("AdminContenidoEducativoPage", () => {
 
         expect(await screen.findByRole("heading", { level: 3, name: "Bolsa blanca" })).toBeInTheDocument();
         expect(document.querySelector("img[src*='sitio-malo']")).toBeNull();
+      });
+    });
+
+    describe("imágenes del muro", () => {
+      const URL_SUBIDA = "/uploads/adjuntos/0b9c1a0e-3f4d-4c52-9b57-6f1f2a3b4c5d.png";
+      const foto = () => new File(["x"], "foto.png", { type: "image/png" });
+
+      async function abrirFormularioNuevo(user: ReturnType<typeof userEvent.setup>) {
+        mockGet.mockImplementation((url: string) => {
+          if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+          return Promise.resolve(respuestaPorDefecto(url));
+        });
+        mockPost.mockImplementation((url: string) =>
+          Promise.resolve({ data: url.includes("/uploads/") ? { url: URL_SUBIDA } : moduloExistente })
+        );
+        renderPage();
+        await irAModulos(user);
+        await screen.findByText("Código de colores");
+        await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
+      }
+
+      it("'Insertar imagen' sube la imagen y la escribe en el texto, en su propia línea", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+        await user.type(screen.getByLabelText("Contenido *"), "Introducción del tema.");
+
+        const entrada = screen.getByText("Insertar imagen").closest("label")!.querySelector("input")!;
+        await user.upload(entrada, foto());
+
+        await waitFor(() => {
+          expect((screen.getByLabelText("Contenido *") as HTMLTextAreaElement).value).toBe(
+            `Introducción del tema.\n\n![descripción de la imagen](${URL_SUBIDA})\n\n`
+          );
+        });
+      });
+
+      it("si falla la subida de la imagen del texto, lo avisa y no cambia el texto", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+        mockPost.mockRejectedValue(new Error("falló"));
+        await user.type(screen.getByLabelText("Contenido *"), "Texto original del módulo.");
+
+        await user.upload(screen.getByText("Insertar imagen").closest("label")!.querySelector("input")!, foto());
+
+        expect(await screen.findByText("No se pudo subir la imagen. Intenta de nuevo.")).toBeInTheDocument();
+        expect((screen.getByLabelText("Contenido *") as HTMLTextAreaElement).value).toBe("Texto original del módulo.");
+      });
+
+      it("la imagen insertada se ve en la vista previa, pegada a su tarjeta", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+        await user.type(screen.getByLabelText("Contenido *"), "Introducción del tema.");
+        await user.upload(screen.getByText("Insertar imagen").closest("label")!.querySelector("input")!, foto());
+        await waitFor(() => expect((screen.getByLabelText("Contenido *") as HTMLTextAreaElement).value).toContain(URL_SUBIDA));
+
+        await user.type(screen.getByLabelText("Contenido *"), "Bolsa blanca: limpio y seco.");
+
+        const tarjeta = (await screen.findByRole("heading", { level: 3, name: "Bolsa blanca" })).closest("article")!;
+        expect(tarjeta.querySelector("img")?.getAttribute("src")).toMatch(/\/uploads\/adjuntos\/0b9c1a0e.*\.png$/);
+      });
+
+      it("la imagen de portada se sube y se envía al guardar el módulo", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+        await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema con portada");
+        await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
+
+        const portada = screen.getByText("Imagen de portada (opcional)").parentElement!.querySelector("input[type=file]")!;
+        await user.upload(portada as HTMLInputElement, foto());
+        await screen.findByRole("img", { name: /vista previa/i });
+        await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+        await waitFor(() => {
+          expect(mockPost).toHaveBeenCalledWith(
+            expect.stringMatching(/\/contenido-educativo$/),
+            expect.objectContaining({ titulo_tema: "Tema con portada", url_imagen: URL_SUBIDA })
+          );
+        });
+      });
+
+      it("un módulo sin portada se guarda con url_imagen en null", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+        await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema sin portada");
+        await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
+
+        await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+        await waitFor(() => {
+          expect(mockPost).toHaveBeenCalledWith(
+            expect.stringMatching(/\/contenido-educativo$/),
+            expect.objectContaining({ url_imagen: null })
+          );
+        });
       });
     });
 

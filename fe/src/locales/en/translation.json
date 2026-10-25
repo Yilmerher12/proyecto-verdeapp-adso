@@ -1318,7 +1318,13 @@
           "videoRecognized": "✓ YouTube link recognized",
           "videoNotRecognized": "This link doesn't look like YouTube: the Resident won't see the video.",
           "guideLink": "Support guide",
-          "contentMuroHint": "Each paragraph (separated by a blank line) becomes a card on the wall. Start the paragraph with a short title and a colon (for example, “White bag: ...”). The first paragraph without a title is the introduction."
+          "contentMuroHint": "Each paragraph (separated by a blank line) becomes a card on the wall. Start the paragraph with a short title and a colon (for example, “White bag: ...”). The first paragraph without a title is the introduction. An image on its own line attaches to the card that follows.",
+          "insertImage": "Insert image",
+          "insertingImage": "Uploading...",
+          "insertImageError": "The image could not be uploaded. Please try again.",
+          "imageAltDefault": "image description",
+          "coverImage": "Cover image (optional)",
+          "coverImageHint": "Shown on the category card. A wide image (16:9) works best, your own or freely licensed. JPG, PNG or WEBP up to 5 MB. Without an image, the category drawing is used."
         },
         "preview": {
           "label": "How the Resident will see it",

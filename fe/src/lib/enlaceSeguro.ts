@@ -29,3 +29,15 @@ export function enlaceAdjuntoSeguro(url: string | null | undefined): string | nu
   if (url.startsWith("https://")) return url;
   return null;
 }
+
+// ¿Qué? Como enlaceAdjuntoSeguro, pero SOLO acepta una imagen que subió esta misma app
+//       (/uploads/adjuntos/...): nunca un https:// de otro sitio.
+// ¿Para qué? Las imágenes del contenido educativo (portada y las del texto) las sube el
+//           Administrador del Sistema a VerdeApp. Una imagen externa permitiría rastrear
+//           quién abre la lección. El backend ya la rechaza al guardar; esto protege
+//           también lo que se hubiera guardado antes.
+// ¿Impacto? Devuelve la URL completa, o null para que la pantalla no pinte nada.
+export function imagenPropiaSegura(url: string | null | undefined): string | null {
+  if (!url || !url.startsWith("/uploads/adjuntos/")) return null;
+  return enlaceAdjuntoSeguro(url);
+}

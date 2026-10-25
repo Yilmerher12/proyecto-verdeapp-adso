@@ -9,6 +9,7 @@ import { extraerIdDeYoutube } from "@/lib/youtube";
 import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
 import { TuSemana } from "@/components/educativo/TuSemana";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT } from "@/config/categoriasEducativas";
+import { imagenPropiaSegura } from "@/lib/enlaceSeguro";
 import { listarContenido, listarVistos, type ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 
 /**
@@ -104,6 +105,7 @@ export function CatalogoEducativoPage() {
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
               {categorias.map(({ nombre, modulos }) => {
                 const Icono = ICONOS_CATEGORIAS[nombre] ?? ICONO_CATEGORIA_DEFAULT;
+                const portada = imagenPropiaSegura(modulos.find((m) => m.url_imagen)?.url_imagen);
                 const visto = modulos.every((m) => vistos.has(m.id_contenido));
                 return (
                   <Link
@@ -112,7 +114,11 @@ export function CatalogoEducativoPage() {
                     className="group flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white transition-transform hover:-translate-y-0.5 dark:border-night-line dark:bg-night-card"
                   >
                     <div className="relative h-44 bg-accent-50 dark:bg-accent-300/10" aria-hidden="true">
-                      <IlustracionCategoria categoria={nombre} />
+                      {portada ? (
+                        <img src={portada} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <IlustracionCategoria categoria={nombre} />
+                      )}
                       <span className="absolute bottom-3 left-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-accent-700 shadow dark:bg-night-card dark:text-accent-400">
                         <Icono className="icon-md" />
                       </span>

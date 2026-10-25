@@ -21,6 +21,8 @@ vi.mock("@/lib/contenidoEducativoApi", () => ({
   marcarVistos: (...args: unknown[]) => mockMarcarVistos(...args),
 }));
 
+const IMAGEN = "/uploads/adjuntos/0b9c1a0e-3f4d-4c52-9b57-6f1f2a3b4c5d.png";
+
 const modulos: ContenidoEducativo[] = [
   {
     id_contenido: "00000000-0000-7000-8000-000000000001",
@@ -29,6 +31,7 @@ const modulos: ContenidoEducativo[] = [
     cuerpo_texto: "Los Ecopuntos reciben residuos voluminosos.",
     url_video: "https://www.youtube.com/watch?v=abc12345678",
     url_guia: "https://bogota.gov.co/ecopuntos",
+    url_imagen: null,
     fecha_publicacion: "2026-08-18",
   },
   {
@@ -38,6 +41,7 @@ const modulos: ContenidoEducativo[] = [
     cuerpo_texto: "...",
     url_video: null,
     url_guia: null,
+    url_imagen: null,
     fecha_publicacion: "2026-08-18",
   },
 ];
@@ -111,12 +115,40 @@ describe("CategoriaEducativaPage", () => {
       expect(cierre.closest("article")).toBeNull();
     });
 
-    it("una imagen escrita dentro del texto no se pinta, sea de VerdeApp o de otro sitio", async () => {
+    it("la imagen escrita antes de un párrafo se muestra en su tarjeta, y el resto no tiene imagen", async () => {
+      mockListarContenido.mockResolvedValue([
+        {
+          ...modulos[0],
+          cuerpo_texto: `Introducción.\n\nBolsa blanca: limpio.\n\n![foto](${IMAGEN})\n\nBolsa negra: ordinarios.\n\nGracias por separar.`,
+        },
+      ]);
+      renderConRuta("Puntos limpios y Ecopuntos");
+
+      const conImagen = (await screen.findByRole("heading", { name: "Bolsa negra" })).closest("article")!;
+      expect(conImagen.querySelector("img")?.getAttribute("src")).toMatch(/\/uploads\/adjuntos\/0b9c1a0e.*\.png$/);
+      const sinImagen = screen.getByRole("heading", { name: "Bolsa blanca" }).closest("article")!;
+      expect(sinImagen.querySelector("img")).toBeNull();
+    });
+
+    it("una tarjeta con imagen no se toma como cierre de la lección", async () => {
+      mockListarContenido.mockResolvedValue([
+        {
+          ...modulos[0],
+          cuerpo_texto: `Introducción.\n\nBolsa blanca: limpio.\n\n![foto](${IMAGEN})\n\nUn párrafo final con su imagen.`,
+        },
+      ]);
+      renderConRuta("Puntos limpios y Ecopuntos");
+
+      const tarjeta = (await screen.findByText("Un párrafo final con su imagen.")).closest("article");
+      expect(tarjeta?.querySelector("img")).not.toBeNull();
+    });
+
+    it("una imagen de otro sitio dentro del texto no se pinta, y una suelta dentro de un párrafo tampoco", async () => {
       mockListarContenido.mockResolvedValue([
         {
           ...modulos[0],
           cuerpo_texto:
-            "Introducción.\n\n![propia](/uploads/adjuntos/0b9c1a0e-3f4d-4c52-9b57-6f1f2a3b4c5d.png)\n\n![rastreo](https://sitio-malo.com/pixel.png)\n\nBolsa blanca: material limpio.",
+            "Introducción.\n\n![rastreo](https://sitio-malo.com/pixel.png)\n\nBolsa blanca: limpio ![pixel](/uploads/adjuntos/7d1e2f3a-4b5c-4d6e-8f70-a1b2c3d4e5f6.jpg) y seco.",
         },
       ]);
       renderConRuta("Puntos limpios y Ecopuntos");
@@ -124,7 +156,7 @@ describe("CategoriaEducativaPage", () => {
       const tarjeta = (await screen.findByRole("heading", { name: "Bolsa blanca" })).closest("article")!;
       expect(tarjeta.querySelector("img")).toBeNull();
       expect(document.querySelector("img[src*='sitio-malo']")).toBeNull();
-      expect(document.querySelector("img[src*='uploads']")).toBeNull();
+      expect(document.querySelector("img[src*='7d1e2f3a']")).toBeNull();
     });
   });
 
@@ -158,6 +190,32 @@ describe("CategoriaEducativaPage", () => {
         expect(screen.queryByRole("link", { name: /abrir la guía oficial/i })).not.toBeInTheDocument();
       }
     );
+  });
+
+  describe("portada", () => {
+    it("con portada y sin video, la lección la muestra arriba en vez del dibujo", async () => {
+      mockListarContenido.mockResolvedValue([{ ...modulos[0], url_video: null, url_imagen: IMAGEN }]);
+      renderConRuta("Puntos limpios y Ecopuntos");
+
+      const lección = (await screen.findByRole("region", { name: "Dónde llevar escombros" })) as HTMLElement;
+      expect(lección.querySelector("img")?.getAttribute("src")).toMatch(/\/uploads\/adjuntos\/0b9c1a0e.*\.png$/);
+    });
+
+    it("«Sigue aprendiendo» usa la portada de la otra categoría", async () => {
+      mockListarContenido.mockResolvedValue([modulos[0], { ...modulos[1], url_imagen: IMAGEN }]);
+      renderConRuta("Puntos limpios y Ecopuntos");
+
+      const seguir = (await screen.findByRole("heading", { name: "Sigue aprendiendo" })).closest("section")!;
+      expect(seguir.querySelector("img")?.getAttribute("src")).toMatch(/\/uploads\/adjuntos\/0b9c1a0e.*\.png$/);
+    });
+
+    it("una portada que no es de la app no se pinta", async () => {
+      mockListarContenido.mockResolvedValue([modulos[0], { ...modulos[1], url_imagen: "https://sitio-malo.com/pixel.png" }]);
+      renderConRuta("Puntos limpios y Ecopuntos");
+
+      const seguir = (await screen.findByRole("heading", { name: "Sigue aprendiendo" })).closest("section")!;
+      expect(seguir.querySelector("img")).toBeNull();
+    });
   });
 
   describe("lecciones vistas", () => {
