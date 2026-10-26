@@ -69,8 +69,44 @@ el futuro se agrega un mapa.
 - Se reemplazaron los 40 registros inventados de `seed_data.sql` por estos
   9, mapeados a su `id_localidad` real (ver `docs/gestion-proyecto/` o la
   tabla `localidades` para la numeración).
-- Las 14 localidades sin ECA registrada quedan sin ningún punto de acopio
-  en el directorio — es el dato real, no un error ni algo pendiente de
-  completar.
-- Pendiente (para otra rama): agregar un aviso visible en el Directorio
-  explicando esto mismo a quien lo use, con el link de esta fuente.
+- Las 14 localidades sin ECA en este dataset quedan sin ningún punto de
+  acopio en el directorio. No significa que no tengan ECA: es lo que
+  trae el dataset de 2020 (ver la actualización de abajo).
+- El aviso visible en el Directorio ya existe (panel "¿Qué es una ECA?",
+  `infoPuntos` en `fe/src/locales/{es,en}/translation.json`). Desde el
+  issue #499 aclara que los puntos son los de este dataset de marzo de 2020
+  y no todas las ECA de la ciudad, y su enlace "Ver fuente" lleva al
+  inventario de la UAESP (el enlace al dataset de Datos Abiertos daba 404).
+
+---
+
+## Actualización 2026-10-21 (issue #460)
+
+> Análisis completo, fuentes y límites en
+> [`investigacion-tipos-puntos-acopio.md`](investigacion-tipos-puntos-acopio.md).
+
+**Este dataset no es el universo de ECA de Bogotá.** La UAESP publica un
+*Listado de Inventario inicial de ECA y Bodegas Privadas de Reciclaje*
+([PDF](https://www.uaesp.gov.co/sites/default/files/archivos-adjuntos/Listado_Inventario_inicial_ECA_y_Bodegas_PR.pdf))
+con 3.108 establecimientos, de los cuales 762 son ECA activas y 636 ECA
+inactivas, y 684 bodegas privadas activas y 1.026 inactivas (conteo propio
+sobre el texto del PDF, sin fecha de publicación). Hay ECA activas en 18 de las
+20 localidades. Las 9 filas de arriba son solo las que traía este dataset de
+marzo de 2020.
+
+**Estado de las 9 ECA frente a ese inventario** (cruce por coordenadas, a unos
+100 m de aproximación): Engativá y Puente Aranda 2 coinciden con una ECA
+**activa**; Usaquén I, Fontibón y Mártires coinciden con una ECA **inactiva**;
+Kennedy, Usaquén II, Engativá 2 y Puente Aranda 1 no tienen coincidencia. No
+significa que hayan cerrado (el Decreto 203 de 2022 obligó a reubicar a varias):
+significa que no se puede afirmar hoy que sigan operando.
+
+**Contacto: no encontrado** para ninguna de las 9. El inventario trae nombre,
+tipo, área, coordenadas, localidad y estado, pero ningún teléfono ni encargado.
+El único contacto institucional hallado es la línea general de la UAESP,
+601 3580400 ([bogota.gov.co, 18-ene-2022](https://bogota.gov.co/servicios/servicios-del-distrito/cuales-son-los-nuevos-horarios-de-atencion-presencial-de-la-uaesp)),
+que debe confirmarse antes de mostrarse y no es el teléfono de ninguna ECA.
+
+**Enlaces que dejaron de funcionar o no se pudieron leer (2026-10-21):** la
+página del dataset de Datos Abiertos (arriba) responde 404; la página de ECA de
+la UAESP responde 403 a la herramienta de lectura.

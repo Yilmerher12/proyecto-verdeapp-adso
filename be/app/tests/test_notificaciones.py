@@ -10,8 +10,14 @@ Descripción: Pruebas del sistema de notificaciones (SHUT lleno/vaciado y llegad
 
 import uuid
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from app.models.administrador_conjunto import AdministradorConjunto
+from app.models.conjunto_residencial import ConjuntoResidencial
+from app.services.notificaciones_helpers import crear_notificacion
 
 
 def _autorizar_reciclador(client: TestClient, admin_headers: dict, reciclador_headers: dict, correo_reciclador: str, id_conjunto) -> None:
@@ -219,6 +225,179 @@ class TestConsultarYMarcarLeidas:
     def test_marcar_leida_notificacion_inexistente_devuelve_404(self, client: TestClient, auth_headers):
         response = client.post(f"/api/v1/notificaciones/{uuid.uuid4()}/leer", headers=auth_headers)
         assert response.status_code == 404
+
+
+@pytest.fixture()
+def dos_conjuntos_con_el_mismo_nombre(db: Session, conjunto_verificado: ConjuntoResidencial) -> ConjuntoResidencial:
+    """¿Qué? Un segundo conjunto con EXACTAMENTE el mismo nombre que `conjunto_verificado`.
+    ¿Para qué? Issue #436: el panel relacionaba avisos y conjuntos por nombre, así que
+              dos conjuntos con el mismo nombre mezclaban sus avisos."""
+    gemelo = ConjuntoResidencial(
+        id_localidad=conjunto_verificado.id_localidad,
+        nombre_conjunto=conjunto_verificado.nombre_conjunto,
+        nit="900000000-9",
+        direccion="Calle 200 # 20-20",
+        verificado=True,
+    )
+    db.add(gemelo)
+    db.commit()
+    db.refresh(gemelo)
+    return gemelo
+
+
+def _avisar_al_admin(db: Session, admin: AdministradorConjunto, id_conjunto, cantidad: int = 1) -> None:
+    """Crea `cantidad` avisos de SHUT_LLENO de un conjunto, dirigidos al admin."""
+    for _ in range(cantidad):
+        crear_notificacion(
+            db,
+            tipo="SHUT_LLENO",
+            mensaje="El SHUT está lleno.",
+            destinatarios=[admin.id_usuario],
+            id_conjunto=id_conjunto,
+        )
+    db.commit()
+
+
+class TestNotificacionesPorConjunto:
+    """Issue #436: el Admin de Conjunto ve y gestiona los avisos conjunto por conjunto."""
+
+    def test_la_lista_incluye_el_id_del_conjunto(
+        self, client: TestClient, db: Session, admin_conjunto_test, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        _avisar_al_admin(db, admin_conjunto_test, conjunto_verificado.id_conjunto_residencial)
+
+        lista = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_conjunto_auth_headers).json()
+
+        assert len(lista) == 1
+        assert lista[0]["id_conjunto_residencial"] == str(conjunto_verificado.id_conjunto_residencial)
+        assert lista[0]["nombre_conjunto"] == conjunto_verificado.nombre_conjunto
+
+    def test_un_aviso_de_plataforma_no_tiene_id_de_conjunto(
+        self, client: TestClient, db: Session, admin_conjunto_test, admin_conjunto_auth_headers
+    ):
+        _avisar_al_admin(db, admin_conjunto_test, None)
+
+        lista = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_conjunto_auth_headers).json()
+
+        assert lista[0]["id_conjunto_residencial"] is None
+        assert lista[0]["nombre_conjunto"] is None
+
+    def test_conjuntos_con_el_mismo_nombre_se_distinguen_por_id(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+        conjunto_verificado,
+        dos_conjuntos_con_el_mismo_nombre,
+    ):
+        _avisar_al_admin(db, admin_conjunto_test, conjunto_verificado.id_conjunto_residencial, cantidad=2)
+        _avisar_al_admin(db, admin_conjunto_test, dos_conjuntos_con_el_mismo_nombre.id_conjunto_residencial, cantidad=1)
+
+        lista = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_conjunto_auth_headers).json()
+
+        # Mismo nombre en las 3 filas: solo el id permite repartirlas.
+        assert {n["nombre_conjunto"] for n in lista} == {conjunto_verificado.nombre_conjunto}
+        ids = [n["id_conjunto_residencial"] for n in lista]
+        assert ids.count(str(conjunto_verificado.id_conjunto_residencial)) == 2
+        assert ids.count(str(dos_conjuntos_con_el_mismo_nombre.id_conjunto_residencial)) == 1
+
+    def test_marcar_todas_leidas_de_un_conjunto_no_toca_los_otros(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+        conjunto_verificado,
+        dos_conjuntos_con_el_mismo_nombre,
+    ):
+        id_a = conjunto_verificado.id_conjunto_residencial
+        id_b = dos_conjuntos_con_el_mismo_nombre.id_conjunto_residencial
+        _avisar_al_admin(db, admin_conjunto_test, id_a, cantidad=2)
+        _avisar_al_admin(db, admin_conjunto_test, id_b, cantidad=3)
+
+        respuesta = client.post(
+            "/api/v1/notificaciones/marcar-todas-leidas",
+            params={"id_conjunto_residencial": str(id_a)},
+            headers=admin_conjunto_auth_headers,
+        )
+
+        assert respuesta.status_code == 200
+        assert respuesta.json()["marcadas"] == 2
+        lista = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_conjunto_auth_headers).json()
+        sin_leer = [n["id_conjunto_residencial"] for n in lista if not n["leida"]]
+        assert sin_leer == [str(id_b)] * 3
+
+    def test_limpiar_leidas_de_un_conjunto_no_toca_los_otros(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+        conjunto_verificado,
+        dos_conjuntos_con_el_mismo_nombre,
+    ):
+        id_a = conjunto_verificado.id_conjunto_residencial
+        id_b = dos_conjuntos_con_el_mismo_nombre.id_conjunto_residencial
+        _avisar_al_admin(db, admin_conjunto_test, id_a, cantidad=2)
+        _avisar_al_admin(db, admin_conjunto_test, id_b, cantidad=3)
+        client.post("/api/v1/notificaciones/marcar-todas-leidas", headers=admin_conjunto_auth_headers)
+
+        respuesta = client.delete(
+            "/api/v1/notificaciones/limpiar-leidas",
+            params={"id_conjunto_residencial": str(id_a)},
+            headers=admin_conjunto_auth_headers,
+        )
+
+        assert respuesta.status_code == 200
+        assert respuesta.json()["eliminadas"] == 2
+        lista = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_conjunto_auth_headers).json()
+        assert [n["id_conjunto_residencial"] for n in lista] == [str(id_b)] * 3
+
+    def test_sin_filtro_marcar_todas_y_limpiar_siguen_afectando_a_todos(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+        conjunto_verificado,
+        dos_conjuntos_con_el_mismo_nombre,
+    ):
+        _avisar_al_admin(db, admin_conjunto_test, conjunto_verificado.id_conjunto_residencial, cantidad=2)
+        _avisar_al_admin(db, admin_conjunto_test, dos_conjuntos_con_el_mismo_nombre.id_conjunto_residencial, cantidad=1)
+
+        marcadas = client.post("/api/v1/notificaciones/marcar-todas-leidas", headers=admin_conjunto_auth_headers)
+        eliminadas = client.delete("/api/v1/notificaciones/limpiar-leidas", headers=admin_conjunto_auth_headers)
+
+        assert marcadas.json()["marcadas"] == 3
+        assert eliminadas.json()["eliminadas"] == 3
+
+    def test_filtrar_por_un_conjunto_ajeno_no_hace_nada(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+        conjunto_verificado,
+    ):
+        _avisar_al_admin(db, admin_conjunto_test, conjunto_verificado.id_conjunto_residencial, cantidad=2)
+
+        respuesta = client.post(
+            "/api/v1/notificaciones/marcar-todas-leidas",
+            params={"id_conjunto_residencial": str(uuid.uuid4())},
+            headers=admin_conjunto_auth_headers,
+        )
+
+        assert respuesta.status_code == 200
+        assert respuesta.json()["marcadas"] == 0
+
+    def test_id_de_conjunto_invalido_devuelve_422(self, client: TestClient, admin_conjunto_auth_headers):
+        respuesta = client.post(
+            "/api/v1/notificaciones/marcar-todas-leidas",
+            params={"id_conjunto_residencial": "no-es-un-uuid"},
+            headers=admin_conjunto_auth_headers,
+        )
+        assert respuesta.status_code == 422
 
 
 class TestEstadoShut:

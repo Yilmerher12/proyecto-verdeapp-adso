@@ -51,7 +51,7 @@ Usuario responsable de:
 * Consultar, buscar, filtrar y ordenar los usuarios registrados de cada rol, y activar o desactivar cualquier cuenta.
 * Supervisar el funcionamiento general del sistema.
 * Aprobar o rechazar solicitudes de desvinculación de un Admin_conjunto, y asignarle conjuntos adicionales.
-* Revisar la bandeja "Solicitudes pendientes" (desvinculaciones y novedades que le envían los usuarios) y marcar las novedades como vistas (RQF-021).
+* Atender "Soporte técnico" (consultas que le envían los usuarios: cambiar estado y prioridad y responder al autor) y revisar las desvinculaciones en su propia pestaña (RQF-021).
 * Cambiar el idioma de la interfaz (español/inglés).
 * Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
 
@@ -81,10 +81,10 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 | ------ | -------------------------------------------------------- | ------------------------------------ |
 | RQF001 | Validar Usuario                                          | Residente, Reciclador, Admin_sistema |
 | RQF002 | Registrar usuarios                                       | Residente, Reciclador                |
-| RQF003 | Alertar máxima capacidad SHUT                            | Residente, Reciclador                |
+| RQF003 | Alertar máxima capacidad SHUT                            | Residente, Reciclador, Admin_conjunto |
 | RQF004 | Visualizar catálogo educativo                            | Residente                            |
 | RQF005 | Visualizar directorio de recicladores y puntos de acopio | Residente                            |
-| RQF006 | Notificar llegada al conjunto residencial                | Reciclador                           |
+| RQF006 | Notificar llegada al conjunto residencial                | Reciclador, Admin_conjunto           |
 | RQF007 | Cerrar sesión                                            | Residente, Reciclador, Admin_sistema, Admin_conjunto |
 | RQF008 | Actualizar perfil                                        | Residente, Reciclador, Admin_conjunto |
 | RQF009 | Visualizar gestión de residuos del conjunto              | Residente, Reciclador                |
@@ -178,6 +178,8 @@ flowchart TB
 
     AdminConjunto --> RQF001
     AdminConjunto --> RQF002
+    AdminConjunto --> RQF003
+    AdminConjunto --> RQF006
     AdminConjunto --> RQF007
     AdminConjunto --> RQF008
     AdminConjunto --> RQF012
@@ -234,10 +236,11 @@ Permite crear una nueva cuenta dentro del sistema.
 
 ### Flujo Principal
 
-1. El usuario diligencia el formulario.
-2. El sistema valida la información.
-3. El sistema registra la cuenta.
-4. Se envía un correo electrónico de validación.
+1. El usuario elige su rol en la primera pantalla del registro.
+2. El usuario diligencia el formulario de ese rol.
+3. El sistema valida la información.
+4. El sistema registra la cuenta.
+5. Se envía un correo electrónico de validación.
 
 ---
 
@@ -247,6 +250,7 @@ Permite crear una nueva cuenta dentro del sistema.
 
 * Residente
 * Reciclador
+* Admin_conjunto (recibe los avisos, no los envía)
 
 ### Descripción
 
@@ -257,6 +261,11 @@ Permite reportar que el SHUT ha alcanzado su capacidad máxima.
 1. El usuario genera la alerta.
 2. El sistema registra la novedad.
 3. El sistema notifica a los responsables correspondientes.
+
+### Flujo Alternativo (Admin_conjunto, HU-050)
+
+1. El Admin_conjunto ve el aviso dentro de la pestaña del conjunto donde ocurrió, con un contador de avisos sin leer en la cabecera de ese conjunto.
+2. Marca ese aviso como leído, o usa "Marcar leídas" y "Limpiar leídas", que solo afectan a los avisos de ese conjunto.
 
 ---
 
@@ -286,13 +295,14 @@ Permite consultar el listado de recicladores y puntos de acopio registrados.
 
 ## RQF006 - Notificar Llegada al Conjunto Residencial
 
-### Actor
+### Actores
 
 * Reciclador
+* Admin_conjunto (recibe los avisos, no los envía)
 
 ### Descripción
 
-Permite informar que el reciclador ha llegado al conjunto residencial para realizar la recolección.
+Permite informar que el reciclador ha llegado al conjunto residencial para realizar la recolección. El Admin_conjunto ve ese aviso dentro de la pestaña de su conjunto (mismo flujo que RQF003, HU-050).
 
 ---
 
@@ -405,6 +415,12 @@ Cubre cómo alguien se convierte en Admin_conjunto por primera vez, cómo un Adm
 3. Al confirmar, el reciclador deja de estar autorizado de inmediato — a diferencia del RQF-016 (desvinculación de Admin_conjunto), esto no pasa por una solicitud/aprobación aparte.
 4. El vínculo no se borra — queda marcado como revocado (con fecha y quién lo hizo), y el reciclador recibe una notificación.
 5. El Admin_conjunto puede volver a invitar al mismo reciclador más adelante; el historial de la revocación anterior no lo impide.
+
+### Flujo E (pedir otro conjunto desde el panel, HU-051)
+
+1. El Admin_conjunto presiona "Solicitar otro conjunto" en su panel principal, debajo de la lista de sus conjuntos.
+2. Lee el paso a paso y los dos documentos que debe adjuntar (los mismos del registro; no se suben a la aplicación).
+3. Presiona la dirección del equipo, que abre su correo con el asunto "Otro conjunto" y los datos a escribir ya puestos (o la copia con el ícono); adjunta los documentos y envía. El resto sigue por correo y el Admin_sistema le asigna el conjunto.
 
 ---
 
@@ -591,9 +607,9 @@ Permite al Admin_conjunto llevar, por cada conjunto que administra, una lista pr
 
 ### Flujo Principal
 
-1. El Admin_conjunto abre "Agenda del conjunto" en el acordeón de uno de sus conjuntos.
+1. El Admin_conjunto abre la opción "Agenda" del menú y elige uno de sus conjuntos.
 2. Agrega un tema (texto y foto opcional); queda como Pendiente.
-3. Después del comité, deja en espera los temas aplazados y elimina los resueltos.
+3. Después del comité, archiva los temas resueltos (quedan en el historial "Archivadas") y, si hace falta, elimina los que ya no quiere.
 
 ---
 
@@ -608,16 +624,16 @@ Permite al Admin_conjunto llevar, por cada conjunto que administra, una lista pr
 
 ### Descripción
 
-Permite que un Residente, Reciclador o Admin_conjunto le envíe una novedad al Admin_sistema (texto e imagen opcional). El Admin_sistema la recibe en la bandeja "Solicitudes pendientes", junto con las solicitudes de desvinculación (RQF016).
+Permite que un Residente, Reciclador o Admin_conjunto le envíe una consulta de soporte al Admin_sistema (motivo, comentario e imagen opcionales). El Admin_sistema la recibe en la pestaña "Soporte técnico" de su bandeja; las solicitudes de desvinculación (RQF016) van en la pestaña "Desvinculaciones".
 
 ### Flujo Principal
 
-1. El usuario abre Novedades → "Escribir novedad", escribe el texto y lo envía.
-2. El sistema la guarda como NUEVA con los datos de la cuenta del autor.
-3. El Admin_sistema la ve en "Solicitudes pendientes" y la marca como vista.
-4. El autor ve en "Mis envíos" que fue vista.
+1. El usuario abre Soporte técnico → "Escribir novedad", elige el motivo y lo envía.
+2. El sistema la guarda como NUEVA, con los datos de la cuenta del autor y una prioridad calculada según el motivo.
+3. El Admin_sistema la ve en "Soporte técnico", puede marcarla en revisión, corregir su prioridad y escribirle una respuesta al autor.
+4. El autor recibe una notificación y ve en "Historial de novedades" el estado y la respuesta.
 
 ### Flujo Alternativo
 
-1. El Admin_sistema filtra la bandeja por tipo (Desvinculación o Novedad).
-2. Las desvinculaciones se aprueban o rechazan con el flujo de RQF016.
+1. El Admin_sistema filtra "Soporte técnico" por estado (pendientes, nuevas, en revisión o resueltas) y por prioridad.
+2. Las desvinculaciones se aprueban o rechazan en su propia pestaña, con el flujo de RQF016.

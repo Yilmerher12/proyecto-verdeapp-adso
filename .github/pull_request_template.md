@@ -1,22 +1,34 @@
-## ¿Qué prueba este PR?
+<!--
+  Título del PR en inglés, descripción en español.
+  PR de tests del bootcamp: agrega ?template=tests.md a la URL del PR para usar la plantilla de tests.
+-->
 
-<!-- Describe el comportamiento que verifican los tests, no el código. -->
+## ¿Qué cambia y por qué?
 
-## Capas
+<!-- Explica el problema y la solución en pocas líneas, sin pegar código. -->
 
-- **Capa del autor esta semana**: <!-- Front / API / BD / E2E -->
-- **Capa del revisor esta semana**: <!-- debe ser distinta a la del autor -->
+## Issue relacionado
+
+<!-- Número de la tarjeta. "Closes #N" no la cierra sola (el PR va a develop): muévela a Done a mano. -->
+
+## Tipo de cambio
+
+- [ ] `feat` — funcionalidad nueva
+- [ ] `fix` — corrección de un error
+- [ ] `docs` — documentación o investigación
+- [ ] `chore` — mantenimiento
+- [ ] `content` — contenido educativo o datos
+- [ ] `test` — pruebas
 
 ## Checklist
 
-- [ ] Los tests siguen el patrón AAA (Arrange, Act, Assert)
-- [ ] Los nombres de los tests describen el comportamiento esperado
-- [ ] Hice fallar cada test al menos una vez para comprobar que detecta el error
-- [ ] Los tests pasan en local
-- [ ] No hay credenciales ni datos reales en los tests
+- [ ] La rama salió de `develop` actualizado y el PR va hacia `develop`
+- [ ] Agregué o actualicé las pruebas que correspondían
+- [ ] Las pruebas y el lint pasan en local
+- [ ] Actualicé la documentación afectada (README, `docs/requisitos/` con su campo Estado, diagramas)
+- [ ] Si hay migración de Alembic, la revisé a mano y dejé el comando para actualizar la BD
+- [ ] Si el cambio es de interfaz: probé modo claro y oscuro, y las claves `es` y `en` de i18n
 
-## ¿Cómo lo ejecuto?
+## ¿Cómo lo pruebo?
 
-```bash
-# comando para correr estos tests
-```
+<!-- Pasos para comprobar el cambio a mano, con la cuenta de prueba de cada rol que aplique. -->

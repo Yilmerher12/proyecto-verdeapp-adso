@@ -1,23 +1,10 @@
 import { useState } from "react";
 import { ExternalLink, Play } from "lucide-react";
-import { REGEX_VIDEO_YOUTUBE } from "@/lib/validacion";
+import { extraerIdDeYoutube } from "@/lib/youtube";
 
 interface YoutubeEmbedProps {
   url: string;
   titulo: string;
-}
-
-// ¿Qué? Extrae el ID del video de cualquier formato de URL de YouTube
-//       (watch?v=, youtu.be/, embed/), con la misma expresión anclada que
-//       validan los formularios (REGEX_VIDEO_YOUTUBE).
-// ¿Para qué? El Admin pega el link tal cual lo copia del navegador — no
-//           debería tener que saber cuál es el formato de embed. Antes la
-//           expresión no estaba anclada al inicio: "https://sitio-malo.com/?x=youtu.be/AAAAAAAAAAA"
-//           también daba un ID, y el enlace "Ver en YouTube" usaba la URL cruda.
-// ¿Impacto? Si la URL no es de YouTube, devuelve null y YoutubeEmbed no
-//           pinta nada (issue #400, CN-065).
-function extraerIdDeYoutube(url: string): string | null {
-  return url.match(REGEX_VIDEO_YOUTUBE)?.[1] ?? null;
 }
 
 /**
@@ -57,6 +44,7 @@ export function YoutubeEmbed({ url, titulo }: YoutubeEmbedProps) {
             onClick={() => setReproduciendo(true)}
             className="group relative h-full w-full cursor-pointer"
             aria-label={`Reproducir video: ${titulo}`}
+            title={`Reproducir video: ${titulo}`}
           >
             <img
               src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`}
@@ -76,10 +64,10 @@ export function YoutubeEmbed({ url, titulo }: YoutubeEmbedProps) {
           href={`https://www.youtube.com/watch?v=${id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex w-fit items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-accent-600 dark:text-gray-400 dark:hover:text-accent-500"
+          className="link-text touch-target-h flex w-fit items-center gap-1.5 text-xs"
         >
-          <ExternalLink className="icon-sm shrink-0" />
           Ver en YouTube
+          <ExternalLink className="icon-sm shrink-0" aria-hidden="true" />
         </a>
       )}
     </div>

@@ -43,6 +43,8 @@ export const PUNTO_ACOPIO_ENCARGADO_MAX_LENGTH = 100;
 export const PUNTO_ACOPIO_TELEFONO_MAX_LENGTH = 15;
 export const AUDITORIA_DESCRIPCION_MAX_LENGTH = 255;
 export const DESVINCULACION_MOTIVO_MAX_LENGTH = 1000;
+// ¿Qué? Debe coincidir con RESPUESTA_MAX_LENGTH de be/app/schemas/novedad_enviada.py.
+export const SOPORTE_RESPUESTA_MAX_LENGTH = 1000;
 export const NIT_MAX_LENGTH = 50;
 // ¿Qué? Tope razonable de apartamentos de un conjunto (evita un typo como 1200000).
 // ¿Impacto? Debe coincidir con TOTAL_APARTAMENTOS_MAX de be/app/schemas/conjunto_panel.py.

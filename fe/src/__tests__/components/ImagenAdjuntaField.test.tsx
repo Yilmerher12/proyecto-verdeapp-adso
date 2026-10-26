@@ -41,9 +41,30 @@ describe("ImagenAdjuntaField", () => {
     await user.upload(input, crearArchivoImagen());
 
     await waitFor(() => {
-      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), { permitirDocumentos: false });
+      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), { permitirDocumentos: false, onProgress: expect.any(Function) });
       expect(onChange).toHaveBeenCalledWith("/uploads/adjuntos/abc123.png");
     });
+  });
+
+  // ¿Qué? Issue #458: mientras se sube, hay una barra con el avance real.
+  it("muestra la barra de progreso mientras sube y la quita al terminar", async () => {
+    let terminar: (url: string) => void = () => {};
+    mockSubirAdjunto.mockImplementation((_archivo: File, opciones?: { onProgress?: (p: number) => void }) => {
+      opciones?.onProgress?.(40);
+      return new Promise<string>((resolver) => { terminar = resolver; });
+    });
+    const user = userEvent.setup();
+
+    const { container } = render(<ImagenAdjuntaField label="Imagen" value="" onChange={vi.fn()} />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, crearArchivoImagen());
+
+    const barra = await screen.findByRole("progressbar");
+    expect(barra).toHaveAttribute("aria-valuenow", "40");
+    expect(screen.getByText("40%")).toBeInTheDocument();
+
+    terminar("/uploads/adjuntos/abc123.png");
+    await waitFor(() => expect(screen.queryByRole("progressbar")).not.toBeInTheDocument());
   });
 
   it("rechaza un tipo de archivo no permitido sin llamar al backend", async () => {
@@ -131,7 +152,7 @@ describe("ImagenAdjuntaField", () => {
     await user.upload(input, crearArchivoImagen("circular.pdf", "application/pdf"));
 
     await waitFor(() => {
-      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), { permitirDocumentos: true });
+      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), { permitirDocumentos: true, onProgress: expect.any(Function) });
       expect(onChange).toHaveBeenCalledWith("/uploads/adjuntos/circular.pdf");
     });
   });

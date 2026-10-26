@@ -20,9 +20,12 @@ from app.schemas.auditoria_conjunto import (
     AuditoriaAdminResponse,
     AuditoriaConjuntoResponse,
     AuditoriasAdminListResponse,
+    AuditoriasListResponse,
     DESCRIPCION_MAX_LENGTH,
+    DesempenoConjuntoResponse,
     NivelDesempeno,
     TEMA_MAX_LENGTH,
+    UltimaAuditoriaConjuntoResponse,
 )
 from app.services import auditoria_conjunto_service as service
 
@@ -83,33 +86,52 @@ async def crear_auditoria(
 
 @router.get(
     "/mias",
-    response_model=list[AuditoriaConjuntoResponse],
-    summary="Reciclador ve las auditorías que ya envió",
+    response_model=AuditoriasListResponse,
+    summary="Reciclador ve, de a páginas, las auditorías que ya envió",
 )
 def listar_mias(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(_requiere_reciclador),
     db: Session = Depends(get_db),
-) -> list[AuditoriaConjuntoResponse]:
-    auditorias = service.listar_mias(db, current_user.id_usuario)
-    return [_a_response(a) for a in auditorias]
+) -> AuditoriasListResponse:
+    auditorias, total = service.listar_mias(db, current_user.id_usuario, limit, offset)
+    return AuditoriasListResponse(items=[_a_response(a) for a in auditorias], total=total)
+
+
+@router.get(
+    "/mias/ultimas",
+    response_model=list[UltimaAuditoriaConjuntoResponse],
+    summary="Reciclador ve la fecha de su última auditoría en cada conjunto que ya auditó",
+)
+def ultimas_mias(
+    current_user: Usuario = Depends(_requiere_reciclador),
+    db: Session = Depends(get_db),
+) -> list[UltimaAuditoriaConjuntoResponse]:
+    return [
+        UltimaAuditoriaConjuntoResponse(id_conjunto_residencial=id_conjunto, ultima_auditoria=ultima)
+        for id_conjunto, ultima in service.ultimas_por_conjunto(db, current_user.id_usuario)
+    ]
 
 
 @router.get(
     "/historial",
-    response_model=list[AuditoriaConjuntoResponse],
-    summary="Residente o Admin de Conjunto ve el historial de auditorías de su(s) conjunto(s)",
+    response_model=AuditoriasListResponse,
+    summary="Residente o Admin de Conjunto ve, de a páginas, el historial de auditorías de su(s) conjunto(s)",
 )
 def listar_historial(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> list[AuditoriaConjuntoResponse]:
+) -> AuditoriasListResponse:
     if current_user.id_rol not in (RolId.RESIDENTE, RolId.ADMIN_CONJUNTO):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo un Residente o Admin de Conjunto puede ver este historial.",
         )
-    auditorias = service.listar_historial(db, current_user)
-    return [_a_response(a) for a in auditorias]
+    auditorias, total = service.listar_historial(db, current_user, limit, offset)
+    return AuditoriasListResponse(items=[_a_response(a) for a in auditorias], total=total)
 
 
 @router.get(
@@ -131,10 +153,53 @@ def listar_admin(
         AuditoriaAdminResponse(
             **_a_response(a).model_dump(),
             avisados=avisados_por_auditoria.get(a.id_auditoria, 0),
+            id_localidad=a.conjunto.id_localidad,
+            nombre_localidad=a.conjunto.localidad.nombre_localidad,
         )
         for a in auditorias
     ]
     return AuditoriasAdminListResponse(items=items, total=total)
+
+
+# ¿Qué? Las dos rutas de desempeño NO usan _requiere_*: aceptan cualquier
+#       sesión y el servicio responde 403 a quien no pertenece al conjunto
+#       (Reciclador y Admin del Sistema nunca pertenecen a uno).
+# ¿Impacto? Deben declararse ANTES de /{id_auditoria}; si no, FastAPI
+#           interpretaría "desempeno" como un id de auditoría.
+@router.get(
+    "/desempeno",
+    response_model=DesempenoConjuntoResponse,
+    summary="Residente o Admin de Conjunto ve el desempeño semanal de un conjunto (conteos por semana y tema)",
+)
+def desempeno_semanal(
+    id_conjunto: Optional[UUID] = Query(None, description="Opcional si el usuario tiene un solo conjunto"),
+    semanas: int = Query(service.SEMANAS_POR_DEFECTO, description="4, 8 o 12"),
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DesempenoConjuntoResponse:
+    # ¿Qué? Se valida a mano porque Literal[4, 8, 12] en un Query no convierte
+    #       el texto "4" a número y rechazaba hasta los valores válidos.
+    if semanas not in service.SEMANAS_PERMITIDAS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="semanas debe ser 4, 8 o 12.",
+        )
+    return service.desempeno_semanal(db, current_user, id_conjunto, semanas)
+
+
+@router.get(
+    "/desempeno/semana",
+    response_model=list[AuditoriaConjuntoResponse],
+    summary="Residente o Admin de Conjunto ve las auditorías de una semana (lunes a domingo, hora de Bogotá)",
+)
+def auditorias_de_semana(
+    lunes: date = Query(..., description="Lunes de la semana a consultar (AAAA-MM-DD)"),
+    id_conjunto: Optional[UUID] = Query(None, description="Opcional si el usuario tiene un solo conjunto"),
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[AuditoriaConjuntoResponse]:
+    auditorias = service.auditorias_de_semana(db, current_user, id_conjunto, lunes)
+    return [_a_response(a) for a in auditorias]
 
 
 @router.get(

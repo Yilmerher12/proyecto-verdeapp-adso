@@ -6,6 +6,7 @@ import { usePolling } from "@/hooks/usePolling";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import {
   Mail,
+  Info,
   BadgeCheck,
   OctagonX,
   Building,
@@ -14,7 +15,6 @@ import {
   PackageCheck,
   DoorOpen,
   ClipboardList,
-  History,
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
@@ -22,16 +22,14 @@ import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
 import type { NotificacionItem } from "@/lib/notificaciones";
-import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
-import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
+import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
+import { notificarNotificacionesActualizadas, onCambioDesdeCampanita } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
 import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
-import { listarMisAuditorias, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
-import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { formatearFechaCreacion } from "@/lib/dateFormat";
+import { listarMisAuditorias, listarUltimasAuditorias } from "@/lib/auditoriaConjuntoApi";
 
 // ¿Qué? Cada cuántos días se le vuelve a sugerir al reciclador auditar el
 //       mismo conjunto. Ver issue #5: se decidió semanal porque no todos
@@ -105,25 +103,25 @@ const ACCIONES_META = [
     tipo: "LLEGADA_RECICLADOR",
     key: "llegada",
     icon: Truck,
-    color: "bg-accent-900 hover:bg-teal-800 dark:bg-accent-800 text-white",   // teal bosque — llegada activa
+    color: "bg-accent-900 hover:bg-teal-800 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200",   // teal bosque — llegada activa
   },
   {
     tipo: "SHUT_LLENO",
     key: "shutLleno",
     icon: TriangleAlert,
-    color: "bg-amber-700 hover:bg-amber-600 text-white",  // ámbar tierra — advertencia cálida
+    color: "bg-amber-700 hover:bg-amber-600 text-white dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200",  // ámbar tierra — advertencia cálida
   },
   {
     tipo: "SHUT_LIBRE",
     key: "shutLibre",
     icon: PackageCheck,
-    color: "bg-accent-900 hover:bg-accent-800 dark:bg-accent-800 dark:hover:bg-accent-700 text-white",  // verde bosque — despejado, natural
+    color: "bg-accent-900 hover:bg-accent-800 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200",  // verde bosque — despejado, natural
   },
   {
     tipo: "FINALIZACION_RECICLADOR",
     key: "finalizacion",
     icon: DoorOpen,
-    color: "bg-indigo-700 hover:bg-indigo-600 text-white",  // índigo — distinto de las otras 3, "ya me voy"
+    color: "bg-indigo-700 hover:bg-indigo-600 text-white dark:border dark:border-night-edge dark:bg-night-field dark:hover:bg-night-hover",  // índigo — distinto de las otras 3, "ya me voy"
   },
 ] as const;
 
@@ -147,7 +145,11 @@ export function RecicladorDashboard() {
   //       notificación que se ve apagado (bloqueado) en vez de abrir el modal.
   const [avisoBoton, mostrarAvisoBoton] = useAvisoTemporal<string>();
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
-  const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
+  // ¿Qué? Fecha (ISO) de la última auditoría de este reciclador en cada conjunto, por id de conjunto.
+  // ¿Para qué? Calcular el aviso "necesita auditoría" sin depender de la lista paginada del historial.
+  const [ultimasAuditorias, setUltimasAuditorias] = useState<Record<string, string>>({});
+  // ¿Qué? Sube al enviar una auditoría; HistorialAuditorias vuelve a pedir su página al cambiar.
+  const [versionHistorial, setVersionHistorial] = useState(0);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(false);
   const [errorAccion, setErrorAccion] = useState(false);
@@ -163,7 +165,6 @@ export function RecicladorDashboard() {
   // Formulario de auditoría (RQF-009)
   const [conjuntoParaAuditar, setConjuntoParaAuditar] = useState<string | null>(null);
   const [feedbackAuditoria, mostrarFeedbackAuditoria] = useAvisoTemporal<string>();
-  const [auditoriaAbierta, setAuditoriaAbierta] = useState<string | null>(null);
 
   // ¿Qué? Issue #406 — allSettled en vez de all: cada una de las 5 peticiones
   //       guarda su resultado por separado.
@@ -178,16 +179,18 @@ export function RecicladorDashboard() {
       axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-invitaciones`),
       axios.get(`${API_BASE_URL}/api/v1/reciclador-conjunto/mis-conjuntos-autorizados`),
       axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`),
-      listarMisAuditorias(),
+      listarUltimasAuditorias(),
       // ¿Qué? Estado de presencia por conjunto — issue de "control de
       //       notificaciones del reciclador según si está en el conjunto".
       axios.get(`${API_BASE_URL}/api/v1/notificaciones/mi-estado-reciclador`),
     ])
-      .then(([resInv, resConj, resNotifs, misAuditorias, resEstado]) => {
+      .then(([resInv, resConj, resNotifs, ultimas, resEstado]) => {
         if (resInv.status === "fulfilled") setInvitaciones(resInv.value.data);
         if (resConj.status === "fulfilled") setConjuntosAutorizados(resConj.value.data);
         if (resNotifs.status === "fulfilled") setNotificaciones(resNotifs.value.data);
-        if (misAuditorias.status === "fulfilled") setAuditorias(misAuditorias.value);
+        if (ultimas.status === "fulfilled") {
+          setUltimasAuditorias(Object.fromEntries(ultimas.value.map((u) => [u.id_conjunto_residencial, u.ultima_auditoria])));
+        }
         if (resEstado.status === "fulfilled") setEstadoReciclador(resEstado.value.data);
         // ¿Qué? Antes un .catch(() => {}) vacío no dejaba ningún rastro de que
         //       algo falló — el dashboard se quedaba tal cual, sin avisar.
@@ -195,13 +198,15 @@ export function RecicladorDashboard() {
         //           corre cada 20s (polling), el aviso desaparece solo en
         //           cuanto una siguiente carga sí funcione.
         setErrorCarga(
-          [resInv, resConj, resNotifs, misAuditorias, resEstado].some((r) => r.status === "rejected")
+          [resInv, resConj, resNotifs, ultimas, resEstado].some((r) => r.status === "rejected")
         );
       })
       .finally(() => setCargando(false));
   };
 
-  usePolling(cargarDatos, { enabled: !!user });
+  // ¿Qué? Issue #516 — se actualiza también al instante cuando se marca o limpia algo
+  //       desde el menú de la campanita (ver ResidenteDashboard.tsx).
+  usePolling(cargarDatos, { enabled: !!user, onExternalTrigger: onCambioDesdeCampanita });
 
   const responderInvitacion = async (id: string, aceptar: boolean) => {
     setProcesandoId(id);
@@ -301,12 +306,16 @@ export function RecicladorDashboard() {
   //           corriendo en segundo plano), se calcula al cargar el panel —
   //           mismo resultado para el usuario, sin infraestructura nueva.
   const necesitaAuditoria = (idConjunto: string): boolean => {
-    const delConjunto = auditorias.filter((a) => a.id_conjunto_residencial === idConjunto);
-    if (delConjunto.length === 0) return true;
-    const masReciente = delConjunto[0].created_at; // el backend ya las ordena más reciente primero
+    const masReciente = ultimasAuditorias[idConjunto];
+    if (!masReciente) return true;
     const dias = (Date.now() - new Date(masReciente).getTime()) / (1000 * 60 * 60 * 24);
     return dias >= DIAS_ENTRE_AUDITORIAS;
   };
+
+  // ¿Qué? "Sin conjuntos" solo cuando la carga ya terminó.
+  // ¿Para qué? Mientras carga, la lista está vacía por defecto; sin esperar, a todo
+  //           Reciclador le saldría un instante el aviso de "no tienes conjuntos".
+  const sinConjuntos = !cargando && conjuntosAutorizados.length === 0;
 
   const conjuntosPendientesAuditoria = conjuntosAutorizados.filter((c) =>
     necesitaAuditoria(c.id_conjunto_residencial)
@@ -315,19 +324,20 @@ export function RecicladorDashboard() {
   const alEnviarAuditoria = () => {
     setConjuntoParaAuditar(null);
     mostrarFeedbackAuditoria(t("dashboards.reciclador.auditoria.successMessage"));
+    setVersionHistorial((v) => v + 1);
     cargarDatos();
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-5">
+    <div className="px-0 py-6 sm:p-6 max-w-5xl mx-auto space-y-5">
       {/* Header — el símbolo de reciclaje de fondo es solo un detalle tenue,
           para que este panel se sienta del Reciclador, sin estorbar la
           lectura del texto encima. */}
       <div className="relative overflow-hidden bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-teal-900/5 dark:text-white/5" aria-hidden="true" />
+        <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-100 dark:bg-teal-900/30">
-            <RolIcon className="icon-xl text-teal-600 dark:text-teal-400" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
+            <RolIcon className="icon-xl text-accent-700 dark:text-accent-300" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.title")}</h1>
@@ -347,16 +357,166 @@ export function RecicladorDashboard() {
         <Alert type="error" message={t("common.actionError")} onClose={() => setErrorAccion(false)} />
       )}
 
-      {/* Feedback de notificación enviada */}
-      {feedbackOk && (
-        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
-          <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
-          {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
+      {/* Invitaciones pendientes.
+          ¿Qué? Issue #515 — van primero, antes de los botones de aviso.
+          ¿Para qué? Un Reciclador nuevo no tiene conjuntos hasta que acepta una
+                    invitación: sin ella los botones de aviso no sirven. Solo se
+                    muestra cuando hay invitaciones, así que no ocupa lugar el resto
+                    del tiempo.
+          ¿Impacto? Orden del panel: invitaciones, avisos, auditoría pendiente, mis
+                    conjuntos, notificaciones recibidas e historial (lo de consulta,
+                    al final). */}
+      {!cargando && invitaciones.length > 0 && (
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <Mail className="icon-md text-amber-600" />
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-200">
+              {invitaciones.length}
+            </span>
+          </div>
+          <div className="space-y-3">
+            {invitaciones.map((inv) => (
+              <div
+                key={inv.id}
+                className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-300/30 dark:bg-amber-400/10 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm">{inv.nombre_conjunto}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{inv.direccion_conjunto}</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t("dashboards.reciclador.invitations.invitedBy", { nombre: inv.invitado_por_nombre })}</p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    onClick={() => responderInvitacion(inv.id, true)}
+                    disabled={procesandoId === inv.id}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+                  >
+                    <BadgeCheck className="icon-sm icon-draw" />
+                    {t("dashboards.reciclador.invitations.accept")}
+                  </button>
+                  <button
+                    onClick={() => responderInvitacion(inv.id, false)}
+                    disabled={procesandoId === inv.id}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400/30 dark:bg-transparent dark:hover:bg-red-400/15"
+                  >
+                    <OctagonX className="icon-sm icon-draw" />
+                    {t("dashboards.reciclador.invitations.reject")}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
+      {/* Acciones de notificación.
+          ¿Qué? Issue #515 — es lo que el Reciclador más usa (avisar que llegó, SHUT
+                lleno/libre, que se va), así que va arriba, justo después de las
+                invitaciones. Antes iba debajo del aviso de auditoría pendiente, que
+                crece con cada conjunto sin auditar y empujaba los botones hacia abajo.
+          ¿Para qué? El título pasa de párrafo a h2 (como los demás bloques) y el
+                    mensaje "Notificación enviada" aparece aquí mismo, debajo de los
+                    botones, donde el Reciclador está mirando; antes salía arriba de
+                    todo el panel. */}
+      <section
+        aria-labelledby="reciclador-avisos-titulo"
+        className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
+      >
+        <h2 id="reciclador-avisos-titulo" className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</h2>
+        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
+          {t("dashboards.reciclador.sendSection.subtitle")}
+        </p>
+        {/* ¿Qué? Sin conjuntos autorizados los 4 botones se muestran apagados, con un
+                aviso corto encima (mismo estilo que el motivo de un botón bloqueado).
+            ¿Para qué? Antes, en su lugar salía una línea gris suelta que contradecía
+                      el subtítulo ("avisa a los residentes…" y debajo "aún no puedes").
+                      Ahora el Reciclador nuevo ve qué va a poder hacer y por qué todavía
+                      no, y el bloque no cambia de forma cuando acepta su primera
+                      invitación. Cómo conseguir un conjunto se explica en "Mis conjuntos".
+            ¿Impacto? Los botones siguen sin abrir nada (abrirModal no hace nada sin
+                      conjuntos); `aria-describedby` apunta al aviso para lectores de pantalla. */}
+        {sinConjuntos && (
+          <p
+            id="reciclador-sin-conjuntos"
+            className="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200"
+          >
+            <Info className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
+            {t("dashboards.reciclador.sendSection.noConjuntos")}
+          </p>
+        )}
+        {/* ¿Qué? 1 columna en celular, 2×2 en tableta y 4 en una fila en escritorio ancho.
+            ¿Para qué? Con `lg:grid-cols-3` los 4 botones dejaban el cuarto solo en una segunda fila. */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {/* ¿Qué? Cuando el reciclador solo tiene UN conjunto asignado ya
+              sabemos, sin abrir el modal, si ese botón se puede usar ahora
+              mismo (¿ya avisó llegada? ¿el SHUT ya está en ese estado?).
+              ¿Para qué? Se ve apagado para que no parezca la acción normal,
+              pero SÍ reacciona al clic — un botón con `disabled` de HTML
+              ignora el clic por completo, así que en vez de eso mostramos
+              el motivo (ver avisoBoton, debajo de la grilla). Esto también
+              funciona en celular, donde no existe el "pasar el mouse" que
+              haría falta para ver un `title`.
+              ¿Impacto? Con 2+ conjuntos no se puede saber cuál elegirá,
+              así que el botón queda habilitado y el aviso llega al abrir
+              el modal y elegir el conjunto (motivoModal, arriba). */}
+          {ACCIONES.map(({ tipo, label, icon: Icon, color }) => {
+            const motivo =
+              conjuntosAutorizados.length === 1
+                ? motivoBloqueo(tipo, estadoDe(conjuntosAutorizados[0].id_conjunto_residencial), t)
+                : null;
+            return (
+              <button
+                key={tipo}
+                onClick={() => {
+                  if (motivo) {
+                    mostrarAvisoBoton(motivo);
+                  } else {
+                    abrirModal(tipo);
+                  }
+                }}
+                aria-disabled={!!motivo || sinConjuntos}
+                aria-label={label}
+                aria-describedby={motivo ? `notif-motivo-${tipo}` : sinConjuntos ? "reciclador-sin-conjuntos" : undefined}
+                title={motivo ?? undefined}
+                className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${color} ${
+                  motivo || sinConjuntos ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+                }`}
+              >
+                <Icon className={"icon-md shrink-0 icon-draw"} />
+                {label}
+                {/* ¿Qué? Texto oculto SOLO para lectores de pantalla, con
+                    el motivo del bloqueo. ¿Para qué? Antes, poner `title`
+                    en el botón hacía que el lector de pantalla anunciara
+                    el motivo EN VEZ del nombre del botón ("Llegué al
+                    conjunto") — con `aria-label` de vuelta y esto como
+                    descripción aparte, anuncia ambas cosas, en orden. */}
+                {motivo && (
+                  <span id={`notif-motivo-${tipo}`} className="sr-only">
+                    {motivo}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {avisoBoton && (
+          <p
+            role="status"
+            className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
+            {avisoBoton}
+          </p>
+        )}
+        {feedbackOk && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
+            <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
+            {t("dashboards.reciclador.feedbackSent", { label: feedbackOk })}
+          </div>
+        )}
+      </section>
+
       {feedbackAuditoria && (
-        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-700/40 dark:bg-accent-900/15 dark:text-accent-400">
+        <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
           <BadgeCheck className="icon-md shrink-0 icon-appear icon-hop" />
           {feedbackAuditoria}
         </div>
@@ -365,9 +525,9 @@ export function RecicladorDashboard() {
       {/* Aviso de auditoría pendiente (RQF-009) — solo aparece cuando aplica,
           no ocupa espacio permanente en la barra lateral. */}
       {!cargando && conjuntosPendientesAuditoria.length > 0 && (
-        <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-800/30 dark:bg-teal-900/10">
+        <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-400/30 dark:bg-teal-400/10">
           <div className="mb-3 flex items-center gap-2">
-            <ClipboardList className="icon-md text-teal-700 dark:text-teal-400" />
+            <ClipboardList className="icon-md text-teal-700 dark:text-teal-300" />
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">
               {t("dashboards.reciclador.auditoria.bannerTitle")}
             </h2>
@@ -383,129 +543,10 @@ export function RecicladorDashboard() {
                 </p>
                 <button
                   onClick={() => setConjuntoParaAuditar(c.id_conjunto_residencial)}
-                  className="shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
+                  className="touch-target-h shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                 >
                   {t("dashboards.reciclador.auditoria.bannerAction")}
                 </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Acciones de notificación */}
-      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
-        <p className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</p>
-        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-          {t("dashboards.reciclador.sendSection.subtitle")}
-        </p>
-        {conjuntosAutorizados.length === 0 && !cargando ? (
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {t("dashboards.reciclador.sendSection.noConjuntos")}
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
-            {/* ¿Qué? Cuando el reciclador solo tiene UN conjunto asignado ya
-                sabemos, sin abrir el modal, si ese botón se puede usar ahora
-                mismo (¿ya avisó llegada? ¿el SHUT ya está en ese estado?).
-                ¿Para qué? Se ve apagado para que no parezca la acción normal,
-                pero SÍ reacciona al clic — un botón con `disabled` de HTML
-                ignora el clic por completo, así que en vez de eso mostramos
-                el motivo (ver avisoBoton, debajo de la grilla). Esto también
-                funciona en celular, donde no existe el "pasar el mouse" que
-                haría falta para ver un `title`.
-                ¿Impacto? Con 2+ conjuntos no se puede saber cuál elegirá,
-                así que el botón queda habilitado y el aviso llega al abrir
-                el modal y elegir el conjunto (motivoModal, arriba). */}
-            {ACCIONES.map(({ tipo, label, icon: Icon, color }) => {
-              const motivo =
-                conjuntosAutorizados.length === 1
-                  ? motivoBloqueo(tipo, estadoDe(conjuntosAutorizados[0].id_conjunto_residencial), t)
-                  : null;
-              return (
-                <button
-                  key={tipo}
-                  onClick={() => {
-                    if (motivo) {
-                      mostrarAvisoBoton(motivo);
-                    } else {
-                      abrirModal(tipo);
-                    }
-                  }}
-                  aria-disabled={!!motivo}
-                  aria-label={label}
-                  aria-describedby={motivo ? `notif-motivo-${tipo}` : undefined}
-                  title={motivo ?? undefined}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${color} ${
-                    motivo ? "cursor-not-allowed opacity-40" : "cursor-pointer"
-                  }`}
-                >
-                  <Icon className={`icon-md shrink-0 ${Icon === TriangleAlert ? "icon-ring" : "icon-draw"}`} />
-                  {label}
-                  {/* ¿Qué? Texto oculto SOLO para lectores de pantalla, con
-                      el motivo del bloqueo. ¿Para qué? Antes, poner `title`
-                      en el botón hacía que el lector de pantalla anunciara
-                      el motivo EN VEZ del nombre del botón ("Llegué al
-                      conjunto") — con `aria-label` de vuelta y esto como
-                      descripción aparte, anuncia ambas cosas, en orden. */}
-                  {motivo && (
-                    <span id={`notif-motivo-${tipo}`} className="sr-only">
-                      {motivo}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-        {avisoBoton && (
-          <p
-            role="status"
-            className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
-            {avisoBoton}
-          </p>
-        )}
-      </div>
-
-      {/* Invitaciones pendientes */}
-      {!cargando && invitaciones.length > 0 && (
-        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <Mail className="icon-md text-amber-600" />
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-              {invitaciones.length}
-            </span>
-          </div>
-          <div className="space-y-3">
-            {invitaciones.map((inv) => (
-              <div
-                key={inv.id}
-                className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-800/30 dark:bg-amber-900/10 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="font-semibold text-gray-900 dark:text-white text-sm">{inv.nombre_conjunto}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{inv.direccion_conjunto}</p>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t("dashboards.reciclador.invitations.invitedBy", { nombre: inv.invitado_por_nombre })}</p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <button
-                    onClick={() => responderInvitacion(inv.id, true)}
-                    disabled={procesandoId === inv.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <BadgeCheck className="icon-sm icon-hop" />
-                    {t("dashboards.reciclador.invitations.accept")}
-                  </button>
-                  <button
-                    onClick={() => responderInvitacion(inv.id, false)}
-                    disabled={procesandoId === inv.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800/40 dark:bg-transparent dark:hover:bg-red-900/10"
-                  >
-                    <OctagonX className="icon-sm icon-shake" />
-                    {t("dashboards.reciclador.invitations.reject")}
-                  </button>
-                </div>
               </div>
             ))}
           </div>
@@ -538,62 +579,6 @@ export function RecicladorDashboard() {
         )}
       </div>
 
-      {/* ¿Qué? Historial de las auditorías que YO envié — antes el
-             reciclador no tenía forma de volver a ver una auditoría
-             pasada, a diferencia de Residente/Admin de Conjunto que sí
-             tienen esta misma sección para las de su conjunto.
-          ¿Para qué? Reutiliza los datos que ya se cargan para calcular el
-                    aviso de "auditoría pendiente" (auditorias, arriba) —
-                    no dispara una petición nueva. */}
-      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <History className="icon-md text-gray-500 dark:text-gray-400" />
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
-        </div>
-
-        {cargando ? (
-          <LoadingState message={t("common.loading")} />
-        ) : auditorias.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t("auditoriaResultado.historialEmpty")}</p>
-        ) : (
-          <ul className="divide-y divide-gray-50 dark:divide-gray-800">
-            {auditorias.map((a) => {
-              const nivel = NIVELES_DESEMPENO[a.nivel_desempeno];
-              return (
-                <li key={a.id_auditoria}>
-                  <button
-                    onClick={() => setAuditoriaAbierta(a.id_auditoria)}
-                    className="flex w-full cursor-pointer items-center justify-between gap-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-night-inset/60"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm text-gray-800 dark:text-gray-200">
-                        {a.nombre_conjunto} — {a.tema_educativo}
-                      </p>
-                      <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        {formatearFechaCreacion(a.created_at)}
-                      </p>
-                    </div>
-                    <span
-                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold ${nivel.claseBadge}`}
-                    >
-                      <nivel.icon className="icon-sm" />
-                      {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        {auditoriaAbierta && (
-          <AuditoriaResultadoModal
-            idAuditoria={auditoriaAbierta}
-            onClose={() => setAuditoriaAbierta(null)}
-          />
-        )}
-      </div>
-
       {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) */}
       {cargando ? (
         <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
@@ -603,14 +588,23 @@ export function RecicladorDashboard() {
         <NotificationFeed
           title={t("dashboards.reciclador.notifications.title")}
           notifications={notificaciones}
-          emptyMessage={t("dashboards.reciclador.notifications.empty")}
+          emptyMessage={t(sinConjuntos ? "dashboards.reciclador.notifications.emptyWithoutConjuntos" : "dashboards.reciclador.notifications.empty")}
           accentBg="bg-amber-700"
-          accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-900/10 dark:hover:bg-amber-900/20"
+          accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-400/10 dark:hover:bg-amber-400/15"
           onMarkRead={marcarLeida}
           onMarkAllRead={marcarTodasLeidas}
           onClearRead={limpiarLeidas}
         />
       )}
+
+      {/* ¿Qué? Historial de las auditorías que YO envié, de a páginas — antes el
+             reciclador no tenía forma de volver a ver una auditoría pasada, a
+             diferencia de Residente/Admin de Conjunto que sí tienen esta misma
+             sección para las de su conjunto.
+          ¿Para qué? Es el mismo componente del Residente (HistorialAuditorias), con
+                    otra fuente de datos. El aviso de "auditoría pendiente" ya no sale
+                    de esta lista sino de ultimasAuditorias (una fecha por conjunto). */}
+      <HistorialAuditorias cargar={listarMisAuditorias} mostrarSiempreElConjunto recargar={versionHistorial} />
 
       {/* Modal: seleccionar conjunto para enviar notificación */}
       {/* ¿Qué? Antes era un <div> armado a mano — no cerraba con Escape, no
@@ -638,7 +632,7 @@ export function RecicladorDashboard() {
                   onClick={() => setConjuntoSeleccionado(c.id_conjunto_residencial)}
                   className={`w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
                     conjuntoSeleccionado === c.id_conjunto_residencial
-                      ? "border-accent-500 bg-accent-50 dark:bg-accent-900/20"
+                      ? "border-accent-500 bg-accent-50 dark:bg-accent-300/10"
                       : "border-gray-200 hover:border-accent-300 dark:border-night-line dark:hover:border-accent-700"
                   }`}
                 >
@@ -654,13 +648,13 @@ export function RecicladorDashboard() {
                 ¿Para qué? Evita un clic para nada y un error genérico.
                 ¿Impacto? Solo lectura — no cambia el flujo de envío en sí. */}
             {motivoModal && (
-              <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+              <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
                 {motivoModal}
               </p>
             )}
 
             {errorEnvio && (
-              <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 dark:bg-red-900/20 dark:text-red-400">
+              <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 dark:bg-red-400/10 dark:text-red-300">
                 {errorEnvio}
               </p>
             )}
@@ -675,7 +669,7 @@ export function RecicladorDashboard() {
               <button
                 onClick={enviarNotificacion}
                 disabled={!conjuntoSeleccionado || enviandoNotif || !!motivoModal}
-                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {enviandoNotif ? t("dashboards.reciclador.modal.sending") : t("dashboards.reciclador.modal.submit")}
               </button>

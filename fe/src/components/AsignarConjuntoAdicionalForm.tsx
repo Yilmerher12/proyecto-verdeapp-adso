@@ -136,19 +136,19 @@ export function AsignarConjuntoAdicionalForm() {
 
       <form onSubmit={buscar} noValidate className="flex gap-2 mb-4">
         <div className="flex-1 relative">
-          <Search className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("desvinculacion.asignarAdicional.searchPlaceholder")}
-            className="w-full pl-9 p-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-line dark:bg-night-field dark:text-white"
+            className="w-full pl-9 p-2.5 border border-edge rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
           />
         </div>
         <button
           type="submit"
           disabled={buscando}
-          className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
           {t("desvinculacion.asignarAdicional.searchButton")}
         </button>
@@ -173,7 +173,7 @@ export function AsignarConjuntoAdicionalForm() {
               onClick={() => seleccionarAdministrador(admin)}
               className={`w-full cursor-pointer text-left rounded-xl border px-4 py-3 transition-colors ${
                 seleccionado?.id_administrador === admin.id_administrador
-                  ? "border-accent-500 bg-accent-50 dark:bg-accent-900/20"
+                  ? "border-accent-500 bg-accent-50 dark:bg-accent-300/10"
                   : "border-gray-200 hover:border-accent-300 dark:border-night-line dark:hover:border-accent-700"
               }`}
             >
@@ -212,7 +212,7 @@ export function AsignarConjuntoAdicionalForm() {
                 setLocalidadId(e.target.value === "" ? "" : Number(e.target.value));
                 setConjuntoElegido(null);
               }}
-              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+              className="w-full cursor-pointer rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
             >
               <option value="">{t("desvinculacion.asignarAdicional.localitySelectPlaceholder")}</option>
               {localidades.map((l) => (
@@ -229,7 +229,7 @@ export function AsignarConjuntoAdicionalForm() {
           </label>
 
           {localidadId === "" ? (
-            <p className="rounded-xl border border-dashed border-gray-300 px-3 py-2.5 text-xs text-gray-500 dark:border-night-line dark:text-gray-400">
+            <p className="rounded-xl border border-dashed border-edge px-3 py-2.5 text-xs text-gray-500 dark:border-night-edge dark:text-gray-400">
               {t("desvinculacion.asignarAdicional.selectLocalityFirst")}
             </p>
           ) : (
@@ -249,7 +249,7 @@ export function AsignarConjuntoAdicionalForm() {
                 type="button"
                 onClick={asignar}
                 disabled={!conjuntoElegido || asignando}
-                className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 h-fit mt-1"
+                className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 h-fit mt-1 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
               </button>

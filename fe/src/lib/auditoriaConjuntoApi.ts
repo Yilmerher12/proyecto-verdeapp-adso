@@ -6,7 +6,7 @@ import { API_BASE_URL } from "@/api/axios";
 //           la consulta del historial en un solo lugar.
 const API_BASE = `${API_BASE_URL}/api/v1/auditorias-conjunto`;
 
-export type NivelDesempeno = "EXCELENTE" | "BUENA" | "REGULAR" | "DEFICIENTE";
+export type NivelDesempeno = "BUENA" | "REGULAR" | "DEFICIENTE";
 
 export interface AuditoriaConjunto {
   id_auditoria: string;
@@ -64,8 +64,29 @@ export async function crearAuditoria(
   return data;
 }
 
-export async function listarMisAuditorias(): Promise<AuditoriaConjunto[]> {
-  const { data } = await axios.get(`${API_BASE}/mias`);
+// ¿Qué? Una página de auditorías con el total que hay (limit/offset en el servidor).
+// ¿Para qué? Las listas que pueden crecer ya no traen todo ni se cortan en un tope fijo.
+export interface PaginaAuditorias {
+  items: AuditoriaConjunto[];
+  total: number;
+}
+
+// ¿Qué? Las auditorías que el Reciclador ya envió, de a páginas, más recientes primero.
+export async function listarMisAuditorias(limit: number, offset: number): Promise<PaginaAuditorias> {
+  const { data } = await axios.get(`${API_BASE}/mias`, { params: { limit, offset } });
+  return data;
+}
+
+export interface UltimaAuditoria {
+  id_conjunto_residencial: string;
+  ultima_auditoria: string;
+}
+
+// ¿Qué? Por cada conjunto que el Reciclador ya auditó, la fecha de su última auditoría.
+// ¿Para qué? El aviso "este conjunto necesita auditoría" (a los 7 días): con la lista paginada
+//           ya no basta con mirar la primera página, que puede no incluir ese conjunto.
+export async function listarUltimasAuditorias(): Promise<UltimaAuditoria[]> {
+  const { data } = await axios.get(`${API_BASE}/mias/ultimas`);
   return data;
 }
 
@@ -76,18 +97,64 @@ export async function obtenerAuditoria(idAuditoria: string): Promise<AuditoriaCo
   return data;
 }
 
-// ¿Qué? Todas las auditorías de el/los conjunto(s) del usuario en sesión —
+// ¿Qué? Las auditorías de el/los conjunto(s) del usuario en sesión, de a páginas —
 //       a diferencia de la notificación (que se pierde al marcarla leída),
 //       esto queda siempre consultable. El backend resuelve solo a qué
 //       conjunto(s) pertenece: un Residente o Admin de Conjunto, sin pasar
 //       ningún id.
-export async function listarHistorial(): Promise<AuditoriaConjunto[]> {
-  const { data } = await axios.get(`${API_BASE}/historial`);
+export async function listarHistorial(limit: number, offset: number): Promise<PaginaAuditorias> {
+  const { data } = await axios.get(`${API_BASE}/historial`, { params: { limit, offset } });
+  return data;
+}
+
+// ¿Qué? Conteos de auditorías de UN conjunto por semana y por tema (issue #486).
+// ¿Para qué? La gráfica de desempeño solo dibuja estos números: el backend ya
+//           los cuenta (sin depender de una página de /historial) y con la semana de
+//           lunes a domingo en hora de Bogotá.
+// ¿Impacto? `lunes` es una fecha de calendario (YYYY-MM-DD), no un instante:
+//           no se convierte de zona horaria.
+export interface SemanaDesempeno {
+  lunes: string;
+  bueno: number;
+  regular: number;
+  malo: number;
+}
+
+export interface TemaDesempeno {
+  tema: string;
+  bueno: number;
+  regular: number;
+  malo: number;
+}
+
+export interface DesempenoConjunto {
+  id_conjunto_residencial: string;
+  total: number;
+  semanas: SemanaDesempeno[];
+  temas: TemaDesempeno[];
+}
+
+// ¿Qué? Sin `idConjunto` el backend usa el único conjunto del usuario (el caso
+//       del Residente); un Admin de Conjunto con varios debe mandarlo (si no, 422).
+export async function obtenerDesempeno(idConjunto?: string, semanas?: number): Promise<DesempenoConjunto> {
+  const { data } = await axios.get(`${API_BASE}/desempeno`, {
+    params: { id_conjunto: idConjunto, semanas },
+  });
+  return data;
+}
+
+// ¿Qué? Las auditorías de una semana (el `lunes` de una SemanaDesempeno), más recientes primero.
+export async function listarAuditoriasDeSemana(lunes: string, idConjunto?: string): Promise<AuditoriaConjunto[]> {
+  const { data } = await axios.get(`${API_BASE}/desempeno/semana`, {
+    params: { lunes, id_conjunto: idConjunto },
+  });
   return data;
 }
 
 export interface AuditoriaAdmin extends AuditoriaConjunto {
   avisados: number;
+  id_localidad: number;
+  nombre_localidad: string;
 }
 
 export interface AuditoriasAdminResultado {
@@ -100,7 +167,24 @@ export interface AuditoriasAdminResultado {
 //       filtra esa semana completa; sin él, trae las más recientes de
 //       cualquier semana (para cruzar "a qué conjuntos se recomendó cada
 //       módulo" sin acotar a una sola semana).
-export async function listarAuditoriasAdmin(opciones?: { lunes?: string; limit?: number }): Promise<AuditoriasAdminResultado> {
+export async function listarAuditoriasAdmin(opciones?: { lunes?: string; limit?: number; offset?: number }): Promise<AuditoriasAdminResultado> {
   const { data } = await axios.get(`${API_BASE}/admin`, { params: opciones });
   return data;
+}
+
+// ¿Qué? Trae TODAS las auditorías de una semana, pidiendo página tras página.
+// ¿Para qué? El backend entrega máximo 100 por defecto (200 como tope) y devuelve
+//           `total`; antes la página guardaba solo la primera página y una semana
+//           con más auditorías se veía incompleta, sin ningún aviso. Con los filtros
+//           por conjunto y fecha, una auditoría que faltaba parecía no existir.
+// ¿Impacto? Se detiene si una página llega vacía, aunque `total` diga que faltan:
+//           nunca queda en un ciclo infinito si los datos cambian mientras se piden.
+const AUDITORIAS_POR_PAGINA = 200;
+export async function listarAuditoriasAdminDeSemana(lunes: string): Promise<AuditoriaAdmin[]> {
+  const todas: AuditoriaAdmin[] = [];
+  for (;;) {
+    const { items, total } = await listarAuditoriasAdmin({ lunes, limit: AUDITORIAS_POR_PAGINA, offset: todas.length });
+    todas.push(...items);
+    if (items.length === 0 || todas.length >= total) return todas;
+  }
 }

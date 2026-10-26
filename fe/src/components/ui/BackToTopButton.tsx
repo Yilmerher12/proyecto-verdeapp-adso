@@ -38,7 +38,8 @@ export function BackToTopButton() {
       type="button"
       onClick={scrollToTop}
       aria-label={t("landing.backToTop")}
-      className={`fixed bottom-6 right-6 z-40 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-accent-700 text-white shadow-lg transition-all duration-300 hover:bg-accent-600 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 ${
+      title={t("landing.backToTop")}
+      className={`fixed bottom-6 right-6 z-40 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-accent-700 text-white shadow-lg transition-all duration-300 hover:bg-accent-600 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400  dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200${
         visible ? "opacity-100 translate-y-0" : "pointer-events-none translate-y-3 opacity-0"
       }`}
     >

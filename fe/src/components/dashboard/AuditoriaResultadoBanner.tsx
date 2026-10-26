@@ -35,9 +35,9 @@ export function AuditoriaResultadoBanner({ notificaciones, onMarcarLeida }: Audi
   };
 
   return (
-    <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-800/30 dark:bg-teal-900/10">
+    <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-400/30 dark:bg-teal-400/10">
       <div className="mb-3 flex items-center gap-2">
-        <ClipboardCheck className="icon-md text-teal-700 dark:text-teal-400" />
+        <ClipboardCheck className="icon-md text-teal-700 dark:text-teal-300" />
         <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.bannerTitle")}</h2>
       </div>
       <div className="space-y-2">
@@ -49,7 +49,7 @@ export function AuditoriaResultadoBanner({ notificaciones, onMarcarLeida }: Audi
             <p className="text-sm text-gray-700 dark:text-gray-300">{n.mensaje}</p>
             <button
               onClick={() => setAbierta({ idNotificacion: n.id, idAuditoria: n.id_referencia as string })}
-              className="shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600"
+              className="shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
             >
               {t("auditoriaResultado.verButton")}
             </button>

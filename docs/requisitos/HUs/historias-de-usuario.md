@@ -59,4 +59,9 @@
 | HU-045 | [Admin Sistema ve el perfil de cualquier usuario](HU-045_admin_sistema_ve_perfil_usuario.md) | [RQF-018](../RFs/RQF-018_gestion_usuarios_admin_sistema.md) |
 | HU-046 | [Admin de Conjunto lleva la agenda de temas para el comité](HU-046_admin_conjunto_lleva_agenda_comite.md) | [RQF-020](../RFs/RQF-020_agenda_interna_conjunto.md) |
 | HU-047 | [Residente, Reciclador o Admin de Conjunto envía una novedad al Admin Sistema](HU-047_usuario_envia_novedad_admin_sistema.md) | [RQF-021](../RFs/RQF-021_novedades_enviadas_admin_sistema.md) |
-| HU-048 | [Admin Sistema revisa la bandeja unificada de solicitudes pendientes](HU-048_admin_sistema_revisa_bandeja_solicitudes.md) | [RQF-021](../RFs/RQF-021_novedades_enviadas_admin_sistema.md) |
+| HU-048 | [Admin Sistema atiende el soporte técnico y las desvinculaciones](HU-048_admin_sistema_revisa_bandeja_solicitudes.md) | [RQF-021](../RFs/RQF-021_novedades_enviadas_admin_sistema.md) |
+| HU-049 | [Admin de Conjunto descarga el historial de la agenda](HU-049_admin_conjunto_descarga_historial_agenda.md) | [RQF-020](../RFs/RQF-020_agenda_interna_conjunto.md) |
+| HU-050 | [Administrador de Conjunto ve los avisos de cada uno de sus conjuntos](HU-050_admin_conjunto_ve_avisos_de_cada_conjunto.md) | [RQF-003](../RFs/RQF-003_alerta_shut_bidireccional.md), [RQF-006](../RFs/RQF-006_notificacion_llegada_reciclador.md) |
+| HU-051 | [Admin de Conjunto pide que le asignen otro conjunto desde su panel](HU-051_admin_conjunto_solicita_otro_conjunto.md) | [RQF-012](../RFs/RQF-012_gestion_vinculacion_conjuntos.md) |
+| HU-052 | [Admin de Conjunto ve el desempeño semanal de su conjunto](HU-052_admin_conjunto_ve_desempeno_semanal.md) | [RQF-009](<../RFs/RQF-009 — Semáforo de Gestión de Residuos.md>) |
+| HU-053 | [Residente ve el desempeño semanal de su conjunto](HU-053_residente_ve_desempeno_semanal.md) | [RQF-009](<../RFs/RQF-009 — Semáforo de Gestión de Residuos.md>) |

@@ -133,6 +133,7 @@ erDiagram
         DATE fecha_publicacion
         VARCHAR url_video
         VARCHAR url_guia
+        VARCHAR url_imagen
     }
 
     CONTENIDO_EDUCATIVO_ENVIOS {
@@ -141,6 +142,12 @@ erDiagram
         UUID id_conjunto_residencial FK
         UUID enviado_por_id FK
         TIMESTAMP created_at
+    }
+
+    CONTENIDO_EDUCATIVO_VISTOS {
+        UUID id_usuario PK, FK
+        UUID id_contenido PK, FK
+        TIMESTAMP visto_at
     }
 
     RECICLADORES_CONJUNTOS {
@@ -209,7 +216,11 @@ erDiagram
         UUID id_conjunto_residencial FK
         TEXT texto
         VARCHAR url_imagen
+        VARCHAR motivo
+        VARCHAR prioridad
         VARCHAR estado
+        TEXT respuesta
+        TIMESTAMP respondida_at
         TIMESTAMP created_at
         TIMESTAMP resuelta_at
     }
@@ -356,6 +367,8 @@ erDiagram
     CONTENIDO_EDUCATIVO ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : se_envia
     CONJUNTOS_RESIDENCIALES ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : recibe
     USUARIOS ||--o{ CONTENIDO_EDUCATIVO_ENVIOS : envia
+    CONTENIDO_EDUCATIVO ||--o{ CONTENIDO_EDUCATIVO_VISTOS : se_abre
+    USUARIOS ||--o{ CONTENIDO_EDUCATIVO_VISTOS : abre
 ```
 
 ---
@@ -420,6 +433,8 @@ CONTENIDO_EDUCATIVO
    │
    ▼
 CONTENIDO_EDUCATIVO_ENVIOS ── CONJUNTOS_RESIDENCIALES / USUARIOS (quién lo envió)
+
+CONTENIDO_EDUCATIVO ──▶ CONTENIDO_EDUCATIVO_VISTOS ◀── USUARIOS (qué Residente abrió qué módulo)
 ```
 
 ---
@@ -579,8 +594,9 @@ Comentarios internos del Admin Sistema sobre un punto de acopio (RQF-011): notas
 | fecha_publicacion | DATE    |
 | url_video         | VARCHAR |
 | url_guia          | VARCHAR |
+| url_imagen        | VARCHAR |
 
-`cuerpo_texto` admite Markdown, renderizado en el frontend. `url_guia` puede ser un archivo subido (PDF/imagen) o un link externo.
+`cuerpo_texto` admite Markdown, renderizado en el frontend. `url_guia` puede ser un archivo subido (PDF/imagen) o un link externo. `url_imagen` es la portada opcional del módulo y solo puede ser una imagen subida a VerdeApp (`/uploads/adjuntos/...`); las imágenes escritas dentro de `cuerpo_texto` siguen la misma regla.
 
 ---
 
@@ -595,6 +611,18 @@ Comentarios internos del Admin Sistema sobre un punto de acopio (RQF-011): notas
 | created_at              | TIMESTAMP |
 
 Registra el envío manual de un módulo del catálogo a un conjunto (RQF-013, Flujo C) — el Admin Sistema decide recomendar un módulo aunque no haya habido una auditoría Regular/Mala que lo dispare automáticamente. `enviado_por_id` queda `NULL` si el usuario que lo envió se elimina después (`ON DELETE SET NULL`), para no perder el registro histórico del envío.
+
+---
+
+## contenido_educativo_vistos
+
+| Campo        | Tipo      |
+| ------------ | --------- |
+| id_usuario   | UUID      |
+| id_contenido | UUID      |
+| visto_at     | TIMESTAMP |
+
+Los módulos que cada Residente ya abrió en "Aprende a reciclar" (HU-005). La clave primaria es compuesta (`id_usuario`, `id_contenido`): una fila por Residente y módulo, así que abrir la misma lección otra vez no duplica nada. "Visto" significa que abrió la lección, no que reprodujo el video completo. Si se elimina el usuario o el módulo, sus filas se eliminan con él (`ON DELETE CASCADE`). `id_contenido` tiene un índice propio para que el borrado de un módulo no recorra toda la tabla.
 
 ---
 
@@ -687,8 +715,9 @@ Solicitud de un Admin de Conjunto para dejar de administrar un conjunto (RQF-016
 | url_evidencia             | VARCHAR   |
 | estado                    | VARCHAR   |
 | created_at                | TIMESTAMP |
+| archivado_en              | TIMESTAMP |
 
-Temas privados del Admin de Conjunto para llevar al comité de un conjunto (RQF-020). `estado` es `PENDIENTE` o `EN_ESPERA`. Se borra con el conjunto (`CASCADE`); si se borra el autor, el tema queda sin autor (`SET NULL`).
+Temas privados del Admin de Conjunto para llevar al comité de un conjunto (RQF-020). `estado` es `PENDIENTE` o `ARCHIVADA`; `archivado_en` solo tiene valor mientras está archivado. Se borra con el conjunto (`CASCADE`); si se borra el autor, el tema queda sin autor (`SET NULL`).
 
 ---
 
@@ -701,11 +730,15 @@ Temas privados del Admin de Conjunto para llevar al comité de un conjunto (RQF-
 | id_conjunto_residencial   | UUID      |
 | texto                     | TEXT      |
 | url_imagen                | VARCHAR   |
+| motivo                    | VARCHAR   |
+| prioridad                 | VARCHAR   |
 | estado                    | VARCHAR   |
+| respuesta                 | TEXT      |
+| respondida_at             | TIMESTAMP |
 | created_at                | TIMESTAMP |
 | resuelta_at               | TIMESTAMP |
 
-Novedad que un Residente, Reciclador o Admin de Conjunto le envía al Admin Sistema (RQF-021). `estado` es `NUEVA` o `VISTA`; el Admin Sistema la ve en la bandeja "Solicitudes pendientes" junto con `solicitudes_desvinculacion`. El conjunto es opcional (un Reciclador no tiene uno solo). No confundir con `novedades` (RQF-015), que publica el Admin Sistema.
+Consulta de soporte que un Residente, Reciclador o Admin de Conjunto le envía al Admin Sistema (RQF-021). `estado` es `NUEVA`, `EN_REVISION` o `RESUELTA`. `prioridad` es `ALTA`, `MEDIA` o `BAJA` y la calcula el backend según `motivo` (la clave del motivo que el autor eligió en el formulario; es `NULL` en las filas anteriores a esa columna, que quedaron en `MEDIA`); el Admin Sistema puede corregirla. `respuesta` y `respondida_at` guardan lo que el Admin Sistema le contesta al autor. El Admin Sistema la atiende en la pestaña "Soporte técnico" de su bandeja; las desvinculaciones (`solicitudes_desvinculacion`) van en la pestaña "Desvinculaciones". El conjunto es opcional (un Reciclador no tiene uno solo). No confundir con `novedades` (RQF-015), que publica el Admin Sistema.
 
 ---
 
@@ -744,7 +777,7 @@ Avisos que un Admin de Conjunto publica para los residentes y/o recicladores de 
 | fecha_edicion      | TIMESTAMP |
 | fecha_archivado    | TIMESTAMP |
 
-Avisos de alcance general que el Admin Sistema publica (RQF-015) — `alcance` decide si va a todos los usuarios o a un rol concreto. A qué conjuntos llega (uno o varios) se guarda en `novedades_conjuntos`: sin filas = llega a todos los conjuntos del alcance (lo de siempre); con filas = solo a esos conjuntos. No se puede cambiar después de publicar, igual que `alcance`. `url_video` guarda un enlace de YouTube opcional. Puede archivarse manualmente antes de expirar.
+Avisos de alcance general que el Admin Sistema publica (RQF-015) — `alcance` decide si va a todos los usuarios o a un rol concreto. A qué conjuntos llega (uno o varios) se guarda en `novedades_conjuntos`: sin filas = llega a todos los conjuntos del alcance (lo de siempre); con filas = solo a esos conjuntos. No se puede cambiar después de publicar, igual que `alcance`. `url_video` guarda un enlace de YouTube opcional. Puede archivarse manualmente antes de expirar (`fecha_archivado`); al vencer cuenta como archivada sin escribir esa columna, y una archivada no se reactiva (RN-005 de RQF-015). No confundir con `novedades_enviadas`, que van en sentido contrario: ver [novedades y novedades enviadas](../../conceptos/novedades-y-novedades-enviadas.md).
 
 ---
 
@@ -901,7 +934,7 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 * Un Reciclador solo puede trabajar en un conjunto tras aceptar una `invitacion_reciclador_conjunto` emitida por el Admin de Conjunto de ese conjunto.
 * Un Admin de Conjunto puede solicitar dejar de administrar un conjunto (`solicitud_desvinculacion`) — requiere aprobación del Admin Sistema, y solo puede haber una solicitud `PENDIENTE` a la vez por (administrador, conjunto).
 * Un Admin de Conjunto lleva una agenda privada de temas por cada conjunto que administra; nadie más la ve.
-* Un Residente, Reciclador o Admin de Conjunto puede enviarle novedades al Admin Sistema; este solo las marca como vistas.
+* Un Residente, Reciclador o Admin de Conjunto puede enviarle novedades (consultas de soporte) al Admin Sistema; este les cambia el estado (`NUEVA`, `EN_REVISION`, `RESUELTA`), corrige su prioridad y le responde al autor. No son las `novedades` que el Admin Sistema publica (ver [novedades y novedades enviadas](../../conceptos/novedades-y-novedades-enviadas.md)).
 * Un Admin de Conjunto publica comunicados dirigidos a los residentes y/o recicladores de su propio conjunto; un Admin Sistema publica novedades de alcance general (todos los usuarios, o un rol específico).
 * Las notificaciones (llegada del reciclador, SHUT lleno/vaciado, revocación de acceso) se generan una sola vez por evento y se reparten a varios destinatarios, cada uno con su propio estado de lectura.
 * Un logout real invalida el token de sesión agregando su `jti` a `tokens_revocados` — no basta con que el frontend "olvide" el token.

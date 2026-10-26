@@ -9,19 +9,23 @@ import {
   Eye,
   FileText,
   Heading2,
+  ImagePlus,
   List as ListIcon,
   Bold,
   ChevronDown,
+  FilterX,
   Maximize2,
   Pencil,
   Plus,
   Search,
   Send,
+  SlidersHorizontal,
   Trash2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
 import { PanelLateral } from "@/components/ui/PanelLateral";
+import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -29,16 +33,19 @@ import { Alert } from "@/components/ui/Alert";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
+import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
+import { MuroLeccion } from "@/components/educativo/MuroLeccion";
+import { subirAdjunto } from "@/lib/uploadsApi";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
-import { API_BASE_URL } from "@/api/axios";
+import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import axios from "axios";
 import { COMPONENTES_MARKDOWN } from "@/config/contenidoEducativoMarkdown";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT, CATEGORIAS_NO_AUDITABLES } from "@/config/categoriasEducativas";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { domingoDeLunesUTC, formatearFechaCreacion, lunesUTC, rangoSemanaUTC } from "@/lib/dateFormat";
+import { domingoDeLunesUTC, fechaBogota, formatearFechaCreacion, isoToDateInputUTC, lunesBogota, lunesUTC, rangoSemanaUTC } from "@/lib/dateFormat";
 import {
   crearContenido,
   editarContenido,
@@ -57,7 +64,12 @@ import {
   ENLACE_MAX_LENGTH,
   REGEX_VIDEO_YOUTUBE,
 } from "@/lib/validacion";
-import { listarAuditoriasAdmin, type AuditoriaAdmin, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
+import { listarAuditoriasAdmin, listarAuditoriasAdminDeSemana, type AuditoriaAdmin, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
+
+type OrdenCalificaciones = "criticas" | "recientes" | "conjunto";
+const ORDENES_CALIFICACIONES: OrdenCalificaciones[] = ["criticas", "recientes", "conjunto"];
+const CLASE_CONTROL_FILTRO =
+  "touch-target-h rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200";
 
 const FORM_VACIO: ContenidoEducativoPayload = {
   modulo_categoria: "",
@@ -65,6 +77,7 @@ const FORM_VACIO: ContenidoEducativoPayload = {
   cuerpo_texto: "",
   url_video: "",
   url_guia: "",
+  url_imagen: "",
 };
 
 const NUEVA_CATEGORIA = "__nueva__";
@@ -101,7 +114,7 @@ function destinatariosAutoDe(modulo: ContenidoEducativo, auditorias: AuditoriaAd
   const vistos = new Set<string>();
   const out: Destinatario[] = [];
   const ordenadas = [...auditorias]
-    .filter((a) => a.tema_educativo === modulo.modulo_categoria && a.nivel_desempeno !== "BUENA" && a.nivel_desempeno !== "EXCELENTE")
+    .filter((a) => a.tema_educativo === modulo.modulo_categoria && a.nivel_desempeno !== "BUENA")
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
   for (const a of ordenadas) {
     if (vistos.has(a.id_conjunto_residencial)) continue;
@@ -185,12 +198,13 @@ export function AdminContenidoEducativoPage() {
   }, [user]);
 
   // ---------- Semana en curso (tarjeta de resumen — siempre la de HOY, sin importar qué semana se esté navegando) ----------
-  const semanaActual = useMemo(() => lunesUTC(), []);
+  // ¿Qué? La semana de hoy en hora de Bogotá, igual que la corta el backend (listar_admin).
+  const semanaActual = useMemo(() => lunesBogota(), []);
   const [calSemanaActual, setCalSemanaActual] = useState<AuditoriaAdmin[]>([]);
   useEffect(() => {
     if (!user) return;
-    listarAuditoriasAdmin({ lunes: semanaActual })
-      .then((res) => setCalSemanaActual(res.items))
+    listarAuditoriasAdminDeSemana(semanaActual)
+      .then(setCalSemanaActual)
       .catch(() => {});
   }, [user, semanaActual]);
 
@@ -201,19 +215,34 @@ export function AdminContenidoEducativoPage() {
   const [errorCal, setErrorCal] = useState(false);
   const [nivelFiltro, setNivelFiltro] = useState<"" | NivelDesempeno>("");
   const [buscarCal, setBuscarCal] = useState("");
+  const [localidadFiltro, setLocalidadFiltro] = useState("");
+  const [conjuntoFiltro, setConjuntoFiltro] = useState("");
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
+  const [orden, setOrden] = useState<OrdenCalificaciones>("criticas");
+  const [masFiltrosAbiertos, setMasFiltrosAbiertos] = useState(false);
   const [calAbierta, setCalAbierta] = useState<string | null>(null);
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
+
+  const limpiarFiltros = () => {
+    setNivelFiltro("");
+    setBuscarCal("");
+    setLocalidadFiltro("");
+    setConjuntoFiltro("");
+    setDesde("");
+    setHasta("");
+  };
 
   useEffect(() => {
     if (!user) return;
     setCargandoCal(true);
     setErrorCal(false);
-    listarAuditoriasAdmin({ lunes: semana })
-      .then((res) => setCalSemana(res.items))
+    listarAuditoriasAdminDeSemana(semana)
+      .then(setCalSemana)
       .catch(() => setErrorCal(true))
       .finally(() => setCargandoCal(false));
-    // Semana nueva: los filtros de la semana anterior ya no aplican.
-    setNivelFiltro("");
+    // Semana nueva: los filtros de la semana anterior ya no aplican (el orden no es un filtro, se queda).
+    limpiarFiltros();
     setCalAbierta(null);
   }, [user, semana]);
 
@@ -223,22 +252,64 @@ export function AdminContenidoEducativoPage() {
     setSemana(lunesUTC(nueva));
   };
 
-  const conteoNiveles = useMemo(() => {
-    const c = { BUENA: 0, REGULAR: 0, DEFICIENTE: 0 } as Record<string, number>;
-    for (const a of calSemana) c[a.nivel_desempeno] = (c[a.nivel_desempeno] ?? 0) + 1;
-    return c;
+  // ¿Qué? Los conjuntos que tienen al menos una calificación esa semana, para el selector;
+  //       con una localidad elegida, solo los de esa localidad.
+  // ¿Impacto? El valor es el id (no el nombre): dos conjuntos pueden llamarse igual.
+  const conjuntosDeLaSemana = useMemo(() => {
+    const porId = new Map<string, string>();
+    for (const a of calSemana) {
+      if (!localidadFiltro || String(a.id_localidad) === localidadFiltro) porId.set(a.id_conjunto_residencial, a.nombre_conjunto);
+    }
+    return [...porId].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [calSemana, localidadFiltro]);
+
+  // ¿Qué? Las localidades que tienen al menos una calificación esa semana, para el primer selector.
+  // ¿Para qué? En producción hay conjuntos en las 20 localidades de Bogotá: se busca primero por localidad.
+  const localidadesDeLaSemana = useMemo(() => {
+    const porId = new Map<string, string>();
+    for (const a of calSemana) porId.set(String(a.id_localidad), a.nombre_localidad);
+    return [...porId].sort((a, b) => a[1].localeCompare(b[1]));
   }, [calSemana]);
 
-  const calFiltradas = useMemo(() => {
+  const hayFiltros = Boolean(nivelFiltro || buscarCal || localidadFiltro || conjuntoFiltro || desde || hasta);
+  // ¿Qué? Cuántos de los filtros guardados en "Más filtros" están activos (el orden cuenta si no es el de siempre).
+  // ¿Para qué? Se muestra en el botón: un filtro escondido en el panel plegado no debe pasar desapercibido.
+  const filtrosExtraActivos = (desde ? 1 : 0) + (hasta ? 1 : 0) + (orden !== "criticas" ? 1 : 0);
+  // ¿Qué? Sin calificaciones esa semana (o cargando / con error) no hay nada que filtrar: los controles se
+  //       desactivan y los selectores avisan por qué están vacíos, para que no parezcan rotos.
+  const sinCalificaciones = !cargandoCal && !errorCal && calSemana.length === 0;
+  const filtrosInactivos = cargandoCal || errorCal || calSemana.length === 0;
+  const domingoSemana = useMemo(() => isoToDateInputUTC(domingoDeLunesUTC(semana).toISOString()), [semana]);
+
+  // ¿Qué? Las calificaciones que pasan todos los filtros MENOS el de nivel.
+  // ¿Para qué? Los botones de nivel ("Malo 4", "Todas 10") cuentan sobre esto: si ya filtraste por
+  //           localidad, conjunto, fecha o texto, el número debe ser el de lo que verías al pulsarlo.
+  const calSinNivel = useMemo(() => {
     const q = buscarCal.trim().toLowerCase();
-    return [...calSemana]
-      .filter((a) => !nivelFiltro || a.nivel_desempeno === nivelFiltro)
-      .filter((a) => !q || `${a.nombre_conjunto} ${a.tema_educativo} ${a.descripcion ?? ""}`.toLowerCase().includes(q))
-      .sort((a, b) => {
-        const orden: Record<string, number> = { DEFICIENTE: 0, REGULAR: 1, BUENA: 2, EXCELENTE: 2 };
-        return (orden[a.nivel_desempeno] ?? 3) - (orden[b.nivel_desempeno] ?? 3) || (a.created_at < b.created_at ? 1 : -1);
-      });
-  }, [calSemana, nivelFiltro, buscarCal]);
+    return calSemana
+      .filter((a) => !localidadFiltro || String(a.id_localidad) === localidadFiltro)
+      .filter((a) => !conjuntoFiltro || a.id_conjunto_residencial === conjuntoFiltro)
+      .filter((a) => !desde || fechaBogota(a.created_at) >= desde)
+      .filter((a) => !hasta || fechaBogota(a.created_at) <= hasta)
+      .filter((a) => !q || `${a.nombre_conjunto} ${a.tema_educativo} ${a.descripcion ?? ""}`.toLowerCase().includes(q));
+  }, [calSemana, buscarCal, localidadFiltro, conjuntoFiltro, desde, hasta]);
+
+  const conteoNiveles = useMemo(() => {
+    const c = { BUENA: 0, REGULAR: 0, DEFICIENTE: 0 } as Record<string, number>;
+    for (const a of calSinNivel) c[a.nivel_desempeno] = (c[a.nivel_desempeno] ?? 0) + 1;
+    return c;
+  }, [calSinNivel]);
+
+  const calFiltradas = useMemo(() => {
+    const gravedad: Record<string, number> = { DEFICIENTE: 0, REGULAR: 1, BUENA: 2 };
+    const masReciente = (a: AuditoriaAdmin, b: AuditoriaAdmin) => (a.created_at < b.created_at ? 1 : -1);
+    const comparadores: Record<OrdenCalificaciones, (a: AuditoriaAdmin, b: AuditoriaAdmin) => number> = {
+      criticas: (a, b) => (gravedad[a.nivel_desempeno] ?? 3) - (gravedad[b.nivel_desempeno] ?? 3) || masReciente(a, b),
+      recientes: masReciente,
+      conjunto: (a, b) => a.nombre_conjunto.localeCompare(b.nombre_conjunto) || masReciente(a, b),
+    };
+    return calSinNivel.filter((a) => !nivelFiltro || a.nivel_desempeno === nivelFiltro).sort(comparadores[orden]);
+  }, [calSinNivel, nivelFiltro, orden]);
 
   const auditoriaAbierta = calAbierta ? calSemana.find((a) => a.id_auditoria === calAbierta) : undefined;
 
@@ -257,7 +328,7 @@ export function AdminContenidoEducativoPage() {
   const categoriasAuditables = useMemo(() => categorias.filter((c) => !CATEGORIAS_NO_AUDITABLES.has(c)), [categorias]);
   const sinRecomendar = useMemo(() => {
     const conRecomendacion = new Set(
-      calSemanaActual.filter((a) => a.nivel_desempeno !== "BUENA" && a.nivel_desempeno !== "EXCELENTE").map((a) => a.tema_educativo)
+      calSemanaActual.filter((a) => a.nivel_desempeno !== "BUENA").map((a) => a.tema_educativo)
     );
     return categoriasAuditables.filter((c) => !conRecomendacion.has(c)).length;
   }, [categoriasAuditables, calSemanaActual]);
@@ -344,6 +415,9 @@ export function AdminContenidoEducativoPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imagenTextoRef = useRef<HTMLInputElement>(null);
+  const [subiendoImagenTexto, setSubiendoImagenTexto] = useState(false);
+  const [errorImagenTexto, setErrorImagenTexto] = useState<string | null>(null);
 
   const abrirCrear = (categoriaPrevia?: string) => {
     setForm(FORM_VACIO);
@@ -361,6 +435,7 @@ export function AdminContenidoEducativoPage() {
       cuerpo_texto: item.cuerpo_texto,
       url_video: item.url_video ?? "",
       url_guia: item.url_guia ?? "",
+      url_imagen: item.url_imagen ?? "",
     });
     setCategoriaSeleccion(item.modulo_categoria);
     setNuevaCategoriaTexto("");
@@ -442,6 +517,7 @@ export function AdminContenidoEducativoPage() {
       cuerpo_texto: form.cuerpo_texto,
       url_video: form.url_video?.trim() || null,
       url_guia: form.url_guia?.trim() || null,
+      url_imagen: form.url_imagen?.trim() || null,
     };
     try {
       if (editando) {
@@ -459,8 +535,12 @@ export function AdminContenidoEducativoPage() {
   };
 
   const [aEliminar, setAEliminar] = useState<ContenidoEducativo | null>(null);
+  // ¿Qué? true mientras corre la acción de la confirmación (issue #458).
+  // ¿Para qué? Antes no pasaba nada visible mientras tardaba y se podía confirmar dos veces.
+  const [eliminando, setEliminando] = useState(false);
   const confirmarEliminar = async () => {
     if (!user || !aEliminar) return;
+    setEliminando(true);
     try {
       await eliminarContenido(aEliminar.id_contenido);
       setAEliminar(null);
@@ -468,6 +548,8 @@ export function AdminContenidoEducativoPage() {
       cargarContenido();
     } catch {
       setErrorMsg(t(`${p}.deleteError`));
+    } finally {
+      setEliminando(false);
     }
   };
 
@@ -504,12 +586,36 @@ export function AdminContenidoEducativoPage() {
     });
   };
 
+  // ¿Qué? Sube una imagen y la escribe en el texto como ![descripción](enlace), en su propia línea.
+  // ¿Para qué? Cada imagen del muro va pegada a la tarjeta que viene justo después (ver
+  //           lib/muroLeccion.ts); el Administrador no tiene que escribir el enlace a mano.
+  // ¿Impacto? Se inserta donde está el cursor. Es la misma subida de imágenes de la guía de apoyo.
+  const insertarImagenEnTexto = async (archivo: File | undefined) => {
+    if (!archivo) return;
+    setErrorImagenTexto(null);
+    setSubiendoImagenTexto(true);
+    try {
+      const url = await subirAdjunto(archivo);
+      const ta = textareaRef.current;
+      const posicion = ta ? ta.selectionStart : form.cuerpo_texto.length;
+      const antes = form.cuerpo_texto.slice(0, posicion).replace(/\s+$/, "");
+      const despues = form.cuerpo_texto.slice(posicion).replace(/^\s+/, "");
+      const imagen = `![${t(`${p}.fields.imageAltDefault`)}](${url})`;
+      actualizarCampo("cuerpo_texto", `${antes}${antes ? "\n\n" : ""}${imagen}\n\n${despues}`);
+    } catch (err) {
+      setErrorImagenTexto(motivoDelServidor(err) ?? t(`${p}.fields.insertImageError`));
+    } finally {
+      setSubiendoImagenTexto(false);
+      if (imagenTextoRef.current) imagenTextoRef.current.value = "";
+    }
+  };
+
   const idVideoReconocido = REGEX_VIDEO_YOUTUBE.test(form.url_video || "");
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 p-6">
+    <div className="mx-auto max-w-6xl space-y-5 px-0 py-6 sm:p-6">
       <div className="flex items-center gap-4 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
           <BookOpen className="icon-xl text-accent-700 dark:text-accent-400" />
         </div>
         <div>
@@ -530,14 +636,14 @@ export function AdminContenidoEducativoPage() {
             <button
               type="button"
               onClick={() => abrirCrear()}
-              className="cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600"
+              className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
             >
               {t(`${p}.newModule`)}
             </button>
             <button
               type="button"
               onClick={() => abrirCrear(NUEVA_CATEGORIA)}
-              className="cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+              className="touch-target-h cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
             >
               {t(`${p}.newSection.newCategory`)}
             </button>
@@ -575,7 +681,7 @@ export function AdminContenidoEducativoPage() {
           </div>
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "BUENA" || a.nivel_desempeno === "EXCELENTE").length}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "BUENA").length}</p>
               <p className="text-[11px] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.good`)}</p>
             </div>
             <div className="text-center">
@@ -602,15 +708,15 @@ export function AdminContenidoEducativoPage() {
           onClick={() => setPanelExpandido((v) => !v)}
           className="flex flex-wrap cursor-pointer items-center justify-between gap-2 px-5 py-4"
         >
-          <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-night-line dark:bg-night-inset/60">
+          <div className="flex flex-wrap rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-night-line dark:bg-night-inset/60">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setTab("cal");
               }}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                tab === "cal" ? "bg-accent-700 text-white shadow-sm" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+              className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                tab === "cal" ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
               <FileText className="icon-sm" />
@@ -622,8 +728,8 @@ export function AdminContenidoEducativoPage() {
                 e.stopPropagation();
                 setTab("mod");
               }}
-              className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                tab === "mod" ? "bg-accent-700 text-white shadow-sm" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+              className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                tab === "mod" ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
               <BookOpen className="icon-sm" />
@@ -638,7 +744,7 @@ export function AdminContenidoEducativoPage() {
               setPanelExpandido((v) => !v);
             }}
             aria-expanded={panelExpandido}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-night-inset/60 dark:hover:text-gray-200"
+            className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-night-inset/60 dark:hover:text-gray-200"
           >
             {panelExpandido ? t(`${p}.collapse`) : tab === "cal" ? t(`${p}.expandRatings`) : t(`${p}.expandModules`)}
             <ChevronDown className={`icon-sm transition-transform ${panelExpandido ? "rotate-180" : ""}`} />
@@ -653,7 +759,8 @@ export function AdminContenidoEducativoPage() {
                   type="button"
                   onClick={() => cambiarSemana(-7)}
                   aria-label={t(`${p}.week.prev`)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
+                  title={t(`${p}.week.prev`)}
+                  className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
                 >
                   <ChevronLeft className="icon-md" />
                 </button>
@@ -666,7 +773,8 @@ export function AdminContenidoEducativoPage() {
                   onClick={() => cambiarSemana(7)}
                   disabled={semana >= semanaActual}
                   aria-label={t(`${p}.week.next`)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
+                  title={t(`${p}.week.next`)}
+                  className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
                 >
                   <ChevronRight className="icon-md" />
                 </button>
@@ -674,23 +782,138 @@ export function AdminContenidoEducativoPage() {
               <span
                 className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${
                   semana === semanaActual
-                    ? "bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                    ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
                     : "bg-gray-100 text-gray-500 dark:bg-night-inset dark:text-gray-400"
                 }`}
               >
                 {semana === semanaActual ? t(`${p}.week.inProgress`) : t(`${p}.week.closed`, { fecha: domingoDeLunesUTC(semana).getUTCDate() })}
               </span>
-              <div className="relative ml-auto">
-                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            </div>
+
+            <div className="flex flex-wrap items-end gap-3 px-5 pb-4">
+              <div className="relative w-full sm:w-56">
+                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
                 <input
                   value={buscarCal}
                   onChange={(e) => setBuscarCal(e.target.value)}
                   placeholder={t(`${p}.week.searchPlaceholder`)}
                   aria-label={t(`${p}.week.searchPlaceholder`)}
-                  className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 sm:w-56"
+                  disabled={filtrosInactivos}
+                  className={`${CLASE_CONTROL_FILTRO} w-full pl-8`}
                 />
               </div>
+              <div className="w-full sm:w-auto">
+                <label htmlFor="cal-filtro-localidad" className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.localidad`)}</label>
+                <select
+                  id="cal-filtro-localidad"
+                  value={localidadFiltro}
+                  onChange={(e) => {
+                    setLocalidadFiltro(e.target.value);
+                    // El conjunto elegido puede no ser de la localidad nueva.
+                    setConjuntoFiltro("");
+                  }}
+                  disabled={filtrosInactivos}
+                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer sm:w-48`}
+                >
+                  <option value="">{sinCalificaciones ? t(`${p}.week.filters.noData`) : t(`${p}.week.filters.allLocalidades`)}</option>
+                  {localidadesDeLaSemana.map(([id, nombre]) => (
+                    <option key={id} value={id}>
+                      {nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="w-full sm:w-auto">
+                <label htmlFor="cal-filtro-conjunto" className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.conjunto`)}</label>
+                <select
+                  id="cal-filtro-conjunto"
+                  value={conjuntoFiltro}
+                  onChange={(e) => setConjuntoFiltro(e.target.value)}
+                  disabled={filtrosInactivos}
+                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer sm:w-48`}
+                >
+                  <option value="">{sinCalificaciones ? t(`${p}.week.filters.noData`) : t(`${p}.week.filters.allConjuntos`)}</option>
+                  {conjuntosDeLaSemana.map(([id, nombre]) => (
+                    <option key={id} value={id}>
+                      {nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMasFiltrosAbiertos((v) => !v)}
+                aria-expanded={masFiltrosAbiertos}
+                aria-controls="cal-mas-filtros"
+                className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg border border-edge px-2.5 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-night-edge dark:text-gray-300 dark:hover:bg-night-inset/60"
+              >
+                <SlidersHorizontal className="icon-sm" />
+                {t(`${p}.week.filters.more`)}
+                {filtrosExtraActivos > 0 && (
+                  <span className="rounded-full bg-accent-50 px-1.5 text-[10px] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+                    {filtrosExtraActivos}
+                  </span>
+                )}
+                <ChevronDown className={`icon-sm transition-transform ${masFiltrosAbiertos ? "rotate-180" : ""}`} />
+              </button>
+              {hayFiltros && (
+                <button
+                  type="button"
+                  onClick={limpiarFiltros}
+                  className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-night-inset/60"
+                >
+                  <FilterX className="icon-sm" />
+                  {t(`${p}.week.filters.clear`)}
+                </button>
+              )}
             </div>
+
+            {masFiltrosAbiertos && (
+            <div id="cal-mas-filtros" className="flex flex-wrap items-end gap-3 px-5 pb-4">
+              <div className="w-[calc(50%-0.375rem)] sm:w-auto">
+                <label htmlFor="cal-filtro-desde" className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.from`)}</label>
+                <input
+                  id="cal-filtro-desde"
+                  type="date"
+                  value={desde}
+                  min={semana}
+                  max={hasta || domingoSemana}
+                  onChange={(e) => setDesde(e.target.value)}
+                  disabled={filtrosInactivos}
+                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer`}
+                />
+              </div>
+              <div className="w-[calc(50%-0.375rem)] sm:w-auto">
+                <label htmlFor="cal-filtro-hasta" className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.to`)}</label>
+                <input
+                  id="cal-filtro-hasta"
+                  type="date"
+                  value={hasta}
+                  min={desde || semana}
+                  max={domingoSemana}
+                  onChange={(e) => setHasta(e.target.value)}
+                  disabled={filtrosInactivos}
+                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer`}
+                />
+              </div>
+              <div className="w-full sm:w-auto">
+                <label htmlFor="cal-orden" className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.sort.label`)}</label>
+                <select
+                  id="cal-orden"
+                  value={orden}
+                  onChange={(e) => setOrden(e.target.value as OrdenCalificaciones)}
+                  disabled={filtrosInactivos}
+                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer sm:w-48`}
+                >
+                  {ORDENES_CALIFICACIONES.map((o) => (
+                    <option key={o} value={o}>
+                      {t(`${p}.week.sort.${o}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            )}
 
             <div className="flex flex-wrap gap-2 border-b border-gray-100 px-5 pb-4 dark:border-night-line">
               {(["" , "DEFICIENTE", "REGULAR", "BUENA"] as const).map((nivel) => (
@@ -699,17 +922,24 @@ export function AdminContenidoEducativoPage() {
                   type="button"
                   onClick={() => setNivelFiltro(nivel)}
                   aria-pressed={nivelFiltro === nivel}
-                  className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                  className={`touch-target-h cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                     nivelFiltro === nivel
-                      ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                      ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
                       : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
                   }`}
                 >
-                  {nivel === "" ? t(`${p}.week.all`, { count: calSemana.length }) : `${t(`dashboards.reciclador.auditoria.niveles.${nivel.toLowerCase()}`)} ${conteoNiveles[nivel] ?? 0}`}
+                  {nivel === "" ? t(`${p}.week.all`, { count: calSinNivel.length }) : `${t(`dashboards.reciclador.auditoria.niveles.${nivel.toLowerCase()}`)} ${conteoNiveles[nivel] ?? 0}`}
                 </button>
               ))}
             </div>
 
+            {/* ¿Qué? Sin resultados, el mensaje va FUERA de la tabla: la tabla mide mínimo 820 px y, en
+                celular, el texto centrado dentro de ella quedaba cortado. */}
+            {!cargandoCal && !errorCal && calFiltradas.length === 0 ? (
+              <div className="px-5 py-6">
+                <EmptyState icon={Search} message={t(`${p}.week.empty`)} />
+              </div>
+            ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] text-left text-sm">
                 <thead>
@@ -735,12 +965,6 @@ export function AdminContenidoEducativoPage() {
                         <Alert type="error" message={t("common.loadError")} />
                       </td>
                     </tr>
-                  ) : calFiltradas.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                        {t(`${p}.week.empty`)}
-                      </td>
-                    </tr>
                   ) : (
                     calFiltradas.map((a) => {
                       const nivel = NIVELES_DESEMPENO[a.nivel_desempeno];
@@ -751,7 +975,7 @@ export function AdminContenidoEducativoPage() {
                           className="cursor-pointer hover:bg-gray-50 dark:hover:bg-night-inset/40 transition-colors"
                         >
                           <td className="px-5 py-3">
-                            <button type="button" className="cursor-pointer text-left font-semibold text-gray-900 underline decoration-gray-200 underline-offset-4 hover:text-accent-700 hover:decoration-accent-600 dark:text-white dark:decoration-night-line">
+                            <button type="button" className="focus-ring cursor-pointer rounded text-left font-semibold text-gray-900 underline decoration-gray-500 underline-offset-4 hover:text-accent-700 hover:decoration-accent-600 dark:text-white dark:decoration-gray-400">
                               {a.nombre_conjunto}
                             </button>
                             <p className="text-xs text-gray-500 dark:text-gray-400">{a.nombre_reciclador}</p>
@@ -777,25 +1001,26 @@ export function AdminContenidoEducativoPage() {
                 </tbody>
               </table>
             </div>
+            )}
           </div>
         ) : (
           <div>
             <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-night-line">
               <div className="relative">
-                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
                 <input
                   value={buscarMod}
                   onChange={(e) => setBuscarMod(e.target.value)}
                   placeholder={t(`${p}.modules.searchPlaceholder`)}
                   aria-label={t(`${p}.modules.searchPlaceholder`)}
-                  className="w-full rounded-lg border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200 sm:w-56"
+                  className="touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 sm:w-56"
                 />
               </div>
               <select
                 value={categoriaFiltro}
                 onChange={(e) => setCategoriaFiltro(e.target.value)}
                 aria-label={t(`${p}.modules.categoryFilterLabel`)}
-                className="cursor-pointer rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200"
+                className="cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               >
                 <option value="">{t(`${p}.modules.allCategories`)}</option>
                 {categorias.map((c) => (
@@ -842,7 +1067,7 @@ export function AdminContenidoEducativoPage() {
                       className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:hover:bg-night-inset/40"
                     >
                       <div className="flex min-w-0 items-start gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
                           <Icono className="icon-lg" />
                         </span>
                         <div className="min-w-0">
@@ -853,7 +1078,7 @@ export function AdminContenidoEducativoPage() {
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         {nRecomendados > 0 && (
-                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
                             {t(`${p}.modules.recommendedTo`, { count: nRecomendados })}
                           </span>
                         )}
@@ -864,6 +1089,7 @@ export function AdminContenidoEducativoPage() {
                           }}
                           className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
                           aria-label={t(`${p}.editAria`, { titulo: item.titulo_tema })}
+                          title={t(`${p}.editAria`, { titulo: item.titulo_tema })}
                         >
                           <Pencil className="icon-md" />
                         </button>
@@ -872,8 +1098,9 @@ export function AdminContenidoEducativoPage() {
                             e.stopPropagation();
                             setAEliminar(item);
                           }}
-                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
+                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-400/15"
                           aria-label={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
+                          title={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
                         >
                           <Trash2 className="icon-md" />
                         </button>
@@ -933,10 +1160,12 @@ export function AdminContenidoEducativoPage() {
                     key={ruta}
                     type="button"
                     onClick={() => setFotoAmpliada(ruta)}
-                    className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
+                    className="focus-ring relative aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
                     aria-label={t(`${p}.ratingPanel.enlarge`)}
+                    title={t(`${p}.ratingPanel.enlarge`)}
                   >
                     <img src={enlaceAdjuntoSeguro(ruta) ?? undefined} alt="" className="h-full w-full object-cover" />
+                    <InsigniaAccionImagen icono={Maximize2} />
                   </button>
                 ))}
             </div>
@@ -961,7 +1190,7 @@ export function AdminContenidoEducativoPage() {
                       className="mb-1.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white px-3 py-2 text-left text-sm text-gray-800 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-200 dark:hover:bg-night-inset"
                     >
                       {m.titulo_tema}
-                      <Eye className="icon-sm shrink-0 text-gray-400" />
+                      <Eye className="icon-sm shrink-0 text-gray-500 dark:text-gray-400" />
                     </button>
                   ))}
               </>
@@ -1006,15 +1235,14 @@ export function AdminContenidoEducativoPage() {
                     onClick={() => setFotoAmpliada(moduloAbiertoObj.url_guia!)}
                     className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-gray-100 dark:border-night-line"
                     aria-label={t(`${p}.ratingPanel.enlarge`)}
+                    title={t(`${p}.ratingPanel.enlarge`)}
                   >
                     <img
                       src={enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) ?? undefined}
                       alt=""
                       className="max-h-64 w-full object-cover"
                     />
-                    <span className="pointer-events-none absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity group-hover:opacity-100">
-                      <Maximize2 className="icon-sm" />
-                    </span>
+                    <InsigniaAccionImagen icono={Maximize2} />
                   </button>
                   <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.modulePanel.guideImageHint`)}</p>
                 </div>
@@ -1056,7 +1284,7 @@ export function AdminContenidoEducativoPage() {
                         );
                       })()
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:bg-purple-900/20 dark:text-purple-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:bg-purple-400/10 dark:text-purple-300">
                         <Send className="icon-sm" />
                         {t(`${p}.modulePanel.sentManually`)}
                       </span>
@@ -1131,7 +1359,7 @@ export function AdminContenidoEducativoPage() {
                   onChange={(e) => setCategoriaSeleccion(e.target.value)}
                   onBlur={() => validarCampo("categoria")}
                   className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    fieldErrors.categoria ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-line"
+                    fieldErrors.categoria ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
                   }`}
                 >
                   <option value="">{t(`${p}.fields.categoryPlaceholderSelect`)}</option>
@@ -1150,12 +1378,12 @@ export function AdminContenidoEducativoPage() {
                       onBlur={() => validarCampo("categoria")}
                       maxLength={CONTENIDO_MODULO_MAX_LENGTH}
                       placeholder={t(`${p}.fields.categoryPlaceholder`)}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
+                      className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
                     />
-                    <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{t(`${p}.fields.newCategoryWarning`)}</p>
+                    <p className="mt-1 text-xs text-amber-600 dark:text-amber-200">{t(`${p}.fields.newCategoryWarning`)}</p>
                   </div>
                 )}
-                {fieldErrors.categoria && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.categoria}</p>}
+                {fieldErrors.categoria && <p className="mt-1 text-sm text-red-600 dark:text-red-300">{fieldErrors.categoria}</p>}
               </div>
 
               <InputField
@@ -1191,6 +1419,18 @@ export function AdminContenidoEducativoPage() {
                     <ListIcon className="icon-sm" />
                     {t(`${p}.fields.formatList`)}
                   </button>
+                  <label className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
+                    <ImagePlus className="icon-sm" />
+                    {subiendoImagenTexto ? t(`${p}.fields.insertingImage`) : t(`${p}.fields.insertImage`)}
+                    <input
+                      ref={imagenTextoRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={subiendoImagenTexto}
+                      onChange={(e) => insertarImagenEnTexto(e.target.files?.[0])}
+                    />
+                  </label>
                 </div>
                 <textarea
                   id="contenido-cuerpo"
@@ -1205,12 +1445,18 @@ export function AdminContenidoEducativoPage() {
                     fieldErrors.cuerpo_texto ? "contenido-cuerpo-error contenido-cuerpo-contador" : "contenido-cuerpo-contador"
                   }
                   className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-line"
+                    fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
                   }`}
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMarkdownHint`)}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMuroHint`)}</p>
+                {errorImagenTexto && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
+                    {errorImagenTexto}
+                  </p>
+                )}
                 {fieldErrors.cuerpo_texto && (
-                  <p id="contenido-cuerpo-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                  <p id="contenido-cuerpo-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                     {fieldErrors.cuerpo_texto}
                   </p>
                 )}
@@ -1232,15 +1478,15 @@ export function AdminContenidoEducativoPage() {
                   className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                     fieldErrors.url_video
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                      : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                      : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
                   }`}
                 />
                 {fieldErrors.url_video ? (
-                  <p id="contenido-url-video-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                  <p id="contenido-url-video-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                     {fieldErrors.url_video}
                   </p>
                 ) : form.url_video?.trim() && (
-                  <p className={`mt-1 text-xs font-semibold ${idVideoReconocido ? "text-accent-600 dark:text-accent-400" : "text-amber-600 dark:text-amber-400"}`}>
+                  <p className={`mt-1 text-xs font-semibold ${idVideoReconocido ? "text-accent-600 dark:text-accent-400" : "text-amber-600 dark:text-amber-200"}`}>
                     {idVideoReconocido ? t(`${p}.fields.videoRecognized`) : t(`${p}.fields.videoNotRecognized`)}
                   </p>
                 )}
@@ -1254,6 +1500,15 @@ export function AdminContenidoEducativoPage() {
                 onBlurEnlace={() => validarCampo("url_guia")}
               />
 
+              <div>
+                <ImagenAdjuntaField
+                  label={t(`${p}.fields.coverImage`)}
+                  value={form.url_imagen ?? ""}
+                  onChange={(url) => actualizarCampo("url_imagen", url)}
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.coverImageHint`)}</p>
+              </div>
+
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={cerrarFormulario}
@@ -1264,49 +1519,39 @@ export function AdminContenidoEducativoPage() {
                 <button
                   onClick={guardar}
                   disabled={guardando || formularioIncompleto}
-                  className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                  className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                 >
                   {guardando ? t("common.saving") : formularioIncompleto ? t("common.formIncomplete") : t("common.save")}
                 </button>
               </div>
             </div>
 
-            {/* ¿Qué? Vista previa en vivo — exactamente los mismos componentes
-                que usa CategoriaEducativaPage.tsx (lo que ve el Residente),
-                para que esto no sea "una aproximación" sino el resultado real. */}
+            {/* ¿Qué? Vista previa en vivo — el mismo componente (MuroLeccion) que usa
+                CategoriaEducativaPage.tsx (lo que ve el Residente), en una sola columna por ser angosta. */}
             <aside className="border-t border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-panel sm:p-8 md:border-l md:border-t-0">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.preview.label`)}</span>
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase text-gray-500 dark:bg-night-inset dark:text-gray-400">{t(`${p}.preview.live`)}</span>
               </div>
-              <div className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-night-line dark:bg-night-card">
-                {(() => {
-                  const Icono = categoriaEfectiva ? ICONOS_CATEGORIAS[categoriaEfectiva] ?? ICONO_CATEGORIA_DEFAULT : BookOpen;
-                  return (
-                    <div className="mb-3 flex items-center gap-2">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-500">
-                        <Icono className="icon-md" />
-                      </span>
-                      <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">
-                        {categoriaEfectiva || t(`${p}.preview.categoryPlaceholder`)}
-                      </span>
-                    </div>
-                  );
-                })()}
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">{form.titulo_tema || t(`${p}.preview.titlePlaceholder`)}</h3>
-                {form.cuerpo_texto.trim() ? (
-                  <ReactMarkdown components={COMPONENTES_MARKDOWN}>{form.cuerpo_texto}</ReactMarkdown>
-                ) : (
-                  <p className="mt-2 text-sm italic text-gray-500 dark:text-gray-400">{t(`${p}.preview.bodyPlaceholder`)}</p>
-                )}
-                {form.url_video?.trim() && idVideoReconocido && <YoutubeEmbed url={form.url_video} titulo={form.titulo_tema || t(`${p}.preview.titlePlaceholder`)} />}
-                {form.url_guia?.trim() && (
-                  <p className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 dark:border-night-line dark:text-gray-200">
-                    <FileText className="icon-md shrink-0" />
-                    {t("categoriaEducativa.viewGuide")}
-                  </p>
-                )}
-              </div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">
+                {categoriaEfectiva || t(`${p}.preview.categoryPlaceholder`)}
+              </p>
+              {form.cuerpo_texto.trim() ? (
+                <MuroLeccion
+                  compacto
+                  mostrarTitulo
+                  modulo={{
+                    modulo_categoria: categoriaEfectiva,
+                    titulo_tema: form.titulo_tema || t(`${p}.preview.titlePlaceholder`),
+                    cuerpo_texto: form.cuerpo_texto,
+                    url_video: idVideoReconocido ? form.url_video?.trim() || null : null,
+                    url_guia: form.url_guia?.trim() || null,
+                    url_imagen: form.url_imagen?.trim() || null,
+                  }}
+                />
+              ) : (
+                <p className="text-sm italic text-gray-500 dark:text-gray-400">{t(`${p}.preview.bodyPlaceholder`)}</p>
+              )}
             </aside>
           </div>
         </Modal>
@@ -1322,6 +1567,7 @@ export function AdminContenidoEducativoPage() {
           description={t(`${p}.deleteConfirm.warning`)}
           confirmLabel={t(`${p}.deleteConfirm.confirm`)}
           onConfirm={confirmarEliminar}
+          isConfirming={eliminando}
           onClose={() => setAEliminar(null)}
         />
       )}

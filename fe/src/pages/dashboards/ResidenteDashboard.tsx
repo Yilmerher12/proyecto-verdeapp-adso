@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
-import { TriangleAlert, Bell, BadgeCheck } from "lucide-react";
+import { TriangleAlert, Bell, BadgeCheck, ChartColumn } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import axios from "axios";
@@ -15,9 +15,11 @@ import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
 import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
-import { notificarNotificacionesActualizadas } from "@/lib/notificationEvents";
-import { obtenerAuditoria } from "@/lib/auditoriaConjuntoApi";
-import { obtenerContenido } from "@/lib/contenidoEducativoApi";
+import { PanelDesempeno } from "@/components/desempeno/PanelDesempeno";
+import { SEMANAS_POR_DEFECTO } from "@/config/desempeno";
+import { notificarNotificacionesActualizadas, onCambioDesdeCampanita } from "@/lib/notificationEvents";
+import { listarHistorial } from "@/lib/auditoriaConjuntoApi";
+import { rutaDeContenidoRecomendado } from "@/lib/contenidoRecomendado";
 
 interface EstadoShut {
   lleno: boolean;
@@ -60,7 +62,11 @@ export function ResidenteDashboard() {
     setCargando(false);
   };
 
-  usePolling(cargarDatos, { enabled: !!user });
+  // ¿Qué? Issue #516 — además del polling de 20 s, se actualiza al instante cuando
+  //       se marca o limpia algo desde el menú de la campanita.
+  // ¿Para qué? Con la lista también en el panel, sin esto el panel seguiría mostrando
+  //           como "nueva" una notificación que ya se leyó desde la campanita.
+  usePolling(cargarDatos, { enabled: !!user, onExternalTrigger: onCambioDesdeCampanita });
 
   const reportarShutLleno = async () => {
     setEnviando(true);
@@ -114,38 +120,27 @@ export function ResidenteDashboard() {
   //       recomendado lleva directo a la categoría de "Aprender" que
   //       corresponde, sin pasos intermedios ("entre menos clicks tenga
   //       que hacer el usuario, mejor").
-  // ¿Para qué? tema_educativo se guarda igual que modulo_categoria a
-  //           propósito (ver models/auditoria_conjunto.py) — se pide la
-  //           auditoría por su id_referencia solo para leer ese texto.
-  //           CONTENIDO_RECOMENDADO_MANUAL (RQF-013, Flujo C) es la misma idea, pero
-  //           sin auditoría de por medio: el Admin del Sistema envió el
-  //           módulo a mano, así que id_referencia apunta directo al
-  //           módulo (id_contenido), no a una auditoría.
+  // ¿Para qué? Issue #516 — cómo se calcula la ruta vive en lib/contenidoRecomendado.ts,
+  //           porque el menú de la campanita hace lo mismo con esta notificación.
   const irAContenidoRecomendado = async (notif: NotificacionItem) => {
-    if (!notif.id_referencia) return;
     try {
-      if (notif.tipo === "CONTENIDO_RECOMENDADO") {
-        const auditoria = await obtenerAuditoria(notif.id_referencia);
-        navigate(`/catalogo-educativo/${encodeURIComponent(auditoria.tema_educativo)}`);
-      } else if (notif.tipo === "CONTENIDO_RECOMENDADO_MANUAL") {
-        const contenido = await obtenerContenido(notif.id_referencia);
-        navigate(`/catalogo-educativo/${encodeURIComponent(contenido.modulo_categoria)}`);
-      }
+      const ruta = await rutaDeContenidoRecomendado(notif);
+      if (ruta) navigate(ruta);
     } catch {
       setErrorAccion(true);
     }
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-5">
+    <div className="px-0 py-6 sm:p-6 max-w-4xl mx-auto space-y-5">
       {/* Header — la llave de fondo es solo un detalle tenue, para que este
           panel se sienta del Residente (su casa, su unidad), sin estorbar la
           lectura del texto encima. */}
       <div className="relative overflow-hidden bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
-            <RolIcon className="icon-xl text-accent-600 dark:text-accent-400" />
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
+            <RolIcon className="icon-xl text-accent-700 dark:text-accent-300" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.residente.title")}</h1>
@@ -162,25 +157,23 @@ export function ResidenteDashboard() {
 
       {/* Banner estado SHUT */}
       {!cargando && estadoShut.lleno && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/40 dark:bg-amber-900/10">
-          <TriangleAlert className="icon-lg mt-0.5 shrink-0 text-amber-700 icon-appear icon-ring" />
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-300/30 dark:bg-amber-400/10">
+          <TriangleAlert className="icon-lg mt-0.5 shrink-0 text-amber-700 icon-appear icon-shake" />
           <div>
-            <p className="text-sm font-semibold text-amber-900 dark:text-amber-400">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
               {t("dashboards.residente.shutBanner.title")}
             </p>
             {estadoShut.created_at && (
-              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-500">
+              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-200">
                 {t("dashboards.residente.shutBanner.reportedAt", { time: tiempoRelativo(estadoShut.created_at) })}
               </p>
             )}
-            <p className="mt-1 text-xs text-amber-700 dark:text-amber-500">
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-200">
               {t("dashboards.residente.shutBanner.warning")}
             </p>
           </div>
         </div>
       )}
-
-      {!cargando && errorCarga && <Alert type="error" message={t("common.loadError")} />}
 
       {/* Resultado de auditoría del reciclador (RQF-009) — aparte del feed normal */}
       {!cargando && (
@@ -190,13 +183,22 @@ export function ResidenteDashboard() {
         />
       )}
 
-      {/* Acción: reportar SHUT lleno */}
-      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
+      {/* ¿Qué? Issue #514 — el aviso de error de carga va después de los dos
+              avisos de arriba (SHUT lleno y resultado de auditoría), no en medio.
+          ¿Para qué? Los tres son "lo que pasó" y así quedan juntos, seguidos de
+                    lo que el Residente puede hacer (el botón de abajo). */}
+      {!cargando && errorCarga && <Alert type="error" message={t("common.loadError")} />}
+
+      {/* Acción: reportar SHUT lleno — con título real (h2) como los demás bloques */}
+      <section
+        aria-labelledby="residente-reporte-titulo"
+        className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+            <h2 id="residente-reporte-titulo" className="text-sm font-bold text-gray-900 dark:text-white">
               {t("dashboards.residente.reportSection.title")}
-            </p>
+            </h2>
             <p className="mt-1 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
               {t("dashboards.residente.reportSection.description")}
             </p>
@@ -221,8 +223,8 @@ export function ResidenteDashboard() {
             disabled={enviando || feedbackOk || estadoShut.lleno}
             className={`shrink-0 flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
               feedbackOk || estadoShut.lleno
-                ? "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400"
-                : "bg-amber-700 text-white hover:bg-amber-600"
+                ? "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
+                : "bg-amber-700 text-white hover:bg-amber-600 dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200"
             }`}
           >
             {feedbackOk || estadoShut.lleno ? (
@@ -238,7 +240,7 @@ export function ResidenteDashboard() {
             )}
           </button>
         </div>
-      </div>
+      </section>
 
       {/* Actividad reciente (notificaciones recibidas) */}
       {cargando ? (
@@ -255,7 +257,7 @@ export function ResidenteDashboard() {
             notifications={notificaciones.filter((n) => n.tipo !== "AUDITORIA_PUBLICADA")}
             emptyMessage={t("dashboards.residente.notifications.empty")}
             accentBg="bg-accent-700"
-            accentHighlight="bg-accent-50/60 hover:bg-accent-50 dark:bg-accent-900/10 dark:hover:bg-accent-900/20"
+            accentHighlight="bg-accent-50/60 hover:bg-accent-50 dark:bg-accent-300/10 dark:hover:bg-accent-300/15"
             onMarkRead={marcarLeida}
             onMarkAllRead={marcarTodasLeidas}
             onClearRead={limpiarLeidas}
@@ -264,7 +266,33 @@ export function ResidenteDashboard() {
         </>
       )}
 
-      <HistorialAuditorias />
+      {/* ¿Qué? Issue #514 — "Mi conjunto" agrupa lo de consulta: el desempeño y las
+              auditorías anteriores (Historial). Su encabezado es una tarjeta, igual
+              que los demás bloques del panel.
+          ¿Para qué? Antes eran dos títulos sueltos sobre el fondo ("Mi conjunto" y
+                    "Desempeño de mi conjunto"): parecían desconectados de las
+                    tarjetas y se iban a ver mal si cambia el fondo del panel.
+          ¿Impacto? Un solo título (h2) para todo el grupo. El Desempeño sigue siendo
+                    el mismo panel que ve el Admin de Conjunto (HU-053, issue #488),
+                    sin `idConjunto`: el backend usa el único conjunto del Residente,
+                    con período fijo y sin selector. */}
+      <section aria-labelledby="residente-mi-conjunto-titulo" className="space-y-5">
+        <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-300/10">
+            <ChartColumn className="icon-md text-accent-700 dark:text-accent-300" aria-hidden="true" />
+          </div>
+          <div>
+            <h2 id="residente-mi-conjunto-titulo" className="text-base font-bold text-gray-900 dark:text-white">
+              {t("dashboards.residente.miConjunto.title")}
+            </h2>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t("dashboards.residente.miConjunto.subtitle")}</p>
+          </div>
+        </div>
+
+        <PanelDesempeno semanas={SEMANAS_POR_DEFECTO} />
+
+        <HistorialAuditorias cargar={listarHistorial} />
+      </section>
     </div>
   );
 }

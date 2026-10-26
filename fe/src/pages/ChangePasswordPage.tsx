@@ -161,7 +161,7 @@ export function ChangePasswordPage() {
           {/* ¿Impacto? Reutiliza el flujo público de /forgot-password, sin backend nuevo. */}
           <p className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
             {t("auth.changePassword.forgotHint")}{" "}
-            <Link to="/forgot-password" className="cursor-pointer font-semibold text-accent-700 underline dark:text-accent-500">
+            <Link to="/forgot-password" className="link-text">
               {t("auth.changePassword.forgotLink")}
             </Link>
           </p>
@@ -203,7 +203,7 @@ export function ChangePasswordPage() {
             <p
               role="status"
               className={`-mt-2 mb-4 text-xs font-semibold ${
-                passwordsMatch ? "text-accent-700 dark:text-accent-500" : "text-red-600 dark:text-red-400"
+                passwordsMatch ? "text-accent-700 dark:text-accent-500" : "text-red-600 dark:text-red-300"
               }`}
             >
               {passwordsMatch ? t("auth.changePassword.passwordsMatch") : t("auth.changePassword.passwordsNoMatch")}

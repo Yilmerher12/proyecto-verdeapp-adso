@@ -209,7 +209,7 @@ permissions-policy: camera=(), microphone=(), geolocation=()
 
 ## A06 — Vulnerable and Outdated Components
 
-`be/pyproject.toml` fija **todas** las versiones exactas (`fastapi==0.135.1`, `sqlalchemy==2.0.48`, etc.) — no rangos abiertos, para que una actualización de una dependencia sea una decisión explícita, no algo que pase solo.
+`be/pyproject.toml` fija **todas** las versiones exactas (`fastapi==0.142.2`, `sqlalchemy==2.1.3`, etc.) — no rangos abiertos, para que una actualización de una dependencia sea una decisión explícita, no algo que pase solo.
 
 VerdeApp ya corrió y documentó una auditoría real de dependencias (`docs/gestion-proyecto/auditoria-dependencias.md`, 2026-08-24) con `pip-audit` (backend) y `pnpm audit` (frontend): de 24 vulnerabilidades de backend bajó a 21 en un solo paquete (`ecdsa`, sin corrección disponible, evaluado como no explotable porque VerdeApp firma sus JWT con HS256, no con el algoritmo afectado); de 92 vulnerabilidades de frontend (1 crítica) bajó a 44 (0 críticas).
 

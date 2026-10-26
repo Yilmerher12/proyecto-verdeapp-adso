@@ -13,6 +13,8 @@
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Maximize2 } from "lucide-react";
+import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
 import { Modal } from "@/components/ui/Modal";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -71,13 +73,15 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
                     type="button"
                     onClick={() => setImagenAmpliada(ruta)}
                     aria-label={t("auditoriaResultado.evidenciaAmpliar")}
-                    className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
+                    title={t("auditoriaResultado.evidenciaAmpliar")}
+                    className="focus-ring relative aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
                   >
                     <img
                       src={enlaceAdjuntoSeguro(ruta) ?? undefined}
                       alt={t("auditoriaResultado.evidenciaAlt")}
                       className="h-full w-full object-cover"
                     />
+                    <InsigniaAccionImagen icono={Maximize2} />
                   </button>
                 ))}
             </div>

@@ -23,7 +23,10 @@ import { LegalLayout, LegalSection } from "@/components/layout/LegalLayout";
 //       podría terminar en manos de quien sea que registre ese dominio en
 //       el futuro.
 // ¿Para qué? El profesor pidió explícitamente que ningún link, ni siquiera
-//           el de contacto, muestre un correo — por seguridad.
+//           el de contacto, muestre un correo — por seguridad. Única
+//           excepción: la pantalla para pedir la cuenta de Administrador de
+//           Conjunto (SolicitudAdminConjuntoInfo, issue #457), que pide
+//           documentos adjuntos y el formulario no puede llevarlos.
 // ¿Impacto? Todo lo que antes mostraba ese correo ahora enlaza a /contacto,
 //           el formulario de contacto real de la app, que no expone nada.
 const RESPONSABLE = {
@@ -47,13 +50,13 @@ export function TerminosDeUsoPage() {
   const privacyLink = (
     <Link
       to="/privacidad"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
   const contactoLink = (
     <Link
       to="/contacto"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
 

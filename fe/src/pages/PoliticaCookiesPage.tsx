@@ -46,7 +46,7 @@ export function PoliticaCookiesPage() {
   const privacyLink = (
     <Link
       to="/privacidad"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
   // ¿Qué? Antes esto era un mailto: hacia un correo inventado
@@ -54,11 +54,14 @@ export function PoliticaCookiesPage() {
   //       que definía la constante CONTACTO_EMAIL — un dominio que no
   //       existe, en ningún caso). Ahora enlaza al formulario de contacto
   //       real de la app — el profesor pidió que ningún link muestre un
-  //       correo, por seguridad.
+  //       correo, por seguridad. Única excepción: la pantalla para pedir la
+  //       cuenta de Administrador de Conjunto (SolicitudAdminConjuntoInfo),
+  //       que pide documentos adjuntos y el formulario no puede llevarlos
+  //       (issue #457).
   const emailLink = (
     <Link
       to="/contacto"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
 
@@ -87,7 +90,7 @@ export function PoliticaCookiesPage() {
 
         <div className="mt-4 space-y-4">
           <div className="rounded-lg border border-gray-200 bg-gray-50 dark:border-night-line dark:bg-night-panel p-4">
-            <h3 className="mb-1 text-sm font-semibold text-accent-400">
+            <h3 className="mb-1 text-sm font-semibold text-accent-700 dark:text-accent-400">
               {t("legal.cookies.s2.authCategory.title")}
             </h3>
             <p>

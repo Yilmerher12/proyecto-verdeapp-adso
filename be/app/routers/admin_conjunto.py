@@ -28,13 +28,8 @@ from app.schemas.desvinculacion import (
     ResolverSolicitudDesvinculacionRequest,
     SolicitudDesvinculacionResponse,
 )
-from app.schemas.solicitud_unificada import (
-    PaginaDeSolicitudesResponse,
-    ResolverSolicitudUnificadaRequest,
-    TipoSolicitud,
-)
 from app.schemas.user import MessageResponse
-from app.services import admin_conjunto_service, desvinculacion_service, novedad_enviada_service
+from app.services import admin_conjunto_service, desvinculacion_service
 from app.utils.audit_log import log_accion_admin, redactar_correo
 from app.utils.limiter import limiter
 
@@ -145,57 +140,6 @@ def resolver_solicitud_desvinculacion(
         solicitud=id_solicitud,
     )
     mensaje = "Solicitud aprobada. El conjunto quedó desvinculado." if datos.aprobar else "Solicitud rechazada."
-    return MessageResponse(message=mensaje)
-
-
-# ¿Qué? Issue #372 (CN-042): tope de filas por página de la bandeja, igual que comunicados y novedades.
-MAX_LIMIT_SOLICITUDES = 100
-
-
-@router.get("/solicitudes", response_model=PaginaDeSolicitudesResponse)
-def listar_solicitudes(
-    tipo: Optional[TipoSolicitud] = Query(default=None),
-    limit: int = Query(10, ge=1, le=MAX_LIMIT_SOLICITUDES),
-    offset: int = Query(0, ge=0),
-    current_user: Usuario = Depends(_requiere_admin_sistema),
-    db: Session = Depends(get_db),
-):
-    """
-    ¿Qué? Bandeja unificada "Solicitudes pendientes": junta desvinculación
-          (solicitudes_desvinculacion, sin tocarla) con las novedades que
-          envían Residentes, Recicladores y Admins de Conjunto
-          (novedades_enviadas), filtrable por `tipo`. Paginado.
-    ¿Para qué? El Admin Sistema resuelve todo desde un solo lugar, sin
-              importar que por dentro sean 2 tablas distintas.
-    """
-    items, total = novedad_enviada_service.listar_unificadas(db, tipo, limit=limit, offset=offset)
-    return {"items": items, "total": total}
-
-
-@router.post("/solicitudes/{tipo}/{id_solicitud}/resolver", response_model=MessageResponse)
-def resolver_solicitud(
-    tipo: TipoSolicitud,
-    id_solicitud: UUID,
-    datos: ResolverSolicitudUnificadaRequest,
-    current_user: Usuario = Depends(_requiere_admin_sistema),
-    db: Session = Depends(get_db),
-):
-    """Aprueba o rechaza una solicitud de la bandeja unificada, sea cual sea su tipo."""
-    novedad_enviada_service.resolver_unificada(
-        db=db,
-        tipo=tipo,
-        id_solicitud=id_solicitud,
-        aprobar=datos.aprobar,
-        motivo_rechazo=datos.motivo_rechazo,
-        resuelta_por=current_user,
-    )
-    log_accion_admin(
-        current_user.correo_electronico,
-        "solicitud_aprobada" if datos.aprobar else "solicitud_rechazada",
-        tipo=tipo,
-        solicitud=id_solicitud,
-    )
-    mensaje = "Solicitud aprobada." if datos.aprobar else "Solicitud rechazada."
     return MessageResponse(message=mensaje)
 
 

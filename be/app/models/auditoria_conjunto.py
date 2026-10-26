@@ -34,7 +34,7 @@ class AuditoriaConjunto(Base):
         ForeignKey("conjuntos_residenciales.id_conjunto_residencial", ondelete="CASCADE"),
         nullable=False,
     )
-    # ¿Qué? Uno de: EXCELENTE | BUENA | REGULAR | DEFICIENTE (ver
+    # ¿Qué? Uno de: BUENA | REGULAR | DEFICIENTE (ver
     #       NivelDesempeno en schemas/auditoria_conjunto.py — la validación
     #       real de estos 4 valores vive ahí, no en la base de datos).
     nivel_desempeno = Column(String(20), nullable=False)

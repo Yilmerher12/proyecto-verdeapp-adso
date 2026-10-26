@@ -136,7 +136,7 @@ export function PuntoAcopioForm({
             className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
               fieldErrors.id_localidad
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                : "border-gray-200 focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-line"
+                : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
             }`}
           >
             <option value="" disabled>
@@ -149,7 +149,7 @@ export function PuntoAcopioForm({
             ))}
           </select>
           {fieldErrors.id_localidad && (
-            <p id="acopio-localidad-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+            <p id="acopio-localidad-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
               {fieldErrors.id_localidad}
             </p>
           )}
@@ -207,7 +207,7 @@ export function PuntoAcopioForm({
             maxLength={1000}
             rows={2}
             placeholder={t("adminPuntosAcopio.form.changeReasonPlaceholder")}
-            className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
+            className="w-full resize-none rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
           />
         </div>
       )}
@@ -224,7 +224,7 @@ export function PuntoAcopioForm({
           type="button"
           onClick={guardar}
           disabled={guardando || formularioIncompleto}
-          className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
           {guardando ? t("common.saving") : formularioIncompleto ? t("common.formIncomplete") : t("common.save")}
         </button>

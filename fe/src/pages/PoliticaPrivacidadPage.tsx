@@ -26,7 +26,10 @@ import { LegalLayout, LegalSection } from "@/components/layout/LegalLayout";
 //       podría terminar en manos de quien sea que registre ese dominio en
 //       el futuro.
 // ¿Para qué? El profesor pidió explícitamente que ningún link, ni siquiera
-//           el de contacto, muestre un correo — por seguridad.
+//           el de contacto, muestre un correo — por seguridad. Única
+//           excepción: la pantalla para pedir la cuenta de Administrador de
+//           Conjunto (SolicitudAdminConjuntoInfo, issue #457), que pide
+//           documentos adjuntos y el formulario no puede llevarlos.
 // ¿Impacto? Todo lo que antes mostraba ese correo ahora enlaza a /contacto,
 //           el formulario de contacto real de la app, que no expone nada.
 const RESPONSABLE = {
@@ -43,7 +46,7 @@ export function PoliticaPrivacidadPage() {
   const rightsLink = (
     <a
       href="#derechos"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
   // ¿Qué? Antes era un <a href="..."> plano.
@@ -57,7 +60,7 @@ export function PoliticaPrivacidadPage() {
   const emailLink = (
     <Link
       to="/contacto"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
   const sicLink = (
@@ -65,7 +68,7 @@ export function PoliticaPrivacidadPage() {
       href="https://www.sic.gov.co"
       target="_blank"
       rel="noopener noreferrer"
-      className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+      className="link-text rounded"
     />
   );
 
@@ -114,7 +117,7 @@ export function PoliticaPrivacidadPage() {
               </strong>{" "}
               <Link
                 to="/contacto"
-                className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+                className="link-text rounded"
               >
                 {t("legal.privacy.s1.contactValue")}
               </Link>
@@ -305,7 +308,7 @@ export function PoliticaPrivacidadPage() {
               href="https://www.sic.gov.co"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent-400 underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded"
+              className="link-text rounded"
             >
               www.sic.gov.co
             </a>

@@ -73,7 +73,7 @@ export function NovedadesFeedPage() {
             onClick={() => setPestana(id)}
             className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
               pestana === id
-                ? "bg-accent-700 text-white"
+                ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                 : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-field"
             }`}
           >
@@ -105,7 +105,7 @@ export function NovedadesFeedPage() {
                 className="rounded-2xl border border-gray-100 bg-white p-5 dark:border-night-line dark:bg-night-card"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                  <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-400/15 dark:text-purple-300">
                     {t(`novedades.alcances.${item.alcance}`)}
                   </span>
                   {item.editado && (
@@ -134,7 +134,7 @@ export function NovedadesFeedPage() {
                     href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
+                    className="link-text mt-3 inline-flex items-center gap-1.5 text-xs"
                   >
                     <Paperclip className="icon-sm" />
                     {t("comunicados.viewAttachment")}

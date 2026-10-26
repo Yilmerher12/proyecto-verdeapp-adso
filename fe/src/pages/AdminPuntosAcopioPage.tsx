@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, MapPin, MapPinOff, Pencil, Plus, Search, Trash2, Warehouse } from "lucide-react";
+import { ChevronDown, ExternalLink, MapPin, MapPinOff, Pencil, Plus, Search, Trash2, Warehouse } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Spinner } from "@/components/ui/Spinner";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
 import { PuntoAcopioForm } from "@/components/PuntoAcopioForm";
@@ -75,6 +76,11 @@ export function AdminPuntosAcopioPage() {
 
   const [aDarDeBaja, setADarDeBaja] = useState<PuntoAcopioAdmin | null>(null);
   const [aEliminar, setAEliminar] = useState<PuntoAcopioAdmin | null>(null);
+  // ¿Qué? true mientras corre dar de baja / eliminar, y el id del punto que se está reactivando.
+  // ¿Para qué? Issue #458: estas acciones no mostraban nada mientras tardaban
+  //           y se podían tocar dos veces.
+  const [confirmando, setConfirmando] = useState(false);
+  const [reactivandoId, setReactivandoId] = useState<string | null>(null);
 
   // ¿Qué? Búsqueda y filtro de estado — se aplican en el navegador: el backend
   //       ya devuelve la lista completa (incluidos los dados de baja).
@@ -155,6 +161,7 @@ export function AdminPuntosAcopioPage() {
 
   const confirmarDarDeBaja = async () => {
     if (!aDarDeBaja) return;
+    setConfirmando(true);
     try {
       await darDeBajaPuntoAcopio(aDarDeBaja.id_punto_acopio);
       setADarDeBaja(null);
@@ -162,20 +169,26 @@ export function AdminPuntosAcopioPage() {
     } catch {
       setADarDeBaja(null);
       setErrorAccion(t("adminPuntosAcopio.deactivateError"));
+    } finally {
+      setConfirmando(false);
     }
   };
 
   const reactivar = async (item: PuntoAcopioAdmin) => {
+    setReactivandoId(item.id_punto_acopio);
     try {
       await reactivarPuntoAcopio(item.id_punto_acopio);
       cargar();
     } catch {
       setErrorAccion(t("adminPuntosAcopio.reactivateError"));
+    } finally {
+      setReactivandoId(null);
     }
   };
 
   const confirmarEliminar = async () => {
     if (!aEliminar) return;
+    setConfirmando(true);
     try {
       await eliminarPuntoAcopioDefinitivo(aEliminar.id_punto_acopio);
       setAEliminar(null);
@@ -183,6 +196,8 @@ export function AdminPuntosAcopioPage() {
     } catch {
       setAEliminar(null);
       setErrorAccion(t("adminPuntosAcopio.deleteError"));
+    } finally {
+      setConfirmando(false);
     }
   };
 
@@ -230,7 +245,7 @@ export function AdminPuntosAcopioPage() {
   ];
 
   const botonAccion =
-    "cursor-pointer rounded-lg border border-gray-200 p-2 transition-colors dark:border-night-line";
+    "touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 transition-colors dark:border-night-line";
 
   const renderFila = (item: PuntoAcopioAdmin) => (
     <div
@@ -244,7 +259,7 @@ export function AdminPuntosAcopioPage() {
           <button
             type="button"
             onClick={() => abrirPanel(item, false)}
-            className="cursor-pointer truncate text-left text-sm font-bold text-gray-900 hover:underline dark:text-white"
+            className="focus-ring cursor-pointer truncate text-left text-sm font-bold text-gray-900 underline decoration-gray-500 underline-offset-4 hover:text-accent-700 dark:text-white dark:decoration-gray-400 dark:hover:text-accent-400"
           >
             {item.nombre}
           </button>
@@ -261,9 +276,10 @@ export function AdminPuntosAcopioPage() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={t("adminPuntosAcopio.mapAria", { nombre: item.nombre })}
-            className="cursor-pointer font-semibold text-accent-700 underline dark:text-accent-400"
+            className="link-text inline-flex items-center gap-1"
           >
             {t("adminPuntosAcopio.mapLink")}
+            <ExternalLink className="icon-sm" aria-hidden="true" />
           </a>
         </p>
       </div>
@@ -274,7 +290,7 @@ export function AdminPuntosAcopioPage() {
           <p className="font-semibold text-gray-700 dark:text-gray-200">{item.telefono_contacto}</p>
         ) : (
           item.activo && (
-            <span className="mt-0.5 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10.5px] font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+            <span className="mt-0.5 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10.5px] font-semibold text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
               {t("adminPuntosAcopio.noPhone")}
             </span>
           )
@@ -286,14 +302,16 @@ export function AdminPuntosAcopioPage() {
           onClick={() => abrirPanel(item, true)}
           className={`${botonAccion} text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-night-hover`}
           aria-label={t("adminPuntosAcopio.editAria", { nombre: item.nombre })}
+          title={t("adminPuntosAcopio.editAria", { nombre: item.nombre })}
         >
           <Pencil className="icon-md" />
         </button>
         {item.activo ? (
           <button
             onClick={() => setADarDeBaja(item)}
-            className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`}
+            className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-400/15`}
             aria-label={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
+            title={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
           >
             <MapPinOff className="icon-md icon-draw" />
           </button>
@@ -301,15 +319,19 @@ export function AdminPuntosAcopioPage() {
           <>
             <button
               onClick={() => reactivar(item)}
-              className={`${botonAccion} text-accent-600 hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-900/20`}
+              disabled={reactivandoId === item.id_punto_acopio}
+              aria-busy={reactivandoId === item.id_punto_acopio}
+              className={`${botonAccion} disabled:cursor-not-allowed disabled:opacity-60 text-accent-600 hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-300/15`}
               aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
+              title={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
             >
-              <MapPin className="icon-md icon-draw" />
+              {reactivandoId === item.id_punto_acopio ? <Spinner size="sm" /> : <MapPin className="icon-md icon-draw" />}
             </button>
             <button
               onClick={() => setAEliminar(item)}
-              className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`}
+              className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-400/15`}
               aria-label={t("adminPuntosAcopio.deleteAria", { nombre: item.nombre })}
+              title={t("adminPuntosAcopio.deleteAria", { nombre: item.nombre })}
             >
               <Trash2 className="icon-md" />
             </button>
@@ -333,7 +355,7 @@ export function AdminPuntosAcopioPage() {
             setErrorMsg(null);
             setCreando(true);
           }}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
           <Plus className="icon-md" />
           {t("adminPuntosAcopio.newPoint")}
@@ -344,14 +366,14 @@ export function AdminPuntosAcopioPage() {
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 dark:border-night-line dark:bg-night-card">
             <div className="relative min-w-[200px] flex-1">
-              <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 type="search"
                 value={busqueda}
                 onChange={(e) => cambiarBusqueda(e.target.value)}
                 aria-label={t("adminPuntosAcopio.search.placeholder")}
                 placeholder={t("adminPuntosAcopio.search.placeholder")}
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full rounded-xl border border-edge bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
             </div>
             <div className="flex gap-1.5">
@@ -361,9 +383,9 @@ export function AdminPuntosAcopioPage() {
                   type="button"
                   onClick={() => cambiarEstado(id)}
                   aria-pressed={filtroEstado === id}
-                  className={`cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`touch-target-h cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                     filtroEstado === id
-                      ? "bg-accent-700 text-white"
+                      ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                       : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-night-line dark:bg-night-field dark:text-gray-200 dark:hover:bg-night-hover"
                   }`}
                 >
@@ -410,7 +432,7 @@ export function AdminPuntosAcopioPage() {
                 className="flex w-full cursor-pointer items-center gap-2.5 rounded-2xl px-4 py-3.5 text-left"
               >
                 <span className="text-sm font-bold text-gray-900 dark:text-white">{grupo.nombre}</span>
-                <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-800 dark:bg-accent-900/30 dark:text-accent-300">
+                <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-800 dark:bg-accent-300/10 dark:text-accent-300">
                   {grupo.puntos.length}
                 </span>
                 {deBaja > 0 && (
@@ -419,7 +441,7 @@ export function AdminPuntosAcopioPage() {
                   </span>
                 )}
                 <ChevronDown
-                  className={`icon-md ml-auto text-gray-400 transition-transform ${abierta ? "rotate-180" : ""}`}
+                  className={`icon-md ml-auto text-gray-500 transition-transform dark:text-gray-400 ${abierta ? "rotate-180" : ""}`}
                   aria-hidden="true"
                 />
               </button>
@@ -464,6 +486,7 @@ export function AdminPuntosAcopioPage() {
           onGuardar={guardarEdicion}
           onDarDeBaja={setADarDeBaja}
           onReactivar={reactivar}
+          reactivando={reactivandoId !== null && reactivandoId === seleccionadoId}
           onEliminar={setAEliminar}
         />
       )}
@@ -477,6 +500,7 @@ export function AdminPuntosAcopioPage() {
           description={t("adminPuntosAcopio.deactivateConfirm.warning")}
           confirmLabel={t("adminPuntosAcopio.deactivateConfirm.confirm")}
           onConfirm={confirmarDarDeBaja}
+          isConfirming={confirmando}
           onClose={() => setADarDeBaja(null)}
         />
       )}
@@ -490,6 +514,7 @@ export function AdminPuntosAcopioPage() {
           description={t("adminPuntosAcopio.deleteConfirm.warning")}
           confirmLabel={t("adminPuntosAcopio.deleteConfirm.confirm")}
           onConfirm={confirmarEliminar}
+          isConfirming={confirmando}
           onClose={() => setAEliminar(null)}
         />
       )}

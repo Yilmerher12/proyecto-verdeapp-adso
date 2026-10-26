@@ -19,6 +19,7 @@ import {
 } from "@headlessui/react";
 import { Search } from "lucide-react";
 import { useConjuntoBusqueda } from "@/hooks/useConjuntoBusqueda";
+import { Spinner } from "@/components/ui/Spinner";
 
 export interface ConjuntoOption {
   id_conjunto_residencial: string;
@@ -60,11 +61,11 @@ export function ConjuntoCombobox({
       <div className="relative">
         <div className="relative">
           <Search
-            className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"
             aria-hidden="true"
           />
           <ComboboxInput
-            className="mt-1 w-full rounded-xl border border-gray-300 bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 disabled:bg-gray-100 disabled:text-gray-400 dark:border-night-line dark:bg-night-field dark:text-gray-100 dark:disabled:bg-night-inset"
+            className="mt-1 w-full rounded-xl border border-edge bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 disabled:bg-gray-100 disabled:text-gray-400 dark:border-night-edge dark:bg-night-field dark:text-gray-100 dark:disabled:bg-night-inset"
             displayValue={(c: ConjuntoOption | null) => c?.nombre_conjunto ?? ""}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
@@ -73,7 +74,10 @@ export function ConjuntoCombobox({
         </div>
         <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-night-line dark:bg-night-field">
           {loading && (
-            <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{loadingLabel}</div>
+            <div role="status" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+              <Spinner size="sm" />
+              {loadingLabel}
+            </div>
           )}
           {!loading && options.length === 0 && (
             <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{emptyLabel}</div>

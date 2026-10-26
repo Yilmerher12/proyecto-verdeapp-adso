@@ -49,7 +49,7 @@ describe("GuiaApoyoField", () => {
     await user.upload(input, crearArchivo());
 
     await waitFor(() => {
-      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), { permitirDocumentos: true });
+      expect(mockSubirAdjunto).toHaveBeenCalledWith(expect.any(File), { permitirDocumentos: true, onProgress: expect.any(Function) });
       expect(onChange).toHaveBeenCalledWith("/uploads/adjuntos/guia123.pdf");
     });
   });

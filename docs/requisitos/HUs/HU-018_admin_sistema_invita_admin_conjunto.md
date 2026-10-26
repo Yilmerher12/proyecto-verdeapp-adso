@@ -68,11 +68,11 @@
 
 ### CA-018.5 — Cómo llega una solicitud al Admin Sistema
 
-- **Dado que** una persona eligió "¿Administras un conjunto?" en el registro (CA-002.7) y envió la solicitud,
-- **cuando** el mensaje llega al buzón de contacto del equipo (`CONTACT_EMAIL` del backend) con el asunto "Solicitud de cuenta de Administrador de Conjunto",
-- **entonces** el equipo le responde por correo pidiendo los documentos, los verifica fuera de la app y, si todo está en orden, usa el formulario de invitación de esta HU con el correo de la persona.
-- Los documentos nunca pasan por VerdeApp y se eliminan del correo al terminar la revisión.
-- El correo llega con la cabecera `Reply-To` igual al correo de la persona: al presionar "Responder", la respuesta le llega directo a ella, sin copiar su dirección a mano.
+- **Dado que** una persona eligió "¿Administras un conjunto?" en el registro (CA-002.7) y envió el correo con sus datos y sus dos documentos,
+- **cuando** el correo llega a la cuenta del equipo (`administradorverdeapp@gmail.com`) con el asunto "Administrador Conjunto",
+- **entonces** el equipo busca su cédula en el Registro Único de Administradores (RUA) de la Secretaría Distrital de Gobierno, revisa el certificado y que el conjunto coincida con los de VerdeApp y, si todo está en orden, usa el formulario de invitación de esta HU con el correo de la persona. Si falta algo o no coincide, le responde por correo diciendo qué dato (ver `docs/gestion-proyecto/investigacion-documentos-admin-conjunto.md`).
+- Los documentos nunca pasan por VerdeApp y se eliminan del correo, y de su papelera, al terminar la revisión (aprobada o rechazada).
+- Esto aplica a los mensajes que llegan por el **formulario de contacto** (por ejemplo, una duda), no a la solicitud de cuenta, que ya no pasa por el formulario. Ese correo llega con la cabecera `Reply-To` igual al correo de la persona: al presionar "Responder", la respuesta le llega directo a ella, sin copiar su dirección a mano.
 - El correo trae un aviso visible: "Dirección de respuesta no verificada: la escribió quien envió el formulario. Confírmala antes de responder con información sensible." (issue #403, hallazgo CN-058). El formulario es público y no comprueba que ese correo sea de quien escribe, así que alguien podría poner el de un tercero y el equipo responderle sin saberlo. El aviso solo advierte al equipo; verificar la dirección de verdad (enviar un código de confirmación antes de aceptar el mensaje) queda pendiente.
 
 > **Nota (2026-10-06)**: antes el correo de contacto solo traía la dirección de la persona dentro del texto ("De: ..."), y "Responder" le escribía a la dirección de la app. Ahora `send_contact_email` (`be/app/utils/email.py`) agrega `Reply-To`; los demás correos de la app (verificación, recuperación, invitaciones) no la llevan.

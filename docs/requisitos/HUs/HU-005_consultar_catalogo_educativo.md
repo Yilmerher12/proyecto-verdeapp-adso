@@ -35,13 +35,13 @@
 
 - **Dado que** entro a la sección "Educación",
 - **cuando** la página carga,
-- **entonces** debo ver la lista de módulos educativos disponibles, cada uno con un título.
+- **entonces** debo ver una tarjeta por categoría, con su imagen (la portada del módulo o, si no tiene, un dibujo fijo de la categoría), su nombre, el título de su lección más reciente y si ya la vi ("Visto" o "Sin ver"), y un "Video destacado" cuando algún módulo tiene video.
 
 ### CA-005.2 — Abrir un módulo
 
 - **Dado que** estoy viendo la lista de módulos,
 - **cuando** selecciono uno,
-- **entonces** debo ver su contenido completo (texto e imágenes).
+- **entonces** debo ver cada lección como un muro: su video, "De qué trata" y una tarjeta corta por cada párrafo del texto. Si el módulo tiene imágenes subidas por el Administrador, se ven dentro de su tarjeta; una imagen que no sea de VerdeApp nunca se muestra.
 
 ### CA-005.3 — Solo lectura
 
@@ -54,3 +54,18 @@
 - **Dado que** todavía no hay módulos educativos publicados,
 - **cuando** entro a la sección "Educación",
 - **entonces** debo ver un mensaje indicando que aún no hay contenido disponible, en vez de una lista vacía sin explicación.
+
+### CA-005.5 — Tu semana
+
+- **Dado que** mi conjunto tiene una auditoría,
+- **cuando** entro a "Aprende a reciclar",
+- **entonces** debo ver arriba cómo salió el conjunto en la última auditoría y, si fue Regular o Malo y existe una categoría con el nombre del tema, la lección recomendada con un botón "Ver lección". Si salió Bueno me felicita, y si no hay auditorías el bloque lo dice. Si la consulta falla, el resto del catálogo se ve igual.
+
+### CA-005.6 — Lecciones vistas y avance
+
+- **Dado que** abro una categoría de "Aprende a reciclar",
+- **cuando** la página carga,
+- **entonces** todos sus módulos quedan marcados como vistos para mí en el servidor (se mantienen si cambio de equipo o de navegador), y el encabezado de la categoría muestra "Visto".
+- **Y** en el catálogo cada categoría dice "Visto" solo si todos sus módulos están vistos, y una tarjeta de avance dice "N de M lecciones vistas" con una barra de progreso.
+- **Y** si no se puede consultar o guardar lo visto, las páginas se ven igual, sin la marca y sin mensaje de error.
+- Solo un Residente tiene lecciones vistas: los demás roles reciben 403 en esos endpoints. Cada Residente ve únicamente las suyas.

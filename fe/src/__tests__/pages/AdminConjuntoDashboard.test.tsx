@@ -152,7 +152,7 @@ describe("AdminConjuntoDashboard", () => {
     renderPage();
 
     await screen.findByText("Conjunto Los Alpes");
-    await user.click(screen.getByRole("button", { name: "Editar" }));
+    await user.click(screen.getByRole("button", { name: "Editar datos del conjunto" }));
 
     const inputNit = screen.getByDisplayValue("900123456");
     await user.clear(inputNit);
@@ -275,6 +275,21 @@ describe("AdminConjuntoDashboard", () => {
     });
   });
 
+  // ¿Qué? Issue #513 — el botón solo ENVÍA una solicitud al equipo de VerdeApp; antes el texto
+  //       decía que "transfiere la administración a otra persona", lo cual no es lo que hace.
+  it("explica que dejar de administrar solo envía una solicitud al equipo de VerdeApp", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
+
+    expect(await screen.findByText(/Esto envía una solicitud al equipo de VerdeApp/)).toHaveTextContent(
+      "mientras tanto sigues administrando el conjunto",
+    );
+    expect(screen.queryByText(/transfiere la administración/)).not.toBeInTheDocument();
+  });
+
   describe("acordeón de conjuntos (issue #166)", () => {
     const conjunto2 = { ...conjunto, id_conjunto_residencial: 2, nombre_conjunto: "Conjunto Los Robles" };
 
@@ -289,205 +304,343 @@ describe("AdminConjuntoDashboard", () => {
 
       await screen.findByText("Conjunto Los Alpes");
       expect(screen.getByText("Conjunto Los Robles")).toBeInTheDocument();
-      // ¿Qué? "Editar" solo lo trae la vista abierta de cada conjunto — con
-      //       1 solo visible, solo el primero (Los Alpes) viene desplegado.
-      expect(screen.getAllByRole("button", { name: "Editar" })).toHaveLength(1);
+      // ¿Qué? Issue #513 — "Editar datos del conjunto" y el código de acceso solo se ven en
+      //       el conjunto desplegado (solo Los Alpes, al inicio): con el conjunto cerrado la
+      //       cabecera es solo para abrir y cerrar, sin botones.
+      expect(screen.getAllByRole("button", { name: "Editar datos del conjunto" })).toHaveLength(1);
+      expect(screen.getAllByText("AB3K9Q")).toHaveLength(1);
 
       const cabeceraRobles = screen.getByRole("button", { name: /Conjunto Los Robles/ });
       expect(cabeceraRobles).toHaveAttribute("aria-expanded", "false");
       await user.click(cabeceraRobles);
       expect(cabeceraRobles).toHaveAttribute("aria-expanded", "true");
-      expect(screen.getAllByRole("button", { name: "Editar" })).toHaveLength(2);
+      expect(screen.getAllByRole("button", { name: "Editar datos del conjunto" })).toHaveLength(2);
+      expect(screen.getAllByText("AB3K9Q")).toHaveLength(2);
     });
   });
 
-  describe("avisos del conjunto, por rol", () => {
-    const avisoReciclador = {
-      id: "n1",
-      tipo: "LLEGADA_RECICLADOR",
-      mensaje: "Juan Pérez avisó su llegada al SHUT.",
+  // ¿Qué? Issue #513 — un solo botón para editar los dos datos (NIT y cantidad de
+  //       apartamentos), dentro del conjunto abierto y con esos datos a la vista.
+  describe("botón Editar datos del conjunto (issue #513)", () => {
+    const conjunto2 = { ...conjunto, id_conjunto_residencial: 2, nombre_conjunto: "Conjunto Los Robles", nit: "800555666" };
+
+    function mockDosConjuntos() {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto, conjunto2] });
+        return Promise.resolve({ data: [] });
+      });
+    }
+
+    it("muestra el NIT y la cantidad de apartamentos que edita el botón, y 'sin definir' si faltan", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/conjunto-panel/mis-conjuntos")) {
+          return Promise.resolve({ data: [{ ...conjunto, nit: null, total_apartamentos: 120 }] });
+        }
+        return Promise.resolve({ data: [] });
+      });
+      renderPage();
+
+      expect(await screen.findByText(/NIT: sin definir/)).toHaveTextContent("Apartamentos del conjunto: 120");
+    });
+
+    it("cada botón se describe con el nombre de su conjunto, para distinguirlos con lector de pantalla", async () => {
+      mockDosConjuntos();
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("button", { name: /Conjunto Los Robles/ }));
+      const [botonAlpes, botonRobles] = screen.getAllByRole("button", { name: "Editar datos del conjunto" });
+      expect(botonAlpes).toHaveAccessibleDescription("Conjunto Los Alpes");
+      expect(botonRobles).toHaveAccessibleDescription("Conjunto Los Robles");
+    });
+
+    it("abre el formulario con el NIT y la cantidad de apartamentos, y vuelve al cancelar", async () => {
+      mockDosConjuntos();
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("button", { name: "Editar datos del conjunto" }));
+      expect(screen.getByDisplayValue("900123456")).toBeInTheDocument();
+      expect(screen.getByLabelText("Cantidad de apartamentos (opcional)")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Editar datos del conjunto" })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Cancelar" }));
+      expect(screen.getByRole("button", { name: "Editar datos del conjunto" })).toBeInTheDocument();
+    });
+  });
+
+  describe("avisos por conjunto (issue #436)", () => {
+    // ¿Qué? Dos conjuntos con EXACTAMENTE el mismo nombre y distinto id: antes el
+    //       panel repartía los avisos por nombre y los mezclaba.
+    const gemeloA = { ...conjunto, id_conjunto_residencial: 1 };
+    const gemeloB = { ...conjunto, id_conjunto_residencial: 2 };
+
+    const aviso = (id: string, idConjunto: number | null, extra: object = {}) => ({
+      id,
+      tipo: "SHUT_LLENO",
+      mensaje: `Mensaje ${id}`,
       id_referencia: null,
       nombre_conjunto: "Conjunto Los Alpes",
+      id_conjunto_residencial: idConjunto,
       leida: false,
       created_at: new Date().toISOString(),
-    };
-    const avisoResidente = {
-      id: "n2",
-      tipo: "SHUT_LLENO",
-      mensaje: "Torre 3, Apto 402 avisó que el SHUT está lleno.",
-      id_referencia: null,
-      nombre_conjunto: "Conjunto Los Alpes",
-      leida: true,
-      created_at: new Date().toISOString(),
-    };
-
-    it("separa los avisos del conjunto en 'De recicladores' y 'De residentes'", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
-        if (url.includes("/mis-notificaciones")) return Promise.resolve({ data: [avisoReciclador, avisoResidente] });
-        return Promise.resolve({ data: [] });
-      });
-      renderPage();
-
-      await screen.findByText("Conjunto Los Alpes");
-      // ¿Qué? El mismo aviso también aparece en NotificationFeed, arriba del
-      //       todo (feed global) — se busca el bloque "Avisos de este
-      //       conjunto" y se mira SOLO adentro de él, para no chocar con esa
-      //       segunda copia.
-      const bloqueAvisos = (await screen.findByText("Avisos de este conjunto")).closest("div")!;
-      expect(within(bloqueAvisos).getByText("Juan Pérez avisó su llegada al SHUT.")).toBeInTheDocument();
-      expect(within(bloqueAvisos).getByText("Torre 3, Apto 402 avisó que el SHUT está lleno.")).toBeInTheDocument();
-      expect(within(bloqueAvisos).getByText("De recicladores")).toBeInTheDocument();
-      expect(within(bloqueAvisos).getByText("De residentes")).toBeInTheDocument();
-      // ¿Qué? Solo avisoReciclador está sin leer — el badge cuenta 1, no 2.
-      expect(screen.getByText("1 aviso nuevo")).toBeInTheDocument();
+      ...extra,
     });
 
-    it("no muestra la sección de avisos si el conjunto no tiene ninguno", async () => {
+    function mockPanel(conjuntos: object[], notificaciones: object[]) {
       mockGet.mockImplementation((url: string) => {
-        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: conjuntos });
+        if (url.includes("/mis-notificaciones")) return Promise.resolve({ data: notificaciones });
         return Promise.resolve({ data: [] });
       });
+    }
+
+    it("cada conjunto muestra solo sus avisos y su propio contador, aunque tengan el mismo nombre", async () => {
+      mockPanel([gemeloA, gemeloB], [aviso("a1", 1), aviso("a2", 1), aviso("b1", 2)]);
+      const user = userEvent.setup();
       renderPage();
 
-      await screen.findByText("Conjunto Los Alpes");
-      expect(screen.queryByText("Avisos de este conjunto")).not.toBeInTheDocument();
+      // ¿Qué? Solo el primer conjunto viene desplegado: ve sus 2 avisos y NO el del otro.
+      expect(await screen.findByText("Mensaje a1")).toBeInTheDocument();
+      expect(screen.getByText("Mensaje a2")).toBeInTheDocument();
+      expect(screen.queryByText("Mensaje b1")).not.toBeInTheDocument();
+
+      const [cabeceraA, cabeceraB] = screen.getAllByRole("button", { name: /Conjunto Los Alpes/ });
+      expect(within(cabeceraA).getByRole("img", { name: "2 avisos nuevos" })).toBeInTheDocument();
+      expect(within(cabeceraB).getByRole("img", { name: "1 aviso nuevo" })).toBeInTheDocument();
+
+      await user.click(cabeceraB);
+      expect(await screen.findByText("Mensaje b1")).toBeInTheDocument();
+    });
+
+    it("ya no hay una lista general de avisos arriba del panel", async () => {
+      mockPanel([gemeloA, gemeloB], [aviso("b1", 2)]);
+      renderPage();
+
+      await screen.findAllByRole("button", { name: /Conjunto Los Alpes/ });
+      expect(screen.queryByText("Actividad del conjunto")).not.toBeInTheDocument();
+      // ¿Qué? El aviso es del segundo conjunto, que está cerrado: no aparece en ningún lado.
+      expect(screen.queryByText("Mensaje b1")).not.toBeInTheDocument();
+    });
+
+    // ¿Qué? Issue #513 — la frase explicativa se ve siempre, no solo con la lista vacía.
+    it("explica qué avisos salen en la sección, aunque ya haya avisos", async () => {
+      mockPanel([conjunto], [aviso("a1", 1)]);
+      renderPage();
+
+      await screen.findByText("Mensaje a1");
+      expect(screen.getByText(/Reportes de residentes y recicladores, y respuestas de VerdeApp a tus solicitudes/)).toBeInTheDocument();
+    });
+
+    it("sin avisos no muestra contador y sí un mensaje de lista vacía", async () => {
+      mockPanel([conjunto], []);
+      renderPage();
+
+      expect(await screen.findByText(/Todavía no hay avisos de este conjunto/)).toBeInTheDocument();
+      expect(screen.queryByRole("img", { name: /aviso/ })).not.toBeInTheDocument();
+    });
+
+    it("'Marcar leídas' solo marca los avisos de ese conjunto", async () => {
+      mockPanel([gemeloA, gemeloB], [aviso("a1", 1), aviso("b1", 2)]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByText("Mensaje a1");
+      await user.click(screen.getByRole("button", { name: "Marcar leídas" }));
+
+      expect(mockPost).toHaveBeenCalledWith(
+        expect.stringContaining("/notificaciones/marcar-todas-leidas"),
+        {},
+        { params: { id_conjunto_residencial: 1 } },
+      );
+      const [cabeceraA, cabeceraB] = screen.getAllByRole("button", { name: /Conjunto Los Alpes/ });
+      await waitFor(() => expect(within(cabeceraA).queryByRole("img", { name: /aviso/ })).not.toBeInTheDocument());
+      // ¿Qué? El otro conjunto conserva su aviso sin leer.
+      expect(within(cabeceraB).getByRole("img", { name: "1 aviso nuevo" })).toBeInTheDocument();
+    });
+
+    it("'Limpiar leídas' solo quita los avisos leídos de ese conjunto", async () => {
+      mockPanel(
+        [gemeloA, gemeloB],
+        [aviso("a1", 1, { leida: true }), aviso("a2", 1), aviso("b1", 2, { leida: true })],
+      );
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByText("Mensaje a1");
+      await user.click(screen.getByRole("button", { name: "Limpiar leídas" }));
+
+      expect(mockDelete).toHaveBeenCalledWith(
+        expect.stringContaining("/notificaciones/limpiar-leidas"),
+        { params: { id_conjunto_residencial: 1 } },
+      );
+      await waitFor(() => expect(screen.queryByText("Mensaje a1")).not.toBeInTheDocument());
+      expect(screen.getByText("Mensaje a2")).toBeInTheDocument();
+      // ¿Qué? El aviso leído del otro conjunto no se tocó: se ve al desplegarlo.
+      await user.click(screen.getAllByRole("button", { name: /Conjunto Los Alpes/ })[1]);
+      expect(await screen.findByText("Mensaje b1")).toBeInTheDocument();
+    });
+
+    it("marcar un aviso como leído sigue funcionando al hacer clic en él", async () => {
+      mockPanel([conjunto], [aviso("a1", 1)]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByText("Mensaje a1"));
+
+      expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/a1/leer"), {});
+    });
+
+    it("el aviso de auditoría se ve en su banner y no cuenta en el contador del conjunto", async () => {
+      mockPanel(
+        [conjunto],
+        [aviso("au1", 1, { tipo: "AUDITORIA_PUBLICADA", mensaje: "El reciclador auditó tu conjunto.", id_referencia: "aud-1" })],
+      );
+      renderPage();
+
+      expect(await screen.findByText("El reciclador auditó tu conjunto.")).toBeInTheDocument();
+      expect(screen.queryByRole("img", { name: /aviso/ })).not.toBeInTheDocument();
+    });
+
+    it("la desvinculación aprobada de un conjunto que ya no administra se ve en un banner arriba", async () => {
+      mockPanel(
+        [conjunto],
+        [
+          aviso("d1", 99, { tipo: "DESVINCULACION_APROBADA", mensaje: "Tu desvinculación de Torres del Sur fue aprobada." }),
+        ],
+      );
+      const user = userEvent.setup();
+      renderPage();
+
+      expect(await screen.findByText("Tu desvinculación de Torres del Sur fue aprobada.")).toBeInTheDocument();
+      expect(screen.getByText("Desvinculación aprobada")).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Entendido" }));
+
+      expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/d1/leer"), {});
+      await waitFor(() => expect(screen.queryByText("Desvinculación aprobada")).not.toBeInTheDocument());
+    });
+
+    it("un aviso de desvinculación de un conjunto que sí administra va dentro de ese conjunto, no en el banner", async () => {
+      mockPanel(
+        [conjunto],
+        [aviso("d2", 1, { tipo: "DESVINCULACION_RECHAZADA", mensaje: "Tu solicitud fue rechazada." })],
+      );
+      renderPage();
+
+      expect(await screen.findByText("Tu solicitud fue rechazada.")).toBeInTheDocument();
+      expect(screen.queryByText("Desvinculación aprobada")).not.toBeInTheDocument();
     });
   });
 
-  describe("agenda del conjunto", () => {
-    const tema = {
-      id: "t-1",
-      texto: "Arreglar la puerta del sótano.",
-      url_evidencia: "/uploads/adjuntos/puerta.jpg",
-      estado: "PENDIENTE",
-      created_at: "2026-09-22T10:00:00Z",
-    };
+  it("ya no muestra la agenda dentro del acordeón del conjunto (ahora vive en su propia opción del menú)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
 
-    function mockConAgenda(items: unknown[]) {
+    await screen.findByText("Conjunto Los Alpes");
+    expect(screen.queryByText("Agenda del conjunto")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver agenda" })).not.toBeInTheDocument();
+  });
+
+  // ¿Qué? Issue #491 — "Solicitar otro conjunto" y el código de acceso arriba.
+  describe("solicitar otro conjunto y código de acceso", () => {
+    function mockUnConjunto() {
       mockGet.mockImplementation((url: string) => {
-        // ¿Qué? "/agenda" se revisa primero: su URL también contiene "/mis-conjuntos".
-        if (url.includes("/agenda")) return Promise.resolve({ data: items });
         if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
         return Promise.resolve({ data: [] });
       });
     }
 
-    async function abrirAgenda(user: ReturnType<typeof userEvent.setup>) {
-      await screen.findByText("Conjunto Los Alpes");
-      await user.click(screen.getByRole("button", { name: "Ver agenda" }));
-    }
-
-    it("lista los temas al desplegar la agenda, con su foto", async () => {
-      mockConAgenda([tema]);
-      const user = userEvent.setup();
+    it("muestra la fila Solicitar otro conjunto debajo de la lista de conjuntos", async () => {
+      mockUnConjunto();
       renderPage();
-      await abrirAgenda(user);
 
-      expect(await screen.findByText("Arreglar la puerta del sótano.")).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: "Ver foto" })).toHaveAttribute("href", expect.stringContaining("/uploads/adjuntos/puerta.jpg"));
+      const nombre = await screen.findByText("Conjunto Los Alpes");
+      const fila = screen.getByRole("button", { name: /Solicitar otro conjunto/ });
+      expect(nombre.compareDocumentPosition(fila) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(screen.getByText("Pide que te asignen otro conjunto.")).toBeInTheDocument();
     });
 
-    it("muestra el estado vacío si no hay temas", async () => {
-      mockConAgenda([]);
-      const user = userEvent.setup();
+    it("la fila se ve también si el administrador todavía no tiene conjuntos", async () => {
       renderPage();
-      await abrirAgenda(user);
 
-      expect(await screen.findByText("Todavía no hay temas en la agenda de este conjunto.")).toBeInTheDocument();
+      expect(await screen.findByRole("button", { name: /Solicitar otro conjunto/ })).toBeInTheDocument();
     });
 
-    it("agrega un tema nuevo (el botón se habilita solo con texto)", async () => {
-      mockConAgenda([]);
-      mockPost.mockResolvedValue({ data: {} });
+    it("al pulsarla abre el paso a paso, con los documentos y el texto de quien ya tiene cuenta", async () => {
+      mockUnConjunto();
       const user = userEvent.setup();
       renderPage();
-      await abrirAgenda(user);
 
-      await user.click(await screen.findByRole("button", { name: "+ Agregar tema" }));
-      const guardar = screen.getByRole("button", { name: "Guardar tema" });
-      expect(guardar).toBeDisabled();
+      await user.click(await screen.findByRole("button", { name: /Solicitar otro conjunto/ }));
 
-      await user.type(screen.getByLabelText("Tema"), "Pintar el pasillo.");
-      expect(guardar).toBeEnabled();
-      await user.click(guardar);
-
-      await waitFor(() => {
-        expect(mockPost).toHaveBeenCalledWith(
-          expect.stringContaining("/conjunto-panel/mis-conjuntos/1/agenda"),
-          { texto: "Pintar el pasillo.", url_evidencia: null }
-        );
-      });
+      const ventana = await screen.findByRole("dialog", { name: "Solicitar otro conjunto" });
+      expect(within(ventana).getByText(/el conjunto se asigna a tu cuenta/)).toBeInTheDocument();
+      expect(within(ventana).getByText(/Certificado de Representación Legal de la Propiedad Horizontal/)).toBeInTheDocument();
+      expect(within(ventana).getByText(/Copia de tu cédula de ciudadanía, ampliada al 150 %/)).toBeInTheDocument();
+      expect(within(ventana).getByText(/nunca se suben a VerdeApp/)).toBeInTheDocument();
+      // ¿Qué? Es el texto del registro ("autorización de registro"): aquí no aplica.
+      expect(within(ventana).queryByText(/autorización de registro/)).not.toBeInTheDocument();
     });
 
-    it("deja un tema en espera", async () => {
-      mockConAgenda([tema]);
-      mockPatch.mockResolvedValue({ data: {} });
+    it("se puede cerrar la ventana", async () => {
+      mockUnConjunto();
       const user = userEvent.setup();
       renderPage();
-      await abrirAgenda(user);
 
-      await user.click(await screen.findByRole("button", { name: "Dejar en espera" }));
+      await user.click(await screen.findByRole("button", { name: /Solicitar otro conjunto/ }));
+      await user.click(await screen.findByRole("button", { name: "Cerrar" }));
 
-      await waitFor(() => {
-        expect(mockPatch).toHaveBeenCalledWith(
-          expect.stringContaining("/conjunto-panel/mis-conjuntos/1/agenda/t-1"),
-          { estado: "EN_ESPERA" }
-        );
-      });
+      expect(screen.queryByRole("dialog", { name: "Solicitar otro conjunto" })).not.toBeInTheDocument();
     });
 
-    it("borra un tema con confirmación", async () => {
-      mockConAgenda([tema]);
-      mockDelete.mockResolvedValue({ data: {} });
+    it("pide el correo con el asunto Otro conjunto, sin botón, y con el ícono de copiar", async () => {
+      mockUnConjunto();
       const user = userEvent.setup();
       renderPage();
-      await abrirAgenda(user);
 
-      await user.click(await screen.findByRole("button", { name: "Eliminar tema" }));
-      await user.click(await screen.findByRole("button", { name: "Sí, eliminar" }));
+      await user.click(await screen.findByRole("button", { name: /Solicitar otro conjunto/ }));
+      const ventana = await screen.findByRole("dialog", { name: "Solicitar otro conjunto" });
 
-      await waitFor(() => {
-        expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining("/conjunto-panel/mis-conjuntos/1/agenda/t-1"));
-      });
+      expect(within(ventana).queryByRole("button", { name: "Solicitar acceso" })).not.toBeInTheDocument();
+      const href = within(ventana).getByRole("link", { name: "administradorverdeapp@gmail.com" }).getAttribute("href") ?? "";
+      const params = new URLSearchParams(href.slice(href.indexOf("?") + 1));
+      expect(params.get("subject")).toBe("Otro conjunto");
+      expect(params.get("body")).toContain("Mi correo en VerdeApp:");
+
+      await user.click(within(ventana).getByRole("button", { name: "Copiar correo" }));
+      expect(await navigator.clipboard.readText()).toBe("administradorverdeapp@gmail.com");
+    });
+
+    // ¿Qué? Issue #513 — la cobertura va primero (es la cifra que se mira) y el código de
+    //       acceso queda a su lado.
+    it("la cobertura queda primero y el código de acceso a su lado", async () => {
+      mockUnConjunto();
+      renderPage();
+
+      const codigo = await screen.findByText("AB3K9Q");
+      const cobertura = screen.getByText("Apartamentos registrados en VerdeApp");
+      expect(cobertura.compareDocumentPosition(codigo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
   });
 
-  describe("historial de auditorías por conjunto", () => {
-    const auditoria = (id: string, idConjunto: number, tema: string) => ({
-      id_auditoria: id,
-      id_conjunto_residencial: idConjunto,
-      nombre_conjunto: "x",
-      nivel_desempeno: "BUENA",
-      tema_educativo: tema,
-      descripcion: null,
-      ruta_evidencia: "/x.jpg",
-      ruta_evidencia_2: null,
-      ruta_evidencia_3: null,
-      created_at: "2026-09-22T10:00:00Z",
-      nombre_reciclador: "Juan",
-    });
-
-    it("muestra dentro de cada conjunto solo las auditorías de ESE conjunto", async () => {
+  describe("historial de auditorías", () => {
+    // ¿Qué? Issue #487: el historial semanal salió del acordeón; ahora vive en la
+    //       página "Desempeño" (AdminConjuntoDesempenoPage).
+    it("ya no pide el historial ni lo muestra dentro del conjunto", async () => {
       mockGet.mockImplementation((url: string) => {
-        // ¿Qué? "/historial" se revisa primero: la lista mezcla auditorías de 2 conjuntos.
-        if (url.includes("/auditorias-conjunto/historial")) {
-          return Promise.resolve({
-            data: [auditoria("a1", 1, "Tema del conjunto uno"), auditoria("a2", 2, "Tema del conjunto dos")],
-          });
-        }
-        if (url.includes("/conjunto-panel/mis-conjuntos")) {
-          return Promise.resolve({
-            data: [conjunto, { ...conjunto, id_conjunto_residencial: 2, nombre_conjunto: "Conjunto Capellanía" }],
-          });
-        }
+        if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: [conjunto] });
         return Promise.resolve({ data: [] });
       });
       renderPage();
 
-      // ¿Qué? Solo el primer conjunto viene desplegado: ve su tema y NO el del otro.
-      expect(await screen.findByText("Tema del conjunto uno")).toBeInTheDocument();
-      expect(screen.queryByText("Tema del conjunto dos")).not.toBeInTheDocument();
+      await screen.findByText("AB3K9Q");
+      expect(screen.queryByText("Historial de auditorías")).not.toBeInTheDocument();
+      const urlsPedidas = mockGet.mock.calls.map(([url]) => String(url));
+      expect(urlsPedidas.some((url) => url.includes("/auditorias-conjunto/historial"))).toBe(false);
     });
   });
 
@@ -518,13 +671,18 @@ describe("AdminConjuntoDashboard", () => {
       expect(screen.getByText("apartamentos por registrar").previousElementSibling).toHaveTextContent("0");
     });
 
-    it("sin cantidad definida muestra los registrados y el botón para definirla, que abre Editar", async () => {
+    // ¿Qué? Issue #513 — la cantidad se define solo con "Editar datos del conjunto": ya no
+    //       hay un segundo botón en la cobertura.
+    it("sin cantidad definida muestra los registrados y manda a definirla con Editar datos del conjunto", async () => {
       mockConjunto({ total_apartamentos: null, apartamentos_registrados: 38 });
       const user = userEvent.setup();
       renderPage();
 
       expect(await screen.findByText("apartamentos ya tienen residentes")).toBeInTheDocument();
-      await user.click(screen.getByRole("button", { name: "Definir cantidad de apartamentos" }));
+      expect(screen.getByText(/Define los apartamentos del conjunto con «Editar datos del conjunto»/)).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Definir cantidad de apartamentos" })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Editar datos del conjunto" }));
       expect(screen.getByLabelText("Cantidad de apartamentos (opcional)")).toBeInTheDocument();
     });
 
@@ -533,7 +691,7 @@ describe("AdminConjuntoDashboard", () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.click(await screen.findByRole("button", { name: "Editar" }));
+      await user.click(await screen.findByRole("button", { name: "Editar datos del conjunto" }));
       await user.type(screen.getByLabelText("Cantidad de apartamentos (opcional)"), "120");
       await user.click(screen.getByRole("button", { name: "Guardar" }));
 
@@ -550,7 +708,7 @@ describe("AdminConjuntoDashboard", () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.click(await screen.findByRole("button", { name: "Editar" }));
+      await user.click(await screen.findByRole("button", { name: "Editar datos del conjunto" }));
       await user.type(screen.getByLabelText("Cantidad de apartamentos (opcional)"), "0");
       await user.click(screen.getByRole("button", { name: "Guardar" }));
 

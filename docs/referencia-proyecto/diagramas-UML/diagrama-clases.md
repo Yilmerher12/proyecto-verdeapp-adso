@@ -152,9 +152,11 @@ class AgendaConjunto {
     +string url_evidencia
     +string estado
     +datetime created_at
+    +datetime archivado_en
 
     +agregarTema()
-    +cambiarEstado()
+    +archivar()
+    +restaurar()
     +eliminar()
 }
 
@@ -164,12 +166,18 @@ class NovedadEnviada {
     +UUID id_conjunto_residencial
     +string texto
     +string url_imagen
+    +string motivo
+    +string prioridad
     +string estado
+    +string respuesta
+    +datetime respondida_at
     +datetime created_at
     +datetime resuelta_at
 
     +enviar()
-    +marcarComoVista()
+    +cambiarEstado()
+    +cambiarPrioridad()
+    +responder()
 }
 
 class Comunicado {
@@ -465,13 +473,13 @@ Representa la solicitud que un Admin_conjunto envía para dejar de administrar u
 
 ## AgendaConjunto
 
-Representa un tema de la agenda **privada** del Admin_conjunto para un conjunto (RQF-020) — algo que le pidieron y quiere llevar al comité, con foto opcional. Su `estado` es `PENDIENTE` o `EN_ESPERA`; cuando el comité lo resuelve, se elimina. Nunca genera notificaciones ni la ve nadie más.
+Representa un tema de la agenda **privada** del Admin_conjunto para un conjunto (RQF-020) — algo que le pidieron y quiere llevar al comité, con foto opcional. Su `estado` es `PENDIENTE` o `ARCHIVADA`; cuando el comité lo resuelve, se archiva (queda como historial y se puede restaurar) en vez de borrarse. Nunca genera notificaciones ni la ve nadie más.
 
 ---
 
 ## NovedadEnviada
 
-Representa una novedad que un Residente, Reciclador o Admin_conjunto le **envía** al Admin_sistema (RQF-021) — la dirección contraria a `Novedad`. Su `estado` es `NUEVA` o `VISTA`: el Admin_sistema la recibe en la bandeja "Solicitudes pendientes" (junto con las `SolicitudDesvinculacion`) y solo la marca como vista; no se aprueba ni se rechaza.
+Representa una consulta de soporte que un Residente, Reciclador o Admin_conjunto le **envía** al Admin_sistema (RQF-021) — la dirección contraria a `Novedad`. Su `estado` es `NUEVA`, `EN_REVISION` o `RESUELTA`, y su `prioridad` (`ALTA`, `MEDIA` o `BAJA`) la calcula el sistema según el `motivo` elegido. El Admin_sistema la atiende en la pestaña "Soporte técnico" (las `SolicitudDesvinculacion` van en su propia pestaña "Desvinculaciones"): cambia su estado, corrige la prioridad y le responde al autor, que ve la respuesta en su historial; una consulta no se aprueba ni se rechaza.
 
 ---
 
@@ -495,7 +503,7 @@ Representa los avisos automáticos del sistema (llegada del reciclador, SHUT lle
 
 ## AuditoriaConjunto
 
-Representa la calificación de desempeño que un Reciclador registra tras visitar un conjunto (RQF-009/RQF-013): un nivel (`EXCELENTE`, `BUENA`, `REGULAR`, `DEFICIENTE`), un tema educativo relacionado, y hasta 3 fotos de evidencia (solo la primera es obligatoria). `orden_interno` es un contador autoincremental aparte de la UUID (que no es ordenable) — permite mostrar el historial de auditorías de un conjunto en el orden real en que ocurrieron.
+Representa la calificación de desempeño que un Reciclador registra tras visitar un conjunto (RQF-009/RQF-013): un nivel (`BUENA`, `REGULAR`, `DEFICIENTE`), un tema educativo relacionado, y hasta 3 fotos de evidencia (solo la primera es obligatoria). `orden_interno` es un contador autoincremental aparte de la UUID (que no es ordenable) — permite mostrar el historial de auditorías de un conjunto en el orden real en que ocurrieron.
 
 ---
 
@@ -525,7 +533,7 @@ Representa apartamentos o unidades habitacionales (torre + apto) dentro de un co
 
 ## PuntoAcopio
 
-Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — dato abierto de la UAESP, cubre 6 de 20 localidades de Bogotá. `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive.
+Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — dato abierto de la UAESP (dataset de marzo de 2020: 9 puntos en 6 de las 20 localidades; no son todas las ECA de Bogotá). `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive.
 
 ---
 

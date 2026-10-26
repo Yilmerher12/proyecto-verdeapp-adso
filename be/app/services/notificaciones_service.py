@@ -217,6 +217,7 @@ def listar_mis_notificaciones(db: Session, current_user: Usuario) -> List[dict]:
             Notificacion.mensaje,
             Notificacion.id_referencia,
             Notificacion.created_at,
+            Notificacion.id_conjunto_residencial,
             ConjuntoResidencial.nombre_conjunto,
             NotificacionDestinatario.leida,
         )
@@ -237,6 +238,7 @@ def listar_mis_notificaciones(db: Session, current_user: Usuario) -> List[dict]:
             "mensaje": r.mensaje,
             "id_referencia": r.id_referencia,
             "nombre_conjunto": r.nombre_conjunto,
+            "id_conjunto_residencial": r.id_conjunto_residencial,
             "leida": r.leida,
             "created_at": r.created_at,
         }
@@ -273,7 +275,18 @@ def marcar_leida(db: Session, current_user: Usuario, id_notificacion: UUID) -> N
         db.commit()
 
 
-def marcar_todas_leidas(db: Session, current_user: Usuario) -> int:
+def _ids_notificaciones_del_conjunto(id_conjunto: UUID):
+    """¿Qué? Subconsulta con los id de las notificaciones de UN conjunto.
+    ¿Para qué? Issue #436: marcar todas / limpiar leídas "solo de este
+              conjunto" en el panel del Admin de Conjunto.
+    ¿Impacto? Solo recorta las filas del propio usuario (ambas consultas ya
+              filtran por su id_usuario), así que no hace falta comprobar
+              que el conjunto sea suyo: uno ajeno simplemente no devuelve
+              nada y no se toca ninguna fila."""
+    return select(Notificacion.id).where(Notificacion.id_conjunto_residencial == id_conjunto)
+
+
+def marcar_todas_leidas(db: Session, current_user: Usuario, id_conjunto: UUID | None = None) -> int:
     stmt = (
         select(NotificacionDestinatario)
         .where(
@@ -281,6 +294,8 @@ def marcar_todas_leidas(db: Session, current_user: Usuario) -> int:
             NotificacionDestinatario.leida.is_(False),
         )
     )
+    if id_conjunto is not None:
+        stmt = stmt.where(NotificacionDestinatario.id_notificacion.in_(_ids_notificaciones_del_conjunto(id_conjunto)))
     pendientes = db.execute(stmt).scalars().all()
     now = datetime.now(timezone.utc)
     for d in pendientes:
@@ -290,14 +305,16 @@ def marcar_todas_leidas(db: Session, current_user: Usuario) -> int:
     return len(pendientes)
 
 
-def limpiar_leidas(db: Session, current_user: Usuario) -> int:
-    """Elimina del feed del usuario todas las notificaciones que ya leyó."""
-    result = db.execute(
-        sql_delete(NotificacionDestinatario).where(
-            NotificacionDestinatario.id_usuario == current_user.id_usuario,
-            NotificacionDestinatario.leida.is_(True),
-        )
+def limpiar_leidas(db: Session, current_user: Usuario, id_conjunto: UUID | None = None) -> int:
+    """Elimina del feed del usuario todas las notificaciones que ya leyó
+    (solo las de `id_conjunto`, si se indica)."""
+    stmt = sql_delete(NotificacionDestinatario).where(
+        NotificacionDestinatario.id_usuario == current_user.id_usuario,
+        NotificacionDestinatario.leida.is_(True),
     )
+    if id_conjunto is not None:
+        stmt = stmt.where(NotificacionDestinatario.id_notificacion.in_(_ids_notificaciones_del_conjunto(id_conjunto)))
+    result = db.execute(stmt)
     db.commit()
     return result.rowcount
 

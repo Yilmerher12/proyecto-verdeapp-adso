@@ -392,7 +392,7 @@ Recursos HTTP con verbos y códigos de estado estándar, bajo `/api/v1/`:
 | `POST` | `/api/v1/auditorias-conjunto` | `201` | Reciclador audita un conjunto |
 | `GET` | `/api/v1/auditorias-conjunto/mias` | `200` | Auditorías que YO ya envié (reciclador) |
 | `PATCH` | `/api/v1/comunicados/{id_comunicado}` | `200` | Editar un comunicado |
-| `DELETE` | `/api/v1/notificaciones/limpiar-leidas` | `200` | Borrar notificaciones ya leídas |
+| `DELETE` | `/api/v1/notificaciones/limpiar-leidas` | `200` | Borrar notificaciones ya leídas (opcionalmente solo las de un conjunto, con `?id_conjunto_residencial=`) |
 
 ### Ventaja
 

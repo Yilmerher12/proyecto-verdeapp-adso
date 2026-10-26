@@ -39,6 +39,8 @@
 | Sidebar: blanco / ítems (`accent-50/80`) sobre `accent-900` | 11.90 / 7.50 | AA |
 | Sidebar: texto del rol (slate / lime / orange / sky) | 8.01 / 7.76 / 6.98 / 7.14 | AA |
 | Hero: "App" (`accent-200`) / texto blanco sobre la foto | 3.22 / 4.97 | AA (título = texto grande) |
+| Hero, botón principal: `accent-900` sobre blanco | 11.90 | AA |
+| Hero, botón secundario: blanco sobre la foto con `bg-black/20` | ≥ 4.97 (el `black/20` solo oscurece el fondo) | AA |
 
 ### Modo oscuro
 
@@ -56,6 +58,8 @@
 | Sidebar: blanco / ítems (`accent-50/80`) sobre `accent-900` | 14.67 / 9.02 | AA |
 | Sidebar: texto del rol (slate / lime / orange / sky) | 9.87 / 9.56 / 8.60 / 8.80 | AA |
 | Hero: "Verde" (`accent-50`) / "App" (`accent-300`) / texto blanco | 7.30 / 3.56 / 8.04 | AA (título = texto grande) |
+| Hero, botón principal: `accent-950` sobre `accent-300` | 7.55 | AA |
+| Hero, botón secundario: `accent-50` sobre la foto con `bg-black/20` | ≥ 7.30 (el `black/20` solo oscurece el fondo) | AA |
 
 **Resumen:** la paleta nueva (verdes, `night-*`, colores por rol, hero) pasa AA en todos sus pares. Los 3 problemas que aparecen son de **grises de Tailwind** que la paleta no cambió.
 

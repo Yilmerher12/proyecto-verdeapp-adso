@@ -164,6 +164,8 @@ uv run python -m app.seed
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
+> **Datos de demostración (opcional, para presentar el proyecto):** después del seed normal, `uv run python -m app.seed_demo` agrega 3 conjuntos con residentes, recicladores, 8 semanas de auditorías con fotos, comunicados, novedades, soporte y agenda, para que ningún panel se vea vacío. Los usuarios inventados terminan en `@demo.verdeapp.com` y comparten la contraseña de las cuentas de prueba. Las fechas son relativas al día en que se corre, así que conviene correrlo justo antes de presentar. Las fotos viven en `be/app/data/demo/fotos/`. Si ya hay usuarios `@demo.verdeapp.com`, no hace nada.
+
 > En ejecuciones siguientes normalmente solo hace falta encender uvicorn (uv usa el entorno correcto solo). Repetir `uv run python -m app.seed` no hace daño, pero solo es necesario si empezaste con una base de datos nueva (ej: borraste el volumen de Docker):
 > ```powershell
 > uv run uvicorn app.main:app --reload --port 8000
@@ -312,6 +314,20 @@ uv run uvicorn app.main:app --reload --port 8000
 **Un puerto ya está en uso** (`3000`, `5173`, `8000`, `5433` u `8025`)
 
 Suele pasar si dejaste corriendo una instancia anterior del proyecto, u otro programa en tu máquina ya usa ese puerto (por ejemplo, un PostgreSQL instalado localmente compite por el `5432`, por eso VerdeApp usa `5433`). Revisa qué proceso lo tiene ocupado y ciérralo, o apaga los contenedores anteriores con `docker compose down` antes de volver a encender.
+
+**`pnpm dev` termina con `Port 5173 is already in use`**
+
+Otro programa (casi siempre un `pnpm dev` anterior que dejaste abierto) tiene el puerto `5173`. Vite ya no se pasa solo al `5174`: antes lo hacía y el login fallaba con un error que el navegador muestra como "CORS", porque el backend solo acepta los orígenes `:5173` y `:3000` (`ALLOWED_ORIGINS` en `be/app/main.py`). Libera el puerto y vuelve a correr `pnpm dev`. En Windows (PowerShell), primero mira qué proceso lo usa; el número que sale al final de la línea es el PID:
+
+```powershell
+netstat -ano | findstr :5173
+```
+
+Luego ciérralo con ese número (reemplaza `1234`):
+
+```powershell
+taskkill /PID 1234 /F
+```
 
 **`uv` o `pnpm` no se reconocen como comando**
 
@@ -510,9 +526,10 @@ Queda estrictamente restringido el uso de npm o yarn en el directorio frontend. 
 
 ## 🌿 Modelo de Ramas y Commits
 
-El proyecto usa dos ramas permanentes y ramas de trabajo temporales:
+El proyecto usa tres ramas permanentes y ramas de trabajo temporales:
 
 * **`main`** — versión estable, la que se etiqueta para cada entrega (ej. `v1.0.0`). Nunca se trabaja directo aquí.
+* **`stg`** (staging) — rama intermedia de verificación. Recibe una copia de `develop` y ahí se prueba ese conjunto exacto de cambios antes de pasarlo a `main`. Nunca se trabaja directo aquí.
 * **`develop`** — rama de integración. Todo el trabajo en curso se fusiona aquí primero.
 * **Ramas de trabajo** — una por cada tarjeta/tarea, siempre creada a partir de `develop`, nunca directo sobre `develop` o `main`. El prefijo indica el tipo de cambio:
 
@@ -525,7 +542,13 @@ El proyecto usa dos ramas permanentes y ramas de trabajo temporales:
 | `content/` | Cambios de contenido (textos, datos de ejemplo) sin lógica nueva |
 | `test/` | Solo pruebas (ej. los retos semanales del bootcamp de testing: `test/semana-01`) |
 
-**Flujo normal:** crear la rama desde `develop` → hacer el cambio → abrir un Pull Request hacia `develop` → esperar a que el CI (pruebas automáticas) pase en verde → fusionar. `main` solo recibe código a través de `develop`, cuando se prepara una entrega.
+**Flujo normal:** crear la rama desde `develop` → hacer el cambio → abrir un Pull Request hacia `develop` → esperar a que el CI (pruebas automáticas) pase en verde → fusionar. `main` solo recibe código a través de `stg`, y `stg` solo recibe código de `develop`:
+
+```
+rama de trabajo → develop → stg → main
+```
+
+**Flujo de entrega:** cuando se prepara una entrega se abre un Pull Request de `develop` hacia `stg`, se prueba ahí el conjunto completo (CI en verde y revisión manual con las 4 cuentas de prueba) y, si todo está bien, se abre un Pull Request de `stg` hacia `main` y se etiqueta la versión. Si en `stg` aparece un error, **no se corrige en `stg`**: se arregla en una rama de trabajo desde `develop` y se vuelve a pasar a `stg`, para que `stg` y `develop` nunca queden distintas.
 
 **Mensajes de commit:** siguen [Conventional Commits](https://www.conventionalcommits.org/) — `tipo: descripción en español`, por ejemplo `fix: bloquear reportes repetidos sin espera` o `docs: actualizar diagramas UML`. El tipo (`feat`, `fix`, `docs`, `chore`, `test`) coincide con el prefijo de la rama.
 
@@ -543,7 +566,7 @@ Toda la documentación vive en `docs/`, en Markdown, versionada junto con el có
 | [`docs/requisitos/restricciones.md`](docs/requisitos/restricciones.md) | Reglas transversales del proyecto (idioma del código, convención de ramas/commits, versionado de dependencias) |
 | [`docs/conceptos/`](docs/conceptos/) | Explicación pedagógica de OWASP Top 10, accesibilidad (ARIA/WCAG) y patrones de arquitectura, con evidencia real de archivo y línea |
 | [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Diagrama de clases y catálogo de casos de uso |
-| [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance |
+| [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance. En [`informes-scrum/`](docs/gestion-proyecto/informes-scrum/) están los informes semanales del Scrum Master |
 | [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md) | Bootcamp de testing: capa de cada integrante por semana y cobertura registrada |
 
 Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implementar`) que se actualiza cada vez que su funcionalidad cambia de verdad — es la fuente de verdad más confiable sobre qué tan avanzado está el proyecto, más que cualquier resumen (incluido este README).
@@ -572,7 +595,7 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 **Cobertura**: `uv run pytest` y `pnpm test` (en `fe/`) miden siempre qué porcentaje del código ejecutan las pruebas, y **fallan** si baja del umbral configurado (`fail_under` en `be/pyproject.toml`, `thresholds` en `fe/vite.config.ts`). El CI corre esos mismos comandos, así que un PR que baje la cobertura queda en rojo. El umbral solo sube; su historial está en [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md).
 
-**E2E, primera vez** (desde `e2e/`): `pnpm install` y luego `pnpm exec playwright install chromium` (descarga el navegador). Antes de `pnpm test`, el backend y la BD deben estar encendidos (Método B); el frontend lo levanta Playwright solo. `pnpm codegen` abre un navegador que graba lo que haces y lo convierte en código de test.
+**E2E, primera vez** (desde `e2e/`): `pnpm install`, luego `pnpm exec playwright install chromium` (descarga el navegador) y copia `e2e/.env.example` como `e2e/.env` (las cuentas de prueba que leen los tests; ese archivo no se sube a Git). Antes de `pnpm test`, el backend y la BD deben estar encendidos (Método B); el frontend lo levanta Playwright solo. `pnpm codegen` abre un navegador que graba lo que haces y lo convierte en código de test.
 
 **E2E y el CI**: las carpetas `e2e/playwright-report/` y `e2e/test-results/` **no se suben como artefacto** del CI (ya están en `.gitignore`). Las trazas de Playwright guardan paso a paso lo que hizo el navegador, y pueden incluir el correo y la contraseña de las cuentas de prueba. Si algún día el CI sube esos reportes, hay que revisar primero qué contienen. Las dependencias de `e2e/` las vigilan Dependabot y un paso `pnpm audit` del CI, igual que las de `fe/`.
 

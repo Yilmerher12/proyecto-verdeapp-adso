@@ -90,11 +90,8 @@ def solicitar_desvinculacion(
     return solicitud
 
 
-def listar_solicitudes_pendientes(db: Session, ids: Optional[List[UUID]] = None) -> List[SolicitudDesvinculacionResponse]:
-    """
-    CA-023.1: el Admin Sistema ve todas las solicitudes pendientes, con el conjunto y quién la pidió.
-    ¿Qué? Issue #399: con `ids` solo trae esas (las de la página de la bandeja unificada).
-    """
+def listar_solicitudes_pendientes(db: Session) -> List[SolicitudDesvinculacionResponse]:
+    """CA-023.1: el Admin Sistema ve todas las solicitudes pendientes, con el conjunto y quién la pidió."""
     stmt = (
         select(SolicitudDesvinculacion, ConjuntoResidencial, AdministradorConjunto)
         .join(
@@ -108,8 +105,6 @@ def listar_solicitudes_pendientes(db: Session, ids: Optional[List[UUID]] = None)
         .where(SolicitudDesvinculacion.estado == EstadoSolicitudDesvinculacion.PENDIENTE)
         .order_by(SolicitudDesvinculacion.created_at)
     )
-    if ids is not None:
-        stmt = stmt.where(SolicitudDesvinculacion.id.in_(ids))
     filas = db.execute(stmt).all()
     return [
         SolicitudDesvinculacionResponse(
