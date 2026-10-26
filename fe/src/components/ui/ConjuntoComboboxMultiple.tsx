@@ -13,6 +13,7 @@
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/react";
 import { Search, X } from "lucide-react";
 import { useConjuntoBusqueda } from "@/hooks/useConjuntoBusqueda";
+import { Spinner } from "@/components/ui/Spinner";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 
 interface ConjuntoComboboxMultipleProps {
@@ -50,14 +51,15 @@ export function ConjuntoComboboxMultiple({
           {value.map((c) => (
             <span
               key={c.id_conjunto_residencial}
-              className="inline-flex items-center gap-1 rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-800 dark:bg-accent-900/30 dark:text-accent-300"
+              className="inline-flex items-center gap-1 rounded-full bg-accent-50 px-2.5 py-1 text-xs font-medium text-accent-800 dark:bg-accent-300/10 dark:text-accent-300"
             >
               {c.nombre_conjunto}
               <button
                 type="button"
                 onClick={() => quitar(c.id_conjunto_residencial)}
-                className="cursor-pointer rounded-full transition-colors hover:bg-accent-100 dark:hover:bg-accent-900/50"
+                className="cursor-pointer rounded-full transition-colors hover:bg-accent-100 dark:hover:bg-accent-300/15"
                 aria-label={`Quitar ${c.nombre_conjunto}`}
+                title={`Quitar ${c.nombre_conjunto}`}
               >
                 <X className="icon-sm" aria-hidden="true" />
               </button>
@@ -72,11 +74,11 @@ export function ConjuntoComboboxMultiple({
         <div className="relative">
           <div className="relative">
             <Search
-              className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"
               aria-hidden="true"
             />
             <ComboboxInput
-              className="w-full rounded-xl border border-gray-300 bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+              className="w-full rounded-xl border border-edge bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
               displayValue={() => ""}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
@@ -84,7 +86,10 @@ export function ConjuntoComboboxMultiple({
             />
           </div>
           <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-night-line dark:bg-night-field">
-            {loading && <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{loadingLabel}</div>}
+            {loading && <div role="status" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+              <Spinner size="sm" />
+              {loadingLabel}
+            </div>}
             {!loading && options.length === 0 && (
               <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{emptyLabel}</div>
             )}

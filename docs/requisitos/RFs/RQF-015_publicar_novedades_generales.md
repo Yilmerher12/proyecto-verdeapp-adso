@@ -19,6 +19,8 @@ El Admin Sistema puede publicar novedades generales sobre la aplicación, los pu
 
 A diferencia de los comunicados de conjunto (RQF-014), las novedades las publica el equipo de VerdeApp para todos sus usuarios o para grupos específicos de roles.
 
+**No confundir** con las novedades enviadas (RQF-021): esas las escriben Residentes, Recicladores y Admins de Conjunto hacia el Admin Sistema. La diferencia completa y el porqué del archivado están en [Novedades y novedades enviadas](../../conceptos/novedades-y-novedades-enviadas.md).
+
 ---
 
 ## Flujos

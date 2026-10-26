@@ -34,6 +34,7 @@ La acción no es un campo: la define el método HTTP (`POST` crea, `PUT /{id_con
 | `cuerpo_texto`     | Texto | Sí          | Mínimo 20 y máximo 10000 caracteres. Admite Markdown simple (`##`, listas, negrita). |
 | `url_video`        | Texto | No          | Solo `https://` de YouTube (RN-004). Máximo 500 caracteres.                  |
 | `url_guia`         | Texto | No          | Solo `https://` o un archivo subido a VerdeApp (`/uploads/...`) (RN-004). Máximo 500 caracteres. |
+| `url_imagen`       | Texto | No          | Imagen de portada: solo un archivo JPG, PNG o WEBP subido a VerdeApp (`/uploads/adjuntos/...`) (RN-005). Máximo 500 caracteres. |
 
 ---
 
@@ -53,7 +54,7 @@ La acción no es un campo: la define el método HTTP (`POST` crea, `PUT /{id_con
 
 | Escenario           | Código HTTP | Respuesta                                                                                                    |
 | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| Módulo creado       | 201         | El módulo creado: `id_contenido`, `modulo_categoria`, `titulo_tema`, `cuerpo_texto`, `url_video`, `url_guia`, `fecha_publicacion` |
+| Módulo creado       | 201         | El módulo creado: `id_contenido`, `modulo_categoria`, `titulo_tema`, `cuerpo_texto`, `url_video`, `url_guia`, `url_imagen`, `fecha_publicacion` |
 | Módulo editado      | 200         | El módulo actualizado, con los mismos campos                                                                 |
 | Módulo eliminado    | 204         | Sin cuerpo                                                                                                   |
 | Otro rol            | 403         | `{"detail": "Solo un Administrador del Sistema puede gestionar el contenido educativo."}`                   |
@@ -100,3 +101,4 @@ La acción no es un campo: la define el método HTTP (`POST` crea, `PUT /{id_con
 - RN-002: Las eliminaciones deben ser lógicas (cambiar un estado a inactivo) o físicas dependiendo de las políticas de auditoría del proyecto, asegurando que no se rompa la vista del frontend.
 - RN-003: El envío manual no reemplaza ni bloquea la recomendación automática de RQF-013 — si un conjunto ya recibió el módulo automáticamente por una auditoría Regular/Mala, ese origen ("automático") tiene prioridad visual sobre un envío manual duplicado al mismo conjunto. **Implementado.**
 - RN-004: `url_video` solo acepta enlaces `https://` de YouTube (`youtube.com`, `youtu.be`, `youtube-nocookie.com`), y `url_guia` solo acepta enlaces `https://` o un archivo subido a VerdeApp (`/uploads/...`). Se valida en el backend (`be/app/utils/enlaces.py`, 422 si no cumple) y en el formulario, con el error debajo del campo. Evita que se publiquen enlaces a sitios de suplantación (issue #314, hallazgo CN-015 del informe de seguridad). **Implementado.**
+- RN-005: Las imágenes de un módulo (la portada `url_imagen` y las que se escriben dentro de `cuerpo_texto` como `![descripción](ruta)`) solo pueden ser archivos que subió la propia app a `/uploads/adjuntos/` (JPG, PNG o WEBP). Se valida en el backend (`validar_imagen_propia` en `be/app/utils/enlaces.py`, 422 si no cumple) y el frontend solo pinta rutas propias (`imagenPropiaSegura`). Evita que una imagen de otro sitio permita rastrear a quien abre la lección. La limpieza de adjuntos (`app.limpiar_adjuntos`) cuenta la portada y las imágenes del texto como "en uso". **Implementado.**

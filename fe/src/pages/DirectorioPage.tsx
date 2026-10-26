@@ -41,7 +41,8 @@ interface DirectorioPageProps {
 // ¿Para qué? Que el link del "Ver fuente" y el de la documentación de
 //           soporte (docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md)
 //           apunten siempre al mismo lugar si algún día cambia.
-const FUENTE_ECA_URL = "https://datosabiertos.bogota.gov.co/dataset/data_set_aprovechamiento_ecas";
+const FUENTE_ECA_URL =
+  "https://www.uaesp.gov.co/sites/default/files/archivos-adjuntos/Listado_Inventario_inicial_ECA_y_Bodegas_PR.pdf";
 
 export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const { t } = useTranslation();
@@ -178,7 +179,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                 onClick={() => setTab(id)}
                 className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   tab === id
-                    ? "bg-accent-700 text-white shadow-sm"
+                    ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                     : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                 }`}
               >
@@ -208,7 +209,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
               onChange={(e) =>
                 setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value))
               }
-              className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-panel dark:text-gray-200"
+              className="cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
             >
               <option value="">{t("directorio.allLocalities")}</option>
               {localidades.map((l) => (
@@ -225,9 +226,10 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           ¿Para qué? El de Recicladores explica qué es y para qué le sirve
           al residente (directorio propio, sin fuente externa). El de
           Puntos de Acopio, además, tiene que aclarar la procedencia del
-          dato (UAESP) y por qué solo cubre 6 de 20 localidades — sin esto,
-          alguien podría pensar que faltan datos por cargar, cuando en
-          realidad es la cobertura real de las ECA en Bogotá. */}
+          dato (dataset UAESP de marzo de 2020) y que no son todas las ECA
+          de la ciudad — sin esto, alguien podría tomar los 9 puntos como
+          el total real de Bogotá. El enlace lleva al inventario de la
+          UAESP, que lista muchas más (su cifra exacta no está clara). */}
       {tab === "recicladores" && !soloAcopio ? (
         <InfoBanner
           titulo={t("directorio.infoRecicladores.titulo")}
@@ -305,14 +307,14 @@ function InfoBanner({
   fuenteLinkLabel?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-800/30 dark:bg-accent-900/10">
+    <div className="rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-300/40 dark:bg-accent-300/10">
       <div className="flex gap-3">
         <Info className="icon-lg mt-0.5 shrink-0 text-accent-600 dark:text-accent-400" />
         <div className="space-y-1.5 text-sm">
           <p className="font-semibold text-accent-900 dark:text-accent-200">{titulo}</p>
           <p className="text-accent-800/90 dark:text-accent-300/90">{descripcion}</p>
           <p className="text-accent-800/90 dark:text-accent-300/90">{paraQueSirve}</p>
-          <p className="text-xs text-accent-700/80 dark:text-accent-400/80">
+          <p className="text-xs text-accent-800 dark:text-accent-300">
             {fuenteTexto}
             {fuenteHref && fuenteLinkLabel && (
               <>
@@ -348,11 +350,11 @@ function TarjetaReciclador({
   return (
     <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
       <div className="mb-3 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-900/30">
-          <HardHat className="icon-lg text-teal-700 dark:text-teal-400" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-400/15">
+          <HardHat className="icon-lg text-teal-700 dark:text-teal-300" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-gray-900 dark:text-white">
+          <p className="line-clamp-2 break-words font-semibold text-gray-900 dark:text-white">
             {r.nombre} {r.apellidos}
           </p>
           {r.nombre_localidad && (
@@ -365,7 +367,7 @@ function TarjetaReciclador({
       </div>
 
       {r.asociacion && (
-        <span className="mb-4 inline-flex w-fit items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 dark:bg-teal-900/20 dark:text-teal-400">
+        <span className="mb-4 inline-flex w-fit items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 dark:bg-teal-400/10 dark:text-teal-300">
           {r.asociacion}
         </span>
       )}
@@ -375,7 +377,7 @@ function TarjetaReciclador({
           <div className="flex gap-2">
             <a
               href={callLink(r.numero_telefonico)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+              className="touch-target-h flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
             >
               <Phone className="icon-sm" />
               {t("directorio.call")}
@@ -384,7 +386,7 @@ function TarjetaReciclador({
               href={waLink(r.numero_telefonico)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600"
+              className="touch-target-h flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
             >
               <MessageCircle className="icon-sm" />
               WhatsApp
@@ -421,11 +423,11 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
       <div className="mb-3 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-900/30">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-300/10">
           <Warehouse className="icon-lg text-accent-700 dark:text-accent-400" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
+          <p className="line-clamp-2 break-words font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
           <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-night-inset dark:text-gray-300">
             <MapIcon className="icon-sm" />
             {p.nombre_localidad}
@@ -435,12 +437,12 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
 
       <div className="space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
         <p className="flex items-start gap-1.5">
-          <MapPin className="icon-sm mt-0.5 shrink-0 text-gray-400" />
+          <MapPin className="icon-sm mt-0.5 shrink-0 text-gray-500 dark:text-gray-400" />
           <span className="flex-1">{p.direccion}</span>
           <button
             type="button"
             onClick={copiarDireccion}
-            className="shrink-0 cursor-pointer rounded-md p-1 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-night-hover dark:hover:text-gray-300"
+            className="touch-area relative shrink-0 cursor-pointer rounded-md p-1 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-night-hover dark:hover:text-gray-300"
             aria-label={t("directorio.copyAddress")}
             title={t("directorio.copyAddress")}
           >
@@ -453,7 +455,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
         </p>
         {p.telefono_contacto && (
           <p className="flex items-center gap-1.5">
-            <Phone className="icon-sm shrink-0 text-gray-400" />
+            <Phone className="icon-sm shrink-0 text-gray-500 dark:text-gray-400" />
             {p.telefono_contacto}
           </p>
         )}

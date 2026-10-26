@@ -4,7 +4,7 @@
  *              pendientes, conjuntos autorizados y envío de notificaciones.
  */
 
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
 import { RecicladorDashboard } from "@/pages/dashboards/RecicladorDashboard";
@@ -33,11 +33,18 @@ const conjuntoAutorizado = {
   nombre_localidad: "Suba",
 };
 
+// ¿Qué? Respuesta de relleno para las peticiones que cada prueba no mira.
+// ¿Para qué? El historial de auditorías llega paginado ({items, total}); las demás listas, como arreglo vacío.
+//           "/mias/ultimas" (una fecha por conjunto) también es un arreglo vacío.
+function respuestaPorDefecto(url: string) {
+  return { data: url.endsWith("/auditorias-conjunto/mias") ? { items: [], total: 0 } : [] };
+}
+
 function mockRespuestasVacias() {
   mockGet.mockImplementation((url: string) => {
     if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
     if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [] });
-    return Promise.resolve({ data: [] });
+    return Promise.resolve(respuestaPorDefecto(url));
   });
 }
 
@@ -84,7 +91,7 @@ describe("RecicladorDashboard", () => {
           ],
         });
       }
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     renderPage();
 
@@ -103,14 +110,43 @@ describe("RecicladorDashboard", () => {
     });
   });
 
-  it("no muestra botones de notificación cuando no hay conjuntos autorizados", async () => {
+  // ¿Qué? Issue #515: sin conjuntos, los botones se ven apagados y un aviso corto explica por qué;
+  //       también el vacío de "Notificaciones recibidas" aclara que los avisos llegan de los conjuntos.
+  it("sin conjuntos autorizados apaga los botones de aviso y lo explica", async () => {
+    const user = userEvent.setup();
     renderPage();
     await waitFor(() => {
       expect(
         screen.getByText("Todavía no tienes ningún conjunto autorizado. Cuando un administrador te invite y aceptes, aparecerá aquí.")
       ).toBeInTheDocument();
     });
-    expect(screen.queryByRole("button", { name: "Llegué al conjunto" })).not.toBeInTheDocument();
+
+    const aviso = screen.getByText("Los botones se activan cuando tengas un conjunto autorizado.");
+    expect(aviso).toBeInTheDocument();
+    const boton = screen.getByRole("button", { name: "Llegué al conjunto" });
+    expect(boton).toHaveAttribute("aria-disabled", "true");
+    expect(boton).toHaveAttribute("aria-describedby", "reciclador-sin-conjuntos");
+
+    // Apagado no abre el modal de selección de conjunto.
+    await user.click(boton);
+    expect(screen.queryByText("¿A qué conjunto notificas?")).not.toBeInTheDocument();
+
+    expect(
+      screen.getByText(/Los avisos de los residentes \(como SHUT lleno\) llegan de los conjuntos donde estés autorizado/)
+    ).toBeInTheDocument();
+  });
+
+  it("con un conjunto autorizado no muestra el aviso de sin conjuntos y los botones quedan activos", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+      return Promise.resolve(respuestaPorDefecto(url));
+    });
+    renderPage();
+
+    const boton = await screen.findByRole("button", { name: "Llegué al conjunto" });
+    expect(boton).toHaveAttribute("aria-disabled", "false");
+    expect(screen.queryByText("Los botones se activan cuando tengas un conjunto autorizado.")).not.toBeInTheDocument();
+    expect(screen.queryByText(/llegan de los conjuntos donde estés autorizado/)).not.toBeInTheDocument();
   });
 
   it("permite responder una invitación pendiente", async () => {
@@ -130,7 +166,7 @@ describe("RecicladorDashboard", () => {
         });
       }
       if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [] });
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     const user = userEvent.setup();
     renderPage();
@@ -150,7 +186,7 @@ describe("RecicladorDashboard", () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
       if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     const user = userEvent.setup();
     renderPage();
@@ -169,11 +205,64 @@ describe("RecicladorDashboard", () => {
     });
   });
 
+  // ¿Qué? Issue #515: orden de los bloques — invitaciones, avisos, auditoría pendiente,
+  //       mis conjuntos, notificaciones recibidas y, al final, el historial.
+  // ¿Impacto? Si alguien reordena el panel sin querer (o el aviso de auditoría vuelve a
+  //           empujar los botones hacia abajo), esta prueba falla.
+  it("muestra los bloques en orden: invitaciones, avisos, auditoría pendiente, conjuntos, notificaciones e historial", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("mis-invitaciones")) {
+        return Promise.resolve({
+          data: [
+            {
+              id: "inv-1",
+              nombre_conjunto: "Conjunto Las Flores",
+              direccion_conjunto: "Cra 5 # 6-7",
+              invitado_por_nombre: "Ana Admin",
+              estado: "PENDIENTE",
+              expires_at: "2026-09-01T00:00:00Z",
+            },
+          ],
+        });
+      }
+      if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+      return Promise.resolve(respuestaPorDefecto(url));
+    });
+    renderPage();
+
+    const titulos = [
+      await screen.findByRole("heading", { name: "Invitaciones pendientes" }),
+      screen.getByRole("heading", { name: "Enviar notificación" }),
+      await screen.findByRole("heading", { name: "Auditoría semanal pendiente" }),
+      screen.getByRole("heading", { name: "Mis conjuntos autorizados" }),
+      screen.getByRole("heading", { name: "Notificaciones recibidas" }),
+      screen.getByRole("heading", { name: "Historial de auditorías" }),
+    ];
+    for (let i = 0; i < titulos.length - 1; i++) {
+      expect(titulos[i].compareDocumentPosition(titulos[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
+  it("el mensaje de aviso enviado aparece dentro del bloque de los botones", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+      return Promise.resolve(respuestaPorDefecto(url));
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Llegué al conjunto" }));
+    await user.click(screen.getByRole("button", { name: "Enviar aviso" }));
+
+    const bloque = screen.getByRole("region", { name: "Enviar notificación" });
+    expect(await within(bloque).findByText(/Notificación enviada/)).toBeInTheDocument();
+  });
+
   // ¿Qué? Issue #414: el motivo exacto del rechazo sale DENTRO del modal.
   async function abrirModalLlegada() {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     const user = userEvent.setup();
     renderPage();
@@ -203,13 +292,12 @@ describe("RecicladorDashboard", () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
       if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
-      if (url.includes("/auditorias-conjunto/mias")) return Promise.resolve({ data: [] });
       if (url.includes("/contenido-educativo")) {
         return Promise.resolve({
           data: [{ id_contenido: 1, modulo_categoria: "Separación en la fuente y código de colores" }],
         });
       }
-      return Promise.resolve({ data: [] });
+      return Promise.resolve(respuestaPorDefecto(url));
     });
     mockPost.mockResolvedValue({ data: { id_auditoria: 1 } });
     const user = userEvent.setup();
@@ -248,5 +336,137 @@ describe("RecicladorDashboard", () => {
     expect(formData.get("nivel_desempeno")).toBe("BUENA");
     expect(formData.get("tema_educativo")).toBe("Separación en la fuente y código de colores");
     expect(formData.get("evidencias")).toBeInstanceOf(File);
+  });
+
+  // ¿Qué? En Chrome, `input.files` es una lista "viva": al hacer `input.value = ""` queda vacía.
+  //       El formulario leía esa lista DESPUÉS de vaciar el campo (React ejecuta la función
+  //       de `setEvidencias` más tarde), así que nunca agregaba la foto y el botón se quedaba
+  //       en "Completa el formulario".
+  // ¿Para qué? Es un error real que se encontró en #459: en jsdom no se nota porque ahí la lista
+  //           no es viva. Esta prueba imita el comportamiento de Chrome.
+  // ¿Impacto? Si alguien vuelve a leer la lista después de vaciar el campo, esta prueba falla.
+  it("adjunta la foto aunque el navegador vacíe la lista de archivos al limpiar el campo (Chrome)", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("mis-invitaciones")) return Promise.resolve({ data: [] });
+      if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+      if (url.includes("/contenido-educativo")) {
+        return Promise.resolve({
+          data: [{ id_contenido: 1, modulo_categoria: "Separación en la fuente y código de colores" }],
+        });
+      }
+      return Promise.resolve(respuestaPorDefecto(url));
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText("Ya puedes calificar la separación de residuos de Conjunto Los Alpes.");
+    await user.click(screen.getByRole("button", { name: "Auditar ahora" }));
+    await user.click(screen.getByRole("radio", { name: "Bueno" }));
+    await user.selectOptions(await screen.findByRole("combobox"), "Separación en la fuente y código de colores");
+
+    const archivo = new File(["contenido"], "evidencia.jpg", { type: "image/jpeg" });
+    const input = screen.getByLabelText(/JPG, PNG o WEBP/) as HTMLInputElement;
+    const listaViva: File[] = [archivo];
+    Object.defineProperty(input, "files", { get: () => listaViva, configurable: true });
+    Object.defineProperty(input, "value", {
+      get: () => "",
+      set: () => {
+        listaViva.length = 0; // lo que hace Chrome al vaciar el campo
+      },
+      configurable: true,
+    });
+    fireEvent.change(input);
+
+    expect(await screen.findByAltText("evidencia.jpg")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Enviar auditoría" })).toBeEnabled();
+  });
+
+  // ¿Qué? El aviso "ya puedes calificar" sale de la fecha de la última auditoría de cada conjunto
+  //       (GET /auditorias-conjunto/mias/ultimas), no de la lista paginada del historial.
+  // ¿Para qué? Con la lista paginada, la auditoría más reciente de un conjunto puede quedar fuera
+  //           de la primera página y el panel avisaría "pendiente" aunque se auditó hace poco.
+  describe("aviso de auditoría pendiente", () => {
+    const haceDias = (dias: number) => new Date(Date.now() - dias * 24 * 60 * 60 * 1000).toISOString();
+    const AVISO = "Ya puedes calificar la separación de residuos de Conjunto Los Alpes.";
+
+    function mockConUltima(ultima: string | null) {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+        if (url.endsWith("/auditorias-conjunto/mias/ultimas")) {
+          return Promise.resolve({
+            data: ultima ? [{ id_conjunto_residencial: 1, ultima_auditoria: ultima }] : [],
+          });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+    }
+
+    it("no avisa un conjunto auditado hace menos de 7 días", async () => {
+      mockConUltima(haceDias(2));
+      renderPage();
+
+      // ¿Qué? El conjunto ya se pintó (terminó la carga), y aun así el aviso no está.
+      await screen.findAllByText("Conjunto Los Alpes");
+      await waitFor(() => {
+        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias/ultimas"));
+      });
+      expect(screen.queryByText(AVISO)).not.toBeInTheDocument();
+    });
+
+    it("avisa un conjunto cuya última auditoría tiene 7 días o más", async () => {
+      mockConUltima(haceDias(8));
+      renderPage();
+
+      expect(await screen.findByText(AVISO)).toBeInTheDocument();
+    });
+
+    it("avisa un conjunto que nunca se ha auditado", async () => {
+      mockConUltima(null);
+      renderPage();
+
+      expect(await screen.findByText(AVISO)).toBeInTheDocument();
+    });
+  });
+
+  describe("historial de auditorías enviadas", () => {
+    const auditoria = (n: number) => ({
+      id_auditoria: `a${n}`,
+      id_conjunto_residencial: 1,
+      nombre_conjunto: "Conjunto Los Alpes",
+      nivel_desempeno: "BUENA",
+      tema_educativo: `Tema número ${n}`,
+      descripcion: null,
+      ruta_evidencia: "/x.jpg",
+      ruta_evidencia_2: null,
+      ruta_evidencia_3: null,
+      created_at: "2026-10-20T10:00:00Z",
+      nombre_reciclador: "Juan",
+    });
+
+    it("pide el historial de a 10 y pasa a la página siguiente con el offset correcto", async () => {
+      mockGet.mockImplementation((url: string, config?: { params?: { limit: number; offset: number } }) => {
+        if (url.endsWith("/auditorias-conjunto/mias")) {
+          const desde = config?.params?.offset ?? 0;
+          const items = Array.from({ length: Math.min(10, 25 - desde) }, (_, i) => auditoria(desde + i + 1));
+          return Promise.resolve({ data: { items, total: 25 } });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup();
+      renderPage();
+
+      expect(await screen.findByText("Conjunto Los Alpes — Tema número 1")).toBeInTheDocument();
+      expect(screen.getByText("Mostrando 1–10 de 25")).toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias"), {
+        params: { limit: 10, offset: 0 },
+      });
+
+      await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+
+      expect(await screen.findByText("Conjunto Los Alpes — Tema número 11")).toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias"), {
+        params: { limit: 10, offset: 10 },
+      });
+    });
   });
 });

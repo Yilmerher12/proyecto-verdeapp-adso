@@ -19,3 +19,10 @@ class ContenidoEducativo(Base):
     #           video, solo guía, o cualquier combinación.
     url_video = Column(String(500), nullable=True)
     url_guia = Column(String(500), nullable=True)
+    # ¿Qué? Imagen de portada del módulo (opcional), subida por el Administrador
+    #       del Sistema a /uploads/adjuntos/.
+    # ¿Para qué? Se ve en la tarjeta de su categoría y arriba de la lección.
+    # ¿Impacto? Sin imagen, el frontend usa la imagen fija de la categoría. Hay
+    #           que listarla en COLUMNAS_CON_ADJUNTOS (limpiar_adjuntos.py), o la
+    #           limpieza borraría imágenes que sí se usan.
+    url_imagen = Column(String(500), nullable=True)

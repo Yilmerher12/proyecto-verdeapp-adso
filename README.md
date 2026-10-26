@@ -164,6 +164,8 @@ uv run python -m app.seed
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
+> **Datos de demostración (opcional, para presentar el proyecto):** después del seed normal, `uv run python -m app.seed_demo` agrega 3 conjuntos con residentes, recicladores, 8 semanas de auditorías con fotos, comunicados, novedades, soporte y agenda, para que ningún panel se vea vacío. Los usuarios inventados terminan en `@demo.verdeapp.com` y comparten la contraseña de las cuentas de prueba. Las fechas son relativas al día en que se corre, así que conviene correrlo justo antes de presentar. Las fotos viven en `be/app/data/demo/fotos/`. Si ya hay usuarios `@demo.verdeapp.com`, no hace nada.
+
 > En ejecuciones siguientes normalmente solo hace falta encender uvicorn (uv usa el entorno correcto solo). Repetir `uv run python -m app.seed` no hace daño, pero solo es necesario si empezaste con una base de datos nueva (ej: borraste el volumen de Docker):
 > ```powershell
 > uv run uvicorn app.main:app --reload --port 8000
@@ -312,6 +314,20 @@ uv run uvicorn app.main:app --reload --port 8000
 **Un puerto ya está en uso** (`3000`, `5173`, `8000`, `5433` u `8025`)
 
 Suele pasar si dejaste corriendo una instancia anterior del proyecto, u otro programa en tu máquina ya usa ese puerto (por ejemplo, un PostgreSQL instalado localmente compite por el `5432`, por eso VerdeApp usa `5433`). Revisa qué proceso lo tiene ocupado y ciérralo, o apaga los contenedores anteriores con `docker compose down` antes de volver a encender.
+
+**`pnpm dev` termina con `Port 5173 is already in use`**
+
+Otro programa (casi siempre un `pnpm dev` anterior que dejaste abierto) tiene el puerto `5173`. Vite ya no se pasa solo al `5174`: antes lo hacía y el login fallaba con un error que el navegador muestra como "CORS", porque el backend solo acepta los orígenes `:5173` y `:3000` (`ALLOWED_ORIGINS` en `be/app/main.py`). Libera el puerto y vuelve a correr `pnpm dev`. En Windows (PowerShell), primero mira qué proceso lo usa; el número que sale al final de la línea es el PID:
+
+```powershell
+netstat -ano | findstr :5173
+```
+
+Luego ciérralo con ese número (reemplaza `1234`):
+
+```powershell
+taskkill /PID 1234 /F
+```
 
 **`uv` o `pnpm` no se reconocen como comando**
 
@@ -550,7 +566,7 @@ Toda la documentación vive en `docs/`, en Markdown, versionada junto con el có
 | [`docs/requisitos/restricciones.md`](docs/requisitos/restricciones.md) | Reglas transversales del proyecto (idioma del código, convención de ramas/commits, versionado de dependencias) |
 | [`docs/conceptos/`](docs/conceptos/) | Explicación pedagógica de OWASP Top 10, accesibilidad (ARIA/WCAG) y patrones de arquitectura, con evidencia real de archivo y línea |
 | [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Diagrama de clases y catálogo de casos de uso |
-| [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance |
+| [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance. En [`informes-scrum/`](docs/gestion-proyecto/informes-scrum/) están los informes semanales del Scrum Master |
 | [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md) | Bootcamp de testing: capa de cada integrante por semana y cobertura registrada |
 
 Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implementar`) que se actualiza cada vez que su funcionalidad cambia de verdad — es la fuente de verdad más confiable sobre qué tan avanzado está el proyecto, más que cualquier resumen (incluido este README).
@@ -579,7 +595,7 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 **Cobertura**: `uv run pytest` y `pnpm test` (en `fe/`) miden siempre qué porcentaje del código ejecutan las pruebas, y **fallan** si baja del umbral configurado (`fail_under` en `be/pyproject.toml`, `thresholds` en `fe/vite.config.ts`). El CI corre esos mismos comandos, así que un PR que baje la cobertura queda en rojo. El umbral solo sube; su historial está en [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md).
 
-**E2E, primera vez** (desde `e2e/`): `pnpm install` y luego `pnpm exec playwright install chromium` (descarga el navegador). Antes de `pnpm test`, el backend y la BD deben estar encendidos (Método B); el frontend lo levanta Playwright solo. `pnpm codegen` abre un navegador que graba lo que haces y lo convierte en código de test.
+**E2E, primera vez** (desde `e2e/`): `pnpm install`, luego `pnpm exec playwright install chromium` (descarga el navegador) y copia `e2e/.env.example` como `e2e/.env` (las cuentas de prueba que leen los tests; ese archivo no se sube a Git). Antes de `pnpm test`, el backend y la BD deben estar encendidos (Método B); el frontend lo levanta Playwright solo. `pnpm codegen` abre un navegador que graba lo que haces y lo convierte en código de test.
 
 **E2E y el CI**: las carpetas `e2e/playwright-report/` y `e2e/test-results/` **no se suben como artefacto** del CI (ya están en `.gitignore`). Las trazas de Playwright guardan paso a paso lo que hizo el navegador, y pueden incluir el correo y la contraseña de las cuentas de prueba. Si algún día el CI sube esos reportes, hay que revisar primero qué contienen. Las dependencias de `e2e/` las vigilan Dependabot y un paso `pnpm audit` del CI, igual que las de `fe/`.
 

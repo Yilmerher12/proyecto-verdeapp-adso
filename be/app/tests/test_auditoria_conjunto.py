@@ -8,6 +8,7 @@ Descripción: Pruebas de la auditoría del Reciclador al conjunto (RQF-009).
 """
 import io
 import uuid
+from datetime import datetime, time, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,6 +16,8 @@ from PIL import Image
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
+from app.models.auditoria_conjunto import AuditoriaConjunto
 from app.models.conjunto_residencial import ConjuntoResidencial
 from app.models.localidad import Localidad
 from app.models.reciclador import Reciclador
@@ -23,6 +26,7 @@ from app.models.rol import RolId
 from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
+from app.services.agenda_conjunto_service import HUSO_BOGOTA
 from app.utils.security import create_access_token, hash_password
 
 
@@ -290,13 +294,14 @@ class TestListarMisAuditorias:
         response = client.get("/api/v1/auditorias-conjunto/mias", headers=reciclador_auth_headers)
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 1
-        assert data[0]["id_conjunto_residencial"] == str(conjunto_verificado.id_conjunto_residencial)
+        assert data["total"] == 1
+        assert len(data["items"]) == 1
+        assert data["items"][0]["id_conjunto_residencial"] == str(conjunto_verificado.id_conjunto_residencial)
 
     def test_reciclador_sin_auditorias_ve_lista_vacia(self, client: TestClient, reciclador_auth_headers):
         response = client.get("/api/v1/auditorias-conjunto/mias", headers=reciclador_auth_headers)
         assert response.status_code == 200
-        assert response.json() == []
+        assert response.json() == {"items": [], "total": 0}
 
 
 class TestNotificacionAlPublicar:
@@ -599,7 +604,7 @@ class TestListarHistorial:
     def test_residente_sin_auditorias_ve_lista_vacia(self, client: TestClient, auth_headers):
         response = client.get("/api/v1/auditorias-conjunto/historial", headers=auth_headers)
         assert response.status_code == 200
-        assert response.json() == []
+        assert response.json() == {"items": [], "total": 0}
 
     def test_residente_ve_las_auditorias_de_su_conjunto_mas_recientes_primero(
         self,
@@ -647,17 +652,17 @@ class TestListarHistorial:
         client.post(
             "/api/v1/auditorias-conjunto",
             headers=headers_otro,
-            data={**_payload_valido(conjunto_verificado.id_conjunto_residencial), "nivel_desempeno": "EXCELENTE"},
+            data={**_payload_valido(conjunto_verificado.id_conjunto_residencial), "nivel_desempeno": "BUENA"},
             files=_archivo_valido(),
         )
 
         response = client.get("/api/v1/auditorias-conjunto/historial", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 2
-        # ¿Qué? La más reciente (EXCELENTE, enviada segunda) debe ir primero.
-        assert data[0]["nivel_desempeno"] == "EXCELENTE"
-        assert data[1]["nivel_desempeno"] == "DEFICIENTE"
+        assert data["total"] == 2
+        # ¿Qué? La más reciente (BUENA, enviada segunda) debe ir primero.
+        assert data["items"][0]["nivel_desempeno"] == "BUENA"
+        assert data["items"][1]["nivel_desempeno"] == "DEFICIENTE"
 
     def test_admin_de_conjunto_ve_el_mismo_historial(
         self,
@@ -677,4 +682,447 @@ class TestListarHistorial:
         )
         response = client.get("/api/v1/auditorias-conjunto/historial", headers=admin_conjunto_auth_headers)
         assert response.status_code == 200
-        assert len(response.json()) == 1
+        assert response.json()["total"] == 1
+
+
+# ────────────────────────────
+# 📊 Desempeño semanal (issue #486)
+# ────────────────────────────
+
+
+def _lunes_actual():
+    """¿Qué? El lunes de la semana en curso, en hora de Bogotá — igual que
+    lo calcula el servicio, para que las pruebas no dependan del día en que
+    se corren."""
+    hoy = datetime.now(HUSO_BOGOTA).date()
+    return hoy - timedelta(days=hoy.weekday())
+
+
+def _momento_bogota(lunes, dias: int, hora: int = 12) -> datetime:
+    return datetime.combine(lunes + timedelta(days=dias), time(hora, 0), tzinfo=HUSO_BOGOTA)
+
+
+def _sembrar_auditoria(db: Session, reciclador: Reciclador, id_conjunto, nivel: str, tema: str, momento: datetime):
+    """¿Qué? Inserta una auditoría directo en la BD con la fecha elegida.
+    ¿Para qué? Por la API no se puede: el cooldown de 24 h y el control de
+    presencia impiden crear auditorías en fechas pasadas o muchas seguidas."""
+    db.add(AuditoriaConjunto(
+        id_reciclador=reciclador.id_reciclador,
+        id_conjunto_residencial=id_conjunto,
+        nivel_desempeno=nivel,
+        tema_educativo=tema,
+        ruta_evidencia="/uploads/evidencias-auditoria/prueba.jpg",
+        created_at=momento,
+    ))
+    db.commit()
+
+
+URL_DESEMPENO = "/api/v1/auditorias-conjunto/desempeno"
+URL_SEMANA = "/api/v1/auditorias-conjunto/desempeno/semana"
+
+
+class TestDesempenoSemanal:
+    def test_sin_login_devuelve_401(self, client: TestClient):
+        assert client.get(URL_DESEMPENO).status_code == 401
+
+    def test_reciclador_recibe_403(self, client: TestClient, reciclador_auth_headers, conjunto_verificado):
+        response = client.get(
+            URL_DESEMPENO,
+            headers=reciclador_auth_headers,
+            params={"id_conjunto": str(conjunto_verificado.id_conjunto_residencial)},
+        )
+        assert response.status_code == 403
+
+    def test_admin_del_sistema_recibe_403(self, client: TestClient, admin_sistema_auth_headers, conjunto_verificado):
+        response = client.get(
+            URL_DESEMPENO,
+            headers=admin_sistema_auth_headers,
+            params={"id_conjunto": str(conjunto_verificado.id_conjunto_residencial)},
+        )
+        assert response.status_code == 403
+
+    def test_reciclador_sin_id_conjunto_recibe_403(self, client: TestClient, reciclador_auth_headers):
+        assert client.get(URL_DESEMPENO, headers=reciclador_auth_headers).status_code == 403
+
+    def test_semanas_invalido_devuelve_422(self, client: TestClient, auth_headers):
+        assert client.get(URL_DESEMPENO, headers=auth_headers, params={"semanas": 5}).status_code == 422
+
+    def test_residente_sin_auditorias_ve_ocho_semanas_en_cero_con_la_actual_al_final(
+        self, client: TestClient, auth_headers, conjunto_verificado
+    ):
+        response = client.get(URL_DESEMPENO, headers=auth_headers)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id_conjunto_residencial"] == str(conjunto_verificado.id_conjunto_residencial)
+        assert data["total"] == 0
+        assert data["temas"] == []
+        assert len(data["semanas"]) == 8
+        assert data["semanas"][-1]["lunes"] == _lunes_actual().isoformat()
+        assert data["semanas"][0]["lunes"] == (_lunes_actual() - timedelta(weeks=7)).isoformat()
+        assert all(s["bueno"] == s["regular"] == s["malo"] == 0 for s in data["semanas"])
+
+    @pytest.mark.parametrize("semanas", [4, 12])
+    def test_semanas_4_y_12_devuelven_esa_cantidad(self, client: TestClient, auth_headers, semanas):
+        response = client.get(URL_DESEMPENO, headers=auth_headers, params={"semanas": semanas})
+        assert len(response.json()["semanas"]) == semanas
+
+    def test_cuenta_por_semana_nivel_y_tema(
+        self, client: TestClient, db: Session, auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        id_conjunto = conjunto_verificado.id_conjunto_residencial
+        lunes = _lunes_actual()
+        _sembrar_auditoria(db, reciclador_autorizado, id_conjunto, "BUENA", "Reciclaje de vidrio", _momento_bogota(lunes, -7))
+        _sembrar_auditoria(db, reciclador_autorizado, id_conjunto, "REGULAR", "Reciclaje de vidrio", _momento_bogota(lunes, -6))
+        _sembrar_auditoria(db, reciclador_autorizado, id_conjunto, "DEFICIENTE", "Residuos orgánicos", _momento_bogota(lunes, -6))
+        _sembrar_auditoria(db, reciclador_autorizado, id_conjunto, "REGULAR", "Residuos orgánicos", _momento_bogota(lunes, 0, hora=0))
+
+        data = client.get(URL_DESEMPENO, headers=auth_headers).json()
+
+        assert data["total"] == 4
+        anterior, actual = data["semanas"][-2], data["semanas"][-1]
+        assert (anterior["bueno"], anterior["regular"], anterior["malo"]) == (1, 1, 1)
+        assert (actual["bueno"], actual["regular"], actual["malo"]) == (0, 1, 0)
+        temas = {t["tema"]: (t["bueno"], t["regular"], t["malo"]) for t in data["temas"]}
+        assert temas == {"Reciclaje de vidrio": (1, 1, 0), "Residuos orgánicos": (0, 1, 1)}
+
+    def test_domingo_9pm_en_bogota_cuenta_en_la_semana_de_ese_domingo(
+        self, client: TestClient, db: Session, auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        """¿Qué? Domingo 21:00 en Bogotá ya es lunes 02:00 en UTC. Por semana
+        UTC caería en la semana siguiente; por semana de Bogotá, no."""
+        domingo_noche = _momento_bogota(_lunes_actual(), -1, hora=21)
+        _sembrar_auditoria(
+            db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, "BUENA", "Tema", domingo_noche
+        )
+
+        semanas = client.get(URL_DESEMPENO, headers=auth_headers).json()["semanas"]
+
+        assert semanas[-2]["bueno"] == 1
+        assert semanas[-1]["bueno"] == 0
+
+    def test_con_mas_de_50_auditorias_se_cuentan_todas(
+        self, client: TestClient, db: Session, auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        momento = _momento_bogota(_lunes_actual(), 0, hora=0)
+        for _ in range(55):
+            _sembrar_auditoria(
+                db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, "BUENA", "Tema", momento
+            )
+
+        data = client.get(URL_DESEMPENO, headers=auth_headers).json()
+
+        assert data["total"] == 55
+        assert data["semanas"][-1]["bueno"] == 55
+
+    def test_auditoria_fuera_de_la_ventana_no_cuenta(
+        self, client: TestClient, db: Session, auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        vieja = _momento_bogota(_lunes_actual(), -50)
+        _sembrar_auditoria(
+            db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, "BUENA", "Tema", vieja
+        )
+
+        assert client.get(URL_DESEMPENO, headers=auth_headers).json()["total"] == 0
+        assert client.get(URL_DESEMPENO, headers=auth_headers, params={"semanas": 12}).json()["total"] == 1
+
+    def test_no_mezcla_auditorias_de_otros_conjuntos(
+        self,
+        client: TestClient,
+        db: Session,
+        auth_headers,
+        reciclador_autorizado,
+        conjunto_verificado,
+        conjunto_verificado_sin_admin,
+    ):
+        momento = _momento_bogota(_lunes_actual(), 0, hora=0)
+        _sembrar_auditoria(
+            db, reciclador_autorizado, conjunto_verificado_sin_admin.id_conjunto_residencial, "BUENA", "Tema", momento
+        )
+
+        assert client.get(URL_DESEMPENO, headers=auth_headers).json()["total"] == 0
+
+    def test_residente_pidiendo_conjunto_ajeno_recibe_403(
+        self, client: TestClient, auth_headers, conjunto_verificado_sin_admin
+    ):
+        response = client.get(
+            URL_DESEMPENO,
+            headers=auth_headers,
+            params={"id_conjunto": str(conjunto_verificado_sin_admin.id_conjunto_residencial)},
+        )
+        assert response.status_code == 403
+
+    def test_admin_de_conjunto_ve_su_conjunto(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        response = client.get(
+            URL_DESEMPENO,
+            headers=admin_conjunto_auth_headers,
+            params={"id_conjunto": str(conjunto_verificado.id_conjunto_residencial)},
+        )
+        assert response.status_code == 200
+
+    def test_admin_de_conjunto_pidiendo_conjunto_ajeno_recibe_403(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado_sin_admin
+    ):
+        response = client.get(
+            URL_DESEMPENO,
+            headers=admin_conjunto_auth_headers,
+            params={"id_conjunto": str(conjunto_verificado_sin_admin.id_conjunto_residencial)},
+        )
+        assert response.status_code == 403
+
+    def test_admin_con_varios_conjuntos_sin_id_conjunto_recibe_422(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+        conjunto_verificado_sin_admin,
+    ):
+        db.add(AdministradorConjuntoAsignacion(
+            id_administrador=admin_conjunto_test.id_administrador,
+            id_conjunto_residencial=conjunto_verificado_sin_admin.id_conjunto_residencial,
+        ))
+        db.commit()
+
+        assert client.get(URL_DESEMPENO, headers=admin_conjunto_auth_headers).status_code == 422
+
+
+class TestAuditoriasDeSemana:
+    def test_sin_login_devuelve_401(self, client: TestClient):
+        assert client.get(URL_SEMANA, params={"lunes": _lunes_actual().isoformat()}).status_code == 401
+
+    def test_reciclador_recibe_403(self, client: TestClient, reciclador_auth_headers, conjunto_verificado):
+        response = client.get(
+            URL_SEMANA,
+            headers=reciclador_auth_headers,
+            params={
+                "lunes": _lunes_actual().isoformat(),
+                "id_conjunto": str(conjunto_verificado.id_conjunto_residencial),
+            },
+        )
+        assert response.status_code == 403
+
+    def test_fecha_que_no_es_lunes_devuelve_422(self, client: TestClient, auth_headers):
+        martes = _lunes_actual() + timedelta(days=1)
+        assert client.get(URL_SEMANA, headers=auth_headers, params={"lunes": martes.isoformat()}).status_code == 422
+
+    def test_conjunto_ajeno_recibe_403(self, client: TestClient, auth_headers, conjunto_verificado_sin_admin):
+        response = client.get(
+            URL_SEMANA,
+            headers=auth_headers,
+            params={
+                "lunes": _lunes_actual().isoformat(),
+                "id_conjunto": str(conjunto_verificado_sin_admin.id_conjunto_residencial),
+            },
+        )
+        assert response.status_code == 403
+
+    def test_devuelve_solo_las_de_esa_semana_mas_recientes_primero(
+        self, client: TestClient, db: Session, auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        id_conjunto = conjunto_verificado.id_conjunto_residencial
+        lunes = _lunes_actual() - timedelta(weeks=1)
+        _sembrar_auditoria(db, reciclador_autorizado, id_conjunto, "BUENA", "Primera", _momento_bogota(lunes, 1))
+        _sembrar_auditoria(db, reciclador_autorizado, id_conjunto, "DEFICIENTE", "Segunda", _momento_bogota(lunes, 3))
+        _sembrar_auditoria(db, reciclador_autorizado, id_conjunto, "BUENA", "Otra semana", _momento_bogota(lunes, -3))
+        _sembrar_auditoria(db, reciclador_autorizado, id_conjunto, "BUENA", "Semana siguiente", _momento_bogota(lunes, 8))
+
+        response = client.get(URL_SEMANA, headers=auth_headers, params={"lunes": lunes.isoformat()})
+
+        assert response.status_code == 200
+        assert [a["tema_educativo"] for a in response.json()] == ["Segunda", "Primera"]
+
+    def test_domingo_9pm_de_bogota_queda_en_su_semana(
+        self, client: TestClient, db: Session, auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        lunes = _lunes_actual() - timedelta(weeks=1)
+        _sembrar_auditoria(
+            db,
+            reciclador_autorizado,
+            conjunto_verificado.id_conjunto_residencial,
+            "BUENA",
+            "Domingo noche",
+            _momento_bogota(lunes, 6, hora=21),
+        )
+
+        este = client.get(URL_SEMANA, headers=auth_headers, params={"lunes": lunes.isoformat()}).json()
+        siguiente = client.get(
+            URL_SEMANA, headers=auth_headers, params={"lunes": (lunes + timedelta(weeks=1)).isoformat()}
+        ).json()
+
+        assert [a["tema_educativo"] for a in este] == ["Domingo noche"]
+        assert siguiente == []
+
+
+# ────────────────────────────
+# 📄 Paginación del historial (Residente) y de "mis auditorías" (Reciclador)
+# ────────────────────────────
+
+URL_HISTORIAL = "/api/v1/auditorias-conjunto/historial"
+URL_MIAS = "/api/v1/auditorias-conjunto/mias"
+URL_ULTIMAS = "/api/v1/auditorias-conjunto/mias/ultimas"
+
+
+def _sembrar_consecutivas(db: Session, reciclador: Reciclador, id_conjunto, cantidad: int) -> list[str]:
+    """¿Qué? `cantidad` auditorías con minutos distintos (la más vieja primero); devuelve sus temas
+    de la más reciente a la más antigua, que es el orden en que las listas deben entregarlas."""
+    base = _momento_bogota(_lunes_actual(), 0, hora=0)
+    for i in range(cantidad):
+        _sembrar_auditoria(db, reciclador, id_conjunto, "BUENA", f"Tema {i:03d}", base + timedelta(minutes=i))
+    return [f"Tema {i:03d}" for i in reversed(range(cantidad))]
+
+
+def _otro_reciclador(db: Session, correo: str, telefono: str) -> Reciclador:
+    usuario = Usuario(
+        correo_electronico=correo,
+        id_rol=RolId.RECICLADOR,
+        password=hash_password("Password1"),
+        is_active=True,
+    )
+    db.add(usuario)
+    db.flush()
+    reciclador = Reciclador(id_usuario=usuario.id_usuario, nombre="OTRO", apellidos="RECICLADOR", numero_telefonico=telefono)
+    db.add(reciclador)
+    db.commit()
+    return reciclador
+
+
+class TestPaginacionDelHistorial:
+    def test_con_mas_de_50_auditorias_las_entrega_todas_de_a_paginas(
+        self, client: TestClient, db: Session, auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        esperados = _sembrar_consecutivas(db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, 55)
+
+        primera = client.get(URL_HISTORIAL, headers=auth_headers, params={"limit": 50}).json()
+        segunda = client.get(URL_HISTORIAL, headers=auth_headers, params={"limit": 50, "offset": 50}).json()
+
+        assert primera["total"] == segunda["total"] == 55
+        assert [a["tema_educativo"] for a in primera["items"] + segunda["items"]] == esperados
+
+    def test_las_paginas_no_repiten_ni_saltan_auditorias(
+        self, client: TestClient, db: Session, auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        esperados = _sembrar_consecutivas(db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, 7)
+
+        temas = []
+        for offset in (0, 3, 6):
+            pagina = client.get(URL_HISTORIAL, headers=auth_headers, params={"limit": 3, "offset": offset}).json()
+            temas += [a["tema_educativo"] for a in pagina["items"]]
+
+        assert temas == esperados
+
+    def test_offset_pasado_del_final_devuelve_pagina_vacia_con_el_total(
+        self, client: TestClient, db: Session, auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        _sembrar_consecutivas(db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, 2)
+
+        data = client.get(URL_HISTORIAL, headers=auth_headers, params={"offset": 10}).json()
+
+        assert data == {"items": [], "total": 2}
+
+    def test_sin_limit_usa_20_por_pagina(
+        self, client: TestClient, db: Session, auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        _sembrar_consecutivas(db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, 25)
+
+        data = client.get(URL_HISTORIAL, headers=auth_headers).json()
+
+        assert len(data["items"]) == 20
+        assert data["total"] == 25
+
+    @pytest.mark.parametrize("params", [{"limit": 0}, {"limit": 101}, {"offset": -1}])
+    def test_limit_u_offset_fuera_de_rango_devuelve_422(self, client: TestClient, auth_headers, params):
+        assert client.get(URL_HISTORIAL, headers=auth_headers, params=params).status_code == 422
+
+    def test_no_mezcla_auditorias_de_otro_conjunto_en_el_total(
+        self,
+        client: TestClient,
+        db: Session,
+        auth_headers,
+        reciclador_autorizado,
+        conjunto_verificado,
+        conjunto_verificado_sin_admin,
+    ):
+        _sembrar_consecutivas(db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, 2)
+        _sembrar_consecutivas(db, reciclador_autorizado, conjunto_verificado_sin_admin.id_conjunto_residencial, 3)
+
+        assert client.get(URL_HISTORIAL, headers=auth_headers).json()["total"] == 2
+
+
+class TestPaginacionDeMisAuditorias:
+    def test_entrega_todas_de_a_paginas_con_el_total(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        esperados = _sembrar_consecutivas(db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, 5)
+
+        temas = []
+        for offset in (0, 2, 4):
+            pagina = client.get(URL_MIAS, headers=reciclador_auth_headers, params={"limit": 2, "offset": offset}).json()
+            assert pagina["total"] == 5
+            temas += [a["tema_educativo"] for a in pagina["items"]]
+
+        assert temas == esperados
+
+    def test_solo_cuenta_las_propias(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        _sembrar_consecutivas(db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, 2)
+        otro = _otro_reciclador(db, "otro.reciclador.mias@verdeapp.com", "3000000097")
+        _sembrar_consecutivas(db, otro, conjunto_verificado.id_conjunto_residencial, 4)
+
+        assert client.get(URL_MIAS, headers=reciclador_auth_headers).json()["total"] == 2
+
+    @pytest.mark.parametrize("params", [{"limit": 0}, {"limit": 101}, {"offset": -1}])
+    def test_limit_u_offset_fuera_de_rango_devuelve_422(self, client: TestClient, reciclador_auth_headers, params):
+        assert client.get(URL_MIAS, headers=reciclador_auth_headers, params=params).status_code == 422
+
+
+class TestUltimasAuditoriasPorConjunto:
+    def test_sin_login_devuelve_401(self, client: TestClient):
+        assert client.get(URL_ULTIMAS).status_code == 401
+
+    def test_residente_recibe_403(self, client: TestClient, auth_headers):
+        assert client.get(URL_ULTIMAS, headers=auth_headers).status_code == 403
+
+    def test_sin_auditorias_devuelve_lista_vacia(self, client: TestClient, reciclador_auth_headers):
+        response = client.get(URL_ULTIMAS, headers=reciclador_auth_headers)
+        assert response.status_code == 200
+        assert response.json() == []
+
+    def test_una_fila_por_conjunto_con_la_fecha_de_la_mas_reciente(
+        self,
+        client: TestClient,
+        db: Session,
+        reciclador_auth_headers,
+        reciclador_autorizado,
+        conjunto_verificado,
+        conjunto_verificado_sin_admin,
+    ):
+        id_a = conjunto_verificado.id_conjunto_residencial
+        id_b = conjunto_verificado_sin_admin.id_conjunto_residencial
+        lunes = _lunes_actual()
+        # ¿Qué? 3 auditorías en A (cuenta la más reciente) y 1 en B, mucho más vieja que las de A.
+        _sembrar_auditoria(db, reciclador_autorizado, id_a, "BUENA", "Vieja", _momento_bogota(lunes, -20))
+        reciente_a = _momento_bogota(lunes, -2)
+        _sembrar_auditoria(db, reciclador_autorizado, id_a, "BUENA", "Reciente", reciente_a)
+        _sembrar_auditoria(db, reciclador_autorizado, id_a, "REGULAR", "Media", _momento_bogota(lunes, -10))
+        unica_b = _momento_bogota(lunes, -30)
+        _sembrar_auditoria(db, reciclador_autorizado, id_b, "BUENA", "Unica", unica_b)
+
+        filas = client.get(URL_ULTIMAS, headers=reciclador_auth_headers).json()
+
+        por_conjunto = {f["id_conjunto_residencial"]: datetime.fromisoformat(f["ultima_auditoria"]) for f in filas}
+        assert len(filas) == 2
+        assert por_conjunto == {str(id_a): reciente_a, str(id_b): unica_b}
+
+    def test_no_incluye_auditorias_de_otros_recicladores(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        otro = _otro_reciclador(db, "otro.reciclador.ultimas@verdeapp.com", "3000000096")
+        _sembrar_auditoria(
+            db, otro, conjunto_verificado.id_conjunto_residencial, "BUENA", "Ajena", _momento_bogota(_lunes_actual(), -1)
+        )
+
+        assert client.get(URL_ULTIMAS, headers=reciclador_auth_headers).json() == []

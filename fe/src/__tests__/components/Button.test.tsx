@@ -89,4 +89,19 @@ describe("Button", () => {
     render(<Button variant={variant}>Botón</Button>);
     expect(screen.getByRole("button")).toHaveClass(claseEsperada);
   });
+
+  // ¿Qué? El foco con teclado usa la utilidad `focus-ring` (anillo sólido, solo
+  //       con :focus-visible) y el cursor de mano.
+  // ¿Para qué? Issue #501: antes el anillo era `focus:ring-accent-500/20`, casi
+  //           invisible; ningún botón compartido debe volver a quitarlo.
+  // ¿Impacto? Si alguien borra `focus-ring`, quien navega con Tab pierde dónde está.
+  it.each(["primary", "secondary", "danger"] as const)(
+    "la variante '%s' muestra el foco con teclado y el cursor de mano",
+    (variant) => {
+      render(<Button variant={variant}>Botón</Button>);
+      const boton = screen.getByRole("button");
+      expect(boton).toHaveClass("focus-ring", "cursor-pointer");
+      expect(boton.className).not.toContain("focus:ring");
+    },
+  );
 });

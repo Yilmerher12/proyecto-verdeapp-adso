@@ -13,6 +13,8 @@ export interface ContenidoEducativo {
   cuerpo_texto: string;
   url_video: string | null;
   url_guia: string | null;
+  // ¿Qué? Imagen de portada opcional que sube el Administrador del Sistema.
+  url_imagen: string | null;
   fecha_publicacion: string;
 }
 
@@ -38,6 +40,19 @@ export async function listarContenido(): Promise<ContenidoEducativo[]> {
 export async function obtenerContenido(id: string): Promise<ContenidoEducativo> {
   const { data } = await axios.get(`${API_BASE}/${id}`);
   return data;
+}
+
+// ¿Qué? Lecciones vistas del Residente en sesión: los ids de los módulos que ya abrió.
+export async function listarVistos(): Promise<string[]> {
+  const { data } = await axios.get<{ ids: string[] }>(`${API_BASE}/vistos`);
+  return data.ids;
+}
+
+// ¿Qué? Marca como vistos los módulos que el Residente acaba de abrir y devuelve
+//       todos los que lleva vistos. Es idempotente: repetirlo no cambia nada.
+export async function marcarVistos(ids: string[]): Promise<string[]> {
+  const { data } = await axios.post<{ ids: string[] }>(`${API_BASE}/vistos`, { ids });
+  return data.ids;
 }
 
 export async function listarEnvios(id: string): Promise<EnvioContenido[]> {

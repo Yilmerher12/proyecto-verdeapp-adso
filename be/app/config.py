@@ -34,6 +34,23 @@ class Settings(BaseSettings):
     # ¿Impacto? Si es incorrecta, ninguna operación de lectura/escritura a la BD funcionará.
     DATABASE_URL: str
 
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def usar_driver_psycopg2(cls, v: str) -> str:
+        """Fuerza el driver psycopg2 en las URLs "postgresql://" sin driver explícito.
+
+        ¿Qué? Convierte "postgresql://..." en "postgresql+psycopg2://...".
+        ¿Para qué? Desde SQLAlchemy 2.1, una URL sin driver usa psycopg (v3) en
+                   vez de psycopg2, y el proyecto instala psycopg2-binary. Sin
+                   esto, el backend y Alembic fallan con "No module named 'psycopg'".
+        ¿Impacto? Los be/.env, docker-compose.yml y el CI siguen con la URL de
+                  siempre: nadie del equipo tiene que editar su .env. Una URL que
+                  ya trae driver (ej. "postgresql+psycopg://") se respeta tal cual.
+        """
+        if v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+psycopg2://", 1)
+        return v
+
     # ────────────────────────────
     # 🔐 JWT y Seguridad
     # ────────────────────────────
@@ -159,6 +176,13 @@ class Settings(BaseSettings):
     # ¿Impacto? Si no coincide con la URL real del frontend, los enlaces de recovery no funcionan
     #           y las peticiones del frontend serán bloqueadas por CORS.
     FRONTEND_URL: str = "http://localhost:5173"
+
+    # ¿Qué? URL pública del backend (ej. "https://verdeapp.com"), sin nada después del dominio.
+    # ¿Para qué? Armar los enlaces de las fotos en el CSV y el PDF de la agenda (HU-049). Si
+    #           está vacía, se usa la dirección con la que llegó la petición (request.base_url).
+    # ¿Impacto? Detrás de un proxy esa dirección es la interna (ej. "http://verde_be:8000") y
+    #           los enlaces quedarían rotos fuera del servidor. En desarrollo se deja vacía.
+    API_PUBLIC_URL: str = ""
 
     # ────────────────────────────
     # 🌍 Entorno de ejecución

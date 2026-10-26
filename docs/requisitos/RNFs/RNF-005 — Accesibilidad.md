@@ -41,6 +41,8 @@ Los componentes de formulario e interactivos deben incluir atributos ARIA correc
 
 Ningún estado del sistema (error, éxito, fortaleza de una contraseña) debe comunicarse únicamente mediante color. Debe acompañarse siempre de texto o un ícono (WCAG 1.4.1). Verificado en el indicador de fortaleza de contraseña, que combina color con una etiqueta de texto.
 
+> **Estado real (2026-10-22, issue #487)**: **Corregido en el semáforo por semana.** La barra semanal anterior (`HistorialAuditoriasSemanal`, tres tramos de color sin texto ni ícono) incumplía este requisito y se retiró. La página "Desempeño" del Admin de Conjunto la reemplaza: cada tramo de la gráfica lleva su número, la leyenda trae color + ícono (carita) + nombre, cada semana es un botón con su descripción completa para lector de pantalla y "Ver como tabla" da los mismos números. Verificado en el navegador, en claro y oscuro, con teclado (Tab, Enter, Espacio) y en celular (375 px).
+
 ### RNF-005.3 — Estructura semántica de la página
 
 El layout principal debe usar elementos HTML semánticos (`<nav>`, `<main>`, `<header>`) con `aria-label` donde el propósito no sea obvio por el contexto, para que la navegación por landmarks funcione con lectores de pantalla. Verificado en `AppShell.tsx`.
@@ -64,3 +66,5 @@ Ninguna transición o animación de la interfaz (aparición de un Modal, una Ale
 > **Estado real (2026-09-08, issue #197)**: **Verificado.** Antes esto solo estaba implementado para el Hero del Landing (`.animate-hero-in`) y el `useScrollReveal` de sus tarjetas. Al agregar transiciones de entrada a `Modal.tsx`, `Alert.tsx` y el mensaje de error de `InputField.tsx` (que antes aparecían de golpe, sin ninguna transición), se generalizó el mismo patrón con 2 utilidades CSS nuevas y reutilizables — `.animate-fade-in` y `.animate-scale-in` (`fe/src/index.css`) — en vez de repetir la lógica de `prefers-reduced-motion` en cada componente por separado.
 
 > **Actualización (2026-09-27)**: las animaciones de íconos agregadas con el mapa de íconos (`icon-draw`, `icon-hop`, `icon-shake`, `icon-ring`, `icon-nudge`, `icon-appear` en `fe/src/index.css`) siguen el mismo patrón: todas están dentro de `@media (prefers-reduced-motion: no-preference)`. Verificado en el navegador: con "reducir movimiento" activo, `animation-name` del ícono es `none`; sin esa preferencia, la animación corre.
+
+> **Actualización (2026-10-22, issue #502)**: las animaciones de íconos pasaron de 5 a 3 (`icon-draw` para lo tocable, `icon-hop` e `icon-shake` para mensajes; se borraron `icon-ring` e `icon-nudge`). `icon-draw` ahora también se dispara al **enfocar con el teclado** (antes solo con el mouse), y con "reducir movimiento" las flechas de los acordeones dejan de girar. El `Spinner` sigue girando, a propósito: es un indicador de progreso, no un ícono animado. Regla en `docs/requisitos/restricciones.md` y prueba en `fe/src/__tests__/lib/animacionesIconos.test.ts`.

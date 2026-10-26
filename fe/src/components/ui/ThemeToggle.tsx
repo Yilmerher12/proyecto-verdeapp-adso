@@ -47,14 +47,22 @@ function useTheme() {
  * ¿Para qué? Experiencia de usuario accesible con toggle visual.
  * ¿Impacto? Diseño limpio: solo un ícono con transición suave, sin texto ni degradados.
  */
-export function ThemeToggle() {
+export function ThemeToggle({ onDark = false }: { onDark?: boolean }) {
   const { isDark, toggle } = useTheme();
   const { t } = useTranslation();
+
+  // ¿Qué? `onDark` es para barras que son oscuras en AMBOS modos (la del Landing).
+  // ¿Para qué? Con el gris del modo claro (`gray-600`), la luna casi no se veía
+  //           sobre el verde oscuro de esa barra (issue #503).
+  // ¿Impacto? Sin `onDark` el botón se comporta como siempre, según el modo.
+  const colores = onDark
+    ? "text-white/80 hover:bg-white/10 hover:text-white"
+    : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-night-hover";
 
   return (
     <button
       onClick={toggle}
-      className="cursor-pointer rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-night-hover"
+      className={`touch-target flex cursor-pointer items-center justify-center rounded-lg p-2 transition-colors ${colores}`}
       // ¿Qué? Textos desde i18n: antes estaban fijos en español y, con la app
       //       en inglés, el lector de pantalla seguía leyendo "Cambiar a tema claro".
       aria-label={isDark ? t("common.switchToLight") : t("common.switchToDark")}

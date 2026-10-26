@@ -46,7 +46,7 @@ Este RF extiende **RQF-009** (Auditoría de Residuos con Semáforo) y **RQF-004*
 
 1. Al guardar una auditoría (`POST /api/v1/auditorias-conjunto`), el sistema revisa el `nivel_desempeno` registrado.
 2. Si el nivel es `REGULAR` o `DEFICIENTE`, crea una notificación de tipo `CONTENIDO_RECOMENDADO` dirigida a los Residentes del conjunto auditado, con el `id_referencia` apuntando a la auditoría recién creada.
-3. Si el nivel es `BUENA` (o el histórico `EXCELENTE`), no se genera ninguna notificación.
+3. Si el nivel es `BUENA`, no se genera ninguna notificación.
 4. El Administrador de Conjunto **no** recibe este tipo de notificación — solo el Residente puede entrar al catálogo educativo ("Aprender"), a diferencia de `AUDITORIA_PUBLICADA` (RQF-009) que sí llega a ambos.
 
 ### Flujo B — Ver la recomendación (Residente)
@@ -78,7 +78,7 @@ Este RF extiende **RQF-009** (Auditoría de Residuos con Semáforo) y **RQF-004*
 ## Reglas de negocio
 
 - RN-001: Solo un `nivel_desempeno` de `REGULAR` o `DEFICIENTE` dispara la notificación de contenido recomendado. **Implementado.**
-- RN-002: Un `nivel_desempeno` de `BUENA` (o el histórico `EXCELENTE`) no genera ninguna recomendación. **Implementado.**
+- RN-002: Un `nivel_desempeno` de `BUENA` no genera ninguna recomendación. **Implementado.**
 - RN-003: Solo los Residentes del conjunto auditado reciben esta notificación — el Administrador de Conjunto queda fuera, porque no tiene acceso al catálogo educativo (`RoleGuard` de `/catalogo-educativo` en `App.tsx`). **Implementado.**
 - RN-004: "Entre menos clics tenga que hacer el usuario, mejor" — un solo clic en la notificación navega directo a la categoría del catálogo educativo correspondiente, sin pasar por un paso intermedio. **Implementado.**
 - RN-005: De las categorías del catálogo educativo, solo se ofrecen como `tema_educativo` seleccionable en el formulario de auditoría aquellas que un Reciclador puede calificar observando el cuarto de basuras en una sola visita — "Por qué es importante reciclar" es un tema de conciencia a largo plazo, no un estado físico observable ese día, y se excluye del selector (`CATEGORIAS_NO_AUDITABLES` en `fe/src/config/categoriasEducativas.ts`) aunque sigue existiendo en el catálogo general para que el Residente la lea por su cuenta. La cantidad de basura generada por el conjunto ("Marco distrital y consumo responsable") sí se considera observable comparando una visita con otra (más bolsas que la visita anterior, el SHUT se llena más rápido de lo normal), por eso sí es seleccionable — su nombre corto para el Reciclador es "Cantidad de basura generada" (ajustado el 2026-09-14). **Implementado.**

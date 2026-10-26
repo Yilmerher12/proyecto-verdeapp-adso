@@ -24,6 +24,12 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // ¿Qué? Si el 5173 está ocupado, Vite se detiene con un error en vez de pasarse solo al 5174.
+    // ¿Para qué? El backend solo acepta los orígenes :5173 y :3000 (ALLOWED_ORIGINS en be/app/main.py);
+    //           en el 5174 el login fallaba y el navegador lo mostraba como un error de "CORS".
+    // ¿Impacto? Quien tenga el puerto ocupado ve el problema real al arrancar (ver README, "Solución
+    //           de Problemas Comunes") en vez de perder tiempo buscando un fallo de CORS.
+    strictPort: true,
     open: false,
   },
   // ¿Qué? Configuración de Vitest integrada en Vite.

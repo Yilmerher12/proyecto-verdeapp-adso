@@ -61,11 +61,11 @@ function resumirTexto(texto: string): string {
 // ¿Qué? Color por tipo — Urgente en rojo para que salte a la vista, igual
 //       que en el feed que ven residentes/recicladores.
 const TIPO_ESTILO: Record<TipoComunicado, string> = {
-  INFORMATIVO: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  URGENTE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400",
+  INFORMATIVO: "bg-blue-100 text-blue-700 dark:bg-blue-400/15 dark:text-blue-300",
+  URGENTE: "bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300",
+  CONVOCATORIA: "bg-purple-100 text-purple-700 dark:bg-purple-400/15 dark:text-purple-300",
+  MANTENIMIENTO: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
+  RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
 };
 
 /**
@@ -94,6 +94,9 @@ export function AdminConjuntoComunicadosPage() {
   const [errorFechaExpiracion, setErrorFechaExpiracion] = useState<string | null>(null);
 
   const [aEliminar, setAEliminar] = useState<Comunicado | null>(null);
+  // ¿Qué? true mientras corre la acción de la confirmación (issue #458).
+  // ¿Para qué? Antes no pasaba nada visible mientras tardaba y se podía confirmar dos veces.
+  const [eliminando, setEliminando] = useState(false);
 
   const paginacion = usePaginacion(TAMANO_PAGINA, total);
 
@@ -212,12 +215,15 @@ export function AdminConjuntoComunicadosPage() {
 
   const confirmarEliminar = async () => {
     if (!user || !aEliminar) return;
+    setEliminando(true);
     try {
       await eliminarComunicado(aEliminar.id_comunicado);
       setAEliminar(null);
       cargar();
     } catch {
       setErrorMsg(t("comunicados.admin.deleteError"));
+    } finally {
+      setEliminando(false);
     }
   };
 
@@ -231,7 +237,7 @@ export function AdminConjuntoComunicadosPage() {
         <button
           onClick={abrirCrear}
           disabled={conjuntos.length === 0}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
           <Plus className="icon-md" />
           {t("comunicados.admin.newButton")}
@@ -276,7 +282,7 @@ export function AdminConjuntoComunicadosPage() {
                     href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700 transition-colors hover:text-accent-800 dark:text-accent-400"
+                    className="link-text mt-2 inline-flex items-center gap-1.5 text-xs"
                   >
                     <Paperclip className="icon-sm" />
                     {t("comunicados.viewAttachment")}
@@ -298,13 +304,15 @@ export function AdminConjuntoComunicadosPage() {
                   onClick={() => abrirEditar(item)}
                   className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
                   aria-label={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
+                  title={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Pencil className="icon-md" />
                 </button>
                 <button
                   onClick={() => setAEliminar(item)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-900/20"
+                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-400/15"
                   aria-label={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
+                  title={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
                 >
                   <Trash2 className="icon-md" />
                 </button>
@@ -354,7 +362,7 @@ export function AdminConjuntoComunicadosPage() {
                     id="comunicado-conjunto"
                     value={form.id_conjunto_residencial}
                     onChange={(e) => setForm({ ...form, id_conjunto_residencial: e.target.value })}
-                    className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                    className="w-full cursor-pointer rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
                   >
                     {conjuntos.map((c) => (
                       <option key={c.id_conjunto_residencial} value={c.id_conjunto_residencial}>
@@ -387,7 +395,7 @@ export function AdminConjuntoComunicadosPage() {
                         onClick={() => setForm({ ...form, destinatarios: d })}
                         className={`flex-1 cursor-pointer rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                           form.destinatarios === d
-                            ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400"
+                            ? "border-accent-500 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
                             : "border-gray-200 text-gray-600 hover:border-accent-300 dark:border-night-line dark:text-gray-300"
                         }`}
                       >
@@ -419,7 +427,7 @@ export function AdminConjuntoComunicadosPage() {
                 id="comunicado-tipo"
                 value={form.tipo}
                 onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoComunicado })}
-                className="w-full cursor-pointer rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full cursor-pointer rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               >
                 {TIPOS.map((tipo) => (
                   <option key={tipo} value={tipo}>
@@ -445,11 +453,11 @@ export function AdminConjuntoComunicadosPage() {
                   aria-invalid={!!errorFechaEvento}
                   aria-describedby={errorFechaEvento ? "comunicado-fecha-evento-error" : undefined}
                   className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    errorFechaEvento ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                    errorFechaEvento ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
                   }`}
                 />
                 {errorFechaEvento && (
-                  <p id="comunicado-fecha-evento-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                  <p id="comunicado-fecha-evento-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                     {errorFechaEvento}
                   </p>
                 )}
@@ -467,7 +475,7 @@ export function AdminConjuntoComunicadosPage() {
                 maxLength={COMUNICADO_TEXTO_MAX_LENGTH}
                 aria-describedby="comunicado-texto-contador"
                 rows={5}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-white"
+                className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               <ContadorCaracteres id="comunicado-texto-contador" actual={form.texto.length} max={COMUNICADO_TEXTO_MAX_LENGTH} />
             </div>
@@ -494,11 +502,11 @@ export function AdminConjuntoComunicadosPage() {
                 aria-invalid={!!errorFechaExpiracion}
                 aria-describedby={errorFechaExpiracion ? "comunicado-fecha-expiracion-error" : undefined}
                 className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                  errorFechaExpiracion ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-gray-200 focus:border-accent-500 focus:ring-accent-500 dark:border-night-line"
+                  errorFechaExpiracion ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
                 }`}
               />
               {errorFechaExpiracion && (
-                <p id="comunicado-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                <p id="comunicado-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                   {errorFechaExpiracion}
                 </p>
               )}
@@ -515,7 +523,7 @@ export function AdminConjuntoComunicadosPage() {
               <button
                 onClick={guardar}
                 disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {guardando
                   ? t("common.saving")
@@ -537,6 +545,7 @@ export function AdminConjuntoComunicadosPage() {
           description={t("comunicados.admin.deleteConfirm.warning")}
           confirmLabel={t("comunicados.admin.deleteConfirm.confirm")}
           onConfirm={confirmarEliminar}
+          isConfirming={eliminando}
           onClose={() => setAEliminar(null)}
         />
       )}

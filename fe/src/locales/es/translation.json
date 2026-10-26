@@ -16,19 +16,21 @@
       "crearNovedades": "Crear Novedades",
       "contenidoEducativo": "Contenido Educativo",
       "miPerfil": "Mi Perfil",
-      "novedades": "Novedades",
+      "novedades": "Soporte técnico",
       "puntosAcopio": "Puntos de Acopio",
-      "gestionarComunicados": "Comunicados de mis Conjuntos",
+      "gestionarComunicados": "Comunicados",
+      "agenda": "Agenda",
+      "desempeno": "Desempeño",
       "comunicados": "Comunicados",
       "aprenderGuias": "Aprende a Reciclar",
       "directorioGeneral": "Directorio General",
-      "groupComunidad": "Comunidad",
       "groupRecursos": "Recursos",
       "groupCuenta": "Cuenta"
     },
     "proximamente": "Pronto",
     "notificaciones": "Notificaciones",
     "notificacionesConNoLeidas": "Notificaciones, {{count}} sin leer",
+    "notificacionesVacias": "Todavía no tienes notificaciones.",
     "expandirMenu": "Expandir menú",
     "colapsarMenu": "Colapsar menú",
     "cerrarSesion": "Cerrar sesión",
@@ -147,20 +149,30 @@
       "roleResident": "Residente",
       "roleRecycler": "Reciclador",
       "roleAdminConjunto": "¿Administras un conjunto?",
+      "roleResidentDesc": "Vivo en un conjunto y quiero separar mejor mis residuos",
+      "roleRecyclerDesc": "Recojo material y quiero unirme a un conjunto",
+      "roleAdminConjuntoDesc": "Administro un conjunto y quiero pedir mi cuenta",
+      "chooseRoleSubtitle": "Elige tu rol para mostrarte lo que necesitas",
+      "changeRole": "Cambiar de rol",
       "adminRequest": {
         "heading": "Las cuentas de administrador se crean por invitación",
-        "intro": "Así nadie puede darse el rol de Administrador de Conjunto por su cuenta. Para pedir la tuya:",
-        "step1": "Envíanos una solicitud con el botón de abajo: tu nombre, tu correo, tu cargo y los datos del conjunto que administras.",
-        "step2": "Te respondemos a tu correo y te pedimos los documentos que acreditan tu cargo. Los adjuntas respondiendo ese mismo correo.",
-        "step3": "Si todo está en orden, te llega una invitación a tu correo para terminar de crear tu cuenta.",
-        "docsHeading": "Ten listos estos documentos",
-        "doc1": "Certificado de existencia y representación legal de la propiedad horizontal, expedido por la Alcaldía Local (máximo 30 días).",
-        "doc2": "Copia de tu cédula de ciudadanía por ambos lados.",
-        "doc3": "Acta de la asamblea o del consejo de administración donde te nombraron.",
-        "doc4": "Contrato firmado con el conjunto, si tienes uno.",
-        "doc5": "Si administras a nombre de una empresa: certificado de Cámara de Comercio y cédula de su representante legal.",
+        "intro": "Las cuentas de administrador se activan bajo estricta verificación. Así garantizamos que nadie pueda tomar el control de tu conjunto sin autorización. Para habilitar tu ingreso, sigue estos pasos:",
+        "step1": {
+          "title": "Envía tus documentos por correo",
+          "send": "Antes de registrarte en la app, envíanos un correo con el asunto «Administrador Conjunto» a esta dirección:",
+          "fields": "En el cuerpo del mensaje escribe tu nombre y apellido, tu correo electrónico, tu número de contacto y el nombre y la dirección del conjunto que administras. Adjunta únicamente dos documentos, en PDF o en foto nítida:"
+        },
+        "doc1": "Certificado de Representación Legal de la Propiedad Horizontal, expedido por la Alcaldía Local y vigente.",
+        "doc2": "Copia de tu cédula de ciudadanía, ampliada al 150 %.",
+        "step2": {
+          "title": "Recibe tu autorización de ingreso",
+          "body": "Nuestro equipo verificará que tus datos coincidan con el registro oficial de la Alcaldía. Si todo está en orden, te enviaremos una autorización de registro a tu correo electrónico."
+        },
         "privacyNotice": "Tus documentos nunca se suben a VerdeApp: viajan solo por correo, se usan únicamente para verificar tu identidad y tu cargo, y se eliminan después de la revisión.",
-        "cta": "Solicitar acceso"
+        "mailSubject": "Administrador Conjunto",
+        "mailBody": "Nombre y apellido:\nCorreo electrónico:\nNúmero de contacto:\nNombre del conjunto:\nDirección del conjunto:",
+        "copyEmail": "Copiar correo",
+        "emailCopied": "Correo copiado"
       },
       "fields": {
         "firstName": "Nombres *",
@@ -388,7 +400,7 @@
         "li4": "<strong>Dirección IP y datos de sesión</strong> — registrados automáticamente en los logs del servidor por razones técnicas y de seguridad, conforme al Decreto 1078 de 2015.",
         "li5": "<strong>Fecha y hora de registro</strong> — metadato técnico generado automáticamente en la creación de la cuenta.",
         "noCollect": "<strong>No se recolectan</strong> datos sensibles (Art. 5, Ley 1581/2012) como origen racial, orientación sexual, datos biométricos, datos de salud ni afiliación política.",
-        "adminRequest": "Si pides una cuenta de <strong>Administrador de Conjunto</strong>, los documentos que acreditan tu cargo (cédula, certificado de representación legal, acta de nombramiento o contrato) <strong>no se suben ni se guardan en VerdeApp</strong>: se piden por correo después del primer contacto, se usan únicamente para verificar tu identidad y tu cargo, y se eliminan del correo una vez termina la revisión."
+        "adminRequest": "Si pides una cuenta de <strong>Administrador de Conjunto</strong>, los dos documentos que acreditan tu cargo (el certificado de representación legal de la propiedad horizontal y la copia de tu cédula) <strong>no se suben ni se guardan en VerdeApp</strong>: los envías por correo en tu primer mensaje, se usan únicamente para verificar tu identidad y tu cargo, y se eliminan del correo una vez termina la revisión."
       },
       "s3": {
         "heading": "Finalidad del Tratamiento",
@@ -618,17 +630,12 @@
     "submit": "Enviar Mensaje",
     "charCount": "{{actual}}/{{max}} caracteres",
     "errorDefault": "No pudimos enviar tu mensaje. Intenta de nuevo más tarde.",
-    "adminRequest": {
-      "subject": "Solicitud de cuenta de Administrador de Conjunto",
-      "messageTemplate": "Nombre del conjunto:\nDirección del conjunto:\nLocalidad:\nMi cargo en el conjunto:\nTeléfono de contacto:"
-    },
     "validation": {
       "nameRequired": "El nombre es obligatorio",
       "subjectMin": "El asunto debe tener al menos {{min}} caracteres",
       "subjectMax": "El asunto no puede superar {{max}} caracteres",
       "messageMin": "El mensaje debe tener al menos {{min}} caracteres",
-      "messageMax": "El mensaje no puede superar {{max}} caracteres",
-      "templateUnchanged": "Completa los datos de la plantilla antes de enviar"
+      "messageMax": "El mensaje no puede superar {{max}} caracteres"
     }
   },
   "dashboards": {
@@ -782,45 +789,39 @@
         "loading": "Cargando invitaciones...",
         "empty": "Todavía no has enviado ninguna invitación."
       },
-      "agendaSection": {
-        "title": "Agenda del conjunto",
-        "hint": "Temas para llevar al comité. Solo los ves tú: no llegan al Administrador del Sistema.",
-        "showDetail": "Ver agenda",
-        "hideDetail": "Ocultar agenda",
-        "empty": "Todavía no hay temas en la agenda de este conjunto.",
-        "add": "Agregar tema",
-        "textLabel": "Tema",
-        "textPlaceholder": "Ej. Arreglar la puerta del sótano, pintar el pasillo...",
-        "evidenceLabel": "Foto de soporte (opcional)",
-        "save": "Guardar tema",
-        "stateWaiting": "En espera",
-        "statePending": "Pendiente",
-        "putOnHold": "Dejar en espera",
-        "backToPending": "Volver a pendiente",
-        "delete": "Eliminar tema",
-        "deleteTitle": "¿Eliminar este tema?",
-        "deleteWarning": "Se borra para siempre. Úsalo cuando ya lo hayas resuelto en el comité.",
-        "deleteConfirm": "Sí, eliminar",
-        "deleting": "Eliminando...",
-        "viewPhoto": "Ver foto",
-        "errorDefault": "No se pudo guardar el tema. Intenta de nuevo.",
-        "actionError": "No se pudo completar la acción. Intenta de nuevo."
-      },
       "myConjuntos": {
         "title": "Conjuntos que administras",
         "loading": "Cargando tus conjuntos...",
         "empty": "Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp."
       },
+      "otroConjunto": {
+        "tileTitle": "Solicitar otro conjunto",
+        "tileHelp": "Pide que te asignen otro conjunto.",
+        "modalTitle": "Solicitar otro conjunto",
+        "heading": "Solicitar otro conjunto",
+        "intro": "Para administrar otro conjunto, el equipo de VerdeApp primero verifica tu cargo en él. Así se hace:",
+        "step1": {
+          "title": "Envía tus documentos por correo",
+          "send": "Envíanos un correo con el asunto «Otro conjunto» a esta dirección:",
+          "fields": "En el cuerpo del mensaje escribe tu correo en VerdeApp, tu nombre y apellido, tu número de contacto y el nombre y la dirección del conjunto que quieres administrar. Adjunta únicamente dos documentos, en PDF o en foto nítida:"
+        },
+        "step2": {
+          "title": "Recibe la confirmación",
+          "body": "Nuestro equipo verificará que tus datos coincidan con el registro oficial de la Alcaldía. Si todo está en orden, el conjunto se asigna a tu cuenta y aparece en este panel. No necesitas crear otra cuenta."
+        },
+        "mailSubject": "Otro conjunto",
+        "mailBody": "Mi correo en VerdeApp:\nNombre y apellido:\nNúmero de contacto:\nNombre del conjunto que quiero administrar:\nDirección del conjunto:"
+      },
       "avisosSection": {
         "title": "Avisos de este conjunto",
-        "fromRecycler": "De recicladores",
-        "fromResident": "De residentes",
+        "description": "Reportes de residentes y recicladores, y respuestas de VerdeApp a tus solicitudes.",
+        "empty": "Todavía no hay avisos de este conjunto.",
         "unreadBadge_one": "{{count}} aviso nuevo",
         "unreadBadge_other": "{{count}} avisos nuevos"
       },
       "codigoAcceso": {
         "title": "Código de acceso",
-        "description": "Compártelo con tus residentes (cartelera, grupo del conjunto) — lo necesitan para registrarse.",
+        "description": "Compártelo con tus residentes para que se registren.",
         "copyAria": "Copiar código de acceso",
         "copiedAria": "Código copiado",
         "regenerateButton": "Regenerar",
@@ -837,23 +838,25 @@
         "barAria": "{{registrados}} de {{total}} apartamentos registrados",
         "missing": "apartamentos por registrar",
         "residents": "residentes con cuenta",
-        "explain": "Un apartamento cuenta como registrado cuando tiene al menos un residente con cuenta. Úsalo en la reunión del conjunto para invitar a los que faltan: el código de acceso lo tienes más abajo.",
-        "noTotal": "Todavía no dijiste cuántos apartamentos tiene este conjunto, por eso no podemos calcular cuántos faltan. Defínelo en Editar.",
-        "define": "Definir cantidad de apartamentos",
+        "explain": "Un apartamento cuenta como registrado si tiene al menos un residente con cuenta.",
+        "noTotal": "Define los apartamentos del conjunto con «Editar datos del conjunto» para ver cuántos faltan.",
         "badge": "{{pct}}% registrado"
       },
       "editForm": {
         "nit": "NIT (opcional)",
         "totalApartments": "Cantidad de apartamentos (opcional)",
-        "totalHelp": "Total de apartamentos del conjunto (no de residentes). Con este número calculamos cuántos faltan por registrarse en VerdeApp.",
+        "title": "Editar datos del conjunto",
+        "optionalHint": "Los dos datos son opcionales.",
+        "totalHelp": "Apartamentos del conjunto, no residentes. Sirve para calcular cuántos faltan por registrarse.",
         "totalInvalid": "Escribe un número entero entre 1 y {{max}}.",
         "successMessage": "Conjunto actualizado correctamente.",
         "errorMessage": "No se pudo guardar el cambio. Intenta de nuevo."
       },
-      "nitLabel": "NIT: {{nit}}",
-      "notifications": {
-        "title": "Actividad del conjunto",
-        "empty": "No hay actividad aún. Las notificaciones de recicladores y residentes aparecerán aquí."
+      "editButton": "Editar datos del conjunto",
+      "datos": {
+        "nit": "NIT: {{valor}}",
+        "apartamentos": "Apartamentos del conjunto: {{valor}}",
+        "sinDefinir": "sin definir"
       }
     },
     "reciclador": {
@@ -869,7 +872,7 @@
       "sendSection": {
         "title": "Enviar notificación",
         "subtitle": "Avisa a los residentes y al administrador del conjunto.",
-        "noConjuntos": "Aún no tienes conjuntos autorizados. Acepta una invitación para poder enviar notificaciones."
+        "noConjuntos": "Los botones se activan cuando tengas un conjunto autorizado."
       },
       "invitations": {
         "title": "Invitaciones pendientes",
@@ -883,7 +886,8 @@
       },
       "notifications": {
         "title": "Notificaciones recibidas",
-        "empty": "No tienes notificaciones. Cuando un residente reporte el SHUT lleno, aparecerá aquí."
+        "empty": "No tienes notificaciones. Cuando un residente reporte el SHUT lleno, aparecerá aquí.",
+        "emptyWithoutConjuntos": "No tienes notificaciones. Los avisos de los residentes (como SHUT lleno) llegan de los conjuntos donde estés autorizado."
       },
       "modal": {
         "title": "¿A qué conjunto notificas?",
@@ -905,7 +909,6 @@
         "conjuntoLabel": "Conjunto",
         "nivelLabel": "Nivel de desempeño",
         "niveles": {
-          "excelente": "Bueno",
           "buena": "Bueno",
           "regular": "Regular",
           "deficiente": "Malo"
@@ -923,6 +926,7 @@
         "submitIncomplete": "Completa el formulario",
         "sending": "Enviando...",
         "sendingProgress": "Enviando... {{porcentaje}}%",
+        "uploadingPhotos": "Subiendo las fotos…",
         "successMessage": "Auditoría enviada.",
         "errorDefault": "No se pudo enviar la auditoría.",
         "errorTimeout": "La subida está tardando demasiado — revisa tu conexión e intenta de nuevo.",
@@ -942,6 +946,10 @@
     },
     "residente": {
       "title": "Panel del Residente",
+      "miConjunto": {
+        "title": "Mi conjunto",
+        "subtitle": "Cómo va la separación de residuos y las auditorías anteriores."
+      },
       "shutBanner": {
         "title": "El SHUT está lleno",
         "reportedAt": "Reportado {{time}}",
@@ -962,6 +970,8 @@
   "notificationFeed": {
     "platformLabel": "VerdeApp",
     "markReadHint": "Presiona para marcar como leída",
+    "new": "Nueva",
+    "read": "Leída",
     "markAllRead": "Marcar leídas",
     "clearRead": "Limpiar leídas",
     "showLess": "Ver menos",
@@ -972,6 +982,10 @@
       "hoursAgo": "hace {{count}}h",
       "daysAgo": "hace {{count}}d"
     }
+  },
+  "desvinculacionAprobada": {
+    "bannerTitle": "Desvinculación aprobada",
+    "gotIt": "Entendido"
   },
   "auditoriaResultado": {
     "bannerTitle": "Nueva auditoría de tu conjunto",
@@ -985,6 +999,65 @@
     "errorLoad": "No se pudo cargar la auditoría.",
     "historialTitle": "Historial de auditorías",
     "historialEmpty": "Todavía no hay auditorías registradas."
+  },
+  "desempeno": {
+    "title": "Desempeño",
+    "subtitle": "Cómo va la separación de residuos de tu conjunto, semana a semana.",
+    "conjuntoTabs": "Conjunto",
+    "periodoLabel": "Período",
+    "periodoOpcion": "Últimas {{semanas}} semanas",
+    "noConjuntos": "Todavía no tienes conjuntos asignados.",
+    "errorCarga": "No se pudo cargar el desempeño.",
+    "resumen": {
+      "auditorias": "Auditorías del período",
+      "bueno": "Calificadas Bueno",
+      "buenoDetalle": "{{buenas}} de {{total}}",
+      "temaReforzar": "Tema a reforzar",
+      "temaReforzarDetalle": "Regular o Malo: {{cantidad}} de {{total}}",
+      "sinTemaReforzar": "Ninguno por ahora",
+      "ultimaAuditoria": "Última auditoría",
+      "sinDato": "—"
+    },
+    "grafica": {
+      "titulo": "Auditorías por semana",
+      "ayuda": "Cada barra es una semana (lunes a domingo). El número dentro de cada color es la cantidad de auditorías. Toca una barra para ver su detalle.",
+      "leyenda": "Niveles de desempeño",
+      "verComoTabla": "Ver como tabla",
+      "verComoGrafica": "Ver como gráfica",
+      "enCurso": "en curso",
+      "rango": "{{desde}} al {{hasta}}",
+      "hastaLinea": "al {{hasta}}",
+      "descripcionBarra": "Semana del {{desde}} al {{hasta}}: Bueno {{bueno}}, Regular {{regular}}, Malo {{malo}}",
+      "descripcionBarraEnCurso": "Semana en curso, del {{desde}} al {{hasta}}: Bueno {{bueno}}, Regular {{regular}}, Malo {{malo}}",
+      "tablaSemana": "Semana",
+      "tablaTotal": "Total",
+      "tablaCaption": "Auditorías por semana y nivel"
+    },
+    "pocosDatos": "Todavía no hay suficientes auditorías para mostrar la gráfica. Aparecerá con al menos {{minimo}} auditorías en las últimas {{semanas}} semanas. Mientras tanto, mira la lista de abajo.",
+    "temas": {
+      "titulo": "Temas del período",
+      "pista": "Ordenados por cuántas auditorías salieron Regular o Malo. Con pocos datos es una pista, no una conclusión.",
+      "regularOMalo": "Regular o Malo: {{cantidad}} de {{total}}",
+      "sinRegularNiMalo": "Sin Regular ni Malo ({{total}})",
+      "columnaTema": "Tema",
+      "columnaRegularOMalo": "Regular o Malo",
+      "tablaCaption": "Auditorías por tema y nivel",
+      "verComoTabla": "Ver como tabla",
+      "verComoLista": "Ver como lista",
+      "vacio": "Todavía no hay temas calificados en este período."
+    },
+    "semana": {
+      "titulo": "Semana del {{desde}} al {{hasta}}",
+      "tituloEnCurso": "Semana del {{desde}} al {{hasta}} (en curso)",
+      "tituloPeriodo": "Auditorías del período",
+      "cantidad_one": "{{count}} auditoría",
+      "cantidad_other": "{{count}} auditorías",
+      "vacia": "Todavía no hay auditorías en esta semana.",
+      "vaciaPeriodo": "Todavía no hay auditorías en este período.",
+      "verDetalle": "Ver detalle",
+      "verDetalleDe": "Ver detalle de la auditoría de {{tema}}",
+      "errorCarga": "No se pudieron cargar las auditorías."
+    }
   },
   "profile": {
     "title": "Mi perfil",
@@ -1015,7 +1088,8 @@
       "change": "Cambiar foto de perfil",
       "invalidType": "La foto debe ser JPG, PNG o WEBP.",
       "tooLarge": "La foto no puede superar 5 MB.",
-      "uploadError": "No se pudo subir la foto. Intenta de nuevo."
+      "uploadError": "No se pudo subir la foto. Intenta de nuevo.",
+      "uploading": "Subiendo foto…"
     },
     "notRegistered": "No registrado",
     "emailNote": "El correo no se puede cambiar desde aquí.",
@@ -1052,23 +1126,57 @@
       "titulo": "¿Qué es una ECA?",
       "descripcion": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen en sus rutas.",
       "paraQueSirve": "Si necesitas entregar materiales reciclables por tu cuenta, aquí puedes ubicar el punto más cercano a tu localidad.",
-      "fuenteTexto": "Fuente: Datos Abiertos Bogotá (UAESP), dataset \"Aprovechamiento ECAS\". Bogotá solo tiene ECA registrada en 6 de sus 20 localidades.",
+      "fuenteTexto": "Los puntos que ves vienen del dataset \"Aprovechamiento ECAS\" de Datos Abiertos Bogotá (UAESP), de marzo de 2020. No son todas las ECA de Bogotá: el inventario de la UAESP registra muchas más.",
       "fuenteLink": "Ver fuente"
     }
   },
   "catalogoEducativo": {
     "title": "Aprende a reciclar",
-    "subtitle": "Elige un tema para ver sus videos y guías de apoyo.",
+    "subtitle": "Guías y videos para separar bien los residuos en tu conjunto, paso a paso.",
     "loading": "Cargando contenido...",
     "loadError": "No se pudo cargar el catálogo educativo.",
     "emptyState": "Todavía no hay contenido educativo publicado.",
     "tema": "tema",
-    "temas": "temas"
+    "temas": "temas",
+    "categoriesTitle": "Categorías de aprendizaje",
+    "viewLesson": "Ver lección",
+    "seen": "Visto",
+    "notSeen": "Sin ver",
+    "progress": {
+      "title": "Tu avance",
+      "of": "de {{total}} lecciones vistas",
+      "hint": "Una lección cuenta como vista cuando la abres."
+    },
+    "featuredTitle": "Video destacado",
+    "featuredCta": "Ver video y guía"
   },
   "categoriaEducativa": {
     "back": "Volver a Aprende a reciclar",
     "emptyForCategory": "No se encontró contenido para esta categoría.",
-    "viewGuide": "Ver guía de apoyo"
+    "viewGuide": "Ver guía de apoyo",
+    "seen": "Visto",
+    "keepLearning": "Sigue aprendiendo",
+    "lessonCount_one": "{{count}} lección",
+    "lessonCount_other": "{{count}} lecciones",
+    "videoCount_one": "{{count}} video",
+    "videoCount_other": "{{count}} videos",
+    "guideCount_one": "{{count}} guía",
+    "guideCount_other": "{{count}} guías"
+  },
+  "tuSemana": {
+    "ariaLabel": "Tu semana",
+    "title": "Tu semana",
+    "lastAudit": "Última auditoría",
+    "noAudit": "Todavía no hay una auditoría de tu conjunto. Cuando el reciclador califique la separación de residuos, la verás aquí.",
+    "result": "En la última auditoría, tu conjunto salió {{nivel}} en «{{tema}}».",
+    "needsReinforcement": "Por eso te recomendamos esta lección.",
+    "keepItUp": "¡Sigue así! Tu conjunto separa bien este tema.",
+    "recommended": "Recomendado para ti",
+    "view": "Ver lección"
+  },
+  "leccionMuro": {
+    "about": "De qué trata",
+    "openGuide": "Abrir la guía oficial"
   },
   "adminContenidoEducativo": {
     "title": "Contenido educativo",
@@ -1127,6 +1235,23 @@
       "notified": "Se avisó a {{count}} residente",
       "notified_other": "Se avisó a {{count}} residentes",
       "noRecommendation": "Sin recomendación",
+      "filters": {
+        "localidad": "Localidad",
+        "allLocalidades": "Todas las localidades",
+        "conjunto": "Conjunto",
+        "allConjuntos": "Todos los conjuntos",
+        "more": "Más filtros",
+        "noData": "Sin calificaciones",
+        "from": "Desde",
+        "to": "Hasta",
+        "clear": "Limpiar filtros"
+      },
+      "sort": {
+        "label": "Ordenar por",
+        "criticas": "Peor calificación primero",
+        "recientes": "Más recientes",
+        "conjunto": "Conjunto (A–Z)"
+      },
       "headers": {
         "conjunto": "Conjunto",
         "tema": "Tema",
@@ -1193,7 +1318,14 @@
       "videoLink": "Link de video (YouTube)",
       "videoRecognized": "✓ Link de YouTube reconocido",
       "videoNotRecognized": "Este link no parece de YouTube: el Residente no verá el video.",
-      "guideLink": "Guía de apoyo"
+      "guideLink": "Guía de apoyo",
+      "contentMuroHint": "Cada párrafo (separado por una línea en blanco) será una tarjeta del muro. Empieza el párrafo con un título corto y dos puntos (por ejemplo, «Bolsa blanca: ...»). El primer párrafo sin título es la introducción. Una imagen en su propia línea se pega a la tarjeta que viene después.",
+      "insertImage": "Insertar imagen",
+      "insertingImage": "Subiendo...",
+      "insertImageError": "No se pudo subir la imagen. Intenta de nuevo.",
+      "imageAltDefault": "descripción de la imagen",
+      "coverImage": "Imagen de portada (opcional)",
+      "coverImageHint": "Se ve en la tarjeta de la categoría. Mejor una imagen ancha (16:9), propia o de uso libre. JPG, PNG o WEBP de hasta 5 MB. Sin imagen se usa el dibujo de la categoría."
     },
     "preview": {
       "label": "Así lo verá el Residente",
@@ -1377,41 +1509,105 @@
     "errorDefault": "No se pudo enviar la invitación. Verifica los datos e intenta de nuevo."
   },
   "novedadesEnviadas": {
-    "tabReceived": "Recibidas",
+    "tabReceived": "Avisos del sistema",
     "tabWrite": "Escribir novedad",
-    "tabMine": "Mis envíos",
-    "formTitle": "Cuéntale una novedad a VerdeApp",
-    "formHint": "Le llega al Administrador del Sistema con tus datos (nombre, conjunto y unidad). No tienes que escribirlos.",
-    "textLabel": "Novedad",
-    "textPlaceholder": "Cuenta qué pasó...",
+    "tabMine": "Historial de novedades",
+    "formTitle": "Cuéntale al equipo de VerdeApp",
+    "formHint": "Elige el motivo de tu consulta. Le llega al Administrador del Sistema con tus datos (nombre, conjunto y unidad): no tienes que escribirlos.",
+    "motivoLegend": "¿Sobre qué es tu consulta?",
+    "motivos": {
+      "residenteUnidad": "Mi conjunto, torre o apartamento no es el correcto",
+      "residenteShut": "Mi reporte de SHUT lleno o libre no se registró bien",
+      "recicladorConjunto": "No veo un conjunto en el que me autorizaron o no me llegó la invitación",
+      "recicladorAuditoria": "No puedo enviar una auditoría o mis fotos no se suben",
+      "adminDatos": "Los datos de mi conjunto están mal (NIT, dirección o total de apartamentos)",
+      "adminCodigo": "Necesito ayuda con el código de acceso o con las invitaciones a recicladores",
+      "adminApartamentos": "Los apartamentos registrados o el avance de mi conjunto no coinciden",
+      "login": "No puedo iniciar sesión o recuperar mi contraseña",
+      "notificaciones": "No me llegan los correos o las notificaciones",
+      "cuenta": "Un dato de mi cuenta está mal (nombre, correo o foto)",
+      "falla": "Algo no carga o la aplicación muestra un error",
+      "informacion": "La información de un punto de acopio o del contenido educativo es incorrecta",
+      "sugerencia": "Tengo una sugerencia para mejorar VerdeApp",
+      "otros": "Otros"
+    },
+    "textLabel": "Comentario",
+    "textLabelRequired": "Comentario (obligatorio con Otros)",
+    "textPlaceholder": "Cuéntanos qué pasó...",
+    "textPlaceholderOff": "Elige Otros para escribir un comentario",
+    "textHelpOn": "Explica tu consulta con tus palabras.",
+    "textHelpOff": "Se activa solo cuando eliges Otros.",
     "imageLabel": "Imagen adjunta (opcional)",
     "conjuntoLabel": "¿De qué conjunto hablas?",
     "conjuntoAny": "Ninguno en particular",
-    "send": "Enviar novedad",
+    "send": "Enviar consulta",
     "sending": "Enviando...",
-    "sentMessage": "Novedad enviada. El Administrador del Sistema la revisará.",
-    "errorDefault": "No se pudo enviar la novedad. Intenta de nuevo.",
+    "needMotivo": "Elige un motivo para poder enviar.",
+    "needComment": "Con Otros, el comentario es obligatorio.",
+    "sentMessage": "Consulta enviada. El Administrador del Sistema la revisará.",
+    "errorDefault": "No se pudo enviar la consulta. Intenta de nuevo.",
     "mineEmpty": "Todavía no has enviado ninguna novedad.",
-    "stateNew": "Enviada",
-    "stateSeen": "Vista por el Admin del Sistema"
+    "estado": {
+      "NUEVA": "Enviada",
+      "EN_REVISION": "En revisión",
+      "RESUELTA": "Resuelta"
+    },
+    "prioridad": {
+      "ALTA": "Prioridad alta",
+      "MEDIA": "Prioridad media",
+      "BAJA": "Prioridad baja"
+    },
+    "respuestaTitulo": "Respuesta del Administrador del Sistema ({{fecha}})"
   },
-  "solicitudesPendientes": {
-    "sectionTitle": "Solicitudes pendientes",
-    "empty": "No hay solicitudes pendientes.",
-    "emptyFiltro": "Ninguna solicitud de este tipo por ahora.",
-    "errorDefault": "No se pudo procesar la solicitud.",
-    "marcarVista": "Marcar como vista",
-    "verFoto": "Ver foto",
-    "filtros": {
-      "todas": "Todas",
-      "desvinculacion": "Desvinculación",
-      "novedad": "Novedad"
+  "bandejaAdmin": {
+    "sectionTitle": "Soporte técnico y desvinculaciones",
+    "pestanas": {
+      "soporte": "Soporte técnico",
+      "desvinculaciones": "Desvinculaciones"
     }
+  },
+  "soporteAdmin": {
+    "estadoLabel": "Estado",
+    "prioridadLabel": "Prioridad",
+    "filtroEstado": {
+      "pendientes": "Pendientes",
+      "nueva": "Nuevas",
+      "enRevision": "En revisión",
+      "resuelta": "Resueltas"
+    },
+    "filtroPrioridad": {
+      "todas": "Todas"
+    },
+    "prioridad": {
+      "ALTA": "Alta",
+      "MEDIA": "Media",
+      "BAJA": "Baja"
+    },
+    "estado": {
+      "NUEVA": "Nueva",
+      "EN_REVISION": "En revisión",
+      "RESUELTA": "Resuelta"
+    },
+    "empty": "Todavía no hay consultas de soporte pendientes.",
+    "emptyFiltro": "Ninguna consulta coincide con estos filtros por ahora.",
+    "errorDefault": "No se pudo actualizar la consulta.",
+    "verFoto": "Ver foto",
+    "responder": "Responder",
+    "cambiarRespuesta": "Cambiar respuesta",
+    "enviarRespuesta": "Enviar respuesta",
+    "respuestaLabel": "Respuesta para quien envió la consulta",
+    "respuestaPlaceholder": "Escribe la respuesta",
+    "respuestaEnviada": "Respuesta enviada ({{fecha}})",
+    "marcarEnRevision": "Marcar en revisión",
+    "marcarResuelta": "Marcar como resuelta",
+    "reabrir": "Reabrir",
+    "cambiarPrioridad": "Cambiar la prioridad",
+    "prioridadOpcion": "Prioridad {{prioridad}}"
   },
   "desvinculacion": {
     "sectionTitle": "Tu rol como administrador",
     "solicitarButton": "Dejar de administrar este conjunto",
-    "clarification": "Esto no afecta a los recicladores autorizados ni a los residentes — solo transfiere la administración de este conjunto a otra persona.",
+    "clarification": "Esto envía una solicitud al equipo de VerdeApp. Ellos la revisan y te avisamos la respuesta; mientras tanto sigues administrando el conjunto.",
     "pendingBadge": "Solicitud de desvinculación pendiente",
     "motivoLabel": "Motivo (opcional)",
     "motivoPlaceholder": "Ej: Fin de contrato",
@@ -1456,6 +1652,70 @@
       "assigning": "Asignando...",
       "successMessage": "Conjunto asignado correctamente.",
       "errorDefault": "No se pudo asignar el conjunto."
+    }
+  },
+  "agenda": {
+    "title": "Agenda del comité",
+    "subtitle": "Temas para llevar a la reunión del comité. Cuando uno se resuelve, archívalo: sale de la lista pero queda guardado. Solo los ves tú: no llegan al Administrador del Sistema.",
+    "add": "Agregar tema",
+    "conjuntoTabs": "Conjunto",
+    "viewTabs": "Vista",
+    "pendingTitle": "Por tratar",
+    "archivedTitle": "Archivadas",
+    "emptyPending": "Todavía no hay temas por tratar en este conjunto.",
+    "emptyArchived": "Todavía no has archivado ningún tema en este conjunto.",
+    "archivedHint": "Aquí quedan los temas que ya se resolvieron. Sirven como historial del comité.",
+    "noConjuntos": "Todavía no tienes ningún conjunto asignado. Contacta al equipo de VerdeApp.",
+    "formTitle": "Agregar tema a la agenda",
+    "textLabel": "Tema",
+    "textPlaceholder": "Ej. Arreglar la puerta del sótano, pintar el pasillo...",
+    "evidenceLabel": "Foto de soporte (opcional)",
+    "save": "Guardar tema",
+    "archive": "Archivar",
+    "restore": "Volver a por tratar",
+    "undo": "Deshacer",
+    "archivedToast": "Tema archivado. Lo encuentras en Archivadas.",
+    "createdOn": "Creado {{fecha}}",
+    "archivedOn": "Archivado {{fecha}}",
+    "delete": "Eliminar tema",
+    "deleteTitle": "¿Eliminar este tema?",
+    "deleteWarning": "Se borra para siempre y no queda en el historial. Si solo se resolvió, mejor archívalo.",
+    "deleteConfirm": "Sí, eliminar",
+    "deleting": "Eliminando...",
+    "viewPhoto": "Ver foto",
+    "errorDefault": "No se pudo guardar el tema. Intenta de nuevo.",
+    "actionError": "No se pudo completar la acción. Intenta de nuevo.",
+    "download": {
+      "button": "Descargar agenda",
+      "noTopics": "Todavía no hay temas para descargar. Agrega uno y podrás bajar el historial.",
+      "title": "Descargar agenda",
+      "description": "Descarga un archivo con los temas de este conjunto para anexar al acta del comité.",
+      "formatLabel": "Formato",
+      "formatCsv": "CSV (Excel)",
+      "formatPdf": "PDF",
+      "periodLabel": "Período",
+      "periodAll": "Todo el historial",
+      "periodThisMonth": "Este mes",
+      "periodLastMonth": "Mes pasado",
+      "periodCustom": "Personalizado",
+      "stateLabel": "Temas",
+      "stateAll": "Todos",
+      "statePending": "Por tratar",
+      "stateArchived": "Archivadas",
+      "fromLabel": "Desde",
+      "toLabel": "Hasta",
+      "customHint": "Elige las dos fechas para descargar.",
+      "dateRuleHint": "Los temas archivados cuentan por su fecha de archivado y los que siguen por tratar, por su fecha de creación.",
+      "limitHint": "Máximo 500 temas por archivo.",
+      "counting": "Contando temas...",
+      "count_one": "Se descargará {{count}} tema.",
+      "count_other": "Se descargarán {{count}} temas.",
+      "overLimit": "Son {{total}} temas y el máximo por archivo es {{max}}. Elige un período más corto o un solo tipo de temas.",
+      "success": "Archivo descargado.",
+      "rangeError": "La fecha \"Hasta\" no puede ser anterior a la fecha \"Desde\".",
+      "confirm": "Descargar",
+      "downloading": "Descargando...",
+      "error": "No se pudo descargar el historial. Intenta de nuevo."
     }
   },
   "comunicados": {
@@ -1592,7 +1852,7 @@
       "viewVideo": "Ver video"
     },
     "feed": {
-      "title": "Novedades",
+      "title": "Soporte técnico",
       "subtitle": "Avisos generales de la plataforma VerdeApp.",
       "empty": "No hay novedades activas por ahora."
     }

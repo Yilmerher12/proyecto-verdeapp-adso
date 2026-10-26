@@ -96,14 +96,32 @@
   /* ¿Para qué? Antes estos 8 colores estaban escritos a mano como           */
   /*       dark:bg-[#12231a] en 50 archivos (536 veces).                     */
   /* ¿Impacto? Cambiar una superficie del modo oscuro es tocar una línea.    */
-  --color-night-base: #050f0a;  /* fondo raíz (auth, legales, shell, footer) */
-  --color-night-page: #0a1510;  /* fondo del área de contenido de los paneles */
-  --color-night-card: #12231a;  /* tarjetas */
-  --color-night-panel: #0f2018; /* modales, tarjeta de login, barras fijas */
-  --color-night-inset: #0c1a12; /* zonas hundidas: filas en hover, botón secundario */
-  --color-night-field: #1a3324; /* campos de formulario */
-  --color-night-line: #23392b;  /* bordes */
-  --color-night-hover: #23392b; /* fondo al pasar el mouse (mismo tono que el borde) */
+  /* Issue #503 (rediseño del tema oscuro): antes todas las capas eran verdes  */
+  /* oscuros casi iguales (1.0 a 1.27:1 entre vecinas: sidebar, encabezado y   */
+  /* tarjetas se confundían). Ahora son verdes casi neutros, cada capa un paso */
+  /* más clara que la de abajo, y la separación la da el borde (night-line).   */
+  /* Orden de abajo hacia arriba: base < page < inset < card < panel.          */
+  --color-night-base: #050a08;  /* fondo raíz y sidebar (la capa más baja) */
+  --color-night-page: #101a15;  /* fondo del área de contenido y del encabezado */
+  --color-night-inset: #131f19; /* zonas hundidas: botón secundario, filas */
+  --color-night-card: #1a2b22;  /* tarjetas */
+  --color-night-panel: #20352a; /* modales, panel lateral, tarjeta de login (encima de todo) */
+  --color-night-field: #223a2d; /* campos de formulario */
+  --color-night-line: #3a5a47;  /* bordes decorativos (1.94:1 sobre la tarjeta) */
+  --color-night-hover: #243d30; /* fondo al pasar el mouse */
+
+  /* ── Borde de los controles (issue #503) ───────────────────────────────── */
+  /* ¿Qué? `edge` (modo claro) y `night-edge` (modo oscuro) son el borde de los  */
+  /*       campos de formulario y de los botones secundarios.                  */
+  /* ¿Para qué? WCAG 1.4.11: el borde que delimita un control debe tener al    */
+  /*       menos 3:1 contra lo que lo rodea. Antes los campos usaban           */
+  /*       border-gray-200 (1.13:1) o border-gray-300 (1.47:1) en claro y      */
+  /*       night-line (1.1-1.3:1) en oscuro: los campos "se perdían".          */
+  /* ¿Impacto? Medido: edge 3.4:1 sobre blanco y 3.2:1 sobre gray-50;          */
+  /*       night-edge 3.3:1 sobre night-field y 4.0:1 sobre night-card.        */
+  /*       Los bordes decorativos siguen siendo gray-100/200 y night-line.     */
+  --color-edge: #7f8f8a;
+  --color-night-edge: #5a8f72;
 }
 
 /* ============================================================================
@@ -131,21 +149,36 @@
   --color-green-950: #06201a;
   --color-gray-50: #f4f8f7;
   --color-gray-100: #e9f0ef;
-  --color-gray-200: #edf2f1;
+  /* ¿Qué? gray-200 era #edf2f1, MÁS CLARO que gray-100 (#e9f0ef): la escala
+     estaba invertida y `border-gray-200` (124 usos) casi no se veía (1.13:1).
+     ¿Impacto? Ahora gray-200 es más oscuro que gray-100 (1.29:1 sobre blanco):
+     los bordes de tarjetas y divisiones se distinguen, sin llegar al peso de
+     un borde de control (ese es `edge`). Lo usan también `bg-gray-200` y
+     `hover:bg-gray-200` (11 usos), que quedan un tono más marcado. */
+  --color-gray-200: #dbe5e2;
 }
 
 .dark {
-  --color-green-50: #eef6f0;
-  --color-green-100: #d6ead9;
-  --color-green-200: #add4b4;
-  --color-green-300: #7fba8b;
-  --color-green-400: #4f9c62;
-  --color-green-500: #2f8049;
-  --color-green-600: #1f6a3b;
-  --color-green-700: #185530;
-  --color-green-800: #134327;
-  --color-green-900: #0f2e20;
-  --color-green-950: #0a2016;
+  /* ¿Qué? Escala de marca del modo oscuro con un MENTA como acento (300 = el
+     verde claro que ya tenía el botón "Unirse a VerdeApp" del Landing).
+     ¿Para qué? Antes 300 a 700 eran verdes apagados (#7fba8b a #185530): el
+     acento era tan oscuro como las capas y nada se destacaba (botón principal
+     1.86:1 sobre la tarjeta). El menta (300) da 8.6:1 sobre la tarjeta.
+     ¿Impacto? Los botones principales pasan a menta con texto oscuro en el modo
+     oscuro (ver Button.tsx); los enlaces y el ítem activo usan 300 y 400.
+     500 a 950 siguen siendo los verdes profundos de los fondos con alpha
+     (dark:bg-accent-900/20). */
+  --color-green-50: #eefaf2;
+  --color-green-100: #d4f1de;
+  --color-green-200: #b0e6c5;
+  --color-green-300: #86d6a6;
+  --color-green-400: #5fbf86;
+  --color-green-500: #3ea46c;
+  --color-green-600: #2d8456;
+  --color-green-700: #226a45;
+  --color-green-800: #1a5038;
+  --color-green-900: #123527;
+  --color-green-950: #0a2018;
 }
 
 /* ¿Qué? Estilos base aplicados al body y al root de la app. */
@@ -384,19 +417,26 @@
 }
 
 /* ============================================================================
-   Animaciones de íconos (lucide)
+   Animaciones de íconos (lucide) — estándar de 3 (issue #502)
    ¿Qué? Clases que se ponen en el propio <Icon className="...">:
-         - icon-draw: el ícono se redibuja trazo por trazo (sidebar, botones).
-         - icon-hop (salta), icon-shake (niega), icon-ring (suena/tiembla),
-           icon-nudge (crece un poco): movimiento según lo que significa.
-         Por defecto se disparan al pasar el mouse por el elemento clicable que
-         contiene al ícono (a, button, label). Con icon-appear se disparan UNA vez
-         al aparecer (mensajes de éxito/error/aviso).
-   ¿Para qué? Regla del proyecto: solo se anima lo que se puede tocar o lo que
-              aparece para avisar algo — no hay íconos moviéndose de adorno.
+         - icon-draw: el ícono se redibuja trazo por trazo. Es la ÚNICA para lo
+           que se puede tocar (menú, botones, enlaces, etiquetas): se dispara al
+           pasar el mouse O al enfocar con el teclado.
+         - icon-hop (salta): mensaje que aparece y es bueno o neutro (éxito,
+           información). Va siempre junto a icon-appear.
+         - icon-shake (sacude): mensaje que aparece y pide atención (error,
+           advertencia). Va siempre junto a icon-appear.
+         icon-appear NO anima por sí sola: hace que hop/shake se disparen UNA vez,
+         al aparecer el mensaje.
+   ¿Para qué? Antes había 5 (con icon-ring e icon-nudge) y se usaban sin regla: el
+              menú animaba cada ítem distinto y un ícono de aviso dentro de un
+              botón reaccionaba al mouse como si fuera un aviso. Regla: solo se
+              anima lo que se puede tocar (draw) o lo que aparece para avisar
+              (hop o shake); nunca un ícono de adorno.
    ¿Impacto? Todo va dentro de prefers-reduced-motion: no-preference, igual que el
              resto de animaciones de este archivo: quien pidió "reducir
-             movimiento" en su sistema ve los íconos quietos.
+             movimiento" en su sistema ve los íconos quietos. Hop y shake NO se
+             disparan con el mouse: un ícono dentro de un botón usa icon-draw.
    ============================================================================ */
 @keyframes icon-draw {
   from {
@@ -432,60 +472,37 @@
     transform: translateX(3px);
   }
 }
-@keyframes icon-ring {
-  0%,
-  100% {
-    transform: none;
-  }
-  20% {
-    transform: rotate(-12deg);
-  }
-  40% {
-    transform: rotate(10deg);
-  }
-  60% {
-    transform: rotate(-6deg);
-  }
-  80% {
-    transform: rotate(3deg);
-  }
-}
-@keyframes icon-nudge {
-  0%,
-  100% {
-    transform: none;
-  }
-  50% {
-    transform: scale(1.15);
-  }
-}
 
 @layer utilities {
   @media (prefers-reduced-motion: no-preference) {
     /* Los íconos de lucide miden 24×24: ningún trazo pasa de 100 unidades, así
        que un dasharray de 100 sirve para todos sin medir cada uno. */
-    :is(a, button, label):hover > .icon-draw > *,
-    :is(a, button, label):hover .icon-draw > * {
+    :is(a, button, label):is(:hover, :focus-visible) > .icon-draw > *,
+    :is(a, button, label):is(:hover, :focus-visible) .icon-draw > * {
       stroke-dasharray: 100;
       animation: icon-draw 0.6s ease-out;
     }
-    :is(a, button, label):hover .icon-hop,
     .icon-appear.icon-hop {
       animation: icon-hop 0.6s ease-in-out;
     }
-    :is(a, button, label):hover .icon-shake,
     .icon-appear.icon-shake {
       animation: icon-shake 0.5s ease-in-out;
     }
-    :is(a, button, label):hover .icon-ring,
-    .icon-appear.icon-ring {
-      transform-origin: 50% 20%;
-      animation: icon-ring 0.7s ease-in-out;
-    }
-    :is(a, button, label):hover .icon-nudge,
-    .icon-appear.icon-nudge {
-      animation: icon-nudge 0.5s ease-in-out;
-    }
+  }
+}
+
+/* ¿Qué? Con "reducir movimiento" las flechas de los acordeones (ChevronDown
+         con `transition-transform` y `rotate-180`) cambian de posición sin girar.
+   ¿Para qué? Es el único movimiento de ícono que no pasa por las clases de
+              arriba, y el criterio del issue #502 es que con esa preferencia
+              ningún ícono se mueva.
+   ¿Impacto? Va SIN @layer a propósito: una regla sin capa le gana a las
+             utilidades de Tailwind. El Spinner (`animate-spin`) queda fuera: es
+             un indicador de que algo está cargando, no un ícono animado, y
+             quitarle el giro lo deja sin significado. */
+@media (prefers-reduced-motion: reduce) {
+  .transition-transform {
+    transition: none;
   }
 }
 
@@ -518,4 +535,94 @@
 }
 @utility icon-deco {
   @apply size-20;
+}
+
+/* ============================================================================
+   Área táctil mínima en celular (RNF-003.3)
+   ¿Qué? `touch-target` da al control un área de al menos 44x44 px, y
+         `touch-target-h` solo de 44 px de alto (para botones anchos). Ambas
+         aplican solo por debajo de 640 px (el breakpoint `sm` de Tailwind).
+   ¿Para qué? Un dedo toca un área de unos 40-44 px; en la revisión de #454 se
+              midieron botones de 19x19 (ojo de contraseña), 24 px de alto
+              (ES/EN) y 28 px de alto ("Copiar dirección") que se fallaban o
+              tocaban el vecino. Un control de <a> o <button> en línea
+              necesita además `inline-flex items-center`, porque min-height no
+              afecta a los elementos en línea.
+   ¿Impacto? En tableta y escritorio el control conserva su tamaño de siempre;
+             no hace falta tocar cada media query a mano.
+   ============================================================================ */
+@utility touch-target {
+  @media (max-width: 639px) {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+}
+@utility touch-target-h {
+  @media (max-width: 639px) {
+    min-height: 2.75rem;
+  }
+}
+
+/* ¿Qué? `touch-area` amplía el área táctil de un control pequeño (un ícono de
+         22-28 px) a 44x44 px en celular SIN cambiar cómo se ve: agrega un
+         área invisible de 12 px alrededor, con ::after.
+   ¿Para qué? Algunos botones, como el de cambiar la foto de perfil, no pueden
+              crecer sin tapar otra cosa. Esta es la forma de hacerlos fáciles
+              de tocar sin mover el diseño.
+   ¿Impacto? El control debe estar posicionado (`relative` o `absolute`); si
+             no, el área invisible se va a otro lugar. En tableta y escritorio
+             no hace nada. */
+@utility touch-area {
+  @media (max-width: 639px) {
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -0.75rem;
+    }
+  }
+}
+
+/* ============================================================================
+   Elementos clicables que se reconocen a simple vista (issue #501)
+   ¿Qué? `focus-ring` dibuja el foco con teclado (anillo verde de 2 px, solo con
+         :focus-visible: el clic con mouse no lo muestra). `link-text` es el
+         enlace de texto: verde de marca, negrita, subrayado siempre visible y
+         el mismo foco.
+   ¿Para qué? Antes cada enlace llevaba el color a mano y casi ninguno tenía
+              subrayado: solo cambiaba de color, y un color no se distingue del
+              texto vecino sin pasar el mouse (en celular no hay mouse). El
+              `Button` tenía además un anillo al 20% de opacidad, casi invisible.
+   ¿Impacto? Todo enlace de texto usa `link-text` y todo control propio con
+             foco personalizado usa `focus-ring` (ver "Elementos clicables" en
+             docs/requisitos/restricciones.md). Un control sin clases de foco
+             conserva el contorno por defecto del navegador, que sí se ve.
+   ============================================================================ */
+@utility focus-ring {
+  @apply focus-visible:ring-2 focus-visible:ring-accent-600 focus-visible:outline-none dark:focus-visible:ring-accent-400;
+}
+@utility link-text {
+  @apply focus-ring cursor-pointer font-semibold text-accent-700 underline underline-offset-2 transition-colors hover:text-accent-800 dark:text-accent-400 dark:hover:text-accent-300;
+}
+
+/* ============================================================================
+   Barra de progreso indeterminada (components/ui/ProgressBar.tsx)
+   ¿Qué? Un tramo que va y viene, para cuando aún no se sabe el porcentaje.
+   ¿Para qué? Es el estado de la barra entre que se toca "enviar" y que el
+              navegador reporta el primer avance de la subida.
+   ¿Impacto? Con "reducir movimiento" activado en el sistema no se anima: la
+             barra queda llena y más tenue.
+   ============================================================================ */
+@keyframes barra-indeterminada {
+  0% { margin-left: -40%; }
+  100% { margin-left: 100%; }
+}
+.animate-barra-indeterminada {
+  animation: barra-indeterminada 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-barra-indeterminada {
+    animation: none;
+    width: 100%;
+    opacity: 0.6;
+  }
 }

@@ -74,22 +74,22 @@ function PasoCard({
           aria-hidden="true"
           className="absolute top-9 left-[calc(50%+2.75rem)] right-[calc(-50%+1.25rem)] hidden items-center sm:flex"
         >
-          <div className="h-0.5 flex-1 bg-accent-200 dark:bg-accent-800" />
+          <div className="h-0.5 flex-1 bg-accent-200 dark:bg-night-line" />
           <ArrowRight className="icon-md -ml-1 shrink-0 text-accent-600 dark:text-accent-400" />
         </div>
       )}
 
-      <div className="relative mb-6 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-2 border-accent-600 bg-white dark:border-accent-500 dark:bg-accent-900">
+      <div className="relative mb-6 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-2 border-accent-600 bg-white dark:border-accent-300 dark:bg-night-card">
         <Icon className="icon-xl text-accent-700 dark:text-accent-300" aria-hidden="true" />
         <span
           aria-hidden="true"
-          className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent-600 text-xs font-bold text-white dark:bg-accent-500 dark:text-accent-950"
+          className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent-600 text-xs font-bold text-white dark:bg-accent-300 dark:text-accent-950"
         >
           {numero}
         </span>
       </div>
 
-      <article className="w-full flex-1 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-accent-800 dark:bg-accent-900">
+      <article className="w-full flex-1 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-night-line dark:bg-night-card">
         <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{titulo}</h3>
         <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{descripcion}</p>
       </article>
@@ -120,21 +120,18 @@ function PilarCard({
     <div
       ref={ref}
       style={{ transitionDelay: visible ? `${index * 120}ms` : "0ms" }}
-      className={`text-left transition-all duration-700 ease-out ${
+      className={`text-left transition-all duration-700 ease-out dark:rounded-2xl dark:border dark:border-night-line dark:bg-night-card dark:p-6 ${
         visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
       }`}
     >
       <div className="mb-4 flex items-center gap-3">
-        <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-          style={{ background: "rgba(255,255,255,0.08)" }}
-        >
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 dark:bg-accent-300/10">
           <Icon className="icon-lg text-accent-300" aria-hidden="true" />
         </div>
         <span className="text-[10px] font-bold tracking-widest text-accent-300">{numero}</span>
       </div>
       <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
-      <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+      <p className="text-sm leading-relaxed text-white/60 dark:text-gray-400">
         {descripcion}
       </p>
     </div>
@@ -273,18 +270,18 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-accent-950">
+    <div className="min-h-screen bg-white dark:bg-night-page">
 
       {/* ── HEADER ── */}
       <header
-        className="fixed left-0 right-0 top-0 z-50 backdrop-blur-md"
-        style={{ background: "rgba(5,46,22,0.58)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+        className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-accent-950/60 backdrop-blur-md dark:border-night-line dark:bg-night-base/80"
       >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             to="/"
-            className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+            className="touch-target inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
             aria-label={t("landing.nav.homeAriaLabel")}
+            title={t("landing.nav.homeAriaLabel")}
           >
             {/* Barra superior: solo el símbolo; el nombre ya lo muestra el hero. */}
             <BrandLogo variant="mark" tone="light" className="h-9" />
@@ -292,7 +289,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
           <ul className="m-0 flex list-none items-center gap-2 p-0">
             <li><LanguageSwitcher /></li>
-            <li><ThemeToggle /></li>
+            <li><ThemeToggle onDark /></li>
             <li className="hidden sm:block">
               <Link
                 to="/login"
@@ -304,7 +301,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
             <li>
               <Link
                 to="/register"
-                className="rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300"
+                className="touch-target-h inline-flex items-center rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {t("landing.nav.register")}
               </Link>
@@ -315,8 +312,16 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
       <main>
         {/* ── HERO ── */}
+        {/* ¿Qué? El hero mide 75% del alto de la pantalla (antes 100%).
+            ¿Para qué? Con 100% la foto llenaba todo y no se notaba que hay
+                      más contenido abajo; ahora asoma el título de "¿Cómo
+                      funciona?" sin hacer scroll.
+            ¿Impacto? `svh` (alto con las barras del navegador del celular
+                      visibles) evita que en móvil el hero crezca al ocultarse
+                      la barra. `min-h` y no `h`: si el contenido es más alto
+                      (celular horizontal), el hero crece en vez de recortarse. */}
         <section
-          className="relative flex min-h-screen items-center justify-center overflow-hidden"
+          className="relative flex min-h-[75svh] items-center justify-center overflow-hidden"
           aria-labelledby="hero-heading"
         >
           {/* Fondo — antes era una <img> normal que se iba con el scroll junto
@@ -340,7 +345,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
                 4.97 (mínimo 4.5). Oscuro: "Verde" accent-50 7.30, "App"
                 accent-300 3.56, texto blanco 8.04. Si se baja más la
                 opacidad, "App" vuelve a verse lavado. */}
-            <div className="absolute inset-0 bg-accent-950/60 dark:bg-accent-950/75" />
+            <div className="absolute inset-0 bg-accent-950/60 dark:bg-night-base/75" />
             <div
               className="absolute inset-0 opacity-15"
               style={{
@@ -353,11 +358,11 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
           </div>
 
           {/* Contenido */}
-          <div className="relative mx-auto max-w-3xl px-6 pt-24 pb-32 text-center lg:px-8">
+          <div className="relative mx-auto max-w-3xl px-6 pt-24 pb-16 text-center lg:max-w-4xl lg:px-8">
             <h1
               id="hero-heading"
               aria-label={BRAND}
-              className={`${heroAnim} mb-4 text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow sm:text-7xl dark:text-accent-50`}
+              className={`${heroAnim} mb-4 text-5xl font-extrabold leading-tight tracking-tight text-white drop-shadow sm:text-7xl lg:text-8xl dark:text-accent-50`}
             >
               <span aria-hidden="true">
                 {BRAND.slice(0, Math.min(marcaEscrita, BRAND_ACCENT_DESDE))}
@@ -372,7 +377,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
 
             <p
-              className={`${heroAnim} mb-3 text-lg font-semibold text-white/90 sm:text-xl`}
+              className={`${heroAnim} mb-3 text-lg font-semibold text-white/90 sm:text-xl lg:text-2xl`}
               style={{ animationDelay: "120ms" }}
             >
               {t("landing.hero.subtitle")}
@@ -386,7 +391,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
                 ¿Impacto? Subido a 80% de opacidad + una sombra de texto sutil,
                           para que se lea igual sin importar qué haya detrás. */}
             <p
-              className={`${heroAnim} mx-auto mb-10 max-w-xl text-sm leading-relaxed`}
+              className={`${heroAnim} mx-auto mb-10 max-w-xl text-sm leading-relaxed lg:max-w-2xl lg:text-base`}
               style={{
                 color: "rgba(255,255,255,0.85)",
                 textShadow: "0 1px 3px rgba(0,0,0,0.6)",
@@ -400,27 +405,27 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
               className={`${heroAnim} flex flex-col items-center justify-center gap-3 sm:flex-row`}
               style={{ animationDelay: "360ms" }}
             >
-              {/* ¿Qué? Antes este botón solo se distinguía por un borde
-                  blanco al 28% de opacidad, sin ningún relleno en reposo.
-                  ¿Para qué? Sobre una parte más clara de la foto de fondo (o
-                            un degradado más débil ahí), ese borde tan sutil
-                            prácticamente desaparecía — dejaba de leerse como
-                            un botón, causando la confusión real reportada
-                            (no era que "el verde" significara otra cosa,
-                            era que el botón de al lado casi no se veía).
-                  ¿Impacto? Ahora tiene un fondo propio (bg-black/20) desde el
-                            reposo, no solo al pasar el mouse — se ve como un
-                            botón sin importar qué haya detrás. */}
+              {/* ¿Qué? Los dos botones tienen jerarquía distinta: "Unirse" es el
+                  principal (relleno blanco, texto verde oscuro) e "Iniciar
+                  sesión" el secundario (borde blanco de 2px sobre bg-black/20).
+                  En modo oscuro el blanco puro encandilaba sobre la foto
+                  oscurecida: pasan a verde claro (accent-300 relleno con texto
+                  accent-950; borde y texto accent-200/50 en el secundario).
+                  ¿Para qué? Antes el principal era verde sobre una foto verde
+                            y el secundario tenía un borde casi invisible: los
+                            botones se perdían contra el fondo.
+                  ¿Impacto? Blanco sobre la foto oscurecida se ve igual sin
+                            importar qué zona de la foto quede detrás; el texto
+                            accent-900 sobre blanco pasa WCAG AA con holgura. */}
               <Link
                 to="/login"
-                className="flex w-full items-center justify-center rounded-xl bg-black/20 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:w-auto"
-                style={{ border: "1px solid rgba(255,255,255,0.45)" }}
+                className="flex w-full items-center justify-center rounded-xl border-2 border-white bg-black/20 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:w-auto dark:border-accent-200 dark:text-accent-50 dark:focus-visible:ring-accent-200 lg:px-10 lg:py-4 lg:text-base"
               >
                 {t("landing.hero.ctaLogin")}
               </Link>
               <Link
                 to="/register"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-700 px-8 py-3.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-accent-600 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300 sm:w-auto"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-accent-900 shadow-lg transition-all hover:bg-accent-50 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:w-auto dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200 dark:focus-visible:ring-accent-200 lg:px-10 lg:py-4 lg:text-base"
               >
                 {t("landing.hero.ctaRegister")} <ArrowRight className="icon-md" aria-hidden="true" />
               </Link>
@@ -447,7 +452,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
           {/* En modo claro la foto se asoma con un velo blanco; en modo oscuro
               se asoma igual, pero con un velo verde oscuro — así el efecto de
               "la foto sigue el scroll" se ve en los dos temas, no solo en claro. */}
-          <div className="absolute inset-0 bg-white/90 dark:bg-accent-950/90" aria-hidden="true" />
+          <div className="absolute inset-0 bg-white/90 dark:bg-night-page/90" aria-hidden="true" />
 
           <div className="relative mx-auto max-w-5xl">
             <div className="mb-14 text-center">
@@ -490,7 +495,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
         {/* Fondo sólido del verde de marca (antes un degradado). En modo
             oscuro accent-900 ya es la versión "de noche" de la paleta. */}
         <section
-          className="relative overflow-hidden bg-accent-900 px-6 py-16 sm:py-20"
+          className="relative overflow-hidden bg-accent-900 px-6 py-16 dark:bg-night-inset sm:py-20"
           aria-labelledby="pilares-heading"
         >
           <div className="relative mx-auto max-w-5xl">
@@ -528,7 +533,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
           fondo de "Pilares" (verde accent-900) —
           si usan un tono parecido, las dos secciones se leen como una sola,
           sin ningún corte entre ellas. */}
-      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-white/10 dark:bg-night-base">
+      <footer className="border-t border-gray-100 bg-white px-6 py-8 dark:border-night-line dark:bg-night-base">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <BrandLogo className="h-7" />
@@ -539,14 +544,14 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
 
           <nav
             aria-label={t("landing.footer.legalAriaLabel")}
-            className="mt-4 border-t border-gray-100 pt-4 dark:border-accent-900"
+            className="mt-4 border-t border-gray-100 pt-4 dark:border-night-line"
           >
             <ul className="m-0 flex list-none flex-wrap justify-center gap-x-5 gap-y-1 p-0">
               {enlacesFooter.map(({ to, label }) => (
                 <li key={to}>
                   <Link
                     to={to}
-                    className="rounded text-xs text-gray-500 transition-colors hover:text-accent-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:text-gray-400 dark:hover:text-accent-400"
+                    className="focus-ring touch-target-h inline-flex items-center rounded text-xs text-gray-500 underline underline-offset-2 transition-colors hover:text-accent-600 dark:text-gray-400 dark:hover:text-accent-400"
                   >
                     {label}
                   </Link>

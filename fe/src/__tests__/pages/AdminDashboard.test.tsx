@@ -105,6 +105,51 @@ describe("AdminDashboard", () => {
     expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
   });
 
+  // ¿Qué? Issue #458: los totales muestran un spinner mientras llegan, no un guion.
+  // ¿Para qué? Un guion parece un dato vacío; el spinner avisa que todavía carga.
+  // ¿Impacto? Si la petición falla, se queda el guion: eso ya no es "cargando".
+  describe("Totales del sistema", () => {
+    it("muestra un spinner mientras llegan los números y luego los números", async () => {
+      // ¿Qué? Los totales piden la pestaña de residentes dos veces (activos e inactivos): se guardan
+      //       todas las respuestas pendientes y se resuelven juntas.
+      const pendientes: Array<(valor: unknown) => void> = [];
+      mockGet.mockImplementation((url: string, config?: { params?: { limit?: number } }) => {
+        if (url.includes("/admin/vista-residentes") && config?.params?.limit === 1) {
+          return new Promise((resolver) => { pendientes.push(resolver); });
+        }
+        if (
+          url.includes("/admin/vista-residentes") ||
+          url.includes("/admin/sp-recicladores") ||
+          url.includes("/admin/administradores-conjunto")
+        ) {
+          return Promise.resolve({ data: { items: [], total: 4 } });
+        }
+        return Promise.resolve({ data: [] });
+      });
+      renderPage();
+
+      const tarjeta = (await screen.findByText("Totales del sistema")).closest("div[class*='rounded']") as HTMLElement;
+      expect(tarjeta.querySelectorAll("svg.animate-spin").length).toBe(3);
+      expect(tarjeta).not.toHaveTextContent("—");
+
+      pendientes.forEach((resolver) => resolver({ data: { items: [], total: 4 } }));
+      await waitFor(() => expect(tarjeta.querySelectorAll("svg.animate-spin").length).toBe(0));
+      expect(tarjeta).toHaveTextContent("4");
+    });
+
+    it("si la petición falla muestra el guion, no un spinner para siempre", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/admin/vista-residentes")) return Promise.reject(new Error("Network Error"));
+        return Promise.resolve({ data: [] });
+      });
+      renderPage();
+
+      const tarjeta = (await screen.findByText("Totales del sistema")).closest("div[class*='rounded']") as HTMLElement;
+      await waitFor(() => expect(tarjeta.querySelectorAll("svg.animate-spin").length).toBe(0));
+      expect(tarjeta).toHaveTextContent("—");
+    });
+  });
+
   it("consulta la pestaña de Residentes al montar", async () => {
     renderPage();
     await waitFor(() => {
@@ -559,20 +604,24 @@ describe("AdminDashboard", () => {
       ) {
         return Promise.resolve({ data: { items: [], total: 0 } });
       }
-      if (url.includes("/admin-conjunto/solicitudes")) {
+      if (url.includes("/novedades-enviadas/soporte")) {
+        return Promise.resolve({ data: { total: 0, items: [] } });
+      }
+      if (url.includes("/admin-conjunto/solicitudes-desvinculacion")) {
         return Promise.resolve({
-          data: { total: 1, items: [
+          data: [
             {
               id: "s-1",
-              tipo: "DESVINCULACION",
-              titulo: "Dejar de administrar Conjunto Los Alpes",
-              origen: "Admin de Conjunto · Pedro Gómez",
+              id_conjunto_residencial: "c-1",
               nombre_conjunto: "Conjunto Los Alpes",
-              detalle: "",
+              id_administrador: "a-1",
+              nombre_administrador: "Pedro",
+              apellidos_administrador: "Gómez",
+              motivo: null,
               estado: "PENDIENTE",
               created_at: new Date().toISOString(),
             },
-          ] },
+          ],
         });
       }
       return Promise.resolve({ data: [] });
@@ -580,10 +629,11 @@ describe("AdminDashboard", () => {
     const user = userEvent.setup();
     renderPage();
 
-    // ¿Qué? El número de pendientes llega apenas carga (SolicitudesPendientes
-    //       avisa por onCountChange) gracias a la instancia oculta (con
-    //       "hidden", no deja de renderizarse) — antes de que el usuario
-    //       abra el modal, la solicitud ya está en el DOM pero no visible.
+    // ¿Qué? El número de pendientes (soporte + desvinculaciones) llega apenas
+    //       carga (BandejaAdminSistema avisa por onCountChange) gracias a la
+    //       instancia oculta (con "hidden", no deja de renderizarse) — antes
+    //       de que el usuario abra el modal, la solicitud ya está en el DOM
+    //       pero no visible.
     expect(await screen.findByText("1 solicitud pendiente por resolver.")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 

@@ -23,7 +23,7 @@ export function ErrorFallback() {
       role="alert"
       className="mx-auto my-16 flex max-w-md flex-col items-center gap-3 rounded-2xl border border-gray-200 bg-white px-6 py-10 text-center dark:border-night-line dark:bg-night-card"
     >
-      <TriangleAlert className="icon-xl text-amber-700 dark:text-amber-500" aria-hidden="true" />
+      <TriangleAlert className="icon-xl text-amber-700 dark:text-amber-200" aria-hidden="true" />
       <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
         {t("errorBoundary.title")}
       </h1>

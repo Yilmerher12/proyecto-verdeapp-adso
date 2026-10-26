@@ -3,16 +3,21 @@ Módulo: schemas/auditoria_conjunto.py
 Descripción: Esquemas de validación para la auditoría del Reciclador al
              conjunto (RQF-009).
 """
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-# ¿Qué? Los 4 niveles de desempeño acordados (issue #5) — escala simple,
-#       cada uno con su propio color/ícono en el frontend, pero siempre
-#       respaldado por una foto de evidencia (ver AuditoriaConjunto.ruta_evidencia).
-NivelDesempeno = Literal["EXCELENTE", "BUENA", "REGULAR", "DEFICIENTE"]
+# ¿Qué? Los 3 niveles de desempeño (en pantalla: Bueno / Regular / Malo) —
+#       escala simple, cada uno con su propio color/ícono en el frontend,
+#       pero siempre respaldado por una foto de evidencia (ver
+#       AuditoriaConjunto.ruta_evidencia).
+# ¿Para qué? Antes había un cuarto nivel, EXCELENTE, que se unificó con BUENA
+#           (2026-08-27) pero siguió aceptado en el código. Se retiró y la
+#           migración que lo acompaña convierte las filas viejas a BUENA.
+# ¿Impacto? Una fila con otro valor haría fallar la respuesta de la API.
+NivelDesempeno = Literal["BUENA", "REGULAR", "DEFICIENTE"]
 
 # ¿Qué? Issue #352 — el tema es String(255); la descripción es Text, con el
 #       máximo de 255 que pide HU-010. Los aplica el router (llega como Form).
@@ -42,6 +47,22 @@ class AuditoriaConjuntoResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# ¿Qué? Una página de auditorías con el total que hay en la base de datos.
+# ¿Para qué? Las listas que pueden crecer (historial del Residente, "mis
+#           auditorías" del Reciclador) se piden de a pocas con limit/offset; el
+#           total permite mostrar "de la X a la Y de Z" y cuántas páginas hay.
+class AuditoriasListResponse(BaseModel):
+    items: list[AuditoriaConjuntoResponse]
+    total: int
+
+
+# ¿Qué? La fecha de la última auditoría que este reciclador hizo en un conjunto.
+# ¿Para qué? El aviso "este conjunto necesita auditoría" del panel del Reciclador.
+class UltimaAuditoriaConjuntoResponse(BaseModel):
+    id_conjunto_residencial: UUID
+    ultima_auditoria: datetime
+
+
 # ¿Qué? Vista del Admin del Sistema sobre las auditorías (RQF-009) — igual a
 #       la de arriba, más cuántos residentes fueron avisados con
 #       "contenido recomendado" a raíz de esta auditoría.
@@ -49,8 +70,41 @@ class AuditoriaConjuntoResponse(BaseModel):
 #           nunca dispara esa notificación) — nunca es un error de datos.
 class AuditoriaAdminResponse(AuditoriaConjuntoResponse):
     avisados: int = 0
+    # ¿Qué? Localidad de Bogotá a la que pertenece el conjunto auditado.
+    # ¿Para qué? La tabla "Calificaciones por conjunto" del Admin Sistema filtra primero por
+    #           localidad y después por conjunto, para no buscar entre todos los conjuntos de Bogotá.
+    # ¿Impacto? Solo lo usa esta vista; el Residente, el Admin de Conjunto y el Reciclador
+    #           siguen recibiendo AuditoriaConjuntoResponse sin estos dos campos.
+    id_localidad: int
+    nombre_localidad: str
 
 
 class AuditoriasAdminListResponse(BaseModel):
     items: list[AuditoriaAdminResponse]
     total: int
+
+
+# ¿Qué? Issue #486 — conteos de auditorías de UN conjunto por semana y por
+#       tema, para la gráfica de desempeño (Admin de Conjunto y Residente).
+# ¿Para qué? Que la base de datos cuente (GROUP BY) y la pantalla solo dibuje:
+#           el historial viejo corta en 50 auditorías mezclando conjuntos.
+# ¿Impacto? `lunes` es el lunes de la semana en hora de Bogotá, no en UTC.
+class SemanaDesempeno(BaseModel):
+    lunes: date
+    bueno: int = 0
+    regular: int = 0
+    malo: int = 0
+
+
+class TemaDesempeno(BaseModel):
+    tema: str
+    bueno: int = 0
+    regular: int = 0
+    malo: int = 0
+
+
+class DesempenoConjuntoResponse(BaseModel):
+    id_conjunto_residencial: UUID
+    total: int
+    semanas: list[SemanaDesempeno]
+    temas: list[TemaDesempeno]

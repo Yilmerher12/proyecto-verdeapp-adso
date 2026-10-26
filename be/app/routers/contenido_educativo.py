@@ -22,6 +22,8 @@ from app.schemas.contenido_educativo import (
     ContenidoEducativoUpdate,
     EnviarContenidoRequest,
     EnvioContenidoResponse,
+    VistosRequest,
+    VistosResponse,
 )
 from app.services import contenido_educativo_service as service
 from app.utils.audit_log import log_accion_admin
@@ -40,12 +42,34 @@ _requiere_admin_sistema = require_role(
 )
 
 
+# ¿Qué? Lecciones vistas (solo Residente). Van ANTES de "/{id_contenido}" a propósito:
+#       si no, FastAPI intentaría leer la palabra "vistos" como un id de módulo.
+_requiere_residente = require_role(RolId.RESIDENTE, "Solo un Residente tiene lecciones vistas.")
+
+
 @router.get("", response_model=list[ContenidoEducativoResponse], summary="Listar el catálogo (HU-005)")
 def listar(
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[ContenidoEducativoResponse]:
     return service.listar_contenido(db)
+
+
+@router.get("/vistos", response_model=VistosResponse, summary="Los módulos que ya abrí (Residente)")
+def mis_vistos(
+    current_user: Usuario = Depends(_requiere_residente),
+    db: Session = Depends(get_db),
+) -> VistosResponse:
+    return VistosResponse(ids=service.listar_vistos(db, current_user.id_usuario))
+
+
+@router.post("/vistos", response_model=VistosResponse, summary="Marcar módulos como vistos (Residente)")
+def marcar_vistos(
+    body: VistosRequest,
+    current_user: Usuario = Depends(_requiere_residente),
+    db: Session = Depends(get_db),
+) -> VistosResponse:
+    return VistosResponse(ids=service.marcar_vistos(db, current_user.id_usuario, body.ids))
 
 
 @router.get(

@@ -28,10 +28,12 @@ Este documento fija seis categorías de restricciones para VerdeApp: tecnología
 | Tecnología   | Versión fijada  |
 | ------------ | ---------------- |
 | Python       | 3.12              |
-| FastAPI      | 0.135.1           |
-| SQLAlchemy   | 2.0.48 (ORM 2.0, no el estilo 1.x)|
-| Alembic      | 1.18.4 (migraciones versionadas — nunca `Base.metadata.create_all()`)|
-| Pydantic     | 2.12.5             |
+| FastAPI      | 0.142.2           |
+| SQLAlchemy   | 2.1.3 (ORM 2.0, no el estilo 1.x)|
+| Alembic      | 1.20.0 (migraciones versionadas — nunca `Base.metadata.create_all()`)|
+| Pydantic     | 2.13.5             |
+| fpdf2        | 2.8.9 (genera el PDF del historial de la agenda, issue #480; licencia LGPL-3.0, se usa como librería sin modificarla; puro Python, no necesita programas de sistema en Windows) |
+| pypdf        | 6.21.1 (solo en las pruebas: lee el PDF generado para comprobar su contenido; licencia BSD-3-Clause) |
 
 No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `pyproject.toml` — toda dependencia va con `==`, reforzado además por `uv.lock`, que fija también las dependencias transitivas.
 
@@ -45,6 +47,7 @@ No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `pyproject.toml
 | TailwindCSS      | 4.3.3             |
 | React Router     | 7.18.4            |
 | react-markdown   | 10.1.0            |
+| recharts         | 3.10.1 (solo la gráfica de desempeño semanal; se carga bajo demanda con `React.lazy`, nunca en la primera carga; licencia MIT) |
 
 ### Base de datos
 
@@ -56,7 +59,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 
 - **Python**: entorno virtual (`.venv`), nunca instalar paquetes en el Python global de la máquina.
 - **Node.js**: **pnpm** como único gestor de paquetes del frontend — no `npm install` ni `yarn add`. La versión de pnpm queda fijada en `packageManager` dentro de `package.json`.
-- **Linting y formato backend**: `ruff` (lint + formato en una sola herramienta).
+- **Linting y formato backend**: `ruff` (lint + formato en una sola herramienta). Las reglas de lint están fijadas a mano en `be/pyproject.toml` (`[tool.ruff.lint]`), porque ruff cambia su lista por defecto entre versiones; para exigir reglas nuevas se agregan ahí en una tarjeta aparte.
 - **Linting y formato frontend**: `eslint` + `prettier`.
 - **Testing**: `pytest` en el backend, `vitest` en el frontend — toda funcionalidad nueva debe llevar sus pruebas correspondientes antes de considerarse terminada.
 
@@ -81,6 +84,8 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | Puntos de acopio / directorio / localidad | `Warehouse` / `MapPinned` / `Map` (una dirección concreta sigue con `MapPin`) |
   | Seguridad (cambiar contraseña) | `KeyRound` |
   | Semáforo de auditoría | Caritas `Smile` / `Meh` / `Frown` (definidas en `fe/src/config/nivelesDesempeno.ts`) |
+  | Desempeño semanal (menú y gráfica) | `ChartColumn` · alternar gráfica/tabla `Table2` / lista `List` |
+  | Ampliar una imagen / abrir algo en otra pestaña | `Maximize2` / `ExternalLink` (siempre dentro de `InsigniaAccionImagen` o junto al texto del enlace) |
 
 - Tamaño de íconos: solo 5, con una clase por uso definida en `fe/src/index.css` — nunca `h-*`/`w-*` sueltos en un ícono:
 
@@ -92,21 +97,69 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | `icon-xl` | 32 px | Destacado: encabezado del dashboard, estado vacío, tarjetas de rol del registro |
   | `icon-deco` | 80 px | Decorativo: marca de agua del dashboard |
 
-- Animación de íconos: solo en lo que se puede tocar (sidebar, botones, selector del semáforo) o en lo que aparece para avisar (mensajes). Se usan las clases `icon-draw`, `icon-hop`, `icon-shake`, `icon-ring`, `icon-nudge` y `icon-appear` de `fe/src/index.css`, que ya respetan `prefers-reduced-motion`. No se agregan librerías de animación.
+- Animación de íconos (estándar de **3**, issue #502): solo se anima lo que se puede tocar o lo que aparece para avisar; nunca un ícono de adorno. Clases de `fe/src/index.css`, todas dentro de `prefers-reduced-motion: no-preference`:
+
+  | Caso | Clase | Cuándo se mueve |
+  | --- | --- | --- |
+  | Algo que se toca: ítem del menú, botón, enlace o etiqueta con ícono (incluidas las caritas del semáforo) | `icon-draw` (se redibuja el trazo) | al pasar el mouse **o enfocar con el teclado**; es la única que se usa en lo tocable |
+  | Mensaje bueno o neutro que aparece (éxito, información) | `icon-appear icon-hop` (salta) | una vez, al aparecer |
+  | Mensaje que pide atención (error, advertencia) | `icon-appear icon-shake` (sacude) | una vez, al aparecer |
+
+  `icon-hop` e `icon-shake` siempre van junto a `icon-appear` (no reaccionan al mouse: un ícono dentro de un botón usa `icon-draw`). Antes también existían `icon-ring` e `icon-nudge`; se borraron. Con "reducir movimiento" ningún ícono se mueve y las flechas de los acordeones cambian de posición sin girar. **Excepción documentada:** el `Spinner` (`animate-spin`) sigue girando: no se cuenta como ícono animado sino como indicador de que algo está cargando, y sin el giro dejaría de significar "trabajando". Una prueba (`fe/src/__tests__/lib/animacionesIconos.test.ts`) falla si aparece `icon-ring` o `icon-nudge`, un `icon-hop` o `icon-shake` sin `icon-appear`, un `icon-draw` junto a `icon-appear`, o una animación de ícono fuera de `no-preference`. No se agregan librerías de animación.
+- Elementos clicables (issue #501): lo que se puede tocar se reconoce **a simple vista, sin pasar el mouse** (en celular no hay mouse). El `cursor-pointer` solo ayuda a quien tiene mouse; esta regla es la que cuenta:
+
+  | Elemento | Cómo se ve | Cómo se escribe |
+  | --- | --- | --- |
+  | Botón primario | Fondo verde sólido, texto blanco | `Button` (variante `primary`) |
+  | Botón secundario / de acción | Borde visible, nunca solo un fondo suave: un fondo suave sin borde se lee como una etiqueta o chip | `Button` (variante `secondary`) o, en un botón hecho a mano, `border` del mismo tono (`border-accent-300`, `border-red-300` o, para el gris, `border-edge dark:border-night-edge`) |
+  | Botón peligroso | Rojo (sólido o con borde rojo) | `Button` (variante `danger`) |
+  | Enlace dentro de un texto, o suelto como texto | Verde de marca, negrita y **subrayado siempre visible** (el color solo no basta: no se distingue del texto vecino). Si abre otra pestaña lleva `ExternalLink` | clase `link-text` (definida en `fe/src/index.css`) |
+  | Enlaces de pie de página | Gris con subrayado | `underline underline-offset-2` junto al gris del pie |
+  | Nombre de una fila que abre su detalle | Subrayado visible (`decoration-gray-500`, no `gray-200`: casi no se ve) | clases a mano, con `focus-ring` |
+  | Botón de solo ícono | Nombre accesible **y** pista visible: `aria-label` y `title` con el mismo texto. Si hay espacio, mejor con texto | `aria-label` + `title` |
+  | Imagen que abre algo (ampliar, abrir en otra pestaña) | Insignia en la esquina, siempre visible (no solo al pasar el mouse) | `InsigniaAccionImagen` dentro de un control `relative` |
+  | Lo que no se toca | No imita nada de lo anterior: sin subrayado, sin borde de botón, sin color de enlace | |
+
+  Foco con teclado: todo control con foco propio usa la clase `focus-ring` (anillo verde sólido de 2 px, solo con `:focus-visible`). Nunca se quita el contorno (`outline-none`) sin ese reemplazo; un control sin clases de foco conserva el contorno por defecto del navegador, que sí se ve. Todo botón, `<select>` y `<label>` clicable lleva además `cursor-pointer`. Lo comprueba `fe/src/__tests__/lib/elementosClicables.test.ts` (botones de solo ícono sin `title`, enlaces de texto sin subrayado, imágenes clicables sin insignia).
 - Paleta de marca: "Páramo Fresco" en modo claro y "Bosque Andino" en modo oscuro, definidas como escala `green-*` (y `accent-*` apuntando a ella) en `fe/src/index.css`. Los botones principales usan `accent-*`; no hay un color de acento distinto (ni azul ni amarillo) para botones. Los paneles no llevan imagen de fondo: el área de contenido es un color sólido.
+- Tema oscuro (issue #503): las capas son verdes casi neutros, cada una un paso más clara que la de abajo (`night-base` < `night-page` < `night-inset` < `night-card` < `night-panel`), y la separación la da el borde `night-line`. El **único acento** es el menta (`accent-300`, el verde claro del botón "Unirse a VerdeApp"): botones principales, ítem activo del menú, enlaces, números destacados y foco. **Los 4 roles comparten ese acento**: el rol se distingue por su ícono y su nombre, no por color (`fe/src/config/roleTheme.ts`, los 4 apuntan a las mismas constantes). Nada de verde oscuro sobre verde oscuro: un botón sólido nuevo lleva siempre su pareja menta.
 - Texto secundario y metadatos (fechas, contadores, ayudas): siempre `text-gray-500 dark:text-gray-400`. Nunca `text-gray-400` en modo claro (2.60 de contraste) ni la pareja invertida `text-gray-400 dark:text-gray-500`, que falla en los dos modos. Verde de marca como texto pequeño sobre fondo verde oscuro: `accent-300` (ver `docs/gestion-proyecto/auditoria-contraste-paleta-nueva.md`).
 - Ningún color escrito a mano en componentes (`bg-[#12231a]`, `border-[#23392b]`…): todo color sale de un token de `fe/src/index.css`. Las superficies del modo oscuro tienen su propio token (siempre con `dark:`):
 
   | Token | Uso |
   | --- | --- |
-  | `night-base` | Fondo raíz (auth, legales, shell, footer) |
-  | `night-page` | Fondo del área de contenido de los paneles |
+  | `night-base` | Fondo raíz y sidebar (la capa más baja: auth, legales, shell, footer) |
+  | `night-page` | Fondo del área de contenido de los paneles y del encabezado |
   | `night-card` | Tarjetas |
-  | `night-panel` | Modales, tarjeta de login, barras fijas |
+  | `night-panel` | Modales, panel lateral y tarjeta de login (encima de las tarjetas) |
   | `night-inset` | Zonas hundidas: filas en hover, botón secundario |
   | `night-field` | Campos de formulario |
-  | `night-line` | Bordes |
+  | `night-line` | Bordes decorativos (tarjetas, divisiones): 1.94:1 sobre la tarjeta |
+  | `night-edge` | Borde de los controles: campos y botones secundarios (3.3:1 sobre el campo) |
   | `night-hover` | Fondo al pasar el mouse |
+
+- Equivalencias entre el modo claro y el oscuro (issue #503). **Esta tabla es la única fuente**: cada papel tiene el mismo trabajo en los dos modos, y un componente nuevo copia la pareja de aquí en vez de inventar la suya. Los contrastes están medidos (ver `docs/gestion-proyecto/auditoria-coherencia-temas.md`):
+
+  | Papel | Modo claro | Modo oscuro |
+  | --- | --- | --- |
+  | Fondo raíz (auth, legales, footer) y sidebar | `bg-gray-50`; el sidebar es `bg-accent-900` (verde de marca) | `night-base` (sidebar y raíz, la capa más baja) |
+  | Fondo del área de contenido y encabezado | `bg-gray-200` (contenido), `bg-white` (encabezado) | `night-page` (los dos; los separa el borde `night-line`) |
+  | Tarjeta | `bg-white` | `night-card` |
+  | Modal, panel lateral, barra fija | `bg-white` | `night-panel` |
+  | Zona hundida, botón secundario | `bg-white` / `bg-gray-100` | `night-inset` |
+  | Campo de formulario | `bg-white` | `night-field` |
+  | Fondo al pasar el mouse | `hover:bg-gray-50` | `night-hover` |
+  | Borde decorativo | `border-gray-100` o `border-gray-200` | `night-line` |
+  | **Borde de un control** (campo, botón secundario) | `border-edge` | `dark:border-night-edge` |
+  | Texto principal | `text-gray-900` | `dark:text-white` o `dark:text-gray-100` |
+  | Texto secundario | `text-gray-500` | `dark:text-gray-400` |
+  | Acción principal (botón sólido) | `bg-accent-700` con texto blanco | **menta**: `dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200` (8.6:1 sobre la tarjeta; antes el botón era verde oscuro, 1.86:1 sobre la tarjeta) |
+  | Ítem activo del menú, números destacados | `bg-white/15 text-white` en el sidebar verde | `dark:bg-accent-300/15 dark:text-accent-300` |
+  | Enlace de texto | `accent-700` (`link-text`) | `accent-400` (`link-text`) |
+  | Éxito, aviso, error | texto `-700` sobre fondo `-50` (`accent`, `amber`, `red`) | fondo translúcido `-400/10`, borde `-300/30` o `-400/30`, texto `amber-200` (aviso), `red-300` (error) o `accent-300` (éxito); nunca `-900` sólido (se ve marrón o sucio sobre el verde) |
+  | Colores de categoría (tipo de comunicado, de aviso, auditoría: `purple`, `indigo`, `teal`) | texto `-700` sobre fondo `-50` | fondo translúcido `-400/10` y texto `-300` |
+
+  Los colores de categoría son los únicos de Tailwind concretos permitidos fuera de los estados de éxito, aviso y error: cada categoría usa siempre su pareja de arriba y nunca el color solo (siempre lleva texto o ícono). Una prueba (`fe/src/__tests__/lib/coloresTemas.test.ts`) falla si aparece un color escrito a mano (`bg-[#…]`), un `text-gray-400` sin su pareja oscura, o un `border-gray-300` suelto en lugar de `border-edge`.
 - Logo: solo en SVG, en `fe/public/logos/` (`logo`, `logo-white`, `logo-mark`, `logo-mark-white` y `favicon`). Ninguna página pone un `<img>` del logo a mano: siempre se usa el componente `BrandLogo` (`fe/src/components/ui/BrandLogo.tsx`), que elige la versión según el fondo y el modo oscuro. No se usan PNG ni íconos de `lucide-react` (como `Leaf`) en lugar del logo.
 - El color de marca (`accent-*`) es el único acento de color permitido en componentes reutilizables; los colores por rol (sidebar, badges) viven centralizados en `fe/src/config/roleTheme.ts`, no repetidos por archivo.
 - Todo componente nuevo debe soportar modo claro y modo oscuro (`dark:`) desde el primer commit — no se agrega como una tarea aparte después.
@@ -137,4 +190,5 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 - CORS restringido explícitamente al dominio del frontend — nunca `allow_origins=["*"]`.
 - Límite de intentos de inicio de sesión (rate limiting) para mitigar fuerza bruta.
 - Toda regla de un formulario se repite en el backend (schema de Pydantic): el frontend solo guía al usuario, el backend es el que protege, porque cualquiera puede llamar a la API sin pasar por el formulario. Todo campo de texto tiene un máximo igual al tamaño de su columna en la base de datos, en los dos lados (`maxLength` en el input, validación en el schema), para que un texto largo se rechace con 422 y nunca llegue a la base de datos como un error 500. Nombres y apellidos: solo letras con espacio, apóstrofe, punto o guion (`fe/src/lib/validacion.ts` / `be/app/schemas/user.py`).
+- Ningún enlace de la aplicación muestra un correo electrónico — por pedido del profesor, por seguridad: los enlaces llevan al formulario de contacto (`/contacto`). **Única excepción:** la pantalla para pedir la cuenta de Administrador de Conjunto (registro y "Solicitar otro conjunto"), que muestra `administradorverdeapp@gmail.com` porque pide dos documentos adjuntos y el formulario no puede llevarlos (issue #457, `fe/src/config/solicitudAdminConjunto.ts`). Es una cuenta dedicada solo a ese trámite. *Pendiente: confirmar con el profesor y anotar aquí la fecha.*
 - Ningún endpoint que modifique o consulte datos sensibles queda sin autenticación — cualquier excepción debe justificarse explícitamente en el código, como ya se documentó en el incidente de `admin.py` corregido en este proyecto.

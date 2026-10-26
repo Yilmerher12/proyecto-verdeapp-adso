@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { LandingPage } from "@/pages/LandingPage";
@@ -8,7 +8,6 @@ import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { enviarMensajeContacto } from "@/lib/contactApi";
-import { MOTIVO_SOLICITUD_ADMIN } from "@/components/SolicitudAdminConjuntoInfo";
 import {
   CONTACTO_ASUNTO_MAX_LENGTH,
   CONTACTO_ASUNTO_MIN_LENGTH,
@@ -35,21 +34,7 @@ export function ContactoModalPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // ¿Qué? Si se llega desde la opción "¿Administras un conjunto?" del
-  //       registro (?motivo=admin-conjunto), el asunto y una plantilla del
-  //       mensaje ya vienen escritos en el idioma activo.
-  // ¿Para qué? Que todas las solicitudes lleguen al equipo con el mismo
-  //           asunto y los mismos datos, sin que la persona adivine qué poner.
-  // ¿Impacto? Nada personal viaja en la URL: solo el motivo.
-  const [searchParams] = useSearchParams();
-  const esSolicitudAdmin = searchParams.get("motivo") === MOTIVO_SOLICITUD_ADMIN;
-  const plantillaAdmin = t("contactoModal.adminRequest.messageTemplate");
-
-  const [formData, setFormData] = useState(() =>
-    esSolicitudAdmin
-      ? { ...FORM_VACIO, subject: t("contactoModal.adminRequest.subject"), message: plantillaAdmin }
-      : FORM_VACIO,
-  );
+  const [formData, setFormData] = useState(FORM_VACIO);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Campo, string>>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
@@ -77,11 +62,6 @@ export function ContactoModalPage() {
         : [CONTACTO_MENSAJE_MIN_LENGTH, CONTACTO_MENSAJE_MAX_LENGTH];
     if (valor.length < min) return t(`contactoModal.validation.${campo}Min`, { min });
     if (valor.length > max) return t(`contactoModal.validation.${campo}Max`, { max });
-    // ¿Qué? La plantilla ya supera el mínimo de caracteres, así que sin esta
-    //       revisión se podía enviar tal cual, sin ningún dato del conjunto.
-    if (campo === "message" && esSolicitudAdmin && valor === plantillaAdmin.trim()) {
-      return t("contactoModal.validation.templateUnchanged");
-    }
     return "";
   };
 
@@ -130,7 +110,7 @@ export function ContactoModalPage() {
       <Modal onClose={() => navigate("/")} wide aria-label={t("contactoModal.title")}>
         <div className="max-h-[85vh] overflow-y-auto p-6 sm:p-8">
           <div className="mb-6 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-900/30">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
               <MessageSquare className="icon-xl text-accent-600 dark:text-accent-400" />
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
@@ -192,7 +172,7 @@ export function ContactoModalPage() {
                 <textarea
                   id="message"
                   name="message"
-                  rows={esSolicitudAdmin ? 6 : 4}
+                  rows={4}
                   value={formData.message}
                   onChange={handleChange}
                   onBlur={() => validarCampo("message")}
@@ -201,12 +181,12 @@ export function ContactoModalPage() {
                   aria-describedby={fieldErrors.message ? "message-error message-count" : "message-count"}
                   placeholder={t("contactoModal.message.placeholder")}
                   className={`block w-full rounded-xl border bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-accent-400 focus:border-accent-500 focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:bg-night-field dark:text-white dark:placeholder:text-gray-500 dark:hover:border-accent-500 ${
-                    fieldErrors.message ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-night-line"
+                    fieldErrors.message ? "border-red-500 dark:border-red-500" : "border-edge dark:border-night-edge"
                   }`}
                 />
                 <div className="flex items-start justify-between gap-2">
                   {fieldErrors.message ? (
-                    <p id="message-error" className="animate-fade-in text-sm text-red-600 dark:text-red-400" role="alert">
+                    <p id="message-error" className="animate-fade-in text-sm text-red-600 dark:text-red-300" role="alert">
                       {fieldErrors.message}
                     </p>
                   ) : (

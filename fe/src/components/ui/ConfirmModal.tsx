@@ -17,6 +17,7 @@ import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
 import { Modal } from "@/components/ui/Modal";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface ConfirmModalProps {
   /** ¿Qué? Ícono dentro del círculo de color, arriba del título (ej: TriangleAlert, Trash2, UserX). */
@@ -49,19 +50,19 @@ interface ConfirmModalProps {
 
 const ESTILOS_VARIANTE = {
   warning: {
-    circulo: "bg-amber-50 dark:bg-amber-900/20",
-    icono: "text-amber-600 dark:text-amber-400",
-    boton: "bg-amber-600 hover:bg-amber-700",
+    circulo: "bg-amber-50 dark:bg-amber-400/10",
+    icono: "text-amber-600 dark:text-amber-200",
+    boton: "bg-amber-600 hover:bg-amber-700 dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200",
   },
   danger: {
-    circulo: "bg-red-50 dark:bg-red-900/20",
-    icono: "text-red-500 dark:text-red-400",
+    circulo: "bg-red-50 dark:bg-red-400/10",
+    icono: "text-red-500 dark:text-red-300",
     boton: "bg-red-500 hover:bg-red-600",
   },
   primary: {
-    circulo: "bg-accent-50 dark:bg-accent-900/20",
+    circulo: "bg-accent-50 dark:bg-accent-300/10",
     icono: "text-accent-600 dark:text-accent-400",
-    boton: "bg-accent-700 hover:bg-accent-800",
+    boton: "bg-accent-700 hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200",
   },
 } as const;
 
@@ -110,8 +111,14 @@ export function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isConfirming}
-            className={`flex-1 cursor-pointer rounded-xl ${estilo.boton} px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60`}
+            aria-busy={isConfirming}
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl ${estilo.boton} px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60`}
           >
+            {/* ¿Qué? Spinner mientras la acción está en curso (issue #458).
+                ¿Para qué? Antes solo cambiaba el texto, y muchas pantallas ni
+                          siquiera pasaban isConfirming: la acción tardaba y nada
+                          avisaba, ni impedía tocar el botón dos veces. */}
+            {isConfirming && <Spinner size="sm" tone="current" />}
             {isConfirming ? (confirmingLabel ?? confirmLabel) : confirmLabel}
           </button>
         </div>

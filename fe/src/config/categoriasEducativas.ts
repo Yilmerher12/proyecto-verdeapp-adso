@@ -64,9 +64,8 @@ export const NOMBRE_SIMPLE_CATEGORIA: Record<string, string> = {
 // ¿Para qué? AuditoriaConjuntoForm.tsx la excluye del desplegable de
 //           "tema" al calificar — sigue existiendo en el catálogo
 //           educativo para que el Residente la lea por su cuenta, pero ya
-//           no se usa como criterio de auditoría. Mismo criterio ya usado
-//           para "Excelente" en nivelesDesempeno.ts: seguir existiendo
-//           para lo suyo, sin ofrecerse donde ya no aplica.
+//           no se usa como criterio de auditoría: seguir existiendo para
+//           lo suyo, sin ofrecerse donde ya no aplica.
 // ¿Impacto? "Marco distrital y consumo responsable" (ahora "Cantidad de
 //           basura generada") salió de este set el 2026-09-14 — sí es
 //           observable comparando la cantidad de residuos entre visitas.

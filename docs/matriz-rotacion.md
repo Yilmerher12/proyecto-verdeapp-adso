@@ -14,10 +14,10 @@ Reglas:
 
 | Integrante (usuario GitHub) | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
 |---|---|---|---|---|---|---|---|---|---|
-| Yilmer Hernández Camargo (@Yilmerher12) | E2E | | | | | | | | |
-| Yordan Castro Guerrero (@yordancastrog7-pixel) | E2E | | | | | | | | |
-| Juan Carlos Barajas (@Juanbarajas90) | E2E | | | | | | | | |
-| José Guerrero (@josperaes-dotcom) | E2E | | | | | | | | |
+| Yilmer Hernández Camargo (@Yilmerher12) | E2E | E2E | | | | | | | |
+| Yordan Castro Guerrero (@yordancastrog7-pixel) | E2E | API | | | | | | | |
+| Juan Carlos Barajas (@Juanbarajas90) | E2E | BD | | | | | | | |
+| José Guerrero (@josperaes-dotcom) | E2E | Front | | | | | | | |
 
 ## Cobertura semanal
 

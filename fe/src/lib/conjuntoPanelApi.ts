@@ -61,14 +61,27 @@ export interface ItemAgenda {
   id: string;
   texto: string;
   url_evidencia: string | null;
-  estado: "PENDIENTE" | "EN_ESPERA";
+  estado: "PENDIENTE" | "ARCHIVADA";
   created_at: string;
+  archivado_en: string | null;
+}
+
+export interface PaginaDeAgenda {
+  items: ItemAgenda[];
+  total: number;
 }
 
 // ¿Qué? Agenda interna del Admin de Conjunto, por conjunto — temas para
 //       llevar al comité (texto + foto opcional). Nunca llega al Admin Sistema.
+//       Devuelve solo los temas por tratar; los archivados se piden aparte.
 export async function listarAgenda(idConjunto: string): Promise<ItemAgenda[]> {
   const { data } = await axios.get(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda`);
+  return data;
+}
+
+// ¿Qué? Issue #435 — el historial (temas archivados) se pide de a páginas (limit/offset).
+export async function listarAgendaArchivada(idConjunto: string, limit: number, offset: number): Promise<PaginaDeAgenda> {
+  const { data } = await axios.get(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda/archivadas`, { params: { limit, offset } });
   return data;
 }
 
@@ -80,6 +93,81 @@ export async function crearItemAgenda(idConjunto: string, payload: { texto: stri
 export async function cambiarEstadoItemAgenda(idConjunto: string, idItem: string, estado: ItemAgenda["estado"]): Promise<ItemAgenda> {
   const { data } = await axios.patch(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda/${idItem}`, { estado });
   return data;
+}
+
+export interface FiltroDescargaAgenda {
+  estado: "TODOS" | ItemAgenda["estado"];
+  // ¿Qué? Fechas "AAAA-MM-DD" (hora de Bogotá, la que ve el usuario); vacías = sin límite.
+  desde: string;
+  hasta: string;
+}
+
+export type FormatoDescargaAgenda = "csv" | "pdf";
+
+export interface ConteoDescargaAgenda {
+  total: number;
+  // ¿Qué? Tope de temas por archivo que fija el backend; la pantalla no lo repite a mano.
+  maximo: number;
+}
+
+// ¿Qué? Cuántos temas traería la descarga con estos filtros (HU-049), sin bajar el archivo.
+// ¿Para qué? Que la ventana "Descargar agenda" lo muestre antes de pulsar "Descargar".
+// ¿Impacto? El backend cuenta con la misma condición que el CSV y el PDF, así que el número
+//           coincide con las filas del archivo.
+export async function contarHistorialAgenda(idConjunto: string, filtro: FiltroDescargaAgenda): Promise<ConteoDescargaAgenda> {
+  const { data } = await axios.get(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda/historial/conteo`, {
+    params: { estado: filtro.estado, desde: filtro.desde || undefined, hasta: filtro.hasta || undefined },
+  });
+  return data;
+}
+
+// ¿Qué? Issues #479 y #480 (HU-049) — historial de la agenda en CSV (para Excel) o PDF (documento).
+// ¿Para qué? Un enlace normal no manda el token de la sesión, así que el archivo se pide
+//           por axios como bloque de bytes (responseType "blob") y luego se baja con
+//           descargarArchivo.
+// ¿Impacto? Con responseType "blob" el cuerpo del error (400 por pasar de 500 temas) también
+//           llega como Blob: se lee aquí para que el mensaje del backend llegue a la pantalla.
+export async function descargarHistorialAgenda(
+  idConjunto: string,
+  filtro: FiltroDescargaAgenda,
+  formato: FormatoDescargaAgenda
+): Promise<Blob> {
+  try {
+    const { data } = await axios.get(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda/historial/${formato}`, {
+      params: { estado: filtro.estado, desde: filtro.desde || undefined, hasta: filtro.hasta || undefined },
+      responseType: "blob",
+    });
+    return data;
+  } catch (error) {
+    const cuerpo = (error as { response?: { data?: unknown } }).response?.data;
+    if (cuerpo instanceof Blob) {
+      try {
+        const detail = JSON.parse(await cuerpo.text()).detail;
+        if (typeof detail === "string") (error as Error).message = detail;
+      } catch {
+        // El cuerpo no era JSON: se deja el mensaje que ya traía el error.
+      }
+    }
+    throw error;
+  }
+}
+
+// ¿Qué? Mismo nombre que arma el backend: historial-agenda-<conjunto>-<desde>_<hasta>.<csv|pdf>.
+// ¿Para qué? Con credenciales el navegador no deja leer la cabecera Content-Disposition,
+//           así que la pantalla arma el nombre sola. Sin datos personales y solo ASCII.
+export function nombreArchivoHistorialAgenda(
+  nombreConjunto: string,
+  desde: string,
+  hasta: string,
+  formato: FormatoDescargaAgenda = "csv"
+): string {
+  const slug = nombreConjunto
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `historial-agenda-${slug}-${desde || "inicio"}_${hasta || "hoy"}.${formato}`;
 }
 
 export async function eliminarItemAgenda(idConjunto: string, idItem: string) {

@@ -35,7 +35,7 @@
 
 - **Dado que** terminé de recoger en un conjunto,
 - **cuando** entro al panel de auditoría,
-- **entonces** debo poder elegir una calificación entre Rojo (malo), Amarillo (regular) o Verde (excelente) para ese conjunto.
+- **entonces** debo poder elegir una calificación entre Rojo (malo), Amarillo (regular) o Verde (bueno) para ese conjunto.
 
 ### CA-010.2 — Observación opcional
 

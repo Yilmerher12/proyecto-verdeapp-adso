@@ -12,7 +12,7 @@
  *           separado.
  */
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach, afterEach } from "vitest";
 import { AdminContenidoEducativoPage } from "@/pages/AdminContenidoEducativoPage";
@@ -37,9 +37,9 @@ vi.mock("axios", () => {
   return { default: { ...instance, create: () => instance } };
 });
 
-// ¿Qué? Hoy fijo (lunes 21 de septiembre de 2026, 10am UTC) — la página
-//       calcula la semana en curso con la hora real del sistema
-//       (lunesUTC()); sin fijarla, cada corrida navegaría una semana
+// ¿Qué? Hoy fijo (lunes 21 de septiembre de 2026, 10am UTC = 5am en Bogotá) — la
+//       página calcula la semana en curso con la hora real del sistema
+//       (lunesBogota()); sin fijarla, cada corrida navegaría una semana
 //       distinta y las aserciones de "semana en curso"/"deshabilitar
 //       siguiente" dejarían de ser confiables.
 const HOY_FIJO = new Date("2026-09-21T10:00:00Z");
@@ -52,6 +52,7 @@ const moduloExistente: ContenidoEducativo = {
   cuerpo_texto: "Blanco, negro y verde. Separa bien tus residuos en casa.",
   url_video: null,
   url_guia: null,
+  url_imagen: null,
   fecha_publicacion: "2026-08-18",
 };
 
@@ -59,6 +60,8 @@ const califMalo: AuditoriaAdmin = {
   id_auditoria: "a1",
   id_conjunto_residencial: "c1",
   nombre_conjunto: "Torres de Aranjuez",
+  id_localidad: 1,
+  nombre_localidad: "Usaquén",
   nivel_desempeno: "DEFICIENTE",
   tema_educativo: "Separación en la fuente",
   descripcion: "Bolsas mezcladas en varios pisos.",
@@ -70,10 +73,33 @@ const califMalo: AuditoriaAdmin = {
   avisados: 12,
 };
 
+// ¿Qué? Mismo conjunto que califMalo (c1), otro día de la semana y nivel Regular.
+const califRegular: AuditoriaAdmin = {
+  ...califMalo,
+  id_auditoria: "a3",
+  nivel_desempeno: "REGULAR",
+  descripcion: "Faltan bolsas verdes.",
+  created_at: "2026-09-23T15:00:00Z",
+};
+
+// ¿Qué? 2026-09-28T02:00Z = domingo 27 a las 9 p. m. en Bogotá: todavía es del 27, no del 28.
+const califDomingoNoche: AuditoriaAdmin = {
+  ...califMalo,
+  id_auditoria: "a4",
+  nivel_desempeno: "BUENA",
+  nombre_conjunto: "Conjunto Domingo",
+  id_conjunto_residencial: "c3",
+  id_localidad: 2,
+  nombre_localidad: "Chapinero",
+  created_at: "2026-09-28T02:00:00Z",
+};
+
 const califBueno: AuditoriaAdmin = {
   id_auditoria: "a2",
   id_conjunto_residencial: "c2",
   nombre_conjunto: "Reserva de Prueba",
+  id_localidad: 2,
+  nombre_localidad: "Chapinero",
   nivel_desempeno: "BUENA",
   tema_educativo: "Tipos de residuos y su preparación",
   descripcion: null,
@@ -103,6 +129,10 @@ function respuestaPorDefecto(url: string) {
 function mockRespuestasVacias() {
   mockGet.mockImplementation((url: string) => Promise.resolve(respuestaPorDefecto(url)));
 }
+
+// ¿Qué? Los nombres de conjunto también salen como <option> del selector de conjunto: se busca
+//       dentro de la tabla para no encontrar el mismo texto dos veces.
+const enTabla = () => within(screen.getByRole("table"));
 
 function renderPage() {
   return renderWithProviders(<AdminContenidoEducativoPage />, {
@@ -183,6 +213,23 @@ describe("AdminContenidoEducativoPage", () => {
       });
     });
 
+    // ¿Qué? Domingo 20 de septiembre a las 9 p. m. en Bogotá = lunes 21 a las 2 a. m. en UTC.
+    // ¿Para qué? El backend corta la semana en hora de Bogotá: ese domingo todavía es de la semana
+    //           del 14 al 20, así que la pantalla no debe dar por empezada la del 21.
+    it("el domingo en la noche (hora de Bogotá) la semana en curso sigue siendo la que termina ese domingo", async () => {
+      vi.setSystemTime(new Date("2026-09-21T02:00:00Z"));
+      renderPage();
+
+      await screen.findByText("14–20 sep");
+      expect(screen.getByRole("button", { name: "Semana siguiente" })).toBeDisabled();
+      await waitFor(() => {
+        expect(mockGet).toHaveBeenCalledWith(
+          expect.stringContaining("/auditorias-conjunto/admin"),
+          expect.objectContaining({ params: expect.objectContaining({ lunes: "2026-09-14" }) })
+        );
+      });
+    });
+
     it("muestra un estado vacío cuando no hay calificaciones esa semana", async () => {
       renderPage();
       expect(await screen.findByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
@@ -194,15 +241,15 @@ describe("AdminContenidoEducativoPage", () => {
         return Promise.resolve(respuestaPorDefecto(url));
       });
       renderPage();
-      expect(await screen.findByText("Torres de Aranjuez")).toBeInTheDocument();
-      expect(screen.getByText("Reserva de Prueba")).toBeInTheDocument();
+      expect(await enTabla().findByText("Torres de Aranjuez")).toBeInTheDocument();
+      expect(enTabla().getByText("Reserva de Prueba")).toBeInTheDocument();
       expect(screen.getByText("Bolsas mezcladas en varios pisos.")).toBeInTheDocument();
       // ¿Qué? Se acota al <tr> de cada calificación porque "Malo"/"Bueno"
       //       también aparecen como etiquetas fijas en la tarjeta "Semana en
       //       curso" — sin acotar, getByText encuentra dos coincidencias.
-      const filaMalo = screen.getByText("Torres de Aranjuez").closest("tr")!;
+      const filaMalo = enTabla().getByText("Torres de Aranjuez").closest("tr")!;
       expect(within(filaMalo).getByText("Malo")).toBeInTheDocument();
-      const filaBuena = screen.getByText("Reserva de Prueba").closest("tr")!;
+      const filaBuena = enTabla().getByText("Reserva de Prueba").closest("tr")!;
       expect(within(filaBuena).getByText("Bueno")).toBeInTheDocument();
     });
 
@@ -213,11 +260,11 @@ describe("AdminContenidoEducativoPage", () => {
       });
       const user = userEvent.setup({ delay: null });
       renderPage();
-      await screen.findByText("Torres de Aranjuez");
+      await enTabla().findByText("Torres de Aranjuez");
 
       await user.click(screen.getByRole("button", { name: "Malo 1" }));
-      expect(screen.getByText("Torres de Aranjuez")).toBeInTheDocument();
-      expect(screen.queryByText("Reserva de Prueba")).not.toBeInTheDocument();
+      expect(enTabla().getByText("Torres de Aranjuez")).toBeInTheDocument();
+      expect(enTabla().queryByText("Reserva de Prueba")).not.toBeInTheDocument();
     });
 
     it("busca por conjunto o por observación", async () => {
@@ -227,11 +274,225 @@ describe("AdminContenidoEducativoPage", () => {
       });
       const user = userEvent.setup({ delay: null });
       renderPage();
-      await screen.findByText("Torres de Aranjuez");
+      await enTabla().findByText("Torres de Aranjuez");
 
       await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "Reserva");
-      expect(screen.queryByText("Torres de Aranjuez")).not.toBeInTheDocument();
-      expect(screen.getByText("Reserva de Prueba")).toBeInTheDocument();
+      expect(enTabla().queryByText("Torres de Aranjuez")).not.toBeInTheDocument();
+      expect(enTabla().getByText("Reserva de Prueba")).toBeInTheDocument();
+    });
+
+    describe("filtros por conjunto y fecha, orden y limpiar filtros", () => {
+      // ¿Qué? Cada calificación se identifica por su observación (la 4.ª celda de la fila).
+      const OBS_MALO = "Bolsas mezcladas en varios pisos.";
+      const OBS_REGULAR = "Faltan bolsas verdes.";
+      const OBS_BUENO = "Sin observaciones";
+      const OBS_DOMINGO = "Todo en orden el domingo.";
+
+      const domingo: AuditoriaAdmin = { ...califDomingoNoche, descripcion: OBS_DOMINGO };
+
+      const montarConCuatro = async () => {
+        mockGet.mockImplementation((url: string) => {
+          if (url.includes("/auditorias-conjunto/admin")) {
+            return Promise.resolve({ data: { items: [califMalo, califBueno, califRegular, domingo], total: 4 } });
+          }
+          return Promise.resolve(respuestaPorDefecto(url));
+        });
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await enTabla().findByText(OBS_MALO);
+        return user;
+      };
+
+      const observacionesEnTabla = () =>
+        enTabla()
+          .getAllByRole("row")
+          .slice(1)
+          .map((fila) => within(fila).getAllByRole("cell")[3].textContent);
+
+      // ¿Qué? Desde, Hasta y Ordenar por viven en el panel plegado "Más filtros".
+      const abrirMasFiltros = (user: ReturnType<typeof userEvent.setup>) =>
+        user.click(screen.getByRole("button", { name: /Más filtros/ }));
+
+      it("Desde, Hasta y Ordenar por están plegados hasta abrir 'Más filtros', que cuenta los activos", async () => {
+        const user = await montarConCuatro();
+        expect(screen.queryByLabelText("Desde")).not.toBeInTheDocument();
+        expect(screen.queryByLabelText("Ordenar por")).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Más filtros" })).toHaveAttribute("aria-expanded", "false");
+
+        await abrirMasFiltros(user);
+        expect(screen.getByLabelText("Desde")).toBeInTheDocument();
+        await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
+        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-22" } });
+
+        // ¿Qué? Se vuelve a plegar: el botón sigue mostrando que hay 2 filtros activos dentro.
+        await abrirMasFiltros(user);
+        expect(screen.queryByLabelText("Desde")).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Más filtros\s*2/ })).toBeInTheDocument();
+      });
+
+      it("sin calificaciones esa semana, los controles se desactivan y los selectores dicen por qué", async () => {
+        renderPage();
+        await screen.findByText("No hay calificaciones con esos filtros en esta semana.");
+
+        expect(screen.getByLabelText("Localidad")).toBeDisabled();
+        expect(screen.getByLabelText("Conjunto")).toBeDisabled();
+        expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toBeDisabled();
+        expect(within(screen.getByLabelText("Localidad")).getByRole("option")).toHaveTextContent("Sin calificaciones");
+      });
+
+      it("el selector solo ofrece los conjuntos que tienen calificaciones esa semana, sin repetirlos", async () => {
+        await montarConCuatro();
+        const opciones = within(screen.getByLabelText("Conjunto")).getAllByRole("option").map((o) => o.textContent);
+        expect(opciones).toEqual(["Todos los conjuntos", "Conjunto Domingo", "Reserva de Prueba", "Torres de Aranjuez"]);
+      });
+
+      it("el selector de localidad solo ofrece las localidades con calificaciones esa semana, sin repetirlas", async () => {
+        await montarConCuatro();
+        const opciones = within(screen.getByLabelText("Localidad")).getAllByRole("option").map((o) => o.textContent);
+        expect(opciones).toEqual(["Todas las localidades", "Chapinero", "Usaquén"]);
+      });
+
+      it("al elegir una localidad, solo se ven sus conjuntos en el selector y en la tabla", async () => {
+        const user = await montarConCuatro();
+        await user.selectOptions(screen.getByLabelText("Localidad"), "2");
+
+        const opciones = within(screen.getByLabelText("Conjunto")).getAllByRole("option").map((o) => o.textContent);
+        expect(opciones).toEqual(["Todos los conjuntos", "Conjunto Domingo", "Reserva de Prueba"]);
+        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_BUENO]);
+      });
+
+      it("los botones de nivel cuentan solo lo que pasa los demás filtros", async () => {
+        const user = await montarConCuatro();
+        expect(screen.getByRole("button", { name: "Todas 4" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Malo 1" })).toBeInTheDocument();
+
+        // ¿Qué? Localidad 2 = Chapinero: solo las dos calificaciones Buenas (Reserva y Domingo).
+        await user.selectOptions(screen.getByLabelText("Localidad"), "2");
+        expect(screen.getByRole("button", { name: "Todas 2" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Malo 0" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Regular 0" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Bueno 2" })).toBeInTheDocument();
+      });
+
+      it("al cambiar de localidad se reinicia el conjunto elegido (podría no ser de la nueva)", async () => {
+        const user = await montarConCuatro();
+        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
+        expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR]);
+
+        await user.selectOptions(screen.getByLabelText("Localidad"), "2");
+        expect(screen.getByLabelText("Conjunto")).toHaveValue("");
+        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_BUENO]);
+      });
+
+      it("filtra por el conjunto elegido en la lista", async () => {
+        const user = await montarConCuatro();
+        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
+        expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR]);
+      });
+
+      it("filtra por rango de fechas, con el día de Bogotá (el domingo en la noche cuenta como domingo)", async () => {
+        const user = await montarConCuatro();
+        await abrirMasFiltros(user);
+        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-22" } });
+        expect(observacionesEnTabla()).toEqual([OBS_REGULAR, OBS_DOMINGO]);
+
+        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-23" } });
+        expect(observacionesEnTabla()).toEqual([OBS_REGULAR]);
+
+        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-27" } });
+        expect(observacionesEnTabla()).toEqual([OBS_REGULAR, OBS_DOMINGO]);
+      });
+
+      it("las fechas solo dejan elegir días de la semana que se está viendo", async () => {
+        const user = await montarConCuatro();
+        await abrirMasFiltros(user);
+        expect(screen.getByLabelText("Desde")).toHaveAttribute("min", "2026-09-21");
+        expect(screen.getByLabelText("Desde")).toHaveAttribute("max", "2026-09-27");
+        expect(screen.getByLabelText("Hasta")).toHaveAttribute("max", "2026-09-27");
+      });
+
+      it("combina conjunto, nivel y fecha", async () => {
+        const user = await montarConCuatro();
+        await abrirMasFiltros(user);
+        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
+        await user.click(screen.getByRole("button", { name: "Regular 1" }));
+        expect(observacionesEnTabla()).toEqual([OBS_REGULAR]);
+
+        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-22" } });
+        expect(screen.getByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
+      });
+
+      it("ordena: peor calificación primero por defecto, y se puede cambiar", async () => {
+        const user = await montarConCuatro();
+        await abrirMasFiltros(user);
+        expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR, OBS_DOMINGO, OBS_BUENO]);
+
+        await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
+        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_REGULAR, OBS_MALO, OBS_BUENO]);
+
+        await user.selectOptions(screen.getByLabelText("Ordenar por"), "conjunto");
+        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_BUENO, OBS_REGULAR, OBS_MALO]);
+      });
+
+      it("'Limpiar filtros' solo aparece con algún filtro activo y los deja todos en blanco", async () => {
+        const user = await montarConCuatro();
+        await abrirMasFiltros(user);
+        expect(screen.queryByRole("button", { name: "Limpiar filtros" })).not.toBeInTheDocument();
+
+        await user.selectOptions(screen.getByLabelText("Localidad"), "1");
+        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
+        await user.click(screen.getByRole("button", { name: "Malo 1" }));
+        await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "bolsas");
+        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-22" } });
+        expect(screen.getByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Limpiar filtros" }));
+        expect(observacionesEnTabla()).toHaveLength(4);
+        expect(screen.getByLabelText("Localidad")).toHaveValue("");
+        expect(screen.getByLabelText("Conjunto")).toHaveValue("");
+        expect(screen.getByLabelText("Desde")).toHaveValue("");
+        expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toHaveValue("");
+        expect(screen.queryByRole("button", { name: "Limpiar filtros" })).not.toBeInTheDocument();
+      });
+
+      it("al cambiar de semana se reinician los filtros (incluida la búsqueda) pero no el orden", async () => {
+        const user = await montarConCuatro();
+        await abrirMasFiltros(user);
+        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
+        await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "bolsas");
+        await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
+
+        await user.click(screen.getByRole("button", { name: "Semana anterior" }));
+        await screen.findByText("14–20 sep");
+        await waitFor(() => expect(screen.getByLabelText("Conjunto")).toHaveValue(""));
+        expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toHaveValue("");
+        expect(screen.getByLabelText("Ordenar por")).toHaveValue("recientes");
+      });
+    });
+
+    // ¿Qué? El backend entrega máximo 200 por página; esta semana tiene 250.
+    it("trae todas las páginas de la semana, no solo la primera", async () => {
+      const mucha = (n: number, desdeIndice: number): AuditoriaAdmin[] =>
+        Array.from({ length: n }, (_, i) => ({
+          ...califMalo,
+          id_auditoria: `m${desdeIndice + i}`,
+          nombre_conjunto: `Conjunto ${desdeIndice + i}`,
+          descripcion: `Obs ${desdeIndice + i}`,
+        }));
+      mockGet.mockImplementation((url: string, config?: { params?: { offset?: number } }) => {
+        if (url.includes("/auditorias-conjunto/admin")) {
+          const offset = config?.params?.offset ?? 0;
+          return Promise.resolve({ data: { items: offset === 0 ? mucha(200, 0) : mucha(50, 200), total: 250 } });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      renderPage();
+
+      expect(await screen.findByText("Obs 249")).toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/auditorias-conjunto/admin"),
+        expect.objectContaining({ params: expect.objectContaining({ lunes: SEMANA_ACTUAL, limit: 200, offset: 200 }) })
+      );
     });
 
     it("navega a la semana anterior, y 'siguiente' se deshabilita en la semana en curso", async () => {
@@ -261,7 +522,7 @@ describe("AdminContenidoEducativoPage", () => {
       });
       const user = userEvent.setup({ delay: null });
       renderPage();
-      await user.click(await screen.findByText("Torres de Aranjuez"));
+      await user.click(await enTabla().findByText("Torres de Aranjuez"));
 
       const panel = await screen.findByRole("dialog", { name: "Calificación de Torres de Aranjuez" });
       expect(within(panel).getByText("Carlos Gómez")).toBeInTheDocument();
@@ -281,7 +542,7 @@ describe("AdminContenidoEducativoPage", () => {
       });
       const user = userEvent.setup({ delay: null });
       renderPage();
-      await user.click(await screen.findByText("Reserva de Prueba"));
+      await user.click(await enTabla().findByText("Reserva de Prueba"));
 
       expect(await screen.findByText("Una calificación Buena no genera recomendación: no hay nada que mejorar en este tema.")).toBeInTheDocument();
     });
@@ -356,6 +617,148 @@ describe("AdminContenidoEducativoPage", () => {
           expect.stringContaining("/contenido-educativo"),
           expect.objectContaining({ modulo_categoria: "Separación en la fuente", titulo_tema: "Nuevo tema de prueba" })
         );
+      });
+    });
+
+    describe("texto como muro", () => {
+      async function abrirFormularioNuevo(user: ReturnType<typeof userEvent.setup>) {
+        mockGet.mockImplementation((url: string) => {
+          if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+          return Promise.resolve(respuestaPorDefecto(url));
+        });
+        renderPage();
+        await irAModulos(user);
+        await screen.findByText("Código de colores");
+        await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
+      }
+
+      it("explica cómo escribir el texto para que el muro quede bien", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+
+        expect(screen.getByText(/Cada párrafo \(separado por una línea en blanco\) será una tarjeta del muro/)).toBeInTheDocument();
+      });
+
+      it("la vista previa dibuja el muro: 'De qué trata' y una tarjeta con su título", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+
+        await user.type(
+          screen.getByLabelText("Contenido *"),
+          "Los tres colores de bolsa se usan en toda la ciudad.\n\nBolsa blanca: material limpio y seco."
+        );
+
+        expect(await screen.findByText("De qué trata")).toBeInTheDocument();
+        expect(screen.getByRole("heading", { level: 3, name: "Bolsa blanca" })).toBeInTheDocument();
+      });
+
+      it("una imagen escrita en el texto no se pinta en la vista previa", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+
+        await user.type(
+          screen.getByLabelText("Contenido *"),
+          "Introducción del tema.\n\n![rastreo](https://sitio-malo.com/pixel.png)\n\nBolsa blanca: material limpio y seco."
+        );
+
+        expect(await screen.findByRole("heading", { level: 3, name: "Bolsa blanca" })).toBeInTheDocument();
+        expect(document.querySelector("img[src*='sitio-malo']")).toBeNull();
+      });
+    });
+
+    describe("imágenes del muro", () => {
+      const URL_SUBIDA = "/uploads/adjuntos/0b9c1a0e-3f4d-4c52-9b57-6f1f2a3b4c5d.png";
+      const foto = () => new File(["x"], "foto.png", { type: "image/png" });
+
+      async function abrirFormularioNuevo(user: ReturnType<typeof userEvent.setup>) {
+        mockGet.mockImplementation((url: string) => {
+          if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+          return Promise.resolve(respuestaPorDefecto(url));
+        });
+        mockPost.mockImplementation((url: string) =>
+          Promise.resolve({ data: url.includes("/uploads/") ? { url: URL_SUBIDA } : moduloExistente })
+        );
+        renderPage();
+        await irAModulos(user);
+        await screen.findByText("Código de colores");
+        await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
+      }
+
+      it("'Insertar imagen' sube la imagen y la escribe en el texto, en su propia línea", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+        await user.type(screen.getByLabelText("Contenido *"), "Introducción del tema.");
+
+        const entrada = screen.getByText("Insertar imagen").closest("label")!.querySelector("input")!;
+        await user.upload(entrada, foto());
+
+        await waitFor(() => {
+          expect((screen.getByLabelText("Contenido *") as HTMLTextAreaElement).value).toBe(
+            `Introducción del tema.\n\n![descripción de la imagen](${URL_SUBIDA})\n\n`
+          );
+        });
+      });
+
+      it("si falla la subida de la imagen del texto, lo avisa y no cambia el texto", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+        mockPost.mockRejectedValue(new Error("falló"));
+        await user.type(screen.getByLabelText("Contenido *"), "Texto original del módulo.");
+
+        await user.upload(screen.getByText("Insertar imagen").closest("label")!.querySelector("input")!, foto());
+
+        expect(await screen.findByText("No se pudo subir la imagen. Intenta de nuevo.")).toBeInTheDocument();
+        expect((screen.getByLabelText("Contenido *") as HTMLTextAreaElement).value).toBe("Texto original del módulo.");
+      });
+
+      it("la imagen insertada se ve en la vista previa, pegada a su tarjeta", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+        await user.type(screen.getByLabelText("Contenido *"), "Introducción del tema.");
+        await user.upload(screen.getByText("Insertar imagen").closest("label")!.querySelector("input")!, foto());
+        await waitFor(() => expect((screen.getByLabelText("Contenido *") as HTMLTextAreaElement).value).toContain(URL_SUBIDA));
+
+        await user.type(screen.getByLabelText("Contenido *"), "Bolsa blanca: limpio y seco.");
+
+        const tarjeta = (await screen.findByRole("heading", { level: 3, name: "Bolsa blanca" })).closest("article")!;
+        expect(tarjeta.querySelector("img")?.getAttribute("src")).toMatch(/\/uploads\/adjuntos\/0b9c1a0e.*\.png$/);
+      });
+
+      it("la imagen de portada se sube y se envía al guardar el módulo", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+        await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema con portada");
+        await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
+
+        const portada = screen.getByText("Imagen de portada (opcional)").parentElement!.querySelector("input[type=file]")!;
+        await user.upload(portada as HTMLInputElement, foto());
+        await screen.findByRole("img", { name: /vista previa/i });
+        await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+        await waitFor(() => {
+          expect(mockPost).toHaveBeenCalledWith(
+            expect.stringMatching(/\/contenido-educativo$/),
+            expect.objectContaining({ titulo_tema: "Tema con portada", url_imagen: URL_SUBIDA })
+          );
+        });
+      });
+
+      it("un módulo sin portada se guarda con url_imagen en null", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirFormularioNuevo(user);
+        await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema sin portada");
+        await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
+
+        await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+        await waitFor(() => {
+          expect(mockPost).toHaveBeenCalledWith(
+            expect.stringMatching(/\/contenido-educativo$/),
+            expect.objectContaining({ url_imagen: null })
+          );
+        });
       });
     });
 

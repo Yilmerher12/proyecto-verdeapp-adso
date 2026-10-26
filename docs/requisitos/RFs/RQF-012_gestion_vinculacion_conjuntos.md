@@ -62,7 +62,13 @@ El nombre del RF quedó como "Invitación y Vinculación Inicial" por su alcance
 
 ### Flujo D — Admin de Conjunto gestiona los datos de su propio conjunto (HU-044)
 1. El Admin de Conjunto edita el NIT y la cantidad de apartamentos de un conjunto que administra — nombre y dirección **no** son editables porque vienen ya verificados desde el dataset oficial de la Alcaldía de Bogotá (issue #180). Con la cantidad de apartamentos, su panel muestra cuántos apartamentos ya tienen residentes registrados y cuántos faltan (se cuentan apartamentos con al menos un residente con cuenta activa).
-2. El Admin de Conjunto puede regenerar el `código de acceso` de su conjunto — el código que reparte fuera de la app (cartelera, grupo del conjunto) para que un Residente demuestre que vive ahí al registrarse. Regenerarlo invalida el código anterior de inmediato.
+2. El Admin de Conjunto puede regenerar el `código de acceso` de su conjunto — el código que reparte fuera de la app (cartelera, grupo del conjunto) para que un Residente demuestre que vive ahí al registrarse. Regenerarlo invalida el código anterior de inmediato. En el panel principal, el código está en la primera fila del conjunto desplegado (issue #491), por ser lo que más se reparte; desde el issue #513 es una tarjeta angosta a la derecha de la cobertura.
+
+### Flujo E — Admin de Conjunto pide que le asignen otro conjunto (HU-051)
+1. En su panel principal, debajo de la lista de conjuntos, el Admin de Conjunto presiona la fila **"Solicitar otro conjunto"** (se ve aunque aún no tenga conjuntos).
+2. Se abre el paso a paso: dos pasos escritos para quien ya tiene cuenta, los dos documentos que debe adjuntar (certificado de representación legal de la propiedad horizontal y cédula) y el aviso de que no se suben a VerdeApp. Los documentos y el aviso son los mismos del registro (`auth.register.adminRequest.*`), para corregirlos en un solo lugar.
+3. La dirección del equipo (`administradorverdeapp@gmail.com`) es un enlace que abre su correo con el asunto "Otro conjunto" y el cuerpo ya empezado, y un ícono permite copiarla. No hay botón: el formulario de contacto no puede llevar adjuntos (issue #457).
+4. El resto sigue por correo, fuera de la app: el equipo verifica el cargo y el Administrador del Sistema asigna el conjunto (HU-024). La app no crea ninguna solicitud.
 
 ---
 
@@ -88,3 +94,4 @@ El nombre del RF quedó como "Invitación y Vinculación Inicial" por su alcance
 | [HU-021](../HUs/HU-021_reciclador_responde_invitacion.md) | Reciclador acepta o rechaza la invitación a un conjunto |
 | [HU-038](../HUs/HU-038_admin_conjunto_revoca_reciclador.md) | Admin de Conjunto revoca el acceso de un reciclador |
 | [HU-044](../HUs/HU-044_admin_conjunto_gestiona_datos_propio_conjunto.md) | Admin de Conjunto edita el NIT y la cantidad de apartamentos, y regenera el código de acceso de su conjunto |
+| [HU-051](../HUs/HU-051_admin_conjunto_solicita_otro_conjunto.md) | Admin de Conjunto pide que le asignen otro conjunto desde su panel |

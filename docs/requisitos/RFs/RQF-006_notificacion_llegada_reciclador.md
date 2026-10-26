@@ -45,7 +45,7 @@ El sistema debe enviar una notificación de 'Llegada al conjunto' a los Resident
 3. El frontend envía `POST /api/v1/notificaciones/enviar` con `tipo=LLEGADA_RECICLADOR` y el `id_conjunto_residencial`.
 4. El backend valida el token del reciclador, que esté autorizado en ese conjunto, que no esté ya marcado como presente (RN-004) y que no haya avisado otra llegada allí en las últimas 2 horas (RN-003).
 5. El backend obtiene los **Residentes** y el **Admin de Conjunto** de ese conjunto.
-6. Se guarda una notificación en la base de datos para cada uno de ellos (tabla de notificaciones). No hay envío por Firebase ni WebSockets: la app de cada usuario consulta sus notificaciones cada cierto tiempo (`fe/src/hooks/usePolling.ts`) y la muestra en la campana.
+6. Se guarda una notificación en la base de datos para cada uno de ellos (tabla de notificaciones). No hay envío por Firebase ni WebSockets: la app de cada usuario consulta cada cierto tiempo cuántas tiene sin leer (`fe/src/hooks/usePolling.ts`) y lo muestra en la campana; al tocarla se abre el menú con la lista (issue #516).
 7. Esa misma notificación queda como registro de la llegada: el backend la usa para saber si el reciclador está presente.
 8. Mientras el reciclador está marcado como presente en ese conjunto (ver RN-004), puede usar `SHUT_LLENO`/`SHUT_LIBRE` (RQF-003) y, al terminar, enviar `FINALIZACION_RECICLADOR` con el mismo botón "Enviar notificación" — el backend le avisa a los mismos residentes/administrador que el reciclador ya se retiró, y lo vuelve a marcar como "no presente" (puede avisar una nueva llegada).
 
@@ -81,3 +81,11 @@ El sistema debe enviar una notificación de 'Llegada al conjunto' a los Resident
 - RN-003: Debe existir un bloqueo temporal (cooldown) para evitar que un reciclador envíe múltiples notificaciones de llegada repetidas en un lapso corto (ej. máximo 1 notificación por conjunto cada 2 horas). **Implementado (2026-08-29).**
 - RN-004: Control de presencia — un reciclador no puede avisar `LLEGADA_RECICLADOR` si ya está marcado como presente en ese conjunto (debe avisar `FINALIZACION_RECICLADOR` primero); y no puede usar `SHUT_LLENO`, `SHUT_LIBRE` ni `FINALIZACION_RECICLADOR` sin haber avisado su llegada antes. Avisar la finalización vuelve a marcarlo como "no presente". **Implementado (2026-09-16, agregado a la documentación — la lógica ya existía en código).**
 - RN-005 (issue #398, CN-055): `POST /api/v1/notificaciones/enviar` acepta máximo 10 peticiones por minuto desde una misma dirección IP (la siguiente responde 429). Además, el mismo reciclador no puede repetir el **mismo** aviso (`SHUT_LLENO`, `SHUT_LIBRE` o `FINALIZACION_RECICLADOR`) para el mismo conjunto antes de 5 minutos: responde 400 con el mensaje "Ya enviaste este aviso a este conjunto hace menos de 5 minutos." Sin esto, los candados de estado dejaban alternar `SHUT_LLENO` y `SHUT_LIBRE` sin freno, y cada aviso crea una notificación por cada residente y administrador del conjunto. `LLEGADA_RECICLADOR` conserva su propio cooldown de 2 horas (RN-003). **Implementado (2026-10-07).** Issue #414: cuando el servidor rechaza un aviso (400 con su motivo, o 429 por el límite de peticiones), el panel del Reciclador muestra ese motivo exacto dentro del modal de envío, en vez de un mensaje genérico; el 429 se traduce a "Hiciste demasiadas peticiones. Espera un momento e intenta de nuevo." (`common.tooManyRequests`). El botón no se apaga durante los 5 minutos: el motivo se ve al intentar enviar. El reporte de SHUT lleno del Residente muestra el motivo igual.
+
+---
+
+## Historias de usuario derivadas
+
+| HU      | Descripción                                                    |
+| ------- | ----------------------------------------------------------------|
+| [HU-050](../HUs/HU-050_admin_conjunto_ve_avisos_de_cada_conjunto.md) | Administrador de Conjunto ve los avisos de cada uno de sus conjuntos (los de SHUT y llegada llegan a su panel; ver RN-002) |

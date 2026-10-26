@@ -17,6 +17,7 @@ uv sync                                              # instalar dependencias (pr
 uv run alembic upgrade head                          # aplicar migraciones pendientes
 uv run alembic revision --autogenerate -m "mensaje"  # generar una migración nueva (revisar el archivo generado a mano — ver Arquitectura)
 uv run python -m app.seed                            # sembrar roles/localidades/usuarios de prueba/conjuntos reales (idempotente)
+uv run python -m app.seed_demo                       # datos de demostración para presentar el proyecto (después de app.seed; idempotente, fotos en app/data/demo/fotos/)
 uv run python -m app.purgar_tokens                   # borrar tokens vencidos de las 4 tablas (manual; ver be/README.md)
 uv run python -m app.limpiar_adjuntos --simular      # listar los adjuntos que nadie usa (sin --simular los borra)
 uv run uvicorn app.main:app --reload --port 8000     # levantar el servidor de desarrollo
@@ -101,6 +102,19 @@ Ver `docs/requisitos/restricciones.md` para el detalle completo (versiones fijad
 ## Modelo de ramas y flujo de trabajo en Git
 
 `main` (estable, se etiqueta por entrega) ← `stg` (verificación previa a producción) ← `develop` (integración) ← una rama por tarjeta, siempre creada desde `develop` actualizado, nunca directo sobre `develop`/`stg`/`main`. `stg` solo recibe PR de `develop`, y `main` solo recibe PR de `stg`; un error hallado en `stg` se corrige en una rama desde `develop`, nunca directo en `stg`. Prefijo según el tipo de cambio: `feat/`, `fix/`, `docs/`, `chore/`, `content/`, `test/`. Commits en Conventional Commits, en español (`feat: agregar filtro por localidad...`), el tipo coincide con el prefijo de la rama. PR siempre hacia `develop`, nunca hacia `main` directo.
+
+## Forma de trabajo del equipo
+
+Son cuatro integrantes. Estas reglas aplican a todos y a cualquier sesión con IA, igual que las de la sección siguiente.
+
+- **Scrum Master rotativo.** Cada semana un integrante hace de Scrum Master. Esa persona asigna un issue a cada integrante, sigue el avance y escribe el informe semanal en `docs/gestion-proyecto/informes-scrum/` (plantilla y reglas en el `README.md` de esa carpeta).
+- **Tablero.** Los cuatro tienen rol Write en el tablero "VerdeApp - Tablero de desarrollo". GitHub no permite limitar la edición por asignado, así que es un acuerdo: cada quien mueve y edita solo sus tarjetas. Los issues se crean en GitHub, nunca desde Claude Code.
+- **Bootcamp de testing.** La rotación de capas de `docs/matriz-rotacion.md` corre en paralelo: no reemplaza al issue de la semana ni se cuenta como parte de él.
+- **Cierre de semana y traspaso.** Al terminar la semana, quien tenía el issue deja un comentario de cierre en ese mismo issue, con la plantilla de `docs/gestion-proyecto/informes-scrum/_cierre-de-issue.md` (qué completó, qué falta, bloqueos y por dónde seguir). Si no lo terminó, antes de cerrar la semana hace `push` de su rama. La rotación del Scrum Master no cambia: el Scrum Master de la semana siguiente decide con el grupo quién continúa la tarjeta y la reasigna en el tablero; quien la continúa sigue en la misma rama. Quien no terminó recibe su issue normal de la semana siguiente. Ese comentario es también la fuente del informe semanal.
+- **Prioridad y tamaño.** Cada tarjeta lleva Importancia, Complejidad, Prioridad (Must, Should o Could, que en el tablero son P0, P1 y P2) y Tamaño (XS a XL, en horas). El método, la escala y los ejemplos están en `docs/gestion-proyecto/prioridad-y-tamano.md`. La capacidad mínima del equipo es de 2 horas por día de lunes a viernes, es decir 10 horas por semana por integrante: una tarjeta L o XL puede pasar de una semana y se traspasa con la regla anterior.
+- **Formato del issue.** Título y descripción en español, completos. Se usa la plantilla de `.github/ISSUE_TEMPLATE/`. Un issue explica el problema y lo que se espera, no trae código pegado. Partes obligatorias: contexto, qué debe pasar, alcance (incluye y no incluye), criterios de aceptación como lista verificable, archivos relacionados (solo rutas), documentación a actualizar, cómo probarlo, importancia, complejidad y tamaño, guía para quien lo trabaje y dependencias. La guía es corta (máximo 5 líneas por parte): siempre lleva "En palabras sencillas", "Por dónde empezar" y "Cómo saber que quedó bien"; "Contexto", "Conceptos que necesitas" y "Qué no hacer" se agregan solo en issues grandes.
+- **Tarjetas de investigación.** Son issues informativos con la plantilla `investigacion.md`. Se trabajan en una rama `docs/...` y su entregable es `docs/gestion-proyecto/investigacion-<tema>.md`. Si la conclusión cambia un RF o una HU, se actualiza en la misma rama. Si concluye que hay que construir algo, eso se abre como issue aparte.
+- **Pull Request.** Título en inglés y descripción en español, con la plantilla general de `.github/pull_request_template.md`. Los PR del bootcamp de tests usan `.github/PULL_REQUEST_TEMPLATE/tests.md`, que se elige agregando `?template=tests.md` a la URL del PR.
 
 ## Cómo trabajar en este proyecto con Claude Code
 

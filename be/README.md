@@ -93,6 +93,7 @@ be/
     ├── database.py         # Engine y sesión de SQLAlchemy
     ├── dependencies.py     # get_db, get_current_user, require_role, require_admin_conjunto
     ├── seed.py             # Siembra roles, localidades, cuentas de prueba y conjuntos reales (idempotente)
+    ├── seed_demo.py        # Comando manual: historia de demostración para presentar (3 conjuntos, auditorías con fotos, etc.)
     ├── limpiar_adjuntos.py # Comando manual: borra de uploads/adjuntos/ lo que ninguna fila usa (ver abajo)
     ├── purgar_tokens.py    # Comando manual: borra los tokens vencidos de 4 tablas (ver abajo)
     ├── data/               # CSV de conjuntos residenciales reales de Bogotá (fuente del seed)
@@ -179,19 +180,19 @@ de producción — ver el `Dockerfile`, que usa `uv sync --no-dev`).
 # pyproject.toml (resumen)
 [project]
 dependencies = [
-    "fastapi==0.135.1",              # El framework web — maneja rutas, requests, responses
-    "uvicorn[standard]==0.42.0",     # Servidor ASGI que ejecuta FastAPI
+    "fastapi==0.142.2",              # El framework web — maneja rutas, requests, responses
+    "uvicorn[standard]==0.54.0",     # Servidor ASGI que ejecuta FastAPI
     "python-multipart==0.0.22",      # Necesario para leer form data (como el login)
-    "sqlalchemy==2.0.48",            # ORM — permite manejar la BD con clases Python
-    "alembic==1.18.4",               # Migraciones versionadas de la BD
-    "psycopg2-binary==2.9.11",       # Driver que conecta Python con PostgreSQL
-    "pydantic==2.12.5",              # Validación de datos con tipos Python
+    "sqlalchemy==2.1.3",            # ORM — permite manejar la BD con clases Python
+    "alembic==1.20.0",               # Migraciones versionadas de la BD
+    "psycopg2-binary==2.9.13",       # Driver que conecta Python con PostgreSQL
+    "pydantic==2.13.5",              # Validación de datos con tipos Python
     "pydantic-settings==2.13.1",     # Leer y validar variables de entorno
     "email-validator==2.3.0",        # Validar formato de emails (lo usa Pydantic)
-    "pyjwt==2.15.0",                 # Crear y verificar tokens JWT (HS256)
+    "pyjwt==2.15.1",                 # Crear y verificar tokens JWT (HS256)
     "bcrypt==5.0.0",                 # Hashear y verificar contraseñas
-    "resend==2.25.0",                # SDK del servicio de envío de emails Resend
-    "slowapi==0.1.9",                # Rate limiting — limita peticiones por IP (OWASP A04)
+    "resend==2.49.1",                # SDK del servicio de envío de emails Resend
+    "slowapi==0.1.10",               # Rate limiting — limita peticiones por IP (OWASP A04)
     # + pines de seguridad de dependencias transitivas con CVEs conocidos
     # (pygments, requests) — ver pyproject.toml para el detalle.
     # Issue #312: antes se usaban python-jose y passlib (sin mantenimiento),
@@ -201,10 +202,10 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest==9.1.1",           # Framework de testing
-    "pytest-asyncio==1.3.0",   # Soporte para funciones async en tests
+    "pytest-asyncio==1.4.0",   # Soporte para funciones async en tests
     "httpx==0.28.1",           # Cliente HTTP para llamar a la API en los tests
-    "pytest-cov==7.0.0",       # Medir cobertura de código
-    "ruff==0.15.7",            # Linter y formateador ultrarrápido
+    "pytest-cov==7.1.0",       # Medir cobertura de código
+    "ruff==0.16.10",           # Linter y formateador ultrarrápido
 ]
 ```
 
@@ -285,6 +286,12 @@ CONTACT_EMAIL=contacto@verdeapp.local
 # URL del frontend (se usa para construir los enlaces en los emails)
 FRONTEND_URL=http://localhost:5173
 
+# URL pública del backend (opcional). Con ella se arman los enlaces de las fotos en
+# las descargas de la agenda (CSV y PDF). Vacía en desarrollo: se usa la dirección de
+# la petición. Al publicar detrás de un proxy, el dominio público (ej. https://verdeapp.com),
+# porque la dirección que ve el backend es la interna y los enlaces quedarían rotos.
+API_PUBLIC_URL=
+
 # Entorno de ejecución
 # En "production", Swagger UI (/docs) queda desactivado por seguridad
 ENVIRONMENT=development
@@ -319,6 +326,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # opcional — con default
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7     # opcional — con default
     RESEND_API_KEY: str = ""               # opcional — si vacío, simula emails
+    API_PUBLIC_URL: str = ""               # opcional — si vacío, los enlaces de fotos usan la dirección de la petición
     ENVIRONMENT: Literal["development", "production"]  # obligatorio — sin default: si falta, no arranca
 
     model_config = SettingsConfigDict(
@@ -463,7 +471,7 @@ una contraseña olvidada. Al usarse, activa `Usuario.is_active` (ver flujo de re
 
 ### 8.4 El resto de tablas
 
-Las 3 tablas de arriba son las de autenticación. El dominio de VerdeApp suma 25 más, cada una con su archivo en `app/models/`:
+Las 3 tablas de arriba son las de autenticación. El dominio de VerdeApp suma 26 más, cada una con su archivo en `app/models/`:
 
 | Grupo | Tablas |
 | ----- | ------ |
@@ -471,7 +479,7 @@ Las 3 tablas de arriba son las de autenticación. El dominio de VerdeApp suma 25
 | Conjuntos | `localidades`, `conjuntos_residenciales`, `unidades`, `administradores_conjuntos` (asignación admin ↔ conjunto), `recicladores_conjuntos`, `agenda_conjunto` |
 | Invitaciones y solicitudes | `invitaciones_admin_conjunto`, `invitaciones_reciclador_conjunto`, `solicitudes_desvinculacion` |
 | Operación | `auditorias_conjunto`, `notificaciones`, `notificaciones_destinatarios`, `comunicados` |
-| Contenido y novedades | `contenido_educativo`, `contenido_educativo_envios`, `novedades`, `novedades_conjuntos`, `novedades_enviadas` |
+| Contenido y novedades | `contenido_educativo`, `contenido_educativo_envios`, `contenido_educativo_vistos`, `novedades`, `novedades_conjuntos`, `novedades_enviadas` |
 | Directorio | `puntos_acopios`, `puntos_acopio_comentarios` |
 | Seguridad | `tokens_revocados` (lista negra de tokens invalidados al cerrar sesión, HU-008/RQF-007) |
 
@@ -1076,7 +1084,7 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 | `directorio.py`             | `/api/v1/directorio`            |     2     | Directorio público de recicladores y puntos de acopio                              |
 | `notificaciones.py`         | `/api/v1/notificaciones`        |     8     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, etc.)      |
 | `auditoria_conjunto.py`     | `/api/v1/auditorias-conjunto`   |     5     | Semáforo de auditoría del Reciclador — registro, historiales e historial global del Admin Sistema por semana (RQF-009) |
-| `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     7     | Catálogo de contenido educativo — lectura para todos, gestión y envío manual a conjuntos solo Admin Sistema (RQF-004/010/013) |
+| `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     9     | Catálogo de contenido educativo — lectura para todos, gestión y envío manual a conjuntos solo Admin Sistema, lecciones vistas solo Residente (RQF-004/010/013) |
 | `comunicados.py`            | `/api/v1/comunicados`           |     5     | Comunicados del conjunto — publica Admin de Conjunto, ven Residente/Reciclador (RQF-014) |
 | `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
 | `novedades_enviadas.py`     | `/api/v1/novedades-enviadas`    |     2     | Novedades que los usuarios le envían al Admin Sistema y su historial propio (RQF-021) |
@@ -1093,7 +1101,7 @@ uv run python -m app.limpiar_adjuntos --simular
 uv run python -m app.limpiar_adjuntos
 ```
 
-Las columnas que cuentan como "uso" están en `COLUMNAS_CON_ADJUNTOS` (`app/limpiar_adjuntos.py`). Si un modelo nuevo guarda rutas de `/uploads/adjuntos/`, hay que sumarla ahí o el comando borraría archivos que sí se usan; `test_limpiar_adjuntos.py` falla si aparece una columna de enlace sin clasificar.
+Las columnas que cuentan como "uso" están en `COLUMNAS_CON_ADJUNTOS` (`app/limpiar_adjuntos.py`). Si un modelo nuevo guarda rutas de `/uploads/adjuntos/`, hay que sumarla ahí o el comando borraría archivos que sí se usan; `test_limpiar_adjuntos.py` falla si aparece una columna de enlace sin clasificar. También cuenta como "uso" una imagen de `/uploads/adjuntos/` escrita dentro del `cuerpo_texto` de un módulo educativo (Markdown `![](ruta)`), no solo las columnas de la lista.
 
 **Purga de tokens vencidos (issue #403).** Cuatro tablas solo reciben filas y nada las borraba: `tokens_revocados` (una por cada cierre y cada renovación de sesión), `email_verification_tokens`, `password_reset_tokens` e `invitaciones_admin_conjunto`. Desde `be/`:
 

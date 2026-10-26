@@ -7,6 +7,7 @@
  */
 
 import { useTranslation } from "react-i18next";
+import { Spinner } from "./Spinner";
 
 /**
  * ¿Qué? Props del componente Button.
@@ -50,18 +51,18 @@ export function Button({
     //       texto normal); accent-700 llega a 4.94:1. Verificado con la fórmula
     //       oficial de contraste WCAG durante la auditoría RNF-003.
     primary:
-      "bg-accent-700 text-white hover:bg-accent-800 dark:bg-accent-700 dark:hover:bg-accent-800 focus:ring-accent-500/20",
+      "bg-accent-700 text-white hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200",
     secondary:
-      "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-line dark:hover:bg-night-hover focus:ring-gray-500/20",
+      "bg-white text-gray-700 border border-edge hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-edge dark:hover:bg-night-hover",
     danger:
-      "bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 focus:ring-red-500/20",
+      "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700",
   };
 
   // ¿Qué? Clases CSS según el tamaño elegido.
   // ¿Para qué? Permitir botones de diferentes tamaños según el contexto.
   const sizeClasses = {
-    sm: "px-3 py-1.5 text-xs",
-    md: "px-4 py-2.5 text-sm",
+    sm: "touch-target-h px-3 py-1.5 text-xs",
+    md: "touch-target-h px-4 py-2.5 text-sm",
     lg: "px-6 py-3 text-base",
   };
 
@@ -80,34 +81,12 @@ export function Button({
       disabled={disabled || isLoading}
       aria-busy={isLoading}
       aria-label={isLoading ? t("common.processing") : undefined}
-      className={`inline-flex cursor-pointer items-center justify-center rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""}`}
+      className={`inline-flex cursor-pointer items-center justify-center rounded-lg font-medium transition-colors duration-200 focus-ring disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""}`}
     >
       {/* ¿Qué? Spinner SVG animado que aparece durante la carga. */}
       {/* ¿Para qué? Feedback visual de que la acción está procesándose. */}
       {/* ¿Impacto? Sin loading state, el usuario podría hacer clic varias veces. */}
-      {isLoading && (
-        <svg
-          className="-ml-1 mr-2 h-4 w-4 animate-spin"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          />
-        </svg>
-      )}
+      {isLoading && <Spinner size="sm" tone="current" className="-ml-1 mr-2" />}
       {children}
     </button>
   );

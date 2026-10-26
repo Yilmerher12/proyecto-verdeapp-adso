@@ -12,7 +12,9 @@
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Camera, ClipboardCheck, LoaderCircle, Plus, X } from "lucide-react";
+import { Camera, ClipboardCheck, Plus, X } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
@@ -75,9 +77,9 @@ export function AuditoriaConjuntoForm({
     return () => urls.forEach((url) => URL.revokeObjectURL(url));
   }, [evidencias]);
 
-  const agregarFotos = (archivos: FileList | null) => {
-    if (!archivos || archivos.length === 0) return;
-    setEvidencias((prev) => [...prev, ...Array.from(archivos)].slice(0, MAXIMO_FOTOS));
+  const agregarFotos = (archivos: File[]) => {
+    if (archivos.length === 0) return;
+    setEvidencias((prev) => [...prev, ...archivos].slice(0, MAXIMO_FOTOS));
   };
 
   const quitarFoto = (indice: number) => {
@@ -182,7 +184,7 @@ export function AuditoriaConjuntoForm({
               id="auditoria-conjunto"
               value={idConjunto}
               onChange={(e) => setIdConjunto(e.target.value)}
-              className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+              className="w-full cursor-pointer rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
             >
               <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
               {conjuntos.map((c) => (
@@ -224,14 +226,9 @@ export function AuditoriaConjuntoForm({
                     seleccionado ? claseSeleccionado : `border-transparent opacity-70 hover:opacity-100 ${claseBadge}`
                   }`}
                 >
-                  {/* La carita salta al pasar el mouse y otra vez al elegirla: el
-                      key cambia al seleccionar, React la vuelve a montar y la
-                      animación de aparición (icon-appear) se repite. */}
-                  <Icon
-                    key={seleccionado ? "elegida" : "libre"}
-                    className={`icon-lg icon-hop ${seleccionado ? "icon-appear" : ""}`}
-                    aria-hidden="true"
-                  />
+                  {/* La carita es parte de un botón: se redibuja al pasar el mouse o
+                      enfocar (icon-draw), igual que el resto de íconos tocables. */}
+                  <Icon className="icon-lg icon-draw" aria-hidden="true" />
                   {t(`dashboards.reciclador.auditoria.niveles.${n.toLowerCase()}`)}
                 </button>
               );
@@ -247,7 +244,7 @@ export function AuditoriaConjuntoForm({
             id="auditoria-tema"
             value={tema}
             onChange={(e) => setTema(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+            className="w-full cursor-pointer rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
           >
             <option value="">{t("dashboards.reciclador.auditoria.temaPlaceholder")}</option>
             {temas.map((cat) => (
@@ -270,7 +267,7 @@ export function AuditoriaConjuntoForm({
             aria-describedby="auditoria-descripcion-contador"
             rows={2}
             placeholder={t("dashboards.reciclador.auditoria.descripcionPlaceholder")}
-            className="w-full resize-none rounded-xl border border-gray-300 bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-100"
+            className="w-full resize-none rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
           />
           <ContadorCaracteres
             id="auditoria-descripcion-contador"
@@ -293,6 +290,7 @@ export function AuditoriaConjuntoForm({
                     type="button"
                     onClick={() => quitarFoto(i)}
                     aria-label={t("dashboards.reciclador.auditoria.evidenciaQuitar")}
+                    title={t("dashboards.reciclador.auditoria.evidenciaQuitar")}
                     className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 p-0.5 text-white transition-colors hover:bg-black/80"
                   >
                     <X className="icon-sm" />
@@ -303,7 +301,7 @@ export function AuditoriaConjuntoForm({
           )}
 
           {evidencias.length < MAXIMO_FOTOS ? (
-            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition-colors hover:border-accent-400 dark:border-night-line dark:text-gray-300">
+            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-edge px-4 py-3 text-sm text-gray-600 transition-colors hover:border-accent-400 dark:border-night-edge dark:text-gray-300">
               {evidencias.length === 0 ? <Camera className="icon-md shrink-0" /> : <Plus className="icon-md shrink-0" />}
               {evidencias.length === 0
                 ? t("dashboards.reciclador.auditoria.evidenciaHint")
@@ -313,8 +311,16 @@ export function AuditoriaConjuntoForm({
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
                 onChange={(e) => {
-                  agregarFotos(e.target.files);
+                  // ¿Qué? Se copian los archivos a un arreglo ANTES de vaciar el campo.
+                  // ¿Para qué? En Chrome `e.target.files` es una lista "viva": al hacer
+                  //           `value = ""` queda vacía. React ejecuta la función de
+                  //           `setEvidencias` más tarde, y para entonces ya no había
+                  //           archivos: la foto nunca se adjuntaba y el botón se quedaba
+                  //           en "Completa el formulario" (error hallado en #459).
+                  // ¿Impacto? Sin la copia, el Reciclador no podía enviar ninguna auditoría.
+                  const archivos = Array.from(e.target.files ?? []);
                   e.target.value = "";
+                  agregarFotos(archivos);
                 }}
               />
             </label>
@@ -331,6 +337,17 @@ export function AuditoriaConjuntoForm({
           </div>
         )}
 
+        {/* ¿Qué? Barra de progreso de la subida de las fotos.
+            ¿Para qué? Issue #458: el porcentaje ya salía solo como texto dentro del
+                      botón; la barra muestra de un vistazo cuánto falta, sobre todo
+                      con 3 fotos de varios MB y mala conexión.
+            ¿Impacto? Solo se ve mientras se envía. */}
+        {enviando && (
+          <div className="mb-4">
+            <ProgressBar value={progreso} label={t("dashboards.reciclador.auditoria.uploadingPhotos")} />
+          </div>
+        )}
+
         <div className="flex gap-2">
           <button
             type="button"
@@ -343,9 +360,9 @@ export function AuditoriaConjuntoForm({
             type="button"
             onClick={intentarEnviar}
             disabled={enviando || formularioIncompleto}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
           >
-            {enviando && <LoaderCircle className="icon-md animate-spin" />}
+            {enviando && <Spinner size="sm" tone="current" />}
             {enviando
               ? // ¿Qué? Antes solo decía "Enviando..." sin ningún número.
                 // ¿Para qué? Una subida que de verdad avanza (pero lento, por

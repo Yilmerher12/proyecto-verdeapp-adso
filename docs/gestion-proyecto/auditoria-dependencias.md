@@ -200,3 +200,54 @@ La carpeta `e2e/` (pruebas con Playwright, `@playwright/test` 1.63.0) tiene su p
 - **Reportes de Playwright:** `playwright-report/` y `test-results/` no se suben como artefacto, porque las trazas pueden contener las credenciales de las cuentas de prueba (quedó escrito en el `README.md` raíz, sección de pruebas).
 
 Verificado: `pnpm audit` en `e2e/` da 0 vulnerabilidades (también sobre una copia solo con `package.json` y `pnpm-lock.yaml`, sin `node_modules`).
+
+---
+
+## Actualización — `follow-redirects` 1.16.1 en el lockfile del frontend (2026-10-21, issue #437)
+
+El paso `pnpm audit` del CI dejó en rojo el PR de la investigación #437 con 2 alertas altas (GHSA-q3jh-wrc6-jgq8 y GHSA-8r9p-f939-6h3c) en `follow-redirects` 1.16.0, que llega como dependencia indirecta de `axios` (`.>axios>follow-redirects`). El PR no tocaba dependencias: la alerta se publicó después de que el lockfile quedó fijado en 1.16.0.
+
+- **Qué se hizo:** `pnpm update follow-redirects --depth Infinity` en `fe/`. Solo cambió `fe/pnpm-lock.yaml` (1.16.0 a 1.16.1, la versión corregida). `axios` sigue en 1.20.0, que ya declaraba `follow-redirects ^1.16.0`, y `package.json` no cambió. No se agregó ninguna regla de `overrides` (se quitaron a propósito en el issue #313).
+- **Verificado:** `pnpm audit` en `fe/`: **No known vulnerabilities found**. 516 pruebas del frontend y `pnpm build` pasan.
+
+---
+
+## Actualización — Pillow 13.0.0 y certifi 2026.10.19 en el backend (2026-10-21, issue #437)
+
+El paso `pip-audit` del CI dejó en rojo el PR de la investigación #437 con 11 alertas en 2 paquetes: `pillow` 12.3.0 (9 alertas, `CVE-2026-112395` y otras, todas corregidas solo en 13.0.0, publicada el 2026-10-16) y `certifi` 2026.7.22 (`PYSEC-2026-4320`, corregida en 2026.10.19). El PR no tocaba dependencias: las alertas se publicaron después de fijar esas versiones.
+
+- **Qué se hizo:** `pillow==12.3.0` pasó a `pillow==13.0.0` en `be/pyproject.toml` (es un salto de versión mayor, con versión exacta como pide `restricciones.md`), y `uv lock --upgrade-package pillow --upgrade-package certifi` actualizó `be/uv.lock`. `certifi` es una dependencia indirecta (no está en `pyproject.toml`); ningún otro paquete cambió.
+- **Riesgo del salto mayor:** el proyecto solo usa la parte básica de Pillow (`Image.open`, `.verify()`, `.width`/`.height`, `Image.MAX_IMAGE_PIXELS`, `DecompressionBombError`, `UnidentifiedImageError`, `Image.new(...).save(...)` en las pruebas), todo en `app/utils/imagenes.py` y sus pruebas.
+- **Verificado:** `pip-audit` con el mismo comando del CI: **No known vulnerabilities found**. 718 pruebas del backend pasan (cobertura 96.82%, umbral 96%) y `ruff` queda limpio.
+- **Pendiente para las tarjetas del reporte de la agenda:** `fpdf2` depende de Pillow; al instalarla hay que comprobar que su versión es compatible con Pillow 13.
+
+---
+
+## Actualización — `fpdf2` y `pypdf` entran al backend (2026-10-21, issue #480)
+
+Para el PDF del historial de la agenda se agregaron dos dependencias, ambas con versión exacta y de más de una semana de publicadas (misma regla de espera que usa Dependabot):
+
+- **`fpdf2==2.8.9`** (producción, LGPL-3.0, publicada el 2026-09-29): trae `defusedxml` 0.7.1 y `fonttools` 4.67.0 como dependencias indirectas. Es puro Python y exige `Pillow>=8.3.2` sin tope superior; se probó con Pillow 13.0.0 (tablas, enlaces y varias páginas) y funciona.
+- **`pypdf==6.20.1`** (solo desarrollo, BSD-3-Clause, publicada el 2026-10-12): lee el PDF generado en las pruebas. No se eligió la 6.21.2 porque salió el mismo día de la revisión.
+
+**Verificado:** `pip-audit` con el mismo comando del CI (dependencias de producción) y también sobre producción más desarrollo: **No known vulnerabilities found**.
+
+---
+
+## Actualización — `pypdf` 6.21.1 en el backend (2026-10-22, issue #504)
+
+La revisión de seguridad del 2026-10-22 (`pip-audit` sobre las dependencias del backend) encontró 4 vulnerabilidades en `pypdf` 6.20.1: `CVE-2026-113786`, `CVE-2026-113789`, `CVE-2026-113790` y `CVE-2026-113791`, todas corregidas en 6.21.1. El CI no la habría detectado: su paso `pip-audit` usa `--no-dev` y `pypdf` es solo de desarrollo.
+
+- **Qué se hizo:** `pypdf==6.20.1` pasó a `pypdf==6.21.1` en `be/pyproject.toml` (versión exacta) y `uv lock --upgrade-package pypdf` actualizó `be/uv.lock`. Ningún otro paquete cambió.
+- **Excepción a la espera de 7 días:** la 6.21.1 se publicó el 2026-10-17 (5 días antes), menos de la semana que exige el `cooldown` de Dependabot. Se adopta igual porque corrige vulnerabilidades conocidas y solo se usa en las pruebas. La 6.21.2 (2026-10-21) sigue descartada por ser demasiado nueva.
+- **Verificado:** `pip-audit@2.10.1` sobre producción más desarrollo (`uv export --no-hashes`, `-s osv`): **No known vulnerabilities found**. 817 pruebas del backend pasan (cobertura 97.07%, umbral 96%) y `ruff` queda limpio.
+
+---
+
+## Actualización — `zod` 4.6.7 en el lockfile del frontend (2026-10-23)
+
+El paso `pnpm audit` del CI quedó en rojo en `develop`, justo después de mergear el PR #536 (la investigación del chat de soporte), con 1 alerta alta: GHSA-mrhx-c7xc-m3w5 ("Zod can exhaust memory while validating oversized constrained collections"), en `zod` anterior a 4.6.6. El PR no tocaba dependencias y su CI había pasado unos 50 minutos antes: la alerta se publicó entre uno y otro. `zod` 4.6.5 llega como dependencia indirecta de `eslint-plugin-react-hooks` (`.>eslint-plugin-react-hooks>zod` y `.>eslint-plugin-react-hooks>zod-validation-error>zod`) y el proyecto no lo usa directamente.
+
+- **Qué se hizo:** `pnpm update zod --depth Infinity` en `fe/`. Solo cambió `fe/pnpm-lock.yaml` (`zod` 4.6.5 a 4.6.7, y las referencias de `zod-validation-error`). `package.json` no cambió y no se agregó ninguna regla de `overrides` (se quitaron a propósito en el issue #313). `eslint-plugin-react-hooks` 7.0.1 y `zod-validation-error` aceptan `zod` 4.x dentro de su rango.
+- **Versión elegida:** la 4.6.7, publicada el 2026-10-12 (11 días antes), así que cumple la espera de 7 días del `cooldown` de Dependabot. La 4.6.6 también corrige la alerta, pero la 4.6.7 es la última.
+- **Verificado:** `pnpm audit` en `fe/`: **No known vulnerabilities found**. `pnpm lint` y `pnpm build` pasan, y las 684 pruebas del frontend también.

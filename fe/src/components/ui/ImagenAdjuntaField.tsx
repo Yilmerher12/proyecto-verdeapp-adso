@@ -15,7 +15,9 @@
  */
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FileText, ImagePlus, LoaderCircle, X } from "lucide-react";
+import { FileText, ImagePlus, X } from "lucide-react";
+import { Spinner } from "./Spinner";
+import { ProgressBar } from "./ProgressBar";
 import { motivoDelServidor } from "@/api/axios";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { subirAdjunto } from "@/lib/uploadsApi";
@@ -56,6 +58,7 @@ export function ImagenAdjuntaField({
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(false);
+  const [progreso, setProgreso] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
 
   const tiposPermitidos = permitirDocumentos ? [...TIPOS_IMAGEN, ...TIPOS_DOCUMENTO] : TIPOS_IMAGEN;
@@ -74,8 +77,9 @@ export function ImagenAdjuntaField({
     }
 
     setSubiendo(true);
+    setProgreso(undefined);
     try {
-      const url = await subirAdjunto(archivo, { permitirDocumentos });
+      const url = await subirAdjunto(archivo, { permitirDocumentos, onProgress: setProgreso });
       onChange(url);
     } catch (err) {
       // ¿Qué? Issue #395: el motivo del servidor (cuota pasada, demasiados píxeles...); el genérico solo si no dio ninguno.
@@ -125,17 +129,17 @@ export function ImagenAdjuntaField({
           <button
             type="button"
             onClick={quitar}
-            className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-400/15"
           >
             <X className="icon-sm" />
             {t("imagenAdjunta.quitar")}
           </button>
         </div>
       ) : (
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-line dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-edge bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:border-night-edge dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover">
           {subiendo ? (
             <>
-              <LoaderCircle className="icon-md animate-spin" />
+              <Spinner size="sm" tone="current" />
               {t("imagenAdjunta.subiendo")}
             </>
           ) : (
@@ -154,7 +158,8 @@ export function ImagenAdjuntaField({
           />
         </label>
       )}
-      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {subiendo && <ProgressBar value={progreso} label={t("imagenAdjunta.subiendo")} className="mt-2" />}
+      {error && <p className="mt-1 text-xs text-red-600 dark:text-red-300">{error}</p>}
     </div>
   );
 }
