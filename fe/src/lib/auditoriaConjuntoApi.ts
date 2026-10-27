@@ -45,7 +45,7 @@ export interface NuevaAuditoria {
 //           un error claro en vez de quedarse esperando sin fin.
 export async function crearAuditoria(
   datos: NuevaAuditoria,
-  onProgress?: (porcentaje: number) => void
+  onProgress?: (porcentaje: number) => void,
 ): Promise<AuditoriaConjunto> {
   const formData = new FormData();
   formData.append("id_conjunto_residencial", String(datos.id_conjunto_residencial));
@@ -72,7 +72,10 @@ export interface PaginaAuditorias {
 }
 
 // ¿Qué? Las auditorías que el Reciclador ya envió, de a páginas, más recientes primero.
-export async function listarMisAuditorias(limit: number, offset: number): Promise<PaginaAuditorias> {
+export async function listarMisAuditorias(
+  limit: number,
+  offset: number,
+): Promise<PaginaAuditorias> {
   const { data } = await axios.get(`${API_BASE}/mias`, { params: { limit, offset } });
   return data;
 }
@@ -136,15 +139,57 @@ export interface DesempenoConjunto {
 
 // ¿Qué? Sin `idConjunto` el backend usa el único conjunto del usuario (el caso
 //       del Residente); un Admin de Conjunto con varios debe mandarlo (si no, 422).
-export async function obtenerDesempeno(idConjunto?: string, semanas?: number): Promise<DesempenoConjunto> {
+export async function obtenerDesempeno(
+  idConjunto?: string,
+  semanas?: number,
+): Promise<DesempenoConjunto> {
   const { data } = await axios.get(`${API_BASE}/desempeno`, {
     params: { id_conjunto: idConjunto, semanas },
   });
   return data;
 }
 
+// ¿Qué? El desempeño semanal del conjunto como PDF (issue #558), con el mismo conjunto y
+//       período que ve la pantalla. Solo el Admin de Conjunto (el backend responde 403 al resto).
+// ¿Impacto? Sin auditorías en el período el backend responde 422 con un mensaje: como la
+//           respuesta es un Blob, se lee ese mensaje del cuerpo para mostrárselo al usuario.
+export async function descargarDesempenoPdf(idConjunto: string, semanas: number): Promise<Blob> {
+  try {
+    const { data } = await axios.get(`${API_BASE}/desempeno/pdf`, {
+      params: { id_conjunto: idConjunto, semanas },
+      responseType: "blob",
+    });
+    return data;
+  } catch (error) {
+    const cuerpo = (error as { response?: { data?: unknown } }).response?.data;
+    if (cuerpo instanceof Blob) {
+      try {
+        const detail = JSON.parse(await cuerpo.text()).detail;
+        if (typeof detail === "string") (error as Error).message = detail;
+      } catch {
+        // El cuerpo no era JSON: se deja el mensaje que ya traía el error.
+      }
+    }
+    throw error;
+  }
+}
+
+export function nombreArchivoDesempeno(nombreConjunto: string, semanas: number): string {
+  const slug =
+    nombreConjunto
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "conjunto";
+  return `desempeno-${slug}-${semanas}semanas-${new Date().toISOString().slice(0, 10)}.pdf`;
+}
+
 // ¿Qué? Las auditorías de una semana (el `lunes` de una SemanaDesempeno), más recientes primero.
-export async function listarAuditoriasDeSemana(lunes: string, idConjunto?: string): Promise<AuditoriaConjunto[]> {
+export async function listarAuditoriasDeSemana(
+  lunes: string,
+  idConjunto?: string,
+): Promise<AuditoriaConjunto[]> {
   const { data } = await axios.get(`${API_BASE}/desempeno/semana`, {
     params: { lunes, id_conjunto: idConjunto },
   });
@@ -167,7 +212,11 @@ export interface AuditoriasAdminResultado {
 //       filtra esa semana completa; sin él, trae las más recientes de
 //       cualquier semana (para cruzar "a qué conjuntos se recomendó cada
 //       módulo" sin acotar a una sola semana).
-export async function listarAuditoriasAdmin(opciones?: { lunes?: string; limit?: number; offset?: number }): Promise<AuditoriasAdminResultado> {
+export async function listarAuditoriasAdmin(opciones?: {
+  lunes?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<AuditoriasAdminResultado> {
   const { data } = await axios.get(`${API_BASE}/admin`, { params: opciones });
   return data;
 }
@@ -183,7 +232,11 @@ const AUDITORIAS_POR_PAGINA = 200;
 export async function listarAuditoriasAdminDeSemana(lunes: string): Promise<AuditoriaAdmin[]> {
   const todas: AuditoriaAdmin[] = [];
   for (;;) {
-    const { items, total } = await listarAuditoriasAdmin({ lunes, limit: AUDITORIAS_POR_PAGINA, offset: todas.length });
+    const { items, total } = await listarAuditoriasAdmin({
+      lunes,
+      limit: AUDITORIAS_POR_PAGINA,
+      offset: todas.length,
+    });
     todas.push(...items);
     if (items.length === 0 || todas.length >= total) return todas;
   }

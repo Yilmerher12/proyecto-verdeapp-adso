@@ -4,6 +4,8 @@ Descripción: Lógica de negocio de la auditoría del Reciclador al conjunto
              (RQF-009) — validaciones y guardado de la foto de evidencia.
 """
 import asyncio
+import re
+import unicodedata
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from uuid import UUID
@@ -37,6 +39,7 @@ from app.services.notificaciones_helpers import (
     residentes_del_conjunto,
 )
 from app.utils.imagenes import guardar_imagen_subida
+from app.utils.pdf_desempeno import construir_pdf_desempeno
 
 # ¿Qué? Carpeta donde quedan las fotos de evidencia, servida luego como
 #       archivos estáticos en /uploads (ver main.py).
@@ -470,6 +473,55 @@ def desempeno_semanal(
         semanas=list(por_semana.values()),
         temas=sorted(por_tema.values(), key=lambda t: t.tema),
     )
+
+
+def exportar_pdf_desempeno(
+    db: Session, current_user: Usuario, id_conjunto: UUID | None, semanas: int
+) -> tuple[bytes, str]:
+    """
+    ¿Qué? El desempeño semanal del conjunto como PDF (issue #558): los mismos números que
+          devuelve desempeno_semanal(), así el PDF siempre coincide con la pantalla.
+    ¿Para qué? Llevar la gráfica, la tabla por semana y el ranking de temas a una reunión.
+    ¿Impacto? Devuelve (contenido, nombre del archivo). Sin auditorías en el período responde
+             422 en vez de entregar un PDF vacío. El ranking de temas usa el mismo orden que
+             la pantalla (rankingTemas en fe/src/lib/desempeno.ts): más Regular o Malo, luego
+             más auditorías, luego el nombre.
+    """
+    datos = desempeno_semanal(db, current_user, id_conjunto, semanas)
+    if datos.total == 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="No hay auditorías en este período para descargar.",
+        )
+    nombre_conjunto = db.execute(
+        select(ConjuntoResidencial.nombre_conjunto).where(
+            ConjuntoResidencial.id_conjunto_residencial == datos.id_conjunto_residencial
+        )
+    ).scalar_one()
+
+    filas_semana = [
+        (
+            s.lunes.strftime("%d/%m"),
+            f"{s.lunes:%d/%m/%Y} al {s.lunes + timedelta(days=6):%d/%m/%Y}",
+            s.bueno,
+            s.regular,
+            s.malo,
+        )
+        for s in datos.semanas
+    ]
+    temas = sorted(datos.temas, key=lambda t: (-(t.regular + t.malo), -(t.bueno + t.regular + t.malo), t.tema))
+    ahora = datetime.now(HUSO_BOGOTA)
+    primero, ultimo = datos.semanas[0].lunes, datos.semanas[-1].lunes + timedelta(days=6)
+    contenido = construir_pdf_desempeno(
+        nombre_conjunto=nombre_conjunto,
+        periodo_texto=f"Últimas {semanas} semanas, del {primero:%d/%m/%Y} al {ultimo:%d/%m/%Y}",
+        generado_el=f"{ahora:%d/%m/%Y %H:%M}",
+        semanas=filas_semana,
+        temas=[(t.tema, t.bueno, t.regular, t.malo) for t in temas],
+    )
+    ascii_ = unicodedata.normalize("NFKD", nombre_conjunto).encode("ascii", "ignore").decode().lower()
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_).strip("-") or "conjunto"
+    return contenido, f"desempeno-{slug}-{semanas}semanas-{ahora:%Y-%m-%d}.pdf"
 
 
 def auditorias_de_semana(

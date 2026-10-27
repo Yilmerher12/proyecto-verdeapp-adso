@@ -991,9 +991,17 @@
     "bannerTitle": "Nueva auditoría de tu conjunto",
     "verButton": "Ver",
     "modalTitle": "Resultado de la auditoría",
-    "temaLabel": "Tema relacionado",
-    "descripcionLabel": "Descripción",
+    "temaLabel": "Tema evaluado",
+    "descripcionLabel": "Observaciones",
     "auditadoPor": "Auditado por {{nombre}}",
+    "auditorLabel": "Auditor",
+    "fechaLabel": "Fecha",
+    "verMas": "Ver más",
+    "verMenos": "Ver menos",
+    "evidenciaContador": "{{actual}} / {{total}}",
+    "fotoAnterior": "Foto anterior",
+    "fotoSiguiente": "Foto siguiente",
+    "irAFoto": "Ir a la foto {{n}}",
     "evidenciaAlt": "Foto de evidencia de la auditoría",
     "evidenciaAmpliar": "Ver foto en tamaño completo",
     "errorLoad": "No se pudo cargar la auditoría.",
@@ -1004,6 +1012,9 @@
     "title": "Desempeño",
     "subtitle": "Cómo va la separación de residuos de tu conjunto, semana a semana.",
     "conjuntoTabs": "Conjunto",
+    "descargarPdf": "Descargar PDF",
+    "descargando": "Generando PDF...",
+    "descargarError": "No se pudo descargar el PDF.",
     "periodoLabel": "Período",
     "periodoOpcion": "Últimas {{semanas}} semanas",
     "noConjuntos": "Todavía no tienes conjuntos asignados.",
@@ -1515,6 +1526,39 @@
     "formTitle": "Cuéntale al equipo de VerdeApp",
     "formHint": "Elige el motivo de tu consulta. Le llega al Administrador del Sistema con tus datos (nombre, conjunto y unidad): no tienes que escribirlos.",
     "motivoLegend": "¿Sobre qué es tu consulta?",
+    "ayuda": {
+      "titulo": "Prueba esto primero",
+      "pregunta": "¿Esto resolvió tu duda?",
+      "si": "Sí, ya la resolví",
+      "no": "No, quiero enviar mi consulta",
+      "gracias": "Nos alegra que lo pudieras resolver. Si algo más falla, aquí estamos.",
+      "personaTitulo": "Esta consulta la revisa una persona",
+      "persona": "No hay pasos para resolverla por tu cuenta. Pulsa «Enviar consulta» y el equipo de VerdeApp la revisa.",
+      "login": {
+        "paso1": "Ya tienes la sesión abierta, así que esto te sirve si el problema es en otro dispositivo o la próxima vez que entres.",
+        "paso2": "Si olvidaste tu contraseña, cierra la sesión y usa «¿Olvidaste tu contraseña?» en la pantalla de inicio de sesión: te llega un correo para crear una nueva.",
+        "paso3": "Después de 5 intentos fallidos la cuenta se bloquea 15 minutos. Espera ese tiempo antes de intentar de nuevo."
+      },
+      "notificaciones": {
+        "paso1": "La campanita se actualiza sola cada 20 segundos. Si acabas de hacer algo, espera un momento.",
+        "paso2": "Abre la campanita para ver tus notificaciones.",
+        "paso3": "Si esperas un correo, revisa también la carpeta de spam."
+      },
+      "cuenta": {
+        "paso1": "Tu nombre, tu teléfono y tu foto los cambias tú mismo en Mi Perfil.",
+        "paso2": "El correo no se puede cambiar desde Mi Perfil. Si ese es el dato que está mal, pulsa «Enviar consulta»."
+      },
+      "falla": {
+        "paso1": "Recarga la página (tecla F5 en el computador; en el celular, desliza hacia abajo).",
+        "paso2": "Revisa tu conexión a internet.",
+        "paso3": "Si el error sigue, pulsa «Enviar consulta» para que el equipo lo revise."
+      },
+      "recicladorAuditoria": {
+        "paso1": "Las fotos deben ser JPG, PNG o WEBP y pesar máximo 5 MB.",
+        "paso2": "Si la foto es muy pesada, prueba con una más liviana.",
+        "paso3": "Revisa tu conexión a internet e intenta de nuevo."
+      }
+    },
     "motivos": {
       "residenteUnidad": "Mi conjunto, torre o apartamento no es el correcto",
       "residenteShut": "Mi reporte de SHUT lleno o libre no se registró bien",

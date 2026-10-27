@@ -9,7 +9,7 @@ from datetime import date
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_user, get_db, require_role
@@ -161,6 +161,16 @@ def listar_admin(
     return AuditoriasAdminListResponse(items=items, total=total)
 
 
+# ¿Qué? Se valida a mano porque Literal[4, 8, 12] en un Query no convierte
+#       el texto "4" a número y rechazaba hasta los valores válidos.
+def _validar_semanas(semanas: int) -> None:
+    if semanas not in service.SEMANAS_PERMITIDAS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="semanas debe ser 4, 8 o 12.",
+        )
+
+
 # ¿Qué? Las dos rutas de desempeño NO usan _requiere_*: aceptan cualquier
 #       sesión y el servicio responde 403 a quien no pertenece al conjunto
 #       (Reciclador y Admin del Sistema nunca pertenecen a uno).
@@ -177,13 +187,7 @@ def desempeno_semanal(
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> DesempenoConjuntoResponse:
-    # ¿Qué? Se valida a mano porque Literal[4, 8, 12] en un Query no convierte
-    #       el texto "4" a número y rechazaba hasta los valores válidos.
-    if semanas not in service.SEMANAS_PERMITIDAS:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="semanas debe ser 4, 8 o 12.",
-        )
+    _validar_semanas(semanas)
     return service.desempeno_semanal(db, current_user, id_conjunto, semanas)
 
 
@@ -200,6 +204,27 @@ def auditorias_de_semana(
 ) -> list[AuditoriaConjuntoResponse]:
     auditorias = service.auditorias_de_semana(db, current_user, id_conjunto, lunes)
     return [_a_response(a) for a in auditorias]
+
+
+@router.get(
+    "/desempeno/pdf",
+    summary="Admin de Conjunto descarga el desempeño semanal de su conjunto en PDF (gráfica, tabla por semana y temas)",
+)
+def desempeno_pdf(
+    id_conjunto: Optional[UUID] = Query(None, description="Opcional si el usuario tiene un solo conjunto"),
+    semanas: int = Query(service.SEMANAS_POR_DEFECTO, description="4, 8 o 12"),
+    current_user: Usuario = Depends(
+        require_role(RolId.ADMIN_CONJUNTO, "Solo el Administrador de Conjunto puede descargar el desempeño en PDF.")
+    ),
+    db: Session = Depends(get_db),
+) -> Response:
+    _validar_semanas(semanas)
+    contenido, nombre = service.exportar_pdf_desempeno(db, current_user, id_conjunto, semanas)
+    return Response(
+        content=contenido,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{nombre}"'},
+    )
 
 
 @router.get(

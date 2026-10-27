@@ -1126,3 +1126,58 @@ class TestUltimasAuditoriasPorConjunto:
         )
 
         assert client.get(URL_ULTIMAS, headers=reciclador_auth_headers).json() == []
+
+
+URL_DESEMPENO_PDF = "/api/v1/auditorias-conjunto/desempeno/pdf"
+
+
+class TestDesempenoPdf:
+    """¿Qué? Issue #558 — el desempeño semanal del conjunto en PDF, solo para el Admin de Conjunto."""
+
+    def test_sin_login_devuelve_401(self, client: TestClient):
+        assert client.get(URL_DESEMPENO_PDF).status_code == 401
+
+    def test_residente_recibe_403(self, client: TestClient, auth_headers, conjunto_verificado):
+        response = client.get(URL_DESEMPENO_PDF, headers=auth_headers)
+        assert response.status_code == 403
+
+    def test_reciclador_recibe_403(self, client: TestClient, reciclador_auth_headers, conjunto_verificado):
+        response = client.get(URL_DESEMPENO_PDF, headers=reciclador_auth_headers)
+        assert response.status_code == 403
+
+    def test_semanas_invalido_devuelve_422(self, client: TestClient, admin_conjunto_auth_headers):
+        assert client.get(URL_DESEMPENO_PDF, headers=admin_conjunto_auth_headers, params={"semanas": 5}).status_code == 422
+
+    def test_sin_auditorias_avisa_en_vez_de_entregar_un_pdf_vacio(self, client: TestClient, admin_conjunto_auth_headers):
+        response = client.get(URL_DESEMPENO_PDF, headers=admin_conjunto_auth_headers)
+
+        assert response.status_code == 422
+        assert "No hay auditorías" in response.json()["detail"]
+
+    def test_admin_de_conjunto_descarga_un_pdf_con_el_conjunto_y_los_temas(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_auth_headers,
+        reciclador_autorizado,
+        conjunto_verificado,
+    ):
+        from pypdf import PdfReader
+
+        id_conjunto = conjunto_verificado.id_conjunto_residencial
+        lunes = _lunes_actual()
+        _sembrar_auditoria(db, reciclador_autorizado, id_conjunto, "BUENA", "Reciclaje de vidrio", _momento_bogota(lunes, -7))
+        _sembrar_auditoria(db, reciclador_autorizado, id_conjunto, "DEFICIENTE", "Residuos orgánicos", _momento_bogota(lunes, 0))
+
+        response = client.get(URL_DESEMPENO_PDF, headers=admin_conjunto_auth_headers)
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/pdf"
+        assert response.headers["content-disposition"].startswith('attachment; filename="desempeno-')
+        assert response.content.startswith(b"%PDF")
+        texto = " ".join(p.extract_text() for p in PdfReader(io.BytesIO(response.content)).pages)
+        assert conjunto_verificado.nombre_conjunto in texto
+        assert "Auditorías en el período" in texto
+        assert "Reciclaje de vidrio" in texto
+        # ¿Qué? El tema con Malo va primero en el ranking, igual que en la pantalla.
+        assert texto.index("Residuos orgánicos") < texto.index("Reciclaje de vidrio")

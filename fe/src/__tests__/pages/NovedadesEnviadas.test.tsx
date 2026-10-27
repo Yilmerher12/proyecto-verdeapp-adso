@@ -61,9 +61,16 @@ describe("Novedades enviadas al Admin Sistema", () => {
 
     await waitFor(() => {
       // ¿Qué? Issue #512: además del texto viaja la clave del motivo, de donde el backend saca la prioridad.
-      expect(mockEnviar).toHaveBeenCalledWith({ texto: LOGIN, motivo: "login", url_imagen: null, id_conjunto_residencial: null });
+      expect(mockEnviar).toHaveBeenCalledWith({
+        texto: LOGIN,
+        motivo: "login",
+        url_imagen: null,
+        id_conjunto_residencial: null,
+      });
     });
-    expect(await screen.findByText("Consulta enviada. El Administrador del Sistema la revisará.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Consulta enviada. El Administrador del Sistema la revisará."),
+    ).toBeInTheDocument();
   });
 
   it("el comentario está bloqueado con cualquier motivo que no sea Otros", async () => {
@@ -140,16 +147,85 @@ describe("Novedades enviadas al Admin Sistema", () => {
       ["Residente", RoleId.RESIDENTE, RESIDENTE, [RECICLADOR, ADMIN]],
       ["Reciclador", RoleId.RECICLADOR, RECICLADOR, [RESIDENTE, ADMIN]],
       ["Admin de Conjunto", RoleId.ADMIN_CONJUNTO, ADMIN, [RESIDENTE, RECICLADOR]],
-    ])("%s ve los suyos, los comunes y Otros, pero no los de otros roles", async (_rol, roleId, propio, ajenos) => {
+    ])(
+      "%s ve los suyos, los comunes y Otros, pero no los de otros roles",
+      async (_rol, roleId, propio, ajenos) => {
+        const user = userEvent.setup();
+        renderPage(roleId);
+
+        await abrirFormulario(user);
+        expect(screen.getByRole("radio", { name: propio })).toBeInTheDocument();
+        expect(screen.getByRole("radio", { name: LOGIN })).toBeInTheDocument();
+        ajenos.forEach((ajeno) =>
+          expect(screen.queryByRole("radio", { name: ajeno })).not.toBeInTheDocument(),
+        );
+        const radios = screen.getAllByRole("radio");
+        expect(radios[radios.length - 1]).toHaveAccessibleName("Otros");
+      },
+    );
+  });
+
+  describe("ayuda escrita al elegir un motivo (investigación #521)", () => {
+    it("un motivo con pasos muestra la ayuda con los valores reales y el formulario sigue disponible", async () => {
       const user = userEvent.setup();
-      renderPage(roleId);
+      renderPage();
 
       await abrirFormulario(user);
-      expect(screen.getByRole("radio", { name: propio })).toBeInTheDocument();
-      expect(screen.getByRole("radio", { name: LOGIN })).toBeInTheDocument();
-      ajenos.forEach((ajeno) => expect(screen.queryByRole("radio", { name: ajeno })).not.toBeInTheDocument());
-      const radios = screen.getAllByRole("radio");
-      expect(radios[radios.length - 1]).toHaveAccessibleName("Otros");
+      expect(screen.queryByText("Prueba esto primero")).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("radio", { name: LOGIN }));
+      expect(screen.getByText("Prueba esto primero")).toBeInTheDocument();
+      expect(
+        screen.getByText(/5 intentos fallidos la cuenta se bloquea 15 minutos/),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Enviar consulta" })).toBeEnabled();
+    });
+
+    it("un motivo que revisa una persona avisa y no muestra pasos", async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await abrirFormulario(user);
+      await user.click(
+        screen.getByRole("radio", { name: "Tengo una sugerencia para mejorar VerdeApp" }),
+      );
+      expect(screen.getByText("Esta consulta la revisa una persona")).toBeInTheDocument();
+      expect(screen.queryByText("¿Esto resolvió tu duda?")).not.toBeInTheDocument();
+    });
+
+    it("Otros no muestra ayuda", async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await abrirFormulario(user);
+      await user.click(screen.getByRole("radio", { name: "Otros" }));
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("«Sí, ya la resolví» cierra la ayuda, limpia el motivo y no envía nada", async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await abrirFormulario(user);
+      await user.click(screen.getByRole("radio", { name: LOGIN }));
+      await user.click(screen.getByRole("button", { name: "Sí, ya la resolví" }));
+
+      expect(screen.queryByText("Prueba esto primero")).not.toBeInTheDocument();
+      expect(screen.getByRole("radio", { name: LOGIN })).not.toBeChecked();
+      expect(screen.getByText(/Nos alegra que lo pudieras resolver/)).toBeInTheDocument();
+      expect(mockEnviar).not.toHaveBeenCalled();
+    });
+
+    it("«No, quiero enviar mi consulta» deja el motivo y lleva el foco al botón Enviar", async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await abrirFormulario(user);
+      await user.click(screen.getByRole("radio", { name: LOGIN }));
+      await user.click(screen.getByRole("button", { name: "No, quiero enviar mi consulta" }));
+
+      expect(screen.getByRole("radio", { name: LOGIN })).toBeChecked();
+      expect(screen.getByRole("button", { name: "Enviar consulta" })).toHaveFocus();
     });
   });
 
@@ -175,7 +251,9 @@ describe("Novedades enviadas al Admin Sistema", () => {
     await user.click(screen.getByRole("button", { name: "Enviar consulta" }));
 
     await waitFor(() => {
-      expect(mockEnviar).toHaveBeenCalledWith(expect.objectContaining({ id_conjunto_residencial: "c-2" }));
+      expect(mockEnviar).toHaveBeenCalledWith(
+        expect.objectContaining({ id_conjunto_residencial: "c-2" }),
+      );
     });
   });
 
@@ -195,11 +273,38 @@ describe("Novedades enviadas al Admin Sistema", () => {
     mockMias.mockResolvedValue({
       items: [
         {
-          id: "n-1", texto: "Pared rayada.", url_imagen: null, estado: "RESUELTA", prioridad: "BAJA", nombre_conjunto: "Quintas",
-          respuesta: "Ya mandamos a pintarla.", respondida_at: "2026-09-24T10:00:00Z", created_at: "2026-09-22T10:00:00Z",
+          id: "n-1",
+          texto: "Pared rayada.",
+          url_imagen: null,
+          estado: "RESUELTA",
+          prioridad: "BAJA",
+          nombre_conjunto: "Quintas",
+          respuesta: "Ya mandamos a pintarla.",
+          respondida_at: "2026-09-24T10:00:00Z",
+          created_at: "2026-09-22T10:00:00Z",
         },
-        { id: "n-2", texto: "Punto cerrado.", url_imagen: null, estado: "NUEVA", prioridad: "ALTA", nombre_conjunto: null, respuesta: null, respondida_at: null, created_at: "2026-09-23T10:00:00Z" },
-        { id: "n-3", texto: "Sin sonido.", url_imagen: null, estado: "EN_REVISION", prioridad: "MEDIA", nombre_conjunto: null, respuesta: null, respondida_at: null, created_at: "2026-09-23T11:00:00Z" },
+        {
+          id: "n-2",
+          texto: "Punto cerrado.",
+          url_imagen: null,
+          estado: "NUEVA",
+          prioridad: "ALTA",
+          nombre_conjunto: null,
+          respuesta: null,
+          respondida_at: null,
+          created_at: "2026-09-23T10:00:00Z",
+        },
+        {
+          id: "n-3",
+          texto: "Sin sonido.",
+          url_imagen: null,
+          estado: "EN_REVISION",
+          prioridad: "MEDIA",
+          nombre_conjunto: null,
+          respuesta: null,
+          respondida_at: null,
+          created_at: "2026-09-23T11:00:00Z",
+        },
       ],
       total: 3,
     });
@@ -224,10 +329,16 @@ describe("Novedades enviadas al Admin Sistema", () => {
 
   it("Historial de novedades pide la página siguiente con el offset correcto", async () => {
     const item = (id: string) => ({
-      id, texto: `Novedad ${id}`, url_imagen: null, estado: "NUEVA", prioridad: "MEDIA", nombre_conjunto: null, created_at: "2026-09-22T10:00:00Z",
+      id,
+      texto: `Novedad ${id}`,
+      url_imagen: null,
+      estado: "NUEVA",
+      prioridad: "MEDIA",
+      nombre_conjunto: null,
+      created_at: "2026-09-22T10:00:00Z",
     });
     mockMias.mockImplementation((_limit: number, offset: number) =>
-      Promise.resolve({ items: [item(offset === 0 ? "primera" : "segunda")], total: 12 })
+      Promise.resolve({ items: [item(offset === 0 ? "primera" : "segunda")], total: 12 }),
     );
     const user = userEvent.setup();
     renderPage();
