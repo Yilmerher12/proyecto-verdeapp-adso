@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Send } from "lucide-react";
+import { AyudaMotivo } from "@/components/AyudaMotivo";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { useAuth } from "@/hooks/useAuth";
 import { RoleId } from "@/types/auth";
@@ -77,9 +78,16 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState(false);
+  // ¿Qué? El usuario dijo que la ayuda escrita le resolvió la duda.
+  const [resuelto, setResuelto] = useState(false);
+  const botonEnviar = useRef<HTMLButtonElement>(null);
 
   const esAdminConjunto = user?.role_id === RoleId.ADMIN_CONJUNTO;
-  const motivos = [...(MOTIVOS_POR_ROL[user?.role_id ?? 0] ?? []), ...MOTIVOS_COMUNES, MOTIVO_OTROS];
+  const motivos = [
+    ...(MOTIVOS_POR_ROL[user?.role_id ?? 0] ?? []),
+    ...MOTIVOS_COMUNES,
+    MOTIVO_OTROS,
+  ];
   const esOtros = motivo === MOTIVO_OTROS;
   // ¿Qué? El texto que se envía: el motivo tal cual, o "Otros: " + el comentario.
   const prefijoOtros = `${t("novedadesEnviadas.motivos.otros")}: `;
@@ -98,7 +106,9 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
     setExito(false);
     try {
       await enviarNovedad({
-        texto: esOtros ? `${prefijoOtros}${texto.trim()}` : t(`novedadesEnviadas.motivos.${motivo}`),
+        texto: esOtros
+          ? `${prefijoOtros}${texto.trim()}`
+          : t(`novedadesEnviadas.motivos.${motivo}`),
         // ¿Qué? Issue #512: la clave del motivo; el backend calcula la prioridad con ella.
         motivo,
         url_imagen: urlImagen || null,
@@ -177,6 +187,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
                 onChange={() => {
                   setMotivo(clave);
                   setExito(false);
+                  setResuelto(false);
                 }}
                 className="peer sr-only"
               />
@@ -201,6 +212,22 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
         </div>
       </fieldset>
 
+      <AyudaMotivo
+        motivo={motivo}
+        onResuelto={() => {
+          setMotivo("");
+          setResuelto(true);
+        }}
+        onNoResuelto={() => botonEnviar.current?.focus()}
+      />
+      {resuelto && !motivo && (
+        <Alert
+          type="success"
+          message={t("novedadesEnviadas.ayuda.gracias")}
+          onClose={() => setResuelto(false)}
+        />
+      )}
+
       <div>
         <label
           htmlFor="novedad-texto"
@@ -216,11 +243,17 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
           maxLength={DESVINCULACION_MOTIVO_MAX_LENGTH - prefijoOtros.length}
           rows={4}
           aria-describedby="novedad-contador"
-          placeholder={esOtros ? t("novedadesEnviadas.textPlaceholder") : t("novedadesEnviadas.textPlaceholderOff")}
+          placeholder={
+            esOtros
+              ? t("novedadesEnviadas.textPlaceholder")
+              : t("novedadesEnviadas.textPlaceholderOff")
+          }
           className="mt-1 w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:border-night-edge dark:bg-night-field dark:text-white dark:disabled:bg-night-inset dark:disabled:text-gray-500"
         />
         <div className="mt-1 flex items-start justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
-          <span>{esOtros ? t("novedadesEnviadas.textHelpOn") : t("novedadesEnviadas.textHelpOff")}</span>
+          <span>
+            {esOtros ? t("novedadesEnviadas.textHelpOn") : t("novedadesEnviadas.textHelpOff")}
+          </span>
           <ContadorCaracteres
             id="novedad-contador"
             actual={texto.length}
@@ -237,6 +270,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
 
       <div className="flex flex-wrap items-center gap-3">
         <button
+          ref={botonEnviar}
           type="button"
           onClick={enviar}
           disabled={enviando || faltaAlgo}
@@ -294,10 +328,14 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
             className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CLASE_ESTADO[n.estado]}`}>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CLASE_ESTADO[n.estado]}`}
+              >
                 {t(`novedadesEnviadas.estado.${n.estado}`)}
               </span>
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CLASE_PRIORIDAD[n.prioridad]}`}>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CLASE_PRIORIDAD[n.prioridad]}`}
+              >
                 {t(`novedadesEnviadas.prioridad.${n.prioridad}`)}
               </span>
               <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
@@ -321,7 +359,9 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
                     fecha: formatearFechaCreacion(n.respondida_at ?? n.created_at),
                   })}
                 </p>
-                <p className="mt-1 whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">{n.respuesta}</p>
+                <p className="mt-1 whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">
+                  {n.respuesta}
+                </p>
               </div>
             )}
           </li>
