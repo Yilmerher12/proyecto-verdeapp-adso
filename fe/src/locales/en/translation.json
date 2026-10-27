@@ -987,9 +987,17 @@
     "bannerTitle": "New audit of your building",
     "verButton": "View",
     "modalTitle": "Audit result",
-    "temaLabel": "Related topic",
-    "descripcionLabel": "Description",
+    "temaLabel": "Topic evaluated",
+    "descripcionLabel": "Observations",
     "auditadoPor": "Audited by {{nombre}}",
+    "auditorLabel": "Auditor",
+    "fechaLabel": "Date",
+    "verMas": "Show more",
+    "verMenos": "Show less",
+    "evidenciaContador": "{{actual}} / {{total}}",
+    "fotoAnterior": "Previous photo",
+    "fotoSiguiente": "Next photo",
+    "irAFoto": "Go to photo {{n}}",
     "evidenciaAlt": "Audit evidence photo",
     "evidenciaAmpliar": "View photo full size",
     "errorLoad": "Couldn't load the audit.",
@@ -1000,6 +1008,9 @@
     "title": "Performance",
     "subtitle": "How waste separation is going in your complex, week by week.",
     "conjuntoTabs": "Complex",
+    "descargarPdf": "Download PDF",
+    "descargando": "Generating PDF...",
+    "descargarError": "Could not download the PDF.",
     "periodoLabel": "Period",
     "periodoOpcion": "Last {{semanas}} weeks",
     "noConjuntos": "You don't have any complexes assigned yet.",
@@ -1511,6 +1522,39 @@
     "formTitle": "Tell the VerdeApp team",
     "formHint": "Choose the reason for your request. It reaches the System Administrator with your details (name, building and unit): you don't have to type them.",
     "motivoLegend": "What is your request about?",
+    "ayuda": {
+      "titulo": "Try this first",
+      "pregunta": "Did this solve your question?",
+      "si": "Yes, it's solved",
+      "no": "No, I want to send my request",
+      "gracias": "Glad you could sort it out. If anything else fails, we're here.",
+      "personaTitulo": "A person reviews this request",
+      "persona": "There are no steps to solve this on your own. Press 'Send request' and the VerdeApp team will review it.",
+      "login": {
+        "paso1": "You are already signed in, so this helps if the problem is on another device or the next time you sign in.",
+        "paso2": "If you forgot your password, sign out and use \"Forgot your password?\" on the sign-in screen: you will get an email to create a new one.",
+        "paso3": "After 5 failed attempts the account is locked for 15 minutes. Wait that long before trying again."
+      },
+      "notificaciones": {
+        "paso1": "The bell refreshes by itself every 20 seconds. If you just did something, wait a moment.",
+        "paso2": "Open the bell to see your notifications.",
+        "paso3": "If you are waiting for an email, check your spam folder too."
+      },
+      "cuenta": {
+        "paso1": "You can change your name, phone and photo yourself in My Profile.",
+        "paso2": "The email cannot be changed from My Profile. If that is the wrong detail, press 'Send request'."
+      },
+      "falla": {
+        "paso1": "Reload the page (F5 key on a computer; on a phone, pull down).",
+        "paso2": "Check your internet connection.",
+        "paso3": "If the error continues, press 'Send request' so the team can review it."
+      },
+      "recicladorAuditoria": {
+        "paso1": "Photos must be JPG, PNG or WEBP and weigh at most 5 MB.",
+        "paso2": "If the photo is too heavy, try a lighter one.",
+        "paso3": "Check your internet connection and try again."
+      }
+    },
     "motivos": {
       "residenteUnidad": "My building, tower or apartment is not the right one",
       "residenteShut": "My full or empty SHUT report was not registered correctly",

@@ -277,7 +277,7 @@ describe("ResidenteDashboard", () => {
     expect(await screen.findByText("Resultado de la auditoría")).toBeInTheDocument();
     expect(screen.getByText("Malo")).toBeInTheDocument();
     expect(screen.getByText("El material llegó mezclado.")).toBeInTheDocument();
-    expect(screen.getByText(/Auditado por Carlos Gómez/)).toBeInTheDocument();
+    expect(screen.getByText("Carlos Gómez")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Cerrar" }));
 
