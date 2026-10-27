@@ -56,7 +56,7 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
   // ¿Qué? Solo las fotos cuya ruta pasa enlaceAdjuntoSeguro (issue #400).
   const fotos = auditoria
     ? [auditoria.ruta_evidencia, auditoria.ruta_evidencia_2, auditoria.ruta_evidencia_3].filter(
-        (ruta): ruta is string => Boolean(enlaceAdjuntoSeguro(ruta))
+        (ruta): ruta is string => Boolean(enlaceAdjuntoSeguro(ruta)),
       )
     : [];
   const actual = Math.min(indice, Math.max(fotos.length - 1, 0));
@@ -81,7 +81,10 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
 
   const nivel = auditoria ? NIVELES_DESEMPENO[auditoria.nivel_desempeno] : null;
   const srcActual = enlaceAdjuntoSeguro(fotos[actual]) ?? undefined;
-  const contador = t("auditoriaResultado.evidenciaContador", { actual: actual + 1, total: fotos.length });
+  const contador = t("auditoriaResultado.evidenciaContador", {
+    actual: actual + 1,
+    total: fotos.length,
+  });
 
   return (
     <Modal onClose={onClose} extraWide aria-label={t("auditoriaResultado.modalTitle")}>
@@ -101,9 +104,13 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
           <div className={`flex items-center gap-4 px-6 py-4 ${nivel.claseBadge}`}>
             <nivel.icon className="icon-xl shrink-0" />
             <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-wide opacity-80">{t("auditoriaResultado.modalTitle")}</p>
+              <p className="text-xs font-bold uppercase tracking-wide opacity-80">
+                {t("auditoriaResultado.modalTitle")}
+              </p>
               <h3 className="text-xl font-bold leading-tight">
-                {t(`dashboards.reciclador.auditoria.niveles.${auditoria.nivel_desempeno.toLowerCase()}`)}
+                {t(
+                  `dashboards.reciclador.auditoria.niveles.${auditoria.nivel_desempeno.toLowerCase()}`,
+                )}
               </h3>
               <p className="truncate text-sm">{auditoria.nombre_conjunto}</p>
             </div>
@@ -121,7 +128,11 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
                       title={t("auditoriaResultado.evidenciaAmpliar")}
                       className="focus-ring relative block aspect-[4/3] w-full cursor-zoom-in"
                     >
-                      <img src={srcActual} alt={t("auditoriaResultado.evidenciaAlt")} className="h-full w-full object-contain" />
+                      <img
+                        src={srcActual}
+                        alt={t("auditoriaResultado.evidenciaAlt")}
+                        className="h-full w-full object-contain"
+                      />
                       <InsigniaAccionImagen icono={Maximize2} />
                     </button>
                     {fotos.length > 1 && (
@@ -129,10 +140,22 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
                         <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-0.5 text-xs font-semibold text-white">
                           {contador}
                         </span>
-                        <button type="button" onClick={() => cambiarFoto(-1)} aria-label={t("auditoriaResultado.fotoAnterior")} className={`${CLASE_FLECHA} left-3`}>
+                        <button
+                          type="button"
+                          onClick={() => cambiarFoto(-1)}
+                          aria-label={t("auditoriaResultado.fotoAnterior")}
+                          title={t("auditoriaResultado.fotoAnterior")}
+                          className={`${CLASE_FLECHA} left-3`}
+                        >
                           <ChevronLeft className="icon-lg" />
                         </button>
-                        <button type="button" onClick={() => cambiarFoto(1)} aria-label={t("auditoriaResultado.fotoSiguiente")} className={`${CLASE_FLECHA} right-3`}>
+                        <button
+                          type="button"
+                          onClick={() => cambiarFoto(1)}
+                          aria-label={t("auditoriaResultado.fotoSiguiente")}
+                          title={t("auditoriaResultado.fotoSiguiente")}
+                          className={`${CLASE_FLECHA} right-3`}
+                        >
                           <ChevronRight className="icon-lg" />
                         </button>
                       </>
@@ -146,9 +169,12 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
                           type="button"
                           onClick={() => setIndice(i)}
                           aria-label={t("auditoriaResultado.irAFoto", { n: i + 1 })}
+                          title={t("auditoriaResultado.irAFoto", { n: i + 1 })}
                           className="flex h-6 w-11 cursor-pointer items-center"
                         >
-                          <span className={`h-2 w-full rounded-full ${i === actual ? "bg-accent-600" : "bg-gray-200 dark:bg-night-line"}`} />
+                          <span
+                            className={`h-2 w-full rounded-full ${i === actual ? "bg-accent-600" : "bg-gray-200 dark:bg-night-line"}`}
+                          />
                         </button>
                       ))}
                     </div>
@@ -159,8 +185,12 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
 
             <div className="flex flex-col gap-4 border-t border-gray-100 p-5 dark:border-night-line md:border-l md:border-t-0">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("auditoriaResultado.temaLabel")}</p>
-                <h4 className="mt-0.5 text-lg font-bold leading-snug text-gray-900 dark:text-white">{auditoria.tema_educativo}</h4>
+                <p className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  {t("auditoriaResultado.temaLabel")}
+                </p>
+                <h4 className="mt-0.5 text-lg font-bold leading-snug text-gray-900 dark:text-white">
+                  {auditoria.tema_educativo}
+                </h4>
               </div>
 
               {auditoria.descripcion && (
@@ -181,7 +211,9 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
                       aria-expanded={textoAbierto}
                       className="focus-ring mt-1 cursor-pointer text-sm font-semibold text-accent-700 hover:underline dark:text-accent-400"
                     >
-                      {t(textoAbierto ? "auditoriaResultado.verMenos" : "auditoriaResultado.verMas")}
+                      {t(
+                        textoAbierto ? "auditoriaResultado.verMenos" : "auditoriaResultado.verMas",
+                      )}
                     </button>
                   )}
                 </div>
@@ -189,13 +221,20 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
 
               <dl className="mt-auto grid gap-2 border-t border-gray-100 pt-3 text-sm dark:border-night-line">
                 <div className="flex gap-3">
-                  <dt className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("auditoriaResultado.auditorLabel")}</dt>
-                  <dd className="font-semibold text-gray-900 dark:text-white">{auditoria.nombre_reciclador}</dd>
+                  <dt className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {t("auditoriaResultado.auditorLabel")}
+                  </dt>
+                  <dd className="font-semibold text-gray-900 dark:text-white">
+                    {auditoria.nombre_reciclador}
+                  </dd>
                 </div>
                 <div className="flex gap-3">
-                  <dt className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("auditoriaResultado.fechaLabel")}</dt>
+                  <dt className="w-16 shrink-0 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {t("auditoriaResultado.fechaLabel")}
+                  </dt>
                   <dd className="text-gray-700 dark:text-gray-300">
-                    {formatearFechaCreacion(auditoria.created_at)} ({tiempoRelativo(auditoria.created_at)})
+                    {formatearFechaCreacion(auditoria.created_at)} (
+                    {tiempoRelativo(auditoria.created_at)})
                   </dd>
                 </div>
               </dl>
@@ -205,16 +244,39 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
       )}
 
       {ampliada && srcActual && (
-        <Modal onClose={() => setAmpliada(false)} layer="stacked" wide aria-label={t("auditoriaResultado.evidenciaAlt")}>
+        <Modal
+          onClose={() => setAmpliada(false)}
+          layer="stacked"
+          wide
+          aria-label={t("auditoriaResultado.evidenciaAlt")}
+        >
           <div className="relative">
-            <img src={srcActual} alt={t("auditoriaResultado.evidenciaAlt")} className="max-h-[80vh] w-full rounded-2xl object-contain" />
+            <img
+              src={srcActual}
+              alt={t("auditoriaResultado.evidenciaAlt")}
+              className="max-h-[80vh] w-full rounded-2xl object-contain"
+            />
             {fotos.length > 1 && (
               <>
-                <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-0.5 text-xs font-semibold text-white">{contador}</span>
-                <button type="button" onClick={() => cambiarFoto(-1)} aria-label={t("auditoriaResultado.fotoAnterior")} className={`${CLASE_FLECHA} left-3`}>
+                <span className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-0.5 text-xs font-semibold text-white">
+                  {contador}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => cambiarFoto(-1)}
+                  aria-label={t("auditoriaResultado.fotoAnterior")}
+                  title={t("auditoriaResultado.fotoAnterior")}
+                  className={`${CLASE_FLECHA} left-3`}
+                >
                   <ChevronLeft className="icon-lg" />
                 </button>
-                <button type="button" onClick={() => cambiarFoto(1)} aria-label={t("auditoriaResultado.fotoSiguiente")} className={`${CLASE_FLECHA} right-3`}>
+                <button
+                  type="button"
+                  onClick={() => cambiarFoto(1)}
+                  aria-label={t("auditoriaResultado.fotoSiguiente")}
+                  title={t("auditoriaResultado.fotoSiguiente")}
+                  className={`${CLASE_FLECHA} right-3`}
+                >
                   <ChevronRight className="icon-lg" />
                 </button>
               </>
