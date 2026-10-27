@@ -10,9 +10,19 @@ import { AdminConjuntoDesempenoPage } from "@/pages/AdminConjuntoDesempenoPage";
 import { renderWithProviders } from "../helpers";
 
 const mockObtenerMisConjuntos = vi.fn();
+const mockDescargarPdf = vi.fn();
+const mockDescargarArchivo = vi.fn();
 
 vi.mock("@/lib/conjuntoPanelApi", () => ({
   obtenerMisConjuntos: (...args: unknown[]) => mockObtenerMisConjuntos(...args),
+}));
+
+vi.mock("@/lib/auditoriaConjuntoApi", () => ({
+  descargarDesempenoPdf: (...args: unknown[]) => mockDescargarPdf(...args),
+  nombreArchivoDesempeno: () => "desempeno-los-alpes.pdf",
+}));
+vi.mock("@/lib/descargarArchivo", () => ({
+  descargarArchivo: (...args: unknown[]) => mockDescargarArchivo(...args),
 }));
 
 // ¿Qué? El panel (gráfica, ranking...) tiene sus propias pruebas: aquí solo
@@ -25,7 +35,10 @@ vi.mock("@/components/desempeno/PanelDesempeno", () => ({
   ),
 }));
 
-const conjunto = (id: string, nombre: string) => ({ id_conjunto_residencial: id, nombre_conjunto: nombre });
+const conjunto = (id: string, nombre: string) => ({
+  id_conjunto_residencial: id,
+  nombre_conjunto: nombre,
+});
 
 describe("AdminConjuntoDesempenoPage", () => {
   beforeEach(() => {
@@ -42,23 +55,38 @@ describe("AdminConjuntoDesempenoPage", () => {
   });
 
   it("con varios conjuntos muestra una pestaña por conjunto, con el primero elegido", async () => {
-    mockObtenerMisConjuntos.mockResolvedValue([conjunto("c1", "Los Alpes"), conjunto("c2", "Capellanía")]);
+    mockObtenerMisConjuntos.mockResolvedValue([
+      conjunto("c1", "Los Alpes"),
+      conjunto("c2", "Capellanía"),
+    ]);
     renderWithProviders(<AdminConjuntoDesempenoPage />);
 
-    expect(await screen.findByRole("tab", { name: "Los Alpes" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: "Capellanía" })).toHaveAttribute("aria-selected", "false");
+    expect(await screen.findByRole("tab", { name: "Los Alpes" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: "Capellanía" })).toHaveAttribute(
+      "aria-selected",
+      "false",
+    );
     expect(screen.getByText("panel:c1:8")).toBeInTheDocument();
   });
 
   it("al elegir otro conjunto, el panel pide el desempeño de ese conjunto", async () => {
     const user = userEvent.setup();
-    mockObtenerMisConjuntos.mockResolvedValue([conjunto("c1", "Los Alpes"), conjunto("c2", "Capellanía")]);
+    mockObtenerMisConjuntos.mockResolvedValue([
+      conjunto("c1", "Los Alpes"),
+      conjunto("c2", "Capellanía"),
+    ]);
     renderWithProviders(<AdminConjuntoDesempenoPage />);
 
     await user.click(await screen.findByRole("tab", { name: "Capellanía" }));
 
     expect(screen.getByText("panel:c2:8")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Capellanía" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Capellanía" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 
   it("ofrece 4, 8 y 12 semanas y pasa la elegida al panel", async () => {
@@ -93,5 +121,41 @@ describe("AdminConjuntoDesempenoPage", () => {
 
     await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
     expect(screen.queryByText(/^panel:/)).not.toBeInTheDocument();
+  });
+
+  describe("descargar el desempeño en PDF (issue #558)", () => {
+    it("baja el PDF del conjunto y el período elegidos", async () => {
+      const user = userEvent.setup();
+      mockObtenerMisConjuntos.mockResolvedValue([conjunto("c1", "Los Alpes")]);
+      mockDescargarPdf.mockResolvedValue(new Blob(["%PDF"]));
+      renderWithProviders(<AdminConjuntoDesempenoPage />);
+      await screen.findByText("panel:c1:8");
+
+      await user.selectOptions(screen.getByLabelText("Período"), "4");
+      await user.click(screen.getByRole("button", { name: "Descargar PDF" }));
+
+      await waitFor(() => expect(mockDescargarPdf).toHaveBeenCalledWith("c1", 4));
+      expect(mockDescargarArchivo).toHaveBeenCalledWith(
+        expect.any(Blob),
+        "desempeno-los-alpes.pdf",
+      );
+    });
+
+    it("si el backend avisa que no hay auditorías, muestra ese mensaje y no descarga nada", async () => {
+      const user = userEvent.setup();
+      mockObtenerMisConjuntos.mockResolvedValue([conjunto("c1", "Los Alpes")]);
+      mockDescargarPdf.mockRejectedValue(
+        new Error("No hay auditorías en este período para descargar."),
+      );
+      renderWithProviders(<AdminConjuntoDesempenoPage />);
+      await screen.findByText("panel:c1:8");
+
+      await user.click(screen.getByRole("button", { name: "Descargar PDF" }));
+
+      expect(
+        await screen.findByText("No hay auditorías en este período para descargar."),
+      ).toBeInTheDocument();
+      expect(mockDescargarArchivo).not.toHaveBeenCalled();
+    });
   });
 });
