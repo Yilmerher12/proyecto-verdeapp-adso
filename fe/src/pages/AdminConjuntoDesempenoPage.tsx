@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChartColumn } from "lucide-react";
+import { ChartColumn, Download } from "lucide-react";
 import { PERIODOS_SEMANAS, SEMANAS_POR_DEFECTO } from "@/config/desempeno";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
+import { descargarDesempenoPdf, nombreArchivoDesempeno } from "@/lib/auditoriaConjuntoApi";
+import { descargarArchivo } from "@/lib/descargarArchivo";
 import { PanelDesempeno } from "@/components/desempeno/PanelDesempeno";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -28,6 +30,8 @@ export function AdminConjuntoDesempenoPage() {
   const [semanas, setSemanas] = useState<number>(SEMANAS_POR_DEFECTO);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState(false);
+  const [bajando, setBajando] = useState(false);
+  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
 
   useEffect(() => {
     obtenerMisConjuntos()
@@ -39,31 +43,71 @@ export function AdminConjuntoDesempenoPage() {
       .finally(() => setCargando(false));
   }, []);
 
+  // ¿Qué? Issue #558 — baja el PDF del conjunto y período elegidos en pantalla.
+  const descargarPdf = async () => {
+    setBajando(true);
+    setErrorDescarga(null);
+    try {
+      const archivo = await descargarDesempenoPdf(idConjunto, semanas);
+      const conjunto = conjuntos.find((c) => c.id_conjunto_residencial === idConjunto);
+      descargarArchivo(
+        archivo,
+        nombreArchivoDesempeno(conjunto?.nombre_conjunto ?? "conjunto", semanas),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setErrorDescarga(err.message || t("desempeno.descargarError"));
+    } finally {
+      setBajando(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 pt-6">
       <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("desempeno.title")}</h1>
-          <p className="mt-1 max-w-xl text-sm text-gray-500 dark:text-gray-400">{t("desempeno.subtitle")}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {t("desempeno.title")}
+          </h1>
+          <p className="mt-1 max-w-xl text-sm text-gray-500 dark:text-gray-400">
+            {t("desempeno.subtitle")}
+          </p>
         </div>
-        <div>
-          <label htmlFor="desempeno-periodo" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t("desempeno.periodoLabel")}
-          </label>
-          <select
-            id="desempeno-periodo"
-            value={semanas}
-            onChange={(e) => setSemanas(Number(e.target.value))}
-            className="block cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label
+              htmlFor="desempeno-periodo"
+              className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              {t("desempeno.periodoLabel")}
+            </label>
+            <select
+              id="desempeno-periodo"
+              value={semanas}
+              onChange={(e) => setSemanas(Number(e.target.value))}
+              className="block cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+            >
+              {PERIODOS_SEMANAS.map((n) => (
+                <option key={n} value={n}>
+                  {t("desempeno.periodoOpcion", { semanas: n })}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={descargarPdf}
+            disabled={!idConjunto || bajando}
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
           >
-            {PERIODOS_SEMANAS.map((n) => (
-              <option key={n} value={n}>
-                {t("desempeno.periodoOpcion", { semanas: n })}
-              </option>
-            ))}
-          </select>
+            <Download className="icon-sm" />
+            {bajando ? t("desempeno.descargando") : t("desempeno.descargarPdf")}
+          </button>
         </div>
       </div>
+      {errorDescarga && (
+        <Alert type="error" message={errorDescarga} onClose={() => setErrorDescarga(null)} />
+      )}
 
       {cargando ? (
         <LoadingState message={t("common.loading")} />
@@ -74,7 +118,11 @@ export function AdminConjuntoDesempenoPage() {
       ) : (
         <>
           {conjuntos.length > 1 && (
-            <div role="tablist" aria-label={t("desempeno.conjuntoTabs")} className="flex flex-wrap gap-2">
+            <div
+              role="tablist"
+              aria-label={t("desempeno.conjuntoTabs")}
+              className="flex flex-wrap gap-2"
+            >
               {conjuntos.map((c) => {
                 const activo = c.id_conjunto_residencial === idConjunto;
                 return (
