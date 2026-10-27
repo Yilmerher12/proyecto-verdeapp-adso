@@ -153,7 +153,7 @@ Para los que no se resuelven solos, la ayuda diría eso y llevaría directo al f
 
 No se abren desde Claude Code; el equipo las crea en GitHub si decide hacerlas.
 
-1. **Mostrar una ayuda escrita al elegir un motivo en "Escribir novedad"** (tamaño S a M, prioridad Could o Should). Incluye escribir y verificar los textos en español e inglés, con los valores reales (límites, bloqueos) tomados del código. Ver la sección 8.1.
+1. **Mostrar una ayuda escrita al elegir un motivo en "Escribir novedad"** (tamaño S a M, prioridad Could o Should). Incluye escribir y verificar los textos en español e inglés, con los valores reales (límites, bloqueos) tomados del código. Ver la sección 8.1. **Hecha** en la rama `feat/ayuda-escrita-soporte`: `fe/src/components/AyudaMotivo.tsx` muestra la ayuda de `login`, `notificaciones`, `cuenta`, `falla` y `recicladorAuditoria`, verificadas contra el código; los demás motivos avisan que los revisa una persona.
 2. **(Después, solo si hay datos reales)** medir cuántas consultas llegan por motivo, para decidir qué respuestas escribir primero y cuáles ya no hacen falta.
 3. **Ya existe, no es nueva:** que el Administrador de Conjunto atienda las consultas de su conjunto (RN-011 de RQF-021). Se relaciona con esta investigación porque reparte la carga de atención.
 
