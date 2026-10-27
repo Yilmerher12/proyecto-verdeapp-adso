@@ -5,6 +5,7 @@
  *           una ruta insegura ("..", "%2e%2e", otro esquema) no se pinta.
  */
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { vi, beforeEach, describe, it, expect } from "vitest";
 import { API_BASE_URL } from "@/api/axios";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
@@ -56,5 +57,39 @@ describe("AuditoriaResultadoModal — fotos de evidencia", () => {
     const fotos = await screen.findAllByRole("img", { name: "Foto de evidencia de la auditoría" });
     expect(fotos).toHaveLength(1);
     expect(fotos[0]).toHaveAttribute("src", `${API_BASE_URL}/uploads/evidencias-auditoria/foto2.jpg`);
+  });
+
+  it("con varias fotos muestra el contador y las flechas cambian de foto", async () => {
+    mockObtenerAuditoria.mockResolvedValue({
+      ...AUDITORIA,
+      ruta_evidencia_2: "/uploads/evidencias-auditoria/foto2.jpg",
+    });
+    render(<AuditoriaResultadoModal idAuditoria="a1" onClose={vi.fn()} />);
+
+    expect(await screen.findByText("1 / 2")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Foto siguiente" }));
+    expect(screen.getByText("2 / 2")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Foto de evidencia de la auditoría" })).toHaveAttribute(
+      "src",
+      `${API_BASE_URL}/uploads/evidencias-auditoria/foto2.jpg`
+    );
+  });
+
+  it("con una sola foto no muestra flechas ni contador", async () => {
+    mockObtenerAuditoria.mockResolvedValue(AUDITORIA);
+    render(<AuditoriaResultadoModal idAuditoria="a1" onClose={vi.fn()} />);
+
+    await screen.findByRole("img", { name: "Foto de evidencia de la auditoría" });
+    expect(screen.queryByRole("button", { name: "Foto siguiente" })).not.toBeInTheDocument();
+  });
+
+  it("muestra tema, observaciones, auditor y el nivel", async () => {
+    mockObtenerAuditoria.mockResolvedValue({ ...AUDITORIA, descripcion: "Todo en orden." });
+    render(<AuditoriaResultadoModal idAuditoria="a1" onClose={vi.fn()} />);
+
+    expect(await screen.findByText("Separación en la fuente")).toBeInTheDocument();
+    expect(screen.getByText("Todo en orden.")).toBeInTheDocument();
+    expect(screen.getByText("Juan")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver más" })).not.toBeInTheDocument();
   });
 });
