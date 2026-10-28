@@ -1078,6 +1078,7 @@
       "unitFormat": "{{torre}} · Apt {{apto}}",
       "baseLocality": "Base district",
       "association": "Association",
+      "fullName": "Full name",
       "firstName": "First name",
       "lastName": "Last name",
       "directoryVisibility": "Phone visibility",
@@ -1090,6 +1091,10 @@
     "managedConjuntoPlural": "Buildings you administer",
     "personalInfoSection": {
       "title": "Personal information"
+    },
+    "roleSection": {
+      "residente": "My building",
+      "reciclador": "My work area"
     },
     "photo": {
       "change": "Change profile photo",

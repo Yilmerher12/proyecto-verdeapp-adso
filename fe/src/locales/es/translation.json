@@ -1082,6 +1082,7 @@
       "unitFormat": "{{torre}} · Apto {{apto}}",
       "baseLocality": "Localidad base",
       "association": "Asociación",
+      "fullName": "Nombre completo",
       "firstName": "Nombre",
       "lastName": "Apellidos",
       "directoryVisibility": "Visibilidad del teléfono",
@@ -1094,6 +1095,10 @@
     "managedConjuntoPlural": "Conjuntos que administras",
     "personalInfoSection": {
       "title": "Información personal"
+    },
+    "roleSection": {
+      "residente": "Mi conjunto",
+      "reciclador": "Mi zona de trabajo"
     },
     "photo": {
       "change": "Cambiar foto de perfil",
