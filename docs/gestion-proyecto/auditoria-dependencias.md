@@ -251,3 +251,14 @@ El paso `pnpm audit` del CI quedó en rojo en `develop`, justo después de merge
 - **Qué se hizo:** `pnpm update zod --depth Infinity` en `fe/`. Solo cambió `fe/pnpm-lock.yaml` (`zod` 4.6.5 a 4.6.7, y las referencias de `zod-validation-error`). `package.json` no cambió y no se agregó ninguna regla de `overrides` (se quitaron a propósito en el issue #313). `eslint-plugin-react-hooks` 7.0.1 y `zod-validation-error` aceptan `zod` 4.x dentro de su rango.
 - **Versión elegida:** la 4.6.7, publicada el 2026-10-12 (11 días antes), así que cumple la espera de 7 días del `cooldown` de Dependabot. La 4.6.6 también corrige la alerta, pero la 4.6.7 es la última.
 - **Verificado:** `pnpm audit` en `fe/`: **No known vulnerabilities found**. `pnpm lint` y `pnpm build` pasan, y las 684 pruebas del frontend también.
+
+---
+
+## Actualización — Dependabot revisa dos veces al mes (2026-10-28)
+
+Dependabot abría PR cada lunes (hasta 6 por semana, uno por ecosistema) y el equipo ya no alcanzaba a revisarlos con calma. Dependabot no ofrece "cada dos semanas": solo `daily`, `weekly`, `monthly`, `quarterly`, `semiannually`, `yearly` y `cron`.
+
+- **Qué se hizo:** los 6 bloques de `.github/dependabot.yml` pasan de `interval: "weekly"` (lunes) a `interval: "cron"` con `cronjob: "0 9 1,15 * *"` y `timezone: "America/Bogota"`: los días 1 y 15 de cada mes, a las 9 a. m.
+- **Lo que no cambia:** el `cooldown` de 7 días, un PR agrupado por ecosistema, `target-branch: develop` y la exclusión de saltos de versión mayor.
+- **Límite:** las revisiones no siempre caen en lunes. Una alerta de seguridad ya conocida la sigue atrapando el CI (`pip-audit` y `pnpm audit`), y Dependabot puede abrir PR de seguridad aparte del horario.
+- **Cuándo se activa:** Dependabot solo lee el archivo desde `main`; el cambio rige cuando llegue ahí.
