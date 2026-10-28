@@ -322,7 +322,7 @@ export function AdminNovedadesPage() {
         : t("novedades.admin.destino.several", { count: item.conjuntos.length });
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pt-6">
+    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
       <div className="flex items-center justify-between gap-3 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
@@ -403,7 +403,7 @@ export function AdminNovedadesPage() {
                 >
                   <span
                     className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                      verArchivadas ? "translate-x-[18px]" : "translate-x-0.5"
+                      verArchivadas ? "translate-x-[1.125rem]" : "translate-x-0.5"
                     }`}
                   />
                 </button>
@@ -469,7 +469,7 @@ export function AdminNovedadesPage() {
                         </div>
                         <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
                         {item.conjuntos.length > 1 && (
-                          <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                          <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">
                             {item.conjuntos.map((c) => c.nombre_conjunto).join(" · ")}
                           </p>
                         )}
@@ -609,8 +609,8 @@ export function AdminNovedadesPage() {
                     ? t("novedades.admin.destino.allConjuntos")
                     : editando.conjuntos.map((c) => c.nombre_conjunto).join(", ")}
                 </p>
-                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.alcanceNoEditable")}</p>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.conjunto.notEditable")}</p>
+                <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("novedades.admin.alcanceNoEditable")}</p>
+                <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("novedades.admin.conjunto.notEditable")}</p>
               </div>
             )}
 
@@ -622,7 +622,7 @@ export function AdminNovedadesPage() {
                     <span className="font-medium text-gray-500 dark:text-gray-400">— {t("novedades.admin.conjunto.question")}</span>
                   </span>
                   {form.modoConjunto === "elegir" && form.conjuntos.length > 0 && (
-                    <span className="shrink-0 text-[11px] font-bold text-indigo-700 dark:text-indigo-300">
+                    <span className="shrink-0 text-[0.6875rem] font-bold text-indigo-700 dark:text-indigo-300">
                       {t("novedades.admin.conjunto.count", { count: form.conjuntos.length })}
                     </span>
                   )}
@@ -659,19 +659,19 @@ export function AdminNovedadesPage() {
                       emptyLabel={t("novedades.admin.conjunto.noResults")}
                     />
                     {form.conjuntos.length === 0 && (
-                      <p role="status" className="text-[11px] font-semibold text-amber-700 dark:text-amber-200">
+                      <p role="status" className="text-[0.6875rem] font-semibold text-amber-700 dark:text-amber-200">
                         {t("novedades.admin.conjunto.pickAtLeastOne")}
                       </p>
                     )}
                   </div>
                 ) : (
-                  <div role="status" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold leading-snug text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
+                  <div role="status" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[0.6875rem] font-semibold leading-snug text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
                     <TriangleAlert className="icon-sm mt-px shrink-0 icon-appear icon-shake" />
                     {t("novedades.admin.conjunto.massWarning")}
                   </div>
                 )}
 
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.conjunto.example")}</p>
+                <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("novedades.admin.conjunto.example")}</p>
               </div>
             )}
 
@@ -716,7 +716,7 @@ export function AdminNovedadesPage() {
                   {errorFechaExpiracion}
                 </p>
               )}
-              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
+              <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
             {/* "Más opciones": todo lo que no hace falta para un aviso rápido
@@ -733,7 +733,7 @@ export function AdminNovedadesPage() {
                   {t("novedades.admin.moreOptions.title")}{" "}
                   <span className="font-medium text-gray-500 dark:text-gray-400">— {t("novedades.admin.moreOptions.hint")}</span>
                 </span>
-                <span className="flex shrink-0 items-center gap-1 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                <span className="flex shrink-0 items-center gap-1 text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">
                   {masOpciones ? t("novedades.admin.moreOptions.hide") : t("novedades.admin.moreOptions.show")}
                   <ChevronDown className={`icon-sm transition-transform ${masOpciones ? "rotate-180" : ""}`} />
                 </span>

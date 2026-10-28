@@ -638,7 +638,7 @@ export function RegisterPage() {
                       className="w-full p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase tracking-widest font-mono"
                     />
                     {fieldErrors.codigo_acceso && <p id="codigo_acceso-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.codigo_acceso}</p>}
-                    <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("auth.register.fields.codigoAccesoHint")}</p>
+                    <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("auth.register.fields.codigoAccesoHint")}</p>
                   </div>
                 </div>
               )}

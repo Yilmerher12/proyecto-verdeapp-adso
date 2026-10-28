@@ -215,10 +215,10 @@ export function SoporteTecnico({ onCountChange }: SoporteTecnicoProps = {}) {
               className="rounded-xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
             >
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${CLASE_PRIORIDAD[s.prioridad]}`}>
+                <span className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-bold uppercase tracking-wide ${CLASE_PRIORIDAD[s.prioridad]}`}>
                   {t(`soporteAdmin.prioridad.${s.prioridad}`)}
                 </span>
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${CLASE_ESTADO[s.estado]}`}>
+                <span className={`rounded-full px-2 py-0.5 text-[0.6875rem] font-bold uppercase tracking-wide ${CLASE_ESTADO[s.estado]}`}>
                   {t(`soporteAdmin.estado.${s.estado}`)}
                 </span>
                 <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(s.created_at)}</span>

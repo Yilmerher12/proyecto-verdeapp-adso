@@ -136,7 +136,7 @@ export function PuntoAcopioPanel({
           <h2 className="break-words text-base font-bold text-gray-900 dark:text-white">{punto.nombre}</h2>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             <span
-              className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+              className={`rounded-full px-2.5 py-0.5 text-[0.6875rem] font-semibold ${
                 punto.activo
                   ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-300"
                   : "bg-gray-100 text-gray-600 dark:bg-night-hover dark:text-gray-300"
@@ -144,7 +144,7 @@ export function PuntoAcopioPanel({
             >
               {punto.activo ? t(`${p}.panel.active`) : t(`${p}.inactiveBadge`)}
             </span>
-            <span className="rounded-full bg-accent-50 px-2.5 py-0.5 text-[11px] font-semibold text-accent-800 dark:bg-accent-300/10 dark:text-accent-300">
+            <span className="rounded-full bg-accent-50 px-2.5 py-0.5 text-[0.6875rem] font-semibold text-accent-800 dark:bg-accent-300/10 dark:text-accent-300">
               {punto.nombre_localidad}
             </span>
           </div>
@@ -176,7 +176,7 @@ export function PuntoAcopioPanel({
       ) : (
         <>
           <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {t(`${p}.panel.dataSection`)}
             </h3>
             <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
@@ -204,7 +204,7 @@ export function PuntoAcopioPanel({
           </section>
 
           <section className="flex-1 space-y-3 p-5">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <h3 className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {t(`${p}.comments.title`)}
             </h3>
 
@@ -218,7 +218,7 @@ export function PuntoAcopioPanel({
                 key={c.id_comentario}
                 className="rounded-xl border border-gray-100 bg-white px-3 py-2.5 dark:border-night-line dark:bg-night-card"
               >
-                <div className="flex justify-between gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                <div className="flex justify-between gap-2 text-[0.6875rem] text-gray-500 dark:text-gray-400">
                   <span className="min-w-0 truncate font-semibold text-gray-600 dark:text-gray-300">
                     {c.autor ?? t(`${p}.comments.deletedAuthor`)}
                   </span>

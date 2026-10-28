@@ -91,7 +91,7 @@ export function BandejaAdminSistema({
             <Icono className="icon-sm" />
             {label}
             {cantidad > 0 && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-200">
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[0.6875rem] font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-200">
                 {cantidad}
               </span>
             )}

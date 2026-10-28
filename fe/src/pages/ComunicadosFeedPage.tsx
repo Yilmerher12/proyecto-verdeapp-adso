@@ -42,7 +42,7 @@ export function ComunicadosFeedPage() {
   }, [user]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 pt-6">
+    <div className="mx-auto max-w-3xl 2xl:max-w-6xl space-y-6 pt-6">
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.feed.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.subtitle")}</p>
