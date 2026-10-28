@@ -63,7 +63,7 @@ describe("ProfilePage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByText("Ana Martínez");
+    await screen.findByRole("heading", { name: "Ana Martínez" });
     await user.click(screen.getByRole("button", { name: "Editar" }));
 
     const inputNombre = await screen.findByLabelText("Nombre");
@@ -89,7 +89,7 @@ describe("ProfilePage", () => {
     mockGet.mockResolvedValue({ data: { ...perfil, foto_perfil_url: "/uploads/%2e%2e/api/ana.png" } });
     renderPage();
 
-    await screen.findByText("Ana Martínez");
+    await screen.findByRole("heading", { name: "Ana Martínez" });
     expect(screen.queryByRole("img", { name: "Ana Martínez" })).not.toBeInTheDocument();
   });
 
@@ -97,7 +97,7 @@ describe("ProfilePage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByText("Ana Martínez");
+    await screen.findByRole("heading", { name: "Ana Martínez" });
     await user.click(screen.getByRole("button", { name: "Editar" }));
     await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
@@ -109,13 +109,60 @@ describe("ProfilePage", () => {
     });
   });
 
+  // ¿Qué? Rediseño del perfil: foto y nombre arriba, y debajo dos bloques —
+  //       información personal y datos propios del rol.
+  describe("datos por rol", () => {
+    it("Residente: nombre completo en una sola casilla y su conjunto en el bloque del rol", async () => {
+      renderPage();
+
+      await screen.findByRole("heading", { name: "Ana Martínez" });
+      expect(screen.getByText("Nombre completo")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Mi conjunto" })).toBeInTheDocument();
+      expect(screen.getByText("Conjunto de Prueba")).toBeInTheDocument();
+    });
+
+    it("Reciclador: localidad base y asociación en el bloque de su zona de trabajo", async () => {
+      mockGet.mockResolvedValue({
+        data: { ...perfil, role_id: 3, asociacion: "INDEPENDIENTE", nombre_conjunto: null, torre: null, apto: null },
+      });
+      renderPage();
+
+      expect(await screen.findByRole("heading", { name: "Mi zona de trabajo" })).toBeInTheDocument();
+      expect(screen.getByText("Usaquén")).toBeInTheDocument();
+      expect(screen.getByText("INDEPENDIENTE")).toBeInTheDocument();
+    });
+
+    it("Admin de Conjunto: cada conjunto que administra va en su propia casilla", async () => {
+      mockGet.mockResolvedValue({
+        data: { ...perfil, role_id: 4, conjuntos_administrados: ["CONJUNTO UNO", "CONJUNTO DOS"], nombre_conjunto: null, torre: null, apto: null },
+      });
+      renderPage();
+
+      expect(await screen.findByRole("heading", { name: "Conjuntos que administras" })).toBeInTheDocument();
+      expect(screen.getByText("CONJUNTO UNO")).toBeInTheDocument();
+      expect(screen.getByText("CONJUNTO DOS")).toBeInTheDocument();
+    });
+
+    it("Admin del Sistema: no dibuja el bloque de datos del rol", async () => {
+      mockGet.mockResolvedValue({
+        data: { ...perfil, role_id: 1, nombre_conjunto: null, torre: null, apto: null, nombre_localidad: null },
+      });
+      renderPage();
+
+      await screen.findByRole("heading", { name: "Ana Martínez" });
+      expect(screen.getByRole("heading", { name: "Información personal" })).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Mi conjunto" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Conjuntos que administras" })).not.toBeInTheDocument();
+    });
+  });
+
   // ¿Qué? Mismas reglas que el registro: antes el perfil solo revisaba que
   //       el nombre no estuviera vacío.
   it("no deja guardar un nombre con números", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByText("Ana Martínez");
+    await screen.findByRole("heading", { name: "Ana Martínez" });
     await user.click(screen.getByRole("button", { name: "Editar" }));
 
     const inputNombre = await screen.findByLabelText("Nombre");

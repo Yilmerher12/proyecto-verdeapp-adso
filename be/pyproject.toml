@@ -7,19 +7,19 @@ dependencies = [
     "alembic==1.20.0",
     "bcrypt==5.0.0",
     "email-validator==2.3.0",
-    "fastapi==0.143.0",
+    "fastapi==0.149.0",
     "fpdf2==2.8.9",
     "pillow==13.0.0",
     "psycopg2-binary==2.9.13",
     "pydantic==2.14.1",
-    "pydantic-settings==2.15.0",
+    "pydantic-settings==2.16.0",
     "pygments==2.21.0",
     "pyjwt==2.15.1",
     "python-multipart==0.0.32",
     "requests==2.34.2",
-    "resend==2.49.1",
+    "resend==2.50.0",
     "slowapi==0.1.10",
-    "sqlalchemy==2.1.4",
+    "sqlalchemy==2.1.5",
     # ¿Qué? Ya nada en app/ la usa (ver app/utils/ids.py, generar_uuid4 usa
     #       solo la librería estándar) — pero sigue siendo obligatoria: la
     #       migración histórica 00e3bf999d33 (ya aplicada, no se toca) hace
@@ -28,7 +28,7 @@ dependencies = [
     #       grafo de revisiones, aunque ya estén aplicadas. Sin esta
     #       dependencia, "alembic upgrade/downgrade" falla siempre,
     #       aunque el destino sea una revisión mucho más reciente.
-    "uuid-utils==0.17.1",
+    "uuid-utils==0.18.0",
     "uvicorn[standard]==0.54.0",
 ]
 
@@ -39,7 +39,7 @@ dev = [
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
     "pytest-cov==7.1.0",
-    "ruff==0.17.0",
+    "ruff==0.17.1",
 ]
 
 # ¿Qué? Cada "uv run pytest" mide la cobertura del código de app/.

@@ -125,7 +125,7 @@ export function NotificationFeed({
           <Clock className="icon-md text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h2>
           {noLeidas > 0 && (
-            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white ${accentBg}`}>
+            <span className={`rounded-full px-1.5 py-0.5 text-[0.625rem] font-bold text-white ${accentBg}`}>
               {noLeidas}
             </span>
           )}

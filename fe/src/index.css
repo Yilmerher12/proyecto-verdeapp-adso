@@ -198,8 +198,20 @@
     font-family: theme(--font-display);
   }
 
+  /* ¿Qué? Tamaño base de la letra (1rem) que crece con el ancho de la pantalla:
+     16 px hasta 1536 px de ancho, 20 px a 1920 px y 40 px a 3840 px (un 4K).
+     ¿Para qué? En el televisor 4K de la feria el contenido quedaba en una
+     columna angosta y con letra de computador: desde 3 metros no se leía.
+     Tailwind mide casi todo en rem (texto, espacios, íconos, anchos máximos),
+     así que cambiar este valor agranda toda la app en proporción.
+     ¿Impacto? Celular, tableta y laptop (hasta 1536 px) quedan en 1rem, igual
+     que antes. Los breakpoints (sm, md, lg) NO se mueven: los media queries
+     miden rem con el tamaño del navegador, no con este. El mínimo es 1rem (no
+     16px) para respetar el tamaño de letra que el usuario eligió en su
+     navegador. Un valor en px fijo (text-[11px]) no escala: usar rem. */
   html {
     font-family: theme(--font-sans);
+    font-size: clamp(1rem, 1.0417vw, 2.5rem);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

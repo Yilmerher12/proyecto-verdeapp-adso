@@ -128,7 +128,7 @@ function PilarCard({
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 dark:bg-accent-300/10">
           <Icon className="icon-lg text-accent-300" aria-hidden="true" />
         </div>
-        <span className="text-[10px] font-bold tracking-widest text-accent-300">{numero}</span>
+        <span className="text-[0.625rem] font-bold tracking-widest text-accent-300">{numero}</span>
       </div>
       <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
       <p className="text-sm leading-relaxed text-white/60 dark:text-gray-400">

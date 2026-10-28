@@ -264,7 +264,7 @@ export function AdminPuntosAcopioPage() {
             {item.nombre}
           </button>
           {!item.activo && (
-            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-night-hover dark:text-gray-400">
+            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-gray-500 dark:bg-night-hover dark:text-gray-400">
               {t("adminPuntosAcopio.inactiveBadge")}
             </span>
           )}
@@ -290,7 +290,7 @@ export function AdminPuntosAcopioPage() {
           <p className="font-semibold text-gray-700 dark:text-gray-200">{item.telefono_contacto}</p>
         ) : (
           item.activo && (
-            <span className="mt-0.5 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[10.5px] font-semibold text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
+            <span className="mt-0.5 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[0.65625rem] font-semibold text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
               {t("adminPuntosAcopio.noPhone")}
             </span>
           )
@@ -342,7 +342,7 @@ export function AdminPuntosAcopioPage() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pt-6">
+    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
       <div className="flex items-center justify-between bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("adminPuntosAcopio.title")}</h1>
@@ -365,7 +365,7 @@ export function AdminPuntosAcopioPage() {
       {puntos.length > 0 && (
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 dark:border-night-line dark:bg-night-card">
-            <div className="relative min-w-[200px] flex-1">
+            <div className="relative min-w-[12.5rem] flex-1">
               <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 type="search"
@@ -432,11 +432,11 @@ export function AdminPuntosAcopioPage() {
                 className="flex w-full cursor-pointer items-center gap-2.5 rounded-2xl px-4 py-3.5 text-left"
               >
                 <span className="text-sm font-bold text-gray-900 dark:text-white">{grupo.nombre}</span>
-                <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-800 dark:bg-accent-300/10 dark:text-accent-300">
+                <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[0.6875rem] font-bold text-accent-800 dark:bg-accent-300/10 dark:text-accent-300">
                   {grupo.puntos.length}
                 </span>
                 {deBaja > 0 && (
-                  <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                  <span className="text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">
                     {t("adminPuntosAcopio.summary.inactive", { count: deBaja })}
                   </span>
                 )}

@@ -1,8 +1,9 @@
 # ============================================================================
 # Dependabot — actualizaciones automáticas de dependencias
 # ============================================================================
-# ¿Qué? Robot de GitHub que revisa cada semana si salió una versión nueva de
-#       alguna dependencia y, si la hay, abre un Pull Request con el cambio.
+# ¿Qué? Robot de GitHub que revisa los días 1 y 15 de cada mes (9 a. m., hora
+#       de Bogotá) si salió una versión nueva de alguna dependencia y, si la
+#       hay, abre un Pull Request con el cambio.
 #       El CI (.github/workflows/ci.yml) prueba ese PR igual que cualquier otro.
 # ¿Para qué? Issue #316 (CN-021): todas las dependencias van con versión
 #           exacta (docs/requisitos/restricciones.md), y sin este robot nadie
@@ -14,8 +15,13 @@
 #     nunca directo a main.
 #   - Se ignoran los saltos de versión MAYOR: pueden romper compatibilidad y
 #     se evalúan a mano (ver issue de actualizaciones mayores del frontend).
-#   - groups "*": UN solo PR por ecosistema cada semana, con todo junto, en
-#     vez de uno por paquete.
+#   - schedule cron "0 9 1,15 * *": Dependabot no tiene "cada dos semanas"
+#     (solo daily, weekly, monthly, etc. y cron). Antes revisaba cada lunes y
+#     era demasiado seguido para el equipo; con los días 1 y 15 son dos
+#     revisiones al mes, aunque no siempre caigan en lunes. Cambiar solo la
+#     línea cronjob (en los 6 bloques) si se quiere otra frecuencia.
+#   - groups "*": UN solo PR por ecosistema en cada revisión, con todo junto,
+#     en vez de uno por paquete.
 #   - cooldown 7 días: no propone una versión hasta que lleve una semana
 #     publicada. Si alguien roba la cuenta del autor de una librería y
 #     publica una versión maliciosa, ninguna auditoría la detecta hasta que
@@ -34,8 +40,9 @@ updates:
     directory: "/be"
     target-branch: "develop"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "cron"
+      cronjob: "0 9 1,15 * *"
+      timezone: "America/Bogota"
     cooldown:
       default-days: 7
     commit-message:
@@ -54,8 +61,9 @@ updates:
     directory: "/fe"
     target-branch: "develop"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "cron"
+      cronjob: "0 9 1,15 * *"
+      timezone: "America/Bogota"
     cooldown:
       default-days: 7
     commit-message:
@@ -80,8 +88,9 @@ updates:
     directory: "/e2e"
     target-branch: "develop"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "cron"
+      cronjob: "0 9 1,15 * *"
+      timezone: "America/Bogota"
     cooldown:
       default-days: 7
     commit-message:
@@ -100,8 +109,9 @@ updates:
     directory: "/"
     target-branch: "develop"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "cron"
+      cronjob: "0 9 1,15 * *"
+      timezone: "America/Bogota"
     cooldown:
       default-days: 7
     commit-message:
@@ -121,8 +131,9 @@ updates:
     directories: ["/be", "/fe"]
     target-branch: "develop"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "cron"
+      cronjob: "0 9 1,15 * *"
+      timezone: "America/Bogota"
     cooldown:
       default-days: 7
     commit-message:
@@ -139,8 +150,9 @@ updates:
     directory: "/"
     target-branch: "develop"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "cron"
+      cronjob: "0 9 1,15 * *"
+      timezone: "America/Bogota"
     cooldown:
       default-days: 7
     commit-message:

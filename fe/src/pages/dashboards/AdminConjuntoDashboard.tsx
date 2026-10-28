@@ -442,7 +442,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
           <Users className="icon-md text-accent-600" />
           <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.recyclersSection.title")}</h5>
           {!cargandoAutorizados && (
-            <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+            <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[0.6875rem] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
               {autorizados.length}
             </span>
           )}
@@ -553,7 +553,7 @@ function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {r.asociacion && (
-                      <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[11px] font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+                      <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[0.6875rem] font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
                         {r.asociacion}
                       </span>
                     )}
@@ -695,11 +695,11 @@ function SeccionDesvinculacion({
           >
             {t("desvinculacion.solicitarButton")}
           </button>
-          <p className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
+          <p className="mt-1.5 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-night-card p-3 rounded-xl space-y-2">
-          <p className="text-[11px] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
+          <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
           <label htmlFor={`desvinculacion-motivo-${idConjunto}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
             {t("desvinculacion.motivoLabel")}
           </label>
@@ -922,7 +922,7 @@ export function AdminConjuntoDashboard() {
   };
 
   return (
-    <div className="px-0 py-6 sm:p-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
+    <div className="px-0 py-6 sm:p-6 max-w-5xl 2xl:max-w-6xl mx-auto space-y-6 animate-fade-in">
       {/* TARJETA DE PERFIL — el maletín de fondo es solo un detalle tenue,
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}
@@ -1031,7 +1031,7 @@ export function AdminConjuntoDashboard() {
                     </p>
                   </div>
                   {c.total_apartamentos ? (
-                    <span className="shrink-0 rounded-full bg-accent-100 px-2.5 py-0.5 text-[11px] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+                    <span className="shrink-0 rounded-full bg-accent-100 px-2.5 py-0.5 text-[0.6875rem] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
                       {t("dashboards.adminConjunto.coverage.badge", {
                         pct: Math.min(100, Math.round((c.apartamentos_registrados / c.total_apartamentos) * 100)),
                       })}
@@ -1041,7 +1041,7 @@ export function AdminConjuntoDashboard() {
                     <span
                       role="img"
                       aria-label={t("dashboards.adminConjunto.avisosSection.unreadBadge", { count: avisosSinLeer })}
-                      className="flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-700 dark:bg-red-400/15 dark:text-red-300"
+                      className="flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[0.6875rem] font-bold text-red-700 dark:bg-red-400/15 dark:text-red-300"
                     >
                       <Bell className="icon-sm" aria-hidden="true" />
                       <span aria-hidden="true">{avisosSinLeer}</span>
