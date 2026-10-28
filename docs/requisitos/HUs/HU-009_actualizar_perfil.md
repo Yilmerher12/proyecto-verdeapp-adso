@@ -19,6 +19,8 @@
 | **Estado**         | Implementada                                  |
 | **RF asociados**   | RQF-008                                      |
 
+> **Organización de la página (2026-10-28)**: "Mi perfil" ya no tiene una columna izquierda más corta que la derecha. Arriba va una tarjeta con la foto, el nombre y el rol; debajo, dos bloques de la misma altura: "Información personal" (nombre completo en una sola casilla al leer, teléfono, correo y, en el Reciclador, la visibilidad del teléfono) y los datos propios del rol (conjunto y unidad del Residente; localidad base y asociación del Reciclador; un conjunto por casilla del Admin de Conjunto). Los criterios de aceptación no cambian: lo editable sigue siendo lo mismo y la edición sigue en "Información personal".
+
 ---
 
 ## Historia
