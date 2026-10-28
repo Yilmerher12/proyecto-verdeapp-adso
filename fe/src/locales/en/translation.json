@@ -868,6 +868,7 @@
       "sendSection": {
         "title": "Send notification",
         "subtitle": "Notify residents and the building administrator.",
+        "subtitleConjunto": "Notify the residents and the administrator of {{conjunto}}.",
         "noConjuntos": "The buttons turn on once you have an authorized building."
       },
       "invitations": {
@@ -878,7 +879,15 @@
       },
       "myConjuntos": {
         "title": "My authorized buildings",
+        "selectorLabel": "Choose the building you are working at",
+        "necesitaAuditoria": "Needs an audit",
         "empty": "You don't have any authorized building yet. Once an administrator invites you and you accept, it will appear here."
+      },
+      "estado": {
+        "presente": "You are at the building",
+        "ausente": "You have not arrived",
+        "shutLleno": "Waste room full",
+        "shutLibre": "Waste room free"
       },
       "notifications": {
         "title": "Received notifications",
@@ -886,8 +895,8 @@
         "emptyWithoutConjuntos": "You have no notifications. Resident notices (such as waste room full) come from the buildings where you are authorized."
       },
       "modal": {
-        "title": "Which building are you notifying?",
-        "subtitle": "Select the building you arrived at or want to notify about.",
+        "confirmTitle": "Send this notice?",
+        "confirmDescription": "You are about to notify \"{{accion}}\" to the residents and the administrator of {{conjunto}}.",
         "sending": "Sending...",
         "submit": "Send notice",
         "yaPresente": "You already checked in at this building — check out before checking in again.",
