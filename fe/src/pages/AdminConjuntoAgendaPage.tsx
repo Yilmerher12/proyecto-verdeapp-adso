@@ -343,7 +343,7 @@ export function AdminConjuntoAgendaPage() {
         key={item.id}
         className={`flex flex-col gap-3 rounded-2xl border p-4 shadow-sm ${COLORES_NOTA[indice % COLORES_NOTA.length]}`}
       >
-        <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+        <span className="text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">
           {formatearFechaCreacion(item.created_at)}
         </span>
         {urlFoto && (
@@ -406,7 +406,7 @@ export function AdminConjuntoAgendaPage() {
           </div>
         )}
         <div className="min-w-0 flex-1 basis-60">
-          <span className="text-[11px] text-gray-500 dark:text-gray-400">
+          <span className="text-[0.6875rem] text-gray-500 dark:text-gray-400">
             {t("agenda.createdOn", { fecha: formatearFechaCreacion(item.created_at) })}
             {item.archivado_en && ` · ${t("agenda.archivedOn", { fecha: formatearFechaCreacion(item.archivado_en) })}`}
           </span>
@@ -437,12 +437,12 @@ export function AdminConjuntoAgendaPage() {
     }`;
 
   const contador = (activo: boolean) =>
-    `rounded-full px-2 py-0.5 text-[11px] ${
+    `rounded-full px-2 py-0.5 text-[0.6875rem] ${
       activo ? "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400" : "bg-gray-200 text-gray-600 dark:bg-night-field dark:text-gray-300"
     }`;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pt-6">
+    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("agenda.title")}</h1>
@@ -517,7 +517,7 @@ export function AdminConjuntoAgendaPage() {
                     >
                       {c.nombre_conjunto}
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] ${
+                        className={`rounded-full px-2 py-0.5 text-[0.6875rem] ${
                           activo ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600 dark:bg-night-field dark:text-gray-300"
                         }`}
                       >

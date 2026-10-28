@@ -329,7 +329,7 @@ export function RecicladorDashboard() {
   };
 
   return (
-    <div className="px-0 py-6 sm:p-6 max-w-5xl mx-auto space-y-5">
+    <div className="px-0 py-6 sm:p-6 max-w-5xl 2xl:max-w-6xl mx-auto space-y-5">
       {/* Header — el símbolo de reciclaje de fondo es solo un detalle tenue,
           para que este panel se sienta del Reciclador, sin estorbar la
           lectura del texto encima. */}

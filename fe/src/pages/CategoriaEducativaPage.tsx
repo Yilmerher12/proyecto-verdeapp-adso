@@ -58,7 +58,7 @@ export function CategoriaEducativaPage() {
   const conGuia = temas.filter((c) => c.url_guia).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-9 pt-6 pb-12">
+    <div className="mx-auto max-w-6xl 2xl:max-w-7xl space-y-9 pt-6 pb-12">
       <Link
         to="/catalogo-educativo"
         className="link-text touch-target-h flex w-fit items-center gap-1.5 text-sm font-semibold"

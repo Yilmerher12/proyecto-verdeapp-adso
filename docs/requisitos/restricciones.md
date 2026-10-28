@@ -97,6 +97,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | `icon-xl` | 32 px | Destacado: encabezado del dashboard, estado vacío, tarjetas de rol del registro |
   | `icon-deco` | 80 px | Decorativo: marca de agua del dashboard |
 
+- Pantallas grandes (televisor 4K de la feria): el tamaño base de la letra (`html` en `fe/src/index.css`) crece con el ancho de la pantalla: 16 px hasta 1536 px, 20 px a 1920 px y 40 px a 3840 px. Por eso todo tamaño se escribe en `rem` (o con las clases de Tailwind, que ya lo son): un valor en px fijo (`text-[11px]`, `min-w-[820px]`) no crece y se ve diminuto en el televisor. Si un componente dibuja en px (por ejemplo un SVG de recharts), multiplica sus medidas por `parseFloat(getComputedStyle(document.documentElement).fontSize) / 16` (ver `GraficaDesempenoSemanal.tsx`). Los topes de ancho de página suben un paso desde `2xl` (`max-w-5xl 2xl:max-w-6xl`).
 - Animación de íconos (estándar de **3**, issue #502): solo se anima lo que se puede tocar o lo que aparece para avisar; nunca un ícono de adorno. Clases de `fe/src/index.css`, todas dentro de `prefers-reduced-motion: no-preference`:
 
   | Caso | Clase | Cuándo se mueve |

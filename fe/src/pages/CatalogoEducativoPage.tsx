@@ -54,7 +54,7 @@ export function CatalogoEducativoPage() {
   const porcentaje = contenido.length ? Math.round((totalVistas / contenido.length) * 100) : 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-10 pt-6 pb-12">
+    <div className="mx-auto max-w-6xl 2xl:max-w-7xl space-y-10 pt-6 pb-12">
       <header className="space-y-2">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t("catalogoEducativo.title")}</h1>
         <p className="max-w-2xl text-base text-gray-600 dark:text-gray-300">{t("catalogoEducativo.subtitle")}</p>

@@ -261,8 +261,24 @@ export function ProfilePage() {
   //       (entonces se muestra la inicial, igual que sin foto).
   const urlFotoPerfil = enlaceAdjuntoSeguro(perfil.foto_perfil_url);
 
+  // ¿Qué? Si el rol tiene datos propios que mostrar y cómo se llama su bloque.
+  // ¿Para qué? El Admin del Sistema no tiene ninguno: sin esto dibujaría un
+  //           bloque vacío al lado de la información personal.
+  const hayDatosDeRol =
+    (perfil.role_id === RoleId.RESIDENTE && !!(perfil.nombre_conjunto || perfil.torre || perfil.apto)) ||
+    (perfil.role_id === RoleId.RECICLADOR && !!(perfil.nombre_localidad || perfil.asociacion)) ||
+    (perfil.role_id === RoleId.ADMIN_CONJUNTO && !!perfil.conjuntos_administrados?.length);
+  const tituloDatosRol =
+    perfil.role_id === RoleId.RESIDENTE
+      ? t("profile.roleSection.residente")
+      : perfil.role_id === RoleId.RECICLADOR
+        ? t("profile.roleSection.reciclador")
+        : perfil.conjuntos_administrados?.length === 1
+          ? t("profile.managedConjuntoSingular")
+          : t("profile.managedConjuntoPlural");
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pt-6">
+    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
       {/* Header */}
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
@@ -277,116 +293,75 @@ export function ProfilePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* LEFT — Avatar + rol + datos de contexto (2/5) */}
-        <div className="lg:col-span-2 lg:self-start bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-8 flex flex-col items-center text-center">
-          {/* Avatar — foto real si existe, si no el círculo con la inicial de siempre. */}
-          <div className="relative mb-4">
-            {urlFotoPerfil ? (
-              <img
-                src={urlFotoPerfil}
-                alt={nombreCompleto}
-                className="h-20 w-20 rounded-full object-cover select-none"
-              />
-            ) : (
-              <div className="h-20 w-20 rounded-full bg-accent-700 flex items-center justify-center text-white text-3xl font-bold select-none">
-                {inicial}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => inputFotoRef.current?.click()}
-              disabled={subiendoFoto}
-              aria-label={t("profile.photo.change")}
-              title={t("profile.photo.change")}
-              className="touch-area absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-night-card"
-            >
-              {subiendoFoto ? <Spinner size="sm" tone="current" /> : <Camera className="icon-sm" />}
-            </button>
-            <input
-              ref={inputFotoRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              disabled={subiendoFoto}
-              onChange={(e) => subirFoto(e.target.files?.[0])}
+      {/* ¿Qué? Tarjeta de identidad: foto, nombre y rol, arriba y a todo el ancho.
+          ¿Para qué? Antes la foto y los datos del rol vivían en una columna
+                    izquierda más corta que la información personal de la
+                    derecha, y los dos bloques blancos quedaban de distinta altura.
+          ¿Impacto? En celular la foto y el nombre se apilan y centran. */}
+      <div className="flex flex-col items-center gap-5 rounded-2xl border border-gray-100 bg-white p-6 text-center dark:border-night-line dark:bg-night-card sm:flex-row sm:p-8 sm:text-left">
+        {/* Avatar — foto real si existe, si no el círculo con la inicial de siempre. */}
+        <div className="relative shrink-0">
+          {urlFotoPerfil ? (
+            <img
+              src={urlFotoPerfil}
+              alt={nombreCompleto}
+              className="h-20 w-20 rounded-full object-cover select-none"
             />
-          </div>
-          {subiendoFoto && (
-            <ProgressBar value={progresoFoto} label={t("profile.photo.uploading")} className="-mt-2 mb-4 max-w-[16rem]" />
+          ) : (
+            <div className="h-20 w-20 rounded-full bg-accent-700 flex items-center justify-center text-white text-3xl font-bold select-none">
+              {inicial}
+            </div>
           )}
-          {errorFoto && (
-            <p className="-mt-2 mb-4 max-w-[16rem] text-xs text-red-600 dark:text-red-300">{errorFoto}</p>
-          )}
+          <button
+            type="button"
+            onClick={() => inputFotoRef.current?.click()}
+            disabled={subiendoFoto}
+            aria-label={t("profile.photo.change")}
+            title={t("profile.photo.change")}
+            className="touch-area absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-gray-700 text-white shadow-sm transition-colors hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-night-card"
+          >
+            {subiendoFoto ? <Spinner size="sm" tone="current" /> : <Camera className="icon-sm" />}
+          </button>
+          <input
+            ref={inputFotoRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            disabled={subiendoFoto}
+            onChange={(e) => subirFoto(e.target.files?.[0])}
+          />
+        </div>
 
+        <div className="min-w-0">
           {/* Nombre completo */}
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-snug">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-snug break-words">
             {nombreCompleto}
           </h2>
 
           {/* Badge de rol — icono Lucide, sin emoji */}
-          <span className={`inline-flex items-center gap-1.5 mt-3 rounded-full ${role.badgeBg} px-3 py-1 text-xs font-semibold ${role.badgeText}`}>
+          <span className={`inline-flex items-center gap-1.5 mt-2 rounded-full ${role.badgeBg} px-3 py-1 text-xs font-semibold ${role.badgeText}`}>
             <RoleIcon className="h-3.5 w-3.5 shrink-0" />
             {roleLabel}
           </span>
 
-          {/* Datos de contexto (no editables) */}
-          <div className="w-full mt-6 space-y-2 text-left">
-            {perfil.role_id === RoleId.RESIDENTE && (
-              <>
-                {perfil.nombre_conjunto && (
-                  <InfoField
-                    label={t("profile.fields.conjunto")}
-                    value={perfil.nombre_conjunto}
-                    icon={<Building className="icon-sm" />}
-                  />
-                )}
-                {(perfil.torre || perfil.apto) && (
-                  <InfoField
-                    label={t("profile.fields.unit")}
-                    value={t("profile.fields.unitFormat", { torre: perfil.torre ?? "", apto: perfil.apto ?? "" })}
-                  />
-                )}
-              </>
-            )}
-
-            {perfil.role_id === RoleId.RECICLADOR && (
-              <>
-                {perfil.nombre_localidad && (
-                  <InfoField
-                    label={t("profile.fields.baseLocality")}
-                    value={perfil.nombre_localidad}
-                    icon={<MapIcon className="icon-sm" />}
-                  />
-                )}
-                {perfil.asociacion && (
-                  <InfoField
-                    label={t("profile.fields.association")}
-                    value={perfil.asociacion}
-                    icon={<UsersIcon className="icon-sm" />}
-                  />
-                )}
-              </>
-            )}
-
-            {perfil.role_id === RoleId.ADMIN_CONJUNTO &&
-              perfil.conjuntos_administrados &&
-              perfil.conjuntos_administrados.length > 0 && (
-                <InfoField
-                  label={
-                    perfil.conjuntos_administrados.length === 1
-                      ? t("profile.managedConjuntoSingular")
-                      : t("profile.managedConjuntoPlural")
-                  }
-                  value={perfil.conjuntos_administrados.join(", ")}
-                  icon={<Building className="icon-sm" />}
-                />
-              )}
-          </div>
+          {subiendoFoto && (
+            <ProgressBar value={progresoFoto} label={t("profile.photo.uploading")} className="mt-3 max-w-[16rem]" />
+          )}
+          {errorFoto && (
+            <p className="mt-3 max-w-[16rem] text-xs text-red-600 dark:text-red-300">{errorFoto}</p>
+          )}
         </div>
+      </div>
 
-        {/* RIGHT — Información personal editable (3/5) */}
-        <div className="lg:col-span-3 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-8">
+      {/* ¿Qué? Dos bloques de la misma altura (la cuadrícula los estira): a la
+                izquierda la información personal, a la derecha los datos propios
+                del rol. Si el rol no tiene datos propios, el bloque no se dibuja
+                y la información personal ocupa todo el ancho.
+          ¿Para qué? Cada rol tiene datos distintos (conjunto y unidad, zona de
+                    trabajo, conjuntos que administra) y así quedan agrupados. */}
+      <div className={`grid grid-cols-1 gap-6 ${hayDatosDeRol ? "lg:grid-cols-2" : ""}`}>
+        {/* Información personal editable */}
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("profile.personalInfoSection.title")}</h3>
             {canEdit && !editando && (
@@ -403,8 +378,9 @@ export function ProfilePage() {
           {!editando ? (
             /* Modo lectura */
             <div className="space-y-3">
-              <InfoField label={t("profile.fields.firstName")} value={perfil.first_name} />
-              <InfoField label={t("profile.fields.lastName")} value={perfil.last_name} />
+              {/* ¿Qué? Una sola casilla en lectura; en edición siguen siendo dos
+                        campos porque así se guardan (nombre y apellidos). */}
+              <InfoField label={t("profile.fields.fullName")} value={nombreCompleto} />
               <InfoField
                 label={t("common.phone")}
                 value={
@@ -535,7 +511,7 @@ export function ProfilePage() {
                 <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-night-line dark:bg-night-inset/60">
                   <p className="text-sm text-gray-500 dark:text-gray-400">{perfil.email}</p>
                 </div>
-                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("profile.emailNote")}</p>
+                <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("profile.emailNote")}</p>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -558,6 +534,62 @@ export function ProfilePage() {
             </div>
           )}
         </div>
+
+        {/* Datos propios del rol (no editables aquí) */}
+        {hayDatosDeRol && (
+          <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-8">
+            <h3 className="mb-6 text-sm font-bold text-gray-900 dark:text-white">{tituloDatosRol}</h3>
+            <div className="space-y-3">
+              {perfil.role_id === RoleId.RESIDENTE && (
+                <>
+                  {perfil.nombre_conjunto && (
+                    <InfoField
+                      label={t("profile.fields.conjunto")}
+                      value={perfil.nombre_conjunto}
+                      icon={<Building className="icon-sm" />}
+                    />
+                  )}
+                  {(perfil.torre || perfil.apto) && (
+                    <InfoField
+                      label={t("profile.fields.unit")}
+                      value={t("profile.fields.unitFormat", { torre: perfil.torre ?? "", apto: perfil.apto ?? "" })}
+                    />
+                  )}
+                </>
+              )}
+
+              {perfil.role_id === RoleId.RECICLADOR && (
+                <>
+                  {perfil.nombre_localidad && (
+                    <InfoField
+                      label={t("profile.fields.baseLocality")}
+                      value={perfil.nombre_localidad}
+                      icon={<MapIcon className="icon-sm" />}
+                    />
+                  )}
+                  {perfil.asociacion && (
+                    <InfoField
+                      label={t("profile.fields.association")}
+                      value={perfil.asociacion}
+                      icon={<UsersIcon className="icon-sm" />}
+                    />
+                  )}
+                </>
+              )}
+
+              {/* Un conjunto por casilla (antes iban todos separados por coma en una sola). */}
+              {perfil.role_id === RoleId.ADMIN_CONJUNTO &&
+                perfil.conjuntos_administrados?.map((nombre) => (
+                  <InfoField
+                    key={nombre}
+                    label={t("profile.fields.conjunto")}
+                    value={nombre}
+                    icon={<Building className="icon-sm" />}
+                  />
+                ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

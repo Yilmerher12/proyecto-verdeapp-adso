@@ -228,7 +228,7 @@ export function AdminConjuntoComunicadosPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pt-6">
+    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
       <div className="flex items-center justify-between bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.admin.title")}</h1>
@@ -415,7 +415,7 @@ export function AdminConjuntoComunicadosPage() {
                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
                   {editando.nombre_conjunto} · {t(`comunicados.destinatarios.${editando.destinatarios}`)}
                 </p>
-                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("comunicados.admin.destinatariosNoEditable")}</p>
+                <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("comunicados.admin.destinatariosNoEditable")}</p>
               </div>
             )}
 
@@ -510,7 +510,7 @@ export function AdminConjuntoComunicadosPage() {
                   {errorFechaExpiracion}
                 </p>
               )}
-              <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
+              <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
             <div className="flex gap-2 pt-2">
