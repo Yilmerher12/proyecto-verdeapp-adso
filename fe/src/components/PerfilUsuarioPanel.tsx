@@ -102,11 +102,11 @@ export function PerfilUsuarioPanel({
           <h2 className="break-words text-base font-bold text-gray-900 dark:text-white">{nombreCompleto}</h2>
           {perfil && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
-              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
+              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[0.6875rem] font-semibold text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
                 {t(CLAVE_ROL[perfil.role_id] ?? "roles.residente")}
               </span>
               <span
-                className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                className={`rounded-full px-2.5 py-0.5 text-[0.6875rem] font-semibold ${
                   perfil.habilitado
                     ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
                     : "bg-red-50 text-red-700 dark:bg-red-400/10 dark:text-red-300"
@@ -114,7 +114,7 @@ export function PerfilUsuarioPanel({
               >
                 {perfil.habilitado ? t("dashboards.admin.usersSection.status.active") : t("dashboards.admin.usersSection.status.inactive")}
               </span>
-              <span className="rounded-full border border-gray-200 px-2.5 py-0.5 text-[11px] font-semibold text-gray-500 dark:border-night-line dark:text-gray-400">
+              <span className="rounded-full border border-gray-200 px-2.5 py-0.5 text-[0.6875rem] font-semibold text-gray-500 dark:border-night-line dark:text-gray-400">
                 {t(`${p}.readOnly`)}
               </span>
             </div>
@@ -137,7 +137,7 @@ export function PerfilUsuarioPanel({
         <>
           {!perfil.habilitado && (
             <section className="border-b border-red-100 bg-red-50 p-5 dark:border-red-400/30 dark:bg-red-400/10">
-              <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">{t(`${p}.sections.deactivated`)}</h3>
+              <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">{t(`${p}.sections.deactivated`)}</h3>
               <dl className="grid grid-cols-[130px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm text-red-900 dark:text-red-200">
                 <Fila etiqueta={t(`${p}.fields.since`)} valor={perfil.fecha_desactivacion ? formatoFecha(perfil.fecha_desactivacion) : "—"} />
                 <Fila
@@ -149,7 +149,7 @@ export function PerfilUsuarioPanel({
           )}
 
           <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.sections.personal`)}</h3>
+            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.sections.personal`)}</h3>
             <dl className="grid grid-cols-[130px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
               <Fila etiqueta={t(`${p}.fields.fullName`)} valor={nombreCompleto} />
               <Fila etiqueta={t("common.phone")} valor={perfil.telefono && perfil.telefono !== "N/A" ? perfil.telefono : "—"} />
@@ -171,7 +171,7 @@ export function PerfilUsuarioPanel({
           </section>
 
           <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.sections.account`)}</h3>
+            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.sections.account`)}</h3>
             <dl className="grid grid-cols-[130px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
               <Fila etiqueta={t("common.email")} valor={perfil.correo_electronico} />
               <Fila etiqueta={t(`${p}.fields.emailVerified`)} valor={perfil.correo_verificado ? t(`${p}.yes`) : t(`${p}.no`)} />

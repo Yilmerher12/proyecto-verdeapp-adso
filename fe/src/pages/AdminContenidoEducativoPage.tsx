@@ -613,7 +613,7 @@ export function AdminContenidoEducativoPage() {
   const idVideoReconocido = REGEX_VIDEO_YOUTUBE.test(form.url_video || "");
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 px-0 py-6 sm:p-6">
+    <div className="mx-auto max-w-6xl 2xl:max-w-7xl space-y-5 px-0 py-6 sm:p-6">
       <div className="flex items-center gap-4 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
           <BookOpen className="icon-xl text-accent-700 dark:text-accent-400" />
@@ -658,18 +658,18 @@ export function AdminContenidoEducativoPage() {
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{contenido.length}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.modules`)}</p>
+              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.modules`)}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{categorias.length}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.categories`)}</p>
+              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.categories`)}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{sinRecomendar}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.notRecommended`)}</p>
+              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.notRecommended`)}</p>
             </div>
           </div>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400">
+          <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">
             {sinRecomendar > 0 ? t(`${p}.catalogSection.notRecommendedHint`, { count: sinRecomendar }) : t(`${p}.catalogSection.allCovered`)}
           </p>
         </div>
@@ -682,15 +682,15 @@ export function AdminContenidoEducativoPage() {
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "BUENA").length}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.good`)}</p>
+              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.good`)}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "REGULAR").length}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.regular`)}</p>
+              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.regular`)}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "DEFICIENTE").length}</p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.bad`)}</p>
+              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.bad`)}</p>
             </div>
           </div>
         </div>
@@ -764,9 +764,9 @@ export function AdminContenidoEducativoPage() {
                 >
                   <ChevronLeft className="icon-md" />
                 </button>
-                <div className="min-w-[130px] text-center">
+                <div className="min-w-[8.125rem] text-center">
                   <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{rangoSemanaUTC(semana)}</p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{t(`${p}.week.mondayToSunday`)}</p>
+                  <p className="text-[0.625rem] text-gray-500 dark:text-gray-400">{t(`${p}.week.mondayToSunday`)}</p>
                 </div>
                 <button
                   type="button"
@@ -780,7 +780,7 @@ export function AdminContenidoEducativoPage() {
                 </button>
               </div>
               <span
-                className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${
+                className={`rounded-full px-2.5 py-0.5 text-[0.6875rem] font-bold uppercase tracking-wide ${
                   semana === semanaActual
                     ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
                     : "bg-gray-100 text-gray-500 dark:bg-night-inset dark:text-gray-400"
@@ -803,7 +803,7 @@ export function AdminContenidoEducativoPage() {
                 />
               </div>
               <div className="w-full sm:w-auto">
-                <label htmlFor="cal-filtro-localidad" className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.localidad`)}</label>
+                <label htmlFor="cal-filtro-localidad" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.localidad`)}</label>
                 <select
                   id="cal-filtro-localidad"
                   value={localidadFiltro}
@@ -824,7 +824,7 @@ export function AdminContenidoEducativoPage() {
                 </select>
               </div>
               <div className="w-full sm:w-auto">
-                <label htmlFor="cal-filtro-conjunto" className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.conjunto`)}</label>
+                <label htmlFor="cal-filtro-conjunto" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.conjunto`)}</label>
                 <select
                   id="cal-filtro-conjunto"
                   value={conjuntoFiltro}
@@ -850,7 +850,7 @@ export function AdminContenidoEducativoPage() {
                 <SlidersHorizontal className="icon-sm" />
                 {t(`${p}.week.filters.more`)}
                 {filtrosExtraActivos > 0 && (
-                  <span className="rounded-full bg-accent-50 px-1.5 text-[10px] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+                  <span className="rounded-full bg-accent-50 px-1.5 text-[0.625rem] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
                     {filtrosExtraActivos}
                   </span>
                 )}
@@ -871,7 +871,7 @@ export function AdminContenidoEducativoPage() {
             {masFiltrosAbiertos && (
             <div id="cal-mas-filtros" className="flex flex-wrap items-end gap-3 px-5 pb-4">
               <div className="w-[calc(50%-0.375rem)] sm:w-auto">
-                <label htmlFor="cal-filtro-desde" className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.from`)}</label>
+                <label htmlFor="cal-filtro-desde" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.from`)}</label>
                 <input
                   id="cal-filtro-desde"
                   type="date"
@@ -884,7 +884,7 @@ export function AdminContenidoEducativoPage() {
                 />
               </div>
               <div className="w-[calc(50%-0.375rem)] sm:w-auto">
-                <label htmlFor="cal-filtro-hasta" className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.to`)}</label>
+                <label htmlFor="cal-filtro-hasta" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.to`)}</label>
                 <input
                   id="cal-filtro-hasta"
                   type="date"
@@ -897,7 +897,7 @@ export function AdminContenidoEducativoPage() {
                 />
               </div>
               <div className="w-full sm:w-auto">
-                <label htmlFor="cal-orden" className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.sort.label`)}</label>
+                <label htmlFor="cal-orden" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.sort.label`)}</label>
                 <select
                   id="cal-orden"
                   value={orden}
@@ -941,7 +941,7 @@ export function AdminContenidoEducativoPage() {
               </div>
             ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] text-left text-sm">
+              <table className="w-full min-w-[51.25rem] text-left text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50 dark:border-night-line dark:bg-night-inset/60">
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.conjunto`)}</th>
@@ -987,7 +987,7 @@ export function AdminContenidoEducativoPage() {
                               {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
                             </span>
                           </td>
-                          <td className="max-w-[220px] px-5 py-3 text-xs text-gray-600 dark:text-gray-300">
+                          <td className="max-w-[13.75rem] px-5 py-3 text-xs text-gray-600 dark:text-gray-300">
                             {a.descripcion ? <span className="line-clamp-2">{a.descripcion}</span> : <span className="italic text-gray-500 dark:text-gray-400">{t(`${p}.week.noObservations`)}</span>}
                           </td>
                           <td className="whitespace-nowrap px-5 py-3 text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(a.created_at)}</td>
@@ -1078,7 +1078,7 @@ export function AdminContenidoEducativoPage() {
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         {nRecomendados > 0 && (
-                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
                             {t(`${p}.modules.recommendedTo`, { count: nRecomendados })}
                           </span>
                         )}
@@ -1130,7 +1130,7 @@ export function AdminContenidoEducativoPage() {
           </div>
 
           <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.details`)}</h3>
+            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.details`)}</h3>
             <dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-sm">
               <dt className="text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.theme`)}</dt>
               <dd className="font-medium text-gray-900 dark:text-white">{auditoriaAbierta.tema_educativo}</dd>
@@ -1142,7 +1142,7 @@ export function AdminContenidoEducativoPage() {
           </section>
 
           <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.observations`)}</h3>
+            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.observations`)}</h3>
             {auditoriaAbierta.descripcion ? (
               <p className="border-l-2 border-gray-200 pl-3 text-sm text-gray-800 dark:border-night-line dark:text-gray-200">{auditoriaAbierta.descripcion}</p>
             ) : (
@@ -1151,7 +1151,7 @@ export function AdminContenidoEducativoPage() {
           </section>
 
           <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.evidence`)}</h3>
+            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.evidence`)}</h3>
             <div className="grid grid-cols-3 gap-2">
               {[auditoriaAbierta.ruta_evidencia, auditoriaAbierta.ruta_evidencia_2, auditoriaAbierta.ruta_evidencia_3]
                 .filter((r): r is string => Boolean(enlaceAdjuntoSeguro(r)))
@@ -1172,7 +1172,7 @@ export function AdminContenidoEducativoPage() {
           </section>
 
           <section className="p-5">
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.recommendedContent`)}</h3>
+            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.recommendedContent`)}</h3>
             {auditoriaAbierta.avisados > 0 ? (
               <>
                 <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">{t(`${p}.week.notified`, { count: auditoriaAbierta.avisados })}</p>
@@ -1261,7 +1261,7 @@ export function AdminContenidoEducativoPage() {
           </section>
 
           <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {t(`${p}.modulePanel.recommendedTo`, { count: destinatariosDelModuloAbierto.length })}
             </h3>
             {cargandoEnvios ? (
@@ -1277,14 +1277,14 @@ export function AdminContenidoEducativoPage() {
                       (() => {
                         const nivel = NIVELES_DESEMPENO[d.nivel];
                         return (
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${nivel.claseBadge}`}>
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${nivel.claseBadge}`}>
                             <nivel.icon className="icon-sm" />
                             {t(`dashboards.reciclador.auditoria.niveles.${d.nivel.toLowerCase()}`)}
                           </span>
                         );
                       })()
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:bg-purple-400/10 dark:text-purple-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-purple-700 dark:bg-purple-400/10 dark:text-purple-300">
                         <Send className="icon-sm" />
                         {t(`${p}.modulePanel.sentManually`)}
                       </span>
@@ -1297,7 +1297,7 @@ export function AdminContenidoEducativoPage() {
           </section>
 
           <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.send.title`)}</h3>
+            <h3 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.send.title`)}</h3>
             {errorEnvio && (
               <div className="mb-3">
                 <Alert type="error" message={errorEnvio} onClose={() => setErrorEnvio(null)} />
@@ -1402,7 +1402,7 @@ export function AdminContenidoEducativoPage() {
                   <label htmlFor="contenido-cuerpo" className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {t(`${p}.fields.content`)} <span className="text-red-500">*</span>
                   </label>
-                  <span id="contenido-cuerpo-contador" className="text-[11px] text-gray-500 dark:text-gray-400">
+                  <span id="contenido-cuerpo-contador" className="text-[0.6875rem] text-gray-500 dark:text-gray-400">
                     {t(`${p}.fields.charCount`, { count: form.cuerpo_texto.length, max: CONTENIDO_CUERPO_MAX_LENGTH })}
                   </span>
                 </div>
@@ -1530,8 +1530,8 @@ export function AdminContenidoEducativoPage() {
                 CategoriaEducativaPage.tsx (lo que ve el Residente), en una sola columna por ser angosta. */}
             <aside className="border-t border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-panel sm:p-8 md:border-l md:border-t-0">
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.preview.label`)}</span>
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase text-gray-500 dark:bg-night-inset dark:text-gray-400">{t(`${p}.preview.live`)}</span>
+                <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.preview.label`)}</span>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[0.625rem] font-bold uppercase text-gray-500 dark:bg-night-inset dark:text-gray-400">{t(`${p}.preview.live`)}</span>
               </div>
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">
                 {categoriaEfectiva || t(`${p}.preview.categoryPlaceholder`)}

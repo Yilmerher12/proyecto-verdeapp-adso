@@ -13,7 +13,7 @@
  *           leyenda (LeyendaNiveles) trae ícono y nombre. Sin animación, así
  *           que `prefers-reduced-motion` no tiene nada que apagar.
  */
-import { useEffect, useRef, type KeyboardEvent, type ReactElement } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
@@ -30,6 +30,23 @@ interface GraficaDesempenoSemanalProps {
 //       lado en vez de apretar las barras hasta no poder leer los rótulos.
 const ANCHO_MINIMO_SEMANA = 72;
 const ALTO_GRAFICA = 300;
+
+// ¿Qué? Cuántas veces es más grande 1rem que los 16 px de siempre (1 en laptop,
+//       2,5 en un televisor 4K; ver `html` en index.css).
+// ¿Para qué? Recharts y el SVG miden en px: sin multiplicar esas medidas por la
+//           escala, el texto crece (está en rem) pero la gráfica no, y los
+//           rótulos de las semanas se montan sobre las barras.
+// ¿Impacto? Se vuelve a leer al cambiar el tamaño de la ventana.
+function useEscalaRem(): number {
+  const leer = () => parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 || 1;
+  const [escala, setEscala] = useState(leer);
+  useEffect(() => {
+    const alCambiar = () => setEscala(leer());
+    window.addEventListener("resize", alCambiar);
+    return () => window.removeEventListener("resize", alCambiar);
+  }, []);
+  return escala;
+}
 
 // ¿Qué? Lo que recharts le pasa a un tramo de barra y a un rótulo del eje (solo lo que se usa).
 interface TramoProps {
@@ -51,6 +68,7 @@ function dibujarTramo(
   nivel: NivelDesempeno,
   campo: "bueno" | "regular" | "malo",
   onSeleccionar: (lunes: string) => void,
+  escala: number,
 ): ReactElement {
   const cantidad = payload?.[campo] ?? 0;
   if (!payload || cantidad === 0 || height <= 0) return <g />;
@@ -65,7 +83,7 @@ function dibujarTramo(
         strokeWidth={1}
         className={`${config.claseRelleno} stroke-white dark:stroke-night-card`}
       />
-      {height >= 18 && (
+      {height >= 18 * escala && (
         <text
           x={x + width / 2}
           y={y + height / 2}
@@ -82,6 +100,7 @@ function dibujarTramo(
 
 export default function GraficaDesempenoSemanal({ semanas, seleccionada, onSeleccionar }: GraficaDesempenoSemanalProps) {
   const { t, i18n } = useTranslation();
+  const e = useEscalaRem();
   // ¿Qué? En celular la gráfica se abre desplazada hasta el final.
   // ¿Para qué? Lo más reciente (la semana en curso) está a la derecha: sin esto se vería primero la semana más vieja.
   const desplazable = useRef<HTMLDivElement>(null);
@@ -108,7 +127,7 @@ export default function GraficaDesempenoSemanal({ semanas, seleccionada, onSelec
         onSeleccionar(lunes);
       }
     };
-    const clasesTexto = `text-[11px] fill-gray-700 dark:fill-gray-200 ${activa ? "font-bold" : "font-medium"}`;
+    const clasesTexto = `text-[0.6875rem] fill-gray-700 dark:fill-gray-200 ${activa ? "font-bold" : "font-medium"}`;
     return (
       <g
         transform={`translate(${x},${y})`}
@@ -121,25 +140,25 @@ export default function GraficaDesempenoSemanal({ semanas, seleccionada, onSelec
         onKeyDown={alTeclear}
       >
         <rect
-          x={-32}
-          y={2}
-          width={64}
-          height={enCurso ? 58 : 44}
-          rx={6}
+          x={-32 * e}
+          y={2 * e}
+          width={64 * e}
+          height={(enCurso ? 58 : 44) * e}
+          rx={6 * e}
           strokeWidth={2}
           className="fill-transparent stroke-transparent group-focus-visible:stroke-accent-600 dark:group-focus-visible:stroke-accent-300"
         />
         {/* ¿Qué? La semana elegida lleva una rayita encima y su rótulo en negrita.
             ¿Para qué? Marcarla sin depender del color ni atenuar las demás barras (restaba contraste a sus números). */}
-        {activa && <rect x={-20} y={4} width={40} height={3} rx={1.5} className="fill-accent-700 dark:fill-accent-300" />}
-        <text y={20} textAnchor="middle" className={clasesTexto}>
+        {activa && <rect x={-20 * e} y={4 * e} width={40 * e} height={3 * e} rx={1.5 * e} className="fill-accent-700 dark:fill-accent-300" />}
+        <text y={20 * e} textAnchor="middle" className={clasesTexto}>
           {desde}
         </text>
-        <text y={34} textAnchor="middle" className={clasesTexto}>
+        <text y={34 * e} textAnchor="middle" className={clasesTexto}>
           {t("desempeno.grafica.hastaLinea", { hasta })}
         </text>
         {enCurso && (
-          <text y={50} textAnchor="middle" className="text-[11px] font-semibold fill-accent-700 dark:fill-accent-300">
+          <text y={50 * e} textAnchor="middle" className="text-[0.6875rem] font-semibold fill-accent-700 dark:fill-accent-300">
             {t("desempeno.grafica.enCurso")}
           </text>
         )}
@@ -149,17 +168,17 @@ export default function GraficaDesempenoSemanal({ semanas, seleccionada, onSelec
 
   return (
     <div ref={desplazable} className="overflow-x-auto">
-      <div style={{ minWidth: semanas.length * ANCHO_MINIMO_SEMANA }}>
-        <ResponsiveContainer width="100%" height={ALTO_GRAFICA}>
-          <BarChart data={semanas} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} accessibilityLayer={false}>
+      <div style={{ minWidth: semanas.length * ANCHO_MINIMO_SEMANA * e }}>
+        <ResponsiveContainer width="100%" height={ALTO_GRAFICA * e}>
+          <BarChart data={semanas} margin={{ top: 8 * e, right: 8 * e, left: 0, bottom: 0 }} accessibilityLayer={false}>
             <CartesianGrid vertical={false} className="stroke-gray-200 dark:stroke-night-line" />
-            <XAxis dataKey="lunes" tickLine={false} axisLine={false} interval={0} height={64} tick={dibujarRotulo} />
+            <XAxis dataKey="lunes" tickLine={false} axisLine={false} interval={0} height={64 * e} tick={dibujarRotulo} />
             <YAxis
               allowDecimals={false}
-              width={28}
+              width={28 * e}
               tickLine={false}
               axisLine={false}
-              tick={{ className: "fill-gray-600 dark:fill-gray-300", fontSize: 11 }}
+              tick={{ className: "fill-gray-600 dark:fill-gray-300", fontSize: 11 * e }}
             />
             {CAMPOS_POR_NIVEL.map(({ nivel, campo }) => (
               <Bar
@@ -167,7 +186,7 @@ export default function GraficaDesempenoSemanal({ semanas, seleccionada, onSelec
                 dataKey={campo}
                 stackId="semana"
                 isAnimationActive={false}
-                shape={(props: TramoProps) => dibujarTramo(props, nivel, campo, onSeleccionar)}
+                shape={(props: TramoProps) => dibujarTramo(props, nivel, campo, onSeleccionar, e)}
               />
             ))}
           </BarChart>

@@ -262,7 +262,7 @@ export function ProfilePage() {
   const urlFotoPerfil = enlaceAdjuntoSeguro(perfil.foto_perfil_url);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pt-6">
+    <div className="mx-auto max-w-4xl 2xl:max-w-5xl space-y-6 pt-6">
       {/* Header */}
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
@@ -535,7 +535,7 @@ export function ProfilePage() {
                 <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-night-line dark:bg-night-inset/60">
                   <p className="text-sm text-gray-500 dark:text-gray-400">{perfil.email}</p>
                 </div>
-                <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{t("profile.emailNote")}</p>
+                <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("profile.emailNote")}</p>
               </div>
 
               <div className="flex gap-2 pt-2">

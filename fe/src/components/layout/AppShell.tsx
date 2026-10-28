@@ -387,7 +387,7 @@ export function AppShell({ children }: AppShellProps) {
                 {labelKey && !collapsed && (
                   <p
                     aria-hidden="true"
-                    className="mb-1 truncate px-3 text-[11px] font-semibold uppercase tracking-wider text-accent-100/50"
+                    className="mb-1 truncate px-3 text-[0.6875rem] font-semibold uppercase tracking-wider text-accent-100/50"
                   >
                     {t(labelKey)}
                   </p>
@@ -431,7 +431,7 @@ export function AppShell({ children }: AppShellProps) {
                           {!collapsed && (
                             <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                               <span className="min-w-0 truncate">{label}</span>
-                              <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-accent-100/70">
+                              <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[0.5625rem] font-semibold uppercase tracking-wider text-accent-100/70">
                                 {t("appShell.proximamente")}
                               </span>
                             </span>

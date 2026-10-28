@@ -151,7 +151,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const callLink = (tel: string) => `tel:+57${tel.replace(/\D/g, "")}`;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pt-6">
+    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
       {/* Encabezado */}
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -358,7 +358,7 @@ function TarjetaReciclador({
             {r.nombre} {r.apellidos}
           </p>
           {r.nombre_localidad && (
-            <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-night-inset dark:text-gray-300">
+            <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[0.6875rem] font-medium text-gray-600 dark:bg-night-inset dark:text-gray-300">
               <MapIcon className="icon-sm" />
               {r.nombre_localidad}
             </span>
@@ -367,7 +367,7 @@ function TarjetaReciclador({
       </div>
 
       {r.asociacion && (
-        <span className="mb-4 inline-flex w-fit items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 dark:bg-teal-400/10 dark:text-teal-300">
+        <span className="mb-4 inline-flex w-fit items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[0.6875rem] font-semibold text-teal-700 dark:bg-teal-400/10 dark:text-teal-300">
           {r.asociacion}
         </span>
       )}
@@ -428,7 +428,7 @@ function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 break-words font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
-          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-night-inset dark:text-gray-300">
+          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[0.6875rem] font-medium text-gray-600 dark:bg-night-inset dark:text-gray-300">
             <MapIcon className="icon-sm" />
             {p.nombre_localidad}
           </span>

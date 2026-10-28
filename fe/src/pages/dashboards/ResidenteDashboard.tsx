@@ -132,7 +132,7 @@ export function ResidenteDashboard() {
   };
 
   return (
-    <div className="px-0 py-6 sm:p-6 max-w-4xl mx-auto space-y-5">
+    <div className="px-0 py-6 sm:p-6 max-w-4xl 2xl:max-w-6xl mx-auto space-y-5">
       {/* Header — la llave de fondo es solo un detalle tenue, para que este
           panel se sienta del Residente (su casa, su unidad), sin estorbar la
           lectura del texto encima. */}
