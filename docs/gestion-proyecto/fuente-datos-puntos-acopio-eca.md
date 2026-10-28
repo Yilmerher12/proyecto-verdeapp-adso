@@ -110,3 +110,22 @@ que debe confirmarse antes de mostrarse y no es el teléfono de ninguna ECA.
 **Enlaces que dejaron de funcionar o no se pudieron leer (2026-10-21):** la
 página del dataset de Datos Abiertos (arriba) responde 404; la página de ECA de
 la UAESP responde 403 a la herramienta de lectura.
+
+---
+
+## Actualización 2026-10-28 (prototipo de la ficha)
+
+Detalle en [`prototipo-ficha-punto-acopio.md`](prototipo-ficha-punto-acopio.md).
+
+- **El inventario de la UAESP sí tiene fecha:** el PDF se imprimió el 21 de
+  diciembre de 2022 (metadatos). Son 44 páginas con ítem, nombre, tipo, área,
+  latitud, longitud, localidad y funcionamiento; **sin dirección, teléfono ni operador**.
+- **La página de ECA de la UAESP** (`.../content/centros-pesaje-estaciones-clasificacion-y-aprovechamiento-eca`)
+  responde "Acceso denegado" también en un navegador común, no solo a la herramienta de lectura.
+- **Registro de ECA de la Superservicios** (Datos Abiertos, `datos.gov.co`, código `y97c-tfd9`):
+  nacional, sin dirección ni coordenadas, con la empresa que opera cada ECA y su estado
+  (para Bogotá, 1.110 en operación y 802 inactivas, de 520 empresas, casi todas asociaciones de recicladores).
+  Sirve para saber quién opera, no para ubicar el punto.
+- **Línea de la UAESP confirmada** en el pie de `uaesp.gov.co`: 601 3580400 (extensión 2, atención a recicladores y aprovechamiento).
+- **Siguiente paso:** una petición a la UAESP (Bogotá Te Escucha) pidiendo el listado actualizado
+  con dirección, contacto y operador; hasta que responda, las 9 ECA siguen "por confirmar".
