@@ -497,7 +497,7 @@ export function AppShell({ children }: AppShellProps) {
         <header className="flex h-16 shrink-0 items-center justify-end gap-3 border-b border-gray-200 bg-white px-6 dark:border-night-line dark:bg-night-page">
           {/* ¿Qué? Campana de notificaciones: abre un menú con la lista (issue #516). Antes
                     llevaba al panel principal, donde estaban mezcladas con otros bloques. */}
-          <NotificationBell noLeidas={noLeidas} dashboardHref={roleMeta.dashboardHref} />
+          <NotificationBell noLeidas={noLeidas} dashboardHref={roleMeta.dashboardHref} rolId={roleId} />
           <LanguageSwitcher />
           <ThemeToggle />
         </header>

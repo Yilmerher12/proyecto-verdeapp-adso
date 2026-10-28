@@ -872,6 +872,7 @@
       "sendSection": {
         "title": "Enviar notificación",
         "subtitle": "Avisa a los residentes y al administrador del conjunto.",
+        "subtitleConjunto": "Avisa a los residentes y al administrador de {{conjunto}}.",
         "noConjuntos": "Los botones se activan cuando tengas un conjunto autorizado."
       },
       "invitations": {
@@ -882,7 +883,15 @@
       },
       "myConjuntos": {
         "title": "Mis conjuntos autorizados",
+        "selectorLabel": "Elige el conjunto que estás atendiendo",
+        "necesitaAuditoria": "Necesita auditoría",
         "empty": "Todavía no tienes ningún conjunto autorizado. Cuando un administrador te invite y aceptes, aparecerá aquí."
+      },
+      "estado": {
+        "presente": "Estás en el conjunto",
+        "ausente": "No has llegado",
+        "shutLleno": "SHUT lleno",
+        "shutLibre": "SHUT libre"
       },
       "notifications": {
         "title": "Notificaciones recibidas",
@@ -890,8 +899,8 @@
         "emptyWithoutConjuntos": "No tienes notificaciones. Los avisos de los residentes (como SHUT lleno) llegan de los conjuntos donde estés autorizado."
       },
       "modal": {
-        "title": "¿A qué conjunto notificas?",
-        "subtitle": "Selecciona el conjunto al que llegaste o sobre el que quieres avisar.",
+        "confirmTitle": "¿Enviar este aviso?",
+        "confirmDescription": "Vas a avisar \"{{accion}}\" a los residentes y al administrador de {{conjunto}}.",
         "sending": "Enviando...",
         "submit": "Enviar aviso",
         "yaPresente": "Ya avisaste tu llegada a este conjunto — avisa que ya te vas antes de volver a llegar.",

@@ -1,5 +1,6 @@
  
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
@@ -21,7 +22,7 @@ import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
-import type { NotificacionItem } from "@/lib/notificaciones";
+import { rutaDeNotificacion, type NotificacionItem } from "@/lib/notificaciones";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas, onCambioDesdeCampanita } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
@@ -127,6 +128,7 @@ const ACCIONES_META = [
 
 export function RecicladorDashboard() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const fullName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || t("roles.reciclador");
   const { Icon: RolIcon } = ROLE_THEME[RoleId.RECICLADOR];
@@ -155,9 +157,15 @@ export function RecicladorDashboard() {
   const [errorAccion, setErrorAccion] = useState(false);
   const [procesandoId, setProcesandoId] = useState<string | null>(null);
 
-  // Modal de selección de conjunto
+  // ¿Qué? El conjunto que el Reciclador eligió arriba (pastillas de "Mis conjuntos autorizados").
+  //       null = todavía no eligió ninguno: se usa el conjunto donde ya está presente, o el primero.
+  // ¿Para qué? Todo el panel (estado, botones de aviso, auditoría pendiente, actividad e
+  //           historial) muestra un conjunto a la vez, así los botones se apagan y se encienden
+  //           según el estado de ESE conjunto, y no según una mezcla de varios.
+  const [conjuntoElegido, setConjuntoElegido] = useState<string | null>(null);
+
+  // Confirmación corta del aviso (el conjunto ya es el elegido arriba)
   const [modalTipo, setModalTipo] = useState<string | null>(null);
-  const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<string | null>(null);
   const [enviandoNotif, setEnviandoNotif] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
   const [feedbackOk, mostrarFeedbackOk] = useAvisoTemporal<string>();
@@ -226,30 +234,43 @@ export function RecicladorDashboard() {
     }
   };
 
-  const abrirModal = (tipo: string) => {
-    if (conjuntosAutorizados.length === 0) return;
-    setErrorEnvio(null);
-    setModalTipo(tipo);
-    setConjuntoSeleccionado(
-      conjuntosAutorizados.length === 1 ? conjuntosAutorizados[0].id_conjunto_residencial : null
-    );
-  };
-
   const estadoDe = (idConjunto: string): EstadoRecicladorConjunto | undefined =>
     estadoReciclador.find((e) => e.id_conjunto_residencial === idConjunto);
 
-  // ¿Qué? Motivo (si hay alguno) por el que el tipo/conjunto elegidos AHORA
-  //       MISMO en el modal no se podrían enviar — null si sí se puede.
-  const motivoModal = conjuntoSeleccionado ? motivoBloqueo(modalTipo, estadoDe(conjuntoSeleccionado), t) : null;
+  // ¿Qué? El conjunto activo: el que eligió; si no ha elegido (o ya no está autorizado), donde ya
+  //       está presente; y si tampoco, el primero.
+  // ¿Impacto? Se calcula en cada render (no es un estado aparte), así que si el Reciclador pierde
+  //           un conjunto mientras el panel está abierto, no queda apuntando a uno que ya no existe.
+  const conjuntoActivo =
+    conjuntosAutorizados.find((c) => c.id_conjunto_residencial === conjuntoElegido) ??
+    conjuntosAutorizados.find((c) => estadoDe(c.id_conjunto_residencial)?.presente) ??
+    conjuntosAutorizados[0] ??
+    null;
+  const idConjuntoActivo = conjuntoActivo?.id_conjunto_residencial ?? null;
+  const estadoActivo = idConjuntoActivo ? estadoDe(idConjuntoActivo) : undefined;
+
+  // ¿Qué? Abre la confirmación del aviso para el conjunto activo, y lo "fija" como elegido.
+  // ¿Para qué? Si el Reciclador no había elegido ninguno (se usó el de por defecto) y el estado
+  //           cambia mientras confirma, el aviso no se manda a otro conjunto por sorpresa.
+  const abrirModal = (tipo: string) => {
+    if (!idConjuntoActivo) return;
+    setErrorEnvio(null);
+    setConjuntoElegido(idConjuntoActivo);
+    setModalTipo(tipo);
+  };
+
+  // ¿Qué? Motivo (si hay alguno) por el que el aviso que se está confirmando AHORA MISMO
+  //       no se podría enviar — null si sí se puede.
+  const motivoModal = modalTipo ? motivoBloqueo(modalTipo, estadoActivo, t) : null;
 
   const enviarNotificacion = async () => {
-    if (!modalTipo || !conjuntoSeleccionado || motivoModal) return;
+    if (!modalTipo || !idConjuntoActivo || motivoModal) return;
     setEnviandoNotif(true);
     setErrorEnvio(null);
     try {
       await axios.post(`${API_BASE_URL}/api/v1/notificaciones/enviar`, {
         tipo: modalTipo,
-        id_conjunto_residencial: conjuntoSeleccionado,
+        id_conjunto_residencial: idConjuntoActivo,
       });
       const accion = ACCIONES.find((a) => a.tipo === modalTipo);
       mostrarFeedbackOk(accion?.label ?? t("dashboards.reciclador.genericNotificationSent"));
@@ -270,6 +291,16 @@ export function RecicladorDashboard() {
       setEnviandoNotif(false);
     }
   };
+
+  // ¿Qué? Tocar el aviso de un comunicado, una novedad o una respuesta de soporte lleva a su página
+  //       (y NotificationFeed ya lo marca leído). Los avisos de SHUT o de llegada no tienen otra
+  //       página: se ven aquí mismo, así que solo se marcan leídos.
+  // ¿Para qué? Antes tocar un comunicado solo lo marcaba leído y no pasaba nada más.
+  const irALaPaginaDeLaNotificacion = (n: NotificacionItem) => {
+    const ruta = rutaDeNotificacion(n, RoleId.RECICLADOR);
+    if (ruta) navigate(ruta);
+  };
+  const tienePagina = (n: NotificacionItem) => rutaDeNotificacion(n, RoleId.RECICLADOR) !== null;
 
   const marcarLeida = async (id: string) => {
     try {
@@ -317,8 +348,23 @@ export function RecicladorDashboard() {
   //           Reciclador le saldría un instante el aviso de "no tienes conjuntos".
   const sinConjuntos = !cargando && conjuntosAutorizados.length === 0;
 
-  const conjuntosPendientesAuditoria = conjuntosAutorizados.filter((c) =>
-    necesitaAuditoria(c.id_conjunto_residencial)
+  // ¿Qué? El aviso "ya puedes auditar" solo del conjunto activo; los demás conjuntos que lo
+  //       necesitan se marcan con un puntito en su pastilla.
+  const auditoriaPendienteActivo = !!idConjuntoActivo && necesitaAuditoria(idConjuntoActivo);
+
+  // ¿Qué? Las notificaciones del conjunto activo, más las que no son de ningún conjunto.
+  // ¿Para qué? El panel muestra un conjunto a la vez. Las generales del sistema no llevan
+  //           conjunto y se siguen viendo siempre.
+  const notificacionesDelConjunto = idConjuntoActivo
+    ? notificaciones.filter((n) => !n.id_conjunto_residencial || n.id_conjunto_residencial === idConjuntoActivo)
+    : notificaciones;
+
+  // ¿Qué? El historial pide solo las auditorías del conjunto activo.
+  // ¿Impacto? useCallback: HistorialAuditorias vuelve a pedir cada vez que cambia `cargar`, así
+  //           que debe cambiar únicamente al cambiar de conjunto, no en cada render.
+  const cargarHistorial = useCallback(
+    (limit: number, offset: number) => listarMisAuditorias(limit, offset, idConjuntoActivo ?? undefined),
+    [idConjuntoActivo]
   );
 
   const alEnviarAuditoria = () => {
@@ -410,11 +456,106 @@ export function RecicladorDashboard() {
         </div>
       )}
 
+      {/* Mis conjuntos autorizados — el selector del panel.
+          ¿Qué? Los conjuntos del Reciclador como pastillas (sin desplegable): elige uno y todo
+                lo de abajo (estado, botones de aviso, auditoría, actividad e historial) pasa a
+                ser de ESE conjunto. La pastilla que necesita auditoría lleva un puntito.
+          ¿Para qué? Antes los conjuntos eran una lista de tarjetas al final y los botones
+                    de aviso se mezclaban con un modal para elegir el conjunto. Con varios
+                    conjuntos los 4 botones quedaban activos aunque no se pudieran usar.
+          ¿Impacto? Con un solo conjunto se ve una sola pastilla, ya elegida. Sin conjuntos,
+                    el mismo aviso de siempre. */}
+      <section
+        aria-labelledby="reciclador-conjuntos-titulo"
+        className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
+      >
+        <div className="mb-4 flex items-center gap-2">
+          <Building className="icon-md text-accent-600" />
+          <h2 id="reciclador-conjuntos-titulo" className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
+        </div>
+        {cargando ? (
+          <LoadingState message={t("common.loading")} />
+        ) : conjuntosAutorizados.length === 0 ? (
+          <EmptyState icon={Building} message={t("dashboards.reciclador.myConjuntos.empty")} />
+        ) : (
+          <>
+            <div role="group" aria-label={t("dashboards.reciclador.myConjuntos.selectorLabel")} className="flex flex-wrap gap-2">
+              {conjuntosAutorizados.map((c) => {
+                const activo = c.id_conjunto_residencial === idConjuntoActivo;
+                return (
+                  <button
+                    key={c.id_conjunto_residencial}
+                    type="button"
+                    aria-pressed={activo}
+                    onClick={() => setConjuntoElegido(c.id_conjunto_residencial)}
+                    className={`flex max-w-full cursor-pointer items-center gap-2 rounded-2xl border px-4 py-2 text-left text-sm font-semibold leading-snug transition-colors ${
+                      activo
+                        ? "border-accent-700 bg-accent-700 text-white dark:border-accent-300 dark:bg-accent-300 dark:text-accent-950"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-hover"
+                    }`}
+                  >
+                    {c.nombre_conjunto}
+                    {necesitaAuditoria(c.id_conjunto_residencial) && (
+                      <>
+                        <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                        <span className="sr-only">{`, ${t("dashboards.reciclador.myConjuntos.necesitaAuditoria")}`}</span>
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {conjuntoActivo && (
+              // ¿Qué? Todo apilado en una columna: nombre, dirección y, debajo, el estado.
+              // ¿Para qué? Con el nombre a un lado y las etiquetas de estado al otro, en una ventana
+              //           angosta el nombre quedaba aplastado y se leía letra por letra hacia abajo.
+              //           Apilado, el nombre usa siempre todo el ancho y las etiquetas pasan de línea.
+              <div className="mt-4 space-y-3 rounded-xl bg-gray-50 p-4 dark:bg-night-inset/60">
+                <div className="min-w-0">
+                  <p className="break-words text-sm font-semibold text-gray-900 dark:text-white">{conjuntoActivo.nombre_conjunto}</p>
+                  <p className="mt-0.5 break-words text-xs text-gray-500 dark:text-gray-400">
+                    {conjuntoActivo.direccion} · {conjuntoActivo.nombre_localidad}
+                  </p>
+                </div>
+                {/* ¿Qué? El estado de este conjunto: si ya llegó y si el SHUT está lleno.
+                    ¿Para qué? Es lo que explica por qué unos botones están encendidos y otros no. */}
+                {estadoActivo && (
+                  <div className="flex flex-wrap gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        estadoActivo.presente
+                          ? "bg-accent-100 text-accent-800 dark:bg-accent-300/15 dark:text-accent-300"
+                          : "bg-gray-200 text-gray-700 dark:bg-night-hover dark:text-gray-300"
+                      }`}
+                    >
+                      <Truck className="icon-sm" />
+                      {t(estadoActivo.presente ? "dashboards.reciclador.estado.presente" : "dashboards.reciclador.estado.ausente")}
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        estadoActivo.shut_lleno
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-200"
+                          : "bg-gray-200 text-gray-700 dark:bg-night-hover dark:text-gray-300"
+                      }`}
+                    >
+                      {estadoActivo.shut_lleno ? <TriangleAlert className="icon-sm" /> : <PackageCheck className="icon-sm" />}
+                      {t(estadoActivo.shut_lleno ? "dashboards.reciclador.estado.shutLleno" : "dashboards.reciclador.estado.shutLibre")}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
       {/* Acciones de notificación.
           ¿Qué? Issue #515 — es lo que el Reciclador más usa (avisar que llegó, SHUT
                 lleno/libre, que se va), así que va arriba, justo después de las
-                invitaciones. Antes iba debajo del aviso de auditoría pendiente, que
-                crece con cada conjunto sin auditar y empujaba los botones hacia abajo.
+                invitaciones y del selector de conjunto. Antes iba debajo del aviso de
+                auditoría pendiente, que crece con cada conjunto sin auditar y empujaba los
+                botones hacia abajo.
           ¿Para qué? El título pasa de párrafo a h2 (como los demás bloques) y el
                     mensaje "Notificación enviada" aparece aquí mismo, debajo de los
                     botones, donde el Reciclador está mirando; antes salía arriba de
@@ -425,7 +566,9 @@ export function RecicladorDashboard() {
       >
         <h2 id="reciclador-avisos-titulo" className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</h2>
         <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-          {t("dashboards.reciclador.sendSection.subtitle")}
+          {conjuntoActivo
+            ? t("dashboards.reciclador.sendSection.subtitleConjunto", { conjunto: conjuntoActivo.nombre_conjunto })
+            : t("dashboards.reciclador.sendSection.subtitle")}
         </p>
         {/* ¿Qué? Sin conjuntos autorizados los 4 botones se muestran apagados, con un
                 aviso corto encima (mismo estilo que el motivo de un botón bloqueado).
@@ -448,23 +591,20 @@ export function RecicladorDashboard() {
         {/* ¿Qué? 1 columna en celular, 2×2 en tableta y 4 en una fila en escritorio ancho.
             ¿Para qué? Con `lg:grid-cols-3` los 4 botones dejaban el cuarto solo en una segunda fila. */}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          {/* ¿Qué? Cuando el reciclador solo tiene UN conjunto asignado ya
-              sabemos, sin abrir el modal, si ese botón se puede usar ahora
-              mismo (¿ya avisó llegada? ¿el SHUT ya está en ese estado?).
-              ¿Para qué? Se ve apagado para que no parezca la acción normal,
-              pero SÍ reacciona al clic — un botón con `disabled` de HTML
-              ignora el clic por completo, así que en vez de eso mostramos
-              el motivo (ver avisoBoton, debajo de la grilla). Esto también
-              funciona en celular, donde no existe el "pasar el mouse" que
-              haría falta para ver un `title`.
-              ¿Impacto? Con 2+ conjuntos no se puede saber cuál elegirá,
-              así que el botón queda habilitado y el aviso llega al abrir
-              el modal y elegir el conjunto (motivoModal, arriba). */}
+          {/* ¿Qué? Cada botón se enciende o se apaga según el estado del conjunto ACTIVO
+              (el elegido arriba): sin haber llegado solo "Llegué" está activo; al llegar
+              se activan SHUT lleno y "Finalicé"; si el SHUT ya está lleno, ese se apaga y
+              se activa SHUT libre.
+              ¿Para qué? Se ve apagado para que no parezca la acción normal, pero SÍ
+              reacciona al clic — un botón con `disabled` de HTML ignora el clic por
+              completo, así que en vez de eso mostramos el motivo (ver avisoBoton, debajo
+              de la grilla). Esto también funciona en celular, donde no existe el "pasar
+              el mouse" que haría falta para ver un `title`.
+              ¿Impacto? Antes solo se apagaban con UN conjunto; con varios quedaban todos
+              activos porque no se sabía cuál elegiría. Ahora el conjunto se elige arriba,
+              así que siempre se sabe. */}
           {ACCIONES.map(({ tipo, label, icon: Icon, color }) => {
-            const motivo =
-              conjuntosAutorizados.length === 1
-                ? motivoBloqueo(tipo, estadoDe(conjuntosAutorizados[0].id_conjunto_residencial), t)
-                : null;
+            const motivo = motivoBloqueo(tipo, estadoActivo, t);
             return (
               <button
                 key={tipo}
@@ -524,7 +664,7 @@ export function RecicladorDashboard() {
 
       {/* Aviso de auditoría pendiente (RQF-009) — solo aparece cuando aplica,
           no ocupa espacio permanente en la barra lateral. */}
-      {!cargando && conjuntosPendientesAuditoria.length > 0 && (
+      {!cargando && conjuntoActivo && auditoriaPendienteActivo && (
         <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-400/30 dark:bg-teal-400/10">
           <div className="mb-3 flex items-center gap-2">
             <ClipboardList className="icon-md text-teal-700 dark:text-teal-300" />
@@ -532,54 +672,21 @@ export function RecicladorDashboard() {
               {t("dashboards.reciclador.auditoria.bannerTitle")}
             </h2>
           </div>
-          <div className="space-y-2">
-            {conjuntosPendientesAuditoria.map((c) => (
-              <div
-                key={c.id_conjunto_residencial}
-                className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-night-card sm:flex-row sm:items-center sm:justify-between"
-              >
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {t("dashboards.reciclador.auditoria.bannerSubtitle", { conjunto: c.nombre_conjunto })}
-                </p>
-                <button
-                  onClick={() => setConjuntoParaAuditar(c.id_conjunto_residencial)}
-                  className="touch-target-h shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                >
-                  {t("dashboards.reciclador.auditoria.bannerAction")}
-                </button>
-              </div>
-            ))}
+          <div className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-night-card sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {t("dashboards.reciclador.auditoria.bannerSubtitle", { conjunto: conjuntoActivo.nombre_conjunto })}
+            </p>
+            <button
+              onClick={() => setConjuntoParaAuditar(conjuntoActivo.id_conjunto_residencial)}
+              className="touch-target-h shrink-0 cursor-pointer rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+            >
+              {t("dashboards.reciclador.auditoria.bannerAction")}
+            </button>
           </div>
         </div>
       )}
 
-      {/* Mis conjuntos autorizados */}
-      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <Building className="icon-md text-accent-600" />
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
-        </div>
-        {cargando ? (
-          <LoadingState message={t("common.loading")} />
-        ) : conjuntosAutorizados.length === 0 ? (
-          <EmptyState icon={Building} message={t("dashboards.reciclador.myConjuntos.empty")} />
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {conjuntosAutorizados.map((c) => (
-              <div
-                key={c.id_conjunto_residencial}
-                className="rounded-xl bg-gray-50 p-4 dark:bg-night-inset/60"
-              >
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{c.nombre_conjunto}</p>
-                <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{c.direccion}</p>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{c.nombre_localidad}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) */}
+      {/* Actividad reciente (notificaciones recibidas — ej. residentes reportando SHUT lleno) del conjunto activo */}
       {cargando ? (
         <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
           <LoadingState message={t("common.loading")} />
@@ -587,13 +694,15 @@ export function RecicladorDashboard() {
       ) : (
         <NotificationFeed
           title={t("dashboards.reciclador.notifications.title")}
-          notifications={notificaciones}
+          notifications={notificacionesDelConjunto}
           emptyMessage={t(sinConjuntos ? "dashboards.reciclador.notifications.emptyWithoutConjuntos" : "dashboards.reciclador.notifications.empty")}
           accentBg="bg-amber-700"
           accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-400/10 dark:hover:bg-amber-400/15"
           onMarkRead={marcarLeida}
           onMarkAllRead={marcarTodasLeidas}
           onClearRead={limpiarLeidas}
+          onItemClick={irALaPaginaDeLaNotificacion}
+          esAccionable={tienePagina}
         />
       )}
 
@@ -604,47 +713,41 @@ export function RecicladorDashboard() {
           ¿Para qué? Es el mismo componente del Residente (HistorialAuditorias), con
                     otra fuente de datos. El aviso de "auditoría pendiente" ya no sale
                     de esta lista sino de ultimasAuditorias (una fecha por conjunto). */}
-      <HistorialAuditorias cargar={listarMisAuditorias} mostrarSiempreElConjunto recargar={versionHistorial} />
+      {/* ¿Qué? Con `key` el historial se vuelve a montar al cambiar de conjunto: arranca otra vez en la
+              primera página, en vez de quedarse en la página 3 del conjunto anterior.
+          ¿Impacto? Se muestra cuando ya terminó la carga, para no pedir primero "todas" y después
+                    las de un conjunto (dos peticiones y un parpadeo). */}
+      {!cargando && (
+        <HistorialAuditorias
+          key={idConjuntoActivo ?? "todos"}
+          cargar={cargarHistorial}
+          mostrarSiempreElConjunto
+          recargar={versionHistorial}
+        />
+      )}
 
-      {/* Modal: seleccionar conjunto para enviar notificación */}
-      {/* ¿Qué? Antes era un <div> armado a mano — no cerraba con Escape, no
-          movía el foco al abrirse ni lo devolvía al cerrar, y su botón de
-          cerrar no tenía aria-label (un lector de pantalla solo anunciaba
-          "botón", sin decir qué hacía).
-          ¿Impacto? Al reusar el <Modal> compartido, este diálogo se
-          comporta exactamente igual que el resto de la app (login, registro,
-          confirmación de logout) en vez de ser el único caso especial. */}
+      {/* Confirmación corta del aviso.
+          ¿Qué? Antes era un modal para ELEGIR el conjunto; ahora el conjunto ya está elegido arriba
+                y esto solo confirma "¿avisar X a los residentes de Y?", para no mandar un aviso a
+                todo un conjunto por un toque accidental.
+          ¿Impacto? Sigue siendo el <Modal> compartido (cierra con Escape, mueve el foco) y el motivo
+                    exacto del rechazo del backend se sigue mostrando dentro (issue #414). */}
       {modalTipo && (
-        <Modal onClose={() => setModalTipo(null)} aria-label={t("dashboards.reciclador.modal.title")}>
+        <Modal onClose={() => setModalTipo(null)} aria-label={t("dashboards.reciclador.modal.confirmTitle")}>
           <div className="p-6">
-            <h3 className="mb-4 text-base font-bold text-gray-900 dark:text-white">
-              {t("dashboards.reciclador.modal.title")}
+            <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">
+              {t("dashboards.reciclador.modal.confirmTitle")}
             </h3>
 
-            <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-              {t("dashboards.reciclador.modal.subtitle")}
+            <p className="mb-5 text-sm text-gray-600 dark:text-gray-300">
+              {t("dashboards.reciclador.modal.confirmDescription", {
+                accion: ACCIONES.find((a) => a.tipo === modalTipo)?.label ?? "",
+                conjunto: conjuntoActivo?.nombre_conjunto ?? "",
+              })}
             </p>
 
-            <div className="space-y-2 mb-5">
-              {conjuntosAutorizados.map((c) => (
-                <button
-                  key={c.id_conjunto_residencial}
-                  onClick={() => setConjuntoSeleccionado(c.id_conjunto_residencial)}
-                  className={`w-full cursor-pointer rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
-                    conjuntoSeleccionado === c.id_conjunto_residencial
-                      ? "border-accent-500 bg-accent-50 dark:bg-accent-300/10"
-                      : "border-gray-200 hover:border-accent-300 dark:border-night-line dark:hover:border-accent-700"
-                  }`}
-                >
-                  <p className="font-semibold text-gray-900 dark:text-white">{c.nombre_conjunto}</p>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{c.nombre_localidad}</p>
-                </button>
-              ))}
-            </div>
-
-            {/* ¿Qué? Si el conjunto/tipo elegidos no se pueden enviar ahora
-                mismo (por presencia o por estado del SHUT), se lo explicamos
-                aquí ANTES de que intente enviar, en vez de dejarlo fallar.
+            {/* ¿Qué? Si el aviso ya no se puede enviar (el estado cambió mientras confirmaba), se
+                explica aquí ANTES de intentar enviar, en vez de dejarlo fallar.
                 ¿Para qué? Evita un clic para nada y un error genérico.
                 ¿Impacto? Solo lectura — no cambia el flujo de envío en sí. */}
             {motivoModal && (
@@ -668,7 +771,7 @@ export function RecicladorDashboard() {
               </button>
               <button
                 onClick={enviarNotificacion}
-                disabled={!conjuntoSeleccionado || enviandoNotif || !!motivoModal}
+                disabled={!idConjuntoActivo || enviandoNotif || !!motivoModal}
                 className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {enviandoNotif ? t("dashboards.reciclador.modal.sending") : t("dashboards.reciclador.modal.submit")}

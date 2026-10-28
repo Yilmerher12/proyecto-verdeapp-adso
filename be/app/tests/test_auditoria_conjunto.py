@@ -303,6 +303,49 @@ class TestListarMisAuditorias:
         assert response.status_code == 200
         assert response.json() == {"items": [], "total": 0}
 
+    # ¿Qué? El panel del Reciclador muestra un conjunto a la vez, así que su historial se
+    #       pide con `id_conjunto`. Sin el parámetro devuelve todas (como siempre).
+    def test_id_conjunto_filtra_solo_las_de_ese_conjunto(
+        self,
+        client: TestClient,
+        db: Session,
+        reciclador_auth_headers,
+        reciclador_autorizado,
+        conjunto_verificado,
+        conjunto_verificado_sin_admin,
+    ):
+        lunes = _lunes_actual()
+        _sembrar_auditoria(db, reciclador_autorizado, conjunto_verificado.id_conjunto_residencial, "BUENA", "Reciclaje de vidrio", _momento_bogota(lunes, -2))
+        _sembrar_auditoria(db, reciclador_autorizado, conjunto_verificado_sin_admin.id_conjunto_residencial, "REGULAR", "Residuos orgánicos", _momento_bogota(lunes, -1))
+
+        todas = client.get("/api/v1/auditorias-conjunto/mias", headers=reciclador_auth_headers).json()
+        assert todas["total"] == 2
+
+        del_primero = client.get(
+            "/api/v1/auditorias-conjunto/mias",
+            headers=reciclador_auth_headers,
+            params={"id_conjunto": str(conjunto_verificado.id_conjunto_residencial)},
+        ).json()
+        assert del_primero["total"] == 1
+        assert [a["id_conjunto_residencial"] for a in del_primero["items"]] == [str(conjunto_verificado.id_conjunto_residencial)]
+
+    def test_id_conjunto_sin_auditorias_devuelve_lista_vacia(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado_sin_admin
+    ):
+        response = client.get(
+            "/api/v1/auditorias-conjunto/mias",
+            headers=reciclador_auth_headers,
+            params={"id_conjunto": str(conjunto_verificado_sin_admin.id_conjunto_residencial)},
+        )
+        assert response.status_code == 200
+        assert response.json() == {"items": [], "total": 0}
+
+    def test_id_conjunto_con_formato_invalido_devuelve_422(self, client: TestClient, reciclador_auth_headers):
+        response = client.get(
+            "/api/v1/auditorias-conjunto/mias", headers=reciclador_auth_headers, params={"id_conjunto": "no-es-un-uuid"}
+        )
+        assert response.status_code == 422
+
 
 class TestNotificacionAlPublicar:
     """¿Por qué? Al crear una auditoría debe avisarse a residentes y Admin

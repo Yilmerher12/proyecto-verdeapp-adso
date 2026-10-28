@@ -11,6 +11,7 @@ import { Route, Routes, useLocation } from "react-router-dom";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { onCambioDesdeCampanita, onCualquierCambioDeNotificaciones, onNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { rutaDeContenidoRecomendado } from "@/lib/contenidoRecomendado";
+import { RoleId } from "@/types/auth";
 import { renderWithProviders } from "../helpers";
 
 const mockGet = vi.fn();
@@ -51,12 +52,15 @@ function Destino() {
   return <p>destino:{pathname}</p>;
 }
 
-function renderBell(noLeidas = 2) {
+function renderBell(noLeidas = 2, rolId?: RoleId) {
   return renderWithProviders(
     <Routes>
-      <Route path="/" element={<NotificationBell noLeidas={noLeidas} dashboardHref="/dashboard/residente" />} />
+      <Route path="/" element={<NotificationBell noLeidas={noLeidas} dashboardHref="/dashboard/residente" rolId={rolId} />} />
       <Route path="/dashboard/residente" element={<Destino />} />
       <Route path="/catalogo-educativo/:categoria" element={<Destino />} />
+      <Route path="/comunicados" element={<Destino />} />
+      <Route path="/novedades" element={<Destino />} />
+      <Route path="/admin/novedades" element={<Destino />} />
     </Routes>,
   );
 }
@@ -209,6 +213,43 @@ describe("NotificationBell", () => {
 
     expect(mockPost).toHaveBeenCalledWith("/api/v1/notificaciones/c1/leer", {});
     expect(await screen.findByText("destino:/catalogo-educativo/Vidrio")).toBeInTheDocument();
+  });
+
+  // ¿Qué? Tocar el aviso de un comunicado, una novedad o una respuesta de soporte lleva a su página
+  //       y la marca leída (antes solo la marcaba leída y no pasaba nada más).
+  it("tocar un comunicado lo marca como leído y lleva a la página de Comunicados", async () => {
+    responderCon([aviso("co1", { tipo: "COMUNICADO_NUEVO", mensaje: "Nuevo comunicado: asamblea el jueves." })]);
+    renderBell(1, RoleId.RESIDENTE);
+    const user = await abrirMenu();
+
+    await user.click(await screen.findByText("Nuevo comunicado: asamblea el jueves."));
+
+    expect(mockPost).toHaveBeenCalledWith("/api/v1/notificaciones/co1/leer", {});
+    expect(await screen.findByText("destino:/comunicados")).toBeInTheDocument();
+  });
+
+  it("tocar una novedad lleva a Soporte técnico y, para el Admin del Sistema, a su página de novedades", async () => {
+    responderCon([aviso("n1", { tipo: "NOVEDAD_NUEVA", mensaje: "Hay una novedad de la plataforma." })]);
+    const { unmount } = renderBell(1, RoleId.RESIDENTE);
+    let user = await abrirMenu();
+    await user.click(await screen.findByText("Hay una novedad de la plataforma."));
+    expect(await screen.findByText("destino:/novedades")).toBeInTheDocument();
+    unmount();
+
+    responderCon([aviso("n2", { tipo: "NOVEDAD_NUEVA", mensaje: "Otra novedad de la plataforma." })]);
+    renderBell(1, RoleId.ADMIN_SISTEMA);
+    user = await abrirMenu();
+    await user.click(await screen.findByText("Otra novedad de la plataforma."));
+    expect(await screen.findByText("destino:/admin/novedades")).toBeInTheDocument();
+  });
+
+  it("un aviso de SHUT ya leído sigue sin ser un botón aunque haya páginas para otros tipos", async () => {
+    responderCon([aviso("s1", { tipo: "SHUT_LLENO", mensaje: "El SHUT está lleno.", leida: true })]);
+    renderBell(0, RoleId.RECICLADOR);
+    await abrirMenu();
+    await screen.findByText("El SHUT está lleno.");
+
+    expect(screen.queryByRole("button", { name: /El SHUT está lleno/ })).not.toBeInTheDocument();
   });
 
   it("una notificación ya leída que no tiene acción no es un botón", async () => {
