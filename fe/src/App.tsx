@@ -36,6 +36,7 @@ import { AdminDashboard } from "@/pages/dashboards/AdminDashboard";
 import { AdminConjuntoDashboard } from "@/pages/dashboards/AdminConjuntoDashboard";
 import { ChangePasswordPage } from "@/pages/ChangePasswordPage";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { PrototipoFichaPuntoAcopioPage } from "@/pages/PrototipoFichaPuntoAcopioPage";
 import { DirectorioPage } from "@/pages/DirectorioPage";
 import { CatalogoEducativoPage } from "@/pages/CatalogoEducativoPage";
 import { CategoriaEducativaPage } from "@/pages/CategoriaEducativaPage";
@@ -168,7 +169,24 @@ function App() {
                 </ProtectedRoute>
               }
             />
-  
+
+            {/* ¿Qué? Prototipo de la ficha del punto de acopio (docs/gestion-proyecto/prototipo-ficha-punto-acopio.md).
+                ¿Para qué? Verlo funcionando antes de construir la ficha real.
+                ¿Impacto? Solo se registra en desarrollo (import.meta.env.DEV): en el build de
+                          producción la ruta no existe. Si es false, Routes lo ignora. */}
+            {import.meta.env.DEV && (
+              <Route
+                path="/prototipo/ficha-punto-acopio"
+                element={
+                  <ProtectedRoute>
+                    <AppShell>
+                      <PrototipoFichaPuntoAcopioPage />
+                    </AppShell>
+                  </ProtectedRoute>
+                }
+              />
+            )}
+
             {/* Directorio — Residente (tabs: recicladores + puntos de acopio) */}
             <Route
               path="/directorio"
