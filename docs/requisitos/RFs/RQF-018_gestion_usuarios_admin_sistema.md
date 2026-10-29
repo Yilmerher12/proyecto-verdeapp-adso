@@ -49,8 +49,8 @@ Cumple además 2 criterios técnicos pedidos explícitamente por el profesor: el
 4. Puede filtrar por conjunto (buscador de conjunto) y encender el botón "Inactivos" para ver solo las cuentas desactivadas. El filtro por localidad se quitó de la pantalla.
 5. Puede hacer clic en el encabezado de cualquier columna para ordenar por ella — un clic ordena ascendente, un segundo clic invierte a descendente.
 6. Los resultados llegan paginados (8 por página).
-7. Puede hacer clic en una fila para abrir el perfil de solo lectura de esa persona (panel lateral).
-8. Puede activar o desactivar la cuenta de cualquier usuario (excepto la propia), con una confirmación previa. Al desactivar puede escribir un motivo opcional; se guardan el motivo y la fecha, y se ven en la tabla y en el perfil. Al reactivar se borran.
+7. Cada fila termina con un kebab (tres puntos) que abre un menú de acciones. "Ver información" despliega la propia fila con la información de solo lectura de esa persona (una fila a la vez, sin panel lateral).
+8. Desde el mismo menú, en rojo y separado, puede desactivar (o activar) la cuenta de cualquier usuario (excepto la propia), con una confirmación previa. Al desactivar puede escribir un motivo opcional; se guardan el motivo y la fecha, y se ven en la tabla y en la información de la fila. Al reactivar se borran.
 
 ---
 

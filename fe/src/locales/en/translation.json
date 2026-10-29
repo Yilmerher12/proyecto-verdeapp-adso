@@ -665,6 +665,10 @@
         "inactiveButton": "Inactive {{count}}",
         "noReason": "No reason recorded",
         "noInactive": "There are no inactive accounts in this tab.",
+        "menu": {
+          "actionsFor": "Actions for {{nombre}}",
+          "viewInfo": "View information"
+        },
         "tabs": {
           "residentes": "Residents",
           "recicladores": "Recyclers",
@@ -697,9 +701,7 @@
         }
       },
       "profilePanel": {
-        "ariaLabel": "Profile of {{nombre}}",
-        "openProfile": "View profile of {{nombre}}",
-        "readOnly": "Read only",
+        "ariaLabel": "Information about {{nombre}}",
         "sections": {
           "personal": "Personal details",
           "account": "Account",
@@ -723,10 +725,7 @@
         "visible": "Visible",
         "hidden": "Hidden",
         "noLockout": "Not locked",
-        "lockedUntil": "Locked until {{hora}}",
-        "disableAccount": "Deactivate account",
-        "enableAccount": "Reactivate account",
-        "editSoon": "Edit details · coming soon"
+        "lockedUntil": "Locked until {{hora}}"
       },
       "residentsTable": {
         "headers": {
