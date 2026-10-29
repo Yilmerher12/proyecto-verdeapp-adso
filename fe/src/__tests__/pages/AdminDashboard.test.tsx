@@ -235,7 +235,8 @@ describe("AdminDashboard", () => {
     renderPage();
     await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
 
-    await user.click(screen.getByRole("button", { name: /Desactivar/i }));
+    await user.click(screen.getByRole("button", { name: "Acciones de Juan Pérez" }));
+    await user.click(screen.getByRole("menuitem", { name: "Desactivar" }));
     expect(screen.getByText("¿Desactivar esta cuenta?")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Sí, continuar" }));
@@ -249,7 +250,7 @@ describe("AdminDashboard", () => {
     await waitFor(() => expect(screen.getByText("Inactivo")).toBeInTheDocument());
   });
 
-  it("no muestra el botón de desactivar en la propia cuenta del Admin del Sistema", async () => {
+  it("en la propia cuenta del Admin del Sistema el menú solo ofrece 'Ver información', no Desactivar", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("/admin/vista-residentes")) {
         return Promise.resolve({
@@ -261,9 +262,13 @@ describe("AdminDashboard", () => {
       }
       return Promise.resolve({ data: [] });
     });
+    const user = userEvent.setup();
     renderPage();
     await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
-    expect(screen.queryByRole("button", { name: /Desactivar/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Acciones de Juan Pérez" }));
+    expect(screen.getByRole("menuitem", { name: "Ver información" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Desactivar/i })).not.toBeInTheDocument();
   });
 
   it("busca en tiempo real (con debounce) y se lo manda al backend como parámetro", async () => {
@@ -800,7 +805,8 @@ describe("AdminDashboard", () => {
       renderPage();
       await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
 
-      await user.click(screen.getByRole("button", { name: /^Desactivar$/ }));
+      await user.click(screen.getByRole("button", { name: "Acciones de Juan Pérez" }));
+      await user.click(screen.getByRole("menuitem", { name: "Desactivar" }));
       await user.type(screen.getByLabelText(/Motivo/), "Se mudó de conjunto");
       await user.click(screen.getByRole("button", { name: "Sí, continuar" }));
 
@@ -818,78 +824,106 @@ describe("AdminDashboard", () => {
       renderPage();
       await waitFor(() => expect(screen.getByText("Laura Gómez")).toBeInTheDocument());
 
-      await user.click(screen.getByRole("button", { name: /^Activar$/ }));
+      await user.click(screen.getByRole("button", { name: "Acciones de Laura Gómez" }));
+      await user.click(screen.getByRole("menuitem", { name: "Activar" }));
       expect(screen.getByText("¿Activar esta cuenta?")).toBeInTheDocument();
       expect(screen.queryByLabelText(/Motivo/)).not.toBeInTheDocument();
     });
 
-    it("un clic en el nombre abre el perfil de solo lectura con los datos de esa persona", async () => {
+    // ¿Qué? Abre el kebab de una fila y elige una de sus opciones del menú.
+    async function elegirOpcion(user: ReturnType<typeof userEvent.setup>, nombre: string, opcion: string) {
+      await user.click(screen.getByRole("button", { name: `Acciones de ${nombre}` }));
+      await user.click(screen.getByRole("menuitem", { name: opcion }));
+    }
+
+    it("'Ver información' despliega la fila con los datos de esa persona, sin panel lateral, y elegirla de nuevo la pliega", async () => {
       mockConInactivos({ items: [residente] });
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
 
-      await user.click(screen.getByRole("button", { name: "Ver perfil de Juan Pérez" }));
+      await elegirOpcion(user, "Juan Pérez", "Ver información");
 
-      const panel = await screen.findByRole("dialog", { name: "Perfil de Juan Pérez" });
-      expect(panel).toBeInTheDocument();
+      const detalle = await screen.findByRole("region", { name: "Información de Juan Pérez" });
       expect(mockGet).toHaveBeenCalledWith(expect.stringContaining(`/admin/usuarios/${encodeURIComponent(residente.Correo)}`));
-      expect(await screen.findByText("Solo lectura")).toBeInTheDocument();
-      expect(await within(panel).findByText("Conjunto Los Alpes")).toBeInTheDocument();
-      expect(within(panel).getByText("A · 101")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /Editar datos/ })).toBeDisabled();
+      expect(await within(detalle).findByText("Conjunto Los Alpes")).toBeInTheDocument();
+      expect(within(detalle).getByText("A · 101")).toBeInTheDocument();
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+      await elegirOpcion(user, "Juan Pérez", "Ver información");
+      expect(screen.queryByRole("region", { name: /Información de/ })).not.toBeInTheDocument();
     });
 
-    it("un clic en cualquier parte de la fila también abre el perfil, pero no el botón Desactivar", async () => {
+    it("un clic en la fila no abre nada: la información solo se despliega desde el kebab", async () => {
       mockConInactivos({ items: [residente] });
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
 
       await user.click(screen.getByText(residente.Conjunto));
-      expect(await screen.findByRole("dialog", { name: "Perfil de Juan Pérez" })).toBeInTheDocument();
+
+      expect(screen.queryByRole("region", { name: /Información de/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 
-    it("Desactivar en la fila abre la confirmación, no el perfil", async () => {
+    it("solo hay una fila desplegada a la vez", async () => {
+      mockConInactivos({ items: [residente, inactivo] });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Laura Gómez")).toBeInTheDocument());
+
+      await elegirOpcion(user, "Juan Pérez", "Ver información");
+      await screen.findAllByRole("region", { name: /Información de/ });
+      await elegirOpcion(user, "Laura Gómez", "Ver información");
+
+      await waitFor(() => expect(screen.getAllByRole("region", { name: /Información de/ })).toHaveLength(1));
+    });
+
+    it("Desactivar en el menú abre la confirmación, no la información", async () => {
       mockConInactivos({ items: [residente] });
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
 
-      await user.click(screen.getByRole("button", { name: /^Desactivar$/ }));
+      await elegirOpcion(user, "Juan Pérez", "Desactivar");
+
       expect(screen.getByText("¿Desactivar esta cuenta?")).toBeInTheDocument();
-      expect(screen.queryByRole("dialog", { name: /Perfil de/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("region", { name: /Información de/ })).not.toBeInTheDocument();
     });
 
-    it("Esc cierra el perfil", async () => {
+    it("Esc cierra el menú sin elegir nada", async () => {
       mockConInactivos({ items: [residente] });
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
-      await user.click(screen.getByRole("button", { name: "Ver perfil de Juan Pérez" }));
-      await screen.findByRole("dialog", { name: "Perfil de Juan Pérez" });
+
+      const kebab = screen.getByRole("button", { name: "Acciones de Juan Pérez" });
+      await user.click(kebab);
+      expect(screen.getByRole("menu")).toBeInTheDocument();
+      expect(kebab).toHaveAttribute("aria-expanded", "true");
 
       await user.keyboard("{Escape}");
-      await waitFor(() => expect(screen.queryByRole("dialog", { name: /Perfil de/ })).not.toBeInTheDocument());
+      await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+      expect(kebab).toHaveAttribute("aria-expanded", "false");
     });
 
-    it("desde el perfil se puede desactivar, y Esc cierra solo la confirmación, no el perfil", async () => {
+    it("al cancelar la confirmación de desactivar, la fila sigue desplegada", async () => {
       mockConInactivos({ items: [residente] });
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
-      await user.click(screen.getByRole("button", { name: "Ver perfil de Juan Pérez" }));
-      await screen.findByRole("dialog", { name: "Perfil de Juan Pérez" });
+      await elegirOpcion(user, "Juan Pérez", "Ver información");
+      await screen.findByRole("region", { name: "Información de Juan Pérez" });
 
-      await user.click(await screen.findByRole("button", { name: "Desactivar cuenta" }));
+      await elegirOpcion(user, "Juan Pérez", "Desactivar");
       expect(screen.getByText("¿Desactivar esta cuenta?")).toBeInTheDocument();
 
       await user.keyboard("{Escape}");
       await waitFor(() => expect(screen.queryByText("¿Desactivar esta cuenta?")).not.toBeInTheDocument());
-      expect(screen.getByRole("dialog", { name: "Perfil de Juan Pérez" })).toBeInTheDocument();
+      expect(screen.getByRole("region", { name: "Información de Juan Pérez" })).toBeInTheDocument();
     });
 
-    it("el perfil de una cuenta desactivada muestra la fecha y el motivo", async () => {
+    it("la fila desplegada de una cuenta desactivada muestra la fecha y el motivo, y el menú ofrece Activar", async () => {
       mockConInactivos({
         items: [inactivo],
         perfil: {
@@ -905,14 +939,30 @@ describe("AdminDashboard", () => {
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => expect(screen.getByText("Laura Gómez")).toBeInTheDocument());
-      await user.click(screen.getByRole("button", { name: "Ver perfil de Laura Gómez" }));
+
+      await elegirOpcion(user, "Laura Gómez", "Ver información");
 
       expect(await screen.findByText("Cuenta desactivada")).toBeInTheDocument();
       expect(screen.getByText("“Cuenta duplicada”")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Reactivar cuenta" })).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Acciones de Laura Gómez" }));
+      expect(screen.getByRole("menuitem", { name: "Activar" })).toBeInTheDocument();
     });
 
-    it("muestra un aviso si no se puede cargar el perfil", async () => {
+    it("la fila desplegada se cierra al escribir en el buscador", async () => {
+      mockConInactivos({ items: [residente] });
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
+      await elegirOpcion(user, "Juan Pérez", "Ver información");
+      await screen.findByRole("region", { name: /Información de/ });
+
+      await user.type(screen.getByPlaceholderText("Buscar por nombre o correo..."), "j");
+
+      expect(screen.queryByRole("region", { name: /Información de/ })).not.toBeInTheDocument();
+    });
+
+    it("muestra un aviso si no se puede cargar la información de la fila", async () => {
       mockGet.mockImplementation((url: string) => {
         if (url.includes("/admin/usuarios/")) return Promise.reject(new Error("Network Error"));
         if (url.includes("/admin/vista-residentes")) return Promise.resolve({ data: { items: [residente], total: 1 } });
@@ -924,7 +974,8 @@ describe("AdminDashboard", () => {
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
-      await user.click(screen.getByRole("button", { name: "Ver perfil de Juan Pérez" }));
+
+      await elegirOpcion(user, "Juan Pérez", "Ver información");
 
       expect(await screen.findByText("No se pudo cargar la información. Intenta de nuevo más tarde.")).toBeInTheDocument();
     });

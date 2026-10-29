@@ -698,7 +698,11 @@
         },
         "inactiveButton": "Inactivos {{count}}",
         "noReason": "Sin motivo registrado",
-        "noInactive": "No hay cuentas inactivas en esta pestaña."
+        "noInactive": "No hay cuentas inactivas en esta pestaña.",
+        "menu": {
+          "actionsFor": "Acciones de {{nombre}}",
+          "viewInfo": "Ver información"
+        }
       },
       "residentsTable": {
         "headers": {
@@ -728,9 +732,7 @@
         "empty": "No hay administradores de conjunto registrados todavía."
       },
       "profilePanel": {
-        "ariaLabel": "Perfil de {{nombre}}",
-        "openProfile": "Ver perfil de {{nombre}}",
-        "readOnly": "Solo lectura",
+        "ariaLabel": "Información de {{nombre}}",
         "sections": {
           "personal": "Datos personales",
           "account": "Cuenta",
@@ -754,10 +756,7 @@
         "visible": "Visible",
         "hidden": "Oculto",
         "noLockout": "Sin bloqueo",
-        "lockedUntil": "Bloqueada hasta las {{hora}}",
-        "disableAccount": "Desactivar cuenta",
-        "enableAccount": "Reactivar cuenta",
-        "editSoon": "Editar datos · próximamente"
+        "lockedUntil": "Bloqueada hasta las {{hora}}"
       }
     },
     "adminConjunto": {
