@@ -1381,6 +1381,8 @@
     },
     "ficha": {
       "ariaLabel": "Details of {{nombre}}",
+      "photoAlt": "Photo of {{nombre}}",
+      "enlargePhoto": "Enlarge photo of {{nombre}}",
       "location": "Location",
       "contact": "Contact",
       "howToGetThere": "Get directions",
@@ -1460,7 +1462,8 @@
       "locality": "Locality",
       "localitySelect": "Select a locality",
       "contactName": "Contact person's name",
-      "phone": "Contact phone"
+      "phone": "Contact phone",
+      "photo": "Point photo"
     },
     "deactivateConfirm": {
       "title": "Deactivate \"{{nombre}}\"?",

@@ -1385,6 +1385,8 @@
     },
     "ficha": {
       "ariaLabel": "Ficha de {{nombre}}",
+      "photoAlt": "Foto de {{nombre}}",
+      "enlargePhoto": "Ampliar foto de {{nombre}}",
       "location": "Ubicación",
       "contact": "Contacto",
       "howToGetThere": "Cómo llegar",
@@ -1464,7 +1466,8 @@
       "locality": "Localidad",
       "localitySelect": "Selecciona una localidad",
       "contactName": "Nombre del encargado",
-      "phone": "Teléfono de contacto"
+      "phone": "Teléfono de contacto",
+      "photo": "Foto del punto"
     },
     "deactivateConfirm": {
       "title": "¿Dar de baja \"{{nombre}}\"?",

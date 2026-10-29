@@ -67,3 +67,10 @@
 - **Dado que** desplegué la ficha de un punto,
 - **cuando** escribo un comentario y lo agrego,
 - **entonces** aparece de primero en la lista de comentarios, con autor y fecha, y ningún Residente ni Reciclador puede verlo.
+
+### CA-016.7 — Cambiar o quitar la foto del punto
+
+- **Dado que** edito un punto de acopio,
+- **cuando** subo otra imagen en "Foto del punto", o la quito, y guardo,
+- **entonces** la ficha muestra la foto nueva, o deja de mostrar foto. La foto reemplazada o quitada ya no cuenta como en uso: la limpieza de adjuntos la borra después.
+- Los Residentes y Recicladores ven la foto actualizada al abrir la ficha del punto, que se puede ampliar al tocarla.

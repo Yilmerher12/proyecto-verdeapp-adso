@@ -55,6 +55,7 @@ def listar_todos(db: Session) -> list[dict]:
             PuntoAcopio.telefono_contacto,
             PuntoAcopio.id_localidad,
             PuntoAcopio.activo,
+            PuntoAcopio.url_foto,
             Localidad.nombre_localidad,
         )
         .join(Localidad, PuntoAcopio.id_localidad == Localidad.id_localidad)
@@ -71,6 +72,7 @@ def listar_todos(db: Session) -> list[dict]:
             "id_localidad": r.id_localidad,
             "nombre_localidad": r.nombre_localidad,
             "activo": r.activo,
+            "url_foto": r.url_foto,
         }
         for r in rows
     ]
@@ -88,6 +90,7 @@ def _a_dict(punto: PuntoAcopio) -> dict:
         "id_localidad": punto.id_localidad,
         "nombre_localidad": punto.localidad.nombre_localidad,
         "activo": punto.activo,
+        "url_foto": punto.url_foto,
     }
 
 
@@ -100,6 +103,7 @@ def crear(db: Session, data: PuntoAcopioCreate) -> dict:
         id_localidad=data.id_localidad,
         nombre_encargado=data.nombre_encargado.strip() if data.nombre_encargado else None,
         telefono_contacto=data.telefono_contacto.strip() if data.telefono_contacto else None,
+        url_foto=data.url_foto,
         activo=True,
     )
     db.add(punto)
@@ -158,7 +162,8 @@ def editar(db: Session, id_punto_acopio: UUID, data: PuntoAcopioUpdate, autor: U
     punto.id_localidad = data.id_localidad
     punto.nombre_encargado = data.nombre_encargado.strip() if data.nombre_encargado else None
     punto.telefono_contacto = data.telefono_contacto.strip() if data.telefono_contacto else None
-    motivo = (data.motivo_cambio or "").strip()
+    punto.url_foto = data.url_foto
+    motivo =(data.motivo_cambio or "").strip()
     if motivo:
         db.add(PuntoAcopioComentario(id_punto_acopio=id_punto_acopio, id_autor=autor.id_usuario, texto=motivo))
     db.commit()

@@ -305,6 +305,60 @@ describe("DirectorioPage", () => {
       expect(screen.queryByRole("region", { name: "Ficha de ECA Kennedy" })).not.toBeInTheDocument();
     });
 
+    describe("foto del punto", () => {
+      const FOTO = "/uploads/adjuntos/0b9c1a0e-3f4d-4c52-9b57-6f1f2a3b4c5d.png";
+
+      it("si el punto tiene foto, la ficha la muestra", async () => {
+        mockRespuestas({ nombreLocalidad: "Kennedy", puntos: [{ ...puntoKennedy, url_foto: FOTO }] });
+        const user = userEvent.setup();
+        renderPage(true);
+
+        await user.click(await screen.findByRole("button", { name: "Ver ficha de ECA Kennedy" }));
+
+        const ficha = await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+        const imagen = within(ficha).getByRole("img", { name: "Foto de ECA Kennedy" });
+        expect(imagen).toHaveAttribute("src", `http://localhost:8000${FOTO}`);
+      });
+
+      it("sin foto la ficha no muestra imagen ni botón para ampliar", async () => {
+        mockRespuestas({ nombreLocalidad: "Kennedy", puntos: [{ ...puntoKennedy, url_foto: null }] });
+        const user = userEvent.setup();
+        renderPage(true);
+
+        await user.click(await screen.findByRole("button", { name: "Ver ficha de ECA Kennedy" }));
+
+        const ficha = await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+        expect(within(ficha).queryByRole("img")).not.toBeInTheDocument();
+        expect(within(ficha).queryByRole("button", { name: /Ampliar foto/ })).not.toBeInTheDocument();
+      });
+
+      it("tocar la foto la amplía en una ventana, que se cierra con Esc", async () => {
+        mockRespuestas({ nombreLocalidad: "Kennedy", puntos: [{ ...puntoKennedy, url_foto: FOTO }] });
+        const user = userEvent.setup();
+        renderPage(true);
+
+        await user.click(await screen.findByRole("button", { name: "Ver ficha de ECA Kennedy" }));
+        await user.click(await screen.findByRole("button", { name: "Ampliar foto de ECA Kennedy" }));
+
+        const ventana = await screen.findByRole("dialog", { name: "Ampliar foto de ECA Kennedy" });
+        expect(within(ventana).getByRole("img", { name: "Foto de ECA Kennedy" })).toHaveAttribute("src", `http://localhost:8000${FOTO}`);
+
+        await user.keyboard("{Escape}");
+        await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      });
+
+      it("una ruta de foto insegura no se muestra", async () => {
+        mockRespuestas({ nombreLocalidad: "Kennedy", puntos: [{ ...puntoKennedy, url_foto: "/uploads/../secreto.png" }] });
+        const user = userEvent.setup();
+        renderPage(true);
+
+        await user.click(await screen.findByRole("button", { name: "Ver ficha de ECA Kennedy" }));
+
+        const ficha = await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+        expect(within(ficha).queryByRole("img")).not.toBeInTheDocument();
+      });
+    });
+
     it("sin puntos en la localidad muestra el estado vacío, no una tabla", async () => {
       mockRespuestas({ nombreLocalidad: "Kennedy", puntos: [] });
       renderPage(true);

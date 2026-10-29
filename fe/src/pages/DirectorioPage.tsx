@@ -31,6 +31,7 @@ interface PuntoAcopio {
   telefono_contacto: string | null;
   nombre_encargado: string | null;
   nombre_localidad: string;
+  url_foto: string | null;
 }
 
 type TabId = "recicladores" | "puntos";

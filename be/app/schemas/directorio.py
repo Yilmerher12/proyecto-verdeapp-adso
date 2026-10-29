@@ -21,5 +21,6 @@ class PuntoAcopioDirectorioResponse(BaseModel):
     telefono_contacto: Optional[str] = None
     nombre_encargado: Optional[str] = None
     nombre_localidad: str
+    url_foto: Optional[str] = None
 
     model_config = {"from_attributes": True}
