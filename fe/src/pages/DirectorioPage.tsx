@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Phone, MapPin, Map as MapIcon, Users, HardHat, Warehouse, MessageCircle, Info, Copy, Check, ExternalLink } from "lucide-react";
+import { Phone, Map as MapIcon, HardHat, Warehouse, MessageCircle, Info, ExternalLink, Search } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { TablaPuntosAcopio } from "@/components/TablaPuntosAcopio";
+import { normalizarTexto } from "@/lib/normalizarTexto";
 
 interface Localidad {
   id_localidad: number;
@@ -23,7 +25,7 @@ interface Reciclador {
 }
 
 interface PuntoAcopio {
-  id_punto_acopio: number;
+  id_punto_acopio: string;
   nombre: string;
   direccion: string;
   telefono_contacto: string | null;
@@ -61,6 +63,12 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const [localidadCargada, setLocalidadCargada] = useState(false);
   const [recicladores, setRecicladores] = useState<Reciclador[]>([]);
   const [puntos, setPuntos] = useState<PuntoAcopio[]>([]);
+  // ¿Qué? Búsqueda por nombre o dirección y fila desplegada de la tabla de puntos.
+  // ¿Para qué? El filtro de localidad ya llega del backend; el de nombre se aplica
+  //           aquí porque la lista de una localidad es corta.
+  // ¿Impacto? La fila abierta se cierra al cambiar de pestaña, de localidad o de búsqueda.
+  const [busquedaPuntos, setBusquedaPuntos] = useState("");
+  const [puntoAbiertoId, setPuntoAbiertoId] = useState<string | null>(null);
   // ¿Qué? Antes empezaba en "false". Mientras se resuelve la localidad del
   //       usuario (primer useEffect, antes de siquiera pedir el directorio),
   //       "cargandoDirectorio" se quedaba en false — el contenido caía en la
@@ -147,6 +155,11 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
      
   }, [tab, localidadPropiaId, localidadPuntosId, localidadCargada, user]);
 
+  const consultaPuntos = normalizarTexto(busquedaPuntos.trim());
+  const puntosVisibles = puntos.filter(
+    (p) => !consultaPuntos || normalizarTexto(`${p.nombre} ${p.direccion}`).includes(consultaPuntos),
+  );
+
   const waLink = (tel: string) => `https://wa.me/57${tel.replace(/\D/g, "")}`;
   const callLink = (tel: string) => `tel:+57${tel.replace(/\D/g, "")}`;
 
@@ -176,7 +189,10 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             ).map(({ id, label, icon }) => (
               <button
                 key={id}
-                onClick={() => setTab(id)}
+                onClick={() => {
+                  setTab(id);
+                  setPuntoAbiertoId(null);
+                }}
                 className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   tab === id
                     ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
@@ -202,22 +218,40 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
               : t("directorio.ownLocalityUnknown")}
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <MapIcon className="icon-md shrink-0 text-accent-600" />
-            <select
-              value={localidadPuntosId}
-              onChange={(e) =>
-                setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value))
-              }
-              className="cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
-            >
-              <option value="">{t("directorio.allLocalities")}</option>
-              {localidades.map((l) => (
-                <option key={l.id_localidad} value={l.id_localidad}>
-                  {l.nombre_localidad}
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative min-w-[12.5rem]">
+              <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
+              <input
+                type="search"
+                value={busquedaPuntos}
+                onChange={(e) => {
+                  setBusquedaPuntos(e.target.value);
+                  setPuntoAbiertoId(null);
+                }}
+                aria-label={t("directorio.searchPoints")}
+                placeholder={t("directorio.searchPoints")}
+                className="w-full rounded-lg border border-edge bg-white py-2 pl-9 pr-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-white"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <MapIcon className="icon-md shrink-0 text-accent-600" />
+              <select
+                value={localidadPuntosId}
+                aria-label={t("adminPuntosAcopio.fields.locality")}
+                onChange={(e) => {
+                  setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value));
+                  setPuntoAbiertoId(null);
+                }}
+                className="cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+              >
+                <option value="">{t("directorio.allLocalities")}</option>
+                {localidades.map((l) => (
+                  <option key={l.id_localidad} value={l.id_localidad}>
+                    {l.nombre_localidad}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
       </div>
@@ -270,12 +304,15 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
         )
       ) : puntos.length === 0 ? (
         <EmptyState icon={Warehouse} message={t("directorio.emptyPoints")} />
+      ) : puntosVisibles.length === 0 ? (
+        <EmptyState icon={Search} message={t("directorio.noPointsMatch")} />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {puntos.map((p) => (
-            <TarjetaPunto key={p.id_punto_acopio} punto={p} />
-          ))}
-        </div>
+        <TablaPuntosAcopio
+          puntos={puntosVisibles}
+          variante="lectura"
+          abiertoId={puntoAbiertoId}
+          onAlternar={(id) => setPuntoAbiertoId((actual) => (actual === id ? null : id))}
+        />
       )}
     </div>
   );
@@ -394,76 +431,6 @@ function TarjetaReciclador({
           </div>
         ) : (
           <p className="text-xs text-gray-500 dark:text-gray-400">{t("directorio.noPhone")}</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TarjetaPunto({ punto: p }: { punto: PuntoAcopio }) {
-  const { t } = useTranslation();
-  const [copiado, setCopiado] = useState(false);
-
-  // ¿Qué? Copia la dirección al portapapeles y muestra una confirmación
-  //       breve (ícono de check) antes de volver al ícono de copiar.
-  // ¿Para qué? Para que se pueda pegar directo en Google Maps u otra app,
-  //           en vez de tener que transcribirla a mano.
-  const copiarDireccion = async () => {
-    try {
-      await navigator.clipboard.writeText(p.direccion);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 1500);
-    } catch {
-      // ¿Qué? Si el navegador niega el permiso del portapapeles (poco común,
-      //       pero posible), no hay nada más que hacer desde aquí — no tiene
-      //       sentido mostrar un error por algo tan menor como esto.
-    }
-  };
-
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
-      <div className="mb-3 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-300/10">
-          <Warehouse className="icon-lg text-accent-700 dark:text-accent-400" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 break-words font-semibold text-gray-900 dark:text-white">{p.nombre}</p>
-          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[0.6875rem] font-medium text-gray-600 dark:bg-night-inset dark:text-gray-300">
-            <MapIcon className="icon-sm" />
-            {p.nombre_localidad}
-          </span>
-        </div>
-      </div>
-
-      <div className="space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
-        <p className="flex items-start gap-1.5">
-          <MapPin className="icon-sm mt-0.5 shrink-0 text-gray-500 dark:text-gray-400" />
-          <span className="flex-1">{p.direccion}</span>
-          <button
-            type="button"
-            onClick={copiarDireccion}
-            className="touch-area relative shrink-0 cursor-pointer rounded-md p-1 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-night-hover dark:hover:text-gray-300"
-            aria-label={t("directorio.copyAddress")}
-            title={t("directorio.copyAddress")}
-          >
-            {copiado ? (
-              <Check className="icon-sm text-accent-600 dark:text-accent-400" />
-            ) : (
-              <Copy className="icon-sm" />
-            )}
-          </button>
-        </p>
-        {p.telefono_contacto && (
-          <p className="flex items-center gap-1.5">
-            <Phone className="icon-sm shrink-0 text-gray-500 dark:text-gray-400" />
-            {p.telefono_contacto}
-          </p>
-        )}
-        {p.nombre_encargado && (
-          <p className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-            <Users className="icon-sm shrink-0" />
-            {p.nombre_encargado}
-          </p>
         )}
       </div>
     </div>
