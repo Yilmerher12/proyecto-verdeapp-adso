@@ -12,6 +12,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.utils.enlaces import ImagenPropia
+
 
 # ¿Qué? Issue #352 — tamaño de cada columna en models/punto_acopio.py.
 # ¿Impacto? Deben coincidir con PUNTO_ACOPIO_* de fe/src/lib/validacion.ts.
@@ -44,6 +46,10 @@ class _PuntoAcopioEntrada(PuntoAcopioBase):
     direccion: str = Field(max_length=DIRECCION_MAX_LENGTH)
     nombre_encargado: Optional[str] = Field(default=None, max_length=ENCARGADO_MAX_LENGTH)
     telefono_contacto: Optional[str] = Field(default=None, max_length=TELEFONO_MAX_LENGTH)
+    # ¿Qué? Foto del punto: solo una imagen que subió esta misma app (ImagenPropia); vacío es "sin foto".
+    # ¿Para qué? Un https:// externo dejaría que un tercero vea quién abre la ficha (rastreo).
+    # ¿Impacto? Como el resto de los campos, editar reemplaza el valor: si no se manda, la foto se quita.
+    url_foto: ImagenPropia = None
 
 
 class PuntoAcopioCreate(_PuntoAcopioEntrada):
@@ -63,6 +69,7 @@ class PuntoAcopioAdminResponse(PuntoAcopioBase):
     id_punto_acopio: UUID
     nombre_localidad: str
     activo: bool
+    url_foto: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

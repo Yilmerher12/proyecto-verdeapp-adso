@@ -54,3 +54,10 @@
 - **Dado que** no tengo el rol admin_sistema,
 - **cuando** intento registrar un punto de acopio,
 - **entonces** el sistema debe negarme el acceso.
+
+### CA-015.5 — Foto opcional del punto
+
+- **Dado que** estoy registrando un punto de acopio,
+- **cuando** elijo una imagen en "Foto del punto" (JPG, PNG o WEBP, de hasta 5 MB) y guardo,
+- **entonces** el punto queda con esa foto, que se ve en su ficha. El campo es opcional: sin foto, el punto se guarda y se ve como siempre.
+- Una foto que no sea una imagen subida a VerdeApp (por ejemplo, un enlace externo) se rechaza.

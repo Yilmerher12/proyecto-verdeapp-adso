@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ExternalLink, MapPin, MapPinOff, Pencil, Plus, Search, Trash2, Warehouse } from "lucide-react";
+import { Eye, MapPin, MapPinOff, Pencil, Plus, Search, Trash2, Warehouse } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { Spinner } from "@/components/ui/Spinner";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
+import { MenuAcciones, type OpcionMenu } from "@/components/ui/MenuAcciones";
+import { ComentariosPunto } from "@/components/ComentariosPunto";
 import { PuntoAcopioForm } from "@/components/PuntoAcopioForm";
-import { PuntoAcopioPanel } from "@/components/PuntoAcopioPanel";
-import { googleMapsUrl } from "@/lib/mapsLink";
+import { TablaPuntosAcopio } from "@/components/TablaPuntosAcopio";
+import { normalizarTexto } from "@/lib/normalizarTexto";
 import {
   crearPuntoAcopio,
   darDeBajaPuntoAcopio,
@@ -31,23 +32,14 @@ interface Localidad {
 
 type FiltroEstado = "todos" | "activos" | "baja";
 
-interface GrupoLocalidad {
-  id: number;
-  nombre: string;
-  puntos: PuntoAcopioAdmin[];
-}
-
 const FORM_VACIO: PuntoAcopioPayload = {
   nombre: "",
   direccion: "",
   id_localidad: 0,
   nombre_encargado: "",
   telefono_contacto: "",
+  url_foto: null,
 };
-
-// ¿Qué? Minúsculas y sin tildes, para que "engativa" encuentre "Engativá".
-const normalizar = (texto: string) =>
-  texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export function AdminPuntosAcopioPage() {
   const { t } = useTranslation();
@@ -57,9 +49,7 @@ export function AdminPuntosAcopioPage() {
   const [cargando, setCargando] = useState(true);
   // ¿Qué? Errores del formulario (crear/editar) — se muestran dentro de él.
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  // ¿Qué? Errores de dar de baja / reactivar / eliminar — antes se guardaban
-  //       en errorMsg, que solo se veía dentro del formulario, así que nunca
-  //       se mostraban. Ahora salen arriba de la lista.
+  // ¿Qué? Errores de dar de baja / reactivar / eliminar — salen arriba de la tabla.
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   // ¿Qué? Issue #6 (hallazgo F1 de la auditoría) — mismo problema que
   //       AdminContenidoEducativoPage: la carga inicial fallida no se veía.
@@ -67,11 +57,12 @@ export function AdminPuntosAcopioPage() {
 
   const [creando, setCreando] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  // ¿Qué? El punto abierto en el panel lateral. Se guarda solo el id y el
-  //       punto se busca en la lista, para que el panel refleje al instante
-  //       lo que quedó guardado tras editar o dar de baja.
-  const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null);
-  const [abrirEditando, setAbrirEditando] = useState(false);
+  // ¿Qué? El punto que se edita en el modal. Se guarda solo el id y el punto se
+  //       busca en la lista, para que el formulario parta de lo ya guardado.
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  // ¿Qué? La fila desplegada de la tabla (una a la vez) y la versión de los
+  //       comentarios, que sube al guardar una edición para que se recarguen.
+  const [abiertoId, setAbiertoId] = useState<string | null>(null);
   const [versionComentarios, setVersionComentarios] = useState(0);
 
   const [aDarDeBaja, setADarDeBaja] = useState<PuntoAcopioAdmin | null>(null);
@@ -82,14 +73,11 @@ export function AdminPuntosAcopioPage() {
   const [confirmando, setConfirmando] = useState(false);
   const [reactivandoId, setReactivandoId] = useState<string | null>(null);
 
-  // ¿Qué? Búsqueda y filtro de estado — se aplican en el navegador: el backend
-  //       ya devuelve la lista completa (incluidos los dados de baja).
+  // ¿Qué? Búsqueda y filtros de estado y localidad — se aplican en el navegador:
+  //       el backend ya devuelve la lista completa (incluidos los dados de baja).
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("todos");
-  // ¿Qué? Secciones de localidad que el admin abrió o cerró a mano (id → abierta).
-  //       Sin decisión manual, una sección está cerrada, salvo que haya un
-  //       filtro activo: entonces se abren solas las que tienen coincidencias.
-  const [abiertasManual, setAbiertasManual] = useState<Record<number, boolean>>({});
+  const [filtroLocalidad, setFiltroLocalidad] = useState<number | "">("");
 
   const cargar = useCallback(() => {
     if (!user) return;
@@ -113,16 +101,15 @@ export function AdminPuntosAcopioPage() {
       .catch(() => {});
   }, [cargar]);
 
-  const seleccionado = puntos.find((p) => p.id_punto_acopio === seleccionadoId) ?? null;
-
-  const abrirPanel = (item: PuntoAcopioAdmin, editando: boolean) => {
-    setErrorMsg(null);
-    setAbrirEditando(editando);
-    setSeleccionadoId(item.id_punto_acopio);
-  };
+  const editando = puntos.find((p) => p.id_punto_acopio === editandoId) ?? null;
 
   const cerrarCrear = () => {
     setCreando(false);
+    setErrorMsg(null);
+  };
+
+  const cerrarEditar = () => {
+    setEditandoId(null);
     setErrorMsg(null);
   };
 
@@ -140,20 +127,18 @@ export function AdminPuntosAcopioPage() {
     }
   };
 
-  // ¿Qué? Devuelve si se guardó, para que el panel sepa si vuelve a su vista
-  //       de datos o se queda en el formulario mostrando el error.
-  const guardarEdicion = async (payload: PuntoAcopioPayload): Promise<boolean> => {
-    if (!seleccionado) return false;
+  // ¿Qué? Si se guarda, el modal se cierra; si falla, se queda con el error a la vista.
+  const guardarEdicion = async (payload: PuntoAcopioPayload) => {
+    if (!editando) return;
     setGuardando(true);
     setErrorMsg(null);
     try {
-      await editarPuntoAcopio(seleccionado.id_punto_acopio, payload);
+      await editarPuntoAcopio(editando.id_punto_acopio, payload);
       setVersionComentarios((v) => v + 1);
+      cerrarEditar();
       cargar();
-      return true;
     } catch {
       setErrorMsg(t("common.saveError"));
-      return false;
     } finally {
       setGuardando(false);
     }
@@ -204,36 +189,30 @@ export function AdminPuntosAcopioPage() {
   const visibles = puntos.filter((p) => {
     if (filtroEstado === "activos" && !p.activo) return false;
     if (filtroEstado === "baja" && p.activo) return false;
-    const q = normalizar(busqueda.trim());
-    return !q || normalizar(`${p.nombre} ${p.direccion}`).includes(q);
+    if (filtroLocalidad !== "" && p.id_localidad !== filtroLocalidad) return false;
+    const q = normalizarTexto(busqueda.trim());
+    return !q || normalizarTexto(`${p.nombre} ${p.direccion}`).includes(q);
   });
 
-  // ¿Qué? Los puntos visibles agrupados por localidad, en orden alfabético.
-  // ¿Para qué? Con decenas de puntos, una lista plana muestra un muro de
-  //            direcciones; agrupada, el admin abre solo la zona que busca.
-  const grupos: GrupoLocalidad[] = [];
-  for (const p of visibles) {
-    let grupo = grupos.find((g) => g.id === p.id_localidad);
-    if (!grupo) {
-      grupo = { id: p.id_localidad, nombre: p.nombre_localidad, puntos: [] };
-      grupos.push(grupo);
-    }
-    grupo.puntos.push(p);
-  }
-  grupos.sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-  const filtrosActivos = busqueda.trim() !== "" || filtroEstado !== "todos";
-  const estaAbierta = (id: number) => abiertasManual[id] ?? filtrosActivos;
-  // ¿Qué? Cambiar el filtro o la búsqueda descarta lo abierto/cerrado a mano,
-  //       para que las secciones con coincidencias se abran de nuevo solas.
+  // ¿Qué? Cambiar la búsqueda o un filtro pliega la fila abierta: ya puede no estar a la vista.
   const cambiarBusqueda = (valor: string) => {
     setBusqueda(valor);
-    setAbiertasManual({});
+    setAbiertoId(null);
   };
   const cambiarEstado = (estado: FiltroEstado) => {
     setFiltroEstado(estado);
-    setAbiertasManual({});
+    setAbiertoId(null);
   };
+  const cambiarLocalidad = (valor: number | "") => {
+    setFiltroLocalidad(valor);
+    setAbiertoId(null);
+  };
+  const alternarFila = (id: string) => setAbiertoId((actual) => (actual === id ? null : id));
+
+  // ¿Qué? Solo las localidades que tienen algún punto: elegir una sin puntos daría una tabla vacía.
+  const localidadesConPuntos = Array.from(new Map(puntos.map((p) => [p.id_localidad, p.nombre_localidad])))
+    .map(([id, nombre]) => ({ id, nombre }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
   const totalActivos = puntos.filter((p) => p.activo).length;
   const totalDeBaja = puntos.length - totalActivos;
@@ -244,102 +223,25 @@ export function AdminPuntosAcopioPage() {
     { id: "baja", cantidad: totalDeBaja },
   ];
 
-  const botonAccion =
-    "touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-2 transition-colors dark:border-night-line";
-
-  const renderFila = (item: PuntoAcopioAdmin) => (
-    <div
-      key={item.id_punto_acopio}
-      className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-gray-100 bg-white p-3 dark:border-night-line dark:bg-night-panel ${
-        item.activo ? "" : "opacity-70"
-      }`}
-    >
-      <div className="min-w-0 flex-1 basis-56">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => abrirPanel(item, false)}
-            className="focus-ring cursor-pointer truncate text-left text-sm font-bold text-gray-900 underline decoration-gray-500 underline-offset-4 hover:text-accent-700 dark:text-white dark:decoration-gray-400 dark:hover:text-accent-400"
-          >
-            {item.nombre}
-          </button>
-          {!item.activo && (
-            <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-gray-500 dark:bg-night-hover dark:text-gray-400">
-              {t("adminPuntosAcopio.inactiveBadge")}
-            </span>
-          )}
-        </div>
-        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-          {item.direccion}{" "}
-          <a
-            href={googleMapsUrl(item.direccion, item.nombre_localidad)}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={t("adminPuntosAcopio.mapAria", { nombre: item.nombre })}
-            className="link-text inline-flex items-center gap-1"
-          >
-            {t("adminPuntosAcopio.mapLink")}
-            <ExternalLink className="icon-sm" aria-hidden="true" />
-          </a>
-        </p>
-      </div>
-
-      <div className="hidden w-40 shrink-0 text-xs leading-snug md:block">
-        <p className="truncate text-gray-500 dark:text-gray-400">{item.nombre_encargado || t("adminPuntosAcopio.noManager")}</p>
-        {item.telefono_contacto ? (
-          <p className="font-semibold text-gray-700 dark:text-gray-200">{item.telefono_contacto}</p>
-        ) : (
-          item.activo && (
-            <span className="mt-0.5 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[0.65625rem] font-semibold text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
-              {t("adminPuntosAcopio.noPhone")}
-            </span>
-          )
-        )}
-      </div>
-
-      <div className="flex shrink-0 gap-2">
-        <button
-          onClick={() => abrirPanel(item, true)}
-          className={`${botonAccion} text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-night-hover`}
-          aria-label={t("adminPuntosAcopio.editAria", { nombre: item.nombre })}
-          title={t("adminPuntosAcopio.editAria", { nombre: item.nombre })}
-        >
-          <Pencil className="icon-md" />
-        </button>
-        {item.activo ? (
-          <button
-            onClick={() => setADarDeBaja(item)}
-            className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-400/15`}
-            aria-label={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
-            title={t("adminPuntosAcopio.deactivateAria", { nombre: item.nombre })}
-          >
-            <MapPinOff className="icon-md icon-draw" />
-          </button>
-        ) : (
-          <>
-            <button
-              onClick={() => reactivar(item)}
-              disabled={reactivandoId === item.id_punto_acopio}
-              aria-busy={reactivandoId === item.id_punto_acopio}
-              className={`${botonAccion} disabled:cursor-not-allowed disabled:opacity-60 text-accent-600 hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-300/15`}
-              aria-label={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
-              title={t("adminPuntosAcopio.reactivateAria", { nombre: item.nombre })}
-            >
-              {reactivandoId === item.id_punto_acopio ? <Spinner size="sm" /> : <MapPin className="icon-md icon-draw" />}
-            </button>
-            <button
-              onClick={() => setAEliminar(item)}
-              className={`${botonAccion} text-red-500 hover:bg-red-50 dark:hover:bg-red-400/15`}
-              aria-label={t("adminPuntosAcopio.deleteAria", { nombre: item.nombre })}
-              title={t("adminPuntosAcopio.deleteAria", { nombre: item.nombre })}
-            >
-              <Trash2 className="icon-md" />
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
+  // ¿Qué? Menú del kebab de cada fila. Un punto activo se puede dar de baja; uno de baja,
+  //       reactivar o eliminar definitivamente (solo así se borra por completo).
+  // ¿Para qué? Antes eran 4 botones de ícono por fila; en el menú cada acción dice su nombre.
+  const menuDe = (p: PuntoAcopioAdmin) => {
+    const panel = "adminPuntosAcopio.panel";
+    const grupos: OpcionMenu[][] = [
+      [
+        { id: "ver", label: t("puntosAcopioTabla.menu.view"), icon: Eye, onSelect: () => alternarFila(p.id_punto_acopio) },
+        { id: "editar", label: t("common.edit"), icon: Pencil, onSelect: () => setEditandoId(p.id_punto_acopio) },
+      ],
+    ];
+    if (p.activo) {
+      grupos.push([{ id: "baja", label: t(`${panel}.deactivate`), icon: MapPinOff, peligrosa: true, onSelect: () => setADarDeBaja(p) }]);
+    } else {
+      grupos.push([{ id: "reactivar", label: t(`${panel}.reactivate`), icon: MapPin, onSelect: () => reactivar(p) }]);
+      grupos.push([{ id: "eliminar", label: t(`${panel}.deleteForever`), icon: Trash2, peligrosa: true, onSelect: () => setAEliminar(p) }]);
+    }
+    return <MenuAcciones ariaLabel={t("puntosAcopioTabla.menu.actionsFor", { nombre: p.nombre })} grupos={grupos} />;
+  };
 
   return (
     <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
@@ -376,6 +278,19 @@ export function AdminPuntosAcopioPage() {
                 className="w-full rounded-xl border border-edge bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
             </div>
+            <select
+              value={filtroLocalidad}
+              onChange={(e) => cambiarLocalidad(e.target.value === "" ? "" : Number(e.target.value))}
+              aria-label={t("adminPuntosAcopio.fields.locality")}
+              className="cursor-pointer rounded-xl border border-edge bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-200"
+            >
+              <option value="">{t("directorio.allLocalities")}</option>
+              {localidadesConPuntos.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.nombre}
+                </option>
+              ))}
+            </select>
             <div className="flex gap-1.5">
               {chips.map(({ id, cantidad }) => (
                 <button
@@ -416,40 +331,17 @@ export function AdminPuntosAcopioPage() {
         <EmptyState icon={Search} message={t("adminPuntosAcopio.search.noResults")} />
       )}
 
-      <div className="space-y-3">
-        {grupos.map((grupo) => {
-          const abierta = estaAbierta(grupo.id);
-          const deBaja = grupo.puntos.filter((p) => !p.activo).length;
-          return (
-            <section
-              key={grupo.id}
-              className="rounded-2xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card"
-            >
-              <button
-                type="button"
-                onClick={() => setAbiertasManual((prev) => ({ ...prev, [grupo.id]: !abierta }))}
-                aria-expanded={abierta}
-                className="flex w-full cursor-pointer items-center gap-2.5 rounded-2xl px-4 py-3.5 text-left"
-              >
-                <span className="text-sm font-bold text-gray-900 dark:text-white">{grupo.nombre}</span>
-                <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[0.6875rem] font-bold text-accent-800 dark:bg-accent-300/10 dark:text-accent-300">
-                  {grupo.puntos.length}
-                </span>
-                {deBaja > 0 && (
-                  <span className="text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">
-                    {t("adminPuntosAcopio.summary.inactive", { count: deBaja })}
-                  </span>
-                )}
-                <ChevronDown
-                  className={`icon-md ml-auto text-gray-500 transition-transform dark:text-gray-400 ${abierta ? "rotate-180" : ""}`}
-                  aria-hidden="true"
-                />
-              </button>
-              {abierta && <div className="space-y-2 px-3 pb-3">{grupo.puntos.map(renderFila)}</div>}
-            </section>
-          );
-        })}
-      </div>
+      {visibles.length > 0 && (
+        <TablaPuntosAcopio
+          puntos={visibles}
+          variante="gestion"
+          abiertoId={abiertoId}
+          onAlternar={alternarFila}
+          renderMenu={menuDe}
+          renderExtra={(p) => <ComentariosPunto idPunto={p.id_punto_acopio} version={versionComentarios} />}
+          ocupadoId={reactivandoId}
+        />
+      )}
 
       {creando && (
         <Modal onClose={cerrarCrear} wide closeOnBackdrop={false} aria-label={t("adminPuntosAcopio.newPoint")}>
@@ -469,26 +361,31 @@ export function AdminPuntosAcopioPage() {
         </Modal>
       )}
 
-      {seleccionado && (
-        <PuntoAcopioPanel
-          // ¿Qué? La key reinicia el panel (modo edición, comentarios) al abrir otro punto.
-          key={seleccionado.id_punto_acopio}
-          punto={seleccionado}
-          localidades={localidades}
-          iniciarEditando={abrirEditando}
-          version={versionComentarios}
-          guardando={guardando}
-          errorMsg={errorMsg}
-          // ¿Qué? Con una confirmación abierta encima, Esc cierra solo esa.
-          cerrarConEscape={!aDarDeBaja && !aEliminar}
-          onErrorClose={() => setErrorMsg(null)}
-          onClose={() => setSeleccionadoId(null)}
-          onGuardar={guardarEdicion}
-          onDarDeBaja={setADarDeBaja}
-          onReactivar={reactivar}
-          reactivando={reactivandoId !== null && reactivandoId === seleccionadoId}
-          onEliminar={setAEliminar}
-        />
+      {editando && (
+        <Modal onClose={cerrarEditar} wide closeOnBackdrop={false} aria-label={t("adminPuntosAcopio.modal.editTitle")}>
+          <div className="space-y-4 p-6 sm:p-8">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("adminPuntosAcopio.modal.editTitle")}</h2>
+            <PuntoAcopioForm
+              // ¿Qué? La key reinicia el formulario al editar otro punto.
+              key={editando.id_punto_acopio}
+              inicial={{
+                nombre: editando.nombre,
+                direccion: editando.direccion,
+                id_localidad: editando.id_localidad,
+                nombre_encargado: editando.nombre_encargado ?? "",
+                telefono_contacto: editando.telefono_contacto ?? "",
+                url_foto: editando.url_foto,
+              }}
+              localidades={localidades}
+              esEdicion
+              guardando={guardando}
+              errorMsg={errorMsg}
+              onErrorClose={() => setErrorMsg(null)}
+              onSubmit={guardarEdicion}
+              onCancel={cerrarEditar}
+            />
+          </div>
+        </Modal>
       )}
 
       {aDarDeBaja && (

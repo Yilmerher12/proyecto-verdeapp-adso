@@ -618,17 +618,27 @@ def listar_admin(
 
 
 def listar_mias(
-    db: Session, id_usuario_reciclador: UUID, limit: int, offset: int
+    db: Session,
+    id_usuario_reciclador: UUID,
+    limit: int,
+    offset: int,
+    id_conjunto: UUID | None = None,
 ) -> tuple[list[AuditoriaConjunto], int]:
     """¿Qué? Auditorías ya enviadas por este reciclador, más recientes primero y de a páginas.
     ¿Para qué? Es su historial en el panel. Antes devolvía todas, sin tope, y
               además servía para calcular el aviso "ya puedes auditar de
               nuevo": ese cálculo ahora usa ultimas_por_conjunto, porque con
-              páginas la lista ya no trae la última auditoría de cada conjunto."""
+              páginas la lista ya no trae la última auditoría de cada conjunto.
+              Con `id_conjunto` solo trae las de ese conjunto: el panel del
+              Reciclador muestra un conjunto a la vez.
+    ¿Impacto? Sin `id_conjunto` devuelve todas, igual que antes. El filtro solo
+              mira las auditorías de este reciclador, así que pasar el id de un
+              conjunto ajeno devuelve una lista vacía, no datos de otro."""
     reciclador = _obtener_reciclador(db, id_usuario_reciclador)
-    return _pagina_de_auditorias(
-        db, [AuditoriaConjunto.id_reciclador == reciclador.id_reciclador], limit, offset
-    )
+    condiciones = [AuditoriaConjunto.id_reciclador == reciclador.id_reciclador]
+    if id_conjunto is not None:
+        condiciones.append(AuditoriaConjunto.id_conjunto_residencial == id_conjunto)
+    return _pagina_de_auditorias(db, condiciones, limit, offset)
 
 
 def ultimas_por_conjunto(db: Session, id_usuario_reciclador: UUID) -> list[tuple[UUID, datetime]]:

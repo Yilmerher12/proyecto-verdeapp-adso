@@ -698,7 +698,11 @@
         },
         "inactiveButton": "Inactivos {{count}}",
         "noReason": "Sin motivo registrado",
-        "noInactive": "No hay cuentas inactivas en esta pestaña."
+        "noInactive": "No hay cuentas inactivas en esta pestaña.",
+        "menu": {
+          "actionsFor": "Acciones de {{nombre}}",
+          "viewInfo": "Ver información"
+        }
       },
       "residentsTable": {
         "headers": {
@@ -728,9 +732,7 @@
         "empty": "No hay administradores de conjunto registrados todavía."
       },
       "profilePanel": {
-        "ariaLabel": "Perfil de {{nombre}}",
-        "openProfile": "Ver perfil de {{nombre}}",
-        "readOnly": "Solo lectura",
+        "ariaLabel": "Información de {{nombre}}",
         "sections": {
           "personal": "Datos personales",
           "account": "Cuenta",
@@ -754,10 +756,7 @@
         "visible": "Visible",
         "hidden": "Oculto",
         "noLockout": "Sin bloqueo",
-        "lockedUntil": "Bloqueada hasta las {{hora}}",
-        "disableAccount": "Desactivar cuenta",
-        "enableAccount": "Reactivar cuenta",
-        "editSoon": "Editar datos · próximamente"
+        "lockedUntil": "Bloqueada hasta las {{hora}}"
       }
     },
     "adminConjunto": {
@@ -872,6 +871,7 @@
       "sendSection": {
         "title": "Enviar notificación",
         "subtitle": "Avisa a los residentes y al administrador del conjunto.",
+        "subtitleConjunto": "Avisa a los residentes y al administrador de {{conjunto}}.",
         "noConjuntos": "Los botones se activan cuando tengas un conjunto autorizado."
       },
       "invitations": {
@@ -882,7 +882,15 @@
       },
       "myConjuntos": {
         "title": "Mis conjuntos autorizados",
+        "selectorLabel": "Elige el conjunto que estás atendiendo",
+        "necesitaAuditoria": "Necesita auditoría",
         "empty": "Todavía no tienes ningún conjunto autorizado. Cuando un administrador te invite y aceptes, aparecerá aquí."
+      },
+      "estado": {
+        "presente": "Estás en el conjunto",
+        "ausente": "No has llegado",
+        "shutLleno": "SHUT lleno",
+        "shutLibre": "SHUT libre"
       },
       "notifications": {
         "title": "Notificaciones recibidas",
@@ -890,8 +898,8 @@
         "emptyWithoutConjuntos": "No tienes notificaciones. Los avisos de los residentes (como SHUT lleno) llegan de los conjuntos donde estés autorizado."
       },
       "modal": {
-        "title": "¿A qué conjunto notificas?",
-        "subtitle": "Selecciona el conjunto al que llegaste o sobre el que quieres avisar.",
+        "confirmTitle": "¿Enviar este aviso?",
+        "confirmDescription": "Vas a avisar \"{{accion}}\" a los residentes y al administrador de {{conjunto}}.",
         "sending": "Enviando...",
         "submit": "Enviar aviso",
         "yaPresente": "Ya avisaste tu llegada a este conjunto — avisa que ya te vas antes de volver a llegar.",
@@ -1129,6 +1137,8 @@
     "ownLocalityUnknown": "No se pudo detectar tu localidad",
     "emptyRecyclers": "No hay recicladores registrados en esta localidad.",
     "emptyPoints": "No hay puntos de acopio registrados en esta localidad.",
+    "searchPoints": "Buscar por nombre o dirección",
+    "noPointsMatch": "Ningún punto coincide con tu búsqueda.",
     "call": "Llamar",
     "noPhone": "Sin teléfono registrado",
     "copyAddress": "Copiar dirección",
@@ -1359,18 +1369,38 @@
     "expandRatings": "Ver calificaciones",
     "expandModules": "Ver módulos"
   },
+  "puntosAcopioTabla": {
+    "headers": {
+      "point": "Punto",
+      "locality": "Localidad",
+      "status": "Estado",
+      "actions": "Acciones",
+      "details": "Ficha"
+    },
+    "expand": "Ver ficha de {{nombre}}",
+    "collapse": "Ocultar ficha de {{nombre}}",
+    "menu": {
+      "actionsFor": "Acciones de {{nombre}}",
+      "view": "Ver ficha"
+    },
+    "ficha": {
+      "ariaLabel": "Ficha de {{nombre}}",
+      "photoAlt": "Foto de {{nombre}}",
+      "enlargePhoto": "Ampliar foto de {{nombre}}",
+      "location": "Ubicación",
+      "contact": "Contacto",
+      "howToGetThere": "Cómo llegar",
+      "howToGetThereAria": "Cómo llegar a {{nombre}} en Google Maps",
+      "noPhonePublished": "Sin teléfono publicado.",
+      "uaespLine": "Línea general de la UAESP (no es la del punto):"
+    }
+  },
   "adminPuntosAcopio": {
     "title": "Puntos de acopio",
     "subtitle": "Registra, edita y da de baja los puntos de acopio oficiales del directorio.",
     "newPoint": "Nuevo punto de acopio",
     "emptyState": "Todavía no hay puntos de acopio registrados.",
     "inactiveBadge": "Inactivo",
-    "editAria": "Editar {{nombre}}",
-    "deactivateAria": "Dar de baja {{nombre}}",
-    "reactivateAria": "Reactivar {{nombre}}",
-    "deleteAria": "Eliminar {{nombre}}",
-    "mapLink": "Ver en el mapa",
-    "mapAria": "Ver {{nombre}} en el mapa",
     "noPhone": "Sin teléfono",
     "noManager": "Sin encargado",
     "search": {
@@ -1392,9 +1422,7 @@
       "inactive_other": "{{count}} de baja"
     },
     "panel": {
-      "ariaLabel": "Detalle de {{nombre}}",
       "active": "Activo",
-      "dataSection": "Datos del punto",
       "manager": "Encargado",
       "phone": "Teléfono",
       "deactivate": "Dar de baja",
@@ -1438,7 +1466,8 @@
       "locality": "Localidad",
       "localitySelect": "Selecciona una localidad",
       "contactName": "Nombre del encargado",
-      "phone": "Teléfono de contacto"
+      "phone": "Teléfono de contacto",
+      "photo": "Foto del punto"
     },
     "deactivateConfirm": {
       "title": "¿Dar de baja \"{{nombre}}\"?",

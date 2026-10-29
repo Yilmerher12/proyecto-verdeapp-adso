@@ -7,6 +7,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
+import { Route, Routes } from "react-router-dom";
 import { ResidenteDashboard } from "@/pages/dashboards/ResidenteDashboard";
 import { renderWithProviders, mockUser } from "../helpers";
 
@@ -409,5 +410,44 @@ describe("ResidenteDashboard", () => {
       expect(screen.getByText("Historial de auditorías")).toBeInTheDocument();
       expect(screen.getByText("Panel del Residente")).toBeInTheDocument();
     });
+  });
+
+  // ¿Qué? Tocar el aviso de un comunicado lleva a Comunicados y lo marca leído (antes solo lo marcaba leído).
+  it("tocar un comunicado nuevo lo marca como leído y lleva a la página de Comunicados", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });
+      if (url.includes("mis-notificaciones")) {
+        return Promise.resolve({
+          data: [
+            {
+              id: "n1",
+              tipo: "COMUNICADO_NUEVO",
+              mensaje: "Nuevo comunicado: asamblea el jueves.",
+              id_referencia: null,
+              nombre_conjunto: "Conjunto Los Alpes",
+              id_conjunto_residencial: "c-1",
+              leida: false,
+              created_at: new Date().toISOString(),
+            },
+          ],
+        });
+      }
+      return Promise.resolve(respuestaPorDefecto(url));
+    });
+    const user = userEvent.setup();
+    renderWithProviders(
+      <Routes>
+        <Route path="/" element={<ResidenteDashboard />} />
+        <Route path="/comunicados" element={<p>Página de comunicados</p>} />
+      </Routes>,
+      { authContext: { user: mockUser, isAuthenticated: true } }
+    );
+
+    await user.click(await screen.findByText("Nuevo comunicado: asamblea el jueves."));
+
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/n1/leer"), {});
+    });
+    expect(await screen.findByText("Página de comunicados")).toBeInTheDocument();
   });
 });

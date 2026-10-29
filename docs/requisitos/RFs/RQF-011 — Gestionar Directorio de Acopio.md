@@ -30,6 +30,7 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 | `nombre_encargado`   | Texto  | No          | Máximo 100 caracteres                                                    |
 | `telefono_contacto`  | Texto  | No          | Máximo 15 caracteres                                                     |
 | `id_localidad`       | Número | Sí          | Debe coincidir obligatoriamente con un ID existente en la tabla `localidades`|
+| `url_foto`           | Texto  | No          | Solo una imagen que subió esta misma app: `/uploads/adjuntos/<uuid>.jpg`, `.png` o `.webp` (máximo 500 caracteres); un enlace externo se rechaza con 422. Vacío es "sin foto". Al editar, si no se manda, la foto se quita |
 | `motivo_cambio`      | Texto  | No (solo al editar) | Máximo 1000 caracteres. No se guarda en el punto: queda como un comentario |
 | `texto` (comentario) | Texto  | Sí (al comentar) | Máximo 1000 caracteres, no puede ir vacío                              |
 
@@ -54,10 +55,12 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 
 ### Panel de gestión (frontend)
 
-- La lista se muestra agrupada por localidad, en orden alfabético, con una sección plegable por localidad (cerradas al entrar) que indica cuántos puntos tiene y cuántos están de baja. Arriba hay un resumen ("9 puntos en 6 localidades · 1 de baja").
-- Se puede buscar por nombre o dirección (sin importar tildes) y filtrar por estado (Todos / Activos / De baja, con su conteo). Con una búsqueda o un filtro activo se abren solas las localidades con coincidencias. Todo se calcula en el navegador con la lista completa que ya entrega el backend.
-- Cada punto trae un enlace "Ver en el mapa" (búsqueda de Google Maps con dirección + localidad + Bogotá) para comprobar que la dirección quedó bien, y la etiqueta "Sin teléfono" en los puntos activos que no tienen teléfono de contacto.
-- Al hacer clic en un punto se abre un panel lateral con sus datos, los comentarios del administrador (autor y fecha) y las acciones Editar, Dar de baja o, si ya está de baja, Reactivar y Eliminar definitivamente. El lápiz de la fila abre el mismo panel directo en modo edición.
+- Los puntos se muestran en una tabla (columnas Punto, Localidad y Estado), ordenada por localidad y luego por nombre, con una fila compacta por punto. Arriba hay un resumen ("9 puntos en 6 localidades · 1 de baja").
+- Se puede buscar por nombre o dirección (sin importar tildes) y filtrar por localidad (solo las que tienen puntos) y por estado (Todos / Activos / De baja, con su conteo). Todo se calcula en el navegador con la lista completa que ya entrega el backend. Al cambiar la búsqueda o un filtro se pliega la fila abierta.
+- Cada fila termina con un kebab (tres puntos) con las acciones: "Ver ficha", "Editar" y "Dar de baja" o, si el punto ya está de baja, "Reactivar" y "Eliminar definitivamente". Un clic en la fila no hace nada: la ficha solo se despliega desde el kebab.
+- "Ver ficha" despliega la fila (una a la vez) con la ficha del punto (Ubicación con el botón "Cómo llegar", que busca en Google Maps con dirección + localidad + Bogotá, y Contacto, con "Sin teléfono" y "Sin encargado" cuando faltan) y, debajo, los comentarios del administrador (autor y fecha) con su campo para agregar uno.
+- "Editar" abre el formulario en un modal centrado, el mismo de "Nuevo punto de acopio".
+- El formulario trae el campo opcional "Foto del punto": se sube con `POST /api/v1/uploads/adjunto` (mismo componente de imagen que comunicados y novedades: vista previa, JPG/PNG/WEBP, máximo 5 MB, botón para quitarla) y el punto solo guarda su ruta. Si el punto tiene foto, la ficha la muestra a la izquierda en pantalla grande y arriba en celular, y se amplía al tocarla; sin foto no se muestra nada.
 - Al editar, el campo opcional "Motivo del cambio" deja constancia de por qué cambió algo (ej. nuevo encargado o dueño): se guarda como un comentario más del punto, en la misma transacción que el cambio.
 - Los comentarios son internos: solo los ve el Admin Sistema, nunca Residentes ni Recicladores.
 
@@ -71,6 +74,7 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 | Baja exitosa (HU-017) | 204       | Sin contenido — el punto queda `activo=false`.                                                               |
 | Punto no encontrado | 404         | `{"detail": "No se encontró ese punto de acopio."}`                                                          |
 | Error de Foránea    | 400         | `{"detail": "La localidad seleccionada no es válida o no existe."}`                                          |
+| Foto que no es de la app | 422    | Error de validación de `url_foto`: "La imagen debe ser un archivo JPG, PNG o WEBP subido a VerdeApp."        |
 | Acceso denegado     | 403         | `{"detail": "Acceso denegado. Privilegios insuficientes."}`                                                  |
 
 ---
@@ -87,7 +91,7 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 | DELETE | `/api/v1/admin/puntos-acopio/{id}/definitivo` | Sí (Admin) | Borra el registro por completo — solo si ya está dado de baja |
 | GET    | `/api/v1/admin/puntos-acopio/{id}/comentarios` | Sí (Admin) | Lista los comentarios internos del punto, del más reciente al más antiguo |
 | POST   | `/api/v1/admin/puntos-acopio/{id}/comentarios` | Sí (Admin) | Agrega un comentario interno firmado por el admin (también en puntos de baja) |
-| GET    | `/api/v1/directorio/puntos-acopio`  | Sí (cualquiera) | Lista solo los puntos activos — vista pública         |
+| GET    | `/api/v1/directorio/puntos-acopio`  | Sí (cualquiera) | Lista solo los puntos activos — vista pública (incluye `url_foto`) |
 
 ---
 
@@ -95,4 +99,5 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 
 - RN-001: Un punto de acopio no puede guardarse en la base de datos si no está estrictamente vinculado a una `localidad_id`. Esto garantiza que el RQF-005 (Filtro por localidad) no falle.
 - RN-002: Exclusividad de escritura. La tabla `Puntos_Acopio` solo puede ser modificada por el `admin_sistema`.
+- RN-004: La foto de un punto (`url_foto`) solo puede ser una imagen que subió esta misma app. Un enlace externo dejaría que un tercero vea quién abre la ficha. El archivo está en `COLUMNAS_CON_ADJUNTOS` (`app/limpiar_adjuntos.py`): la limpieza de adjuntos no lo borra mientras algún punto lo use, y sí cuando se reemplaza o se quita.
 - RN-003: Los comentarios de un punto (`puntos_acopio_comentarios`) son internos del `admin_sistema`. Se borran junto con el punto al eliminarlo definitivamente; si se borra la cuenta del autor, el comentario se conserva sin autor.

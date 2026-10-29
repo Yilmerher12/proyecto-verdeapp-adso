@@ -21,7 +21,8 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { Alert } from "@/components/ui/Alert";
 import { notificarCambioDesdeCampanita, onNotificacionesActualizadas } from "@/lib/notificationEvents";
 import { rutaDeContenidoRecomendado, TIPOS_CONTENIDO_RECOMENDADO } from "@/lib/contenidoRecomendado";
-import type { NotificacionItem } from "@/lib/notificaciones";
+import { rutaDeNotificacion, type NotificacionItem } from "@/lib/notificaciones";
+import type { RoleId } from "@/types/auth";
 
 // ¿Qué? El resultado de la auditoría se lee desde su banner en el panel principal (el banner
 //       sigue visible mientras la notificación esté sin leer).
@@ -33,9 +34,11 @@ interface NotificationBellProps {
   noLeidas: number;
   /** Panel principal del rol: adonde lleva tocar el aviso de una auditoría. */
   dashboardHref: string;
+  /** Rol de quien tiene la sesión: decide a qué página lleva el aviso de un comunicado o una novedad. */
+  rolId?: RoleId;
 }
 
-export function NotificationBell({ noLeidas, dashboardHref }: NotificationBellProps) {
+export function NotificationBell({ noLeidas, dashboardHref, rolId }: NotificationBellProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -127,13 +130,22 @@ export function NotificationBell({ noLeidas, dashboardHref }: NotificationBellPr
     }
   };
 
-  // ¿Qué? Solo dos tipos hacen algo al tocarlos: el contenido recomendado lleva a "Aprender"
-  //       (issue #4, RQF-013) y el resultado de auditoría, a su banner en el panel.
-  const esAccionable = (n: NotificacionItem) => n.tipo === TIPO_AUDITORIA || TIPOS_CONTENIDO_RECOMENDADO.includes(n.tipo);
+  // ¿Qué? Hacen algo al tocarlos: el contenido recomendado (lleva a "Aprender", issue #4, RQF-013),
+  //       el resultado de auditoría (a su banner en el panel) y los que tienen su propia página:
+  //       comunicados, novedades y soporte (ver rutaDeNotificacion). El resto solo se marca leída.
+  const esAccionable = (n: NotificacionItem) =>
+    n.tipo === TIPO_AUDITORIA || TIPOS_CONTENIDO_RECOMENDADO.includes(n.tipo) || rutaDeNotificacion(n, rolId) !== null;
 
   const alTocarNotificacion = async (n: NotificacionItem) => {
     if (n.tipo === TIPO_AUDITORIA) {
       navigate(dashboardHref);
+      setAbierto(false);
+      return;
+    }
+    const rutaPropia = rutaDeNotificacion(n, rolId);
+    if (rutaPropia) {
+      navigate(rutaPropia);
+      // ¿Impacto? Si ya está en esa página la ruta no cambia y el menú no se cerraría solo.
       setAbierto(false);
       return;
     }
