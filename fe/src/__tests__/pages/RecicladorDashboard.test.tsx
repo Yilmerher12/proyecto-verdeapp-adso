@@ -7,6 +7,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
+import { Route, Routes } from "react-router-dom";
 import { RecicladorDashboard } from "@/pages/dashboards/RecicladorDashboard";
 import { renderWithProviders, mockUser } from "../helpers";
 
@@ -127,9 +128,9 @@ describe("RecicladorDashboard", () => {
     expect(boton).toHaveAttribute("aria-disabled", "true");
     expect(boton).toHaveAttribute("aria-describedby", "reciclador-sin-conjuntos");
 
-    // Apagado no abre el modal de selección de conjunto.
+    // Apagado no abre la confirmación del aviso.
     await user.click(boton);
-    expect(screen.queryByText("¿A qué conjunto notificas?")).not.toBeInTheDocument();
+    expect(screen.queryByText("¿Enviar este aviso?")).not.toBeInTheDocument();
 
     expect(
       screen.getByText(/Los avisos de los residentes \(como SHUT lleno\) llegan de los conjuntos donde estés autorizado/)
@@ -194,7 +195,9 @@ describe("RecicladorDashboard", () => {
     const boton = await screen.findByRole("button", { name: "Llegué al conjunto" });
     await user.click(boton);
 
-    expect(screen.getByText("¿A qué conjunto notificas?")).toBeInTheDocument();
+    // ¿Qué? El conjunto ya está elegido arriba: el modal solo confirma, sin volver a preguntar cuál.
+    expect(screen.getByText("¿Enviar este aviso?")).toBeInTheDocument();
+    expect(screen.getByText(/Vas a avisar "Llegué al conjunto" a los residentes y al administrador de Conjunto Los Alpes/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Enviar aviso" }));
 
     await waitFor(() => {
@@ -205,11 +208,12 @@ describe("RecicladorDashboard", () => {
     });
   });
 
-  // ¿Qué? Issue #515: orden de los bloques — invitaciones, avisos, auditoría pendiente,
-  //       mis conjuntos, notificaciones recibidas y, al final, el historial.
+  // ¿Qué? Orden de los bloques — invitaciones, mis conjuntos (el selector), avisos, auditoría
+  //       pendiente, notificaciones recibidas y, al final, el historial.
   // ¿Impacto? Si alguien reordena el panel sin querer (o el aviso de auditoría vuelve a
-  //           empujar los botones hacia abajo), esta prueba falla.
-  it("muestra los bloques en orden: invitaciones, avisos, auditoría pendiente, conjuntos, notificaciones e historial", async () => {
+  //           empujar los botones hacia abajo), esta prueba falla. El selector va ARRIBA de los
+  //           botones porque los botones dependen del conjunto elegido (issue #515 y rediseño por conjunto).
+  it("muestra los bloques en orden: invitaciones, conjuntos, avisos, auditoría pendiente, notificaciones e historial", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("mis-invitaciones")) {
         return Promise.resolve({
@@ -232,9 +236,9 @@ describe("RecicladorDashboard", () => {
 
     const titulos = [
       await screen.findByRole("heading", { name: "Invitaciones pendientes" }),
+      await screen.findByRole("heading", { name: "Mis conjuntos autorizados" }),
       screen.getByRole("heading", { name: "Enviar notificación" }),
       await screen.findByRole("heading", { name: "Auditoría semanal pendiente" }),
-      screen.getByRole("heading", { name: "Mis conjuntos autorizados" }),
       screen.getByRole("heading", { name: "Notificaciones recibidas" }),
       screen.getByRole("heading", { name: "Historial de auditorías" }),
     ];
@@ -278,7 +282,7 @@ describe("RecicladorDashboard", () => {
 
     const alerta = await screen.findByRole("alert");
     expect(alerta).toHaveTextContent("Ya enviaste este aviso a este conjunto hace menos de 5 minutos.");
-    expect(screen.getByText("¿A qué conjunto notificas?")).toBeInTheDocument();
+    expect(screen.getByText("¿Enviar este aviso?")).toBeInTheDocument();
   });
 
   it("si el rechazo no trae motivo, muestra el aviso genérico dentro del modal", async () => {
@@ -425,6 +429,264 @@ describe("RecicladorDashboard", () => {
       renderPage();
 
       expect(await screen.findByText(AVISO)).toBeInTheDocument();
+    });
+  });
+
+  // ¿Qué? Tocar el aviso de un comunicado lleva a la página de Comunicados y lo marca leído
+  //       (antes solo lo marcaba leído y no pasaba nada más).
+  describe("notificaciones recibidas que llevan a otra página", () => {
+    const notificacion = (id: string, tipo: string, mensaje: string, leida = false) => ({
+      id,
+      tipo,
+      mensaje,
+      id_referencia: null,
+      nombre_conjunto: "Conjunto Los Alpes",
+      id_conjunto_residencial: 1,
+      leida,
+      created_at: new Date().toISOString(),
+    });
+
+    function renderConRutas(notificaciones: object[]) {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [conjuntoAutorizado] });
+        if (url.includes("mis-notificaciones")) return Promise.resolve({ data: notificaciones });
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      return renderWithProviders(
+        <Routes>
+          <Route path="/" element={<RecicladorDashboard />} />
+          <Route path="/comunicados" element={<p>Página de comunicados</p>} />
+          <Route path="/novedades" element={<p>Página de soporte técnico</p>} />
+        </Routes>,
+        { authContext: { user: mockUser, isAuthenticated: true } }
+      );
+    }
+
+    it("tocar un comunicado nuevo lo marca como leído y lleva a Comunicados", async () => {
+      const user = userEvent.setup();
+      renderConRutas([notificacion("n1", "COMUNICADO_NUEVO", "Nuevo comunicado: asamblea el jueves.")]);
+
+      await user.click(await screen.findByText("Nuevo comunicado: asamblea el jueves."));
+
+      await waitFor(() => {
+        expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/notificaciones/n1/leer"), {});
+      });
+      expect(await screen.findByText("Página de comunicados")).toBeInTheDocument();
+    });
+
+    it("un comunicado ya leído sigue llevando a Comunicados", async () => {
+      const user = userEvent.setup();
+      renderConRutas([notificacion("n2", "COMUNICADO_NUEVO", "Comunicado ya leído.", true)]);
+
+      await user.click(await screen.findByText("Comunicado ya leído."));
+
+      expect(await screen.findByText("Página de comunicados")).toBeInTheDocument();
+      expect(mockPost).not.toHaveBeenCalled();
+    });
+
+    it("una respuesta de soporte lleva a Soporte técnico", async () => {
+      const user = userEvent.setup();
+      renderConRutas([notificacion("n3", "RESPUESTA_SOPORTE", "Respondieron tu consulta.")]);
+
+      await user.click(await screen.findByText("Respondieron tu consulta."));
+
+      expect(await screen.findByText("Página de soporte técnico")).toBeInTheDocument();
+    });
+
+    it("un aviso de SHUT ya leído no es un botón: no tiene otra página", async () => {
+      renderConRutas([notificacion("n4", "SHUT_LLENO", "El SHUT está lleno.", true)]);
+
+      await screen.findByText("El SHUT está lleno.");
+      expect(screen.queryByRole("button", { name: /El SHUT está lleno/ })).not.toBeInTheDocument();
+    });
+  });
+
+  // ¿Qué? Con varios conjuntos el panel muestra UNO a la vez, el que se elige en las pastillas de
+  //       "Mis conjuntos autorizados": estado, botones de aviso, auditoría, actividad e historial.
+  // ¿Para qué? Antes, con 2 o más conjuntos los 4 botones quedaban siempre activos porque no se sabía
+  //           cuál elegiría el Reciclador; ahora se encienden y se apagan según el conjunto elegido.
+  describe("varios conjuntos: el panel sigue al conjunto elegido", () => {
+    const alpes = { id_conjunto_residencial: "c-alpes", nombre_conjunto: "Conjunto Los Alpes", direccion: "Cra 10 # 20-30", nombre_localidad: "Suba" };
+    const flores = { id_conjunto_residencial: "c-flores", nombre_conjunto: "Conjunto Las Flores", direccion: "Cra 5 # 6-7", nombre_localidad: "Usaquén" };
+    const estado = (id: string, presente: boolean, shutLleno = false) => ({
+      id_conjunto_residencial: id,
+      presente,
+      shut_lleno: shutLleno,
+      puede_avisar_llegada: !presente,
+    });
+    const notif = (id: string, mensaje: string, idConjunto: string | null) => ({
+      id,
+      tipo: "SHUT_LLENO",
+      mensaje,
+      id_referencia: null,
+      nombre_conjunto: null,
+      id_conjunto_residencial: idConjunto,
+      leida: false,
+      created_at: new Date().toISOString(),
+    });
+
+    // ¿Qué? Alpes: no ha llegado. Flores: ya llegó y el SHUT está libre.
+    function mockDosConjuntos() {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [alpes, flores] });
+        if (url.includes("mi-estado-reciclador")) {
+          return Promise.resolve({ data: [estado("c-alpes", false), estado("c-flores", true)] });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+    }
+
+    const pastilla = (nombre: string) => screen.getByRole("button", { name: new RegExp(`^${nombre}`) });
+    const apagado = (nombre: string) => screen.getByRole("button", { name: nombre }).getAttribute("aria-disabled") === "true";
+
+    it("arranca en el conjunto donde ya está presente y sus botones reflejan ese estado", async () => {
+      mockDosConjuntos();
+      renderPage();
+
+      await screen.findByText("Estás en el conjunto");
+      expect(pastilla("Conjunto Las Flores")).toHaveAttribute("aria-pressed", "true");
+      expect(pastilla("Conjunto Los Alpes")).toHaveAttribute("aria-pressed", "false");
+
+      // Ya llegó a Las Flores: no puede volver a llegar, puede avisar SHUT lleno y que finalizó.
+      expect(apagado("Llegué al conjunto")).toBe(true);
+      expect(apagado("SHUT está lleno")).toBe(false);
+      expect(apagado("SHUT ya está libre")).toBe(true);
+      expect(apagado("Finalicé separación")).toBe(false);
+    });
+
+    it("al elegir otro conjunto, los botones pasan al estado de ese conjunto", async () => {
+      mockDosConjuntos();
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText("Estás en el conjunto");
+
+      await user.click(pastilla("Conjunto Los Alpes"));
+
+      // En Los Alpes todavía no llegó: solo "Llegué" está activo.
+      expect(screen.getByText("No has llegado")).toBeInTheDocument();
+      expect(apagado("Llegué al conjunto")).toBe(false);
+      expect(apagado("SHUT está lleno")).toBe(true);
+      expect(apagado("SHUT ya está libre")).toBe(true);
+      expect(apagado("Finalicé separación")).toBe(true);
+    });
+
+    it("con el SHUT lleno se apaga 'lleno' y se enciende 'libre'", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [alpes, flores] });
+        if (url.includes("mi-estado-reciclador")) {
+          return Promise.resolve({ data: [estado("c-alpes", false), estado("c-flores", true, true)] });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      renderPage();
+
+      await screen.findByText("SHUT lleno");
+      expect(apagado("SHUT está lleno")).toBe(true);
+      expect(apagado("SHUT ya está libre")).toBe(false);
+    });
+
+    it("apagado explica el motivo al tocarlo y no abre la confirmación", async () => {
+      mockDosConjuntos();
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText("Estás en el conjunto");
+
+      await user.click(screen.getByRole("button", { name: "SHUT ya está libre" }));
+
+      // ¿Qué? El motivo se ve en el aviso visible (role="status"); el mismo texto también va oculto
+      //       dentro del botón, para lectores de pantalla.
+      expect(
+        await within(await screen.findByRole("status")).findByText("El SHUT de este conjunto ya está reportado como libre.")
+      ).toBeInTheDocument();
+      expect(screen.queryByText("¿Enviar este aviso?")).not.toBeInTheDocument();
+    });
+
+    it("el aviso se envía al conjunto elegido", async () => {
+      mockDosConjuntos();
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText("Estás en el conjunto");
+
+      await user.click(pastilla("Conjunto Los Alpes"));
+      await user.click(screen.getByRole("button", { name: "Llegué al conjunto" }));
+      expect(screen.getByText(/Vas a avisar "Llegué al conjunto" a los residentes y al administrador de Conjunto Los Alpes/)).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Enviar aviso" }));
+
+      await waitFor(() => {
+        expect(mockPost).toHaveBeenCalledWith(
+          expect.stringContaining("/notificaciones/enviar"),
+          { tipo: "LLEGADA_RECICLADOR", id_conjunto_residencial: "c-alpes" }
+        );
+      });
+    });
+
+    it("muestra las notificaciones del conjunto elegido y las generales, no las de otro conjunto", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [alpes, flores] });
+        if (url.includes("mi-estado-reciclador")) {
+          return Promise.resolve({ data: [estado("c-alpes", false), estado("c-flores", true)] });
+        }
+        if (url.includes("mis-notificaciones")) {
+          return Promise.resolve({
+            data: [
+              notif("n1", "Aviso de Los Alpes", "c-alpes"),
+              notif("n2", "Aviso de Las Flores", "c-flores"),
+              notif("n3", "Aviso general de la plataforma", null),
+            ],
+          });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup();
+      renderPage();
+
+      // Arranca en Las Flores (ya está presente).
+      expect(await screen.findByText("Aviso de Las Flores")).toBeInTheDocument();
+      expect(screen.getByText("Aviso general de la plataforma")).toBeInTheDocument();
+      expect(screen.queryByText("Aviso de Los Alpes")).not.toBeInTheDocument();
+
+      await user.click(pastilla("Conjunto Los Alpes"));
+
+      expect(screen.getByText("Aviso de Los Alpes")).toBeInTheDocument();
+      expect(screen.getByText("Aviso general de la plataforma")).toBeInTheDocument();
+      expect(screen.queryByText("Aviso de Las Flores")).not.toBeInTheDocument();
+    });
+
+    it("pide el historial solo del conjunto elegido y vuelve a pedirlo al cambiar", async () => {
+      mockDosConjuntos();
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText("Estás en el conjunto");
+
+      await waitFor(() => {
+        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias"), {
+          params: { limit: 10, offset: 0, id_conjunto: "c-flores" },
+        });
+      });
+
+      await user.click(pastilla("Conjunto Los Alpes"));
+
+      await waitFor(() => {
+        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias"), {
+          params: { limit: 10, offset: 0, id_conjunto: "c-alpes" },
+        });
+      });
+    });
+
+    it("marca con un aviso la pastilla del conjunto que necesita auditoría", async () => {
+      const reciente = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("mis-conjuntos-autorizados")) return Promise.resolve({ data: [alpes, flores] });
+        if (url.endsWith("/auditorias-conjunto/mias/ultimas")) {
+          return Promise.resolve({ data: [{ id_conjunto_residencial: "c-flores", ultima_auditoria: reciente }] });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      renderPage();
+
+      // Los Alpes nunca se auditó; Las Flores se auditó ayer.
+      expect(await screen.findByRole("button", { name: "Conjunto Los Alpes, Necesita auditoría" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Conjunto Las Flores" })).toBeInTheDocument();
     });
   });
 

@@ -16,6 +16,8 @@ export interface PuntoAcopioAdmin {
   nombre_encargado: string | null;
   telefono_contacto: string | null;
   activo: boolean;
+  // ¿Qué? Ruta de la foto del punto (/uploads/adjuntos/...); null si no tiene.
+  url_foto: string | null;
 }
 
 export type PuntoAcopioPayload = {
@@ -24,6 +26,8 @@ export type PuntoAcopioPayload = {
   id_localidad: number;
   nombre_encargado: string | null;
   telefono_contacto: string | null;
+  // ¿Qué? Foto del punto, ya subida con subirAdjunto; null o vacío es "sin foto".
+  url_foto?: string | null;
   // ¿Qué? Solo al editar: por qué se hace el cambio. El backend lo guarda
   //       como un comentario del punto, no como un campo del punto.
   motivo_cambio?: string | null;

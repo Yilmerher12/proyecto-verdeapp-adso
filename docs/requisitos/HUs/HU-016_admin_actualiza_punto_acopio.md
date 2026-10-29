@@ -49,11 +49,12 @@
 - **cuando** un residente consulta ese punto en el directorio,
 - **entonces** debe ver la información actualizada.
 
-### CA-016.4 — Editar desde un panel al lado de la lista
+### CA-016.4 — Editar desde el kebab de la tabla
 
-- **Dado que** estoy viendo la lista de puntos de acopio,
-- **cuando** hago clic en un punto o en su lápiz,
-- **entonces** se abre un panel lateral con sus datos y puedo editarlo sin salir de la lista.
+- **Dado que** estoy viendo la tabla de puntos de acopio,
+- **cuando** abro el kebab (tres puntos) de un punto y elijo "Editar",
+- **entonces** se abre un modal centrado con el formulario de ese punto, el mismo de "Nuevo punto de acopio". Si guardo, el modal se cierra; si falla, se queda abierto con el aviso.
+- Elegir "Ver ficha" en el mismo menú despliega la fila con sus datos, sin abrir ningún panel.
 
 ### CA-016.5 — Dejar constancia del motivo del cambio
 
@@ -63,6 +64,13 @@
 
 ### CA-016.6 — Comentarios internos del punto
 
-- **Dado que** abrí el panel de un punto,
+- **Dado que** desplegué la ficha de un punto,
 - **cuando** escribo un comentario y lo agrego,
 - **entonces** aparece de primero en la lista de comentarios, con autor y fecha, y ningún Residente ni Reciclador puede verlo.
+
+### CA-016.7 — Cambiar o quitar la foto del punto
+
+- **Dado que** edito un punto de acopio,
+- **cuando** subo otra imagen en "Foto del punto", o la quito, y guardo,
+- **entonces** la ficha muestra la foto nueva, o deja de mostrar foto. La foto reemplazada o quitada ya no cuenta como en uso: la limpieza de adjuntos la borra después.
+- Los Residentes y Recicladores ven la foto actualizada al abrir la ficha del punto, que se puede ampliar al tocarla.

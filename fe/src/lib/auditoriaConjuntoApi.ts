@@ -72,11 +72,14 @@ export interface PaginaAuditorias {
 }
 
 // ¿Qué? Las auditorías que el Reciclador ya envió, de a páginas, más recientes primero.
+// ¿Para qué? Con `idConjunto` solo las de ese conjunto (su panel muestra un conjunto a la vez);
+//           sin él, todas.
 export async function listarMisAuditorias(
   limit: number,
   offset: number,
+  idConjunto?: string,
 ): Promise<PaginaAuditorias> {
-  const { data } = await axios.get(`${API_BASE}/mias`, { params: { limit, offset } });
+  const { data } = await axios.get(`${API_BASE}/mias`, { params: { limit, offset, id_conjunto: idConjunto } });
   return data;
 }
 

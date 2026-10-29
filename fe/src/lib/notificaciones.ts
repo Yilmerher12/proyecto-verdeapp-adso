@@ -12,6 +12,7 @@
  *           NotificationFeed.tsx exportando SOLO el componente.
  */
 import i18n from "@/i18n";
+import { RoleId } from "@/types/auth";
 
 export interface NotificacionItem {
   id: string;
@@ -29,6 +30,29 @@ export interface NotificacionItem {
   id_conjunto_residencial: string | null;
   leida: boolean;
   created_at: string;
+}
+
+// ¿Qué? La página donde vive lo que la notificación anuncia, o null si no hay una (ej. "SHUT lleno":
+//       eso se ve en el propio panel).
+// ¿Para qué? Tocar el aviso de un comunicado, una novedad o una respuesta de soporte debe LLEVAR
+//           a esa página (y marcarla leída), no solo marcarla leída. Se usa en los paneles y en el
+//           menú de la campanita, para que se comporten igual.
+// ¿Impacto? Depende del rol porque cada uno tiene su propia pantalla: el Admin de Conjunto
+//           escribe los comunicados (no los lee en el feed) y el Admin del Sistema escribe las novedades.
+//           Los avisos de auditoría y contenido recomendado no pasan por aquí (tienen su propia lógica).
+export function rutaDeNotificacion(notificacion: Pick<NotificacionItem, "tipo">, rol?: RoleId): string | null {
+  switch (notificacion.tipo) {
+    case "COMUNICADO_NUEVO":
+    case "COMUNICADO_ACTUALIZADO":
+      return rol === RoleId.ADMIN_CONJUNTO ? "/admin-conjunto/comunicados" : "/comunicados";
+    case "NOVEDAD_NUEVA":
+    case "NOVEDAD_ACTUALIZADA":
+    case "RESPUESTA_SOPORTE":
+    case "ESTADO_SOPORTE":
+      return rol === RoleId.ADMIN_SISTEMA ? "/admin/novedades" : "/novedades";
+    default:
+      return null;
+  }
 }
 
 // ¿Qué? Se usa i18n.t() directamente (no el hook useTranslation) porque esta

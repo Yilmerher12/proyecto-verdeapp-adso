@@ -66,3 +66,11 @@
 - **Dado que** entro a la pestaña de Puntos de Acopio,
 - **cuando** reviso el filtro de localidad,
 - **entonces** viene preseleccionado en la mía por conveniencia, pero puedo cambiarlo a cualquier otra localidad sin restricción.
+
+### CA-006.7 — Los puntos de acopio se ven en una tabla con fila desplegable
+
+- **Dado que** veo los puntos de acopio (el Residente en la pestaña Puntos de Acopio, el Reciclador en su página "Puntos de acopio"),
+- **cuando** la lista carga,
+- **entonces** los veo en una tabla con las columnas Punto (nombre y dirección) y Localidad, ordenada por localidad y luego por nombre. Puedo buscar por nombre o dirección sin importar tildes.
+- Al tocar la fila (o la flecha del final) se despliega la ficha del punto, de a una a la vez: **Ubicación** (dirección con botón para copiarla y el botón "Cómo llegar", que abre Google Maps) y **Contacto** (teléfono y encargado).
+- Si el punto no tiene teléfono, veo "Sin teléfono publicado" y la línea general de la UAESP, aclarando que no es la del punto. No veo kebab, comentarios ni botones de edición: son solo del Admin del Sistema.

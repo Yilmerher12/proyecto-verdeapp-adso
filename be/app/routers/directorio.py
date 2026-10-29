@@ -105,6 +105,7 @@ def listar_puntos_acopio(
             PuntoAcopio.direccion,
             PuntoAcopio.telefono_contacto,
             PuntoAcopio.nombre_encargado,
+            PuntoAcopio.url_foto,
             Localidad.nombre_localidad,
         )
         .join(Localidad, PuntoAcopio.id_localidad == Localidad.id_localidad)
@@ -126,6 +127,7 @@ def listar_puntos_acopio(
             "telefono_contacto": r.telefono_contacto,
             "nombre_encargado": r.nombre_encargado,
             "nombre_localidad": r.nombre_localidad,
+            "url_foto": r.url_foto,
         }
         for r in rows
     ]

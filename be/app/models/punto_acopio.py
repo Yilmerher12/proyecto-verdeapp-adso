@@ -14,6 +14,11 @@ class PuntoAcopio(Base):
     nombre_encargado = Column(String(100), nullable=True)
     direccion = Column(String(255), nullable=False)
     telefono_contacto = Column(String(15), nullable=True)
+    # ¿Qué? Ruta de la foto del punto (/uploads/adjuntos/<uuid>.jpg|png|webp), subida por
+    #       el Admin Sistema con POST /uploads/adjunto — no la foto en sí.
+    # ¿Impacto? Opcional: un punto sin foto se ve igual que antes. Está en
+    #           COLUMNAS_CON_ADJUNTOS (limpiar_adjuntos.py), o la limpieza la borraría.
+    url_foto = Column(String(500), nullable=True)
     # ¿Qué? RQF-011/HU-017: "dar de baja" es un soft-delete — el punto deja
     #       de aparecer en el directorio de Residentes/Recicladores, pero
     #       el registro se conserva (igual que fecha_desvinculacion en

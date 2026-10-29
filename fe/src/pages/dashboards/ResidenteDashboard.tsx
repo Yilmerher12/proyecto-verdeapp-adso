@@ -12,7 +12,7 @@ import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
-import { tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
+import { rutaDeNotificacion, tiempoRelativo, type NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { PanelDesempeno } from "@/components/desempeno/PanelDesempeno";
@@ -122,7 +122,14 @@ export function ResidenteDashboard() {
   //       que hacer el usuario, mejor").
   // ¿Para qué? Issue #516 — cómo se calcula la ruta vive en lib/contenidoRecomendado.ts,
   //           porque el menú de la campanita hace lo mismo con esta notificación.
+  // ¿Qué? Los comunicados, novedades y respuestas de soporte llevan a su propia página
+  //       (rutaDeNotificacion); el contenido recomendado, a su categoría de "Aprender".
   const irAContenidoRecomendado = async (notif: NotificacionItem) => {
+    const rutaPropia = rutaDeNotificacion(notif, RoleId.RESIDENTE);
+    if (rutaPropia) {
+      navigate(rutaPropia);
+      return;
+    }
     try {
       const ruta = await rutaDeContenidoRecomendado(notif);
       if (ruta) navigate(ruta);

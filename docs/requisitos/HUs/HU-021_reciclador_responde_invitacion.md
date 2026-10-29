@@ -54,3 +54,5 @@
 - **Dado que** ya acepté una o más invitaciones,
 - **cuando** consulto mis conjuntos autorizados,
 - **entonces** debo ver la lista completa de conjuntos donde puedo operar.
+
+> **Actualización (2026-10-28):** la lista son pastillas en la parte de arriba del panel. Al elegir un conjunto, el resto del panel (estado, botones de aviso, auditoría pendiente, notificaciones e historial) muestra solo ese conjunto. Ver RQF-006.

@@ -92,10 +92,11 @@ async def crear_auditoria(
 def listar_mias(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    id_conjunto: Optional[UUID] = Query(None, description="Opcional: solo las auditorías de este conjunto"),
     current_user: Usuario = Depends(_requiere_reciclador),
     db: Session = Depends(get_db),
 ) -> AuditoriasListResponse:
-    auditorias, total = service.listar_mias(db, current_user.id_usuario, limit, offset)
+    auditorias, total = service.listar_mias(db, current_user.id_usuario, limit, offset, id_conjunto)
     return AuditoriasListResponse(items=[_a_response(a) for a in auditorias], total=total)
 
 

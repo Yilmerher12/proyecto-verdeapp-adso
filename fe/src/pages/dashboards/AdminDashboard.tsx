@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Database, UserPlus, Search, ChevronLeft, ChevronRight, ChevronDown, Building, UserX, UserCheck, ArrowUp, ArrowDown, ArrowUpDown, ClipboardList, ChartColumn } from "lucide-react";
+import { Database, UserPlus, Search, ChevronLeft, ChevronRight, ChevronDown, Building, UserX, UserCheck, Eye, ArrowUp, ArrowDown, ArrowUpDown, ClipboardList, ChartColumn } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -10,14 +10,14 @@ import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Spinner } from "@/components/ui/Spinner";
 import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { MenuAcciones, type OpcionMenu } from "@/components/ui/MenuAcciones";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
 import { BandejaAdminSistema } from "@/components/BandejaAdminSistema";
 import { AsignarConjuntoAdicionalForm } from "@/components/AsignarConjuntoAdicionalForm";
 import { ConjuntoCombobox } from "@/components/ui/ConjuntoCombobox";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
-import { PerfilUsuarioPanel } from "@/components/PerfilUsuarioPanel";
+import { PerfilUsuarioDetalle } from "@/components/PerfilUsuarioDetalle";
 import { cambiarHabilitado, MOTIVO_MAX_LENGTH } from "@/lib/adminUsuariosApi";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 
@@ -113,7 +113,12 @@ export function AdminDashboard() {
   //           en vez de parchar filas a mano (con "Inactivos" encendido, una
   //           cuenta reactivada tiene que salir de la lista).
   const [version, setVersion] = useState(0);
-  const [perfilAbierto, setPerfilAbierto] = useState<string | null>(null);
+  // ¿Qué? Correo de la fila desplegada con "Ver información" (solo una a la vez).
+  // ¿Para qué? Antes el perfil se abría en un panel por el lado derecho; ahora
+  //           la información se muestra dentro de la propia tabla.
+  // ¿Impacto? Se cierra al cambiar de pestaña, de página o de filtro (ver
+  //           cerrarFila), para no dejar abierta una fila que ya no se ve.
+  const [filaExpandida, setFilaExpandida] = useState<string | null>(null);
   // ¿Qué? Cada pestaña tiene sus propias columnas ordenables, así que
   //       cambiar de pestaña reinicia el orden (ver cambiarTab) — sin
   //       columna elegida (orderBy null), el backend usa su propio orden
@@ -258,7 +263,10 @@ export function AdminDashboard() {
   //       página a la primera — evita quedar "varado" en una página que ya
   //       no tiene resultados con el filtro nuevo (antes esto vivía en un
   //       useEffect aparte, solo para llamar setPagina).
+  const cerrarFila = () => setFilaExpandida(null);
+
   const cambiarTab = (nuevaTab: TabUsuarios) => {
+    cerrarFila();
     setTab(nuevaTab);
     // ¿Qué? Cada pestaña tiene sus propias columnas — el orden de una no
     //       tiene sentido en la otra.
@@ -281,14 +289,18 @@ export function AdminDashboard() {
   };
 
   const alternarInactivos = () => {
+    cerrarFila();
     setSoloInactivos((v) => !v);
     setPagina(0);
   };
 
   const cambiarConjunto = (valor: ConjuntoOption | null) => {
+    cerrarFila();
     setConjuntoSeleccionado(valor);
     setPagina(0);
   };
+
+  const alternarFila = (correo: string) => setFilaExpandida((actual) => (actual === correo ? null : correo));
 
   // ¿Qué? El profesor pidió, en la sustentación, que esta vista permitiera
   //       HACER algo con los usuarios, no solo consultarlos — esta es esa
@@ -372,16 +384,11 @@ export function AdminDashboard() {
     );
   };
 
-  // ¿Qué? Celda compartida por las 3 tablas: muestra el estado y, si no es
-  //       la propia cuenta del Admin del Sistema (el backend rechaza
-  //       desactivarse a sí mismo), el botón para cambiarlo.
-  // ¿Qué? Estado (insignia, solo lectura) y Acciones (botón real) van en
-  //       columnas SEPARADAS a propósito — antes compartían una celda y el
-  //       botón, con solo texto de color, se confundía visualmente con la
-  //       insignia de al lado (ambos eran "una etiqueta de color"). El
-  //       componente Button ya reutilizado en el resto de la app (relleno
-  //       sólido o borde marcado) deja mucho más claro que uno es estado y
-  //       el otro es una acción para pulsar.
+  // ¿Qué? Celda compartida por las 3 tablas: la insignia de estado (solo
+  //       lectura) y, si la cuenta está inactiva, desde cuándo y por qué.
+  // ¿Para qué? El estado y las acciones van en columnas separadas (el kebab es
+  //           la última): una insignia de color no debe confundirse con algo
+  //           que se pueda pulsar.
   const celdaBadgeEstado = (habilitado: boolean, fecha?: string | null, motivoDesactivacion?: string | null) => (
     <td className="px-5 py-3">
       <span
@@ -405,39 +412,55 @@ export function AdminDashboard() {
     </td>
   );
 
-  // ¿Qué? El nombre es un botón (se alcanza con teclado) y toda la fila
-  //       también abre el perfil con un clic — la celda de Acciones
-  //       frena el clic para no abrir el perfil al desactivar/activar.
-  const celdaNombre = (correo: string, nombre: string) => (
-    <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">
-      <button
-        type="button"
-        onClick={() => setPerfilAbierto(correo)}
-        aria-label={t("dashboards.admin.profilePanel.openProfile", { nombre })}
-        className="focus-ring cursor-pointer rounded text-left underline decoration-gray-500 underline-offset-4 transition-colors hover:text-accent-700 hover:decoration-accent-600 dark:decoration-gray-400 dark:hover:text-accent-400"
-      >
-        {nombre}
-      </button>
-    </td>
+  const celdaNombre = (nombre: string) => (
+    <td className="px-5 py-3 text-sm font-medium text-gray-900 dark:text-white">{nombre}</td>
   );
 
-  const celdaAcciones = (correo: string, habilitado: boolean) => (
-    <td className="px-5 py-3" onClick={(e) => e.stopPropagation()}>
-      {correo !== user?.email && (
-        <Button
-          type="button"
-          size="sm"
-          variant={habilitado ? "danger" : "secondary"}
-          onClick={() => pedirConfirmacion(correo, !habilitado)}
-        >
-          {habilitado ? <UserX className="icon-sm mr-1 icon-draw" /> : <UserCheck className="icon-sm mr-1 icon-draw" />}
-          {habilitado
-            ? t("dashboards.admin.usersSection.status.disable")
-            : t("dashboards.admin.usersSection.status.enable")}
-        </Button>
-      )}
-    </td>
-  );
+  // ¿Qué? Última columna de las 3 tablas: el kebab con las acciones sobre esa
+  //       cuenta. "Ver información" despliega la fila; Desactivar/Activar va
+  //       aparte, en rojo, y solo si no es la propia cuenta del Admin (el
+  //       backend rechaza desactivarse a sí mismo).
+  // ¿Para qué? Antes era una columna "Acciones" con un botón por fila. Aquí
+  //           caben las acciones que vengan (por ejemplo "Editar datos") como
+  //           un grupo más del menú, sin agregar columnas.
+  const celdaKebab = (correo: string, nombre: string, habilitado: boolean) => {
+    const s = "dashboards.admin.usersSection";
+    const grupos: OpcionMenu[][] = [
+      [{ id: "ver", label: t(`${s}.menu.viewInfo`), icon: Eye, onSelect: () => alternarFila(correo) }],
+    ];
+    if (correo !== user?.email) {
+      grupos.push([
+        {
+          id: "estado",
+          label: habilitado ? t(`${s}.status.disable`) : t(`${s}.status.enable`),
+          icon: habilitado ? UserX : UserCheck,
+          peligrosa: habilitado,
+          onSelect: () => pedirConfirmacion(correo, !habilitado),
+        },
+      ]);
+    }
+    return (
+      <td className="px-3 py-3 text-right">
+        <MenuAcciones ariaLabel={t(`${s}.menu.actionsFor`, { nombre })} grupos={grupos} />
+      </td>
+    );
+  };
+
+  // ¿Qué? Fila extra, debajo de la cuenta elegida, con su información completa.
+  // ¿Para qué? El contenido va en un div pegajoso al borde izquierdo y tan ancho
+  //           como el contenedor visible (100cqw), no como la tabla.
+  // ¿Impacto? Con pantallas angostas la tabla tiene scroll horizontal; sin esto la
+  //           información quedaría tan ancha como la tabla y cortada por la izquierda.
+  const filaDetalle = (correo: string, columnas: number) =>
+    filaExpandida === correo && (
+      <tr className="bg-gray-50 dark:bg-night-inset/40">
+        <td colSpan={columnas}>
+          <div className="sticky left-0 w-[100cqw]">
+            <PerfilUsuarioDetalle correo={correo} version={version} />
+          </div>
+        </td>
+      </tr>
+    );
 
   const fullName = `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || t("roles.adminSistema");
 
@@ -641,7 +664,13 @@ export function AdminDashboard() {
               <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(e) => {
+                  // ¿Qué? Se cierra la fila al escribir, no dentro del debounce: ese
+                  //       temporizador también corre al montar la página y cerraría
+                  //       una fila abierta en los primeros 350 ms.
+                  cerrarFila();
+                  setSearchInput(e.target.value);
+                }}
                 placeholder={t("dashboards.admin.usersSection.searchPlaceholder")}
                 className="touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 lg:w-48"
               />
@@ -681,7 +710,7 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="@container overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
               <tr className="border-b border-gray-100 dark:border-night-line bg-gray-50 dark:bg-night-inset/60">
@@ -692,7 +721,7 @@ export function AdminDashboard() {
                     {thOrdenable("conjunto", t("dashboards.admin.residentsTable.headers.conjunto"))}
                     {thOrdenable("unidad", t("dashboards.admin.residentsTable.headers.unit"))}
                     {thOrdenable("estado", t("dashboards.admin.usersSection.status.header"))}
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
+                    <th className="px-3 py-3"><span className="sr-only">{t("dashboards.admin.usersSection.status.actionsHeader")}</span></th>
                   </>
                 )}
                 {tab === "recicladores" && (
@@ -701,7 +730,7 @@ export function AdminDashboard() {
                     {thOrdenable("nombre", t("dashboards.admin.recyclersTable.headers.fullName"))}
                     {thOrdenable("asociacion", t("dashboards.admin.recyclersTable.headers.association"))}
                     {thOrdenable("estado", t("dashboards.admin.usersSection.status.header"))}
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
+                    <th className="px-3 py-3"><span className="sr-only">{t("dashboards.admin.usersSection.status.actionsHeader")}</span></th>
                   </>
                 )}
                 {tab === "administradores" && (
@@ -711,7 +740,7 @@ export function AdminDashboard() {
                     {thOrdenable("telefono", t("dashboards.admin.adminsTable.headers.phone"))}
                     {thOrdenable("conjuntos", t("dashboards.admin.adminsTable.headers.conjuntos"))}
                     {thOrdenable("estado", t("dashboards.admin.usersSection.status.header"))}
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboards.admin.usersSection.status.actionsHeader")}</th>
+                    <th className="px-3 py-3"><span className="sr-only">{t("dashboards.admin.usersSection.status.actionsHeader")}</span></th>
                   </>
                 )}
               </tr>
@@ -737,21 +766,20 @@ export function AdminDashboard() {
                     </td>
                   </tr>
                 ) : (
-                  residentesData.map((r, idx) => (
-                    <tr
-                      key={idx}
-                      onClick={() => setPerfilAbierto(r.Correo)}
-                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-night-inset/40 transition-colors"
-                    >
-                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
-                      {celdaNombre(r.Correo, `${r.Nombre} ${r.Apellido}`)}
-                      <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{r.Conjunto}</td>
-                      <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">
-                        {t("dashboards.admin.residentsTable.unitFormat", { bloque: r.Bloque, apto: r.Apartamento })}
-                      </td>
-                      {celdaBadgeEstado(r.Habilitado, r.Fecha_Desactivacion, r.Motivo_Desactivacion)}
-                      {celdaAcciones(r.Correo, r.Habilitado)}
-                    </tr>
+                  residentesData.map((r) => (
+                    <Fragment key={r.Correo}>
+                      <tr className="hover:bg-gray-50 dark:hover:bg-night-inset/40 transition-colors">
+                        <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
+                        {celdaNombre(`${r.Nombre} ${r.Apellido}`)}
+                        <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{r.Conjunto}</td>
+                        <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">
+                          {t("dashboards.admin.residentsTable.unitFormat", { bloque: r.Bloque, apto: r.Apartamento })}
+                        </td>
+                        {celdaBadgeEstado(r.Habilitado, r.Fecha_Desactivacion, r.Motivo_Desactivacion)}
+                        {celdaKebab(r.Correo, `${r.Nombre} ${r.Apellido}`, r.Habilitado)}
+                      </tr>
+                      {filaDetalle(r.Correo, 6)}
+                    </Fragment>
                   ))
                 )
               ) : tab === "recicladores" ? (
@@ -762,22 +790,21 @@ export function AdminDashboard() {
                     </td>
                   </tr>
                 ) : (
-                  recicladoresData.map((r, idx) => (
-                    <tr
-                      key={idx}
-                      onClick={() => setPerfilAbierto(r.Correo)}
-                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-night-inset/40 transition-colors"
-                    >
-                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
-                      {celdaNombre(r.Correo, r.Nombre_Completo)}
-                      <td className="px-5 py-3">
-                        <span className="rounded-full bg-accent-50 dark:bg-accent-300/10 px-2.5 py-0.5 text-xs font-semibold text-accent-700 dark:text-accent-400">
-                          {r.Asociacion}
-                        </span>
-                      </td>
-                      {celdaBadgeEstado(r.Habilitado, r.Fecha_Desactivacion, r.Motivo_Desactivacion)}
-                      {celdaAcciones(r.Correo, r.Habilitado)}
-                    </tr>
+                  recicladoresData.map((r) => (
+                    <Fragment key={r.Correo}>
+                      <tr className="hover:bg-gray-50 dark:hover:bg-night-inset/40 transition-colors">
+                        <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{r.Correo}</td>
+                        {celdaNombre(r.Nombre_Completo)}
+                        <td className="px-5 py-3">
+                          <span className="rounded-full bg-accent-50 dark:bg-accent-300/10 px-2.5 py-0.5 text-xs font-semibold text-accent-700 dark:text-accent-400">
+                            {r.Asociacion}
+                          </span>
+                        </td>
+                        {celdaBadgeEstado(r.Habilitado, r.Fecha_Desactivacion, r.Motivo_Desactivacion)}
+                        {celdaKebab(r.Correo, r.Nombre_Completo, r.Habilitado)}
+                      </tr>
+                      {filaDetalle(r.Correo, 5)}
+                    </Fragment>
                   ))
                 )
               ) : administradoresData.length === 0 ? (
@@ -787,19 +814,18 @@ export function AdminDashboard() {
                   </td>
                 </tr>
               ) : (
-                administradoresData.map((a, idx) => (
-                  <tr
-                      key={idx}
-                      onClick={() => setPerfilAbierto(a.Correo)}
-                      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-night-inset/40 transition-colors"
-                    >
-                    <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{a.Correo}</td>
-                    {celdaNombre(a.Correo, `${a.Nombre} ${a.Apellido}`)}
-                    <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">{a.Teléfono || "—"}</td>
-                    <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{a.Conjuntos}</td>
-                    {celdaBadgeEstado(a.Habilitado, a.Fecha_Desactivacion, a.Motivo_Desactivacion)}
-                    {celdaAcciones(a.Correo, a.Habilitado)}
-                  </tr>
+                administradoresData.map((a) => (
+                  <Fragment key={a.Correo}>
+                    <tr className="hover:bg-gray-50 dark:hover:bg-night-inset/40 transition-colors">
+                      <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{a.Correo}</td>
+                      {celdaNombre(`${a.Nombre} ${a.Apellido}`)}
+                      <td className="px-5 py-3 text-xs text-gray-500 dark:text-gray-400">{a.Teléfono || "—"}</td>
+                      <td className="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{a.Conjuntos}</td>
+                      {celdaBadgeEstado(a.Habilitado, a.Fecha_Desactivacion, a.Motivo_Desactivacion)}
+                      {celdaKebab(a.Correo, `${a.Nombre} ${a.Apellido}`, a.Habilitado)}
+                    </tr>
+                    {filaDetalle(a.Correo, 6)}
+                  </Fragment>
                 ))
               )}
             </tbody>
@@ -815,7 +841,10 @@ export function AdminDashboard() {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setPagina((p) => Math.max(0, p - 1))}
+                onClick={() => {
+                  cerrarFila();
+                  setPagina((p) => Math.max(0, p - 1));
+                }}
                 disabled={pagina === 0}
                 className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
                 aria-label={t("dashboards.admin.usersSection.pagination.prev")}
@@ -828,7 +857,10 @@ export function AdminDashboard() {
               </span>
               <button
                 type="button"
-                onClick={() => setPagina((p) => (p + 1 < totalPaginas ? p + 1 : p))}
+                onClick={() => {
+                  cerrarFila();
+                  setPagina((p) => (p + 1 < totalPaginas ? p + 1 : p));
+                }}
                 disabled={pagina + 1 >= totalPaginas}
                 className="touch-target flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent dark:text-gray-400 dark:hover:bg-night-hover"
                 aria-label={t("dashboards.admin.usersSection.pagination.next")}
@@ -869,20 +901,8 @@ export function AdminDashboard() {
         </Modal>
       )}
 
-      {perfilAbierto && (
-        <PerfilUsuarioPanel
-          correo={perfilAbierto}
-          version={version}
-          esPropiaCuenta={perfilAbierto === user?.email}
-          cerrarConEscape={!confirmando}
-          onClose={() => setPerfilAbierto(null)}
-          onCambiarEstado={pedirConfirmacion}
-        />
-      )}
-
       {confirmando && (
         <ConfirmModal
-          layer={perfilAbierto ? "stacked" : "base"}
           icon={confirmando.nuevoEstado ? UserCheck : UserX}
           variant={confirmando.nuevoEstado ? "primary" : "danger"}
           ariaLabel={t("dashboards.admin.usersSection.status.confirmButton")}
