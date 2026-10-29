@@ -1,7 +1,8 @@
 /**
  * Archivo: __tests__/pages/AdminPuntosAcopioPage.test.tsx
  * Descripción: Tests del panel de gestión de puntos de acopio del Admin
- *              Sistema (RQF-011 / HU-015, HU-016, HU-017).
+ *              Sistema (RQF-011 / HU-015, HU-016, HU-017): tabla con filas
+ *              desplegables, kebab por fila y modal de edición.
  */
 
 import { screen, waitFor, within } from "@testing-library/react";
@@ -62,19 +63,16 @@ function mockRespuestas(puntos: unknown[], comentarios: unknown[] = []) {
   });
 }
 
-// ¿Qué? Las secciones de localidad arrancan cerradas. Por defecto la prueba las
-//       abre todas para poder ver las filas; con abrir=false se ve el estado inicial.
-async function renderPage(abrir = true) {
-  const utils = renderWithProviders(<AdminPuntosAcopioPage />, {
+function renderPage() {
+  return renderWithProviders(<AdminPuntosAcopioPage />, {
     authContext: { user: adminUser, isAuthenticated: true },
   });
-  if (abrir) {
-    const user = userEvent.setup();
-    for (const boton of await screen.findAllByRole("button", { expanded: false })) {
-      await user.click(boton);
-    }
-  }
-  return utils;
+}
+
+// ¿Qué? Abre el kebab de un punto y elige una de sus opciones del menú.
+async function elegirOpcion(user: ReturnType<typeof userEvent.setup>, nombre: string, opcion: string) {
+  await user.click(await screen.findByRole("button", { name: `Acciones de ${nombre}` }));
+  await user.click(screen.getByRole("menuitem", { name: opcion }));
 }
 
 describe("AdminPuntosAcopioPage", () => {
@@ -87,26 +85,60 @@ describe("AdminPuntosAcopioPage", () => {
   });
 
   it("muestra el estado vacío cuando no hay puntos registrados", async () => {
-    await renderPage(false);
+    renderPage();
     expect(await screen.findByText("Todavía no hay puntos de acopio registrados.")).toBeInTheDocument();
   });
 
-  it("lista los puntos de acopio, marcando los inactivos", async () => {
+  it("lista los puntos en una tabla, marcando los inactivos", async () => {
     mockRespuestas([puntoActivo, puntoInactivo]);
-    await renderPage();
+    renderPage();
 
     expect(await screen.findByText("ECA Kennedy")).toBeInTheDocument();
     expect(screen.getByText("ECA Retirado")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Punto" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Estado" })).toBeInTheDocument();
+    expect(screen.getByText("Activo")).toBeInTheDocument();
     expect(screen.getByText("Inactivo")).toBeInTheDocument();
+  });
 
-    // ¿Qué? El botón de dar de baja no debe ofrecerse para uno ya inactivo.
-    expect(screen.queryByRole("button", { name: "Dar de baja ECA Retirado" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Dar de baja ECA Kennedy" })).toBeInTheDocument();
+  it("no tiene secciones por localidad ni botones de ícono en la fila: las acciones van en el kebab", async () => {
+    mockRespuestas([puntoActivo]);
+    renderPage();
+
+    await screen.findByText("ECA Kennedy");
+    expect(screen.queryByRole("button", { name: "Editar ECA Kennedy" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dar de baja ECA Kennedy" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Acciones de ECA Kennedy" })).toBeInTheDocument();
+  });
+
+  it("el menú de un punto activo ofrece ver, editar y dar de baja, pero no reactivar ni eliminar", async () => {
+    mockRespuestas([puntoActivo]);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Acciones de ECA Kennedy" }));
+
+    expect(screen.getAllByRole("menuitem").map((i) => i.textContent)).toEqual(["Ver ficha", "Editar", "Dar de baja"]);
+  });
+
+  it("el menú de un punto de baja ofrece reactivar y eliminar definitivamente, pero no dar de baja", async () => {
+    mockRespuestas([puntoInactivo]);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Acciones de ECA Retirado" }));
+
+    expect(screen.getAllByRole("menuitem").map((i) => i.textContent)).toEqual([
+      "Ver ficha",
+      "Editar",
+      "Reactivar",
+      "Eliminar definitivamente",
+    ]);
   });
 
   it("crea un punto de acopio nuevo", async () => {
     const user = userEvent.setup();
-    await renderPage(false);
+    renderPage();
 
     await screen.findByText("Todavía no hay puntos de acopio registrados.");
     await user.click(screen.getByRole("button", { name: "Nuevo punto de acopio" }));
@@ -130,7 +162,7 @@ describe("AdminPuntosAcopioPage", () => {
   //       valida al salir de él, y el error queda anclado a ESE campo.
   it("marca el campo Nombre con su propio error al salir vacío, sin tocar los demás", async () => {
     const user = userEvent.setup();
-    await renderPage(false);
+    renderPage();
 
     await screen.findByText("Todavía no hay puntos de acopio registrados.");
     await user.click(screen.getByRole("button", { name: "Nuevo punto de acopio" }));
@@ -142,14 +174,14 @@ describe("AdminPuntosAcopioPage", () => {
     expect(screen.queryByText("La dirección es obligatoria.")).not.toBeInTheDocument();
   });
 
-  it("edita un punto de acopio existente", async () => {
+  it("'Editar' abre el formulario en un modal, no en un panel lateral, y guarda el cambio", async () => {
     mockRespuestas([puntoActivo]);
     const user = userEvent.setup();
-    await renderPage();
+    renderPage();
 
-    await screen.findByText("ECA Kennedy");
-    await user.click(screen.getByRole("button", { name: "Editar ECA Kennedy" }));
+    await elegirOpcion(user, "ECA Kennedy", "Editar");
 
+    expect(await screen.findByRole("dialog", { name: "Editar punto de acopio" })).toBeInTheDocument();
     const inputNombre = screen.getByDisplayValue("ECA Kennedy");
     await user.clear(inputNombre);
     await user.type(inputNombre, "ECA Kennedy Renovada");
@@ -161,15 +193,52 @@ describe("AdminPuntosAcopioPage", () => {
         expect.objectContaining({ nombre: "ECA Kennedy Renovada" })
       );
     });
+    // ¿Qué? Tras guardar, el modal se cierra.
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Editar punto de acopio" })).not.toBeInTheDocument());
+  });
+
+  it("al editar envía el motivo del cambio", async () => {
+    mockRespuestas([{ ...puntoActivo, nombre_encargado: "Marta Rojas", telefono_contacto: "3105550142" }]);
+    const user = userEvent.setup();
+    renderPage();
+
+    await elegirOpcion(user, "ECA Kennedy", "Editar");
+
+    const encargado = await screen.findByDisplayValue("Marta Rojas");
+    await user.clear(encargado);
+    await user.type(encargado, "Luis Peña");
+    expect(screen.getByText("Cambió: Marta Rojas → Luis Peña")).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/Motivo del cambio/), "Marta dejó el cargo");
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+    await waitFor(() => {
+      expect(mockPut).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/puntos-acopio/1"),
+        expect.objectContaining({ nombre_encargado: "Luis Peña", motivo_cambio: "Marta dejó el cargo" })
+      );
+    });
+  });
+
+  it("si falla al guardar la edición, el modal se queda abierto con el aviso", async () => {
+    mockRespuestas([puntoActivo]);
+    mockPut.mockRejectedValue(new Error("Network Error"));
+    const user = userEvent.setup();
+    renderPage();
+
+    await elegirOpcion(user, "ECA Kennedy", "Editar");
+    await screen.findByRole("dialog", { name: "Editar punto de acopio" });
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+    expect(await screen.findByText(/No se pudo guardar/)).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Editar punto de acopio" })).toBeInTheDocument();
   });
 
   it("da de baja un punto de acopio tras confirmar", async () => {
     mockRespuestas([puntoActivo]);
     const user = userEvent.setup();
-    await renderPage();
+    renderPage();
 
-    await screen.findByText("ECA Kennedy");
-    await user.click(screen.getByRole("button", { name: "Dar de baja ECA Kennedy" }));
+    await elegirOpcion(user, "ECA Kennedy", "Dar de baja");
 
     expect(screen.getByText('¿Dar de baja "ECA Kennedy"?')).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Sí, dar de baja" }));
@@ -183,10 +252,9 @@ describe("AdminPuntosAcopioPage", () => {
     mockRespuestas([puntoInactivo]);
     mockPost.mockResolvedValue({ data: { ...puntoInactivo, activo: true } });
     const user = userEvent.setup();
-    await renderPage();
+    renderPage();
 
-    await screen.findByText("ECA Retirado");
-    await user.click(screen.getByRole("button", { name: "Reactivar ECA Retirado" }));
+    await elegirOpcion(user, "ECA Retirado", "Reactivar");
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
@@ -201,11 +269,9 @@ describe("AdminPuntosAcopioPage", () => {
   it("elimina definitivamente un punto ya dado de baja, tras confirmar", async () => {
     mockRespuestas([puntoInactivo]);
     const user = userEvent.setup();
-    await renderPage();
+    renderPage();
 
-    await screen.findByText("ECA Retirado");
-    expect(screen.queryByRole("button", { name: "Dar de baja ECA Retirado" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Eliminar ECA Retirado" }));
+    await elegirOpcion(user, "ECA Retirado", "Eliminar definitivamente");
 
     expect(screen.getByText('¿Eliminar "ECA Retirado" definitivamente?')).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Sí, eliminar" }));
@@ -223,7 +289,7 @@ describe("AdminPuntosAcopioPage", () => {
     it("filtra por texto sin importar tildes ni mayúsculas", async () => {
       mockRespuestas([puntoActivo, engativa]);
       const user = userEvent.setup();
-      await renderPage();
+      renderPage();
 
       await screen.findByText("ECA Kennedy");
       await user.type(screen.getByRole("searchbox"), "engativa");
@@ -235,7 +301,7 @@ describe("AdminPuntosAcopioPage", () => {
     it("muestra un aviso si nada coincide con la búsqueda", async () => {
       mockRespuestas([puntoActivo, engativa]);
       const user = userEvent.setup();
-      await renderPage();
+      renderPage();
 
       await screen.findByText("ECA Kennedy");
       await user.type(screen.getByRole("searchbox"), "zzz");
@@ -246,7 +312,7 @@ describe("AdminPuntosAcopioPage", () => {
     it("filtra por estado y muestra el conteo de cada uno", async () => {
       mockRespuestas([puntoActivo, puntoInactivo]);
       const user = userEvent.setup();
-      await renderPage();
+      renderPage();
 
       await screen.findByText("ECA Kennedy");
       expect(screen.getByRole("button", { name: "Todos · 2" })).toBeInTheDocument();
@@ -256,51 +322,118 @@ describe("AdminPuntosAcopioPage", () => {
       expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument();
       expect(screen.getByText("ECA Retirado")).toBeInTheDocument();
     });
+
+    it("filtra por localidad, con solo las localidades que tienen puntos", async () => {
+      mockRespuestas([puntoActivo, engativa]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByText("ECA Kennedy");
+      const select = screen.getByRole("combobox", { name: "Localidad" });
+      expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual(["Todas las localidades", "Engativá", "Usaquén"]);
+
+      await user.selectOptions(select, "2");
+      expect(screen.getByText("ECA Engativá")).toBeInTheDocument();
+      expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument();
+    });
+
+    it("ordena la tabla por localidad y luego por nombre", async () => {
+      mockRespuestas([puntoActivo, engativa, { ...engativa, id_punto_acopio: "5", nombre: "ECA Engativá 2" }]);
+      renderPage();
+
+      await screen.findByText("ECA Kennedy");
+      const nombres = screen.getAllByRole("row").slice(1).map((fila) => within(fila).getAllByRole("cell")[0].querySelector("p")?.textContent);
+      expect(nombres).toEqual(["ECA Engativá", "ECA Engativá 2", "ECA Kennedy"]);
+    });
+
+    it("muestra el resumen de puntos y localidades, y cuántos están de baja", async () => {
+      mockRespuestas([puntoActivo, puntoInactivo, engativa]);
+      renderPage();
+
+      expect(await screen.findByText("3 puntos en 2 localidades · 1 de baja")).toBeInTheDocument();
+    });
   });
 
-  describe("lista: mapa y teléfono", () => {
-    it("ofrece 'Ver en el mapa' con la dirección, la localidad y Bogotá", async () => {
-      mockRespuestas([puntoActivo]);
-      await renderPage();
+  describe("fila desplegable: ficha y comentarios", () => {
+    const puntoConDatos = { ...puntoActivo, nombre_encargado: "Marta Rojas", telefono_contacto: "3105550142" };
 
-      const enlace = await screen.findByRole("link", { name: "Ver ECA Kennedy en el mapa" });
+    it("'Ver ficha' despliega la fila con la ubicación, el contacto y los comentarios del punto", async () => {
+      mockRespuestas([puntoConDatos], [comentario]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await elegirOpcion(user, "ECA Kennedy", "Ver ficha");
+
+      const ficha = await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+      expect(ficha).toHaveTextContent("Carrera 84 # 11A-34");
+      expect(ficha).toHaveTextContent("Marta Rojas");
+      expect(ficha).toHaveTextContent("3105550142");
+      expect(await screen.findByText("Encargada confirmada por llamada.")).toBeInTheDocument();
+      expect(screen.getByText("admin@verdeapp.com")).toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/admin/puntos-acopio/1/comentarios"));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("elegir 'Ver ficha' otra vez pliega la fila", async () => {
+      mockRespuestas([puntoConDatos]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await elegirOpcion(user, "ECA Kennedy", "Ver ficha");
+      await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+      await elegirOpcion(user, "ECA Kennedy", "Ver ficha");
+
+      expect(screen.queryByRole("region", { name: "Ficha de ECA Kennedy" })).not.toBeInTheDocument();
+    });
+
+    it("un clic en la fila no la despliega: solo se abre desde el kebab", async () => {
+      mockRespuestas([puntoConDatos]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByText("ECA Kennedy"));
+
+      expect(screen.queryByRole("region", { name: /Ficha de/ })).not.toBeInTheDocument();
+    });
+
+    it("solo hay una fila desplegada a la vez", async () => {
+      mockRespuestas([puntoConDatos, { ...puntoActivo, id_punto_acopio: "9", nombre: "ECA Fontibón" }]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await elegirOpcion(user, "ECA Kennedy", "Ver ficha");
+      await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+      await elegirOpcion(user, "ECA Fontibón", "Ver ficha");
+
+      await screen.findByRole("region", { name: "Ficha de ECA Fontibón" });
+      expect(screen.queryByRole("region", { name: "Ficha de ECA Kennedy" })).not.toBeInTheDocument();
+    });
+
+    it("ofrece 'Cómo llegar' con la dirección, la localidad y Bogotá", async () => {
+      mockRespuestas([puntoConDatos]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await elegirOpcion(user, "ECA Kennedy", "Ver ficha");
+
+      const enlace = await screen.findByRole("link", { name: "Cómo llegar a ECA Kennedy en Google Maps" });
       const url = new URL(enlace.getAttribute("href") ?? "");
       expect(url.hostname).toBe("www.google.com");
       expect(url.searchParams.get("query")).toBe("Carrera 84 # 11A-34, Usaquén, Bogotá, Colombia");
       expect(enlace).toHaveAttribute("target", "_blank");
     });
 
-    it("avisa 'Sin teléfono' solo en puntos activos sin teléfono", async () => {
-      mockRespuestas([
-        puntoActivo,
-        puntoInactivo,
-        { ...puntoActivo, id_punto_acopio: "4", nombre: "ECA Con Teléfono", telefono_contacto: "3105550142" },
-      ]);
-      await renderPage();
-
-      await screen.findByText("ECA Kennedy");
-      // ¿Qué? Uno activo sin teléfono; el inactivo no lleva aviso y el que tiene teléfono lo muestra.
-      expect(screen.getAllByText("Sin teléfono")).toHaveLength(1);
-      expect(screen.getByText("3105550142")).toBeInTheDocument();
-    });
-  });
-
-  describe("panel lateral del punto", () => {
-    const puntoConDatos = { ...puntoActivo, nombre_encargado: "Marta Rojas", telefono_contacto: "3105550142" };
-
-    it("abre el perfil con los datos y los comentarios del punto", async () => {
-      mockRespuestas([puntoConDatos], [comentario]);
+    it("sin teléfono ni encargado dice 'Sin teléfono' y 'Sin encargado', no la línea de la UAESP", async () => {
+      mockRespuestas([puntoActivo]);
       const user = userEvent.setup();
-      await renderPage();
+      renderPage();
 
-      await user.click(await screen.findByRole("button", { name: "ECA Kennedy" }));
+      await elegirOpcion(user, "ECA Kennedy", "Ver ficha");
 
-      const panel = await screen.findByRole("dialog", { name: "Detalle de ECA Kennedy" });
-      expect(panel).toHaveTextContent("Marta Rojas");
-      expect(panel).toHaveTextContent("3105550142");
-      expect(await screen.findByText("Encargada confirmada por llamada.")).toBeInTheDocument();
-      expect(screen.getByText("admin@verdeapp.com")).toBeInTheDocument();
-      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/admin/puntos-acopio/1/comentarios"));
+      const ficha = await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+      expect(ficha).toHaveTextContent("Sin teléfono");
+      expect(ficha).toHaveTextContent("Sin encargado");
+      expect(ficha).not.toHaveTextContent("UAESP");
     });
 
     it("agrega un comentario y lo muestra arriba", async () => {
@@ -309,9 +442,9 @@ describe("AdminPuntosAcopioPage", () => {
         data: { id_comentario: "c2", texto: "Nuevo dato", created_at: "2026-09-23T10:00:00Z", autor: "admin@verdeapp.com" },
       });
       const user = userEvent.setup();
-      await renderPage();
+      renderPage();
 
-      await user.click(await screen.findByRole("button", { name: "ECA Kennedy" }));
+      await elegirOpcion(user, "ECA Kennedy", "Ver ficha");
       await screen.findByText("Encargada confirmada por llamada.");
       expect(screen.getByRole("button", { name: "Agregar comentario" })).toBeDisabled();
 
@@ -327,133 +460,23 @@ describe("AdminPuntosAcopioPage", () => {
       expect(await screen.findByText("Nuevo dato")).toBeInTheDocument();
     });
 
-    it("edita desde el panel y envía el motivo del cambio", async () => {
+    it("la fila se pliega al cambiar un filtro", async () => {
       mockRespuestas([puntoConDatos]);
       const user = userEvent.setup();
-      await renderPage();
+      renderPage();
 
-      await user.click(await screen.findByRole("button", { name: "ECA Kennedy" }));
-      await user.click(await screen.findByRole("button", { name: "Editar" }));
+      await elegirOpcion(user, "ECA Kennedy", "Ver ficha");
+      await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+      await user.click(screen.getByRole("button", { name: "Activos · 1" }));
 
-      const encargado = screen.getByDisplayValue("Marta Rojas");
-      await user.clear(encargado);
-      await user.type(encargado, "Luis Peña");
-      expect(screen.getByText("Cambió: Marta Rojas → Luis Peña")).toBeInTheDocument();
-      await user.type(screen.getByLabelText(/Motivo del cambio/), "Marta dejó el cargo");
-      await user.click(screen.getByRole("button", { name: "Guardar" }));
-
-      await waitFor(() => {
-        expect(mockPut).toHaveBeenCalledWith(
-          expect.stringContaining("/admin/puntos-acopio/1"),
-          expect.objectContaining({ nombre_encargado: "Luis Peña", motivo_cambio: "Marta dejó el cargo" })
-        );
-      });
-      // ¿Qué? Tras guardar, el panel vuelve a mostrar los datos (ya no el formulario).
-      await waitFor(() => expect(screen.queryByLabelText(/Motivo del cambio/)).not.toBeInTheDocument());
-    });
-
-    it("el lápiz de la fila abre el panel directo en modo edición", async () => {
-      mockRespuestas([puntoConDatos]);
-      const user = userEvent.setup();
-      await renderPage();
-
-      await user.click(await screen.findByRole("button", { name: "Editar ECA Kennedy" }));
-
-      expect(await screen.findByLabelText(/Motivo del cambio/)).toBeInTheDocument();
-    });
-
-    it("para un punto de baja ofrece reactivar y eliminar definitivamente", async () => {
-      mockRespuestas([puntoInactivo]);
-      const user = userEvent.setup();
-      await renderPage();
-
-      await user.click(await screen.findByRole("button", { name: "ECA Retirado" }));
-
-      const panel = await screen.findByRole("dialog", { name: "Detalle de ECA Retirado" });
-      expect(within(panel).getByRole("button", { name: "Reactivar" })).toBeInTheDocument();
-      expect(within(panel).getByRole("button", { name: "Eliminar definitivamente" })).toBeInTheDocument();
-      expect(within(panel).queryByRole("button", { name: "Dar de baja" })).not.toBeInTheDocument();
-    });
-
-    it("da de baja desde el panel, pidiendo confirmación", async () => {
-      mockRespuestas([puntoActivo]);
-      const user = userEvent.setup();
-      await renderPage();
-
-      await user.click(await screen.findByRole("button", { name: "ECA Kennedy" }));
-      const panel = await screen.findByRole("dialog", { name: "Detalle de ECA Kennedy" });
-      await user.click(within(panel).getByRole("button", { name: "Dar de baja" }));
-      await user.click(screen.getByRole("button", { name: "Sí, dar de baja" }));
-
-      await waitFor(() => {
-        expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining("/admin/puntos-acopio/1"));
-      });
-    });
-  });
-
-  describe("lista agrupada por localidad", () => {
-    const engativa = { ...puntoActivo, id_punto_acopio: "3", nombre: "ECA Engativá", id_localidad: 2, nombre_localidad: "Engativá" };
-
-    it("arranca con las localidades cerradas y las abre y cierra con un clic", async () => {
-      mockRespuestas([puntoActivo, engativa]);
-      const user = userEvent.setup();
-      await renderPage(false);
-
-      const cabecera = await screen.findByRole("button", { name: /^Engativá/ });
-      expect(cabecera).toHaveAttribute("aria-expanded", "false");
-      expect(screen.queryByText("ECA Engativá")).not.toBeInTheDocument();
-      expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument();
-
-      await user.click(cabecera);
-      expect(cabecera).toHaveAttribute("aria-expanded", "true");
-      expect(screen.getByText("ECA Engativá")).toBeInTheDocument();
-      // ¿Qué? Abrir una localidad no abre las demás.
-      expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument();
-
-      await user.click(cabecera);
-      expect(screen.queryByText("ECA Engativá")).not.toBeInTheDocument();
-    });
-
-    it("ordena las localidades alfabéticamente y muestra cuántos puntos tiene cada una", async () => {
-      mockRespuestas([puntoActivo, engativa, { ...engativa, id_punto_acopio: "5", nombre: "ECA Engativá 2" }]);
-      await renderPage(false);
-
-      const cabeceras = await screen.findAllByRole("button", { expanded: false });
-      expect(cabeceras.map((c) => c.textContent)).toEqual(["Engativá2", "Usaquén1"]);
-    });
-
-    it("muestra el resumen de puntos y localidades, y cuántos están de baja", async () => {
-      mockRespuestas([puntoActivo, puntoInactivo, engativa]);
-      await renderPage(false);
-
-      expect(await screen.findByText("3 puntos en 2 localidades · 1 de baja")).toBeInTheDocument();
-    });
-
-    it("al buscar abre solas las localidades con coincidencias", async () => {
-      mockRespuestas([puntoActivo, engativa]);
-      const user = userEvent.setup();
-      await renderPage(false);
-
-      await screen.findByRole("button", { name: /^Engativá/ });
-      await user.type(screen.getByRole("searchbox"), "kennedy");
-
-      expect(screen.getByText("ECA Kennedy")).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /^Engativá/ })).not.toBeInTheDocument();
-    });
-
-    it("marca en la cabecera cuántos puntos de la localidad están de baja", async () => {
-      mockRespuestas([puntoActivo, puntoInactivo]);
-      await renderPage(false);
-
-      const cabecera = await screen.findByRole("button", { name: /^Usaquén/ });
-      expect(cabecera).toHaveTextContent("1 de baja");
+      expect(screen.queryByRole("region", { name: "Ficha de ECA Kennedy" })).not.toBeInTheDocument();
     });
   });
 
   // ¿Qué? Issue #352 — cada campo usa el tamaño de su columna en la base de datos.
   it("no deja escribir más de lo que guarda cada columna", async () => {
     const user = userEvent.setup();
-    await renderPage(false);
+    renderPage();
 
     await screen.findByText("Todavía no hay puntos de acopio registrados.");
     await user.click(screen.getByRole("button", { name: "Nuevo punto de acopio" }));

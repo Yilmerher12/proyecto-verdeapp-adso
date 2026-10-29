@@ -1,6 +1,6 @@
 # Prototipo — Ficha del punto de acopio
 
-**Estado:** borrador del 2026-10-28. Es un documento de diseño: **no se programó nada**. Sirve para elegir cómo se verá la ficha antes de tocar la base de datos o el backend (tarjeta 7 de `tarjetas-despues-de-la-feria.md`; issue N3, pendiente de crear).
+**Estado:** el modelo elegido está en la sección 10 (2026-10-29): una tabla con fila desplegable, que no es ninguno de los tres modelos de la sección 5. Lo demás es el borrador del 2026-10-28, un documento de diseño: **no se programó nada** en esa fecha. Sirve para elegir cómo se verá la ficha antes de tocar la base de datos o el backend (tarjeta 7 de `tarjetas-despues-de-la-feria.md`; issue N3, pendiente de crear).
 
 **Datos de las ECA usados en los modelos:** los 9 puntos que ya están en el directorio (ver [`fuente-datos-puntos-acopio-eca.md`](fuente-datos-puntos-acopio-eca.md)) y su estado frente al inventario de la UAESP (ver [`investigacion-tipos-puntos-acopio.md`](investigacion-tipos-puntos-acopio.md)).
 
@@ -168,3 +168,16 @@ Hay una página de prototipo dentro de la app, con las 9 ECA y los 3 modelos (in
 2. Abrir `http://localhost:5173/prototipo/ficha-punto-acopio`.
 
 La ruta solo existe en desarrollo (`import.meta.env.DEV`); el build de producción no la incluye (verificado con `pnpm build`). **El código del prototipo NO está en `develop`: vive en la rama `feat/prototipo-ficha-punto-acopio`, sin PR, hasta que el equipo decida.** Para verlo: `git checkout feat/prototipo-ficha-punto-acopio`. Los archivos son `fe/src/pages/PrototipoFichaPuntoAcopioPage.tsx`, su prueba `fe/src/__tests__/pages/PrototipoFichaPuntoAcopioPage.test.tsx` y la ruta en `fe/src/App.tsx`.
+
+---
+
+## 10. Modelo elegido (2026-10-29)
+
+El equipo no escogió ninguno de los tres modelos de la sección 5. Después de ver los prototipos y de hablar con el profesor, quedó una **tabla con fila desplegable**, construida en #578. El profesor pidió además cuidar el espacio: las secciones cerradas por localidad de la vista anterior del Admin ocupaban demasiado.
+
+- **Una sola tabla y una sola ficha para los 3 roles.** Una fila compacta por punto; al desplegarla se ve la ficha en dos bloques, Ubicación (dirección con botón para copiarla y "Cómo llegar") y Contacto (teléfono y encargado). Solo hay una fila abierta a la vez.
+- **Residente y Reciclador (solo lectura):** columnas Punto y Localidad, filtros de localidad y de nombre. La fila se despliega con una flecha en la última columna o con un clic en la fila. Se eligió la flecha al final, y no al inicio, porque así se ve en los acordeones de las aplicaciones conocidas y aquí no choca con ningún kebab.
+- **Admin del Sistema:** columnas Punto, Localidad y Estado, con filtros de localidad, nombre y estado. No lleva flecha: un kebab al final de la fila ofrece "Ver ficha", "Editar", "Dar de baja" y, si el punto está de baja, "Reactivar" y "Eliminar definitivamente". La ficha lleva debajo los comentarios internos del punto. "Editar" abre el formulario en un modal centrado.
+- **Sin teléfono:** Residente y Reciclador ven "Sin teléfono publicado" y la línea general de la UAESP (601 3580400), aclarando que no es la del punto. El Admin ve "Sin teléfono", porque es quien debe completarlo.
+- **Queda para la tarjeta 7:** la foto, las coordenadas, el mapa en imagen y el estado frente a la UAESP. "Cómo llegar" usa por ahora la dirección. **Queda para la tarjeta 10:** la paginación, cuando haya muchos puntos.
+- **Los tres modelos de la sección 5 quedan como histórico.** La rama `feat/prototipo-ficha-punto-acopio` ya no hace falta: se puede borrar cuando se cierre #578.

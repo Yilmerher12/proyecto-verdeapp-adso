@@ -54,10 +54,11 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 
 ### Panel de gestión (frontend)
 
-- La lista se muestra agrupada por localidad, en orden alfabético, con una sección plegable por localidad (cerradas al entrar) que indica cuántos puntos tiene y cuántos están de baja. Arriba hay un resumen ("9 puntos en 6 localidades · 1 de baja").
-- Se puede buscar por nombre o dirección (sin importar tildes) y filtrar por estado (Todos / Activos / De baja, con su conteo). Con una búsqueda o un filtro activo se abren solas las localidades con coincidencias. Todo se calcula en el navegador con la lista completa que ya entrega el backend.
-- Cada punto trae un enlace "Ver en el mapa" (búsqueda de Google Maps con dirección + localidad + Bogotá) para comprobar que la dirección quedó bien, y la etiqueta "Sin teléfono" en los puntos activos que no tienen teléfono de contacto.
-- Al hacer clic en un punto se abre un panel lateral con sus datos, los comentarios del administrador (autor y fecha) y las acciones Editar, Dar de baja o, si ya está de baja, Reactivar y Eliminar definitivamente. El lápiz de la fila abre el mismo panel directo en modo edición.
+- Los puntos se muestran en una tabla (columnas Punto, Localidad y Estado), ordenada por localidad y luego por nombre, con una fila compacta por punto. Arriba hay un resumen ("9 puntos en 6 localidades · 1 de baja").
+- Se puede buscar por nombre o dirección (sin importar tildes) y filtrar por localidad (solo las que tienen puntos) y por estado (Todos / Activos / De baja, con su conteo). Todo se calcula en el navegador con la lista completa que ya entrega el backend. Al cambiar la búsqueda o un filtro se pliega la fila abierta.
+- Cada fila termina con un kebab (tres puntos) con las acciones: "Ver ficha", "Editar" y "Dar de baja" o, si el punto ya está de baja, "Reactivar" y "Eliminar definitivamente". Un clic en la fila no hace nada: la ficha solo se despliega desde el kebab.
+- "Ver ficha" despliega la fila (una a la vez) con la ficha del punto (Ubicación con el botón "Cómo llegar", que busca en Google Maps con dirección + localidad + Bogotá, y Contacto, con "Sin teléfono" y "Sin encargado" cuando faltan) y, debajo, los comentarios del administrador (autor y fecha) con su campo para agregar uno.
+- "Editar" abre el formulario en un modal centrado, el mismo de "Nuevo punto de acopio".
 - Al editar, el campo opcional "Motivo del cambio" deja constancia de por qué cambió algo (ej. nuevo encargado o dueño): se guarda como un comentario más del punto, en la misma transacción que el cambio.
 - Los comentarios son internos: solo los ve el Admin Sistema, nunca Residentes ni Recicladores.
 

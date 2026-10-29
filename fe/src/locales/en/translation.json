@@ -1133,6 +1133,8 @@
     "ownLocalityUnknown": "We couldn't detect your district",
     "emptyRecyclers": "No recyclers registered in this district.",
     "emptyPoints": "No collection points registered in this district.",
+    "searchPoints": "Search by name or address",
+    "noPointsMatch": "No point matches your search.",
     "call": "Call",
     "noPhone": "No phone registered",
     "copyAddress": "Copy address",
@@ -1363,18 +1365,36 @@
           "confirm": "Yes, delete"
         }
       },
+  "puntosAcopioTabla": {
+    "headers": {
+      "point": "Point",
+      "locality": "District",
+      "status": "Status",
+      "actions": "Actions",
+      "details": "Details"
+    },
+    "expand": "View details of {{nombre}}",
+    "collapse": "Hide details of {{nombre}}",
+    "menu": {
+      "actionsFor": "Actions for {{nombre}}",
+      "view": "View details"
+    },
+    "ficha": {
+      "ariaLabel": "Details of {{nombre}}",
+      "location": "Location",
+      "contact": "Contact",
+      "howToGetThere": "Get directions",
+      "howToGetThereAria": "Get directions to {{nombre}} on Google Maps",
+      "noPhonePublished": "No phone number published.",
+      "uaespLine": "UAESP general line (not the point's own):"
+    }
+  },
   "adminPuntosAcopio": {
     "title": "Collection points",
     "subtitle": "Register, edit, and deactivate the official collection points in the directory.",
     "newPoint": "New collection point",
     "emptyState": "No collection points registered yet.",
     "inactiveBadge": "Inactive",
-    "editAria": "Edit {{nombre}}",
-    "deactivateAria": "Deactivate {{nombre}}",
-    "reactivateAria": "Reactivate {{nombre}}",
-    "deleteAria": "Delete {{nombre}}",
-    "mapLink": "View on map",
-    "mapAria": "View {{nombre}} on the map",
     "noPhone": "No phone",
     "noManager": "No manager",
     "search": {
@@ -1396,9 +1416,7 @@
       "inactive_other": "{{count}} deactivated"
     },
     "panel": {
-      "ariaLabel": "Details of {{nombre}}",
       "active": "Active",
-      "dataSection": "Point details",
       "manager": "Manager",
       "phone": "Phone",
       "deactivate": "Deactivate",

@@ -1137,6 +1137,8 @@
     "ownLocalityUnknown": "No se pudo detectar tu localidad",
     "emptyRecyclers": "No hay recicladores registrados en esta localidad.",
     "emptyPoints": "No hay puntos de acopio registrados en esta localidad.",
+    "searchPoints": "Buscar por nombre o dirección",
+    "noPointsMatch": "Ningún punto coincide con tu búsqueda.",
     "call": "Llamar",
     "noPhone": "Sin teléfono registrado",
     "copyAddress": "Copiar dirección",
@@ -1367,18 +1369,36 @@
     "expandRatings": "Ver calificaciones",
     "expandModules": "Ver módulos"
   },
+  "puntosAcopioTabla": {
+    "headers": {
+      "point": "Punto",
+      "locality": "Localidad",
+      "status": "Estado",
+      "actions": "Acciones",
+      "details": "Ficha"
+    },
+    "expand": "Ver ficha de {{nombre}}",
+    "collapse": "Ocultar ficha de {{nombre}}",
+    "menu": {
+      "actionsFor": "Acciones de {{nombre}}",
+      "view": "Ver ficha"
+    },
+    "ficha": {
+      "ariaLabel": "Ficha de {{nombre}}",
+      "location": "Ubicación",
+      "contact": "Contacto",
+      "howToGetThere": "Cómo llegar",
+      "howToGetThereAria": "Cómo llegar a {{nombre}} en Google Maps",
+      "noPhonePublished": "Sin teléfono publicado.",
+      "uaespLine": "Línea general de la UAESP (no es la del punto):"
+    }
+  },
   "adminPuntosAcopio": {
     "title": "Puntos de acopio",
     "subtitle": "Registra, edita y da de baja los puntos de acopio oficiales del directorio.",
     "newPoint": "Nuevo punto de acopio",
     "emptyState": "Todavía no hay puntos de acopio registrados.",
     "inactiveBadge": "Inactivo",
-    "editAria": "Editar {{nombre}}",
-    "deactivateAria": "Dar de baja {{nombre}}",
-    "reactivateAria": "Reactivar {{nombre}}",
-    "deleteAria": "Eliminar {{nombre}}",
-    "mapLink": "Ver en el mapa",
-    "mapAria": "Ver {{nombre}} en el mapa",
     "noPhone": "Sin teléfono",
     "noManager": "Sin encargado",
     "search": {
@@ -1400,9 +1420,7 @@
       "inactive_other": "{{count}} de baja"
     },
     "panel": {
-      "ariaLabel": "Detalle de {{nombre}}",
       "active": "Activo",
-      "dataSection": "Datos del punto",
       "manager": "Encargado",
       "phone": "Teléfono",
       "deactivate": "Dar de baja",

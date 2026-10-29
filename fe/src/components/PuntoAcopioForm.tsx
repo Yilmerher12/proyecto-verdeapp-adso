@@ -2,9 +2,9 @@
  * Archivo: components/PuntoAcopioForm.tsx
  * Descripción: Formulario de un punto de acopio (nombre, localidad, dirección,
  *              encargado y teléfono), con su validación por campo.
- * ¿Para qué? Lo usan dos lugares del panel del Admin Sistema: la ventana de
- *           "Nuevo punto de acopio" y la edición dentro del panel lateral. Antes
- *           el formulario vivía dentro de AdminPuntosAcopioPage.
+ * ¿Para qué? Lo usan dos ventanas del panel del Admin Sistema: "Nuevo punto de
+ *           acopio" y "Editar punto de acopio". Antes el formulario vivía dentro
+ *           de AdminPuntosAcopioPage.
  * ¿Impacto? Al editar, agrega "Motivo del cambio" (opcional): el backend lo
  *           guarda como un comentario del punto, para dejar constancia de por
  *           qué cambió (ej. nuevo encargado o dueño).
