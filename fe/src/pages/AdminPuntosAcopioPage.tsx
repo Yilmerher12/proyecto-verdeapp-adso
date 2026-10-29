@@ -38,6 +38,7 @@ const FORM_VACIO: PuntoAcopioPayload = {
   id_localidad: 0,
   nombre_encargado: "",
   telefono_contacto: "",
+  url_foto: null,
 };
 
 export function AdminPuntosAcopioPage() {
@@ -373,6 +374,7 @@ export function AdminPuntosAcopioPage() {
                 id_localidad: editando.id_localidad,
                 nombre_encargado: editando.nombre_encargado ?? "",
                 telefono_contacto: editando.telefono_contacto ?? "",
+                url_foto: editando.url_foto,
               }}
               localidades={localidades}
               esEdicion

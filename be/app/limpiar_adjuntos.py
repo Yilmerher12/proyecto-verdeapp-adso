@@ -33,6 +33,7 @@ from app.models.comunicado import Comunicado
 from app.models.contenido_educativo import ContenidoEducativo
 from app.models.novedad import Novedad
 from app.models.novedad_enviada import NovedadEnviada
+from app.models.punto_acopio import PuntoAcopio
 from app.models.usuario import Usuario
 from app.routers.uploads import CARPETA_ADJUNTOS
 
@@ -52,6 +53,7 @@ COLUMNAS_CON_ADJUNTOS = [
     ContenidoEducativo.url_imagen,
     NovedadEnviada.url_imagen,
     AgendaConjunto.url_evidencia,
+    PuntoAcopio.url_foto,
 ]
 
 # ¿Qué? Columnas que parecen un enlace pero NO apuntan a /uploads/adjuntos/.

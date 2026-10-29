@@ -42,6 +42,7 @@ const puntoActivo = {
   nombre_encargado: null,
   telefono_contacto: null,
   activo: true,
+  url_foto: null,
 };
 
 const puntoInactivo = { ...puntoActivo, id_punto_acopio: "2", nombre: "ECA Retirado", activo: false };
@@ -470,6 +471,91 @@ describe("AdminPuntosAcopioPage", () => {
       await user.click(screen.getByRole("button", { name: "Activos · 1" }));
 
       expect(screen.queryByRole("region", { name: "Ficha de ECA Kennedy" })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("foto del punto", () => {
+    const FOTO = "/uploads/adjuntos/0b9c1a0e-3f4d-4c52-9b57-6f1f2a3b4c5d.png";
+    const puntoConFoto = { ...puntoActivo, url_foto: FOTO };
+
+    // ¿Qué? La subida (/uploads/adjunto) devuelve la ruta; lo demás responde vacío.
+    function mockSubidaDeFoto() {
+      mockPost.mockImplementation((url: string) =>
+        Promise.resolve({ data: url.includes("/uploads/adjunto") ? { url: FOTO } : {} })
+      );
+    }
+
+    it("la ficha desplegada muestra la foto del punto", async () => {
+      mockRespuestas([puntoConFoto]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await elegirOpcion(user, "ECA Kennedy", "Ver ficha");
+
+      const ficha = await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+      expect(within(ficha).getByRole("img", { name: "Foto de ECA Kennedy" })).toHaveAttribute("src", `http://localhost:8000${FOTO}`);
+    });
+
+    it("al crear un punto se puede subir una foto y se manda su ruta", async () => {
+      mockSubidaDeFoto();
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByText("Todavía no hay puntos de acopio registrados.");
+      await user.click(screen.getByRole("button", { name: "Nuevo punto de acopio" }));
+      await user.type(screen.getByPlaceholderText("Ej: ECA Kennedy"), "ECA Nueva");
+      await user.type(screen.getByPlaceholderText("Ej: Carrera 84 # 11A-34"), "Calle 1 # 1-1");
+      await user.selectOptions(screen.getByLabelText(/Localidad/), "1");
+      await user.upload(
+        document.querySelector<HTMLInputElement>('input[type="file"]') as HTMLInputElement,
+        new File(["x"], "eca.png", { type: "image/png" })
+      );
+      await screen.findByAltText("Vista previa de la imagen adjunta");
+      await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+      await waitFor(() => {
+        expect(mockPost).toHaveBeenCalledWith(
+          expect.stringContaining("/admin/puntos-acopio"),
+          expect.objectContaining({ nombre: "ECA Nueva", url_foto: FOTO })
+        );
+      });
+    });
+
+    it("al editar, el formulario trae la foto y se puede quitar", async () => {
+      mockRespuestas([puntoConFoto]);
+      const user = userEvent.setup();
+      renderPage();
+
+      await elegirOpcion(user, "ECA Kennedy", "Editar");
+      expect(await screen.findByAltText("Vista previa de la imagen adjunta")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Quitar imagen" }));
+      await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+      await waitFor(() => {
+        expect(mockPut).toHaveBeenCalledWith(
+          expect.stringContaining("/admin/puntos-acopio/1"),
+          expect.objectContaining({ url_foto: null })
+        );
+      });
+    });
+
+    it("un punto sin foto se crea con url_foto nula", async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByText("Todavía no hay puntos de acopio registrados.");
+      await user.click(screen.getByRole("button", { name: "Nuevo punto de acopio" }));
+      await user.type(screen.getByPlaceholderText("Ej: ECA Kennedy"), "ECA Sin Foto");
+      await user.type(screen.getByPlaceholderText("Ej: Carrera 84 # 11A-34"), "Calle 2 # 2-2");
+      await user.selectOptions(screen.getByLabelText(/Localidad/), "1");
+      await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+      await waitFor(() => {
+        expect(mockPost).toHaveBeenCalledWith(
+          expect.stringContaining("/admin/puntos-acopio"),
+          expect.objectContaining({ nombre: "ECA Sin Foto", url_foto: null })
+        );
+      });
     });
   });
 

@@ -33,7 +33,7 @@ Los términos se confunden porque en la calle se usan como si fueran lo mismo. E
 | Encargado | Sí, opcional y vacío | Sin fuente |
 | Activo / dado de baja | Sí (`activo`) | Ya existe |
 | **Latitud y longitud** | **No**: están documentadas en `fuente-datos-puntos-acopio-eca.md` pero no se guardaron | Los 9 pares ya están escritos ahí (dataset de marzo de 2020) |
-| **Foto** | **No** | Solo si se sube a VerdeApp, como en las lecciones de "Aprende a reciclar" (no se usan fotos de terceros). Mientras no haya foto, un dibujo por defecto |
+| **Foto** | **Sí (2026-10-30, #581)**: columna `url_foto`, opcional | La sube el Admin del Sistema desde el formulario del punto, como en las lecciones de "Aprende a reciclar" (no se usan fotos de terceros). Los puntos actuales no tienen foto: se agregan cuando el equipo las consiga. Sin foto no se muestra nada (no hay dibujo por defecto) |
 | **Estado frente a la UAESP** ("Activa en inventario" o "Por confirmar") | **No** | Del cruce de la investigación #460; se actualiza cuando responda la solicitud a la UAESP (#500) |
 | Categoría (ECA, CCR, etc.) | **No** | Pendiente de aclarar por qué se cerró #461 como "NO SE HACE" |
 
@@ -139,7 +139,7 @@ Las coordenadas son de 2020 y varias ECA pudieron reubicarse (Decreto 203 de 202
 
 Solo para dejarlo escrito; no se hace en esta tarjeta:
 
-- Columnas nuevas en `puntos_acopios`: `latitud`, `longitud` (decimales, opcionales), `foto_url` (opcional) y un estado de verificación (por ejemplo `por_confirmar` / `confirmada`).
+- Columnas nuevas en `puntos_acopios`: `latitud`, `longitud` (decimales, opcionales) y un estado de verificación (por ejemplo `por_confirmar` / `confirmada`). La foto (`url_foto`) ya se construyó en #581.
 - Migración de Alembic con los 9 pares de coordenadas ya documentados.
 - Subida de la foto reutilizando `guardar_imagen_subida` (`app/utils/imagenes.py`) en su propia subcarpeta de `be/app/uploads/`; sumar la columna a `COLUMNAS_CON_ADJUNTOS` en `app/limpiar_adjuntos.py`.
 - Si se retoma la categoría (#461), una columna `tipo`; hoy no se asume.
@@ -179,5 +179,6 @@ El equipo no escogió ninguno de los tres modelos de la sección 5. Después de 
 - **Residente y Reciclador (solo lectura):** columnas Punto y Localidad, filtros de localidad y de nombre. La fila se despliega con una flecha en la última columna o con un clic en la fila. Se eligió la flecha al final, y no al inicio, porque así se ve en los acordeones de las aplicaciones conocidas y aquí no choca con ningún kebab.
 - **Admin del Sistema:** columnas Punto, Localidad y Estado, con filtros de localidad, nombre y estado. No lleva flecha: un kebab al final de la fila ofrece "Ver ficha", "Editar", "Dar de baja" y, si el punto está de baja, "Reactivar" y "Eliminar definitivamente". La ficha lleva debajo los comentarios internos del punto. "Editar" abre el formulario en un modal centrado.
 - **Sin teléfono:** Residente y Reciclador ven "Sin teléfono publicado" y la línea general de la UAESP (601 3580400), aclarando que no es la del punto. El Admin ve "Sin teléfono", porque es quien debe completarlo.
-- **Queda para la tarjeta 7:** la foto, las coordenadas, el mapa en imagen y el estado frente a la UAESP. "Cómo llegar" usa por ahora la dirección. **Queda para la tarjeta 10:** la paginación, cuando haya muchos puntos.
+- **Foto (#581, 2026-10-30):** el Admin la sube desde el formulario del punto (opcional). En la ficha va a la izquierda en pantalla grande, en tamaño natural y sin sumar altura, y arriba en celular; se amplía al tocarla. Sin foto no se muestra nada: ni recuadro vacío ni dibujo repetido. Se escogió la foto al costado y no una franja arriba porque en una pantalla ancha o un televisor 4K la franja quedaría larguísima y muy baja, y recortaría la imagen. Las fotos reales se agregan cuando el equipo las consiga, ligado a la respuesta de la UAESP (#500).
+- **Queda para la tarjeta 7:** las coordenadas, el mapa en imagen y el estado frente a la UAESP. "Cómo llegar" usa por ahora la dirección. **Queda para la tarjeta 10:** la paginación, cuando haya muchos puntos.
 - **Los tres modelos de la sección 5 quedan como histórico.** La rama `feat/prototipo-ficha-punto-acopio` ya no hace falta: se puede borrar cuando se cierre #578.

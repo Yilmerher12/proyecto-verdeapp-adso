@@ -5,7 +5,8 @@
  * ¿Para qué? Lo usan dos ventanas del panel del Admin Sistema: "Nuevo punto de
  *           acopio" y "Editar punto de acopio". Antes el formulario vivía dentro
  *           de AdminPuntosAcopioPage.
- * ¿Impacto? Al editar, agrega "Motivo del cambio" (opcional): el backend lo
+ * ¿Impacto? La foto del punto (opcional) se sube con ImagenAdjuntaField y aquí solo
+ *           se guarda su ruta. Al editar, agrega "Motivo del cambio" (opcional): el backend lo
  *           guarda como un comentario del punto, para dejar constancia de por
  *           qué cambió (ej. nuevo encargado o dueño).
  */
@@ -13,6 +14,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
+import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { InputField } from "@/components/ui/InputField";
 import type { PuntoAcopioPayload } from "@/lib/puntosAcopioApi";
 import {
@@ -184,6 +186,12 @@ export function PuntoAcopioForm({
         maxLength={PUNTO_ACOPIO_TELEFONO_MAX_LENGTH}
         />
       </div>
+
+      <ImagenAdjuntaField
+        label={t("adminPuntosAcopio.fields.photo")}
+        value={form.url_foto ?? ""}
+        onChange={(url) => actualizarCampo("url_foto", url || null)}
+      />
 
       {cambioEncargado && (
         <p className="-mt-2 text-xs font-semibold text-accent-700 dark:text-accent-400">
