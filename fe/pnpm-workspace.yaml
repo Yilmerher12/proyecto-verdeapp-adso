@@ -12,3 +12,16 @@ allowBuilds:
 # ¿Impacto? Si una alerta nueva no tiene corrección desde el paquete que la
 #       trae, se vuelve a agregar aquí con la forma "paquete@<corregida: corregida"
 #       (solo sube las versiones afectadas), nunca con una versión fija suelta.
+#
+# ¿Qué? Dos reglas nuevas (2026-10-31), porque `pnpm audit` volvió a fallar en CI.
+#       - follow-redirects (alerta alta, GHSA-mrwp-f3q8-3g9p): la trae axios
+#         1.20.0, que la pide como ^1.16.0 y el lockfile tenía la 1.16.1.
+#       - minimatch (alerta moderada, GHSA-g3hv-75wg-m249): la traen eslint y
+#         typescript-eslint por dentro (usan la 3.x y la 10.x); ninguna versión
+#         anterior a 11.0.1 está corregida.
+# ¿Para qué? Dejar `pnpm audit` en 0 sin esperar a que axios y eslint suban.
+# ¿Impacto? Si eslint deja de funcionar con minimatch 11, quitar esa regla y
+#           revisar si ya existe una versión de eslint que la traiga corregida.
+overrides:
+  follow-redirects@<1.16.2: 1.16.2
+  minimatch@<11.0.1: 11.0.3
