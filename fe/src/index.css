@@ -216,6 +216,18 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* ¿Qué? Las celdas de tabla (th y td) son "posicionadas" (position: relative).
+     ¿Para qué? El texto oculto para lectores de pantalla (`sr-only`, que es position: absolute) de la última
+     columna de una tabla (ej: "Acciones") buscaba su "padre posicionado" fuera de la tabla. Como el contenedor
+     con scroll (`overflow-x-auto`) no lo era, ese texto se escapaba del recorte y ensanchaba toda la página:
+     en el panel del Admin del Sistema salía un scroll horizontal de hasta 377 px entre 375 y 900 px.
+     ¿Impacto? Se arregla en las 6 tablas de la app a la vez, y en las que se agreguen. Con la celda como
+     referencia, ese texto queda dentro de la celda y el contenedor con scroll lo recorta bien. */
+  th,
+  td {
+    position: relative;
+  }
+
   /* ¿Qué? Scroll suave para cualquier salto de posición (anclas, el botón
      "volver arriba" del Landing).
      ¿Para qué? RNF-005 (Accesibilidad) — se respeta si el usuario pidió

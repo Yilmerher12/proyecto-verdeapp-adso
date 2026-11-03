@@ -626,7 +626,7 @@ export function RecicladorDashboard() {
                         El nombre accesible del botón sigue siendo solo su etiqueta (aria-label). */}
           <section
             aria-labelledby="reciclador-avisos-titulo"
-            className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
+            className="@container bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
           >
             <h2 id="reciclador-avisos-titulo" className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</h2>
             <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
@@ -647,7 +647,12 @@ export function RecicladorDashboard() {
                 {t("dashboards.reciclador.sendSection.noConjuntos")}
               </p>
             )}
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {/* ¿Qué? Los 4 botones de aviso pasan a 2 columnas según el ancho de SU tarjeta (`@md`, 28 rem), no
+                      el de la ventana.
+                ¿Para qué? Entre 640 y 1024 px el menú lateral ya ocupa 16 rem: con `sm:grid-cols-2` cada botón
+                          quedaba de unos 170 px y su motivo ("Ya llegaste...") se partía en 3 líneas.
+                ¿Impacto? En un espacio angosto van en una columna, en uno ancho en dos. */}
+            <div className="grid grid-cols-1 gap-2 @md:grid-cols-2">
               {ACCIONES.map(({ tipo, label, icon: Icon, color, apagado: estiloApagado }) => {
                 const clave = claveBloqueo(tipo, estadoActivo);
                 const razon = clave ? t(`dashboards.reciclador.razon.${clave}`) : null;

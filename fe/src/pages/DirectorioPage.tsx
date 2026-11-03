@@ -185,7 +185,10 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
       {/* Controles: tabs + filtro localidad */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         {!soloAcopio && (
-          <div className="flex shrink-0 rounded-xl border border-gray-200 bg-white p-1 dark:border-night-line dark:bg-night-panel">
+          // ¿Qué? En celular (375 px) las dos pestañas se reparten el ancho de la tarjeta en partes iguales (el
+          //       texto largo baja a una segunda línea); desde `sm` van juntas, cada una del tamaño de su texto.
+          // ¿Para qué? Con `whitespace-nowrap` las dos medían 326 px y se salían 22 px de la tarjeta de 278 px.
+          <div className="grid w-full grid-cols-2 rounded-xl border border-gray-200 bg-white p-1 dark:border-night-line dark:bg-night-panel sm:flex sm:w-auto sm:shrink-0">
             {(
               [
                 { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <HardHat className="icon-md shrink-0" /> },
@@ -198,7 +201,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                   setTab(id);
                   setPuntoAbiertoId(null);
                 }}
-                className={`flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2 text-center text-sm font-medium leading-tight transition-colors sm:whitespace-nowrap sm:px-4 ${
                   tab === id
                     ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                     : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"

@@ -246,7 +246,11 @@ export function AdminPuntosAcopioPage() {
 
   return (
     <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
-      <div className="flex items-center justify-between bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
+      {/* ¿Qué? `flex-wrap` en la cabecera y `shrink-0` + `whitespace-nowrap` en el botón.
+          ¿Para qué? En pantallas angostas (375 a 768 px) el botón se apretaba junto al título: su texto se partía
+                    en 3 líneas y su ícono se encogía. Ahora el botón conserva su tamaño y, si no cabe al lado,
+                    baja a otra fila. */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("adminPuntosAcopio.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -258,9 +262,9 @@ export function AdminPuntosAcopioPage() {
             setErrorMsg(null);
             setCreando(true);
           }}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+          className="flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
         >
-          <Plus className="icon-md" />
+          <Plus className="icon-md shrink-0" />
           {t("adminPuntosAcopio.newPoint")}
         </button>
       </div>
