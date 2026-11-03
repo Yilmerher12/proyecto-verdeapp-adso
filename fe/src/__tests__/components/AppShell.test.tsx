@@ -63,6 +63,36 @@ describe("AppShell — foto de perfil", () => {
   });
 });
 
+// ¿Qué? Al cerrar sesión se olvidan los avisos que el usuario cerró con la X.
+// ¿Para qué? AppShell no pasa por clearAuth() (recarga la página directo), y el aviso de la ECA quedaba
+//           cerrado para la siguiente cuenta que entrara en el mismo navegador.
+// ¿Impacto? Si alguien quita limpiarAvisosCerrados() de handleLogout, esta prueba falla.
+describe("AppShell — cerrar sesión", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    responderConFoto(null);
+    // jsdom no implementa la navegación: se cambia window.location por un objeto simple.
+    vi.stubGlobal("location", { ...window.location, href: "" });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    sessionStorage.clear();
+  });
+
+  it("borra los avisos cerrados de la sesión", async () => {
+    sessionStorage.setItem("verdeapp:aviso-cerrado:directorio-eca", "1");
+    const user = userEvent.setup();
+    renderShell();
+
+    await user.click(screen.getAllByRole("button", { name: "Cerrar sesión" })[0]);
+    await user.click(screen.getByRole("button", { name: "Sí, cerrar sesión" }));
+
+    await waitFor(() => expect(window.location.href).toBe("/"));
+    expect(sessionStorage.getItem("verdeapp:aviso-cerrado:directorio-eca")).toBeNull();
+  });
+});
+
 // ¿Qué? Menú lateral por rol: "Puntos de Acopio" va suelto bajo "Panel
 //       Principal" (grupo "principal", sin encabezado), no dentro de "Recursos".
 // ¿Para qué? Issue #456: no es un recurso de consulta sino un lugar al que se

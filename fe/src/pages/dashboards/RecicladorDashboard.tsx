@@ -459,15 +459,14 @@ export function RecicladorDashboard() {
         </div>
       )}
 
-      {/* Dos columnas solo en pantalla ancha.
-          ¿Qué? A la izquierda lo que el Reciclador HACE (conjunto, auditoría, avisos) y a la derecha lo
-                que CONSULTA (notificaciones recibidas y mis auditorías). En celular y tableta es una sola
-                columna, en el mismo orden.
-          ¿Para qué? En un computador ancho o un televisor, una sola columna deja un vacío enorme a los
-                    lados y obliga a bajar mucho para llegar al historial.
-          ¿Impacto? El orden en el HTML no cambia (de arriba abajo, izquierda a derecha), así que el
-                    orden de lectura y de tabulación es el mismo en todos los tamaños. */}
-      <div className="space-y-5 2xl:grid 2xl:grid-cols-2 2xl:items-start 2xl:gap-5 2xl:space-y-0">
+      {/* Una sola columna en todos los tamaños.
+          ¿Qué? Primero lo que el Reciclador HACE (conjunto, auditoría, avisos) y debajo lo que CONSULTA
+                (notificaciones recibidas y mis auditorías).
+          ¿Para qué? Antes, desde 1536 px el panel pasaba a dos columnas de alturas distintas, que se
+                    veían como cuadros sueltos. El espacio ancho lo resuelve el ancho estándar de las
+                    páginas (ver docs/gestion-proyecto/decision-ancho-de-paginas.md), no una segunda columna.
+          ¿Impacto? El orden de lectura y de tabulación es el mismo en todos los tamaños. */}
+      <div className="space-y-5">
         <div className="space-y-5">
           {/* Mis conjuntos autorizados — el selector del panel.
               ¿Qué? Los conjuntos del Reciclador como pastillas (sin desplegable): elige uno y todo

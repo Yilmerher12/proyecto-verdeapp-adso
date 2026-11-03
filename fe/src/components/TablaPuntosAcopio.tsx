@@ -27,6 +27,8 @@ interface TablaPuntosAcopioProps<T extends PuntoFicha> {
   renderExtra?: (punto: T) => ReactNode;
   /** ¿Qué? Punto con una acción en curso (reactivar): se ve un spinner en su estado. */
   ocupadoId?: string | null;
+  /** ¿Qué? Franja opcional arriba de la tabla, dentro de la misma tarjeta (el aviso de la ECA en el Directorio). */
+  encabezado?: ReactNode;
 }
 
 const ENCABEZADO = "px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400";
@@ -39,6 +41,7 @@ export function TablaPuntosAcopio<T extends PuntoFicha>({
   renderMenu,
   renderExtra,
   ocupadoId = null,
+  encabezado,
 }: TablaPuntosAcopioProps<T>) {
   const { t } = useTranslation();
   const k = "puntosAcopioTabla";
@@ -51,6 +54,7 @@ export function TablaPuntosAcopio<T extends PuntoFicha>({
 
   return (
     <div className="@container overflow-x-auto rounded-2xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card">
+      {encabezado}
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-gray-100 bg-gray-50 dark:border-night-line dark:bg-night-inset/60">

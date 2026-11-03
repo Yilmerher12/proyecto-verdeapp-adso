@@ -4,7 +4,7 @@
  * ¿Para qué? Un aviso de ayuda (ej: "¿Qué es una ECA?") puede estorbar a quien ya lo leyó, pero
  *           debe volver a mostrarse en cada nuevo inicio de sesión como apoyo.
  * ¿Impacto? Se guarda en sessionStorage (se borra al cerrar la pestaña) y además al cerrar sesión
- *           (limpiarAvisosCerrados, que llama AuthContext). Si el navegador bloquea el
+ *           (limpiarAvisosCerrados, que llaman AuthContext y el botón de cerrar sesión de AppShell). Si el navegador bloquea el
  *           almacenamiento, el aviso simplemente vuelve a aparecer: nada se rompe.
  */
 import { useState } from "react";
