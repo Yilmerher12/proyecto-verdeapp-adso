@@ -25,6 +25,7 @@ import {
   type PaginaAuditorias,
 } from "@/lib/auditoriaConjuntoApi";
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
+import { Pestanas } from "@/components/ui/Pestanas";
 import { lunesInicial, rangoSemana, totalSemana } from "@/lib/desempeno";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -193,36 +194,18 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
                 auditorías (solo si quien usa el panel pasa `cargarHistorial`, como el Residente) y los temas.
           ¿Para qué? Antes el panel eran 6 bloques seguidos y había que bajar mucho para llegar al final.
           ¿Impacto? "Todas las auditorías" pide su lista solo al abrir la pestaña. */}
-      {/* ¿Qué? En un espacio angosto las pestañas se reparten el ancho en partes iguales (el texto largo baja
-                a una segunda línea dentro de su propia pestaña); en uno ancho van en una fila, cada una del
-                tamaño de su texto.
+      {/* ¿Qué? Las pestañas son el componente compartido `Pestanas`: en un espacio angosto se reparten el ancho en
+                partes iguales y en uno ancho van en una fila (ver components/ui/Pestanas.tsx).
           ¿Para qué? Antes se envolvían en filas y una pestaña quedaba sola en la segunda, desordenada. */}
-      <div
-        role="tablist"
-        aria-label={t("desempeno.pestanas.aria")}
-        className={`grid gap-2 border-t border-gray-100 pt-5 dark:border-night-line @xl:flex ${
-          pestanas.length === 3 ? "grid-cols-3" : "grid-cols-2"
-        }`}
-      >
-        {pestanas.map(({ id, clave: claveTexto }) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            id={`desempeno-pestana-${id}`}
-            aria-selected={pestana === id}
-            aria-controls="desempeno-pestana-contenido"
-            onClick={() => setPestana(id)}
-            className={`cursor-pointer rounded-full px-3 py-2 text-center text-sm font-semibold leading-tight transition-colors @xl:px-4 ${
-              pestana === id
-                ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-field"
-            }`}
-          >
-            {t(claveTexto)}
-          </button>
-        ))}
-      </div>
+      <Pestanas
+        pestanas={pestanas.map(({ id, clave: claveTexto }) => ({ id, etiqueta: t(claveTexto) }))}
+        activa={pestana}
+        onCambiar={setPestana}
+        ariaLabel={t("desempeno.pestanas.aria")}
+        idBase="desempeno-pestana"
+        idPanel="desempeno-pestana-contenido"
+        className="border-t border-gray-100 pt-5 dark:border-night-line"
+      />
 
       <div role="tabpanel" id="desempeno-pestana-contenido" aria-labelledby={`desempeno-pestana-${pestana}`}>
         {pestana === "semana" && (

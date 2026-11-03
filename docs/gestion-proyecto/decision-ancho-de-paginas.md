@@ -42,7 +42,7 @@ Hay **tres anchos**, definidos en `fe/src/config/anchoPagina.ts`, y toda página
 | Ancho | Valor | Para qué se usa |
 | --- | --- | --- |
 | `normal` | Todo el área disponible (80 rem) | Los cuatro paneles, listas, catálogos, Perfil, Directorio y las páginas de administración |
-| `lectura` | 48 rem (`max-w-3xl`) | Listas cortas de avisos: Comunicados cuando hay menos de 4, y Soporte técnico (feed de Novedades) |
+| `lectura` | 48 rem (`max-w-3xl`) | Listas de avisos de texto: Comunicados y Soporte técnico (feed de Novedades), siempre |
 | `formulario` | 32 rem (`max-w-lg`) | Formularios cortos: Cambiar contraseña |
 
 Cómo se usa en una página:
@@ -70,7 +70,8 @@ Reglas:
 ## 6. Qué páginas usan cada ancho
 
 - **`normal`:** Panel del Residente, Panel del Reciclador, Panel del Admin de Conjunto, Panel del Admin del Sistema, Perfil, Directorio y Puntos de acopio, Aprende a reciclar y su categoría, y las páginas de administración (Agenda, Comunicados, Desempeño, Contenido educativo, Novedades y Puntos de acopio).
-- **`lectura`:** Comunicados del Residente y del Reciclador cuando hay menos de 4 avisos (con 4 o más usa `normal`, porque aparecen filtros y grupos por fecha), y Soporte técnico (el feed de Novedades, con sus pestañas Recibidas, Escribir y Mis envíos). Soporte técnico se movió de `normal` a `lectura` el 2026-11-03: era una lista corta de textos y un formulario de un solo campo, y a 80 rem quedaba muy alargada y distinta de Comunicados, que está a su lado en el menú.
+- **`lectura`:** Comunicados del Residente y del Reciclador, y Soporte técnico (el feed de Novedades, con sus pestañas Avisos del sistema, Escribir novedad e Historial de novedades; lo ven el Residente, el Reciclador y el Admin de Conjunto). Soporte técnico se movió de `normal` a `lectura` el 2026-11-03: era una lista corta de textos y un formulario de un solo campo, y a 80 rem quedaba muy alargada y distinta de Comunicados, que está a su lado en el menú.
+  - **Decisión del 2026-11-03 (issue #603):** Comunicados ya no pasa a `normal` con 4 o más avisos. Antes la pantalla se ensanchaba sola cuando se publicaba el cuarto aviso (para dar lugar a los filtros y a los grupos "Esta semana" y "Anteriores") y quedaba distinta de Soporte técnico, que no cambia. Los filtros se envuelven y los grupos son listas de tarjetas, así que caben bien en 48 rem. Resultado: las dos pantallas hermanas miden siempre lo mismo.
 - **`formulario`:** Cambiar contraseña.
 
 Quedan fuera del estándar las páginas públicas (Landing, Login, Registro, recuperación de contraseña y verificación de correo) y los modales, que tienen su propio diseño.
