@@ -128,9 +128,11 @@ export function NotificationFeed({
 
   return (
     <div className={flat ? "" : "bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm"}>
-      <div className={`flex items-center justify-between gap-3 px-5 pt-5 ${description ? "pb-2" : "pb-3"}`}>
+      {/* ¿Qué? `flex-wrap` y `shrink-0` en el ícono: en un espacio angosto los botones "Marcar leídas / Limpiar
+                leídas" bajan a otra fila en vez de apretar el título y encoger el ícono del reloj (barrido #602). */}
+      <div className={`flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-5 pt-5 ${description ? "pb-2" : "pb-3"}`}>
         <div className="flex items-center gap-2">
-          <Clock className="icon-md text-accent-600" />
+          <Clock className="icon-md shrink-0 text-accent-600" />
           <h2 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h2>
           {noLeidas > 0 && (
             <span className={`rounded-full px-1.5 py-0.5 text-[0.625rem] font-bold text-white ${accentBg}`}>
