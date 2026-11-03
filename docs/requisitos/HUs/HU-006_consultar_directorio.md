@@ -74,3 +74,13 @@
 - **entonces** los veo en una tabla con las columnas Punto (nombre y dirección) y Localidad, ordenada por localidad y luego por nombre. Puedo buscar por nombre o dirección sin importar tildes.
 - Al tocar la fila (o la flecha del final) se despliega la ficha del punto, de a una a la vez: **Ubicación** (dirección con botón para copiarla y el botón "Cómo llegar", que abre Google Maps) y **Contacto** (teléfono y encargado).
 - Si el punto no tiene teléfono, veo "Sin teléfono publicado" y la línea general de la UAESP, aclarando que no es la del punto. No veo kebab, comentarios ni botones de edición: son solo del Admin del Sistema.
+
+
+### CA-006.8 — El aviso "¿Qué es una ECA?" se puede cerrar y la advertencia no
+
+- **Dado que** entro a los puntos de acopio,
+- **cuando** la página carga,
+- **entonces** veo el aviso "¿Qué es una ECA?", con un texto para el Residente ("aquí puedes ver las ECA de tu localidad") y otro para el Reciclador ("aquí puedes ubicar la más cercana a tu ruta"). Lo puedo cerrar con la X y, al cerrarlo, queda un enlace con el mismo título para volver a abrirlo. Solo se recuerda mientras dure mi sesión: en cada inicio de sesión vuelve a mostrarse.
+- Aparte del aviso, siempre veo (sin poder cerrarla) la advertencia "Lista oficial de 2020. No incluye todas las ECA de Bogotá", con el enlace a la fuente.
+
+> **Decisión pendiente de la respuesta de la UAESP (issue #500):** el aviso ya no dice que un residente pueda "entregar materiales reciclables por su cuenta" en una ECA. No está confirmado que un ciudadano común pueda entregar en una ECA (ver `docs/gestion-proyecto/investigacion-tipos-puntos-acopio.md` y `prototipo-ficha-punto-acopio.md`). Cuando la UAESP responda, si se confirma, se puede volver a agregar esa frase con la fuente; si no, se deja como está. Decisión del 2026-10-30.

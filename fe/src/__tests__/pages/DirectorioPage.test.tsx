@@ -76,6 +76,8 @@ function renderPage(soloAcopio = false) {
 describe("DirectorioPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // ¿Qué? El aviso cerrado se recuerda en sessionStorage: se limpia para que una prueba no afecte a la otra.
+    sessionStorage.clear();
   });
 
   it("en Recicladores muestra la localidad propia fija, sin selector editable", async () => {
@@ -138,13 +140,63 @@ describe("DirectorioPage", () => {
     await user.click(await screen.findByRole("button", { name: "Puntos de Acopio" }));
 
     // ¿Qué? El panel ya no afirma que Bogotá solo tiene ECA en 6 de 20 localidades.
-    expect(await screen.findByText(/de marzo de 2020\. No son todas las ECA de Bogotá/)).toBeInTheDocument();
+    expect(await screen.findByText(/Lista oficial de 2020\. No incluye todas las ECA de Bogotá/)).toBeInTheDocument();
     expect(screen.queryByText(/6 de sus 20/)).not.toBeInTheDocument();
 
     expect(screen.getByRole("link", { name: /Ver fuente/ })).toHaveAttribute(
       "href",
       expect.stringContaining("Listado_Inventario_inicial_ECA_y_Bodegas_PR.pdf")
     );
+  });
+
+  // ¿Qué? El aviso "¿Qué es una ECA?" se puede cerrar con la X y se vuelve a abrir con su enlace; la
+  //       advertencia de que la lista es de 2020 NO se cierra. El texto cambia por rol y no promete que se
+  //       pueda entregar por cuenta propia (pendiente de la respuesta de la UAESP, issue #500).
+  describe('aviso "¿Qué es una ECA?"', () => {
+    it("el Residente lo ve completo, sin la frase de entregar por cuenta propia", async () => {
+      mockRespuestas({ nombreLocalidad: "Usaquén" });
+      const user = userEvent.setup();
+      renderPage();
+      await user.click(await screen.findByRole("button", { name: "Puntos de Acopio" }));
+
+      expect(await screen.findByText(/Aquí puedes ver las ECA de tu localidad\./)).toBeInTheDocument();
+      expect(screen.queryByText(/entregar materiales reciclables por tu cuenta/)).not.toBeInTheDocument();
+    });
+
+    it("el Reciclador ve la versión pensada para su ruta", async () => {
+      mockRespuestas({ nombreLocalidad: "Usaquén" });
+      renderPage(true);
+
+      expect(await screen.findByText(/Aquí puedes ubicar la más cercana a tu ruta\./)).toBeInTheDocument();
+    });
+
+    it("se cierra con la X, queda el enlace para reabrirlo y la advertencia de 2020 sigue visible", async () => {
+      mockRespuestas({ nombreLocalidad: "Usaquén" });
+      const user = userEvent.setup();
+      renderPage(true);
+      await screen.findByText(/Aquí puedes ubicar la más cercana a tu ruta\./);
+
+      await user.click(screen.getByRole("button", { name: "Cerrar" }));
+
+      expect(screen.queryByText(/Aquí puedes ubicar la más cercana a tu ruta\./)).not.toBeInTheDocument();
+      expect(screen.getByText(/Lista oficial de 2020/)).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "¿Qué es una ECA?" }));
+      expect(await screen.findByText(/Aquí puedes ubicar la más cercana a tu ruta\./)).toBeInTheDocument();
+    });
+
+    it("recuerda que se cerró mientras dure la sesión", async () => {
+      mockRespuestas({ nombreLocalidad: "Usaquén" });
+      const user = userEvent.setup();
+      const primera = renderPage(true);
+      await screen.findByText(/Aquí puedes ubicar la más cercana a tu ruta\./);
+      await user.click(screen.getByRole("button", { name: "Cerrar" }));
+      primera.unmount();
+
+      renderPage(true);
+      expect(await screen.findByRole("button", { name: "¿Qué es una ECA?" })).toBeInTheDocument();
+      expect(screen.queryByText(/Aquí puedes ubicar la más cercana a tu ruta\./)).not.toBeInTheDocument();
+    });
   });
 
   // ¿Qué? Los puntos de acopio se ven como tabla con fila desplegable, para el

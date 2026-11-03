@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Phone, Map as MapIcon, HardHat, Warehouse, MessageCircle, Info, ExternalLink, Search } from "lucide-react";
+import { Phone, Map as MapIcon, HardHat, Warehouse, MessageCircle, Info, ExternalLink, Search, X, TriangleAlert } from "lucide-react";
+import { useAvisoCerradoEnSesion } from "@/hooks/useAvisoCerradoEnSesion";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
@@ -265,22 +266,43 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           de la ciudad — sin esto, alguien podría tomar los 9 puntos como
           el total real de Bogotá. El enlace lleva al inventario de la
           UAESP, que lista muchas más (su cifra exacta no está clara). */}
+      {/* ¿Qué? El aviso se puede cerrar con la X y queda un enlace con su título para volver a abrirlo;
+                solo se recuerda mientras dure la sesión (en cada inicio de sesión vuelve a salir).
+          ¿Para qué? Es apoyo para quien no conoce el tema, pero estorba a quien ya lo leyó.
+          ¿Impacto? La advertencia de procedencia de los puntos (lista de 2020, no son todas las ECA) NO se
+                    puede cerrar: va aparte, siempre visible. El texto de la ECA cambia por rol y no
+                    dice que se pueda entregar por cuenta propia hasta que la UAESP lo confirme (#500). */}
       {tab === "recicladores" && !soloAcopio ? (
         <InfoBanner
+          id="directorio-recicladores"
           titulo={t("directorio.infoRecicladores.titulo")}
           descripcion={t("directorio.infoRecicladores.descripcion")}
           paraQueSirve={t("directorio.infoRecicladores.paraQueSirve")}
           fuenteTexto={t("directorio.infoRecicladores.fuenteTexto")}
         />
       ) : (
-        <InfoBanner
-          titulo={t("directorio.infoPuntos.titulo")}
-          descripcion={t("directorio.infoPuntos.descripcion")}
-          paraQueSirve={t("directorio.infoPuntos.paraQueSirve")}
-          fuenteTexto={t("directorio.infoPuntos.fuenteTexto")}
-          fuenteHref={FUENTE_ECA_URL}
-          fuenteLinkLabel={t("directorio.infoPuntos.fuenteLink")}
-        />
+        <>
+          <InfoBanner
+            id="directorio-eca"
+            titulo={t("directorio.infoPuntos.titulo")}
+            descripcion={t(soloAcopio ? "directorio.infoPuntos.descripcionReciclador" : "directorio.infoPuntos.descripcionResidente")}
+          />
+          <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
+            <TriangleAlert className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
+            <span>
+              {t("directorio.infoPuntos.nota")}{" "}
+              <a
+                href={FUENTE_ECA_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-semibold underline underline-offset-2"
+              >
+                {t("directorio.infoPuntos.fuenteLink")}
+                <ExternalLink className="icon-sm" aria-hidden="true" />
+              </a>
+            </span>
+          </p>
+        </>
       )}
 
       {/* Contenido */}
@@ -321,55 +343,59 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
 
 // ¿Qué? Caja informativa compartida por las 2 pestañas del directorio, con
 //       la misma estructura (qué es / para qué sirve / de dónde viene) pero
-//       contenido distinto según el tipo de dato.
+//       contenido distinto según el tipo de dato. Se puede cerrar con la X.
 // ¿Para qué? Usa los tokens accent-* de la marca (no el Alert genérico de
 //           tipo "info", que es azul neutro) para que se sienta parte del
 //           sistema de diseño de VerdeApp, no una alerta del navegador.
+//           Cerrada, queda un enlace con el título para volver a abrirla.
 // ¿Impacto? Sin esto, alguien nuevo en el directorio no tiene forma de
-//           saber, por ejemplo, por qué 14 de 20 localidades no muestran
-//           ningún punto de acopio — con esto queda aclarado la primera
-//           vez que entra, cada vez que entra.
+//           saber, por ejemplo, qué es una ECA. La preferencia solo dura la
+//           sesión (ver useAvisoCerradoEnSesion): en cada inicio de sesión
+//           vuelve a mostrarse.
 function InfoBanner({
+  id,
   titulo,
   descripcion,
   paraQueSirve,
   fuenteTexto,
-  fuenteHref,
-  fuenteLinkLabel,
 }: {
+  id: string;
   titulo: string;
   descripcion: string;
-  paraQueSirve: string;
-  fuenteTexto: string;
-  fuenteHref?: string;
-  fuenteLinkLabel?: string;
+  paraQueSirve?: string;
+  fuenteTexto?: string;
 }) {
+  const { t } = useTranslation();
+  const { cerrado, cerrar, reabrir } = useAvisoCerradoEnSesion(id);
+
+  if (cerrado) {
+    return (
+      <button type="button" onClick={reabrir} className="link-text inline-flex cursor-pointer items-center gap-1.5 text-sm">
+        <Info className="icon-sm" aria-hidden="true" />
+        {titulo}
+      </button>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-300/40 dark:bg-accent-300/10">
       <div className="flex gap-3">
         <Info className="icon-lg mt-0.5 shrink-0 text-accent-600 dark:text-accent-400" />
-        <div className="space-y-1.5 text-sm">
+        <div className="min-w-0 flex-1 space-y-1.5 text-sm">
           <p className="font-semibold text-accent-900 dark:text-accent-200">{titulo}</p>
           <p className="text-accent-800/90 dark:text-accent-300/90">{descripcion}</p>
-          <p className="text-accent-800/90 dark:text-accent-300/90">{paraQueSirve}</p>
-          <p className="text-xs text-accent-800 dark:text-accent-300">
-            {fuenteTexto}
-            {fuenteHref && fuenteLinkLabel && (
-              <>
-                {" — "}
-                <a
-                  href={fuenteHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-semibold underline underline-offset-2 transition-colors hover:text-accent-900 dark:hover:text-accent-200"
-                >
-                  {fuenteLinkLabel}
-                  <ExternalLink className="icon-sm" aria-hidden="true" />
-                </a>
-              </>
-            )}
-          </p>
+          {paraQueSirve && <p className="text-accent-800/90 dark:text-accent-300/90">{paraQueSirve}</p>}
+          {fuenteTexto && <p className="text-xs text-accent-800 dark:text-accent-300">{fuenteTexto}</p>}
         </div>
+        <button
+          type="button"
+          onClick={cerrar}
+          aria-label={t("common.close")}
+          title={t("common.close")}
+          className="touch-target-h -mr-1 -mt-1 flex h-8 shrink-0 cursor-pointer items-center justify-center rounded-lg px-1.5 text-accent-700 transition-colors hover:bg-accent-100 dark:text-accent-300 dark:hover:bg-accent-300/15"
+        >
+          <X className="icon-md" aria-hidden="true" />
+        </button>
       </div>
     </div>
   );

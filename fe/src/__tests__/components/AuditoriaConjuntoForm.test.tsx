@@ -61,6 +61,13 @@ function botonEnviar() {
   return screen.getByRole("button", { name: /Completa el formulario|Enviar auditoría/ });
 }
 
+// ¿Qué? El botón de la ventana de confirmación, que ahora también se llama "Enviar auditoría".
+// ¿Para qué? El formulario y la confirmación tienen un botón con el mismo nombre; se busca el de la confirmación.
+async function botonConfirmar() {
+  const confirmacion = await screen.findByRole("dialog", { name: "Confirmar auditoría" });
+  return within(confirmacion).getByRole("button", { name: "Enviar auditoría" });
+}
+
 async function completarFormulario(user: ReturnType<typeof userEvent.setup>, container: HTMLElement) {
   await esperarTemas();
   await user.click(screen.getByRole("radio", { name: "Regular" }));
@@ -236,7 +243,8 @@ describe("AuditoriaConjuntoForm", () => {
       await user.click(botonEnviar());
 
       expect(await screen.findByText("¿Enviar esta auditoría?")).toBeInTheDocument();
-      expect(screen.getByText(/Vas a calificar "Cómo entregar el material" como Regular/)).toBeInTheDocument();
+      expect(screen.getByText("Vas a calificar Cómo entregar el material como Regular en Torres del Parque.")).toBeInTheDocument();
+      expect(screen.getByText("Después de enviarla no podrás editarla.")).toBeInTheDocument();
       expect(mockCrearAuditoria).not.toHaveBeenCalled();
     });
 
@@ -264,7 +272,7 @@ describe("AuditoriaConjuntoForm", () => {
       await user.type(screen.getByLabelText("Descripción (opcional)"), "  Bolsas mezcladas en el SHUT  ");
 
       await user.click(botonEnviar());
-      await user.click(await screen.findByRole("button", { name: "Sí, enviar" }));
+      await user.click(await botonConfirmar());
 
       await waitFor(() => expect(onSuccess).toHaveBeenCalledWith(AUDITORIA_CREADA));
       expect(mockCrearAuditoria).toHaveBeenCalledTimes(1);
@@ -287,7 +295,7 @@ describe("AuditoriaConjuntoForm", () => {
       await completarFormulario(user, container);
 
       await user.click(botonEnviar());
-      await user.click(await screen.findByRole("button", { name: "Sí, enviar" }));
+      await user.click(await botonConfirmar());
 
       await waitFor(() => expect(onSuccess).toHaveBeenCalled());
       expect(mockCrearAuditoria.mock.calls[0][0].descripcion).toBeUndefined();
@@ -301,7 +309,7 @@ describe("AuditoriaConjuntoForm", () => {
       await user.selectOptions(screen.getByLabelText("Conjunto"), CONJUNTO_B.id_conjunto_residencial);
 
       await user.click(botonEnviar());
-      await user.click(await screen.findByRole("button", { name: "Sí, enviar" }));
+      await user.click(await botonConfirmar());
 
       await waitFor(() => expect(onSuccess).toHaveBeenCalled());
       expect(mockCrearAuditoria.mock.calls[0][0].id_conjunto_residencial).toBe(CONJUNTO_B.id_conjunto_residencial);
@@ -316,7 +324,7 @@ describe("AuditoriaConjuntoForm", () => {
       await completarFormulario(user, container);
 
       await user.click(botonEnviar());
-      await user.click(await screen.findByRole("button", { name: "Sí, enviar" }));
+      await user.click(await botonConfirmar());
 
       expect(await screen.findByText("Espera 24 horas entre auditorías del mismo conjunto.")).toBeInTheDocument();
       expect(onSuccess).not.toHaveBeenCalled();
@@ -330,7 +338,7 @@ describe("AuditoriaConjuntoForm", () => {
       await completarFormulario(user, container);
 
       await user.click(botonEnviar());
-      await user.click(await screen.findByRole("button", { name: "Sí, enviar" }));
+      await user.click(await botonConfirmar());
 
       expect(await screen.findByText("No se pudo enviar la auditoría.")).toBeInTheDocument();
     });
@@ -342,7 +350,7 @@ describe("AuditoriaConjuntoForm", () => {
       await completarFormulario(user, container);
 
       await user.click(botonEnviar());
-      await user.click(await screen.findByRole("button", { name: "Sí, enviar" }));
+      await user.click(await botonConfirmar());
 
       expect(
         await screen.findByText("La subida está tardando demasiado — revisa tu conexión e intenta de nuevo.")
@@ -357,5 +365,21 @@ describe("AuditoriaConjuntoForm", () => {
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ¿Qué? Al elegir un nivel, la franja de arriba toma su color y sale un mensaje neutro con lo elegido.
+describe("AuditoriaConjuntoForm — nivel elegido", () => {
+  it("sin elegir no hay mensaje; al elegir un nivel dice cuál quedó marcado", async () => {
+    const user = userEvent.setup();
+    renderFormulario();
+
+    expect(screen.queryByText(/^Elegiste:/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: "Regular" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Elegiste: Regular");
+
+    await user.click(screen.getByRole("radio", { name: "Malo" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Elegiste: Malo");
   });
 });

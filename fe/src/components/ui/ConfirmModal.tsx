@@ -36,6 +36,11 @@ interface ConfirmModalProps {
   /** ¿Qué? Texto del botón mientras isConfirming=true. Por defecto, el mismo confirmLabel. */
   confirmingLabel?: string;
   isConfirming?: boolean;
+  /** ¿Qué? Apaga el botón de confirmar sin mostrar el spinner de "en curso".
+   *  ¿Para qué? Cuando la acción ya no se puede hacer (ej: el estado del conjunto cambió
+   *            mientras el Reciclador confirmaba un aviso) y el motivo va en `children`.
+   *  ¿Impacto? Opcional: sin pasarlo, el botón se comporta exactamente igual que antes. */
+  confirmDisabled?: boolean;
   error?: string | null;
   /** ¿Qué? Si se pasa, el aviso de error se puede cerrar sin cerrar todo el modal. */
   onDismissError?: () => void;
@@ -75,6 +80,7 @@ export function ConfirmModal({
   confirmLabel,
   confirmingLabel,
   isConfirming = false,
+  confirmDisabled = false,
   error,
   onDismissError,
   onConfirm,
@@ -110,7 +116,7 @@ export function ConfirmModal({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={isConfirming}
+            disabled={isConfirming || confirmDisabled}
             aria-busy={isConfirming}
             className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl ${estilo.boton} px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60`}
           >

@@ -41,12 +41,12 @@
     }
   },
   "passwordStrength": {
-    "ariaLabel": "Fortaleza de contraseña: {{label}}",
     "1": "Muy débil",
     "2": "Débil",
     "3": "Regular",
     "4": "Buena",
-    "5": "Fuerte"
+    "5": "Fuerte",
+    "ariaLabel": "Fortaleza de contraseña: {{label}}"
   },
   "roles": {
     "adminSistema": "Administrador",
@@ -868,6 +868,14 @@
       },
       "feedbackSent": "Notificación enviada: \"{{label}}\"",
       "genericNotificationSent": "Notificación enviada",
+      "misAuditorias": "Mis auditorías",
+      "razon": {
+        "yaPresente": "Ya llegaste",
+        "avisoLlegadaReciente": "Avisaste hace menos de 2 h",
+        "debesLlegarPrimero": "Avisa tu llegada primero",
+        "yaEstaLleno": "Ya está reportado lleno",
+        "yaEstaLibre": "Ya está reportado libre"
+      },
       "sendSection": {
         "title": "Enviar notificación",
         "subtitle": "Avisa a los residentes y al administrador del conjunto.",
@@ -898,8 +906,13 @@
         "emptyWithoutConjuntos": "No tienes notificaciones. Los avisos de los residentes (como SHUT lleno) llegan de los conjuntos donde estés autorizado."
       },
       "modal": {
-        "confirmTitle": "¿Enviar este aviso?",
-        "confirmDescription": "Vas a avisar \"{{accion}}\" a los residentes y al administrador de {{conjunto}}.",
+        "confirmTitles": {
+          "llegada": "¿Avisar que llegaste?",
+          "shutLleno": "¿Avisar que el SHUT está lleno?",
+          "shutLibre": "¿Avisar que el SHUT está libre?",
+          "finalizacion": "¿Avisar que terminaste?"
+        },
+        "confirmDescription": "Se lo diremos a los residentes y al administrador de {{conjunto}}.",
         "sending": "Enviando...",
         "submit": "Enviar aviso",
         "yaPresente": "Ya avisaste tu llegada a este conjunto — avisa que ya te vas antes de volver a llegar.",
@@ -910,12 +923,15 @@
       },
       "auditoria": {
         "bannerTitle": "Auditoría semanal pendiente",
-        "bannerSubtitle": "Ya puedes calificar la separación de residuos de {{conjunto}}.",
+        "bannerSubtitle": "Califica cómo separan el material en {{conjunto}} esta semana.",
         "bannerAction": "Auditar ahora",
+        "alDiaTitle": "Auditoría de esta semana",
+        "alDiaText": "Ya enviaste la de {{conjunto}} ({{fecha}}).",
         "modalTitle": "Auditar conjunto",
         "modalSubtitle": "Califica cómo está separando el material reciclable este conjunto — la calificación queda respaldada con una foto.",
         "conjuntoLabel": "Conjunto",
         "nivelLabel": "Nivel de desempeño",
+        "nivelElegido": "Elegiste: {{nivel}}",
         "niveles": {
           "buena": "Bueno",
           "regular": "Regular",
@@ -941,8 +957,9 @@
         "confirmSubmit": {
           "ariaLabel": "Confirmar auditoría",
           "title": "¿Enviar esta auditoría?",
-          "warning": "Vas a calificar \"{{tema}}\" como {{nivel}}. Una vez enviada, la auditoría no se puede editar.",
-          "confirm": "Sí, enviar"
+          "description": "Vas a calificar {{tema}} como {{nivel}} en {{conjunto}}.",
+          "irreversible": "Después de enviarla no podrás editarla.",
+          "confirm": "Enviar auditoría"
         },
         "validation": {
           "conjunto": "Selecciona un conjunto.",
@@ -1150,10 +1167,10 @@
     },
     "infoPuntos": {
       "titulo": "¿Qué es una ECA?",
-      "descripcion": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen en sus rutas.",
-      "paraQueSirve": "Si necesitas entregar materiales reciclables por tu cuenta, aquí puedes ubicar el punto más cercano a tu localidad.",
-      "fuenteTexto": "Los puntos que ves vienen del dataset \"Aprovechamiento ECAS\" de Datos Abiertos Bogotá (UAESP), de marzo de 2020. No son todas las ECA de Bogotá: el inventario de la UAESP registra muchas más.",
-      "fuenteLink": "Ver fuente"
+      "fuenteLink": "Ver fuente",
+      "descripcionResidente": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen. Aquí puedes ver las ECA de tu localidad.",
+      "descripcionReciclador": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen en sus rutas. Aquí puedes ubicar la más cercana a tu ruta.",
+      "nota": "Lista oficial de 2020. No incluye todas las ECA de Bogotá."
     }
   },
   "catalogoEducativo": {
@@ -1849,7 +1866,11 @@
     "feed": {
       "title": "Comunicados",
       "subtitle": "Avisos activos de tu conjunto.",
-      "empty": "No hay comunicados activos por ahora."
+      "empty": "No hay comunicados activos por ahora.",
+      "filtroLabel": "Filtrar por tipo",
+      "filtroTodos": "Todos",
+      "estaSemana": "Esta semana",
+      "anteriores": "Anteriores"
     }
   },
   "novedades": {

@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 import axios from "axios";
 import * as authApi from "@/api/auth";
 import { AuthContext } from "@/context/authContextDef";
+import { limpiarAvisosCerrados } from "@/hooks/useAvisoCerradoEnSesion";
 import i18n from "@/i18n";
 import {
   alCerrarSesionEnOtraPestana,
@@ -62,6 +63,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     //           recordar un scroll viejo que no tenía nada que ver con la
     //           sesión que se acaba de cerrar.
     sessionStorage.removeItem("landing-scroll-y");
+    // ¿Qué? También se olvida qué avisos informativos cerró el usuario.
+    // ¿Para qué? Esos avisos (ej: "¿Qué es una ECA?") deben volver a mostrarse en cada inicio de sesión nuevo.
+    limpiarAvisosCerrados();
     setUser(null);
   }, []);
 

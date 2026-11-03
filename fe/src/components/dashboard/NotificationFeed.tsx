@@ -98,6 +98,13 @@ interface NotificationFeedProps {
    *           suya además se verían dos bordes uno dentro del otro.
    */
   flat?: boolean;
+  /**
+   * ¿Qué? Si cada fila escribe el nombre de su conjunto. Por omisión, sí.
+   * ¿Para qué? En el panel del Reciclador la lista ya es del conjunto elegido arriba: repetir el
+   *           nombre en cada fila no aporta. Las notificaciones generales de VerdeApp (que no
+   *           son de ningún conjunto) conservan su etiqueta.
+   */
+  mostrarConjunto?: boolean;
 }
 
 export function NotificationFeed({
@@ -113,6 +120,7 @@ export function NotificationFeed({
   onItemClick,
   esAccionable,
   flat = false,
+  mostrarConjunto = true,
 }: NotificationFeedProps) {
   const { t } = useTranslation();
   const [expandido, setExpandido] = useState(false);
@@ -195,9 +203,11 @@ export function NotificationFeed({
                       {n.mensaje}
                     </p>
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                      <span className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 font-medium text-gray-700 dark:border-night-line dark:bg-night-inset dark:text-gray-300">
-                        {n.nombre_conjunto ?? t("notificationFeed.platformLabel")}
-                      </span>
+                      {(mostrarConjunto || !n.nombre_conjunto) && (
+                        <span className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 font-medium text-gray-700 dark:border-night-line dark:bg-night-inset dark:text-gray-300">
+                          {n.nombre_conjunto ?? t("notificationFeed.platformLabel")}
+                        </span>
+                      )}
                       <time dateTime={n.created_at} title={formatearFechaCreacion(n.created_at)}>
                         {tiempoRelativo(n.created_at)}
                       </time>
