@@ -25,16 +25,21 @@ interface ListaAuditoriasSemanaProps {
   // ¿Qué? undefined = cargando; null = falló la carga.
   auditorias: AuditoriaConjunto[] | null | undefined;
   mensajeVacio: string;
+  // ¿Qué? Sin marco propio (borde, fondo, sombra).
+  // ¿Para qué? Dentro de la tarjeta única "Mi conjunto" / Desempeño la lista va en una pestaña, no en otra tarjeta.
+  sinTarjeta?: boolean;
 }
 
-export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio }: ListaAuditoriasSemanaProps) {
+export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio, sinTarjeta = false }: ListaAuditoriasSemanaProps) {
   const { t } = useTranslation();
   const [idAbierta, setIdAbierta] = useState<string | null>(null);
 
   return (
     <section
       aria-label={titulo}
-      className="space-y-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card"
+      className={`space-y-3 ${
+        sinTarjeta ? "" : "rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card"
+      }`}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base font-bold text-gray-900 dark:text-white">{titulo}</h2>

@@ -280,12 +280,6 @@ export function ProfilePage() {
 
   return (
     <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
-      {/* Header */}
-      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("profile.subtitle")}</p>
-      </div>
-
       {/* Success banner */}
       {exito && (
         <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
@@ -294,12 +288,17 @@ export function ProfilePage() {
         </div>
       )}
 
-      {/* ¿Qué? Tarjeta de identidad: foto, nombre y rol, arriba y a todo el ancho.
-          ¿Para qué? Antes la foto y los datos del rol vivían en una columna
-                    izquierda más corta que la información personal de la
-                    derecha, y los dos bloques blancos quedaban de distinta altura.
+      {/* ¿Qué? Una sola tarjeta arriba: el título de la página y, debajo, la identidad (foto, nombre y rol),
+                a todo el ancho.
+          ¿Para qué? Antes eran dos tarjetas seguidas (el título y la identidad) con espacio de sobra entre
+                    ellas, y la foto y los datos del rol vivían en una columna izquierda más corta que la
+                    información personal de la derecha.
           ¿Impacto? En celular la foto y el nombre se apilan y centran. */}
-      <div className="flex flex-col items-center gap-5 rounded-2xl border border-gray-100 bg-white p-6 text-center dark:border-night-line dark:bg-night-card sm:flex-row sm:p-8 sm:text-left">
+      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("profile.subtitle")}</p>
+
+      <div className="mt-5 flex flex-col items-center gap-5 border-t border-gray-100 pt-5 text-center dark:border-night-line sm:flex-row sm:text-left">
         {/* Avatar — foto real si existe, si no el círculo con la inicial de siempre. */}
         <div className="relative shrink-0">
           {urlFotoPerfil ? (
@@ -352,6 +351,7 @@ export function ProfilePage() {
             <p className="mt-3 max-w-[16rem] text-xs text-red-600 dark:text-red-300">{errorFoto}</p>
           )}
         </div>
+      </div>
       </div>
 
       {/* ¿Qué? Dos bloques de la misma altura (la cuadrícula los estira): a la

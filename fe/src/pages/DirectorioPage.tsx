@@ -183,13 +183,13 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
         </p>
 
       {/* Controles: tabs + filtro localidad */}
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         {!soloAcopio && (
-          <div className="flex rounded-xl border border-gray-200 bg-white p-1 dark:border-night-line dark:bg-night-panel">
+          <div className="flex shrink-0 rounded-xl border border-gray-200 bg-white p-1 dark:border-night-line dark:bg-night-panel">
             {(
               [
-                { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <HardHat className="icon-md" /> },
-                { id: "puntos" as TabId, label: t("appShell.nav.puntosAcopio"), icon: <Warehouse className="icon-md" /> },
+                { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <HardHat className="icon-md shrink-0" /> },
+                { id: "puntos" as TabId, label: t("appShell.nav.puntosAcopio"), icon: <Warehouse className="icon-md shrink-0" /> },
               ] as const
             ).map(({ id, label, icon }) => (
               <button
@@ -198,7 +198,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                   setTab(id);
                   setPuntoAbiertoId(null);
                 }}
-                className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   tab === id
                     ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                     : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
@@ -223,7 +223,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
               : t("directorio.ownLocalityUnknown")}
           </div>
         ) : (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="relative min-w-[12.5rem]">
               <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
@@ -247,7 +247,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                   setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value));
                   setPuntoAbiertoId(null);
                 }}
-                className="cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="min-w-0 max-w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               >
                 <option value="">{t("directorio.allLocalities")}</option>
                 {localidades.map((l) => (
@@ -262,41 +262,44 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
       </div>
       </div>
 
-      {/* ¿Qué? Aviso informativo de la pestaña Recicladores (explica qué es y para qué le sirve al
-                residente; directorio propio, sin fuente externa). Se puede cerrar con la X y queda un
-                enlace con su título para volver a abrirlo; solo se recuerda mientras dure la sesión.
-          ¿Para qué? Es apoyo para quien no conoce el tema, pero estorba a quien ya lo leyó.
-          ¿Impacto? El de Puntos de acopio no va aquí: vive dentro de la tarjeta de la lista (ver más abajo). */}
-      {tab === "recicladores" && !soloAcopio && (
-        <InfoBanner
-          id="directorio-recicladores"
-          titulo={t("directorio.infoRecicladores.titulo")}
-          descripcion={t("directorio.infoRecicladores.descripcion")}
-          paraQueSirve={t("directorio.infoRecicladores.paraQueSirve")}
-          fuenteTexto={t("directorio.infoRecicladores.fuenteTexto")}
-        />
-      )}
-
       {/* Contenido */}
       {tab === "recicladores" && !soloAcopio ? (
-        cargandoDirectorio ? (
-          <LoadingState message={t("common.loading")} />
-        ) : errorDirectorio ? (
-          <Alert type="error" message={t("common.loadError")} />
-        ) : recicladores.length === 0 ? (
-          <EmptyState icon={HardHat} message={t("directorio.emptyRecyclers")} />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {recicladores.map((r) => (
-              <TarjetaReciclador
-                key={r.id_reciclador}
-                reciclador={r}
-                waLink={waLink}
-                callLink={callLink}
-              />
-            ))}
+        // ¿Qué? Tarjeta 2 de la pestaña Recicladores: arriba la franja con el aviso "¿Qué es este directorio?"
+        //       (se puede cerrar con la X y queda un enlace con su título; solo se recuerda en la sesión) y
+        //       debajo la lista, una fila por reciclador con Llamar y WhatsApp a la vista.
+        // ¿Para qué? Antes eran tarjetas sueltas en dos columnas con la localidad repetida en cada una (ya
+        //           está fija arriba) y el aviso flotando como otro bloque.
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card">
+          <div className="border-b border-gray-100 dark:border-night-line">
+            <InfoBanner
+              enFranja
+              id="directorio-recicladores"
+              titulo={t("directorio.infoRecicladores.titulo")}
+              descripcion={t("directorio.infoRecicladores.descripcion")}
+              paraQueSirve={t("directorio.infoRecicladores.paraQueSirve")}
+              fuenteTexto={t("directorio.infoRecicladores.fuenteTexto")}
+            />
           </div>
-        )
+          {cargandoDirectorio ? (
+            <div className="p-4">
+              <LoadingState message={t("common.loading")} />
+            </div>
+          ) : errorDirectorio ? (
+            <div className="p-4">
+              <Alert type="error" message={t("common.loadError")} />
+            </div>
+          ) : recicladores.length === 0 ? (
+            <div className="p-4">
+              <EmptyState icon={HardHat} message={t("directorio.emptyRecyclers")} />
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-50 dark:divide-night-line">
+              {recicladores.map((r) => (
+                <FilaReciclador key={r.id_reciclador} reciclador={r} waLink={waLink} callLink={callLink} />
+              ))}
+            </ul>
+          )}
+        </div>
       ) : !cargandoDirectorio && !errorDirectorio && puntosVisibles.length > 0 ? (
         <TablaPuntosAcopio
           puntos={puntosVisibles}
@@ -433,7 +436,13 @@ function InfoBanner({
   );
 }
 
-function TarjetaReciclador({
+// ¿Qué? Una fila de la lista de recicladores: nombre, asociación (si tiene) y, a la derecha, Llamar y
+//       WhatsApp. Si el reciclador no comparte su teléfono, en su lugar dice "No comparte su teléfono".
+// ¿Para qué? Lo que el Residente viene a hacer aquí es contactar: los dos botones quedan siempre a la vista,
+//           sin desplegar nada. La localidad no se escribe porque la lista ya es de la localidad fija de arriba.
+// ¿Impacto? El backend solo manda el teléfono si el reciclador activó `mostrar_contacto_directorio`; sin
+//           teléfono es una decisión del reciclador, no un dato faltante.
+function FilaReciclador({
   reciclador: r,
   waLink,
   callLink,
@@ -443,55 +452,43 @@ function TarjetaReciclador({
   callLink: (t: string) => string;
 }) {
   const { t } = useTranslation();
+  const nombre = `${r.nombre} ${r.apellidos}`;
   return (
-    <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
-      <div className="mb-3 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-400/15">
-          <HardHat className="icon-lg text-teal-700 dark:text-teal-300" />
+    <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-400/15">
+          <HardHat className="icon-lg text-teal-700 dark:text-teal-300" aria-hidden="true" />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 break-words font-semibold text-gray-900 dark:text-white">
-            {r.nombre} {r.apellidos}
-          </p>
-          {r.nombre_localidad && (
-            <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[0.6875rem] font-medium text-gray-600 dark:bg-night-inset dark:text-gray-300">
-              <MapIcon className="icon-sm" />
-              {r.nombre_localidad}
-            </span>
-          )}
+        <div className="min-w-0">
+          <p className="break-words text-sm font-semibold text-gray-900 dark:text-white">{nombre}</p>
+          {r.asociacion && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{r.asociacion}</p>}
         </div>
       </div>
 
-      {r.asociacion && (
-        <span className="mb-4 inline-flex w-fit items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[0.6875rem] font-semibold text-teal-700 dark:bg-teal-400/10 dark:text-teal-300">
-          {r.asociacion}
-        </span>
+      {r.numero_telefonico ? (
+        <div className="flex gap-2">
+          <a
+            href={callLink(r.numero_telefonico)}
+            aria-label={`${t("directorio.call")} ${nombre}`}
+            className="touch-target-h flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+          >
+            <Phone className="icon-sm" aria-hidden="true" />
+            {t("directorio.call")}
+          </a>
+          <a
+            href={waLink(r.numero_telefonico)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`WhatsApp ${nombre}`}
+            className="touch-target-h flex items-center justify-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+          >
+            <MessageCircle className="icon-sm" aria-hidden="true" />
+            WhatsApp
+          </a>
+        </div>
+      ) : (
+        <p className="text-xs text-gray-500 dark:text-gray-400">{t("directorio.noPhone")}</p>
       )}
-
-      <div className="mt-auto pt-1">
-        {r.numero_telefonico ? (
-          <div className="flex gap-2">
-            <a
-              href={callLink(r.numero_telefonico)}
-              className="touch-target-h flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
-            >
-              <Phone className="icon-sm" />
-              {t("directorio.call")}
-            </a>
-            <a
-              href={waLink(r.numero_telefonico)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="touch-target-h flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-            >
-              <MessageCircle className="icon-sm" />
-              WhatsApp
-            </a>
-          </div>
-        ) : (
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t("directorio.noPhone")}</p>
-        )}
-      </div>
-    </div>
+    </li>
   );
 }

@@ -68,7 +68,8 @@ export function CategoriaEducativaPage() {
         {t("categoriaEducativa.back")}
       </Link>
 
-      <header className="space-y-3">
+      {/* ¿Qué? El título de la categoría y el de "Sigue aprendiendo" van en una tarjeta (ver CatalogoEducativoPage). */}
+      <header className="space-y-3 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card">
         <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
           {categoriaDecodificada}
         </span>
@@ -106,7 +107,7 @@ export function CategoriaEducativaPage() {
 
       {otras.length > 0 && (
         <section aria-labelledby="titulo-sigue" className="space-y-5">
-          <h2 id="titulo-sigue" className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h2 id="titulo-sigue" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-xl font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
             {t("categoriaEducativa.keepLearning")}
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

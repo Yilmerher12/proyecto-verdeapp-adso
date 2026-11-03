@@ -983,12 +983,21 @@
       "reportSection": {
         "title": "Report waste room full",
         "description": "Notify the recycler and the administrator that the waste room is full. The report is anonymous.",
-        "sent": "Sent",
-        "submit": "Report"
+        "sent": "Report sent",
+        "alreadyReported": "Already reported",
+        "submit": "Report waste room full"
+      },
+      "confirmReport": {
+        "title": "Report that the waste room is full?",
+        "description": "The recycler and the administrator of {{conjunto}} will be notified.",
+        "descriptionSinNombre": "The recycler and the administrator of your complex will be notified.",
+        "anonymous": "Your report is anonymous.",
+        "submit": "Report",
+        "sending": "Reporting..."
       },
       "notifications": {
-        "title": "Recent activity",
-        "empty": "You have no notifications yet. They will appear here when the recycler sends notices."
+        "title": "Received notifications",
+        "empty": "You have no notifications yet. Notices from the recycler and your administration will appear here."
       }
     }
   },
@@ -1068,6 +1077,12 @@
       "tablaSemana": "Week",
       "tablaTotal": "Total",
       "tablaCaption": "Audits per week and level"
+    },
+    "pestanas": {
+      "aria": "What to see about performance",
+      "semana": "Chosen week",
+      "todas": "All audits",
+      "temas": "By topic"
     },
     "pocosDatos": "There aren't enough audits yet to show the chart. It will appear with at least {{minimo}} audits in the last {{semanas}} weeks. Meanwhile, see the list below.",
     "temas": {
@@ -1157,7 +1172,7 @@
     "searchPoints": "Search by name or address",
     "noPointsMatch": "No point matches your search.",
     "call": "Call",
-    "noPhone": "No phone registered",
+    "noPhone": "Does not share their phone",
     "copyAddress": "Copy address",
     "infoRecicladores": {
       "titulo": "What is this directory?",

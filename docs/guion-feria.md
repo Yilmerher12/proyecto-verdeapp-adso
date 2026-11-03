@@ -1914,7 +1914,7 @@ auditoría en vivo, las fotos están en `be/app/data/demo/fotos/`: usa `regular-
 | Min | Ventana | Qué haces | Qué dices (una frase) |
 | --- | --- | --- | --- |
 | 0:00 | Pantalla de inicio | Muestras el inicio, cambias a inglés y activas el modo oscuro | "VerdeApp está en español e inglés y tiene modo oscuro; tiene cuatro roles y esta es la historia de un reciclaje completo." |
-| 0:30 | **Residente** | Muestras el panel (avisos, comunicados, última auditoría) y pulsas **Reportar** en "Reportar SHUT lleno" | "El residente avisa con un botón que el cuarto de basuras está lleno; el reporte es anónimo y le llega al reciclador y al administrador." |
+| 0:30 | **Residente** | Muestras el panel (avisos, comunicados, última auditoría) y pulsas **Reportar SHUT lleno** y confirmas en la ventana | "El residente avisa con un botón que el cuarto de basuras está lleno; el reporte es anónimo y le llega al reciclador y al administrador." |
 | 1:15 | **Reciclador** | En "Notificaciones recibidas" aparece el aviso (puede tardar hasta 20 s). Pulsas **Llegué al conjunto**, eliges Aranjuez y **Enviar aviso** | "Recibe el aviso y avisa que llegó; la app le avisa al residente. Solo puede avisar si está autorizado en ese conjunto." |
 | 2:00 | **Reciclador** | Pulsas **SHUT ya está libre** y luego **Finalicé separación** | "Cada aviso exige haber avisado la llegada antes: así corresponden a una presencia real." |
 | 2:30 | **Reciclador** | En "Auditoría semanal pendiente" pulsas **Auditar ahora**: nivel **Regular**, un tema, una descripción breve y 2 fotos (`regular-1.jpg` y `regular-2.jpg`). Confirmas el envío | "Califica el conjunto con evidencia: la foto es obligatoria y una auditoría enviada no se puede editar." |

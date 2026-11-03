@@ -36,9 +36,18 @@ interface HistorialAuditoriasProps {
   // ¿Qué? Título de la tarjeta. Por omisión, "Historial de auditorías".
   // ¿Para qué? Al Reciclador esta lista le muestra las que ÉL envió: "Mis auditorías" se entiende mejor.
   titulo?: string;
+  // ¿Qué? Sin tarjeta ni título propios, solo la lista.
+  // ¿Para qué? En el panel del Residente es la pestaña "Todas las auditorías" de la tarjeta "Mi conjunto".
+  sinTarjeta?: boolean;
 }
 
-export function HistorialAuditorias({ cargar, mostrarSiempreElConjunto = false, recargar = 0, titulo }: HistorialAuditoriasProps) {
+export function HistorialAuditorias({
+  cargar,
+  mostrarSiempreElConjunto = false,
+  recargar = 0,
+  titulo,
+  sinTarjeta = false,
+}: HistorialAuditoriasProps) {
   const { t } = useTranslation();
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [total, setTotal] = useState(0);
@@ -73,11 +82,13 @@ export function HistorialAuditorias({ cargar, mostrarSiempreElConjunto = false, 
   const conNombreDeConjunto = mostrarSiempreElConjunto || variosConjuntos;
 
   return (
-    <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
-      <div className="mb-4 flex items-center gap-2">
-        <History className="icon-md text-gray-500 dark:text-gray-400" />
-        <h2 className="text-sm font-bold text-gray-900 dark:text-white">{titulo ?? t("auditoriaResultado.historialTitle")}</h2>
-      </div>
+    <div className={sinTarjeta ? "" : "bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5"}>
+      {!sinTarjeta && (
+        <div className="mb-4 flex items-center gap-2">
+          <History className="icon-md text-gray-500 dark:text-gray-400" />
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white">{titulo ?? t("auditoriaResultado.historialTitle")}</h2>
+        </div>
+      )}
 
       {cargando ? (
         <LoadingState message={t("common.loading")} />
