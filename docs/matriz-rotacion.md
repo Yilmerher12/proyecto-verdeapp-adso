@@ -26,8 +26,24 @@ Anota la cobertura real al cerrar cada semana. El umbral de la semana siguiente 
 | Semana | Frontend (% líneas) | Backend (% líneas) | Umbral configurado para la semana siguiente |
 |---|---|---|---|
 | S1 (línea base, 6 de octubre de 2026) | 78.2 | 96.69 | Frontend 78 · Backend 96 |
+| S2 (cierre, 3 de noviembre de 2026) | 86.4 | sin medir | Frontend 86 · Backend 96 (sin cambio) |
 
 > La línea base ya supera el piso del 80% del bootcamp en el backend: el proyecto venía con pruebas de API contra la BD real (`be/app/tests/`) y de componentes React (`fe/src/__tests__/`). Lo que no tenía era E2E (carpeta `e2e/`, creada en S1).
+
+> **Cierre de S2 (3 de noviembre de 2026):** el frontend subió de 78.2 a 86.4 % de líneas (sentencias 84.9, ramas 82.9 y funciones 81.2). El umbral de `fe/vite.config.ts` pasó de 78 / 76 / 72 / 70 a 86 / 84 / 82 / 81 (líneas, sentencias, ramas, funciones), redondeado hacia abajo. El backend no se midió en esa rama: el umbral de `be/pyproject.toml` (96) no cambió y se actualiza cuando alguien mida la capa API.
+
+### Retos sugeridos para la capa Front
+
+Páginas y archivos del frontend con menos cobertura de líneas al cierre de S2 (con más de 15 líneas). Son buenos retos para quien tenga la capa **Front** en una semana de la rotación, porque tienen flujos reales por probar:
+
+| Archivo | Líneas cubiertas | Qué falta probar |
+|---|---|---|
+| `src/pages/ProfilePage.tsx` | 67.4 % | Subida de foto (tipo inválido, más de 5 MB, éxito y error del servidor), cancelar la edición, teléfono inválido (7 a 10 dígitos), error al guardar y banner de éxito, campos del Reciclador (asociación y permiso para mostrar el teléfono en el Directorio) y que el Admin del Sistema no vea "Editar" |
+| `src/pages/LoginPage.tsx` | 69.2 % | Ver las líneas sin cubrir en el reporte de pnpm test |
+| `src/pages/AdminConjuntoComunicadosPage.tsx` | 64.1 % | Ver las líneas sin cubrir en el reporte de pnpm test |
+| `src/pages/AceptarInvitacionPage.tsx` | 61.2 % | Ver las líneas sin cubrir en el reporte de pnpm test |
+| `src/components/InvitarAdminConjuntoForm.tsx` | 52.3 % | Ver las líneas sin cubrir en el reporte de pnpm test |
+| `src/api/auth.ts` | 13.6 % | Ver las líneas sin cubrir en el reporte de pnpm test |
 
 ## Registro de vocero aleatorio
 

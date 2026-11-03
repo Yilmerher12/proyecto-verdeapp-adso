@@ -79,8 +79,8 @@ function TarjetaComunicado({ item, fijado }: { item: Comunicado; fijado: boolean
  *           que cada tarjeta muestra a qué conjunto pertenece el aviso.
  *           Los urgentes se fijan arriba; con 4 o más comunicados se agrega el
  *           filtro por tipo y los encabezados "Esta semana" y "Anteriores".
- * ¿Impacto? Con pocos comunicados el ancho de la lista se limita (una línea de
- *           texto muy larga se lee mal en pantallas anchas).
+ * ¿Impacto? El ancho de la lista siempre se limita a 48 rem (una línea de
+ *           texto muy larga se lee mal en pantallas anchas), tenga los avisos que tenga.
  */
 export function ComunicadosFeedPage() {
   const { t } = useTranslation();
@@ -106,7 +106,13 @@ export function ComunicadosFeedPage() {
   const tiposPresentes = ORDEN_TIPOS.filter((tipo) => comunicados.some((c) => c.tipo === tipo));
 
   return (
-    <div className={`${organizar ? ANCHO_PAGINA.normal : ANCHO_PAGINA.lectura} space-y-6 pt-6`}>
+    // ¿Qué? Siempre el ancho de lectura (48 rem), igual que Soporte técnico.
+    // ¿Para qué? Antes pasaba a 80 rem con 4 o más comunicados, y la pantalla se ensanchaba sola cuando el
+    //           Admin de Conjunto publicaba el cuarto aviso. Los filtros y los grupos "Esta semana" y
+    //           "Anteriores" caben igual en 48 rem (los filtros se envuelven).
+    // ¿Impacto? Comunicados y Soporte técnico (Residente, Reciclador y Admin de Conjunto) se ven del mismo
+    //           tamaño siempre. Ver docs/gestion-proyecto/decision-ancho-de-paginas.md.
+    <div className={`${ANCHO_PAGINA.lectura} space-y-6 pt-6`}>
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.feed.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.subtitle")}</p>

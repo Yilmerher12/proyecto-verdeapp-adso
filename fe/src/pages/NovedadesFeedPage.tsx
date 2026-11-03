@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { MisNovedadesEnviadas, NovedadEnviadaForm } from "@/components/NovedadesEnviadas";
+import { Pestanas } from "@/components/ui/Pestanas";
 
 // ¿Qué? Una novedad no tiene título, solo texto — el reproductor de video
 //       necesita uno (accesibilidad), así que se usa un recorte corto del texto.
@@ -62,30 +63,21 @@ export function NovedadesFeedPage() {
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2" role="tablist">
-        {(
-          [
-            ["recibidas", "novedadesEnviadas.tabReceived"],
-            ["escribir", "novedadesEnviadas.tabWrite"],
-            ["mias", "novedadesEnviadas.tabMine"],
-          ] as const
-        ).map(([id, labelKey]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={pestana === id}
-            onClick={() => setPestana(id)}
-            className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-              pestana === id
-                ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-field"
-            }`}
-          >
-            {t(labelKey)}
-          </button>
-        ))}
-      </div>
+      {/* ¿Qué? Pestañas compartidas, en dos columnas cuando el espacio es angosto: "Avisos del sistema" y
+                "Escribir novedad" arriba y "Historial de novedades" abajo, a todo el ancho.
+          ¿Para qué? Antes se envolvían y la tercera quedaba sola a la izquierda. Tres columnas partirían
+                    "Historial de novedades" en 3 líneas. */}
+      <Pestanas
+        dosColumnas
+        pestanas={[
+          { id: "recibidas", etiqueta: t("novedadesEnviadas.tabReceived") },
+          { id: "escribir", etiqueta: t("novedadesEnviadas.tabWrite") },
+          { id: "mias", etiqueta: t("novedadesEnviadas.tabMine") },
+        ]}
+        activa={pestana}
+        onCambiar={setPestana}
+        ariaLabel={t("novedades.feed.title")}
+      />
 
       {pestana === "escribir" && (
         <NovedadEnviadaForm onEnviada={() => setVersionEnvios((v) => v + 1)} />
