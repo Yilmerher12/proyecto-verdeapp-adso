@@ -16,7 +16,7 @@
  */
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageOff, Maximize2 } from "lucide-react";
 import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
 import { Modal } from "@/components/ui/Modal";
 import { Alert } from "@/components/ui/Alert";
@@ -118,6 +118,23 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
 
           <div className="grid md:grid-cols-[1.4fr_1fr]">
             <div className="p-5">
+              {/* ¿Qué? Sin fotos: la foto se borró al pasar el plazo de retención de 6 meses (issue #587).
+                  ¿Para qué? Que la ficha no quede con un hueco sin explicación ni falle: el resultado, el tema y las
+                            observaciones se conservan y se siguen viendo a la derecha. */}
+              {fotos.length === 0 && (
+                <div
+                  role="status"
+                  className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 text-center dark:border-night-line dark:bg-night-inset/60"
+                >
+                  <ImageOff className="icon-xl text-gray-400 dark:text-gray-500" aria-hidden="true" />
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    {t("auditoriaResultado.evidenciaNoDisponible")}
+                  </p>
+                  <p className="max-w-xs text-xs text-gray-500 dark:text-gray-400">
+                    {t("auditoriaResultado.evidenciaNoDisponibleAyuda")}
+                  </p>
+                </div>
+              )}
               {fotos.length > 0 && (
                 <>
                   <div className="relative overflow-hidden rounded-2xl bg-gray-100 dark:bg-night-line">

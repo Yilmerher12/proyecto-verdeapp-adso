@@ -59,6 +59,35 @@ describe("AuditoriaResultadoModal — fotos de evidencia", () => {
     expect(fotos[0]).toHaveAttribute("src", `${API_BASE_URL}/uploads/evidencias-auditoria/foto2.jpg`);
   });
 
+  // ¿Qué? Issue #587: pasados 6 meses la foto se borra y las rutas quedan en null; la auditoría se conserva.
+  it("sin fotos (ya se borraron) avisa que la foto ya no está disponible y conserva el resultado", async () => {
+    mockObtenerAuditoria.mockResolvedValue({
+      ...AUDITORIA,
+      descripcion: "El material llegó mezclado.",
+      ruta_evidencia: null,
+      ruta_evidencia_2: null,
+      ruta_evidencia_3: null,
+    });
+    render(<AuditoriaResultadoModal idAuditoria="a1" onClose={vi.fn()} />);
+
+    expect(await screen.findByText("La foto ya no está disponible")).toBeInTheDocument();
+    expect(screen.getByText(/Las fotos de evidencia se guardan 6 meses/)).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Foto de evidencia de la auditoría" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver foto en tamaño completo" })).not.toBeInTheDocument();
+    // ¿Qué? Lo demás de la auditoría se sigue viendo.
+    expect(screen.getByText("Separación en la fuente")).toBeInTheDocument();
+    expect(screen.getByText("El material llegó mezclado.")).toBeInTheDocument();
+    expect(screen.getByText("Juan")).toBeInTheDocument();
+  });
+
+  it("con foto no muestra el aviso de foto no disponible", async () => {
+    mockObtenerAuditoria.mockResolvedValue(AUDITORIA);
+    render(<AuditoriaResultadoModal idAuditoria="a1" onClose={vi.fn()} />);
+
+    await screen.findByRole("img", { name: "Foto de evidencia de la auditoría" });
+    expect(screen.queryByText("La foto ya no está disponible")).not.toBeInTheDocument();
+  });
+
   it("con varias fotos muestra el contador y las flechas cambian de foto", async () => {
     mockObtenerAuditoria.mockResolvedValue({
       ...AUDITORIA,

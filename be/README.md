@@ -95,6 +95,7 @@ be/
     ├── seed.py             # Siembra roles, localidades, cuentas de prueba y conjuntos reales (idempotente)
     ├── seed_demo.py        # Comando manual: historia de demostración para presentar (3 conjuntos, auditorías con fotos, etc.)
     ├── limpiar_adjuntos.py # Comando manual: borra de uploads/adjuntos/ lo que ninguna fila usa (ver abajo)
+    ├── limpiar_evidencias.py # Comando manual: borra las fotos de evidencia de auditorías con más de 6 meses (ver abajo)
     ├── purgar_tokens.py    # Comando manual: borra los tokens vencidos de 4 tablas (ver abajo)
     ├── data/               # CSV de conjuntos residenciales reales de Bogotá (fuente del seed)
     ├── models/             # Un archivo por tabla (usuario.py, residente.py, reciclador.py,
@@ -1102,6 +1103,15 @@ uv run python -m app.limpiar_adjuntos
 ```
 
 Las columnas que cuentan como "uso" están en `COLUMNAS_CON_ADJUNTOS` (`app/limpiar_adjuntos.py`). Si un modelo nuevo guarda rutas de `/uploads/adjuntos/`, hay que sumarla ahí o el comando borraría archivos que sí se usan; `test_limpiar_adjuntos.py` falla si aparece una columna de enlace sin clasificar. También cuenta como "uso" una imagen de `/uploads/adjuntos/` escrita dentro del `cuerpo_texto` de un módulo educativo (Markdown `![](ruta)`), no solo las columnas de la lista.
+
+**Retención de las fotos de evidencia de las auditorías (issue #587).** Cada auditoría guarda hasta 3 fotos en `app/uploads/evidencias-auditoria/` y nada las borraba. Este comando borra las fotos de las auditorías con más de 6 meses (180 días, `PLAZO_RETENCION` en `app/limpiar_evidencias.py`) y deja sus tres rutas en `NULL`; **la auditoría se conserva** (nivel, tema, observaciones y fecha), porque el historial y las gráficas del conjunto salen de esos datos, y la pantalla muestra "La foto ya no está disponible". Una foto compartida con una auditoría que se conserva no se borra del disco. Es manual: nada lo corre solo y trabaja sobre la carpeta de la máquina donde se ejecuta (en Docker, dentro del contenedor del backend). Como borrar no se deshace, primero `--simular`:
+
+```bash
+uv run python -m app.limpiar_evidencias --simular
+uv run python -m app.limpiar_evidencias
+```
+
+El plazo es una propuesta pendiente de aprobación del grupo y del profesor (ver `docs/gestion-proyecto/politica-retencion-fotos-evidencia.md`). Para programarlo en producción hay que agendarlo en el servidor, por ejemplo una tarea mensual que corra `python -m app.limpiar_evidencias` dentro del contenedor del backend (tarjeta #317, igual que los otros dos comandos). Si las fotos se guardan en otro servidor o servicio de archivos, solo hay que cambiar la función `borrar_archivo` de ese archivo. La migración `b1c2d3e4f5a6` hizo que `auditorias_conjunto.ruta_evidencia` acepte `NULL`; la foto sigue siendo obligatoria al crear una auditoría (la exige el servicio).
 
 **Purga de tokens vencidos (issue #403).** Cuatro tablas solo reciben filas y nada las borraba: `tokens_revocados` (una por cada cierre y cada renovación de sesión), `email_verification_tokens`, `password_reset_tokens` e `invitaciones_admin_conjunto`. Desde `be/`:
 

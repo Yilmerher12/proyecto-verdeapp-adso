@@ -15,7 +15,8 @@ export interface AuditoriaConjunto {
   nivel_desempeno: NivelDesempeno;
   tema_educativo: string;
   descripcion: string | null;
-  ruta_evidencia: string;
+  // ¿Qué? null cuando la foto ya se borró por el plazo de retención de 6 meses (issue #587).
+  ruta_evidencia: string | null;
   ruta_evidencia_2: string | null;
   ruta_evidencia_3: string | null;
   created_at: string;
