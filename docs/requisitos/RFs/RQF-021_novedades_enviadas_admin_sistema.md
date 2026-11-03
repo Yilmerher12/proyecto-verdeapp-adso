@@ -69,6 +69,8 @@ Motivos comunes a los tres: no puedo iniciar sesión o recuperar mi contraseña 
 | **Media** | no me llegan los correos o las notificaciones · un dato de mi cuenta está mal · conjunto, torre o apartamento del Residente · SHUT mal registrado · datos o apartamentos del conjunto del Admin de Conjunto · **Otros** · sin motivo (novedades anteriores a #512) |
 | **Baja** | la información de un punto de acopio o del contenido educativo es incorrecta · una sugerencia para mejorar VerdeApp |
 
+> **Ayuda escrita (issue #559):** al elegir un motivo, debajo del selector aparece "Prueba esto primero" con pasos para resolverlo solo (`fe/src/components/AyudaMotivo.tsx`) y la pregunta "¿Esto resolvió tu duda?". El formulario sigue disponible: si la persona dice que no se resolvió, o el motivo no tiene pasos, envía la consulta como siempre. "Otros" no muestra ayuda. Es solo frontend, no hay endpoint nuevo.
+
 ### Flujo B — Ver el historial de novedades
 
 1. En la sub-pestaña **"Historial de novedades"**, el autor ve sus novedades, de la más reciente a la más antigua, con su estado: "Enviada" (NUEVA), "En revisión" (EN_REVISION) o "Resuelta" (RESUELTA), y su prioridad ("Prioridad alta", "media" o "baja", issue #520). Si el Administrador del Sistema le respondió, debajo del texto ve la respuesta con su fecha. Se muestra de a 10 por página.

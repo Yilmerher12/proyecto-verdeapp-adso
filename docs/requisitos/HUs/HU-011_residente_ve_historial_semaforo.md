@@ -58,3 +58,10 @@
 > **Actualización (2026-11-03, issue #593)**: el historial ya no es un bloque aparte del panel. Es la pestaña "Todas las auditorías" de la tarjeta "Mi conjunto" (junto a "Semana elegida" y "Por tema"). La lista se pide solo al abrir la pestaña. Con menos de 4 auditorías en el período no hay pestañas: se ve directo este historial completo.
 
 > **Implementado**: antes la lista traía solo las 50 más recientes y cortaba el resto sin avisar. Ahora `GET /auditorias-conjunto/historial` recibe `limit` y `offset` y responde `{items, total}` (ver RQF-009). Con 10 calificaciones o menos no se muestra la barra de páginas.
+
+### CA-011.5 — Detalle de una calificación (issue #556)
+
+- **Dado que** veo una calificación en el historial,
+- **cuando** la toco,
+- **entonces** se abre su ficha: arriba el veredicto (cara, nivel Bueno, Regular o Malo, y el conjunto), a la izquierda la evidencia en grande con contador y flechas si hay más de una foto (también con el teclado), y a la derecha el tema, las observaciones (con "Ver más" si son largas), el nombre del reciclador y la fecha. Tocar una foto la abre en tamaño completo.
+- **y** si la foto ya se borró por el plazo de retención de 6 meses (issue #587), la ficha dice "La foto ya no está disponible" y conserva todo lo demás.

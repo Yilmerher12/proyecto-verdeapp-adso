@@ -102,6 +102,7 @@ fe/
     ├── config/                 ← Configuración visual centralizada:
     │   ├── roleTheme.ts        ←   ícono y colores de cada rol
     │   ├── nivelesDesempeno.ts ←   caritas y colores del semáforo de auditoría
+    │   ├── anchoPagina.ts      ←   los tres anchos de página (normal, lectura y formulario)
     │   └── categoriasEducativas.ts ← ícono de cada categoría del catálogo
     │
     ├── components/
@@ -109,6 +110,8 @@ fe/
     │   │                         EmptyState, BrandLogo, Paginacion, ThemeToggle, LanguageSwitcher…
     │   ├── layout/             ← AppShell (sidebar + contenido con sesión), AuthLayout, LegalLayout
     │   ├── dashboard/          ← Piezas de los paneles: notificaciones, auditorías
+    │   ├── desempeno/          ← Desempeño semanal de un conjunto: PanelDesempeno (tarjeta con resumen,
+    │   │                         gráfica y pestañas), gráfica, tabla, ranking de temas y lista de la semana
     │   └── *.tsx               ← Formularios y paneles de dominio (puntos de acopio, invitaciones…)
     │
     ├── pages/                  ← Una página por ruta (landing, login, registro, directorio…)
@@ -875,6 +878,9 @@ Antes de escribir algo a mano en una página, revisa si ya existe aquí. La regl
 | Adjuntar una imagen | `ImagenAdjuntaField` | Revisa tipo (jpg/png/webp) y tamaño (5 MB) antes de subir, igual que el backend |
 | Agregar una guía de apoyo | `GuiaApoyoField` | Deja subir un archivo (imagen o PDF) o pegar un enlace; usado en contenido educativo y novedades |
 | Un estado de carga | `LoadingState` | Spinner + texto con `role="status"` para lectores de pantalla (`Spinner` es solo el ícono) |
+| Pestañas que cambian de vista | `Pestanas` | En un espacio angosto se reparten en una cuadrícula ordenada (`dosColumnas` deja la última a todo el ancho); desde `@xl` van en una fila. Lo usan Soporte técnico y "Mi conjunto". Mide su contenedor (consulta de contenedor), no la ventana |
+| El desempeño semanal de un conjunto | `PanelDesempeno` | Tarjeta única con resumen, gráfica y pestañas (semana elegida, todas las auditorías con `cargarHistorial`, por tema). La usan el Residente ("Mi conjunto") y el Admin de Conjunto ("Desempeño") |
+| Cerrar un aviso solo durante la sesión | `useAvisoCerradoEnSesion` | Guarda en `sessionStorage` qué avisos cerró la persona (ej. "¿Qué es una ECA?"); se borra al cerrar sesión |
 
 ### Paginación
 
@@ -915,6 +921,8 @@ Cuando un componente cambia algo que otro muestra (ej. se marcó una notificaci�
 - **Íconos:** solo `lucide-react`, un ícono por concepto, tamaño solo con `icon-sm`/`md`/`lg`/`xl`/`deco`.
 - **Colores:** `accent-*` para la marca y `night-*` para superficies oscuras; nunca un color concreto (`bg-green-600`) ni un hex a mano en un componente reutilizable.
 - **Clicables:** todo `<button>`, `<select>` o `<label>` que envuelve un input oculto lleva `cursor-pointer` explícito.
+- **Ancho de la página:** el contenedor principal de cada página usa `ANCHO_PAGINA.normal`, `.lectura` o `.formulario` (`config/anchoPagina.ts`); nunca un `max-w-*` suelto ni relleno lateral propio (decisión en `docs/gestion-proyecto/decision-ancho-de-paginas.md`).
+- **Pantallas medianas (640 a 1100 px):** el menú lateral ya ocupa 16 rem, así que el contenido queda angosto. Para acomodar controles se usa `flex-wrap`, `shrink-0`, `min-w-0` y consultas de contenedor (`@container`, `@xl:`), no solo los puntos de quiebre de la ventana. Las celdas de tabla son `position: relative` en `index.css` por el mismo motivo (ver `docs/gestion-proyecto/auditoria-rnf-003-barrido-pantallas-medianas.md`).
 - **Fechas:** siempre con `lib/dateFormat.ts` (`formatearFechaCreacion` para instantes como `created_at`, `formatearFechaUTC` para fechas elegidas a mano).
 - **Textos:** todo texto visible (incluidos `aria-label` y `title`) sale de `t("clave")`, con la clave en `es` y en `en`.
 - **Validación de formularios:** por campo al salir de él (`onBlur`), con las reglas compartidas de `lib/validacion.ts` (las mismas longitudes que la base de datos).
@@ -977,8 +985,8 @@ Cada página en `pages/` sigue el mismo patrón:
 
 | Panel | Qué hace el rol ahí |
 | ----- | ------------------- |
-| `ResidenteDashboard` | Reportar el estado del SHUT, ver sus notificaciones, los resultados de las auditorías de su conjunto y el contenido educativo recomendado |
-| `RecicladorDashboard` | Sus conjuntos, enviar notificaciones de recolección a residentes y administrador, registrar auditorías de separación, responder invitaciones |
+| `ResidenteDashboard` | Reportar el SHUT lleno (con ventana de confirmación), ver el resultado de la última auditoría, sus notificaciones recibidas y "Mi conjunto": el desempeño semanal con su historial de auditorías y los temas |
+| `RecicladorDashboard` | Sus conjuntos (de uno en uno), enviar avisos de recolección a residentes y administrador (con ventana de confirmación), registrar auditorías de separación, ver sus notificaciones y sus auditorías, responder invitaciones |
 | `AdminConjuntoDashboard` | Gestionar sus conjuntos: datos, código de acceso, recicladores, avisos, auditorías y agenda del comité |
 | `AdminDashboard` | Totales, tablas de usuarios por rol, invitar Administradores de Conjunto y resolver solicitudes pendientes |
 
@@ -993,8 +1001,9 @@ Cada página en `pages/` sigue el mismo patrón:
 | `ComunicadosFeedPage` / `AdminConjuntoComunicadosPage` | `/comunicados` / `/admin-conjunto/comunicados` |
 | `NovedadesFeedPage` / `AdminNovedadesPage` | `/novedades` / `/admin/novedades` |
 | `AdminContenidoEducativoPage` / `AdminPuntosAcopioPage` | `/admin/contenido-educativo` / `/admin/puntos-acopio` |
+| `AdminConjuntoAgendaPage` / `AdminConjuntoDesempenoPage` | `/admin-conjunto/agenda` (agenda del comité y su historial) / `/admin-conjunto/desempeno` (desempeño semanal con descarga en PDF) |
 | `AceptarInvitacionPage` | `/aceptar-invitacion` — termina el registro de un Administrador de Conjunto invitado |
-| `TerminosModalPage`, `PrivacidadModalPage`, `CookiesModalPage`, `ContactoModalPage` | `/terminos-de-uso`, `/privacidad`, `/politica-cookies`, `/contacto` |
+| `TerminosModalPage`, `PrivacidadModalPage`, `CookiesModalPage`, `ContactoModalPage` | `/terminos-de-uso`, `/privacidad`, `/politica-cookies`, `/contacto` (el contenido de las tres primeras vive en `TerminosDeUsoPage`, `PoliticaPrivacidadPage` y `PoliticaCookiesPage`) |
 
 Abajo, el detalle de las páginas de autenticación.
 

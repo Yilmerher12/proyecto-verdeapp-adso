@@ -1,6 +1,16 @@
 # Prototipo — Ficha del punto de acopio
 
-**Estado:** el modelo elegido está en la sección 10 (2026-10-29): una tabla con fila desplegable, que no es ninguno de los tres modelos de la sección 5. Lo demás es el borrador del 2026-10-28, un documento de diseño: **no se programó nada** en esa fecha. Sirve para elegir cómo se verá la ficha antes de tocar la base de datos o el backend (tarjeta 7 de `tarjetas-despues-de-la-feria.md`; issue N3, pendiente de crear).
+**Estado (actualizado el 2026-11-03):** el modelo elegido está en la sección 10: una tabla con fila desplegable, que no es ninguno de los tres modelos de la sección 5. Las secciones 1 a 9 son el borrador del 2026-10-28 y quedan como histórico.
+
+| Qué | Estado |
+| --- | --- |
+| Tabla con fila desplegable para Residente, Reciclador y Admin del Sistema (#578, #582) | **Hecho** |
+| Foto opcional del punto, que sube el Admin del Sistema y se ve en la ficha (#581, #583) | **Hecho** |
+| "Cómo llegar" con la dirección, en la ficha (`mapsLink.ts`) | **Hecho** |
+| Aviso "¿Qué es una ECA?" y nota de la lista de 2020 en la franja de la tabla (#594) | **Hecho** |
+| Latitud y longitud, y "Cómo llegar" con coordenadas | **Pendiente** (tarjeta 7) |
+| Estado frente a la UAESP ("Activa en inventario" o "Por confirmar"), cuando responda la solicitud (#500) | **Pendiente** |
+| Categoría del punto (ECA, CCR, etc.) y paginación de la tabla | **Pendiente** |
 
 **Datos de las ECA usados en los modelos:** los 9 puntos que ya están en el directorio (ver [`fuente-datos-puntos-acopio-eca.md`](fuente-datos-puntos-acopio-eca.md)) y su estado frente al inventario de la UAESP (ver [`investigacion-tipos-puntos-acopio.md`](investigacion-tipos-puntos-acopio.md)).
 

@@ -306,6 +306,7 @@ class PuntoAcopio {
     +string nombre_encargado
     +string direccion
     +string telefono_contacto
+    +string url_foto
     +bool activo
 }
 
@@ -332,6 +333,19 @@ class ContenidoEducativoEnvio {
     +UUID id_contenido
     +UUID id_conjunto_residencial
     +UUID enviado_por_id
+    +datetime created_at
+}
+
+class ContenidoEducativoVisto {
+    +UUID id_usuario
+    +UUID id_contenido
+    +datetime visto_at
+}
+
+class ArchivoSubido {
+    +UUID id
+    +UUID id_usuario
+    +string ruta
     +datetime created_at
 }
 
@@ -392,6 +406,9 @@ Notificacion "1" --> "*" NotificacionDestinatario
 ContenidoEducativo "1" --> "*" ContenidoEducativoEnvio
 ConjuntoResidencial "1" --> "*" ContenidoEducativoEnvio : recibe
 Usuario "1" --> "*" ContenidoEducativoEnvio : envia
+Usuario "1" --> "*" ContenidoEducativoVisto : abre
+ContenidoEducativo "1" --> "*" ContenidoEducativoVisto
+Usuario "1" --> "*" ArchivoSubido : sube
 ```
 
 ---
@@ -533,7 +550,7 @@ Representa apartamentos o unidades habitacionales (torre + apto) dentro de un co
 
 ## PuntoAcopio
 
-Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — dato abierto de la UAESP (dataset de marzo de 2020: 9 puntos en 6 de las 20 localidades; no son todas las ECA de Bogotá). `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive.
+Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — dato abierto de la UAESP (dataset de marzo de 2020: 9 puntos en 6 de las 20 localidades; no son todas las ECA de Bogotá). `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive. `url_foto` es una foto opcional (issue #581) que sube el Admin Sistema y se ve en la ficha del punto.
 
 ---
 
@@ -552,6 +569,18 @@ Representa los módulos educativos publicados en la plataforma — texto, video 
 ## ContenidoEducativoEnvio
 
 Registra que el Admin Sistema envió un módulo del catálogo a mano a un conjunto puntual (RQF-013, Flujo C) — independiente de la recomendación automática que dispara una auditoría Regular/Mala. `enviado_por_id` queda `NULL` si el usuario que lo envió se elimina después, para no perder el historial del envío.
+
+---
+
+## ContenidoEducativoVisto
+
+Un módulo del catálogo que un Residente ya abrió (issue #545). Una fila por Residente y módulo (clave compuesta `id_usuario` + `id_contenido`): abrir la misma lección otra vez no duplica nada. "Visto" significa que abrió la lección, no que vio el video completo. Alimenta "Visto" en cada tarjeta y el avance de "Aprende a reciclar".
+
+---
+
+## ArchivoSubido
+
+Un registro por cada archivo que alguien sube con `POST /uploads/adjunto`: quién lo subió, la ruta pública y cuándo. Sirve para la cuota de subidas por usuario y para saber de quién es cada archivo. No es una referencia de uso: `limpiar_adjuntos` la ignora a propósito.
 
 ---
 
@@ -581,6 +610,9 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 | Localidad                   | PuntoAcopio                       | 1 : N    |
 | PuntoAcopio                 | PuntoAcopioComentario             | 1 : N    |
 | Usuario                     | PuntoAcopioComentario             | 1 : N (escribe) |
+| Usuario                     | ArchivoSubido                     | 1 : N (sube) |
+| Usuario                     | ContenidoEducativoVisto           | 1 : N (abre) |
+| ContenidoEducativo          | ContenidoEducativoVisto           | 1 : N    |
 | Localidad                   | Reciclador                        | 1 : N    |
 | ConjuntoResidencial         | Unidad                            | 1 : N    |
 | Unidad                      | Residente                         | 1 : N    |
@@ -609,7 +641,7 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 # 📌 Observaciones
 
 * El modelo sigue una estructura orientada a objetos alineada con la base de datos del proyecto (`be/app/models/`).
-* Solo `Role` y `Localidad` usan llave primaria `Integer` — las demás 20 tablas usan `UUID` versión 4 (`generar_uuid4()`). El proyecto migró de UUIDv7 a UUIDv4 (issue #167): v7 sigue sin ser adivinable, pero codifica la marca de tiempo de creación dentro del propio ID — v4 no filtra esa información.
+* Solo `Role` y `Localidad` usan llave primaria `Integer` — las demás 28 tablas usan `UUID` versión 4 (`generar_uuid4()`). El proyecto migró de UUIDv7 a UUIDv4 (issue #167): v7 sigue sin ser adivinable, pero codifica la marca de tiempo de creación dentro del propio ID — v4 no filtra esa información.
 * Las clases `Residente`, `Reciclador` y `AdministradorConjunto` representan perfiles especializados asociados 1:1 a un `Usuario`, uno por cada rol (2, 3 y 4 respectivamente). El rol 1 (Admin_sistema) no tiene una clase de perfil propia: sus datos viven directamente en `Usuario`.
 * `AdministradorConjunto` nunca se crea por registro público — únicamente mediante `InvitacionAdminConjunto`, aceptada con un token de un solo uso.
 * Las relaciones N:M con historial propio (`AdministradorConjuntoAsignacion` entre `AdministradorConjunto`↔`ConjuntoResidencial`, y `RecicladorConjunto` entre `Reciclador`↔`ConjuntoResidencial`) se dibujan como entidad completa, no como asociación directa, porque ambas tienen atributos propios (fechas de asignación/revocación) — no son simples tablas puente.

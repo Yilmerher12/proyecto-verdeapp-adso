@@ -23,31 +23,33 @@ Este documento fija seis categorías de restricciones para VerdeApp: tecnología
 
 ## Tecnología Obligatoria
 
+> **Cómo leer las versiones (2026-11-03):** las tablas de abajo dan la versión **mayor y menor** (por ejemplo, React 19.3). La versión **exacta**, hasta el último número, está fijada en `be/pyproject.toml` y `fe/package.json`, que son la fuente real. Dependabot las sube el día 1 y el 15 de cada mes y solo edita esos archivos; si este documento copiara el número exacto, se desactualizaría en cada subida. Se actualiza esta tabla solo cuando cambia la versión mayor o menor.
+
 ### Backend
 
-| Tecnología   | Versión fijada  |
+| Tecnología   | Versión (mayor.menor) |
 | ------------ | ---------------- |
 | Python       | 3.12              |
-| FastAPI      | 0.142.2           |
-| SQLAlchemy   | 2.1.3 (ORM 2.0, no el estilo 1.x)|
-| Alembic      | 1.20.0 (migraciones versionadas — nunca `Base.metadata.create_all()`)|
-| Pydantic     | 2.13.5             |
-| fpdf2        | 2.8.9 (genera el PDF del historial de la agenda, issue #480; licencia LGPL-3.0, se usa como librería sin modificarla; puro Python, no necesita programas de sistema en Windows) |
-| pypdf        | 6.21.1 (solo en las pruebas: lee el PDF generado para comprobar su contenido; licencia BSD-3-Clause) |
+| FastAPI      | 0.x (exacta en `be/pyproject.toml`) |
+| SQLAlchemy   | 2.1 (ORM 2.0, no el estilo 1.x) |
+| Alembic      | 1.20 (migraciones versionadas — nunca `Base.metadata.create_all()`)|
+| Pydantic     | 2.14 |
+| fpdf2        | 2.8 (genera los PDF del historial de la agenda, issue #480, y del desempeño semanal, issue #558; licencia LGPL-3.0, se usa como librería sin modificarla; puro Python, no necesita programas de sistema en Windows) |
+| pypdf        | 6.21 (solo en las pruebas: lee el PDF generado para comprobar su contenido; licencia BSD-3-Clause) |
 
 No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `pyproject.toml` — toda dependencia va con `==`, reforzado además por `uv.lock`, que fija también las dependencias transitivas.
 
 ### Frontend
 
-| Tecnología      | Versión fijada |
+| Tecnología      | Versión (mayor.menor) |
 | ---------------- | --------------- |
-| React            | 19.3.0           |
-| TypeScript       | 5.9.3 (modo estricto)|
-| Vite             | 7.3.6             |
-| TailwindCSS      | 4.3.3             |
-| React Router     | 7.18.4            |
-| react-markdown   | 10.1.0            |
-| recharts         | 3.10.1 (solo la gráfica de desempeño semanal; se carga bajo demanda con `React.lazy`, nunca en la primera carga; licencia MIT) |
+| React            | 19.3 |
+| TypeScript       | 5.9 (modo estricto)|
+| Vite             | 7.3 |
+| TailwindCSS      | 4.3 |
+| React Router     | 7.18 |
+| react-markdown   | 10.1 |
+| recharts         | 3.10 (solo la gráfica de desempeño semanal; se carga bajo demanda con `React.lazy`, nunca en la primera carga; licencia MIT) |
 
 ### Base de datos
 
