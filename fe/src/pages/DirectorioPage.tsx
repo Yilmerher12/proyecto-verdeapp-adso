@@ -168,7 +168,10 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
 
   return (
     <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
-      {/* Encabezado */}
+      {/* ¿Qué? Tarjeta 1: título, subtítulo y controles (pestañas y filtros) juntos.
+          ¿Para qué? Antes eran dos bloques sueltos (el título en una tarjeta y los controles flotando
+                    debajo sobre el fondo de la página).
+          ¿Impacto? El contenido (la lista) va en una segunda tarjeta, debajo. */}
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {soloAcopio ? t("appShell.nav.puntosAcopio") : t("appShell.nav.directorioGeneral")}
@@ -178,10 +181,9 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             ? t("directorio.subtitleAcopio")
             : t("directorio.subtitleGeneral")}
         </p>
-      </div>
 
       {/* Controles: tabs + filtro localidad */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {!soloAcopio && (
           <div className="flex rounded-xl border border-gray-200 bg-white p-1 dark:border-night-line dark:bg-night-panel">
             {(
@@ -258,22 +260,14 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           </div>
         )}
       </div>
+      </div>
 
-      {/* ¿Qué? Aviso informativo, distinto según la pestaña activa.
-          ¿Para qué? El de Recicladores explica qué es y para qué le sirve
-          al residente (directorio propio, sin fuente externa). El de
-          Puntos de Acopio, además, tiene que aclarar la procedencia del
-          dato (dataset UAESP de marzo de 2020) y que no son todas las ECA
-          de la ciudad — sin esto, alguien podría tomar los 9 puntos como
-          el total real de Bogotá. El enlace lleva al inventario de la
-          UAESP, que lista muchas más (su cifra exacta no está clara). */}
-      {/* ¿Qué? El aviso se puede cerrar con la X y queda un enlace con su título para volver a abrirlo;
-                solo se recuerda mientras dure la sesión (en cada inicio de sesión vuelve a salir).
+      {/* ¿Qué? Aviso informativo de la pestaña Recicladores (explica qué es y para qué le sirve al
+                residente; directorio propio, sin fuente externa). Se puede cerrar con la X y queda un
+                enlace con su título para volver a abrirlo; solo se recuerda mientras dure la sesión.
           ¿Para qué? Es apoyo para quien no conoce el tema, pero estorba a quien ya lo leyó.
-          ¿Impacto? La advertencia de procedencia de los puntos (lista de 2020, no son todas las ECA) NO se
-                    puede cerrar: va aparte, siempre visible. El texto de la ECA cambia por rol y no
-                    dice que se pueda entregar por cuenta propia hasta que la UAESP lo confirme (#500). */}
-      {tab === "recicladores" && !soloAcopio ? (
+          ¿Impacto? El de Puntos de acopio no va aquí: vive dentro de la tarjeta de la lista (ver más abajo). */}
+      {tab === "recicladores" && !soloAcopio && (
         <InfoBanner
           id="directorio-recicladores"
           titulo={t("directorio.infoRecicladores.titulo")}
@@ -281,38 +275,15 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           paraQueSirve={t("directorio.infoRecicladores.paraQueSirve")}
           fuenteTexto={t("directorio.infoRecicladores.fuenteTexto")}
         />
-      ) : (
-        <>
-          <InfoBanner
-            id="directorio-eca"
-            titulo={t("directorio.infoPuntos.titulo")}
-            descripcion={t(soloAcopio ? "directorio.infoPuntos.descripcionReciclador" : "directorio.infoPuntos.descripcionResidente")}
-          />
-          <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
-            <TriangleAlert className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
-            <span>
-              {t("directorio.infoPuntos.nota")}{" "}
-              <a
-                href={FUENTE_ECA_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-semibold underline underline-offset-2"
-              >
-                {t("directorio.infoPuntos.fuenteLink")}
-                <ExternalLink className="icon-sm" aria-hidden="true" />
-              </a>
-            </span>
-          </p>
-        </>
       )}
 
       {/* Contenido */}
-      {cargandoDirectorio ? (
-        <LoadingState message={t("common.loading")} />
-      ) : errorDirectorio ? (
-        <Alert type="error" message={t("common.loadError")} />
-      ) : tab === "recicladores" && !soloAcopio ? (
-        recicladores.length === 0 ? (
+      {tab === "recicladores" && !soloAcopio ? (
+        cargandoDirectorio ? (
+          <LoadingState message={t("common.loading")} />
+        ) : errorDirectorio ? (
+          <Alert type="error" message={t("common.loadError")} />
+        ) : recicladores.length === 0 ? (
           <EmptyState icon={HardHat} message={t("directorio.emptyRecyclers")} />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -326,18 +297,68 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             ))}
           </div>
         )
-      ) : puntos.length === 0 ? (
-        <EmptyState icon={Warehouse} message={t("directorio.emptyPoints")} />
-      ) : puntosVisibles.length === 0 ? (
-        <EmptyState icon={Search} message={t("directorio.noPointsMatch")} />
-      ) : (
+      ) : !cargandoDirectorio && !errorDirectorio && puntosVisibles.length > 0 ? (
         <TablaPuntosAcopio
           puntos={puntosVisibles}
           variante="lectura"
           abiertoId={puntoAbiertoId}
           onAlternar={(id) => setPuntoAbiertoId((actual) => (actual === id ? null : id))}
+          encabezado={<FranjaEca soloAcopio={soloAcopio} />}
         />
+      ) : (
+        // ¿Qué? Tarjeta 2 sin tabla (cargando, error o sin resultados): mantiene la misma franja arriba.
+        // ¿Para qué? Que la advertencia de la lista de 2020 se vea siempre, también cuando no hay filas.
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card">
+          <FranjaEca soloAcopio={soloAcopio} />
+          <div className="p-4">
+            {cargandoDirectorio ? (
+              <LoadingState message={t("common.loading")} />
+            ) : errorDirectorio ? (
+              <Alert type="error" message={t("common.loadError")} />
+            ) : puntos.length === 0 ? (
+              <EmptyState icon={Warehouse} message={t("directorio.emptyPoints")} />
+            ) : (
+              <EmptyState icon={Search} message={t("directorio.noPointsMatch")} />
+            )}
+          </div>
+        </div>
       )}
+    </div>
+  );
+}
+
+// ¿Qué? Franja que va arriba de la lista de puntos de acopio, dentro de su tarjeta: el aviso "¿Qué es una
+//       ECA?" (se puede cerrar y queda un enlace) y, siempre visible, la nota de procedencia con "Ver fuente".
+// ¿Para qué? La nota tiene que aclarar de dónde sale el dato (lista oficial de la UAESP de marzo de 2020) y
+//           que no son todas las ECA de la ciudad; sin ella, alguien podría tomar los 9 puntos como el total
+//           real de Bogotá. El enlace lleva al inventario de la UAESP, que lista muchas más.
+// ¿Impacto? El texto de la ECA cambia por rol y no dice que se pueda entregar por cuenta propia hasta que
+//           la UAESP lo confirme (#500). La nota NO se puede cerrar.
+function FranjaEca({ soloAcopio }: { soloAcopio: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <div className="border-b border-gray-100 dark:border-night-line">
+      <InfoBanner
+        enFranja
+        id="directorio-eca"
+        titulo={t("directorio.infoPuntos.titulo")}
+        descripcion={t(soloAcopio ? "directorio.infoPuntos.descripcionReciclador" : "directorio.infoPuntos.descripcionResidente")}
+      />
+      <p className="flex items-start gap-2 border-t border-amber-200 bg-amber-50 px-5 py-2 text-xs text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
+        <TriangleAlert className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
+        <span>
+          {t("directorio.infoPuntos.nota")}{" "}
+          <a
+            href={FUENTE_ECA_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-semibold underline underline-offset-2"
+          >
+            {t("directorio.infoPuntos.fuenteLink")}
+            <ExternalLink className="icon-sm" aria-hidden="true" />
+          </a>
+        </span>
+      </p>
     </div>
   );
 }
@@ -359,27 +380,37 @@ function InfoBanner({
   descripcion,
   paraQueSirve,
   fuenteTexto,
+  enFranja = false,
 }: {
   id: string;
   titulo: string;
   descripcion: string;
   paraQueSirve?: string;
   fuenteTexto?: string;
+  /** ¿Qué? Dentro de la tarjeta de la lista: sin esquinas ni borde propios, a todo el ancho. */
+  enFranja?: boolean;
 }) {
   const { t } = useTranslation();
   const { cerrado, cerrar, reabrir } = useAvisoCerradoEnSesion(id);
 
   if (cerrado) {
-    return (
+    const enlace = (
       <button type="button" onClick={reabrir} className="link-text inline-flex cursor-pointer items-center gap-1.5 text-sm">
         <Info className="icon-sm" aria-hidden="true" />
         {titulo}
       </button>
     );
+    return enFranja ? <div className="px-5 py-3">{enlace}</div> : enlace;
   }
 
   return (
-    <div className="rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-300/40 dark:bg-accent-300/10">
+    <div
+      className={
+        enFranja
+          ? "bg-accent-50 px-5 py-4 dark:bg-accent-300/10"
+          : "rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-300/40 dark:bg-accent-300/10"
+      }
+    >
       <div className="flex gap-3">
         <Info className="icon-lg mt-0.5 shrink-0 text-accent-600 dark:text-accent-400" />
         <div className="min-w-0 flex-1 space-y-1.5 text-sm">

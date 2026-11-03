@@ -34,6 +34,7 @@ import { onCualquierCambioDeNotificaciones } from "@/lib/notificationEvents";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { onFotoPerfilActualizada } from "@/lib/profileEvents";
 import { borrarSesionActiva } from "@/lib/sesionActiva";
+import { limpiarAvisosCerrados } from "@/hooks/useAvisoCerradoEnSesion";
 
 interface AppShellProps {
   children: ReactNode;
@@ -125,6 +126,11 @@ export function AppShell({ children }: AppShellProps) {
     }
 
     borrarSesionActiva();
+    // ¿Qué? Olvida los avisos que el usuario cerró con la X (ECA, directorio, etc.).
+    // ¿Para qué? Aquí no se llama a clearAuth() (ver comentario de arriba), que es quien los borraba:
+    //           el aviso de la ECA quedaba cerrado para la siguiente cuenta que iniciara sesión en el mismo navegador.
+    // ¿Impacto? En cada inicio de sesión los avisos vuelven a aparecer.
+    limpiarAvisosCerrados();
     sessionStorage.removeItem("landing-scroll-y");
     window.location.href = "/";
   };

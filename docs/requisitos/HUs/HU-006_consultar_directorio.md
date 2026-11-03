@@ -81,6 +81,7 @@
 - **Dado que** entro a los puntos de acopio,
 - **cuando** la página carga,
 - **entonces** veo el aviso "¿Qué es una ECA?", con un texto para el Residente ("aquí puedes ver las ECA de tu localidad") y otro para el Reciclador ("aquí puedes ubicar la más cercana a tu ruta"). Lo puedo cerrar con la X y, al cerrarlo, queda un enlace con el mismo título para volver a abrirlo. Solo se recuerda mientras dure mi sesión: en cada inicio de sesión vuelve a mostrarse.
-- Aparte del aviso, siempre veo (sin poder cerrarla) la advertencia "Lista oficial de 2020. No incluye todas las ECA de Bogotá", con el enlace a la fuente.
+- Debajo del aviso, siempre veo (sin poder cerrarla) la advertencia "Lista oficial de 2020. No incluye todas las ECA de Bogotá", con el enlace a la fuente.
+- La página son dos tarjetas: la primera con el título, el subtítulo, las pestañas y los filtros; la segunda con la lista. El aviso y la advertencia van como una franja arriba de la tabla, dentro de la segunda tarjeta, y se ven igual cuando la lista está cargando, falla o no tiene resultados.
 
 > **Decisión pendiente de la respuesta de la UAESP (issue #500):** el aviso ya no dice que un residente pueda "entregar materiales reciclables por su cuenta" en una ECA. No está confirmado que un ciudadano común pueda entregar en una ECA (ver `docs/gestion-proyecto/investigacion-tipos-puntos-acopio.md` y `prototipo-ficha-punto-acopio.md`). Cuando la UAESP responda, si se confirma, se puede volver a agregar esa frase con la fuente; si no, se deja como está. Decisión del 2026-10-30.
