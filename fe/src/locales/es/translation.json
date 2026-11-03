@@ -1038,6 +1038,8 @@
     "irAFoto": "Ir a la foto {{n}}",
     "evidenciaAlt": "Foto de evidencia de la auditoría",
     "evidenciaAmpliar": "Ver foto en tamaño completo",
+    "evidenciaNoDisponible": "La foto ya no está disponible",
+    "evidenciaNoDisponibleAyuda": "Las fotos de evidencia se guardan 6 meses. La calificación y su detalle se conservan.",
     "errorLoad": "No se pudo cargar la auditoría.",
     "historialTitle": "Historial de auditorías",
     "historialEmpty": "Todavía no hay auditorías registradas."
@@ -1336,6 +1338,7 @@
       "recycler": "Reciclador",
       "observations": "Observaciones",
       "evidence": "Evidencia",
+      "evidenceGone": "La foto ya no está disponible (las fotos se guardan 6 meses).",
       "enlarge": "Ampliar foto",
       "recommendedContent": "Contenido recomendado",
       "noRecommendationHint": "Una calificación Buena no genera recomendación: no hay nada que mejorar en este tema."

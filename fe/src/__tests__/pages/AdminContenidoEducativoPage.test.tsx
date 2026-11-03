@@ -535,6 +535,23 @@ describe("AdminContenidoEducativoPage", () => {
       expect(within(panel).getByText("Código de colores")).toBeInTheDocument();
     });
 
+    // ¿Qué? Issue #587: pasados 6 meses la foto se borra (rutas en null) y el detalle lo avisa.
+    it("el detalle de una calificación sin fotos (ya se borraron) lo avisa y conserva lo demás", async () => {
+      const sinFotos: AuditoriaAdmin = { ...califMalo, ruta_evidencia: null, ruta_evidencia_2: null, ruta_evidencia_3: null };
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [sinFotos], total: 1 } });
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await user.click(await enTabla().findByText("Torres de Aranjuez"));
+
+      const panel = await screen.findByRole("dialog", { name: "Calificación de Torres de Aranjuez" });
+      expect(within(panel).getByText(/La foto ya no está disponible/)).toBeInTheDocument();
+      expect(within(panel).queryByRole("button", { name: "Ampliar foto" })).not.toBeInTheDocument();
+      expect(within(panel).getByText("Carlos Gómez")).toBeInTheDocument();
+    });
+
     it("el detalle de una calificación Buena dice que no hay recomendación", async () => {
       mockGet.mockImplementation((url: string) => {
         if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califBueno], total: 1 } });

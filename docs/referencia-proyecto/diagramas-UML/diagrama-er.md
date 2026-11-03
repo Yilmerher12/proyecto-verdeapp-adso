@@ -843,7 +843,7 @@ PRIMARY KEY (id_notificacion, id_usuario)
 | created_at                  | TIMESTAMP |
 | orden_interno                | BIGINT    |
 
-Calificación de desempeño que un Reciclador registra tras visitar un conjunto (RQF-009/RQF-013). Solo `ruta_evidencia` es obligatoria; las otras 2 fotos son opcionales. `orden_interno` es un contador autoincremental aparte del `id` (UUID, no ordenable) para mostrar el historial en el orden real en que ocurrió.
+Calificación de desempeño que un Reciclador registra tras visitar un conjunto (RQF-009/RQF-013). Solo `ruta_evidencia` es obligatoria al crear la auditoría (la exige el servicio); las otras 2 fotos son opcionales. Pasados 6 meses las tres rutas quedan en `NULL` porque la foto se borra (issue #587), y la auditoría se conserva; por eso la columna acepta `NULL`. `orden_interno` es un contador autoincremental aparte del `id` (UUID, no ordenable) para mostrar el historial en el orden real en que ocurrió.
 
 ---
 

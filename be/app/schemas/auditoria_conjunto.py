@@ -33,7 +33,9 @@ class AuditoriaConjuntoResponse(BaseModel):
     nivel_desempeno: NivelDesempeno
     tema_educativo: str
     descripcion: Optional[str] = None
-    ruta_evidencia: str
+    # ¿Qué? None cuando la foto ya se borró por el plazo de retención (issue #587): la pantalla
+    #       muestra "La foto ya no está disponible" en vez de fallar.
+    ruta_evidencia: Optional[str] = None
     ruta_evidencia_2: Optional[str] = None
     ruta_evidencia_3: Optional[str] = None
     created_at: datetime

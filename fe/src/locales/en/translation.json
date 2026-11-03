@@ -1038,6 +1038,8 @@
     "irAFoto": "Go to photo {{n}}",
     "evidenciaAlt": "Audit evidence photo",
     "evidenciaAmpliar": "View photo full size",
+    "evidenciaNoDisponible": "The photo is no longer available",
+    "evidenciaNoDisponibleAyuda": "Evidence photos are kept for 6 months. The rating and its details are kept.",
     "errorLoad": "Couldn't load the audit.",
     "historialTitle": "Audit history",
     "historialEmpty": "No audits recorded yet."
@@ -1339,6 +1341,7 @@
           "recycler": "Recycler",
           "observations": "Notes",
           "evidence": "Evidence",
+      "evidenceGone": "The photo is no longer available (photos are kept for 6 months).",
           "enlarge": "Enlarge photo",
           "recommendedContent": "Recommended content",
           "noRecommendationHint": "A Good rating doesn't generate a recommendation: there's nothing to improve on this topic."

@@ -6,9 +6,10 @@ Descripción: Auditoría que el Reciclador hace del desempeño de separación
           global al conjunto entero — no por residente individual, porque
           no hay forma de saber qué unidad entregó qué material. Decisión
           documentada en el issue #5 del backlog.
-¿Impacto? `ruta_evidencia` es obligatoria a propósito: la calificación no
-          se apoya solo en la palabra del reciclador, siempre trae una foto
-          de respaldo. `tema_educativo` es texto libre porque así vive
+¿Impacto? `ruta_evidencia` es obligatoria al crear la auditoría a propósito:
+          la calificación no se apoya solo en la palabra del reciclador,
+          siempre trae una foto de respaldo (después de 6 meses la foto se
+          borra, ver ruta_evidencia abajo). `tema_educativo` es texto libre porque así vive
           `contenido_educativo.modulo_categoria` — sirve para conectar esta
           auditoría con el catálogo educativo (RQF-013) sin inventar una
           tabla de categorías que hoy no existe.
@@ -42,7 +43,11 @@ class AuditoriaConjunto(Base):
     descripcion = Column(Text, nullable=True)
     # ¿Qué? Ruta pública (ej. "/uploads/evidencias-auditoria/<uuid>.jpg"),
     #       no la ruta absoluta en disco del servidor.
-    ruta_evidencia = Column(String(500), nullable=False)
+    # ¿Para qué? Issue #587: pasado el plazo de retención (ver app/limpiar_evidencias.py) se borra la foto
+    #           del disco y las 3 rutas quedan en NULL; la auditoría (resultado, fecha, tema) se conserva.
+    # ¿Impacto? Es nullable en la base de datos SOLO por eso. Al crear una auditoría la foto sigue siendo
+    #           obligatoria: lo exige el servicio (auditoria_conjunto_service.py), no la columna.
+    ruta_evidencia = Column(String(500), nullable=True)
     # ¿Qué? Hasta 2 fotos adicionales, opcionales — el reciclador puede
     #       documentar hasta 3 fotos en total (decisión 2026-08-27). Se
     #       usan columnas fijas en vez de una tabla aparte porque el máximo

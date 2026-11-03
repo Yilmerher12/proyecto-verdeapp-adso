@@ -266,7 +266,7 @@ La misma gráfica y el mismo ranking en una sección "Desempeño de mi conjunto"
 | 4 | Retirar el historial semanal del acordeón del conjunto y de `HistorialAuditorias` donde quede duplicado (corrige el incumplimiento de RNF-005.2 de la barra actual) | 2 |
 | 5 | Alinear a hora de Bogotá el resumen semanal del Admin del Sistema en "Contenido educativo" (hoy cuenta las semanas en UTC) | Ninguna |
 | 6 | **Hecha (issue #558, rama `feat/pdf-desempeno-conjunto`):** descargar el desempeño del conjunto en PDF **con la gráfica**. Las barras son solo rectángulos y texto, así que se pueden dibujar directamente con `fpdf2` (la misma librería de la tarjeta del PDF de la agenda, #480) sin dependencia nueva | 1 y la tarjeta #480 |
-| 7 | **Futura:** política de retención de las fotos de evidencia (ver "Fuera de alcance") | Ninguna |
+| 7 | ~~**Futura:** política de retención de las fotos de evidencia (ver "Fuera de alcance")~~ **Hecha (2026-11-03, issue #587):** propuesta de 6 meses pendiente de aprobación, comando `app/limpiar_evidencias.py` y aviso "foto ya no disponible". Ver `politica-retencion-fotos-evidencia.md` | Ninguna |
 | 8 | **Futura:** mapa de tema por semana, cuando haya más auditorías por conjunto | 2 |
 
 ---

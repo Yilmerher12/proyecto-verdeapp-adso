@@ -1153,6 +1153,10 @@ export function AdminContenidoEducativoPage() {
 
           <section className="border-b border-gray-100 p-5 dark:border-night-line">
             <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.evidence`)}</h3>
+            {/* ¿Qué? Sin fotos = ya se borraron por el plazo de retención de 6 meses (issue #587). */}
+            {![auditoriaAbierta.ruta_evidencia, auditoriaAbierta.ruta_evidencia_2, auditoriaAbierta.ruta_evidencia_3].some(
+              (r) => Boolean(enlaceAdjuntoSeguro(r)),
+            ) && <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.evidenceGone`)}</p>}
             <div className="grid grid-cols-3 gap-2">
               {[auditoriaAbierta.ruta_evidencia, auditoriaAbierta.ruta_evidencia_2, auditoriaAbierta.ruta_evidencia_3]
                 .filter((r): r is string => Boolean(enlaceAdjuntoSeguro(r)))
