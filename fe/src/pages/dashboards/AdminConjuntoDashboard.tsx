@@ -1,3 +1,4 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -922,7 +923,7 @@ export function AdminConjuntoDashboard() {
   };
 
   return (
-    <div className="px-0 py-6 sm:p-6 max-w-5xl 2xl:max-w-6xl mx-auto space-y-6 animate-fade-in">
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6 animate-fade-in`}>
       {/* TARJETA DE PERFIL — el maletín de fondo es solo un detalle tenue,
           para que este panel se sienta del Admin de Conjunto, sin estorbar
           la lectura del texto encima. */}

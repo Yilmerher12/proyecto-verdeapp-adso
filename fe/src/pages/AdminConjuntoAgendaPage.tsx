@@ -1,3 +1,4 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Archive, Check, ClipboardList, Download, ExternalLink, Info, Plus, Trash2, Undo2, X } from "lucide-react";
@@ -442,7 +443,7 @@ export function AdminConjuntoAgendaPage() {
     }`;
 
   return (
-    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("agenda.title")}</h1>

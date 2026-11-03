@@ -1,3 +1,4 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
@@ -613,7 +614,7 @@ export function AdminContenidoEducativoPage() {
   const idVideoReconocido = REGEX_VIDEO_YOUTUBE.test(form.url_video || "");
 
   return (
-    <div className="mx-auto max-w-6xl 2xl:max-w-7xl space-y-5 px-0 py-6 sm:p-6">
+    <div className={`${ANCHO_PAGINA.normal} space-y-5 pt-6`}>
       <div className="flex items-center gap-4 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
           <BookOpen className="icon-xl text-accent-700 dark:text-accent-400" />

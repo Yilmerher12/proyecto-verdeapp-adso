@@ -1,3 +1,4 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
@@ -322,7 +323,7 @@ export function AdminNovedadesPage() {
         : t("novedades.admin.destino.several", { count: item.conjuntos.length });
 
   return (
-    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="flex items-center justify-between gap-3 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">

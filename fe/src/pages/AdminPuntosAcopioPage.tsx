@@ -1,3 +1,4 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Eye, MapPin, MapPinOff, Pencil, Plus, Search, Trash2, Warehouse } from "lucide-react";
@@ -244,7 +245,7 @@ export function AdminPuntosAcopioPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="flex items-center justify-between bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("adminPuntosAcopio.title")}</h1>
