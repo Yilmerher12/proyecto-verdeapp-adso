@@ -41,12 +41,12 @@
     }
   },
   "passwordStrength": {
-    "ariaLabel": "Password strength: {{label}}",
     "1": "Very weak",
     "2": "Weak",
     "3": "Fair",
     "4": "Good",
-    "5": "Strong"
+    "5": "Strong",
+    "ariaLabel": "Password strength: {{label}}"
   },
   "roles": {
     "adminSistema": "System Admin",
@@ -550,7 +550,11 @@
   },
   "landing": {
     "backToTop": "Back to top",
-    "nav": { "homeAriaLabel": "VerdeApp — home", "login": "Sign in", "register": "Sign up" },
+    "nav": {
+      "homeAriaLabel": "VerdeApp — home",
+      "login": "Sign in",
+      "register": "Sign up"
+    },
     "hero": {
       "subtitle": "Waste management for residential buildings in Bogotá",
       "description": "We connect residents, recyclers, and administrators to transform waste management in your community.",
@@ -864,6 +868,14 @@
       },
       "feedbackSent": "Notification sent: \"{{label}}\"",
       "genericNotificationSent": "Notification sent",
+      "misAuditorias": "My audits",
+      "razon": {
+        "yaPresente": "You've already arrived",
+        "avisoLlegadaReciente": "You notified less than 2 h ago",
+        "debesLlegarPrimero": "Notify your arrival first",
+        "yaEstaLleno": "Already reported as full",
+        "yaEstaLibre": "Already reported as free"
+      },
       "sendSection": {
         "title": "Send notification",
         "subtitle": "Notify residents and the building administrator.",
@@ -894,8 +906,13 @@
         "emptyWithoutConjuntos": "You have no notifications. Resident notices (such as waste room full) come from the buildings where you are authorized."
       },
       "modal": {
-        "confirmTitle": "Send this notice?",
-        "confirmDescription": "You are about to notify \"{{accion}}\" to the residents and the administrator of {{conjunto}}.",
+        "confirmTitles": {
+          "llegada": "Notify that you've arrived?",
+          "shutLleno": "Notify that the waste room is full?",
+          "shutLibre": "Notify that the waste room is free?",
+          "finalizacion": "Notify that you've finished?"
+        },
+        "confirmDescription": "We'll let the residents and the administrator of {{conjunto}} know.",
         "sending": "Sending...",
         "submit": "Send notice",
         "yaPresente": "You already checked in at this building — check out before checking in again.",
@@ -906,12 +923,15 @@
       },
       "auditoria": {
         "bannerTitle": "Weekly audit pending",
-        "bannerSubtitle": "You can now rate the recycling sorting of {{conjunto}}.",
+        "bannerSubtitle": "Rate how the material is being sorted at {{conjunto}} this week.",
         "bannerAction": "Audit now",
+        "alDiaTitle": "This week's audit",
+        "alDiaText": "You already submitted the one for {{conjunto}} ({{fecha}}).",
         "modalTitle": "Audit building",
         "modalSubtitle": "Rate how well this building is sorting its recyclable material — the rating is backed by a photo.",
         "conjuntoLabel": "Building",
         "nivelLabel": "Performance level",
+        "nivelElegido": "You chose: {{nivel}}",
         "niveles": {
           "buena": "Good",
           "regular": "Fair",
@@ -937,8 +957,9 @@
         "confirmSubmit": {
           "ariaLabel": "Confirm audit",
           "title": "Send this audit?",
-          "warning": "You're about to rate \"{{tema}}\" as {{nivel}}. Once sent, an audit can't be edited.",
-          "confirm": "Yes, send"
+          "description": "You're about to rate {{tema}} as {{nivel}} in {{conjunto}}.",
+          "irreversible": "Once sent, you won't be able to edit it.",
+          "confirm": "Send audit"
         },
         "validation": {
           "conjunto": "Select a building.",
@@ -1146,10 +1167,10 @@
     },
     "infoPuntos": {
       "titulo": "What is an ECA?",
-      "descripcion": "An Estación de Clasificación y Aprovechamiento (ECA) is the formal site, regulated by UAESP (Bogotá's public utilities authority), where organized professional recyclers weigh and sort what they collect on their routes.",
-      "paraQueSirve": "If you need to drop off recyclable materials on your own, you can find the nearest point here.",
-      "fuenteTexto": "The points you see come from the \"Aprovechamiento ECAS\" dataset of Bogotá Open Data (UAESP), from March 2020. They are not all of Bogotá's ECAs: the UAESP inventory lists many more.",
-      "fuenteLink": "View source"
+      "fuenteLink": "View source",
+      "descripcionResidente": "An Estación de Clasificación y Aprovechamiento (ECA) is the formal site, regulated by UAESP (Bogotá’s public utilities authority), where organized professional recyclers weigh and sort what they collect. Here you can see the ECAs in your district.",
+      "descripcionReciclador": "An Estación de Clasificación y Aprovechamiento (ECA) is the formal site, regulated by UAESP (Bogotá’s public utilities authority), where organized professional recyclers weigh and sort what they collect on their routes. Here you can find the nearest one to your route.",
+      "nota": "Official list from 2020. It does not include every ECA in Bogotá."
     }
   },
   "catalogoEducativo": {
@@ -1845,7 +1866,11 @@
     "feed": {
       "title": "Announcements",
       "subtitle": "Active announcements for your building.",
-      "empty": "No active announcements right now."
+      "empty": "No active announcements right now.",
+      "filtroLabel": "Filter by type",
+      "filtroTodos": "All",
+      "estaSemana": "This week",
+      "anteriores": "Earlier"
     }
   },
   "novedades": {

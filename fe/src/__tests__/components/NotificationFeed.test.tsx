@@ -135,3 +135,36 @@ describe("NotificationFeed — accesibilidad de la fila no leída", () => {
     expect(screen.getByText("El SHUT está lleno")).toBeInTheDocument();
   });
 });
+
+// ¿Qué? En el panel del Reciclador la lista ya es de un solo conjunto: se puede ocultar su nombre.
+describe("NotificationFeed — nombre del conjunto en cada fila", () => {
+  const general: NotificacionItem = { ...notificacionNoLeida, id: "2", mensaje: "Aviso de la plataforma", nombre_conjunto: null, id_conjunto_residencial: null };
+
+  function renderConPropiedad(mostrarConjunto?: boolean) {
+    render(
+      <NotificationFeed
+        title="Notificaciones"
+        notifications={[notificacionNoLeida, general]}
+        emptyMessage="Sin notificaciones"
+        accentBg="bg-accent-600"
+        accentHighlight="bg-accent-50"
+        onMarkRead={vi.fn()}
+        onMarkAllRead={vi.fn()}
+        onClearRead={vi.fn()}
+        mostrarConjunto={mostrarConjunto}
+      />,
+    );
+  }
+
+  it("por omisión escribe el conjunto en cada fila", () => {
+    renderConPropiedad();
+    expect(screen.getByText("AGRUPACION QUINTAS DE ARANJUEZ")).toBeInTheDocument();
+    expect(screen.getByText("VerdeApp")).toBeInTheDocument();
+  });
+
+  it("con mostrarConjunto=false oculta el conjunto pero conserva la etiqueta de las generales", () => {
+    renderConPropiedad(false);
+    expect(screen.queryByText("AGRUPACION QUINTAS DE ARANJUEZ")).not.toBeInTheDocument();
+    expect(screen.getByText("VerdeApp")).toBeInTheDocument();
+  });
+});

@@ -163,6 +163,14 @@ export function AuditoriaConjuntoForm({
 
   return (
     <Modal onClose={onClose} wide closeOnBackdrop={false} aria-label={t("dashboards.reciclador.auditoria.modalTitle")}>
+      {/* ¿Qué? Franja de color arriba del modal que toma el color del nivel elegido.
+          ¿Para qué? Confirmar de un vistazo qué nivel quedó marcado, sin pintar todo el modal
+                    (el resto del formulario necesita su propio contraste, sobre todo en modo oscuro).
+          ¿Impacto? Es solo decorativa (aria-hidden): el nivel también se dice con texto y con la carita. */}
+      <div
+        aria-hidden="true"
+        className={`h-1.5 rounded-t-2xl transition-colors ${nivel ? NIVELES_DESEMPENO[nivel].claseMuestra : "bg-transparent"}`}
+      />
       <div className="p-6">
         <h3 className="mb-1 text-base font-bold text-gray-900 dark:text-white">
           {t("dashboards.reciclador.auditoria.modalTitle")}
@@ -222,18 +230,36 @@ export function AuditoriaConjuntoForm({
                   role="radio"
                   aria-checked={seleccionado}
                   onClick={() => setNivel(n)}
-                  className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-xs font-semibold transition-all ${
+                  className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 px-2 py-4 text-sm font-semibold transition-all ${
                     seleccionado ? claseSeleccionado : `border-transparent opacity-70 hover:opacity-100 ${claseBadge}`
                   }`}
                 >
-                  {/* La carita es parte de un botón: se redibuja al pasar el mouse o
-                      enfocar (icon-draw), igual que el resto de íconos tocables. */}
-                  <Icon className="icon-lg icon-draw" aria-hidden="true" />
+                  {/* ¿Qué? Carita grande. Sin elegir se redibuja al pasar el mouse o enfocar (icon-draw);
+                            la elegida da un saltito una sola vez (icon-appear + icon-hop).
+                      ¿Para qué? Que el toque se sienta respondido, sin una animación larga.
+                      ¿Impacto? Las dos animaciones ya respetan "reducir movimiento" (ver index.css). */}
+                  <Icon
+                    className={`icon-xl ${seleccionado ? "icon-appear icon-hop" : "icon-draw"}`}
+                    aria-hidden="true"
+                  />
                   {t(`dashboards.reciclador.auditoria.niveles.${n.toLowerCase()}`)}
                 </button>
               );
             })}
           </div>
+          {/* ¿Qué? Mensaje corto con lo que quedó elegido. Neutro a propósito: no define qué
+                    significa cada nivel, eso lo decide el proyecto.
+              ¿Para qué? Confirmar la elección con palabras, además de color y carita. */}
+          {nivel && (
+            <p
+              role="status"
+              className={`mt-3 rounded-lg px-3 py-2 text-xs font-medium ${NIVELES_DESEMPENO[nivel].claseBadge}`}
+            >
+              {t("dashboards.reciclador.auditoria.nivelElegido", {
+                nivel: t(`dashboards.reciclador.auditoria.niveles.${nivel.toLowerCase()}`),
+              })}
+            </p>
+          )}
         </div>
 
         <div className="mb-4">
@@ -380,20 +406,30 @@ export function AuditoriaConjuntoForm({
       </div>
 
       {confirmando && nivel && (
+        // ¿Qué? La confirmación dice A CUÁL conjunto se envía y separa, en una línea ámbar aparte, que la
+        //       auditoría ya no se puede editar.
+        // ¿Para qué? Con varios conjuntos, el Reciclador podía confirmar sin saber a cuál iba; y la
+        //           advertencia más importante estaba perdida al final de un párrafo.
+        // ¿Impacto? "warning" (ámbar) porque la acción no se puede deshacer.
         <ConfirmModal
           layer="stacked"
           icon={ClipboardCheck}
-          variant="primary"
+          variant="warning"
           ariaLabel={t("dashboards.reciclador.auditoria.confirmSubmit.ariaLabel")}
           title={t("dashboards.reciclador.auditoria.confirmSubmit.title")}
-          description={t("dashboards.reciclador.auditoria.confirmSubmit.warning", {
+          description={t("dashboards.reciclador.auditoria.confirmSubmit.description", {
             tema: NOMBRE_SIMPLE_CATEGORIA[tema] ?? tema,
             nivel: t(`dashboards.reciclador.auditoria.niveles.${nivel.toLowerCase()}`),
+            conjunto: conjuntos.find((c) => c.id_conjunto_residencial === idConjunto)?.nombre_conjunto ?? "",
           })}
           confirmLabel={t("dashboards.reciclador.auditoria.confirmSubmit.confirm")}
           onConfirm={enviar}
           onClose={() => setConfirmando(false)}
-        />
+        >
+          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-200">
+            {t("dashboards.reciclador.auditoria.confirmSubmit.irreversible")}
+          </p>
+        </ConfirmModal>
       )}
     </Modal>
   );
