@@ -53,7 +53,7 @@ La tarjeta trata del **desempeño semanal del conjunto**: el nivel de una audito
 
 | Rol | Dónde | Qué ve |
 | --- | --- | --- |
-| Admin de Conjunto | Dentro del acordeón de cada conjunto, en [`HistorialAuditoriasSemanal.tsx`](../../fe/src/components/dashboard/HistorialAuditoriasSemanal.tsx) | Una fila por semana: rango de fechas, una barra delgada de tres colores y el total. Al abrir la semana, la lista de auditorías |
+| Admin de Conjunto | Dentro del acordeón de cada conjunto, en [`HistorialAuditoriasSemanal.tsx`](../../fe/src/components/desempeno/ListaAuditoriasSemana.tsx) | Una fila por semana: rango de fechas, una barra delgada de tres colores y el total. Al abrir la semana, la lista de auditorías |
 | Residente | [`HistorialAuditorias.tsx`](../../fe/src/components/dashboard/HistorialAuditorias.tsx) | Lista plana, más recientes primero |
 | Admin del Sistema | "Contenido educativo" ([`AdminContenidoEducativoPage.tsx`](../../fe/src/pages/AdminContenidoEducativoPage.tsx)) | 3 contadores de la semana en curso (Bueno / Regular / Malo) y navegación semana a semana |
 | Reciclador | Su panel | Sus propias auditorías, para saber cuándo volver |

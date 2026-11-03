@@ -42,7 +42,7 @@ El proyecto utiliza una estructura de arquitectura limpia y desacoplada, facilit
 | Gestor de Paquetes (Frontend) | pnpm (Corepack)         | 11.0.9                   | Resolución eficiente de dependencias mediante almacenamiento enlazado.            |
 | Infraestructura               | Docker & Docker Compose | 24+ / 2.20+              | Contenedores herméticos que aseguran el funcionamiento idéntico en cualquier PC.  |
 | Servidor Web FE               | Nginx                   | 1.27-alpine              | Servidor de alto rendimiento para la distribución de los estáticos del Frontend.  |
-| Servidor SMTP Dev             | Mailpit                 | v1.31.0 | Captura local de correos (verificación, recuperación, invitaciones) en el puerto 8025. |
+| Servidor SMTP Dev             | Mailpit                 | v1.31 | Captura local de correos (verificación, recuperación, invitaciones) en el puerto 8025. |
 
 ---
 
@@ -577,11 +577,11 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 | Métrica | Avance |
 |---|---|
-| Historias de Usuario | 48 / 48 implementadas |
+| Historias de Usuario | 53 / 53 implementadas |
 | Requisitos Funcionales | 21 / 21 implementados |
 | Requisitos No Funcionales | 4 / 6 completos (2 parciales — de naturaleza continua: se miden, no se "terminan") |
-| Pruebas backend (pytest) | 604 (6 de octubre de 2026; conteo de hoy: `uv run pytest -q` desde `be/`) |
-| Pruebas frontend (vitest) | Más de 410 (conteo de hoy: `pnpm test` desde `fe/`) |
+| Pruebas backend (pytest) | 915 (3 de noviembre de 2026; conteo de hoy: `uv run pytest -q` desde `be/`) |
+| Pruebas frontend (vitest) | 899 (3 de noviembre de 2026; conteo de hoy: `pnpm test` desde `fe/`) |
 
 ---
 

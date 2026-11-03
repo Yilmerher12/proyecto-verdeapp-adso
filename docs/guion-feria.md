@@ -1,5 +1,7 @@
 # Guion de la feria — VerdeApp
 
+> **Nota (2026-11-03):** este guion es de la feria. Los números (pruebas, versiones, historias de usuario, Pull Requests) son del 25 de octubre de 2026 y **no se actualizan aquí**. Para los de hoy mira el `README.md` (sección "Estado del Proyecto"), `be/pyproject.toml` y `fe/package.json`. Hoy hay 53 historias de usuario, 915 pruebas de backend y 899 de frontend. Si se vuelve a presentar, se repasa antes.
+
 <!--
   ¿Qué? Documento de estudio y de apoyo para presentar VerdeApp en la feria: qué es, para qué
         existe, cómo funciona cada rol, cómo está hecho por dentro y qué responder cuando el

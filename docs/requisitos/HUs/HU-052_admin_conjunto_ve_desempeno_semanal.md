@@ -38,6 +38,8 @@
 
 ## Criterios de aceptación
 
+> **Actualización (2026-11-03, issue #593):** la página muestra una sola tarjeta con el resumen y la gráfica y, debajo, dos pestañas: "Semana elegida" (las auditorías de la semana, CA-052.3) y "Por tema" (CA-052.4). Antes eran bloques apilados. Las pestañas son el componente compartido `Pestanas`, que en una ventana angosta las reparte en una cuadrícula ordenada. El Residente ve el mismo panel con una pestaña más (HU-053).
+
 ### CA-052.1 — La página "Desempeño"
 
 - **Dado que** inicié sesión como Administrador de Conjunto,
@@ -87,10 +89,19 @@
 - **cuando** miro su contenido,
 - **entonces** ya no aparece el historial semanal: vive en la página "Desempeño".
 
+### CA-052.8 — Descargar el desempeño en PDF
+
+- **Dado que** estoy en "Desempeño" viendo un conjunto y un período,
+- **cuando** presiono "Descargar PDF",
+- **entonces** se baja un PDF con la gráfica semanal, la tabla por semana y el ranking de temas de ese conjunto y período. Si falla la descarga, veo el aviso de error sin perder lo que tenía en pantalla. Lo genera el backend (`GET /api/v1/auditorias-conjunto/desempeno/pdf`, con la librería fpdf2).
+
 ---
 
 ## Fuera de alcance
 
 - Desglose por reciclador: las gráficas son del conjunto, nunca de una persona.
-- Vista para el Administrador del Sistema, PDF con la gráfica, mapa de tema por semana y líneas de tendencia con porcentajes.
-- La sección del Residente (HU siguiente, issue #488): reutiliza los componentes de esta página.
+- Mapa de tema por semana y líneas de tendencia con porcentajes.
+- La vista del Administrador del Sistema (su tabla de calificaciones por conjunto, con filtros por localidad, conjunto y fecha, está en el panel del Admin del Sistema, issue #527).
+- La sección del Residente es otra historia (HU-053, issue #488): reutiliza los componentes de esta página.
+
+> **Actualización (2026-11-03):** el PDF con la gráfica, que antes figuraba aquí como fuera de alcance, ya existe (CA-052.8, issues #558 y #560).

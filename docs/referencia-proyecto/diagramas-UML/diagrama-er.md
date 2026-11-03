@@ -114,6 +114,7 @@ erDiagram
         VARCHAR nombre_encargado
         VARCHAR direccion
         VARCHAR telefono_contacto
+        VARCHAR url_foto
         BOOLEAN activo
     }
 
@@ -311,6 +312,13 @@ erDiagram
         TIMESTAMP expira_en
     }
 
+    ARCHIVOS_SUBIDOS {
+        UUID id PK
+        UUID id_usuario FK
+        VARCHAR ruta
+        TIMESTAMP created_at
+    }
+
     ROLES ||--o{ USUARIOS : posee
 
     USUARIOS ||--|| RESIDENTES : pertenece
@@ -320,6 +328,7 @@ erDiagram
     USUARIOS ||--o{ EMAIL_VERIFICATION_TOKENS : solicita
     USUARIOS ||--o{ INVITACIONES_ADMIN_CONJUNTO : invita
     USUARIOS ||--o{ SOLICITUDES_DESVINCULACION : resuelve
+    USUARIOS ||--o{ ARCHIVOS_SUBIDOS : sube
     USUARIOS ||--o{ NOVEDADES : publica
     NOVEDADES ||--o{ NOVEDADES_CONJUNTOS : dirige
     CONJUNTOS_RESIDENCIALES ||--o{ NOVEDADES_CONJUNTOS : recibe
@@ -428,6 +437,8 @@ NOTIFICACIONES_DESTINATARIOS ── USUARIOS
 USUARIOS (Admin_sistema) ── NOVEDADES
 
 TOKENS_REVOCADOS  (lista negra de JWT, sin relación a otras tablas)
+
+USUARIOS ── ARCHIVOS_SUBIDOS  (registro de quién subió cada adjunto, para la cuota de subidas)
 
 CONTENIDO_EDUCATIVO
    │
@@ -563,9 +574,10 @@ CONTENIDO_EDUCATIVO ──▶ CONTENIDO_EDUCATIVO_VISTOS ◀── USUARIOS (qu�
 | nombre_encargado  | VARCHAR |
 | direccion         | VARCHAR |
 | telefono_contacto | VARCHAR |
+| url_foto          | VARCHAR |
 | activo            | BOOLEAN |
 
-`activo` es un soft-delete (HU-017): un punto dado de baja no se borra, solo deja de verse en el directorio público hasta reactivarse.
+`activo` es un soft-delete (HU-017): un punto dado de baja no se borra, solo deja de verse en el directorio público hasta reactivarse. `url_foto` es opcional (issue #581): la sube el Admin del Sistema desde el formulario del punto y se ve en la ficha para los tres roles; si es `NULL` se muestra un dibujo por defecto.
 
 ---
 
@@ -862,6 +874,19 @@ Estructura idéntica entre ambas tablas — tokens de un solo uso, con expiraci�
 
 ---
 
+## archivos_subidos
+
+| Campo      | Tipo      |
+| ---------- | --------- |
+| id         | UUID      |
+| id_usuario | UUID      |
+| ruta       | VARCHAR   |
+| created_at | TIMESTAMP |
+
+Un registro por cada archivo que alguien sube con `POST /api/v1/uploads/adjunto`: quién lo subió, la ruta pública y cuándo. Sirve para la cuota de subidas por usuario (cuántas lleva en el último minuto y en el último día) y para saber de quién es cada archivo. **No es una referencia de uso**: que la tabla tenga la ruta no significa que el archivo se use (`app/limpiar_adjuntos.py` la ignora a propósito). `id_usuario` es `NULL` si la cuenta se borra (`SET NULL`).
+
+---
+
 ## tokens_revocados
 
 | Campo      | Tipo      |
@@ -878,6 +903,7 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 | Entidad A                    | Entidad B                       | Cardinalidad |
 | ------------------------------ | --------------------------------- | ------------ |
 | Roles                          | Usuarios                         | 1:N          |
+| Usuarios                       | Archivos_subidos                 | 1:N          |
 | Usuarios                       | Residentes                       | 1:1          |
 | Usuarios                       | Recicladores                     | 1:1          |
 | Usuarios                       | Administradores de Conjunto      | 1:1          |
@@ -937,5 +963,6 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 * Un Residente, Reciclador o Admin de Conjunto puede enviarle novedades (consultas de soporte) al Admin Sistema; este les cambia el estado (`NUEVA`, `EN_REVISION`, `RESUELTA`), corrige su prioridad y le responde al autor. No son las `novedades` que el Admin Sistema publica (ver [novedades y novedades enviadas](../../conceptos/novedades-y-novedades-enviadas.md)).
 * Un Admin de Conjunto publica comunicados dirigidos a los residentes y/o recicladores de su propio conjunto; un Admin Sistema publica novedades de alcance general (todos los usuarios, o un rol específico).
 * Las notificaciones (llegada del reciclador, SHUT lleno/vaciado, revocación de acceso) se generan una sola vez por evento y se reparten a varios destinatarios, cada uno con su propio estado de lectura.
+* Cada adjunto subido (`POST /uploads/adjunto`) deja un registro en `archivos_subidos` con su dueño, para aplicar la cuota de subidas por usuario.
 * Un logout real invalida el token de sesión agregando su `jti` a `tokens_revocados` — no basta con que el frontend "olvide" el token.
 * El contenido educativo puede ser consultado por los usuarios del sistema, y puede recibir texto en formato Markdown.

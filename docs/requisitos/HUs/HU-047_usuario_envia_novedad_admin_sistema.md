@@ -52,6 +52,13 @@
 - **cuando** abro el formulario,
 - **entonces** veo los motivos propios de mi rol, los comunes a los tres roles y **Otros** al final, sin los motivos de los otros roles.
 
+### CA-047.9 — Ayuda escrita al elegir un motivo (issue #559)
+
+- **Dado que** estoy en Soporte técnico → "Escribir novedad",
+- **cuando** elijo un motivo de la lista,
+- **entonces** veo debajo un recuadro "Prueba esto primero" con los pasos para resolverlo yo mismo (hay pasos para iniciar sesión, notificaciones, mi cuenta, fallas y, para el Reciclador, la auditoría) y la pregunta "¿Esto resolvió tu duda?", con "Sí, ya la resolví" y "No, quiero enviar mi consulta". Los motivos que no se resuelven solos avisan que "Esta consulta la revisa una persona". **Otros** no muestra ayuda.
+- **y** el formulario sigue disponible debajo: la ayuda nunca bloquea ni retrasa el contacto con una persona. Solo hay pasos escritos para los motivos cuya respuesta se verificó contra el código. Ver `docs/gestion-proyecto/investigacion-chat-soporte.md`.
+
 ### CA-047.2 — Imagen opcional
 
 - **Dado que** quiero acompañar la novedad con una foto,
