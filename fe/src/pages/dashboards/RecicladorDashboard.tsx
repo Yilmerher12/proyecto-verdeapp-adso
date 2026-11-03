@@ -1,4 +1,5 @@
  
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -382,7 +383,7 @@ export function RecicladorDashboard() {
   };
 
   return (
-    <div className="px-0 py-6 sm:p-6 max-w-5xl 2xl:max-w-6xl mx-auto space-y-5">
+    <div className={`${ANCHO_PAGINA.normal} space-y-5 pt-6`}>
       {/* Encabezado compacto.
           ¿Qué? El título y la bienvenida van en una sola línea con el ícono del rol, dentro de una
                 tarjeta baja (menos relleno que la de antes y sin la marca de agua).

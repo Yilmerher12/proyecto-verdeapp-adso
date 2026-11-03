@@ -1,3 +1,4 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Newspaper, Paperclip } from "lucide-react";
@@ -47,7 +48,7 @@ export function NovedadesFeedPage() {
   }, [user]);
 
   return (
-    <div className="mx-auto max-w-3xl 2xl:max-w-6xl space-y-6 pt-6">
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {t("novedades.feed.title")}

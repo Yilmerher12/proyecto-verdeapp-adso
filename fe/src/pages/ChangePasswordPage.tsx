@@ -5,6 +5,7 @@
  * ¿Impacto? Requiere contraseña actual como verificación — previene cambios no autorizados.
  */
 
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Lock, KeyRound, ShieldCheck } from "lucide-react";
@@ -120,7 +121,7 @@ export function ChangePasswordPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md pt-6">
+    <div className={`${ANCHO_PAGINA.formulario} pt-6`}>
       <div className="mb-6 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
           {t("auth.changePassword.title")}

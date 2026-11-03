@@ -1,3 +1,4 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useState, useEffect, Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -483,7 +484,7 @@ export function AdminDashboard() {
   );
 
   return (
-    <div className="px-0 py-6 sm:p-6 max-w-6xl 2xl:max-w-7xl mx-auto space-y-5">
+    <div className={`${ANCHO_PAGINA.normal} space-y-5 pt-6`}>
       {/* ¿Qué? Antes llevaba también un ícono grande (Shield) muy tenue de
           fondo, encima de la foto del panel.
           ¿Para qué? Con la foto de hoja detrás de todo el panel, ese

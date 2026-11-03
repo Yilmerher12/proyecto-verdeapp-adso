@@ -1,3 +1,4 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChartColumn, Download } from "lucide-react";
@@ -63,7 +64,7 @@ export function AdminConjuntoDesempenoPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
