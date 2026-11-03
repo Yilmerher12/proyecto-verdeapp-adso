@@ -983,12 +983,21 @@
       "reportSection": {
         "title": "Reportar SHUT lleno",
         "description": "Avisa al reciclador y al administrador que el cuarto de basuras está lleno. El reporte es anónimo.",
-        "sent": "Enviado",
-        "submit": "Reportar"
+        "sent": "Reporte enviado",
+        "alreadyReported": "Ya reportado",
+        "submit": "Reportar SHUT lleno"
+      },
+      "confirmReport": {
+        "title": "¿Reportar que el SHUT está lleno?",
+        "description": "Se notificará al reciclador y al administrador de {{conjunto}}.",
+        "descriptionSinNombre": "Se notificará al reciclador y al administrador de tu conjunto.",
+        "anonymous": "Tu reporte es anónimo.",
+        "submit": "Reportar",
+        "sending": "Reportando..."
       },
       "notifications": {
-        "title": "Actividad reciente",
-        "empty": "No tienes notificaciones aún. Aparecerán aquí cuando el reciclador envíe avisos."
+        "title": "Notificaciones recibidas",
+        "empty": "No tienes notificaciones aún. Aquí aparecerán los avisos del reciclador y de tu administración."
       }
     }
   },
@@ -1068,6 +1077,12 @@
       "tablaSemana": "Semana",
       "tablaTotal": "Total",
       "tablaCaption": "Auditorías por semana y nivel"
+    },
+    "pestanas": {
+      "aria": "Qué ver del desempeño",
+      "semana": "Semana elegida",
+      "todas": "Todas las auditorías",
+      "temas": "Por tema"
     },
     "pocosDatos": "Todavía no hay suficientes auditorías para mostrar la gráfica. Aparecerá con al menos {{minimo}} auditorías en las últimas {{semanas}} semanas. Mientras tanto, mira la lista de abajo.",
     "temas": {
@@ -1157,7 +1172,7 @@
     "searchPoints": "Buscar por nombre o dirección",
     "noPointsMatch": "Ningún punto coincide con tu búsqueda.",
     "call": "Llamar",
-    "noPhone": "Sin teléfono registrado",
+    "noPhone": "No comparte su teléfono",
     "copyAddress": "Copiar dirección",
     "infoRecicladores": {
       "titulo": "¿Qué es este directorio?",

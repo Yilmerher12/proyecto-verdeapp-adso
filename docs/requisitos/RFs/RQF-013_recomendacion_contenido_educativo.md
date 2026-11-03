@@ -51,7 +51,7 @@ Este RF extiende **RQF-009** (Auditoría de Residuos con Semáforo) y **RQF-004*
 
 ### Flujo B — Ver la recomendación (Residente)
 
-1. El Residente ve la notificación en la sección "Actividad reciente" de su panel, con su propio ícono (🎓) y el mensaje: *"El reciclador calificó "\<tema\>" como Regular/Malo en tu conjunto. Revisa el contenido educativo recomendado."*
+1. El Residente ve la notificación en la sección "Notificaciones recibidas" de su panel, con su propio ícono (🎓) y el mensaje: *"El reciclador calificó "\<tema\>" como Regular/Malo en tu conjunto. Revisa el contenido educativo recomendado."*
 2. Al hacer clic sobre la notificación (un solo clic, sin pasos intermedios — ver RN-004), el sistema consulta la auditoría referenciada, toma su `tema_educativo` y navega directo a `/catalogo-educativo/:categoria` con ese tema.
 3. El clic también marca la notificación como leída, igual que cualquier otra notificación del panel.
 
@@ -70,7 +70,7 @@ Este RF extiende **RQF-009** (Auditoría de Residuos con Semáforo) y **RQF-004*
 1. El Admin Sistema abre un módulo del catálogo (pestaña "Módulos", RQF-010) y ve a qué conjuntos ya se recomendó (automático o manual).
 2. Elige enviarlo a un conjunto específico o a varios a la vez (`POST /api/v1/contenido-educativo/{id}/enviar`).
 3. El sistema registra el envío (tabla `contenido_educativo_envios`) y crea, para cada conjunto elegido, una notificación de tipo `CONTENIDO_RECOMENDADO_MANUAL` dirigida a sus Residentes, con `id_referencia` apuntando al módulo (no a una auditoría, porque no hay ninguna de por medio).
-4. El Residente ve la notificación igual que en el Flujo B (mismo ícono 🎓 y ubicación en "Actividad reciente"), con el mensaje: *"Hay contenido educativo nuevo recomendado para tu conjunto."* Al hacer clic, navega directo a la categoría del módulo enviado.
+4. El Residente ve la notificación igual que en el Flujo B (mismo ícono 🎓 y ubicación en "Notificaciones recibidas"), con el mensaje: *"Hay contenido educativo nuevo recomendado para tu conjunto."* Al hacer clic, navega directo a la categoría del módulo enviado.
 5. Si el conjunto elegido no tiene ningún Residente registrado todavía, el envío se guarda igual (para que la lista de "Recomendado a" del módulo quede completa) pero no se crea ninguna notificación — no hay nadie a quien notificar.
 
 ---

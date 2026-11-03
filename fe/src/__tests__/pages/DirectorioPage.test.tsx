@@ -97,6 +97,35 @@ describe("DirectorioPage", () => {
     });
   });
 
+  // ¿Qué? Cada reciclador es una fila con Llamar y WhatsApp a la vista; sin teléfono, dice que no lo comparte.
+  it("en Recicladores cada fila trae Llamar y WhatsApp, o 'No comparte su teléfono' si no lo publica", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/geography/localidades")) return Promise.resolve({ data: localidades });
+      if (url.includes("/users/me")) return Promise.resolve({ data: { nombre_localidad: "Usaquén" } });
+      if (url.includes("/directorio/recicladores")) {
+        return Promise.resolve({
+          data: [
+            { ...recicladorUsaquen, id_reciclador: "r1", nombre: "Ana", apellidos: "Ruiz", numero_telefonico: "3001234567", asociacion: "Asociación Verde" },
+            { ...recicladorUsaquen, id_reciclador: "r2", nombre: "Luis", apellidos: "Mora", numero_telefonico: null },
+          ],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    renderPage();
+
+    const filaAna = (await screen.findByText("Ana Ruiz")).closest("li") as HTMLElement;
+    expect(within(filaAna).getByText("Asociación Verde")).toBeInTheDocument();
+    expect(within(filaAna).getByRole("link", { name: "Llamar Ana Ruiz" })).toHaveAttribute("href", "tel:+573001234567");
+    expect(within(filaAna).getByRole("link", { name: "WhatsApp Ana Ruiz" })).toHaveAttribute("href", "https://wa.me/573001234567");
+
+    const filaLuis = screen.getByText("Luis Mora").closest("li") as HTMLElement;
+    expect(within(filaLuis).getByText("No comparte su teléfono")).toBeInTheDocument();
+    expect(within(filaLuis).queryByRole("link")).not.toBeInTheDocument();
+    // ¿Qué? La localidad ya está fija arriba: no se repite en cada fila.
+    expect(within(filaLuis).queryByText("Usaquén")).not.toBeInTheDocument();
+  });
+
   it("si no se pudo detectar la localidad, lo avisa en vez de mostrar una vacía", async () => {
     mockRespuestas({ nombreLocalidad: null });
     renderPage();

@@ -35,7 +35,7 @@
 
 - **Dado que** el Reciclador calificó mi conjunto como Regular o Malo en algún tema,
 - **cuando** entro a mi panel,
-- **entonces** debo ver una notificación en "Actividad reciente" indicando el tema y la calificación recibida.
+- **entonces** debo ver una notificación en "Notificaciones recibidas" indicando el tema y la calificación recibida.
 
 ### CA-026.2 — Sin recomendaciones nuevas
 

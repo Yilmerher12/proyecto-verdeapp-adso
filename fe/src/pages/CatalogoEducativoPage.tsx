@@ -56,7 +56,11 @@ export function CatalogoEducativoPage() {
 
   return (
     <div className={`${ANCHO_PAGINA.normal} space-y-10 pt-6 pb-12`}>
-      <header className="space-y-2">
+      {/* ¿Qué? Los títulos (el de la página y los de cada sección) van en una tarjeta, no sueltos sobre el fondo.
+          ¿Para qué? Igual que el título "Mi conjunto" del panel del Residente: se leen como parte de la
+                    pantalla y no se pierden sobre el fondo. Se conserva el estilo propio de Aprende a
+                    reciclar (esquinas más redondeadas). */}
+      <header className="space-y-2 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t("catalogoEducativo.title")}</h1>
         <p className="max-w-2xl text-base text-gray-600 dark:text-gray-300">{t("catalogoEducativo.subtitle")}</p>
       </header>
@@ -100,7 +104,7 @@ export function CatalogoEducativoPage() {
           </div>
 
           <section aria-labelledby="titulo-categorias" className="space-y-5">
-            <h2 id="titulo-categorias" className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 id="titulo-categorias" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-xl font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
               {t("catalogoEducativo.categoriesTitle")}
             </h2>
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
@@ -156,7 +160,7 @@ export function CatalogoEducativoPage() {
 
           {destacado && idDestacado && (
             <section aria-labelledby="titulo-destacado" className="space-y-5">
-              <h2 id="titulo-destacado" className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h2 id="titulo-destacado" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-xl font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
                 {t("catalogoEducativo.featuredTitle")}
               </h2>
               <Link

@@ -55,4 +55,6 @@
 - **cuando** entro a la sección,
 - **entonces** veo las 10 más recientes y, debajo, "Mostrando 1–10 de N" con flechas para pasar de página; ninguna calificación se queda fuera de la lista.
 
+> **Actualización (2026-11-03, issue #593)**: el historial ya no es un bloque aparte del panel. Es la pestaña "Todas las auditorías" de la tarjeta "Mi conjunto" (junto a "Semana elegida" y "Por tema"). La lista se pide solo al abrir la pestaña. Con menos de 4 auditorías en el período no hay pestañas: se ve directo este historial completo.
+
 > **Implementado**: antes la lista traía solo las 50 más recientes y cortaba el resto sin avisar. Ahora `GET /auditorias-conjunto/historial` recibe `limit` y `offset` y responde `{items, total}` (ver RQF-009). Con 10 calificaciones o menos no se muestra la barra de páginas.

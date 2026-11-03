@@ -49,6 +49,8 @@
 - **cuando** reviso su información,
 - **entonces** debo poder ver su teléfono o un enlace de contacto (ej. chat/WhatsApp), solo si el reciclador autorizó compartirlo.
 
+> **Actualización (2026-11-03, issue #593)**: los recicladores se ven como una lista (una fila por reciclador, en la segunda tarjeta de la página) con su nombre, su asociación y los botones "Llamar" y "WhatsApp" siempre a la vista, sin desplegar nada. La localidad no se repite en cada fila (ya está fija arriba). Si el reciclador no comparte su teléfono, la fila dice "No comparte su teléfono" (antes "Sin teléfono registrado"). El aviso "¿Qué es este directorio?" va como franja arriba de la lista y se puede cerrar.
+
 ### CA-006.4 — Sin resultados
 
 - **Dado que** aplico un filtro que no coincide con ningún registro,

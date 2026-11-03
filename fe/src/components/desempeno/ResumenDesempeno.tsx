@@ -19,7 +19,10 @@ interface ResumenDesempenoProps {
 
 function Tarjeta({ titulo, valor, detalle }: { titulo: string; valor: string; detalle?: string }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-night-line dark:bg-night-card">
+    // ¿Qué? Cuadro sin borde ni sombra, con fondo suave.
+    // ¿Para qué? Los cuatro datos viven dentro de la tarjeta única del desempeño; con borde propio cada uno
+    //           se veía como una tarjeta metida dentro de otra tarjeta.
+    <div className="rounded-xl bg-gray-50 p-3 dark:bg-night-inset">
       <dt className="text-xs font-semibold text-gray-500 dark:text-gray-400">{titulo}</dt>
       <dd className="mt-1 break-words text-lg font-bold text-gray-900 dark:text-white">{valor}</dd>
       {detalle && <dd className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{detalle}</dd>}

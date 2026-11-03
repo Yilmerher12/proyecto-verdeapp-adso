@@ -188,7 +188,7 @@ export function NotificationBell({ noLeidas, dashboardHref, rolId }: Notificatio
           id={idPanel}
           role="region"
           aria-label={t("appShell.notificaciones")}
-          className="fixed inset-x-4 top-[4.5rem] z-50 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-night-line dark:bg-night-card sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:max-h-[min(36rem,calc(100vh-6rem))]"
+          className="fixed inset-x-4 top-[4.5rem] z-50 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-night-line dark:bg-night-card sm:inset-x-auto sm:right-4 sm:w-[min(24rem,calc(100vw-18rem))] sm:max-h-[min(36rem,calc(100vh-6rem))] lg:absolute lg:right-0 lg:top-full lg:mt-2 lg:w-96"
         >
           {!cargado ? (
             <div className="p-5">

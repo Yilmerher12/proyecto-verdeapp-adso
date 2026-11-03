@@ -16,7 +16,8 @@ import type { TemaDesempeno } from "@/lib/auditoriaConjuntoApi";
 import { CAMPOS_POR_NIVEL, claveNivel, rankingTemas, regularOMalo, totalTema } from "@/lib/desempeno";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-export function RankingTemas({ temas }: { temas: TemaDesempeno[] }) {
+// ¿Qué? `sinTarjeta`: sin marco propio, porque va dentro de una pestaña de la tarjeta del desempeño.
+export function RankingTemas({ temas, sinTarjeta = false }: { temas: TemaDesempeno[]; sinTarjeta?: boolean }) {
   const { t } = useTranslation();
   const [comoTabla, setComoTabla] = useState(false);
   const ordenados = rankingTemas(temas);
@@ -24,7 +25,9 @@ export function RankingTemas({ temas }: { temas: TemaDesempeno[] }) {
   return (
     <section
       aria-labelledby="desempeno-temas-titulo"
-      className="space-y-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card"
+      className={`space-y-3 ${
+        sinTarjeta ? "" : "rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card"
+      }`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

@@ -13,7 +13,7 @@
  *           de todas las del período. La gráfica se descarga bajo demanda
  *           (lazy), recharts no entra en la primera carga de la app.
  */
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ChartColumn, Table2 } from "lucide-react";
 import { MINIMO_AUDITORIAS_GRAFICA } from "@/config/desempeno";
@@ -22,7 +22,9 @@ import {
   obtenerDesempeno,
   type AuditoriaConjunto,
   type DesempenoConjunto,
+  type PaginaAuditorias,
 } from "@/lib/auditoriaConjuntoApi";
+import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { lunesInicial, rangoSemana, totalSemana } from "@/lib/desempeno";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -35,13 +37,20 @@ import { TablaDesempenoSemanal } from "@/components/desempeno/TablaDesempenoSema
 
 const GraficaDesempenoSemanal = lazy(() => import("@/components/desempeno/GraficaDesempenoSemanal"));
 
+type Pestana = "semana" | "todas" | "temas";
+
 interface PanelDesempenoProps {
   idConjunto?: string;
   semanas: number;
+  /** ¿Qué? Título (e ícono) de la tarjeta, arriba del resumen. Sin él, la tarjeta empieza en el resumen. */
+  cabecera?: ReactNode;
+  /** ¿Qué? Si se pasa, aparece la pestaña "Todas las auditorías" con esa lista paginada (la del Residente). */
+  cargarHistorial?: (limit: number, offset: number) => Promise<PaginaAuditorias>;
 }
 
-export function PanelDesempeno({ idConjunto, semanas }: PanelDesempenoProps) {
+export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial }: PanelDesempenoProps) {
   const { t, i18n } = useTranslation();
+  const [pestana, setPestana] = useState<Pestana>("semana");
 
   // ¿Qué? Cada respuesta lleva la "clave" (conjunto + período) con que se pidió.
   // ¿Para qué? Si el usuario cambia de conjunto o de período mientras carga, la
@@ -93,8 +102,8 @@ export function PanelDesempeno({ idConjunto, semanas }: PanelDesempenoProps) {
     }
   }, [llave, clave, idConjunto]);
 
-  if (!actual) return <LoadingState message={t("common.loading")} />;
-  if (!desempeno) return <Alert type="error" message={t("desempeno.errorCarga")} />;
+  if (!actual) return <Marco cabecera={cabecera}><LoadingState message={t("common.loading")} /></Marco>;
+  if (!desempeno) return <Marco cabecera={cabecera}><Alert type="error" message={t("desempeno.errorCarga")} /></Marco>;
 
   const deSemana = (lunes: string | null) => (lunes ? listas[`${clave}|${lunes}`] : undefined);
   const fechaUltima = desempeno.total > 0 ? (deSemana(lunesPorDefecto)?.[0]?.created_at ?? null) : null;
@@ -110,18 +119,25 @@ export function PanelDesempeno({ idConjunto, semanas }: PanelDesempenoProps) {
         ? undefined
         : cargadas.flatMap((l) => l ?? []).sort((a, b) => b.created_at.localeCompare(a.created_at));
     return (
-      <div className="space-y-6">
+      <Marco cabecera={cabecera}>
         <ResumenDesempeno desempeno={desempeno} fechaUltima={fechaUltima} />
         <EmptyState
           icon={ChartColumn}
           message={t("desempeno.pocosDatos", { minimo: MINIMO_AUDITORIAS_GRAFICA, semanas })}
         />
-        <ListaAuditoriasSemana
-          titulo={t("desempeno.semana.tituloPeriodo")}
-          auditorias={listaDelPeriodo}
-          mensajeVacio={t("desempeno.semana.vaciaPeriodo")}
-        />
-      </div>
+        {/* ¿Qué? Con `cargarHistorial` (el Residente) se muestra el historial completo y paginado, no solo el
+                  período: con pocas auditorías no hay pestañas, y así las más viejas siguen al alcance. */}
+        {cargarHistorial ? (
+          <HistorialAuditorias sinTarjeta cargar={cargarHistorial} />
+        ) : (
+          <ListaAuditoriasSemana
+            sinTarjeta
+            titulo={t("desempeno.semana.tituloPeriodo")}
+            auditorias={listaDelPeriodo}
+            mensajeVacio={t("desempeno.semana.vaciaPeriodo")}
+          />
+        )}
+      </Marco>
     );
   }
 
@@ -131,13 +147,19 @@ export function PanelDesempeno({ idConjunto, semanas }: PanelDesempenoProps) {
     hasta,
   });
 
+  const pestanas: { id: Pestana; clave: string }[] = [
+    { id: "semana", clave: "desempeno.pestanas.semana" },
+    ...(cargarHistorial ? [{ id: "todas" as const, clave: "desempeno.pestanas.todas" }] : []),
+    { id: "temas", clave: "desempeno.pestanas.temas" },
+  ];
+
   return (
-    <div className="space-y-6">
+    <Marco cabecera={cabecera}>
       <ResumenDesempeno desempeno={desempeno} fechaUltima={fechaUltima} />
 
       <section
         aria-labelledby="desempeno-grafica-titulo"
-        className="space-y-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card"
+        className="space-y-4 border-t border-gray-100 pt-5 dark:border-night-line"
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -167,13 +189,65 @@ export function PanelDesempeno({ idConjunto, semanas }: PanelDesempenoProps) {
         )}
       </section>
 
-      <ListaAuditoriasSemana
-        titulo={tituloSemana}
-        auditorias={deSemana(seleccionada)}
-        mensajeVacio={t("desempeno.semana.vacia")}
-      />
+      {/* ¿Qué? Tres pestañas en vez de tres bloques apilados: la semana elegida en la gráfica, todas las
+                auditorías (solo si quien usa el panel pasa `cargarHistorial`, como el Residente) y los temas.
+          ¿Para qué? Antes el panel eran 6 bloques seguidos y había que bajar mucho para llegar al final.
+          ¿Impacto? "Todas las auditorías" pide su lista solo al abrir la pestaña. */}
+      {/* ¿Qué? En un espacio angosto las pestañas se reparten el ancho en partes iguales (el texto largo baja
+                a una segunda línea dentro de su propia pestaña); en uno ancho van en una fila, cada una del
+                tamaño de su texto.
+          ¿Para qué? Antes se envolvían en filas y una pestaña quedaba sola en la segunda, desordenada. */}
+      <div
+        role="tablist"
+        aria-label={t("desempeno.pestanas.aria")}
+        className={`grid gap-2 border-t border-gray-100 pt-5 dark:border-night-line @xl:flex ${
+          pestanas.length === 3 ? "grid-cols-3" : "grid-cols-2"
+        }`}
+      >
+        {pestanas.map(({ id, clave: claveTexto }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            id={`desempeno-pestana-${id}`}
+            aria-selected={pestana === id}
+            aria-controls="desempeno-pestana-contenido"
+            onClick={() => setPestana(id)}
+            className={`cursor-pointer rounded-full px-3 py-2 text-center text-sm font-semibold leading-tight transition-colors @xl:px-4 ${
+              pestana === id
+                ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+                : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-field"
+            }`}
+          >
+            {t(claveTexto)}
+          </button>
+        ))}
+      </div>
 
-      <RankingTemas temas={desempeno.temas} />
+      <div role="tabpanel" id="desempeno-pestana-contenido" aria-labelledby={`desempeno-pestana-${pestana}`}>
+        {pestana === "semana" && (
+          <ListaAuditoriasSemana
+            sinTarjeta
+            titulo={tituloSemana}
+            auditorias={deSemana(seleccionada)}
+            mensajeVacio={t("desempeno.semana.vacia")}
+          />
+        )}
+        {pestana === "todas" && cargarHistorial && <HistorialAuditorias sinTarjeta cargar={cargarHistorial} />}
+        {pestana === "temas" && <RankingTemas sinTarjeta temas={desempeno.temas} />}
+      </div>
+    </Marco>
+  );
+}
+
+// ¿Qué? La tarjeta única del desempeño: un solo marco con (opcional) la cabecera que le pasa quien lo usa.
+// ¿Para qué? El panel del Residente la usa como su tarjeta "Mi conjunto" (con título e ícono); la página
+//           Desempeño del Admin de Conjunto no pasa cabecera porque su título ya está arriba de la página.
+function Marco({ cabecera, children }: { cabecera?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="@container space-y-5 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
+      {cabecera}
+      {children}
     </div>
   );
 }
