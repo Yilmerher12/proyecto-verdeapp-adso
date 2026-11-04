@@ -14,9 +14,9 @@ Reglas:
 
 | Integrante (usuario GitHub) | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
 |---|---|---|---|---|---|---|---|---|---|
-| Yilmer Hernández Camargo (@Yilmerher12) | E2E | E2E | | | | | | | |
+| Yilmer Hernández Camargo (@Yilmerher12) | E2E ([#467](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/467)) | E2E ([#586](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/586)) | | | | | | | |
 | Yordan Castro Guerrero (@yordancastrog7-pixel) | E2E | API | | | | | | | |
-| Juan Carlos Barajas (@Juanbarajas90) | E2E | BD | | | | | | | |
+| Juan Carlos Barajas (@Juanbarajas90) | E2E | BD ([#592](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/592)) | | | | | | | |
 | José Guerrero (@josperaes-dotcom) | E2E | Front | | | | | | | |
 
 ## Cobertura semanal
@@ -26,11 +26,11 @@ Anota la cobertura real al cerrar cada semana. El umbral de la semana siguiente 
 | Semana | Frontend (% líneas) | Backend (% líneas) | Umbral configurado para la semana siguiente |
 |---|---|---|---|
 | S1 (línea base, 6 de octubre de 2026) | 78.2 | 96.69 | Frontend 78 · Backend 96 |
-| S2 (cierre, 3 de noviembre de 2026) | 86.4 | sin medir | Frontend 86 · Backend 96 (sin cambio) |
+| S2 (cierre, 3 de noviembre de 2026) | 86.4 | 97.17 | Frontend 86 · Backend 96 (sin cambio) |
 
 > La línea base ya supera el piso del 80% del bootcamp en el backend: el proyecto venía con pruebas de API contra la BD real (`be/app/tests/`) y de componentes React (`fe/src/__tests__/`). Lo que no tenía era E2E (carpeta `e2e/`, creada en S1).
 
-> **Cierre de S2 (3 de noviembre de 2026):** el frontend subió de 78.2 a 86.4 % de líneas (sentencias 84.9, ramas 82.9 y funciones 81.2). El umbral de `fe/vite.config.ts` pasó de 78 / 76 / 72 / 70 a 86 / 84 / 82 / 81 (líneas, sentencias, ramas, funciones), redondeado hacia abajo. El backend no se midió en esa rama: el umbral de `be/pyproject.toml` (96) no cambió y se actualiza cuando alguien mida la capa API.
+> **Cierre de S2 (3 de noviembre de 2026):** el frontend subió de 78.2 a 86.4 % de líneas (sentencias 84.9, ramas 82.9 y funciones 81.2). El umbral de `fe/vite.config.ts` pasó de 78 / 76 / 72 / 70 a 86 / 84 / 82 / 81 (líneas, sentencias, ramas, funciones), redondeado hacia abajo. El backend no se midió en esa rama; se midió después sobre `develop` (3 de noviembre de 2026) y dio 97.17 % de líneas con 915 pruebas en verde. El umbral de `be/pyproject.toml` (96) no cambió: se actualiza en el PR de cierre de la S3.
 
 ### Retos sugeridos para la capa Front
 
