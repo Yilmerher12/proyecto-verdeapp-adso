@@ -16,6 +16,7 @@ import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { agregarComentario, listarComentarios, type ComentarioPunto } from "@/lib/puntosAcopioApi";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
 
 interface ComentariosPuntoProps {
   idPunto: string;
@@ -78,7 +79,7 @@ export function ComentariosPunto({ idPunto, version }: ComentariosPuntoProps) {
             <span className="min-w-0 truncate font-semibold text-gray-600 dark:text-gray-300">{c.autor ?? t(`${p}.deletedAuthor`)}</span>
             <span className="shrink-0">{formatearFechaCreacion(c.created_at)}</span>
           </div>
-          <p className="mt-1 whitespace-pre-line break-words text-sm text-gray-700 dark:text-gray-200">{c.texto}</p>
+          <TextoRecortable texto={c.texto} className="mt-1 whitespace-pre-line break-words text-sm text-gray-700 dark:text-gray-200" />
         </div>
       ))}
 

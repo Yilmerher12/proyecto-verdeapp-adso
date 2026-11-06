@@ -750,7 +750,7 @@ export function AdminDashboard() {
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+            <tbody className="divide-y divide-gray-200 dark:divide-night-line">
               {error ? (
                 <tr>
                   <td colSpan={colSpanActivo} className="px-5 py-6">

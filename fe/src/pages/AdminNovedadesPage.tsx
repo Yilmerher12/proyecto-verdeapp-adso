@@ -37,6 +37,7 @@ import {
   validarFechaAviso,
 } from "@/lib/validacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
 import {
   archivarNovedad,
@@ -470,7 +471,7 @@ export function AdminNovedadesPage() {
                             <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
                           )}
                         </div>
-                        <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
+                        <TextoRecortable texto={item.texto} className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line" />
                         {item.conjuntos.length > 1 && (
                           <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">
                             {item.conjuntos.map((c) => c.nombre_conjunto).join(" · ")}

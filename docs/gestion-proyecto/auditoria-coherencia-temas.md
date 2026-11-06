@@ -111,3 +111,7 @@ Después de revisar la primera versión en pantalla, el equipo señaló que el t
 - **El salto numérico entre capas grandes casi no cambió**: sidebar contra contenido sigue en 1.12:1 y contenido contra tarjeta en 1.20:1. La mejora viene de los bordes más claros (1.94:1), de los tonos casi neutros (ya no es verde sobre verde), del acento menta y de unificar los roles; no de capas mucho más separadas. Separar más las capas sería un oscuro mucho más claro y cambiaría la identidad.
 - **En modo claro** los cuatro botones de acción del Reciclador siguen con colores propios (teal, ámbar, verde, índigo); el rediseño fue del tema oscuro.
 - No se revisó en un celular real, con lector de pantalla ni cada modal y formulario cerrado.
+
+## Tercera parte: separadores entre filas (issue #616, 2026-11-06)
+
+Los separadores de listas y tablas usaban `divide-gray-50` (en claro casi no se ve, unos 1,05 a 1 contra la tarjeta blanca) y `dark:divide-gray-800` (en oscuro tampoco se ve, y no es un token `night-*`); los de pie de lista, `border-gray-50`. Se cambiaron en 9 archivos (las notificaciones, el historial de auditorías, las tablas de usuarios, puntos de acopio, calificaciones y desempeño, y el directorio) por `gray-200` en claro y `night-line` en oscuro, los valores que ya documenta `docs/requisitos/restricciones.md`. Una búsqueda de `divide-gray-50`, `border-gray-50` y `dark:divide-gray-800` en `fe/src` ya no devuelve nada.

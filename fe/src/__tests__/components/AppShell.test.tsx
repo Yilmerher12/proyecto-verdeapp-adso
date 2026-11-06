@@ -116,20 +116,20 @@ describe("AppShell — grupo de Puntos de Acopio", () => {
   const enlacesDelMenu = (container: HTMLElement) =>
     Array.from(container.querySelectorAll("nav a")).map((a) => a.textContent);
 
-  it("Reciclador: Puntos de Acopio va justo bajo Panel Principal y no hay grupo Recursos", () => {
+  it("Reciclador: Puntos de acopio va justo bajo Panel principal y no hay grupo Recursos", () => {
     const { container, queryByText } = renderComo(RoleId.RECICLADOR);
 
-    expect(enlacesDelMenu(container).slice(0, 2)).toEqual(["Panel Principal", "Puntos de Acopio"]);
+    expect(enlacesDelMenu(container).slice(0, 2)).toEqual(["Panel principal", "Puntos de acopio"]);
     expect(queryByText("Recursos")).not.toBeInTheDocument();
   });
 
-  it("Administrador del Sistema: Puntos de Acopio va bajo Panel Principal y Recursos solo tiene Contenido Educativo", () => {
+  it("Administrador del Sistema: Puntos de acopio va bajo Panel principal y Recursos solo tiene Contenido educativo", () => {
     const { container, getByText } = renderComo(RoleId.ADMIN_SISTEMA);
 
-    expect(enlacesDelMenu(container).slice(0, 2)).toEqual(["Panel Principal", "Puntos de Acopio"]);
+    expect(enlacesDelMenu(container).slice(0, 2)).toEqual(["Panel principal", "Puntos de acopio"]);
     expect(getByText("Recursos")).toBeInTheDocument();
     const gruposRecursos = getByText("Recursos").parentElement as HTMLElement;
-    expect(Array.from(gruposRecursos.querySelectorAll("a")).map((a) => a.textContent)).toEqual(["Contenido Educativo"]);
+    expect(Array.from(gruposRecursos.querySelectorAll("a")).map((a) => a.textContent)).toEqual(["Contenido educativo"]);
   });
 
   // ¿Qué? Issue #487: "Desempeño" es solo del Admin de Conjunto, junto a Agenda.
@@ -146,14 +146,14 @@ describe("AppShell — grupo de Puntos de Acopio", () => {
     }
   });
 
-  it("Residente: el menú no cambia, Directorio General sigue en Recursos", () => {
+  it("Residente: el menú no cambia, Directorio general sigue en Recursos", () => {
     const { container, getByText } = renderComo(RoleId.RESIDENTE);
 
-    expect(enlacesDelMenu(container)).not.toContain("Puntos de Acopio");
+    expect(enlacesDelMenu(container)).not.toContain("Puntos de acopio");
     const gruposRecursos = getByText("Recursos").parentElement as HTMLElement;
     expect(Array.from(gruposRecursos.querySelectorAll("a")).map((a) => a.textContent)).toEqual([
-      "Aprende a Reciclar",
-      "Directorio General",
+      "Aprende a reciclar",
+      "Directorio general",
     ]);
   });
 });

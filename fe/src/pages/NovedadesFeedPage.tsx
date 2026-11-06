@@ -12,6 +12,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { MisNovedadesEnviadas, NovedadEnviadaForm } from "@/components/NovedadesEnviadas";
 import { Pestanas } from "@/components/ui/Pestanas";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
 
 // ¿Qué? Una novedad no tiene título, solo texto — el reproductor de video
 //       necesita uno (accesibilidad), así que se usa un recorte corto del texto.
@@ -115,9 +116,10 @@ export function NovedadesFeedPage() {
                   </span>
                 </div>
 
-                <p className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">
-                  {item.texto}
-                </p>
+                <TextoRecortable
+                  texto={item.texto}
+                  className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line"
+                />
 
                 {item.url_video && (
                   <YoutubeEmbed url={item.url_video} titulo={resumirTitulo(item.texto)} />

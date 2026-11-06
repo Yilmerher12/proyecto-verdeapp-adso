@@ -16,6 +16,7 @@ import { COMUNICADO_TEXTO_MAX_LENGTH, DIAS_MAX_EXPIRACION, rangoFechaAviso, vali
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import {
   crearComunicado,
   editarComunicado,
@@ -277,7 +278,7 @@ export function AdminConjuntoComunicadosPage() {
                     <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
                   )}
                 </div>
-                <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
+                <TextoRecortable texto={item.texto} className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line" />
                 {enlaceAdjuntoSeguro(item.url_adjunto) && (
                   <a
                     href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}

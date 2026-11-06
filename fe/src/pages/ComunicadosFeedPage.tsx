@@ -10,6 +10,7 @@ import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
 
 // ¿Qué? Mismo criterio de color que en el panel del Admin de Conjunto —
 //       Urgente en rojo para que salte a la vista de inmediato (CA-028.2).
@@ -50,7 +51,7 @@ function TarjetaComunicado({ item, fijado }: { item: Comunicado; fijado: boolean
         <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(item.created_at)}</span>
       </div>
 
-      <p className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
+      <TextoRecortable texto={item.texto} className="mt-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line" />
 
       {enlaceAdjuntoSeguro(item.url_adjunto) && (
         <a

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { BadgeCheck, Headset, ImageIcon, Send } from "lucide-react";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { ContenidoRecargable } from "@/components/ui/ContenidoRecargable";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Alert } from "@/components/ui/Alert";
@@ -228,7 +229,7 @@ export function SoporteTecnico({ onCountChange }: SoporteTecnicoProps = {}) {
                 {s.nombre_autor ? `${s.origen} — ${s.nombre_autor}` : s.origen}
               </p>
               {s.nombre_conjunto && <p className="text-xs text-gray-500 dark:text-gray-400">{s.nombre_conjunto}</p>}
-              <p className="mt-1 whitespace-pre-line text-xs text-gray-600 dark:text-gray-300">{s.texto}</p>
+              <TextoRecortable texto={s.texto} className="mt-1 whitespace-pre-line text-xs text-gray-600 dark:text-gray-300" />
               {enlaceAdjuntoSeguro(s.url_imagen) && (
                 <a
                   href={enlaceAdjuntoSeguro(s.url_imagen) ?? undefined}
@@ -246,7 +247,7 @@ export function SoporteTecnico({ onCountChange }: SoporteTecnicoProps = {}) {
                   <p className="text-xs font-bold text-gray-600 dark:text-gray-400">
                     {t("soporteAdmin.respuestaEnviada", { fecha: formatearFechaCreacion(s.respondida_at ?? s.created_at) })}
                   </p>
-                  <p className="mt-1 whitespace-pre-line text-xs text-gray-700 dark:text-gray-200">{s.respuesta}</p>
+                  <TextoRecortable texto={s.respuesta} className="mt-1 whitespace-pre-line text-xs text-gray-700 dark:text-gray-200" />
                 </div>
               )}
 

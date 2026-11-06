@@ -953,7 +953,7 @@ export function AdminContenidoEducativoPage() {
                     <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.avisados`)}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+                <tbody className="divide-y divide-gray-200 dark:divide-night-line">
                   {cargandoCal ? (
                     <tr>
                       <td colSpan={6} className="px-5 py-6">
