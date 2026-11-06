@@ -345,11 +345,13 @@ describe("AdminNovedadesPage", () => {
 
       const buscador = within(dialogo).getByRole("combobox", { name: "Conjuntos" });
       await user.type(buscador, "Torres");
-      await user.click(await within(dialogo).findByText(/Torres de Aranjuez/));
+      // ¿Qué? Las opciones se buscan en `screen`, no dentro del diálogo: la lista del buscador se
+      //       dibuja fuera del modal (`anchor`, issue #615) para que el scroll interno no la recorte.
+      await user.click(await screen.findByText(/Torres de Aranjuez/));
       // ¿Qué? El buscador conserva lo escrito ("Torres") al elegir — lo que se
       //       escribe ahora se suma, y la búsqueda pasa a incluir "Alpes".
       await user.type(buscador, "Alpes");
-      await user.click(await within(dialogo).findByText(/Conjunto Los Alpes/));
+      await user.click(await screen.findByText(/Conjunto Los Alpes/));
       // ¿Qué? El combobox de selección múltiple deja su lista abierta y
       //       oculta (aria-hidden) el resto del modal hasta cerrarla.
       await user.keyboard("{Escape}");

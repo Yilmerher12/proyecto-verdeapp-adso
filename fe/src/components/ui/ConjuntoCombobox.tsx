@@ -72,7 +72,15 @@ export function ConjuntoCombobox({
             aria-label={ariaLabel}
           />
         </div>
-        <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-night-line dark:bg-night-field">
+        {/* ¿Qué? `anchor` saca la lista del contenedor y la dibuja al final de la página, pegada al campo
+            (Headless UI deja su ancho en --input-width); z-[80] queda sobre un Modal "stacked" (z-[70]).
+            ¿Para qué? Dentro de un Modal con scroll interno (issue #615) una lista con posición absoluta
+                      quedaba recortada y había que bajar el scroll del modal para ver las opciones.
+            ¿Impacto? Se ve igual dentro y fuera de un modal. */}
+        <ComboboxOptions
+          anchor="bottom start"
+          className="z-[80] mt-1 max-h-60 w-(--input-width) overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-night-line dark:bg-night-field"
+        >
           {loading && (
             <div role="status" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
               <Spinner size="sm" />

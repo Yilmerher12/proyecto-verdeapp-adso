@@ -130,9 +130,18 @@ export function Modal({
   //           orden React montó cada <Modal> en el árbol de componentes.
   const backdropZIndex = layer === "stacked" ? "z-[70]" : "z-50";
 
+  // ¿Qué? El cuadro nunca pasa de la altura de la pantalla (max-h-full dentro del fondo, que ya
+  //       tiene su propio relleno): si el contenido es más alto, el scroll lo hace SOLO el
+  //       contenedor de adentro y la X queda fuera de él, siempre a la vista.
+  // ¿Para qué? Antes el cuadro crecía con su contenido y era el fondo el que hacía scroll: la
+  //           página parecía bajar con el modal y la X se iba arriba, fuera de la pantalla
+  //           (issue #615; el modal de solicitudes llegaba a 955 px en una pantalla de 900).
+  // ¿Impacto? Los modales cortos se ven igual. Una lista desplegable con posición absoluta que
+  //           salga del cuadro (ConjuntoCombobox) queda dentro del scroll interno en vez de
+  //           sobresalir; esos buscadores usan `anchor` de Headless UI para no recortarse.
   return (
     <div
-      className={`animate-fade-in fixed inset-0 ${backdropZIndex} flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm sm:items-center sm:p-6 ${closeOnBackdrop ? "cursor-pointer" : ""}`}
+      className={`animate-fade-in fixed inset-0 ${backdropZIndex} flex items-start justify-center bg-black/50 p-4 backdrop-blur-sm sm:items-center sm:p-6 ${closeOnBackdrop ? "cursor-pointer" : ""}`}
       onClick={closeOnBackdrop ? onClose : undefined}
       aria-hidden="false"
     >
@@ -142,13 +151,13 @@ export function Modal({
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
-        className={`animate-scale-in relative my-auto w-full ${extraWide ? "max-w-5xl" : wide ? "max-w-xl" : "max-w-md"} rounded-2xl bg-white shadow-2xl outline-none dark:bg-night-panel`}
+        className={`animate-scale-in relative my-auto flex max-h-full w-full flex-col ${extraWide ? "max-w-5xl" : wide ? "max-w-xl" : "max-w-md"} rounded-2xl bg-white shadow-2xl outline-none dark:bg-night-panel`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
-          className="touch-target absolute right-2 top-2 z-10 flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 sm:right-4 sm:top-4 dark:text-gray-400 transition-colors
+          className="touch-target absolute right-2 top-2 z-10 flex cursor-pointer items-center justify-center rounded-lg bg-white/90 p-1.5 text-gray-500 sm:right-4 sm:top-4 dark:bg-night-panel/90 dark:text-gray-400 transition-colors
             hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-night-hover dark:hover:text-gray-300
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
           aria-label={t("common.close")}
@@ -157,7 +166,7 @@ export function Modal({
           <X className="icon-lg" />
         </button>
 
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl">{children}</div>
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { ContenidoRecargable } from "@/components/ui/ContenidoRecargable";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
@@ -423,9 +423,11 @@ export function AdminNovedadesPage() {
               />
             </div>
 
-            {cargando && <LoadingState message={t("common.loading")} />}
-
-            {!cargando && novedades.length === 0 && (
+            {/* ¿Qué? Issue #615: antes el aviso "Cargando…" salía ARRIBA de las novedades viejas (las dos cosas
+                      a la vez). Ahora la lista se atenúa con una barra de progreso al recargar y solo la
+                      primera carga muestra el "Cargando…" completo. */}
+            <ContenidoRecargable cargando={cargando} mensaje={t("common.loading")}>
+            {novedades.length === 0 && (
               <EmptyState
                 icon={Newspaper}
                 message={hayFiltros ? t("novedades.admin.filters.noResults") : t("novedades.admin.emptyState")}
@@ -534,10 +536,11 @@ export function AdminNovedadesPage() {
                 );
               })}
             </div>
+            </ContenidoRecargable>
           </div>
         )}
 
-        {listaAbierta && !cargando && total > 0 && (
+        {listaAbierta && total > 0 && (
           <div className="border-t border-gray-100 dark:border-night-line">
             <Paginacion
               desde={paginacion.desde}
