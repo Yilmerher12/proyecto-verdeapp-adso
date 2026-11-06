@@ -925,7 +925,9 @@ describe("AdminContenidoEducativoPage", () => {
 
       const panel = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
       await user.type(within(panel).getByLabelText("A un conjunto específico"), "Alpes");
-      await user.click(await within(panel).findByText("Conjunto Los Alpes"));
+      // ¿Qué? Las opciones se buscan en `screen`: la lista del buscador se dibuja fuera del panel
+      //       (`anchor`, issue #615) para que el scroll interno del modal no la recorte.
+      await user.click(await screen.findByText("Conjunto Los Alpes"));
       // ¿Qué? Se acota al bloque "A un conjunto específico" porque el botón
       //       "Enviar" del bloque "A varios conjuntos" tiene el mismo texto
       //       mientras no hay ninguno seleccionado — sin acotar, hay dos
@@ -961,9 +963,9 @@ describe("AdminContenidoEducativoPage", () => {
       const panel = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
       const buscador = within(panel).getByLabelText("A varios conjuntos");
       await user.type(buscador, "a");
-      await user.click(await within(panel).findByText("Conjunto Los Alpes"));
+      await user.click(await screen.findByText("Conjunto Los Alpes"));
       await user.type(buscador, "a");
-      await user.click(await within(panel).findByText("Parques de Bogotá Urapan"));
+      await user.click(await screen.findByText("Parques de Bogotá Urapan"));
 
       // ¿Qué? El combobox de selección múltiple de Headless UI no cierra su
       //       lista al elegir un ítem (a propósito, para poder seguir

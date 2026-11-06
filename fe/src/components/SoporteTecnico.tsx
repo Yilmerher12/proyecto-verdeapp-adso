@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BadgeCheck, Headset, ImageIcon, Send } from "lucide-react";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { ContenidoRecargable } from "@/components/ui/ContenidoRecargable";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { Alert } from "@/components/ui/Alert";
@@ -198,9 +198,10 @@ export function SoporteTecnico({ onCountChange }: SoporteTecnicoProps = {}) {
         </div>
       )}
 
-      {cargando ? (
-        <LoadingState message={t("common.loading")} />
-      ) : items.length === 0 ? (
+      {/* ¿Qué? Issue #615: al cambiar un filtro o de página las solicitudes anteriores se quedan
+                atenuadas con una barra de progreso, en vez de ser reemplazadas por un "Cargando…". */}
+      <ContenidoRecargable cargando={cargando} mensaje={t("common.loading")}>
+      {items.length === 0 ? (
         <EmptyState
           icon={Headset}
           message={
@@ -341,7 +342,7 @@ export function SoporteTecnico({ onCountChange }: SoporteTecnicoProps = {}) {
         </div>
       )}
 
-      {!cargando && total > TAMANO_PAGINA && (
+      {total > TAMANO_PAGINA && (
         <div className="mt-3">
           <Paginacion
             desde={paginacion.desde}
@@ -356,6 +357,7 @@ export function SoporteTecnico({ onCountChange }: SoporteTecnicoProps = {}) {
           />
         </div>
       )}
+      </ContenidoRecargable>
     </div>
   );
 }

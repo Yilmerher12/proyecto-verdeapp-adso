@@ -8,7 +8,7 @@ import { RoleId } from "@/types/auth";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { ContenidoRecargable } from "@/components/ui/ContenidoRecargable";
 import { Spinner } from "@/components/ui/Spinner";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -711,6 +711,10 @@ export function AdminDashboard() {
           </div>
         </div>
 
+        {/* ¿Qué? La tabla y su paginación van dentro de ContenidoRecargable (issue #615): al filtrar o
+            cambiar de pestaña conservan las filas atenuadas con una barra de progreso, en vez de
+            reemplazarlas por un "Cargando…". Solo la primera carga muestra el "Cargando…" completo. */}
+        <ContenidoRecargable cargando={cargando} mensaje={t("dashboards.admin.loadingData")}>
         <div className="@container overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead>
@@ -747,13 +751,7 @@ export function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-              {cargando ? (
-                <tr>
-                  <td colSpan={colSpanActivo} className="px-5 py-6">
-                    <LoadingState message={t("dashboards.admin.loadingData")} />
-                  </td>
-                </tr>
-              ) : error ? (
+              {error ? (
                 <tr>
                   <td colSpan={colSpanActivo} className="px-5 py-6">
                     <Alert type="error" message={t("common.loadError")} />
@@ -834,7 +832,7 @@ export function AdminDashboard() {
         </div>
 
         {/* Paginación */}
-        {!cargando && !error && total > 0 && (
+        {!error && total > 0 && (
           <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3 dark:border-night-line">
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {t("dashboards.admin.usersSection.pagination.showing", { from: desde, to: hasta, total })}
@@ -872,6 +870,7 @@ export function AdminDashboard() {
             </div>
           </div>
         )}
+        </ContenidoRecargable>
         </div>
         )}
       </div>
