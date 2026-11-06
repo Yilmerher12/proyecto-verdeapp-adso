@@ -548,8 +548,8 @@ export function AdminNovedadesPage() {
               total={total}
               pagina={paginacion.pagina}
               totalPaginas={paginacion.totalPaginas}
-              puedeAnterior={paginacion.puedeAnterior}
-              puedeSiguiente={paginacion.puedeSiguiente}
+              puedeAnterior={paginacion.puedeAnterior && !cargando}
+              puedeSiguiente={paginacion.puedeSiguiente && !cargando}
               onAnterior={paginacion.irAAnterior}
               onSiguiente={paginacion.irASiguiente}
             />

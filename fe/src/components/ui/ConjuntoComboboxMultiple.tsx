@@ -87,7 +87,7 @@ export function ConjuntoComboboxMultiple({
           </div>
           {/* ¿Qué? Igual que ConjuntoCombobox: `anchor` dibuja la lista fuera del modal (issue #615). */}
           <ComboboxOptions
-            anchor="bottom start"
+            anchor={{ to: "bottom start", padding: 8 }}
             className="z-[80] mt-1 max-h-60 w-(--input-width) overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-night-line dark:bg-night-field"
           >
             {loading && <div role="status" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
