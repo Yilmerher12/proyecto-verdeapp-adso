@@ -1,12 +1,13 @@
 /**
  * Archivo: __tests__/components/SoporteTecnico.test.tsx
  * Descripción: Tests de la pestaña "Soporte técnico" del Admin Sistema (issue #512):
- *              prioridad, estado, filtros, respuesta al autor y paginación.
+ *              prioridad, estado, pestañas con contador, menú de acciones, respuesta al autor y paginación.
  */
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
 import { SoporteTecnico } from "@/components/SoporteTecnico";
+import { onSolicitudesActualizadas } from "@/lib/solicitudesEvents";
 import { renderWithProviders } from "../helpers";
 
 const mockGet = vi.fn();
@@ -48,6 +49,9 @@ function mockLista(data: { estado: string; prioridad: string; [campo: string]: u
   );
 }
 
+const abrirMenuDe = async (user: ReturnType<typeof userEvent.setup>, nombre = /Más acciones de la solicitud de Residente/) =>
+  user.click(await screen.findByRole("button", { name: nombre }));
+
 describe("SoporteTecnico", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,46 +76,59 @@ describe("SoporteTecnico", () => {
     expect(screen.getByText("En revisión", { selector: "span.rounded-full" })).toBeInTheDocument();
   });
 
-  it("el filtro Resueltas pide el historial al backend", async () => {
+  it("cada pestaña de estado muestra cuántas consultas tiene", async () => {
+    mockLista([login, sugerencia, vieja]);
+    renderWithProviders(<SoporteTecnico />);
+
+    expect(await screen.findByRole("tab", { name: /Pendientes\s*2/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Nuevas\s*1/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /En revisión\s*1/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Resueltas\s*1/ })).toBeInTheDocument();
+  });
+
+  it("la pestaña Resueltas pide el historial al backend", async () => {
     mockLista([login, vieja]);
     const user = userEvent.setup();
     renderWithProviders(<SoporteTecnico />);
 
     await screen.findByText("No puedo iniciar sesión.");
-    await user.click(screen.getByRole("button", { name: "Resueltas" }));
+    await user.click(screen.getByRole("tab", { name: /Resueltas/ }));
 
     expect(await screen.findByText("Ya la atendimos.")).toBeInTheDocument();
     expect(screen.queryByText("No puedo iniciar sesión.")).not.toBeInTheDocument();
     expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/novedades-enviadas/soporte"), {
-      params: { limit: 5, offset: 0, estado: "RESUELTA", prioridad: undefined },
+      params: { limit: 10, offset: 0, estado: "RESUELTA", prioridad: undefined },
     });
   });
 
-  it("filtra por prioridad pidiéndoselo al backend", async () => {
+  it("filtra por prioridad desde el menú, pidiéndoselo al backend", async () => {
     mockLista([login, sugerencia]);
     const user = userEvent.setup();
     renderWithProviders(<SoporteTecnico />);
 
     await screen.findByText("No puedo iniciar sesión.");
-    await user.click(screen.getByRole("button", { name: "Baja" }));
+    await user.click(screen.getByRole("button", { name: "Prioridad" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Baja" }));
 
     await waitFor(() => expect(screen.queryByText("No puedo iniciar sesión.")).not.toBeInTheDocument());
     expect(screen.getByText("Sería bueno un modo claro.")).toBeInTheDocument();
     expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/novedades-enviadas/soporte"), {
-      params: { limit: 5, offset: 0, estado: undefined, prioridad: "BAJA" },
+      params: { limit: 10, offset: 0, estado: undefined, prioridad: "BAJA" },
     });
   });
 
-  it("avisa el total de pendientes (sin importar los filtros) por onCountChange", async () => {
-    mockLista([login, sugerencia, vieja]);
-    const onCountChange = vi.fn();
+  it("avisa al resto de la app que las solicitudes cambiaron cuando se atiende una", async () => {
+    mockLista([login]);
+    const alCambiar = vi.fn();
+    const darseDeBaja = onSolicitudesActualizadas(alCambiar);
     const user = userEvent.setup();
-    renderWithProviders(<SoporteTecnico onCountChange={onCountChange} />);
+    renderWithProviders(<SoporteTecnico />);
 
-    await waitFor(() => expect(onCountChange).toHaveBeenCalledWith(2));
-    await user.click(screen.getByRole("button", { name: "Resueltas" }));
-    await screen.findByText("Ya la atendimos.");
-    expect(onCountChange).not.toHaveBeenCalledWith(1);
+    await abrirMenuDe(user);
+    await user.click(screen.getByRole("menuitem", { name: "Marcar en revisión" }));
+
+    await waitFor(() => expect(alCambiar).toHaveBeenCalled());
+    darseDeBaja();
   });
 
   it("marca una consulta nueva como en revisión", async () => {
@@ -119,8 +136,8 @@ describe("SoporteTecnico", () => {
     const user = userEvent.setup();
     renderWithProviders(<SoporteTecnico />);
 
-    await screen.findByText("No puedo iniciar sesión.");
-    await user.click(screen.getByRole("button", { name: "Marcar en revisión" }));
+    await abrirMenuDe(user);
+    await user.click(screen.getByRole("menuitem", { name: "Marcar en revisión" }));
 
     await waitFor(() =>
       expect(mockPatch).toHaveBeenCalledWith(expect.stringContaining("/novedades-enviadas/soporte/n-1"), { estado: "EN_REVISION" }),
@@ -132,28 +149,30 @@ describe("SoporteTecnico", () => {
     const user = userEvent.setup();
     renderWithProviders(<SoporteTecnico />);
 
-    await screen.findByText("Sería bueno un modo claro.");
-    expect(screen.queryByRole("button", { name: "Marcar en revisión" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Marcar como resuelta" }));
+    await abrirMenuDe(user);
+    expect(screen.queryByRole("menuitem", { name: "Marcar en revisión" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: "Marcar como resuelta" }));
     await waitFor(() =>
       expect(mockPatch).toHaveBeenCalledWith(expect.stringContaining("/soporte/n-2"), { estado: "RESUELTA" }),
     );
 
-    await user.click(screen.getByRole("button", { name: "Resueltas" }));
+    await user.click(screen.getByRole("tab", { name: /Resueltas/ }));
     await screen.findByText("Ya la atendimos.");
-    await user.click(screen.getByRole("button", { name: "Reabrir" }));
+    await abrirMenuDe(user);
+    await user.click(screen.getByRole("menuitem", { name: "Reabrir" }));
     await waitFor(() =>
       expect(mockPatch).toHaveBeenCalledWith(expect.stringContaining("/soporte/n-3"), { estado: "EN_REVISION" }),
     );
   });
 
-  it("el Admin Sistema corrige la prioridad con el selector", async () => {
+  it("el Admin Sistema corrige la prioridad desde el menú de la consulta", async () => {
     mockLista([login]);
     const user = userEvent.setup();
     renderWithProviders(<SoporteTecnico />);
 
-    await screen.findByText("No puedo iniciar sesión.");
-    await user.selectOptions(screen.getByLabelText("Cambiar la prioridad"), "BAJA");
+    await abrirMenuDe(user);
+    expect(screen.getByRole("menuitemradio", { name: "Prioridad Alta" })).toHaveAttribute("aria-checked", "true");
+    await user.click(screen.getByRole("menuitemradio", { name: "Prioridad Baja" }));
 
     await waitFor(() =>
       expect(mockPatch).toHaveBeenCalledWith(expect.stringContaining("/soporte/n-1"), { prioridad: "BAJA" }),
@@ -179,30 +198,32 @@ describe("SoporteTecnico", () => {
     );
   });
 
-  it("muestra la respuesta ya enviada y el enlace de la foto", async () => {
+  it("al abrir una consulta muestra la respuesta ya enviada y el enlace de la foto", async () => {
     mockLista([{ ...vieja, url_imagen: "/uploads/adjuntos/c.jpg" }]);
     const user = userEvent.setup();
     renderWithProviders(<SoporteTecnico />);
 
-    await user.click(await screen.findByRole("button", { name: "Resueltas" }));
+    await user.click(await screen.findByRole("tab", { name: /Resueltas/ }));
+    expect(screen.queryByText("Listo, quedó.")).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: /Ya la atendimos/ }));
 
     expect(await screen.findByText("Listo, quedó.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cambiar respuesta" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver foto" })).toHaveAttribute("href", expect.stringContaining("/uploads/adjuntos/c.jpg"));
   });
 
-  it("pagina de a 5 filas y pide la siguiente página al backend", async () => {
-    const muchas = Array.from({ length: 7 }, (_, i) => ({ ...login, id: `m-${i}`, texto: `Consulta ${i}` }));
+  it("pagina de a 10 filas y pide la siguiente página al backend", async () => {
+    const muchas = Array.from({ length: 12 }, (_, i) => ({ ...login, id: `m-${i}`, texto: `Consulta ${i}` }));
     mockLista(muchas);
     const user = userEvent.setup();
     renderWithProviders(<SoporteTecnico />);
 
     expect(await screen.findByText("Consulta 0")).toBeInTheDocument();
-    expect(screen.queryByText("Consulta 5")).not.toBeInTheDocument();
+    expect(screen.queryByText("Consulta 10")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /siguiente/i }));
 
-    expect(await screen.findByText("Consulta 5")).toBeInTheDocument();
+    expect(await screen.findByText("Consulta 10")).toBeInTheDocument();
     expect(screen.queryByText("Consulta 0")).not.toBeInTheDocument();
   });
 });

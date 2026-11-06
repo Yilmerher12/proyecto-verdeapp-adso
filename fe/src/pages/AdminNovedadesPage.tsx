@@ -125,8 +125,7 @@ export function AdminNovedadesPage() {
   //       guardar o archivar) sin depender de que cambie un filtro.
   const [version, setVersion] = useState(0);
 
-  // ---------- Filtros y lista recogible ----------
-  const [listaAbierta, setListaAbierta] = useState(true);
+  // ---------- Filtros ----------
   const [alcanceFiltro, setAlcanceFiltro] = useState<"" | AlcanceNovedad>("");
   const [verArchivadas, setVerArchivadas] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -348,24 +347,10 @@ export function AdminNovedadesPage() {
         <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />
       )}
 
-      {/* Barra recogible — mismo patrón que "Usuarios registrados" (un solo
-          <button> que abre/cierra todo lo de abajo). */}
+      {/* Issue #596: la lista ya no se recoge (el "Recoger/Desplegar" no aportaba nada), solo lleva su título. */}
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setListaAbierta((v) => !v)}
-          aria-expanded={listaAbierta}
-          aria-controls="novedades-lista-cuerpo"
-          className="flex w-full cursor-pointer items-center justify-between gap-2 px-5 py-4 text-left"
-        >
-          <span className="text-sm font-bold text-gray-900 dark:text-white">{t("novedades.admin.listBar")}</span>
-          <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400">
-            {listaAbierta ? t("novedades.admin.collapse") : t("novedades.admin.expand")}
-            <ChevronDown className={`icon-sm transition-transform ${listaAbierta ? "rotate-180" : ""}`} />
-          </span>
-        </button>
+        <h2 className="px-5 py-4 text-sm font-bold text-gray-900 dark:text-white">{t("novedades.admin.listBar")}</h2>
 
-        {listaAbierta && (
           <div id="novedades-lista-cuerpo" className="space-y-4 border-t border-gray-100 p-5 dark:border-night-line">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-2">
@@ -539,9 +524,8 @@ export function AdminNovedadesPage() {
             </div>
             </ContenidoRecargable>
           </div>
-        )}
 
-        {listaAbierta && total > 0 && (
+        {total > 0 && (
           <div className="border-t border-gray-100 dark:border-night-line">
             <Paginacion
               desde={paginacion.desde}

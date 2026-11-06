@@ -11,6 +11,7 @@ import {
 } from "@/lib/adminConjuntoApi";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 import { Alert } from "@/components/ui/Alert";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 
 interface Localidad {
   id_localidad: number;
@@ -54,19 +55,41 @@ export function AsignarConjuntoAdicionalForm() {
       .catch(() => {});
   }, []);
 
-  const buscar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBuscando(true);
-    setError(null);
-    try {
-      const data = await buscarAdministradoresConjunto(query.trim());
-      setResultados(data);
-      setBusquedaHecha(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || t("desvinculacion.asignarAdicional.errorDefault"));
-    } finally {
-      setBuscando(false);
+  // ¿Qué? Búsqueda en vivo del administrador (issue #596): sin botón "Buscar" ni Enter. Espera 350 ms
+  //       tras la última tecla y descarta la respuesta si ya llegó una búsqueda más nueva.
+  // ¿Para qué? Mismo patrón que el buscador de usuarios del panel. Con el campo vacío no se consulta:
+  //           se muestra una pista en vez de listar a todos los administradores.
+  // ¿Impacto? Los setState viven dentro del temporizador, no en el cuerpo del efecto.
+  useEffect(() => {
+    const texto = query.trim();
+    if (!texto) return;
+    let vigente = true;
+    const id = setTimeout(async () => {
+      setBuscando(true);
+      setError(null);
+      try {
+        const data = await buscarAdministradoresConjunto(texto);
+        if (!vigente) return;
+        setResultados(data);
+        setBusquedaHecha(true);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        if (vigente) setError(err.message || t("desvinculacion.asignarAdicional.errorDefault"));
+      } finally {
+        if (vigente) setBuscando(false);
+      }
+    }, 350);
+    return () => {
+      vigente = false;
+      clearTimeout(id);
+    };
+  }, [query, t]);
+
+  const cambiarBusqueda = (valor: string) => {
+    setQuery(valor);
+    if (!valor.trim()) {
+      setResultados([]);
+      setBusquedaHecha(false);
     }
   };
 
@@ -134,25 +157,23 @@ export function AsignarConjuntoAdicionalForm() {
         </h3>
       </div>
 
-      <form onSubmit={buscar} noValidate className="flex gap-2 mb-4">
-        <div className="flex-1 relative">
-          <Search className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("desvinculacion.asignarAdicional.searchPlaceholder")}
-            className="w-full pl-9 p-2.5 border border-edge rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={buscando}
-          className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-        >
-          {t("desvinculacion.asignarAdicional.searchButton")}
-        </button>
-      </form>
+      {/* Paso 1 — buscar al administrador */}
+      <p className="mb-2 text-xs font-bold text-gray-600 dark:text-gray-400">{t("desvinculacion.asignarAdicional.stepSearch")}</p>
+      <div className="relative mb-2">
+        <Search className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => cambiarBusqueda(e.target.value)}
+          placeholder={t("desvinculacion.asignarAdicional.searchPlaceholder")}
+          aria-label={t("desvinculacion.asignarAdicional.stepSearch")}
+          className="w-full pl-9 p-2.5 border border-edge rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
+        />
+      </div>
+      {!query.trim() && (
+        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">{t("desvinculacion.asignarAdicional.searchHint")}</p>
+      )}
+      {buscando && <ProgressBar compacta label={t("common.loading")} className="mb-3" />}
 
       {error && (
         <div className="mb-3">
@@ -192,36 +213,39 @@ export function AsignarConjuntoAdicionalForm() {
         </div>
       )}
 
-      {seleccionado && (
-        <div className="border-t border-gray-100 dark:border-night-line pt-4">
-          {mensajeExito && (
-            <div className="mb-3">
-              <Alert type="success" message={mensajeExito} onClose={() => setMensajeExito(null)} />
-            </div>
-          )}
-
+      {/* ¿Qué? Pasos 2 y 3 (issue #596): se ven desde el inicio, pero quedan bloqueados (atenuados e
+                inertes) hasta completar el anterior.
+          ¿Para qué? Quien abre el modal ve todo el recorrido de entrada, en vez de que aparezcan
+                    campos nuevos a medida que avanza. */}
+      <div className="border-t border-gray-100 dark:border-night-line pt-4">
+        {mensajeExito && (
           <div className="mb-3">
-            <label htmlFor="asignar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
-              <MapIcon className="icon-md" />
-              {t("desvinculacion.asignarAdicional.localityLabel")}
-            </label>
-            <select
-              id="asignar-localidad"
-              value={localidadId}
-              onChange={(e) => {
-                setLocalidadId(e.target.value === "" ? "" : Number(e.target.value));
-                setConjuntoElegido(null);
-              }}
-              className="w-full cursor-pointer rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
-            >
-              <option value="">{t("desvinculacion.asignarAdicional.localitySelectPlaceholder")}</option>
-              {localidades.map((l) => (
-                <option key={l.id_localidad} value={l.id_localidad}>
-                  {l.nombre_localidad}
-                </option>
-              ))}
-            </select>
+            <Alert type="success" message={mensajeExito} onClose={() => setMensajeExito(null)} />
           </div>
+        )}
+
+        <div inert={!seleccionado} className={`mb-3 transition-opacity ${seleccionado ? "" : "opacity-50"}`}>
+          <p className="mb-2 text-xs font-bold text-gray-600 dark:text-gray-400">{t("desvinculacion.asignarAdicional.stepPlace")}</p>
+          <label htmlFor="asignar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+            <MapIcon className="icon-md" />
+            {t("desvinculacion.asignarAdicional.localityLabel")}
+          </label>
+          <select
+            id="asignar-localidad"
+            value={localidadId}
+            onChange={(e) => {
+              setLocalidadId(e.target.value === "" ? "" : Number(e.target.value));
+              setConjuntoElegido(null);
+            }}
+            className="mb-3 w-full cursor-pointer rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+          >
+            <option value="">{t("desvinculacion.asignarAdicional.localitySelectPlaceholder")}</option>
+            {localidades.map((l) => (
+              <option key={l.id_localidad} value={l.id_localidad}>
+                {l.nombre_localidad}
+              </option>
+            ))}
+          </select>
 
           <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
             <Building className="icon-md" />
@@ -233,30 +257,30 @@ export function AsignarConjuntoAdicionalForm() {
               {t("desvinculacion.asignarAdicional.selectLocalityFirst")}
             </p>
           ) : (
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex-1">
-                <ConjuntoCombobox
-                  value={conjuntoElegido}
-                  onChange={setConjuntoElegido}
-                  fetchOptions={fetchConjuntosDisponibles}
-                  placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
-                  emptyLabel={t("desvinculacion.asignarAdicional.noConjuntosDisponibles")}
-                  loadingLabel={t("common.loading")}
-                  ariaLabel={t("desvinculacion.asignarAdicional.selectConjuntoLabel")}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={asignar}
-                disabled={!conjuntoElegido || asignando}
-                className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 h-fit mt-1 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-              >
-                {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
-              </button>
-            </div>
+            <ConjuntoCombobox
+              value={conjuntoElegido}
+              onChange={setConjuntoElegido}
+              fetchOptions={fetchConjuntosDisponibles}
+              placeholder={t("auth.register.fields.conjuntoSearchPlaceholder")}
+              emptyLabel={t("desvinculacion.asignarAdicional.noConjuntosDisponibles")}
+              loadingLabel={t("common.loading")}
+              ariaLabel={t("desvinculacion.asignarAdicional.selectConjuntoLabel")}
+            />
           )}
         </div>
-      )}
+
+        <div inert={!conjuntoElegido} className={`transition-opacity ${conjuntoElegido ? "" : "opacity-50"}`}>
+          <p className="mb-2 text-xs font-bold text-gray-600 dark:text-gray-400">{t("desvinculacion.asignarAdicional.stepConfirm")}</p>
+          <button
+            type="button"
+            onClick={asignar}
+            disabled={!seleccionado || !conjuntoElegido || asignando}
+            className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+          >
+            {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

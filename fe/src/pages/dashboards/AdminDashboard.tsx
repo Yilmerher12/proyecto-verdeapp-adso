@@ -2,7 +2,9 @@ import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useState, useEffect, Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Database, UserPlus, Search, ChevronLeft, ChevronRight, ChevronDown, Building, UserX, UserCheck, Eye, ArrowUp, ArrowDown, ArrowUpDown, ClipboardList, ChartColumn } from "lucide-react";
+import { Database, UserPlus, Search, ChevronLeft, ChevronRight, Building, UserX, UserCheck, Eye, ArrowUp, ArrowDown, ArrowUpDown, BellRing, ChartColumn, Map as MapIcon } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useSolicitudesPendientes } from "@/hooks/useSolicitudesPendientes";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
@@ -14,7 +16,6 @@ import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { MenuAcciones, type OpcionMenu } from "@/components/ui/MenuAcciones";
 import { InvitarAdminConjuntoForm } from "@/components/InvitarAdminConjuntoForm";
-import { BandejaAdminSistema } from "@/components/BandejaAdminSistema";
 import { AsignarConjuntoAdicionalForm } from "@/components/AsignarConjuntoAdicionalForm";
 import { ConjuntoCombobox } from "@/components/ui/ConjuntoCombobox";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
@@ -102,8 +103,12 @@ export function AdminDashboard() {
   // ¿Qué? Filtro de Conjunto — mismo patrón que ya usa
   //       InvitarAdminConjuntoForm (ConjuntoCombobox con búsqueda, nunca un
   //       <select> con miles de opciones de golpe).
-  // ¿Para qué? El filtro de Localidad se quitó: el buscador de conjunto ya
-  //           acota el lugar por sí solo, y un filtro más era ruido.
+  // ¿Qué? Issue #596: la Localidad vuelve como filtro OPCIONAL. Si se elige, el buscador de conjunto
+  //       solo trae conjuntos de esa localidad y la tabla se acota a ella; si no, todo funciona como antes.
+  // ¿Para qué? Con miles de conjuntos reales los nombres se repiten entre localidades; acotar por
+  //           localidad ayuda, pero obligarla frenaría a quien ya sabe el nombre del conjunto.
+  const [localidadId, setLocalidadId] = useState<number | "">("");
+  const [localidades, setLocalidades] = useState<{ id_localidad: number; nombre_localidad: string }[]>([]);
   const [conjuntoSeleccionado, setConjuntoSeleccionado] = useState<ConjuntoOption | null>(null);
   const [pagina, setPagina] = useState(0);
   // ¿Qué? Botón "Inactivos": apagado muestra todas las cuentas, encendido
@@ -140,20 +145,10 @@ export function AdminDashboard() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
 
-  // ¿Qué? "Usuarios registrados" empieza desplegada — sin exigir un clic
-  //       extra solo para ver los datos que se vino a ver.
-  // ¿Impacto? El "reguero" de filas que se quería evitar al plegarla por
-  //           defecto ya no aplica: con TAMANO_PAGINA más chico (8) la
-  //           tabla no se desborda ni obliga a bajar mucho la página.
-  const [usuariosAbierto, setUsuariosAbierto] = useState(true);
-  // ¿Qué? "Solicitudes pendientes" ahora vive en un modal (ver más abajo,
-  //       junto a mostrarModalInvitar/mostrarModalAsignar) en vez de un
-  //       segundo acordeón aparte — la tarjeta de resumen de arriba y ese
-  //       acordeón hacían exactamente lo mismo, mostrar la misma lista.
-  const [mostrarModalSolicitudes, setMostrarModalSolicitudes] = useState(false);
-  // ¿Para qué? El número de pendientes lo reporta BandejaAdminSistema
-  //           vía onCountChange, sin duplicar la petición solo para contar.
-  const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
+  // ¿Qué? Issue #596: las solicitudes ya no se atienden en un modal de este panel; viven en su página
+  //       (/admin/solicitudes). Aquí solo se avisa, con una franja, cuántas hay pendientes.
+  // ¿Para qué? Mismo número que el contador del menú lateral (useSolicitudesPendientes).
+  const solicitudesPendientes = useSolicitudesPendientes(!!user);
 
   // ¿Qué? Los 3 totales de la tarjeta "Totales del sistema" — una petición
   //       liviana (limit=1) a cada uno de los 3 listados que ya existen,
@@ -193,10 +188,18 @@ export function AdminDashboard() {
   const fetchConjuntos = (query: string): Promise<ConjuntoOption[]> =>
     axios
       .get(`${API_BASE_URL}/api/v1/geography/conjuntos/todos`, {
-        params: { search: query || undefined, limit: 20 },
+        params: { search: query || undefined, limit: 20, ...(localidadId ? { id_localidad: localidadId } : {}) },
       })
       .then((res) => res.data)
       .catch(() => []);
+
+  // ¿Qué? Catálogo de localidades para el filtro opcional (público, sin token).
+  useEffect(() => {
+    axios
+      .get(`${API_BASE_URL}/api/v1/geography/localidades`)
+      .then((res) => setLocalidades(res.data))
+      .catch(() => {});
+  }, []);
 
   // ¿Qué? Búsqueda en tiempo real, con un pequeño "debounce" de 350ms.
   // ¿Para qué? Antes había que presionar Enter — funcional, pero incómodo.
@@ -239,6 +242,7 @@ export function AdminDashboard() {
     if (search.trim()) params.search = search.trim();
     if (soloInactivos) params.habilitado = "false";
     if (conjuntoSeleccionado) params.conjunto_id = conjuntoSeleccionado.id_conjunto_residencial;
+    if (localidadId) params.localidad_id = localidadId;
     if (orderBy) {
       params.order_by = orderBy;
       params.order_dir = orderDir;
@@ -258,7 +262,7 @@ export function AdminDashboard() {
         setError(true);
       })
       .finally(() => setCargando(false));
-  }, [user, tab, search, conjuntoSeleccionado, soloInactivos, orderBy, orderDir, pagina, version]);
+  }, [user, tab, search, conjuntoSeleccionado, localidadId, soloInactivos, orderBy, orderDir, pagina, version]);
 
   // ¿Qué? Cada uno de estos manejadores cambia un filtro Y reinicia la
   //       página a la primera — evita quedar "varado" en una página que ya
@@ -292,6 +296,14 @@ export function AdminDashboard() {
   const alternarInactivos = () => {
     cerrarFila();
     setSoloInactivos((v) => !v);
+    setPagina(0);
+  };
+
+  // ¿Qué? Al cambiar la localidad se limpia el conjunto elegido: podría ser de otra localidad.
+  const cambiarLocalidad = (valor: number | "") => {
+    cerrarFila();
+    setLocalidadId(valor);
+    setConjuntoSeleccionado(null);
     setPagina(0);
   };
 
@@ -507,24 +519,31 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* ¿Qué? Instancia oculta de BandejaAdminSistema — SIEMPRE
-          montada (con "hidden", no deja de renderizarse) solo para que
-          reporte su conteo a la tarjeta de arriba desde antes de que el
-          usuario abra el modal. El modal (más abajo, junto a
-          mostrarModalInvitar/mostrarModalAsignar) monta su propia
-          instancia cuando se abre.
-          ¿Para qué? Antes esto vivía en un segundo acordeón aparte, que
-          mostraba exactamente la misma lista que ya se veía al abrir el
-          modal desde la tarjeta de resumen — contenido duplicado en dos
-          partes distintas de la misma pantalla. */}
-      <div hidden>{user && <BandejaAdminSistema onCountChange={setSolicitudesPendientes} mostrarEncabezado={false} />}</div>
+      {/* ¿Qué? Franja de aviso (issue #596): aparece SOLO si hay solicitudes pendientes y lleva a su página.
+          ¿Para qué? Reemplaza a la tarjeta "Solicitudes pendientes" con su modal: el panel solo avisa,
+                    la atención de las solicitudes vive en /admin/solicitudes.
+          ¿Impacto? Mismo número que el contador del menú lateral (ambos salen de useSolicitudesPendientes). */}
+      {solicitudesPendientes.total !== null && solicitudesPendientes.total > 0 && (
+        <div
+          role="status"
+          className="flex flex-col gap-3 rounded-2xl bg-amber-400 p-4 text-amber-950 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <BellRing className="icon-md shrink-0" aria-hidden="true" />
+            {t("dashboards.admin.pendingRequests.withCount", { count: solicitudesPendientes.total })}
+          </p>
+          <Link
+            to="/admin/solicitudes"
+            className="focus-ring touch-target-h inline-flex cursor-pointer items-center justify-center self-start rounded-xl bg-white px-4 py-1.5 text-xs font-semibold text-amber-900 transition-colors hover:bg-amber-50 sm:self-auto"
+          >
+            {t("dashboards.admin.pendingRequests.viewButton")}
+          </Link>
+        </div>
+      )}
 
-      {/* Franja de resumen — Administradores de conjunto / Solicitudes
-          pendientes / Totales del sistema. Va ANTES de la tabla: primero
-          las acciones y los números del sistema, y debajo el detalle de
-          los usuarios. (Antes la tabla iba arriba, a pedido del profesor;
-          se volvió a invertir por decisión del equipo tras probar el panel.) */}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+      {/* Franja de resumen — Administradores de conjunto / Totales del sistema. Va ANTES de la tabla:
+          primero las acciones y los números del sistema, y debajo el detalle de los usuarios. */}
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
           <div className="flex items-center gap-2">
             <UserPlus className="icon-md text-accent-600" />
@@ -546,30 +565,6 @@ export function AdminDashboard() {
               {t("desvinculacion.asignarAdicional.openButton")}
             </button>
           </div>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="icon-md text-accent-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.pendingRequests.title")}</h3>
-            {solicitudesPendientes > 0 && (
-              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-200">
-                {solicitudesPendientes}
-              </span>
-            )}
-          </div>
-          <p className="flex-1 text-xs text-gray-500 dark:text-gray-400">
-            {solicitudesPendientes > 0
-              ? t("dashboards.admin.pendingRequests.withCount", { count: solicitudesPendientes })
-              : t("desvinculacion.adminSistema.empty")}
-          </p>
-          <button
-            type="button"
-            onClick={() => setMostrarModalSolicitudes(true)}
-            className="focus-ring touch-target-h cursor-pointer self-start rounded-xl border border-accent-300 bg-accent-50 px-3 py-1.5 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
-          >
-            {t("dashboards.admin.pendingRequests.viewButton")}
-          </button>
         </div>
 
         <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
@@ -603,34 +598,15 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* Usuarios registrados — ya no empieza plegada (ver estado
-          usuariosAbierto arriba). Adentro va todo: pestañas, buscador,
-          filtros de Localidad/Conjunto, tabla y paginación. */}
+      {/* Usuarios registrados — issue #596: ya no se pliega (era un acordeón siempre abierto) ni
+          repite el total (el número ya está en la tarjeta de Totales). Adentro va todo: pestañas,
+          buscador, filtros de Localidad/Conjunto, tabla y paginación. */}
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setUsuariosAbierto((v) => !v)}
-          className="flex w-full cursor-pointer flex-wrap items-center justify-between gap-2 px-5 py-4 text-left"
-          aria-expanded={usuariosAbierto}
-          aria-controls="usuarios-registrados-body"
-        >
-          <span className="flex min-w-0 items-center gap-2">
-            <Database className="icon-md shrink-0 text-accent-600" />
-            <h3 className="truncate text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.usersSection.title")}</h3>
-          </span>
-          <span className="flex shrink-0 items-center gap-2">
-            {totales && (
-              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-inset dark:text-gray-300">
-                {t("dashboards.admin.usersSection.totalBadge", {
-                  count: totales.residentes + totales.recicladores + totales.administradores,
-                })}
-              </span>
-            )}
-            <ChevronDown className={`icon-md text-gray-500 transition-transform dark:text-gray-400 ${usuariosAbierto ? "rotate-180" : ""}`} aria-hidden="true" />
-          </span>
-        </button>
+        <div className="flex items-center gap-2 px-5 py-4">
+          <Database className="icon-md shrink-0 text-accent-600" />
+          <h3 className="truncate text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.usersSection.title")}</h3>
+        </div>
 
-        {usuariosAbierto && (
         <div id="usuarios-registrados-body">
         <div className="px-5 py-4 border-t border-b border-gray-100 dark:border-night-line space-y-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -678,11 +654,26 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* ¿Qué? Buscador de conjunto + botón "Inactivos". El buscador acota
-              el lugar por sí solo (no hace falta un filtro de localidad
-              aparte); el botón apagado muestra todas las cuentas y
-              encendido solo las desactivadas. */}
+          {/* ¿Qué? Localidad (opcional) + buscador de conjunto + botón "Inactivos". Elegir una
+              localidad acota el buscador de conjunto y la tabla; el botón apagado muestra todas
+              las cuentas y encendido solo las desactivadas. */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-1.5 sm:w-52">
+              <MapIcon className="icon-sm shrink-0 text-accent-600" />
+              <select
+                value={localidadId}
+                onChange={(e) => cambiarLocalidad(e.target.value ? Number(e.target.value) : "")}
+                aria-label={t("dashboards.admin.localidadFilter.label")}
+                className="touch-target-h w-full min-w-0 cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+              >
+                <option value="">{t("dashboards.admin.localidadFilter.all")}</option>
+                {localidades.map((l) => (
+                  <option key={l.id_localidad} value={l.id_localidad}>
+                    {l.nombre_localidad}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="flex items-center gap-1.5 sm:w-64">
               <Building className="icon-sm shrink-0 text-accent-600" />
               <div className="flex-1 [&_input]:!mt-0 [&_input]:!py-1.5 [&_input]:!text-xs [&_input]:touch-target-h">
@@ -872,7 +863,6 @@ export function AdminDashboard() {
         )}
         </ContenidoRecargable>
         </div>
-        )}
       </div>
 
       {mostrarModalInvitar && (
@@ -887,16 +877,6 @@ export function AdminDashboard() {
         <Modal onClose={() => setMostrarModalAsignar(false)} wide aria-label={t("desvinculacion.asignarAdicional.sectionTitle")}>
           <div className="p-6 sm:p-8">
             <AsignarConjuntoAdicionalForm />
-          </div>
-        </Modal>
-      )}
-
-      {mostrarModalSolicitudes && (
-        <Modal onClose={() => setMostrarModalSolicitudes(false)} wide aria-label={t("dashboards.admin.pendingRequests.title")}>
-          <div className="p-6 sm:p-8">
-            {user && (
-              <BandejaAdminSistema onCountChange={setSolicitudesPendientes} mostrarEncabezado dentroDeModal />
-            )}
           </div>
         </Modal>
       )}

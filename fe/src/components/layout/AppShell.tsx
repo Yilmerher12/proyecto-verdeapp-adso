@@ -17,9 +17,12 @@ import {
   User,
   ClipboardList,
   ChartColumn,
+  Inbox,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
+import { useSolicitudesPendientes } from "@/hooks/useSolicitudesPendientes";
 import * as authApi from "@/api/auth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
@@ -177,6 +180,12 @@ export function AppShell({ children }: AppShellProps) {
   const roleId = user?.role_id ?? RoleId.RESIDENTE;
   const roleMeta = ROLE_THEME[roleId] ?? ROLE_THEME[RoleId.RESIDENTE];
 
+  // ¿Qué? Cuántas solicitudes tiene pendientes el Administrador del Sistema (contador de "Solicitudes").
+  // ¿Para qué? Issue #596: la bandeja salió del panel principal a su propia página; el contador del menú
+  //           es la señal de que hay algo por atender desde cualquier pantalla.
+  // ¿Impacto? Solo pide datos si el rol es Administrador del Sistema (enabled).
+  const solicitudesPendientes = useSolicitudesPendientes(!!user && roleId === RoleId.ADMIN_SISTEMA);
+
   // ¿Qué? ROLE_THEME (fe/src/config/roleTheme.ts) es un objeto de configuración
   //       plano, no un componente — no puede llamar a useTranslation() por su
   //       cuenta. Por eso la etiqueta traducida del rol se resuelve aquí, en
@@ -211,8 +220,10 @@ export function AppShell({ children }: AppShellProps) {
   //           el rol tiene al menos una opción en ese grupo (ver
   //           GRUPOS_NAV más abajo).
   type GrupoNav = "principal" | "comunidad" | "recursos" | "cuenta";
+  // ¿Qué? `badge` es un contador opcional que se muestra a la derecha de la opción (solo "Solicitudes").
+  type ItemNav = { icon: LucideIcon; label: string; href: string; enabled: boolean; group: GrupoNav; badge?: number };
 
-  const getNavItemsByRole = () => {
+  const getNavItemsByRole = (): ItemNav[] => {
     const commonStart = [
       { icon: LayoutDashboard, label: t("appShell.nav.panelPrincipal"), href: roleMeta.dashboardHref, enabled: true, group: "principal" as GrupoNav },
     ];
@@ -224,6 +235,7 @@ export function AppShell({ children }: AppShellProps) {
     if (roleId === RoleId.ADMIN_SISTEMA) {
       return [
         ...commonStart,
+        { icon: Inbox, label: t("appShell.nav.solicitudes"), href: "/admin/solicitudes", enabled: true, group: "principal" as GrupoNav, badge: solicitudesPendientes.total ?? 0 },
         { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: "/admin/novedades", enabled: true, group: "comunidad" as GrupoNav },
         { icon: BookOpen, label: t("appShell.nav.contenidoEducativo"), href: "/admin/contenido-educativo", enabled: true, group: "recursos" as GrupoNav },
         { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true, group: "principal" as GrupoNav },
@@ -399,7 +411,7 @@ export function AppShell({ children }: AppShellProps) {
                   </p>
                 )}
                 <ul className="min-w-0 space-y-0.5">
-                  {itemsDelGrupo.map(({ icon: Icon, label, href, enabled }, idx) => {
+                  {itemsDelGrupo.map(({ icon: Icon, label, href, enabled, badge }, idx) => {
                     if (enabled && href) {
                       return (
                         <li key={idx} className="min-w-0">
@@ -417,8 +429,19 @@ export function AppShell({ children }: AppShellProps) {
                           >
                             {/* Animación al pasar el mouse: comunicados "suena", novedades
                                 crece, el resto se redibuja (ver index.css). */}
-                            <Icon className={"icon-lg shrink-0 icon-draw"} />
-                            {!collapsed && <span className="min-w-0 truncate">{label}</span>}
+                            <span className="relative shrink-0">
+                              <Icon className={"icon-lg shrink-0 icon-draw"} />
+                              {/* ¿Qué? Con el menú colapsado no cabe el número: un punto sobre el ícono. */}
+                              {collapsed && !!badge && (
+                                <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-400" />
+                              )}
+                            </span>
+                            {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+                            {!collapsed && !!badge && (
+                              <span className="ml-auto shrink-0 rounded-full bg-amber-400 px-2 py-0.5 text-[0.6875rem] font-bold text-amber-950">
+                                {badge}
+                              </span>
+                            )}
                           </NavLink>
                         </li>
                       );

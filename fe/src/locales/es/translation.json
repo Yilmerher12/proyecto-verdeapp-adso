@@ -13,6 +13,7 @@
     "nav": {
       "panelPrincipal": "Panel principal",
       "seguridad": "Seguridad",
+      "solicitudes": "Solicitudes",
       "crearNovedades": "Novedades",
       "contenidoEducativo": "Contenido educativo",
       "miPerfil": "Mi perfil",
@@ -652,7 +653,6 @@
         "show": "+ Invitar administrador"
       },
       "pendingRequests": {
-        "title": "Solicitudes pendientes",
         "withCount": "{{count}} solicitud pendiente por resolver.",
         "withCount_other": "{{count}} solicitudes pendientes por resolver.",
         "viewButton": "Ver solicitudes"
@@ -664,10 +664,13 @@
       "conjuntoFilter": {
         "placeholder": "Buscar conjunto..."
       },
+      "localidadFilter": {
+        "label": "Filtrar por localidad",
+        "all": "Todas las localidades"
+      },
       "loadingData": "Cargando datos...",
       "usersSection": {
         "title": "Usuarios registrados",
-        "totalBadge": "{{count}} en total",
         "tabs": {
           "residentes": "Residentes",
           "recicladores": "Recicladores",
@@ -1672,9 +1675,11 @@
     },
     "respuestaTitulo": "Respuesta del Administrador del Sistema ({{fecha}})"
   },
-  "bandejaAdmin": {
-    "sectionTitle": "Soporte técnico y desvinculaciones",
-    "pestanas": {
+  "solicitudesAdmin": {
+    "title": "Solicitudes",
+    "subtitle": "Atiende las consultas de soporte técnico y las solicitudes de desvinculación.",
+    "tabsLabel": "Tipo de solicitud",
+    "tabs": {
       "soporte": "Soporte técnico",
       "desvinculaciones": "Desvinculaciones"
     }
@@ -1715,7 +1720,9 @@
     "marcarResuelta": "Marcar como resuelta",
     "reabrir": "Reabrir",
     "cambiarPrioridad": "Cambiar la prioridad",
-    "prioridadOpcion": "Prioridad {{prioridad}}"
+    "prioridadOpcion": "Prioridad {{prioridad}}",
+    "prioridadFiltro": "Prioridad: {{valor}}",
+    "masAcciones": "Más acciones de la solicitud de {{nombre}}"
   },
   "desvinculacion": {
     "sectionTitle": "Tu rol como administrador",
@@ -1752,7 +1759,10 @@
       "openButton": "+ Asignar conjunto",
       "searchLabel": "Buscar administrador",
       "searchPlaceholder": "Nombre, apellidos o correo",
-      "searchButton": "Buscar",
+      "searchHint": "Escribe para buscar. Los resultados salen mientras escribes.",
+      "stepSearch": "1 · Busca al administrador",
+      "stepPlace": "2 · Elige la localidad y el conjunto",
+      "stepConfirm": "3 · Confirma",
       "noResults": "No se encontraron administradores.",
       "currentConjuntos": "Administra:",
       "noConjuntos": "Ningún conjunto todavía",
@@ -1761,7 +1771,7 @@
       "selectLocalityFirst": "Selecciona una localidad para poder buscar el conjunto.",
       "selectConjuntoLabel": "Conjunto a asignar",
       "noConjuntosDisponibles": "No hay conjuntos sin administrador disponibles.",
-      "assignButton": "Asignar",
+      "assignButton": "Asignar conjunto",
       "assigning": "Asignando...",
       "successMessage": "Conjunto asignado correctamente.",
       "errorDefault": "No se pudo asignar el conjunto."
@@ -1930,9 +1940,7 @@
         "fechaExpiracionHint": "Si la dejas vacía, se usa una fecha sugerida por el sistema.",
         "urlVideo": "Enlace de video (YouTube, opcional)"
       },
-      "listBar": "Filtros y lista",
-      "collapse": "Recoger",
-      "expand": "Ver novedades",
+      "listBar": "Novedades publicadas",
       "filters": {
         "all": "Todas",
         "showArchived": "Ver archivadas",

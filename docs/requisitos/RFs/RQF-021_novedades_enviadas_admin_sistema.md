@@ -33,7 +33,7 @@
 
 El sistema debe permitir que un Residente, un Reciclador o un Admin de Conjunto le **envíe** una novedad al Administrador del Sistema (texto y, de forma opcional, una imagen), por ejemplo para reportar un problema o contar algo que pasó en su conjunto. El autor no escribe sus datos: el sistema los toma de su cuenta (nombre, rol, conjunto y unidad).
 
-El Administrador del Sistema recibe esas novedades en la pestaña **"Soporte técnico"** de la bandeja de su panel. La otra pestaña, **"Desvinculaciones"**, trae las solicitudes de los Admins de Conjunto (RQF-016); son cosas de distinta naturaleza (una decisión de sí o no, sin prioridad ni respuesta) y por eso tienen cada una su lugar. Cada consulta de soporte tiene una **prioridad** (Alta, Media o Baja), que el sistema calcula según el motivo que eligió el autor, y un **estado** (Nueva, En revisión o Resuelta). El Administrador del Sistema puede corregir la prioridad, cambiar el estado y **responderle al autor**, que ve la respuesta en su historial.
+El Administrador del Sistema recibe esas novedades en la pestaña **"Soporte técnico"** de la página Solicitudes de su panel. La otra pestaña, **"Desvinculaciones"**, trae las solicitudes de los Admins de Conjunto (RQF-016); son cosas de distinta naturaleza (una decisión de sí o no, sin prioridad ni respuesta) y por eso tienen cada una su lugar. Cada consulta de soporte tiene una **prioridad** (Alta, Media o Baja), que el sistema calcula según el motivo que eligió el autor, y un **estado** (Nueva, En revisión o Resuelta). El Administrador del Sistema puede corregir la prioridad, cambiar el estado y **responderle al autor**, que ve la respuesta en su historial.
 
 **No confundir** con las Novedades de RQF-015: esas las publica el Administrador del Sistema hacia los usuarios. Las de este RF van en la dirección contraria. La comparación completa está en [Novedades y novedades enviadas](../../conceptos/novedades-y-novedades-enviadas.md).
 
@@ -78,10 +78,10 @@ Motivos comunes a los tres: no puedo iniciar sesión o recuperar mi contraseña 
 
 ### Flujo C — Atender el soporte técnico (Administrador del Sistema)
 
-1. En su panel principal, el Administrador del Sistema ve el resumen "Solicitudes pendientes" con el número de pendientes (consultas de soporte sin resolver más desvinculaciones) y abre la bandeja, que tiene dos pestañas: **"Soporte técnico"** y **"Desvinculaciones"**.
-2. "Soporte técnico" lista las consultas con su prioridad y su estado: primero las de prioridad Alta y, dentro de cada prioridad, la más reciente. Por defecto muestra lo **pendiente** (NUEVA y EN_REVISION); se puede filtrar por estado (**Pendientes**, **Nuevas**, **En revisión**, **Resueltas**) y por prioridad. **Resueltas** es el historial de lo ya atendido. Se muestra de a 5 filas por página.
+1. El Administrador del Sistema entra a **Solicitudes** desde el menú lateral, donde un contador muestra cuántas hay pendientes (consultas de soporte sin resolver más desvinculaciones), o desde la franja naranja que su panel principal muestra solo cuando hay pendientes. La página tiene dos pestañas: **"Soporte técnico"** y **"Desvinculaciones"**, cada una con su número (issue #596; antes era un modal del panel).
+2. "Soporte técnico" lista las consultas con su prioridad y su estado: primero las de prioridad Alta y, dentro de cada prioridad, la más reciente. Por defecto muestra lo **pendiente** (NUEVA y EN_REVISION); se puede filtrar por estado con cuatro pestañas con contador (**Pendientes**, **Nuevas**, **En revisión**, **Resueltas**) y por prioridad con un menú. **Resueltas** es el historial de lo ya atendido. Se muestra de a 10 filas por página.
 3. Cada consulta muestra el rol y nombre del autor (y, si es Residente, su torre y apartamento), el conjunto, el texto y, si tiene, un enlace "Ver foto".
-4. El Administrador del Sistema puede **marcar la consulta en revisión**, **marcarla como resuelta**, **reabrirla**, **corregir su prioridad** con un selector y **responderle al autor** (máximo 1000 caracteres). Escribir una respuesta sin indicar estado la deja RESUELTA.
+4. El Administrador del Sistema puede **marcar la consulta en revisión**, **marcarla como resuelta**, **reabrirla**, **corregir su prioridad** y **responderle al autor** (máximo 1000 caracteres); "Responder" está a la vista y el resto de acciones (estado y prioridad) en el menú de tres puntos de cada consulta. Escribir una respuesta sin indicar estado la deja RESUELTA.
 5. La pestaña **"Desvinculaciones"** lista las desvinculaciones pendientes, que se aprueban o se rechazan (con motivo) con su flujo de siempre (RQF-016). No tienen prioridad ni respuesta.
 
 ---
@@ -128,7 +128,7 @@ Motivos comunes a los tres: no puedo iniciar sesión o recuperar mi contraseña 
 
 Las desvinculaciones usan los endpoints de RQF-016 (`GET /api/v1/admin-conjunto/solicitudes-desvinculacion` y `POST .../{id}/resolver`).
 
-Código: `be/app/routers/novedades_enviadas.py`, `be/app/services/novedad_enviada_service.py`, `be/app/models/novedad_enviada.py`; interfaz en `fe/src/components/NovedadesEnviadas.tsx` (pestañas de `NovedadesFeedPage.tsx`) y, en el panel del Admin Sistema, `fe/src/components/BandejaAdminSistema.tsx` (las dos pestañas) con `SoporteTecnico.tsx` y `SolicitudesDesvinculacion.tsx`.
+Código: `be/app/routers/novedades_enviadas.py`, `be/app/services/novedad_enviada_service.py`, `be/app/models/novedad_enviada.py`; interfaz en `fe/src/components/NovedadesEnviadas.tsx` (pestañas de `NovedadesFeedPage.tsx`) y, en el panel del Admin Sistema, `fe/src/pages/AdminSolicitudesPage.tsx` (las dos pestañas, ruta `/admin/solicitudes`) con `SoporteTecnico.tsx` y `SolicitudesDesvinculacion.tsx`; el contador sale de `fe/src/hooks/useSolicitudesPendientes.ts`.
 
 ---
 

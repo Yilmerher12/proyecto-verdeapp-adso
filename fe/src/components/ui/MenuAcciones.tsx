@@ -10,9 +10,9 @@
  *           el menú en las últimas filas.
  */
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { EllipsisVertical, type LucideIcon } from "lucide-react";
+import { Check, ChevronDown, EllipsisVertical, type LucideIcon } from "lucide-react";
 
 export interface OpcionMenu {
   id: string;
@@ -20,6 +20,9 @@ export interface OpcionMenu {
   icon?: LucideIcon;
   /** ¿Qué? Acción delicada (desactivar, dar de baja): se pinta en rojo. */
   peligrosa?: boolean;
+  /** ¿Qué? Con un valor (true o false) la opción es de "elegir una": muestra una marca si está elegida.
+   *  ¿Para qué? Issue #596: la prioridad de una solicitud se elige dentro del menú, sin lista nativa. */
+  marcada?: boolean;
   onSelect: () => void;
 }
 
@@ -27,6 +30,9 @@ interface MenuAccionesProps {
   ariaLabel: string;
   /** ¿Qué? Cada grupo es un arreglo de opciones; entre grupos va una línea. */
   grupos: OpcionMenu[][];
+  /** ¿Qué? Texto del botón que abre el menú. Sin él, el botón son los tres puntos (kebab).
+   *  ¿Para qué? Reutilizar el mismo menú como un filtro desplegable ("Prioridad: Todas"). */
+  etiqueta?: ReactNode;
 }
 
 interface PosicionMenu {
@@ -43,7 +49,7 @@ const ALTO_OPCION = 40;
 const ALTO_SEPARADOR = 9;
 const MARGEN = 4;
 
-export function MenuAcciones({ ariaLabel, grupos }: MenuAccionesProps) {
+export function MenuAcciones({ ariaLabel, grupos, etiqueta }: MenuAccionesProps) {
   const [posicion, setPosicion] = useState<PosicionMenu | null>(null);
   const botonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -73,7 +79,7 @@ export function MenuAcciones({ ariaLabel, grupos }: MenuAccionesProps) {
   //           suelto, lejos de la fila a la que pertenece.
   useEffect(() => {
     if (!abierto) return;
-    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    menuRef.current?.querySelector<HTMLElement>('[role^="menuitem"]')?.focus();
 
     const alHacerClicFuera = (e: MouseEvent) => {
       const objetivo = e.target as Node;
@@ -102,7 +108,7 @@ export function MenuAcciones({ ariaLabel, grupos }: MenuAccionesProps) {
   }, [abierto]);
 
   const moverFoco = (e: KeyboardEvent<HTMLDivElement>) => {
-    const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+    const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? []);
     const actual = items.indexOf(document.activeElement as HTMLElement);
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -127,9 +133,20 @@ export function MenuAcciones({ ariaLabel, grupos }: MenuAccionesProps) {
         aria-haspopup="menu"
         aria-expanded={abierto}
         onClick={() => (abierto ? cerrar(false) : abrir())}
-        className="touch-target focus-ring inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-night-hover"
+        className={
+          etiqueta
+            ? "touch-target-h focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-300 dark:hover:bg-night-field"
+            : "touch-target focus-ring inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-night-hover"
+        }
       >
-        <EllipsisVertical className="icon-md" aria-hidden="true" />
+        {etiqueta ? (
+          <>
+            {etiqueta}
+            <ChevronDown className="icon-sm" aria-hidden="true" />
+          </>
+        ) : (
+          <EllipsisVertical className="icon-md" aria-hidden="true" />
+        )}
       </button>
 
       {posicion &&
@@ -145,11 +162,12 @@ export function MenuAcciones({ ariaLabel, grupos }: MenuAccionesProps) {
             {gruposConOpciones.map((grupo, indice) => (
               <div key={indice}>
                 {indice > 0 && <div role="separator" className="my-1 border-t border-gray-100 dark:border-night-line" />}
-                {grupo.map(({ id, label, icon: Icono, peligrosa, onSelect }) => (
+                {grupo.map(({ id, label, icon: Icono, peligrosa, marcada, onSelect }) => (
                   <button
                     key={id}
                     type="button"
-                    role="menuitem"
+                    role={marcada === undefined ? "menuitem" : "menuitemradio"}
+                    aria-checked={marcada}
                     onClick={() => {
                       cerrar(true);
                       onSelect();
@@ -162,6 +180,7 @@ export function MenuAcciones({ ariaLabel, grupos }: MenuAccionesProps) {
                   >
                     {Icono && <Icono className="icon-sm" aria-hidden="true" />}
                     {label}
+                    {marcada && <Check className="icon-sm ml-auto" aria-hidden="true" />}
                   </button>
                 ))}
               </div>

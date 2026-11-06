@@ -31,6 +31,10 @@ interface PestanasProps<T extends string> {
   dosColumnas?: boolean;
   /** ¿Qué? Clases extra para la fila (por ejemplo, un borde y un espacio arriba). */
   className?: string;
+  /** ¿Qué? Chips pequeños en una fila que salta de línea, en vez de píldoras grandes en cuadrícula.
+   *  ¿Para qué? Issue #596: los filtros de estado de Solicitudes (con su contador) ocupaban demasiado alto
+   *            en pantallas angostas y se parecían a las pestañas principales. */
+  compacta?: boolean;
 }
 
 const COLUMNAS: Record<number, string> = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" };
@@ -44,11 +48,16 @@ export function Pestanas<T extends string>({
   idPanel,
   dosColumnas = false,
   className = "",
+  compacta = false,
 }: PestanasProps<T>) {
   const columnas = dosColumnas ? COLUMNAS[2] : (COLUMNAS[pestanas.length] ?? COLUMNAS[2]);
   return (
     <div className="@container">
-      <div role="tablist" aria-label={ariaLabel} className={`grid ${columnas} gap-2 @xl:flex ${className}`}>
+      <div
+        role="tablist"
+        aria-label={ariaLabel}
+        className={`${compacta ? "flex flex-wrap gap-1.5" : `grid ${columnas} gap-2 @xl:flex`} ${className}`}
+      >
         {pestanas.map(({ id, etiqueta }) => (
           <button
             key={id}
@@ -58,8 +67,10 @@ export function Pestanas<T extends string>({
             aria-selected={activa === id}
             aria-controls={idPanel}
             onClick={() => onCambiar(id)}
-            className={`cursor-pointer rounded-full px-3 py-2 text-center text-sm font-semibold leading-tight transition-colors @xl:px-4 ${
-              dosColumnas ? "last:odd:col-span-2 @xl:last:odd:col-span-1" : ""
+            className={`cursor-pointer rounded-full text-center font-semibold leading-tight transition-colors ${
+              compacta ? "px-3 py-1 text-xs" : "px-3 py-2 text-sm @xl:px-4"
+            } ${
+              dosColumnas && !compacta ? "last:odd:col-span-2 @xl:last:odd:col-span-1" : ""
             } ${
               activa === id
                 ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
