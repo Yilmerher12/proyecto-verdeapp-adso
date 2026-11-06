@@ -46,6 +46,7 @@ import { AdminConjuntoAgendaPage } from "@/pages/AdminConjuntoAgendaPage";
 import { AdminConjuntoDesempenoPage } from "@/pages/AdminConjuntoDesempenoPage";
 import { ComunicadosFeedPage } from "@/pages/ComunicadosFeedPage";
 import { AdminNovedadesPage } from "@/pages/AdminNovedadesPage";
+import { AdminSolicitudesPage } from "@/pages/AdminSolicitudesPage";
 import { NovedadesFeedPage } from "@/pages/NovedadesFeedPage";
 
 interface CustomUser {
@@ -307,6 +308,20 @@ function App() {
               }
             />
   
+            {/* Solicitudes (soporte técnico y desvinculaciones) — Admin Sistema (issue #596) */}
+            <Route
+              path="/admin/solicitudes"
+              element={
+                <ProtectedRoute>
+                  <RoleGuard allowedRoles={[RoleId.ADMIN_SISTEMA]}>
+                    <AppShell>
+                      <AdminSolicitudesPage />
+                    </AppShell>
+                  </RoleGuard>
+                </ProtectedRoute>
+              }
+            />
+
             {/* Novedades de la plataforma — Admin Sistema gestiona (RQF-015) */}
             <Route
               path="/admin/novedades"

@@ -13,6 +13,7 @@
     "nav": {
       "panelPrincipal": "Dashboard",
       "seguridad": "Security",
+      "solicitudes": "Requests",
       "crearNovedades": "News",
       "contenidoEducativo": "Educational Content",
       "miPerfil": "My Profile",
@@ -652,7 +653,6 @@
         "show": "+ Invite administrator"
       },
       "pendingRequests": {
-        "title": "Pending requests",
         "withCount": "{{count}} pending request to resolve.",
         "withCount_other": "{{count}} pending requests to resolve.",
         "viewButton": "View requests"
@@ -664,10 +664,13 @@
       "conjuntoFilter": {
         "placeholder": "Search building..."
       },
+      "localidadFilter": {
+        "label": "Filter by district",
+        "all": "All districts"
+      },
       "loadingData": "Loading data...",
       "usersSection": {
         "title": "Registered users",
-        "totalBadge": "{{count}} total",
         "inactiveButton": "Inactive {{count}}",
         "noReason": "No reason recorded",
         "noInactive": "There are no inactive accounts in this tab.",
@@ -1672,9 +1675,11 @@
     },
     "respuestaTitulo": "System Administrator's reply ({{fecha}})"
   },
-  "bandejaAdmin": {
-    "sectionTitle": "Technical support and unlinking",
-    "pestanas": {
+  "solicitudesAdmin": {
+    "title": "Requests",
+    "subtitle": "Handle technical support queries and unlinking requests.",
+    "tabsLabel": "Request type",
+    "tabs": {
       "soporte": "Technical support",
       "desvinculaciones": "Unlinking requests"
     }
@@ -1715,7 +1720,9 @@
     "marcarResuelta": "Mark as resolved",
     "reabrir": "Reopen",
     "cambiarPrioridad": "Change the priority",
-    "prioridadOpcion": "{{prioridad}} priority"
+    "prioridadOpcion": "{{prioridad}} priority",
+    "prioridadFiltro": "Priority: {{valor}}",
+    "masAcciones": "More actions for the request from {{nombre}}"
   },
   "desvinculacion": {
     "sectionTitle": "Your role as administrator",
@@ -1752,7 +1759,10 @@
       "openButton": "+ Assign building",
       "searchLabel": "Search administrator",
       "searchPlaceholder": "Name, last name, or email",
-      "searchButton": "Search",
+      "searchHint": "Type to search. Results appear as you type.",
+      "stepSearch": "1 · Find the administrator",
+      "stepPlace": "2 · Choose the district and the building",
+      "stepConfirm": "3 · Confirm",
       "noResults": "No administrators found.",
       "currentConjuntos": "Administers:",
       "noConjuntos": "No buildings yet",
@@ -1761,7 +1771,7 @@
       "selectLocalityFirst": "Select a district first to search for the building.",
       "selectConjuntoLabel": "Building to assign",
       "noConjuntosDisponibles": "No unassigned buildings available.",
-      "assignButton": "Assign",
+      "assignButton": "Assign building",
       "assigning": "Assigning...",
       "successMessage": "Building assigned successfully.",
       "errorDefault": "The building could not be assigned."
@@ -1917,9 +1927,7 @@
         "confirm": "Yes, archive"
       },
       "viewVideo": "Watch video",
-      "listBar": "Filters and list",
-      "collapse": "Collapse",
-      "expand": "View news",
+      "listBar": "Published news",
       "filters": {
         "all": "All",
         "showArchived": "Show archived",

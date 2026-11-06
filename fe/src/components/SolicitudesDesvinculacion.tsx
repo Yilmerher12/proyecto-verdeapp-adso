@@ -11,13 +11,8 @@ import {
   resolverSolicitudDesvinculacion,
   type SolicitudDesvinculacion,
 } from "@/lib/adminConjuntoApi";
+import { notificarSolicitudesActualizadas } from "@/lib/solicitudesEvents";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
-
-interface SolicitudesDesvinculacionProps {
-  /** ¿Para qué? El resumen de arriba del panel necesita el número de pendientes
-   *  ANTES de que el usuario abra la bandeja — se avisa cada vez que cambia. */
-  onCountChange?: (count: number) => void;
-}
 
 /**
  * ¿Qué? Pestaña "Desvinculaciones" del Administrador del Sistema: las solicitudes
@@ -26,9 +21,11 @@ interface SolicitudesDesvinculacionProps {
  * ¿Para qué? Issue #512: antes iban mezcladas con las consultas de soporte en una
  *           sola lista. Son cosas distintas (una decisión de sí o no, sin prioridad
  *           ni respuesta), así que tienen su propio lugar.
- * ¿Impacto? Usa el mismo flujo y los mismos endpoints de RQF-016; solo cambia dónde se ve.
+ * ¿Impacto? Usa el mismo flujo y los mismos endpoints de RQF-016; solo cambia dónde se ve. Issue #596: ya
+ *          no reporta su número hacia arriba (lo lee useSolicitudesPendientes); al aprobar o rechazar
+ *          avisa con solicitudesEvents para que el contador del menú y la franja del panel se actualicen.
  */
-export function SolicitudesDesvinculacion({ onCountChange }: SolicitudesDesvinculacionProps = {}) {
+export function SolicitudesDesvinculacion() {
   const { t } = useTranslation();
   const [solicitudes, setSolicitudes] = useState<SolicitudDesvinculacion[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -39,13 +36,10 @@ export function SolicitudesDesvinculacion({ onCountChange }: SolicitudesDesvincu
 
   const cargar = useCallback(() => {
     listarSolicitudesDesvinculacion()
-      .then((lista) => {
-        setSolicitudes(lista);
-        onCountChange?.(lista.length);
-      })
+      .then(setSolicitudes)
       .catch((err) => console.error("Error cargando solicitudes de desvinculación", err))
       .finally(() => setCargando(false));
-  }, [onCountChange]);
+  }, []);
 
   useEffect(() => {
     cargar();
@@ -59,6 +53,7 @@ export function SolicitudesDesvinculacion({ onCountChange }: SolicitudesDesvincu
       setRechazandoId(null);
       setMotivoRechazo("");
       cargar();
+      notificarSolicitudesActualizadas();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || t("desvinculacion.adminSistema.errorDefault"));

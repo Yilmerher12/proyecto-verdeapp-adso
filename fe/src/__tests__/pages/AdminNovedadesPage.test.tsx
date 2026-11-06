@@ -194,18 +194,14 @@ describe("AdminNovedadesPage", () => {
       expect(mockListar).not.toHaveBeenCalledWith(8, 0, expect.objectContaining({ search: "vi" }));
     });
 
-    it("la barra recoge y expande todo el contenido de la lista", async () => {
+    it("la lista lleva su título y ya no se recoge (issue #596)", async () => {
       mockListar.mockResolvedValue({ items: [NOVEDAD], total: 1 });
-      const user = userEvent.setup();
       renderPage();
       await screen.findByText(NOVEDAD.texto);
 
-      await user.click(screen.getByRole("button", { name: /Recoger/ }));
-      expect(screen.queryByText(NOVEDAD.texto)).not.toBeInTheDocument();
-      expect(screen.queryByPlaceholderText("Buscar en el texto de la novedad…")).not.toBeInTheDocument();
-
-      await user.click(screen.getByRole("button", { name: /Ver novedades/ }));
-      expect(await screen.findByText(NOVEDAD.texto)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Novedades publicadas" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Recoger/ })).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Buscar en el texto de la novedad…")).toBeInTheDocument();
     });
   });
 

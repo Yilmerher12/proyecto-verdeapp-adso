@@ -1,13 +1,14 @@
 /**
- * Archivo: __tests__/components/BandejaAdminSistema.test.tsx
- * Descripción: Tests de la bandeja del Admin Sistema con sus dos pestañas,
- *              "Soporte técnico" y "Desvinculaciones" (issue #512).
+ * Archivo: __tests__/pages/AdminSolicitudesPage.test.tsx
+ * Descripción: Tests de la página de Solicitudes del Admin del Sistema (issue #596): sus dos
+ *              pestañas, "Soporte técnico" y "Desvinculaciones", con su contador.
+ *              Reemplaza a los de la bandeja con pestañas que vivía dentro de un modal.
  */
-import { screen, waitFor } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
-import { BandejaAdminSistema } from "@/components/BandejaAdminSistema";
-import { renderWithProviders } from "../helpers";
+import { AdminSolicitudesPage } from "@/pages/AdminSolicitudesPage";
+import { mockUser, renderWithProviders } from "../helpers";
 
 const mockGet = vi.fn();
 
@@ -45,7 +46,7 @@ const desvinculacion = {
   created_at: new Date().toISOString(),
 };
 
-describe("BandejaAdminSistema", () => {
+describe("AdminSolicitudesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGet.mockImplementation((url: string) =>
@@ -57,24 +58,21 @@ describe("BandejaAdminSistema", () => {
 
   it("abre en Soporte técnico y deja las Desvinculaciones en su propia pestaña", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<BandejaAdminSistema />);
+    renderWithProviders(<AdminSolicitudesPage />, { authContext: { user: mockUser } });
 
     expect(await screen.findByText("No puedo iniciar sesión.")).toBeVisible();
-    expect(screen.getByText("Conjunto Los Alpes")).not.toBeVisible();
+    expect(screen.queryByText("Conjunto Los Alpes")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: /Desvinculaciones/ }));
 
-    expect(screen.getByText("Conjunto Los Alpes")).toBeVisible();
-    expect(screen.getByText("No puedo iniciar sesión.")).not.toBeVisible();
+    expect(await screen.findByText("Conjunto Los Alpes")).toBeVisible();
+    expect(screen.queryByText("No puedo iniciar sesión.")).not.toBeInTheDocument();
   });
 
-  it("avisa la suma de las dos pestañas aunque una no se esté viendo", async () => {
-    const onCountChange = vi.fn();
-    renderWithProviders(<BandejaAdminSistema onCountChange={onCountChange} />);
+  it("cada pestaña principal muestra cuántas solicitudes pendientes tiene", async () => {
+    renderWithProviders(<AdminSolicitudesPage />, { authContext: { user: mockUser } });
 
-    await waitFor(() => expect(onCountChange).toHaveBeenLastCalledWith(2));
-    // ¿Qué? No avisa un 0 de arranque: el resumen del panel parpadearía a "No hay solicitudes pendientes".
-    expect(onCountChange).not.toHaveBeenCalledWith(0);
-    expect(onCountChange).not.toHaveBeenCalledWith(1);
+    expect(await screen.findByRole("tab", { name: /Soporte técnico\s*1/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Desvinculaciones\s*1/ })).toBeInTheDocument();
   });
 });

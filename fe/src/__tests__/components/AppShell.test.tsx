@@ -126,7 +126,8 @@ describe("AppShell — grupo de Puntos de Acopio", () => {
   it("Administrador del Sistema: Puntos de acopio va bajo Panel principal y Recursos solo tiene Contenido educativo", () => {
     const { container, getByText } = renderComo(RoleId.ADMIN_SISTEMA);
 
-    expect(enlacesDelMenu(container).slice(0, 2)).toEqual(["Panel principal", "Puntos de acopio"]);
+    // ¿Qué? Issue #596: "Solicitudes" (con su contador) va justo bajo el panel principal.
+    expect(enlacesDelMenu(container).slice(0, 3)).toEqual(["Panel principal", "Solicitudes", "Puntos de acopio"]);
     expect(getByText("Recursos")).toBeInTheDocument();
     const gruposRecursos = getByText("Recursos").parentElement as HTMLElement;
     expect(Array.from(gruposRecursos.querySelectorAll("a")).map((a) => a.textContent)).toEqual(["Contenido educativo"]);

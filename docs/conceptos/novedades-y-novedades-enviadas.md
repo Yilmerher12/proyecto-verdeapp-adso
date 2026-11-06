@@ -109,4 +109,4 @@ El detalle de cada columna está en el [diagrama ER](../referencia-proyecto/diag
 | **Novedad enviada** | Residente, Reciclador o Admin de Conjunto | Al Admin Sistema | RQF-021 |
 | **Solicitud de desvinculación** | Admin de Conjunto | Al Admin Sistema (se aprueba o se rechaza) | RQF-016 |
 
-La solicitud de desvinculación comparte con las novedades enviadas la bandeja "Solicitudes pendientes" del Admin Sistema, pero en otra pestaña (**Desvinculaciones**), porque es una decisión de sí o no, sin prioridad ni respuesta.
+La solicitud de desvinculación comparte con las novedades enviadas la página "Solicitudes" del Admin Sistema, pero en otra pestaña (**Desvinculaciones**), porque es una decisión de sí o no, sin prioridad ni respuesta.
