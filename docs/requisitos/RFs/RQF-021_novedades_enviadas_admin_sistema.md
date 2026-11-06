@@ -83,6 +83,7 @@ Motivos comunes a los tres: no puedo iniciar sesión o recuperar mi contraseña 
 3. Cada consulta muestra el rol y nombre del autor (y, si es Residente, su torre y apartamento), el conjunto, el texto y, si tiene, un enlace "Ver foto".
 4. El Administrador del Sistema puede **marcar la consulta en revisión**, **marcarla como resuelta**, **reabrirla**, **corregir su prioridad** y **responderle al autor** (máximo 1000 caracteres); "Responder" está a la vista y el resto de acciones (estado y prioridad) en el menú de tres puntos de cada consulta. Escribir una respuesta sin indicar estado la deja RESUELTA.
 5. La pestaña **"Desvinculaciones"** lista las desvinculaciones pendientes, que se aprueban o se rechazan (con motivo) con su flujo de siempre (RQF-016). No tienen prioridad ni respuesta.
+6. Cuando llega una consulta de soporte nueva, todos los Administradores del Sistema activos (cuenta verificada y no desactivada) reciben una notificación `SOPORTE_NUEVO` en la campana, con el rol del autor y sin el texto de la consulta; al tocarla llegan a la página Solicitudes (issue #617). Sin administradores activos la consulta se guarda igual y no se crea el aviso. Cambiar el estado o la prioridad no avisa al administrador.
 
 ---
 
