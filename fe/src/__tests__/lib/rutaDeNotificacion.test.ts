@@ -28,6 +28,12 @@ describe("rutaDeNotificacion", () => {
     }
   );
 
+  // Issue #617: lo que le llega al Admin del Sistema por atender lo lleva a la página de Solicitudes.
+  it.each(["SOPORTE_NUEVO", "DESVINCULACION_SOLICITADA"])("%s lleva al Admin del Sistema a Solicitudes", (tipo) => {
+    expect(rutaDeNotificacion({ tipo }, RoleId.ADMIN_SISTEMA)).toBe("/admin/solicitudes");
+    expect(rutaDeNotificacion({ tipo }, RoleId.RESIDENTE)).toBeNull();
+  });
+
   it.each(["SHUT_LLENO", "SHUT_LIBRE", "LLEGADA_RECICLADOR", "AUDITORIA_PUBLICADA", "CONTENIDO_RECOMENDADO", "TIPO_DESCONOCIDO"])(
     "%s no tiene página propia",
     (tipo) => {
