@@ -66,7 +66,7 @@ export function TablaPuntosAcopio<T extends PuntoFicha>({
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
+        <tbody className="divide-y divide-gray-200 dark:divide-night-line">
           {ordenados.map((p) => {
             const abierto = abiertoId === p.id_punto_acopio;
             return (

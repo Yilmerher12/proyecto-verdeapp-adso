@@ -14,10 +14,11 @@
  *           encima (layer="stacked"). Las observaciones largas se cortan a 5
  *           líneas con "Ver más" — el botón solo aparece si el texto no cabe.
  */
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, ImageOff, Maximize2 } from "lucide-react";
 import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import { Modal } from "@/components/ui/Modal";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -42,9 +43,6 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
   const [error, setError] = useState(false);
   const [indice, setIndice] = useState(0);
   const [ampliada, setAmpliada] = useState(false);
-  const [textoAbierto, setTextoAbierto] = useState(false);
-  const [hayMas, setHayMas] = useState(false);
-  const refObservaciones = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     obtenerAuditoria(idAuditoria)
@@ -61,13 +59,6 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
     : [];
   const actual = Math.min(indice, Math.max(fotos.length - 1, 0));
   const cambiarFoto = (paso: number) => setIndice((actual + paso + fotos.length) % fotos.length);
-
-  // ¿Qué? Mide si el texto cortado a 5 líneas deja algo oculto.
-  // ¿Para qué? "Ver más" solo aparece cuando hace falta, no en cada auditoría.
-  useLayoutEffect(() => {
-    const el = refObservaciones.current;
-    if (el && !textoAbierto) setHayMas(el.scrollHeight > el.clientHeight + 1);
-  }, [auditoria, textoAbierto]);
 
   useEffect(() => {
     if (fotos.length < 2) return;
@@ -215,24 +206,11 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
                   <p className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                     {t("auditoriaResultado.descripcionLabel")}
                   </p>
-                  <p
-                    ref={refObservaciones}
-                    className={`mt-0.5 break-words text-sm text-gray-800 dark:text-gray-200 ${textoAbierto ? "" : "line-clamp-5"}`}
-                  >
-                    {auditoria.descripcion}
-                  </p>
-                  {(hayMas || textoAbierto) && (
-                    <button
-                      type="button"
-                      onClick={() => setTextoAbierto((v) => !v)}
-                      aria-expanded={textoAbierto}
-                      className="focus-ring mt-1 cursor-pointer text-sm font-semibold text-accent-700 hover:underline dark:text-accent-400"
-                    >
-                      {t(
-                        textoAbierto ? "auditoriaResultado.verMenos" : "auditoriaResultado.verMas",
-                      )}
-                    </button>
-                  )}
+                  <TextoRecortable
+                    texto={auditoria.descripcion}
+                    lineas={5}
+                    className="mt-0.5 break-words text-sm text-gray-800 dark:text-gray-200"
+                  />
                 </div>
               )}
 

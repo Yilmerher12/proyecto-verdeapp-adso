@@ -57,7 +57,7 @@ export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio, sinTar
       ) : auditorias.length === 0 ? (
         <EmptyState icon={ClipboardList} message={mensajeVacio} />
       ) : (
-        <ul className="divide-y divide-gray-50 dark:divide-night-line">
+        <ul className="divide-y divide-gray-200 dark:divide-night-line">
           {auditorias.map((a) => {
             const nivel = NIVELES_DESEMPENO[a.nivel_desempeno];
             return (

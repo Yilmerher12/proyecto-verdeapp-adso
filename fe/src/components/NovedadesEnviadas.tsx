@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Paginacion } from "@/components/ui/Paginacion";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import { usePaginacion } from "@/hooks/usePaginacion";
 
 // ¿Qué? Issue #399 — novedades por página en "Historial de novedades".
@@ -342,9 +343,7 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
                 {formatearFechaCreacion(n.created_at)}
               </span>
             </div>
-            <p className="mt-2 whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">
-              {n.texto}
-            </p>
+            <TextoRecortable texto={n.texto} className="mt-2 whitespace-pre-line text-sm text-gray-800 dark:text-gray-200" />
             {enlaceAdjuntoSeguro(n.url_imagen) && (
               <img
                 src={enlaceAdjuntoSeguro(n.url_imagen) ?? undefined}
@@ -359,9 +358,7 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
                     fecha: formatearFechaCreacion(n.respondida_at ?? n.created_at),
                   })}
                 </p>
-                <p className="mt-1 whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">
-                  {n.respuesta}
-                </p>
+                <TextoRecortable texto={n.respuesta} className="mt-1 whitespace-pre-line text-sm text-gray-800 dark:text-gray-200" />
               </div>
             )}
           </li>

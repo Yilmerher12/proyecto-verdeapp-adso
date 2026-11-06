@@ -296,7 +296,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
               <EmptyState icon={HardHat} message={t("directorio.emptyRecyclers")} />
             </div>
           ) : (
-            <ul className="divide-y divide-gray-50 dark:divide-night-line">
+            <ul className="divide-y divide-gray-200 dark:divide-night-line">
               {recicladores.map((r) => (
                 <FilaReciclador key={r.id_reciclador} reciclador={r} waLink={waLink} callLink={callLink} />
               ))}

@@ -96,7 +96,7 @@ export function HistorialAuditorias({
         <EmptyState icon={History} message={t("auditoriaResultado.historialEmpty")} />
       ) : (
         <>
-          <ul className="divide-y divide-gray-50 dark:divide-gray-800">
+          <ul className="divide-y divide-gray-200 dark:divide-night-line">
             {auditorias.map((a) => {
               const nivel = NIVELES_DESEMPENO[a.nivel_desempeno];
               return (
@@ -126,7 +126,7 @@ export function HistorialAuditorias({
             })}
           </ul>
           {total > TAMANO_PAGINA && (
-            <div className="mt-2 border-t border-gray-50 dark:border-night-line">
+            <div className="mt-2 border-t border-gray-200 dark:border-night-line">
               <Paginacion
                 desde={paginacion.desde}
                 hasta={paginacion.hasta}

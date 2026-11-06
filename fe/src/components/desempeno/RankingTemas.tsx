@@ -69,7 +69,7 @@ export function RankingTemas({ temas, sinTarjeta = false }: { temas: TemaDesempe
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-night-line">
+            <tbody className="divide-y divide-gray-200 dark:divide-night-line">
               {ordenados.map((tema) => (
                 <tr key={tema.tema}>
                   <th scope="row" className="py-2 pr-3 text-left font-normal text-gray-800 dark:text-gray-200">
@@ -89,7 +89,7 @@ export function RankingTemas({ temas, sinTarjeta = false }: { temas: TemaDesempe
           </table>
         </div>
       ) : (
-        <ol className="divide-y divide-gray-50 dark:divide-night-line">
+        <ol className="divide-y divide-gray-200 dark:divide-night-line">
           {ordenados.map((tema) => {
             const malas = regularOMalo(tema);
             return (

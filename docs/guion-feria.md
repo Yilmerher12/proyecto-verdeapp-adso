@@ -329,8 +329,8 @@ sistema por detrás. Las reglas de esta sección salen del código real (`be/app
 su número de apartamento. El código de acceso del conjunto es opcional (lo reparte el
 administrador). Debe **verificar su correo** antes de poder iniciar sesión.
 
-**Menú:** Panel Principal · Comunicados · Soporte técnico · Aprende a Reciclar · Directorio
-General · Mi Perfil · Seguridad.
+**Menú:** Panel principal · Comunicados · Soporte técnico · Aprende a reciclar · Directorio
+general · Mi perfil · Seguridad.
 
 **Proceso:**
 1. Entra a su panel y ve primero lo nuevo: la última auditoría del conjunto, los avisos y los
@@ -397,7 +397,7 @@ persona nueva que quiere administrar un conjunto, la pantalla de registro le exp
 la cuenta: enviar por correo el certificado de representación legal de la propiedad horizontal y
 la copia de la cédula.
 
-**Menú:** Panel Principal · Comunicados · Agenda · Desempeño · Soporte técnico · Mi Perfil ·
+**Menú:** Panel principal · Comunicados · Agenda · Desempeño · Soporte técnico · Mi perfil ·
 Seguridad.
 
 **Proceso:**
@@ -426,7 +426,7 @@ Seguridad.
 
 **Cómo entra.** No hay registro público: es una cuenta sembrada en la base de datos.
 
-**Menú:** Panel Principal · Puntos de Acopio · Crear Novedades · Contenido Educativo ·
+**Menú:** Panel principal · Puntos de acopio · Novedades · Contenido educativo ·
 Seguridad.
 
 **Proceso:**
@@ -1920,9 +1920,9 @@ auditoría en vivo, las fotos están en `be/app/data/demo/fotos/`: usa `regular-
 | 1:15 | **Reciclador** | En "Notificaciones recibidas" aparece el aviso (puede tardar hasta 20 s). Pulsas **Llegué al conjunto**, eliges Aranjuez y **Enviar aviso** | "Recibe el aviso y avisa que llegó; la app le avisa al residente. Solo puede avisar si está autorizado en ese conjunto." |
 | 2:00 | **Reciclador** | Pulsas **SHUT ya está libre** y luego **Finalicé separación** | "Cada aviso exige haber avisado la llegada antes: así corresponden a una presencia real." |
 | 2:30 | **Reciclador** | En "Auditoría semanal pendiente" pulsas **Auditar ahora**: nivel **Regular**, un tema, una descripción breve y 2 fotos (`regular-1.jpg` y `regular-2.jpg`). Confirmas el envío | "Califica el conjunto con evidencia: la foto es obligatoria y una auditoría enviada no se puede editar." |
-| 3:30 | **Residente** | Aparecen el aviso de auditoría y el de contenido recomendado. Abres la auditoría con **Ver** y luego vas a **Aprende a Reciclar**: "Tu semana" y la lección recomendada | "Como salió Regular, la app le recomienda la lección del tema que falló; queda como Visto y sube su avance." |
+| 3:30 | **Residente** | Aparecen el aviso de auditoría y el de contenido recomendado. Abres la auditoría con **Ver** y luego vas a **Aprende a reciclar**: "Tu semana" y la lección recomendada | "Como salió Regular, la app le recomienda la lección del tema que falló; queda como Visto y sube su avance." |
 | 4:30 | **Administrador de Conjunto** | Muestras sus conjuntos y el código de acceso; abres **Desempeño** (gráfica de 8 semanas con la barra nueva) y **Agenda → descargar PDF** | "El administrador ve la tendencia semana a semana y organiza al comité; la agenda se descarga en PDF o CSV." |
-| 5:30 | **Administrador del Sistema** | Muestras los totales, **Solicitudes pendientes** (Soporte técnico y Desvinculaciones), usuarios y **Contenido Educativo** con portadas | "El administrador del sistema supervisa la plataforma, atiende soporte, invita administradores y publica contenido." |
+| 5:30 | **Administrador del Sistema** | Muestras los totales, **Solicitudes pendientes** (Soporte técnico y Desvinculaciones), usuarios y **Contenido educativo** con portadas | "El administrador del sistema supervisa la plataforma, atiende soporte, invita administradores y publica contenido." |
 | 6:30 | Cualquiera | Cierras con los números | "53 historias de usuario implementadas, 871 pruebas en el backend, seguridad auditada contra el OWASP Top 10, y un camino claro de qué sigue." |
 
 ### 16.3 Si el tiempo es corto (versión de 3 minutos)

@@ -79,6 +79,32 @@ describe("GuiaApoyoField", () => {
     expect(input).toHaveValue("https://bogota.gov.co/guia");
   });
 
+  // ¿Qué? Issue #616: antes, cambiar de modo (o pulsar el que ya estaba activo) borraba lo escrito.
+  it("conserva el link escrito al pasar a 'subir archivo' y volver", async () => {
+    const user = userEvent.setup();
+
+    render(<GuiaApoyoFieldControlado />);
+    await user.click(screen.getByRole("radio", { name: "Pegar link" }));
+    await user.type(screen.getByPlaceholderText("https://..."), "https://bogota.gov.co/guia");
+
+    await user.click(screen.getByRole("radio", { name: "Subir archivo" }));
+    expect(screen.getByText("Seleccionar imagen o PDF")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("radio", { name: "Pegar link" }));
+    expect(screen.getByPlaceholderText("https://...")).toHaveValue("https://bogota.gov.co/guia");
+  });
+
+  it("pulsar el modo que ya está activo no borra lo escrito", async () => {
+    const user = userEvent.setup();
+
+    render(<GuiaApoyoFieldControlado />);
+    await user.click(screen.getByRole("radio", { name: "Pegar link" }));
+    await user.type(screen.getByPlaceholderText("https://..."), "https://bogota.gov.co/guia");
+
+    await user.click(screen.getByRole("radio", { name: "Pegar link" }));
+    expect(screen.getByPlaceholderText("https://...")).toHaveValue("https://bogota.gov.co/guia");
+  });
+
   it("infiere el modo 'link' cuando el valor ya guardado es una URL externa", () => {
     render(<GuiaApoyoField label="Guía" value="https://bogota.gov.co/guia" onChange={vi.fn()} />);
     expect(screen.getByDisplayValue("https://bogota.gov.co/guia")).toBeInTheDocument();

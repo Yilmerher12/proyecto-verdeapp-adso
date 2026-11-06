@@ -153,6 +153,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | Campo de formulario | `bg-white` | `night-field` |
   | Fondo al pasar el mouse | `hover:bg-gray-50` | `night-hover` |
   | Borde decorativo | `border-gray-100` o `border-gray-200` | `night-line` |
+  | Separador entre filas de una lista o tabla (`divide-y`) y línea sobre un pie (`border-t`) | `divide-gray-200` / `border-gray-200` | `dark:divide-night-line` / `dark:border-night-line`. No se usan `gray-50` (en claro casi no se ve) ni `gray-800` (en oscuro no se ve y no es un token `night-*`); issue #616 |
   | **Borde de un control** (campo, botón secundario) | `border-edge` | `dark:border-night-edge` |
   | Texto principal | `text-gray-900` | `dark:text-white` o `dark:text-gray-100` |
   | Texto secundario | `text-gray-500` | `dark:text-gray-400` |

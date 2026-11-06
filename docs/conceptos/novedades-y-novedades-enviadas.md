@@ -29,7 +29,7 @@ Van en **direcciones contrarias** y viven en **tablas distintas**.
 | Ciclo de vida | Activa → archivada. **Sin vuelta atrás** | `NUEVA` → `EN_REVISION` → `RESUELTA`. Una resuelta **sí se puede reabrir** |
 | Dónde se guarda | `novedades` (+ `novedades_conjuntos` para los conjuntos elegidos) | `novedades_enviadas` |
 | Código del backend | `be/app/routers/novedades.py`, `be/app/services/novedad_service.py` | `be/app/routers/novedades_enviadas.py`, `be/app/services/novedad_enviada_service.py` |
-| Pantalla | Admin Sistema: **Crear Novedades** (`AdminNovedadesPage.tsx`). Los demás roles: **Soporte técnico → Avisos del sistema** (`NovedadesFeedPage.tsx`) | Autor: **Soporte técnico → Escribir novedad** y **Historial de novedades** (`NovedadesEnviadas.tsx`). Admin Sistema: **Panel Principal → Solicitudes pendientes → Soporte técnico** (`SoporteTecnico.tsx`) |
+| Pantalla | Admin Sistema: **Novedades** (`AdminNovedadesPage.tsx`). Los demás roles: **Soporte técnico → Avisos del sistema** (`NovedadesFeedPage.tsx`) | Autor: **Soporte técnico → Escribir novedad** y **Historial de novedades** (`NovedadesEnviadas.tsx`). Admin Sistema: **Panel Principal → Solicitudes pendientes → Soporte técnico** (`SoporteTecnico.tsx`) |
 
 La pestaña **Avisos del sistema** (novedades de RQF-015) y las pestañas **Escribir novedad** e **Historial de novedades** (novedades enviadas de RQF-021) comparten la misma página (`/novedades`).
 Por eso se confunden. La primera es lo que **recibes**; las otras dos son lo que **envías**.
@@ -38,7 +38,7 @@ Por eso se confunden. La primera es lo que **recibes**; las otras dos son lo que
 
 ## 2. Un ejemplo de cada una
 
-**Novedad (RQF-015).** El Admin Sistema entra a **Crear Novedades**, escribe "El jueves la app estará en mantenimiento de 2 a 4 a. m.", elige el alcance "Residentes" y deja "Todos los conjuntos".
+**Novedad (RQF-015).** El Admin Sistema entra a **Novedades**, escribe "El jueves la app estará en mantenimiento de 2 a 4 a. m.", elige el alcance "Residentes" y deja "Todos los conjuntos".
 Al publicar, todos los Residentes reciben una notificación y ven el aviso en **Soporte técnico → Avisos del sistema** hasta que venza o se archive.
 
 **Novedad enviada (RQF-021).** Un Residente entra a **Soporte técnico → Escribir novedad**, elige el motivo "No puedo iniciar sesión o recuperar mi contraseña" y presiona "Enviar consulta".

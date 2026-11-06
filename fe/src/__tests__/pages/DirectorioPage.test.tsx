@@ -141,7 +141,7 @@ describe("DirectorioPage", () => {
     renderPage();
 
     await screen.findByText("Reciclador De Usaquén");
-    await user.click(screen.getByRole("button", { name: "Puntos de Acopio" }));
+    await user.click(screen.getByRole("button", { name: "Puntos de acopio" }));
 
     // Preseleccionado en la misma localidad por conveniencia, pero editable.
     const select = await screen.findByRole("combobox");
@@ -166,7 +166,7 @@ describe("DirectorioPage", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(await screen.findByRole("button", { name: "Puntos de Acopio" }));
+    await user.click(await screen.findByRole("button", { name: "Puntos de acopio" }));
 
     // ¿Qué? El panel ya no afirma que Bogotá solo tiene ECA en 6 de 20 localidades.
     expect(await screen.findByText(/Lista oficial de 2020\. No incluye todas las ECA de Bogotá/)).toBeInTheDocument();
@@ -186,7 +186,7 @@ describe("DirectorioPage", () => {
       mockRespuestas({ nombreLocalidad: "Usaquén" });
       const user = userEvent.setup();
       renderPage();
-      await user.click(await screen.findByRole("button", { name: "Puntos de Acopio" }));
+      await user.click(await screen.findByRole("button", { name: "Puntos de acopio" }));
 
       expect(await screen.findByText(/Aquí puedes ver las ECA de tu localidad\./)).toBeInTheDocument();
       expect(screen.queryByText(/entregar materiales reciclables por tu cuenta/)).not.toBeInTheDocument();
@@ -236,7 +236,7 @@ describe("DirectorioPage", () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.click(await screen.findByRole("button", { name: "Puntos de Acopio" }));
+      await user.click(await screen.findByRole("button", { name: "Puntos de acopio" }));
 
       expect(await screen.findByText("ECA Kennedy")).toBeInTheDocument();
       expect(screen.getByText("ECA Engativá")).toBeInTheDocument();

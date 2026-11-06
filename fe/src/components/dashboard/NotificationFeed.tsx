@@ -162,7 +162,7 @@ export function NotificationFeed({
         <p className="px-5 pb-5 text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</p>
       ) : (
         <>
-          <ul className="divide-y divide-gray-50 dark:divide-gray-800">
+          <ul className="divide-y divide-gray-200 dark:divide-night-line">
             {(expandido ? notifications : notifications.slice(0, 5)).map((n) => {
               const meta = TIPO_META[n.tipo] ?? { Icon: Bell, color: "text-gray-500 dark:text-gray-400" };
               const interactiva = !n.leida || Boolean(onItemClick && (esAccionable?.(n) ?? true));
@@ -229,7 +229,7 @@ export function NotificationFeed({
           {notifications.length > 5 && (
             <button
               onClick={() => setExpandido((v) => !v)}
-              className="w-full cursor-pointer py-2.5 text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 border-t border-gray-50 dark:border-night-line transition-colors"
+              className="w-full cursor-pointer py-2.5 text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 border-t border-gray-200 dark:border-night-line transition-colors"
             >
               {expandido ? t("notificationFeed.showLess") : t("notificationFeed.showMore", { count: notifications.length - 5 })}
             </button>
