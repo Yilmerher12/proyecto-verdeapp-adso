@@ -33,7 +33,12 @@ export function ContenidoRecargable({ cargando, mensaje, children }: ContenidoRe
   return (
     <div aria-busy={cargando}>
       <div className="h-1">{cargando && <ProgressBar compacta label={mensaje} />}</div>
-      <div className={`transition-opacity duration-200 motion-reduce:transition-none ${cargando ? "pointer-events-none opacity-50" : ""}`}>
+      {/* ¿Qué? `inert` además de pointer-events-none: bloquea también el teclado (Tab + Enter) y los
+                lectores de pantalla mientras las filas viejas están atenuadas. */}
+      <div
+        inert={cargando}
+        className={`transition-opacity duration-200 motion-reduce:transition-none ${cargando ? "pointer-events-none opacity-50" : ""}`}
+      >
         {children}
       </div>
     </div>

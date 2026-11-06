@@ -78,7 +78,7 @@ export function ConjuntoCombobox({
                       quedaba recortada y había que bajar el scroll del modal para ver las opciones.
             ¿Impacto? Se ve igual dentro y fuera de un modal. */}
         <ComboboxOptions
-          anchor="bottom start"
+          anchor={{ to: "bottom start", padding: 8 }}
           className="z-[80] mt-1 max-h-60 w-(--input-width) overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-night-line dark:bg-night-field"
         >
           {loading && (
