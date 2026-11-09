@@ -1246,8 +1246,6 @@
     "subtitle": "Crea, edita y elimina los módulos del catálogo, y revisa qué se recomendó a cada conjunto.",
     "newModule": "Nuevo módulo",
     "emptyState": "Todavía no hay módulos creados.",
-    "editAria": "Editar {{titulo}}",
-    "deleteAria": "Eliminar {{titulo}}",
     "modal": {
       "editTitle": "Editar módulo",
       "deleteAriaLabel": "Confirmar eliminación"
@@ -1270,13 +1268,13 @@
       "title": "Catálogo",
       "modules": "Módulos",
       "categories": "Categorías",
-      "notRecommended": "Sin recomendar",
+      "notRecommended": "Temas sin recomendación",
       "notRecommendedHint": "Esta semana no hay recomendación en {{count}} tema — puedes enviar contenido a mano para variar los temas.",
       "notRecommendedHint_other": "Esta semana no hay recomendación en {{count}} temas — puedes enviar contenido a mano para variar los temas.",
       "allCovered": "Todos los temas tuvieron alguna recomendación esta semana."
     },
     "currentWeek": {
-      "title": "Semana {{rango}}",
+      "title": "Calificaciones de esta semana · {{rango}}",
       "good": "Bueno",
       "regular": "Regular",
       "bad": "Malo"
@@ -1341,8 +1339,9 @@
       "allCategories": "Todas las categorías",
       "total": "{{count}} módulo",
       "total_other": "{{count}} módulos",
-      "recommendedTo": "{{count}} conjunto",
-      "recommendedTo_other": "{{count}} conjuntos"
+      "recommendedTo": "Recomendado a {{count}} conjunto",
+      "recommendedTo_other": "Recomendado a {{count}} conjuntos",
+      "actionsFor": "Acciones de {{titulo}}"
     },
     "ratingPanel": {
       "ariaLabel": "Calificación de {{conjunto}}",
@@ -1359,16 +1358,20 @@
     },
     "modulePanel": {
       "ariaLabel": "Módulo: {{titulo}}",
-      "recommendedTo": "Recomendado a {{count}} conjunto",
-      "recommendedTo_other": "Recomendado a {{count}} conjuntos",
+      "tabsLabel": "Secciones del módulo",
+      "preview": "Vista previa",
+      "recommendedTab": "Recomendado a ({{count}})",
       "noneYet": "Todavía no se ha recomendado a ningún conjunto.",
       "sentManually": "Enviado a mano",
       "guideImageHint": "Clic en la imagen para ampliarla."
     },
     "send": {
-      "title": "Enviar a otros conjuntos",
-      "oneLabel": "A un conjunto específico",
-      "severalLabel": "A varios conjuntos",
+      "title": "Enviar a conjuntos",
+      "menuItem": "Enviar a conjuntos…",
+      "subtitle": "Elige los conjuntos que recibirán «{{titulo}}».",
+      "localidadLabel": "Localidad (opcional)",
+      "allLocalidades": "Todas las localidades",
+      "severalLabel": "Conjuntos",
       "searchPlaceholder": "Buscar conjunto…",
       "button": "Enviar",
       "buttonMany": "Enviar a {{count}} conjunto",
@@ -1412,11 +1415,9 @@
     "deleteConfirm": {
       "title": "¿Eliminar \"{{titulo}}\"?",
       "warning": "Esta acción no se puede deshacer.",
+      "action": "Eliminar",
       "confirm": "Sí, eliminar"
-    },
-    "collapse": "Recoger",
-    "expandRatings": "Ver calificaciones",
-    "expandModules": "Ver módulos"
+    }
   },
   "puntosAcopioTabla": {
     "headers": {

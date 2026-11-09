@@ -62,13 +62,13 @@ Este RF extiende **RQF-009** (Auditoría de Residuos con Semáforo) y **RQF-004*
      módulo cuando SU categoría coincidió con el tema calificado Regular/Malo
      en una auditoría — un módulo cuya categoría nunca sale mal calificada
      (o que ni siquiera es auditable, ver RN-005) nunca se recomendaba a
-     nadie por ese camino. El panel del Admin ahora muestra "Sin recomendar"
-     (RQF-010) para que decida enviar esos módulos a mano y aprovechar más el
+     nadie por ese camino. El panel del Admin ahora muestra "Temas sin recomendación"
+     (RQF-010; hasta el issue #619 se llamaba "Sin recomendar", pero cuenta temas, no módulos) para que decida enviar esos módulos a mano y aprovechar más el
      catálogo. ¿Impacto? Segundo camino, además del automático, para que un
      Residente reciba la misma notificación de contenido recomendado. -->
 
-1. El Admin Sistema abre un módulo del catálogo (pestaña "Módulos", RQF-010) y ve a qué conjuntos ya se recomendó (automático o manual).
-2. Elige enviarlo a un conjunto específico o a varios a la vez (`POST /api/v1/contenido-educativo/{id}/enviar`).
+1. El Admin Sistema pulsa un módulo del catálogo (pestaña "Módulos", RQF-010) y se abre un modal para ver, con dos pestañas: "Vista previa" y "Recomendado a (N)" (a qué conjuntos ya se recomendó, automático o manual). La fila de la lista dice "Recomendado a N conjuntos"; el modal solo muestra, y las acciones (Enviar a conjuntos…, Editar y Eliminar) están únicamente en el menú de tres puntos de la fila (issue #619; antes era un panel lateral).
+2. Elige "Enviar a conjuntos…" y, en su propia ventana, marca uno o varios conjuntos con un solo buscador (con un filtro de Localidad opcional que acota la búsqueda sin quitar los ya elegidos); el botón dice cuántos se enviarán (`POST /api/v1/contenido-educativo/{id}/enviar`). Al enviar, la pestaña "Recomendado a" y el chip de la fila se actualizan.
 3. El sistema registra el envío (tabla `contenido_educativo_envios`) y crea, para cada conjunto elegido, una notificación de tipo `CONTENIDO_RECOMENDADO_MANUAL` dirigida a sus Residentes, con `id_referencia` apuntando al módulo (no a una auditoría, porque no hay ninguna de por medio).
 4. El Residente ve la notificación igual que en el Flujo B (mismo ícono 🎓 y ubicación en "Notificaciones recibidas"), con el mensaje: *"Hay contenido educativo nuevo recomendado para tu conjunto."* Al hacer clic, navega directo a la categoría del módulo enviado.
 5. Si el conjunto elegido no tiene ningún Residente registrado todavía, el envío se guarda igual (para que la lista de "Recomendado a" del módulo quede completa) pero no se crea ninguna notificación — no hay nadie a quien notificar.

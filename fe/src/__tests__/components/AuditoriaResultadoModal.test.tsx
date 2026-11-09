@@ -122,3 +122,25 @@ describe("AuditoriaResultadoModal — fotos de evidencia", () => {
     expect(screen.queryByRole("button", { name: "Ver más" })).not.toBeInTheDocument();
   });
 });
+
+// ¿Qué? Issue #619: el Admin del Sistema ya tiene la auditoría en su tabla y el servidor le rechaza GET /{id}, así que
+//       el modal acepta la ficha ya cargada y un pie propio (la sección "Contenido recomendado").
+describe("AuditoriaResultadoModal — con la auditoría ya cargada", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("muestra la ficha sin pedirla al servidor y pinta el pie", () => {
+    render(<AuditoriaResultadoModal auditoria={AUDITORIA} pie={<p>Pie del administrador</p>} onClose={vi.fn()} />);
+
+    expect(screen.getByText("Los Alpes")).toBeInTheDocument();
+    expect(screen.getByText("Juan")).toBeInTheDocument();
+    expect(screen.getByText("Pie del administrador")).toBeInTheDocument();
+    expect(mockObtenerAuditoria).not.toHaveBeenCalled();
+  });
+
+  it("sin pie no agrega ninguna sección extra", () => {
+    render(<AuditoriaResultadoModal auditoria={AUDITORIA} onClose={vi.fn()} />);
+    expect(screen.queryByText("Pie del administrador")).not.toBeInTheDocument();
+  });
+});

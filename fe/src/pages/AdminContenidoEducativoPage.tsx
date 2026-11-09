@@ -1,18 +1,14 @@
 import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import ReactMarkdown from "react-markdown";
 import {
   BookOpen,
   Calendar,
-  Eye,
   FileText,
   Heading2,
   ImagePlus,
   List as ListIcon,
   Bold,
-  ChevronDown,
-  Maximize2,
   Pencil,
   Plus,
   Search,
@@ -21,33 +17,24 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
-import { PanelLateral } from "@/components/ui/PanelLateral";
-import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
+import { MenuAcciones } from "@/components/ui/MenuAcciones";
+import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
 import { InputField } from "@/components/ui/InputField";
-import { Button } from "@/components/ui/Button";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { MuroLeccion } from "@/components/educativo/MuroLeccion";
 import { subirAdjunto } from "@/lib/uploadsApi";
-import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
-import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
-import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
-import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
-import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
-import axios from "axios";
-import { COMPONENTES_MARKDOWN } from "@/config/contenidoEducativoMarkdown";
+import { motivoDelServidor } from "@/api/axios";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT, CATEGORIAS_NO_AUDITABLES } from "@/config/categoriasEducativas";
-import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import { formatearFechaCreacion, lunesBogota, rangoSemanaUTC } from "@/lib/dateFormat";
 import {
   crearContenido,
   editarContenido,
   eliminarContenido,
-  enviarContenido,
   listarContenido,
   listarEnvios,
   type ContenidoEducativo,
@@ -65,10 +52,13 @@ import {
   listarAuditoriasAdmin,
   obtenerResumenSemanaAdmin,
   type AuditoriaAdmin,
-  type NivelDesempeno,
   type ResumenSemanaAdmin,
 } from "@/lib/auditoriaConjuntoApi";
 import { CalificacionesPorConjunto } from "@/components/educativo/CalificacionesPorConjunto";
+import { ContenidoRecomendadoCalificacion } from "@/components/educativo/ContenidoRecomendadoCalificacion";
+import { EnviarAConjuntosModal } from "@/components/educativo/EnviarAConjuntosModal";
+import { ModuloEducativoModal } from "@/components/educativo/ModuloEducativoModal";
+import { combinarConEnvios, destinatariosAutoDe } from "@/lib/destinatariosModulo";
 
 
 const FORM_VACIO: ContenidoEducativoPayload = {
@@ -88,87 +78,12 @@ const NUEVA_CATEGORIA = "__nueva__";
 //       tamaño real de este catálogo (6-20 módulos).
 const LIMITE_AUDITORIAS_RECIENTES = 100;
 
-function fetchConjuntos(query: string): Promise<ConjuntoOption[]> {
-  return axios
-    .get(`${API_BASE_URL}/api/v1/geography/conjuntos/todos`, { params: { search: query || undefined, limit: 20 } })
-    .then((res) => res.data)
-    .catch(() => []);
-}
-
-// ¿Qué? Destinatario ya resuelto de un módulo — une las auditorías Regular
-//       o Malo (automáticas) con los envíos manuales, sin repetir un mismo
-//       conjunto dos veces.
-// ¿Para qué? Si un conjunto tiene ambas, se queda la calificación (trae más
-//           contexto: el semáforo y quién la hizo) — el envío manual solo
-//           se muestra para los conjuntos que no tienen ya una calificación
-//           de ese tema.
-interface Destinatario {
-  id_conjunto_residencial: string;
-  nombre_conjunto: string;
-  tipo: "auto" | "manual";
-  nivel?: NivelDesempeno;
-  fecha: string;
-}
-
-function destinatariosAutoDe(modulo: ContenidoEducativo, auditorias: AuditoriaAdmin[]): Destinatario[] {
-  const vistos = new Set<string>();
-  const out: Destinatario[] = [];
-  const ordenadas = [...auditorias]
-    .filter((a) => a.tema_educativo === modulo.modulo_categoria && a.nivel_desempeno !== "BUENA")
-    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-  for (const a of ordenadas) {
-    if (vistos.has(a.id_conjunto_residencial)) continue;
-    vistos.add(a.id_conjunto_residencial);
-    out.push({
-      id_conjunto_residencial: a.id_conjunto_residencial,
-      nombre_conjunto: a.nombre_conjunto,
-      tipo: "auto",
-      nivel: a.nivel_desempeno,
-      fecha: a.created_at,
-    });
-  }
-  return out;
-}
-
-function combinarConEnvios(auto: Destinatario[], envios: EnvioContenido[]): Destinatario[] {
-  const vistos = new Set(auto.map((d) => d.id_conjunto_residencial));
-  const manuales: Destinatario[] = envios
-    .filter((e) => !vistos.has(e.id_conjunto_residencial))
-    .map((e) => ({
-      id_conjunto_residencial: e.id_conjunto_residencial,
-      nombre_conjunto: e.nombre_conjunto,
-      tipo: "manual" as const,
-      fecha: e.created_at,
-    }));
-  return [...auto, ...manuales];
-}
-
-// ¿Qué? La guía de apoyo puede ser una imagen subida, un PDF subido, o un
-//       link externo escrito a mano (GuiaApoyoField admite las 3 formas) —
-//       solo las imágenes se pueden mostrar integradas con una <img>; un PDF
-//       (o un link cuyo tipo no se puede saber sin descargarlo) se queda
-//       como el botón "Ver guía de apoyo" de siempre.
-// ¿Para qué? Antes, ver la foto de la guía exigía un clic extra a ciegas
-//           (el botón no daba ninguna pista de que había una imagen detrás).
-const EXTENSIONES_IMAGEN_GUIA = [".jpg", ".jpeg", ".png", ".webp"];
-function esImagenGuia(url: string): boolean {
-  const limpia = url.split("?")[0].split("#")[0].toLowerCase();
-  return EXTENSIONES_IMAGEN_GUIA.some((ext) => limpia.endsWith(ext));
-}
-
 export function AdminContenidoEducativoPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const p = "adminContenidoEducativo";
 
   const [tab, setTab] = useState<"cal" | "mod">("cal");
-  // ¿Qué? El contenido de la pestaña activa (semana/chips/tabla, o
-  //       buscador/lista de módulos) se puede recoger para que no ocupe
-  //       espacio cuando no se está usando — solo las dos pestañas quedan
-  //       siempre visibles. Empieza expandido: recogerlo es una decisión
-  //       explícita del Admin, no algo que tenga que abrir cada vez que
-  //       entra al panel.
-  const [panelExpandido, setPanelExpandido] = useState(true);
 
   // ---------- Catálogo (módulos) ----------
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
@@ -216,10 +131,8 @@ export function AdminContenidoEducativoPage() {
 
   // ---------- Pestaña "Calificaciones por conjunto" ----------
   // ¿Qué? La tabla, el periodo y los filtros viven en CalificacionesPorConjunto; aquí solo se guarda cuál
-  //       calificación está abierta en el panel de detalle.
+  //       calificación está abierta en su modal de detalle.
   const [calAbierta, setCalAbierta] = useState<AuditoriaAdmin | null>(null);
-  const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
-  const auditoriaAbierta = calAbierta ?? undefined;
 
   // ---------- Tarjeta "Sin recomendar" ----------
   const categorias = useMemo(() => {
@@ -239,77 +152,31 @@ export function AdminContenidoEducativoPage() {
     return categoriasAuditables.filter((c) => !conRecomendacion.has(c)).length;
   }, [categoriasAuditables, resumenSemana]);
 
-  // ---------- Panel de un módulo (vista previa + recomendado a + enviar) ----------
+  // ---------- Módulo abierto (modal de ver) y su envío a conjuntos ----------
+  // ¿Qué? Los envíos manuales de cada módulo que ya se pidieron, por id. La lista los usa para el chip
+  //       "Recomendado a N conjuntos" y el modal de ver para su pestaña; se actualizan al abrir un módulo y al enviar.
+  // ¿Para qué? Issue #619: que enviar a conjuntos cambie el chip de la lista sin recargar la página.
   const [moduloAbierto, setModuloAbierto] = useState<string | null>(null);
-  const [enviosDelModulo, setEnviosDelModulo] = useState<EnvioContenido[]>([]);
+  const [enviosPorModulo, setEnviosPorModulo] = useState<Record<string, EnvioContenido[]>>({});
   const [cargandoEnvios, setCargandoEnvios] = useState(false);
-  const [conjuntoUnico, setConjuntoUnico] = useState<ConjuntoOption | null>(null);
-  const [conjuntosVarios, setConjuntosVarios] = useState<ConjuntoOption[]>([]);
-  const [enviando, setEnviando] = useState(false);
-  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
+  const [aEnviar, setAEnviar] = useState<ContenidoEducativo | null>(null);
 
   const moduloAbiertoObj = moduloAbierto ? contenido.find((m) => m.id_contenido === moduloAbierto) : undefined;
 
-  useEffect(() => {
-    if (!moduloAbierto) {
-      setEnviosDelModulo([]);
-      setConjuntoUnico(null);
-      setConjuntosVarios([]);
-      setErrorEnvio(null);
-      return;
-    }
+  const cargarEnvios = (idContenido: string) => {
     setCargandoEnvios(true);
-    listarEnvios(moduloAbierto)
-      .then(setEnviosDelModulo)
-      .catch(() => setEnviosDelModulo([]))
+    listarEnvios(idContenido)
+      .then((envios) => setEnviosPorModulo((previos) => ({ ...previos, [idContenido]: envios })))
+      .catch(() => {})
       .finally(() => setCargandoEnvios(false));
+  };
+
+  useEffect(() => {
+    if (moduloAbierto) cargarEnvios(moduloAbierto);
   }, [moduloAbierto]);
 
-  const destinatariosDelModuloAbierto = useMemo(() => {
-    if (!moduloAbiertoObj) return [];
-    return combinarConEnvios(destinatariosAutoDe(moduloAbiertoObj, auditoriasRecientes), enviosDelModulo);
-  }, [moduloAbiertoObj, auditoriasRecientes, enviosDelModulo]);
-
-  const refrescarTrasEnvio = () => {
-    if (!moduloAbierto) return;
-    setCargandoEnvios(true);
-    listarEnvios(moduloAbierto)
-      .then(setEnviosDelModulo)
-      .finally(() => setCargandoEnvios(false));
-  };
-
-  const enviarAUno = async () => {
-    if (!moduloAbierto || !conjuntoUnico) return;
-    setEnviando(true);
-    setErrorEnvio(null);
-    try {
-      await enviarContenido(moduloAbierto, [conjuntoUnico.id_conjunto_residencial]);
-      setConjuntoUnico(null);
-      refrescarTrasEnvio();
-    } catch {
-      setErrorEnvio(t(`${p}.send.error`));
-    } finally {
-      setEnviando(false);
-    }
-  };
-
-  const enviarAVarios = async () => {
-    if (!moduloAbierto || conjuntosVarios.length === 0) return;
-    setEnviando(true);
-    setErrorEnvio(null);
-    try {
-      await enviarContenido(
-        moduloAbierto,
-        conjuntosVarios.map((c) => c.id_conjunto_residencial)
-      );
-      setConjuntosVarios([]);
-      refrescarTrasEnvio();
-    } catch {
-      setErrorEnvio(t(`${p}.send.error`));
-    } finally {
-      setEnviando(false);
-    }
-  };
+  const destinatariosDe = (modulo: ContenidoEducativo) =>
+    combinarConEnvios(destinatariosAutoDe(modulo, auditoriasRecientes), enviosPorModulo[modulo.id_contenido] ?? []);
 
   // ---------- Formulario crear/editar (con vista previa en vivo) ----------
   const [editando, setEditando] = useState<ContenidoEducativo | null>(null);
@@ -603,24 +470,13 @@ export function AdminContenidoEducativoPage() {
       </div>
 
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm overflow-hidden">
-        {/* ¿Qué? Toda la barra recoge/expande al hacer clic (no solo el
-            texto "Recoger"/"Ver..." de la derecha) — las pestañas cortan la
-            propagación para que elegir una NO dispare también el toggle,
-            ya que un <button> no puede ir anidado dentro de otro <button>
-            (por eso esta barra es un <div>, no un <button>, a diferencia
-            del encabezado de "Usuarios registrados" en AdminDashboard.tsx,
-            que sí es un solo <button> porque no tiene pestañas adentro). */}
-        <div
-          onClick={() => setPanelExpandido((v) => !v)}
-          className="flex flex-wrap cursor-pointer items-center justify-between gap-2 px-5 py-4"
-        >
+        {/* ¿Qué? Issue #619: la barra de pestañas ya no se recoge (se quitó "Recoger / Ver calificaciones / Ver módulos"):
+            ocultar la tabla no aportaba nada y el panel queda siempre abierto. */}
+        <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
           <div className="flex flex-wrap rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-night-line dark:bg-night-inset/60">
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setTab("cal");
-              }}
+              onClick={() => setTab("cal")}
               className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 tab === "cal" ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
@@ -630,10 +486,7 @@ export function AdminContenidoEducativoPage() {
             </button>
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setTab("mod");
-              }}
+              onClick={() => setTab("mod")}
               className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 tab === "mod" ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
@@ -643,21 +496,9 @@ export function AdminContenidoEducativoPage() {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPanelExpandido((v) => !v);
-            }}
-            aria-expanded={panelExpandido}
-            className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-night-inset/60 dark:hover:text-gray-200"
-          >
-            {panelExpandido ? t(`${p}.collapse`) : tab === "cal" ? t(`${p}.expandRatings`) : t(`${p}.expandModules`)}
-            <ChevronDown className={`icon-sm transition-transform ${panelExpandido ? "rotate-180" : ""}`} />
-          </button>
         </div>
 
-        {panelExpandido && (tab === "cal" ? (
+        {tab === "cal" ? (
           <CalificacionesPorConjunto
             semanaActual={semanaActual}
             ultimaFecha={auditoriasRecientes[0]?.created_at ?? null}
@@ -720,289 +561,86 @@ export function AdminContenidoEducativoPage() {
                 })
                 .map((item) => {
                   const Icono = ICONOS_CATEGORIAS[item.modulo_categoria] ?? ICONO_CATEGORIA_DEFAULT;
-                  const nRecomendados = destinatariosAutoDe(item, auditoriasRecientes).length;
+                  const nRecomendados = destinatariosDe(item).length;
                   return (
+                    // ¿Qué? Issue #619: pulsar la fila sirve para VER (abre el modal); las acciones (enviar, editar,
+                    //       eliminar) están en el menú de tres puntos. El botón de la izquierda hace la fila alcanzable con
+                    //       el teclado: su clic sube a la fila, que es la que abre el modal.
                     <div
                       key={item.id_contenido}
                       onClick={() => setModuloAbierto(item.id_contenido)}
                       className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:hover:bg-night-inset/40"
                     >
-                      <div className="flex min-w-0 items-start gap-3">
+                      <button type="button" className="focus-ring flex min-w-0 flex-1 cursor-pointer items-start gap-3 rounded-lg text-left">
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
                           <Icono className="icon-lg" />
                         </span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">{item.modulo_categoria}</p>
-                          <p className="truncate text-sm font-bold text-gray-900 dark:text-white">{item.titulo_tema}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(item.fecha_publicacion)}</p>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">{item.modulo_categoria}</span>
+                          <span className="block truncate text-sm font-bold text-gray-900 dark:text-white">{item.titulo_tema}</span>
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(item.fecha_publicacion)}</span>
+                        </span>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         {nRecomendados > 0 && (
                           <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
                             {t(`${p}.modules.recommendedTo`, { count: nRecomendados })}
                           </span>
                         )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            abrirEditar(item);
-                          }}
-                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
-                          aria-label={t(`${p}.editAria`, { titulo: item.titulo_tema })}
-                          title={t(`${p}.editAria`, { titulo: item.titulo_tema })}
-                        >
-                          <Pencil className="icon-md" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setAEliminar(item);
-                          }}
-                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-400/15"
-                          aria-label={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
-                          title={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
-                        >
-                          <Trash2 className="icon-md" />
-                        </button>
+                        <MenuAcciones
+                          ariaLabel={t(`${p}.modules.actionsFor`, { titulo: item.titulo_tema })}
+                          grupos={[
+                            [
+                              { id: "enviar", label: t(`${p}.send.menuItem`), icon: Send, onSelect: () => setAEnviar(item) },
+                              { id: "editar", label: t("common.edit"), icon: Pencil, onSelect: () => abrirEditar(item) },
+                            ],
+                            [{ id: "eliminar", label: t(`${p}.deleteConfirm.action`), icon: Trash2, peligrosa: true, onSelect: () => setAEliminar(item) }],
+                          ]}
+                        />
                       </div>
                     </div>
                   );
                 })}
             </div>
           </div>
-        ))}
+        )}
       </div>
 
-      {/* ---------- Panel: detalle de una calificación ---------- */}
-      {auditoriaAbierta && (
-        <PanelLateral onClose={() => setCalAbierta(null)} aria-label={t(`${p}.ratingPanel.ariaLabel`, { conjunto: auditoriaAbierta.nombre_conjunto })}>
-          <div className="border-b border-gray-100 p-5 pr-14 dark:border-night-line">
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">{auditoriaAbierta.nombre_conjunto}</h2>
-            {(() => {
-              const nivel = NIVELES_DESEMPENO[auditoriaAbierta.nivel_desempeno];
-              return (
-                <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${nivel.claseBadge}`}>
-                  <nivel.icon className="icon-sm" />
-                  {t(`dashboards.reciclador.auditoria.niveles.${auditoriaAbierta.nivel_desempeno.toLowerCase()}`)}
-                </div>
-              );
-            })()}
-          </div>
-
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.details`)}</h3>
-            <dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-sm">
-              <dt className="text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.theme`)}</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">{auditoriaAbierta.tema_educativo}</dd>
-              <dt className="text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.date`)}</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">{formatearFechaCreacion(auditoriaAbierta.created_at)}</dd>
-              <dt className="text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.recycler`)}</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">{auditoriaAbierta.nombre_reciclador}</dd>
-            </dl>
-          </section>
-
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.observations`)}</h3>
-            {auditoriaAbierta.descripcion ? (
-              <p className="border-l-2 border-gray-200 pl-3 text-sm text-gray-800 dark:border-night-line dark:text-gray-200">{auditoriaAbierta.descripcion}</p>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.week.noObservations`)}</p>
-            )}
-          </section>
-
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.evidence`)}</h3>
-            {/* ¿Qué? Sin fotos = ya se borraron por el plazo de retención de 6 meses (issue #587). */}
-            {![auditoriaAbierta.ruta_evidencia, auditoriaAbierta.ruta_evidencia_2, auditoriaAbierta.ruta_evidencia_3].some(
-              (r) => Boolean(enlaceAdjuntoSeguro(r)),
-            ) && <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.evidenceGone`)}</p>}
-            <div className="grid grid-cols-3 gap-2">
-              {[auditoriaAbierta.ruta_evidencia, auditoriaAbierta.ruta_evidencia_2, auditoriaAbierta.ruta_evidencia_3]
-                .filter((r): r is string => Boolean(enlaceAdjuntoSeguro(r)))
-                .map((ruta) => (
-                  <button
-                    key={ruta}
-                    type="button"
-                    onClick={() => setFotoAmpliada(ruta)}
-                    className="focus-ring relative aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
-                    aria-label={t(`${p}.ratingPanel.enlarge`)}
-                    title={t(`${p}.ratingPanel.enlarge`)}
-                  >
-                    <img src={enlaceAdjuntoSeguro(ruta) ?? undefined} alt="" className="h-full w-full object-cover" />
-                    <InsigniaAccionImagen icono={Maximize2} />
-                  </button>
-                ))}
-            </div>
-          </section>
-
-          <section className="p-5">
-            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.recommendedContent`)}</h3>
-            {auditoriaAbierta.avisados > 0 ? (
-              <>
-                <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">{t(`${p}.week.notified`, { count: auditoriaAbierta.avisados })}</p>
-                {contenido
-                  .filter((m) => m.modulo_categoria === auditoriaAbierta.tema_educativo)
-                  .map((m) => (
-                    <button
-                      key={m.id_contenido}
-                      type="button"
-                      onClick={() => {
-                        setCalAbierta(null);
-                        setTab("mod");
-                        setModuloAbierto(m.id_contenido);
-                      }}
-                      className="mb-1.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white px-3 py-2 text-left text-sm text-gray-800 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-200 dark:hover:bg-night-inset"
-                    >
-                      {m.titulo_tema}
-                      <Eye className="icon-sm shrink-0 text-gray-500 dark:text-gray-400" />
-                    </button>
-                  ))}
-              </>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.noRecommendationHint`)}</p>
-            )}
-          </section>
-        </PanelLateral>
+      {/* ---------- Detalle de una calificación (issue #619: el mismo modal que ven los demás roles) ---------- */}
+      {calAbierta && (
+        <AuditoriaResultadoModal
+          auditoria={calAbierta}
+          onClose={() => setCalAbierta(null)}
+          pie={
+            <ContenidoRecomendadoCalificacion
+              auditoria={calAbierta}
+              modulos={contenido}
+              onAbrirModulo={(id) => {
+                setCalAbierta(null);
+                setTab("mod");
+                setModuloAbierto(id);
+              }}
+            />
+          }
+        />
       )}
 
-      {fotoAmpliada && (
-        <Modal onClose={() => setFotoAmpliada(null)} layer="stacked" wide aria-label={t(`${p}.ratingPanel.enlarge`)}>
-          {/* ¿Qué? La imagen de la guía puede venir de un link externo pegado a
-              mano (https://) o de un archivo subido (/uploads/...);
-              enlaceAdjuntoSeguro completa solo el segundo caso con la URL del
-              backend (issue #400). */}
-          <img
-            src={enlaceAdjuntoSeguro(fotoAmpliada) ?? undefined}
-            alt=""
-            className="max-h-[80vh] w-full rounded-2xl object-contain"
-          />
-        </Modal>
-      )}
-
-      {/* ---------- Panel: un módulo (vista previa + recomendado a + enviar) ---------- */}
+      {/* ---------- Ver un módulo (vista previa + recomendado a) ---------- */}
       {moduloAbiertoObj && (
-        <PanelLateral onClose={() => setModuloAbierto(null)} aria-label={t(`${p}.modulePanel.ariaLabel`, { titulo: moduloAbiertoObj.titulo_tema })}>
-          <div className="border-b border-gray-100 p-5 pr-14 dark:border-night-line">
-            <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">{moduloAbiertoObj.modulo_categoria}</span>
-            <h2 className="mt-1 text-base font-bold text-gray-900 dark:text-white">{moduloAbiertoObj.titulo_tema}</h2>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(moduloAbiertoObj.fecha_publicacion)}</p>
-          </div>
+        <ModuloEducativoModal
+          modulo={moduloAbiertoObj}
+          destinatarios={destinatariosDe(moduloAbiertoObj)}
+          cargandoEnvios={cargandoEnvios}
+          onClose={() => setModuloAbierto(null)}
+        />
+      )}
 
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <ReactMarkdown components={COMPONENTES_MARKDOWN}>{moduloAbiertoObj.cuerpo_texto}</ReactMarkdown>
-            {moduloAbiertoObj.url_video && <YoutubeEmbed url={moduloAbiertoObj.url_video} titulo={moduloAbiertoObj.titulo_tema} />}
-            {enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) && (
-              esImagenGuia(moduloAbiertoObj.url_guia!) ? (
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    onClick={() => setFotoAmpliada(moduloAbiertoObj.url_guia!)}
-                    className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-gray-100 dark:border-night-line"
-                    aria-label={t(`${p}.ratingPanel.enlarge`)}
-                    title={t(`${p}.ratingPanel.enlarge`)}
-                  >
-                    <img
-                      src={enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) ?? undefined}
-                      alt=""
-                      className="max-h-64 w-full object-cover"
-                    />
-                    <InsigniaAccionImagen icono={Maximize2} />
-                  </button>
-                  <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.modulePanel.guideImageHint`)}</p>
-                </div>
-              ) : (
-                <a
-                  href={enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) ?? undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-200 dark:hover:bg-night-hover"
-                >
-                  <FileText className="icon-md shrink-0" />
-                  {t("categoriaEducativa.viewGuide")}
-                </a>
-              )
-            )}
-          </section>
-
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              {t(`${p}.modulePanel.recommendedTo`, { count: destinatariosDelModuloAbierto.length })}
-            </h3>
-            {cargandoEnvios ? (
-              <LoadingState message={t("common.loading")} />
-            ) : destinatariosDelModuloAbierto.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.modulePanel.noneYet`)}</p>
-            ) : (
-              <div className="space-y-2">
-                {destinatariosDelModuloAbierto.map((d) => (
-                  <div key={d.id_conjunto_residencial} className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-2 text-sm first:border-t-0 first:pt-0 dark:border-night-line">
-                    <span className="flex-1 font-semibold text-gray-900 dark:text-white">{d.nombre_conjunto}</span>
-                    {d.tipo === "auto" && d.nivel ? (
-                      (() => {
-                        const nivel = NIVELES_DESEMPENO[d.nivel];
-                        return (
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${nivel.claseBadge}`}>
-                            <nivel.icon className="icon-sm" />
-                            {t(`dashboards.reciclador.auditoria.niveles.${d.nivel.toLowerCase()}`)}
-                          </span>
-                        );
-                      })()
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-purple-700 dark:bg-purple-400/10 dark:text-purple-300">
-                        <Send className="icon-sm" />
-                        {t(`${p}.modulePanel.sentManually`)}
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(d.fecha)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.send.title`)}</h3>
-            {errorEnvio && (
-              <div className="mb-3">
-                <Alert type="error" message={errorEnvio} onClose={() => setErrorEnvio(null)} />
-              </div>
-            )}
-            <div className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600 dark:text-gray-300">{t(`${p}.send.oneLabel`)}</label>
-                <div className="flex gap-2">
-                  <div className="min-w-0 flex-1 [&_input]:!mt-0">
-                    <ConjuntoCombobox value={conjuntoUnico} onChange={setConjuntoUnico} fetchOptions={fetchConjuntos} placeholder={t(`${p}.send.searchPlaceholder`)} ariaLabel={t(`${p}.send.oneLabel`)} />
-                  </div>
-                  <Button type="button" size="sm" onClick={enviarAUno} isLoading={enviando} disabled={!conjuntoUnico}>
-                    <Send className="icon-sm mr-1" />
-                    {t(`${p}.send.button`)}
-                  </Button>
-                </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600 dark:text-gray-300">{t(`${p}.send.severalLabel`)}</label>
-                <ConjuntoComboboxMultiple value={conjuntosVarios} onChange={setConjuntosVarios} fetchOptions={fetchConjuntos} placeholder={t(`${p}.send.searchPlaceholder`)} ariaLabel={t(`${p}.send.severalLabel`)} />
-                <Button type="button" size="sm" fullWidth onClick={enviarAVarios} isLoading={enviando} disabled={conjuntosVarios.length === 0}>
-                  <Send className="icon-sm mr-1" />
-                  {conjuntosVarios.length > 0 ? t(`${p}.send.buttonMany`, { count: conjuntosVarios.length }) : t(`${p}.send.button`)}
-                </Button>
-              </div>
-            </div>
-          </section>
-
-          <div className="sticky bottom-0 mt-auto flex flex-wrap gap-2 border-t border-gray-100 bg-white p-5 dark:border-night-line dark:bg-night-card">
-            <Button type="button" size="sm" onClick={() => abrirEditar(moduloAbiertoObj)}>
-              <Pencil className="icon-sm mr-1" />
-              {t("common.edit")}
-            </Button>
-            <Button type="button" size="sm" variant="danger" onClick={() => setAEliminar(moduloAbiertoObj)}>
-              <Trash2 className="icon-sm mr-1" />
-              {t(`${p}.deleteConfirm.confirm`)}
-            </Button>
-          </div>
-        </PanelLateral>
+      {aEnviar && (
+        <EnviarAConjuntosModal
+          modulo={aEnviar}
+          onEnviado={() => cargarEnvios(aEnviar.id_contenido)}
+          onClose={() => setAEnviar(null)}
+        />
       )}
 
       {/* ---------- Formulario crear/editar, con vista previa en vivo ---------- */}

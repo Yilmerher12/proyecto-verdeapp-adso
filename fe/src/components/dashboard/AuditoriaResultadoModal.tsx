@@ -14,7 +14,7 @@
  *           encima (layer="stacked"). Las observaciones largas se cortan a 5
  *           líneas con "Ver más" — el botón solo aparece si el texto no cabe.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, ImageOff, Maximize2 } from "lucide-react";
 import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
@@ -29,27 +29,36 @@ import { tiempoRelativo } from "@/lib/notificaciones";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 interface AuditoriaResultadoModalProps {
-  idAuditoria: string;
+  /** La pide al servidor por su id (Residente, Admin de Conjunto y Reciclador). */
+  idAuditoria?: string;
+  /** ¿Qué? La auditoría ya cargada: no se pide al servidor.
+   *  ¿Para qué? Issue #619: el Admin del Sistema ya tiene la fila en su tabla, y GET /auditorias-conjunto/{id}
+   *            rechaza a ese rol (el servicio solo deja ver la auditoría a quien pertenece al conjunto). */
+  auditoria?: AuditoriaConjunto;
+  /** ¿Qué? Contenido extra al pie de la ficha (ej. "Contenido recomendado" del Admin del Sistema). */
+  pie?: ReactNode;
   onClose: () => void;
 }
 
 const CLASE_FLECHA =
   "focus-ring absolute top-1/2 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/55 text-white transition-colors hover:bg-black/80";
 
-export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResultadoModalProps) {
+export function AuditoriaResultadoModal({ idAuditoria, auditoria: auditoriaRecibida, pie, onClose }: AuditoriaResultadoModalProps) {
   const { t } = useTranslation();
-  const [auditoria, setAuditoria] = useState<AuditoriaConjunto | null>(null);
-  const [cargando, setCargando] = useState(true);
+  const [auditoriaPedida, setAuditoriaPedida] = useState<AuditoriaConjunto | null>(null);
+  const [cargando, setCargando] = useState(!auditoriaRecibida);
   const [error, setError] = useState(false);
   const [indice, setIndice] = useState(0);
   const [ampliada, setAmpliada] = useState(false);
+  const auditoria = auditoriaRecibida ?? auditoriaPedida;
 
   useEffect(() => {
+    if (auditoriaRecibida || !idAuditoria) return;
     obtenerAuditoria(idAuditoria)
-      .then(setAuditoria)
+      .then(setAuditoriaPedida)
       .catch(() => setError(true))
       .finally(() => setCargando(false));
-  }, [idAuditoria]);
+  }, [idAuditoria, auditoriaRecibida]);
 
   // ¿Qué? Solo las fotos cuya ruta pasa enlaceAdjuntoSeguro (issue #400).
   const fotos = auditoria
@@ -235,6 +244,8 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
               </dl>
             </div>
           </div>
+
+          {pie && <div className="border-t border-gray-100 p-5 dark:border-night-line">{pie}</div>}
         </div>
       )}
 
