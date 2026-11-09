@@ -50,6 +50,10 @@ export function rutaDeNotificacion(notificacion: Pick<NotificacionItem, "tipo">,
     case "RESPUESTA_SOPORTE":
     case "ESTADO_SOPORTE":
       return rol === RoleId.ADMIN_SISTEMA ? "/admin/novedades" : "/novedades";
+    // ¿Qué? Issue #617: lo que le llega al Admin del Sistema por atender va a la página de Solicitudes.
+    case "SOPORTE_NUEVO":
+    case "DESVINCULACION_SOLICITADA":
+      return rol === RoleId.ADMIN_SISTEMA ? "/admin/solicitudes" : null;
     default:
       return null;
   }

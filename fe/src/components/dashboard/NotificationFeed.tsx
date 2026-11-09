@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   DoorOpen,
   GraduationCap,
+  Headset,
   LifeBuoy,
   Megaphone,
   MessageSquareReply,
@@ -55,6 +56,9 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   // Soporte técnico: respuesta y cambio de estado de la consulta que el usuario envió
   RESPUESTA_SOPORTE: { Icon: MessageSquareReply, color: "text-accent-700 dark:text-accent-500" },
   ESTADO_SOPORTE: { Icon: LifeBuoy, color: "text-accent-700 dark:text-accent-500" },
+  // Issue #617: lo que le llega al Admin del Sistema para atender (consulta de soporte y solicitud de desvinculación)
+  SOPORTE_NUEVO: { Icon: Headset, color: "text-amber-700 dark:text-amber-200" },
+  DESVINCULACION_SOLICITADA: { Icon: Unlink, color: "text-amber-700 dark:text-amber-200" },
   // RQF-009 (resultado de la auditoría del reciclador)
   AUDITORIA_PUBLICADA: { Icon: ClipboardCheck, color: "text-teal-700 dark:text-teal-300" },
   // RQF-013 (recomendación de contenido educativo según auditoría)
