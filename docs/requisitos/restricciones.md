@@ -167,6 +167,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 - Logo: solo en SVG, en `fe/public/logos/` (`logo`, `logo-white`, `logo-mark`, `logo-mark-white` y `favicon`). Ninguna página pone un `<img>` del logo a mano: siempre se usa el componente `BrandLogo` (`fe/src/components/ui/BrandLogo.tsx`), que elige la versión según el fondo y el modo oscuro. No se usan PNG ni íconos de `lucide-react` (como `Leaf`) en lugar del logo.
 - El color de marca (`accent-*`) es el único acento de color permitido en componentes reutilizables; los colores por rol (sidebar, badges) viven centralizados en `fe/src/config/roleTheme.ts`, no repetidos por archivo.
 - Todo componente nuevo debe soportar modo claro y modo oscuro (`dark:`) desde el primer commit — no se agrega como una tarea aparte después.
+- Modal o página (issue #621, `docs/gestion-proyecto/decision-modal-o-pagina.md`): **modal** para una tarea corta que se hace sin salir de donde se estaba (mirar una ficha, un formulario corto, una confirmación); **página** para una lista que se recorre, para un trabajo largo o para algo a lo que hay que poder volver o enlazar. Un modal nunca es más alto que la pantalla (scroll interno y X fija en `Modal.tsx`), uno sobre otro es excepcional (`layer="stacked"`, máximo dos capas) y no se usan paneles laterales.
 
 ---
 
