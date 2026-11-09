@@ -1257,13 +1257,10 @@
           "bodyRequired": "The content is required.",
           "bodyTooShort": "The content must be at least 20 characters long.",
           "videoNotYoutube": "The video must be a YouTube link starting with https:// (for example https://youtu.be/...).",
-          "guideNotHttps": "The guide link must start with https://."
+          "guideNotHttps": "The guide link must start with https://.",
+          "categoryDuplicate": "That category already exists. Pick it under “Existing” to avoid duplicating it."
         },
         "deleteError": "Could not delete. Please try again.",
-        "newSection": {
-          "title": "New content",
-          "newCategory": "+ New category"
-        },
         "catalogSection": {
           "title": "Catalog",
           "modules": "Modules",
@@ -1382,14 +1379,25 @@
           "category": "Category",
           "categoryPlaceholder": "E.g.: Source separation",
           "categoryPlaceholderSelect": "Choose a category…",
-          "newCategoryOption": "+ New category…",
-          "newCategoryWarning": "This will create a new category in the Resident's catalog. Type it exactly like the existing ones to avoid duplicating it.",
+          "categoryModeAria": "How to choose the category",
+          "categoryMode": {
+            "existing": "Existing",
+            "new": "New"
+          },
+          "categoryNoneYet": "There are no categories yet: type a new one.",
+          "categoryDuplicate": "The category “{{nombre}}” already exists.",
+          "useExistingCategory": "Use “{{nombre}}”",
+          "newCategoryWarning": "A new category will also be a topic that recyclers can rate when they audit a building.",
           "titleField": "Title",
           "titlePlaceholder": "E.g.: Bag color code",
           "content": "Content",
-          "contentMarkdownHint": "You can use ## for subheadings, **bold**, and - for lists.",
           "charCount": "{{count}}/{{max}} characters · minimum 20",
-          "formatHeading": "Heading",
+          "addCard": "Card",
+          "addCardHint": "Adds a new paragraph with its title, ready to type",
+          "cardTitlePlaceholder": "Card title",
+          "boldHint": "Makes the selected text bold",
+          "listHint": "Turns the selected lines into a list",
+          "insertImageHint": "Uploads an image and pastes it into the text; it goes with the next card",
           "formatBold": "Bold",
           "formatList": "List",
           "boldPlaceholder": "bold text",
@@ -1397,7 +1405,7 @@
           "videoRecognized": "✓ YouTube link recognized",
           "videoNotRecognized": "This link doesn't look like YouTube: the Resident won't see the video.",
           "guideLink": "Support guide",
-          "contentMuroHint": "Each paragraph (separated by a blank line) becomes a card on the wall. Start the paragraph with a short title and a colon (for example, “White bag: ...”). The first paragraph without a title is the introduction. An image on its own line attaches to the card that follows.",
+          "contentHint": "Each paragraph, separated by a blank line, is a card on the wall. “Card” starts one with its title; the first paragraph without a title is the introduction.",
           "insertImage": "Insert image",
           "insertingImage": "Uploading...",
           "insertImageError": "The image could not be uploaded. Please try again.",
@@ -1405,9 +1413,29 @@
           "coverImage": "Cover image (optional)",
           "coverImageHint": "Shown on the category card. A wide image (16:9) works best, your own or freely licensed. JPG, PNG or WEBP up to 5 MB. Without an image, the category drawing is used."
         },
+        "wallSummary": {
+          "title": "How your text will be split on the wall",
+          "empty": "Write the content and here you will see its introduction, its cards and its closing.",
+          "intro": "Introduction",
+          "cards_one": "{{count}} card",
+          "cards_other": "{{count}} cards",
+          "noTitle": "No title",
+          "closing": "Closing",
+          "none": "none"
+        },
+        "editor": {
+          "mobileTabsLabel": "What to show",
+          "edit": "Edit",
+          "preview": "Preview"
+        },
         "preview": {
           "label": "How the Resident will see it",
-          "live": "live",
+          "updates": "Updates as you type",
+          "tabsLabel": "Which part to show",
+          "tabLesson": "Lesson",
+          "tabCatalog": "Catalog card",
+          "catalogHint": "This is how this module looks in the “Learn to recycle” list.",
+          "catalogNoCover": "Without a cover image the category drawing is used. Upload a cover to see it here.",
           "categoryPlaceholder": "Category",
           "titlePlaceholder": "The title will show here",
           "bodyPlaceholder": "The content will show here, exactly as the Resident will read it."

@@ -34,7 +34,7 @@
 ### CA-012.1 — Formulario de creación
 
 - **Dado que** estoy en el panel de administración de contenido educativo,
-- **cuando** elijo "Crear módulo",
+- **cuando** elijo "+ Nuevo módulo" (el único botón para crear, en la pestaña "Módulos"; issue #620),
 - **entonces** debo poder ingresar un título (mínimo 5 caracteres) y un cuerpo de texto (mínimo 20 caracteres).
 
 ### CA-012.2 — Publicación exitosa
@@ -61,7 +61,13 @@
 
 - **Dado que** estoy escribiendo un módulo,
 - **cuando** miro la vista previa en vivo,
-- **entonces** debo ver la lección con el mismo muro que verá el Residente (categoría arriba, "De qué trata" y una tarjeta por párrafo), y debajo del campo de contenido debo tener una ayuda que explique cómo escribir los títulos de las tarjetas ("Título: texto").
+- **entonces** debo ver la lección con el mismo muro que verá el Residente, sobre el fondo gris que ve el Residente, en dos pestañas: "Lección" ("De qué trata" y una tarjeta por párrafo) y "Tarjeta del catálogo" (donde se ve la portada). La vista previa se queda fija mientras recorro el formulario y, en celular, se alterna con el formulario mediante "Editar | Vista previa". Debajo del campo de contenido veo una línea de ayuda, el botón "Tarjeta" (agrega un párrafo con "Título de la tarjeta: " ya seleccionado) y un recuadro en vivo "Así se dividirá tu texto en el muro" con la introducción, cada tarjeta con su título y el cierre (issue #620).
+
+### CA-012.7 — Categoría existente o nueva
+
+- **Dado que** estoy escribiendo un módulo,
+- **cuando** elijo la categoría,
+- **entonces** puedo escoger "Existente" (un selector solo con las categorías ya creadas) o "Nueva" (un campo de texto). Si escribo una categoría nueva que ya existe, sin importar mayúsculas, tildes o espacios de más, veo el aviso de duplicado, puedo pasar a "Existente" con un clic y no me deja guardar. Una categoría nueva avisa que también será un tema que los recicladores podrán calificar al auditar un conjunto (issue #620).
 
 ### CA-012.6 — Portada e imágenes dentro del texto
 

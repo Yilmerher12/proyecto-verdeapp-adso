@@ -5,7 +5,6 @@ import {
   BookOpen,
   Calendar,
   FileText,
-  Heading2,
   ImagePlus,
   List as ListIcon,
   Bold,
@@ -26,7 +25,11 @@ import { Alert } from "@/components/ui/Alert";
 import { InputField } from "@/components/ui/InputField";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
-import { MuroLeccion } from "@/components/educativo/MuroLeccion";
+import { CategoriaField, type ModoCategoria } from "@/components/educativo/CategoriaField";
+import { ResumenMuro } from "@/components/educativo/ResumenMuro";
+import { VistaPreviaModulo } from "@/components/educativo/VistaPreviaModulo";
+import { Pestanas } from "@/components/ui/Pestanas";
+import { categoriaDuplicada } from "@/lib/categoriaEducativa";
 import { subirAdjunto } from "@/lib/uploadsApi";
 import { motivoDelServidor } from "@/api/axios";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT, CATEGORIAS_NO_AUDITABLES } from "@/config/categoriasEducativas";
@@ -43,7 +46,6 @@ import {
 } from "@/lib/contenidoEducativoApi";
 import {
   CONTENIDO_CUERPO_MAX_LENGTH,
-  CONTENIDO_MODULO_MAX_LENGTH,
   CONTENIDO_TITULO_MAX_LENGTH,
   ENLACE_MAX_LENGTH,
   REGEX_VIDEO_YOUTUBE,
@@ -69,8 +71,6 @@ const FORM_VACIO: ContenidoEducativoPayload = {
   url_guia: "",
   url_imagen: "",
 };
-
-const NUEVA_CATEGORIA = "__nueva__";
 
 // ¿Qué? Cuántas auditorías "de todos los tiempos" se piden para cruzar
 //       "a qué conjuntos se recomendó cada módulo" en la tabla y en el
@@ -182,8 +182,12 @@ export function AdminContenidoEducativoPage() {
   const [editando, setEditando] = useState<ContenidoEducativo | null>(null);
   const [creando, setCreando] = useState(false);
   const [form, setForm] = useState<ContenidoEducativoPayload>(FORM_VACIO);
-  const [categoriaSeleccion, setCategoriaSeleccion] = useState("");
+  // ¿Qué? Issue #620: la categoría se elige en uno de dos modos, "Existente" o "Nueva" (ver CategoriaField).
+  const [modoCategoria, setModoCategoria] = useState<ModoCategoria>("existente");
+  const [categoriaExistente, setCategoriaExistente] = useState("");
   const [nuevaCategoriaTexto, setNuevaCategoriaTexto] = useState("");
+  // ¿Qué? En celular el formulario y la vista previa no caben juntos: se alterna entre los dos.
+  const [vistaMovil, setVistaMovil] = useState<"editar" | "vista">("editar");
   const [guardando, setGuardando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -192,10 +196,13 @@ export function AdminContenidoEducativoPage() {
   const [subiendoImagenTexto, setSubiendoImagenTexto] = useState(false);
   const [errorImagenTexto, setErrorImagenTexto] = useState<string | null>(null);
 
-  const abrirCrear = (categoriaPrevia?: string) => {
+  const abrirCrear = () => {
     setForm(FORM_VACIO);
-    setCategoriaSeleccion(categoriaPrevia ?? "");
+    // Sin ninguna categoría creada todavía, solo se puede crear una nueva.
+    setModoCategoria(categorias.length > 0 ? "existente" : "nueva");
+    setCategoriaExistente("");
     setNuevaCategoriaTexto("");
+    setVistaMovil("editar");
     setFieldErrors({});
     setErrorMsg(null);
     setCreando(true);
@@ -210,8 +217,10 @@ export function AdminContenidoEducativoPage() {
       url_guia: item.url_guia ?? "",
       url_imagen: item.url_imagen ?? "",
     });
-    setCategoriaSeleccion(item.modulo_categoria);
+    setModoCategoria("existente");
+    setCategoriaExistente(item.modulo_categoria);
     setNuevaCategoriaTexto("");
+    setVistaMovil("editar");
     setFieldErrors({});
     setErrorMsg(null);
     setModuloAbierto(null);
@@ -225,7 +234,9 @@ export function AdminContenidoEducativoPage() {
     setFieldErrors({});
   };
 
-  const categoriaEfectiva = categoriaSeleccion === NUEVA_CATEGORIA ? nuevaCategoriaTexto.trim() : categoriaSeleccion;
+  const categoriaEfectiva = modoCategoria === "nueva" ? nuevaCategoriaTexto.trim() : categoriaExistente;
+  // ¿Qué? Una categoría "Nueva" que ya existe (sin distinguir mayúsculas ni tildes) no se puede guardar: se duplicaría.
+  const categoriaRepetida = modoCategoria === "nueva" ? categoriaDuplicada(nuevaCategoriaTexto, categorias) : null;
 
   const actualizarCampo = <K extends keyof ContenidoEducativoPayload>(campo: K, valor: ContenidoEducativoPayload[K]) => {
     setForm((prev) => ({ ...prev, [campo]: valor }));
@@ -253,6 +264,7 @@ export function AdminContenidoEducativoPage() {
     let mensaje = "";
     if (campo === "url_video" || campo === "url_guia") mensaje = errorDeEnlace(campo);
     if (campo === "categoria" && !categoriaEfectiva) mensaje = t(`${p}.validation.categoryRequired`);
+    if (campo === "categoria" && categoriaRepetida) mensaje = t(`${p}.validation.categoryDuplicate`);
     if (campo === "titulo_tema") {
       if (!form.titulo_tema.trim()) mensaje = t(`${p}.validation.titleRequired`);
       else if (form.titulo_tema.trim().length < 5) mensaje = t(`${p}.validation.titleTooShort`);
@@ -264,12 +276,13 @@ export function AdminContenidoEducativoPage() {
     setFieldErrors((prev) => (mensaje ? { ...prev, [campo]: mensaje } : prev));
   };
 
-  const formularioIncompleto = !categoriaEfectiva || !form.titulo_tema.trim() || !form.cuerpo_texto.trim();
+  const formularioIncompleto = !categoriaEfectiva || Boolean(categoriaRepetida) || !form.titulo_tema.trim() || !form.cuerpo_texto.trim();
 
   const guardar = async () => {
     if (!user) return;
     const errores: Record<string, string> = {};
     if (!categoriaEfectiva) errores.categoria = t(`${p}.validation.categoryRequired`);
+    else if (categoriaRepetida) errores.categoria = t(`${p}.validation.categoryDuplicate`);
     if (!form.titulo_tema.trim()) errores.titulo_tema = t(`${p}.validation.titleRequired`);
     else if (form.titulo_tema.trim().length < 5) errores.titulo_tema = t(`${p}.validation.titleTooShort`);
     if (!form.cuerpo_texto.trim()) errores.cuerpo_texto = t(`${p}.validation.bodyRequired`);
@@ -329,7 +342,7 @@ export function AdminContenidoEducativoPage() {
   // ¿Qué? Envuelve la línea (o la selección) actual del textarea en la
   //       sintaxis Markdown elegida — mismo patrón para las 3 opciones,
   //       aplicado sobre selectionStart/End del elemento real.
-  const aplicarFormato = (tipo: "h" | "b" | "ul") => {
+  const aplicarFormato = (tipo: "b" | "ul") => {
     const ta = textareaRef.current;
     if (!ta) return;
     const { selectionStart: a, selectionEnd: b, value: v } = ta;
@@ -343,7 +356,7 @@ export function AdminContenidoEducativoPage() {
       const inicioLinea = v.lastIndexOf("\n", a - 1) + 1;
       let finBloque = v.indexOf("\n", b);
       if (finBloque === -1) finBloque = v.length;
-      const prefijo = tipo === "h" ? "## " : "- ";
+      const prefijo = "- ";
       const bloque = v
         .slice(inicioLinea, finBloque)
         .split("\n")
@@ -356,6 +369,27 @@ export function AdminContenidoEducativoPage() {
     requestAnimationFrame(() => {
       ta.focus();
       ta.setSelectionRange(cursorFinal, cursorFinal);
+    });
+  };
+
+  // ¿Qué? Issue #620: "+ Tarjeta" agrega, donde está el cursor, un párrafo nuevo que empieza con "Título de la tarjeta: " y deja
+  //       seleccionado ese título para escribir encima.
+  // ¿Para qué? Cada párrafo es una tarjeta del muro y su título es lo que va antes de los dos puntos (lib/muroLeccion.ts); así nadie
+  //           tiene que conocer la regla para armar una tarjeta.
+  // ¿Impacto? Separa con una línea en blanco del texto de antes y de después, que es lo que parte las tarjetas.
+  const agregarTarjeta = () => {
+    const ta = textareaRef.current;
+    const v = form.cuerpo_texto;
+    const posicion = ta ? ta.selectionStart : v.length;
+    const antes = v.slice(0, posicion).replace(/\s+$/, "");
+    const despues = v.slice(posicion).replace(/^\s+/, "");
+    const titulo = t(`${p}.fields.cardTitlePlaceholder`);
+    const separador = antes ? "\n\n" : "";
+    const inicioTitulo = antes.length + separador.length;
+    actualizarCampo("cuerpo_texto", `${antes}${separador}${titulo}: ${despues ? `\n\n${despues}` : ""}`);
+    requestAnimationFrame(() => {
+      ta?.focus();
+      ta?.setSelectionRange(inicioTitulo, inicioTitulo + titulo.length);
     });
   };
 
@@ -399,30 +433,7 @@ export function AdminContenidoEducativoPage() {
 
       {/* Franja de resumen — igual patrón que el Panel Principal: antes de
           la tabla, no encima de ella. */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
-          <div className="flex items-center gap-2">
-            <Plus className="icon-md text-accent-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.newSection.title`)}</h3>
-          </div>
-          <div className="flex flex-1 flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => abrirCrear()}
-              className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-            >
-              {t(`${p}.newModule`)}
-            </button>
-            <button
-              type="button"
-              onClick={() => abrirCrear(NUEVA_CATEGORIA)}
-              className="touch-target-h cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
-            >
-              {t(`${p}.newSection.newCategory`)}
-            </button>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
           <div className="flex items-center gap-2">
             <BookOpen className="icon-md text-accent-600" />
@@ -534,6 +545,16 @@ export function AdminContenidoEducativoPage() {
               <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-inset dark:text-gray-300">
                 {t(`${p}.modules.total`, { count: contenido.length })}
               </span>
+              {/* ¿Qué? Issue #620: el ÚNICO camino para crear un módulo. Se quitaron la tarjeta "Nuevo contenido" y el botón
+                        "+ Nueva categoría": una categoría no existe sola, es el texto que trae cada módulo. */}
+              <button
+                type="button"
+                onClick={abrirCrear}
+                className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+              >
+                <Plus className="icon-sm" aria-hidden="true" />
+                {t(`${p}.newModule`)}
+              </button>
             </div>
 
             {cargandoContenido && (
@@ -646,48 +667,36 @@ export function AdminContenidoEducativoPage() {
       {/* ---------- Formulario crear/editar, con vista previa en vivo ---------- */}
       {(creando || editando) && (
         <Modal onClose={cerrarFormulario} extraWide closeOnBackdrop={false} aria-label={editando ? t(`${p}.modal.editTitle`) : t(`${p}.newModule`)}>
+          {/* ¿Qué? Solo en celular: alterna entre el formulario y la vista previa (en pantallas anchas van lado a lado). */}
+          <div className="px-6 pb-1 pt-5 md:hidden">
+            <Pestanas
+              ariaLabel={t(`${p}.editor.mobileTabsLabel`)}
+              activa={vistaMovil}
+              onCambiar={setVistaMovil}
+              compacta
+              pestanas={[
+                { id: "editar", etiqueta: t(`${p}.editor.edit`) },
+                { id: "vista", etiqueta: t(`${p}.editor.preview`) },
+              ]}
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="space-y-4 p-6 sm:p-8">
+            <div className={`space-y-4 p-6 sm:p-8 ${vistaMovil === "vista" ? "hidden md:block" : ""}`}>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editando ? t(`${p}.modal.editTitle`) : t(`${p}.newModule`)}</h2>
 
               {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
-              <div>
-                <label htmlFor="contenido-categoria" className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
-                  {t(`${p}.fields.category`)} <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="contenido-categoria"
-                  value={categoriaSeleccion}
-                  onChange={(e) => setCategoriaSeleccion(e.target.value)}
-                  onBlur={() => validarCampo("categoria")}
-                  className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    fieldErrors.categoria ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
-                  }`}
-                >
-                  <option value="">{t(`${p}.fields.categoryPlaceholderSelect`)}</option>
-                  {categorias.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                  <option value={NUEVA_CATEGORIA}>{t(`${p}.fields.newCategoryOption`)}</option>
-                </select>
-                {categoriaSeleccion === NUEVA_CATEGORIA && (
-                  <div className="mt-2">
-                    <input
-                      value={nuevaCategoriaTexto}
-                      onChange={(e) => setNuevaCategoriaTexto(e.target.value)}
-                      onBlur={() => validarCampo("categoria")}
-                      maxLength={CONTENIDO_MODULO_MAX_LENGTH}
-                      placeholder={t(`${p}.fields.categoryPlaceholder`)}
-                      className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
-                    />
-                    <p className="mt-1 text-xs text-amber-600 dark:text-amber-200">{t(`${p}.fields.newCategoryWarning`)}</p>
-                  </div>
-                )}
-                {fieldErrors.categoria && <p className="mt-1 text-sm text-red-600 dark:text-red-300">{fieldErrors.categoria}</p>}
-              </div>
+              <CategoriaField
+                modo={modoCategoria}
+                onCambiarModo={setModoCategoria}
+                categorias={categorias}
+                existente={categoriaExistente}
+                onExistente={setCategoriaExistente}
+                nueva={nuevaCategoriaTexto}
+                onNueva={setNuevaCategoriaTexto}
+                error={fieldErrors.categoria}
+                onBlur={() => validarCampo("categoria")}
+              />
 
               <InputField
                 label={t(`${p}.fields.titleField`)}
@@ -709,20 +718,38 @@ export function AdminContenidoEducativoPage() {
                     {t(`${p}.fields.charCount`, { count: form.cuerpo_texto.length, max: CONTENIDO_CUERPO_MAX_LENGTH })}
                   </span>
                 </div>
-                <div className="mb-1.5 flex gap-1.5">
-                  <button type="button" onClick={() => aplicarFormato("h")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
-                    <Heading2 className="icon-sm" />
-                    {t(`${p}.fields.formatHeading`)}
+                <div className="mb-1.5 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={agregarTarjeta}
+                    title={t(`${p}.fields.addCardHint`)}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-accent-300 bg-accent-50 px-2 py-1 text-xs font-semibold text-accent-800 hover:bg-accent-100 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-300 dark:hover:bg-accent-300/15"
+                  >
+                    <Plus className="icon-sm" aria-hidden="true" />
+                    {t(`${p}.fields.addCard`)}
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("b")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
+                  <button
+                    type="button"
+                    onClick={() => aplicarFormato("b")}
+                    title={t(`${p}.fields.boldHint`)}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+                  >
                     <Bold className="icon-sm" />
                     {t(`${p}.fields.formatBold`)}
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("ul")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
+                  <button
+                    type="button"
+                    onClick={() => aplicarFormato("ul")}
+                    title={t(`${p}.fields.listHint`)}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+                  >
                     <ListIcon className="icon-sm" />
                     {t(`${p}.fields.formatList`)}
                   </button>
-                  <label className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
+                  <label
+                    title={t(`${p}.fields.insertImageHint`)}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+                  >
                     <ImagePlus className="icon-sm" />
                     {subiendoImagenTexto ? t(`${p}.fields.insertingImage`) : t(`${p}.fields.insertImage`)}
                     <input
@@ -751,8 +778,10 @@ export function AdminContenidoEducativoPage() {
                     fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
                   }`}
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMarkdownHint`)}</p>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMuroHint`)}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentHint`)}</p>
+                <div className="mt-2">
+                  <ResumenMuro texto={form.cuerpo_texto} />
+                </div>
                 {errorImagenTexto && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                     {errorImagenTexto}
@@ -829,32 +858,22 @@ export function AdminContenidoEducativoPage() {
               </div>
             </div>
 
-            {/* ¿Qué? Vista previa en vivo — el mismo componente (MuroLeccion) que usa
-                CategoriaEducativaPage.tsx (lo que ve el Residente), en una sola columna por ser angosta. */}
-            <aside className="border-t border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-panel sm:p-8 md:border-l md:border-t-0">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.preview.label`)}</span>
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[0.625rem] font-bold uppercase text-gray-500 dark:bg-night-inset dark:text-gray-400">{t(`${p}.preview.live`)}</span>
-              </div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">
-                {categoriaEfectiva || t(`${p}.preview.categoryPlaceholder`)}
-              </p>
-              {form.cuerpo_texto.trim() ? (
-                <MuroLeccion
-                  compacto
-                  mostrarTitulo
-                  modulo={{
-                    modulo_categoria: categoriaEfectiva,
-                    titulo_tema: form.titulo_tema || t(`${p}.preview.titlePlaceholder`),
-                    cuerpo_texto: form.cuerpo_texto,
-                    url_video: idVideoReconocido ? form.url_video?.trim() || null : null,
-                    url_guia: form.url_guia?.trim() || null,
-                    url_imagen: form.url_imagen?.trim() || null,
-                  }}
-                />
-              ) : (
-                <p className="text-sm italic text-gray-500 dark:text-gray-400">{t(`${p}.preview.bodyPlaceholder`)}</p>
-              )}
+            {/* ¿Qué? Vista previa fija mientras se recorre el formulario (sticky) — el mismo MuroLeccion que ve el Residente. */}
+            <aside
+              className={`border-t border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-panel sm:p-8 md:sticky md:top-0 md:self-start md:border-l md:border-t-0 ${
+                vistaMovil === "editar" ? "hidden md:block" : ""
+              }`}
+            >
+              <VistaPreviaModulo
+                modulo={{
+                  modulo_categoria: categoriaEfectiva,
+                  titulo_tema: form.titulo_tema,
+                  cuerpo_texto: form.cuerpo_texto,
+                  url_video: idVideoReconocido ? form.url_video?.trim() || null : null,
+                  url_guia: form.url_guia?.trim() || null,
+                  url_imagen: form.url_imagen?.trim() || null,
+                }}
+              />
             </aside>
           </div>
         </Modal>
