@@ -206,42 +206,58 @@ export interface AuditoriaAdmin extends AuditoriaConjunto {
   nombre_localidad: string;
 }
 
+// ¿Qué? Cuántas calificaciones hay de cada nivel con todos los filtros puestos MENOS el de nivel (issue #618).
+// ¿Para qué? Son los números de los botones de nivel ("Malo 4", "Regular 2"): los cuenta el servidor.
+export interface ConteosNivelAdmin {
+  BUENA: number;
+  REGULAR: number;
+  DEFICIENTE: number;
+}
+
 export interface AuditoriasAdminResultado {
   items: AuditoriaAdmin[];
   total: number;
+  conteos: ConteosNivelAdmin;
 }
 
-// ¿Qué? El Admin del Sistema ve las auditorías del reciclador sin importar
-//       a qué conjunto pertenecen (RQF-009) — con `lunes` (YYYY-MM-DD),
-//       filtra esa semana completa; sin él, trae las más recientes de
-//       cualquier semana (para cruzar "a qué conjuntos se recomendó cada
-//       módulo" sin acotar a una sola semana).
-export async function listarAuditoriasAdmin(opciones?: {
+export type OrdenCalificaciones = "criticas" | "recientes" | "conjunto";
+
+// ¿Qué? Filtros de la lista del Admin del Sistema; todos son opcionales y los aplica el servidor.
+//       `desde` y `hasta` son días de calendario de Bogotá (YYYY-MM-DD), ambos incluidos; `lunes` es el atajo
+//       de una semana completa.
+// ¿Para qué? Issue #618: antes la pantalla traía TODAS las calificaciones de una semana (de a 200, en un
+//           ciclo) y las filtraba en el navegador. Ahora pide solo una página, ya filtrada y ordenada.
+export interface FiltrosAuditoriasAdmin {
   lunes?: string;
+  desde?: string;
+  hasta?: string;
+  id_localidad?: number;
+  id_conjunto?: string;
+  buscar?: string;
+  nivel?: NivelDesempeno;
+  orden?: OrdenCalificaciones;
   limit?: number;
   offset?: number;
-}): Promise<AuditoriasAdminResultado> {
-  const { data } = await axios.get(`${API_BASE}/admin`, { params: opciones });
+}
+
+// ¿Qué? El Admin del Sistema ve las auditorías del reciclador sin importar a qué conjunto pertenecen
+//       (RQF-009). Sin ningún rango trae las más recientes de cualquier semana (para cruzar "a qué
+//       conjuntos se recomendó cada módulo").
+export async function listarAuditoriasAdmin(filtros?: FiltrosAuditoriasAdmin): Promise<AuditoriasAdminResultado> {
+  const { data } = await axios.get(`${API_BASE}/admin`, { params: filtros });
   return data;
 }
 
-// ¿Qué? Trae TODAS las auditorías de una semana, pidiendo página tras página.
-// ¿Para qué? El backend entrega máximo 100 por defecto (200 como tope) y devuelve
-//           `total`; antes la página guardaba solo la primera página y una semana
-//           con más auditorías se veía incompleta, sin ningún aviso. Con los filtros
-//           por conjunto y fecha, una auditoría que faltaba parecía no existir.
-// ¿Impacto? Se detiene si una página llega vacía, aunque `total` diga que faltan:
-//           nunca queda en un ciclo infinito si los datos cambian mientras se piden.
-const AUDITORIAS_POR_PAGINA = 200;
-export async function listarAuditoriasAdminDeSemana(lunes: string): Promise<AuditoriaAdmin[]> {
-  const todas: AuditoriaAdmin[] = [];
-  for (;;) {
-    const { items, total } = await listarAuditoriasAdmin({
-      lunes,
-      limit: AUDITORIAS_POR_PAGINA,
-      offset: todas.length,
-    });
-    todas.push(...items);
-    if (items.length === 0 || todas.length >= total) return todas;
-  }
+// ¿Qué? Conteos por nivel y temas con recomendación de una semana (issue #618), para las dos tarjetas de arriba.
+export interface ResumenSemanaAdmin {
+  lunes: string;
+  bueno: number;
+  regular: number;
+  malo: number;
+  temas_con_recomendacion: string[];
+}
+
+export async function obtenerResumenSemanaAdmin(lunes: string): Promise<ResumenSemanaAdmin> {
+  const { data } = await axios.get(`${API_BASE}/admin/resumen-semana`, { params: { lunes } });
+  return data;
 }

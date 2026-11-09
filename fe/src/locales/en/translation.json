@@ -1288,6 +1288,17 @@
           "ratings": "Ratings by building",
           "modules": "Modules"
         },
+        "period": {
+          "label": "Period",
+          "semana": "Week",
+          "mes": "Month",
+          "rango": "Custom",
+          "prevMonth": "Previous month",
+          "nextMonth": "Next month",
+          "from": "From",
+          "to": "To",
+          "rangeInvalid": "\"To\" cannot be earlier than \"From\"."
+        },
         "week": {
           "prev": "Previous week",
           "next": "Next week",
@@ -1297,7 +1308,10 @@
           "searchPlaceholder": "Search building or notes…",
           "all": "All {{count}}",
           "noObservations": "No notes",
-          "empty": "No ratings match those filters this week.",
+          "empty": "No ratings match those filters in this period.",
+          "emptyPeriod": "There are no ratings in this period yet.",
+          "lastWeekNotice": "The current week has no ratings yet. You are viewing the latest week with data ({{rango}}).",
+          "viewThisWeek": "View this week",
           "notified": "{{count}} resident notified",
           "notified_other": "{{count}} residents notified",
           "noRecommendation": "No recommendation",
@@ -1306,10 +1320,7 @@
             "allLocalidades": "All districts",
             "conjunto": "Building",
             "allConjuntos": "All buildings",
-            "more": "More filters",
-            "noData": "No ratings",
-            "from": "From",
-            "to": "To",
+            "conjuntoPlaceholder": "Search building…",
             "clear": "Clear filters"
           },
           "sort": {

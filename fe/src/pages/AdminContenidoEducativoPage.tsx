@@ -5,8 +5,6 @@ import ReactMarkdown from "react-markdown";
 import {
   BookOpen,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   FileText,
   Heading2,
@@ -14,13 +12,11 @@ import {
   List as ListIcon,
   Bold,
   ChevronDown,
-  FilterX,
   Maximize2,
   Pencil,
   Plus,
   Search,
   Send,
-  SlidersHorizontal,
   Trash2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,7 +42,7 @@ import axios from "axios";
 import { COMPONENTES_MARKDOWN } from "@/config/contenidoEducativoMarkdown";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT, CATEGORIAS_NO_AUDITABLES } from "@/config/categoriasEducativas";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { domingoDeLunesUTC, fechaBogota, formatearFechaCreacion, isoToDateInputUTC, lunesBogota, lunesUTC, rangoSemanaUTC } from "@/lib/dateFormat";
+import { formatearFechaCreacion, lunesBogota, rangoSemanaUTC } from "@/lib/dateFormat";
 import {
   crearContenido,
   editarContenido,
@@ -65,12 +61,15 @@ import {
   ENLACE_MAX_LENGTH,
   REGEX_VIDEO_YOUTUBE,
 } from "@/lib/validacion";
-import { listarAuditoriasAdmin, listarAuditoriasAdminDeSemana, type AuditoriaAdmin, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
+import {
+  listarAuditoriasAdmin,
+  obtenerResumenSemanaAdmin,
+  type AuditoriaAdmin,
+  type NivelDesempeno,
+  type ResumenSemanaAdmin,
+} from "@/lib/auditoriaConjuntoApi";
+import { CalificacionesPorConjunto } from "@/components/educativo/CalificacionesPorConjunto";
 
-type OrdenCalificaciones = "criticas" | "recientes" | "conjunto";
-const ORDENES_CALIFICACIONES: OrdenCalificaciones[] = ["criticas", "recientes", "conjunto"];
-const CLASE_CONTROL_FILTRO =
-  "touch-target-h rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200";
 
 const FORM_VACIO: ContenidoEducativoPayload = {
   modulo_categoria: "",
@@ -191,128 +190,36 @@ export function AdminContenidoEducativoPage() {
 
   // ---------- Auditorías recientes (cruce "recomendado a", todos los módulos) ----------
   const [auditoriasRecientes, setAuditoriasRecientes] = useState<AuditoriaAdmin[]>([]);
+  // ¿Qué? true cuando ya terminó de pedirlas (con o sin éxito): la tabla de Calificaciones espera esto para decidir
+  //       si abre en la última semana con datos (issue #618).
+  const [recientesCargadas, setRecientesCargadas] = useState(false);
   useEffect(() => {
     if (!user) return;
     listarAuditoriasAdmin({ limit: LIMITE_AUDITORIAS_RECIENTES })
       .then((res) => setAuditoriasRecientes(res.items))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setRecientesCargadas(true));
   }, [user]);
 
-  // ---------- Semana en curso (tarjeta de resumen — siempre la de HOY, sin importar qué semana se esté navegando) ----------
-  // ¿Qué? La semana de hoy en hora de Bogotá, igual que la corta el backend (listar_admin).
+  // ---------- Semana en curso (tarjeta de resumen — siempre la de HOY, sin importar qué periodo se esté viendo) ----------
+  // ¿Qué? La semana de hoy en hora de Bogotá, igual que la corta el backend.
+  // ¿Para qué? Issue #618: los conteos y los temas con recomendación los calcula el servidor (antes se traían
+  //           todas las calificaciones de la semana al navegador solo para contarlas).
   const semanaActual = useMemo(() => lunesBogota(), []);
-  const [calSemanaActual, setCalSemanaActual] = useState<AuditoriaAdmin[]>([]);
+  const [resumenSemana, setResumenSemana] = useState<ResumenSemanaAdmin | null>(null);
   useEffect(() => {
     if (!user) return;
-    listarAuditoriasAdminDeSemana(semanaActual)
-      .then(setCalSemanaActual)
+    obtenerResumenSemanaAdmin(semanaActual)
+      .then(setResumenSemana)
       .catch(() => {});
   }, [user, semanaActual]);
 
   // ---------- Pestaña "Calificaciones por conjunto" ----------
-  const [semana, setSemana] = useState(semanaActual);
-  const [calSemana, setCalSemana] = useState<AuditoriaAdmin[]>([]);
-  const [cargandoCal, setCargandoCal] = useState(true);
-  const [errorCal, setErrorCal] = useState(false);
-  const [nivelFiltro, setNivelFiltro] = useState<"" | NivelDesempeno>("");
-  const [buscarCal, setBuscarCal] = useState("");
-  const [localidadFiltro, setLocalidadFiltro] = useState("");
-  const [conjuntoFiltro, setConjuntoFiltro] = useState("");
-  const [desde, setDesde] = useState("");
-  const [hasta, setHasta] = useState("");
-  const [orden, setOrden] = useState<OrdenCalificaciones>("criticas");
-  const [masFiltrosAbiertos, setMasFiltrosAbiertos] = useState(false);
-  const [calAbierta, setCalAbierta] = useState<string | null>(null);
+  // ¿Qué? La tabla, el periodo y los filtros viven en CalificacionesPorConjunto; aquí solo se guarda cuál
+  //       calificación está abierta en el panel de detalle.
+  const [calAbierta, setCalAbierta] = useState<AuditoriaAdmin | null>(null);
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
-
-  const limpiarFiltros = () => {
-    setNivelFiltro("");
-    setBuscarCal("");
-    setLocalidadFiltro("");
-    setConjuntoFiltro("");
-    setDesde("");
-    setHasta("");
-  };
-
-  useEffect(() => {
-    if (!user) return;
-    setCargandoCal(true);
-    setErrorCal(false);
-    listarAuditoriasAdminDeSemana(semana)
-      .then(setCalSemana)
-      .catch(() => setErrorCal(true))
-      .finally(() => setCargandoCal(false));
-    // Semana nueva: los filtros de la semana anterior ya no aplican (el orden no es un filtro, se queda).
-    limpiarFiltros();
-    setCalAbierta(null);
-  }, [user, semana]);
-
-  const cambiarSemana = (dias: number) => {
-    const [y, m, d] = semana.split("-").map(Number);
-    const nueva = new Date(Date.UTC(y, m - 1, d + dias));
-    setSemana(lunesUTC(nueva));
-  };
-
-  // ¿Qué? Los conjuntos que tienen al menos una calificación esa semana, para el selector;
-  //       con una localidad elegida, solo los de esa localidad.
-  // ¿Impacto? El valor es el id (no el nombre): dos conjuntos pueden llamarse igual.
-  const conjuntosDeLaSemana = useMemo(() => {
-    const porId = new Map<string, string>();
-    for (const a of calSemana) {
-      if (!localidadFiltro || String(a.id_localidad) === localidadFiltro) porId.set(a.id_conjunto_residencial, a.nombre_conjunto);
-    }
-    return [...porId].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [calSemana, localidadFiltro]);
-
-  // ¿Qué? Las localidades que tienen al menos una calificación esa semana, para el primer selector.
-  // ¿Para qué? En producción hay conjuntos en las 20 localidades de Bogotá: se busca primero por localidad.
-  const localidadesDeLaSemana = useMemo(() => {
-    const porId = new Map<string, string>();
-    for (const a of calSemana) porId.set(String(a.id_localidad), a.nombre_localidad);
-    return [...porId].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [calSemana]);
-
-  const hayFiltros = Boolean(nivelFiltro || buscarCal || localidadFiltro || conjuntoFiltro || desde || hasta);
-  // ¿Qué? Cuántos de los filtros guardados en "Más filtros" están activos (el orden cuenta si no es el de siempre).
-  // ¿Para qué? Se muestra en el botón: un filtro escondido en el panel plegado no debe pasar desapercibido.
-  const filtrosExtraActivos = (desde ? 1 : 0) + (hasta ? 1 : 0) + (orden !== "criticas" ? 1 : 0);
-  // ¿Qué? Sin calificaciones esa semana (o cargando / con error) no hay nada que filtrar: los controles se
-  //       desactivan y los selectores avisan por qué están vacíos, para que no parezcan rotos.
-  const sinCalificaciones = !cargandoCal && !errorCal && calSemana.length === 0;
-  const filtrosInactivos = cargandoCal || errorCal || calSemana.length === 0;
-  const domingoSemana = useMemo(() => isoToDateInputUTC(domingoDeLunesUTC(semana).toISOString()), [semana]);
-
-  // ¿Qué? Las calificaciones que pasan todos los filtros MENOS el de nivel.
-  // ¿Para qué? Los botones de nivel ("Malo 4", "Todas 10") cuentan sobre esto: si ya filtraste por
-  //           localidad, conjunto, fecha o texto, el número debe ser el de lo que verías al pulsarlo.
-  const calSinNivel = useMemo(() => {
-    const q = buscarCal.trim().toLowerCase();
-    return calSemana
-      .filter((a) => !localidadFiltro || String(a.id_localidad) === localidadFiltro)
-      .filter((a) => !conjuntoFiltro || a.id_conjunto_residencial === conjuntoFiltro)
-      .filter((a) => !desde || fechaBogota(a.created_at) >= desde)
-      .filter((a) => !hasta || fechaBogota(a.created_at) <= hasta)
-      .filter((a) => !q || `${a.nombre_conjunto} ${a.tema_educativo} ${a.descripcion ?? ""}`.toLowerCase().includes(q));
-  }, [calSemana, buscarCal, localidadFiltro, conjuntoFiltro, desde, hasta]);
-
-  const conteoNiveles = useMemo(() => {
-    const c = { BUENA: 0, REGULAR: 0, DEFICIENTE: 0 } as Record<string, number>;
-    for (const a of calSinNivel) c[a.nivel_desempeno] = (c[a.nivel_desempeno] ?? 0) + 1;
-    return c;
-  }, [calSinNivel]);
-
-  const calFiltradas = useMemo(() => {
-    const gravedad: Record<string, number> = { DEFICIENTE: 0, REGULAR: 1, BUENA: 2 };
-    const masReciente = (a: AuditoriaAdmin, b: AuditoriaAdmin) => (a.created_at < b.created_at ? 1 : -1);
-    const comparadores: Record<OrdenCalificaciones, (a: AuditoriaAdmin, b: AuditoriaAdmin) => number> = {
-      criticas: (a, b) => (gravedad[a.nivel_desempeno] ?? 3) - (gravedad[b.nivel_desempeno] ?? 3) || masReciente(a, b),
-      recientes: masReciente,
-      conjunto: (a, b) => a.nombre_conjunto.localeCompare(b.nombre_conjunto) || masReciente(a, b),
-    };
-    return calSinNivel.filter((a) => !nivelFiltro || a.nivel_desempeno === nivelFiltro).sort(comparadores[orden]);
-  }, [calSinNivel, nivelFiltro, orden]);
-
-  const auditoriaAbierta = calAbierta ? calSemana.find((a) => a.id_auditoria === calAbierta) : undefined;
+  const auditoriaAbierta = calAbierta ?? undefined;
 
   // ---------- Tarjeta "Sin recomendar" ----------
   const categorias = useMemo(() => {
@@ -328,11 +235,9 @@ export function AdminContenidoEducativoPage() {
   }, [contenido]);
   const categoriasAuditables = useMemo(() => categorias.filter((c) => !CATEGORIAS_NO_AUDITABLES.has(c)), [categorias]);
   const sinRecomendar = useMemo(() => {
-    const conRecomendacion = new Set(
-      calSemanaActual.filter((a) => a.nivel_desempeno !== "BUENA").map((a) => a.tema_educativo)
-    );
+    const conRecomendacion = new Set(resumenSemana?.temas_con_recomendacion ?? []);
     return categoriasAuditables.filter((c) => !conRecomendacion.has(c)).length;
-  }, [categoriasAuditables, calSemanaActual]);
+  }, [categoriasAuditables, resumenSemana]);
 
   // ---------- Panel de un módulo (vista previa + recomendado a + enviar) ----------
   const [moduloAbierto, setModuloAbierto] = useState<string | null>(null);
@@ -682,15 +587,15 @@ export function AdminContenidoEducativoPage() {
           </div>
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "BUENA").length}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{resumenSemana?.bueno ?? 0}</p>
               <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.good`)}</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "REGULAR").length}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{resumenSemana?.regular ?? 0}</p>
               <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.regular`)}</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "DEFICIENTE").length}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{resumenSemana?.malo ?? 0}</p>
               <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.bad`)}</p>
             </div>
           </div>
@@ -753,257 +658,12 @@ export function AdminContenidoEducativoPage() {
         </div>
 
         {panelExpandido && (tab === "cal" ? (
-          <div>
-            <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-night-line">
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => cambiarSemana(-7)}
-                  aria-label={t(`${p}.week.prev`)}
-                  title={t(`${p}.week.prev`)}
-                  className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
-                >
-                  <ChevronLeft className="icon-md" />
-                </button>
-                <div className="min-w-[8.125rem] text-center">
-                  <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{rangoSemanaUTC(semana)}</p>
-                  <p className="text-[0.625rem] text-gray-500 dark:text-gray-400">{t(`${p}.week.mondayToSunday`)}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => cambiarSemana(7)}
-                  disabled={semana >= semanaActual}
-                  aria-label={t(`${p}.week.next`)}
-                  title={t(`${p}.week.next`)}
-                  className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
-                >
-                  <ChevronRight className="icon-md" />
-                </button>
-              </div>
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-[0.6875rem] font-bold uppercase tracking-wide ${
-                  semana === semanaActual
-                    ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
-                    : "bg-gray-100 text-gray-500 dark:bg-night-inset dark:text-gray-400"
-                }`}
-              >
-                {semana === semanaActual ? t(`${p}.week.inProgress`) : t(`${p}.week.closed`, { fecha: domingoDeLunesUTC(semana).getUTCDate() })}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-end gap-3 px-5 pb-4">
-              <div className="relative w-full sm:w-56">
-                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
-                <input
-                  value={buscarCal}
-                  onChange={(e) => setBuscarCal(e.target.value)}
-                  placeholder={t(`${p}.week.searchPlaceholder`)}
-                  aria-label={t(`${p}.week.searchPlaceholder`)}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} w-full pl-8`}
-                />
-              </div>
-              <div className="w-full sm:w-auto">
-                <label htmlFor="cal-filtro-localidad" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.localidad`)}</label>
-                <select
-                  id="cal-filtro-localidad"
-                  value={localidadFiltro}
-                  onChange={(e) => {
-                    setLocalidadFiltro(e.target.value);
-                    // El conjunto elegido puede no ser de la localidad nueva.
-                    setConjuntoFiltro("");
-                  }}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer sm:w-48`}
-                >
-                  <option value="">{sinCalificaciones ? t(`${p}.week.filters.noData`) : t(`${p}.week.filters.allLocalidades`)}</option>
-                  {localidadesDeLaSemana.map(([id, nombre]) => (
-                    <option key={id} value={id}>
-                      {nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="w-full sm:w-auto">
-                <label htmlFor="cal-filtro-conjunto" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.conjunto`)}</label>
-                <select
-                  id="cal-filtro-conjunto"
-                  value={conjuntoFiltro}
-                  onChange={(e) => setConjuntoFiltro(e.target.value)}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer sm:w-48`}
-                >
-                  <option value="">{sinCalificaciones ? t(`${p}.week.filters.noData`) : t(`${p}.week.filters.allConjuntos`)}</option>
-                  {conjuntosDeLaSemana.map(([id, nombre]) => (
-                    <option key={id} value={id}>
-                      {nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMasFiltrosAbiertos((v) => !v)}
-                aria-expanded={masFiltrosAbiertos}
-                aria-controls="cal-mas-filtros"
-                className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg border border-edge px-2.5 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-night-edge dark:text-gray-300 dark:hover:bg-night-inset/60"
-              >
-                <SlidersHorizontal className="icon-sm" />
-                {t(`${p}.week.filters.more`)}
-                {filtrosExtraActivos > 0 && (
-                  <span className="rounded-full bg-accent-50 px-1.5 text-[0.625rem] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
-                    {filtrosExtraActivos}
-                  </span>
-                )}
-                <ChevronDown className={`icon-sm transition-transform ${masFiltrosAbiertos ? "rotate-180" : ""}`} />
-              </button>
-              {hayFiltros && (
-                <button
-                  type="button"
-                  onClick={limpiarFiltros}
-                  className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-night-inset/60"
-                >
-                  <FilterX className="icon-sm" />
-                  {t(`${p}.week.filters.clear`)}
-                </button>
-              )}
-            </div>
-
-            {masFiltrosAbiertos && (
-            <div id="cal-mas-filtros" className="flex flex-wrap items-end gap-3 px-5 pb-4">
-              <div className="w-[calc(50%-0.375rem)] sm:w-auto">
-                <label htmlFor="cal-filtro-desde" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.from`)}</label>
-                <input
-                  id="cal-filtro-desde"
-                  type="date"
-                  value={desde}
-                  min={semana}
-                  max={hasta || domingoSemana}
-                  onChange={(e) => setDesde(e.target.value)}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer`}
-                />
-              </div>
-              <div className="w-[calc(50%-0.375rem)] sm:w-auto">
-                <label htmlFor="cal-filtro-hasta" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.to`)}</label>
-                <input
-                  id="cal-filtro-hasta"
-                  type="date"
-                  value={hasta}
-                  min={desde || semana}
-                  max={domingoSemana}
-                  onChange={(e) => setHasta(e.target.value)}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer`}
-                />
-              </div>
-              <div className="w-full sm:w-auto">
-                <label htmlFor="cal-orden" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.sort.label`)}</label>
-                <select
-                  id="cal-orden"
-                  value={orden}
-                  onChange={(e) => setOrden(e.target.value as OrdenCalificaciones)}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer sm:w-48`}
-                >
-                  {ORDENES_CALIFICACIONES.map((o) => (
-                    <option key={o} value={o}>
-                      {t(`${p}.week.sort.${o}`)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            )}
-
-            <div className="flex flex-wrap gap-2 border-b border-gray-100 px-5 pb-4 dark:border-night-line">
-              {(["" , "DEFICIENTE", "REGULAR", "BUENA"] as const).map((nivel) => (
-                <button
-                  key={nivel || "todas"}
-                  type="button"
-                  onClick={() => setNivelFiltro(nivel)}
-                  aria-pressed={nivelFiltro === nivel}
-                  className={`touch-target-h cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-                    nivelFiltro === nivel
-                      ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
-                      : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
-                  }`}
-                >
-                  {nivel === "" ? t(`${p}.week.all`, { count: calSinNivel.length }) : `${t(`dashboards.reciclador.auditoria.niveles.${nivel.toLowerCase()}`)} ${conteoNiveles[nivel] ?? 0}`}
-                </button>
-              ))}
-            </div>
-
-            {/* ¿Qué? Sin resultados, el mensaje va FUERA de la tabla: la tabla mide mínimo 820 px y, en
-                celular, el texto centrado dentro de ella quedaba cortado. */}
-            {!cargandoCal && !errorCal && calFiltradas.length === 0 ? (
-              <div className="px-5 py-6">
-                <EmptyState icon={Search} message={t(`${p}.week.empty`)} />
-              </div>
-            ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[51.25rem] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 dark:border-night-line dark:bg-night-inset/60">
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.conjunto`)}</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.tema`)}</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.nivel`)}</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.observaciones`)}</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.fecha`)}</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.avisados`)}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-night-line">
-                  {cargandoCal ? (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-6">
-                        <LoadingState message={t("common.loading")} />
-                      </td>
-                    </tr>
-                  ) : errorCal ? (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-6">
-                        <Alert type="error" message={t("common.loadError")} />
-                      </td>
-                    </tr>
-                  ) : (
-                    calFiltradas.map((a) => {
-                      const nivel = NIVELES_DESEMPENO[a.nivel_desempeno];
-                      return (
-                        <tr
-                          key={a.id_auditoria}
-                          onClick={() => setCalAbierta(a.id_auditoria)}
-                          className="cursor-pointer hover:bg-gray-50 dark:hover:bg-night-inset/40 transition-colors"
-                        >
-                          <td className="px-5 py-3">
-                            <button type="button" className="focus-ring cursor-pointer rounded text-left font-semibold text-gray-900 underline decoration-gray-500 underline-offset-4 hover:text-accent-700 hover:decoration-accent-600 dark:text-white dark:decoration-gray-400">
-                              {a.nombre_conjunto}
-                            </button>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{a.nombre_reciclador}</p>
-                          </td>
-                          <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{a.tema_educativo}</td>
-                          <td className="px-5 py-3">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${nivel.claseBadge}`}>
-                              <nivel.icon className="icon-sm" />
-                              {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
-                            </span>
-                          </td>
-                          <td className="max-w-[13.75rem] px-5 py-3 text-xs text-gray-600 dark:text-gray-300">
-                            {a.descripcion ? <span className="line-clamp-2">{a.descripcion}</span> : <span className="italic text-gray-500 dark:text-gray-400">{t(`${p}.week.noObservations`)}</span>}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(a.created_at)}</td>
-                          <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">
-                            {a.avisados > 0 ? t(`${p}.week.notified`, { count: a.avisados }) : <span className="text-gray-500 dark:text-gray-400">{t(`${p}.week.noRecommendation`)}</span>}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-            )}
-          </div>
+          <CalificacionesPorConjunto
+            semanaActual={semanaActual}
+            ultimaFecha={auditoriasRecientes[0]?.created_at ?? null}
+            recientesCargadas={recientesCargadas}
+            onAbrir={setCalAbierta}
+          />
         ) : (
           <div>
             <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-night-line">

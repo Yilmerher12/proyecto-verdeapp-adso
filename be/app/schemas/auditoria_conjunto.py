@@ -81,9 +81,28 @@ class AuditoriaAdminResponse(AuditoriaConjuntoResponse):
     nombre_localidad: str
 
 
+# ¿Qué? Issue #618 — cuántas calificaciones hay de cada nivel con todos los filtros puestos MENOS el de nivel.
+# ¿Para qué? Son los números de los botones de nivel de la pantalla ("Malo 4", "Regular 2").
+class ConteosNivelAdmin(BaseModel):
+    BUENA: int = 0
+    REGULAR: int = 0
+    DEFICIENTE: int = 0
+
+
 class AuditoriasAdminListResponse(BaseModel):
     items: list[AuditoriaAdminResponse]
     total: int
+    conteos: ConteosNivelAdmin = ConteosNivelAdmin()
+
+
+# ¿Qué? Issue #618 — resumen de una semana para las dos tarjetas de arriba de Calificaciones.
+class ResumenSemanaAdminResponse(BaseModel):
+    lunes: date
+    bueno: int = 0
+    regular: int = 0
+    malo: int = 0
+    # ¿Qué? Temas distintos que tuvieron alguna calificación Regular o Mala esa semana.
+    temas_con_recomendacion: list[str] = []
 
 
 # ¿Qué? Issue #486 — conteos de auditorías de UN conjunto por semana y por
