@@ -134,7 +134,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | `night-base` | Fondo raíz y sidebar (la capa más baja: auth, legales, shell, footer) |
   | `night-page` | Fondo del área de contenido de los paneles y del encabezado |
   | `night-card` | Tarjetas |
-  | `night-panel` | Modales, panel lateral y tarjeta de login (encima de las tarjetas) |
+  | `night-panel` | Modales y tarjeta de login (encima de las tarjetas) |
   | `night-inset` | Zonas hundidas: filas en hover, botón secundario |
   | `night-field` | Campos de formulario |
   | `night-line` | Bordes decorativos (tarjetas, divisiones): 1.94:1 sobre la tarjeta |
@@ -148,7 +148,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | Fondo raíz (auth, legales, footer) y sidebar | `bg-gray-50`; el sidebar es `bg-accent-900` (verde de marca) | `night-base` (sidebar y raíz, la capa más baja) |
   | Fondo del área de contenido y encabezado | `bg-gray-200` (contenido), `bg-white` (encabezado) | `night-page` (los dos; los separa el borde `night-line`) |
   | Tarjeta | `bg-white` | `night-card` |
-  | Modal, panel lateral, barra fija | `bg-white` | `night-panel` |
+  | Modal, barra fija | `bg-white` | `night-panel` |
   | Zona hundida, botón secundario | `bg-white` / `bg-gray-100` | `night-inset` |
   | Campo de formulario | `bg-white` | `night-field` |
   | Fondo al pasar el mouse | `hover:bg-gray-50` | `night-hover` |

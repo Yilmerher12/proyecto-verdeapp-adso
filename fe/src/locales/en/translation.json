@@ -1244,13 +1244,8 @@
   "adminContenidoEducativo": {
         "title": "Educational content",
         "subtitle": "Create, edit and delete catalog modules, and check what was recommended to each building.",
-        "collapse": "Collapse",
-        "expandRatings": "View ratings",
-        "expandModules": "View modules",
         "newModule": "New module",
         "emptyState": "No modules created yet.",
-        "editAria": "Edit {{titulo}}",
-        "deleteAria": "Delete {{titulo}}",
         "modal": {
           "editTitle": "Edit module",
           "deleteAriaLabel": "Confirm deletion"
@@ -1273,13 +1268,13 @@
           "title": "Catalog",
           "modules": "Modules",
           "categories": "Categories",
-          "notRecommended": "Not recommended",
+          "notRecommended": "Topics without recommendation",
           "notRecommendedHint": "This week there's no recommendation in {{count}} topic — you can send content by hand to vary the topics.",
           "notRecommendedHint_other": "This week there's no recommendation in {{count}} topics — you can send content by hand to vary the topics.",
           "allCovered": "Every topic had some recommendation this week."
         },
         "currentWeek": {
-          "title": "Week {{rango}}",
+          "title": "Ratings this week · {{rango}}",
           "good": "Good",
           "regular": "Regular",
           "bad": "Bad"
@@ -1344,8 +1339,9 @@
           "allCategories": "All categories",
           "total": "{{count}} module",
           "total_other": "{{count}} modules",
-          "recommendedTo": "{{count}} building",
-          "recommendedTo_other": "{{count}} buildings"
+          "recommendedTo": "Recommended to {{count}} building",
+          "recommendedTo_other": "Recommended to {{count}} buildings",
+          "actionsFor": "Actions for {{titulo}}"
         },
         "ratingPanel": {
           "ariaLabel": "Rating for {{conjunto}}",
@@ -1362,16 +1358,20 @@
         },
         "modulePanel": {
           "ariaLabel": "Module: {{titulo}}",
-          "recommendedTo": "Recommended to {{count}} building",
-          "recommendedTo_other": "Recommended to {{count}} buildings",
+          "tabsLabel": "Module sections",
+          "preview": "Preview",
+          "recommendedTab": "Recommended to ({{count}})",
           "noneYet": "Not recommended to any building yet.",
           "sentManually": "Sent by hand",
           "guideImageHint": "Click the image to enlarge it."
         },
         "send": {
-          "title": "Send to other buildings",
-          "oneLabel": "To a specific building",
-          "severalLabel": "To several buildings",
+          "title": "Send to buildings",
+          "menuItem": "Send to buildings…",
+          "subtitle": "Choose the buildings that will receive “{{titulo}}”.",
+          "localidadLabel": "District (optional)",
+          "allLocalidades": "All districts",
+          "severalLabel": "Buildings",
           "searchPlaceholder": "Search building…",
           "button": "Send",
           "buttonMany": "Send to {{count}} building",
@@ -1415,6 +1415,7 @@
         "deleteConfirm": {
           "title": "Delete \"{{titulo}}\"?",
           "warning": "This action cannot be undone.",
+          "action": "Delete",
           "confirm": "Yes, delete"
         }
       },

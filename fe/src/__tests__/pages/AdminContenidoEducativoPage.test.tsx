@@ -249,44 +249,35 @@ describe("AdminContenidoEducativoPage", () => {
     expect(screen.getByRole("button", { name: "Módulos" })).toBeInTheDocument();
   });
 
-  it("el contenido de la pestaña se puede recoger y volver a expandir, sin esconder las pestañas", async () => {
+  // ¿Qué? Issue #619: se quitó "Recoger / Ver calificaciones / Ver módulos"; el panel queda siempre abierto.
+  it("el panel ya no se recoge: no hay botón Recoger en ninguna pestaña", async () => {
+    const user = userEvent.setup({ delay: null });
+    renderPage();
+    await screen.findByText("Todavía no hay calificaciones en este periodo.");
+    expect(screen.queryByRole("button", { name: "Recoger" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Módulos" }));
+    expect(await screen.findByText("Todavía no hay módulos creados.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Recoger|Ver módulos|Ver calificaciones/ })).not.toBeInTheDocument();
+  });
+
+  it("un clic en las pestañas cambia de pestaña", async () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
     await screen.findByText("Todavía no hay calificaciones en este periodo.");
 
-    await user.click(screen.getByRole("button", { name: "Recoger" }));
+    await user.click(screen.getByRole("button", { name: "Módulos" }));
+    expect(await screen.findByText("Todavía no hay módulos creados.")).toBeInTheDocument();
     expect(screen.queryByText("Todavía no hay calificaciones en este periodo.")).not.toBeInTheDocument();
-    // ¿Qué? Las pestañas siguen ahí — recoger solo esconde el contenido de
-    //       la pestaña activa, no la navegación entre pestañas.
-    expect(screen.getByRole("button", { name: /Calificaciones por conjunto/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Módulos" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Ver calificaciones" }));
+    await user.click(screen.getByRole("button", { name: /Calificaciones por conjunto/ }));
     expect(await screen.findByText("Todavía no hay calificaciones en este periodo.")).toBeInTheDocument();
   });
 
-  it("un clic en las pestañas cambia de pestaña sin recoger el panel", async () => {
-    const user = userEvent.setup({ delay: null });
+  it("las tarjetas de arriba dicen lo que cuentan: 'Temas sin recomendación' y 'Calificaciones de esta semana'", async () => {
     renderPage();
-    await screen.findByText("Todavía no hay calificaciones en este periodo.");
-
-    // ¿Qué? La barra completa recoge/expande al hacer clic — las pestañas
-    //       cortan la propagación para no disparar también el toggle. Este
-    //       test cubre justo ese riesgo: elegir "Módulos" no debe cerrar
-    //       el panel de un golpe.
-    await user.click(screen.getByRole("button", { name: "Módulos" }));
-    expect(await screen.findByText("Todavía no hay módulos creados.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Recoger" })).toBeInTheDocument();
-  });
-
-  it("cambia el texto del botón para recoger según la pestaña activa", async () => {
-    const user = userEvent.setup({ delay: null });
-    renderPage();
-    await user.click(screen.getByRole("button", { name: "Módulos" }));
-    await screen.findByText("Todavía no hay módulos creados.");
-
-    await user.click(screen.getByRole("button", { name: "Recoger" }));
-    expect(screen.getByRole("button", { name: "Ver módulos" })).toBeInTheDocument();
+    expect(await screen.findByText("Temas sin recomendación")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Calificaciones de esta semana · 21–27 sep/ })).toBeInTheDocument();
   });
 
   describe("pestaña Calificaciones por conjunto", () => {
@@ -602,19 +593,36 @@ describe("AdminContenidoEducativoPage", () => {
       );
     });
 
-    it("abre el detalle de una calificación Mala, con evidencia y el módulo recomendado", async () => {
+    it("abre el modal de la auditoría de una calificación Mala, con las fotos y el módulo recomendado", async () => {
       simularServidor([califMalo], { modulos: [moduloExistente] });
       const user = userEvent.setup({ delay: null });
       renderPage();
       await user.click(await (await tablaLista()).findByText("Torres de Aranjuez"));
 
-      const panel = await screen.findByRole("dialog", { name: "Calificación de Torres de Aranjuez" });
-      expect(within(panel).getByText("Carlos Gómez")).toBeInTheDocument();
+      // ¿Qué? Issue #619: es el mismo modal que ven los demás roles, con la ficha ya cargada (no se pide al servidor:
+      //       GET /auditorias-conjunto/{id} rechaza al Admin del Sistema).
+      const modal = await screen.findByRole("dialog", { name: "Resultado de la auditoría" });
+      expect(within(modal).getByText("Carlos Gómez")).toBeInTheDocument();
+      expect(within(modal).getByRole("button", { name: "Ver foto en tamaño completo" })).toBeInTheDocument();
       // ¿Qué? El mock de t() en __tests__/setup.ts no pluraliza (siempre usa la forma "_other" en bare) — se
       //       verifica con una expresión regular sin la "s" final, así sirve tanto aquí como con el i18next real.
-      expect(within(panel).getByText(/Se avisó a 12 residente/)).toBeInTheDocument();
-      expect(within(panel).getByRole("button", { name: "Ampliar foto" })).toBeInTheDocument();
-      expect(within(panel).getByText("Código de colores")).toBeInTheDocument();
+      expect(within(modal).getByText("Contenido recomendado")).toBeInTheDocument();
+      expect(within(modal).getByText(/Se avisó a 12 residente/)).toBeInTheDocument();
+      expect(within(modal).getByRole("button", { name: /Código de colores/ })).toBeInTheDocument();
+      expect(mockGet).not.toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/a1"), expect.anything());
+    });
+
+    it("el módulo recomendado del modal de la calificación abre su modal en la pestaña Módulos", async () => {
+      simularServidor([califMalo], { modulos: [moduloExistente] });
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await user.click(await (await tablaLista()).findByText("Torres de Aranjuez"));
+      const modal = await screen.findByRole("dialog", { name: "Resultado de la auditoría" });
+
+      await user.click(within(modal).getByRole("button", { name: /Código de colores/ }));
+
+      expect(await screen.findByRole("dialog", { name: /Módulo: Código de colores/ })).toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "Resultado de la auditoría" })).not.toBeInTheDocument();
     });
 
     // ¿Qué? Issue #587: pasados 6 meses la foto se borra (rutas en null) y el detalle lo avisa.
@@ -625,10 +633,10 @@ describe("AdminContenidoEducativoPage", () => {
       renderPage();
       await user.click(await (await tablaLista()).findByText("Torres de Aranjuez"));
 
-      const panel = await screen.findByRole("dialog", { name: "Calificación de Torres de Aranjuez" });
-      expect(within(panel).getByText(/La foto ya no está disponible/)).toBeInTheDocument();
-      expect(within(panel).queryByRole("button", { name: "Ampliar foto" })).not.toBeInTheDocument();
-      expect(within(panel).getByText("Carlos Gómez")).toBeInTheDocument();
+      const modal = await screen.findByRole("dialog", { name: "Resultado de la auditoría" });
+      expect(within(modal).getByText(/La foto ya no está disponible/)).toBeInTheDocument();
+      expect(within(modal).queryByRole("button", { name: "Ver foto en tamaño completo" })).not.toBeInTheDocument();
+      expect(within(modal).getByText("Carlos Gómez")).toBeInTheDocument();
     });
 
     it("el detalle de una calificación Buena dice que no hay recomendación", async () => {
@@ -920,7 +928,7 @@ describe("AdminContenidoEducativoPage", () => {
       expect(mockPost).not.toHaveBeenCalled();
     });
 
-    it("edita un módulo existente desde su panel", async () => {
+    it("edita un módulo existente desde el menú de la fila", async () => {
       mockGet.mockImplementation((url: string) => {
         if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
         return Promise.resolve(respuestaPorDefecto(url));
@@ -929,9 +937,8 @@ describe("AdminContenidoEducativoPage", () => {
       const user = userEvent.setup({ delay: null });
       renderPage();
       await irAModulos(user);
-      await user.click(await screen.findByText("Código de colores"));
-
-      await user.click(await screen.findByRole("button", { name: "Editar" }));
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Editar" }));
       const inputTitulo = screen.getByDisplayValue("Código de colores");
       await user.clear(inputTitulo);
       await user.type(inputTitulo, "Código de colores actualizado");
@@ -945,7 +952,36 @@ describe("AdminContenidoEducativoPage", () => {
       });
     });
 
-    it("elimina un módulo tras confirmar, desde el panel", async () => {
+    it("pulsar la fila abre el modal de ver, y 'Recomendado a' muestra los conjuntos sin repetir uno dos veces", async () => {
+      const califViejaMismoConjunto: AuditoriaAdmin = { ...califMalo, id_auditoria: "a0", created_at: "2026-09-01T09:00:00Z" };
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/contenido-educativo") && url.includes("/envios")) return Promise.resolve({ data: [] });
+        if (url.includes("/contenido-educativo")) return Promise.resolve({ data: [moduloExistente] });
+        if (url.includes("/auditorias-conjunto/admin/resumen-semana")) return Promise.resolve(respuestaPorDefecto(url));
+        if (url.includes("/auditorias-conjunto/admin")) {
+          return Promise.resolve({ data: { items: [califMalo, califViejaMismoConjunto], total: 2, conteos: { BUENA: 0, REGULAR: 0, DEFICIENTE: 2 } } });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      // ¿Qué? El chip de la fila ya dice "Recomendado a N conjuntos" (no "N conjunto").
+      expect(await screen.findByText("Recomendado a 1 conjunto")).toBeInTheDocument();
+      await user.click(await screen.findByText("Código de colores"));
+
+      const modal = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
+      // Se abre en "Vista previa": el contenido del módulo, no la lista de conjuntos.
+      expect(within(modal).getByRole("tab", { name: "Vista previa" })).toHaveAttribute("aria-selected", "true");
+      expect(within(modal).getByText(/Blanco, negro y verde/)).toBeInTheDocument();
+      expect(within(modal).queryByText("Torres de Aranjuez")).not.toBeInTheDocument();
+
+      await user.click(within(modal).getByRole("tab", { name: "Recomendado a (1)" }));
+      expect(within(modal).getAllByText("Torres de Aranjuez")).toHaveLength(1);
+    });
+
+    // ¿Qué? Cada acción tiene un solo lugar: el menú de tres puntos de la fila. El modal de ver solo muestra.
+    it("el modal de ver no tiene acciones: ni Enviar, ni Editar, ni Eliminar", async () => {
       mockGet.mockImplementation((url: string) => {
         if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
         return Promise.resolve(respuestaPorDefecto(url));
@@ -954,68 +990,65 @@ describe("AdminContenidoEducativoPage", () => {
       renderPage();
       await irAModulos(user);
       await user.click(await screen.findByText("Código de colores"));
-      await user.click(await screen.findByRole("button", { name: "Sí, eliminar" }));
 
-      const dialog = screen.getByRole("dialog", { name: "Confirmar eliminación" });
+      const modal = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
+      expect(within(modal).queryByRole("button", { name: /Enviar a conjuntos|Editar|Eliminar/ })).not.toBeInTheDocument();
+    });
+
+    it("el menú de tres puntos de la fila solo tiene acciones (Enviar, Editar y Eliminar), sin 'Ver'", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+
+      const menu = await screen.findByRole("menu");
+      expect(within(menu).getAllByRole("menuitem").map((o) => o.textContent)).toEqual(["Enviar a conjuntos…", "Editar", "Eliminar"]);
+      // Abrir el menú no abre el modal de ver: el clic no sube a la fila.
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("Eliminar desde el menú de la fila pide confirmación antes de borrar", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Eliminar" }));
+
+      expect(mockDelete).not.toHaveBeenCalled();
+      const dialog = await screen.findByRole("dialog", { name: "Confirmar eliminación" });
       await user.click(within(dialog).getByRole("button", { name: "Sí, eliminar" }));
-
-      await waitFor(() => {
-        expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining(moduloExistente.id_contenido));
-      });
+      await waitFor(() => expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining(moduloExistente.id_contenido)));
     });
 
-    it("abre el panel de un módulo y muestra a qué conjuntos se recomendó, sin repetir uno dos veces", async () => {
-      const califViejaMismoConjunto: AuditoriaAdmin = { ...califMalo, id_auditoria: "a0", created_at: "2026-09-01T09:00:00Z" };
+    it("Editar desde el menú de la fila abre el formulario de edición", async () => {
       mockGet.mockImplementation((url: string) => {
-        if (url.includes("/contenido-educativo") && url.includes("/envios")) return Promise.resolve({ data: [] });
-        if (url.includes("/contenido-educativo")) return Promise.resolve({ data: [moduloExistente] });
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califMalo, califViejaMismoConjunto], total: 2 } });
+        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
         return Promise.resolve(respuestaPorDefecto(url));
       });
       const user = userEvent.setup({ delay: null });
       renderPage();
       await irAModulos(user);
-      await user.click(await screen.findByText("Código de colores"));
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Editar" }));
 
-      const panel = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
-      expect(within(panel).getByText("Recomendado a 1 conjunto")).toBeInTheDocument();
-      expect(within(panel).getAllByText("Torres de Aranjuez")).toHaveLength(1);
+      expect(await screen.findByDisplayValue("Código de colores")).toBeInTheDocument();
     });
 
-    it("envía el módulo a un conjunto específico", async () => {
+    // ¿Qué? Issue #619: un solo control de varios conjuntos y un botón que dice cuántos se enviarán.
+    const montarEnvio = (enviosDespues: unknown[] = []) => {
+      let yaEnvio = false;
       mockGet.mockImplementation((url: string) => {
-        if (url.includes("/contenido-educativo") && url.includes("/envios")) return Promise.resolve({ data: [] });
+        if (url.includes("/contenido-educativo") && url.includes("/envios")) return Promise.resolve({ data: yaEnvio ? enviosDespues : [] });
         if (url.includes("/contenido-educativo")) return Promise.resolve({ data: [moduloExistente] });
-        if (url.includes("/geography/conjuntos/todos")) return Promise.resolve({ data: [{ id_conjunto_residencial: "c9", nombre_conjunto: "Conjunto Los Alpes" }] });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
-      mockPost.mockResolvedValue({ data: [{ id_conjunto_residencial: "c9", nombre_conjunto: "Conjunto Los Alpes", created_at: "2026-09-21T10:00:00Z" }] });
-      const user = userEvent.setup({ delay: null });
-      renderPage();
-      await irAModulos(user);
-      await user.click(await screen.findByText("Código de colores"));
-
-      const panel = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
-      await user.type(within(panel).getByLabelText("A un conjunto específico"), "Alpes");
-      // ¿Qué? Las opciones se buscan en `screen`: la lista del buscador se dibuja fuera del panel
-      //       (`anchor`, issue #615) para que el scroll interno del modal no la recorte.
-      await user.click(await screen.findByText("Conjunto Los Alpes"));
-      // ¿Qué? Se acota al bloque "A un conjunto específico" porque el botón
-      //       "Enviar" del bloque "A varios conjuntos" tiene el mismo texto
-      //       mientras no hay ninguno seleccionado — sin acotar, hay dos
-      //       botones con ese nombre exacto.
-      const bloqueUno = within(panel).getByText("A un conjunto específico").closest("div")!;
-      await user.click(within(bloqueUno).getByRole("button", { name: "Enviar" }));
-
-      await waitFor(() => {
-        expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/enviar"), { conjuntos: ["c9"] });
-      });
-    });
-
-    it("envía el módulo a varios conjuntos a la vez", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/contenido-educativo") && url.includes("/envios")) return Promise.resolve({ data: [] });
-        if (url.includes("/contenido-educativo")) return Promise.resolve({ data: [moduloExistente] });
+        if (url.includes("/geography/localidades")) return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
         if (url.includes("/geography/conjuntos/todos")) {
           return Promise.resolve({
             data: [
@@ -1026,32 +1059,117 @@ describe("AdminContenidoEducativoPage", () => {
         }
         return Promise.resolve(respuestaPorDefecto(url));
       });
-      mockPost.mockResolvedValue({ data: [] });
+      mockPost.mockImplementation(() => {
+        yaEnvio = true;
+        return Promise.resolve({ data: [] });
+      });
+    };
+
+    it("envía el módulo a un conjunto desde la ventana 'Enviar a conjuntos', y el chip de la lista se actualiza", async () => {
+      montarEnvio([{ id_conjunto_residencial: "c9", nombre_conjunto: "Conjunto Los Alpes", created_at: "2026-09-21T10:00:00Z" }]);
       const user = userEvent.setup({ delay: null });
       renderPage();
       await irAModulos(user);
-      await user.click(await screen.findByText("Código de colores"));
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Enviar a conjuntos…" }));
 
-      const panel = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
-      const buscador = within(panel).getByLabelText("A varios conjuntos");
+      const ventana = await screen.findByRole("dialog", { name: "Enviar a conjuntos" });
+      await user.type(within(ventana).getByLabelText("Conjuntos"), "Alpes");
+      // ¿Qué? Las opciones se buscan en `screen`: la lista del buscador se dibuja fuera de la ventana (`anchor`, issue #615).
+      await user.click(await screen.findByText("Conjunto Los Alpes"));
+      await user.keyboard("{Escape}");
+      // ¿Qué? El mock de t() no pluraliza: el botón queda en singular ("conjunto") aunque haya más de uno.
+      await user.click(within(ventana).getByRole("button", { name: /Enviar a 1 conjunto/ }));
+
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/enviar"), { conjuntos: ["c9"] }));
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Enviar a conjuntos" })).not.toBeInTheDocument());
+      expect(await screen.findByText("Recomendado a 1 conjunto")).toBeInTheDocument();
+    });
+
+    it("envía el módulo a varios conjuntos a la vez", async () => {
+      montarEnvio();
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Enviar a conjuntos…" }));
+
+      const ventana = await screen.findByRole("dialog", { name: "Enviar a conjuntos" });
+      const buscador = within(ventana).getByLabelText("Conjuntos");
       await user.type(buscador, "a");
       await user.click(await screen.findByText("Conjunto Los Alpes"));
       await user.type(buscador, "a");
       await user.click(await screen.findByText("Parques de Bogotá Urapan"));
 
-      // ¿Qué? El combobox de selección múltiple de Headless UI no cierra su
-      //       lista al elegir un ítem (a propósito, para poder seguir
-      //       marcando varios) — mientras sigue abierta, marca el resto del
-      //       panel con aria-hidden="true", y el botón "Enviar" queda fuera
-      //       del árbol de accesibilidad hasta cerrarla con Escape.
+      // ¿Qué? El combobox de selección múltiple de Headless UI no cierra su lista al elegir un ítem (a propósito, para
+      //       poder seguir marcando varios) — mientras sigue abierta, marca el resto con aria-hidden="true", y el botón
+      //       queda fuera del árbol de accesibilidad hasta cerrarla con Escape.
+      await user.keyboard("{Escape}");
+      await user.click(within(ventana).getByRole("button", { name: /Enviar a 2 conjunto/ }));
+
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/enviar"), { conjuntos: ["c9", "c8"] }));
+    });
+
+    it("la Localidad es opcional: acota la búsqueda de conjuntos y los ya elegidos se conservan al cambiarla", async () => {
+      montarEnvio();
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Enviar a conjuntos…" }));
+      const ventana = await screen.findByRole("dialog", { name: "Enviar a conjuntos" });
+      // Sin elegir localidad ya se puede buscar y enviar: no es obligatoria.
+      expect(within(ventana).getByLabelText("Localidad (opcional)")).toHaveValue("");
+      await user.type(within(ventana).getByLabelText("Conjuntos"), "Alpes");
+      await user.click(await screen.findByText("Conjunto Los Alpes"));
+      await user.keyboard("{Escape}");
+      expect(within(ventana).getByRole("button", { name: /Enviar a 1 conjunto/ })).toBeEnabled();
+
+      await screen.findByRole("option", { name: "Usaquén" });
+      await user.selectOptions(within(ventana).getByLabelText("Localidad (opcional)"), "1");
+      await user.type(within(ventana).getByLabelText("Conjuntos"), "a");
+
+      await waitFor(() =>
+        expect(mockGet).toHaveBeenCalledWith(
+          expect.stringContaining("/geography/conjuntos/todos"),
+          expect.objectContaining({ params: expect.objectContaining({ id_localidad: 1 }) })
+        )
+      );
+      // El conjunto elegido antes de cambiar de localidad sigue ahí (con la lista abierta el resto queda aria-hidden).
+      await user.keyboard("{Escape}");
+      expect(within(ventana).getByText("Conjunto Los Alpes")).toBeInTheDocument();
+      expect(within(ventana).getByRole("button", { name: /Enviar a 1 conjunto/ })).toBeInTheDocument();
+    });
+
+    it("sin ningún conjunto elegido el botón de enviar está desactivado", async () => {
+      montarEnvio();
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Enviar a conjuntos…" }));
+
+      const ventana = await screen.findByRole("dialog", { name: "Enviar a conjuntos" });
+      expect(within(ventana).getByRole("button", { name: "Enviar" })).toBeDisabled();
+    });
+
+    it("si falla el envío lo avisa y la ventana se queda abierta con lo elegido", async () => {
+      montarEnvio();
+      mockPost.mockRejectedValue(new Error("falló"));
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Enviar a conjuntos…" }));
+      const ventana = await screen.findByRole("dialog", { name: "Enviar a conjuntos" });
+      await user.type(within(ventana).getByLabelText("Conjuntos"), "Alpes");
+      await user.click(await screen.findByText("Conjunto Los Alpes"));
       await user.keyboard("{Escape}");
 
-      // ¿Qué? Mismo motivo que arriba: el mock de t() no pluraliza, el botón
-      //       queda en singular ("conjunto") aunque count=2.
-      await user.click(within(panel).getByRole("button", { name: /Enviar a 2 conjunto/ }));
-      await waitFor(() => {
-        expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/enviar"), { conjuntos: ["c9", "c8"] });
-      });
+      await user.click(within(ventana).getByRole("button", { name: /Enviar a 1 conjunto/ }));
+
+      expect(await within(ventana).findByText("No se pudo enviar. Intenta de nuevo.")).toBeInTheDocument();
+      expect(within(ventana).getByRole("button", { name: /Enviar a 1 conjunto/ })).toBeInTheDocument();
     });
 
     it("muestra la guía de apoyo integrada cuando es una imagen, y se puede ampliar", async () => {
