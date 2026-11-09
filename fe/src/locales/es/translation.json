@@ -1257,13 +1257,10 @@
       "bodyRequired": "El contenido es obligatorio.",
       "bodyTooShort": "El contenido debe tener al menos 20 caracteres.",
       "videoNotYoutube": "El video debe ser un enlace de YouTube que empiece por https:// (por ejemplo https://youtu.be/...).",
-      "guideNotHttps": "El enlace de la guía debe empezar por https://."
+      "guideNotHttps": "El enlace de la guía debe empezar por https://.",
+      "categoryDuplicate": "Esa categoría ya existe. Elígela en «Existente» para no duplicarla."
     },
     "deleteError": "No se pudo eliminar. Intenta de nuevo.",
-    "newSection": {
-      "title": "Nuevo contenido",
-      "newCategory": "+ Nueva categoría"
-    },
     "catalogSection": {
       "title": "Catálogo",
       "modules": "Módulos",
@@ -1382,14 +1379,25 @@
       "category": "Categoría",
       "categoryPlaceholder": "Ej: Separación en la fuente",
       "categoryPlaceholderSelect": "Elige una categoría…",
-      "newCategoryOption": "+ Nueva categoría…",
-      "newCategoryWarning": "Se creará una categoría nueva en el catálogo del Residente. Escríbela igual que las existentes para no duplicarla.",
+      "categoryModeAria": "Cómo elegir la categoría",
+      "categoryMode": {
+        "existing": "Existente",
+        "new": "Nueva"
+      },
+      "categoryNoneYet": "Todavía no hay categorías creadas: escribe una nueva.",
+      "categoryDuplicate": "Ya existe la categoría «{{nombre}}».",
+      "useExistingCategory": "Usar «{{nombre}}»",
+      "newCategoryWarning": "Una categoría nueva también será un tema que los recicladores podrán calificar al auditar un conjunto.",
       "titleField": "Título",
       "titlePlaceholder": "Ej: Código de colores de bolsas",
       "content": "Contenido",
-      "contentMarkdownHint": "Puedes usar ## para subtítulos, **negrita** y - para listas.",
       "charCount": "{{count}}/{{max}} caracteres · mínimo 20",
-      "formatHeading": "Subtítulo",
+      "addCard": "Tarjeta",
+      "addCardHint": "Agrega un párrafo nuevo con su título, listo para escribir",
+      "cardTitlePlaceholder": "Título de la tarjeta",
+      "boldHint": "Pone en negrita el texto seleccionado",
+      "listHint": "Convierte las líneas seleccionadas en una lista",
+      "insertImageHint": "Sube una imagen y la pega en el texto; va con la tarjeta que sigue",
       "formatBold": "Negrita",
       "formatList": "Lista",
       "boldPlaceholder": "texto en negrita",
@@ -1397,7 +1405,7 @@
       "videoRecognized": "✓ Link de YouTube reconocido",
       "videoNotRecognized": "Este link no parece de YouTube: el Residente no verá el video.",
       "guideLink": "Guía de apoyo",
-      "contentMuroHint": "Cada párrafo (separado por una línea en blanco) será una tarjeta del muro. Empieza el párrafo con un título corto y dos puntos (por ejemplo, «Bolsa blanca: ...»). El primer párrafo sin título es la introducción. Una imagen en su propia línea se pega a la tarjeta que viene después.",
+      "contentHint": "Cada párrafo, separado por una línea en blanco, es una tarjeta del muro. Con «Tarjeta» empiezas una con su título; el primer párrafo sin título es la introducción.",
       "insertImage": "Insertar imagen",
       "insertingImage": "Subiendo...",
       "insertImageError": "No se pudo subir la imagen. Intenta de nuevo.",
@@ -1405,9 +1413,29 @@
       "coverImage": "Imagen de portada (opcional)",
       "coverImageHint": "Se ve en la tarjeta de la categoría. Mejor una imagen ancha (16:9), propia o de uso libre. JPG, PNG o WEBP de hasta 5 MB. Sin imagen se usa el dibujo de la categoría."
     },
+    "wallSummary": {
+      "title": "Así se dividirá tu texto en el muro",
+      "empty": "Escribe el contenido y aquí verás su introducción, sus tarjetas y su cierre.",
+      "intro": "Introducción",
+      "cards_one": "{{count}} tarjeta",
+      "cards_other": "{{count}} tarjetas",
+      "noTitle": "Sin título",
+      "closing": "Cierre",
+      "none": "ninguno"
+    },
+    "editor": {
+      "mobileTabsLabel": "Qué ver",
+      "edit": "Editar",
+      "preview": "Vista previa"
+    },
     "preview": {
       "label": "Así lo verá el Residente",
-      "live": "en vivo",
+      "updates": "Se actualiza al escribir",
+      "tabsLabel": "Qué parte ver",
+      "tabLesson": "Lección",
+      "tabCatalog": "Tarjeta del catálogo",
+      "catalogHint": "Así se ve este módulo en la lista de «Aprende a reciclar».",
+      "catalogNoCover": "Sin imagen de portada se usa el dibujo de la categoría. Sube una portada para verla aquí.",
       "categoryPlaceholder": "Categoría",
       "titlePlaceholder": "Aquí verás el título",
       "bodyPlaceholder": "Aquí verás el contenido tal como lo leerá el Residente."

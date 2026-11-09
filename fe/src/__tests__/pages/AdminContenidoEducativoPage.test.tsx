@@ -698,7 +698,7 @@ describe("AdminContenidoEducativoPage", () => {
       await screen.findByText("Código de colores");
 
       await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
-      await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+      await user.selectOptions(screen.getByLabelText("Categoría"), "Separación en la fuente");
       await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Nuevo tema de prueba");
       const textarea = screen.getByLabelText("Contenido *");
       await user.type(textarea, "Contenido de prueba con más de veinte caracteres.");
@@ -733,7 +733,7 @@ describe("AdminContenidoEducativoPage", () => {
         const user = userEvent.setup({ delay: null });
         await abrirFormularioNuevo(user);
 
-        expect(screen.getByText(/Cada párrafo \(separado por una línea en blanco\) será una tarjeta del muro/)).toBeInTheDocument();
+        expect(screen.getByText(/Cada párrafo, separado por una línea en blanco, es una tarjeta del muro/)).toBeInTheDocument();
       });
 
       it("la vista previa dibuja el muro: 'De qué trata' y una tarjeta con su título", async () => {
@@ -824,7 +824,7 @@ describe("AdminContenidoEducativoPage", () => {
       it("la imagen de portada se sube y se envía al guardar el módulo", async () => {
         const user = userEvent.setup({ delay: null });
         await abrirFormularioNuevo(user);
-        await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+        await user.selectOptions(screen.getByLabelText("Categoría"), "Separación en la fuente");
         await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema con portada");
         await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
 
@@ -844,7 +844,7 @@ describe("AdminContenidoEducativoPage", () => {
       it("un módulo sin portada se guarda con url_imagen en null", async () => {
         const user = userEvent.setup({ delay: null });
         await abrirFormularioNuevo(user);
-        await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+        await user.selectOptions(screen.getByLabelText("Categoría"), "Separación en la fuente");
         await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema sin portada");
         await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
 
@@ -870,7 +870,7 @@ describe("AdminContenidoEducativoPage", () => {
       await screen.findByText("Código de colores");
 
       await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
-      await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+      await user.selectOptions(screen.getByLabelText("Categoría"), "Separación en la fuente");
       await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Nuevo tema de prueba");
       await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
       await user.type(screen.getByPlaceholderText("https://www.youtube.com/watch?v=..."), "https://sitio-malo.com/video");
@@ -887,11 +887,190 @@ describe("AdminContenidoEducativoPage", () => {
       await irAModulos(user);
 
       await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
-      await user.selectOptions(screen.getByLabelText("Categoría *"), "+ Nueva categoría…");
-
-      expect(screen.getByText(/Se creará una categoría nueva en el catálogo del Residente/)).toBeInTheDocument();
+      // Sin ninguna categoría creada, el formulario abre directo en "Nueva".
+      expect(screen.getByRole("radio", { name: "Nueva" })).toHaveAttribute("aria-checked", "true");
+      expect(screen.getByText(/también será un tema que los recicladores podrán calificar/)).toBeInTheDocument();
       await user.type(screen.getByPlaceholderText("Ej: Separación en la fuente"), "Compostaje en casa");
-      expect(screen.getByText("Compostaje en casa")).toBeInTheDocument(); // vista previa
+      // La categoría escrita se ve en la "Tarjeta del catálogo" de la vista previa.
+      await user.click(screen.getByRole("tab", { name: "Tarjeta del catálogo" }));
+      expect(within(screen.getByRole("tabpanel", { name: "Tarjeta del catálogo" })).getByText("Compostaje en casa")).toBeInTheDocument();
+    });
+
+    describe("editor de módulos (issue #620)", () => {
+      async function abrirNuevo(user: ReturnType<typeof userEvent.setup>) {
+        mockGet.mockImplementation((url: string) => {
+          if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+          return Promise.resolve(respuestaPorDefecto(url));
+        });
+        renderPage();
+        await irAModulos(user);
+        await screen.findByText("Código de colores");
+        await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
+      }
+      const cuerpo = () => screen.getByLabelText("Contenido *") as HTMLTextAreaElement;
+
+      it("crear un módulo tiene un solo camino: el botón de la pestaña Módulos", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText("Todavía no hay calificaciones en este periodo.");
+        // En la pestaña Calificaciones no hay botón para crear, y ya no existen la tarjeta "Nuevo contenido" ni "+ Nueva categoría".
+        expect(screen.queryByRole("button", { name: "Nuevo módulo" })).not.toBeInTheDocument();
+        expect(screen.queryByText("Nuevo contenido")).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /Nueva categoría/ })).not.toBeInTheDocument();
+
+        await irAModulos(user);
+        expect(screen.getAllByRole("button", { name: "Nuevo módulo" })).toHaveLength(1);
+      });
+
+      it("la categoría tiene dos modos: 'Existente' elige solo entre las ya creadas, sin la opción de crear una", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+
+        expect(screen.getByRole("radio", { name: "Existente" })).toHaveAttribute("aria-checked", "true");
+        const opciones = within(screen.getByLabelText("Categoría")).getAllByRole("option").map((o) => o.textContent);
+        expect(opciones).toEqual(["Elige una categoría…", "Separación en la fuente"]);
+
+        await user.click(screen.getByRole("radio", { name: "Nueva" }));
+        // En "Nueva" el campo es de texto, ya no un selector.
+        expect(screen.getByLabelText("Categoría").tagName).toBe("INPUT");
+        expect(screen.getByPlaceholderText("Ej: Separación en la fuente")).toBeInTheDocument();
+      });
+
+      it("una categoría 'Nueva' que ya existe (en minúscula y sin tilde) avisa del duplicado y no deja guardar", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema con duplicado");
+        await user.type(cuerpo(), "Contenido de prueba con más de veinte caracteres.");
+
+        await user.click(screen.getByRole("radio", { name: "Nueva" }));
+        await user.type(screen.getByPlaceholderText("Ej: Separación en la fuente"), "separacion  en la FUENTE");
+
+        expect(await screen.findByText(/Ya existe la categoría «Separación en la fuente»/)).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeDisabled();
+        expect(mockPost).not.toHaveBeenCalled();
+      });
+
+      it("'Usar «…»' cambia a 'Existente' con esa categoría y ya se puede guardar", async () => {
+        mockPost.mockResolvedValue({ data: moduloExistente });
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema sin duplicar");
+        await user.type(cuerpo(), "Contenido de prueba con más de veinte caracteres.");
+        await user.click(screen.getByRole("radio", { name: "Nueva" }));
+        await user.type(screen.getByPlaceholderText("Ej: Separación en la fuente"), "separación en la fuente");
+
+        await user.click(await screen.findByRole("button", { name: "Usar «Separación en la fuente»" }));
+
+        expect(screen.getByRole("radio", { name: "Existente" })).toHaveAttribute("aria-checked", "true");
+        expect(screen.getByLabelText("Categoría")).toHaveValue("Separación en la fuente");
+        await user.click(screen.getByRole("button", { name: "Guardar" }));
+        await waitFor(() =>
+          expect(mockPost).toHaveBeenCalledWith(
+            expect.stringMatching(/\/contenido-educativo$/),
+            expect.objectContaining({ modulo_categoria: "Separación en la fuente" })
+          )
+        );
+      });
+
+      it("una categoría realmente nueva se guarda con el nombre escrito", async () => {
+        mockPost.mockResolvedValue({ data: moduloExistente });
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema de compostaje");
+        await user.type(cuerpo(), "Contenido de prueba con más de veinte caracteres.");
+        await user.click(screen.getByRole("radio", { name: "Nueva" }));
+        await user.type(screen.getByPlaceholderText("Ej: Separación en la fuente"), "Compostaje en casa");
+
+        await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+        await waitFor(() =>
+          expect(mockPost).toHaveBeenCalledWith(
+            expect.stringMatching(/\/contenido-educativo$/),
+            expect.objectContaining({ modulo_categoria: "Compostaje en casa" })
+          )
+        );
+      });
+
+      it("ya no existe el botón 'Subtítulo' y quedan Negrita, Lista e Insertar imagen", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+
+        expect(screen.queryByRole("button", { name: "Subtítulo" })).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Negrita" })).toHaveAttribute("title", "Pone en negrita el texto seleccionado");
+        expect(screen.getByRole("button", { name: "Lista" })).toHaveAttribute("title", expect.stringContaining("lista"));
+        expect(screen.getByText("Insertar imagen").closest("label")).toHaveAttribute("title", expect.stringContaining("tarjeta que sigue"));
+      });
+
+      it("'Tarjeta' agrega un párrafo con su título seleccionado, separado del texto anterior", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        await user.type(cuerpo(), "Introducción del tema.");
+
+        await user.click(screen.getByRole("button", { name: "Tarjeta" }));
+
+        expect(cuerpo().value).toBe("Introducción del tema.\n\nTítulo de la tarjeta: ");
+        // El título queda seleccionado para escribir encima.
+        await waitFor(() => {
+          expect(cuerpo().selectionStart).toBe("Introducción del tema.\n\n".length);
+          expect(cuerpo().selectionEnd).toBe("Introducción del tema.\n\nTítulo de la tarjeta".length);
+        });
+      });
+
+      it("'Tarjeta' en un texto vacío empieza directo, sin líneas en blanco de más", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+
+        await user.click(screen.getByRole("button", { name: "Tarjeta" }));
+
+        expect(cuerpo().value).toBe("Título de la tarjeta: ");
+      });
+
+      it("el recuadro en vivo cuenta introducción, tarjetas con su título y cierre", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        const recuadro = screen.getByRole("status", { name: "Así se dividirá tu texto en el muro" });
+        expect(within(recuadro).getByText(/Escribe el contenido y aquí verás/)).toBeInTheDocument();
+
+        await user.type(
+          cuerpo(),
+          "Los tres colores se usan en toda la ciudad.\n\nBolsa blanca: material limpio.\n\nBolsa negra: otros residuos.\n\nGracias por separar bien."
+        );
+
+        expect(within(recuadro).getByText(/Los tres colores se usan en toda la ciudad/)).toBeInTheDocument();
+        expect(within(recuadro).getByText("2 tarjetas")).toBeInTheDocument();
+        expect(within(recuadro).getByText("Bolsa blanca")).toBeInTheDocument();
+        expect(within(recuadro).getByText("Bolsa negra")).toBeInTheDocument();
+        expect(within(recuadro).getByText(/Gracias por separar bien/)).toBeInTheDocument();
+      });
+
+      it("la vista previa tiene dos pestañas: 'Lección' (el muro) y 'Tarjeta del catálogo'", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema para la vista previa");
+
+        expect(screen.getByRole("tab", { name: "Lección" })).toHaveAttribute("aria-selected", "true");
+        expect(screen.getByText("Se actualiza al escribir")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("tab", { name: "Tarjeta del catálogo" }));
+        const panel = screen.getByRole("tabpanel", { name: "Tarjeta del catálogo" });
+        expect(within(panel).getByText("Tema para la vista previa")).toBeInTheDocument();
+        expect(within(panel).getByText(/Sin imagen de portada se usa el dibujo de la categoría/)).toBeInTheDocument();
+      });
+
+      it("en celular se alterna entre 'Editar' y 'Vista previa'", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        const columnaFormulario = () => cuerpo().closest(".space-y-4")!;
+        expect(screen.getByRole("tab", { name: "Editar" })).toHaveAttribute("aria-selected", "true");
+        expect(columnaFormulario().className).not.toMatch(/\bhidden\b/);
+
+        await user.click(screen.getByRole("tab", { name: "Vista previa" }));
+
+        expect(screen.getByRole("tab", { name: "Vista previa" })).toHaveAttribute("aria-selected", "true");
+        // Con la vista previa elegida, el formulario se esconde en pantallas angostas (y sigue visible desde md).
+        expect(columnaFormulario().className).toMatch(/\bhidden\b/);
+        expect(columnaFormulario().className).toContain("md:block");
+      });
     });
 
     it("el botón Negrita envuelve el texto seleccionado en **", async () => {
