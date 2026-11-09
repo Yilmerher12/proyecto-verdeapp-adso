@@ -81,7 +81,8 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
 | GET    | `/api/v1/auditorias-conjunto/desempeno`   | Sí (Residente, Admin de Conjunto) | Conteo de auditorías de UN conjunto por semana (Bueno/Regular/Malo) y por tema. Parámetros: `id_conjunto` (opcional si el usuario tiene un solo conjunto; con varios responde 422) y `semanas` (4, 8 o 12; por defecto 8; otro valor responde 422). Incluye la semana en curso, las semanas sin auditorías salen en cero y la más antigua va primero. Responde `id_conjunto_residencial`, `total`, `semanas` y `temas` |
 | GET    | `/api/v1/auditorias-conjunto/desempeno/semana` | Sí (Residente, Admin de Conjunto) | Auditorías de una semana concreta de un conjunto, más recientes primero, con el mismo formato que `/historial`. Parámetros: `lunes` (`YYYY-MM-DD`, debe ser lunes; si no, 422) e `id_conjunto` (misma regla de arriba) |
 | GET    | `/api/v1/auditorias-conjunto/{id}`        | Sí (Residente, Admin de Conjunto, o el Reciclador que la envió) | Detalle de una auditoría puntual |
-| GET    | `/api/v1/auditorias-conjunto/admin`       | Sí (Admin Sistema) | Lista todas las auditorías de todos los conjuntos, filtrables por la semana (parámetro `lunes`, formato `YYYY-MM-DD` — devuelve `[lunes, lunes+7)` en hora de Bogotá); cada ítem incluye `avisados` (cuántos Residentes recibieron la recomendación automática de RQF-013 por esa auditoría), `id_localidad` y `nombre_localidad` (la localidad del conjunto auditado) |
+| GET    | `/api/v1/auditorias-conjunto/admin`       | Sí (Admin Sistema) | Lista las auditorías de todos los conjuntos, de a páginas (`limit` de 1 a 200, por defecto 100, y `offset`). Filtros opcionales, todos aplicados en el servidor (issue #618): `desde` y `hasta` (`YYYY-MM-DD`, días de Bogotá, ambos incluidos; `hasta` anterior a `desde` responde 422), `lunes` (atajo de una semana completa), `id_localidad`, `id_conjunto`, `buscar` (texto en el conjunto, el tema o la descripción), `nivel` y `orden` (`criticas` = peor primero, `recientes` —por defecto— o `conjunto`). Responde `items`, `total` (con el filtro de nivel) y `conteos` (Bueno/Regular/Malo con todos los filtros MENOS el de nivel, para los botones de la pantalla). Cada ítem incluye `avisados` (cuántos Residentes recibieron la recomendación automática de RQF-013 por esa auditoría), `id_localidad` y `nombre_localidad` |
+| GET    | `/api/v1/auditorias-conjunto/admin/resumen-semana` | Sí (Admin Sistema) | Resumen de una semana (`lunes` obligatorio, `YYYY-MM-DD`): `bueno`, `regular`, `malo` y `temas_con_recomendacion` (temas con alguna calificación Regular o Mala). Alimenta las dos tarjetas de arriba de la pestaña (issue #618) |
 
 <!-- ¿Qué? `GET /admin` se agregó junto con el rediseño de RQF-010 (pestaña
      "Calificaciones por conjunto" del panel de Contenido educativo) — el
@@ -100,10 +101,12 @@ La petición es un formulario (`multipart/form-data`), porque lleva fotos.
      También se filtra por localidad (primero la localidad, luego solo sus conjuntos en
      el selector de conjunto), por eso `GET /admin` ahora devuelve `id_localidad` y
      `nombre_localidad` de cada auditoría (sin migración: el dato ya está en el conjunto).
-     Los filtros se aplican en el frontend; el filtro por fecha usa el día de Bogotá
-     (igual que la semana). Como el endpoint entrega como máximo 200 por
-     página, el frontend pide página tras página (`offset`) hasta traer las `total` de la
-     semana: antes una semana con más de 100 auditorías se veía incompleta, sin aviso. -->
+     Issue #618: esos filtros YA NO se aplican en el frontend. El servidor filtra, ordena,
+     cuenta por nivel y corta en páginas de 10 filas; el frontend dejó de pedir página tras
+     página toda la semana. El filtro por fecha usa el día de Bogotá (igual que la semana).
+     "Desde" y "Hasta" ya no se limitan a la semana vista: el periodo tiene tres modos
+     (Semana, Mes y Personalizado) y "Más filtros" desapareció. Si la semana en curso está
+     vacía, la pestaña abre en la última semana con datos y lo explica en una franja. -->
 
 <!-- ¿Qué? Paginación de `/historial` y `/mias`, y semana de Bogotá en `/admin`.
      ¿Para qué? `/historial` entregaba como máximo las 50 auditorías más recientes

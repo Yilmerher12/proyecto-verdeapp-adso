@@ -19,6 +19,7 @@ import { AdminContenidoEducativoPage } from "@/pages/AdminContenidoEducativoPage
 import { renderWithProviders, mockUser } from "../helpers";
 import type { ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 import type { AuditoriaAdmin } from "@/lib/auditoriaConjuntoApi";
+import { domingoDeLunesUTC, fechaBogota, isoToDateInputUTC } from "@/lib/dateFormat";
 
 const mockGet = vi.fn();
 const mockPost = vi.fn();
@@ -106,7 +107,7 @@ const califBueno: AuditoriaAdmin = {
   ruta_evidencia: "/uploads/evidencias-auditoria/foto2.jpg",
   ruta_evidencia_2: null,
   ruta_evidencia_3: null,
-  created_at: "2026-09-20T09:00:00Z",
+  created_at: "2026-09-22T09:00:00Z",
   nombre_reciclador: "Marta Peña",
   avisados: 0,
 };
@@ -121,7 +122,12 @@ const califBueno: AuditoriaAdmin = {
 function respuestaPorDefecto(url: string) {
   if (url.includes("/contenido-educativo") && url.includes("/envios")) return { data: [] };
   if (url.includes("/contenido-educativo")) return { data: [] };
-  if (url.includes("/auditorias-conjunto/admin")) return { data: { items: [], total: 0 } };
+  if (url.includes("/auditorias-conjunto/admin/resumen-semana")) {
+    return { data: { lunes: SEMANA_ACTUAL, bueno: 0, regular: 0, malo: 0, temas_con_recomendacion: [] } };
+  }
+  if (url.includes("/auditorias-conjunto/admin")) {
+    return { data: { items: [], total: 0, conteos: { BUENA: 0, REGULAR: 0, DEFICIENTE: 0 } } };
+  }
   if (url.includes("/geography/conjuntos/todos")) return { data: [] };
   return { data: [] };
 }
@@ -130,9 +136,90 @@ function mockRespuestasVacias() {
   mockGet.mockImplementation((url: string) => Promise.resolve(respuestaPorDefecto(url)));
 }
 
+// ¿Qué? Issue #618: simula el servidor de calificaciones — filtra, ordena, corta en páginas y cuenta por nivel
+//       igual que GET /auditorias-conjunto/admin, y responde el resumen de la semana, las localidades y los
+//       conjuntos. Así las pruebas comprueban lo que la pantalla PIDE y lo que muestra con la respuesta.
+function simularServidor(auditorias: AuditoriaAdmin[], extra: { modulos?: ContenidoEducativo[] } = {}) {
+  const dia = (iso: string) => fechaBogota(iso);
+  mockGet.mockImplementation((url: string, config?: { params?: Record<string, unknown> }) => {
+    const params = config?.params ?? {};
+    if (url.includes("/auditorias-conjunto/admin/resumen-semana")) {
+      const lunes = String(params.lunes);
+      const domingo = isoToDateInputUTC(domingoDeLunesUTC(lunes).toISOString());
+      const semana = auditorias.filter((a) => dia(a.created_at) >= lunes && dia(a.created_at) <= domingo);
+      return Promise.resolve({
+        data: {
+          lunes,
+          bueno: semana.filter((a) => a.nivel_desempeno === "BUENA").length,
+          regular: semana.filter((a) => a.nivel_desempeno === "REGULAR").length,
+          malo: semana.filter((a) => a.nivel_desempeno === "DEFICIENTE").length,
+          temas_con_recomendacion: [...new Set(semana.filter((a) => a.nivel_desempeno !== "BUENA").map((a) => a.tema_educativo))],
+        },
+      });
+    }
+    if (url.includes("/auditorias-conjunto/admin")) {
+      const { desde, hasta, id_localidad, id_conjunto, buscar, nivel, orden = "recientes", limit = 100, offset = 0 } = params as {
+        desde?: string;
+        hasta?: string;
+        id_localidad?: number;
+        id_conjunto?: string;
+        buscar?: string;
+        nivel?: string;
+        orden?: string;
+        limit?: number;
+        offset?: number;
+      };
+      const q = buscar?.toLowerCase();
+      const sinNivel = auditorias
+        .filter((a) => !desde || dia(a.created_at) >= desde)
+        .filter((a) => !hasta || dia(a.created_at) <= hasta)
+        .filter((a) => !id_localidad || a.id_localidad === id_localidad)
+        .filter((a) => !id_conjunto || a.id_conjunto_residencial === id_conjunto)
+        .filter((a) => !q || `${a.nombre_conjunto} ${a.tema_educativo} ${a.descripcion ?? ""}`.toLowerCase().includes(q));
+      const gravedad: Record<string, number> = { DEFICIENTE: 0, REGULAR: 1, BUENA: 2 };
+      const masReciente = (a: AuditoriaAdmin, b: AuditoriaAdmin) => (a.created_at < b.created_at ? 1 : -1);
+      const comparadores: Record<string, (a: AuditoriaAdmin, b: AuditoriaAdmin) => number> = {
+        criticas: (a, b) => gravedad[a.nivel_desempeno] - gravedad[b.nivel_desempeno] || masReciente(a, b),
+        recientes: masReciente,
+        conjunto: (a, b) => a.nombre_conjunto.localeCompare(b.nombre_conjunto) || masReciente(a, b),
+      };
+      const filtradas = sinNivel.filter((a) => !nivel || a.nivel_desempeno === nivel).sort(comparadores[orden]);
+      const cuenta = (n: string) => sinNivel.filter((a) => a.nivel_desempeno === n).length;
+      return Promise.resolve({
+        data: {
+          items: filtradas.slice(offset, offset + limit),
+          total: filtradas.length,
+          conteos: { BUENA: cuenta("BUENA"), REGULAR: cuenta("REGULAR"), DEFICIENTE: cuenta("DEFICIENTE") },
+        },
+      });
+    }
+    if (url.includes("/geography/localidades")) {
+      return Promise.resolve({
+        data: [
+          { id_localidad: 1, nombre_localidad: "Usaquén" },
+          { id_localidad: 2, nombre_localidad: "Chapinero" },
+        ],
+      });
+    }
+    if (url.includes("/geography/conjuntos/todos")) {
+      const idLocalidad = params.id_localidad as number | undefined;
+      const conjuntos = new Map(auditorias.map((a) => [a.id_conjunto_residencial, a]));
+      return Promise.resolve({
+        data: [...conjuntos.values()]
+          .filter((a) => !idLocalidad || a.id_localidad === idLocalidad)
+          .map((a) => ({ id_conjunto_residencial: a.id_conjunto_residencial, nombre_conjunto: a.nombre_conjunto, nombre_localidad: a.nombre_localidad })),
+      });
+    }
+    if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: extra.modulos ?? [] });
+    return Promise.resolve(respuestaPorDefecto(url));
+  });
+}
+
 // ¿Qué? Los nombres de conjunto también salen como <option> del selector de conjunto: se busca
 //       dentro de la tabla para no encontrar el mismo texto dos veces.
 const enTabla = () => within(screen.getByRole("table"));
+// ¿Qué? La primera vez la tabla aparece cuando llega la respuesta (antes se muestra "Cargando…").
+const tablaLista = async () => within(await screen.findByRole("table"));
 
 function renderPage() {
   return renderWithProviders(<AdminContenidoEducativoPage />, {
@@ -165,23 +252,23 @@ describe("AdminContenidoEducativoPage", () => {
   it("el contenido de la pestaña se puede recoger y volver a expandir, sin esconder las pestañas", async () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
-    await screen.findByText("No hay calificaciones con esos filtros en esta semana.");
+    await screen.findByText("Todavía no hay calificaciones en este periodo.");
 
     await user.click(screen.getByRole("button", { name: "Recoger" }));
-    expect(screen.queryByText("No hay calificaciones con esos filtros en esta semana.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Todavía no hay calificaciones en este periodo.")).not.toBeInTheDocument();
     // ¿Qué? Las pestañas siguen ahí — recoger solo esconde el contenido de
     //       la pestaña activa, no la navegación entre pestañas.
     expect(screen.getByRole("button", { name: /Calificaciones por conjunto/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Módulos" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Ver calificaciones" }));
-    expect(await screen.findByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
+    expect(await screen.findByText("Todavía no hay calificaciones en este periodo.")).toBeInTheDocument();
   });
 
   it("un clic en las pestañas cambia de pestaña sin recoger el panel", async () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
-    await screen.findByText("No hay calificaciones con esos filtros en esta semana.");
+    await screen.findByText("Todavía no hay calificaciones en este periodo.");
 
     // ¿Qué? La barra completa recoge/expande al hacer clic — las pestañas
     //       cortan la propagación para no disparar también el toggle. Este
@@ -203,14 +290,40 @@ describe("AdminContenidoEducativoPage", () => {
   });
 
   describe("pestaña Calificaciones por conjunto", () => {
-    it("consulta la semana actual al montar", async () => {
+    // ¿Qué? Issue #618: el servidor filtra, ordena y corta; estas pruebas simulan ese servidor y comprueban lo que la
+    //       pantalla le pide y lo que muestra con su respuesta.
+    const pedidosAAuditorias = () =>
+      mockGet.mock.calls
+        .filter(([url]) => String(url).endsWith("/auditorias-conjunto/admin"))
+        .map(([, config]) => (config as { params: Record<string, unknown> }).params);
+    const ultimoPedido = () => pedidosAAuditorias().at(-1)!;
+
+    // ¿Qué? Cada calificación se identifica por su observación (la 4.ª celda de la fila).
+    const OBS_MALO = "Bolsas mezcladas en varios pisos.";
+    const OBS_REGULAR = "Faltan bolsas verdes.";
+    const OBS_DOMINGO = "Todo en orden el domingo.";
+    const domingo: AuditoriaAdmin = { ...califDomingoNoche, descripcion: OBS_DOMINGO };
+
+    const observacionesEnTabla = () =>
+      enTabla()
+        .getAllByRole("row")
+        .slice(1)
+        .map((fila) => within(fila).getAllByRole("cell")[3].textContent);
+
+    const montar = async (items: AuditoriaAdmin[]) => {
+      simularServidor(items);
+      const user = userEvent.setup({ delay: null });
       renderPage();
-      await waitFor(() => {
-        expect(mockGet).toHaveBeenCalledWith(
-          expect.stringContaining("/auditorias-conjunto/admin"),
-          expect.objectContaining({ params: expect.objectContaining({ lunes: SEMANA_ACTUAL }) })
-        );
-      });
+      await screen.findByRole("table");
+      return user;
+    };
+
+    it("consulta la semana actual al montar, de a 10 filas y con el peor primero", async () => {
+      renderPage();
+      await waitFor(() => expect(pedidosAAuditorias().length).toBeGreaterThan(0));
+      expect(pedidosAAuditorias()).toContainEqual(
+        expect.objectContaining({ desde: SEMANA_ACTUAL, hasta: "2026-09-27", limit: 10, offset: 0, orden: "criticas" })
+      );
     });
 
     // ¿Qué? Domingo 20 de septiembre a las 9 p. m. en Bogotá = lunes 21 a las 2 a. m. en UTC.
@@ -222,314 +335,283 @@ describe("AdminContenidoEducativoPage", () => {
 
       await screen.findByText("14–20 sep");
       expect(screen.getByRole("button", { name: "Semana siguiente" })).toBeDisabled();
-      await waitFor(() => {
-        expect(mockGet).toHaveBeenCalledWith(
-          expect.stringContaining("/auditorias-conjunto/admin"),
-          expect.objectContaining({ params: expect.objectContaining({ lunes: "2026-09-14" }) })
-        );
-      });
+      await waitFor(() => expect(pedidosAAuditorias()).toContainEqual(expect.objectContaining({ desde: "2026-09-14", hasta: "2026-09-20" })));
     });
 
-    it("muestra un estado vacío cuando no hay calificaciones esa semana", async () => {
+    it("sin calificaciones y sin filtros dice que todavía no hay en el periodo (no 'con esos filtros')", async () => {
       renderPage();
-      expect(await screen.findByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
+      expect(await screen.findByText("Todavía no hay calificaciones en este periodo.")).toBeInTheDocument();
     });
 
     it("lista las calificaciones de la semana con su semáforo y sus observaciones", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califMalo, califBueno], total: 2 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
-      renderPage();
-      expect(await enTabla().findByText("Torres de Aranjuez")).toBeInTheDocument();
+      await montar([califMalo, califBueno]);
       expect(enTabla().getByText("Reserva de Prueba")).toBeInTheDocument();
       expect(screen.getByText("Bolsas mezcladas en varios pisos.")).toBeInTheDocument();
-      // ¿Qué? Se acota al <tr> de cada calificación porque "Malo"/"Bueno"
-      //       también aparecen como etiquetas fijas en la tarjeta "Semana en
-      //       curso" — sin acotar, getByText encuentra dos coincidencias.
+      // ¿Qué? Se acota al <tr> de cada calificación porque "Malo"/"Bueno" también aparecen como etiquetas fijas
+      //       en la tarjeta "Semana en curso" — sin acotar, getByText encuentra dos coincidencias.
       const filaMalo = enTabla().getByText("Torres de Aranjuez").closest("tr")!;
       expect(within(filaMalo).getByText("Malo")).toBeInTheDocument();
       const filaBuena = enTabla().getByText("Reserva de Prueba").closest("tr")!;
       expect(within(filaBuena).getByText("Bueno")).toBeInTheDocument();
     });
 
-    it("filtra por semáforo con los chips", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califMalo, califBueno], total: 2 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
-      const user = userEvent.setup({ delay: null });
-      renderPage();
-      await enTabla().findByText("Torres de Aranjuez");
+    it("los botones de nivel muestran los conteos del servidor y filtran pidiéndolo al servidor", async () => {
+      const user = await montar([califMalo, califBueno, califRegular, domingo]);
+      expect(screen.getByRole("button", { name: "Todas 4" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Malo 1" })).toBeInTheDocument();
 
       await user.click(screen.getByRole("button", { name: "Malo 1" }));
-      expect(enTabla().getByText("Torres de Aranjuez")).toBeInTheDocument();
-      expect(enTabla().queryByText("Reserva de Prueba")).not.toBeInTheDocument();
+
+      await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ nivel: "DEFICIENTE", offset: 0 })));
+      await waitFor(() => expect(observacionesEnTabla()).toEqual([OBS_MALO]));
+      // Los conteos no cambian al elegir un nivel: cuentan con los demás filtros, no con este.
+      expect(screen.getByRole("button", { name: "Regular 1" })).toBeInTheDocument();
     });
 
-    it("busca por conjunto o por observación", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califMalo, califBueno], total: 2 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
-      const user = userEvent.setup({ delay: null });
-      renderPage();
-      await enTabla().findByText("Torres de Aranjuez");
+    it("la búsqueda espera a que termines de escribir y se la manda al servidor", async () => {
+      const user = await montar([califMalo, califBueno]);
+      const antes = pedidosAAuditorias().length;
 
       await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "Reserva");
-      expect(enTabla().queryByText("Torres de Aranjuez")).not.toBeInTheDocument();
+
+      await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ buscar: "Reserva" })));
+      // Una sola petición nueva con el texto completo, no una por tecla.
+      expect(pedidosAAuditorias().length - antes).toBeLessThanOrEqual(2);
+      await waitFor(() => expect(enTabla().queryByText("Torres de Aranjuez")).not.toBeInTheDocument());
       expect(enTabla().getByText("Reserva de Prueba")).toBeInTheDocument();
     });
 
-    describe("filtros por conjunto y fecha, orden y limpiar filtros", () => {
-      // ¿Qué? Cada calificación se identifica por su observación (la 4.ª celda de la fila).
-      const OBS_MALO = "Bolsas mezcladas en varios pisos.";
-      const OBS_REGULAR = "Faltan bolsas verdes.";
-      const OBS_BUENO = "Sin observaciones";
-      const OBS_DOMINGO = "Todo en orden el domingo.";
+    it("al elegir una localidad pide solo esa localidad y los conteos se recalculan", async () => {
+      const user = await montar([califMalo, califBueno, califRegular, domingo]);
+      await screen.findByRole("option", { name: "Chapinero" });
 
-      const domingo: AuditoriaAdmin = { ...califDomingoNoche, descripcion: OBS_DOMINGO };
+      await user.selectOptions(screen.getByLabelText("Localidad"), "2");
 
-      const montarConCuatro = async () => {
-        mockGet.mockImplementation((url: string) => {
-          if (url.includes("/auditorias-conjunto/admin")) {
-            return Promise.resolve({ data: { items: [califMalo, califBueno, califRegular, domingo], total: 4 } });
-          }
-          return Promise.resolve(respuestaPorDefecto(url));
-        });
-        const user = userEvent.setup({ delay: null });
-        renderPage();
-        await enTabla().findByText(OBS_MALO);
-        return user;
-      };
+      await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ id_localidad: 2 })));
+      expect(await screen.findByRole("button", { name: "Todas 2" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Malo 0" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Bueno 2" })).toBeInTheDocument();
+    });
 
-      const observacionesEnTabla = () =>
-        enTabla()
-          .getAllByRole("row")
-          .slice(1)
-          .map((fila) => within(fila).getAllByRole("cell")[3].textContent);
+    it("elige un conjunto en el buscador (acotado a la localidad) y se lo manda al servidor", async () => {
+      const user = await montar([califMalo, califBueno, califRegular]);
+      await screen.findByRole("option", { name: "Usaquén" });
+      await user.selectOptions(screen.getByLabelText("Localidad"), "1");
 
-      // ¿Qué? Desde, Hasta y Ordenar por viven en el panel plegado "Más filtros".
-      const abrirMasFiltros = (user: ReturnType<typeof userEvent.setup>) =>
-        user.click(screen.getByRole("button", { name: /Más filtros/ }));
+      await user.type(screen.getByPlaceholderText("Buscar conjunto…"), "Torres");
+      await user.click(await screen.findByText("Torres de Aranjuez — Usaquén"));
 
-      it("Desde, Hasta y Ordenar por están plegados hasta abrir 'Más filtros', que cuenta los activos", async () => {
-        const user = await montarConCuatro();
-        expect(screen.queryByLabelText("Desde")).not.toBeInTheDocument();
-        expect(screen.queryByLabelText("Ordenar por")).not.toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Más filtros" })).toHaveAttribute("aria-expanded", "false");
+      await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ id_localidad: 1, id_conjunto: "c1" })));
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/geography/conjuntos/todos"),
+        expect.objectContaining({ params: expect.objectContaining({ id_localidad: 1 }) })
+      );
+      await waitFor(() => expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR]));
+    });
 
-        await abrirMasFiltros(user);
-        expect(screen.getByLabelText("Desde")).toBeInTheDocument();
-        await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
-        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-22" } });
+    it("al cambiar de localidad se reinicia el conjunto elegido (podría no ser de la nueva)", async () => {
+      const user = await montar([califMalo, califBueno, califRegular]);
+      await screen.findByRole("option", { name: "Chapinero" });
+      await user.selectOptions(screen.getByLabelText("Localidad"), "1");
+      await user.type(screen.getByPlaceholderText("Buscar conjunto…"), "Torres");
+      await user.click(await screen.findByText("Torres de Aranjuez — Usaquén"));
+      await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ id_conjunto: "c1" })));
 
-        // ¿Qué? Se vuelve a plegar: el botón sigue mostrando que hay 2 filtros activos dentro.
-        await abrirMasFiltros(user);
-        expect(screen.queryByLabelText("Desde")).not.toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /Más filtros\s*2/ })).toBeInTheDocument();
+      await user.selectOptions(screen.getByLabelText("Localidad"), "2");
+
+      await waitFor(() => expect(ultimoPedido()).not.toHaveProperty("id_conjunto", "c1"));
+      expect(ultimoPedido()).toEqual(expect.objectContaining({ id_localidad: 2 }));
+    });
+
+    it("ordena: peor calificación primero por defecto, y se puede cambiar", async () => {
+      const user = await montar([califMalo, califBueno, califRegular, domingo]);
+      expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR, OBS_DOMINGO, "Sin observaciones"]);
+
+      await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
+      await waitFor(() => expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_REGULAR, "Sin observaciones", OBS_MALO]));
+      expect(ultimoPedido()).toEqual(expect.objectContaining({ orden: "recientes" }));
+
+      await user.selectOptions(screen.getByLabelText("Ordenar por"), "conjunto");
+      await waitFor(() => expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, "Sin observaciones", OBS_REGULAR, OBS_MALO]));
+    });
+
+    it("'Limpiar filtros' solo aparece con algún filtro activo y los deja todos en blanco", async () => {
+      const user = await montar([califMalo, califBueno, califRegular, domingo]);
+      await screen.findByRole("option", { name: "Usaquén" });
+      expect(screen.queryByRole("button", { name: "Limpiar filtros" })).not.toBeInTheDocument();
+
+      await user.selectOptions(screen.getByLabelText("Localidad"), "1");
+      await user.click(screen.getByRole("button", { name: /^Malo/ }));
+      await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "bolsas");
+      await user.click(await screen.findByRole("button", { name: "Limpiar filtros" }));
+
+      await waitFor(() => expect(ultimoPedido().buscar).toBeUndefined());
+      expect(ultimoPedido().nivel).toBeUndefined();
+      expect(ultimoPedido().id_localidad).toBeUndefined();
+      expect(screen.getByLabelText("Localidad")).toHaveValue("");
+      expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toHaveValue("");
+      expect(screen.queryByRole("button", { name: "Limpiar filtros" })).not.toBeInTheDocument();
+    });
+
+    it("con filtros sin resultados dice 'con esos filtros'", async () => {
+      const user = await montar([califMalo, califBueno]);
+      await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "zzz");
+      expect(await screen.findByText("No hay calificaciones con esos filtros en este periodo.")).toBeInTheDocument();
+    });
+
+    describe("paginación", () => {
+      const muchas = Array.from({ length: 12 }, (_, i) => ({
+        ...califMalo,
+        id_auditoria: `m${i}`,
+        nombre_conjunto: `Conjunto ${String(i).padStart(2, "0")}`,
+        descripcion: `Obs ${i}`,
+        created_at: `2026-09-21T${String(10 + i).padStart(2, "0")}:00:00Z`,
+      }));
+
+      it("muestra 10 filas, el total y pide la siguiente página al servidor", async () => {
+        const user = await montar(muchas);
+        expect(observacionesEnTabla()).toHaveLength(10);
+        expect(screen.getByText("Mostrando 1–10 de 12")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ offset: 10, limit: 10 })));
+        expect(await screen.findByText("Mostrando 11–12 de 12")).toBeInTheDocument();
+        expect(observacionesEnTabla()).toHaveLength(2);
       });
 
-      it("sin calificaciones esa semana, los controles se desactivan y los selectores dicen por qué", async () => {
-        renderPage();
-        await screen.findByText("No hay calificaciones con esos filtros en esta semana.");
-
-        expect(screen.getByLabelText("Localidad")).toBeDisabled();
-        expect(screen.getByLabelText("Conjunto")).toBeDisabled();
-        expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toBeDisabled();
-        expect(within(screen.getByLabelText("Localidad")).getByRole("option")).toHaveTextContent("Sin calificaciones");
-      });
-
-      it("el selector solo ofrece los conjuntos que tienen calificaciones esa semana, sin repetirlos", async () => {
-        await montarConCuatro();
-        const opciones = within(screen.getByLabelText("Conjunto")).getAllByRole("option").map((o) => o.textContent);
-        expect(opciones).toEqual(["Todos los conjuntos", "Conjunto Domingo", "Reserva de Prueba", "Torres de Aranjuez"]);
-      });
-
-      it("el selector de localidad solo ofrece las localidades con calificaciones esa semana, sin repetirlas", async () => {
-        await montarConCuatro();
-        const opciones = within(screen.getByLabelText("Localidad")).getAllByRole("option").map((o) => o.textContent);
-        expect(opciones).toEqual(["Todas las localidades", "Chapinero", "Usaquén"]);
-      });
-
-      it("al elegir una localidad, solo se ven sus conjuntos en el selector y en la tabla", async () => {
-        const user = await montarConCuatro();
-        await user.selectOptions(screen.getByLabelText("Localidad"), "2");
-
-        const opciones = within(screen.getByLabelText("Conjunto")).getAllByRole("option").map((o) => o.textContent);
-        expect(opciones).toEqual(["Todos los conjuntos", "Conjunto Domingo", "Reserva de Prueba"]);
-        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_BUENO]);
-      });
-
-      it("los botones de nivel cuentan solo lo que pasa los demás filtros", async () => {
-        const user = await montarConCuatro();
-        expect(screen.getByRole("button", { name: "Todas 4" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Malo 1" })).toBeInTheDocument();
-
-        // ¿Qué? Localidad 2 = Chapinero: solo las dos calificaciones Buenas (Reserva y Domingo).
-        await user.selectOptions(screen.getByLabelText("Localidad"), "2");
-        expect(screen.getByRole("button", { name: "Todas 2" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Malo 0" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Regular 0" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Bueno 2" })).toBeInTheDocument();
-      });
-
-      it("al cambiar de localidad se reinicia el conjunto elegido (podría no ser de la nueva)", async () => {
-        const user = await montarConCuatro();
-        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
-        expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR]);
-
-        await user.selectOptions(screen.getByLabelText("Localidad"), "2");
-        expect(screen.getByLabelText("Conjunto")).toHaveValue("");
-        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_BUENO]);
-      });
-
-      it("filtra por el conjunto elegido en la lista", async () => {
-        const user = await montarConCuatro();
-        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
-        expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR]);
-      });
-
-      it("filtra por rango de fechas, con el día de Bogotá (el domingo en la noche cuenta como domingo)", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-22" } });
-        expect(observacionesEnTabla()).toEqual([OBS_REGULAR, OBS_DOMINGO]);
-
-        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-23" } });
-        expect(observacionesEnTabla()).toEqual([OBS_REGULAR]);
-
-        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-27" } });
-        expect(observacionesEnTabla()).toEqual([OBS_REGULAR, OBS_DOMINGO]);
-      });
-
-      it("las fechas solo dejan elegir días de la semana que se está viendo", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        expect(screen.getByLabelText("Desde")).toHaveAttribute("min", "2026-09-21");
-        expect(screen.getByLabelText("Desde")).toHaveAttribute("max", "2026-09-27");
-        expect(screen.getByLabelText("Hasta")).toHaveAttribute("max", "2026-09-27");
-      });
-
-      it("combina conjunto, nivel y fecha", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
-        await user.click(screen.getByRole("button", { name: "Regular 1" }));
-        expect(observacionesEnTabla()).toEqual([OBS_REGULAR]);
-
-        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-22" } });
-        expect(screen.getByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
-      });
-
-      it("ordena: peor calificación primero por defecto, y se puede cambiar", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR, OBS_DOMINGO, OBS_BUENO]);
+      it("cambiar un filtro vuelve a la página 1", async () => {
+        const user = await montar(muchas);
+        await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+        await screen.findByText("Mostrando 11–12 de 12");
 
         await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
-        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_REGULAR, OBS_MALO, OBS_BUENO]);
 
-        await user.selectOptions(screen.getByLabelText("Ordenar por"), "conjunto");
-        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_BUENO, OBS_REGULAR, OBS_MALO]);
-      });
-
-      it("'Limpiar filtros' solo aparece con algún filtro activo y los deja todos en blanco", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        expect(screen.queryByRole("button", { name: "Limpiar filtros" })).not.toBeInTheDocument();
-
-        await user.selectOptions(screen.getByLabelText("Localidad"), "1");
-        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
-        await user.click(screen.getByRole("button", { name: "Malo 1" }));
-        await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "bolsas");
-        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-22" } });
-        expect(screen.getByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
-
-        await user.click(screen.getByRole("button", { name: "Limpiar filtros" }));
-        expect(observacionesEnTabla()).toHaveLength(4);
-        expect(screen.getByLabelText("Localidad")).toHaveValue("");
-        expect(screen.getByLabelText("Conjunto")).toHaveValue("");
-        expect(screen.getByLabelText("Desde")).toHaveValue("");
-        expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toHaveValue("");
-        expect(screen.queryByRole("button", { name: "Limpiar filtros" })).not.toBeInTheDocument();
-      });
-
-      it("al cambiar de semana se reinician los filtros (incluida la búsqueda) pero no el orden", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
-        await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "bolsas");
-        await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
-
-        await user.click(screen.getByRole("button", { name: "Semana anterior" }));
-        await screen.findByText("14–20 sep");
-        await waitFor(() => expect(screen.getByLabelText("Conjunto")).toHaveValue(""));
-        expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toHaveValue("");
-        expect(screen.getByLabelText("Ordenar por")).toHaveValue("recientes");
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ offset: 0, orden: "recientes" })));
+        expect(await screen.findByText("Mostrando 1–10 de 12")).toBeInTheDocument();
       });
     });
 
-    // ¿Qué? El backend entrega máximo 200 por página; esta semana tiene 250.
-    it("trae todas las páginas de la semana, no solo la primera", async () => {
-      const mucha = (n: number, desdeIndice: number): AuditoriaAdmin[] =>
-        Array.from({ length: n }, (_, i) => ({
-          ...califMalo,
-          id_auditoria: `m${desdeIndice + i}`,
-          nombre_conjunto: `Conjunto ${desdeIndice + i}`,
-          descripcion: `Obs ${desdeIndice + i}`,
-        }));
-      mockGet.mockImplementation((url: string, config?: { params?: { offset?: number } }) => {
-        if (url.includes("/auditorias-conjunto/admin")) {
-          const offset = config?.params?.offset ?? 0;
-          return Promise.resolve({ data: { items: offset === 0 ? mucha(200, 0) : mucha(50, 200), total: 250 } });
-        }
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
-      renderPage();
+    describe("periodo: semana, mes o personalizado", () => {
+      it("navega a la semana anterior, y 'siguiente' se deshabilita en la semana en curso", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText("21–27 sep");
+        expect(screen.getByRole("button", { name: "Semana siguiente" })).toBeDisabled();
 
-      expect(await screen.findByText("Obs 249")).toBeInTheDocument();
-      expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/auditorias-conjunto/admin"),
-        expect.objectContaining({ params: expect.objectContaining({ lunes: SEMANA_ACTUAL, limit: 200, offset: 200 }) })
+        await user.click(screen.getByRole("button", { name: "Semana anterior" }));
+
+        expect(await screen.findByText("14–20 sep")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Semana siguiente" })).not.toBeDisabled();
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ desde: "2026-09-14", hasta: "2026-09-20" })));
+      });
+
+      it("el modo Mes pide el mes entero, se mueve con flechas y no pasa del mes actual", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText("21–27 sep");
+
+        await user.click(screen.getByRole("tab", { name: "Mes" }));
+
+        expect(await screen.findByText(/septiembre de 2026/i)).toBeInTheDocument();
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ desde: "2026-09-01", hasta: "2026-09-30" })));
+        expect(screen.getByRole("button", { name: "Mes siguiente" })).toBeDisabled();
+
+        await user.click(screen.getByRole("button", { name: "Mes anterior" }));
+
+        expect(await screen.findByText(/agosto de 2026/i)).toBeInTheDocument();
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ desde: "2026-08-01", hasta: "2026-08-31" })));
+        expect(screen.getByRole("button", { name: "Mes siguiente" })).not.toBeDisabled();
+      });
+
+      it("el modo Personalizado acepta cualquier rango, con varias semanas", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText("21–27 sep");
+
+        await user.click(screen.getByRole("tab", { name: "Personalizado" }));
+        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-08-10" } });
+        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-15" } });
+
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ desde: "2026-08-10", hasta: "2026-09-15" })));
+        // No se puede elegir una fecha futura.
+        expect(screen.getByLabelText("Hasta")).toHaveAttribute("max", "2026-09-21");
+      });
+
+      it("'Hasta' anterior a 'Desde' se avisa y no se manda al servidor", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText("21–27 sep");
+        await user.click(screen.getByRole("tab", { name: "Personalizado" }));
+        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-15" } });
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ desde: "2026-09-15" })));
+        const pedidos = pedidosAAuditorias().length;
+
+        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-01" } });
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("\"Hasta\" no puede ser anterior a \"Desde\".");
+        expect(pedidosAAuditorias().length).toBe(pedidos);
+      });
+    });
+
+    describe("semana en curso vacía", () => {
+      const califSemanaPasada: AuditoriaAdmin = { ...califBueno, created_at: "2026-09-20T09:00:00Z" };
+
+      it("abre en la última semana con datos y lo explica, con un botón para volver a esta semana", async () => {
+        simularServidor([califSemanaPasada]); // 20 de septiembre: la semana en curso (21–27) no tiene nada
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+
+        expect(await screen.findByText(/La semana en curso todavía no tiene calificaciones/)).toBeInTheDocument();
+        expect(screen.getByText(/última semana con datos \(14–20 sep\)/)).toBeInTheDocument();
+        expect(await (await tablaLista()).findByText("Reserva de Prueba")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Ver esta semana" }));
+
+        expect(await screen.findByText("21–27 sep")).toBeInTheDocument();
+        expect(screen.queryByText(/La semana en curso todavía no tiene calificaciones/)).not.toBeInTheDocument();
+        expect(await screen.findByText("Todavía no hay calificaciones en este periodo.")).toBeInTheDocument();
+      });
+
+      it("no salta de semana si la semana en curso sí tiene calificaciones", async () => {
+        await montar([califMalo, califBueno]);
+        expect(screen.getByText("21–27 sep")).toBeInTheDocument();
+        expect(screen.queryByText(/La semana en curso todavía no tiene calificaciones/)).not.toBeInTheDocument();
+      });
+
+      it("la franja desaparece al moverse de semana por cuenta propia", async () => {
+        simularServidor([califSemanaPasada]);
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText(/La semana en curso todavía no tiene calificaciones/);
+
+        await user.click(screen.getByRole("button", { name: "Semana anterior" }));
+
+        expect(screen.queryByText(/La semana en curso todavía no tiene calificaciones/)).not.toBeInTheDocument();
+      });
+    });
+
+    it("las tarjetas de arriba salen del resumen del servidor", async () => {
+      simularServidor([califMalo, califRegular, califBueno]);
+      renderPage();
+      await waitFor(() =>
+        expect(mockGet).toHaveBeenCalledWith(
+          expect.stringContaining("/auditorias-conjunto/admin/resumen-semana"),
+          expect.objectContaining({ params: { lunes: SEMANA_ACTUAL } })
+        )
       );
     });
 
-    it("navega a la semana anterior, y 'siguiente' se deshabilita en la semana en curso", async () => {
-      const user = userEvent.setup({ delay: null });
-      renderPage();
-      await screen.findByText("21–27 sep");
-
-      expect(screen.getByRole("button", { name: "Semana siguiente" })).toBeDisabled();
-
-      await user.click(screen.getByRole("button", { name: "Semana anterior" }));
-      expect(await screen.findByText("14–20 sep")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Semana siguiente" })).not.toBeDisabled();
-
-      await waitFor(() => {
-        expect(mockGet).toHaveBeenCalledWith(
-          expect.stringContaining("/auditorias-conjunto/admin"),
-          expect.objectContaining({ params: expect.objectContaining({ lunes: "2026-09-14" }) })
-        );
-      });
-    });
-
     it("abre el detalle de una calificación Mala, con evidencia y el módulo recomendado", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califMalo], total: 1 } });
-        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
+      simularServidor([califMalo], { modulos: [moduloExistente] });
       const user = userEvent.setup({ delay: null });
       renderPage();
-      await user.click(await enTabla().findByText("Torres de Aranjuez"));
+      await user.click(await (await tablaLista()).findByText("Torres de Aranjuez"));
 
       const panel = await screen.findByRole("dialog", { name: "Calificación de Torres de Aranjuez" });
       expect(within(panel).getByText("Carlos Gómez")).toBeInTheDocument();
-      // ¿Qué? El mock de t() en __tests__/setup.ts no pluraliza (siempre usa
-      //       la forma "_other" en bare) — se verifica con una expresión
-      //       regular sin la "s" final, así sirve tanto aquí como con el
-      //       i18next real de la app (que sí pluraliza correctamente).
+      // ¿Qué? El mock de t() en __tests__/setup.ts no pluraliza (siempre usa la forma "_other" en bare) — se
+      //       verifica con una expresión regular sin la "s" final, así sirve tanto aquí como con el i18next real.
       expect(within(panel).getByText(/Se avisó a 12 residente/)).toBeInTheDocument();
       expect(within(panel).getByRole("button", { name: "Ampliar foto" })).toBeInTheDocument();
       expect(within(panel).getByText("Código de colores")).toBeInTheDocument();
@@ -538,13 +620,10 @@ describe("AdminContenidoEducativoPage", () => {
     // ¿Qué? Issue #587: pasados 6 meses la foto se borra (rutas en null) y el detalle lo avisa.
     it("el detalle de una calificación sin fotos (ya se borraron) lo avisa y conserva lo demás", async () => {
       const sinFotos: AuditoriaAdmin = { ...califMalo, ruta_evidencia: null, ruta_evidencia_2: null, ruta_evidencia_3: null };
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [sinFotos], total: 1 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
+      simularServidor([sinFotos]);
       const user = userEvent.setup({ delay: null });
       renderPage();
-      await user.click(await enTabla().findByText("Torres de Aranjuez"));
+      await user.click(await (await tablaLista()).findByText("Torres de Aranjuez"));
 
       const panel = await screen.findByRole("dialog", { name: "Calificación de Torres de Aranjuez" });
       expect(within(panel).getByText(/La foto ya no está disponible/)).toBeInTheDocument();
@@ -553,13 +632,10 @@ describe("AdminContenidoEducativoPage", () => {
     });
 
     it("el detalle de una calificación Buena dice que no hay recomendación", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califBueno], total: 1 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
+      simularServidor([{ ...califBueno, created_at: "2026-09-21T09:00:00Z" }]);
       const user = userEvent.setup({ delay: null });
       renderPage();
-      await user.click(await enTabla().findByText("Reserva de Prueba"));
+      await user.click(await (await tablaLista()).findByText("Reserva de Prueba"));
 
       expect(await screen.findByText("Una calificación Buena no genera recomendación: no hay nada que mejorar en este tema.")).toBeInTheDocument();
     });
@@ -593,11 +669,7 @@ describe("AdminContenidoEducativoPage", () => {
     });
 
     it("muestra 'Sin recomendar' cuando ninguna categoría auditable tuvo calificación esta semana", async () => {
-      mockGet.mockImplementation((url: string, config?: { params?: Record<string, unknown> }) => {
-        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
-        if (url.includes("/auditorias-conjunto/admin") && config?.params?.lunes === SEMANA_ACTUAL) return Promise.resolve({ data: { items: [], total: 0 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
+      simularServidor([], { modulos: [moduloExistente] });
       renderPage();
       await waitFor(() => {
         const numeros = screen.getAllByText("1");

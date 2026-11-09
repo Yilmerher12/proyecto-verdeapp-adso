@@ -104,3 +104,29 @@ export function rangoSemanaUTC(lunesIso: string): string {
   if (m1 - 1 === m2) return `${d1}–${d2} ${MESES_CORTOS[m2]}`;
   return `${d1} ${MESES_CORTOS[m1 - 1]} – ${d2} ${MESES_CORTOS[m2]}`;
 }
+
+// ¿Qué? Issue #618 — cuentas de calendario con meses ("YYYY-MM"), para el modo Mes del periodo de Calificaciones.
+//       Como las de las semanas, trabajan en UTC sobre fechas ya elegidas: no convierten zonas horarias.
+export function mesBogota(ahora: Date = new Date()): string {
+  return fechaBogota(ahora.toISOString()).slice(0, 7);
+}
+
+export function moverMes(mes: string, delta: number): string {
+  const [y, m] = mes.split("-").map(Number);
+  return isoToDateInputUTC(new Date(Date.UTC(y, m - 1 + delta, 1)).toISOString()).slice(0, 7);
+}
+
+// ¿Qué? Primer y último día del mes (YYYY-MM-DD), que es lo que se manda como desde/hasta.
+export function rangoDeMes(mes: string): { desde: string; hasta: string } {
+  const [y, m] = mes.split("-").map(Number);
+  return {
+    desde: isoToDateInputUTC(new Date(Date.UTC(y, m - 1, 1)).toISOString()),
+    hasta: isoToDateInputUTC(new Date(Date.UTC(y, m, 0)).toISOString()),
+  };
+}
+
+// ¿Qué? "septiembre de 2026" / "September 2026" según el idioma.
+export function etiquetaMes(mes: string, locale?: string): string {
+  const [y, m] = mes.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(locale, { month: "long", year: "numeric", timeZone: "UTC" });
+}

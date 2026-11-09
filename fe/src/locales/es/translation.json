@@ -1285,6 +1285,17 @@
       "ratings": "Calificaciones por conjunto",
       "modules": "Módulos"
     },
+    "period": {
+      "label": "Periodo",
+      "semana": "Semana",
+      "mes": "Mes",
+      "rango": "Personalizado",
+      "prevMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente",
+      "from": "Desde",
+      "to": "Hasta",
+      "rangeInvalid": "\"Hasta\" no puede ser anterior a \"Desde\"."
+    },
     "week": {
       "prev": "Semana anterior",
       "next": "Semana siguiente",
@@ -1294,7 +1305,10 @@
       "searchPlaceholder": "Buscar conjunto u observación…",
       "all": "Todas {{count}}",
       "noObservations": "Sin observaciones",
-      "empty": "No hay calificaciones con esos filtros en esta semana.",
+      "empty": "No hay calificaciones con esos filtros en este periodo.",
+      "emptyPeriod": "Todavía no hay calificaciones en este periodo.",
+      "lastWeekNotice": "La semana en curso todavía no tiene calificaciones. Estás viendo la última semana con datos ({{rango}}).",
+      "viewThisWeek": "Ver esta semana",
       "notified": "Se avisó a {{count}} residente",
       "notified_other": "Se avisó a {{count}} residentes",
       "noRecommendation": "Sin recomendación",
@@ -1303,10 +1317,7 @@
         "allLocalidades": "Todas las localidades",
         "conjunto": "Conjunto",
         "allConjuntos": "Todos los conjuntos",
-        "more": "Más filtros",
-        "noData": "Sin calificaciones",
-        "from": "Desde",
-        "to": "Hasta",
+        "conjuntoPlaceholder": "Buscar conjunto…",
         "clear": "Limpiar filtros"
       },
       "sort": {
