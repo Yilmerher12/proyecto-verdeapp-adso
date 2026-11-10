@@ -111,6 +111,95 @@ interface NotificationFeedProps {
   mostrarConjunto?: boolean;
 }
 
+interface FilaNotificacionProps {
+  n: NotificacionItem;
+  /** Fondo de la fila cuando está sin leer (claro + oscuro). */
+  accentHighlight: string;
+  /** Si la fila escribe el nombre de su conjunto (por omisión, sí). */
+  mostrarConjunto?: boolean;
+  onMarkRead: (id: string) => void;
+  onItemClick?: (notif: NotificacionItem) => void;
+  esAccionable?: (notif: NotificacionItem) => boolean;
+}
+
+/**
+ * ¿Qué? Una fila de aviso: ícono del tipo en un círculo, el mensaje y una línea con el conjunto (o "VerdeApp"), la
+ *       hora y si es nueva o ya leída.
+ * ¿Para qué? Issue #595: salió de NotificationFeed para que la pestaña "Avisos" de cada conjunto (una lista paginada
+ *           por el servidor, sin título ni botón "ver más") dibuje cada aviso igual que el resto de la app.
+ * ¿Impacto? Es el mismo código de antes, sin cambios de comportamiento: NotificationFeed la usa para cada fila.
+ *           Va dentro de un <ul>.
+ */
+export function FilaNotificacion({
+  n,
+  accentHighlight,
+  mostrarConjunto = true,
+  onMarkRead,
+  onItemClick,
+  esAccionable,
+}: FilaNotificacionProps) {
+  const { t } = useTranslation();
+  const meta = TIPO_META[n.tipo] ?? { Icon: Bell, color: "text-gray-500 dark:text-gray-400" };
+  const interactiva = !n.leida || Boolean(onItemClick && (esAccionable?.(n) ?? true));
+  const activar = () => {
+    if (!n.leida) onMarkRead(n.id);
+    onItemClick?.(n);
+  };
+  return (
+    <li
+      onClick={() => interactiva && activar()}
+      onKeyDown={(e) => {
+        if (interactiva && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          activar();
+        }
+      }}
+      role={interactiva ? "button" : undefined}
+      tabIndex={interactiva ? 0 : undefined}
+      aria-label={
+        interactiva
+          ? !n.leida
+            ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}`
+            : n.mensaje
+          : undefined
+      }
+      className={`flex items-start gap-3 px-5 py-3.5 transition-colors ${interactiva ? "cursor-pointer" : ""} ${
+        !n.leida ? accentHighlight : interactiva ? "hover:bg-gray-50 dark:hover:bg-night-inset/60" : ""
+      }`}
+    >
+      {/* ¿Qué? Issue #516 — el ícono va en un círculo, y debajo del mensaje una fila
+                fija: de qué conjunto (o "VerdeApp"), cuándo y si es nueva o leída.
+          ¿Para qué? Antes el estado era solo un punto de color; ahora se dice con
+                    palabras y se lee igual con lector de pantalla. */}
+      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-night-inset">
+        <meta.Icon className={`icon-md ${meta.color}`} aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm ${!n.leida ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
+          {n.mensaje}
+        </p>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+          {(mostrarConjunto || !n.nombre_conjunto) && (
+            <span className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 font-medium text-gray-700 dark:border-night-line dark:bg-night-inset dark:text-gray-300">
+              {n.nombre_conjunto ?? t("notificationFeed.platformLabel")}
+            </span>
+          )}
+          <time dateTime={n.created_at} title={formatearFechaCreacion(n.created_at)}>
+            {tiempoRelativo(n.created_at)}
+          </time>
+          {n.leida ? (
+            <span>{t("notificationFeed.read")}</span>
+          ) : (
+            <span className="rounded-md bg-accent-100 px-2 py-0.5 font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+              {t("notificationFeed.new")}
+            </span>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+}
+
 export function NotificationFeed({
   title,
   description,
@@ -167,68 +256,17 @@ export function NotificationFeed({
       ) : (
         <>
           <ul className="divide-y divide-gray-200 dark:divide-night-line">
-            {(expandido ? notifications : notifications.slice(0, 5)).map((n) => {
-              const meta = TIPO_META[n.tipo] ?? { Icon: Bell, color: "text-gray-500 dark:text-gray-400" };
-              const interactiva = !n.leida || Boolean(onItemClick && (esAccionable?.(n) ?? true));
-              const activar = () => {
-                if (!n.leida) onMarkRead(n.id);
-                onItemClick?.(n);
-              };
-              return (
-                <li
-                  key={n.id}
-                  onClick={() => interactiva && activar()}
-                  onKeyDown={(e) => {
-                    if (interactiva && (e.key === "Enter" || e.key === " ")) {
-                      e.preventDefault();
-                      activar();
-                    }
-                  }}
-                  role={interactiva ? "button" : undefined}
-                  tabIndex={interactiva ? 0 : undefined}
-                  aria-label={
-                    interactiva
-                      ? !n.leida
-                        ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}`
-                        : n.mensaje
-                      : undefined
-                  }
-                  className={`flex items-start gap-3 px-5 py-3.5 transition-colors ${interactiva ? "cursor-pointer" : ""} ${
-                    !n.leida ? accentHighlight : interactiva ? "hover:bg-gray-50 dark:hover:bg-night-inset/60" : ""
-                  }`}
-                >
-                  {/* ¿Qué? Issue #516 — el ícono va en un círculo, y debajo del mensaje una fila
-                            fija: de qué conjunto (o "VerdeApp"), cuándo y si es nueva o leída.
-                      ¿Para qué? Antes el estado era solo un punto de color; ahora se dice con
-                                palabras y se lee igual con lector de pantalla. */}
-                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-night-inset">
-                    <meta.Icon className={`icon-md ${meta.color}`} aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className={`text-sm ${!n.leida ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
-                      {n.mensaje}
-                    </p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                      {(mostrarConjunto || !n.nombre_conjunto) && (
-                        <span className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 font-medium text-gray-700 dark:border-night-line dark:bg-night-inset dark:text-gray-300">
-                          {n.nombre_conjunto ?? t("notificationFeed.platformLabel")}
-                        </span>
-                      )}
-                      <time dateTime={n.created_at} title={formatearFechaCreacion(n.created_at)}>
-                        {tiempoRelativo(n.created_at)}
-                      </time>
-                      {n.leida ? (
-                        <span>{t("notificationFeed.read")}</span>
-                      ) : (
-                        <span className="rounded-md bg-accent-100 px-2 py-0.5 font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
-                          {t("notificationFeed.new")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
+            {(expandido ? notifications : notifications.slice(0, 5)).map((n) => (
+              <FilaNotificacion
+                key={n.id}
+                n={n}
+                accentHighlight={accentHighlight}
+                mostrarConjunto={mostrarConjunto}
+                onMarkRead={onMarkRead}
+                onItemClick={onItemClick}
+                esAccionable={esAccionable}
+              />
+            ))}
           </ul>
           {notifications.length > 5 && (
             <button

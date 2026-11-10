@@ -771,11 +771,17 @@
         "aceptada": "Aceptada",
         "rechazada": "Rechazada"
       },
+      "tabs": {
+        "label": "Secciones del conjunto",
+        "resumen": "Resumen",
+        "avisos": "Avisos",
+        "recicladores": "Recicladores"
+      },
       "recyclersSection": {
         "title": "Recicladores",
-        "showDetail": "Ver detalle",
-        "hideDetail": "Ocultar detalle",
         "invite": "+ Invitar reciclador",
+        "inviteModalTitle": "Invitar reciclador",
+        "inviteModalHint": "Escribe el correo del reciclador. Quedará como invitación pendiente hasta que la acepte.",
         "emailPlaceholder": "correo.del.reciclador@ejemplo.com",
         "sending": "Enviando...",
         "inviteButton": "Invitar",
@@ -800,7 +806,6 @@
       },
       "otroConjunto": {
         "tileTitle": "Solicitar otro conjunto",
-        "tileHelp": "Pide que te asignen otro conjunto.",
         "modalTitle": "Solicitar otro conjunto",
         "heading": "Solicitar otro conjunto",
         "intro": "Para administrar otro conjunto, el equipo de VerdeApp primero verifica tu cargo en él. Así se hace:",

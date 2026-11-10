@@ -14,7 +14,7 @@ Descripción: Lógica de negocio de notificaciones (RQF-003, RQF-006, RQF-007).
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import List
+from typing import List, Tuple
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -209,18 +209,41 @@ def enviar_notificacion(db: Session, current_user: Usuario, body: NotificacionEn
     return {"ok": True, "destinatarios": len(destinatarios)}
 
 
+# ¿Qué? Tipos que el panel del Admin de Conjunto NO cuenta como "aviso de un conjunto".
+# ¿Para qué? Issue #595: el resultado de una auditoría lo muestra un banner aparte, arriba del panel; si entrara
+#           en la lista y en el contador del conjunto, el contador diría un número sin avisos que mostrar al abrirlo.
+# ¿Impacto? Solo afecta a listar_avisos_de_conjunto y contar_no_leidas_por_conjunto; la lista general
+#           (listar_mis_notificaciones, la que usan la campanita y los banners) sigue trayendo todos los tipos.
+TIPOS_FUERA_DE_LOS_AVISOS_DE_CONJUNTO = ("AUDITORIA_PUBLICADA",)
+
+_COLUMNAS_NOTIFICACION = (
+    Notificacion.id,
+    Notificacion.tipo,
+    Notificacion.mensaje,
+    Notificacion.id_referencia,
+    Notificacion.created_at,
+    Notificacion.id_conjunto_residencial,
+    ConjuntoResidencial.nombre_conjunto,
+    NotificacionDestinatario.leida,
+)
+
+
+def _notificacion_a_dict(r) -> dict:
+    return {
+        "id": r.id,
+        "tipo": r.tipo,
+        "mensaje": r.mensaje,
+        "id_referencia": r.id_referencia,
+        "nombre_conjunto": r.nombre_conjunto,
+        "id_conjunto_residencial": r.id_conjunto_residencial,
+        "leida": r.leida,
+        "created_at": r.created_at,
+    }
+
+
 def listar_mis_notificaciones(db: Session, current_user: Usuario) -> List[dict]:
     stmt = (
-        select(
-            Notificacion.id,
-            Notificacion.tipo,
-            Notificacion.mensaje,
-            Notificacion.id_referencia,
-            Notificacion.created_at,
-            Notificacion.id_conjunto_residencial,
-            ConjuntoResidencial.nombre_conjunto,
-            NotificacionDestinatario.leida,
-        )
+        select(*_COLUMNAS_NOTIFICACION)
         .join(NotificacionDestinatario, Notificacion.id == NotificacionDestinatario.id_notificacion)
         # ¿Qué? outerjoin (LEFT JOIN), no join — las novedades de plataforma
         #       (RQF-015) tienen id_conjunto_residencial NULL, y un JOIN
@@ -231,19 +254,60 @@ def listar_mis_notificaciones(db: Session, current_user: Usuario) -> List[dict]:
         .limit(30)
     )
     rows = db.execute(stmt).all()
-    return [
-        {
-            "id": r.id,
-            "tipo": r.tipo,
-            "mensaje": r.mensaje,
-            "id_referencia": r.id_referencia,
-            "nombre_conjunto": r.nombre_conjunto,
-            "id_conjunto_residencial": r.id_conjunto_residencial,
-            "leida": r.leida,
-            "created_at": r.created_at,
-        }
-        for r in rows
-    ]
+    return [_notificacion_a_dict(r) for r in rows]
+
+
+def listar_avisos_de_conjunto(
+    db: Session, current_user: Usuario, id_conjunto: UUID, limit: int, offset: int
+) -> Tuple[List[dict], int]:
+    """¿Qué? Una página de los avisos de UN conjunto del usuario en sesión, del más reciente al más antiguo,
+    y cuántos hay en total.
+    ¿Para qué? Issue #595: la pestaña "Avisos" de cada conjunto del panel del Admin de Conjunto.
+    ¿Impacto? Solo mira las filas del propio usuario (la unión con los destinatarios filtra por su id), así que
+              pedir un conjunto ajeno no devuelve nada ni da error. Deja fuera los tipos de
+              TIPOS_FUERA_DE_LOS_AVISOS_DE_CONJUNTO."""
+    filtros = (
+        NotificacionDestinatario.id_usuario == current_user.id_usuario,
+        Notificacion.id_conjunto_residencial == id_conjunto,
+        Notificacion.tipo.not_in(TIPOS_FUERA_DE_LOS_AVISOS_DE_CONJUNTO),
+    )
+    total = db.execute(
+        select(sqlfunc.count())
+        .select_from(Notificacion)
+        .join(NotificacionDestinatario, Notificacion.id == NotificacionDestinatario.id_notificacion)
+        .where(*filtros)
+    ).scalar() or 0
+    filas = db.execute(
+        select(*_COLUMNAS_NOTIFICACION)
+        .join(NotificacionDestinatario, Notificacion.id == NotificacionDestinatario.id_notificacion)
+        .join(ConjuntoResidencial, Notificacion.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial)
+        .where(*filtros)
+        # ¿Qué? El id desempata las que se crearon en el mismo instante: sin él, dos páginas seguidas podrían
+        #       repetir o saltarse un aviso.
+        .order_by(Notificacion.created_at.desc(), Notificacion.id)
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return [_notificacion_a_dict(r) for r in filas], total
+
+
+def contar_no_leidas_por_conjunto(db: Session, current_user: Usuario) -> List[dict]:
+    """¿Qué? Cuántos avisos sin leer tiene cada conjunto del usuario en sesión (solo los que tienen alguno).
+    ¿Para qué? Issue #595: la pastilla de avisos en la cabecera de cada conjunto, sin pedir todas las listas.
+    ¿Impacto? Cuenta lo mismo que muestra la pestaña Avisos (sin los tipos de
+              TIPOS_FUERA_DE_LOS_AVISOS_DE_CONJUNTO y sin las novedades de plataforma, que no son de un conjunto)."""
+    filas = db.execute(
+        select(Notificacion.id_conjunto_residencial, sqlfunc.count().label("total"))
+        .join(NotificacionDestinatario, Notificacion.id == NotificacionDestinatario.id_notificacion)
+        .where(
+            NotificacionDestinatario.id_usuario == current_user.id_usuario,
+            NotificacionDestinatario.leida.is_(False),
+            Notificacion.id_conjunto_residencial.is_not(None),
+            Notificacion.tipo.not_in(TIPOS_FUERA_DE_LOS_AVISOS_DE_CONJUNTO),
+        )
+        .group_by(Notificacion.id_conjunto_residencial)
+    ).all()
+    return [{"id_conjunto_residencial": f.id_conjunto_residencial, "count": f.total} for f in filas]
 
 
 def contar_no_leidas(db: Session, current_user: Usuario) -> int:

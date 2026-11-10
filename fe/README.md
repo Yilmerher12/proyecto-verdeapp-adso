@@ -987,7 +987,7 @@ Cada página en `pages/` sigue el mismo patrón:
 | ----- | ------------------- |
 | `ResidenteDashboard` | Reportar el SHUT lleno (con ventana de confirmación), ver el resultado de la última auditoría, sus notificaciones recibidas y "Mi conjunto": el desempeño semanal con su historial de auditorías y los temas |
 | `RecicladorDashboard` | Sus conjuntos (de uno en uno), enviar avisos de recolección a residentes y administrador (con ventana de confirmación), registrar auditorías de separación, ver sus notificaciones y sus auditorías, responder invitaciones |
-| `AdminConjuntoDashboard` | Gestionar sus conjuntos: datos, código de acceso, recicladores, avisos, auditorías y agenda del comité |
+| `AdminConjuntoDashboard` | Gestionar sus conjuntos, cada uno con tres pestañas (Resumen: datos, cobertura, código de acceso y "Dejar de administrar"; Avisos, de 10 en 10 desde el servidor; Recicladores). Editar datos, invitar reciclador y pedir la desvinculación se hacen en ventanas. Las piezas viven en `components/adminConjunto/` (issue #595) |
 | `AdminDashboard` | Totales, tablas de usuarios por rol, invitar Administradores de Conjunto y resolver solicitudes pendientes |
 
 ### Otras páginas

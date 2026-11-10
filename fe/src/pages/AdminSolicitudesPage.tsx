@@ -5,6 +5,7 @@ import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useAuth } from "@/hooks/useAuth";
 import { useSolicitudesPendientes } from "@/hooks/useSolicitudesPendientes";
 
+import { Pestanas } from "@/components/ui/Pestanas";
 import { SoporteTecnico } from "@/components/SoporteTecnico";
 import { SolicitudesDesvinculacion } from "@/components/SolicitudesDesvinculacion";
 
@@ -54,31 +55,18 @@ export function AdminSolicitudesPage() {
                   técnico siguen siendo píldoras.
             ¿Para qué? Con las dos en forma de píldora, en pantallas angostas se confundían las dos filas
                       (la sección y el estado). El subrayado las separa a simple vista. */}
-        <div role="tablist" aria-label={t("solicitudesAdmin.tabsLabel")} className="flex border-b border-gray-200 dark:border-night-line">
-          {(
-            [
-              { id: "soporte", clave: "solicitudesAdmin.tabs.soporte", cantidad: pendientes.soporte },
-              { id: "desvinculaciones", clave: "solicitudesAdmin.tabs.desvinculaciones", cantidad: pendientes.desvinculaciones },
-            ] as const
-          ).map(({ id, clave, cantidad }) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              id={`solicitudes-tab-${id}`}
-              aria-selected={pestana === id}
-              aria-controls="solicitudes-panel"
-              onClick={() => setPestana(id)}
-              className={`-mb-px flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 px-1 py-3 text-center text-xs font-bold leading-tight transition-colors min-[25rem]:gap-1.5 min-[25rem]:px-2 min-[25rem]:text-sm sm:flex-none sm:px-5 ${
-                pestana === id
-                  ? "border-accent-600 text-accent-700 dark:border-accent-400 dark:text-accent-300"
-                  : "border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-              }`}
-            >
-              {etiqueta(clave, cantidad)}
-            </button>
-          ))}
-        </div>
+        <Pestanas
+          variante="subrayadas"
+          ariaLabel={t("solicitudesAdmin.tabsLabel")}
+          idBase="solicitudes-tab"
+          idPanel="solicitudes-panel"
+          activa={pestana}
+          onCambiar={setPestana}
+          pestanas={[
+            { id: "soporte", etiqueta: etiqueta("solicitudesAdmin.tabs.soporte", pendientes.soporte) },
+            { id: "desvinculaciones", etiqueta: etiqueta("solicitudesAdmin.tabs.desvinculaciones", pendientes.desvinculaciones) },
+          ]}
+        />
         <div id="solicitudes-panel" role="tabpanel" aria-labelledby={`solicitudes-tab-${pestana}`}>
           {pestana === "soporte" ? <SoporteTecnico /> : <SolicitudesDesvinculacion />}
         </div>

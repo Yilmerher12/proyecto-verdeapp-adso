@@ -75,9 +75,11 @@ El "estado del SHUT" no es una columna aparte: es el tipo del **último** aviso 
 | ------ | --------------------------------- | -------------- | ------------------------------------------------ |
 | POST   | `/api/v1/notificaciones/enviar`   | Sí             | Emite la alerta (`tipo=SHUT_LLENO` o `SHUT_LIBRE`) |
 | GET    | `/api/v1/notificaciones/estado-shut` | Sí (Residente) | Consulta si el SHUT de su conjunto está lleno o no |
-| GET    | `/api/v1/notificaciones/mis-notificaciones` | Sí | Lista las últimas 30 notificaciones del usuario. Cada una trae `nombre_conjunto` y, desde el issue #436, `id_conjunto_residencial` (`null` en las novedades de la plataforma) |
+| GET    | `/api/v1/notificaciones/mis-notificaciones` | Sí | Lista las últimas 30 notificaciones del usuario (la usan la campanita y los banners de arriba del panel del Admin de Conjunto; los avisos de cada conjunto salen de `por-conjunto`, issue #595). Cada una trae `nombre_conjunto` y, desde el issue #436, `id_conjunto_residencial` (`null` en las novedades de la plataforma) |
 | POST   | `/api/v1/notificaciones/marcar-todas-leidas?id_conjunto_residencial=` | Sí | Marca como leídas las del usuario; con el parámetro opcional, solo las de ese conjunto (issue #436, HU-050) |
 | DELETE | `/api/v1/notificaciones/limpiar-leidas?id_conjunto_residencial=` | Sí | Quita del feed las ya leídas; con el parámetro opcional, solo las de ese conjunto (issue #436, HU-050) |
+| GET    | `/api/v1/notificaciones/por-conjunto/{id_conjunto_residencial}?limit=&offset=` | Sí | Una página (por omisión 10, máximo 50) de los avisos de UN conjunto del usuario, del más reciente al más antiguo, como `{items, total}`. Deja fuera `AUDITORIA_PUBLICADA` (la muestra un banner). Solo ve sus propias filas: un conjunto ajeno devuelve una página vacía (issue #595, HU-050) |
+| GET    | `/api/v1/notificaciones/no-leidas-por-conjunto` | Sí | Cuántos avisos sin leer tiene cada conjunto del usuario, como `[{id_conjunto_residencial, count}]` (solo los que tienen alguno; sin `AUDITORIA_PUBLICADA` ni novedades de plataforma). Para las pastillas del panel (issue #595, HU-050) |
 
 ---
 

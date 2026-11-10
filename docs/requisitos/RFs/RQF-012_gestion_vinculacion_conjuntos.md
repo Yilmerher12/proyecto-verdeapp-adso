@@ -65,7 +65,7 @@ El nombre del RF quedó como "Invitación y Vinculación Inicial" por su alcance
 2. El Admin de Conjunto puede regenerar el `código de acceso` de su conjunto — el código que reparte fuera de la app (cartelera, grupo del conjunto) para que un Residente demuestre que vive ahí al registrarse. Regenerarlo invalida el código anterior de inmediato. En el panel principal, el código está en la primera fila del conjunto desplegado (issue #491), por ser lo que más se reparte; desde el issue #513 es una tarjeta angosta a la derecha de la cobertura.
 
 ### Flujo E — Admin de Conjunto pide que le asignen otro conjunto (HU-051)
-1. En su panel principal, debajo de la lista de conjuntos, el Admin de Conjunto presiona la fila **"Solicitar otro conjunto"** (se ve aunque aún no tenga conjuntos).
+1. En su panel principal, arriba a la derecha de la lista "Conjuntos que administras", el Admin de Conjunto presiona el botón **"+ Solicitar otro conjunto"** (se ve aunque aún no tenga conjuntos; issue #595).
 2. Se abre el paso a paso: dos pasos escritos para quien ya tiene cuenta, los dos documentos que debe adjuntar (certificado de representación legal de la propiedad horizontal y cédula) y el aviso de que no se suben a VerdeApp. Los documentos y el aviso son los mismos del registro (`auth.register.adminRequest.*`), para corregirlos en un solo lugar.
 3. La dirección del equipo (`administradorverdeapp@gmail.com`) es un enlace que abre su correo con el asunto "Otro conjunto" y el cuerpo ya empezado, y un ícono permite copiarla. No hay botón: el formulario de contacto no puede llevar adjuntos (issue #457).
 4. El resto sigue por correo, fuera de la app: el equipo verifica el cargo y el Administrador del Sistema asigna el conjunto (HU-024). La app no crea ninguna solicitud.

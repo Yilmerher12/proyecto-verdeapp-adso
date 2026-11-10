@@ -4,6 +4,8 @@
  *              propio espacio.
  * ¿Para qué? Antes cada pantalla armaba sus pestañas a mano con `flex-wrap`: en una ventana angosta se
  *           envolvían en filas y una quedaba sola, desordenada ("Mi conjunto" del Residente y Soporte técnico).
+ * ¿Qué más? Issue #595: la variante `subrayadas` (una línea bajo la pestaña activa) para las pestañas que cambian el
+ *            contenido de UNA tarjeta (Resumen / Avisos / Recicladores de un conjunto); las píldoras quedan para filtros.
  * ¿Impacto? En un espacio angosto las pestañas van en una cuadrícula ordenada (partes iguales, o dos columnas
  *           con la última a todo el ancho si `dosColumnas`); desde `@xl` (36 rem de ancho del espacio, no de la
  *           ventana) van en una fila, cada una del tamaño de su texto. Mide el ancho de su contenedor, así que
@@ -35,6 +37,11 @@ interface PestanasProps<T extends string> {
    *  ¿Para qué? Issue #596: los filtros de estado de Solicitudes (con su contador) ocupaban demasiado alto
    *            en pantallas angostas y se parecían a las pestañas principales. */
   compacta?: boolean;
+  /** ¿Qué? "subrayadas": una fila con una línea bajo la pestaña activa, a todo el ancho en celular.
+   *  ¿Para qué? Issue #595: las pestañas de una sola tarjeta (el panel de cada conjunto) no deben parecerse a los
+   *            filtros en píldora de su interior; ya se usaban así a mano en la página de Solicitudes del Admin del Sistema.
+   *  ¿Impacto? Ignora `dosColumnas` y `compacta`. Por omisión: "pastillas", como siempre. */
+  variante?: "pastillas" | "subrayadas";
 }
 
 const COLUMNAS: Record<number, string> = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" };
@@ -49,7 +56,32 @@ export function Pestanas<T extends string>({
   dosColumnas = false,
   className = "",
   compacta = false,
+  variante = "pastillas",
 }: PestanasProps<T>) {
+  if (variante === "subrayadas") {
+    return (
+      <div role="tablist" aria-label={ariaLabel} className={`flex border-b border-gray-200 dark:border-night-line ${className}`}>
+        {pestanas.map(({ id, etiqueta }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            id={idBase ? `${idBase}-${id}` : undefined}
+            aria-selected={activa === id}
+            aria-controls={idPanel}
+            onClick={() => onCambiar(id)}
+            className={`-mb-px flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 px-2 py-3 text-center text-xs font-bold leading-tight transition-colors min-[25rem]:gap-1.5 min-[25rem]:px-2 min-[25rem]:text-sm sm:flex-none sm:px-5 ${
+              activa === id
+                ? "border-accent-600 text-accent-700 dark:border-accent-400 dark:text-accent-300"
+                : "border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+            }`}
+          >
+            {etiqueta}
+          </button>
+        ))}
+      </div>
+    );
+  }
   const columnas = dosColumnas ? COLUMNAS[2] : (COLUMNAS[pestanas.length] ?? COLUMNAS[2]);
   return (
     <div className="@container">
