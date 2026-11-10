@@ -41,7 +41,7 @@
 
 - **Dado que** administro varios conjuntos y uno tiene avisos sin leer,
 - **cuando** miro la lista "Mis conjuntos",
-- **entonces** la cabecera de ese conjunto muestra una campana con el número de avisos sin leer de ese conjunto; si no tiene ninguno sin leer, no muestra contador.
+- **entonces** la cabecera de ese conjunto muestra una campana **ámbar** con el número de avisos sin leer de ese conjunto (issue #595: ámbar y no rojo, porque 5 avisos sin leer no son un error; el rojo queda para peligro y error); si no tiene ninguno sin leer, no muestra contador. El mismo número aparece en su pestaña "Avisos".
 
 ### CA-050.2 — Cada conjunto muestra solo sus avisos
 
@@ -79,3 +79,12 @@
 - **cuando** toco la campanita del encabezado,
 - **entonces** se abre un menú con todas, cada una con su ícono, el conjunto (o "VerdeApp" si es de la plataforma), cuándo ocurrió y si es nueva o leída; desde ahí puedo marcarlas como leídas, marcar todas y limpiar las leídas (issue #516).
 - **y** el número rojo de la campanita cuenta todas las no leídas, también las que no pertenecen a ninguno de mis conjuntos.
+
+### CA-050.8 — Pestaña Avisos: de 10 en 10, desde el servidor (issue #595)
+
+- **Dado que** abro la pestaña **Avisos** de un conjunto,
+- **cuando** tiene más de 10 avisos,
+- **entonces** veo los 10 más recientes y una barra de paginación al pie de la lista ("Mostrando 1–10 de N"). Cada página se pide al servidor (`GET /api/v1/notificaciones/por-conjunto/{id_conjunto_residencial}`), así que los avisos de un conjunto nunca dejan sin lugar a los de otro: la lista general (`mis-notificaciones`) solo trae las últimas 30 de todos los conjuntos juntos. Con 10 avisos o menos no hay barra.
+- **y** las filas no repiten el nombre del conjunto (ya estoy dentro de él) y el resultado de una auditoría no se lista ni se cuenta (lo muestra su banner, CA-050.4).
+- **y** el número de avisos sin leer de cada conjunto sale de `GET /api/v1/notificaciones/no-leidas-por-conjunto`, no de contar la lista en la pantalla.
+- **y** la pestaña solo pide y refresca sus avisos (cada 20 segundos, o al instante si algo cambió desde la campanita) mientras está abierta.

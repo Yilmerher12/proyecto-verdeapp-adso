@@ -3,754 +3,32 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
-import { Building, MapPin, Pencil, Check, X, Users, Mail, Send, Clock, KeyRound, Copy, TriangleAlert, UserX, ChevronDown, Bell, ChevronRight, Plus, RefreshCw } from "lucide-react";
+import { Building, Plus } from "lucide-react";
 import { ROLE_THEME } from "@/config/roleTheme";
 import { RoleId } from "@/types/auth";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
-import {
-  obtenerMisConjuntos,
-  editarMiConjunto,
-  solicitarDesvinculacion,
-  regenerarCodigoAcceso,
-  type ConjuntoAdministrado,
-} from "@/lib/conjuntoPanelApi";
-import {
-  invitarReciclador,
-  obtenerInvitacionesDeConjunto,
-  obtenerRecicladoresAutorizados,
-  revocarReciclador,
-  type InvitacionEnviada,
-  type RecicladorAutorizado,
-} from "@/lib/recicladorConjuntoApi";
-import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
+import { obtenerNoLeidasPorConjunto } from "@/lib/avisosConjuntoApi";
 import type { NotificacionItem } from "@/lib/notificaciones";
 import { AuditoriaResultadoBanner } from "@/components/dashboard/AuditoriaResultadoBanner";
 import { DesvinculacionAprobadaBanner } from "@/components/dashboard/DesvinculacionAprobadaBanner";
+import { TarjetaConjunto } from "@/components/adminConjunto/TarjetaConjunto";
 import { notificarNotificacionesActualizadas, onCambioDesdeCampanita } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Modal } from "@/components/ui/Modal";
 import { SolicitudAdminConjuntoInfo } from "@/components/SolicitudAdminConjuntoInfo";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
-import {
-  CORREO_MAX_LENGTH,
-  CORREO_REGEX,
-  DESVINCULACION_MOTIVO_MAX_LENGTH,
-  NIT_MAX_LENGTH,
-  TOTAL_APARTAMENTOS_MAX,
-} from "@/lib/validacion";
-
-/**
- * ¿Qué? Badge de color según el estado de la invitación.
- * ¿Para qué? Distinguir visualmente PENDIENTE (ámbar) / ACEPTADA (verde) /
- *           RECHAZADA (rojo) sin tener que leer el texto con atención.
- */
-function BadgeEstado({ estado }: { estado: string }) {
-  const { t } = useTranslation();
-  const estilos: Record<string, string> = {
-    PENDIENTE: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-200",
-    ACEPTADA: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
-    RECHAZADA: "bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300",
-  };
-  const etiquetas: Record<string, string> = {
-    PENDIENTE: t("dashboards.adminConjunto.estado.pendiente"),
-    ACEPTADA: t("dashboards.adminConjunto.estado.aceptada"),
-    RECHAZADA: t("dashboards.adminConjunto.estado.rechazada"),
-  };
-  return (
-    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${estilos[estado] || "bg-gray-100 text-gray-600"}`}>
-      {etiquetas[estado] || estado}
-    </span>
-  );
-}
-
-/**
- * ¿Qué? Avisos de UN conjunto, con sus propias acciones (marcar leído, marcar
- *       todos y limpiar leídos) que solo afectan a ese conjunto.
- * ¿Para qué? Issue #436 — antes todos los avisos de todos los conjuntos vivían
- *           mezclados en una lista general arriba del todo, y un Admin con
- *           más de un conjunto no sabía de un vistazo qué pasó en cuál.
- * ¿Impacto? Reutiliza NotificationFeed (la misma lista que usan los otros
- *           paneles). Recibe los avisos ya filtrados por id de conjunto: aquí
- *           no se vuelve a comparar nada, para que dos conjuntos con el mismo
- *           nombre no mezclen los suyos.
- */
-function SeccionAvisosConjunto({
-  notificaciones,
-  cargando,
-  onMarkRead,
-  onMarkAllRead,
-  onClearRead,
-}: {
-  notificaciones: NotificacionItem[];
-  cargando: boolean;
-  onMarkRead: (id: string) => void;
-  onMarkAllRead: () => void;
-  onClearRead: () => void;
-}) {
-  const { t } = useTranslation();
-
-  if (cargando) {
-    return (
-      <div className="mt-4">
-        <LoadingState message={t("common.loading")} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-4">
-      <NotificationFeed
-        title={t("dashboards.adminConjunto.avisosSection.title")}
-        description={t("dashboards.adminConjunto.avisosSection.description")}
-        notifications={notificaciones}
-        emptyMessage={t("dashboards.adminConjunto.avisosSection.empty")}
-        accentBg="bg-amber-700"
-        accentHighlight="bg-amber-50/60 hover:bg-amber-50 dark:bg-amber-400/10 dark:hover:bg-amber-400/15"
-        onMarkRead={onMarkRead}
-        onMarkAllRead={onMarkAllRead}
-        onClearRead={onClearRead}
-      />
-    </div>
-  );
-}
-
-/**
- * ¿Qué? Cobertura de UN conjunto: cuántos de sus apartamentos ya tienen al
- *       menos un residente con cuenta, contra el total que definió su Admin.
- * ¿Para qué? Que el Admin de Conjunto vea cuántos faltan por usar VerdeApp y
- *           pueda invitarlos (por ejemplo en la reunión del conjunto).
- * ¿Impacto? Si todavía no definió el total (todos los conjuntos arrancan así),
- *          muestra los registrados y le indica que lo defina con "Editar datos del
- *          conjunto" (issue #513): ya no hay un segundo botón para eso aquí, así la
- *          cantidad de apartamentos se edita en un solo lugar.
- */
-function SeccionCobertura({ conjunto }: { conjunto: ConjuntoAdministrado }) {
-  const { t } = useTranslation();
-  const { total_apartamentos: total, apartamentos_registrados: registrados, residentes_registrados: residentes } = conjunto;
-  const tieneTotal = total !== null && total > 0;
-  // ¿Qué? Se topa en 100% / 0 faltantes por si hay más registrados que el total escrito.
-  const porcentaje = tieneTotal ? Math.min(100, Math.round((registrados / total) * 100)) : 0;
-  const faltan = tieneTotal ? Math.max(0, total - registrados) : 0;
-
-  return (
-    // ¿Qué? Columna con mt-auto en el texto de abajo: la tarjeta comparte fila con el
-    //       código de acceso y, si es más alta, el espacio sobrante queda repartido
-    //       (cifras arriba, explicación abajo) y no como un hueco al final.
-    <div className="flex w-full flex-col rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-night-line dark:bg-night-inset/40">
-      <div className="mb-2 flex items-center gap-2">
-        <Building className="icon-md text-accent-600" />
-        <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.coverage.title")}</h5>
-      </div>
-      {/* ¿Qué? Las cifras van en el medio (my-auto) y no pegadas al título.
-          ¿Para qué? Con tarjetas de la misma altura en la fila, el espacio sobrante
-                    queda repartido arriba y abajo de las cifras, no como un hueco al final. */}
-      <div className="my-auto py-4">
-        <div className="flex flex-wrap items-baseline gap-2">
-          <span className="text-4xl font-bold leading-none text-accent-700 dark:text-accent-400">{registrados}</span>
-          <span className="text-base text-gray-500 dark:text-gray-400">
-            {tieneTotal
-              ? t("dashboards.adminConjunto.coverage.ofTotal", { total })
-              : t("dashboards.adminConjunto.coverage.alreadyHaveResidents")}
-          </span>
-        </div>
-
-        {tieneTotal && (
-          <div
-            role="img"
-            aria-label={t("dashboards.adminConjunto.coverage.barAria", { registrados, total })}
-            className="mt-3 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-night-line"
-          >
-            <div className="h-full rounded-full bg-accent-700" style={{ width: `${porcentaje}%` }} />
-          </div>
-        )}
-
-        <div className="mt-4 flex flex-wrap gap-6">
-          {tieneTotal && (
-            <div>
-              <div className="text-xl font-bold text-gray-800 dark:text-white">{faltan}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.coverage.missing")}</div>
-            </div>
-          )}
-          <div>
-            <div className="text-xl font-bold text-gray-800 dark:text-white">{residentes}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.coverage.residents")}</div>
-          </div>
-        </div>
-      </div>
-
-      {tieneTotal ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.coverage.explain")}</p>
-      ) : (
-        <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
-          {t("dashboards.adminConjunto.coverage.noTotal")}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/**
- * ¿Qué? Código de acceso de UN conjunto específico (issue #168) — lo que
- *       el Admin de Conjunto reparte fuera de la app (cartelera, grupo
- *       del conjunto) para que un Residente demuestre que vive ahí al
- *       registrarse.
- * ¿Para qué? Componente aparte, mismo criterio que SeccionRecicladores/
- *           SeccionDesvinculacion: cada conjunto administrado tiene su
- *           propio código, y regenerarlo es una acción con su propia
- *           llamada al backend, no solo un campo de texto que se guarda.
- */
-function SeccionCodigoAcceso({
-  idConjunto,
-  codigoAcceso,
-  onRegenerado,
-}: {
-  idConjunto: string;
-  codigoAcceso: string;
-  onRegenerado: () => void;
-}) {
-  const { t } = useTranslation();
-  const [copiado, setCopiado] = useState(false);
-  const [confirmando, setConfirmando] = useState(false);
-  const [regenerando, setRegenerando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // ¿Qué? Mismo patrón de copiar-al-portapapeles ya usado en
-  //       DirectorioPage.tsx (copiarDireccion) — ícono de check breve
-  //       antes de volver al ícono de copiar.
-  const copiarCodigo = async () => {
-    try {
-      await navigator.clipboard.writeText(codigoAcceso);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 1500);
-    } catch {
-      // ¿Qué? Si el navegador niega el permiso del portapapeles (poco
-      //       común, pero posible), no hay nada más que hacer desde aquí.
-    }
-  };
-
-  const regenerar = async () => {
-    setRegenerando(true);
-    setError(null);
-    try {
-      await regenerarCodigoAcceso(idConjunto);
-      setConfirmando(false);
-      onRegenerado();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || t("dashboards.adminConjunto.codigoAcceso.errorDefault"));
-    } finally {
-      setRegenerando(false);
-    }
-  };
-
-  return (
-    // ¿Qué? Borde de acento: es lo que más se reparte (issue #491). Issue #513: tarjeta
-    //       angosta con todo repartido de arriba abajo (título, código con el botón de
-    //       copiar dentro de su caja, explicación corta y "Regenerar" al fondo, a todo
-    //       el ancho), en vez de una franja de todo el ancho con un vacío en medio.
-    <div className="flex w-full flex-col gap-3 rounded-xl border border-accent-200 bg-accent-50/60 p-4 dark:border-accent-300/40 dark:bg-accent-300/10">
-      <div className="flex items-center gap-2">
-        <KeyRound className="icon-md text-accent-600" />
-        <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">
-          {t("dashboards.adminConjunto.codigoAcceso.title")}
-        </h5>
-      </div>
-      {/* ¿Qué? El código y su texto van en el medio (my-auto), igual que las cifras de la cobertura. */}
-      <div className="my-auto flex flex-col gap-2 py-2">
-      <div className="relative rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-center font-mono text-xl font-bold tracking-widest text-gray-900 dark:border-night-line dark:bg-night-panel dark:text-white">
-        {codigoAcceso}
-        <button
-          type="button"
-          onClick={copiarCodigo}
-          className="touch-target focus-ring absolute right-1 top-1/2 flex -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-night-field"
-          aria-label={t(
-            copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
-          )}
-          title={t(
-            copiado ? "dashboards.adminConjunto.codigoAcceso.copiedAria" : "dashboards.adminConjunto.codigoAcceso.copyAria"
-          )}
-        >
-          {copiado ? <Check className="icon-md text-accent-600" /> : <Copy className="icon-md" />}
-        </button>
-      </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        {t("dashboards.adminConjunto.codigoAcceso.description")}
-      </p>
-      </div>
-      <button
-        type="button"
-        onClick={() => setConfirmando(true)}
-        className="focus-ring touch-target-h flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100 hover:text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200 dark:hover:bg-amber-400/15"
-      >
-        <RefreshCw className="icon-sm" aria-hidden="true" />
-        {t("dashboards.adminConjunto.codigoAcceso.regenerateButton")}
-      </button>
-
-      {confirmando && (
-        <ConfirmModal
-          icon={TriangleAlert}
-          variant="warning"
-          ariaLabel={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
-          title={t("dashboards.adminConjunto.codigoAcceso.confirmTitle")}
-          description={t("dashboards.adminConjunto.codigoAcceso.confirmWarning")}
-          error={error}
-          isConfirming={regenerando}
-          confirmLabel={t("dashboards.adminConjunto.codigoAcceso.confirmButton")}
-          confirmingLabel={t("dashboards.adminConjunto.codigoAcceso.regenerating")}
-          onConfirm={regenerar}
-          onClose={() => setConfirmando(false)}
-        />
-      )}
-    </div>
-  );
-}
-
-/**
- * ¿Qué? Sección de Recicladores Autorizados de UN conjunto específico.
- * ¿Para qué? Componente separado para mantener legible el dashboard
- *           principal — cada conjunto administrado tiene su propia
- *           lista de invitaciones, así que esto vive por tarjeta.
- */
-function SeccionRecicladores({ idConjunto }: { idConjunto: string }) {
-  const { t } = useTranslation();
-  const [autorizados, setAutorizados] = useState<RecicladorAutorizado[]>([]);
-  const [cargandoAutorizados, setCargandoAutorizados] = useState(true);
-  const [errorAutorizados, setErrorAutorizados] = useState(false);
-  const [invitaciones, setInvitaciones] = useState<InvitacionEnviada[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [correoNuevo, setCorreoNuevo] = useState("");
-  const [enviando, setEnviando] = useState(false);
-  const [errorInvitar, setErrorInvitar] = useState<string | null>(null);
-  // ¿Qué? Issue #352 — con noValidate el navegador ya no revisa el formato
-  //       del correo; lo revisa la app, anclado al campo como en el resto.
-  const [errorCorreo, setErrorCorreo] = useState<string | null>(null);
-  const validarCorreo = () => {
-    const correo = correoNuevo.trim();
-    const mensaje = correo && !CORREO_REGEX.test(correo) ? t("auth.register.validation.emailInvalid") : null;
-    setErrorCorreo(mensaje);
-    return !mensaje;
-  };
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  // ¿Qué? Esta sección (autorizados + invitaciones) es la que más espacio
-  //       ocupa dentro de la tarjeta de cada conjunto — con un admin que
-  //       administra varios conjuntos, esto por sí solo empujaba el resto
-  //       del dashboard fuera de la vista inicial (issue #166). Colapsada
-  //       por defecto, igual que ya hace "Invitar Administradores" en el
-  //       panel del Admin del Sistema.
-  const [mostrarDetalle, setMostrarDetalle] = useState(false);
-  const [aRevocar, setARevocar] = useState<RecicladorAutorizado | null>(null);
-  const [revocando, setRevocando] = useState(false);
-  const [errorRevocar, setErrorRevocar] = useState<string | null>(null);
-
-  // ¿Qué? Antes esta sección solo consultaba el historial de invitaciones
-  //       (obtenerInvitacionesDeConjunto) — un reciclador vinculado por
-  //       fuera de ese flujo (ej. seed_data.sql, que lo hace a propósito
-  //       "como si ya hubiera aceptado una invitación") nunca aparecía en
-  //       ningún lado, aunque sí estuviera autorizado de verdad. El admin
-  //       veía "no has invitado a nadie" y, al intentar invitarlo, el
-  //       backend le decía "ya está autorizado" — dos respuestas correctas
-  //       por separado, pero contradictorias entre sí.
-  // ¿Impacto? Ahora se consultan las dos fuentes por separado: la lista
-  //           real de autorizados (recicladores_conjuntos) y el historial
-  //           de invitaciones, cada una con su propio título honesto.
-  const cargarAutorizados = useCallback(() => {
-    setCargandoAutorizados(true);
-    obtenerRecicladoresAutorizados(idConjunto)
-      .then((data) => {
-        setAutorizados(data);
-        setErrorAutorizados(false);
-      })
-      // ¿Qué? Issue #223 (f2 del diagnóstico) — antes esto fallaba en
-      //       silencio: solo un console.error, y la pantalla se veía
-      //       igual que si de verdad no hubiera ningún reciclador
-      //       autorizado en este conjunto.
-      // ¿Impacto? Ahora se distingue "no hay recicladores autorizados"
-      //           de "falló la carga" con un aviso real (ver el render
-      //           más abajo).
-      .catch((err) => {
-        console.error("Error cargando recicladores autorizados", err);
-        setErrorAutorizados(true);
-      })
-      .finally(() => setCargandoAutorizados(false));
-  }, [idConjunto]);
-
-  const cargarInvitaciones = useCallback(() => {
-    setCargando(true);
-    obtenerInvitacionesDeConjunto(idConjunto)
-      .then(setInvitaciones)
-      .catch((err) => console.error("Error cargando invitaciones de reciclador", err))
-      .finally(() => setCargando(false));
-  }, [idConjunto]);
-
-  // ¿Qué? Issue #225 — "cargarAutorizados"/"cargarInvitaciones" faltaban en
-  //       las dependencias; se silenciaba la advertencia en vez de
-  //       agregarlas. Envolverlas en useCallback (arriba) las vuelve
-  //       estables salvo cuando "idConjunto" cambia de verdad.
-  useEffect(() => {
-    cargarAutorizados();
-    cargarInvitaciones();
-  }, [cargarAutorizados, cargarInvitaciones]);
-
-  const handleInvitar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorInvitar(null);
-
-    if (!correoNuevo.trim() || !validarCorreo()) return;
-
-    setEnviando(true);
-    try {
-      await invitarReciclador(correoNuevo.trim(), idConjunto);
-      setCorreoNuevo("");
-      setMostrarFormulario(false);
-      cargarInvitaciones();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setErrorInvitar(err.message || t("dashboards.adminConjunto.recyclersSection.errorDefault"));
-    } finally {
-      setEnviando(false);
-    }
-  };
-
-  const confirmarRevocar = async () => {
-    if (!aRevocar) return;
-    setRevocando(true);
-    setErrorRevocar(null);
-    try {
-      await revocarReciclador(idConjunto, aRevocar.id_reciclador);
-      setARevocar(null);
-      cargarAutorizados();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setErrorRevocar(err.message || t("dashboards.adminConjunto.recyclersSection.revokeErrorDefault"));
-    } finally {
-      setRevocando(false);
-    }
-  };
-
-  return (
-    // ¿Qué? Fondo tenue propio (en vez de solo el borde superior de antes)
-    //       para que esta sección se lea como un bloque aparte del resto de
-    //       la tarjeta del conjunto — antes todo compartía el mismo blanco y
-    //       solo una línea delgada las separaba (issue #166, "se ve todo
-    //       pegado").
-    <div className="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-night-inset/40">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2">
-          <Users className="icon-md text-accent-600" />
-          <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.recyclersSection.title")}</h5>
-          {!cargandoAutorizados && (
-            <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[0.6875rem] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
-              {autorizados.length}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setMostrarDetalle((v) => !v)}
-            aria-expanded={mostrarDetalle}
-            aria-controls={`recicladores-detalle-${idConjunto}`}
-            className="touch-target-h cursor-pointer text-xs font-semibold text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors dark:bg-night-panel dark:text-gray-300 dark:border-night-line dark:hover:bg-night-field"
-          >
-            {mostrarDetalle
-              ? t("dashboards.adminConjunto.recyclersSection.hideDetail")
-              : t("dashboards.adminConjunto.recyclersSection.showDetail")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setMostrarFormulario((v) => !v)}
-            aria-expanded={mostrarFormulario}
-            aria-controls={`recicladores-invitar-${idConjunto}`}
-            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-accent-700 hover:text-accent-800 bg-accent-50 hover:bg-accent-100 border border-accent-300 dark:border-accent-300/40 px-3 py-1.5 rounded-lg transition-colors dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
-          >
-            {t("dashboards.adminConjunto.recyclersSection.invite")}
-          </button>
-        </div>
-      </div>
-
-      {mostrarFormulario && (
-        <form
-          id={`recicladores-invitar-${idConjunto}`}
-          onSubmit={handleInvitar}
-          noValidate
-          className="flex flex-col sm:flex-row gap-2 mb-4 bg-white dark:bg-night-card p-3 rounded-xl"
-        >
-          <div className="flex-1">
-            <div className="relative">
-              <Mail className="icon-md absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
-              <input
-                type="email"
-                placeholder={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
-                aria-label={t("dashboards.adminConjunto.recyclersSection.emailPlaceholder")}
-                value={correoNuevo}
-                onChange={(e) => {
-                  setCorreoNuevo(e.target.value);
-                  setErrorCorreo(null);
-                }}
-                onBlur={validarCorreo}
-                maxLength={CORREO_MAX_LENGTH}
-                aria-invalid={!!errorCorreo}
-                aria-describedby={errorCorreo ? `recicladores-correo-error-${idConjunto}` : undefined}
-                className={`w-full pl-9 p-2.5 border rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:bg-night-field dark:text-white ${
-                  errorCorreo ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
-                }`}
-              />
-            </div>
-            {errorCorreo && (
-              <p id={`recicladores-correo-error-${idConjunto}`} role="alert" className="mt-1 text-xs text-red-600 dark:text-red-300">
-                {errorCorreo}
-              </p>
-            )}
-          </div>
-          <button
-            type="submit"
-            disabled={enviando || !correoNuevo.trim()}
-            className="flex cursor-pointer items-center justify-center gap-1.5 bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-          >
-            <Send className="icon-sm" />
-            {enviando ? t("dashboards.adminConjunto.recyclersSection.sending") : t("dashboards.adminConjunto.recyclersSection.inviteButton")}
-          </button>
-        </form>
-      )}
-
-      {errorInvitar && (
-        <div className="mb-3">
-          <Alert type="error" message={errorInvitar} onClose={() => setErrorInvitar(null)} />
-        </div>
-      )}
-
-      {mostrarDetalle && (
-        <div id={`recicladores-detalle-${idConjunto}`} className="mt-1">
-          {/* Recicladores YA autorizados — el dato real (recicladores_conjuntos) */}
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
-          </p>
-          {cargandoAutorizados ? (
-            <LoadingState message={t("dashboards.adminConjunto.recyclersSection.authorizedLoading")} />
-          ) : errorAutorizados ? (
-            <div className="mb-4">
-              <Alert type="error" message={t("common.loadError")} />
-            </div>
-          ) : autorizados.length === 0 ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              {t("dashboards.adminConjunto.recyclersSection.authorizedEmpty")}
-            </p>
-          ) : (
-            <div className="space-y-2 mb-4">
-              {autorizados.map((r) => (
-                <div
-                  key={r.id_reciclador}
-                  className="flex items-center justify-between gap-3 bg-accent-50 dark:bg-accent-300/10 rounded-lg px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                      {r.nombre} {r.apellidos}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{r.correo_electronico}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    {r.asociacion && (
-                      <span className="rounded-full bg-accent-100 px-2 py-0.5 text-[0.6875rem] font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
-                        {r.asociacion}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setARevocar(r)}
-                      className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-night-line dark:hover:bg-red-400/15"
-                      aria-label={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
-                      title={t("dashboards.adminConjunto.recyclersSection.revokeAria", { nombre: `${r.nombre} ${r.apellidos}` })}
-                    >
-                      <UserX className="icon-sm" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Historial de invitaciones enviadas — puede estar vacío aunque sí
-              haya recicladores autorizados arriba (ver comentario más arriba). */}
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
-          </p>
-          {cargando ? (
-            <LoadingState message={t("dashboards.adminConjunto.recyclersSection.loading")} />
-          ) : invitaciones.length === 0 ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {t("dashboards.adminConjunto.recyclersSection.empty")}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {invitaciones.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="flex items-center justify-between gap-3 bg-white dark:bg-night-card rounded-lg px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                      {inv.nombre_reciclador} {inv.apellidos_reciclador}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{inv.correo_reciclador}</p>
-                  </div>
-                  <BadgeEstado estado={inv.estado} />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {aRevocar && (
-        <ConfirmModal
-          icon={UserX}
-          variant="danger"
-          ariaLabel={t("dashboards.adminConjunto.recyclersSection.revokeModalAriaLabel")}
-          title={t("dashboards.adminConjunto.recyclersSection.revokeConfirmTitle", { nombre: `${aRevocar.nombre} ${aRevocar.apellidos}` })}
-          description={t("dashboards.adminConjunto.recyclersSection.revokeConfirmWarning")}
-          error={errorRevocar}
-          isConfirming={revocando}
-          confirmLabel={t("dashboards.adminConjunto.recyclersSection.revokeConfirmButton")}
-          confirmingLabel={t("common.saving")}
-          onConfirm={confirmarRevocar}
-          onClose={() => setARevocar(null)}
-        />
-      )}
-    </div>
-  );
-}
-
-/**
- * ¿Qué? Botón/formulario para pedir dejar de administrar UN conjunto
- *       específico (RQF-016, HU-022).
- * ¿Para qué? Si ya hay una solicitud pendiente para ese conjunto, se
- *           muestra un badge en vez del botón — evita que el usuario
- *           choque con el error de "ya tienes una solicitud pendiente".
- */
-function SeccionDesvinculacion({
-  idConjunto,
-  tieneSolicitudPendiente,
-  onSolicitudEnviada,
-}: {
-  idConjunto: string;
-  tieneSolicitudPendiente: boolean;
-  onSolicitudEnviada: () => void;
-}) {
-  const { t } = useTranslation();
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [motivo, setMotivo] = useState("");
-  const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSolicitar = async () => {
-    setEnviando(true);
-    setError(null);
-    try {
-      await solicitarDesvinculacion(idConjunto, motivo.trim() || undefined);
-      setMostrarFormulario(false);
-      setMotivo("");
-      onSolicitudEnviada();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || t("desvinculacion.errorDefault"));
-    } finally {
-      setEnviando(false);
-    }
-  };
-
-  // ¿Qué? Antes este botón decía solo "Solicitar desvinculación", sin decir
-  //       DE QUÉ — y estaba pegado justo debajo de la sección de
-  //       Recicladores, lo que hacía parecer que ambas cosas estaban
-  //       relacionadas. Un usuario real lo probó pensando que iba a
-  //       desvincular a un reciclador, cuando en realidad desvincula al
-  //       ADMIN de la administración de este conjunto (RQF-016) — los
-  //       recicladores autorizados no se ven afectados en absoluto.
-  // ¿Impacto? Título propio + texto del botón explícito + aclaración corta
-  //           dejan claro, sin necesidad de leer el código, que esto es
-  //           sobre el rol del admin, no sobre los recicladores.
-  return (
-    // ¿Qué? Mismo criterio que en SeccionRecicladores — fondo propio en vez
-    //       de solo un borde arriba, para que se vea como un bloque aparte
-    //       (issue #166).
-    // ¿Qué? Issue #513 — sin recuadro de fondo, solo una línea de separación: es la
-    //       acción que casi nunca se usa y no debe pesar lo mismo que los avisos.
-    <div className="mt-6 border-t border-gray-100 pt-4 dark:border-night-line">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        {t("desvinculacion.sectionTitle")}
-      </p>
-
-      {tieneSolicitudPendiente ? (
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 dark:bg-amber-400/10 dark:text-amber-200 px-2.5 py-1 rounded-full">
-          <Clock className="icon-sm" /> {t("desvinculacion.pendingBadge")}
-        </span>
-      ) : !mostrarFormulario ? (
-        <div>
-          <button
-            type="button"
-            onClick={() => setMostrarFormulario(true)}
-            className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-300 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-300 dark:hover:bg-red-400/15 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            {t("desvinculacion.solicitarButton")}
-          </button>
-          <p className="mt-1.5 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-night-card p-3 rounded-xl space-y-2">
-          <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
-          <label htmlFor={`desvinculacion-motivo-${idConjunto}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
-            {t("desvinculacion.motivoLabel")}
-          </label>
-          <textarea
-            id={`desvinculacion-motivo-${idConjunto}`}
-            value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
-            maxLength={DESVINCULACION_MOTIVO_MAX_LENGTH}
-            aria-describedby={`desvinculacion-motivo-contador-${idConjunto}`}
-            placeholder={t("desvinculacion.motivoPlaceholder")}
-            rows={2}
-            className="w-full p-2.5 border border-edge rounded-xl bg-white text-sm text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
-          />
-          <ContadorCaracteres
-            id={`desvinculacion-motivo-contador-${idConjunto}`}
-            actual={motivo.length}
-            max={DESVINCULACION_MOTIVO_MAX_LENGTH}
-          />
-          {error && <p className="text-xs text-red-600 dark:text-red-300">{error}</p>}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleSolicitar}
-              disabled={enviando}
-              className="touch-target-h cursor-pointer text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {enviando ? t("desvinculacion.sending") : t("desvinculacion.submit")}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMostrarFormulario(false);
-                setError(null);
-              }}
-              className="focus-ring touch-target-h cursor-pointer text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-edge dark:border-night-edge dark:bg-night-field dark:text-gray-300 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              {t("common.cancel")}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /**
  * ¿Qué? Dashboard del rol Administrador de Conjunto (id_rol = 4).
- * ¿Para qué? Mostrar SOLO los conjuntos que esta persona administra,
- *           permitirle editar nombre/NIT/dirección de cada uno, y ahora
- *           también invitar recicladores autorizados por conjunto.
+ * ¿Para qué? Mostrar SOLO los conjuntos que esta persona administra (cada uno con su tarjeta: datos, pestañas de
+ *           resumen, avisos y recicladores) y permitirle pedir que le asignen otro.
+ * ¿Impacto? Issue #595: la tarjeta de cada conjunto vive en components/adminConjunto/ (este archivo tenía más de 1200
+ *           líneas). Aquí quedan lo que es de TODO el panel: la lista de conjuntos, los banners de arriba (resultado de
+ *           auditoría y desvinculación aprobada, que leen la lista general de notificaciones), los contadores de avisos
+ *           sin leer de cada conjunto y el aviso de "guardado".
  */
 export function AdminConjuntoDashboard() {
   const { t } = useTranslation();
@@ -759,43 +37,37 @@ export function AdminConjuntoDashboard() {
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorConjuntos, setErrorConjuntos] = useState(false);
-  const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [formEdicion, setFormEdicion] = useState({ nit: "", total: "" });
-  const [errorTotal, setErrorTotal] = useState<string | null>(null);
-  const [guardando, setGuardando] = useState(false);
-  // ¿Qué? Antes "mensaje" era un simple string, y el aviso siempre se
-  //       pintaba de verde (éxito) aunque el texto fuera el de error.
-  // ¿Impacto? Ahora guarda también el tipo ("success"/"error"), así el
-  //           color que se ve siempre corresponde a lo que pasó de verdad.
+  // ¿Qué? Antes "mensaje" era un simple string, y el aviso siempre se pintaba de verde (éxito) aunque el texto fuera el
+  //       de error. Ahora guarda también el tipo ("success"/"error"), así el color que se ve corresponde a lo que pasó.
   const [mensaje, setMensaje] = useState<{ tipo: "success" | "error"; texto: string } | null>(null);
-  // ¿Qué? Qué conjunto está desplegado — mismo patrón de acordeón que
-  //       AdminPuntosAcopioPage (Record<id, boolean>): sin decisión manual,
-  //       solo el primero de la lista viene abierto (ver estaAbierto más abajo).
-  // ¿Para qué? Con un Admin que administra varios conjuntos, tenerlos todos
-  //           abiertos a la vez empujaba el resto del panel fuera de la
-  //           vista inicial (issue #166) — ahora solo se ve el primero.
+  // ¿Qué? Qué conjunto está desplegado — acordeón independiente (cada uno se abre y se cierra por su cuenta), igual
+  //       que AdminPuntosAcopioPage (Record<id, boolean>): sin decisión manual, solo el primero viene abierto.
+  // ¿Para qué? Con un Admin que administra varios conjuntos, tenerlos todos abiertos a la vez empujaba el resto del panel
+  //           fuera de la vista inicial (issue #166). El servidor los entrega ordenados por nombre (issue #595), así que
+  //           "el primero" es siempre el mismo.
   const [abiertos, setAbiertos] = useState<Record<string, boolean>>({});
   const [solicitandoConjunto, setSolicitandoConjunto] = useState(false);
 
+  // ¿Qué? La lista general de notificaciones: ya NO reparte avisos entre conjuntos (eso lo hace cada pestaña "Avisos"
+  //       pidiéndole sus avisos al servidor); aquí solo alimenta los banners de arriba.
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
+  // ¿Qué? Avisos sin leer de cada conjunto, { id: cantidad }, para las pastillas de las cabeceras y de las pestañas.
+  const [sinLeerPorConjunto, setSinLeerPorConjunto] = useState<Record<string, number>>({});
   const [cargandoNotifs, setCargandoNotifs] = useState(true);
   const [errorNotifs, setErrorNotifs] = useState(false);
   const [errorAccionNotif, setErrorAccionNotif] = useState(false);
 
+  // ¿Qué? Solo la primera carga muestra "Cargando...": al volver a pedir (después de editar o regenerar el código) la
+  //       lista sigue a la vista, así cada tarjeta conserva su pestaña abierta y lo que tenía cargado.
   const cargarConjuntos = useCallback(() => {
     if (!user) return;
-    setCargando(true);
     obtenerMisConjuntos()
       .then((data) => {
         setConjuntos(data);
         setErrorConjuntos(false);
       })
-      // ¿Qué? Issue #223 (f2 del diagnóstico) — antes esto fallaba en
-      //       silencio: solo un console.error (que un usuario normal
-      //       nunca ve) y la pantalla quedaba igual que si el Admin no
-      //       administrara ningún conjunto.
-      // ¿Impacto? Ahora se distingue "no hay conjuntos" de "falló la
-      //           carga" con un aviso real (ver el render más abajo).
+      // ¿Qué? Issue #223 (f2 del diagnóstico) — antes esto fallaba en silencio: la pantalla quedaba igual que si el
+      //       Admin no administrara ningún conjunto. Ahora se distingue "no hay conjuntos" de "falló la carga".
       .catch((err) => {
         console.error("Error cargando mis conjuntos", err);
         setErrorConjuntos(true);
@@ -805,20 +77,18 @@ export function AdminConjuntoDashboard() {
 
   const cargarNotificaciones = () => {
     if (!user) return;
-    axios
-      .get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`)
-      .then((res) => {
-        setNotificaciones(res.data);
+    Promise.all([axios.get(`${API_BASE_URL}/api/v1/notificaciones/mis-notificaciones`), obtenerNoLeidasPorConjunto()])
+      .then(([general, sinLeer]) => {
+        setNotificaciones(general.data);
+        setSinLeerPorConjunto(sinLeer);
         setErrorNotifs(false);
       })
-      // ¿Qué? Antes esto fallaba en silencio — el panel se quedaba con
-      //       notificaciones viejas sin ningún aviso de que algo salió mal.
-      // ¿Impacto? Como esto también corre cada 20s (polling), el aviso
-      //           desaparece solo apenas una siguiente carga funcione.
+      // ¿Qué? Como esto también corre cada 20s (polling), el aviso desaparece solo apenas una siguiente carga funcione.
       .catch(() => setErrorNotifs(true))
       .finally(() => setCargandoNotifs(false));
   };
 
+  // ¿Qué? Marca como leído un aviso de los banners de arriba (los avisos de cada conjunto los marca su pestaña).
   const marcarLeida = async (id: string) => {
     try {
       await axios.post(`${API_BASE_URL}/api/v1/notificaciones/${id}/leer`, {});
@@ -829,54 +99,19 @@ export function AdminConjuntoDashboard() {
     }
   };
 
-  // ¿Qué? Issue #436 — "marcar todos" y "limpiar leídos" actúan solo sobre
-  //       los avisos del conjunto desde donde se pidió (parámetro
-  //       id_conjunto_residencial del backend), no sobre los de todos.
-  // ¿Impacto? Sin él, marcar todos en un conjunto marcaría también los de los
-  //           otros conjuntos del mismo Admin.
-  const marcarTodasLeidas = async (idConjunto: string) => {
-    try {
-      await axios.post(
-        `${API_BASE_URL}/api/v1/notificaciones/marcar-todas-leidas`,
-        {},
-        { params: { id_conjunto_residencial: idConjunto } },
-      );
-      setNotificaciones((prev) =>
-        prev.map((n) => (n.id_conjunto_residencial === idConjunto ? { ...n, leida: true } : n)),
-      );
-      notificarNotificacionesActualizadas();
-    } catch {
-      setErrorAccionNotif(true);
-    }
-  };
-
-  const limpiarLeidas = async (idConjunto: string) => {
-    try {
-      await axios.delete(`${API_BASE_URL}/api/v1/notificaciones/limpiar-leidas`, {
-        params: { id_conjunto_residencial: idConjunto },
-      });
-      setNotificaciones((prev) => prev.filter((n) => !(n.id_conjunto_residencial === idConjunto && n.leida)));
-    } catch {
-      setErrorAccionNotif(true);
-    }
-  };
-
-  // ¿Qué? Issue #225 — "cargarConjuntos" faltaba en las dependencias; se
-  //       silenciaba la advertencia en vez de agregarla.
+  // ¿Qué? Issue #225 — "cargarConjuntos" faltaba en las dependencias; se silenciaba la advertencia en vez de agregarla.
   useEffect(() => {
     cargarConjuntos();
   }, [cargarConjuntos]);
 
-  // ¿Qué? Issue #516 — se actualiza también al instante cuando se marca o limpia algo
-  //       desde el menú de la campanita (ver ResidenteDashboard.tsx).
+  // ¿Qué? Issue #516 — se actualiza también al instante cuando se marca o limpia algo desde el menú de la campanita.
   usePolling(cargarNotificaciones, { enabled: !!user, onExternalTrigger: onCambioDesdeCampanita });
 
-  // ¿Qué? Avisos de "desvinculación aprobada" sin leer de conjuntos que el Admin
-  //       ya no administra (por eso no tienen pestaña donde mostrarse).
+  // ¿Qué? Avisos de "desvinculación aprobada" sin leer de conjuntos que el Admin ya no administra (por eso no tienen
+  //       tarjeta donde mostrarse).
   // ¿Para qué? Issue #436 — ver DesvinculacionAprobadaBanner.
-  // ¿Impacto? Mientras los conjuntos cargan (o fallan) no se calcula: sin la
-  //           lista, todos los avisos parecerían de un conjunto ajeno y el
-  //           banner parpadearía con avisos que sí tienen pestaña.
+  // ¿Impacto? Mientras los conjuntos cargan (o fallan) no se calcula: sin la lista, todos los avisos parecerían de un
+  //           conjunto ajeno y el banner parpadearía con avisos que sí tienen tarjeta.
   const desvinculacionesAprobadas =
     cargando || errorConjuntos
       ? []
@@ -887,46 +122,10 @@ export function AdminConjuntoDashboard() {
             !conjuntos.some((c) => c.id_conjunto_residencial === n.id_conjunto_residencial),
         );
 
-  const iniciarEdicion = (c: ConjuntoAdministrado) => {
-    setEditandoId(c.id_conjunto_residencial);
-    setFormEdicion({ nit: c.nit || "", total: c.total_apartamentos ? String(c.total_apartamentos) : "" });
-    setErrorTotal(null);
-    setMensaje(null);
-  };
-
-  const cancelarEdicion = () => {
-    setEditandoId(null);
-  };
-
-  const guardarEdicion = async (id: string) => {
-    if (!user) return;
-    // ¿Qué? Vacío = "sin definir"; si hay texto, debe ser un entero entre 1 y el tope.
-    const totalTexto = formEdicion.total.trim();
-    const total = totalTexto === "" ? null : Number(totalTexto);
-    if (total !== null && (!Number.isInteger(total) || total < 1 || total > TOTAL_APARTAMENTOS_MAX)) {
-      setErrorTotal(t("dashboards.adminConjunto.editForm.totalInvalid", { max: TOTAL_APARTAMENTOS_MAX }));
-      return;
-    }
-    setErrorTotal(null);
-    setGuardando(true);
-    try {
-      await editarMiConjunto(id, { nit: formEdicion.nit || null, total_apartamentos: total });
-      setMensaje({ tipo: "success", texto: t("dashboards.adminConjunto.editForm.successMessage") });
-      setEditandoId(null);
-      cargarConjuntos();
-    } catch (err) {
-      console.error("Error al editar conjunto", err);
-      setMensaje({ tipo: "error", texto: t("dashboards.adminConjunto.editForm.errorMessage") });
-    } finally {
-      setGuardando(false);
-    }
-  };
-
   return (
     <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6 animate-fade-in`}>
-      {/* TARJETA DE PERFIL — el maletín de fondo es solo un detalle tenue,
-          para que este panel se sienta del Admin de Conjunto, sin estorbar
-          la lectura del texto encima. */}
+      {/* TARJETA DE PERFIL — el maletín de fondo es solo un detalle tenue, para que este panel se sienta del Admin de
+          Conjunto, sin estorbar la lectura del texto encima. */}
       <div className="relative overflow-hidden bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <RolIcon className="icon-deco pointer-events-none absolute right-4 top-4 text-accent-900/5 dark:text-white/5" aria-hidden="true" />
         <div className="relative flex items-center gap-4">
@@ -934,11 +133,8 @@ export function AdminConjuntoDashboard() {
             <RolIcon className="icon-xl text-accent-700 dark:text-accent-300" />
           </div>
           {/* ¿Qué? min-w-0 + break-words, y título más chico en celular.
-              ¿Para qué? Sin min-w-0 la columna de texto no se encogía por
-                        debajo de su contenido y el título "Panel de
-                        Administrador de Conjunto" y el correo se salían de la
-                        tarjeta (overflow-hidden) a 375 px: se leía
-                        "Administrador d…" (issue #454).
+              ¿Para qué? Sin min-w-0 la columna de texto no se encogía por debajo de su contenido y el título y el correo
+                        se salían de la tarjeta (overflow-hidden) a 375 px (issue #454).
               ¿Impacto? Desde `sm` el título vuelve a text-2xl. */}
           <div className="min-w-0">
             <h1 className="break-words text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">{t("dashboards.adminConjunto.title")}</h1>
@@ -952,39 +148,39 @@ export function AdminConjuntoDashboard() {
         </div>
       </div>
 
-      {/* Avisos que requieren reacción (resultado de auditoría y desvinculación
-          aprobada) — van primero, justo después del encabezado (issue #166).
-          Issue #436: ya no hay una lista general de avisos aquí; los de cada
-          conjunto viven dentro de su pestaña, en "Mis conjuntos". */}
+      {/* Avisos que requieren reacción (resultado de auditoría y desvinculación aprobada) — van primero, justo después
+          del encabezado (issue #166). Los avisos de cada conjunto viven dentro de su pestaña "Avisos" (issues #436 y #595). */}
       {!cargandoNotifs && (
         <>
-          <AuditoriaResultadoBanner
-            notificaciones={notificaciones}
-            onMarcarLeida={marcarLeida}
-          />
-          <DesvinculacionAprobadaBanner
-            notificaciones={desvinculacionesAprobadas}
-            onMarcarLeida={marcarLeida}
-          />
+          <AuditoriaResultadoBanner notificaciones={notificaciones} onMarcarLeida={marcarLeida} />
+          <DesvinculacionAprobadaBanner notificaciones={desvinculacionesAprobadas} onMarcarLeida={marcarLeida} />
           {errorNotifs && <Alert type="error" message={t("common.loadError")} />}
           {errorAccionNotif && (
-            <Alert
-              type="error"
-              message={t("common.actionError")}
-              onClose={() => setErrorAccionNotif(false)}
-            />
+            <Alert type="error" message={t("common.actionError")} onClose={() => setErrorAccionNotif(false)} />
           )}
         </>
       )}
 
-      {mensaje && (
-        <Alert type={mensaje.tipo} message={mensaje.texto} onClose={() => setMensaje(null)} />
-      )}
+      {mensaje && <Alert type={mensaje.tipo} message={mensaje.texto} onClose={() => setMensaje(null)} />}
 
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4 border-b border-gray-100 dark:border-night-line pb-2">
-          <Building className="icon-lg text-accent-600" />
-          <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
+        {/* ¿Qué? "Solicitar otro conjunto" es un botón pequeño arriba a la derecha de la lista, como "+ Nuevo comunicado"
+                  y "+ Agregar tema" en sus páginas (issue #595).
+            ¿Para qué? Antes era una fila grande con borde punteado, fuera de la tarjeta y al final de la página: con un
+                      conjunto abierto había que bajar para llegar, y pesaba más que acciones de todos los días. */}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-gray-100 pb-3 dark:border-night-line">
+          <div className="flex items-center gap-2">
+            <Building className="icon-lg text-accent-600" />
+            <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSolicitandoConjunto(true)}
+            className="focus-ring touch-target-h flex cursor-pointer items-center gap-1.5 rounded-xl border border-accent-300 bg-accent-50 px-3 py-1.5 text-sm font-semibold text-accent-700 transition-colors hover:bg-accent-100 hover:text-accent-800 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
+          >
+            <Plus className="icon-sm" aria-hidden="true" />
+            {t("dashboards.adminConjunto.otroConjunto.tileTitle")}
+          </button>
         </div>
 
         {cargando ? (
@@ -996,261 +192,27 @@ export function AdminConjuntoDashboard() {
         ) : (
           <div className="space-y-4">
             {conjuntos.map((c, i) => {
-              const abierto = abiertos[c.id_conjunto_residencial] ?? i === 0;
-              // ¿Qué? Se reparten por id, no por nombre (issue #436): dos conjuntos con
-              //       el mismo nombre mezclarían sus avisos y sus contadores.
-              // ¿Impacto? "AUDITORIA_PUBLICADA" sale de la cuenta porque no se muestra
-              //           dentro del conjunto (la muestra AuditoriaResultadoBanner,
-              //           arriba), y dejarla contar daría un número sin avisos que
-              //           mostrar al abrir el conjunto.
-              const avisosDelConjunto = notificaciones.filter(
-                (n) => n.id_conjunto_residencial === c.id_conjunto_residencial && n.tipo !== "AUDITORIA_PUBLICADA",
-              );
-              const avisosSinLeer = avisosDelConjunto.filter((n) => !n.leida).length;
+              const id = c.id_conjunto_residencial;
+              const abierto = abiertos[id] ?? i === 0;
               return (
-              <div
-                key={c.id_conjunto_residencial}
-                className="overflow-hidden border border-gray-200 dark:border-night-line rounded-xl"
-              >
-                {/* ¿Qué? La cabecera es solo para abrir y cerrar el conjunto, a todo el ancho.
-                    ¿Para qué? Issue #513 — el botón de editar estuvo aquí dentro y dejaba la
-                              cabecera cortada, y seguía visible con el conjunto cerrado.
-                    ¿Impacto? "Editar datos del conjunto" vive ahora justo debajo, dentro del
-                              conjunto abierto (ver más abajo). */}
-                <button
-                  type="button"
-                  onClick={() => setAbiertos((prev) => ({ ...prev, [c.id_conjunto_residencial]: !abierto }))}
-                  aria-expanded={abierto}
-                  className="flex w-full cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-night-inset/60"
-                >
-                  <Building className="icon-md shrink-0 text-accent-600" aria-hidden="true" />
-                  <div className="min-w-0 flex-1">
-                    <h4 id={`conjunto-nombre-${c.id_conjunto_residencial}`} className="font-bold text-gray-800 dark:text-white">{c.nombre_conjunto}</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                      <MapPin className="icon-sm" />
-                      {c.direccion} — {c.nombre_localidad}
-                    </p>
-                  </div>
-                  {c.total_apartamentos ? (
-                    <span className="shrink-0 rounded-full bg-accent-100 px-2.5 py-0.5 text-[0.6875rem] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
-                      {t("dashboards.adminConjunto.coverage.badge", {
-                        pct: Math.min(100, Math.round((c.apartamentos_registrados / c.total_apartamentos) * 100)),
-                      })}
-                    </span>
-                  ) : null}
-                  {avisosSinLeer > 0 && (
-                    <span
-                      role="img"
-                      aria-label={t("dashboards.adminConjunto.avisosSection.unreadBadge", { count: avisosSinLeer })}
-                      className="flex shrink-0 items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[0.6875rem] font-bold text-red-700 dark:bg-red-400/15 dark:text-red-300"
-                    >
-                      <Bell className="icon-sm" aria-hidden="true" />
-                      <span aria-hidden="true">{avisosSinLeer}</span>
-                    </span>
-                  )}
-                  <ChevronDown
-                    className={`icon-sm shrink-0 text-gray-500 transition-transform dark:text-gray-400 ${abierto ? "rotate-180" : ""}`}
-                    aria-hidden="true"
-                  />
-                </button>
-
-                {abierto && (
-                <div className="px-4 pb-4">
-                {editandoId === c.id_conjunto_residencial ? (
-                  <div>
-                    {/* ¿Qué? Issue #513 — formulario con título, etiquetas arriba de cada campo, los dos
-                              campos del mismo ancho (dos columnas desde `sm`, apilados en celular) y los
-                              botones al final, separados por una línea.
-                        ¿Para qué? Antes la etiqueta de la cantidad quedaba en la misma línea que su campo
-                                  (se veía pegado), el NIT era ancho y la cantidad angosta, y los botones
-                                  flotaban justo debajo del texto de ayuda. */}
-                    <h5 className="flex items-center gap-2 text-base font-bold text-gray-800 dark:text-white">
-                      <Pencil className="icon-md text-accent-600" aria-hidden="true" />
-                      {t("dashboards.adminConjunto.editForm.title")}
-                    </h5>
-                    <p className="mb-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {t("dashboards.adminConjunto.editForm.optionalHint")}
-                    </p>
-                    {/*
-                      ¿Qué? Antes este formulario también dejaba editar
-                            nombre_conjunto y direccion.
-                      ¿Para qué? Issue #180: esos dos datos vienen ya
-                                verificados desde el dataset oficial de
-                                Bogotá — un Admin de Conjunto no debería
-                                poder sobreescribirlos sin control ni
-                                rastro. Solo se corrigen re-importando ese
-                                dataset (seed.py), nunca a mano desde aquí.
-                      ¿Impacto? El NIT sigue editable porque el dataset
-                                oficial no lo trae — es el único dato que
-                                de verdad falta completar.
-                    */}
-                    <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label htmlFor={`nit-${c.id_conjunto_residencial}`} className="block text-xs font-bold text-gray-600 dark:text-gray-400">{t("dashboards.adminConjunto.editForm.nit")}</label>
-                      <input
-                        id={`nit-${c.id_conjunto_residencial}`}
-                        type="text"
-                        value={formEdicion.nit}
-                        onChange={(e) => setFormEdicion((p) => ({ ...p, nit: e.target.value }))}
-                        maxLength={NIT_MAX_LENGTH}
-                        className="w-full p-2.5 border border-edge rounded-xl mt-1.5 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor={`total-${c.id_conjunto_residencial}`} className="block text-xs font-bold text-gray-600 dark:text-gray-400">
-                        {t("dashboards.adminConjunto.editForm.totalApartments")}
-                      </label>
-                      <input
-                        id={`total-${c.id_conjunto_residencial}`}
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        max={TOTAL_APARTAMENTOS_MAX}
-                        value={formEdicion.total}
-                        onChange={(e) => setFormEdicion((p) => ({ ...p, total: e.target.value }))}
-                        aria-invalid={!!errorTotal}
-                        aria-describedby={`total-ayuda-${c.id_conjunto_residencial}`}
-                        className={`w-full p-2.5 border rounded-xl mt-1.5 bg-white text-gray-900 focus:ring-2 focus:ring-accent-500 outline-none dark:bg-night-field dark:text-white ${
-                          errorTotal ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
-                        }`}
-                      />
-                      <p id={`total-ayuda-${c.id_conjunto_residencial}`} className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        {t("dashboards.adminConjunto.editForm.totalHelp")}
-                      </p>
-                      {errorTotal && (
-                        <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-300">
-                          {errorTotal}
-                        </p>
-                      )}
-                    </div>
-                    </div>
-                    <div className="mt-5 flex justify-end gap-2 border-t border-gray-100 pt-4 dark:border-night-line">
-                      <button
-                        type="button"
-                        onClick={cancelarEdicion}
-                        className="focus-ring flex cursor-pointer items-center gap-1 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-edge dark:border-night-edge px-4 py-2 rounded-xl transition-colors dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
-                      >
-                        <X className="icon-md" /> {t("common.cancel")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => guardarEdicion(c.id_conjunto_residencial)}
-                        disabled={guardando}
-                        className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-white bg-accent-700 hover:bg-accent-800 px-4 py-2 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-60 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                      >
-                        <Check className="icon-md" /> {t("common.save")}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* ¿Qué? Issue #513 — los dos datos que se editan (NIT y cantidad de
-                              apartamentos) y el único botón para editarlos, juntos y justo debajo
-                              del nombre del conjunto.
-                        ¿Para qué? Antes el botón estaba entre el código y la cobertura (parecía
-                                  editar la cobertura) y la cantidad de apartamentos se definía
-                                  desde otro botón aparte.
-                        ¿Impacto? Nombre, dirección y localidad ya se ven en la cabecera. */}
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {t("dashboards.adminConjunto.datos.nit", {
-                          valor: c.nit || t("dashboards.adminConjunto.datos.sinDefinir"),
-                        })}
-                        <span aria-hidden="true"> · </span>
-                        {t("dashboards.adminConjunto.datos.apartamentos", {
-                          valor: c.total_apartamentos || t("dashboards.adminConjunto.datos.sinDefinir"),
-                        })}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => iniciarEdicion(c)}
-                        aria-describedby={`conjunto-nombre-${c.id_conjunto_residencial}`}
-                        className="focus-ring touch-target-h flex cursor-pointer items-center gap-1.5 rounded-xl border border-accent-300 bg-accent-50 px-3 py-1.5 text-sm font-semibold text-accent-700 transition-colors hover:bg-accent-100 hover:text-accent-800 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
-                      >
-                        <Pencil className="icon-sm" aria-hidden="true" />
-                        {t("dashboards.adminConjunto.editButton")}
-                      </button>
-                    </div>
-
-                    {/* ¿Qué? Primera fila: la cobertura (más ancha, es la cifra que se mira)
-                              y el código de acceso a su derecha (angosto, lo que se reparte).
-                              En celular se apilan, con la cobertura primero. */}
-                    <div className="grid gap-4 lg:grid-cols-5">
-                      <div className={`flex ${user ? "lg:col-span-3" : "lg:col-span-5"}`}>
-                        <SeccionCobertura conjunto={c} />
-                      </div>
-                      {user && (
-                        <div className="flex lg:col-span-2">
-                          <SeccionCodigoAcceso
-                            idConjunto={c.id_conjunto_residencial}
-                            codigoAcceso={c.codigo_acceso}
-                            onRegenerado={cargarConjuntos}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Avisos de este conjunto, separados por rol — ver SeccionAvisosConjunto arriba. */}
-                    <SeccionAvisosConjunto
-                      notificaciones={avisosDelConjunto}
-                      cargando={cargandoNotifs}
-                      onMarkRead={marcarLeida}
-                      onMarkAllRead={() => marcarTodasLeidas(c.id_conjunto_residencial)}
-                      onClearRead={() => limpiarLeidas(c.id_conjunto_residencial)}
-                    />
-
-                    {/*
-                      ¿Qué? Sección nueva de Recicladores Autorizados,
-                            anidada DENTRO de cada conjunto — solo se
-                            muestra cuando NO se está editando ese conjunto.
-                      ¿Para qué? Cada conjunto tiene sus propios recicladores
-                                autorizados; tiene más sentido vivir aquí
-                                que en una sección global aparte.
-                    */}
-                    {user && (
-                      <>
-                        <SeccionRecicladores idConjunto={c.id_conjunto_residencial} />
-                        <SeccionDesvinculacion
-                          idConjunto={c.id_conjunto_residencial}
-                          tieneSolicitudPendiente={c.tiene_solicitud_pendiente}
-                          onSolicitudEnviada={cargarConjuntos}
-                        />
-                      </>
-                    )}
-                  </>
-                )}
-                </div>
-                )}
-              </div>
+                <TarjetaConjunto
+                  key={id}
+                  conjunto={c}
+                  abierto={abierto}
+                  onAlternar={() => setAbiertos((prev) => ({ ...prev, [id]: !abierto }))}
+                  avisosSinLeer={sinLeerPorConjunto[id] ?? 0}
+                  onCambioAvisos={cargarNotificaciones}
+                  onActualizado={cargarConjuntos}
+                  onEditado={() => {
+                    setMensaje({ tipo: "success", texto: t("dashboards.adminConjunto.editForm.successMessage") });
+                    cargarConjuntos();
+                  }}
+                />
               );
             })}
           </div>
         )}
       </div>
-
-      {/* ¿Qué? Fila aparte, debajo de la lista, para pedir que le asignen otro
-                conjunto (issue #491).
-          ¿Para qué? Es una acción ocasional: va con borde punteado y sin color
-                    lleno para parecer "un conjunto más por agregar" y no competir
-                    con las acciones de todos los días (copiar el código). */}
-      <button
-        type="button"
-        onClick={() => setSolicitandoConjunto(true)}
-        className="touch-target-h flex w-full cursor-pointer items-center gap-4 rounded-2xl border-2 border-dashed border-edge bg-gray-50 px-5 py-4 text-left transition-colors hover:bg-accent-50 dark:border-night-edge dark:bg-night-inset/40 dark:hover:bg-night-hover"
-      >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
-          <Plus className="icon-md" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-bold text-accent-800 dark:text-accent-400">
-            {t("dashboards.adminConjunto.otroConjunto.tileTitle")}
-          </span>
-          <span className="block text-sm text-gray-600 dark:text-gray-400">
-            {t("dashboards.adminConjunto.otroConjunto.tileHelp")}
-          </span>
-        </span>
-        <ChevronRight className="icon-md shrink-0 text-gray-500 dark:text-gray-400" aria-hidden="true" />
-      </button>
 
       {solicitandoConjunto && (
         <Modal

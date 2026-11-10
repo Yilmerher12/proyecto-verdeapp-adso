@@ -429,7 +429,7 @@ Cubre cómo alguien se convierte en Admin_conjunto por primera vez, cómo un Adm
 
 ### Flujo E (pedir otro conjunto desde el panel, HU-051)
 
-1. El Admin_conjunto presiona "Solicitar otro conjunto" en su panel principal, debajo de la lista de sus conjuntos.
+1. El Admin_conjunto presiona "Solicitar otro conjunto" en su panel principal, arriba a la derecha de la lista de sus conjuntos.
 2. Lee el paso a paso y los dos documentos que debe adjuntar (los mismos del registro; no se suben a la aplicación).
 3. Presiona la dirección del equipo, que abre su correo con el asunto "Otro conjunto" y los datos a escribir ya puestos (o la copia con el ícono); adjunta los documentos y envía. El resto sigue por correo y el Admin_sistema le asigna el conjunto.
 

@@ -580,3 +580,168 @@ class TestControlDePresencia:
         estado_conjunto = next(e for e in estado.json() if e["id_conjunto_residencial"] == id_conjunto)
         assert estado_conjunto["presente"] is False
         assert estado_conjunto["puede_avisar_llegada"] is False
+
+
+class TestAvisosPorConjuntoPaginados:
+    """Issue #595: la pestaña "Avisos" de cada conjunto pide sus avisos al servidor, de 10 en 10."""
+
+    URL = "/api/v1/notificaciones/por-conjunto"
+    URL_CONTEO = "/api/v1/notificaciones/no-leidas-por-conjunto"
+
+    def test_sin_login_devuelve_401(self, client: TestClient, conjunto_verificado):
+        assert client.get(f"{self.URL}/{conjunto_verificado.id_conjunto_residencial}").status_code == 401
+        assert client.get(self.URL_CONTEO).status_code == 401
+
+    def test_devuelve_de_10_en_10_con_el_total(
+        self, client: TestClient, db: Session, admin_conjunto_test, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        id_conjunto = conjunto_verificado.id_conjunto_residencial
+        # ¿Qué? Los 12 se crean en una sola transacción: comparten la misma hora de creación.
+        # ¿Para qué? Comprobar que el id desempata y dos páginas seguidas no repiten ni se saltan ningún aviso.
+        _avisar_al_admin(db, admin_conjunto_test, id_conjunto, cantidad=12)
+
+        primera = client.get(f"{self.URL}/{id_conjunto}", headers=admin_conjunto_auth_headers).json()
+        segunda = client.get(
+            f"{self.URL}/{id_conjunto}", params={"offset": 10}, headers=admin_conjunto_auth_headers
+        ).json()
+
+        assert primera["total"] == 12 and len(primera["items"]) == 10
+        assert segunda["total"] == 12 and len(segunda["items"]) == 2
+        ids_primera = {n["id"] for n in primera["items"]}
+        ids_segunda = {n["id"] for n in segunda["items"]}
+        assert ids_primera.isdisjoint(ids_segunda)
+        assert len(ids_primera | ids_segunda) == 12
+
+    def test_cada_aviso_trae_su_conjunto_y_su_estado(
+        self, client: TestClient, db: Session, admin_conjunto_test, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        _avisar_al_admin(db, admin_conjunto_test, conjunto_verificado.id_conjunto_residencial)
+
+        aviso = client.get(
+            f"{self.URL}/{conjunto_verificado.id_conjunto_residencial}", headers=admin_conjunto_auth_headers
+        ).json()["items"][0]
+
+        assert aviso["tipo"] == "SHUT_LLENO"
+        assert aviso["leida"] is False
+        assert aviso["id_conjunto_residencial"] == str(conjunto_verificado.id_conjunto_residencial)
+        assert aviso["nombre_conjunto"] == conjunto_verificado.nombre_conjunto
+
+    def test_los_avisos_de_un_conjunto_no_desplazan_a_los_del_otro(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+        conjunto_verificado,
+        dos_conjuntos_con_el_mismo_nombre,
+    ):
+        id_a = conjunto_verificado.id_conjunto_residencial
+        id_b = dos_conjuntos_con_el_mismo_nombre.id_conjunto_residencial
+        # El otro conjunto recibe sus 2 avisos PRIMERO y el principal 35 después: la lista general (solo las
+        # últimas 30) ya no incluye ninguno del otro, pero su página sí.
+        _avisar_al_admin(db, admin_conjunto_test, id_b, cantidad=2)
+        _avisar_al_admin(db, admin_conjunto_test, id_a, cantidad=35)
+
+        general = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_conjunto_auth_headers).json()
+        pagina_b = client.get(f"{self.URL}/{id_b}", headers=admin_conjunto_auth_headers).json()
+        pagina_a = client.get(f"{self.URL}/{id_a}", headers=admin_conjunto_auth_headers).json()
+
+        assert len(general) == 30
+        assert str(id_b) not in {n["id_conjunto_residencial"] for n in general}
+        assert pagina_b["total"] == 2
+        assert pagina_a["total"] == 35
+
+    def test_deja_fuera_la_auditoria_publicada(
+        self, client: TestClient, db: Session, admin_conjunto_test, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """La muestra un banner aparte; no debe estar en la lista ni en el contador del conjunto."""
+        id_conjunto = conjunto_verificado.id_conjunto_residencial
+        _avisar_al_admin(db, admin_conjunto_test, id_conjunto)
+        crear_notificacion(
+            db,
+            tipo="AUDITORIA_PUBLICADA",
+            mensaje="Hay una nueva auditoría.",
+            destinatarios=[admin_conjunto_test.id_usuario],
+            id_conjunto=id_conjunto,
+        )
+        db.commit()
+
+        pagina = client.get(f"{self.URL}/{id_conjunto}", headers=admin_conjunto_auth_headers).json()
+        conteo = client.get(self.URL_CONTEO, headers=admin_conjunto_auth_headers).json()
+        general = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_conjunto_auth_headers).json()
+
+        assert pagina["total"] == 1 and pagina["items"][0]["tipo"] == "SHUT_LLENO"
+        assert conteo == [{"id_conjunto_residencial": str(id_conjunto), "count": 1}]
+        # La lista general (campanita y banners) sí sigue trayéndola.
+        assert len(general) == 2
+
+    def test_un_conjunto_ajeno_devuelve_una_pagina_vacia(
+        self, client: TestClient, db: Session, admin_conjunto_test, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        _avisar_al_admin(db, admin_conjunto_test, conjunto_verificado.id_conjunto_residencial, cantidad=2)
+
+        respuesta = client.get(f"{self.URL}/{uuid.uuid4()}", headers=admin_conjunto_auth_headers)
+
+        assert respuesta.status_code == 200
+        assert respuesta.json() == {"items": [], "total": 0}
+
+    def test_no_muestra_los_avisos_de_otras_personas(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+        conjunto_verificado,
+        test_user,
+    ):
+        """El aviso es del Residente del conjunto, no del Admin: el Admin no lo ve ni lo cuenta."""
+        id_conjunto = conjunto_verificado.id_conjunto_residencial
+        crear_notificacion(
+            db, tipo="SHUT_LLENO", mensaje="El SHUT está lleno.", destinatarios=[test_user.id_usuario], id_conjunto=id_conjunto
+        )
+        db.commit()
+
+        pagina = client.get(f"{self.URL}/{id_conjunto}", headers=admin_conjunto_auth_headers).json()
+        conteo = client.get(self.URL_CONTEO, headers=admin_conjunto_auth_headers).json()
+
+        assert pagina == {"items": [], "total": 0}
+        assert conteo == []
+
+    def test_limit_fuera_de_rango_devuelve_422(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        url = f"{self.URL}/{conjunto_verificado.id_conjunto_residencial}"
+        assert client.get(url, params={"limit": 0}, headers=admin_conjunto_auth_headers).status_code == 422
+        assert client.get(url, params={"limit": 51}, headers=admin_conjunto_auth_headers).status_code == 422
+        assert client.get(url, params={"offset": -1}, headers=admin_conjunto_auth_headers).status_code == 422
+
+    def test_id_de_conjunto_invalido_devuelve_422(self, client: TestClient, admin_conjunto_auth_headers):
+        respuesta = client.get(f"{self.URL}/no-es-un-uuid", headers=admin_conjunto_auth_headers)
+        assert respuesta.status_code == 422
+
+    def test_el_conteo_separa_los_conjuntos_y_solo_cuenta_los_sin_leer(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+        conjunto_verificado,
+        dos_conjuntos_con_el_mismo_nombre,
+    ):
+        id_a = conjunto_verificado.id_conjunto_residencial
+        id_b = dos_conjuntos_con_el_mismo_nombre.id_conjunto_residencial
+        _avisar_al_admin(db, admin_conjunto_test, id_a, cantidad=2)
+        _avisar_al_admin(db, admin_conjunto_test, id_b, cantidad=3)
+        # Una novedad de plataforma no es de ningún conjunto: no se cuenta.
+        _avisar_al_admin(db, admin_conjunto_test, None)
+
+        conteo = client.get(self.URL_CONTEO, headers=admin_conjunto_auth_headers).json()
+        assert {c["id_conjunto_residencial"]: c["count"] for c in conteo} == {str(id_a): 2, str(id_b): 3}
+
+        client.post(
+            "/api/v1/notificaciones/marcar-todas-leidas",
+            params={"id_conjunto_residencial": str(id_a)},
+            headers=admin_conjunto_auth_headers,
+        )
+        conteo = client.get(self.URL_CONTEO, headers=admin_conjunto_auth_headers).json()
+        assert conteo == [{"id_conjunto_residencial": str(id_b), "count": 3}]

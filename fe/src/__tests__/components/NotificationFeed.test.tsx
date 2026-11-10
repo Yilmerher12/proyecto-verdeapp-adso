@@ -7,7 +7,7 @@
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NotificationFeed } from "@/components/dashboard/NotificationFeed";
+import { FilaNotificacion, NotificationFeed } from "@/components/dashboard/NotificationFeed";
 import type { NotificacionItem } from "@/lib/notificaciones";
 
 const notificacionNoLeida: NotificacionItem = {
@@ -166,5 +166,47 @@ describe("NotificationFeed — nombre del conjunto en cada fila", () => {
     renderConPropiedad(false);
     expect(screen.queryByText("AGRUPACION QUINTAS DE ARANJUEZ")).not.toBeInTheDocument();
     expect(screen.getByText("VerdeApp")).toBeInTheDocument();
+  });
+});
+
+// ¿Qué? Issue #595: la fila salió de NotificationFeed para que la pestaña "Avisos" de cada conjunto la reutilice.
+describe("FilaNotificacion", () => {
+  function renderFila(extra: Partial<NotificacionItem> = {}, props: Partial<Parameters<typeof FilaNotificacion>[0]> = {}) {
+    const onMarkRead = vi.fn();
+    render(
+      <ul>
+        <FilaNotificacion
+          n={{ ...notificacionNoLeida, ...extra }}
+          accentHighlight="bg-amber-50"
+          onMarkRead={onMarkRead}
+          {...props}
+        />
+      </ul>,
+    );
+    return onMarkRead;
+  }
+
+  it("dibuja el mensaje, el conjunto y la marca de nueva", () => {
+    renderFila();
+    expect(screen.getByText("El SHUT está lleno")).toBeInTheDocument();
+    expect(screen.getByText("AGRUPACION QUINTAS DE ARANJUEZ")).toBeInTheDocument();
+    expect(screen.getByText("Nueva")).toBeInTheDocument();
+  });
+
+  it("con mostrarConjunto=false no escribe el conjunto", () => {
+    renderFila({}, { mostrarConjunto: false });
+    expect(screen.queryByText("AGRUPACION QUINTAS DE ARANJUEZ")).not.toBeInTheDocument();
+  });
+
+  it("al hacer clic en una no leída la marca como leída", async () => {
+    const onMarkRead = renderFila();
+    await userEvent.setup().click(screen.getByRole("button", { name: /El SHUT está lleno/ }));
+    expect(onMarkRead).toHaveBeenCalledWith("1");
+  });
+
+  it("una ya leída no es un botón y dice que está leída", () => {
+    renderFila({ leida: true });
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.getByText("Leída")).toBeInTheDocument();
   });
 });

@@ -771,11 +771,17 @@
         "aceptada": "Accepted",
         "rechazada": "Rejected"
       },
+      "tabs": {
+        "label": "Building sections",
+        "resumen": "Summary",
+        "avisos": "Notices",
+        "recicladores": "Recyclers"
+      },
       "recyclersSection": {
         "title": "Recyclers",
-        "showDetail": "Show detail",
-        "hideDetail": "Hide detail",
         "invite": "+ Invite recycler",
+        "inviteModalTitle": "Invite recycler",
+        "inviteModalHint": "Enter the recycler's email address. It stays as a pending invitation until they accept it.",
         "emailPlaceholder": "recycler.email@example.com",
         "sending": "Sending...",
         "inviteButton": "Invite",
@@ -800,7 +806,6 @@
       },
       "otroConjunto": {
         "tileTitle": "Request another complex",
-        "tileHelp": "Ask to be assigned another complex.",
         "modalTitle": "Request another complex",
         "heading": "Request another complex",
         "intro": "To manage another complex, the VerdeApp team first verifies your position in it. Here is how:",

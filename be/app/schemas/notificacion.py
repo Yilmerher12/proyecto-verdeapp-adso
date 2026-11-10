@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 from uuid import UUID
 
@@ -32,6 +32,20 @@ class NotificacionResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class PaginaDeNotificacionesResponse(BaseModel):
+    """¿Qué? Una página de los avisos de UN conjunto + cuántos hay en total, para pintar la paginación.
+    ¿Para qué? Issue #595: el panel del Admin de Conjunto pide sus avisos conjunto por conjunto, de 10 en 10, en vez
+              de repartir entre sus conjuntos las últimas 30 notificaciones de todos juntos."""
+    items: List[NotificacionResponse]
+    total: int
+
+
+class NoLeidasDeConjuntoResponse(BaseModel):
+    """¿Qué? Cuántos avisos sin leer tiene UN conjunto (solo aparecen los conjuntos que tienen al menos uno)."""
+    id_conjunto_residencial: UUID
+    count: int
 
 
 class EstadoShutResponse(BaseModel):

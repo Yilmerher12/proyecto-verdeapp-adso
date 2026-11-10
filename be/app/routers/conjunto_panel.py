@@ -105,6 +105,11 @@ def listar_mis_conjuntos(
             AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
         )
         .options(selectinload(ConjuntoResidencial.localidad))
+        # ¿Qué? Orden alfabético por nombre (el id desempata dos conjuntos con el mismo nombre).
+        # ¿Para qué? Issue #595: sin orden, la base de datos los devolvía como quisiera y el conjunto que viene
+        #           abierto al entrar al panel (el primero) podía cambiar de un inicio de sesión a otro.
+        # ¿Impacto? El panel los muestra en este mismo orden; Agenda, Desempeño y Comunicados lo heredan.
+        .order_by(ConjuntoResidencial.nombre_conjunto, ConjuntoResidencial.id_conjunto_residencial)
     ).scalars().all()
 
     # ¿Qué? Cuántos apartamentos y residentes ya están registrados, por

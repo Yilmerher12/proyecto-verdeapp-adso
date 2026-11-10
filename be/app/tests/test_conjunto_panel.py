@@ -9,6 +9,8 @@ Descripción: Pruebas del panel propio del Administrador de Conjunto.
 
 from fastapi.testclient import TestClient
 
+from app.models.administrador_conjunto_asignacion import AdministradorConjuntoAsignacion
+from app.models.conjunto_residencial import ConjuntoResidencial
 from app.tests.conftest import ADMIN_CONJUNTO_EMAIL
 from app.utils.audit_log import redactar_correo
 
@@ -30,6 +32,33 @@ class TestMisConjuntos:
         assert response.status_code == 200
         ids = [c["id_conjunto_residencial"] for c in response.json()]
         assert ids == [str(conjunto_verificado.id_conjunto_residencial)]
+
+    def test_los_conjuntos_salen_ordenados_por_nombre(
+        self, client: TestClient, db, admin_conjunto_test, admin_conjunto_auth_headers, conjunto_verificado, localidad_test
+    ):
+        """Issue #595: de la A a la Z, sin importar el orden en que se asignaron (el primero viene abierto en el panel)."""
+        # "TORRES DE PRUEBA" es el de la fixture; uno va antes y otro después, y se asignan en desorden.
+        for nombre in ("ZONA VERDE", "ALAMEDA"):
+            conjunto = ConjuntoResidencial(
+                id_localidad=localidad_test.id_localidad,
+                nombre_conjunto=nombre,
+                nit="900000000-5",
+                direccion="Calle 1 # 1-1",
+                verificado=True,
+            )
+            db.add(conjunto)
+            db.flush()
+            db.add(
+                AdministradorConjuntoAsignacion(
+                    id_administrador=admin_conjunto_test.id_administrador,
+                    id_conjunto_residencial=conjunto.id_conjunto_residencial,
+                )
+            )
+        db.commit()
+
+        response = client.get("/api/v1/conjunto-panel/mis-conjuntos", headers=admin_conjunto_auth_headers)
+
+        assert [c["nombre_conjunto"] for c in response.json()] == ["ALAMEDA", "TORRES DE PRUEBA", "ZONA VERDE"]
 
     def test_incluye_el_codigo_acceso(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
