@@ -6,7 +6,7 @@ Descripción: Endpoints de comunicados del conjunto (RQF-014).
            - GET /feed -> SOLO Residente o Reciclador (ven, no publican).
 """
 
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -15,7 +15,12 @@ from sqlalchemy.orm import Session
 from app.dependencies import get_current_user, get_db, require_admin_conjunto
 from app.models.administrador_conjunto import AdministradorConjunto
 from app.models.usuario import Usuario
-from app.schemas.comunicado import ComunicadoResponse, CrearComunicadoRequest, EditarComunicadoRequest
+from app.schemas.comunicado import (
+    ComunicadoResponse,
+    CrearComunicadoRequest,
+    EditarComunicadoRequest,
+    VigenciaComunicado,
+)
 from app.schemas.user import MessageResponse
 from app.services import comunicado_service
 from app.utils.audit_log import log_accion_admin
@@ -51,13 +56,19 @@ def crear_comunicado(
 
 @router.get("/mis-comunicados")
 def listar_mis_comunicados(
-    limit: int = Query(8, ge=1, le=MAX_LIMIT_COMUNICADOS),
+    limit: int = Query(10, ge=1, le=MAX_LIMIT_COMUNICADOS),
     offset: int = Query(0, ge=0),
+    vigencia: Optional[VigenciaComunicado] = Query(None),
     administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
-    """Todo lo que he publicado en mis conjuntos (activos y vencidos), para poder editarlos o eliminarlos. Paginado."""
-    items, total = comunicado_service.listar_mis_comunicados(db, administrador, limit=limit, offset=offset)
+    """Todo lo que he publicado en mis conjuntos, para poder editarlo o eliminarlo. Paginado.
+
+    Issue #632: con `vigencia` (VIGENTES o VENCIDOS) trae solo los activos o solo los ya vencidos; sin ella, todos.
+    """
+    items, total = comunicado_service.listar_mis_comunicados(
+        db, administrador, limit=limit, offset=offset, vigencia=vigencia
+    )
     return {"items": items, "total": total}
 
 

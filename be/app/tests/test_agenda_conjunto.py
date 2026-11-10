@@ -33,7 +33,7 @@ class TestCrearYListar:
         assert response.status_code == 201
         assert response.json()["estado"] == "PENDIENTE"
 
-        lista = client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()
+        lista = client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()["items"]
         assert [t["texto"] for t in lista] == ["Arreglar la puerta del sótano."]
 
     def test_guarda_la_foto_de_soporte(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
@@ -42,7 +42,7 @@ class TestCrearYListar:
             headers=admin_conjunto_auth_headers,
             json={"texto": "Pintar el pasillo.", "url_evidencia": "/uploads/adjuntos/pasillo.jpg"},
         )
-        lista = client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()
+        lista = client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()["items"]
         assert lista[0]["url_evidencia"] == "/uploads/adjuntos/pasillo.jpg"
 
     @pytest.mark.parametrize("url", ["@sitio-malo.com/login", "http://sitio-malo.com/f.jpg", "javascript:alert(1)"])
@@ -58,7 +58,7 @@ class TestCrearYListar:
         client.post(_url(conjunto_verificado), headers=admin_conjunto_auth_headers, json={"texto": "Viejo"})
         client.post(_url(conjunto_verificado), headers=admin_conjunto_auth_headers, json={"texto": "Nuevo"})
 
-        textos = [t["texto"] for t in client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()]
+        textos = [t["texto"] for t in client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()["items"]]
         assert textos == ["Nuevo", "Viejo"]
 
     def test_conjunto_ajeno_devuelve_403(self, client: TestClient, admin_conjunto_auth_headers):
@@ -88,7 +88,7 @@ class TestEstadoYBorrar:
         assert r.json()["estado"] == "ARCHIVADA"
         assert r.json()["archivado_en"] is not None
 
-        assert client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json() == []
+        assert client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()["items"] == []
         archivadas = client.get(_url(conjunto_verificado, "/archivadas"), headers=admin_conjunto_auth_headers).json()
         assert [t["id"] for t in archivadas["items"]] == [id_item]
         assert archivadas["total"] == 1
@@ -102,7 +102,7 @@ class TestEstadoYBorrar:
         assert r.json()["estado"] == "PENDIENTE"
         assert r.json()["archivado_en"] is None
 
-        assert [t["id"] for t in client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()] == [id_item]
+        assert [t["id"] for t in client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()["items"]] == [id_item]
         archivadas = client.get(_url(conjunto_verificado, "/archivadas"), headers=admin_conjunto_auth_headers).json()
         assert archivadas == {"items": [], "total": 0}
 
@@ -116,7 +116,7 @@ class TestEstadoYBorrar:
     def test_borra_un_tema(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
         id_item = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado)
         assert client.delete(_url(conjunto_verificado, f"/{id_item}"), headers=admin_conjunto_auth_headers).status_code == 200
-        assert client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json() == []
+        assert client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()["items"] == []
 
     def test_borra_un_tema_archivado(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
         id_item = self._crear(client, admin_conjunto_auth_headers, conjunto_verificado)
@@ -613,3 +613,45 @@ class TestTextoParaPdf:
     )
     def test_cambia_lo_que_la_fuente_no_soporta_y_deja_lo_demas(self, original, esperado):
         assert texto_para_pdf(original) == esperado
+
+
+class TestListarPorTratarPaginado:
+    """Issue #632: "Por tratar" se pide de 10 en 10 al servidor, con el total (de ahí salen los contadores de las pestañas)."""
+
+    def _crear_varios(self, client: TestClient, headers, conjunto, cantidad: int) -> None:
+        for n in range(cantidad):
+            respuesta = client.post(_url(conjunto), headers=headers, json={"texto": f"Tema {n}"})
+            assert respuesta.status_code == 201
+
+    def test_devuelve_de_10_en_10_con_el_total(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        self._crear_varios(client, admin_conjunto_auth_headers, conjunto_verificado, 12)
+
+        primera = client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()
+        segunda = client.get(_url(conjunto_verificado), params={"offset": 10}, headers=admin_conjunto_auth_headers).json()
+
+        assert primera["total"] == 12 and len(primera["items"]) == 10
+        assert segunda["total"] == 12 and len(segunda["items"]) == 2
+        ids = {t["id"] for t in primera["items"]} | {t["id"] for t in segunda["items"]}
+        assert len(ids) == 12
+
+    def test_el_total_cuenta_solo_los_pendientes_de_ese_conjunto(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        self._crear_varios(client, admin_conjunto_auth_headers, conjunto_verificado, 3)
+        id_item = client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()["items"][0]["id"]
+        client.patch(_url(conjunto_verificado, f"/{id_item}"), headers=admin_conjunto_auth_headers, json={"estado": "ARCHIVADA"})
+
+        pagina = client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json()
+
+        assert pagina["total"] == 2 and len(pagina["items"]) == 2
+
+    def test_sin_temas_devuelve_una_pagina_vacia(self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado):
+        assert client.get(_url(conjunto_verificado), headers=admin_conjunto_auth_headers).json() == {"items": [], "total": 0}
+
+    def test_limit_y_offset_fuera_de_rango_devuelven_422(
+        self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        url = _url(conjunto_verificado)
+        assert client.get(url, params={"limit": 0}, headers=admin_conjunto_auth_headers).status_code == 422
+        assert client.get(url, params={"limit": 101}, headers=admin_conjunto_auth_headers).status_code == 422
+        assert client.get(url, params={"offset": -1}, headers=admin_conjunto_auth_headers).status_code == 422

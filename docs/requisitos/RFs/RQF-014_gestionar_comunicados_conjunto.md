@@ -36,11 +36,17 @@ Los usuarios destinatarios ven los comunicados en un feed dentro de la app y rec
 ## Flujos
 
 ### Flujo A — Publicar comunicado (Admin Conjunto)
+El formulario sigue el orden de las preguntas (issue #632): para quién → qué → cuándo → imagen.
 1. El Admin Conjunto selecciona el conjunto y los destinatarios: solo residentes, solo recicladores o ambos.
 2. Elige el tipo de comunicado y escribe el contenido (texto obligatorio).
-3. Puede adjuntar un archivo real: imagen (JPG/PNG/WEBP), PDF, Word (.docx) o Excel (.xlsx) — validado por contenido real, no solo por su nombre (ver `be/app/utils/imagenes.py`).
-4. El sistema sugiere la fecha de expiración según el tipo, pero el admin puede cambiarla.
+3. El sistema sugiere la fecha de expiración según el tipo, pero el admin puede cambiarla. En una Convocatoria, la fecha del evento y la de expiración van lado a lado.
+4. Al final puede adjuntar un archivo real: imagen (JPG/PNG/WEBP), PDF, Word (.docx) o Excel (.xlsx) — validado por contenido real, no solo por su nombre (ver `be/app/utils/imagenes.py`).
 5. Al publicar, los destinatarios reciben una notificación y el comunicado aparece en su feed.
+
+#### Lista de "Mis comunicados" (issue #632)
+- Un solo contenedor con dos pestañas subrayadas, **Vigentes** y **Vencidos**; el filtro lo aplica el servidor (`GET /comunicados/mis-comunicados?vigencia=VIGENTES|VENCIDOS&limit=&offset=`, `{items, total}`), de 10 en 10, con la barra de paginación siempre visible al pie ("Mostrando 1–N de N", con las flechas apagadas si solo hay una página), igual que en las demás vistas.
+- Cada comunicado es una fila con una barra delgada de color a la izquierda del contenido (con aire alrededor, no pegada al borde de la tarjeta), según su tipo. Un comunicado vencido lleva la barra gris y el pie "Venció el <fecha>" (sin chip "Vencido"); uno vigente dice "Expira el <fecha>". Las pestañas llevan margen a cada lado, como en Desempeño.
+- En una tarjeta de título angosta (menos de 36 rem), el botón "Nuevo comunicado" baja debajo del texto, a todo el ancho; en una más ancha va a la derecha, sin partir su nombre.
 
 ### Flujo B — Ver feed de comunicados (Residente / Reciclador)
 1. El usuario abre la sección de comunicados de su conjunto.

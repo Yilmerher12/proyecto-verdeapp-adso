@@ -129,7 +129,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
   };
 
   return (
-    <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
+    <div className="space-y-4 p-5">
       <div>
         <h2 className="text-base font-bold text-gray-900 dark:text-white">
           {t("novedadesEnviadas.formTitle")}
@@ -315,19 +315,33 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
       .finally(() => setCargando(false));
   }, [version, offset]);
 
-  if (cargando) return <LoadingState message={t("common.loading")} />;
-  if (error) return <Alert type="error" message={t("common.loadError")} />;
+  // ¿Qué? Los estados de carga, error y vacío van con margen propio porque ya no hay una tarjeta alrededor.
+  if (cargando)
+    return (
+      <div className="p-5">
+        <LoadingState message={t("common.loading")} />
+      </div>
+    );
+  if (error)
+    return (
+      <div className="p-5">
+        <Alert type="error" message={t("common.loadError")} />
+      </div>
+    );
   if (items.length === 0)
-    return <EmptyState icon={Send} message={t("novedadesEnviadas.mineEmpty")} />;
+    return (
+      <div className="p-5">
+        <EmptyState icon={Send} message={t("novedadesEnviadas.mineEmpty")} />
+      </div>
+    );
 
+  // ¿Qué? Issue #632: filas separadas por una línea dentro de la tarjeta de la página, y la paginación como pie (solo
+  //       si hay más de una página), en vez de una tarjeta por novedad y otra para la paginación.
   return (
-    <div className="space-y-3">
-      <ul className="space-y-3">
+    <div>
+      <ul className="divide-y divide-gray-200 dark:divide-night-line">
         {items.map((n) => (
-          <li
-            key={n.id}
-            className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
-          >
+          <li key={n.id} className="px-5 py-4">
             <div className="flex flex-wrap items-center gap-2">
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CLASE_ESTADO[n.estado]}`}
@@ -364,7 +378,7 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
           </li>
         ))}
       </ul>
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-night-line dark:bg-night-card">
+      {total > 0 && (
         <Paginacion
           desde={paginacion.desde}
           hasta={paginacion.hasta}
@@ -376,7 +390,7 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
           onAnterior={paginacion.irAAnterior}
           onSiguiente={paginacion.irASiguiente}
         />
-      </div>
+      )}
     </div>
   );
 }

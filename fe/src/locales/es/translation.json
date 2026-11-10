@@ -1857,7 +1857,7 @@
       "button": "Descargar agenda",
       "noTopics": "Todavía no hay temas para descargar. Agrega uno y podrás bajar el historial.",
       "title": "Descargar agenda",
-      "description": "Descarga un archivo con los temas de este conjunto para anexar al acta del comité.",
+      "description": "Descarga un archivo con los temas de {{conjunto}} para anexar al acta del comité.",
       "formatLabel": "Formato",
       "formatCsv": "CSV (Excel)",
       "formatPdf": "PDF",
@@ -1906,12 +1906,19 @@
       "subtitle": "Publica avisos para los residentes y/o recicladores de tus conjuntos.",
       "newButton": "Nuevo comunicado",
       "noConjuntos": "No administras ningún conjunto todavía.",
-      "emptyState": "Todavía no has publicado ningún comunicado.",
+      "tabs": {
+        "label": "Vigencia de los comunicados",
+        "vigentes": "Vigentes",
+        "vencidos": "Vencidos"
+      },
+      "emptyVigentes": "No tienes comunicados vigentes. Los que ya vencieron están en la pestaña «Vencidos».",
+      "emptyVencidos": "Todavía no tienes comunicados vencidos.",
       "editAria": "Editar {{resumen}}",
       "deleteAria": "Eliminar {{resumen}}",
       "editTitle": "Editar comunicado",
       "creadoEl": "Creado el {{fecha}}",
       "expiraEl": "Expira el {{fecha}}",
+      "vencioEl": "Venció el {{fecha}}",
       "destinatariosNoEditable": "El conjunto y los destinatarios no se pueden cambiar después de publicar. Si te equivocaste, elimina este comunicado y crea uno nuevo.",
       "deleteError": "No se pudo eliminar. Intenta de nuevo.",
       "validation": {
@@ -2023,7 +2030,7 @@
     },
     "feed": {
       "title": "Soporte técnico",
-      "subtitle": "Avisos generales de la plataforma VerdeApp.",
+      "subtitle": "Escribe al equipo de VerdeApp y revisa las novedades de la plataforma.",
       "empty": "No hay novedades activas por ahora."
     }
   }

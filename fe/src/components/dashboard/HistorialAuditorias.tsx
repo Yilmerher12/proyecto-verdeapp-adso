@@ -125,7 +125,7 @@ export function HistorialAuditorias({
               );
             })}
           </ul>
-          {total > TAMANO_PAGINA && (
+          {total > 0 && (
             <div className="mt-2 border-t border-gray-200 dark:border-night-line">
               <Paginacion
                 desde={paginacion.desde}

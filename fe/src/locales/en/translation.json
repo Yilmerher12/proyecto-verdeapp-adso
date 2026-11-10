@@ -1857,7 +1857,7 @@
       "button": "Download agenda",
       "noTopics": "There are no topics to download yet. Add one and you can download the history.",
       "title": "Download agenda",
-      "description": "Downloads a file with this building's topics to attach to the committee minutes.",
+      "description": "Downloads a file with the topics of {{conjunto}} to attach to the committee minutes.",
       "formatLabel": "Format",
       "formatCsv": "CSV (Excel)",
       "formatPdf": "PDF",
@@ -1906,12 +1906,19 @@
       "subtitle": "Post announcements for the residents and/or recyclers of your buildings.",
       "newButton": "New announcement",
       "noConjuntos": "You don't administer any building yet.",
-      "emptyState": "You haven't posted any announcement yet.",
+      "tabs": {
+        "label": "Announcement status",
+        "vigentes": "Active",
+        "vencidos": "Expired"
+      },
+      "emptyVigentes": "You have no active announcements. The ones that already expired are in the “Expired” tab.",
+      "emptyVencidos": "You don't have any expired announcements yet.",
       "editAria": "Edit {{resumen}}",
       "deleteAria": "Delete {{resumen}}",
       "editTitle": "Edit announcement",
       "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
+      "vencioEl": "Expired on {{fecha}}",
       "destinatariosNoEditable": "The building and recipients can't be changed after publishing. If you made a mistake, delete this announcement and create a new one.",
       "deleteError": "Could not delete. Please try again.",
       "validation": {
@@ -2023,7 +2030,7 @@
     },
     "feed": {
       "title": "Technical Support",
-      "subtitle": "General announcements from the VerdeApp platform.",
+      "subtitle": "Write to the VerdeApp team and read the platform news.",
       "empty": "No active news right now."
     }
   }

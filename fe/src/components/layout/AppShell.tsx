@@ -536,7 +536,7 @@ export function AppShell({ children }: AppShellProps) {
             encima; no combinaba con la paleta nueva y se pidió quitarla.
             ¿Impacto? Contraste tarjeta/fondo depende solo de los dos colores
             sólidos (claro: gray-200, oscuro: night-page). */}
-        <main className="relative flex-1 overflow-y-auto bg-gray-200 dark:bg-night-page">
+        <main className="relative flex-1 overflow-y-auto bg-gray-200 [scrollbar-gutter:stable] dark:bg-night-page">
           {/* ¿Qué? 16 px de margen lateral en celular (24 px desde `sm`).
               ¿Para qué? Con 24 px del contenedor + 24 px de la página, las
                         tarjetas ocupaban solo el 74% del ancho de un celular

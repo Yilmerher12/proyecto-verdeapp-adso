@@ -2,7 +2,8 @@
  * Archivo: __tests__/pages/AdminConjuntoAgendaPage.test.tsx
  * Descripción: Tests de la Agenda del comité del Admin de Conjunto (RQF-020,
  *              HU-046, issue #435) — opción propia del menú, con notas "Por
- *              tratar", historial "Archivadas" paginado y una pestaña por conjunto.
+ *              tratar", historial "Archivadas" y una pestaña por conjunto; issue #632: los controles
+ *              viven dentro de la tarjeta del encabezado y los dos listados se piden de 10 en 10.
  */
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -71,8 +72,12 @@ function mockAgenda(conjuntos: unknown[], pendientes: Listas = {}, archivadas: L
       return Promise.resolve({ data: { items: lista.slice(offset, offset + limit), total: lista.length } });
     }
     if (url.includes("/agenda")) {
+      // ¿Qué? Issue #632: "Por tratar" también se pide por página (limit/offset) y responde { items, total }.
       const id = Object.keys(pendientes).find((c) => url.includes(`/mis-conjuntos/${c}/agenda`));
-      return Promise.resolve({ data: id ? pendientes[id] : [] });
+      const lista = id ? pendientes[id] : [];
+      const offset = config?.params?.offset ?? 0;
+      const limit = config?.params?.limit ?? 10;
+      return Promise.resolve({ data: { items: lista.slice(offset, offset + limit), total: lista.length } });
     }
     if (url.includes("/conjunto-panel/mis-conjuntos")) return Promise.resolve({ data: conjuntos });
     return Promise.resolve({ data: [] });
@@ -257,21 +262,24 @@ describe("AdminConjuntoAgendaPage", () => {
       expect(screen.queryByRole("tablist", { name: "Conjunto" })).not.toBeInTheDocument();
     });
 
-    it("con 2 conjuntos muestra una pestaña por conjunto con sus pendientes y cambia de agenda al elegirla", async () => {
+    it("con 2 conjuntos muestra una pestaña por conjunto y cambia de agenda al elegirla", async () => {
       const temaOtro = { ...temaPendiente, id: "t-9", texto: "Revisar la luz del parqueadero.", url_evidencia: null };
       mockAgenda([conjuntoUno, conjuntoDos], { "c-1": [temaPendiente], "c-2": [temaOtro, { ...temaOtro, id: "t-10" }] });
       const user = userEvent.setup();
       renderPage();
 
-      const pestanaDos = await screen.findByRole("tab", { name: /Portal de Capellanía/ });
-      expect(within(pestanaDos).getByText("2")).toBeInTheDocument();
-      expect(within(screen.getByRole("tab", { name: /Quintas de Aranjuez/ })).getByText("1")).toBeInTheDocument();
-      expect(screen.getByText("Arreglar la puerta del sótano.")).toBeInTheDocument();
+      const conjuntos = await screen.findByRole("tablist", { name: "Conjunto" });
+      expect(within(conjuntos).getAllByRole("tab").map((o) => o.textContent)).toEqual([
+        "Quintas de Aranjuez",
+        "Portal de Capellanía",
+      ]);
+      // ¿Para qué? Las pestañas (con su contador) y las notas salen de pedidos distintos: se espera a las notas.
+      expect(await screen.findByText("Arreglar la puerta del sótano.")).toBeInTheDocument();
 
-      await user.click(pestanaDos);
+      await user.click(screen.getByRole("tab", { name: "Portal de Capellanía" }));
 
+      expect(await screen.findAllByText("Revisar la luz del parqueadero.")).toHaveLength(2);
       expect(screen.queryByText("Arreglar la puerta del sótano.")).not.toBeInTheDocument();
-      expect(screen.getAllByText("Revisar la luz del parqueadero.")).toHaveLength(2);
     });
 
     it("el historial es de cada conjunto: al cambiar de pestaña se piden sus archivadas", async () => {
@@ -398,16 +406,29 @@ describe("AdminConjuntoAgendaPage", () => {
 
     const pedidosDeConteo = () => mockGet.mock.calls.filter(([url]) => String(url).includes("/agenda/historial/conteo"));
 
-    it("deja el botón junto a las pestañas Por tratar y Archivadas, y 'Agregar' en el encabezado (issue #517)", async () => {
+    // ¿Qué? Issue #632 — "Descargar agenda" y "Agregar tema" son las dos acciones de la página: van juntas, arriba a la
+    //       derecha del encabezado (antes "Descargar" estaba suelto junto a las pestañas de vista).
+    it("deja 'Descargar agenda' junto a 'Agregar tema', en la tarjeta del encabezado", async () => {
       mockAgenda([conjuntoUno], { "c-1": [temaPendiente] });
       renderPage();
 
       const descargar = await screen.findByRole("button", { name: "Descargar agenda" });
-      const pestanas = screen.getByRole("tablist", { name: "Vista" });
-      expect(descargar.parentElement).toBe(pestanas.parentElement);
-      expect(screen.getByRole("button", { name: "Agregar tema" }).parentElement).toContainElement(
-        screen.getByRole("heading", { level: 1 })
-      );
+      const agregar = screen.getByRole("button", { name: "Agregar tema" });
+      expect(descargar.parentElement).toBe(agregar.parentElement);
+      expect(descargar.parentElement!.parentElement).toContainElement(screen.getByRole("heading", { level: 1 }));
+    });
+
+    // ¿Qué? Issue #632 — la ventana dice de qué conjunto es el archivo (ya no está pegada a las pestañas del conjunto).
+    it("la ventana de descarga nombra el conjunto elegido", async () => {
+      mockAgenda([conjuntoUno, conjuntoDos], { "c-1": [temaPendiente], "c-2": [temaPendiente] });
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole("tab", { name: /Portal de Capellanía/ }));
+      await user.click(screen.getByRole("button", { name: "Descargar agenda" }));
+
+      const ventana = await screen.findByRole("dialog", { name: "Descargar agenda" });
+      expect(within(ventana).getByText(/los temas de Portal de Capellanía para anexar al acta/)).toBeInTheDocument();
     });
 
     it("sin ningún tema el botón se ve apagado y, al pulsarlo, explica el motivo en vez de abrir la ventana (issue #517)", async () => {
@@ -740,6 +761,256 @@ describe("AdminConjuntoAgendaPage", () => {
 
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(pedidoDeDescarga()).toBeUndefined();
+    });
+  });
+
+  // ¿Qué? Issue #632 — los controles viven dentro de la tarjeta del encabezado y no flotan sobre el fondo.
+  describe("organización de la página (issue #632)", () => {
+    it("la tarjeta del título solo lleva el título y las dos acciones, no las pestañas", async () => {
+      mockAgenda([conjuntoUno, conjuntoDos], { "c-1": [temaPendiente] });
+      renderPage();
+
+      await screen.findByText("Arreglar la puerta del sótano.");
+      const tarjeta = screen.getByRole("heading", { level: 1 }).closest(".rounded-2xl")!;
+      expect(tarjeta).toContainElement(screen.getByRole("button", { name: "Agregar tema" }));
+      expect(tarjeta).not.toContainElement(screen.getByRole("tablist", { name: "Vista" }));
+      expect(tarjeta).not.toContainElement(screen.getByRole("tablist", { name: "Conjunto" }));
+    });
+
+    it("Por tratar y Archivadas son burbujas pequeñas, con su número, dentro del mismo contenedor que las notas", async () => {
+      mockAgenda([conjuntoUno], { "c-1": [temaPendiente] }, { "c-1": [temaArchivado] });
+      renderPage();
+
+      const nota = await screen.findByText("Arreglar la puerta del sótano.");
+      const vista = screen.getByRole("tablist", { name: "Vista" });
+      expect(vista).toHaveClass("flex-wrap");
+      expect(vista.closest(".overflow-hidden")).toContainElement(nota);
+      expect(within(screen.getByRole("tab", { name: /Por tratar/ })).getByText("1")).toBeInTheDocument();
+      expect(within(await screen.findByRole("tab", { name: /Archivadas 1/ })).getByText("1")).toBeInTheDocument();
+    });
+
+    it("con un solo conjunto no hay pestañas de conjunto, solo las burbujas de vista", async () => {
+      mockAgenda([conjuntoUno]);
+      renderPage();
+
+      await screen.findByRole("tablist", { name: "Vista" });
+      expect(screen.queryByRole("tablist", { name: "Conjunto" })).not.toBeInTheDocument();
+    });
+
+    it("las pestañas de conjunto van arriba de las burbujas de vista, repartidas y con 20 px de espacio arriba, como en Desempeño", async () => {
+      mockAgenda([conjuntoUno, conjuntoDos]);
+      renderPage();
+
+      const conjuntos = await screen.findByRole("tablist", { name: "Conjunto" });
+      const vista = screen.getByRole("tablist", { name: "Vista" });
+      expect(conjuntos.compareDocumentPosition(vista) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(conjuntos.parentElement).toHaveClass("px-5", "pt-5");
+      for (const pestana of within(conjuntos).getAllByRole("tab")) {
+        expect(pestana).toHaveClass("flex-1");
+        expect(pestana).not.toHaveClass("sm:flex-none");
+      }
+    });
+
+    it("las burbujas de vista dejan espacio debajo para no quedar pegadas al aviso de Archivadas", async () => {
+      mockAgenda([conjuntoUno]);
+      renderPage();
+
+      const vista = await screen.findByRole("tablist", { name: "Vista" });
+      expect(vista.closest(".pb-4")).not.toBeNull();
+    });
+
+    it("el número de Por tratar sale del total que responde el servidor, no de las notas de la página", async () => {
+      const muchos = Array.from({ length: 25 }, (_, i) => ({ ...temaPendiente, id: `p-${i}`, texto: `Tema ${i}` }));
+      mockAgenda([conjuntoUno], { "c-1": muchos });
+      renderPage();
+
+      expect(within(await screen.findByRole("tab", { name: /Por tratar/ })).getByText("25")).toBeInTheDocument();
+    });
+  });
+
+  describe("notas en una sola tinta neutra (issue #632)", () => {
+    const notas = Array.from({ length: 5 }, (_, i) => ({ ...temaPendiente, id: `n-${i}`, texto: `Nota ${i}`, url_evidencia: null }));
+
+    it("todas las notas comparten el mismo color, sin importar su posición", async () => {
+      mockAgenda([conjuntoUno], { "c-1": notas });
+      renderPage();
+
+      await screen.findByText("Nota 0");
+      const tarjetas = notas.map((n) => screen.getByText(n.texto).closest("li")!);
+      for (const tarjeta of tarjetas) {
+        expect(tarjeta).toHaveClass("bg-white", "border-gray-200");
+        expect(tarjeta.className).not.toMatch(/bg-(amber|accent|blue|purple)-50/);
+      }
+    });
+
+    it("al archivar una nota las demás no cambian de color", async () => {
+      mockAgenda([conjuntoUno], { "c-1": notas });
+      renderPage();
+      await screen.findByText("Nota 0");
+      const antes = screen.getByText("Nota 3").closest("li")!.className;
+
+      // ¿Qué? Con el color por posición, archivar la primera movía a todas las demás un lugar y les cambiaba el color.
+      mockAgenda([conjuntoUno], { "c-1": notas.slice(1) });
+      const user = userEvent.setup();
+      await user.click(within(screen.getByText("Nota 0").closest("li")!).getByRole("button", { name: "Archivar" }));
+
+      await waitFor(() => expect(screen.queryByText("Nota 0")).not.toBeInTheDocument());
+      expect(screen.getByText("Nota 3").closest("li")!.className).toBe(antes);
+    });
+  });
+
+  describe("Por tratar paginado desde el servidor (issue #632)", () => {
+    const muchos = (cantidad: number) =>
+      Array.from({ length: cantidad }, (_, i) => ({ ...temaPendiente, id: `p-${i}`, texto: `Tema ${i}`, url_evidencia: null }));
+
+    it("pide la primera página de 10 y muestra solo 10 notas", async () => {
+      mockAgenda([conjuntoUno], { "c-1": muchos(25) });
+      renderPage();
+
+      expect(await screen.findByText("Tema 0")).toBeInTheDocument();
+      expect(screen.getByText("Tema 9")).toBeInTheDocument();
+      expect(screen.queryByText("Tema 10")).not.toBeInTheDocument();
+      expect(screen.getByText("Mostrando 1–10 de 25")).toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/mis-conjuntos/c-1/agenda"),
+        { params: { limit: 10, offset: 0 } },
+      );
+    });
+
+    it("la página siguiente pide el offset 10 al servidor", async () => {
+      mockAgenda([conjuntoUno], { "c-1": muchos(25) });
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText("Tema 0");
+
+      await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+
+      expect(await screen.findByText("Tema 10")).toBeInTheDocument();
+      expect(screen.queryByText("Tema 0")).not.toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/mis-conjuntos/c-1/agenda"),
+        { params: { limit: 10, offset: 10 } },
+      );
+    });
+
+    it("con 10 notas o menos la barra de paginación se ve igual, con las flechas apagadas", async () => {
+      mockAgenda([conjuntoUno], { "c-1": muchos(10) });
+      renderPage();
+
+      await screen.findByText("Tema 0");
+      expect(screen.getByText("Mostrando 1–10 de 10")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Página siguiente" })).toBeDisabled();
+    });
+
+    it("la barra de paginación es el pie del mismo contenedor que las notas", async () => {
+      mockAgenda([conjuntoUno], { "c-1": muchos(25) });
+      renderPage();
+
+      const nota = await screen.findByText("Tema 0");
+      const barra = screen.getByText("Mostrando 1–10 de 25");
+      expect(nota.closest("ul")).not.toContainElement(barra);
+      expect(barra.closest(".overflow-hidden")).toContainElement(nota);
+    });
+
+    it("al cambiar de conjunto vuelve a la primera página", async () => {
+      mockAgenda([conjuntoUno, conjuntoDos], { "c-1": muchos(25), "c-2": muchos(25) });
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText("Tema 0");
+      await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+      await screen.findByText("Tema 10");
+
+      await user.click(screen.getByRole("tab", { name: /Portal de Capellanía/ }));
+
+      expect(await screen.findByText("Tema 0")).toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/mis-conjuntos/c-2/agenda"),
+        { params: { limit: 10, offset: 0 } },
+      );
+    });
+
+    it("si se archiva la única nota de la última página, retrocede a la anterior", async () => {
+      mockAgenda([conjuntoUno], { "c-1": muchos(11) });
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText("Tema 0");
+      await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+      await screen.findByText("Tema 10");
+
+      mockAgenda([conjuntoUno], { "c-1": muchos(10) });
+      await user.click(within(screen.getByText("Tema 10").closest("li")!).getByRole("button", { name: "Archivar" }));
+
+      expect(await screen.findByText("Tema 0")).toBeInTheDocument();
+      expect(screen.queryByText("Tema 10")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Archivadas como un solo contenedor (issue #632)", () => {
+    async function abrirArchivadas(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(await screen.findByRole("tab", { name: /Archivadas/ }));
+    }
+
+    it("el aviso del historial va en una banda gris con el ícono de información, arriba de las filas", async () => {
+      mockAgenda([conjuntoUno], {}, { "c-1": [temaArchivado] });
+      const user = userEvent.setup();
+      renderPage();
+      await abrirArchivadas(user);
+
+      const aviso = await screen.findByText(/Aquí quedan los temas que ya se resolvieron/);
+      const fila = screen.getByText(temaArchivado.texto);
+      expect(aviso.className).toMatch(/bg-gray-50/);
+      expect(aviso.querySelector("svg")).not.toBeNull();
+      // ¿Qué? La banda y la fila comparten contenedor, y la banda va primero.
+      expect(aviso.parentElement).toContainElement(fila);
+      expect(aviso.compareDocumentPosition(fila) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it("cada tema archivado es una fila de la lista, no una tarjeta suelta", async () => {
+      mockAgenda([conjuntoUno], {}, { "c-1": [temaArchivado, { ...temaArchivado, id: "t-3", texto: "Otro tema archivado." }] });
+      const user = userEvent.setup();
+      renderPage();
+      await abrirArchivadas(user);
+
+      await screen.findByText(temaArchivado.texto);
+      const fila = screen.getByText(temaArchivado.texto).closest("li")!;
+      expect(fila.className).not.toMatch(/rounded-2xl|border-gray-100/);
+      expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    });
+
+    it("con un solo tema la barra de paginación se ve igual, con las flechas apagadas", async () => {
+      mockAgenda([conjuntoUno], {}, { "c-1": [temaArchivado] });
+      const user = userEvent.setup();
+      renderPage();
+      await abrirArchivadas(user);
+
+      await screen.findByText(temaArchivado.texto);
+      expect(screen.getByText("Mostrando 1–1 de 1")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Página siguiente" })).toBeDisabled();
+    });
+
+    it("con más de 10 temas la barra de paginación es el pie del mismo contenedor", async () => {
+      const muchos = Array.from({ length: 12 }, (_, i) => ({ ...temaArchivado, id: `a-${i}`, texto: `Archivado ${i}` }));
+      mockAgenda([conjuntoUno], {}, { "c-1": muchos });
+      const user = userEvent.setup();
+      renderPage();
+      await abrirArchivadas(user);
+
+      const fila = await screen.findByText("Archivado 0");
+      const barra = screen.getByText("Mostrando 1–10 de 12");
+      expect(fila.closest(".overflow-hidden")).toContainElement(barra);
+    });
+
+    it("sin foto muestra el cuadro gris con el ícono de archivo; con foto, la miniatura", async () => {
+      mockAgenda([conjuntoUno], {}, { "c-1": [temaArchivado, { ...temaArchivado, id: "t-4", texto: "Con foto.", url_evidencia: "/uploads/adjuntos/foto.jpg" }] });
+      const user = userEvent.setup();
+      renderPage();
+      await abrirArchivadas(user);
+
+      const sinFoto = (await screen.findByText(temaArchivado.texto)).closest("li")!;
+      const conFoto = screen.getByText("Con foto.").closest("li")!;
+      expect(sinFoto.querySelector("img")).toBeNull();
+      expect(sinFoto.querySelector("svg")).not.toBeNull();
+      expect(conFoto.querySelector("img")).not.toBeNull();
     });
   });
 });
