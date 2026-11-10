@@ -153,7 +153,7 @@ export function AvisosConjunto({
             ))}
           </ul>
 
-          {total > AVISOS_POR_PAGINA && (
+          {total > 0 && (
             <Paginacion
               desde={paginacion.desde}
               hasta={paginacion.hasta}

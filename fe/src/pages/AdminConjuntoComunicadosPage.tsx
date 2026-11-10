@@ -11,8 +11,14 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { Alert } from "@/components/ui/Alert";
 import { Paginacion } from "@/components/ui/Paginacion";
+import { Pestanas } from "@/components/ui/Pestanas";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
-import { COMUNICADO_TEXTO_MAX_LENGTH, DIAS_MAX_EXPIRACION, rangoFechaAviso, validarFechaAviso } from "@/lib/validacion";
+import {
+  COMUNICADO_TEXTO_MAX_LENGTH,
+  DIAS_MAX_EXPIRACION,
+  rangoFechaAviso,
+  validarFechaAviso,
+} from "@/lib/validacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
@@ -25,10 +31,11 @@ import {
   type Comunicado,
   type DestinatariosComunicado,
   type TipoComunicado,
+  type VigenciaComunicado,
 } from "@/lib/comunicadosApi";
 
-// ¿Qué? Issue #11 — mismo tamaño de página que ya usa Novedades (issue #227).
-const TAMANO_PAGINA = 8;
+// ¿Qué? Comunicados por página: el estándar del proyecto (10), igual que el resto de las listas (issue #632).
+const TAMANO_PAGINA = 10;
 
 interface FormState {
   id_conjunto_residencial: string | "";
@@ -50,7 +57,13 @@ const FORM_VACIO: FormState = {
   fecha_expiracion: "",
 };
 
-const TIPOS: TipoComunicado[] = ["INFORMATIVO", "URGENTE", "CONVOCATORIA", "MANTENIMIENTO", "RECICLAJE"];
+const TIPOS: TipoComunicado[] = [
+  "INFORMATIVO",
+  "URGENTE",
+  "CONVOCATORIA",
+  "MANTENIMIENTO",
+  "RECICLAJE",
+];
 const DESTINATARIOS: DestinatariosComunicado[] = ["RESIDENTES", "RECICLADORES", "AMBOS"];
 
 // ¿Qué? Issue #7 (hallazgo F2 de la auditoría) — un comunicado no tiene
@@ -70,12 +83,28 @@ const TIPO_ESTILO: Record<TipoComunicado, string> = {
   RECICLAJE: "bg-accent-100 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400",
 };
 
+// ¿Qué? Barra delgada (3 px) a la izquierda del contenido de cada fila, con aire alrededor: el mismo color de la etiqueta del tipo
+//       (issue #632). Antes era una franja gruesa pegada al borde de la tarjeta, que se veía rara.
+// ¿Para qué? Que el tipo se distinga de un vistazo sin leer, sobre todo "Urgente". Cuando el comunicado ya venció la
+//           franja se vuelve gris (ver más abajo): el color queda para lo que sigue vigente.
+const TIPO_FRANJA: Record<TipoComunicado, string> = {
+  INFORMATIVO: "bg-blue-500 dark:bg-blue-400",
+  URGENTE: "bg-red-500 dark:bg-red-400",
+  CONVOCATORIA: "bg-purple-500 dark:bg-purple-400",
+  MANTENIMIENTO: "bg-amber-500 dark:bg-amber-400",
+  RECICLAJE: "bg-accent-600 dark:bg-accent-400",
+};
+
 /**
  * ¿Qué? Panel del Administrador de Conjunto para publicar, editar y
  *       eliminar comunicados (RQF-014, HU-027/029/030).
  * ¿Para qué? Un mismo admin puede manejar varios conjuntos — por eso al
  *           crear un comunicado hay que elegir para cuál es, y la lista
- *           muestra el nombre del conjunto en cada tarjeta.
+ *           muestra el nombre del conjunto en cada fila.
+ * ¿Impacto? Issue #632: la lista es UNA tarjeta con las pestañas "Vigentes" y "Vencidos" arriba (el servidor filtra
+ *           cada una), filas separadas por una línea con una franja de color según el tipo, y la paginación de 10 en 10
+ *           como pie. Un comunicado vencido se distingue por su franja gris y por el texto "Venció el", no solo por el
+ *           color. Los vencidos siguen a mano para reutilizarlos (editar su fecha) o borrarlos.
  */
 export function AdminConjuntoComunicadosPage() {
   const { t } = useTranslation();
@@ -84,7 +113,11 @@ export function AdminConjuntoComunicadosPage() {
   const [conjuntos, setConjuntos] = useState<ConjuntoAdministrado[]>([]);
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [total, setTotal] = useState(0);
+  const [vigencia, setVigencia] = useState<VigenciaComunicado>("VIGENTES");
+  // ¿Qué? Se sube cada vez que hay que volver a pedir la lista (después de crear, editar o eliminar).
+  const [version, setVersion] = useState(0);
   const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [creando, setCreando] = useState(false);
@@ -101,24 +134,54 @@ export function AdminConjuntoComunicadosPage() {
   const [eliminando, setEliminando] = useState(false);
 
   const paginacion = usePaginacion(TAMANO_PAGINA, total);
+  const { offset, pagina, irAAnterior, reiniciar } = paginacion;
 
-  const cargar = () => {
+  // ¿Qué? Los conjuntos del admin se piden una sola vez (sirven para el formulario), no con cada página de la lista.
+  useEffect(() => {
     if (!user) return;
-    setCargando(true);
-    Promise.all([obtenerMisConjuntos(), listarMisComunicados(TAMANO_PAGINA, paginacion.offset)])
-      .then(([listaConjuntos, paginaComunicados]) => {
-        setConjuntos(listaConjuntos);
-        setComunicados(paginaComunicados.items);
-        setTotal(paginaComunicados.total);
+    obtenerMisConjuntos()
+      .then(setConjuntos)
+      .catch((err) => console.error("Error cargando conjuntos", err));
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    listarMisComunicados(TAMANO_PAGINA, offset, vigencia)
+      .then((p) => {
+        setComunicados(p.items);
+        setTotal(p.total);
+        setErrorCarga(false);
       })
-      .catch((err) => console.error("Error cargando comunicados", err))
+      .catch((err) => {
+        console.error("Error cargando comunicados", err);
+        setErrorCarga(true);
+      })
       .finally(() => setCargando(false));
+  }, [user, offset, vigencia, version]);
+
+  // ¿Qué? Si se vació la última página (se borró su único comunicado, o uno vencido pasó a vigente), se retrocede una.
+  useEffect(() => {
+    if (comunicados.length === 0 && total > 0 && pagina > 0) irAAnterior();
+  }, [comunicados, total, pagina, irAAnterior]);
+
+  const recargar = () => setVersion((v) => v + 1);
+
+  // ¿Qué? Al cambiar de pestaña se vacía la lista y se vuelve a la primera página, para no mostrar un instante los
+  //       comunicados de la otra pestaña.
+  const cambiarVigencia = (nueva: VigenciaComunicado) => {
+    if (nueva === vigencia) return;
+    setComunicados([]);
+    setTotal(0);
+    setCargando(true);
+    reiniciar();
+    setVigencia(nueva);
   };
 
-  useEffect(cargar, [user, paginacion.offset]);
-
   const abrirCrear = () => {
-    setForm({ ...FORM_VACIO, id_conjunto_residencial: conjuntos[0]?.id_conjunto_residencial ?? "" });
+    setForm({
+      ...FORM_VACIO,
+      id_conjunto_residencial: conjuntos[0]?.id_conjunto_residencial ?? "",
+    });
     setCreando(true);
   };
 
@@ -206,7 +269,13 @@ export function AdminConjuntoComunicadosPage() {
         });
       }
       cerrarFormulario();
-      cargar();
+      // ¿Qué? Un comunicado nuevo nace vigente (y uno vencido editado con fecha nueva pasa a vigente): se muestra la
+      //       pestaña "Vigentes" desde su primera página.
+      if (vigencia !== "VIGENTES") cambiarVigencia("VIGENTES");
+      else {
+        reiniciar();
+        recargar();
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setErrorMsg(err.message || t("common.saveError"));
@@ -221,7 +290,7 @@ export function AdminConjuntoComunicadosPage() {
     try {
       await eliminarComunicado(aEliminar.id_comunicado);
       setAEliminar(null);
-      cargar();
+      recargar();
     } catch {
       setErrorMsg(t("comunicados.admin.deleteError"));
     } finally {
@@ -229,142 +298,243 @@ export function AdminConjuntoComunicadosPage() {
     }
   };
 
+  const clasesInput =
+    "w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white";
+  const claseFecha = (error: string | null) =>
+    `w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+      error
+        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+        : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
+    }`;
+
   return (
     <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
-      <div className="flex items-center justify-between bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comunicados.admin.title")}</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.subtitle")}</p>
-        </div>
-        <button
-          onClick={abrirCrear}
-          disabled={conjuntos.length === 0}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-        >
-          <Plus className="icon-md" />
-          {t("comunicados.admin.newButton")}
-        </button>
-      </div>
-
-      {cargando && <LoadingState message={t("common.loading")} />}
-
-      {!cargando && conjuntos.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t("comunicados.admin.noConjuntos")}</p>
-      )}
-
-      {!cargando && comunicados.length === 0 && conjuntos.length > 0 && (
-        <EmptyState icon={Megaphone} message={t("comunicados.admin.emptyState")} />
-      )}
-
-      <div className="space-y-3">
-        {comunicados.map((item) => (
-          <div
-            key={item.id_comunicado}
-            className="rounded-2xl border border-gray-100 bg-white p-4 dark:border-night-line dark:bg-night-card"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIPO_ESTILO[item.tipo]}`}>
-                    {t(`comunicados.tipos.${item.tipo}`)}
-                  </span>
-                  <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-field dark:text-gray-300">
-                    {item.nombre_conjunto}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {t(`comunicados.destinatarios.${item.destinatarios}`)}
-                  </span>
-                  {item.editado && (
-                    <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
-                  )}
-                </div>
-                <TextoRecortable texto={item.texto} className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line" />
-                {enlaceAdjuntoSeguro(item.url_adjunto) && (
-                  <a
-                    href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="link-text mt-2 inline-flex items-center gap-1.5 text-xs"
-                  >
-                    <Paperclip className="icon-sm" />
-                    {t("comunicados.viewAttachment")}
-                  </a>
-                )}
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-night-line dark:text-gray-400">
-                  <span className="inline-flex items-center gap-1.5">
-                    <Clock className="icon-sm" />
-                    {t("comunicados.admin.creadoEl", { fecha: formatearFechaCreacion(item.created_at) })}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <CalendarClock className="icon-sm" />
-                    {t("comunicados.admin.expiraEl", { fecha: formatearFechaUTC(item.fecha_expiracion) })}
-                  </span>
-                </div>
-              </div>
-              <div className="flex shrink-0 gap-2">
-                <button
-                  onClick={() => abrirEditar(item)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
-                  aria-label={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
-                  title={t("comunicados.admin.editAria", { resumen: resumirTexto(item.texto) })}
-                >
-                  <Pencil className="icon-md" />
-                </button>
-                <button
-                  onClick={() => setAEliminar(item)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-400/15"
-                  aria-label={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
-                  title={t("comunicados.admin.deleteAria", { resumen: resumirTexto(item.texto) })}
-                >
-                  <Trash2 className="icon-md" />
-                </button>
-              </div>
-            </div>
+      {/* ¿Qué? Título y botón "Nuevo comunicado": en un espacio angosto (menos de 36 rem de ancho de la tarjeta, no de la
+                ventana) el botón baja debajo del texto, a todo el ancho; desde ahí van en una fila.
+          ¿Para qué? Issue #632 — con el botón al lado del texto en una tarjeta angosta no quedaba espacio entre ambos y el
+                    nombre del botón se partía en dos líneas. */}
+      <div className="@container">
+        <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card @xl:flex-row @xl:items-center @xl:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {t("comunicados.admin.title")}
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {t("comunicados.admin.subtitle")}
+            </p>
           </div>
-        ))}
+          <button
+            onClick={abrirCrear}
+            disabled={conjuntos.length === 0}
+            className="flex shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+          >
+            <Plus className="icon-md" />
+            {t("comunicados.admin.newButton")}
+          </button>
+        </div>
       </div>
 
-      {!cargando && total > 0 && (
-        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm">
-          <Paginacion
-            desde={paginacion.desde}
-            hasta={paginacion.hasta}
-            total={total}
-            pagina={paginacion.pagina}
-            totalPaginas={paginacion.totalPaginas}
-            puedeAnterior={paginacion.puedeAnterior}
-            puedeSiguiente={paginacion.puedeSiguiente}
-            onAnterior={paginacion.irAAnterior}
-            onSiguiente={paginacion.irASiguiente}
-          />
-        </div>
+      {errorMsg && !creando && !editando && (
+        <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />
       )}
+
+      {!cargando && conjuntos.length === 0 && !errorCarga && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {t("comunicados.admin.noConjuntos")}
+        </p>
+      )}
+
+      {/* ¿Qué? Una sola tarjeta: pestañas subrayadas arriba, filas separadas por una línea y la paginación como pie
+                (issue #632). Antes las pestañas no existían, cada comunicado era una tarjeta suelta y la paginación otra caja. */}
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-night-line dark:bg-night-card">
+        <Pestanas
+          variante="subrayadas"
+          className="mx-5"
+          ariaLabel={t("comunicados.admin.tabs.label")}
+          idBase="comunicados-tab"
+          idPanel="comunicados-panel"
+          activa={vigencia}
+          onCambiar={cambiarVigencia}
+          pestanas={[
+            { id: "VIGENTES", etiqueta: t("comunicados.admin.tabs.vigentes") },
+            { id: "VENCIDOS", etiqueta: t("comunicados.admin.tabs.vencidos") },
+          ]}
+        />
+
+        <div id="comunicados-panel" role="tabpanel" aria-labelledby={`comunicados-tab-${vigencia}`}>
+          {cargando && (
+            <div className="p-5">
+              <LoadingState message={t("common.loading")} />
+            </div>
+          )}
+
+          {!cargando && errorCarga && (
+            <div className="p-5">
+              <Alert type="error" message={t("common.loadError")} />
+            </div>
+          )}
+
+          {!cargando && !errorCarga && comunicados.length === 0 && conjuntos.length > 0 && (
+            <div className="p-5">
+              <EmptyState
+                icon={Megaphone}
+                message={
+                  vigencia === "VIGENTES"
+                    ? t("comunicados.admin.emptyVigentes")
+                    : t("comunicados.admin.emptyVencidos")
+                }
+              />
+            </div>
+          )}
+
+          {comunicados.length > 0 && (
+            <ul className="divide-y divide-gray-200 dark:divide-night-line">
+              {comunicados.map((item) => {
+                // ¿Qué? Vencido = su fecha de expiración ya pasó (la misma que usa el servidor para filtrar las pestañas).
+                const vencido = new Date(item.fecha_expiracion).getTime() < Date.now();
+                return (
+                  <li key={item.id_comunicado} className="flex gap-3 px-5 py-4">
+                    <span
+                      aria-hidden="true"
+                      className={`w-[3px] shrink-0 rounded-full ${vencido ? "bg-gray-300 dark:bg-night-line" : TIPO_FRANJA[item.tipo]}`}
+                    />
+                    <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIPO_ESTILO[item.tipo]}`}
+                          >
+                            {t(`comunicados.tipos.${item.tipo}`)}
+                          </span>
+                          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-field dark:text-gray-300">
+                            {item.nombre_conjunto}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {t(`comunicados.destinatarios.${item.destinatarios}`)}
+                          </span>
+                          {item.editado && (
+                            <span className="text-xs italic text-gray-500 dark:text-gray-400">
+                              {t("comunicados.editedBadge")}
+                            </span>
+                          )}
+                        </div>
+                        <TextoRecortable
+                          texto={item.texto}
+                          className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line"
+                        />
+                        {enlaceAdjuntoSeguro(item.url_adjunto) && (
+                          <a
+                            href={enlaceAdjuntoSeguro(item.url_adjunto) ?? undefined}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="link-text mt-2 inline-flex items-center gap-1.5 text-xs"
+                          >
+                            <Paperclip className="icon-sm" />
+                            {t("comunicados.viewAttachment")}
+                          </a>
+                        )}
+                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-night-line dark:text-gray-400">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Clock className="icon-sm" />
+                            {t("comunicados.admin.creadoEl", {
+                              fecha: formatearFechaCreacion(item.created_at),
+                            })}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <CalendarClock className="icon-sm" />
+                            {t(
+                              vencido ? "comunicados.admin.vencioEl" : "comunicados.admin.expiraEl",
+                              {
+                                fecha: formatearFechaUTC(item.fecha_expiracion),
+                              },
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          onClick={() => abrirEditar(item)}
+                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+                          aria-label={t("comunicados.admin.editAria", {
+                            resumen: resumirTexto(item.texto),
+                          })}
+                          title={t("comunicados.admin.editAria", {
+                            resumen: resumirTexto(item.texto),
+                          })}
+                        >
+                          <Pencil className="icon-md" />
+                        </button>
+                        <button
+                          onClick={() => setAEliminar(item)}
+                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-400/15"
+                          aria-label={t("comunicados.admin.deleteAria", {
+                            resumen: resumirTexto(item.texto),
+                          })}
+                          title={t("comunicados.admin.deleteAria", {
+                            resumen: resumirTexto(item.texto),
+                          })}
+                        >
+                          <Trash2 className="icon-md" />
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {!cargando && total > 0 && (
+            <Paginacion
+              desde={paginacion.desde}
+              hasta={paginacion.hasta}
+              total={total}
+              pagina={paginacion.pagina}
+              totalPaginas={paginacion.totalPaginas}
+              puedeAnterior={paginacion.puedeAnterior}
+              puedeSiguiente={paginacion.puedeSiguiente}
+              onAnterior={paginacion.irAAnterior}
+              onSiguiente={paginacion.irASiguiente}
+            />
+          )}
+        </div>
+      </div>
 
       {(creando || editando) && (
         <Modal
           onClose={cerrarFormulario}
           wide
           closeOnBackdrop={false}
-          aria-label={editando ? t("comunicados.admin.editTitle") : t("comunicados.admin.newButton")}
+          aria-label={
+            editando ? t("comunicados.admin.editTitle") : t("comunicados.admin.newButton")
+          }
         >
+          {/* ¿Qué? Issue #632 — el formulario sigue el orden en que se piensa un comunicado: para quién (conjunto y
+                    destinatarios), qué dices (tipo y mensaje), cuándo (las dos fechas juntas) y, al final, lo opcional
+                    (la imagen). Antes la fecha del evento quedaba antes del mensaje y la de expiración después de la imagen. */}
           <div className="p-6 sm:p-8 space-y-4">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               {editando ? t("comunicados.admin.editTitle") : t("comunicados.admin.newButton")}
             </h2>
 
-            {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
+            {errorMsg && (
+              <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />
+            )}
 
             {!editando && (
               <>
                 <div>
-                  <label htmlFor="comunicado-conjunto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                  <label
+                    htmlFor="comunicado-conjunto"
+                    className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
+                  >
                     {t("comunicados.admin.fields.conjunto")} <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="comunicado-conjunto"
                     value={form.id_conjunto_residencial}
                     onChange={(e) => setForm({ ...form, id_conjunto_residencial: e.target.value })}
-                    className="w-full cursor-pointer rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                    className={`cursor-pointer ${clasesInput}`}
                   >
                     {conjuntos.map((c) => (
                       <option key={c.id_conjunto_residencial} value={c.id_conjunto_residencial}>
@@ -384,10 +554,18 @@ export function AdminConjuntoComunicadosPage() {
                                 comunica cuál está elegido — antes solo se
                                 sabía por una clase CSS (mismo patrón que ya
                                 usa AuditoriaConjuntoForm.tsx). */}
-                  <span id="comunicado-destinatarios-label" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                    {t("comunicados.admin.fields.destinatarios")} <span className="text-red-500">*</span>
+                  <span
+                    id="comunicado-destinatarios-label"
+                    className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
+                  >
+                    {t("comunicados.admin.fields.destinatarios")}{" "}
+                    <span className="text-red-500">*</span>
                   </span>
-                  <div role="radiogroup" aria-labelledby="comunicado-destinatarios-label" className="flex gap-2">
+                  <div
+                    role="radiogroup"
+                    aria-labelledby="comunicado-destinatarios-label"
+                    className="flex gap-2"
+                  >
                     {DESTINATARIOS.map((d) => (
                       <button
                         key={d}
@@ -412,24 +590,31 @@ export function AdminConjuntoComunicadosPage() {
             {editando && (
               <div className="rounded-xl bg-gray-50 px-4 py-3 dark:bg-night-field/60">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  {t("comunicados.admin.fields.conjunto")} · {t("comunicados.admin.fields.destinatarios")}
+                  {t("comunicados.admin.fields.conjunto")} ·{" "}
+                  {t("comunicados.admin.fields.destinatarios")}
                 </p>
                 <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  {editando.nombre_conjunto} · {t(`comunicados.destinatarios.${editando.destinatarios}`)}
+                  {editando.nombre_conjunto} ·{" "}
+                  {t(`comunicados.destinatarios.${editando.destinatarios}`)}
                 </p>
-                <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("comunicados.admin.destinatariosNoEditable")}</p>
+                <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">
+                  {t("comunicados.admin.destinatariosNoEditable")}
+                </p>
               </div>
             )}
 
             <div>
-              <label htmlFor="comunicado-tipo" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label
+                htmlFor="comunicado-tipo"
+                className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
+              >
                 {t("comunicados.admin.fields.tipo")} <span className="text-red-500">*</span>
               </label>
               <select
                 id="comunicado-tipo"
                 value={form.tipo}
                 onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoComunicado })}
-                className="w-full cursor-pointer rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                className={`cursor-pointer ${clasesInput}`}
               >
                 {TIPOS.map((tipo) => (
                   <option key={tipo} value={tipo}>
@@ -439,35 +624,11 @@ export function AdminConjuntoComunicadosPage() {
               </select>
             </div>
 
-            {form.tipo === "CONVOCATORIA" && (
-              <div>
-                <label htmlFor="comunicado-fecha-evento" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                  {t("comunicados.admin.fields.fechaEvento")} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="comunicado-fecha-evento"
-                  type="date"
-                  value={form.fecha_evento}
-                  min={rangoFecha.min}
-                  max={rangoFecha.max}
-                  onChange={(e) => setForm({ ...form, fecha_evento: e.target.value })}
-                  onBlur={() => setErrorFechaEvento(mensajeFecha(form.fecha_evento))}
-                  aria-invalid={!!errorFechaEvento}
-                  aria-describedby={errorFechaEvento ? "comunicado-fecha-evento-error" : undefined}
-                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    errorFechaEvento ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
-                  }`}
-                />
-                {errorFechaEvento && (
-                  <p id="comunicado-fecha-evento-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
-                    {errorFechaEvento}
-                  </p>
-                )}
-              </div>
-            )}
-
             <div>
-              <label htmlFor="comunicado-texto" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              <label
+                htmlFor="comunicado-texto"
+                className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
+              >
                 {t("comunicados.admin.fields.texto")} <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -477,9 +638,89 @@ export function AdminConjuntoComunicadosPage() {
                 maxLength={COMUNICADO_TEXTO_MAX_LENGTH}
                 aria-describedby="comunicado-texto-contador"
                 rows={5}
-                className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                className={clasesInput}
               />
-              <ContadorCaracteres id="comunicado-texto-contador" actual={form.texto.length} max={COMUNICADO_TEXTO_MAX_LENGTH} />
+              <ContadorCaracteres
+                id="comunicado-texto-contador"
+                actual={form.texto.length}
+                max={COMUNICADO_TEXTO_MAX_LENGTH}
+              />
+            </div>
+
+            {/* ¿Qué? Las dos fechas juntas: la del evento (solo en una Convocatoria, obligatoria) y la de expiración
+                      (opcional). Lado a lado desde `sm`; sin Convocatoria, la expiración va sola a todo el ancho. */}
+            <div>
+              <div className={`grid gap-4 ${form.tipo === "CONVOCATORIA" ? "sm:grid-cols-2" : ""}`}>
+                {form.tipo === "CONVOCATORIA" && (
+                  <div>
+                    <label
+                      htmlFor="comunicado-fecha-evento"
+                      className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
+                    >
+                      {t("comunicados.admin.fields.fechaEvento")}{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="comunicado-fecha-evento"
+                      type="date"
+                      value={form.fecha_evento}
+                      min={rangoFecha.min}
+                      max={rangoFecha.max}
+                      onChange={(e) => setForm({ ...form, fecha_evento: e.target.value })}
+                      onBlur={() => setErrorFechaEvento(mensajeFecha(form.fecha_evento))}
+                      aria-invalid={!!errorFechaEvento}
+                      aria-describedby={
+                        errorFechaEvento ? "comunicado-fecha-evento-error" : undefined
+                      }
+                      className={claseFecha(errorFechaEvento)}
+                    />
+                    {errorFechaEvento && (
+                      <p
+                        id="comunicado-fecha-evento-error"
+                        className="mt-1 text-sm text-red-600 dark:text-red-300"
+                        role="alert"
+                      >
+                        {errorFechaEvento}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <label
+                    htmlFor="comunicado-fecha-expiracion"
+                    className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
+                  >
+                    {t("comunicados.admin.fields.fechaExpiracion")}
+                  </label>
+                  <input
+                    id="comunicado-fecha-expiracion"
+                    type="date"
+                    value={form.fecha_expiracion}
+                    min={rangoFecha.min}
+                    max={rangoFecha.max}
+                    onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
+                    onBlur={() => setErrorFechaExpiracion(mensajeFecha(form.fecha_expiracion))}
+                    aria-invalid={!!errorFechaExpiracion}
+                    aria-describedby={
+                      errorFechaExpiracion ? "comunicado-fecha-expiracion-error" : undefined
+                    }
+                    className={claseFecha(errorFechaExpiracion)}
+                  />
+                  {errorFechaExpiracion && (
+                    <p
+                      id="comunicado-fecha-expiracion-error"
+                      className="mt-1 text-sm text-red-600 dark:text-red-300"
+                      role="alert"
+                    >
+                      {errorFechaExpiracion}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">
+                {t("comunicados.admin.fields.fechaExpiracionHint")}
+              </p>
             </div>
 
             <ImagenAdjuntaField
@@ -488,32 +729,6 @@ export function AdminConjuntoComunicadosPage() {
               onChange={(url) => setForm({ ...form, url_adjunto: url })}
               permitirDocumentos
             />
-
-            <div>
-              <label htmlFor="comunicado-fecha-expiracion" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                {t("comunicados.admin.fields.fechaExpiracion")}
-              </label>
-              <input
-                id="comunicado-fecha-expiracion"
-                type="date"
-                value={form.fecha_expiracion}
-                min={rangoFecha.min}
-                max={rangoFecha.max}
-                onChange={(e) => setForm({ ...form, fecha_expiracion: e.target.value })}
-                onBlur={() => setErrorFechaExpiracion(mensajeFecha(form.fecha_expiracion))}
-                aria-invalid={!!errorFechaExpiracion}
-                aria-describedby={errorFechaExpiracion ? "comunicado-fecha-expiracion-error" : undefined}
-                className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                  errorFechaExpiracion ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
-                }`}
-              />
-              {errorFechaExpiracion && (
-                <p id="comunicado-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
-                  {errorFechaExpiracion}
-                </p>
-              )}
-              <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("comunicados.admin.fields.fechaExpiracionHint")}</p>
-            </div>
 
             <div className="flex gap-2 pt-2">
               <button

@@ -42,7 +42,7 @@ Hay **tres anchos**, definidos en `fe/src/config/anchoPagina.ts`, y toda página
 | Ancho | Valor | Para qué se usa |
 | --- | --- | --- |
 | `normal` | Todo el área disponible (80 rem) | Los cuatro paneles, listas, catálogos, Perfil, Directorio y las páginas de administración |
-| `lectura` | 48 rem (`max-w-3xl`) | Listas de avisos de texto: Comunicados y Soporte técnico (feed de Novedades), siempre |
+| `lectura` | 48 rem (`max-w-3xl`) | Listas de avisos de texto: Comunicados del Residente y del Reciclador, y Soporte técnico para esos dos roles (en el Admin de Conjunto, Soporte técnico usa `normal`; ver sección 6) |
 | `formulario` | 32 rem (`max-w-lg`) | Formularios cortos: Cambiar contraseña |
 
 Cómo se usa en una página:
@@ -71,6 +71,7 @@ Reglas:
 
 - **`normal`:** Panel del Residente, Panel del Reciclador, Panel del Admin de Conjunto, Panel del Admin del Sistema, Perfil, Directorio y Puntos de acopio, Aprende a reciclar y su categoría, y las páginas de administración (Agenda, Comunicados, Desempeño, Contenido educativo, Novedades y Puntos de acopio).
 - **`lectura`:** Comunicados del Residente y del Reciclador, y Soporte técnico (el feed de Novedades, con sus pestañas Avisos del sistema, Escribir novedad e Historial de novedades; lo ven el Residente, el Reciclador y el Admin de Conjunto). Soporte técnico se movió de `normal` a `lectura` el 2026-11-03: era una lista corta de textos y un formulario de un solo campo, y a 80 rem quedaba muy alargada y distinta de Comunicados, que está a su lado en el menú.
+  - **Ajuste del 2026-11-10 (issue #632): Soporte técnico depende del rol.** Para el Admin de Conjunto usa `normal` (80 rem); para el Residente y el Reciclador sigue en `lectura` (48 rem). Motivo: Soporte técnico es una sola página para los tres roles, pero cada rol la tiene junto a una pantalla distinta en su menú. Al Residente y al Reciclador les queda junto a Comunicados (48 rem). Al Admin de Conjunto le queda junto a su Comunicados de administración y su Agenda (80 rem): con 48 rem para todos, sobraba espacio a los lados y parecía una pantalla de otro tipo. Cada rol ve así pantallas vecinas del mismo ancho.
   - **Decisión del 2026-11-03 (issue #603):** Comunicados ya no pasa a `normal` con 4 o más avisos. Antes la pantalla se ensanchaba sola cuando se publicaba el cuarto aviso (para dar lugar a los filtros y a los grupos "Esta semana" y "Anteriores") y quedaba distinta de Soporte técnico, que no cambia. Los filtros se envuelven y los grupos son listas de tarjetas, así que caben bien en 48 rem. Resultado: las dos pantallas hermanas miden siempre lo mismo.
 - **`formulario`:** Cambiar contraseña.
 

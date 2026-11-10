@@ -39,14 +39,14 @@ La agenda es **privada**: solo la ve el Admin de Conjunto que administra ese con
 
 ### Flujo A — Agregar un tema
 
-1. El Admin de Conjunto abre la opción **Agenda** del menú lateral (`/admin-conjunto/agenda`). Si administra más de un conjunto, elige el conjunto en las pestañas de arriba.
+1. El Admin de Conjunto abre la opción **Agenda** del menú lateral (`/admin-conjunto/agenda`). Si administra más de un conjunto, elige el conjunto en el selector que está a la derecha de las pestañas "Por tratar" y "Archivadas" (en una tarjeta angosta pasa arriba de ellas, a todo el ancho). La tarjeta del título solo lleva "Descargar agenda" y "Agregar tema" (issue #632). Las pestañas traen su número, que sale del `total` del servidor.
 2. Presiona "Agregar tema", escribe el tema y, si quiere, sube una foto de soporte (usa el mismo campo de imagen adjunta que los comunicados).
-3. Al guardar, el tema queda en estado **Pendiente** y aparece como una nota en la vista "Por tratar".
+3. Al guardar, el tema queda en estado **Pendiente** y aparece como una nota en la vista "Por tratar". Todas las notas son de una sola tinta neutra (issue #632; la idea de pintarlas según su antigüedad quedó como idea futura). "Por tratar" se pide al servidor de 10 en 10, con las notas dentro del mismo contenedor que las pestañas y la barra de paginación siempre visible al pie.
 
 ### Flujo B — Archivar un tema resuelto o devolverlo a Por tratar
 
 1. Desde la nota, el Admin de Conjunto presiona "Archivar". El tema sale de "Por tratar", se guarda con su fecha de archivado y la pantalla ofrece "Deshacer".
-2. En la vista "Archivadas" (historial, paginado de a 10) puede presionar "Volver a por tratar" en un tema archivado: vuelve a estado **Pendiente** y pierde la fecha de archivado.
+2. La vista "Archivadas" es un contenedor con filas (miniatura a la izquierda, o un cuadro gris con ícono si no hay foto), un aviso en banda gris con ícono `Info` y paginación de a 10 siempre visible. Allí puede presionar "Volver a por tratar" en un tema archivado: vuelve a estado **Pendiente** y pierde la fecha de archivado.
 
 ### Flujo C — Eliminar un tema
 
@@ -55,9 +55,9 @@ La agenda es **privada**: solo la ve el Admin de Conjunto que administra ese con
 
 ### Flujo D — Descargar el historial en CSV o PDF (HU-049, issues #479 y #480)
 
-1. En la Agenda, el Admin de Conjunto presiona "Descargar agenda" (junto a las pestañas "Por tratar" y "Archivadas", porque descarga lo que ellas muestran; "Agregar tema" queda solo en el encabezado, como acción principal; el botón está desactivado si el conjunto no tiene ningún tema, issue #517) y elige el formato ("CSV (Excel)" o "PDF"), el período (todo el historial, este mes, mes pasado o personalizado, que es el único que pide las fechas) y los temas (todos, por tratar o archivadas; viene con lo que está viendo). En "Personalizado" el botón "Descargar" espera las dos fechas.
+1. En la Agenda, el Admin de Conjunto presiona "Descargar agenda" (en la tarjeta del encabezado, junto a "Agregar tema", que es la acción principal; la ventana viene con lo que está viendo en "Por tratar" o "Archivadas"; el botón está desactivado si el conjunto no tiene ningún tema, issue #517) y elige el formato ("CSV (Excel)" o "PDF"), el período (todo el historial, este mes, mes pasado o personalizado, que es el único que pide las fechas) y los temas (todos, por tratar o archivadas; viene con lo que está viendo). En "Personalizado" el botón "Descargar" espera las dos fechas.
 2. Presiona "Descargar" y el navegador baja el PDF (`historial-agenda-<conjunto>-<desde>_<hasta>.pdf`, hoja A4 horizontal con una tabla de los temas) o, si eligió CSV, baja `historial-agenda-<conjunto>-<desde>_<hasta>.csv`, que se abre en Excel con una fila por tema (tema, estado, creado, archivado, autor y foto).
-3. Mientras elige, la ventana muestra cuántos temas se van a descargar ("Se descargarán N temas."). El número se pide al backend cuando el usuario deja de cambiar el período, las fechas o los temas (espera unos 400 ms, así que cambiar varios filtros seguidos hace un solo pedido) y cuenta con la misma condición que el CSV y el PDF, por lo que siempre coincide con las filas del archivo. Con "Personalizado" y fechas incompletas o al revés no se pide.
+3. El título de la ventana nombra el conjunto del que se descarga (issue #632). Mientras elige, la ventana muestra cuántos temas se van a descargar ("Se descargarán N temas."). El número se pide al backend cuando el usuario deja de cambiar el período, las fechas o los temas (espera unos 400 ms, así que cambiar varios filtros seguidos hace un solo pedido) y cuenta con la misma condición que el CSV y el PDF, por lo que siempre coincide con las filas del archivo. Con "Personalizado" y fechas incompletas o al revés no se pide.
 4. Si el rango trae más de 500 temas, la ventana escribe el motivo ("Son N temas y el máximo por archivo es 500...") y deja deshabilitado "Descargar" hasta que acote el período o los temas. Si el conteo falla (ej. sin red), no se muestra el número ni se bloquea nada: el backend igual rechaza con 400 un archivo de más de 500 temas.
 
 ---
@@ -95,7 +95,7 @@ La agenda es **privada**: solo la ve el Admin de Conjunto que administra ese con
 
 | Método | Ruta                                                                 | Auth requerida            | Descripción                       |
 | ------ | --------------------------------------------------------------------- | -------------------------- | ---------------------------------- |
-| GET    | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda`           | Sí (Admin de Conjunto)     | Lista los temas por tratar del conjunto |
+| GET    | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda?limit=&offset=` | Sí (Admin de Conjunto) | Página de los temas por tratar del conjunto: `{items, total}`, 10 por defecto, `limit` de 1 a 100 (issue #632) |
 | GET    | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda/archivadas?limit=&offset=` | Sí (Admin de Conjunto) | Lista paginada del historial (temas archivados) |
 | POST   | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda`           | Sí (Admin de Conjunto)     | Agrega un tema                     |
 | PATCH  | `/api/v1/conjunto-panel/mis-conjuntos/{id_conjunto}/agenda/{id_item}` | Sí (Admin de Conjunto)     | Archiva el tema o lo vuelve a pendiente |

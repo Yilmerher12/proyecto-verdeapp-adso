@@ -363,7 +363,7 @@ class TestFeed:
         )
         response = client.get("/api/v1/novedades/feed", headers=auth_headers)
         assert response.status_code == 200
-        assert len(response.json()) == 1
+        assert len(response.json()["items"]) == 1
 
     def test_reciclador_no_ve_novedad_solo_para_residentes(
         self, client: TestClient, admin_sistema_auth_headers, reciclador_auth_headers
@@ -375,7 +375,7 @@ class TestFeed:
         )
         response = client.get("/api/v1/novedades/feed", headers=reciclador_auth_headers)
         assert response.status_code == 200
-        assert response.json() == []
+        assert response.json()["items"] == []
 
     def test_admin_conjunto_ve_novedad_de_su_alcance(
         self, client: TestClient, admin_sistema_auth_headers, admin_conjunto_auth_headers
@@ -387,7 +387,7 @@ class TestFeed:
         )
         response = client.get("/api/v1/novedades/feed", headers=admin_conjunto_auth_headers)
         assert response.status_code == 200
-        assert len(response.json()) == 1
+        assert len(response.json()["items"]) == 1
 
     def test_novedad_archivada_no_aparece_en_feed(
         self, client: TestClient, admin_sistema_auth_headers, auth_headers
@@ -402,7 +402,7 @@ class TestFeed:
 
         response = client.get("/api/v1/novedades/feed", headers=auth_headers)
         assert response.status_code == 200
-        assert response.json() == []
+        assert response.json()["items"] == []
 
     def test_novedad_vencida_no_aparece_en_feed(
         self, client: TestClient, db: Session, admin_sistema_auth_headers, auth_headers
@@ -422,7 +422,7 @@ class TestFeed:
 
         response = client.get("/api/v1/novedades/feed", headers=auth_headers)
         assert response.status_code == 200
-        assert response.json() == []
+        assert response.json()["items"] == []
 
 
 class TestConjuntosDestino:
@@ -569,8 +569,8 @@ class TestConjuntosDestino:
         headers_otro = self._residente_en(db, otro, "otro.residente@verdeapp.com")
         self._publicar(client, admin_sistema_auth_headers, [conjunto_verificado], alcance="TODOS")
 
-        assert len(client.get("/api/v1/novedades/feed", headers=auth_headers).json()) == 1
-        assert client.get("/api/v1/novedades/feed", headers=headers_otro).json() == []
+        assert len(client.get("/api/v1/novedades/feed", headers=auth_headers).json()["items"]) == 1
+        assert client.get("/api/v1/novedades/feed", headers=headers_otro).json()["items"] == []
 
     def test_feed_reciclador_ve_novedad_si_esta_autorizado_en_alguno_de_los_conjuntos(
         self,
@@ -588,7 +588,7 @@ class TestConjuntosDestino:
 
         response = client.get("/api/v1/novedades/feed", headers=reciclador_auth_headers)
         assert response.status_code == 200
-        assert len(response.json()) == 1
+        assert len(response.json()["items"]) == 1
 
     def test_reciclador_en_dos_conjuntos_elegidos_recibe_una_sola_notificacion(
         self,
@@ -624,3 +624,66 @@ class TestConjuntosDestino:
         data = editar.json()
         assert [c["id_conjunto_residencial"] for c in data["conjuntos"]] == [str(conjunto_verificado.id_conjunto_residencial)]
         assert data["url_video"] == "https://youtube.com/watch?v=xyz"
+
+
+class TestFeedPaginado:
+    """Issue #632: el feed de Soporte técnico se pide de 10 en 10, con el total."""
+
+    URL = "/api/v1/novedades/feed"
+
+    def _publicar_varias(self, client: TestClient, admin_headers, cantidad: int, alcance: str = "TODOS") -> None:
+        for n in range(cantidad):
+            respuesta = client.post(
+                "/api/v1/novedades", headers=admin_headers, json={"alcance": alcance, "texto": f"Novedad {n}."}
+            )
+            assert respuesta.status_code == 201
+
+    def test_devuelve_de_10_en_10_con_el_total(self, client: TestClient, admin_sistema_auth_headers, auth_headers):
+        self._publicar_varias(client, admin_sistema_auth_headers, 12)
+
+        primera = client.get(self.URL, headers=auth_headers).json()
+        segunda = client.get(self.URL, params={"offset": 10}, headers=auth_headers).json()
+
+        assert primera["total"] == 12 and len(primera["items"]) == 10
+        assert segunda["total"] == 12 and len(segunda["items"]) == 2
+        ids_primera = {n["id_novedad"] for n in primera["items"]}
+        ids_segunda = {n["id_novedad"] for n in segunda["items"]}
+        assert ids_primera.isdisjoint(ids_segunda)
+        assert len(ids_primera | ids_segunda) == 12
+
+    def test_el_total_cuenta_solo_lo_que_ve_esa_persona(
+        self, client: TestClient, admin_sistema_auth_headers, reciclador_auth_headers
+    ):
+        self._publicar_varias(client, admin_sistema_auth_headers, 3, alcance="RESIDENTES")
+        self._publicar_varias(client, admin_sistema_auth_headers, 2, alcance="RECICLADORES")
+
+        pagina = client.get(self.URL, headers=reciclador_auth_headers).json()
+
+        assert pagina["total"] == 2 and len(pagina["items"]) == 2
+
+    def test_sin_novedades_devuelve_una_pagina_vacia(self, client: TestClient, auth_headers):
+        assert client.get(self.URL, headers=auth_headers).json() == {"items": [], "total": 0}
+
+    def test_la_mas_reciente_va_primero(
+        self, client: TestClient, db: Session, admin_sistema_auth_headers, auth_headers
+    ):
+        from sqlalchemy import select
+
+        from app.models.novedad import Novedad
+
+        self._publicar_varias(client, admin_sistema_auth_headers, 3)
+        # ¿Qué? En las pruebas todas comparten la misma hora de creación; se separan a mano para comprobar el orden.
+        ahora = datetime.now(timezone.utc)
+        for n in range(3):
+            novedad = db.execute(select(Novedad).where(Novedad.texto == f"Novedad {n}.")).scalar_one()
+            novedad.created_at = ahora - timedelta(hours=3 - n)
+        db.commit()
+
+        textos = [n["texto"] for n in client.get(self.URL, headers=auth_headers).json()["items"]]
+
+        assert textos == ["Novedad 2.", "Novedad 1.", "Novedad 0."]
+
+    def test_limit_y_offset_fuera_de_rango_devuelven_422(self, client: TestClient, auth_headers):
+        assert client.get(self.URL, params={"limit": 0}, headers=auth_headers).status_code == 422
+        assert client.get(self.URL, params={"limit": 101}, headers=auth_headers).status_code == 422
+        assert client.get(self.URL, params={"offset": -1}, headers=auth_headers).status_code == 422

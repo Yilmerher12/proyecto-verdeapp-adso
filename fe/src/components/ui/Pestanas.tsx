@@ -42,6 +42,11 @@ interface PestanasProps<T extends string> {
    *            filtros en píldora de su interior; ya se usaban así a mano en la página de Solicitudes del Admin del Sistema.
    *  ¿Impacto? Ignora `dosColumnas` y `compacta`. Por omisión: "pastillas", como siempre. */
   variante?: "pastillas" | "subrayadas";
+  /** ¿Qué? Solo con `subrayadas`: las pestañas se reparten SIEMPRE el ancho en partes iguales, también en ventana ancha.
+   *  ¿Para qué? Issue #632 — las pestañas de CONJUNTO (Desempeño) se ven mejor repartidas: son nombres largos y de cantidad
+   *            variable. Las demás (Vigentes / Vencidos, Soporte técnico...) miden lo que su texto desde 640 px, para no
+   *            estirar una acción corta a todo el ancho. */
+  repartidas?: boolean;
 }
 
 const COLUMNAS: Record<number, string> = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" };
@@ -57,6 +62,7 @@ export function Pestanas<T extends string>({
   className = "",
   compacta = false,
   variante = "pastillas",
+  repartidas = false,
 }: PestanasProps<T>) {
   if (variante === "subrayadas") {
     return (
@@ -70,7 +76,7 @@ export function Pestanas<T extends string>({
             aria-selected={activa === id}
             aria-controls={idPanel}
             onClick={() => onCambiar(id)}
-            className={`-mb-px flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 px-2 py-3 text-center text-xs font-bold leading-tight transition-colors min-[25rem]:gap-1.5 min-[25rem]:px-2 min-[25rem]:text-sm sm:flex-none sm:px-5 ${
+            className={`-mb-px flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 px-2 py-3 text-center text-xs font-bold leading-tight transition-colors min-[25rem]:gap-1.5 min-[25rem]:px-2 min-[25rem]:text-sm ${repartidas ? "sm:px-4" : "sm:flex-none sm:px-5"} ${
               activa === id
                 ? "border-accent-600 text-accent-700 dark:border-accent-400 dark:text-accent-300"
                 : "border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"

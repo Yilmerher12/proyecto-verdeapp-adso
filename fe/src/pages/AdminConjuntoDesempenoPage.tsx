@@ -8,6 +8,7 @@ import { descargarDesempenoPdf, nombreArchivoDesempeno } from "@/lib/auditoriaCo
 import { descargarArchivo } from "@/lib/descargarArchivo";
 import { PanelDesempeno } from "@/components/desempeno/PanelDesempeno";
 import { Alert } from "@/components/ui/Alert";
+import { Pestanas } from "@/components/ui/Pestanas";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
 
@@ -23,6 +24,9 @@ import { LoadingState } from "@/components/ui/LoadingState";
  *           que también reutiliza el Residente. Con un solo conjunto no hay
  *           selector. Con varios se pide siempre `id_conjunto`: el backend
  *           responde 422 si falta.
+ *           Issue #632: las pestañas de conjunto van DENTRO de la tarjeta del panel (por su prop `cabecera`), al tope,
+ *           pegadas al contenido que cambian; antes eran píldoras sueltas entre el encabezado y el panel. El período y
+ *           "Descargar PDF" se quedan en el encabezado (el PDF baja el conjunto y el período que estás viendo).
  */
 export function AdminConjuntoDesempenoPage() {
   const { t } = useTranslation();
@@ -117,36 +121,22 @@ export function AdminConjuntoDesempenoPage() {
       ) : conjuntos.length === 0 ? (
         <EmptyState icon={ChartColumn} message={t("desempeno.noConjuntos")} />
       ) : (
-        <>
-          {conjuntos.length > 1 && (
-            <div
-              role="tablist"
-              aria-label={t("desempeno.conjuntoTabs")}
-              className="flex flex-wrap gap-2"
-            >
-              {conjuntos.map((c) => {
-                const activo = c.id_conjunto_residencial === idConjunto;
-                return (
-                  <button
-                    key={c.id_conjunto_residencial}
-                    type="button"
-                    role="tab"
-                    aria-selected={activo}
-                    onClick={() => setIdConjunto(c.id_conjunto_residencial)}
-                    className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
-                      activo
-                        ? "border-accent-700 bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                        : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
-                    }`}
-                  >
-                    {c.nombre_conjunto}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          <PanelDesempeno idConjunto={idConjunto} semanas={semanas} />
-        </>
+        <PanelDesempeno
+          idConjunto={idConjunto}
+          semanas={semanas}
+          cabecera={
+            conjuntos.length > 1 ? (
+              <Pestanas
+                variante="subrayadas"
+                repartidas
+                ariaLabel={t("desempeno.conjuntoTabs")}
+                activa={idConjunto}
+                onCambiar={setIdConjunto}
+                pestanas={conjuntos.map((c) => ({ id: c.id_conjunto_residencial, etiqueta: c.nombre_conjunto }))}
+              />
+            ) : undefined
+          }
+        />
       )}
     </div>
   );

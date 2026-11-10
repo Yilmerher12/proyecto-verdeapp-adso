@@ -225,4 +225,13 @@ describe("AppShell — menú en celular", () => {
     expect(screen.getAllByLabelText("Expandir menú").length).toBeGreaterThan(0);
     expect(screen.queryByLabelText("Colapsar menú")).not.toBeInTheDocument();
   });
+
+  // ¿Qué? Issue #632 — el área principal reserva siempre el espacio de la barra de scroll.
+  // ¿Para qué? Con barras clásicas (Windows), una pestaña más alta que la pantalla hacía aparecer la barra y la tarjeta se
+  //           achicaba unos 17 px solo en esa pestaña: el ancho "saltaba" al cambiar de pestaña.
+  it("el área principal reserva el espacio de la barra de scroll para que el ancho no salte", () => {
+    const { container } = renderShell();
+
+    expect(container.querySelector("main")).toHaveClass("[scrollbar-gutter:stable]");
+  });
 });

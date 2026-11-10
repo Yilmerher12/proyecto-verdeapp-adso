@@ -75,12 +75,12 @@ describe("HistorialAuditorias", () => {
     expect(cargar).toHaveBeenLastCalledWith(10, 10);
   });
 
-  it("con 10 auditorías o menos no muestra la barra de páginas", async () => {
+  it("con 10 auditorías o menos la barra de páginas se ve igual, con las flechas apagadas", async () => {
     renderWithProviders(<HistorialAuditorias cargar={servidorCon(7)} />);
 
     await screen.findByText("Tema 7");
-    expect(screen.queryByRole("button", { name: "Página siguiente" })).not.toBeInTheDocument();
-    expect(screen.queryByText(/Mostrando/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Página siguiente" })).toBeDisabled();
+    expect(screen.getByText("Mostrando 1–7 de 7")).toBeInTheDocument();
   });
 
   it("sin auditorías dice que todavía no hay", async () => {

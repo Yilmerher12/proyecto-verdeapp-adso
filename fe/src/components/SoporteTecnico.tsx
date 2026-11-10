@@ -388,7 +388,7 @@ export function SoporteTecnico() {
           </div>
         )}
 
-        {total > TAMANO_PAGINA && (
+        {total > 0 && (
           <div className="mt-3">
             <Paginacion
               desde={paginacion.desde}

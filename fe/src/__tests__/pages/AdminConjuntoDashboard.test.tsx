@@ -638,7 +638,7 @@ describe("AdminConjuntoDashboard", () => {
       expect(screen.queryByRole("img", { name: /aviso/ })).not.toBeInTheDocument();
     });
 
-    it("con 10 avisos o menos no aparece la barra de paginación", async () => {
+    it("con 10 avisos o menos la barra de paginación se ve igual, con las flechas apagadas", async () => {
       mockPanel({ avisos: { 1: Array.from({ length: 10 }, (_, i) => aviso(`a${i}`, 1)) } });
       const user = userEvent.setup();
       renderPage();
@@ -646,7 +646,8 @@ describe("AdminConjuntoDashboard", () => {
       await abrirPestana(user, /^Avisos/);
       await screen.findByText("Mensaje a0");
 
-      expect(screen.queryByText(/Mostrando/)).not.toBeInTheDocument();
+      expect(screen.getByText("Mostrando 1–10 de 10")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Página siguiente" })).toBeDisabled();
     });
 
     it("con más de 10 avisos pagina de 10 en 10 pidiendo cada página al servidor", async () => {

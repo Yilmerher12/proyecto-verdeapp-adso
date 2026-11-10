@@ -28,7 +28,12 @@ from app.models.residente import Residente
 from app.models.rol import RolId
 from app.models.unidad import Unidad
 from app.models.usuario import Usuario
-from app.schemas.comunicado import ComunicadoResponse, CrearComunicadoRequest, EditarComunicadoRequest
+from app.schemas.comunicado import (
+    ComunicadoResponse,
+    CrearComunicadoRequest,
+    EditarComunicadoRequest,
+    VigenciaComunicado,
+)
 from app.services.notificaciones_helpers import crear_notificacion, recicladores_del_conjunto, residentes_del_conjunto
 
 # ¿Qué? Expiración sugerida por tipo (RF, tabla "Tipos de comunicado").
@@ -157,7 +162,11 @@ def crear_comunicado(db: Session, administrador: AdministradorConjunto, datos: C
 
 
 def listar_mis_comunicados(
-    db: Session, administrador: AdministradorConjunto, limit: int, offset: int
+    db: Session,
+    administrador: AdministradorConjunto,
+    limit: int,
+    offset: int,
+    vigencia: Optional[VigenciaComunicado] = None,
 ) -> tuple[List[ComunicadoResponse], int]:
     """
     ¿Qué? Todo lo que el Admin Conjunto ha publicado, en TODOS los
@@ -167,11 +176,20 @@ def listar_mis_comunicados(
               el historial de una sola vez, igual que le pasaba a
               Novedades antes de la issue #227. Mismo patrón de
               limit/offset + total.
+    ¿Impacto? Issue #632: `vigencia` separa los que siguen activos (fecha de expiración de ahora en adelante) de los que
+              ya vencieron, y el total corresponde a ese filtro. Sin `vigencia` trae todos, como antes.
     """
     condiciones = (
         AdministradorConjuntoAsignacion.id_administrador == administrador.id_administrador,
         AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
     )
+    if vigencia is not None:
+        ahora = datetime.now(timezone.utc)
+        condiciones += (
+            (Comunicado.fecha_expiracion >= ahora)
+            if vigencia == VigenciaComunicado.VIGENTES
+            else (Comunicado.fecha_expiracion < ahora),
+        )
 
     total = db.execute(
         select(func.count(Comunicado.id_comunicado))
@@ -190,7 +208,8 @@ def listar_mis_comunicados(
             AdministradorConjuntoAsignacion.id_conjunto_residencial == Comunicado.id_conjunto_residencial,
         )
         .where(*condiciones)
-        .order_by(Comunicado.created_at.desc())
+        # ¿Qué? El id desempata los que se crearon en el mismo instante, para que dos páginas seguidas no repitan ni se salten uno.
+        .order_by(Comunicado.created_at.desc(), Comunicado.id_comunicado)
         .limit(limit)
         .offset(offset)
     )
