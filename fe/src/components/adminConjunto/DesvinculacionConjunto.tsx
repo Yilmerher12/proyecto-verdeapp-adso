@@ -73,7 +73,7 @@ export function DesvinculacionConjunto({
           >
             {t("desvinculacion.solicitarButton")}
           </button>
-          <p className="mt-1.5 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
+          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
         </div>
       )}
 

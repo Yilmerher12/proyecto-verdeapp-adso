@@ -58,6 +58,7 @@ El sistema debe permitir a cualquier usuario cambiar el idioma de la interfaz en
 - RN-004: La preferencia solo se sincroniza con el backend cuando el usuario está autenticado.
 - RN-005: Al restaurar sesión, el idioma guardado en la cuenta tiene prioridad sobre el que tenía configurado el navegador.
 - RN-006: El selector siempre muestra cada opción en su propio idioma ("Español" / "English"), nunca traducidas al idioma activo.
+- RN-007: Las fechas escritas en pantalla siguen el idioma elegido en la app, no el del navegador: en español día/mes/año (29/10/2026) y en inglés mes/día/año (10/29/2026). Debajo de cada campo de fecha del navegador (`<input type="date">`, que el navegador dibuja con su propio idioma) se muestra la fecha elegida con el mes en palabras ("20 de noviembre de 2026" / "November 20, 2026"). Se escriben con `fe/src/lib/dateFormat.ts` y `FechaEnPalabras` (issue #633). **Implementada.**
 
 ---
 

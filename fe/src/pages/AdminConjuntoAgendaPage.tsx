@@ -39,6 +39,7 @@ import { usePaginacion } from "@/hooks/usePaginacion";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
+import { FechaEnPalabras } from "@/components/ui/FechaEnPalabras";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
@@ -421,7 +422,7 @@ export function AdminConjuntoAgendaPage() {
         key={item.id}
         className={`flex flex-col gap-3 rounded-2xl border p-4 shadow-sm ${NOTA_NEUTRA}`}
       >
-        <span className="text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">
+        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
           {formatearFechaCreacion(item.created_at)}
         </span>
         {urlFoto && (
@@ -487,7 +488,7 @@ export function AdminConjuntoAgendaPage() {
           </div>
         )}
         <div className="min-w-0 flex-1 basis-60">
-          <span className="text-[0.6875rem] text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             {t("agenda.createdOn", { fecha: formatearFechaCreacion(item.created_at) })}
             {item.archivado_en &&
               ` · ${t("agenda.archivedOn", { fecha: formatearFechaCreacion(item.archivado_en) })}`}
@@ -871,27 +872,33 @@ export function AdminConjuntoAgendaPage() {
             {periodoDescarga === "PERSONALIZADO" && (
               <div>
                 <div className="grid gap-x-4 sm:grid-cols-2">
-                  <InputField
-                    label={t("agenda.download.fromLabel")}
-                    name="agenda-descarga-desde"
-                    type="date"
-                    value={fechasDescarga.desde}
-                    onChange={(e) =>
-                      setFechasDescarga({ ...fechasDescarga, desde: e.target.value })
-                    }
-                    onBlur={() => setErrorRango(mensajeRango(fechasDescarga))}
-                  />
-                  <InputField
-                    label={t("agenda.download.toLabel")}
-                    name="agenda-descarga-hasta"
-                    type="date"
-                    value={fechasDescarga.hasta}
-                    onChange={(e) =>
-                      setFechasDescarga({ ...fechasDescarga, hasta: e.target.value })
-                    }
-                    onBlur={() => setErrorRango(mensajeRango(fechasDescarga))}
-                    error={errorRango ?? undefined}
-                  />
+                  <div>
+                    <InputField
+                      label={t("agenda.download.fromLabel")}
+                      name="agenda-descarga-desde"
+                      type="date"
+                      value={fechasDescarga.desde}
+                      onChange={(e) =>
+                        setFechasDescarga({ ...fechasDescarga, desde: e.target.value })
+                      }
+                      onBlur={() => setErrorRango(mensajeRango(fechasDescarga))}
+                    />
+                    <FechaEnPalabras valor={fechasDescarga.desde} />
+                  </div>
+                  <div>
+                    <InputField
+                      label={t("agenda.download.toLabel")}
+                      name="agenda-descarga-hasta"
+                      type="date"
+                      value={fechasDescarga.hasta}
+                      onChange={(e) =>
+                        setFechasDescarga({ ...fechasDescarga, hasta: e.target.value })
+                      }
+                      onBlur={() => setErrorRango(mensajeRango(fechasDescarga))}
+                      error={errorRango ?? undefined}
+                    />
+                    <FechaEnPalabras valor={fechasDescarga.hasta} />
+                  </div>
                 </div>
                 {faltanFechas && (
                   <p className="-mt-2 text-xs text-gray-500 dark:text-gray-400">

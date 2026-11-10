@@ -87,6 +87,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | Seguridad (cambiar contraseña) | `KeyRound` |
   | Semáforo de auditoría | Caritas `Smile` / `Meh` / `Frown` (definidas en `fe/src/config/nivelesDesempeno.ts`) |
   | Desempeño semanal (menú y gráfica) | `ChartColumn` · alternar gráfica/tabla `Table2` / lista `List` |
+  | Archivar un tema / devolverlo a "Por tratar" (Agenda) | `Archive` / `Undo2` |
   | Ampliar una imagen / abrir algo en otra pestaña | `Maximize2` / `ExternalLink` (siempre dentro de `InsigniaAccionImagen` o junto al texto del enlace) |
 
 - Tamaño de íconos: solo 5, con una clase por uso definida en `fe/src/index.css` — nunca `h-*`/`w-*` sueltos en un ícono:
@@ -169,6 +170,32 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 - Todo componente nuevo debe soportar modo claro y modo oscuro (`dark:`) desde el primer commit — no se agrega como una tarea aparte después.
 - Modal o página (issue #621, `docs/gestion-proyecto/decision-modal-o-pagina.md`): **modal** para una tarea corta que se hace sin salir de donde se estaba (mirar una ficha, un formulario corto, una confirmación); **página** para una lista que se recorre, para un trabajo largo o para algo a lo que hay que poder volver o enlazar. Un modal nunca es más alto que la pantalla (scroll interno y X fija en `Modal.tsx`), uno sobre otro es excepcional (`layer="stacked"`, máximo dos capas) y no se usan paneles laterales.
 
+- **Escala tipográfica (issue #633).** Siempre en Inter, con el mismo peso por nivel; **Outfit** solo en `h1` a `h3` (los títulos de bloque no la usan). Los niveles de encabezado no saltan (no se pasa de `h2` a `h4`) y cada página tiene un solo `h1`. Todo en `rem`, como pide la regla de pantallas grandes:
+
+  | Nivel | Tamaño | Cómo se escribe | Ejemplo |
+  | --- | --- | --- | --- |
+  | Título de página | 24 px | `h1` con `text-2xl font-bold` | "Comunicados" |
+  | Título de tarjeta | 18 px | `h2` con `text-lg font-bold` | "Avisos de este conjunto" |
+  | Nombre de un ítem | 16 px | `h3` con `text-base font-bold` | El nombre de un conjunto |
+  | Título de un bloque | 14 px | `h3`/`h4` con `text-sm font-bold` (Inter) | "Cobertura" |
+  | Texto normal | 14 px | `text-sm` | Un comunicado, una fila |
+  | **Texto de ayuda** (descripciones, fechas, avisos, "Creado el…") | **12 px** | `text-xs` | La línea gris bajo un título |
+  | Pastillas y contadores (etiquetas cortas de una o dos palabras, números) | **mínimo 11 px** | `text-[0.6875rem]` | "Urgente", el 3 de una pestaña |
+
+  Nada mide menos de 11 px: no existe `text-[0.625rem]` (10 px) en la app. Una frase que se lee es texto de ayuda y mide 12 px; solo una etiqueta corta o un número puede medir 11 px. Una prueba (`tamanoTexto.test.ts`) falla si reaparece texto de 10 px.
+- **Fechas escritas (issue #633):** siguen el **idioma de la app**, no el del navegador. Español: día/mes/año (29/10/2026); inglés: mes/día/año (10/29/2026). Se escriben siempre con `lib/dateFormat.ts` (`formatearFechaUTC`, `formatearFechaCreacion`), nunca con `toLocaleDateString()` suelto. Debajo de cada campo de fecha (`<input type="date">`, que el navegador dibuja con su propio idioma) va el componente `FechaEnPalabras`, que escribe la fecha elegida con el mes en palabras ("Expira el 20 de noviembre de 2026"): así no hay duda entre día y mes en ningún navegador.
+- **Color con significado (issue #633):** el **rojo** es solo para peligro y error (borrar, fallo, "Urgente"). Un contador de avisos sin leer va en **ámbar**, no en rojo, porque pide atención pero no es un error. Las notas de la Agenda son de una sola tinta neutra: un color que no significa nada no se usa (la idea de teñirlas según su antigüedad está en `docs/gestion-proyecto/idea-color-por-antiguedad-agenda.md`).
+- **Listas de registros (issues #595 y #632):** una lista es **un contenedor** con las filas separadas por una línea y la **paginación al pie, siempre visible** (aunque solo haya una página: "Mostrando 1–2 de 2" con las flechas apagadas), igual que en todas las vistas. Las tarjetas sueltas se reservan para piezas grandes y distintas entre sí (el tablero de notas de la Agenda, los paneles). Las listas que pueden crecer se piden al servidor de 10 en 10 (`limit`/`offset`, respuesta `{items, total}`).
+- **Botones (issue #633):** una acción para **agregar** algo va arriba, junto al título de la lista o de la página; lo **peligroso** va abajo y apartado, nunca pegado a una acción normal. En una tarjeta angosta (menos de 36 rem de ancho de la tarjeta, no de la ventana) el botón del encabezado baja debajo del texto, a todo el ancho; no se deja que parta su propio nombre en dos líneas.
+- **Acciones por fila (issue #633):** una o dos acciones van como **íconos visibles**; tres o más, en un **menú de tres puntos** (`MenuAcciones`).
+- **Pestañas (issues #595 y #632).** Tres usos, cada uno con su forma (componente `Pestanas`):
+  - **Subrayadas** (una línea bajo la activa) para cambiar el contenido de UNA tarjeta: Vigentes / Vencidos, Resumen / Avisos / Recicladores, las pestañas de Soporte técnico. Miden lo que su texto (desde 640 px de ventana) y llevan 20 px de margen a cada lado.
+  - **Subrayadas y repartidas** (`repartidas`: se reparten el ancho en partes iguales, también en ventana ancha) solo para elegir **conjunto** (Desempeño, Agenda): son nombres largos y de cantidad variable. Van al tope de la tarjeta, con 20 px de espacio arriba y a los lados. Con un solo conjunto no se muestran.
+  - **Burbujas** (`compacta`) para filtrar o alternar vistas del mismo contenido (Por tratar / Archivadas, filtros de Solicitudes). Llevan espacio debajo para no quedar pegadas a lo que sigue.
+  - Un conjunto no se elige con un `<select>` suelto dentro del contenedor: se probó y se descartó (corta el nombre y se ve mal en pantalla angosta).
+- **Ancho por rol (issue #632):** Soporte técnico es una sola página, pero cada rol la tiene junto a una pantalla distinta del menú: para el Admin de Conjunto usa `normal` (80 rem, como su Comunicados y su Agenda) y para el Residente y el Reciclador `lectura` (48 rem, como su Comunicados). Ver `docs/gestion-proyecto/decision-ancho-de-paginas.md`.
+- **El ancho no debe saltar:** el área principal reserva siempre el espacio de la barra de scroll (`scrollbar-gutter: stable` en `AppShell`), para que una pestaña más alta que la pantalla no achique la tarjeta solo en esa pestaña.
+
 ---
 
 ## Idioma
@@ -176,6 +203,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 - **Código** (variables, funciones, nombres de archivo, rutas de API): en **inglés**.
 - **Comentarios y documentación** (este documento incluido, los RFs, las HUs, los mensajes de commit descriptivos): en **español**.
 - Los mensajes de error mostrados al usuario final: en español, sin importar el idioma del código que los genera.
+- **La interfaz** está en español (por defecto) e inglés, y **todo lo que se escribe en pantalla sigue el idioma elegido en la app**, incluidas las fechas (ver "Fechas escritas" en Diseño Visual), no el idioma del navegador.
 
 ---
 

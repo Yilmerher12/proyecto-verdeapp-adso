@@ -66,9 +66,9 @@ export function CodigoAccesoConjunto({
     <div className="flex w-full flex-col gap-3 rounded-xl border border-accent-200 bg-accent-50/60 p-4 dark:border-accent-300/40 dark:bg-accent-300/10">
       <div className="flex items-center gap-2">
         <KeyRound className="icon-md text-accent-600" />
-        <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">
+        <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300">
           {t("dashboards.adminConjunto.codigoAcceso.title")}
-        </h5>
+        </h4>
       </div>
       {/* ¿Qué? El código y su texto van en el medio (my-auto), igual que las cifras de la cobertura. */}
       <div className="my-auto flex flex-col gap-2 py-2">
