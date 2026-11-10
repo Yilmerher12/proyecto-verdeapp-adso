@@ -5,6 +5,7 @@ import { CalendarSearch, ChevronLeft, ChevronRight, FilterX, Search } from "luci
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
+import { FechaEnPalabras } from "@/components/ui/FechaEnPalabras";
 import { ContenidoRecargable } from "@/components/ui/ContenidoRecargable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Paginacion } from "@/components/ui/Paginacion";
@@ -264,7 +265,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
                 </button>
                 <div className="min-w-[8.125rem] text-center">
                   <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{rangoSemanaUTC(semana)}</p>
-                  <p className="text-[0.625rem] text-gray-500 dark:text-gray-400">{t(`${p}.week.mondayToSunday`)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.week.mondayToSunday`)}</p>
                 </div>
                 <button
                   type="button"
@@ -311,7 +312,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
           {modo === "rango" && (
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label htmlFor="cal-periodo-desde" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">
+                <label htmlFor="cal-periodo-desde" className="block text-xs font-semibold text-gray-500 dark:text-gray-400">
                   {t(`${p}.period.from`)}
                 </label>
                 <input
@@ -326,9 +327,10 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
                   }}
                   className={`${CLASE_CONTROL_FILTRO} mt-1 block cursor-pointer`}
                 />
+                <FechaEnPalabras valor={desdeLibre} />
               </div>
               <div>
-                <label htmlFor="cal-periodo-hasta" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">
+                <label htmlFor="cal-periodo-hasta" className="block text-xs font-semibold text-gray-500 dark:text-gray-400">
                   {t(`${p}.period.to`)}
                 </label>
                 <input
@@ -344,6 +346,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
                   }}
                   className={`${CLASE_CONTROL_FILTRO} mt-1 block cursor-pointer`}
                 />
+                <FechaEnPalabras valor={hastaLibre} />
               </div>
               {rangoInvalido && (
                 <p role="alert" className="text-xs font-semibold text-red-700 dark:text-red-300">
@@ -380,7 +383,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
             />
           </div>
           <div className="w-full sm:w-auto">
-            <label htmlFor="cal-filtro-localidad" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">
+            <label htmlFor="cal-filtro-localidad" className="block text-xs font-semibold text-gray-500 dark:text-gray-400">
               {t(`${p}.week.filters.localidad`)}
             </label>
             <select
@@ -398,7 +401,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
             </select>
           </div>
           <div className="w-full sm:w-56">
-            <span className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.conjunto`)}</span>
+            <span className="block text-xs font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.conjunto`)}</span>
             <div className="mt-1 [&_input]:!mt-0 [&_input]:!py-1.5 [&_input]:!text-xs [&_input]:touch-target-h">
               <ConjuntoCombobox
                 key={localidadId}
@@ -414,7 +417,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
             </div>
           </div>
           <div className="w-full sm:w-auto">
-            <label htmlFor="cal-orden" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">
+            <label htmlFor="cal-orden" className="block text-xs font-semibold text-gray-500 dark:text-gray-400">
               {t(`${p}.week.sort.label`)}
             </label>
             <select

@@ -88,9 +88,9 @@ export function TarjetaConjunto({
       >
         <Building className="icon-md mt-0.5 shrink-0 text-accent-600 @xl:mt-0" aria-hidden="true" />
         <div className="min-w-0">
-          <h4 id={`conjunto-nombre-${id}`} className="break-words font-bold text-gray-800 dark:text-white">
+          <h3 id={`conjunto-nombre-${id}`} className="break-words font-bold text-gray-800 dark:text-white">
             {conjunto.nombre_conjunto}
-          </h4>
+          </h3>
           <p className="mt-0.5 flex items-start gap-1 text-sm text-gray-500 dark:text-gray-400">
             <MapPin className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
             <span className="min-w-0">

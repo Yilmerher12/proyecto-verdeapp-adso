@@ -75,7 +75,7 @@ export function ComentariosPunto({ idPunto, version }: ComentariosPuntoProps) {
       {comentarios?.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.empty`)}</p>}
       {comentarios?.map((c) => (
         <div key={c.id_comentario} className="rounded-xl border border-gray-100 bg-white px-3 py-2.5 dark:border-night-line dark:bg-night-card">
-          <div className="flex justify-between gap-2 text-[0.6875rem] text-gray-500 dark:text-gray-400">
+          <div className="flex justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
             <span className="min-w-0 truncate font-semibold text-gray-600 dark:text-gray-300">{c.autor ?? t(`${p}.deletedAuthor`)}</span>
             <span className="shrink-0">{formatearFechaCreacion(c.created_at)}</span>
           </div>

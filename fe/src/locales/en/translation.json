@@ -1918,6 +1918,7 @@
       "editTitle": "Edit announcement",
       "creadoEl": "Created on {{fecha}}",
       "expiraEl": "Expires on {{fecha}}",
+      "eventoEl": "Event on {{fecha}}",
       "vencioEl": "Expired on {{fecha}}",
       "destinatariosNoEditable": "The building and recipients can't be changed after publishing. If you made a mistake, delete this announcement and create a new one.",
       "deleteError": "Could not delete. Please try again.",

@@ -436,7 +436,7 @@ describe("AdminConjuntoDashboard", () => {
       mockPanel({ conjuntos: [conjunto, conjunto2] });
       renderPage();
 
-      const nombres = (await screen.findAllByRole("heading", { level: 4 })).map((h) => h.textContent);
+      const nombres = (await screen.findAllByRole("heading", { level: 3 })).map((h) => h.textContent);
       expect(nombres).toEqual(["Conjunto Los Alpes", "Conjunto Los Robles"]);
     });
 

@@ -27,7 +27,7 @@ export function CoberturaConjunto({ conjunto }: { conjunto: ConjuntoAdministrado
     <div className="flex w-full flex-col rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-night-line dark:bg-night-inset/40">
       <div className="mb-2 flex items-center gap-2">
         <Building className="icon-md text-accent-600" />
-        <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.coverage.title")}</h5>
+        <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300">{t("dashboards.adminConjunto.coverage.title")}</h4>
       </div>
       {/* ¿Qué? Las cifras van en el medio (my-auto) y no pegadas al título.
           ¿Para qué? Con tarjetas de la misma altura en la fila, el espacio sobrante

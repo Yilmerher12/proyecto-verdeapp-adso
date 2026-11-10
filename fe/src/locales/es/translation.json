@@ -1918,6 +1918,7 @@
       "editTitle": "Editar comunicado",
       "creadoEl": "Creado el {{fecha}}",
       "expiraEl": "Expira el {{fecha}}",
+      "eventoEl": "Evento el {{fecha}}",
       "vencioEl": "Venció el {{fecha}}",
       "destinatariosNoEditable": "El conjunto y los destinatarios no se pueden cambiar después de publicar. Si te equivocaste, elimina este comunicado y crea uno nuevo.",
       "deleteError": "No se pudo eliminar. Intenta de nuevo.",

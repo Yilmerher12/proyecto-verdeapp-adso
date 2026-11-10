@@ -171,7 +171,7 @@ export function AdminConjuntoDashboard() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-gray-100 pb-3 dark:border-night-line">
           <div className="flex items-center gap-2">
             <Building className="icon-lg text-accent-600" />
-            <h3 className="font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h3>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h2>
           </div>
           <button
             type="button"

@@ -416,7 +416,7 @@ export function AdminDashboard() {
           : t("dashboards.admin.usersSection.status.inactive")}
       </span>
       {!habilitado && (
-        <p className="mt-1 max-w-[16rem] text-[0.6875rem] text-gray-500 dark:text-gray-400">
+        <p className="mt-1 max-w-[16rem] text-xs text-gray-500 dark:text-gray-400">
           {fecha && <span className="font-semibold text-gray-700 dark:text-gray-300">{formatearFechaCreacion(fecha)}</span>}
           {fecha && " · "}
           {motivoDesactivacion ? `“${motivoDesactivacion}”` : t("dashboards.admin.usersSection.noReason")}
@@ -584,15 +584,15 @@ export function AdminDashboard() {
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.residentes : indicadorTotal}</p>
-              <p className="break-words text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("dashboards.admin.usersSection.tabs.residentes")}</p>
+              <p className="break-words text-xs text-gray-500 dark:text-gray-400">{t("dashboards.admin.usersSection.tabs.residentes")}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.recicladores : indicadorTotal}</p>
-              <p className="break-words text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("dashboards.admin.usersSection.tabs.recicladores")}</p>
+              <p className="break-words text-xs text-gray-500 dark:text-gray-400">{t("dashboards.admin.usersSection.tabs.recicladores")}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{totales ? totales.administradores : indicadorTotal}</p>
-              <p className="break-words text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("dashboards.admin.totals.administradoresShort")}</p>
+              <p className="break-words text-xs text-gray-500 dark:text-gray-400">{t("dashboards.admin.totals.administradoresShort")}</p>
             </div>
           </div>
         </div>
@@ -631,7 +631,7 @@ export function AdminDashboard() {
                   {icon}
                   {label}
                   {soloInactivos && inactivos && inactivos[id] > 0 && (
-                    <span className="rounded-full bg-red-600 px-1.5 text-[0.625rem] font-bold text-white">{inactivos[id]}</span>
+                    <span className="rounded-full bg-red-600 px-1.5 text-[0.6875rem] font-bold text-white">{inactivos[id]}</span>
                   )}
                 </button>
               ))}

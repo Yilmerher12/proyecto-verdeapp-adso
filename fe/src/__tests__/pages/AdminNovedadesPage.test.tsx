@@ -80,8 +80,9 @@ describe("AdminNovedadesPage", () => {
     mockListar.mockResolvedValue({ items: [NOVEDAD], total: 1 });
     renderPage();
 
-    const creadoEsperado = new Date(FECHA_CREACION).toLocaleDateString();
-    const expiraEsperado = new Date(FECHA_EXPIRACION).toLocaleDateString(undefined, { timeZone: "UTC" });
+    // ¿Para qué? Issue #633 — la fecha sigue el idioma de la app (español → día/mes/año), no el del navegador.
+    const creadoEsperado = new Date(FECHA_CREACION).toLocaleDateString("es-CO");
+    const expiraEsperado = new Date(FECHA_EXPIRACION).toLocaleDateString("es-CO", { timeZone: "UTC" });
 
     await waitFor(() => {
       expect(screen.getByText(`Creado el ${creadoEsperado}`)).toBeInTheDocument();

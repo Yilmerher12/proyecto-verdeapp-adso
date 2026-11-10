@@ -175,7 +175,7 @@ export function NotificationBell({ noLeidas, dashboardHref, rolId }: Notificatio
       >
         <Bell className="icon-lg" aria-hidden="true" />
         {noLeidas > 0 && (
-          <span aria-hidden="true" className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-700 text-[0.5625rem] font-bold text-white">
+          <span aria-hidden="true" className="absolute right-1 top-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-700 px-0.5 text-[0.6875rem] font-bold leading-none text-white">
             {noLeidas > 9 ? "9+" : noLeidas}
           </span>
         )}

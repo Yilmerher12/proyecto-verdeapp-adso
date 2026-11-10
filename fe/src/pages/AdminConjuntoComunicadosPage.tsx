@@ -13,6 +13,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { Pestanas } from "@/components/ui/Pestanas";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
+import { FechaEnPalabras } from "@/components/ui/FechaEnPalabras";
 import {
   COMUNICADO_TEXTO_MAX_LENGTH,
   DIAS_MAX_EXPIRACION,
@@ -597,7 +598,7 @@ export function AdminConjuntoComunicadosPage() {
                   {editando.nombre_conjunto} ·{" "}
                   {t(`comunicados.destinatarios.${editando.destinatarios}`)}
                 </p>
-                <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {t("comunicados.admin.destinatariosNoEditable")}
                 </p>
               </div>
@@ -674,6 +675,7 @@ export function AdminConjuntoComunicadosPage() {
                       }
                       className={claseFecha(errorFechaEvento)}
                     />
+                    <FechaEnPalabras valor={form.fecha_evento} frase="comunicados.admin.eventoEl" />
                     {errorFechaEvento && (
                       <p
                         id="comunicado-fecha-evento-error"
@@ -707,6 +709,7 @@ export function AdminConjuntoComunicadosPage() {
                     }
                     className={claseFecha(errorFechaExpiracion)}
                   />
+                  <FechaEnPalabras valor={form.fecha_expiracion} frase="comunicados.admin.expiraEl" />
                   {errorFechaExpiracion && (
                     <p
                       id="comunicado-fecha-expiracion-error"
@@ -718,7 +721,7 @@ export function AdminConjuntoComunicadosPage() {
                   )}
                 </div>
               </div>
-              <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {t("comunicados.admin.fields.fechaExpiracionHint")}
               </p>
             </div>

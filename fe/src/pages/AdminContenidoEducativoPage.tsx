@@ -442,18 +442,18 @@ export function AdminContenidoEducativoPage() {
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{contenido.length}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.modules`)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.modules`)}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{categorias.length}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.categories`)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.categories`)}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{sinRecomendar}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.notRecommended`)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.notRecommended`)}</p>
             </div>
           </div>
-          <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             {sinRecomendar > 0 ? t(`${p}.catalogSection.notRecommendedHint`, { count: sinRecomendar }) : t(`${p}.catalogSection.allCovered`)}
           </p>
         </div>
@@ -466,15 +466,15 @@ export function AdminContenidoEducativoPage() {
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{resumenSemana?.bueno ?? 0}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.good`)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.good`)}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{resumenSemana?.regular ?? 0}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.regular`)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.regular`)}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{resumenSemana?.malo ?? 0}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.bad`)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.bad`)}</p>
             </div>
           </div>
         </div>
@@ -714,7 +714,7 @@ export function AdminContenidoEducativoPage() {
                   <label htmlFor="contenido-cuerpo" className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {t(`${p}.fields.content`)} <span className="text-red-500">*</span>
                   </label>
-                  <span id="contenido-cuerpo-contador" className="text-[0.6875rem] text-gray-500 dark:text-gray-400">
+                  <span id="contenido-cuerpo-contador" className="text-xs text-gray-500 dark:text-gray-400">
                     {t(`${p}.fields.charCount`, { count: form.cuerpo_texto.length, max: CONTENIDO_CUERPO_MAX_LENGTH })}
                   </span>
                 </div>

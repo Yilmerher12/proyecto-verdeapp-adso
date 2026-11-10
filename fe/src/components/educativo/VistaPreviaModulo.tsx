@@ -35,7 +35,7 @@ export function VistaPreviaModulo({ modulo }: { modulo: DatosModulo }) {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pr-12">
         <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.label`)}</span>
-        <span className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.updates`)}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.updates`)}</span>
       </div>
 
       <Pestanas
