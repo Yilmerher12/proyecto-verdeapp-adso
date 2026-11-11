@@ -29,7 +29,7 @@ function TarjetaComunicado({ item, fijado }: { item: Comunicado; fijado: boolean
   const { t } = useTranslation();
   return (
     <article
-      className={`rounded-2xl border p-5 ${
+      className={`rounded-2xl border p-6 ${
         fijado
           ? "border-red-200 bg-red-50 dark:border-red-400/30 dark:bg-red-400/10"
           : item.tipo === "URGENTE"

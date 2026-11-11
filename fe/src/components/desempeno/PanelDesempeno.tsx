@@ -225,7 +225,7 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
 //           Desempeño del Admin de Conjunto no pasa cabecera porque su título ya está arriba de la página.
 function Marco({ cabecera, children }: { cabecera?: ReactNode; children: ReactNode }) {
   return (
-    <div className="@container space-y-5 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
+    <div className="@container space-y-5 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
       {cabecera}
       {children}
     </div>

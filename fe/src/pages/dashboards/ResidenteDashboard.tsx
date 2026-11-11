@@ -163,11 +163,11 @@ export function ResidenteDashboard() {
   const yaReportado = estadoShut.lleno || !!feedbackOk;
 
   return (
-    <div className={`${ANCHO_PAGINA.normal} space-y-5 pt-6`}>
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       {/* ¿Qué? Encabezado compacto en tarjeta, igual que el del Reciclador.
           ¿Para qué? Antes era una tarjeta alta con una llave de fondo: ocupaba lo que vale una acción entera
                     y los dos paneles se veían distintos. */}
-      <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-night-line dark:bg-night-card">
+      <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-300/10">
           <RolIcon className="icon-lg text-accent-700 dark:text-accent-300" />
         </div>
@@ -191,7 +191,7 @@ export function ResidenteDashboard() {
                     como lleno, porque el servidor lo rechazaría. */}
       <section
         aria-labelledby="residente-reporte-titulo"
-        className={`rounded-2xl border p-5 shadow-sm ${
+        className={`rounded-2xl border p-6 shadow-sm ${
           !cargando && yaReportado
             ? "border-amber-200 bg-amber-50 dark:border-amber-300/30 dark:bg-amber-400/10"
             : "border-gray-100 bg-white dark:border-night-line dark:bg-night-card"
@@ -293,7 +293,7 @@ export function ResidenteDashboard() {
       {/* Notificaciones recibidas.
           ¿Qué? Cada fila ya no escribe el conjunto (el Residente solo tiene uno): `mostrarConjunto={false}`. */}
       {cargando ? (
-        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-6">
           <LoadingState message={t("common.loading")} />
         </div>
       ) : (

@@ -25,7 +25,7 @@ export function DesvinculacionAprobadaBanner({ notificaciones, onMarcarLeida }: 
   if (notificaciones.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-night-line dark:bg-night-card">
+    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-night-line dark:bg-night-card">
       <div className="mb-3 flex items-center gap-2">
         <Unlink className="icon-md text-gray-600 dark:text-gray-400" aria-hidden="true" />
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("desvinculacionAprobada.bannerTitle")}</h2>

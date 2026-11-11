@@ -674,7 +674,7 @@ export function AdminNovedadesPage() {
                 maxLength={NOVEDAD_TEXTO_MAX_LENGTH}
                 aria-describedby="novedad-texto-contador"
                 rows={5}
-                className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                className="w-full rounded-lg border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               <ContadorCaracteres id="novedad-texto-contador" actual={form.texto.length} max={NOVEDAD_TEXTO_MAX_LENGTH} />
             </div>
@@ -693,7 +693,7 @@ export function AdminNovedadesPage() {
                 onBlur={validarFechaExpiracion}
                 aria-invalid={!!errorFechaExpiracion}
                 aria-describedby={errorFechaExpiracion ? "novedad-fecha-expiracion-error" : undefined}
-                className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                   errorFechaExpiracion
                     ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
                     : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
@@ -752,7 +752,7 @@ export function AdminNovedadesPage() {
                       placeholder="https://www.youtube.com/watch?v=..."
                       aria-invalid={!!errorVideo}
                       aria-describedby={errorVideo ? "novedad-url-video-error" : undefined}
-                      className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                      className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                         errorVideo
                           ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
                           : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"

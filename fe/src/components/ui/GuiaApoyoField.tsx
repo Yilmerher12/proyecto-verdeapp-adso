@@ -140,7 +140,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
             aria-label={label}
             aria-invalid={!!errorEnlace}
             aria-describedby={errorEnlace ? "guia-apoyo-enlace-error" : undefined}
-            className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+            className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
               errorEnlace
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
                 : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"

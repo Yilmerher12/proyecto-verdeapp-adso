@@ -39,7 +39,7 @@ export function AdminSolicitudesPage() {
   );
 
   return (
-    <div className={`${ANCHO_PAGINA.normal} space-y-5 pt-6`}>
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
           <Inbox className="icon-lg" />

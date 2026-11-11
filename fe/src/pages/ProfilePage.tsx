@@ -363,7 +363,7 @@ export function ProfilePage() {
                     trabajo, conjuntos que administra) y así quedan agrupados. */}
       <div className={`grid grid-cols-1 gap-6 ${hayDatosDeRol ? "lg:grid-cols-2" : ""}`}>
         {/* Información personal editable */}
-        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-8">
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("profile.personalInfoSection.title")}</h3>
             {canEdit && !editando && (
@@ -529,7 +529,7 @@ export function ProfilePage() {
 
         {/* Datos propios del rol (no editables aquí) */}
         {hayDatosDeRol && (
-          <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-8">
+          <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6">
             <h3 className="mb-6 text-sm font-bold text-gray-900 dark:text-white">{tituloDatosRol}</h3>
             <div className="space-y-3">
               {perfil.role_id === RoleId.RESIDENTE && (

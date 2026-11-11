@@ -722,7 +722,7 @@ export function AdminConjuntoAgendaPage() {
                 rows={3}
                 aria-describedby="agenda-contador"
                 placeholder={t("agenda.textPlaceholder")}
-                className="mt-1 w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                className="mt-1 w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               <ContadorCaracteres
                 id="agenda-contador"

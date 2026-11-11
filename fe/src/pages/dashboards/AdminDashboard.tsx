@@ -497,7 +497,7 @@ export function AdminDashboard() {
   );
 
   return (
-    <div className={`${ANCHO_PAGINA.normal} space-y-5 pt-6`}>
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       {/* ¿Qué? Antes llevaba también un ícono grande (Shield) muy tenue de
           fondo, encima de la foto del panel.
           ¿Para qué? Con la foto de hoja detrás de todo el panel, ese
@@ -545,7 +545,7 @@ export function AdminDashboard() {
       {/* Franja de resumen — Administradores de conjunto / Totales del sistema. Va ANTES de la tabla:
           primero las acciones y los números del sistema, y debajo el detalle de los usuarios. */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
           <div className="flex items-center gap-2">
             <UserPlus className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
@@ -560,7 +560,7 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
           <div className="flex items-center gap-2">
             <ChartColumn className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.totals.title")}</h3>
@@ -911,7 +911,7 @@ export function AdminDashboard() {
                 onChange={(e) => setMotivo(e.target.value)}
                 placeholder={t("dashboards.admin.usersSection.status.reasonPlaceholder")}
                 rows={3}
-                className="mt-1.5 w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                className="mt-1.5 w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
             </div>
           )}

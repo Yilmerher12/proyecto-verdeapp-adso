@@ -101,7 +101,7 @@ export function DesvinculacionConjunto({
               aria-describedby={`desvinculacion-motivo-contador-${idConjunto}`}
               placeholder={t("desvinculacion.motivoPlaceholder")}
               rows={3}
-              className="w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+              className="w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
             />
             <ContadorCaracteres
               id={`desvinculacion-motivo-contador-${idConjunto}`}

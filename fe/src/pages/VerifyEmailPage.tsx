@@ -71,7 +71,7 @@ export function VerifyEmailPage() {
             <BrandLogo className="h-10" />
           </h1>
         </Link>
-        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-200 dark:border-night-line p-8 shadow-sm text-center">
+        <div className="bg-white dark:bg-night-card rounded-xl border border-gray-200 dark:border-night-line p-6 sm:p-8 shadow-sm text-center">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
             {t("verifyEmail.title")}
           </h2>
