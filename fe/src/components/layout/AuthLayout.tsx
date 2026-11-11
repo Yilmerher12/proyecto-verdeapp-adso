@@ -38,7 +38,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice, ce
           <div className="mb-5 text-center">
             <Link
               to="/"
-              className="inline-block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+              className="focus-ring inline-block rounded-lg "
               aria-label={t("common.backToHome")}
               title={t("common.backToHome")}
             >

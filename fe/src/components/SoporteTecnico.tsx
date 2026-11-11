@@ -327,7 +327,7 @@ export function SoporteTecnico() {
                           aria-describedby={`respuesta-contador-${s.id}`}
                           placeholder={t("soporteAdmin.respuestaPlaceholder")}
                           rows={3}
-                          className="w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                          className="focus-ring w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 transition-colors dark:border-night-edge dark:bg-night-field dark:text-white"
                         />
                         <ContadorCaracteres
                           id={`respuesta-contador-${s.id}`}

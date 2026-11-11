@@ -238,7 +238,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                 }}
                 aria-label={t("directorio.searchPoints")}
                 placeholder={t("directorio.searchPoints")}
-                className="w-full rounded-lg border border-edge bg-white py-2 pl-9 pr-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-white"
+                className="focus-ring w-full rounded-lg border border-edge bg-white py-2 pl-9 pr-3 text-sm text-gray-900 dark:border-night-edge dark:bg-night-panel dark:text-white"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -250,7 +250,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                   setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value));
                   setPuntoAbiertoId(null);
                 }}
-                className="min-w-0 max-w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="focus-ring min-w-0 max-w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               >
                 <option value="">{t("directorio.allLocalities")}</option>
                 {localidades.map((l) => (

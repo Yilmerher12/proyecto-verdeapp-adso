@@ -180,9 +180,9 @@ export function ContactoModalPage() {
                   aria-invalid={!!fieldErrors.message}
                   aria-describedby={fieldErrors.message ? "message-error message-count" : "message-count"}
                   placeholder={t("contactoModal.message.placeholder")}
-                  className={`block w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-accent-400 focus:border-accent-500 focus:outline-none focus:ring-4 focus:ring-accent-500/10 dark:bg-night-field dark:text-white dark:placeholder:text-gray-500 dark:hover:border-accent-500 ${
-                    fieldErrors.message ? "border-red-500 dark:border-red-500" : "border-edge dark:border-night-edge"
-                  }`}
+                  className={`focus-ring block w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-colors hover:border-accent-400 focus:border-accent-500 focus:ring-4 /10 dark:bg-night-field dark:text-white dark:placeholder:text-gray-500 dark:hover:border-accent-500 ${
+ fieldErrors.message ? "border-red-500 dark:border-red-500" : "border-edge dark:border-night-edge"
+ }`}
                 />
                 <div className="flex items-start justify-between gap-2">
                   {fieldErrors.message ? (

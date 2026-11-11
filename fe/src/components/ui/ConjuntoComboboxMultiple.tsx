@@ -78,7 +78,7 @@ export function ConjuntoComboboxMultiple({
               aria-hidden="true"
             />
             <ComboboxInput
-              className="w-full rounded-xl border border-edge bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+              className="focus-ring w-full rounded-xl border border-edge bg-white p-2.5 pl-9 text-gray-900 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
               displayValue={() => ""}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}

@@ -86,9 +86,9 @@ export function InvitarRecicladorModal({
               maxLength={CORREO_MAX_LENGTH}
               aria-invalid={!!errorCorreo}
               aria-describedby={errorCorreo ? idError : undefined}
-              className={`w-full rounded-lg border bg-white p-2.5 pl-9 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:bg-night-field dark:text-white ${
-                errorCorreo ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
-              }`}
+              className={`focus-ring w-full rounded-lg border bg-white p-2.5 pl-9 text-sm text-gray-900 transition-colors dark:bg-night-field dark:text-white ${
+ errorCorreo ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
+ }`}
             />
           </div>
           {errorCorreo && (

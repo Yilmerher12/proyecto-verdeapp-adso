@@ -161,7 +161,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
             id="novedad-conjunto"
             value={idConjunto}
             onChange={(e) => setIdConjunto(e.target.value)}
-            className="mt-1 w-full cursor-pointer rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+            className="focus-ring mt-1 w-full cursor-pointer rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 dark:border-night-edge dark:bg-night-field dark:text-white"
           >
             <option value="">{t("novedadesEnviadas.conjuntoAny")}</option>
             {conjuntos.map((c) => (
@@ -195,7 +195,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
               />
               <label
                 htmlFor={`motivo-${clave}`}
-                className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm text-gray-800 transition-colors hover:bg-gray-50 peer-checked:border-accent-700 peer-checked:bg-accent-50 peer-focus-visible:ring-2 peer-focus-visible:ring-accent-500 dark:border-night-line dark:bg-night-field dark:text-gray-200 dark:hover:bg-night-hover dark:peer-checked:border-accent-500 dark:peer-checked:bg-accent-900/20"
+                className="focus-ring flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm text-gray-800 transition-colors hover:bg-gray-50 peer-checked:border-accent-700 peer-checked:bg-accent-50 peer- peer- dark:border-night-line dark:bg-night-field dark:text-gray-200 dark:hover:bg-night-hover dark:peer-checked:border-accent-500 dark:peer-checked:bg-accent-900/20"
               >
                 <span
                   aria-hidden="true"
@@ -250,7 +250,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
               ? t("novedadesEnviadas.textPlaceholder")
               : t("novedadesEnviadas.textPlaceholderOff")
           }
-          className="mt-1 w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:border-night-edge dark:bg-night-field dark:text-white dark:disabled:bg-night-inset dark:disabled:text-gray-500"
+          className="focus-ring mt-1 w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 transition-colors disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:border-night-edge dark:bg-night-field dark:text-white dark:disabled:bg-night-inset dark:disabled:text-gray-500"
         />
         <div className="mt-1 flex items-start justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
           <span>

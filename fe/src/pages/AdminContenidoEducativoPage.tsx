@@ -527,14 +527,14 @@ export function AdminContenidoEducativoPage() {
                   onChange={(e) => setBuscarMod(e.target.value)}
                   placeholder={t(`${p}.modules.searchPlaceholder`)}
                   aria-label={t(`${p}.modules.searchPlaceholder`)}
-                  className="touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 sm:w-56"
+                  className="focus-ring touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 sm:w-56"
                 />
               </div>
               <select
                 value={categoriaFiltro}
                 onChange={(e) => setCategoriaFiltro(e.target.value)}
                 aria-label={t(`${p}.modules.categoryFilterLabel`)}
-                className="cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="focus-ring cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               >
                 <option value="">{t(`${p}.modules.allCategories`)}</option>
                 {categorias.map((c) => (
@@ -601,7 +601,7 @@ export function AdminContenidoEducativoPage() {
                       </button>
                       <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         {nRecomendados > 0 && (
-                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
+                          <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-teal-700 dark:bg-teal-400/10 dark:text-teal-300">
                             {t(`${p}.modules.recommendedTo`, { count: nRecomendados })}
                           </span>
                         )}
@@ -771,8 +771,8 @@ export function AdminContenidoEducativoPage() {
                   aria-describedby={
                     fieldErrors.cuerpo_texto ? "contenido-cuerpo-error contenido-cuerpo-contador" : "contenido-cuerpo-contador"
                   }
-                  className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
+                  className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 dark:bg-night-field dark:text-white ${
+                    fieldErrors.cuerpo_texto ? "focus:outline-none focus:ring-1 border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "focus-ring border-edge focus:border-accent-500 dark:border-night-edge"
                   }`}
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentHint`)}</p>
@@ -804,10 +804,10 @@ export function AdminContenidoEducativoPage() {
                   placeholder="https://www.youtube.com/watch?v=..."
                   aria-invalid={!!fieldErrors.url_video}
                   aria-describedby={fieldErrors.url_video ? "contenido-url-video-error" : undefined}
-                  className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                  className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 dark:bg-night-field dark:text-white ${
                     fieldErrors.url_video
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                      : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
+                      ? "focus:outline-none focus:ring-1 border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                      : "focus-ring border-edge focus:border-accent-500 dark:border-night-edge"
                   }`}
                 />
                 {fieldErrors.url_video ? (

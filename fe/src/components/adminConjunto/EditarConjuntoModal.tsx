@@ -87,7 +87,7 @@ export function EditarConjuntoModal({
               value={nit}
               onChange={(e) => setNit(e.target.value)}
               maxLength={NIT_MAX_LENGTH}
-              className="mt-1.5 w-full rounded-lg border border-edge bg-white p-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+              className="focus-ring mt-1.5 w-full rounded-lg border border-edge bg-white p-2.5 text-gray-900 dark:border-night-edge dark:bg-night-field dark:text-white"
             />
           </div>
           <div>
@@ -104,9 +104,9 @@ export function EditarConjuntoModal({
               onChange={(e) => setTotal(e.target.value)}
               aria-invalid={!!errorTotal}
               aria-describedby={`total-ayuda-${id}`}
-              className={`mt-1.5 w-full rounded-lg border bg-white p-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:bg-night-field dark:text-white ${
-                errorTotal ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
-              }`}
+              className={`focus-ring mt-1.5 w-full rounded-lg border bg-white p-2.5 text-gray-900 dark:bg-night-field dark:text-white ${
+ errorTotal ? "border-red-500 dark:border-red-400" : "border-edge dark:border-night-edge"
+ }`}
             />
             <p id={`total-ayuda-${id}`} className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {t("dashboards.adminConjunto.editForm.totalHelp")}
