@@ -624,7 +624,7 @@ export function AdminDashboard() {
                   {icon}
                   {label}
                   {soloInactivos && inactivos && inactivos[id] > 0 && (
-                    <span className="rounded-full bg-red-600 px-1.5 text-[0.6875rem] font-bold text-white">{inactivos[id]}</span>
+                    <span className="rounded-full bg-amber-100 px-1.5 text-[0.6875rem] font-bold text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">{inactivos[id]}</span>
                   )}
                 </button>
               ))}
@@ -642,7 +642,7 @@ export function AdminDashboard() {
                   setSearchInput(e.target.value);
                 }}
                 placeholder={t("dashboards.admin.usersSection.searchPlaceholder")}
-                className="touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 lg:w-48"
+                className="focus-ring touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 lg:w-48"
               />
             </div>
           </div>
@@ -657,7 +657,7 @@ export function AdminDashboard() {
                 value={localidadId}
                 onChange={(e) => cambiarLocalidad(e.target.value ? Number(e.target.value) : "")}
                 aria-label={t("dashboards.admin.localidadFilter.label")}
-                className="touch-target-h w-full min-w-0 cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="focus-ring touch-target-h w-full min-w-0 cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               >
                 <option value="">{t("dashboards.admin.localidadFilter.all")}</option>
                 {localidades.map((l) => (
@@ -911,7 +911,7 @@ export function AdminDashboard() {
                 onChange={(e) => setMotivo(e.target.value)}
                 placeholder={t("dashboards.admin.usersSection.status.reasonPlaceholder")}
                 rows={3}
-                className="mt-1.5 w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                className="focus-ring mt-1.5 w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 transition-colors dark:border-night-edge dark:bg-night-field dark:text-white"
               />
             </div>
           )}

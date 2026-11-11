@@ -29,6 +29,9 @@ const BASE = {
   tarjetasConRellenoPropio: 0,
   camposConEsquinaGrande: 0,
   paginasConSeparacionPropia: 0,
+  // Issue #642 — colores y efectos: foco con teclado y colores permitidos.
+  focoDelAnilloAMano: 0,
+  coloresFueraDeLaLista: 0,
 };
 
 // ¿Qué? Páginas de Aprende a reciclar: tienen su propio estilo (esquinas más redondeadas y más espacio), documentado en restricciones.md.
@@ -163,6 +166,17 @@ function analizar(ruta: string, codigo: string): Hallazgo[] {
         const separacion = clase.match(/space-y-[\d.]+/)?.[0];
         if (separacion && separacion !== "space-y-6") salida.push({ regla: "paginasConSeparacionPropia", donde: `${dondeEsta(nodo)} ${separacion}` });
       }
+
+      // Regla 9 (issue #642): el anillo de foco verde sale de la clase focus-ring, no se escribe a mano en cada control. El anillo ROJO de un
+      //          campo con error sí se escribe a mano (debe seguir rojo) y no se cuenta.
+      if (/(?:dark:)?focus(?:-visible)?:ring-accent-\d+/.test(clase) && !/(?<![\w:-])focus-ring(?![\w-])/.test(clase)) {
+        salida.push({ regla: "focoDelAnilloAMano", donde: dondeEsta(nodo) });
+      }
+
+      // Regla 10 (issue #642): solo hay colores de acento (accent), de estado (red y amber) y de categoría (purple, indigo y teal); nada de
+      //           blue, yellow, orange, green, etc. (los de modo oscuro con prefijo dark: acompañan siempre a uno de claro).
+      const fuera = clase.match(/(?<![:\w-])(?:bg|text|border|ring|fill|stroke)-(?:blue|yellow|orange|green|emerald|sky|cyan|violet|pink|rose|lime)-\d+/);
+      if (fuera) salida.push({ regla: "coloresFueraDeLaLista", donde: `${dondeEsta(nodo)} ${fuera[0]}` });
     }
     ts.forEachChild(nodo, visitar);
   };
@@ -234,5 +248,20 @@ describe("estándar de texto, íconos y botones (issue #640)", () => {
        );`,
     ).filter((h) => h.regla === "pesosFueraDeLaRegla");
     expect(muestra).toHaveLength(2);
+  });
+
+  it("reconoce un anillo de foco verde escrito a mano y un color fuera de la lista", () => {
+    const muestra = analizar(
+      "/src/pages/Muestra.tsx",
+      `export const X = () => (
+         <div>
+           <input className="focus:ring-2 focus:ring-accent-500" />
+           <span className="bg-blue-50 text-blue-800">N</span>
+           <input className="focus-ring" />
+         </div>
+       );`,
+    ).map((h) => h.regla);
+    expect(muestra.filter((r) => r === "focoDelAnilloAMano")).toHaveLength(1);
+    expect(muestra).toContain("coloresFueraDeLaLista");
   });
 });

@@ -193,7 +193,7 @@ export function AuditoriaConjuntoForm({
               id="auditoria-conjunto"
               value={idConjunto}
               onChange={(e) => setIdConjunto(e.target.value)}
-              className="w-full cursor-pointer rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+              className="focus-ring w-full cursor-pointer rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
             >
               <option value="">{t("auth.register.fields.selectPlaceholder")}</option>
               {conjuntos.map((c) => (
@@ -271,7 +271,7 @@ export function AuditoriaConjuntoForm({
             id="auditoria-tema"
             value={tema}
             onChange={(e) => setTema(e.target.value)}
-            className="w-full cursor-pointer rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+            className="focus-ring w-full cursor-pointer rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
           >
             <option value="">{t("dashboards.reciclador.auditoria.temaPlaceholder")}</option>
             {temas.map((cat) => (
@@ -294,7 +294,7 @@ export function AuditoriaConjuntoForm({
             aria-describedby="auditoria-descripcion-contador"
             rows={2}
             placeholder={t("dashboards.reciclador.auditoria.descripcionPlaceholder")}
-            className="w-full resize-none rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+            className="focus-ring w-full resize-none rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
           />
           <ContadorCaracteres
             id="auditoria-descripcion-contador"

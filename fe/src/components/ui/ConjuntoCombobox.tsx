@@ -65,7 +65,7 @@ export function ConjuntoCombobox({
             aria-hidden="true"
           />
           <ComboboxInput
-            className="mt-1 w-full rounded-xl border border-edge bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 disabled:bg-gray-100 disabled:text-gray-400 dark:border-night-edge dark:bg-night-field dark:text-gray-100 dark:disabled:bg-night-inset"
+            className="focus-ring mt-1 w-full rounded-xl border border-edge bg-white p-2.5 pl-9 text-gray-900 disabled:bg-gray-100 disabled:text-gray-400 dark:border-night-edge dark:bg-night-field dark:text-gray-100 dark:disabled:bg-night-inset"
             displayValue={(c: ConjuntoOption | null) => c?.nombre_conjunto ?? ""}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}

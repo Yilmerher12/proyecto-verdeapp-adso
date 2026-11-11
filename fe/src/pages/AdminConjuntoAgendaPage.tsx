@@ -722,7 +722,7 @@ export function AdminConjuntoAgendaPage() {
                 rows={3}
                 aria-describedby="agenda-contador"
                 placeholder={t("agenda.textPlaceholder")}
-                className="mt-1 w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                className="focus-ring mt-1 w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 transition-colors dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               <ContadorCaracteres
                 id="agenda-contador"
@@ -776,13 +776,13 @@ export function AdminConjuntoAgendaPage() {
                 {(["csv", "pdf"] as const).map((formato) => (
                   <label
                     key={formato}
-                    className={`has-focus-visible:ring-2 has-focus-visible:ring-inset has-focus-visible:ring-accent-500 flex cursor-pointer items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-colors ${
-                      formato === "pdf" ? "border-l border-edge dark:border-night-edge" : ""
-                    } ${
-                      formatoDescarga === formato
-                        ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                        : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
-                    }`}
+                    className={`focus-ring has- has-focus-visible:ring-inset has- flex cursor-pointer items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-colors ${
+ formato === "pdf" ? "border-l border-edge dark:border-night-edge" : ""
+ } ${
+ formatoDescarga === formato
+ ? "bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+ : "bg-white text-gray-600 hover:bg-gray-50 dark:bg-night-field dark:text-gray-300 dark:hover:bg-night-hover"
+ }`}
                   >
                     <input
                       type="radio"
@@ -817,7 +817,7 @@ export function AdminConjuntoAgendaPage() {
                   setPeriodoDescarga(e.target.value as PeriodoDescarga);
                   setErrorRango(null);
                 }}
-                className="block w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+                className="focus-ring block w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 /20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
               >
                 <option value="TODO">{t("agenda.download.periodAll")}</option>
                 <option value="ESTE_MES">{t("agenda.download.periodThisMonth")}</option>
@@ -881,7 +881,7 @@ export function AdminConjuntoAgendaPage() {
                 onChange={(e) =>
                   setEstadoDescarga(e.target.value as FiltroDescargaAgenda["estado"])
                 }
-                className="block w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+                className="focus-ring block w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 /20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
               >
                 <option value="TODOS">{t("agenda.download.stateAll")}</option>
                 <option value="PENDIENTE">{t("agenda.download.statePending")}</option>

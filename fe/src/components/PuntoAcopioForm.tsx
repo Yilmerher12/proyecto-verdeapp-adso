@@ -136,10 +136,10 @@ export function PuntoAcopioForm({
             onBlur={() => validarCampo("id_localidad")}
             aria-invalid={!!fieldErrors.id_localidad}
             aria-describedby={fieldErrors.id_localidad ? "acopio-localidad-error" : undefined}
-            className={`w-full cursor-pointer rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+            className={`w-full cursor-pointer rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 dark:bg-night-field dark:text-white ${
               fieldErrors.id_localidad
-                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
+                ? "focus:outline-none focus:ring-1 border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                : "focus-ring border-edge focus:border-accent-500 dark:border-night-edge"
             }`}
           >
             <option value="" disabled>
@@ -216,7 +216,7 @@ export function PuntoAcopioForm({
             maxLength={1000}
             rows={2}
             placeholder={t("adminPuntosAcopio.form.changeReasonPlaceholder")}
-            className="w-full resize-none rounded-lg border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
+            className="focus-ring w-full resize-none rounded-lg border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 /20 dark:border-night-edge dark:bg-night-field dark:text-white"
           />
         </div>
       )}

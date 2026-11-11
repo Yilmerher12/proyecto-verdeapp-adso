@@ -62,7 +62,7 @@ export function VerifyEmailPage() {
         {/* Esta página no usa AuthLayout ni AppShell: el logo va aquí directo. */}
         <Link
           to="/"
-          className="mb-5 flex justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+          className="focus-ring mb-5 flex justify-center rounded-lg "
           aria-label={t("common.backToHome")}
           title={t("common.backToHome")}
         >

@@ -141,7 +141,7 @@ export function InvitarAdminConjuntoForm() {
             id="invitar-localidad"
             value={localidadId}
             onChange={(e) => setLocalidadId(e.target.value === "" ? "" : Number(e.target.value))}
-            className="w-full cursor-pointer rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+            className="focus-ring w-full cursor-pointer rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
           >
             <option value="">{t("invitarAdminConjunto.localitySelectPlaceholder")}</option>
             {localidades.map((l) => (
