@@ -104,4 +104,52 @@ describe("Button", () => {
       expect(boton.className).not.toContain("focus:ring");
     },
   );
+
+  // ¿Qué? Issue #640 — el botón acepta los atributos normales de un botón, para poder reemplazar los escritos a mano.
+  describe("atributos extra (issue #640)", () => {
+    it("pasa aria-label, title y aria-describedby al botón", () => {
+      render(<Button aria-label="Cerrar aviso" title="Cerrar" aria-describedby="ayuda">X</Button>);
+      const boton = screen.getByRole("button", { name: "Cerrar aviso" });
+      expect(boton).toHaveAttribute("title", "Cerrar");
+      expect(boton).toHaveAttribute("aria-describedby", "ayuda");
+    });
+
+    it("pasa aria-pressed y aria-disabled", () => {
+      render(<Button aria-pressed={true} aria-disabled={true}>Filtro</Button>);
+      const boton = screen.getByRole("button", { name: "Filtro" });
+      expect(boton).toHaveAttribute("aria-pressed", "true");
+      expect(boton).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("respeta aria-busy que le pasa quien lo usa, y lo pone en true mientras carga", () => {
+      const { rerender } = render(<Button aria-busy={true}>Guardar</Button>);
+      expect(screen.getByRole("button")).toHaveAttribute("aria-busy", "true");
+      rerender(<Button isLoading>Guardar</Button>);
+      expect(screen.getByRole("button")).toHaveAttribute("aria-busy", "true");
+    });
+
+    it("sin isLoading ni aria-busy deja aria-busy en false, como siempre", () => {
+      render(<Button>Guardar</Button>);
+      expect(screen.getByRole("button")).toHaveAttribute("aria-busy", "false");
+    });
+
+    it("mientras carga, el nombre accesible es el de procesando aunque tenga aria-label", () => {
+      render(<Button isLoading aria-label="Guardar tema">Guardar</Button>);
+      expect(screen.getByRole("button", { name: "Procesando, por favor espera" })).toBeInTheDocument();
+    });
+  });
+
+  describe("variante dangerOutline (issue #640)", () => {
+    it("lleva borde rojo, sin fondo rojo sólido", () => {
+      render(<Button variant="dangerOutline">Rechazar</Button>);
+      const boton = screen.getByRole("button", { name: "Rechazar" });
+      expect(boton).toHaveClass("border-red-300", "text-red-700");
+      expect(boton).not.toHaveClass("bg-red-600");
+    });
+
+    it("deja un espacio entre el ícono y el texto", () => {
+      render(<Button><svg data-testid="icono" />Archivar</Button>);
+      expect(screen.getByRole("button")).toHaveClass("gap-1.5");
+    });
+  });
 });

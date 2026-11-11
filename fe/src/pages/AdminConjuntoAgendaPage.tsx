@@ -49,6 +49,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { Pestanas } from "@/components/ui/Pestanas";
 import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 
 // ¿Qué? Issue #435 — temas del historial por página, igual que "Historial de novedades".
 const TAMANO_PAGINA = 10;
@@ -446,16 +447,10 @@ export function AdminConjuntoAgendaPage() {
           {item.texto}
         </p>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => archivar(item)}
-            disabled={cambiandoId === item.id}
-            aria-busy={cambiandoId === item.id}
-            className="disabled:cursor-not-allowed disabled:opacity-60 flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
-          >
+          <Button variant="secondary" size="sm" fullWidth type="button" onClick={() => archivar(item)} disabled={cambiandoId === item.id} aria-busy={cambiandoId === item.id}>
             {cambiandoId === item.id ? <Spinner size="sm" /> : <Archive className="icon-sm" />}
             {t("agenda.archive")}
-          </button>
+          </Button>
           {botonBorrar(item)}
         </div>
       </li>
@@ -498,16 +493,10 @@ export function AdminConjuntoAgendaPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => restaurar(item)}
-            disabled={cambiandoId === item.id}
-            aria-busy={cambiandoId === item.id}
-            className="disabled:cursor-not-allowed disabled:opacity-60 flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-          >
+          <Button variant="secondary" size="sm" type="button" onClick={() => restaurar(item)} disabled={cambiandoId === item.id} aria-busy={cambiandoId === item.id}>
             {cambiandoId === item.id ? <Spinner size="sm" /> : <Undo2 className="icon-sm" />}
             {t("agenda.restore")}
-          </button>
+          </Button>
           {botonBorrar(item)}
         </div>
       </li>
@@ -542,29 +531,15 @@ export function AdminConjuntoAgendaPage() {
               //       nada, tampoco en celular (no hay "pasar el mouse"). Se muestra el motivo.
               // ¿Impacto? Mismo patrón que los botones apagados del panel del Reciclador. Descarga lo del conjunto elegido
               //           (su nombre sale en la ventana).
-              <button
-                type="button"
-                onClick={sinTemas ? () => mostrarAvisoSinTemas(true) : abrirDescarga}
-                aria-disabled={sinTemas}
-                className={`flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors dark:border-night-line dark:bg-transparent dark:text-gray-300 ${
-                  sinTemas
-                    ? "cursor-not-allowed opacity-50"
-                    : "cursor-pointer hover:bg-gray-50 dark:hover:bg-night-hover"
-                }`}
-              >
+              <Button variant="secondary" onClick={sinTemas ? () => mostrarAvisoSinTemas(true) : abrirDescarga} aria-disabled={sinTemas}>
                 <Download className="icon-md" />
                 {t("agenda.download.button")}
-              </button>
+              </Button>
             )}
-            <button
-              type="button"
-              onClick={() => setAgregando(true)}
-              disabled={!idConjunto}
-              className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-            >
+            <Button variant="primary" type="button" onClick={() => setAgregando(true)} disabled={!idConjunto}>
               <Plus className="icon-md" />
               {t("agenda.add")}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -584,14 +559,9 @@ export function AdminConjuntoAgendaPage() {
           className="flex flex-wrap items-center gap-3 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-800 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-300"
         >
           <span className="flex-1">{t("agenda.archivedToast")}</span>
-          <button
-            type="button"
-            onClick={deshacerArchivado}
-            disabled={cambiandoId !== null}
-            className="disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer rounded-lg border border-accent-300 bg-white px-3 py-1 text-xs font-semibold text-accent-800 transition-colors hover:bg-accent-100 dark:border-accent-300/40 dark:bg-transparent dark:text-accent-300 dark:hover:bg-accent-300/15"
-          >
+          <Button variant="secondary" size="sm" type="button" onClick={deshacerArchivado} disabled={cambiandoId !== null}>
             {t("agenda.undo")}
-          </button>
+          </Button>
           <button
             type="button"
             onClick={() => setRecienArchivado(null)}
@@ -740,7 +710,7 @@ export function AdminConjuntoAgendaPage() {
             <div>
               <label
                 htmlFor="agenda-texto"
-                className="text-xs font-bold text-gray-600 dark:text-gray-400"
+                className="text-xs font-medium text-gray-600 dark:text-gray-400"
               >
                 {t("agenda.textLabel")}
               </label>
@@ -766,22 +736,13 @@ export function AdminConjuntoAgendaPage() {
               onChange={setUrlEvidencia}
             />
             <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={cerrarFormulario}
-                className="cursor-pointer rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-              >
+              <Button variant="secondary" type="button" onClick={cerrarFormulario}>
                 {t("common.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={guardar}
-                disabled={guardando || !texto.trim()}
-                className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-              >
+              </Button>
+              <Button variant="primary" type="button" onClick={guardar} disabled={guardando || !texto.trim()}>
                 <Check className="icon-sm" />
                 {guardando ? t("common.saving") : t("agenda.save")}
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>
@@ -950,23 +911,13 @@ export function AdminConjuntoAgendaPage() {
                   : t("agenda.download.count", { count: conteoVigente.total }))}
             </p>
             <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={cerrarDescarga}
-                className="cursor-pointer rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-              >
+              <Button variant="secondary" type="button" onClick={cerrarDescarga}>
                 {t("common.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={descargar}
-                disabled={bajando || faltanFechas || fechasAlReves || pasaDelMaximo}
-                aria-busy={bajando}
-                className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-              >
+              </Button>
+              <Button variant="primary" type="button" onClick={descargar} disabled={bajando || faltanFechas || fechasAlReves || pasaDelMaximo} aria-busy={bajando}>
                 {bajando ? <Spinner size="sm" /> : <Download className="icon-sm" />}
                 {bajando ? t("agenda.download.downloading") : t("agenda.download.confirm")}
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>

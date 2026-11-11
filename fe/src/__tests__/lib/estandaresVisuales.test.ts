@@ -19,11 +19,11 @@ const archivos = import.meta.glob("/src/**/*.tsx", { query: "?raw", import: "def
 // ¿Qué? El conteo de partida de cada regla (medido el 2026-11-11, antes de empezar a corregir).
 // ¿Para qué? Fijar el avance: cada tanda de pantallas que se corrige baja el número. Al terminar el issue, todos llegan a 0.
 const BASE = {
-  botonesAMano: 68,
-  iconosConMedidaSuelta: 2,
-  textoGrandeFueraDeLaPortada: 5,
-  titulosFueraDeLaEscala: 35,
-  pesosFueraDeLaRegla: 34,
+  botonesAMano: 27,
+  iconosConMedidaSuelta: 1,
+  textoGrandeFueraDeLaPortada: 1,
+  titulosFueraDeLaEscala: 8,
+  pesosFueraDeLaRegla: 26,
 };
 
 // ¿Qué? Páginas que tienen su propio diseño y no siguen la escala (decisión del issue #640: solo la portada y los textos legales).
@@ -92,12 +92,19 @@ function analizar(ruta: string, codigo: string): Hallazgo[] {
 
       // Regla 1: botón primario, secundario o de peligro escrito a mano (debe ser el componente Button).
       if (etiqueta === "button" && !esButton) {
-        const esPestana = nodo.attributes.properties.some((p) => ts.isJsxAttribute(p) && p.name.getText() === "role");
-        const soloIcono = nodo.attributes.properties.some((p) => ts.isJsxAttribute(p) && p.name.getText() === "aria-label") && !/\bpx-(?:[3-9]|2\.5)\b/.test(clase);
+        const tiene = (nombre: string) => nodo.attributes.properties.some((p) => ts.isJsxAttribute(p) && p.name.getText() === nombre);
+        const esPestana = tiene("role");
+        // ¿Qué? Controles de selección (pestañas, chips de filtro, tarjetas que hacen de botón): su estilo cambia según estén o no
+        //       elegidos, así que su className es una expresión con condiciones y no un texto fijo, o llevan aria-pressed. No son
+        //       acciones y no se reemplazan por Button: quedan fuera de esta regla.
+        const atributoClase = nodo.attributes.properties.find((p) => ts.isJsxAttribute(p) && p.name.getText() === "className") as ts.JsxAttribute | undefined;
+        const esControlDeSeleccion = tiene("aria-pressed") || (!!atributoClase?.initializer && !ts.isStringLiteral(atributoClase.initializer));
+        // ¿Qué? Un botón de solo ícono tiene su nombre en aria-label o en title, y no lleva relleno horizontal de texto.
+        const soloIcono = (tiene("aria-label") || tiene("title")) && !/\bpx-(?:[3-9]|2\.5)\b/.test(clase);
         const primario = /bg-accent-700/.test(clase);
         const peligro = /bg-red-[67]00|(?:border|bg|text)-red-/.test(clase);
         const secundario = /\bborder\b/.test(clase) && /\bpx-/.test(clase);
-        if (!esPestana && !soloIcono && (primario || peligro || secundario)) salida.push({ regla: "botonesAMano", donde: dondeEsta(nodo) });
+        if (!esPestana && !esControlDeSeleccion && !soloIcono && (primario || peligro || secundario)) salida.push({ regla: "botonesAMano", donde: dondeEsta(nodo) });
       }
 
       // Regla 2: ícono (de lucide-react o de un ícono de rol) con medida suelta en vez de icon-sm/md/lg/xl.
@@ -114,7 +121,10 @@ function analizar(ruta: string, codigo: string): Hallazgo[] {
       if (!esExcepcion && (/^h[1-4]$/.test(etiqueta) || etiqueta === "label")) {
         const peso = clase.match(PESO_DE_TEXTO)?.[1];
         const debe = etiqueta === "label" ? "medium" : "bold";
-        const aislado = etiqueta !== "label" && !peso && /\bflex\b/.test(clase); // título que solo envuelve el logo
+        const logo = etiqueta !== "label" && !peso && /\bflex\b/.test(clase); // título que solo envuelve el logo
+        // ¿Qué? Un label con borde o relleno horizontal hace de botón (por ejemplo "Insertar imagen" o una opción CSV/PDF): no es el nombre de un campo.
+        const haceDeBoton = etiqueta === "label" && (/\bborder\b/.test(clase) || /\bpx-/.test(clase));
+        const aislado = logo || haceDeBoton;
         if (peso && peso !== debe && !aislado) salida.push({ regla: "pesosFueraDeLaRegla", donde: `${dondeEsta(nodo)} <${etiqueta}> ${peso} (debe ser ${debe})` });
       }
 

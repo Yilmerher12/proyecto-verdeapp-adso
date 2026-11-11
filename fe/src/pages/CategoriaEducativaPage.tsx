@@ -73,7 +73,7 @@ export function CategoriaEducativaPage() {
         <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
           {categoriaDecodificada}
         </span>
-        <h1 className="max-w-3xl text-3xl font-bold leading-tight text-gray-900 dark:text-white">
+        <h1 className="max-w-3xl text-2xl font-bold leading-tight text-gray-900 dark:text-white">
           {temas.length === 1 ? temas[0].titulo_tema : categoriaDecodificada}
         </h1>
         {temas.length > 0 && (
@@ -107,7 +107,7 @@ export function CategoriaEducativaPage() {
 
       {otras.length > 0 && (
         <section aria-labelledby="titulo-sigue" className="space-y-5">
-          <h2 id="titulo-sigue" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-xl font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
+          <h2 id="titulo-sigue" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-lg font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
             {t("categoriaEducativa.keepLearning")}
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

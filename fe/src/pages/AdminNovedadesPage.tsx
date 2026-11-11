@@ -40,6 +40,7 @@ import {
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
+import { Button } from "@/components/ui/Button";
 import {
   archivarNovedad,
   crearNovedad,
@@ -335,13 +336,10 @@ export function AdminNovedadesPage() {
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("novedades.admin.subtitle")}</p>
           </div>
         </div>
-        <button
-          onClick={abrirCrear}
-          className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-        >
+        <Button variant="primary" onClick={abrirCrear}>
           <Plus className="icon-md" />
           {t("novedades.admin.newButton")}
-        </button>
+        </Button>
       </div>
 
       {errorMsg && !creando && !editando && (
@@ -350,7 +348,7 @@ export function AdminNovedadesPage() {
 
       {/* Issue #596: la lista ya no se recoge (el "Recoger/Desplegar" no aportaba nada), solo lleva su título. */}
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm overflow-hidden">
-        <h2 className="px-5 py-4 text-sm font-bold text-gray-900 dark:text-white">{t("novedades.admin.listBar")}</h2>
+        <h2 className="px-5 py-4 text-lg font-bold text-gray-900 dark:text-white">{t("novedades.admin.listBar")}</h2>
 
           <div id="novedades-lista-cuerpo" className="space-y-4 border-t border-gray-100 p-5 dark:border-night-line">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -777,17 +775,13 @@ export function AdminNovedadesPage() {
               >
                 {t("common.cancel")}
               </button>
-              <button
-                onClick={guardar}
-                disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-              >
+              <Button variant="primary" fullWidth onClick={guardar} disabled={guardando || formularioIncompleto}>
                 {guardando
                   ? t("common.saving")
                   : formularioIncompleto
                     ? t("common.formIncomplete")
                     : t("common.save")}
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>

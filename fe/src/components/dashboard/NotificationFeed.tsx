@@ -226,7 +226,7 @@ export function NotificationFeed({
       <div className={`flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-5 pt-5 ${description ? "pb-2" : "pb-3"}`}>
         <div className="flex items-center gap-2">
           <Clock className="icon-md shrink-0 text-accent-600" />
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
           {noLeidas > 0 && (
             <span className={`rounded-full px-1.5 py-0.5 text-[0.6875rem] font-bold text-white ${accentBg}`}>
               {noLeidas}

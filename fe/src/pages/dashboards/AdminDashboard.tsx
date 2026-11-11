@@ -22,6 +22,7 @@ import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 import { PerfilUsuarioDetalle } from "@/components/PerfilUsuarioDetalle";
 import { cambiarHabilitado, MOTIVO_MAX_LENGTH } from "@/lib/adminUsuariosApi";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
+import { Button } from "@/components/ui/Button";
 
 interface ResidenteRow {
   Correo: string;
@@ -508,7 +509,7 @@ export function AdminDashboard() {
             <AdminIcon className="icon-xl text-accent-700 dark:text-accent-300" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.admin.title")}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("dashboards.admin.title")}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {t("dashboards.common.welcomePrefix")}{" "}
               <span className="font-semibold text-gray-800 dark:text-gray-200 uppercase">{fullName}</span>
@@ -550,20 +551,12 @@ export function AdminDashboard() {
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.admin.inviteSection.title")}</h3>
           </div>
           <div className="flex flex-1 flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => setMostrarModalInvitar(true)}
-              className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-            >
+            <Button variant="primary" size="sm" type="button" onClick={() => setMostrarModalInvitar(true)}>
               {t("dashboards.admin.inviteSection.show")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMostrarModalAsignar(true)}
-              className="touch-target-h cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
-            >
+            </Button>
+            <Button variant="secondary" size="sm" type="button" onClick={() => setMostrarModalAsignar(true)}>
               {t("desvinculacion.asignarAdicional.openButton")}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -905,7 +898,7 @@ export function AdminDashboard() {
         >
           {!confirmando.nuevoEstado && (
             <div>
-              <label htmlFor="motivo-desactivacion" className="flex justify-between text-xs font-semibold text-gray-700 dark:text-gray-300">
+              <label htmlFor="motivo-desactivacion" className="flex justify-between text-xs font-medium text-gray-700 dark:text-gray-300">
                 {t("dashboards.admin.usersSection.status.reasonLabel")}
                 <span className="font-normal text-gray-500 dark:text-gray-400">
                   {motivo.length} / {MOTIVO_MAX_LENGTH}

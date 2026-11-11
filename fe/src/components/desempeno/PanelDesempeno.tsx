@@ -164,7 +164,7 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 id="desempeno-grafica-titulo" className="text-base font-bold text-gray-900 dark:text-white">
+            <h2 id="desempeno-grafica-titulo" className="text-lg font-bold text-gray-900 dark:text-white">
               {t("desempeno.grafica.titulo")}
             </h2>
             <p className="mt-0.5 max-w-2xl text-xs text-gray-500 dark:text-gray-400">{t("desempeno.grafica.ayuda")}</p>

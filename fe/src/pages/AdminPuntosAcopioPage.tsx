@@ -15,6 +15,7 @@ import { ComentariosPunto } from "@/components/ComentariosPunto";
 import { PuntoAcopioForm } from "@/components/PuntoAcopioForm";
 import { TablaPuntosAcopio } from "@/components/TablaPuntosAcopio";
 import { normalizarTexto } from "@/lib/normalizarTexto";
+import { Button } from "@/components/ui/Button";
 import {
   crearPuntoAcopio,
   darDeBajaPuntoAcopio,
@@ -257,16 +258,13 @@ export function AdminPuntosAcopioPage() {
             {t("adminPuntosAcopio.subtitle")}
           </p>
         </div>
-        <button
-          onClick={() => {
+        <Button variant="primary" onClick={() => {
             setErrorMsg(null);
             setCreando(true);
-          }}
-          className="flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-        >
+          }}>
           <Plus className="icon-md shrink-0" />
           {t("adminPuntosAcopio.newPoint")}
-        </button>
+        </Button>
       </div>
 
       {puntos.length > 0 && (

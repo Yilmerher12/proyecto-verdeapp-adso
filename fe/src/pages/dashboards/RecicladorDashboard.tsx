@@ -34,6 +34,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
 import { listarMisAuditorias, listarUltimasAuditorias } from "@/lib/auditoriaConjuntoApi";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
+import { Button } from "@/components/ui/Button";
 
 // ¿Qué? Cada cuántos días se le vuelve a sugerir al reciclador auditar el
 //       mismo conjunto. Ver issue #5: se decidió semanal porque no todos
@@ -395,7 +396,7 @@ export function RecicladorDashboard() {
           <RolIcon className="icon-lg text-accent-700 dark:text-accent-300" />
         </div>
         <div className="min-w-0">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.title")}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.title")}</h1>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
             {t("dashboards.common.welcomePrefix")}{" "}
             <span className="font-semibold uppercase text-gray-800 dark:text-gray-200">{fullName}</span>.
@@ -419,7 +420,7 @@ export function RecicladorDashboard() {
         <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <Mail className="icon-md text-amber-600" />
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-400/15 dark:text-amber-200">
               {invitaciones.length}
             </span>
@@ -436,22 +437,14 @@ export function RecicladorDashboard() {
                   <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t("dashboards.reciclador.invitations.invitedBy", { nombre: inv.invitado_por_nombre })}</p>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <button
-                    onClick={() => responderInvitacion(inv.id, true)}
-                    disabled={procesandoId === inv.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                  >
+                  <Button variant="primary" size="sm" onClick={() => responderInvitacion(inv.id, true)} disabled={procesandoId === inv.id}>
                     <BadgeCheck className="icon-sm icon-draw" />
                     {t("dashboards.reciclador.invitations.accept")}
-                  </button>
-                  <button
-                    onClick={() => responderInvitacion(inv.id, false)}
-                    disabled={procesandoId === inv.id}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400/30 dark:bg-transparent dark:hover:bg-red-400/15"
-                  >
+                  </Button>
+                  <Button variant="dangerOutline" size="sm" onClick={() => responderInvitacion(inv.id, false)} disabled={procesandoId === inv.id}>
                     <OctagonX className="icon-sm icon-draw" />
                     {t("dashboards.reciclador.invitations.reject")}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -483,7 +476,7 @@ export function RecicladorDashboard() {
           >
             <div className="mb-4 flex items-center gap-2">
               <Building className="icon-md text-accent-600" />
-              <h2 id="reciclador-conjuntos-titulo" className="text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
+              <h2 id="reciclador-conjuntos-titulo" className="text-lg font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
             </div>
             {cargando ? (
               <LoadingState message={t("common.loading")} />
@@ -579,7 +572,7 @@ export function RecicladorDashboard() {
             >
               <div className="flex items-center gap-2">
                 <ClipboardList className="icon-md text-teal-700 dark:text-teal-300" />
-                <h2 id="reciclador-auditoria-titulo" className="text-sm font-bold text-gray-900 dark:text-white">
+                <h2 id="reciclador-auditoria-titulo" className="text-lg font-bold text-gray-900 dark:text-white">
                   {t("dashboards.reciclador.auditoria.bannerTitle")}
                 </h2>
               </div>
@@ -601,7 +594,7 @@ export function RecicladorDashboard() {
             >
               <div className="flex items-center gap-2">
                 <CircleCheck className="icon-md text-accent-600 dark:text-accent-400" />
-                <h2 id="reciclador-auditoria-al-dia-titulo" className="text-sm font-bold text-gray-900 dark:text-white">
+                <h2 id="reciclador-auditoria-al-dia-titulo" className="text-lg font-bold text-gray-900 dark:text-white">
                   {t("dashboards.reciclador.auditoria.alDiaTitle")}
                 </h2>
               </div>
@@ -628,7 +621,7 @@ export function RecicladorDashboard() {
             aria-labelledby="reciclador-avisos-titulo"
             className="@container bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
           >
-            <h2 id="reciclador-avisos-titulo" className="mb-1 text-sm font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</h2>
+            <h2 id="reciclador-avisos-titulo" className="mb-1 text-lg font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</h2>
             <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
               {conjuntoActivo
                 ? t("dashboards.reciclador.sendSection.subtitleConjunto", { conjunto: conjuntoActivo.nombre_conjunto })

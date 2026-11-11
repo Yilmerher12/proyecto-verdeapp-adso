@@ -27,7 +27,7 @@ export function DesvinculacionAprobadaBanner({ notificaciones, onMarcarLeida }: 
     <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-night-line dark:bg-night-card">
       <div className="mb-3 flex items-center gap-2">
         <Unlink className="icon-md text-gray-600 dark:text-gray-400" aria-hidden="true" />
-        <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("desvinculacionAprobada.bannerTitle")}</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("desvinculacionAprobada.bannerTitle")}</h2>
       </div>
       <div className="space-y-2">
         {notificaciones.map((n) => (

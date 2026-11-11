@@ -36,6 +36,7 @@ import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { InputField } from "@/components/ui/InputField";
+import { Button } from "@/components/ui/Button";
 
 interface PerfilData {
   id: number;
@@ -308,7 +309,7 @@ export function ProfilePage() {
               className="h-20 w-20 rounded-full object-cover select-none"
             />
           ) : (
-            <div className="h-20 w-20 rounded-full bg-accent-700 flex items-center justify-center text-white text-3xl font-bold select-none">
+            <div className="h-20 w-20 rounded-full bg-accent-700 flex items-center justify-center text-white text-2xl font-bold select-none">
               {inicial}
             </div>
           )}
@@ -340,7 +341,7 @@ export function ProfilePage() {
 
           {/* Badge de rol — icono Lucide, sin emoji */}
           <span className={`inline-flex items-center gap-1.5 mt-2 rounded-full ${role.badgeBg} px-3 py-1 text-xs font-semibold ${role.badgeText}`}>
-            <RoleIcon className="h-3.5 w-3.5 shrink-0" />
+            <RoleIcon className="icon-sm shrink-0" />
             {roleLabel}
           </span>
 
@@ -366,13 +367,10 @@ export function ProfilePage() {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("profile.personalInfoSection.title")}</h3>
             {canEdit && !editando && (
-              <button
-                onClick={iniciarEdicion}
-                className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
-              >
+              <Button variant="secondary" size="sm" onClick={iniciarEdicion}>
                 <Pencil className="icon-sm" />
                 {t("common.edit")}
-              </button>
+              </Button>
             )}
           </div>
 
@@ -523,14 +521,10 @@ export function ProfilePage() {
                   <X className="icon-md" />
                   {t("common.cancel")}
                 </button>
-                <button
-                  onClick={guardarPerfil}
-                  disabled={guardando}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                >
+                <Button variant="primary" fullWidth onClick={guardarPerfil} disabled={guardando}>
                   <BadgeCheck className="icon-md icon-draw" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}
-                </button>
+                </Button>
               </div>
             </div>
           )}

@@ -11,18 +11,18 @@ import { Spinner } from "./Spinner";
 
 /**
  * ¿Qué? Props del componente Button.
- * ¿Para qué? Configurar variante (primary, secondary, danger), tamaño, loading, etc.
+ * ¿Para qué? Configurar variante (primary, secondary, danger, dangerOutline), tamaño, loading, etc.
  * ¿Impacto? TypeScript garantiza que solo se usen variantes válidas.
+ *           Issue #640: acepta también los atributos normales de un botón (aria-*, title, onBlur, id...) para poder
+ *           reemplazar los botones escritos a mano, pero NO className ni style: el aspecto sale solo de variant y size.
  */
-interface ButtonProps {
+interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "className" | "style" | "children" | "type"> {
   children: React.ReactNode;
   type?: "button" | "submit" | "reset";
-  variant?: "primary" | "secondary" | "danger";
+  variant?: "primary" | "secondary" | "danger" | "dangerOutline";
   size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
   isLoading?: boolean;
-  disabled?: boolean;
-  onClick?: () => void;
 }
 
 /**
@@ -39,12 +39,15 @@ export function Button({
   fullWidth = false,
   isLoading = false,
   disabled = false,
-  onClick,
+  "aria-label": ariaLabel,
+  "aria-busy": ariaBusy,
+  ...resto
 }: ButtonProps) {
-  // ¿Qué? Clases CSS según la variante elegida (primary, secondary, danger).
+  // ¿Qué? Clases CSS según la variante elegida (primary, secondary, danger, dangerOutline).
   // ¿Para qué? Cada variante tiene colores distintos para comunicar intención.
-  // ¿Impacto? primary = acción principal (azul), secondary = acción secundaria (gris),
-  //           danger = acción destructiva (rojo).
+  // ¿Impacto? primary = acción principal (verde), secondary = acción secundaria (borde gris),
+  //           danger = acción destructiva (rojo sólido), dangerOutline = acción destructiva
+  //           de menos peso (borde rojo, p. ej. "Rechazar" junto a un "Aceptar").
   const variantClasses = {
     // ¿Qué? accent-700 en vez de accent-600 — con texto blanco, accent-600 solo
     //       llega a 3.22:1 de contraste (falla el mínimo 4.5:1 de WCAG AA para
@@ -56,6 +59,10 @@ export function Button({
       "bg-white text-gray-700 border border-edge hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-edge dark:hover:bg-night-hover",
     danger:
       "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700",
+    // ¿Qué? Mismos colores que ya usaban a mano los botones de borde rojo (issue #640): texto red-700, borde red-300 y,
+    //       en modo oscuro, borde translúcido y texto red-300.
+    dangerOutline:
+      "bg-white text-red-700 border border-red-300 hover:bg-red-50 dark:bg-transparent dark:text-red-300 dark:border-red-400/30 dark:hover:bg-red-400/10",
   };
 
   // ¿Qué? Clases CSS según el tamaño elegido.
@@ -76,17 +83,17 @@ export function Button({
 
   return (
     <button
+      {...resto}
       type={type}
-      onClick={onClick}
       disabled={disabled || isLoading}
-      aria-busy={isLoading}
-      aria-label={isLoading ? t("common.processing") : undefined}
-      className={`inline-flex cursor-pointer items-center justify-center rounded-lg font-semibold transition-colors duration-200 focus-ring disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""}`}
+      aria-busy={isLoading ? true : (ariaBusy ?? false)}
+      aria-label={isLoading ? t("common.processing") : ariaLabel}
+      className={`inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg font-semibold transition-colors duration-200 focus-ring disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : "whitespace-nowrap"}`}
     >
       {/* ¿Qué? Spinner SVG animado que aparece durante la carga. */}
       {/* ¿Para qué? Feedback visual de que la acción está procesándose. */}
       {/* ¿Impacto? Sin loading state, el usuario podría hacer clic varias veces. */}
-      {isLoading && <Spinner size="sm" tone="current" className="-ml-1 mr-2" />}
+      {isLoading && <Spinner size="sm" tone="current" className="-ml-1" />}
       {children}
     </button>
   );

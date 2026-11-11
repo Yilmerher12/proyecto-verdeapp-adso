@@ -479,7 +479,7 @@ describe("AdminConjuntoComunicadosPage", () => {
       renderPage();
 
       const boton = await screen.findByRole("button", { name: "Nuevo comunicado" });
-      expect(boton).toHaveClass("whitespace-nowrap", "shrink-0");
+      expect(boton).toHaveClass("whitespace-nowrap");
       expect(boton.parentElement).toHaveClass("gap-4");
     });
   });

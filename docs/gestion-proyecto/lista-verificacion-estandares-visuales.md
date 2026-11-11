@@ -26,11 +26,13 @@
 
 | Regla | Al empezar | Hoy |
 | --- | --- | --- |
-| Botón primario, secundario o de peligro escrito a mano | 68 | 68 |
-| Ícono con medida suelta | 2 | 2 |
-| Texto de 3xl o más fuera de la portada y los textos legales | 7 | 5 |
-| Título fuera de la escala | 42 | 35 |
-| Peso de letra fuera de la regla (títulos bold, nombres de campo medium) | 34 (se midió al sumar la regla) | 34 |
+| Botón primario, secundario o de peligro escrito a mano | 68 | 27 |
+| Ícono con medida suelta | 2 | 1 |
+| Texto de 3xl o más fuera de la portada y los textos legales | 7 | 1 |
+| Título fuera de la escala | 42 | 8 |
+| Peso de letra fuera de la regla (títulos bold, nombres de campo medium) | 34 (se midió al sumar la regla) | 26 |
+
+En la etapa 3 (paneles y páginas de `pages/`) el conteo de botones bajó además porque la regla dejó de contar los controles de selección (pestañas, chips de filtro y tarjetas que hacen de botón: su estilo depende de si están elegidos, así que no son acciones ni se reemplazan por `Button`). Los casos que quedan están en `components/` (etapa 4).
 
 Cada tanda baja estos números y la constante `BASE` de la prueba. Al cerrar el issue, todos son 0.
 
@@ -58,33 +60,33 @@ Cada tanda baja estos números y la constante `BASE` de la prueba. Al cerrar el 
 
 ## Residente y Reciclador (paneles) (2)
 
-- [ ] `pages/dashboards/RecicladorDashboard.tsx` (ventana)
-- [ ] `pages/dashboards/ResidenteDashboard.tsx` (ventana)
+- [x] `pages/dashboards/RecicladorDashboard.tsx` (ventana)
+- [x] `pages/dashboards/ResidenteDashboard.tsx` (ventana)
 
 ## Administrador de Conjunto (panel y páginas) (4)
 
-- [ ] `pages/AdminConjuntoAgendaPage.tsx` (ventana)
-- [ ] `pages/AdminConjuntoComunicadosPage.tsx` (ventana)
-- [ ] `pages/AdminConjuntoDesempenoPage.tsx`
-- [ ] `pages/dashboards/AdminConjuntoDashboard.tsx` (ventana)
+- [x] `pages/AdminConjuntoAgendaPage.tsx` (ventana)
+- [x] `pages/AdminConjuntoComunicadosPage.tsx` (ventana)
+- [x] `pages/AdminConjuntoDesempenoPage.tsx`
+- [x] `pages/dashboards/AdminConjuntoDashboard.tsx` (ventana)
 
 ## Administrador del Sistema (panel y páginas) (5)
 
-- [ ] `pages/AdminContenidoEducativoPage.tsx` (ventana)
-- [ ] `pages/AdminNovedadesPage.tsx` (ventana)
-- [ ] `pages/AdminPuntosAcopioPage.tsx` (ventana)
-- [ ] `pages/AdminSolicitudesPage.tsx`
-- [ ] `pages/dashboards/AdminDashboard.tsx` (ventana)
+- [x] `pages/AdminContenidoEducativoPage.tsx` (ventana)
+- [x] `pages/AdminNovedadesPage.tsx` (ventana)
+- [x] `pages/AdminPuntosAcopioPage.tsx` (ventana)
+- [x] `pages/AdminSolicitudesPage.tsx`
+- [x] `pages/dashboards/AdminDashboard.tsx` (ventana)
 
 ## Páginas compartidas (Perfil, Contraseña, Soporte técnico, Directorio, Comunicados, Aprende a reciclar…) (7)
 
-- [ ] `pages/CatalogoEducativoPage.tsx`
-- [ ] `pages/CategoriaEducativaPage.tsx`
-- [ ] `pages/ChangePasswordPage.tsx`
-- [ ] `pages/ComunicadosFeedPage.tsx`
-- [ ] `pages/DirectorioPage.tsx`
-- [ ] `pages/NovedadesFeedPage.tsx`
-- [ ] `pages/ProfilePage.tsx`
+- [x] `pages/CatalogoEducativoPage.tsx`
+- [x] `pages/CategoriaEducativaPage.tsx`
+- [x] `pages/ChangePasswordPage.tsx`
+- [x] `pages/ComunicadosFeedPage.tsx`
+- [x] `pages/DirectorioPage.tsx`
+- [x] `pages/NovedadesFeedPage.tsx`
+- [x] `pages/ProfilePage.tsx`
 
 ## Componentes compartidos de `ui/` (29)
 

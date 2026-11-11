@@ -42,7 +42,7 @@ export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio, sinTar
       }`}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-base font-bold text-gray-900 dark:text-white">{titulo}</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{titulo}</h2>
         {auditorias && auditorias.length > 0 && (
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {t("desempeno.semana.cantidad", { count: auditorias.length })}

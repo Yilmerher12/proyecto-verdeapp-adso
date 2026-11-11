@@ -31,7 +31,7 @@ export function RankingTemas({ temas, sinTarjeta = false }: { temas: TemaDesempe
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 id="desempeno-temas-titulo" className="text-base font-bold text-gray-900 dark:text-white">
+          <h2 id="desempeno-temas-titulo" className="text-lg font-bold text-gray-900 dark:text-white">
             {t("desempeno.temas.titulo")}
           </h2>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t("desempeno.temas.pista")}</p>

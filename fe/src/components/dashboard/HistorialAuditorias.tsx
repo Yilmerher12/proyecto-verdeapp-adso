@@ -86,7 +86,7 @@ export function HistorialAuditorias({
       {!sinTarjeta && (
         <div className="mb-4 flex items-center gap-2">
           <History className="icon-md text-gray-500 dark:text-gray-400" />
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white">{titulo ?? t("auditoriaResultado.historialTitle")}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{titulo ?? t("auditoriaResultado.historialTitle")}</h2>
         </div>
       )}
 
