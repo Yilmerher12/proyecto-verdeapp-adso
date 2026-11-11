@@ -365,9 +365,14 @@
    ¿Para qué? Antes esos 3 aparecían de golpe (issue #197) — mismo criterio
    de accesibilidad que .animate-hero-in: sin movimiento si el sistema
    operativo pidió "reducir movimiento" (RNF-005.6).
-   ¿Impacto? .animate-fade-in y .animate-scale-in arrancan en opacity:0
-   SIEMPRE, igual que .animate-hero-in, para evitar el "flash" del
-   contenido final antes de que la animación corra. */
+   ¿Impacto? .animate-scale-in arranca en opacity:0 SIEMPRE, igual que
+   .animate-hero-in, para evitar el "flash" del contenido final antes de que
+   la animación corra. .animate-fade-in (issue #643, estándar de movimiento:
+   desvanecer solo, 200 ms) usa fill-mode "backwards": aplica el primer
+   fotograma mientras espera y, al terminar, SUELTA el elemento. Con "forwards"
+   dejaba el elemento con una opacidad animada para siempre, y eso crea una capa
+   propia que puede tapar menús flotantes dentro de la página. Por eso no
+   necesita opacity:0 de base. */
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -389,14 +394,13 @@
 }
 
 @layer utilities {
-  .animate-fade-in,
   .animate-scale-in {
     opacity: 0;
   }
 
   @media (prefers-reduced-motion: no-preference) {
     .animate-fade-in {
-      animation: fade-in 0.2s ease-out forwards;
+      animation: fade-in 0.2s ease-out backwards;
     }
     .animate-scale-in {
       animation: scale-in 0.2s ease-out forwards;
@@ -404,7 +408,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .animate-fade-in,
     .animate-scale-in {
       opacity: 1;
     }

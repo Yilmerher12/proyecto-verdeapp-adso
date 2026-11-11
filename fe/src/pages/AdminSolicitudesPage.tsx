@@ -8,6 +8,7 @@ import { useSolicitudesPendientes } from "@/hooks/useSolicitudesPendientes";
 import { Pestanas } from "@/components/ui/Pestanas";
 import { SoporteTecnico } from "@/components/SoporteTecnico";
 import { SolicitudesDesvinculacion } from "@/components/SolicitudesDesvinculacion";
+import { PanelPestana } from "@/components/ui/PanelPestana";
 
 type Pestana = "soporte" | "desvinculaciones";
 
@@ -67,9 +68,9 @@ export function AdminSolicitudesPage() {
             { id: "desvinculaciones", etiqueta: etiqueta("solicitudesAdmin.tabs.desvinculaciones", pendientes.desvinculaciones) },
           ]}
         />
-        <div id="solicitudes-panel" role="tabpanel" aria-labelledby={`solicitudes-tab-${pestana}`}>
+        <PanelPestana id="solicitudes-panel" labelledBy={`solicitudes-tab-${pestana}`} claveActiva={pestana}>
           {pestana === "soporte" ? <SoporteTecnico /> : <SolicitudesDesvinculacion />}
-        </div>
+        </PanelPestana>
       </div>
     </div>
   );

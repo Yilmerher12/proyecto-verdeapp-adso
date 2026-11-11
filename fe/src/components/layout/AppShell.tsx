@@ -547,11 +547,15 @@ export function AppShell({ children }: AppShellProps) {
             {/* ¿Qué? ErrorBoundary solo alrededor de la página, no del sidebar.
                 ¿Para qué? Si una página falla al dibujarse, el menú lateral
                            sigue funcionando para ir a otra (issue #378).
-                ¿Impacto? key={pathname} crea un ErrorBoundary nuevo al cambiar
-                          de ruta, así el error se limpia solo al navegar con
-                          el menú — sin key, la pantalla de error se quedaría
-                          pegada en todas las páginas siguientes. */}
-            <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+                ¿Impacto? key={pathname} en el div crea un ErrorBoundary nuevo al
+                          cambiar de ruta, así el error se limpia solo al navegar
+                          con el menú — sin key, la pantalla de error se quedaría
+                          pegada en todas las páginas siguientes. El mismo key
+                          repite el desvanecimiento estándar en cada página nueva
+                          (issue #643). */}
+            <div key={pathname} className="animate-fade-in">
+              <ErrorBoundary>{children}</ErrorBoundary>
+            </div>
           </div>
         </main>
       </div>

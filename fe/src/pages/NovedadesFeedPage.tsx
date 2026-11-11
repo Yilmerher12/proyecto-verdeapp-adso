@@ -16,6 +16,7 @@ import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { MisNovedadesEnviadas, NovedadEnviadaForm } from "@/components/NovedadesEnviadas";
 import { Pestanas } from "@/components/ui/Pestanas";
 import { TextoRecortable } from "@/components/ui/TextoRecortable";
+import { PanelPestana } from "@/components/ui/PanelPestana";
 
 // ¿Qué? Novedades por página en "Avisos del sistema", igual que "Historial de novedades" (issue #399).
 const TAMANO_PAGINA = 10;
@@ -102,7 +103,7 @@ export function NovedadesFeedPage() {
           ariaLabel={t("novedades.feed.title")}
         />
 
-        <div id="soporte-panel" role="tabpanel" aria-labelledby={`soporte-tab-${pestana}`}>
+        <PanelPestana id="soporte-panel" labelledBy={`soporte-tab-${pestana}`} claveActiva={pestana}>
           {pestana === "escribir" && (
             <NovedadEnviadaForm onEnviada={() => setVersionEnvios((v) => v + 1)} />
           )}
@@ -190,7 +191,7 @@ export function NovedadesFeedPage() {
               )}
             </>
           )}
-        </div>
+        </PanelPestana>
       </div>
     </div>
   );

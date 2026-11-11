@@ -36,6 +36,7 @@ import { RankingTemas } from "@/components/desempeno/RankingTemas";
 import { ResumenDesempeno } from "@/components/desempeno/ResumenDesempeno";
 import { TablaDesempenoSemanal } from "@/components/desempeno/TablaDesempenoSemanal";
 import { Button } from "@/components/ui/Button";
+import { PanelPestana } from "@/components/ui/PanelPestana";
 
 const GraficaDesempenoSemanal = lazy(() => import("@/components/desempeno/GraficaDesempenoSemanal"));
 
@@ -204,7 +205,7 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
         className="border-t border-gray-100 pt-5 dark:border-night-line"
       />
 
-      <div role="tabpanel" id="desempeno-pestana-contenido" aria-labelledby={`desempeno-pestana-${pestana}`}>
+      <PanelPestana id="desempeno-pestana-contenido" labelledBy={`desempeno-pestana-${pestana}`} claveActiva={pestana}>
         {pestana === "semana" && (
           <ListaAuditoriasSemana
             sinTarjeta
@@ -215,7 +216,7 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
         )}
         {pestana === "todas" && cargarHistorial && <HistorialAuditorias sinTarjeta cargar={cargarHistorial} />}
         {pestana === "temas" && <RankingTemas sinTarjeta temas={desempeno.temas} />}
-      </div>
+      </PanelPestana>
     </Marco>
   );
 }

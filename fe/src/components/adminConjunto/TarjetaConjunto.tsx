@@ -8,6 +8,7 @@ import { EditarConjuntoModal } from "@/components/adminConjunto/EditarConjuntoMo
 import { RecicladoresConjunto } from "@/components/adminConjunto/RecicladoresConjunto";
 import { ResumenConjunto } from "@/components/adminConjunto/ResumenConjunto";
 import { Button } from "@/components/ui/Button";
+import { PanelPestana } from "@/components/ui/PanelPestana";
 
 type PestanaConjunto = "resumen" | "avisos" | "recicladores";
 
@@ -175,17 +176,17 @@ export function TarjetaConjunto({
             ]}
           />
 
-          <div id={`conjunto-panel-${id}`} role="tabpanel" aria-labelledby={`conjunto-tab-${id}-${pestana}`}>
-            <div hidden={pestana !== "resumen"}>
+          <PanelPestana id={`conjunto-panel-${id}`} labelledBy={`conjunto-tab-${id}-${pestana}`}>
+            <div hidden={pestana !== "resumen"} className="animate-fade-in">
               <ResumenConjunto conjunto={conjunto} onActualizado={onActualizado} />
             </div>
-            <div hidden={pestana !== "avisos"}>
+            <div hidden={pestana !== "avisos"} className="animate-fade-in">
               <AvisosConjunto idConjunto={id} activa={pestana === "avisos"} onCambio={onCambioAvisos} />
             </div>
-            <div hidden={pestana !== "recicladores"}>
+            <div hidden={pestana !== "recicladores"} className="animate-fade-in">
               <RecicladoresConjunto idConjunto={id} onCantidad={setRecicladores} />
             </div>
-          </div>
+          </PanelPestana>
         </div>
       )}
 
