@@ -173,4 +173,78 @@ describe("ProfilePage", () => {
     expect(await screen.findByText("Solo se permiten letras, espacios, apóstrofe, punto o guion")).toBeInTheDocument();
     expect(inputNombre).toHaveAttribute("maxLength", "100");
   });
+
+  // ¿Qué? Verifica el estado de carga: el backend todavía no responde.
+  // ¿Para qué? Comprobar que la persona ve "Cargando tu perfil..." y no una pantalla vacía.
+  // ¿Impacto? Si no se muestra ese elemento la pantalla queda en blanco hasta que los datos lleguen
+  it("should show the loading message when the profile has not arrived yet", () => {
+    // Arrange: un backend que nunca responde
+    mockGet.mockReturnValue(new Promise(() => {}));
+
+    // Act
+    renderPage();
+
+    // Assert
+    expect(screen.getByText("Cargando tu perfil...")).toBeInTheDocument();
+  });
+
+  // ¿Qué? Verifica la regla del teléfono (7 a 10 dígitos) al salir del campo.
+  // ¿Para qué? El campo solo deja escribir dígitos, así que el caso inválido real es "muy corto".
+  // ¿Impacto? Si se quita la validación, se podría guardar un teléfono de 3 dígitos.
+  it("should show the phone error when the phone has fewer than 7 digits", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByRole("heading", { name: "Ana Martínez" });
+    await user.click(screen.getByRole("button", { name: "Editar" }));
+
+    // Act
+    await user.type(screen.getByLabelText("Teléfono"), "123");
+    await user.tab();
+
+    // Assert
+    expect(await screen.findByText("El número telefónico tiene un formato inválido.")).toBeInTheDocument();
+  });
+
+  // ¿Qué? Verifica que una foto de más de 5 MB se rechaza en el navegador, antes de subirla.
+  // ¿Para qué? Evitar el viaje al backend con un archivo que de todas formas rechazaría.
+  // ¿Impacto? Si se quita el tope, la persona no vería ningún aviso y la foto se enviaría.
+  it("should show the size error when the photo is larger than 5 MB", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const { container } = renderPage();
+    await screen.findByRole("heading", { name: "Ana Martínez" });
+    // querySelector justificado: el input de archivo es invisible (className="hidden") y no tiene
+    // etiqueta propia, así que getByRole y getByLabelText no lo encuentran. El botón de la cámara
+    // sí tiene etiqueta, pero solo hace clic sobre este input.
+    const inputFoto = container.querySelector('input[type="file"]') as HTMLInputElement;
+    // El archivo pesa 1 byte de verdad; se le finge un tamaño de 6 MB para no crear 6 MB en memoria.
+    const fotoGrande = new File(["x"], "grande.png", { type: "image/png" });
+    Object.defineProperty(fotoGrande, "size", { value: 6 * 1024 * 1024 });
+
+    // Act
+    await user.upload(inputFoto, fotoGrande);
+
+    // Assert
+    expect(await screen.findByText("La foto no puede superar 5 MB.")).toBeInTheDocument();
+  });
+
+  // ¿Qué? Verifica que "Cancelar" cierra el formulario de edición.
+  // ¿Para qué? Comprobar que la persona vuelve a la vista normal sin guardar nada.
+  // ¿Impacto? Si Cancelar no cierra, la persona queda atrapada en el formulario.
+  it("should close the edit form when the user cancels", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByRole("heading", { name: "Ana Martínez" });
+    await user.click(screen.getByRole("button", { name: "Editar" }));
+    expect(screen.getByLabelText("Nombre")).toBeInTheDocument();
+
+    // Act
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    // Assert
+    expect(screen.queryByLabelText("Nombre")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Editar" })).toBeInTheDocument();
+  });
 });
