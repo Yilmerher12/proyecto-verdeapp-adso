@@ -24,6 +24,7 @@ import { usePaginacion } from "@/hooks/usePaginacion";
 import { obtenerMisConjuntos, type ConjuntoAdministrado } from "@/lib/conjuntoPanelApi";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
 import { TextoRecortable } from "@/components/ui/TextoRecortable";
+import { Button } from "@/components/ui/Button";
 import {
   crearComunicado,
   editarComunicado,
@@ -324,14 +325,10 @@ export function AdminConjuntoComunicadosPage() {
               {t("comunicados.admin.subtitle")}
             </p>
           </div>
-          <button
-            onClick={abrirCrear}
-            disabled={conjuntos.length === 0}
-            className="flex shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-          >
+          <Button variant="primary" onClick={abrirCrear} disabled={conjuntos.length === 0}>
             <Plus className="icon-md" />
             {t("comunicados.admin.newButton")}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -734,23 +731,16 @@ export function AdminConjuntoComunicadosPage() {
             />
 
             <div className="flex gap-2 pt-2">
-              <button
-                onClick={cerrarFormulario}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
-              >
+              <Button variant="secondary" fullWidth onClick={cerrarFormulario}>
                 {t("common.cancel")}
-              </button>
-              <button
-                onClick={guardar}
-                disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-              >
+              </Button>
+              <Button variant="primary" fullWidth onClick={guardar} disabled={guardando || formularioIncompleto}>
                 {guardando
                   ? t("common.saving")
                   : formularioIncompleto
                     ? t("common.formIncomplete")
                     : t("common.save")}
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>

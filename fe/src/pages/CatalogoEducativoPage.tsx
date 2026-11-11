@@ -61,7 +61,7 @@ export function CatalogoEducativoPage() {
                     pantalla y no se pierden sobre el fondo. Se conserva el estilo propio de Aprende a
                     reciclar (esquinas más redondeadas). */}
       <header className="space-y-2 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t("catalogoEducativo.title")}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("catalogoEducativo.title")}</h1>
         <p className="max-w-2xl text-base text-gray-600 dark:text-gray-300">{t("catalogoEducativo.subtitle")}</p>
       </header>
 
@@ -86,7 +86,7 @@ export function CatalogoEducativoPage() {
                 {t("catalogoEducativo.progress.title")}
               </span>
               <p className="text-base text-gray-600 dark:text-gray-300">
-                <span className="mr-2 text-4xl font-bold text-accent-700 dark:text-accent-400">{totalVistas}</span>
+                <span className="mr-2 text-2xl font-bold text-accent-700 dark:text-accent-400">{totalVistas}</span>
                 {t("catalogoEducativo.progress.of", { total: contenido.length })}
               </p>
               <div
@@ -104,7 +104,7 @@ export function CatalogoEducativoPage() {
           </div>
 
           <section aria-labelledby="titulo-categorias" className="space-y-5">
-            <h2 id="titulo-categorias" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-xl font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
+            <h2 id="titulo-categorias" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-lg font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
               {t("catalogoEducativo.categoriesTitle")}
             </h2>
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
@@ -160,7 +160,7 @@ export function CatalogoEducativoPage() {
 
           {destacado && idDestacado && (
             <section aria-labelledby="titulo-destacado" className="space-y-5">
-              <h2 id="titulo-destacado" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-xl font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
+              <h2 id="titulo-destacado" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-lg font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
                 {t("catalogoEducativo.featuredTitle")}
               </h2>
               <Link

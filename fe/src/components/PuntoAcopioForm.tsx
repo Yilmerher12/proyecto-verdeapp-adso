@@ -17,6 +17,7 @@ import { Alert } from "@/components/ui/Alert";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { InputField } from "@/components/ui/InputField";
 import type { PuntoAcopioPayload } from "@/lib/puntosAcopioApi";
+import { Button } from "@/components/ui/Button";
 import {
   PUNTO_ACOPIO_DIRECCION_MAX_LENGTH,
   PUNTO_ACOPIO_ENCARGADO_MAX_LENGTH,
@@ -221,21 +222,12 @@ export function PuntoAcopioForm({
       )}
 
       <div className="flex gap-2 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
-        >
+        <Button variant="secondary" fullWidth type="button" onClick={onCancel}>
           {t("common.cancel")}
-        </button>
-        <button
-          type="button"
-          onClick={guardar}
-          disabled={guardando || formularioIncompleto}
-          className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-        >
+        </Button>
+        <Button variant="primary" fullWidth type="button" onClick={guardar} disabled={guardando || formularioIncompleto}>
           {guardando ? t("common.saving") : formularioIncompleto ? t("common.formIncomplete") : t("common.save")}
-        </button>
+        </Button>
       </div>
     </div>
   );

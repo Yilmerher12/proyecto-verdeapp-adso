@@ -61,6 +61,7 @@ import { ContenidoRecomendadoCalificacion } from "@/components/educativo/Conteni
 import { EnviarAConjuntosModal } from "@/components/educativo/EnviarAConjuntosModal";
 import { ModuloEducativoModal } from "@/components/educativo/ModuloEducativoModal";
 import { combinarConEnvios, destinatariosAutoDe } from "@/lib/destinatariosModulo";
+import { Button } from "@/components/ui/Button";
 
 
 const FORM_VACIO: ContenidoEducativoPayload = {
@@ -426,7 +427,7 @@ export function AdminContenidoEducativoPage() {
           <BookOpen className="icon-xl text-accent-700 dark:text-accent-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t(`${p}.title`)}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t(`${p}.title`)}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t(`${p}.subtitle`)}</p>
         </div>
       </div>
@@ -547,14 +548,10 @@ export function AdminContenidoEducativoPage() {
               </span>
               {/* ¿Qué? Issue #620: el ÚNICO camino para crear un módulo. Se quitaron la tarjeta "Nuevo contenido" y el botón
                         "+ Nueva categoría": una categoría no existe sola, es el texto que trae cada módulo. */}
-              <button
-                type="button"
-                onClick={abrirCrear}
-                className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-              >
+              <Button variant="primary" size="sm" type="button" onClick={abrirCrear}>
                 <Plus className="icon-sm" aria-hidden="true" />
                 {t(`${p}.newModule`)}
-              </button>
+              </Button>
             </div>
 
             {cargandoContenido && (
@@ -842,19 +839,12 @@ export function AdminContenidoEducativoPage() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button
-                  onClick={cerrarFormulario}
-                  className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
-                >
+                <Button variant="secondary" fullWidth onClick={cerrarFormulario}>
                   {t("common.cancel")}
-                </button>
-                <button
-                  onClick={guardar}
-                  disabled={guardando || formularioIncompleto}
-                  className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                >
+                </Button>
+                <Button variant="primary" fullWidth onClick={guardar} disabled={guardando || formularioIncompleto}>
                   {guardando ? t("common.saving") : formularioIncompleto ? t("common.formIncomplete") : t("common.save")}
-                </button>
+                </Button>
               </div>
             </div>
 

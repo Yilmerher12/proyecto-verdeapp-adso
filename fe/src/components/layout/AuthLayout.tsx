@@ -16,11 +16,14 @@ interface AuthLayoutProps {
   children: React.ReactNode;
   title: string;
   subtitle?: string;
+  /** ¿Qué? Centra el título y el subtítulo.
+   *  ¿Para qué? Issue #640 — una tarjeta que es un MENSAJE de resultado (por ejemplo "enlace inválido") va centrada; una que lleva campos va a la izquierda. */
+  centered?: boolean;
   wide?: boolean;
   notice?: React.ReactNode;
 }
 
-export function AuthLayout({ children, title, subtitle, wide = false, notice }: AuthLayoutProps) {
+export function AuthLayout({ children, title, subtitle, wide = false, notice, centered = false }: AuthLayoutProps) {
   const { t } = useTranslation();
 
   return (
@@ -50,8 +53,8 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
           {notice && <div className="mb-4">{notice}</div>}
 
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-panel sm:p-8">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
+            <div className={`mb-6 ${centered ? "text-center" : ""}`}>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
               {subtitle && (
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>
               )}

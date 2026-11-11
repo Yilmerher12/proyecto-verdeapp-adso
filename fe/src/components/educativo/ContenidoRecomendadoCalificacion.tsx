@@ -24,7 +24,7 @@ export function ContenidoRecomendadoCalificacion({ auditoria, modulos, onAbrirMo
 
   return (
     <section>
-      <h4 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.recommendedContent`)}</h4>
+      <h4 className="mb-2 text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.recommendedContent`)}</h4>
       {auditoria.avisados > 0 ? (
         <>
           <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">{t(`${p}.week.notified`, { count: auditoria.avisados })}</p>

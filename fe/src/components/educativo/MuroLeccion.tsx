@@ -46,7 +46,7 @@ export function MuroLeccion({
   return (
     <section className="space-y-6" aria-label={modulo.titulo_tema}>
       {mostrarTitulo && (
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{modulo.titulo_tema}</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{modulo.titulo_tema}</h2>
       )}
 
       <div className={`flex flex-col gap-6 ${compacto ? "" : "lg:flex-row lg:items-stretch"}`}>
@@ -109,7 +109,7 @@ export function MuroLeccion({
                 )}
                 <div className="flex flex-1 flex-col gap-2 p-6">
                   {tarjeta.titulo && (
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{tarjeta.titulo}</h3>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">{tarjeta.titulo}</h3>
                   )}
                   <ReactMarkdown components={COMPONENTES_MARKDOWN}>{tarjeta.texto}</ReactMarkdown>
                 </div>

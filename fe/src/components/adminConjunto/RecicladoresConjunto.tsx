@@ -12,6 +12,7 @@ import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { InvitarRecicladorModal } from "@/components/adminConjunto/InvitarRecicladorModal";
+import { Button } from "@/components/ui/Button";
 
 /**
  * ¿Qué? Badge de color según el estado de la invitación.
@@ -119,13 +120,9 @@ export function RecicladoresConjunto({
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
           {t("dashboards.adminConjunto.recyclersSection.authorizedTitle")}
         </p>
-        <button
-          type="button"
-          onClick={() => setInvitando(true)}
-          className="focus-ring touch-target-h cursor-pointer rounded-lg border border-accent-300 bg-accent-50 px-3 py-1.5 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 hover:text-accent-800 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
-        >
+        <Button variant="secondary" size="sm" type="button" onClick={() => setInvitando(true)}>
           {t("dashboards.adminConjunto.recyclersSection.invite")}
-        </button>
+        </Button>
       </div>
       {cargandoAutorizados ? (
         <LoadingState message={t("dashboards.adminConjunto.recyclersSection.authorizedLoading")} />

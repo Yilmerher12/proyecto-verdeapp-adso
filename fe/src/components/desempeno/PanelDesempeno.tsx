@@ -35,6 +35,7 @@ import { ListaAuditoriasSemana } from "@/components/desempeno/ListaAuditoriasSem
 import { RankingTemas } from "@/components/desempeno/RankingTemas";
 import { ResumenDesempeno } from "@/components/desempeno/ResumenDesempeno";
 import { TablaDesempenoSemanal } from "@/components/desempeno/TablaDesempenoSemanal";
+import { Button } from "@/components/ui/Button";
 
 const GraficaDesempenoSemanal = lazy(() => import("@/components/desempeno/GraficaDesempenoSemanal"));
 
@@ -164,19 +165,15 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 id="desempeno-grafica-titulo" className="text-base font-bold text-gray-900 dark:text-white">
+            <h2 id="desempeno-grafica-titulo" className="text-lg font-bold text-gray-900 dark:text-white">
               {t("desempeno.grafica.titulo")}
             </h2>
             <p className="mt-0.5 max-w-2xl text-xs text-gray-500 dark:text-gray-400">{t("desempeno.grafica.ayuda")}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setComoTabla((v) => !v)}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-          >
+          <Button variant="secondary" size="sm" type="button" onClick={() => setComoTabla((v) => !v)}>
             {comoTabla ? <ChartColumn className="icon-sm" aria-hidden="true" /> : <Table2 className="icon-sm" aria-hidden="true" />}
             {comoTabla ? t("desempeno.grafica.verComoGrafica") : t("desempeno.grafica.verComoTabla")}
-          </button>
+          </Button>
         </div>
 
         <LeyendaNiveles />

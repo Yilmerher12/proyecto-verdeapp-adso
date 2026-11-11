@@ -38,7 +38,7 @@ export function AuditoriaResultadoBanner({ notificaciones, onMarcarLeida }: Audi
     <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-400/30 dark:bg-teal-400/10">
       <div className="mb-3 flex items-center gap-2">
         <ClipboardCheck className="icon-md text-teal-700 dark:text-teal-300" />
-        <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.bannerTitle")}</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.bannerTitle")}</h2>
       </div>
       <div className="space-y-2">
         {pendientes.map((n) => (

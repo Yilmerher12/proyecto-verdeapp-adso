@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Check, Copy, KeyRound, RefreshCw, TriangleAlert } from "lucide-react";
 import { regenerarCodigoAcceso } from "@/lib/conjuntoPanelApi";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Button } from "@/components/ui/Button";
 
 /**
  * ¿Qué? Código de acceso de UN conjunto específico (issue #168) — lo que
@@ -92,14 +93,10 @@ export function CodigoAccesoConjunto({
           {t("dashboards.adminConjunto.codigoAcceso.description")}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={() => setConfirmando(true)}
-        className="focus-ring touch-target-h flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition-colors hover:bg-amber-100 hover:text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200 dark:hover:bg-amber-400/15"
-      >
+      <Button variant="secondary" size="sm" fullWidth type="button" onClick={() => setConfirmando(true)}>
         <RefreshCw className="icon-sm" aria-hidden="true" />
         {t("dashboards.adminConjunto.codigoAcceso.regenerateButton")}
-      </button>
+      </Button>
 
       {confirmando && (
         <ConfirmModal

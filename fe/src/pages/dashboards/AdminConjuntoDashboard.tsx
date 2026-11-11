@@ -20,6 +20,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { Modal } from "@/components/ui/Modal";
 import { SolicitudAdminConjuntoInfo } from "@/components/SolicitudAdminConjuntoInfo";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 
 /**
  * ¿Qué? Dashboard del rol Administrador de Conjunto (id_rol = 4).
@@ -137,7 +138,7 @@ export function AdminConjuntoDashboard() {
                         se salían de la tarjeta (overflow-hidden) a 375 px (issue #454).
               ¿Impacto? Desde `sm` el título vuelve a text-2xl. */}
           <div className="min-w-0">
-            <h1 className="break-words text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">{t("dashboards.adminConjunto.title")}</h1>
+            <h1 className="break-words text-2xl font-bold text-gray-900 dark:text-white">{t("dashboards.adminConjunto.title")}</h1>
             <p className="break-words text-gray-600 dark:text-gray-300">
               {t("dashboards.common.welcomePrefix")} <span className="font-bold uppercase">{user?.first_name} {user?.last_name}</span>.
             </p>
@@ -173,14 +174,10 @@ export function AdminConjuntoDashboard() {
             <Building className="icon-lg text-accent-600" />
             <h2 className="text-lg font-bold text-gray-800 dark:text-white">{t("dashboards.adminConjunto.myConjuntos.title")}</h2>
           </div>
-          <button
-            type="button"
-            onClick={() => setSolicitandoConjunto(true)}
-            className="focus-ring touch-target-h flex cursor-pointer items-center gap-1.5 rounded-xl border border-accent-300 bg-accent-50 px-3 py-1.5 text-sm font-semibold text-accent-700 transition-colors hover:bg-accent-100 hover:text-accent-800 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
-          >
+          <Button variant="secondary" type="button" onClick={() => setSolicitandoConjunto(true)}>
             <Plus className="icon-sm" aria-hidden="true" />
             {t("dashboards.adminConjunto.otroConjunto.tileTitle")}
-          </button>
+          </Button>
         </div>
 
         {cargando ? (

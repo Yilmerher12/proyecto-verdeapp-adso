@@ -107,11 +107,11 @@ export function AuditoriaResultadoModal({ idAuditoria, auditoria: auditoriaRecib
               <p className="text-xs font-bold uppercase tracking-wide opacity-80">
                 {t("auditoriaResultado.modalTitle")}
               </p>
-              <h3 className="text-xl font-bold leading-tight">
+              <h2 className="text-lg font-bold leading-tight">
                 {t(
                   `dashboards.reciclador.auditoria.niveles.${auditoria.nivel_desempeno.toLowerCase()}`,
                 )}
-              </h3>
+              </h2>
               <p className="truncate text-sm">{auditoria.nombre_conjunto}</p>
             </div>
           </div>
@@ -205,9 +205,9 @@ export function AuditoriaResultadoModal({ idAuditoria, auditoria: auditoriaRecib
                 <p className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   {t("auditoriaResultado.temaLabel")}
                 </p>
-                <h4 className="mt-0.5 text-lg font-bold leading-snug text-gray-900 dark:text-white">
+                <h3 className="mt-0.5 text-base font-bold leading-snug text-gray-900 dark:text-white">
                   {auditoria.tema_educativo}
-                </h4>
+                </h3>
               </div>
 
               {auditoria.descripcion && (

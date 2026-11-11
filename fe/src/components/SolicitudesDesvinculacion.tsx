@@ -13,6 +13,7 @@ import {
 } from "@/lib/adminConjuntoApi";
 import { notificarSolicitudesActualizadas } from "@/lib/solicitudesEvents";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
+import { Button } from "@/components/ui/Button";
 
 /**
  * ¿Qué? Pestaña "Desvinculaciones" del Administrador del Sistema: las solicitudes
@@ -90,7 +91,7 @@ export function SolicitudesDesvinculacion() {
 
             {rechazandoId === s.id ? (
               <div className="mt-3 space-y-2">
-                <label htmlFor={`motivo-rechazo-${s.id}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                <label htmlFor={`motivo-rechazo-${s.id}`} className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   {t("desvinculacion.adminSistema.rejectModal.motivoLabel")}
                 </label>
                 <textarea
@@ -109,43 +110,28 @@ export function SolicitudesDesvinculacion() {
                   max={DESVINCULACION_MOTIVO_MAX_LENGTH}
                 />
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => resolver(s, false)}
-                    disabled={procesandoId === s.id || !motivoRechazo.trim()}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
+                  <Button variant="danger" size="sm" onClick={() => resolver(s, false)} disabled={procesandoId === s.id || !motivoRechazo.trim()}>
                     <OctagonX className="icon-sm icon-draw" />
                     {t("desvinculacion.adminSistema.rejectModal.confirm")}
-                  </button>
-                  <button
-                    onClick={() => {
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => {
                       setRechazandoId(null);
                       setMotivoRechazo("");
-                    }}
-                    className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-                  >
+                    }}>
                     {t("common.cancel")}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
               <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => resolver(s, true)}
-                  disabled={procesandoId === s.id}
-                  className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                >
+                <Button variant="primary" size="sm" onClick={() => resolver(s, true)} disabled={procesandoId === s.id}>
                   <BadgeCheck className="icon-sm icon-draw" />
                   {t("desvinculacion.adminSistema.approve")}
-                </button>
-                <button
-                  onClick={() => setRechazandoId(s.id)}
-                  disabled={procesandoId === s.id}
-                  className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400/30 dark:bg-transparent dark:hover:bg-red-400/15"
-                >
+                </Button>
+                <Button variant="dangerOutline" size="sm" onClick={() => setRechazandoId(s.id)} disabled={procesandoId === s.id}>
                   <OctagonX className="icon-sm icon-draw" />
                   {t("desvinculacion.adminSistema.reject")}
-                </button>
+                </Button>
               </div>
             )}
           </div>

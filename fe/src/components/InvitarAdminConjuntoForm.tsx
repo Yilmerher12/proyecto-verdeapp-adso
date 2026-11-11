@@ -111,7 +111,7 @@ export function InvitarAdminConjuntoForm() {
     <div>
       <div className="flex items-center gap-2 mb-4">
         <UserPlus className="icon-lg text-accent-600" />
-        <h3 className="font-bold text-gray-800 dark:text-white text-lg">{t("invitarAdminConjunto.title")}</h3>
+        <h2 className="font-bold text-gray-800 dark:text-white text-lg">{t("invitarAdminConjunto.title")}</h2>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
         {t("invitarAdminConjunto.description")}
@@ -133,7 +133,7 @@ export function InvitarAdminConjuntoForm() {
         />
 
         <div>
-          <label htmlFor="invitar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+          <label htmlFor="invitar-localidad" className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
             <MapIcon className="icon-md" />
             {t("invitarAdminConjunto.localityLabel")}
           </label>
@@ -153,7 +153,7 @@ export function InvitarAdminConjuntoForm() {
         </div>
 
         <div>
-          <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
             <Building className="icon-md" />
             {t("invitarAdminConjunto.conjuntosLabel")}
           </label>

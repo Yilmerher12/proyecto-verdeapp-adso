@@ -12,6 +12,7 @@
 import { useTranslation } from "react-i18next";
 import { Unlink } from "lucide-react";
 import type { NotificacionItem } from "@/lib/notificaciones";
+import { Button } from "@/components/ui/Button";
 
 interface DesvinculacionAprobadaBannerProps {
   notificaciones: NotificacionItem[];
@@ -27,7 +28,7 @@ export function DesvinculacionAprobadaBanner({ notificaciones, onMarcarLeida }: 
     <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-night-line dark:bg-night-card">
       <div className="mb-3 flex items-center gap-2">
         <Unlink className="icon-md text-gray-600 dark:text-gray-400" aria-hidden="true" />
-        <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("desvinculacionAprobada.bannerTitle")}</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("desvinculacionAprobada.bannerTitle")}</h2>
       </div>
       <div className="space-y-2">
         {notificaciones.map((n) => (
@@ -36,13 +37,9 @@ export function DesvinculacionAprobadaBanner({ notificaciones, onMarcarLeida }: 
             className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-night-inset sm:flex-row sm:items-center sm:justify-between"
           >
             <p className="text-sm text-gray-700 dark:text-gray-300">{n.mensaje}</p>
-            <button
-              type="button"
-              onClick={() => onMarcarLeida(n.id)}
-              className="shrink-0 cursor-pointer rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-            >
+            <Button variant="primary" size="sm" type="button" onClick={() => onMarcarLeida(n.id)}>
               {t("desvinculacionAprobada.gotIt")}
-            </button>
+            </Button>
           </div>
         ))}
       </div>

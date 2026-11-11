@@ -11,6 +11,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Pestanas } from "@/components/ui/Pestanas";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Button } from "@/components/ui/Button";
 
 /**
  * ¿Qué? Página "Desempeño" del Admin de Conjunto (HU-052): cómo va la separación
@@ -99,15 +100,10 @@ export function AdminConjuntoDesempenoPage() {
               ))}
             </select>
           </div>
-          <button
-            type="button"
-            onClick={descargarPdf}
-            disabled={!idConjunto || bajando}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-          >
+          <Button variant="primary" type="button" onClick={descargarPdf} disabled={!idConjunto || bajando}>
             <Download className="icon-sm" />
             {bajando ? t("desempeno.descargando") : t("desempeno.descargarPdf")}
-          </button>
+          </Button>
         </div>
       </div>
       {errorDescarga && (

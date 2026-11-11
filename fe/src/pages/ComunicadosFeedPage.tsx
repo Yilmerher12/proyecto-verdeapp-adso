@@ -162,7 +162,7 @@ export function ComunicadosFeedPage() {
         <>
           {estaSemana.length > 0 && (
             <section aria-labelledby="comunicados-esta-semana" className="space-y-3">
-              <h2 id="comunicados-esta-semana" className="px-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+              <h2 id="comunicados-esta-semana" className="px-1 text-lg font-bold text-gray-900 dark:text-white">
                 {t("comunicados.feed.estaSemana")}
               </h2>
               {estaSemana.map((item) => (
@@ -172,7 +172,7 @@ export function ComunicadosFeedPage() {
           )}
           {anteriores.length > 0 && (
             <section aria-labelledby="comunicados-anteriores" className="space-y-3">
-              <h2 id="comunicados-anteriores" className="px-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+              <h2 id="comunicados-anteriores" className="px-1 text-lg font-bold text-gray-900 dark:text-white">
                 {t("comunicados.feed.anteriores")}
               </h2>
               {anteriores.map((item) => (

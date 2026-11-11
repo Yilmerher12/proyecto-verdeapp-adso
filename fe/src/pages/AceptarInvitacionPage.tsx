@@ -191,7 +191,7 @@ export function AceptarInvitacionPage() {
             <div className="mx-auto w-16 h-16 bg-red-100 flex items-center justify-center rounded-full border border-red-200 dark:bg-red-400/15 dark:border-red-400/30">
               <OctagonX className="icon-xl text-red-600 dark:text-red-300 icon-appear icon-shake" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.invalid.title")}</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.invalid.title")}</h2>
             <p className="text-gray-600 text-sm dark:text-gray-400">
               {t("aceptarInvitacion.invalid.message")}
             </p>
@@ -214,7 +214,7 @@ export function AceptarInvitacionPage() {
             <div className="mx-auto w-20 h-20 bg-accent-100 flex items-center justify-center rounded-full border border-accent-200 dark:bg-accent-300/10 dark:border-accent-300/40">
               <BadgeCheck className="icon-xl text-accent-600 dark:text-accent-400 icon-appear icon-hop" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.success.title")}</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.success.title")}</h2>
             <p className="text-gray-600 text-sm dark:text-gray-400">
               {t("aceptarInvitacion.success.message")}
             </p>
@@ -239,7 +239,7 @@ export function AceptarInvitacionPage() {
             <div className="mb-3 flex justify-center">
               <BrandLogo variant="mark" className="h-12" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.form.title")}</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("aceptarInvitacion.form.title")}</h2>
             <p className="text-gray-500 mt-1 dark:text-gray-400">
               {t("aceptarInvitacion.form.invitationFor")} <strong>{infoInvitacion.correo_electronico}</strong>
             </p>

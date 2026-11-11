@@ -172,7 +172,7 @@ export function ResidenteDashboard() {
           <RolIcon className="icon-lg text-accent-700 dark:text-accent-300" />
         </div>
         <div className="min-w-0">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("dashboards.residente.title")}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("dashboards.residente.title")}</h1>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
             {t("dashboards.common.welcomePrefix")}{" "}
             <span className="font-semibold uppercase text-gray-800 dark:text-gray-200">{fullName}</span>.
@@ -205,7 +205,7 @@ export function ResidenteDashboard() {
             <div className="min-w-0">
               <h2
                 id="residente-reporte-titulo"
-                className={`text-sm font-bold ${
+                className={`text-lg font-bold ${
                   !cargando && yaReportado ? "text-amber-900 dark:text-amber-200" : "text-gray-900 dark:text-white"
                 }`}
               >
@@ -334,7 +334,7 @@ export function ResidenteDashboard() {
                 <ChartColumn className="icon-md text-accent-700 dark:text-accent-300" aria-hidden="true" />
               </div>
               <div>
-                <h2 id="residente-mi-conjunto-titulo" className="text-base font-bold text-gray-900 dark:text-white">
+                <h2 id="residente-mi-conjunto-titulo" className="text-lg font-bold text-gray-900 dark:text-white">
                   {t("dashboards.residente.miConjunto.title")}
                 </h2>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t("dashboards.residente.miConjunto.subtitle")}</p>

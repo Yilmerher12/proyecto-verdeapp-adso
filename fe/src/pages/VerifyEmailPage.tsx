@@ -66,12 +66,15 @@ export function VerifyEmailPage() {
           aria-label={t("common.backToHome")}
           title={t("common.backToHome")}
         >
-          <BrandLogo className="h-10" />
+          {/* ¿Qué? El logo es el encabezado principal (h1) y el título de la tarjeta un h2 de 18 px, igual que en AuthLayout (recuperar y restablecer contraseña): las tres páginas son hermanas y deben verse iguales (issue #640). */}
+          <h1 className="flex justify-center">
+            <BrandLogo className="h-10" />
+          </h1>
         </Link>
         <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-200 dark:border-night-line p-8 shadow-sm text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
             {t("verifyEmail.title")}
-          </h1>
+          </h2>
 
           {/* ──── Estado: cargando ──── */}
           {status === "loading" && (
