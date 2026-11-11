@@ -121,7 +121,7 @@ export function ResetPasswordPage() {
   // ¿Qué? Si no hay token en la URL, mostrar mensaje de error.
   if (!token) {
     return (
-      <AuthLayout title={t("auth.resetPassword.invalidLinkTitle")}>
+      <AuthLayout title={t("auth.resetPassword.invalidLinkTitle")} centered>
         <Alert type="error" message={t("auth.resetPassword.invalidLinkMessage")} />
         <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
           <Link
