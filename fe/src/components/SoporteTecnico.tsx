@@ -59,9 +59,6 @@ const CLASE_ESTADO: Record<EstadoSoporte, string> = {
   RESUELTA: "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-300",
 };
 
-const CLASE_BOTON_SECUNDARIO =
-  "flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover";
-
 type Conteos = Record<FiltroEstado, number>;
 
 /**
@@ -339,16 +336,17 @@ export function SoporteTecnico() {
                             <Send className="icon-sm" />
                             {t("soporteAdmin.enviarRespuesta")}
                           </Button>
-                          <button
+                          <Button
+                            variant="secondary"
+                            size="sm"
                             type="button"
                             onClick={() => {
                               setRespondiendoId(null);
                               setTextoRespuesta("");
                             }}
-                            className={CLASE_BOTON_SECUNDARIO}
                           >
                             {t("common.cancel")}
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     )}
@@ -365,14 +363,9 @@ export function SoporteTecnico() {
                       </span>
                       <div className="ml-auto flex items-center gap-1.5">
                         {respondiendoId !== s.id && (
-                          <button
-                            type="button"
-                            onClick={() => abrirRespuesta(s)}
-                            disabled={procesandoId === s.id}
-                            className={CLASE_BOTON_SECUNDARIO}
-                          >
+                          <Button variant="secondary" size="sm" type="button" onClick={() => abrirRespuesta(s)} disabled={procesandoId === s.id}>
                             {s.respuesta ? t("soporteAdmin.cambiarRespuesta") : t("soporteAdmin.responder")}
-                          </button>
+                          </Button>
                         )}
                         <MenuAcciones ariaLabel={t("soporteAdmin.masAcciones", { nombre })} grupos={opcionesDe(s)} />
                       </div>

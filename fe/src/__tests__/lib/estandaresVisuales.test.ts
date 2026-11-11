@@ -119,7 +119,12 @@ function analizar(ruta: string, codigo: string): Hallazgo[] {
         const primario = /bg-accent-700/.test(clase);
         const peligro = /bg-red-[67]00|border-red-/.test(clase); // un botón que solo tiene texto rojo (sin fondo ni borde) es un enlace, no un Button
         const secundario = /(?:^|[\s"'`])border(?=[\s"'`])/.test(clase) && /\bpx-|\bflex-1\b|\bw-full\b/.test(clase);
-        if (!esPestana && !esControlDeSeleccion && !soloIcono && (primario || peligro || secundario)) salida.push({ regla: "botonesAMano", donde: dondeEsta(nodo) });
+        // ¿Qué? Un botón cuyo className sale de una constante o de un estilo de variante (CLASE_BOTON_..., estilo.boton) también es un botón de
+        //       acción escrito a mano, aunque su className no sea un texto fijo: así no se escapa (por ejemplo el de confirmar de ConfirmModal).
+        const claseDeConstante = !!atributoClase?.initializer && /CLASE_BOTON|estilo\.boton/.test(atributoClase.initializer.getText());
+        if ((!esPestana && !esControlDeSeleccion && !soloIcono && (primario || peligro || secundario)) || claseDeConstante) {
+          salida.push({ regla: "botonesAMano", donde: dondeEsta(nodo) });
+        }
       }
 
       // Regla 2: ícono (de lucide-react o de un ícono de rol) con medida suelta en vez de icon-sm/md/lg/xl.

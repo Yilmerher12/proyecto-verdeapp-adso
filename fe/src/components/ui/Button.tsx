@@ -19,7 +19,7 @@ import { Spinner } from "./Spinner";
 interface ButtonProps extends Omit<React.ComponentPropsWithRef<"button">, "className" | "style" | "children" | "type"> {
   children: React.ReactNode;
   type?: "button" | "submit" | "reset";
-  variant?: "primary" | "secondary" | "danger" | "dangerOutline";
+  variant?: "primary" | "secondary" | "danger" | "dangerOutline" | "warning";
   size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
   isLoading?: boolean;
@@ -59,6 +59,10 @@ export function Button({
       "bg-white text-gray-700 border border-edge hover:bg-gray-50 dark:bg-night-inset dark:text-gray-300 dark:border-night-edge dark:hover:bg-night-hover",
     danger:
       "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700",
+    // ¿Qué? Acción delicada pero reversible (ámbar sólido): la de las confirmaciones de tipo "warning". accent: amber-700 con texto blanco
+    //       cumple el contraste (amber-600 no llega a 4.5:1).
+    warning:
+      "bg-amber-700 text-white hover:bg-amber-800 dark:bg-amber-300 dark:text-amber-950 dark:hover:bg-amber-200",
     // ¿Qué? Mismos colores que ya usaban a mano los botones de borde rojo (issue #640): texto red-700, borde red-300 y,
     //       en modo oscuro, borde translúcido y texto red-300.
     dangerOutline:
@@ -87,7 +91,7 @@ export function Button({
       type={type}
       disabled={disabled || isLoading}
       aria-busy={isLoading ? true : (ariaBusy ?? false)}
-      aria-label={isLoading ? t("common.processing") : ariaLabel}
+      aria-label={ariaLabel ?? (isLoading ? t("common.processing") : undefined)}
       className={`inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg font-semibold transition-colors duration-200 focus-ring disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : "whitespace-nowrap"}`}
     >
       {/* ¿Qué? Spinner SVG animado que aparece durante la carga. */}

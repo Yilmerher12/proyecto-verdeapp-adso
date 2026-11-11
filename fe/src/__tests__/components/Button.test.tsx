@@ -133,9 +133,18 @@ describe("Button", () => {
       expect(screen.getByRole("button")).toHaveAttribute("aria-busy", "false");
     });
 
-    it("mientras carga, el nombre accesible es el de procesando aunque tenga aria-label", () => {
-      render(<Button isLoading aria-label="Guardar tema">Guardar</Button>);
+    it("mientras carga y sin aria-label, el nombre accesible es 'Procesando'; con aria-label propio se respeta", () => {
+      const { rerender } = render(<Button isLoading>Guardar</Button>);
       expect(screen.getByRole("button", { name: "Procesando, por favor espera" })).toBeInTheDocument();
+      rerender(<Button isLoading aria-label="Eliminando…">Eliminando…</Button>);
+      expect(screen.getByRole("button", { name: "Eliminando…" })).toBeInTheDocument();
+    });
+  });
+
+  describe("variante warning (issue #640)", () => {
+    it("es ámbar sólido con letra blanca, para las confirmaciones delicadas", () => {
+      render(<Button variant="warning">Reportar</Button>);
+      expect(screen.getByRole("button", { name: "Reportar" })).toHaveClass("bg-amber-700", "text-white");
     });
   });
 
