@@ -16,14 +16,15 @@ import * as ts from "typescript";
 
 const archivos = import.meta.glob("/src/**/*.tsx", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
 
-// ¿Qué? El conteo de partida de cada regla (medido el 2026-11-11, antes de empezar a corregir).
+// ¿Qué? El conteo permitido de cada regla. Partió de 68 botones, 2 íconos, 7 textos grandes, 42 títulos y 34 pesos (medido el 2026-11-11) y
+//       bajó tanda por tanda hasta 0: desde el cierre del issue #640, cualquier caso nuevo hace fallar la prueba.
 // ¿Para qué? Fijar el avance: cada tanda de pantallas que se corrige baja el número. Al terminar el issue, todos llegan a 0.
 const BASE = {
-  botonesAMano: 27,
-  iconosConMedidaSuelta: 1,
-  textoGrandeFueraDeLaPortada: 1,
-  titulosFueraDeLaEscala: 8,
-  pesosFueraDeLaRegla: 26,
+  botonesAMano: 0,
+  iconosConMedidaSuelta: 0,
+  textoGrandeFueraDeLaPortada: 0,
+  titulosFueraDeLaEscala: 0,
+  pesosFueraDeLaRegla: 0,
 };
 
 // ¿Qué? Páginas que tienen su propio diseño y no siguen la escala (decisión del issue #640: solo la portada y los textos legales).
@@ -98,12 +99,16 @@ function analizar(ruta: string, codigo: string): Hallazgo[] {
         //       elegidos, así que su className es una expresión con condiciones y no un texto fijo, o llevan aria-pressed. No son
         //       acciones y no se reemplazan por Button: quedan fuera de esta regla.
         const atributoClase = nodo.attributes.properties.find((p) => ts.isJsxAttribute(p) && p.name.getText() === "className") as ts.JsxAttribute | undefined;
-        const esControlDeSeleccion = tiene("aria-pressed") || (!!atributoClase?.initializer && !ts.isStringLiteral(atributoClase.initializer));
+        // ¿Qué? También quedan fuera una fila o tarjeta que hace de botón (texto alineado a la izquierda) y un enlace con forma de botón (subrayado).
+        const esControlDeSeleccion =
+          tiene("aria-pressed") ||
+          (!!atributoClase?.initializer && !ts.isStringLiteral(atributoClase.initializer)) ||
+          /\btext-left\b|\bunderline\b/.test(clase);
         // ¿Qué? Un botón de solo ícono tiene su nombre en aria-label o en title, y no lleva relleno horizontal de texto.
         const soloIcono = (tiene("aria-label") || tiene("title")) && !/\bpx-(?:[3-9]|2\.5)\b/.test(clase);
         const primario = /bg-accent-700/.test(clase);
-        const peligro = /bg-red-[67]00|(?:border|bg|text)-red-/.test(clase);
-        const secundario = /\bborder\b/.test(clase) && /\bpx-/.test(clase);
+        const peligro = /bg-red-[67]00|border-red-/.test(clase); // un botón que solo tiene texto rojo (sin fondo ni borde) es un enlace, no un Button
+        const secundario = /(?:^|[\s"'`])border(?=[\s"'`])/.test(clase) && /\bpx-|\bflex-1\b|\bw-full\b/.test(clase);
         if (!esPestana && !esControlDeSeleccion && !soloIcono && (primario || peligro || secundario)) salida.push({ regla: "botonesAMano", donde: dondeEsta(nodo) });
       }
 

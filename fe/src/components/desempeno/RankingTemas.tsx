@@ -15,6 +15,7 @@ import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import type { TemaDesempeno } from "@/lib/auditoriaConjuntoApi";
 import { CAMPOS_POR_NIVEL, claveNivel, rankingTemas, regularOMalo, totalTema } from "@/lib/desempeno";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 
 // ¿Qué? `sinTarjeta`: sin marco propio, porque va dentro de una pestaña de la tarjeta del desempeño.
 export function RankingTemas({ temas, sinTarjeta = false }: { temas: TemaDesempeno[]; sinTarjeta?: boolean }) {
@@ -37,14 +38,10 @@ export function RankingTemas({ temas, sinTarjeta = false }: { temas: TemaDesempe
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t("desempeno.temas.pista")}</p>
         </div>
         {ordenados.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setComoTabla((v) => !v)}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-          >
+          <Button variant="secondary" size="sm" type="button" onClick={() => setComoTabla((v) => !v)}>
             {comoTabla ? <List className="icon-sm" aria-hidden="true" /> : <Table2 className="icon-sm" aria-hidden="true" />}
             {comoTabla ? t("desempeno.temas.verComoLista") : t("desempeno.temas.verComoTabla")}
-          </button>
+          </Button>
         )}
       </div>
 

@@ -88,7 +88,7 @@ export function EnviarAConjuntosModal({ modulo, onEnviado, onClose }: EnviarACon
         {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
 
         <div>
-          <label htmlFor="enviar-localidad" className="mb-1 block text-xs font-semibold text-gray-600 dark:text-gray-300">
+          <label htmlFor="enviar-localidad" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
             {t(`${p}.send.localidadLabel`)}
           </label>
           <select

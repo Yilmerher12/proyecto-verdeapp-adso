@@ -12,6 +12,7 @@ import { Paginacion } from "@/components/ui/Paginacion";
 import { Pestanas } from "@/components/ui/Pestanas";
 import { usePaginacion } from "@/hooks/usePaginacion";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
+import { Button } from "@/components/ui/Button";
 import {
   listarAuditoriasAdmin,
   type AuditoriaAdmin,
@@ -312,7 +313,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
           {modo === "rango" && (
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label htmlFor="cal-periodo-desde" className="block text-xs font-semibold text-gray-500 dark:text-gray-400">
+                <label htmlFor="cal-periodo-desde" className="block text-xs font-medium text-gray-500 dark:text-gray-400">
                   {t(`${p}.period.from`)}
                 </label>
                 <input
@@ -330,7 +331,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
                 <FechaEnPalabras valor={desdeLibre} />
               </div>
               <div>
-                <label htmlFor="cal-periodo-hasta" className="block text-xs font-semibold text-gray-500 dark:text-gray-400">
+                <label htmlFor="cal-periodo-hasta" className="block text-xs font-medium text-gray-500 dark:text-gray-400">
                   {t(`${p}.period.to`)}
                 </label>
                 <input
@@ -361,13 +362,9 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-accent-300 bg-accent-50 px-4 py-3 dark:border-accent-300/40 dark:bg-accent-300/10">
             <CalendarSearch className="icon-md shrink-0 text-accent-700 dark:text-accent-400" aria-hidden="true" />
             <p className="min-w-0 flex-1 text-xs text-accent-900 dark:text-accent-200">{t(`${p}.week.lastWeekNotice`, { rango: rangoSemanaUTC(semana) })}</p>
-            <button
-              type="button"
-              onClick={verEstaSemana}
-              className="touch-target-h cursor-pointer rounded-lg border border-accent-600 px-3 py-1.5 text-xs font-semibold text-accent-700 transition-colors hover:bg-accent-100 dark:border-accent-400 dark:text-accent-300 dark:hover:bg-accent-300/15"
-            >
+            <Button variant="secondary" size="sm" type="button" onClick={verEstaSemana}>
               {t(`${p}.week.viewThisWeek`)}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -383,7 +380,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
             />
           </div>
           <div className="w-full sm:w-auto">
-            <label htmlFor="cal-filtro-localidad" className="block text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <label htmlFor="cal-filtro-localidad" className="block text-xs font-medium text-gray-500 dark:text-gray-400">
               {t(`${p}.week.filters.localidad`)}
             </label>
             <select
@@ -417,7 +414,7 @@ export function CalificacionesPorConjunto({ semanaActual, ultimaFecha, recientes
             </div>
           </div>
           <div className="w-full sm:w-auto">
-            <label htmlFor="cal-orden" className="block text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <label htmlFor="cal-orden" className="block text-xs font-medium text-gray-500 dark:text-gray-400">
               {t(`${p}.week.sort.label`)}
             </label>
             <select

@@ -7,6 +7,7 @@ import { AvisosConjunto } from "@/components/adminConjunto/AvisosConjunto";
 import { EditarConjuntoModal } from "@/components/adminConjunto/EditarConjuntoModal";
 import { RecicladoresConjunto } from "@/components/adminConjunto/RecicladoresConjunto";
 import { ResumenConjunto } from "@/components/adminConjunto/ResumenConjunto";
+import { Button } from "@/components/ui/Button";
 
 type PestanaConjunto = "resumen" | "avisos" | "recicladores";
 
@@ -138,15 +139,10 @@ export function TarjetaConjunto({
                 valor: conjunto.total_apartamentos || t("dashboards.adminConjunto.datos.sinDefinir"),
               })}
             </p>
-            <button
-              type="button"
-              onClick={() => setEditando(true)}
-              aria-describedby={`conjunto-nombre-${id}`}
-              className="focus-ring touch-target-h flex cursor-pointer items-center gap-1.5 rounded-xl border border-accent-300 bg-accent-50 px-3 py-1.5 text-sm font-semibold text-accent-700 transition-colors hover:bg-accent-100 hover:text-accent-800 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400 dark:hover:bg-accent-300/15"
-            >
+            <Button variant="secondary" type="button" onClick={() => setEditando(true)} aria-describedby={`conjunto-nombre-${id}`}>
               <Pencil className="icon-sm" aria-hidden="true" />
               {t("dashboards.adminConjunto.editButton")}
-            </button>
+            </Button>
           </div>
 
           <Pestanas

@@ -26,13 +26,13 @@
 
 | Regla | Al empezar | Hoy |
 | --- | --- | --- |
-| Botón primario, secundario o de peligro escrito a mano | 68 | 27 |
-| Ícono con medida suelta | 2 | 1 |
-| Texto de 3xl o más fuera de la portada y los textos legales | 7 | 1 |
-| Título fuera de la escala | 42 | 8 |
-| Peso de letra fuera de la regla (títulos bold, nombres de campo medium) | 34 (se midió al sumar la regla) | 26 |
+| Botón primario, secundario o de peligro escrito a mano | 68 | 0 |
+| Ícono con medida suelta | 2 | 0 |
+| Texto de 3xl o más fuera de la portada y los textos legales | 7 | 0 |
+| Título fuera de la escala | 42 | 0 |
+| Peso de letra fuera de la regla (títulos bold, nombres de campo medium) | 34 (se midió al sumar la regla) | 0 |
 
-En la etapa 3 (paneles y páginas de `pages/`) el conteo de botones bajó además porque la regla dejó de contar los controles de selección (pestañas, chips de filtro y tarjetas que hacen de botón: su estilo depende de si están elegidos, así que no son acciones ni se reemplazan por `Button`). Los casos que quedan están en `components/` (etapa 4).
+En la etapa 3 (paneles y páginas de `pages/`) el conteo de botones bajó además porque la regla dejó de contar los controles de selección (pestañas, chips de filtro y tarjetas que hacen de botón: su estilo depende de si están elegidos, así que no son acciones ni se reemplazan por `Button`). Con la etapa 4 (componentes, ventanas y `ui/`) todos los números llegaron a 0 y todas las casillas están marcadas.
 
 Cada tanda baja estos números y la constante `BASE` de la prueba. Al cerrar el issue, todos son 0.
 
@@ -48,15 +48,15 @@ Cada tanda baja estos números y la constante `BASE` de la prueba. Al cerrar el 
 
 ## Públicas con diseño propio (excepción: portada y textos legales) (9)
 
-- [ ] `components/layout/LegalLayout.tsx` (ventana)
-- [ ] `pages/ContactoModalPage.tsx` (ventana)
-- [ ] `pages/CookiesModalPage.tsx` (ventana)
-- [ ] `pages/LandingPage.tsx`
-- [ ] `pages/PoliticaCookiesPage.tsx`
-- [ ] `pages/PoliticaPrivacidadPage.tsx`
-- [ ] `pages/PrivacidadModalPage.tsx` (ventana)
-- [ ] `pages/TerminosDeUsoPage.tsx`
-- [ ] `pages/TerminosModalPage.tsx` (ventana)
+- [x] `components/layout/LegalLayout.tsx` (ventana)
+- [x] `pages/ContactoModalPage.tsx` (ventana)
+- [x] `pages/CookiesModalPage.tsx` (ventana)
+- [x] `pages/LandingPage.tsx`
+- [x] `pages/PoliticaCookiesPage.tsx`
+- [x] `pages/PoliticaPrivacidadPage.tsx`
+- [x] `pages/PrivacidadModalPage.tsx` (ventana)
+- [x] `pages/TerminosDeUsoPage.tsx`
+- [x] `pages/TerminosModalPage.tsx` (ventana)
 
 ## Residente y Reciclador (paneles) (2)
 
@@ -90,110 +90,110 @@ Cada tanda baja estos números y la constante `BASE` de la prueba. Al cerrar el 
 
 ## Componentes compartidos de `ui/` (29)
 
-- [ ] `components/ui/Alert.tsx`
-- [ ] `components/ui/BackToTopButton.tsx`
-- [ ] `components/ui/BrandLogo.tsx`
-- [ ] `components/ui/Button.tsx`
-- [ ] `components/ui/ConfirmModal.tsx` (ventana)
-- [ ] `components/ui/ConjuntoCombobox.tsx`
-- [ ] `components/ui/ConjuntoComboboxMultiple.tsx`
-- [ ] `components/ui/ContadorCaracteres.tsx`
-- [ ] `components/ui/ContenidoRecargable.tsx`
-- [ ] `components/ui/EmptyState.tsx`
-- [ ] `components/ui/FechaEnPalabras.tsx`
-- [ ] `components/ui/GuiaApoyoField.tsx`
-- [ ] `components/ui/ImagenAdjuntaField.tsx`
-- [ ] `components/ui/InputField.tsx`
-- [ ] `components/ui/InsigniaAccionImagen.tsx`
-- [ ] `components/ui/LanguageSwitcher.tsx`
-- [ ] `components/ui/LoadingState.tsx`
-- [ ] `components/ui/MenuAcciones.tsx`
-- [ ] `components/ui/Modal.tsx` (ventana)
-- [ ] `components/ui/Paginacion.tsx`
-- [ ] `components/ui/PasswordRequirementsChecklist.tsx`
-- [ ] `components/ui/PasswordStrengthIndicator.tsx`
-- [ ] `components/ui/Pestanas.tsx`
-- [ ] `components/ui/ProgressBar.tsx`
-- [ ] `components/ui/ServerErrorBanner.tsx`
-- [ ] `components/ui/Spinner.tsx`
-- [ ] `components/ui/TextoRecortable.tsx`
-- [ ] `components/ui/ThemeToggle.tsx`
-- [ ] `components/ui/YoutubeEmbed.tsx`
+- [x] `components/ui/Alert.tsx`
+- [x] `components/ui/BackToTopButton.tsx`
+- [x] `components/ui/BrandLogo.tsx`
+- [x] `components/ui/Button.tsx`
+- [x] `components/ui/ConfirmModal.tsx` (ventana)
+- [x] `components/ui/ConjuntoCombobox.tsx`
+- [x] `components/ui/ConjuntoComboboxMultiple.tsx`
+- [x] `components/ui/ContadorCaracteres.tsx`
+- [x] `components/ui/ContenidoRecargable.tsx`
+- [x] `components/ui/EmptyState.tsx`
+- [x] `components/ui/FechaEnPalabras.tsx`
+- [x] `components/ui/GuiaApoyoField.tsx`
+- [x] `components/ui/ImagenAdjuntaField.tsx`
+- [x] `components/ui/InputField.tsx`
+- [x] `components/ui/InsigniaAccionImagen.tsx`
+- [x] `components/ui/LanguageSwitcher.tsx`
+- [x] `components/ui/LoadingState.tsx`
+- [x] `components/ui/MenuAcciones.tsx`
+- [x] `components/ui/Modal.tsx` (ventana)
+- [x] `components/ui/Paginacion.tsx`
+- [x] `components/ui/PasswordRequirementsChecklist.tsx`
+- [x] `components/ui/PasswordStrengthIndicator.tsx`
+- [x] `components/ui/Pestanas.tsx`
+- [x] `components/ui/ProgressBar.tsx`
+- [x] `components/ui/ServerErrorBanner.tsx`
+- [x] `components/ui/Spinner.tsx`
+- [x] `components/ui/TextoRecortable.tsx`
+- [x] `components/ui/ThemeToggle.tsx`
+- [x] `components/ui/YoutubeEmbed.tsx`
 
 ## Componentes de `layout/` (2)
 
-- [ ] `components/layout/AppShell.tsx` (ventana)
-- [ ] `components/layout/NotificationBell.tsx`
+- [x] `components/layout/AppShell.tsx` (ventana)
+- [x] `components/layout/NotificationBell.tsx`
 
 ## Componentes del panel del Administrador de Conjunto (`adminConjunto/`) (9)
 
-- [ ] `components/adminConjunto/AvisosConjunto.tsx`
-- [ ] `components/adminConjunto/CoberturaConjunto.tsx`
-- [ ] `components/adminConjunto/CodigoAccesoConjunto.tsx` (ventana)
-- [ ] `components/adminConjunto/DesvinculacionConjunto.tsx` (ventana)
-- [ ] `components/adminConjunto/EditarConjuntoModal.tsx` (ventana)
-- [ ] `components/adminConjunto/InvitarRecicladorModal.tsx` (ventana)
-- [ ] `components/adminConjunto/RecicladoresConjunto.tsx` (ventana)
-- [ ] `components/adminConjunto/ResumenConjunto.tsx`
-- [ ] `components/adminConjunto/TarjetaConjunto.tsx`
+- [x] `components/adminConjunto/AvisosConjunto.tsx`
+- [x] `components/adminConjunto/CoberturaConjunto.tsx`
+- [x] `components/adminConjunto/CodigoAccesoConjunto.tsx` (ventana)
+- [x] `components/adminConjunto/DesvinculacionConjunto.tsx` (ventana)
+- [x] `components/adminConjunto/EditarConjuntoModal.tsx` (ventana)
+- [x] `components/adminConjunto/InvitarRecicladorModal.tsx` (ventana)
+- [x] `components/adminConjunto/RecicladoresConjunto.tsx` (ventana)
+- [x] `components/adminConjunto/ResumenConjunto.tsx`
+- [x] `components/adminConjunto/TarjetaConjunto.tsx`
 
 ## Componentes de desempeño (`desempeno/`) (7)
 
-- [ ] `components/desempeno/GraficaDesempenoSemanal.tsx`
-- [ ] `components/desempeno/LeyendaNiveles.tsx`
-- [ ] `components/desempeno/ListaAuditoriasSemana.tsx`
-- [ ] `components/desempeno/PanelDesempeno.tsx`
-- [ ] `components/desempeno/RankingTemas.tsx`
-- [ ] `components/desempeno/ResumenDesempeno.tsx`
-- [ ] `components/desempeno/TablaDesempenoSemanal.tsx`
+- [x] `components/desempeno/GraficaDesempenoSemanal.tsx`
+- [x] `components/desempeno/LeyendaNiveles.tsx`
+- [x] `components/desempeno/ListaAuditoriasSemana.tsx`
+- [x] `components/desempeno/PanelDesempeno.tsx`
+- [x] `components/desempeno/RankingTemas.tsx`
+- [x] `components/desempeno/ResumenDesempeno.tsx`
+- [x] `components/desempeno/TablaDesempenoSemanal.tsx`
 
 ## Componentes de contenido educativo (`educativo/`) (10)
 
-- [ ] `components/educativo/CalificacionesPorConjunto.tsx`
-- [ ] `components/educativo/CategoriaField.tsx`
-- [ ] `components/educativo/ContenidoRecomendadoCalificacion.tsx`
-- [ ] `components/educativo/EnviarAConjuntosModal.tsx` (ventana)
-- [ ] `components/educativo/IlustracionCategoria.tsx`
-- [ ] `components/educativo/ModuloEducativoModal.tsx` (ventana)
-- [ ] `components/educativo/MuroLeccion.tsx`
-- [ ] `components/educativo/ResumenMuro.tsx`
-- [ ] `components/educativo/TuSemana.tsx`
-- [ ] `components/educativo/VistaPreviaModulo.tsx`
+- [x] `components/educativo/CalificacionesPorConjunto.tsx`
+- [x] `components/educativo/CategoriaField.tsx`
+- [x] `components/educativo/ContenidoRecomendadoCalificacion.tsx`
+- [x] `components/educativo/EnviarAConjuntosModal.tsx` (ventana)
+- [x] `components/educativo/IlustracionCategoria.tsx`
+- [x] `components/educativo/ModuloEducativoModal.tsx` (ventana)
+- [x] `components/educativo/MuroLeccion.tsx`
+- [x] `components/educativo/ResumenMuro.tsx`
+- [x] `components/educativo/TuSemana.tsx`
+- [x] `components/educativo/VistaPreviaModulo.tsx`
 
 ## Componentes de los paneles (`dashboard/`) (5)
 
-- [ ] `components/dashboard/AuditoriaResultadoBanner.tsx`
-- [ ] `components/dashboard/AuditoriaResultadoModal.tsx` (ventana)
-- [ ] `components/dashboard/DesvinculacionAprobadaBanner.tsx`
-- [ ] `components/dashboard/HistorialAuditorias.tsx`
-- [ ] `components/dashboard/NotificationFeed.tsx`
+- [x] `components/dashboard/AuditoriaResultadoBanner.tsx`
+- [x] `components/dashboard/AuditoriaResultadoModal.tsx` (ventana)
+- [x] `components/dashboard/DesvinculacionAprobadaBanner.tsx`
+- [x] `components/dashboard/HistorialAuditorias.tsx`
+- [x] `components/dashboard/NotificationFeed.tsx`
 
 ## Otros componentes (17)
 
-- [ ] `components/AsignarConjuntoAdicionalForm.tsx` (ventana)
-- [ ] `components/AuditoriaConjuntoForm.tsx` (ventana)
-- [ ] `components/AyudaMotivo.tsx`
-- [ ] `components/ComentariosPunto.tsx`
-- [ ] `components/ErrorBoundary.tsx`
-- [ ] `components/ErrorFallback.tsx`
-- [ ] `components/FichaPuntoAcopio.tsx` (ventana)
-- [ ] `components/InvitarAdminConjuntoForm.tsx` (ventana)
-- [ ] `components/NovedadesEnviadas.tsx`
-- [ ] `components/PerfilUsuarioDetalle.tsx`
-- [ ] `components/ProtectedRoute.tsx`
-- [ ] `components/PuntoAcopioForm.tsx`
-- [ ] `components/RoleGuard.tsx`
-- [ ] `components/SolicitudAdminConjuntoInfo.tsx`
-- [ ] `components/SolicitudesDesvinculacion.tsx`
-- [ ] `components/SoporteTecnico.tsx`
-- [ ] `components/TablaPuntosAcopio.tsx`
+- [x] `components/AsignarConjuntoAdicionalForm.tsx` (ventana)
+- [x] `components/AuditoriaConjuntoForm.tsx` (ventana)
+- [x] `components/AyudaMotivo.tsx`
+- [x] `components/ComentariosPunto.tsx`
+- [x] `components/ErrorBoundary.tsx`
+- [x] `components/ErrorFallback.tsx`
+- [x] `components/FichaPuntoAcopio.tsx` (ventana)
+- [x] `components/InvitarAdminConjuntoForm.tsx` (ventana)
+- [x] `components/NovedadesEnviadas.tsx`
+- [x] `components/PerfilUsuarioDetalle.tsx`
+- [x] `components/ProtectedRoute.tsx`
+- [x] `components/PuntoAcopioForm.tsx`
+- [x] `components/RoleGuard.tsx`
+- [x] `components/SolicitudAdminConjuntoInfo.tsx`
+- [x] `components/SolicitudesDesvinculacion.tsx`
+- [x] `components/SoporteTecnico.tsx`
+- [x] `components/TablaPuntosAcopio.tsx`
 
 ## Configuración con JSX (4)
 
-- [ ] `App.tsx`
-- [ ] `config/contenidoEducativoMarkdown.tsx`
-- [ ] `context/AuthContext.tsx`
-- [ ] `main.tsx`
+- [x] `App.tsx`
+- [x] `config/contenidoEducativoMarkdown.tsx`
+- [x] `context/AuthContext.tsx`
+- [x] `main.tsx`
 
 ## Total
 

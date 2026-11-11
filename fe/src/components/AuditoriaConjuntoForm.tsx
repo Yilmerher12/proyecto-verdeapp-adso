@@ -24,6 +24,7 @@ import { NIVELES_DESEMPENO, ORDEN_NIVELES_SELECCIONABLES } from "@/config/nivele
 import { CATEGORIAS_NO_AUDITABLES, NOMBRE_SIMPLE_CATEGORIA } from "@/config/categoriasEducativas";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
 import { AUDITORIA_DESCRIPCION_MAX_LENGTH } from "@/lib/validacion";
+import { Button } from "@/components/ui/Button";
 
 const MAXIMO_FOTOS = 3;
 
@@ -185,7 +186,7 @@ export function AuditoriaConjuntoForm({
                un conjunto asignado, aunque ya se supiera la respuesta. */}
         {!conjuntoPreseleccionado && conjuntos.length > 1 && (
           <div className="mb-4">
-            <label htmlFor="auditoria-conjunto" className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
+            <label htmlFor="auditoria-conjunto" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
               {t("dashboards.reciclador.auditoria.conjuntoLabel")}
             </label>
             <select
@@ -205,7 +206,7 @@ export function AuditoriaConjuntoForm({
         )}
 
         <div className="mb-4">
-          <label className="mb-2 block text-xs font-bold text-gray-600 dark:text-gray-400">
+          <label className="mb-2 block text-xs font-medium text-gray-600 dark:text-gray-400">
             {t("dashboards.reciclador.auditoria.nivelLabel")}
           </label>
           {/* ¿Qué? Los 3 botones muestran su color desde el inicio (como un
@@ -263,7 +264,7 @@ export function AuditoriaConjuntoForm({
         </div>
 
         <div className="mb-4">
-          <label htmlFor="auditoria-tema" className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
+          <label htmlFor="auditoria-tema" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
             {t("dashboards.reciclador.auditoria.temaLabel")}
           </label>
           <select
@@ -282,7 +283,7 @@ export function AuditoriaConjuntoForm({
         </div>
 
         <div className="mb-4">
-          <label htmlFor="auditoria-descripcion" className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
+          <label htmlFor="auditoria-descripcion" className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
             {t("dashboards.reciclador.auditoria.descripcionLabel")}
           </label>
           <textarea
@@ -303,7 +304,7 @@ export function AuditoriaConjuntoForm({
         </div>
 
         <div className="mb-5">
-          <label className="mb-1 block text-xs font-bold text-gray-600 dark:text-gray-400">
+          <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
             {t("dashboards.reciclador.auditoria.evidenciaLabel")}
           </label>
 
@@ -375,19 +376,10 @@ export function AuditoriaConjuntoForm({
         )}
 
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
-          >
+          <Button variant="secondary" fullWidth type="button" onClick={onClose}>
             {t("common.cancel")}
-          </button>
-          <button
-            type="button"
-            onClick={intentarEnviar}
-            disabled={enviando || formularioIncompleto}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-          >
+          </Button>
+          <Button variant="primary" fullWidth type="button" onClick={intentarEnviar} disabled={enviando || formularioIncompleto}>
             {enviando && <Spinner size="sm" tone="current" />}
             {enviando
               ? // ¿Qué? Antes solo decía "Enviando..." sin ningún número.
@@ -401,7 +393,7 @@ export function AuditoriaConjuntoForm({
               : formularioIncompleto
                 ? t("dashboards.reciclador.auditoria.submitIncomplete")
                 : t("dashboards.reciclador.auditoria.submit")}
-          </button>
+          </Button>
         </div>
       </div>
 

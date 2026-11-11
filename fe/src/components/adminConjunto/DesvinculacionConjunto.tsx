@@ -5,6 +5,7 @@ import { solicitarDesvinculacion } from "@/lib/conjuntoPanelApi";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
 import { DESVINCULACION_MOTIVO_MAX_LENGTH } from "@/lib/validacion";
+import { Button } from "@/components/ui/Button";
 
 /**
  * ¿Qué? Botón para pedir dejar de administrar UN conjunto específico (RQF-016, HU-022); el motivo se escribe en
@@ -66,13 +67,9 @@ export function DesvinculacionConjunto({
         </span>
       ) : (
         <div>
-          <button
-            type="button"
-            onClick={() => setAbierta(true)}
-            className="focus-ring touch-target-h cursor-pointer rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100 hover:text-red-800 dark:border-red-400/30 dark:bg-red-400/10 dark:text-red-300 dark:hover:bg-red-400/15"
-          >
+          <Button variant="dangerOutline" size="sm" type="button" onClick={() => setAbierta(true)}>
             {t("desvinculacion.solicitarButton")}
-          </button>
+          </Button>
           <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{t("desvinculacion.clarification")}</p>
         </div>
       )}
@@ -93,7 +90,7 @@ export function DesvinculacionConjunto({
           onClose={cerrar}
         >
           <div className="space-y-2 text-left">
-            <label htmlFor={`desvinculacion-motivo-${idConjunto}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
+            <label htmlFor={`desvinculacion-motivo-${idConjunto}`} className="text-xs font-medium text-gray-600 dark:text-gray-400">
               {t("desvinculacion.motivoLabel")}
             </label>
             <textarea

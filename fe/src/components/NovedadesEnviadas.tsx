@@ -21,6 +21,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import { usePaginacion } from "@/hooks/usePaginacion";
+import { Button } from "@/components/ui/Button";
 
 // ¿Qué? Issue #399 — novedades por página en "Historial de novedades".
 const TAMANO_PAGINA = 10;
@@ -131,7 +132,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
   return (
     <div className="space-y-4 p-5">
       <div>
-        <h2 className="text-base font-bold text-gray-900 dark:text-white">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
           {t("novedadesEnviadas.formTitle")}
         </h2>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -152,7 +153,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
         <div>
           <label
             htmlFor="novedad-conjunto"
-            className="text-xs font-bold text-gray-600 dark:text-gray-400"
+            className="text-xs font-medium text-gray-600 dark:text-gray-400"
           >
             {t("novedadesEnviadas.conjuntoLabel")}
           </label>
@@ -232,7 +233,7 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
       <div>
         <label
           htmlFor="novedad-texto"
-          className="text-xs font-bold text-gray-600 dark:text-gray-400"
+          className="text-xs font-medium text-gray-600 dark:text-gray-400"
         >
           {esOtros ? t("novedadesEnviadas.textLabelRequired") : t("novedadesEnviadas.textLabel")}
         </label>
@@ -270,16 +271,10 @@ export function NovedadEnviadaForm({ onEnviada }: { onEnviada: () => void }) {
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        <button
-          ref={botonEnviar}
-          type="button"
-          onClick={enviar}
-          disabled={enviando || faltaAlgo}
-          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-        >
+        <Button variant="primary" ref={botonEnviar} type="button" onClick={enviar} disabled={enviando || faltaAlgo}>
           <Send className="icon-sm" />
           {enviando ? t("novedadesEnviadas.sending") : t("novedadesEnviadas.send")}
-        </button>
+        </Button>
         {faltaAlgo && (
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {motivo ? t("novedadesEnviadas.needComment") : t("novedadesEnviadas.needMotivo")}

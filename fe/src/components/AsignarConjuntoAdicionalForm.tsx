@@ -12,6 +12,7 @@ import {
 import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 import { Alert } from "@/components/ui/Alert";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { Button } from "@/components/ui/Button";
 
 interface Localidad {
   id_localidad: number;
@@ -226,7 +227,7 @@ export function AsignarConjuntoAdicionalForm() {
 
         <div inert={!seleccionado} className={`mb-3 transition-opacity ${seleccionado ? "" : "opacity-50"}`}>
           <p className="mb-2 text-xs font-bold text-gray-600 dark:text-gray-400">{t("desvinculacion.asignarAdicional.stepPlace")}</p>
-          <label htmlFor="asignar-localidad" className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+          <label htmlFor="asignar-localidad" className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
             <MapIcon className="icon-md" />
             {t("desvinculacion.asignarAdicional.localityLabel")}
           </label>
@@ -247,7 +248,7 @@ export function AsignarConjuntoAdicionalForm() {
             ))}
           </select>
 
-          <label className="text-xs font-bold text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
+          <label className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1 mb-2">
             <Building className="icon-md" />
             {t("desvinculacion.asignarAdicional.selectConjuntoLabel")}
           </label>
@@ -271,14 +272,9 @@ export function AsignarConjuntoAdicionalForm() {
 
         <div inert={!conjuntoElegido} className={`transition-opacity ${conjuntoElegido ? "" : "opacity-50"}`}>
           <p className="mb-2 text-xs font-bold text-gray-600 dark:text-gray-400">{t("desvinculacion.asignarAdicional.stepConfirm")}</p>
-          <button
-            type="button"
-            onClick={asignar}
-            disabled={!seleccionado || !conjuntoElegido || asignando}
-            className="cursor-pointer rounded-xl bg-accent-700 hover:bg-accent-800 text-white text-sm font-semibold px-4 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-          >
+          <Button variant="primary" type="button" onClick={asignar} disabled={!seleccionado || !conjuntoElegido || asignando}>
             {asignando ? t("desvinculacion.asignarAdicional.assigning") : t("desvinculacion.asignarAdicional.assignButton")}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

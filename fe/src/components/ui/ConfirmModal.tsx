@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
 import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 
 interface ConfirmModalProps {
   /** ¿Qué? Ícono dentro del círculo de color, arriba del título (ej: TriangleAlert, Trash2, UserX). */
@@ -106,13 +107,9 @@ export function ConfirmModal({
           </div>
         )}
         <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-night-line px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-night-hover transition-colors"
-          >
+          <Button variant="secondary" fullWidth type="button" onClick={onClose}>
             {t("common.cancel")}
-          </button>
+          </Button>
           <button
             type="button"
             onClick={onConfirm}

@@ -20,6 +20,7 @@ import {
 } from "@/lib/novedadesEnviadasApi";
 import { notificarSolicitudesActualizadas } from "@/lib/solicitudesEvents";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
+import { Button } from "@/components/ui/Button";
 
 type FiltroEstado = "PENDIENTES" | EstadoSoporte;
 type FiltroPrioridad = "TODAS" | PrioridadSoporte;
@@ -315,7 +316,7 @@ export function SoporteTecnico() {
 
                     {respondiendoId === s.id && (
                       <div className="mt-3 space-y-2">
-                        <label htmlFor={`respuesta-${s.id}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                        <label htmlFor={`respuesta-${s.id}`} className="text-xs font-medium text-gray-600 dark:text-gray-400">
                           {t("soporteAdmin.respuestaLabel")}
                         </label>
                         <textarea
@@ -334,15 +335,10 @@ export function SoporteTecnico() {
                           max={SOPORTE_RESPUESTA_MAX_LENGTH}
                         />
                         <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => actualizar(s, { respuesta: textoRespuesta.trim() })}
-                            disabled={procesandoId === s.id || !textoRespuesta.trim()}
-                            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                          >
+                          <Button variant="primary" size="sm" type="button" onClick={() => actualizar(s, { respuesta: textoRespuesta.trim() })} disabled={procesandoId === s.id || !textoRespuesta.trim()}>
                             <Send className="icon-sm" />
                             {t("soporteAdmin.enviarRespuesta")}
-                          </button>
+                          </Button>
                           <button
                             type="button"
                             onClick={() => {

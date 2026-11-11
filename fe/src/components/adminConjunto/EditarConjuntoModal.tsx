@@ -78,7 +78,7 @@ export function EditarConjuntoModal({
         */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor={`nit-${id}`} className="block text-xs font-bold text-gray-600 dark:text-gray-400">
+            <label htmlFor={`nit-${id}`} className="block text-xs font-medium text-gray-600 dark:text-gray-400">
               {t("dashboards.adminConjunto.editForm.nit")}
             </label>
             <input
@@ -91,7 +91,7 @@ export function EditarConjuntoModal({
             />
           </div>
           <div>
-            <label htmlFor={`total-${id}`} className="block text-xs font-bold text-gray-600 dark:text-gray-400">
+            <label htmlFor={`total-${id}`} className="block text-xs font-medium text-gray-600 dark:text-gray-400">
               {t("dashboards.adminConjunto.editForm.totalApartments")}
             </label>
             <input

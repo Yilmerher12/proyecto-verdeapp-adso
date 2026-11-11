@@ -19,6 +19,7 @@ import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResulta
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Button } from "@/components/ui/Button";
 
 interface ListaAuditoriasSemanaProps {
   titulo: string;
@@ -73,14 +74,9 @@ export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio, sinTar
                     <nivel.icon className="icon-sm" aria-hidden="true" />
                     {t(claveNivel(a.nivel_desempeno))}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setIdAbierta(a.id_auditoria)}
-                    aria-label={t("desempeno.semana.verDetalleDe", { tema: a.tema_educativo })}
-                    className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-                  >
+                  <Button variant="secondary" size="sm" type="button" onClick={() => setIdAbierta(a.id_auditoria)} aria-label={t("desempeno.semana.verDetalleDe", { tema: a.tema_educativo })}>
                     {t("desempeno.semana.verDetalle")}
-                  </button>
+                  </Button>
                 </div>
               </li>
             );

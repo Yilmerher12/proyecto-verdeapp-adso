@@ -380,7 +380,7 @@ export function AppShell({ children }: AppShellProps) {
                   {displayName}
                 </p>
                 <span className={`flex min-w-0 items-center gap-1.5 text-xs font-medium mt-0.5 ${roleMeta.sidebarAccentText}`}>
-                  <roleMeta.Icon className="h-3 w-3 shrink-0" />
+                  <roleMeta.Icon className="icon-sm shrink-0" />
                   <span className="truncate">{roleLabel}</span>
                 </span>
               </div>

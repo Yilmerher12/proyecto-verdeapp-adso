@@ -34,7 +34,7 @@ export function CoberturaConjunto({ conjunto }: { conjunto: ConjuntoAdministrado
                     queda repartido arriba y abajo de las cifras, no como un hueco al final. */}
       <div className="my-auto py-4">
         <div className="flex flex-wrap items-baseline gap-2">
-          <span className="text-4xl font-bold leading-none text-accent-700 dark:text-accent-400">{registrados}</span>
+          <span className="text-2xl font-bold leading-none text-accent-700 dark:text-accent-400">{registrados}</span>
           <span className="text-base text-gray-500 dark:text-gray-400">
             {tieneTotal
               ? t("dashboards.adminConjunto.coverage.ofTotal", { total })

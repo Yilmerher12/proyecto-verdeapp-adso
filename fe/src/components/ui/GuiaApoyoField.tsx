@@ -88,7 +88,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
 
   return (
     <div>
-      <label className="mb-2 flex items-center gap-1 text-xs font-bold text-gray-600 dark:text-gray-400">
+      <label className="mb-2 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400">
         <FileText className="icon-md" />
         {label}
       </label>

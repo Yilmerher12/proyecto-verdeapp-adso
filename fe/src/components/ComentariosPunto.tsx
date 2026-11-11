@@ -17,6 +17,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { agregarComentario, listarComentarios, type ComentarioPunto } from "@/lib/puntosAcopioApi";
 import { TextoRecortable } from "@/components/ui/TextoRecortable";
+import { Button } from "@/components/ui/Button";
 
 interface ComentariosPuntoProps {
   idPunto: string;
@@ -68,7 +69,7 @@ export function ComentariosPunto({ idPunto, version }: ComentariosPuntoProps) {
 
   return (
     <section className="space-y-3 border-t border-gray-100 p-5 dark:border-night-line">
-      <h3 className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.title`)}</h3>
+      <h3 className="text-[0.6875rem] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.title`)}</h3>
 
       {errorCarga && <Alert type="error" message={t(`${p}.loadError`)} />}
       {!errorCarga && comentarios === null && <LoadingState message={t("common.loading")} />}
@@ -95,14 +96,9 @@ export function ComentariosPunto({ idPunto, version }: ComentariosPuntoProps) {
         />
         {errorEnvio && <Alert type="error" message={t(`${p}.addError`)} onClose={() => setErrorEnvio(false)} />}
         <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={enviar}
-            disabled={enviando || !nuevo.trim()}
-            className="cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-          >
+          <Button variant="primary" type="button" onClick={enviar} disabled={enviando || !nuevo.trim()}>
             {enviando ? t("common.saving") : t(`${p}.add`)}
-          </button>
+          </Button>
         </div>
       </div>
     </section>

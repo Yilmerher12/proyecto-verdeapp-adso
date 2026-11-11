@@ -514,13 +514,10 @@ export function ProfilePage() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button
-                  onClick={cancelarEdicion}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
-                >
+                <Button variant="secondary" fullWidth onClick={cancelarEdicion}>
                   <X className="icon-md" />
                   {t("common.cancel")}
-                </button>
+                </Button>
                 <Button variant="primary" fullWidth onClick={guardarPerfil} disabled={guardando}>
                   <BadgeCheck className="icon-md icon-draw" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}

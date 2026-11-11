@@ -12,6 +12,7 @@
 import { useTranslation } from "react-i18next";
 import { Unlink } from "lucide-react";
 import type { NotificacionItem } from "@/lib/notificaciones";
+import { Button } from "@/components/ui/Button";
 
 interface DesvinculacionAprobadaBannerProps {
   notificaciones: NotificacionItem[];
@@ -36,13 +37,9 @@ export function DesvinculacionAprobadaBanner({ notificaciones, onMarcarLeida }: 
             className="flex flex-col gap-2 rounded-xl bg-white px-4 py-3 dark:bg-night-inset sm:flex-row sm:items-center sm:justify-between"
           >
             <p className="text-sm text-gray-700 dark:text-gray-300">{n.mensaje}</p>
-            <button
-              type="button"
-              onClick={() => onMarcarLeida(n.id)}
-              className="shrink-0 cursor-pointer rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-800 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-            >
+            <Button variant="primary" size="sm" type="button" onClick={() => onMarcarLeida(n.id)}>
               {t("desvinculacionAprobada.gotIt")}
-            </button>
+            </Button>
           </div>
         ))}
       </div>

@@ -13,10 +13,10 @@ import { Spinner } from "./Spinner";
  * ¿Qué? Props del componente Button.
  * ¿Para qué? Configurar variante (primary, secondary, danger, dangerOutline), tamaño, loading, etc.
  * ¿Impacto? TypeScript garantiza que solo se usen variantes válidas.
- *           Issue #640: acepta también los atributos normales de un botón (aria-*, title, onBlur, id...) para poder
+ *           Issue #640: acepta también los atributos normales de un botón (aria-*, title, onBlur, id, ref...) para poder
  *           reemplazar los botones escritos a mano, pero NO className ni style: el aspecto sale solo de variant y size.
  */
-interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "className" | "style" | "children" | "type"> {
+interface ButtonProps extends Omit<React.ComponentPropsWithRef<"button">, "className" | "style" | "children" | "type"> {
   children: React.ReactNode;
   type?: "button" | "submit" | "reset";
   variant?: "primary" | "secondary" | "danger" | "dangerOutline";
