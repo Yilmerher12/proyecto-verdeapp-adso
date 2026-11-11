@@ -59,8 +59,9 @@ omit = ["app/tests/*", "app/seed.py"]
 
 [tool.coverage.report]
 # ¿Qué? Umbral mínimo (bootcamp de testing, semana 1: línea base del 6 de
-#       octubre de 2026, 96.69% redondeado hacia abajo). Solo se sube.
-fail_under = 96
+#       octubre de 2026, 96.69% redondeado hacia abajo). Cierre de la semana 3,
+#       10 de noviembre de 2026: cobertura real 97.24%, redondeada a 97. Solo se sube.
+fail_under = 97
 
 # ¿Qué? Reglas de lint fijadas a mano: las mismas que ruff 0.15 traía por
 #       defecto (errores de sintaxis, imports no usados, variables sin definir).
