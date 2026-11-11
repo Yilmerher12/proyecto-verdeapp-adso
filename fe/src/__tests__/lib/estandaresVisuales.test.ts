@@ -25,7 +25,14 @@ const BASE = {
   textoGrandeFueraDeLaPortada: 0,
   titulosFueraDeLaEscala: 0,
   pesosFueraDeLaRegla: 0,
+  // Issue #641 — dimensiones: relleno de las tarjetas, esquina de los campos y separación entre los bloques de una página.
+  tarjetasConRellenoPropio: 0,
+  camposConEsquinaGrande: 0,
+  paginasConSeparacionPropia: 0,
 };
+
+// ¿Qué? Páginas de Aprende a reciclar: tienen su propio estilo (esquinas más redondeadas y más espacio), documentado en restricciones.md.
+const PAGINAS_CON_SEPARACION_PROPIA = ["/src/pages/CatalogoEducativoPage.tsx", "/src/pages/CategoriaEducativaPage.tsx"];
 
 // ¿Qué? Páginas que tienen su propio diseño y no siguen la escala (decisión del issue #640: solo la portada y los textos legales).
 // ¿Impacto? Ingreso, registro, recuperar y restablecer contraseña, verificar correo e invitación NO están aquí: siguen la escala.
@@ -142,6 +149,20 @@ function analizar(ruta: string, codigo: string): Hallazgo[] {
         const envuelveElLogo = !m && /\bflex\b/.test(clase);
         if (!envuelveElLogo && !TAMANO_DE_TITULO[etiqueta].includes(tamano)) salida.push({ regla: "titulosFueraDeLaEscala", donde: `${dondeEsta(nodo)} <${etiqueta}> ${tamano}` });
       }
+
+      // Regla 6 (issue #641): una tarjeta de página (esquina de 16 px y borde, con fondo de tarjeta o de aviso) lleva 24 px de relleno (p-6), no 20 (p-5).
+      // ¿Qué? Los elementos de lista (p-4) y las barras de filtros (p-3) son más compactos a propósito y no se cuentan.
+      const esTarjeta = /\brounded-2xl\b/.test(clase) && /\bborder\b/.test(clase);
+      if (!esExcepcion && esTarjeta && /(?:^|[\s"'`])p-5(?=[\s"'`])/.test(clase)) salida.push({ regla: "tarjetasConRellenoPropio", donde: dondeEsta(nodo) });
+
+      // Regla 7 (issue #641): un campo de formulario escrito a mano lleva esquina de 8 px (rounded-lg), igual que InputField y Button.
+      if (["input", "select", "textarea"].includes(etiqueta) && /\brounded-xl\b/.test(clase)) salida.push({ regla: "camposConEsquinaGrande", donde: dondeEsta(nodo) });
+
+      // Regla 8 (issue #641): los bloques de una página se separan 24 px (space-y-6); Aprende a reciclar tiene su estilo propio.
+      if (/ANCHO_PAGINA/.test(clase) && !PAGINAS_CON_SEPARACION_PROPIA.includes(ruta)) {
+        const separacion = clase.match(/space-y-[\d.]+/)?.[0];
+        if (separacion && separacion !== "space-y-6") salida.push({ regla: "paginasConSeparacionPropia", donde: `${dondeEsta(nodo)} ${separacion}` });
+      }
     }
     ts.forEachChild(nodo, visitar);
   };
@@ -167,6 +188,20 @@ describe("estándar de texto, íconos y botones (issue #640)", () => {
   it.each(Object.keys(BASE) as (keyof typeof BASE)[])("%s: si bajó, la constante BASE se baja también (el avance queda fijo)", (regla) => {
     const lugares = de(regla);
     expect(lugares.length, `"${regla}" bajó a ${lugares.length}: cambia BASE.${regla} de ${BASE[regla]} a ${lugares.length}.`).toBe(BASE[regla]);
+  });
+
+  it("reconoce una tarjeta con relleno de 20 px, un campo con esquina de 12 px y una página con otra separación", () => {
+    const muestra = analizar(
+      "/src/pages/Muestra.tsx",
+      `export const X = () => (
+         <div className={\`\${ANCHO_PAGINA.normal} space-y-5 pt-6\`}>
+           <div className="rounded-2xl border border-gray-100 bg-white p-5">
+             <input className="rounded-xl border px-3 py-2" />
+           </div>
+         </div>
+       );`,
+    ).map((h) => h.regla);
+    expect(muestra).toEqual(expect.arrayContaining(["tarjetasConRellenoPropio", "camposConEsquinaGrande", "paginasConSeparacionPropia"]));
   });
 
   it("la prueba analiza archivos reales (no se queda vacía si cambia la carpeta)", () => {

@@ -92,7 +92,7 @@ export function ComentariosPunto({ idPunto, version }: ComentariosPuntoProps) {
           rows={2}
           aria-label={t(`${p}.placeholder`)}
           placeholder={t(`${p}.placeholder`)}
-          className="w-full resize-none rounded-xl border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
+          className="w-full resize-none rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
         />
         {errorEnvio && <Alert type="error" message={t(`${p}.addError`)} onClose={() => setErrorEnvio(false)} />}
         <div className="flex justify-end">

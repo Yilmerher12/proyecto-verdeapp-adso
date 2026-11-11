@@ -278,14 +278,14 @@ export function AdminPuntosAcopioPage() {
                 onChange={(e) => cambiarBusqueda(e.target.value)}
                 aria-label={t("adminPuntosAcopio.search.placeholder")}
                 placeholder={t("adminPuntosAcopio.search.placeholder")}
-                className="w-full rounded-xl border border-edge bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
+                className="w-full rounded-lg border border-edge bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
             </div>
             <select
               value={filtroLocalidad}
               onChange={(e) => cambiarLocalidad(e.target.value === "" ? "" : Number(e.target.value))}
               aria-label={t("adminPuntosAcopio.fields.locality")}
-              className="cursor-pointer rounded-xl border border-edge bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-200"
+              className="cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-200"
             >
               <option value="">{t("directorio.allLocalities")}</option>
               {localidadesConPuntos.map((l) => (

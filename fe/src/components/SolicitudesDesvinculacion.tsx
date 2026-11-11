@@ -102,7 +102,7 @@ export function SolicitudesDesvinculacion() {
                   aria-describedby={`motivo-rechazo-contador-${s.id}`}
                   placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}
                   rows={2}
-                  className="w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                  className="w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
                 />
                 <ContadorCaracteres
                   id={`motivo-rechazo-contador-${s.id}`}

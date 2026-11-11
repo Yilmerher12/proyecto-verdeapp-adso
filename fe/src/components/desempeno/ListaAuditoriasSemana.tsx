@@ -39,7 +39,7 @@ export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio, sinTar
     <section
       aria-label={titulo}
       className={`space-y-3 ${
-        sinTarjeta ? "" : "rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card"
+        sinTarjeta ? "" : "rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card"
       }`}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">

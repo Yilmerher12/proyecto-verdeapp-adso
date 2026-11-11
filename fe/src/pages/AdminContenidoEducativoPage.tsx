@@ -421,7 +421,7 @@ export function AdminContenidoEducativoPage() {
   const idVideoReconocido = REGEX_VIDEO_YOUTUBE.test(form.url_video || "");
 
   return (
-    <div className={`${ANCHO_PAGINA.normal} space-y-5 pt-6`}>
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="flex items-center gap-4 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
           <BookOpen className="icon-xl text-accent-700 dark:text-accent-400" />
@@ -435,7 +435,7 @@ export function AdminContenidoEducativoPage() {
       {/* Franja de resumen — igual patrón que el Panel Principal: antes de
           la tabla, no encima de ella. */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
+        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
           <div className="flex items-center gap-2">
             <BookOpen className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.catalogSection.title`)}</h3>
@@ -459,7 +459,7 @@ export function AdminContenidoEducativoPage() {
           </p>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
+        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
           <div className="flex items-center gap-2">
             <Calendar className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.currentWeek.title`, { rango: rangoSemanaUTC(semanaActual) })}</h3>
@@ -771,7 +771,7 @@ export function AdminContenidoEducativoPage() {
                   aria-describedby={
                     fieldErrors.cuerpo_texto ? "contenido-cuerpo-error contenido-cuerpo-contador" : "contenido-cuerpo-contador"
                   }
-                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                  className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                     fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
                   }`}
                 />
@@ -804,7 +804,7 @@ export function AdminContenidoEducativoPage() {
                   placeholder="https://www.youtube.com/watch?v=..."
                   aria-invalid={!!fieldErrors.url_video}
                   aria-describedby={fieldErrors.url_video ? "contenido-url-video-error" : undefined}
-                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                  className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
                     fieldErrors.url_video
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
                       : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"

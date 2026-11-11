@@ -82,7 +82,7 @@ export function HistorialAuditorias({
   const conNombreDeConjunto = mostrarSiempreElConjunto || variosConjuntos;
 
   return (
-    <div className={sinTarjeta ? "" : "bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5"}>
+    <div className={sinTarjeta ? "" : "bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-6"}>
       {!sinTarjeta && (
         <div className="mb-4 flex items-center gap-2">
           <History className="icon-md text-gray-500 dark:text-gray-400" />

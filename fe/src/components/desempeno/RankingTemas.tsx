@@ -27,7 +27,7 @@ export function RankingTemas({ temas, sinTarjeta = false }: { temas: TemaDesempe
     <section
       aria-labelledby="desempeno-temas-titulo"
       className={`space-y-3 ${
-        sinTarjeta ? "" : "rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card"
+        sinTarjeta ? "" : "rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card"
       }`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">

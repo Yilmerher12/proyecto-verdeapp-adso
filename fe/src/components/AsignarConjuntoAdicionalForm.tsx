@@ -168,7 +168,7 @@ export function AsignarConjuntoAdicionalForm() {
           onChange={(e) => cambiarBusqueda(e.target.value)}
           placeholder={t("desvinculacion.asignarAdicional.searchPlaceholder")}
           aria-label={t("desvinculacion.asignarAdicional.stepSearch")}
-          className="w-full pl-9 p-2.5 border border-edge rounded-xl bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
+          className="w-full pl-9 p-2.5 border border-edge rounded-lg bg-white text-sm text-gray-900 transition-colors focus:ring-2 focus:ring-accent-500 outline-none dark:border-night-edge dark:bg-night-field dark:text-white"
         />
       </div>
       {!query.trim() && (
@@ -238,7 +238,7 @@ export function AsignarConjuntoAdicionalForm() {
               setLocalidadId(e.target.value === "" ? "" : Number(e.target.value));
               setConjuntoElegido(null);
             }}
-            className="mb-3 w-full cursor-pointer rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+            className="mb-3 w-full cursor-pointer rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
           >
             <option value="">{t("desvinculacion.asignarAdicional.localitySelectPlaceholder")}</option>
             {localidades.map((l) => (

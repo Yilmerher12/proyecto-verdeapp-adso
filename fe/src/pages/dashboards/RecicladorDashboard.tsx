@@ -384,14 +384,14 @@ export function RecicladorDashboard() {
   };
 
   return (
-    <div className={`${ANCHO_PAGINA.normal} space-y-5 pt-6`}>
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       {/* Encabezado compacto.
           ¿Qué? El título y la bienvenida van en una sola línea con el ícono del rol, dentro de una
                 tarjeta baja (menos relleno que la de antes y sin la marca de agua).
           ¿Para qué? Sigue diciendo en qué pantalla está y con qué cuenta entró, pero ya no empuja
                     hacia abajo lo que el Reciclador viene a hacer.
           ¿Impacto? Va en tarjeta porque sin ella, en modo claro, se perdía con el fondo de la página. */}
-      <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-night-line dark:bg-night-card">
+      <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 dark:bg-accent-300/10">
           <RolIcon className="icon-lg text-accent-700 dark:text-accent-300" />
         </div>
@@ -417,7 +417,7 @@ export function RecicladorDashboard() {
           ¿Impacto? Orden del panel: invitaciones, mis conjuntos, auditoría, avisos y, en pantalla
                     ancha, a la derecha las notificaciones recibidas y mis auditorías. */}
       {!cargando && invitaciones.length > 0 && (
-        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm">
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <Mail className="icon-md text-amber-600" />
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.invitations.title")}</h2>
@@ -472,7 +472,7 @@ export function RecicladorDashboard() {
                         ve una sola pastilla, ya elegida. Sin conjuntos, el mismo aviso de siempre. */}
           <section
             aria-labelledby="reciclador-conjuntos-titulo"
-            className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
+            className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm"
           >
             <div className="mb-4 flex items-center gap-2">
               <Building className="icon-md text-accent-600" />
@@ -568,7 +568,7 @@ export function RecicladorDashboard() {
           {!cargando && conjuntoActivo && auditoriaPendienteActivo && (
             <section
               aria-labelledby="reciclador-auditoria-titulo"
-              className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 dark:border-teal-400/30 dark:bg-teal-400/10"
+              className="rounded-2xl border border-teal-100 bg-teal-50/60 p-6 dark:border-teal-400/30 dark:bg-teal-400/10"
             >
               <div className="flex items-center gap-2">
                 <ClipboardList className="icon-md text-teal-700 dark:text-teal-300" />
@@ -590,7 +590,7 @@ export function RecicladorDashboard() {
           {!cargando && conjuntoActivo && !auditoriaPendienteActivo && ultimaAuditoriaActiva && (
             <section
               aria-labelledby="reciclador-auditoria-al-dia-titulo"
-              className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
+              className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm"
             >
               <div className="flex items-center gap-2">
                 <CircleCheck className="icon-md text-accent-600 dark:text-accent-400" />
@@ -619,7 +619,7 @@ export function RecicladorDashboard() {
                         El nombre accesible del botón sigue siendo solo su etiqueta (aria-label). */}
           <section
             aria-labelledby="reciclador-avisos-titulo"
-            className="@container bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-5 shadow-sm"
+            className="@container bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm"
           >
             <h2 id="reciclador-avisos-titulo" className="mb-1 text-lg font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.sendSection.title")}</h2>
             <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
@@ -691,7 +691,7 @@ export function RecicladorDashboard() {
               ¿Qué? Ya no repite el nombre del conjunto en cada fila: la lista es del conjunto elegido
                     arriba. Solo las notificaciones generales de VerdeApp conservan su etiqueta. */}
           {cargando ? (
-            <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
+            <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-6">
               <LoadingState message={t("common.loading")} />
             </div>
           ) : (
