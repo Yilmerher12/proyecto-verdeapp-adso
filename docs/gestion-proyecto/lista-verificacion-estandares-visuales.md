@@ -20,26 +20,27 @@
 3. Los íconos usan `icon-sm`, `icon-md`, `icon-lg` o `icon-xl`, nunca una medida suelta.
 4. Nada de `text-3xl` o más, salvo en la portada y en los textos legales.
 
-## Conteo de partida de la prueba (2026-11-11)
+## Conteo de la prueba (partida del 2026-11-11 y hoy)
 
-| Regla | Casos al empezar |
-| --- | --- |
-| Botón primario, secundario o de peligro escrito a mano | 68 |
-| Ícono con medida suelta | 2 |
-| Texto de 3xl o más fuera de la portada y los textos legales | 7 |
-| Título fuera de la escala | 42 |
+| Regla | Al empezar | Hoy |
+| --- | --- | --- |
+| Botón primario, secundario o de peligro escrito a mano | 68 | 68 |
+| Ícono con medida suelta | 2 | 2 |
+| Texto de 3xl o más fuera de la portada y los textos legales | 7 | 5 |
+| Título fuera de la escala | 42 | 35 |
+| Peso de letra fuera de la regla (títulos bold, nombres de campo medium) | 34 (se midió al sumar la regla) | 34 |
 
 Cada tanda baja estos números y la constante `BASE` de la prueba. Al cerrar el issue, todos son 0.
 
 ## Públicas con formulario (siguen la escala completa) (7)
 
-- [ ] `components/layout/AuthLayout.tsx`
-- [ ] `pages/AceptarInvitacionPage.tsx` (ventana)
-- [ ] `pages/ForgotPasswordPage.tsx` (ventana)
-- [ ] `pages/LoginPage.tsx` (ventana)
-- [ ] `pages/RegisterPage.tsx` (ventana)
-- [ ] `pages/ResetPasswordPage.tsx`
-- [ ] `pages/VerifyEmailPage.tsx`
+- [x] `components/layout/AuthLayout.tsx`
+- [x] `pages/AceptarInvitacionPage.tsx` (ventana)
+- [x] `pages/ForgotPasswordPage.tsx` (ventana)
+- [x] `pages/LoginPage.tsx` (ventana)
+- [x] `pages/RegisterPage.tsx` (ventana)
+- [x] `pages/ResetPasswordPage.tsx`
+- [x] `pages/VerifyEmailPage.tsx`
 
 ## Públicas con diseño propio (excepción: portada y textos legales) (9)
 

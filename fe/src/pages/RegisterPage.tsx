@@ -390,7 +390,7 @@ export function RegisterPage() {
               </div>
             </div>
 
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
               {t("auth.register.success.title")}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 leading-relaxed">
@@ -471,7 +471,7 @@ export function RegisterPage() {
             <div className="mb-3 flex justify-center">
               <BrandLogo variant="mark" className="h-12" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t("auth.register.title")}</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("auth.register.title")}</h2>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
               {t(rolElegido ? "auth.register.subtitle" : "auth.register.chooseRoleSubtitle")}
             </p>
@@ -563,7 +563,7 @@ export function RegisterPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.locality")}</label>
+                      <label htmlFor="localidad_id" className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("auth.register.fields.locality")}</label>
                       <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} disabled={cargandoLocalidades} aria-busy={cargandoLocalidades} className="w-full cursor-pointer p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
                         <option value="">{cargandoLocalidades ? t("common.loading") : t("auth.register.fields.selectPlaceholder")}</option>
                         {localidades.map(loc => (
@@ -573,7 +573,7 @@ export function RegisterPage() {
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.conjunto")}</label>
+                      <label className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("auth.register.fields.conjunto")}</label>
                       <ConjuntoCombobox
                         value={conjuntoSeleccionado}
                         onChange={handleConjuntoChange}
@@ -589,7 +589,7 @@ export function RegisterPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-night-line">
                     <div>
-                      <label htmlFor="prefijo_unidad" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitType")}</label>
+                      <label htmlFor="prefijo_unidad" className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitType")}</label>
                       <select id="prefijo_unidad" name="prefijo_unidad" value={formData.prefijo_unidad} onChange={handleChange} disabled={!formData.id_conjunto_residencial} className="w-full cursor-pointer p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-night-inset">
                         <option value="TORRE">{t("auth.register.fields.unitTypeTower")}</option>
                         <option value="INTERIOR">{t("auth.register.fields.unitTypeInterior")}</option>
@@ -599,13 +599,13 @@ export function RegisterPage() {
                     </div>
 
                     <div>
-                      <label htmlFor="numero_bloque" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitNumber")}</label>
+                      <label htmlFor="numero_bloque" className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("auth.register.fields.unitNumber")}</label>
                       <input id="numero_bloque" type="text" name="numero_bloque" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.numero_bloque} aria-describedby={fieldErrors.numero_bloque ? "numero_bloque-error" : undefined} placeholder={t("auth.register.fields.unitNumberPlaceholder")} value={formData.numero_bloque} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
                       {fieldErrors.numero_bloque && <p id="numero_bloque-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.numero_bloque}</p>}
                     </div>
 
                     <div>
-                      <label htmlFor="apto" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
+                      <label htmlFor="apto" className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("auth.register.fields.apto")}</label>
                       <input id="apto" type="text" name="apto" maxLength={UNIDAD_MAX_LENGTH} aria-invalid={!!fieldErrors.apto} aria-describedby={fieldErrors.apto ? "apto-error" : undefined} placeholder={t("auth.register.fields.aptoPlaceholder")} value={formData.apto} onChange={handleChange} onBlur={handleBlur} disabled={!formData.id_conjunto_residencial} className="w-full p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none disabled:bg-gray-100 dark:disabled:bg-night-inset uppercase" />
                       {fieldErrors.apto && <p id="apto-error" role="alert" className="text-xs text-red-500 mt-1">{fieldErrors.apto}</p>}
                     </div>
@@ -621,7 +621,7 @@ export function RegisterPage() {
                               y merece su propia aclaración debajo.
                   */}
                   <div className="pt-3 border-t border-gray-200 dark:border-night-line">
-                    <label htmlFor="codigo_acceso" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.codigoAcceso")}</label>
+                    <label htmlFor="codigo_acceso" className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("auth.register.fields.codigoAcceso")}</label>
                     <input
                       id="codigo_acceso"
                       type="text"
@@ -652,7 +652,7 @@ export function RegisterPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="localidad_id" className="text-xs font-bold text-gray-600 dark:text-gray-400">{t("auth.register.fields.workLocality")}</label>
+                      <label htmlFor="localidad_id" className="text-xs font-medium text-gray-600 dark:text-gray-400">{t("auth.register.fields.workLocality")}</label>
                       <select id="localidad_id" name="localidad_id" value={formData.localidad_id} onChange={handleChange} disabled={cargandoLocalidades} aria-busy={cargandoLocalidades} className="w-full cursor-pointer p-2.5 border border-edge dark:border-night-edge rounded-xl mt-1 bg-white dark:bg-night-field text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 outline-none">
                         <option value="">{cargandoLocalidades ? t("common.loading") : t("auth.register.fields.selectYourLocality")}</option>
                         {localidades.map(loc => (

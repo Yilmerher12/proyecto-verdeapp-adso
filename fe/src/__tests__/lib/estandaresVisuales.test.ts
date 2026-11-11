@@ -21,8 +21,9 @@ const archivos = import.meta.glob("/src/**/*.tsx", { query: "?raw", import: "def
 const BASE = {
   botonesAMano: 68,
   iconosConMedidaSuelta: 2,
-  textoGrandeFueraDeLaPortada: 7,
-  titulosFueraDeLaEscala: 42,
+  textoGrandeFueraDeLaPortada: 5,
+  titulosFueraDeLaEscala: 35,
+  pesosFueraDeLaRegla: 34,
 };
 
 // ¿Qué? Páginas que tienen su propio diseño y no siguen la escala (decisión del issue #640: solo la portada y los textos legales).
@@ -49,6 +50,8 @@ const TAMANO_DE_TITULO: Record<string, string[]> = {
 // ¿Qué? El texto del className empieza con comilla, comilla invertida o llave: el tamaño puede ir pegado a ella y no solo después de un espacio.
 // ¿Para qué? Sin esto, el primer tamaño de cada className ("text-sm font-bold") no se reconocía y todo título parecía de 16 px.
 const TAMANOS_GRANDES = /(?:^|[\s"'`{])text-(?:3xl|4xl|5xl|6xl)(?=[\s"'`}]|$)/;
+// ¿Qué? Peso (grosor) de la letra que corresponde a cada función (docs/requisitos/restricciones.md): títulos grueso (bold), nombres de campo medio (medium).
+const PESO_DE_TEXTO = /\bfont-(normal|medium|semibold|bold|extrabold)\b/;
 const TAMANO_DE_TEXTO = /(?:^|[\s"'`{])text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl)(?=[\s"'`}]|$)/;
 
 interface Hallazgo {
@@ -106,6 +109,15 @@ function analizar(ruta: string, codigo: string): Hallazgo[] {
       // Regla 3: texto de 3xl o más fuera de la portada y de los textos legales.
       if (!esExcepcion && TAMANOS_GRANDES.test(clase)) salida.push({ regla: "textoGrandeFueraDeLaPortada", donde: dondeEsta(nodo) });
 
+      // Regla 5: peso de la letra. Un título lleva bold y el nombre de un campo (label) lleva medium. Solo cuenta si el peso está
+      //          escrito: un label sin peso es un texto corriente (por ejemplo, el de una casilla de términos), no un nombre de campo.
+      if (!esExcepcion && (/^h[1-4]$/.test(etiqueta) || etiqueta === "label")) {
+        const peso = clase.match(PESO_DE_TEXTO)?.[1];
+        const debe = etiqueta === "label" ? "medium" : "bold";
+        const aislado = etiqueta !== "label" && !peso && /\bflex\b/.test(clase); // título que solo envuelve el logo
+        if (peso && peso !== debe && !aislado) salida.push({ regla: "pesosFueraDeLaRegla", donde: `${dondeEsta(nodo)} <${etiqueta}> ${peso} (debe ser ${debe})` });
+      }
+
       // Regla 4: título (h1 a h4) con un tamaño que no es el de su nivel.
       if (!esExcepcion && /^h[1-4]$/.test(etiqueta)) {
         const m = clase.match(TAMANO_DE_TEXTO);
@@ -158,5 +170,19 @@ describe("estándar de texto, íconos y botones (issue #640)", () => {
        );`,
     ).map((h) => h.regla);
     expect(muestra).toEqual(expect.arrayContaining(["titulosFueraDeLaEscala", "botonesAMano", "iconosConMedidaSuelta"]));
+  });
+
+  it("reconoce un nombre de campo grueso y un título semigrueso", () => {
+    const muestra = analizar(
+      "/src/pages/Muestra.tsx",
+      `export const X = () => (
+         <div>
+           <h2 className="text-lg font-semibold">Título</h2>
+           <label className="text-xs font-bold">Nombre</label>
+           <label className="text-sm">Acepto los términos</label>
+         </div>
+       );`,
+    ).filter((h) => h.regla === "pesosFueraDeLaRegla");
+    expect(muestra).toHaveLength(2);
   });
 });

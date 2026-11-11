@@ -124,7 +124,7 @@ export function LoginPage() {
             <div className="mb-3 flex justify-center sm:justify-start">
               <BrandLogo variant="mark" className="h-12" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               {t("auth.login.title")}
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

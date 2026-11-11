@@ -51,7 +51,7 @@ export function AuthLayout({ children, title, subtitle, wide = false, notice }: 
 
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-panel sm:p-8">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
               {subtitle && (
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>
               )}

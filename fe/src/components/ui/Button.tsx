@@ -81,7 +81,7 @@ export function Button({
       disabled={disabled || isLoading}
       aria-busy={isLoading}
       aria-label={isLoading ? t("common.processing") : undefined}
-      className={`inline-flex cursor-pointer items-center justify-center rounded-lg font-medium transition-colors duration-200 focus-ring disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""}`}
+      className={`inline-flex cursor-pointer items-center justify-center rounded-lg font-semibold transition-colors duration-200 focus-ring disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""}`}
     >
       {/* ¿Qué? Spinner SVG animado que aparece durante la carga. */}
       {/* ¿Para qué? Feedback visual de que la acción está procesándose. */}
