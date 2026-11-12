@@ -284,7 +284,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             />
           </div>
           {cargandoDirectorio ? (
-            <Esqueleto mensaje={t("common.loading")} variante="filas" />
+            <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} />
           ) : errorDirectorio ? (
             <div className="p-4">
               <Alert type="error" message={t("common.loadError")} />

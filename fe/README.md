@@ -877,7 +877,7 @@ Antes de escribir algo a mano en una página, revisa si ya existe aquí. La regl
 | Contar caracteres | `ContadorCaracteres` | Debajo de un `<textarea>` con `maxLength` |
 | Adjuntar una imagen | `ImagenAdjuntaField` | Revisa tipo (jpg/png/webp) y tamaño (5 MB) antes de subir, igual que el backend |
 | Agregar una guía de apoyo | `GuiaApoyoField` | Deja subir un archivo (imagen o PDF) o pegar un enlace; usado en contenido educativo y novedades |
-| Un estado de carga de datos | `Esqueleto` | Silueta gris con la forma del contenido (`filas`, `tarjetas`, `campos`, `bloque`), con `role="status"` para lectores de pantalla; aparece a los 200 ms. `Spinner` es solo el ícono del círculo (lo usa el botón) |
+| Un estado de carga de datos | `Esqueleto` | Silueta gris con la forma del contenido (`filas`, `tarjetas`, `campos`, `bloque`), con `role="status"` para lectores de pantalla; aparece a los 100 ms; acepta `cantidad`, `alto` y `enTarjeta` para parecerse al contenido real. `Spinner` es solo el ícono del círculo (lo usa el botón) |
 | Pestañas que cambian de vista | `Pestanas` | En un espacio angosto se reparten en una cuadrícula ordenada (`dosColumnas` deja la última a todo el ancho); desde `@xl` van en una fila. Lo usan Soporte técnico y "Mi conjunto". Mide su contenedor (consulta de contenedor), no la ventana |
 | El desempeño semanal de un conjunto | `PanelDesempeno` | Tarjeta única con resumen, gráfica y pestañas (semana elegida, todas las auditorías con `cargarHistorial`, por tema). La usan el Residente ("Mi conjunto") y el Admin de Conjunto ("Desempeño") |
 | Cerrar un aviso solo durante la sesión | `useAvisoCerradoEnSesion` | Guarda en `sessionStorage` qué avisos cerró la persona (ej. "¿Qué es una ECA?"); se borra al cerrar sesión |

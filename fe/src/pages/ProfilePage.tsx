@@ -243,7 +243,7 @@ export function ProfilePage() {
     }
   };
 
-  if (cargando) return <div className="pt-6"><Esqueleto mensaje={t("profile.loading")} variante="campos" /></div>;
+  if (cargando) return <div className="pt-6"><Esqueleto mensaje={t("profile.loading")} variante="campos" cantidad={7} /></div>;
   if (!perfil) return <div className="pt-6"><Alert type="error" message={t("profile.loadError")} /></div>;
 
   const role = ROLE_THEME[perfil.role_id] ?? ROLE_THEME[RoleId.RESIDENTE];

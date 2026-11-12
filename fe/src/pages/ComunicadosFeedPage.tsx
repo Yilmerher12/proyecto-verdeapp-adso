@@ -119,7 +119,7 @@ export function ComunicadosFeedPage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.subtitle")}</p>
       </div>
 
-      {cargando && <Esqueleto mensaje={t("common.loading")} variante="tarjetas" />}
+      {cargando && <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} enTarjeta />}
 
       {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
 

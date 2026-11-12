@@ -324,7 +324,7 @@ export function AdminPuntosAcopioPage() {
       )}
 
       {errorAccion && <Alert type="error" message={errorAccion} onClose={() => setErrorAccion(null)} />}
-      {cargando && <Esqueleto mensaje={t("common.loading")} variante="tarjetas" />}
+      {cargando && <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={10} enTarjeta />}
       {!cargando && cargaError && <Alert type="error" message={t("adminPuntosAcopio.loadError")} />}
 
       {!cargando && !cargaError && puntos.length === 0 && (

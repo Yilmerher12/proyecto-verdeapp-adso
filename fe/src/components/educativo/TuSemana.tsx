@@ -42,7 +42,7 @@ export function TuSemana({ contenido }: { contenido: ContenidoEducativo[] }) {
   if (cargando) {
     return (
       <div className={`${envoltorio} p-6`}>
-        <Esqueleto mensaje={t("common.loading")} variante="bloque" />
+        <Esqueleto mensaje={t("common.loading")} variante="bloque" alto="h-56" />
       </div>
     );
   }

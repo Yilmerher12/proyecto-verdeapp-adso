@@ -93,7 +93,7 @@ export function CategoriaEducativaPage() {
         )}
       </header>
 
-      {cargando && <Esqueleto mensaje={t("common.loading")} variante="tarjetas" />}
+      {cargando && <Esqueleto mensaje={t("common.loading")} variante="bloque" alto="h-96" />}
 
       {!cargando && temas.length === 0 && (
         <EmptyState icon={FileText} message={t("categoriaEducativa.emptyForCategory")} />

@@ -181,7 +181,7 @@ export function AdminConjuntoDashboard() {
         </div>
 
         {cargando ? (
-          <Esqueleto mensaje={t("dashboards.adminConjunto.myConjuntos.loading")} variante="bloque" />
+          <Esqueleto mensaje={t("dashboards.adminConjunto.myConjuntos.loading")} variante="bloque" alto="h-[30rem]" />
         ) : errorConjuntos ? (
           <Alert type="error" message={t("common.loadError")} />
         ) : conjuntos.length === 0 ? (

@@ -52,7 +52,7 @@ export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio, sinTar
       </div>
 
       {auditorias === undefined ? (
-        <Esqueleto mensaje={t("common.loading")} variante="filas" />
+        <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} />
       ) : auditorias === null ? (
         <Alert type="error" message={t("desempeno.semana.errorCarga")} />
       ) : auditorias.length === 0 ? (

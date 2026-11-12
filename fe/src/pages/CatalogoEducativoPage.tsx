@@ -65,7 +65,7 @@ export function CatalogoEducativoPage() {
         <p className="max-w-2xl text-base text-gray-600 dark:text-gray-300">{t("catalogoEducativo.subtitle")}</p>
       </header>
 
-      {cargando && <Esqueleto mensaje={t("catalogoEducativo.loading")} variante="tarjetas" />}
+      {cargando && <Esqueleto mensaje={t("catalogoEducativo.loading")} variante="tarjetas" cantidad={9} alto="h-80" />}
       {error && <Alert type="error" message={error} />}
 
       {!cargando && !error && categorias.length === 0 && (
