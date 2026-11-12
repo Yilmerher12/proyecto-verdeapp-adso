@@ -9,7 +9,7 @@ import { MINIMO_PARA_ORGANIZAR, organizarComunicados } from "@/lib/organizarComu
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { TextoRecortable } from "@/components/ui/TextoRecortable";
 
 // ¿Qué? Mismo criterio de color que en el panel del Admin de Conjunto —
@@ -119,7 +119,7 @@ export function ComunicadosFeedPage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("comunicados.feed.subtitle")}</p>
       </div>
 
-      {cargando && <LoadingState message={t("common.loading")} />}
+      {cargando && <Esqueleto mensaje={t("common.loading")} variante="tarjetas" />}
 
       {!cargando && error && <Alert type="error" message={t("common.loadError")} />}
 

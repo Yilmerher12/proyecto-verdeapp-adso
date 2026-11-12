@@ -28,7 +28,7 @@ import { rutaDeNotificacion, type NotificacionItem } from "@/lib/notificaciones"
 import { HistorialAuditorias } from "@/components/dashboard/HistorialAuditorias";
 import { notificarNotificacionesActualizadas, onCambioDesdeCampanita } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { AuditoriaConjuntoForm } from "@/components/AuditoriaConjuntoForm";
@@ -479,7 +479,7 @@ export function RecicladorDashboard() {
               <h2 id="reciclador-conjuntos-titulo" className="text-lg font-bold text-gray-900 dark:text-white">{t("dashboards.reciclador.myConjuntos.title")}</h2>
             </div>
             {cargando ? (
-              <LoadingState message={t("common.loading")} />
+              <Esqueleto mensaje={t("common.loading")} variante="bloque" />
             ) : conjuntosAutorizados.length === 0 ? (
               <EmptyState icon={Building} message={t("dashboards.reciclador.myConjuntos.empty")} />
             ) : (
@@ -692,7 +692,7 @@ export function RecicladorDashboard() {
                     arriba. Solo las notificaciones generales de VerdeApp conservan su etiqueta. */}
           {cargando ? (
             <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-6">
-              <LoadingState message={t("common.loading")} />
+              <Esqueleto mensaje={t("common.loading")} variante="bloque" />
             </div>
           ) : (
             <NotificationFeed

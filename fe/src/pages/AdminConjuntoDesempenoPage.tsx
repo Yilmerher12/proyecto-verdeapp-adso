@@ -10,7 +10,7 @@ import { PanelDesempeno } from "@/components/desempeno/PanelDesempeno";
 import { Alert } from "@/components/ui/Alert";
 import { Pestanas } from "@/components/ui/Pestanas";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Button } from "@/components/ui/Button";
 
 /**
@@ -111,7 +111,7 @@ export function AdminConjuntoDesempenoPage() {
       )}
 
       {cargando ? (
-        <LoadingState message={t("common.loading")} />
+        <Esqueleto mensaje={t("common.loading")} variante="bloque" />
       ) : errorCarga ? (
         <Alert type="error" message={t("common.loadError")} />
       ) : conjuntos.length === 0 ? (

@@ -35,6 +35,8 @@ const BASE = {
   // Issue #643 — movimiento: panel de pestañas con PanelPestana y una sola duración "normal" (200 ms).
   panelesDePestanaAMano: 0,
   duracionesFueraDeLaRegla: 0,
+  // Issue #644 — estados de carga: una lista, tarjeta o formulario que espera datos muestra una silueta (Esqueleto), no un círculo.
+  estadosDeCargaConCirculo: 0,
 };
 
 // ¿Qué? Páginas de Aprende a reciclar: tienen su propio estilo (esquinas más redondeadas y más espacio), documentado en restricciones.md.
@@ -186,6 +188,10 @@ function analizar(ruta: string, codigo: string): Hallazgo[] {
       const fuera = clase.match(/(?<![:\w-])(?:bg|text|border|ring|fill|stroke)-(?:blue|yellow|orange|green|emerald|sky|cyan|violet|pink|rose|lime)-\d+/);
       if (fuera) salida.push({ regla: "coloresFueraDeLaLista", donde: `${dondeEsta(nodo)} ${fuera[0]}` });
 
+      // Regla 13 (issue #644): el círculo "Cargando…" (LoadingState) ya no se usa para esperar datos de una pantalla; para eso está Esqueleto.
+      //           Un círculo dentro de un botón (Button con isLoading) no usa este componente y no se cuenta.
+      if (etiqueta === "LoadingState" && !ruta.endsWith("/components/ui/LoadingState.tsx")) salida.push({ regla: "estadosDeCargaConCirculo", donde: dondeEsta(nodo) });
+
       // Regla 11 (issue #643): el panel de una fila de pestañas es el componente PanelPestana (rol, vínculo con la pestaña y desvanecimiento
       //           de entrada), no un elemento con role="tabpanel" escrito a mano.
       const rolEscrito = nodo.attributes.properties.some((p) => ts.isJsxAttribute(p) && p.name.getText() === "role" && p.initializer?.getText() === '"tabpanel"');
@@ -281,6 +287,14 @@ describe("estándar de texto, íconos y botones (issue #640)", () => {
     ).map((h) => h.regla);
     expect(muestra.filter((r) => r === "focoDelAnilloAMano")).toHaveLength(1);
     expect(muestra).toContain("coloresFueraDeLaLista");
+  });
+
+  it("reconoce el círculo de carga usado en una pantalla", () => {
+    const muestra = analizar(
+      "/src/pages/Muestra.tsx",
+      `export const X = () => (cargando ? <LoadingState message="Cargando" /> : <Lista />);`,
+    ).map((h) => h.regla);
+    expect(muestra).toContain("estadosDeCargaConCirculo");
   });
 
   it("reconoce un panel de pestañas escrito a mano y una duración distinta de 200 ms", () => {

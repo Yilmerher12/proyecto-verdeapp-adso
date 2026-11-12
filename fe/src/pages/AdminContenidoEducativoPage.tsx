@@ -19,7 +19,7 @@ import { Modal } from "@/components/ui/Modal";
 import { MenuAcciones } from "@/components/ui/MenuAcciones";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
 import { InputField } from "@/components/ui/InputField";
@@ -555,9 +555,7 @@ export function AdminContenidoEducativoPage() {
             </div>
 
             {cargandoContenido && (
-              <div className="px-5 py-6">
-                <LoadingState message={t("common.loading")} />
-              </div>
+              <Esqueleto mensaje={t("common.loading")} variante="filas" />
             )}
             {!cargandoContenido && errorContenido && (
               <div className="px-5 py-6">

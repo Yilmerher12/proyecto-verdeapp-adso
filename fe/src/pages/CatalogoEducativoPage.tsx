@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { BookOpen, Check, ChevronRight, Play } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { extraerIdDeYoutube } from "@/lib/youtube";
 import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
 import { TuSemana } from "@/components/educativo/TuSemana";
@@ -65,7 +65,7 @@ export function CatalogoEducativoPage() {
         <p className="max-w-2xl text-base text-gray-600 dark:text-gray-300">{t("catalogoEducativo.subtitle")}</p>
       </header>
 
-      {cargando && <LoadingState message={t("catalogoEducativo.loading")} />}
+      {cargando && <Esqueleto mensaje={t("catalogoEducativo.loading")} variante="tarjetas" />}
       {error && <Alert type="error" message={error} />}
 
       {!cargando && !error && categorias.length === 0 && (

@@ -21,7 +21,7 @@ import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
 import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import { Modal } from "@/components/ui/Modal";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { obtenerAuditoria, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
@@ -90,7 +90,7 @@ export function AuditoriaResultadoModal({ idAuditoria, auditoria: auditoriaRecib
     <Modal onClose={onClose} extraWide aria-label={t("auditoriaResultado.modalTitle")}>
       {cargando && (
         <div className="p-6">
-          <LoadingState message={t("common.loading")} />
+          <Esqueleto mensaje={t("common.loading")} variante="bloque" />
         </div>
       )}
       {error && (

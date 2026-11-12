@@ -16,7 +16,7 @@ import { DesvinculacionAprobadaBanner } from "@/components/dashboard/Desvinculac
 import { TarjetaConjunto } from "@/components/adminConjunto/TarjetaConjunto";
 import { notificarNotificacionesActualizadas, onCambioDesdeCampanita } from "@/lib/notificationEvents";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Modal } from "@/components/ui/Modal";
 import { SolicitudAdminConjuntoInfo } from "@/components/SolicitudAdminConjuntoInfo";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -181,7 +181,7 @@ export function AdminConjuntoDashboard() {
         </div>
 
         {cargando ? (
-          <LoadingState message={t("dashboards.adminConjunto.myConjuntos.loading")} />
+          <Esqueleto mensaje={t("dashboards.adminConjunto.myConjuntos.loading")} variante="bloque" />
         ) : errorConjuntos ? (
           <Alert type="error" message={t("common.loadError")} />
         ) : conjuntos.length === 0 ? (

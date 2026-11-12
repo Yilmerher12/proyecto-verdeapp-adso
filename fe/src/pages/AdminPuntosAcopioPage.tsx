@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/api/axios";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
 import { MenuAcciones, type OpcionMenu } from "@/components/ui/MenuAcciones";
@@ -324,7 +324,7 @@ export function AdminPuntosAcopioPage() {
       )}
 
       {errorAccion && <Alert type="error" message={errorAccion} onClose={() => setErrorAccion(null)} />}
-      {cargando && <LoadingState message={t("common.loading")} />}
+      {cargando && <Esqueleto mensaje={t("common.loading")} variante="tarjetas" />}
       {!cargando && cargaError && <Alert type="error" message={t("adminPuntosAcopio.loadError")} />}
 
       {!cargando && !cargaError && puntos.length === 0 && (

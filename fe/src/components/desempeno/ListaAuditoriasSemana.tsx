@@ -18,7 +18,7 @@ import { claveNivel } from "@/lib/desempeno";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Button } from "@/components/ui/Button";
 
 interface ListaAuditoriasSemanaProps {
@@ -52,7 +52,7 @@ export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio, sinTar
       </div>
 
       {auditorias === undefined ? (
-        <LoadingState message={t("common.loading")} />
+        <Esqueleto mensaje={t("common.loading")} variante="filas" />
       ) : auditorias === null ? (
         <Alert type="error" message={t("desempeno.semana.errorCarga")} />
       ) : auditorias.length === 0 ? (

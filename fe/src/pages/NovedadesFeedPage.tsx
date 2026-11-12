@@ -10,7 +10,7 @@ import { verFeedNovedades, type Novedad } from "@/lib/novedadesApi";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { MisNovedadesEnviadas, NovedadEnviadaForm } from "@/components/NovedadesEnviadas";
@@ -113,9 +113,7 @@ export function NovedadesFeedPage() {
           {pestana === "recibidas" && (
             <>
               {cargando && (
-                <div className="p-5">
-                  <LoadingState message={t("common.loading")} />
-                </div>
+                <Esqueleto mensaje={t("common.loading")} variante="filas" />
               )}
 
               {!cargando && error && (

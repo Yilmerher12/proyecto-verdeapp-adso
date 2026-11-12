@@ -34,7 +34,7 @@ import {
 } from "@/lib/validacion";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 
@@ -243,7 +243,7 @@ export function ProfilePage() {
     }
   };
 
-  if (cargando) return <div className="pt-6"><LoadingState message={t("profile.loading")} /></div>;
+  if (cargando) return <div className="pt-6"><Esqueleto mensaje={t("profile.loading")} variante="campos" /></div>;
   if (!perfil) return <div className="pt-6"><Alert type="error" message={t("profile.loadError")} /></div>;
 
   const role = ROLE_THEME[perfil.role_id] ?? ROLE_THEME[RoleId.RESIDENTE];

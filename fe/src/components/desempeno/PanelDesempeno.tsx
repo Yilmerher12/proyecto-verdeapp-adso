@@ -29,7 +29,7 @@ import { Pestanas } from "@/components/ui/Pestanas";
 import { lunesInicial, rangoSemana, totalSemana } from "@/lib/desempeno";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { LeyendaNiveles } from "@/components/desempeno/LeyendaNiveles";
 import { ListaAuditoriasSemana } from "@/components/desempeno/ListaAuditoriasSemana";
 import { RankingTemas } from "@/components/desempeno/RankingTemas";
@@ -105,7 +105,7 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
     }
   }, [llave, clave, idConjunto]);
 
-  if (!actual) return <Marco cabecera={cabecera}><LoadingState message={t("common.loading")} /></Marco>;
+  if (!actual) return <Marco cabecera={cabecera}><Esqueleto mensaje={t("common.loading")} variante="bloque" /></Marco>;
   if (!desempeno) return <Marco cabecera={cabecera}><Alert type="error" message={t("desempeno.errorCarga")} /></Marco>;
 
   const deSemana = (lunes: string | null) => (lunes ? listas[`${clave}|${lunes}`] : undefined);
@@ -182,7 +182,7 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
         {comoTabla ? (
           <TablaDesempenoSemanal semanas={desempeno.semanas} seleccionada={seleccionada} onSeleccionar={elegir} />
         ) : (
-          <Suspense fallback={<LoadingState message={t("common.loading")} />}>
+          <Suspense fallback={<Esqueleto mensaje={t("common.loading")} variante="bloque" />}>
             <GraficaDesempenoSemanal semanas={desempeno.semanas} seleccionada={seleccionada} onSeleccionar={elegir} />
           </Suspense>
         )}
