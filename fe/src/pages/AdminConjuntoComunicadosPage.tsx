@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { Alert } from "@/components/ui/Alert";
@@ -362,9 +362,7 @@ export function AdminConjuntoComunicadosPage() {
 
         <PanelPestana id="comunicados-panel" labelledBy={`comunicados-tab-${vigencia}`} claveActiva={vigencia}>
           {cargando && (
-            <div className="p-5">
-              <LoadingState message={t("common.loading")} />
-            </div>
+            <Esqueleto mensaje={t("common.loading")} variante="filas" />
           )}
 
           {!cargando && errorCarga && (

@@ -8,7 +8,7 @@ import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import { TriangleAlert, Bell, BadgeCheck, ChartColumn } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import axios from "axios";
 import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
 import { ROLE_THEME } from "@/config/roleTheme";
@@ -294,7 +294,7 @@ export function ResidenteDashboard() {
           ¿Qué? Cada fila ya no escribe el conjunto (el Residente solo tiene uno): `mostrarConjunto={false}`. */}
       {cargando ? (
         <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-6">
-          <LoadingState message={t("common.loading")} />
+          <Esqueleto mensaje={t("common.loading")} variante="bloque" />
         </div>
       ) : (
         <>

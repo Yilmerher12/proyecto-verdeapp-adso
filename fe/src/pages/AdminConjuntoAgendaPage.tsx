@@ -44,7 +44,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
 import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
 import { InputField } from "@/components/ui/InputField";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Modal } from "@/components/ui/Modal";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { Pestanas } from "@/components/ui/Pestanas";
@@ -578,7 +578,7 @@ export function AdminConjuntoAgendaPage() {
       {avisoSinTemas && <Alert type="info" message={t("agenda.download.noTopics")} />}
 
       {cargando ? (
-        <LoadingState message={t("common.loading")} />
+        <Esqueleto mensaje={t("common.loading")} variante="bloque" />
       ) : errorCarga ? (
         <Alert type="error" message={t("common.loadError")} />
       ) : conjuntos.length === 0 ? (
@@ -637,7 +637,7 @@ export function AdminConjuntoAgendaPage() {
                     {cuantosPorTratar === 0 ? (
                       <EmptyState icon={ClipboardList} message={t("agenda.emptyPending")} />
                     ) : (
-                      <LoadingState message={t("common.loading")} />
+                      <Esqueleto mensaje={t("common.loading")} variante="tarjetas" />
                     )}
                   </div>
                 ) : (

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BadgeCheck, OctagonX, Unlink } from "lucide-react";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
@@ -63,7 +63,7 @@ export function SolicitudesDesvinculacion() {
     }
   };
 
-  if (cargando) return <LoadingState message={t("common.loading")} />;
+  if (cargando) return <Esqueleto mensaje={t("common.loading")} variante="filas" />;
 
   return (
     <div className="space-y-3">

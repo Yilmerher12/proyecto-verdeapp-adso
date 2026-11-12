@@ -17,7 +17,7 @@ import { Alert } from "@/components/ui/Alert";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import { usePaginacion } from "@/hooks/usePaginacion";
@@ -313,9 +313,7 @@ export function MisNovedadesEnviadas({ version }: { version: number }) {
   // ¿Qué? Los estados de carga, error y vacío van con margen propio porque ya no hay una tarjeta alrededor.
   if (cargando)
     return (
-      <div className="p-5">
-        <LoadingState message={t("common.loading")} />
-      </div>
+      <Esqueleto mensaje={t("common.loading")} variante="filas" />
     );
   if (error)
     return (

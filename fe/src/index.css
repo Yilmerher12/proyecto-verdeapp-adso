@@ -414,6 +414,28 @@
   }
 }
 
+/* ¿Qué? Latido de la silueta de carga (componente Esqueleto): toda la silueta se aclara y se oscurece despacio.
+   ¿Para qué? Issue #644: indicar que la pantalla espera datos sin llamar la atención. Solo cambia la opacidad (nada de
+   degradados, que el proyecto no usa), igual que el desvanecimiento de .animate-fade-in.
+   ¿Impacto? Dentro de prefers-reduced-motion: no-preference: con "reducir movimiento" la silueta queda quieta. */
+@keyframes latido {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-latido {
+      animation: latido 1.4s ease-in-out infinite;
+    }
+  }
+}
+
 /* ¿Qué? Cursor parpadeante del efecto de máquina de escribir del Hero
    (ver LandingPage.tsx — "VerdeApp" + el eslogan se escriben letra por
    letra).

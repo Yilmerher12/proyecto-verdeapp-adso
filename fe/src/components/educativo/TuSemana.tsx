@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import { lunesBogota, rangoSemanaUTC } from "@/lib/dateFormat";
@@ -42,7 +42,7 @@ export function TuSemana({ contenido }: { contenido: ContenidoEducativo[] }) {
   if (cargando) {
     return (
       <div className={`${envoltorio} p-6`}>
-        <LoadingState message={t("common.loading")} />
+        <Esqueleto mensaje={t("common.loading")} variante="bloque" />
       </div>
     );
   }

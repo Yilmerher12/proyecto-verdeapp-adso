@@ -13,7 +13,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { agregarComentario, listarComentarios, type ComentarioPunto } from "@/lib/puntosAcopioApi";
 import { TextoRecortable } from "@/components/ui/TextoRecortable";
@@ -72,7 +72,7 @@ export function ComentariosPunto({ idPunto, version }: ComentariosPuntoProps) {
       <h3 className="text-[0.6875rem] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.title`)}</h3>
 
       {errorCarga && <Alert type="error" message={t(`${p}.loadError`)} />}
-      {!errorCarga && comentarios === null && <LoadingState message={t("common.loading")} />}
+      {!errorCarga && comentarios === null && <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} />}
       {comentarios?.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.empty`)}</p>}
       {comentarios?.map((c) => (
         <div key={c.id_comentario} className="rounded-xl border border-gray-100 bg-white px-3 py-2.5 dark:border-night-line dark:bg-night-card">

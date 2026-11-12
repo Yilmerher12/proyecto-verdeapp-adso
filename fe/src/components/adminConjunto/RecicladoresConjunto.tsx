@@ -10,7 +10,7 @@ import {
 } from "@/lib/recicladorConjuntoApi";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { InvitarRecicladorModal } from "@/components/adminConjunto/InvitarRecicladorModal";
 import { Button } from "@/components/ui/Button";
 
@@ -125,7 +125,7 @@ export function RecicladoresConjunto({
         </Button>
       </div>
       {cargandoAutorizados ? (
-        <LoadingState message={t("dashboards.adminConjunto.recyclersSection.authorizedLoading")} />
+        <Esqueleto mensaje={t("dashboards.adminConjunto.recyclersSection.authorizedLoading")} variante="filas" cantidad={3} />
       ) : errorAutorizados ? (
         <div className="mb-4">
           <Alert type="error" message={t("common.loadError")} />
@@ -173,7 +173,7 @@ export function RecicladoresConjunto({
         {t("dashboards.adminConjunto.recyclersSection.invitationsTitle")}
       </p>
       {cargando ? (
-        <LoadingState message={t("dashboards.adminConjunto.recyclersSection.loading")} />
+        <Esqueleto mensaje={t("dashboards.adminConjunto.recyclersSection.loading")} variante="filas" cantidad={3} />
       ) : invitaciones.length === 0 ? (
         <p className="text-xs text-gray-500 dark:text-gray-400">{t("dashboards.adminConjunto.recyclersSection.empty")}</p>
       ) : (

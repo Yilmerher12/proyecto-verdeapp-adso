@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowLeft, Check, ChevronRight, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
 import { MuroLeccion } from "@/components/educativo/MuroLeccion";
 import { imagenPropiaSegura } from "@/lib/enlaceSeguro";
@@ -93,7 +93,7 @@ export function CategoriaEducativaPage() {
         )}
       </header>
 
-      {cargando && <LoadingState message={t("common.loading")} />}
+      {cargando && <Esqueleto mensaje={t("common.loading")} variante="tarjetas" />}
 
       {!cargando && temas.length === 0 && (
         <EmptyState icon={FileText} message={t("categoriaEducativa.emptyForCategory")} />

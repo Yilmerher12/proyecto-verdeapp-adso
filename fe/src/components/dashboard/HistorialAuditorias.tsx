@@ -18,7 +18,7 @@ import { History } from "lucide-react";
 import { type AuditoriaConjunto, type PaginaAuditorias } from "@/lib/auditoriaConjuntoApi";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
@@ -91,7 +91,7 @@ export function HistorialAuditorias({
       )}
 
       {cargando ? (
-        <LoadingState message={t("common.loading")} />
+        <Esqueleto mensaje={t("common.loading")} variante="filas" />
       ) : auditorias.length === 0 ? (
         <EmptyState icon={History} message={t("auditoriaResultado.historialEmpty")} />
       ) : (

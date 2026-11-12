@@ -23,6 +23,7 @@
 6. La alineación sigue la regla: los formularios y listas de la app a la izquierda; un mensaje de resultado (ícono, frase, botón), centrado; las ventanas de cuenta (ingreso, registro, invitación) conservan su encabezado centrado hasta el issue de diseño (ver `docs/requisitos/restricciones.md`).
 7. Las dimensiones siguen la regla (issue #641): tarjetas de página con 24 px de relleno, bloques de una página separados 24 px y campos con esquina de 8 px.
 8. El foco y los colores siguen la regla (issue #642): el anillo verde sale de `focus-ring` y no hay colores fuera de la lista.
+9. Los estados de carga siguen la regla (issue #644): una pantalla que espera datos muestra `Esqueleto`, no un círculo (la prueba `estandaresVisuales` cuenta cualquier `LoadingState`, que ya no existe).
 
 ## Conteo de la prueba (partida del 2026-11-11 y hoy)
 

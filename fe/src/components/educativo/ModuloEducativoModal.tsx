@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import { FileText, Maximize2, Send } from "lucide-react";
 import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Modal } from "@/components/ui/Modal";
 import { Pestanas } from "@/components/ui/Pestanas";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
@@ -104,7 +104,7 @@ export function ModuloEducativoModal({ modulo, destinatarios, cargandoEnvios, on
               ))}
           </>
         ) : cargandoEnvios ? (
-          <LoadingState message={t("common.loading")} />
+          <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} />
         ) : destinatarios.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.modulePanel.noneYet`)}</p>
         ) : (

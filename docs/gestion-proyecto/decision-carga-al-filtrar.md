@@ -28,7 +28,7 @@ El "Cargando…" no es un error: es lo que pide RNF-004.3. El problema es usarlo
 
 | Situación | Qué se muestra |
 | --- | --- |
-| Primera carga de la lista, sin nada que mostrar todavía | `LoadingState` ("Cargando…" con spinner), como siempre |
+| Primera carga de la lista, sin nada que mostrar todavía | `Esqueleto` (silueta gris de la lista, issue #644; antes un círculo "Cargando…") |
 | Recarga con filas ya visibles (filtro, pestaña, página, acción que vuelve a pedir la lista) | Las filas anteriores se quedan **atenuadas y sin clic**, con una **barra de progreso delgada** arriba; al llegar lo nuevo recuperan su opacidad con una transición suave |
 
 El componente `ContenidoRecargable` aplica la regla solo: recibe `cargando` y el mensaje ya traducido, y recuerda internamente si ya hubo una primera carga.

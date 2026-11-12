@@ -13,7 +13,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { obtenerPerfilUsuario, type PerfilUsuarioAdmin } from "@/lib/adminUsuariosApi";
 import { RoleId } from "@/types/auth";
 
@@ -68,7 +68,7 @@ export function PerfilUsuarioDetalle({ correo, version }: PerfilUsuarioDetallePr
   return (
     <div role="region" aria-label={t(`${p}.ariaLabel`, { nombre: nombreCompleto })} className="p-5">
       {error && <Alert type="error" message={t("common.loadError")} />}
-      {!error && !perfil && <LoadingState message={t("common.loading")} />}
+      {!error && !perfil && <Esqueleto mensaje={t("common.loading")} variante="campos" cantidad={3} />}
 
       {perfil && (
         <div className="space-y-5">

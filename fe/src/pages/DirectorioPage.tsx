@@ -8,7 +8,7 @@ import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { TablaPuntosAcopio } from "@/components/TablaPuntosAcopio";
 import { normalizarTexto } from "@/lib/normalizarTexto";
 
@@ -284,9 +284,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             />
           </div>
           {cargandoDirectorio ? (
-            <div className="p-4">
-              <LoadingState message={t("common.loading")} />
-            </div>
+            <Esqueleto mensaje={t("common.loading")} variante="filas" />
           ) : errorDirectorio ? (
             <div className="p-4">
               <Alert type="error" message={t("common.loadError")} />
@@ -318,7 +316,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           <FranjaEca soloAcopio={soloAcopio} />
           <div className="p-4">
             {cargandoDirectorio ? (
-              <LoadingState message={t("common.loading")} />
+              <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} />
             ) : errorDirectorio ? (
               <Alert type="error" message={t("common.loadError")} />
             ) : puntos.length === 0 ? (

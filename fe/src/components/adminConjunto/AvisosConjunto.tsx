@@ -15,7 +15,7 @@ import { notificarNotificacionesActualizadas, onCambioDesdeCampanita } from "@/l
 import { FilaNotificacion } from "@/components/dashboard/NotificationFeed";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Paginacion } from "@/components/ui/Paginacion";
 
 /**
@@ -99,7 +99,7 @@ export function AvisosConjunto({
     }
   };
 
-  if (cargando) return <LoadingState message={t("common.loading")} />;
+  if (cargando) return <Esqueleto mensaje={t("common.loading")} variante="filas" />;
   if (error && items.length === 0) return <Alert type="error" message={t("common.loadError")} />;
 
   const hayNoLeidas = items.some((n) => !n.leida);
