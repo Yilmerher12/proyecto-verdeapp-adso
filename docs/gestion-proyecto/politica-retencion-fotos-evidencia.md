@@ -44,7 +44,7 @@
 4. Si un archivo ya no está en el disco, no pasa nada: igual se limpian las rutas.
 5. Correr el comando dos veces no hace nada la segunda vez.
 
-La foto sigue siendo **obligatoria al crear** una auditoría: lo exige el servicio. La columna `ruta_evidencia` pasó a aceptar `NULL` (migración `b1c2d3e4f5a6`) solo para poder dejarla vacía después.
+La foto sigue siendo **obligatoria al crear** una auditoría: lo exige el servicio. La columna `ruta_evidencia` pasó a aceptar `NULL` (migración `d606da68c80c`) solo para poder dejarla vacía después.
 
 ## 5. Límites y lo que falta
 

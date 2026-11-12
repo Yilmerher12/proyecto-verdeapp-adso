@@ -1118,7 +1118,7 @@ uv run python -m app.limpiar_evidencias --simular
 uv run python -m app.limpiar_evidencias
 ```
 
-El plazo es una propuesta pendiente de aprobación del grupo y del profesor (ver `docs/gestion-proyecto/politica-retencion-fotos-evidencia.md`). Para programarlo en producción hay que agendarlo en el servidor, por ejemplo una tarea mensual que corra `python -m app.limpiar_evidencias` dentro del contenedor del backend (tarjeta #317, igual que los otros dos comandos). Si las fotos se guardan en otro servidor o servicio de archivos, solo hay que cambiar la función `borrar_archivo` de ese archivo. La migración `b1c2d3e4f5a6` hizo que `auditorias_conjunto.ruta_evidencia` acepte `NULL`; la foto sigue siendo obligatoria al crear una auditoría (la exige el servicio).
+El plazo es una propuesta pendiente de aprobación del grupo y del profesor (ver `docs/gestion-proyecto/politica-retencion-fotos-evidencia.md`). Para programarlo en producción hay que agendarlo en el servidor, por ejemplo una tarea mensual que corra `python -m app.limpiar_evidencias` dentro del contenedor del backend (tarjeta #317, igual que los otros dos comandos). Si las fotos se guardan en otro servidor o servicio de archivos, solo hay que cambiar la función `borrar_archivo` de ese archivo. La migración `d606da68c80c` hizo que `auditorias_conjunto.ruta_evidencia` acepte `NULL`; la foto sigue siendo obligatoria al crear una auditoría (la exige el servicio).
 
 **Purga de tokens vencidos (issue #403).** Cuatro tablas solo reciben filas y nada las borraba: `tokens_revocados` (una por cada cierre y cada renovación de sesión), `email_verification_tokens`, `password_reset_tokens` e `invitaciones_admin_conjunto`. Desde `be/`:
 
