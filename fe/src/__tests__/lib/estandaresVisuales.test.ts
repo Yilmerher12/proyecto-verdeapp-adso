@@ -32,6 +32,9 @@ const BASE = {
   // Issue #642 — colores y efectos: foco con teclado y colores permitidos.
   focoDelAnilloAMano: 0,
   coloresFueraDeLaLista: 0,
+  // Issue #643 — movimiento: panel de pestañas con PanelPestana y una sola duración "normal" (200 ms).
+  panelesDePestanaAMano: 0,
+  duracionesFueraDeLaRegla: 0,
 };
 
 // ¿Qué? Páginas de Aprende a reciclar: tienen su propio estilo (esquinas más redondeadas y más espacio), documentado en restricciones.md.
@@ -182,6 +185,16 @@ function analizar(ruta: string, codigo: string): Hallazgo[] {
       //           blue, yellow, orange, green, etc. (los de modo oscuro con prefijo dark: acompañan siempre a uno de claro).
       const fuera = clase.match(/(?<![:\w-])(?:bg|text|border|ring|fill|stroke)-(?:blue|yellow|orange|green|emerald|sky|cyan|violet|pink|rose|lime)-\d+/);
       if (fuera) salida.push({ regla: "coloresFueraDeLaLista", donde: `${dondeEsta(nodo)} ${fuera[0]}` });
+
+      // Regla 11 (issue #643): el panel de una fila de pestañas es el componente PanelPestana (rol, vínculo con la pestaña y desvanecimiento
+      //           de entrada), no un elemento con role="tabpanel" escrito a mano.
+      const rolEscrito = nodo.attributes.properties.some((p) => ts.isJsxAttribute(p) && p.name.getText() === "role" && p.initializer?.getText() === '"tabpanel"');
+      if (rolEscrito && !ruta.endsWith("/components/ui/PanelPestana.tsx")) salida.push({ regla: "panelesDePestanaAMano", donde: dondeEsta(nodo) });
+
+      // Regla 12 (issue #643): las duraciones son dos, rápida (150 ms, la de transition-colors sin duración) y normal (duration-200). Cualquier
+      //           otra duration-N escrita fuera de la portada se cuenta.
+      const duracion = clase.match(/(?<![:\w-])duration-(\d+)/);
+      if (!esExcepcion && duracion && duracion[1] !== "200") salida.push({ regla: "duracionesFueraDeLaRegla", donde: `${dondeEsta(nodo)} ${duracion[0]}` });
     }
     ts.forEachChild(nodo, visitar);
   };
@@ -268,5 +281,20 @@ describe("estándar de texto, íconos y botones (issue #640)", () => {
     ).map((h) => h.regla);
     expect(muestra.filter((r) => r === "focoDelAnilloAMano")).toHaveLength(1);
     expect(muestra).toContain("coloresFueraDeLaLista");
+  });
+
+  it("reconoce un panel de pestañas escrito a mano y una duración distinta de 200 ms", () => {
+    const muestra = analizar(
+      "/src/pages/Muestra.tsx",
+      `export const X = () => (
+         <div>
+           <div role="tabpanel" aria-labelledby="x">A</div>
+           <div className="transition-colors duration-300">B</div>
+           <div className="transition-colors duration-200">C</div>
+         </div>
+       );`,
+    ).map((h) => h.regla);
+    expect(muestra.filter((r) => r === "panelesDePestanaAMano")).toHaveLength(1);
+    expect(muestra.filter((r) => r === "duracionesFueraDeLaRegla")).toHaveLength(1);
   });
 });

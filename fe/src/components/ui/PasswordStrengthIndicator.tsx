@@ -59,7 +59,7 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
         {[1, 2, 3, 4, 5].map((bar) => (
           <div
             key={bar}
-            className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+            className={`h-1.5 flex-1 rounded-full transition-colors duration-200 ${
               bar <= strength ? meta.barColor : "bg-gray-200 dark:bg-night-inset"
             }`}
           />

@@ -31,7 +31,10 @@ export function ContenidoRecargable({ cargando, mensaje, children }: ContenidoRe
   if (cargando && !yaCargo) return <LoadingState message={mensaje} />;
 
   return (
-    <div aria-busy={cargando}>
+    // ¿Qué? `animate-fade-in` en la raíz: este bloque se crea UNA vez, cuando termina la primera carga.
+    // ¿Para qué? Que la lista aparezca con el desvanecimiento estándar (issue #643).
+    // ¿Impacto? Al filtrar o recargar sigue siendo el mismo bloque, así que NO se repite la animación.
+    <div aria-busy={cargando} className="animate-fade-in">
       <div className="h-1">{cargando && <ProgressBar compacta label={mensaje} />}</div>
       {/* ¿Qué? `inert` además de pointer-events-none: bloquea también el teclado (Tab + Enter) y los
                 lectores de pantalla mientras las filas viejas están atenuadas. */}

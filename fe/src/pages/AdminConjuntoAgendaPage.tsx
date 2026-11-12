@@ -50,6 +50,7 @@ import { Paginacion } from "@/components/ui/Paginacion";
 import { Pestanas } from "@/components/ui/Pestanas";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
+import { PanelPestana } from "@/components/ui/PanelPestana";
 
 // ¿Qué? Issue #435 — temas del historial por página, igual que "Historial de novedades".
 const TAMANO_PAGINA = 10;
@@ -627,7 +628,7 @@ export function AdminConjuntoAgendaPage() {
               ]}
             />
           </div>
-          <div id="agenda-panel" role="tabpanel" aria-labelledby={`agenda-vista-${vista}`}>
+          <PanelPestana id="agenda-panel" labelledBy={`agenda-vista-${vista}`} claveActiva={vista}>
             {vista === "porTratar" ? (
               // ¿Qué? "Por tratar" es un tablero de notas: cuadrícula de notas dentro del contenedor, con la paginación al pie.
               <>
@@ -690,7 +691,7 @@ export function AdminConjuntoAgendaPage() {
                 )}
               </div>
             )}
-          </div>
+          </PanelPestana>
         </div>
       )}
 

@@ -10,7 +10,7 @@
 
 **Fecha:** 2026-11-10
 **Rama:** `feat/estandares-tipografia-y-fechas-por-idioma`
-**Estado:** idea abierta, sin decisión.
+**Estado:** decisión tomada el 2026-11-11 en el issue #643 (rama `feat/estandar-movimiento`). Se eligió el desvanecimiento solo, con duración rápida de 150 ms y normal de 200 ms, el componente `PanelPestana` para las pestañas y `AppShell` para las páginas. La regla quedó escrita en `docs/requisitos/restricciones.md` ("Movimiento"). Lo de abajo es el análisis que llevó a la decisión.
 **Relacionado:** issues #632 y #633, `fe/src/components/ui/Pestanas.tsx` y `fe/src/index.css` (ya existe `animate-fade-in`, usada por el panel del Admin de Conjunto).
 
 ## 1. Qué se vio

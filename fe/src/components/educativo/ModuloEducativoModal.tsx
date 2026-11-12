@@ -13,6 +13,7 @@ import type { ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 import type { Destinatario } from "@/lib/destinatariosModulo";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
+import { PanelPestana } from "@/components/ui/PanelPestana";
 
 type Pestana = "vista" | "recomendado";
 
@@ -70,7 +71,7 @@ export function ModuloEducativoModal({ modulo, destinatarios, cargandoEnvios, on
         />
       </div>
 
-      <div id="modulo-panel" role="tabpanel" aria-labelledby={`modulo-tab-${pestana}`} className="p-6">
+      <PanelPestana id="modulo-panel" labelledBy={`modulo-tab-${pestana}`} claveActiva={pestana} className="p-6">
         {pestana === "vista" ? (
           <>
             <ReactMarkdown components={COMPONENTES_MARKDOWN}>{modulo.cuerpo_texto}</ReactMarkdown>
@@ -133,7 +134,7 @@ export function ModuloEducativoModal({ modulo, destinatarios, cargandoEnvios, on
             })}
           </ul>
         )}
-      </div>
+      </PanelPestana>
 
       {guiaAmpliada && urlGuia && (
         <Modal onClose={() => setGuiaAmpliada(false)} layer="stacked" wide aria-label={t(`${p}.ratingPanel.enlarge`)}>

@@ -35,6 +35,7 @@ import {
   type TipoComunicado,
   type VigenciaComunicado,
 } from "@/lib/comunicadosApi";
+import { PanelPestana } from "@/components/ui/PanelPestana";
 
 // ¿Qué? Comunicados por página: el estándar del proyecto (10), igual que el resto de las listas (issue #632).
 const TAMANO_PAGINA = 10;
@@ -359,7 +360,7 @@ export function AdminConjuntoComunicadosPage() {
           ]}
         />
 
-        <div id="comunicados-panel" role="tabpanel" aria-labelledby={`comunicados-tab-${vigencia}`}>
+        <PanelPestana id="comunicados-panel" labelledBy={`comunicados-tab-${vigencia}`} claveActiva={vigencia}>
           {cargando && (
             <div className="p-5">
               <LoadingState message={t("common.loading")} />
@@ -495,7 +496,7 @@ export function AdminConjuntoComunicadosPage() {
               onSiguiente={paginacion.irASiguiente}
             />
           )}
-        </div>
+        </PanelPestana>
       </div>
 
       {(creando || editando) && (

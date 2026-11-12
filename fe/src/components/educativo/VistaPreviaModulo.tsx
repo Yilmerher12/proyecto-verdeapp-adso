@@ -6,6 +6,7 @@ import { MuroLeccion } from "@/components/educativo/MuroLeccion";
 import { Pestanas } from "@/components/ui/Pestanas";
 import { imagenPropiaSegura } from "@/lib/enlaceSeguro";
 import type { ContenidoEducativo } from "@/lib/contenidoEducativoApi";
+import { PanelPestana } from "@/components/ui/PanelPestana";
 
 type DatosModulo = Pick<
   ContenidoEducativo,
@@ -51,12 +52,7 @@ export function VistaPreviaModulo({ modulo }: { modulo: DatosModulo }) {
         ]}
       />
 
-      <div
-        id="vista-previa-panel"
-        role="tabpanel"
-        aria-labelledby={`vista-previa-tab-${pestana}`}
-        className="rounded-2xl bg-gray-200 p-4 dark:bg-night-page"
-      >
+      <PanelPestana id="vista-previa-panel" labelledBy={`vista-previa-tab-${pestana}`} claveActiva={pestana} className="rounded-2xl bg-gray-200 p-4 dark:bg-night-page">
         {pestana === "leccion" ? (
           modulo.cuerpo_texto.trim() ? (
             <MuroLeccion compacto mostrarTitulo modulo={{ ...modulo, titulo_tema: titulo }} />
@@ -82,7 +78,7 @@ export function VistaPreviaModulo({ modulo }: { modulo: DatosModulo }) {
             <p className="text-xs text-gray-600 dark:text-gray-300">{portada ? t(`${p}.catalogHint`) : t(`${p}.catalogNoCover`)}</p>
           </div>
         )}
-      </div>
+      </PanelPestana>
     </div>
   );
 }
