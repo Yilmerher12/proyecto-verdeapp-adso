@@ -129,7 +129,7 @@ describe("Pestanas", () => {
     it("por omisión, desde 640 px cada pestaña mide lo que su texto (no se estira a todo el ancho)", () => {
       render(<Pestanas variante="subrayadas" pestanas={TRES} activa="a" onCambiar={() => {}} ariaLabel="x" />);
 
-      for (const pestana of screen.getAllByRole("tab")) expect(pestana).toHaveClass("sm:flex-none");
+      for (const pestana of screen.getAllByRole("tab")) expect(pestana).toHaveClass("sm:flex-initial");
     });
 
     it("con repartidas se reparten el ancho en partes iguales también en ventana ancha (pestañas de conjunto)", () => {
@@ -137,7 +137,7 @@ describe("Pestanas", () => {
 
       for (const pestana of screen.getAllByRole("tab")) {
         expect(pestana).toHaveClass("flex-1");
-        expect(pestana).not.toHaveClass("sm:flex-none");
+        expect(pestana).not.toHaveClass("sm:flex-initial");
       }
     });
   });

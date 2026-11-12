@@ -31,7 +31,7 @@ Para cualquier operación que requiera comunicación con el servidor y tome más
 >
 > **Recargas de listas (issue #615, 2026-11-06)**: al filtrar, cambiar de pestaña o de página en una lista que ya tiene filas, el indicador es una **barra de progreso delgada** sobre las filas atenuadas (`ContenidoRecargable`), y no el "Cargando…" que reemplazaba toda la lista; el "Cargando…" completo queda para la primera carga. Aplicado en Usuarios registrados, Soporte técnico y Novedades. Ver `docs/gestion-proyecto/decision-carga-al-filtrar.md`.
 >
-> **Siluetas de carga (issue #644, 2026-11-12)**: en toda pantalla que espera datos de listas, tarjetas, formularios o gráficas, el "Cargando…" con círculo se reemplazó por una **silueta gris** del contenido (`Esqueleto`), que reserva su altura para que la página no salte al llegar los datos. Aparece a los 200 ms (si la respuesta llega antes no se ve, dentro del límite de 500 ms de este requisito), late suave y se queda quieta con "reducir movimiento". El aviso para lectores de pantalla (`role="status"`) se conserva. Las acciones cortas siguen con el spinner del botón.
+> **Siluetas de carga (issue #644, 2026-11-12)**: en toda pantalla que espera datos de listas, tarjetas, formularios o gráficas, el "Cargando…" con círculo se reemplazó por una **silueta gris** del contenido (`Esqueleto`), que reserva su altura para que la página no salte al llegar los datos. Aparece a los 100 ms (si la respuesta llega antes no se ve, dentro del límite de 500 ms de este requisito), late suave y se queda quieta con "reducir movimiento". El aviso para lectores de pantalla (`role="status"`) se conserva. Las acciones cortas siguen con el spinner del botón.
 
 ### RNF-004.1 y RNF-004.2 — Latencia y optimización de consultas
 

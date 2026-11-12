@@ -111,7 +111,7 @@ export function AdminConjuntoDesempenoPage() {
       )}
 
       {cargando ? (
-        <Esqueleto mensaje={t("common.loading")} variante="bloque" />
+        <Esqueleto mensaje={t("common.loading")} variante="bloque" alto="h-[48rem]" />
       ) : errorCarga ? (
         <Alert type="error" message={t("common.loadError")} />
       ) : conjuntos.length === 0 ? (

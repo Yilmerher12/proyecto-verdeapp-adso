@@ -2,7 +2,7 @@
  * Archivo: __tests__/components/Esqueleto.test.tsx
  * Descripción: Pruebas de la silueta de carga (issue #644).
  * ¿Para qué? Fijar lo decidido con prototipos: el aviso para lectores de pantalla está desde el primer instante, las formas
- *            aparecen tras 200 ms (y antes ya ocupan su espacio) y cada variante dibuja la cantidad pedida.
+ *            aparecen tras 100 ms (y antes ya ocupan su espacio) y cada variante dibuja la cantidad pedida.
  * ¿Impacto? Sin esta prueba, quitar la espera o el aviso dejaría un destello gris o una pantalla muda sin que nada falle.
  */
 import { act, render, screen } from "@testing-library/react";
@@ -20,7 +20,7 @@ describe("Esqueleto (issue #644)", () => {
     expect(screen.getByText("Cargando comunicados…")).toHaveClass("sr-only");
   });
 
-  it("las formas están ocultas (pero ocupan su espacio) hasta que pasan 200 ms", () => {
+  it("las formas están ocultas (pero ocupan su espacio) hasta que pasan 100 ms", () => {
     const { container } = render(<Esqueleto mensaje="Cargando…" />);
     const formas = container.querySelector("[data-esqueleto]") as HTMLElement;
     expect(formas).toHaveClass("invisible");
@@ -35,7 +35,7 @@ describe("Esqueleto (issue #644)", () => {
     expect(formas).toHaveClass("animate-latido");
   });
 
-  it("si se quita antes de los 200 ms no deja ningún temporizador pendiente", () => {
+  it("si se quita antes de los 100 ms no deja ningún temporizador pendiente", () => {
     const { unmount } = render(<Esqueleto mensaje="Cargando…" />);
     unmount();
     expect(vi.getTimerCount()).toBe(0);
@@ -52,6 +52,15 @@ describe("Esqueleto (issue #644)", () => {
     expect(container.querySelectorAll(".space-y-4 > div")).toHaveLength(4);
     rerender(<Esqueleto mensaje="x" variante="bloque" />);
     expect(container.querySelector("[data-esqueleto='bloque']")?.children).toHaveLength(1);
+  });
+
+  it("el alto pedido llega a la tarjeta y al bloque, y enTarjeta envuelve las filas con borde", () => {
+    const { container, rerender } = render(<Esqueleto mensaje="x" variante="bloque" alto="h-72" />);
+    expect(container.querySelector("[data-esqueleto='bloque'] > div")).toHaveClass("h-72");
+    rerender(<Esqueleto mensaje="x" variante="tarjetas" alto="h-56" />);
+    expect(container.querySelector(".grid > div")).toHaveClass("h-56");
+    rerender(<Esqueleto mensaje="x" variante="filas" enTarjeta />);
+    expect(container.querySelector(".divide-y")).toHaveClass("rounded-2xl", "border");
   });
 
   it("acepta una clase extra en el contenedor", () => {

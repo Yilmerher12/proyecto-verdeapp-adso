@@ -5,14 +5,17 @@
  * ¿Para qué? Issue #644: el círculo "Cargando…" mide unos 100 px y, al llegar los datos, se reemplazaba por una lista de
  *            otra altura, así que la página saltaba. La silueta reserva el espacio del contenido final desde el primer instante.
  * ¿Impacto? Tres cosas decididas con prototipos: (1) el aspecto es un latido suave (solo cambia la opacidad, clase
- *           `animate-latido`; quieto con "reducir movimiento"); (2) las formas aparecen tras 200 ms: si los datos llegan antes
+ *           `animate-latido`; quieto con "reducir movimiento"); (2) las formas aparecen tras 100 ms: si los datos llegan antes
  *           no se ve nada, y mientras tanto el espacio ya está reservado (`invisible` oculta sin quitar la altura);
- *           (3) el aviso "Cargando…" para lectores de pantalla (`role="status"`) está desde el primer momento, no a los 200 ms.
+ *           (3) el aviso "Cargando…" para lectores de pantalla (`role="status"`) está desde el primer momento, no a los 100 ms.
  *           `mensaje` llega ya traducido: este componente no conoce i18n. Las filas son 5 por omisión (las listas paginan de a 10).
  */
 import { useEffect, useState } from "react";
 
-export const RETRASO_ESQUELETO_MS = 200;
+// ¿Qué? Cuánto espera la silueta antes de verse. ¿Para qué? Issue #644, ajuste tras medir: con 200 ms y una respuesta de
+// ~300 ms (Slow 4G) la silueta se veía solo ~110 ms y parecía que no existía. ¿Impacto? Con 100 ms se ve unos ~250 ms en
+// esa misma carga, y una respuesta de menos de 100 ms sigue sin mostrar ningún destello gris.
+export const RETRASO_ESQUELETO_MS = 100;
 
 export type VarianteEsqueleto = "filas" | "tarjetas" | "campos" | "bloque";
 
@@ -24,6 +27,12 @@ interface EsqueletoProps {
   cantidad?: number;
   /** ¿Qué? Clases extra para el contenedor (por ejemplo, un margen). */
   className?: string;
+  /** ¿Qué? Clase de Tailwind con el alto de cada tarjeta o del bloque (por ejemplo, "h-72"). Sin valor: h-32 la tarjeta, h-40 el bloque.
+   *  ¿Para qué? Que la silueta mida lo mismo que el contenido real (una gráfica, la portada de una categoría) y la página no salte. */
+  alto?: string;
+  /** ¿Qué? Dibuja las filas dentro de una tarjeta con borde, la misma de las listas reales. Solo con la variante "filas".
+   *  ¿Para qué? Una lista que en la pantalla real va dentro de una tarjeta no debe verse como filas sueltas sobre el fondo. */
+  enTarjeta?: boolean;
 }
 
 const CANTIDAD_POR_OMISION: Record<VarianteEsqueleto, number> = { filas: 5, tarjetas: 3, campos: 4, bloque: 1 };
@@ -43,8 +52,8 @@ function Fila() {
   );
 }
 
-function Tarjeta() {
-  return <div className={`h-32 rounded-2xl ${GRIS}`} />;
+function Tarjeta({ alto }: { alto: string }) {
+  return <div className={`${alto} rounded-2xl ${GRIS}`} />;
 }
 
 function Campo() {
@@ -56,7 +65,7 @@ function Campo() {
   );
 }
 
-export function Esqueleto({ mensaje, variante = "filas", cantidad, className = "" }: EsqueletoProps) {
+export function Esqueleto({ mensaje, variante = "filas", cantidad, className = "", alto, enTarjeta = false }: EsqueletoProps) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const espera = setTimeout(() => setVisible(true), RETRASO_ESQUELETO_MS);
@@ -71,7 +80,9 @@ export function Esqueleto({ mensaje, variante = "filas", cantidad, className = "
       <span className="sr-only">{mensaje}</span>
       <div aria-hidden="true" data-esqueleto={variante} className={`animate-latido ${visible ? "" : "invisible"}`}>
         {variante === "filas" && (
-          <div className="divide-y divide-gray-100 dark:divide-night-line">
+          <div
+            className={`divide-y divide-gray-100 dark:divide-night-line ${enTarjeta ? "overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card" : ""}`}
+          >
             {formas.map((i) => (
               <Fila key={i} />
             ))}
@@ -80,7 +91,7 @@ export function Esqueleto({ mensaje, variante = "filas", cantidad, className = "
         {variante === "tarjetas" && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {formas.map((i) => (
-              <Tarjeta key={i} />
+              <Tarjeta key={i} alto={alto ?? "h-32"} />
             ))}
           </div>
         )}
@@ -91,7 +102,7 @@ export function Esqueleto({ mensaje, variante = "filas", cantidad, className = "
             ))}
           </div>
         )}
-        {variante === "bloque" && <div className={`h-40 rounded-2xl ${GRIS}`} />}
+        {variante === "bloque" && <div className={`${alto ?? "h-40"} rounded-2xl ${GRIS}`} />}
       </div>
     </div>
   );

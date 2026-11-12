@@ -807,7 +807,7 @@ describe("AdminConjuntoAgendaPage", () => {
       expect(conjuntos.parentElement).toHaveClass("px-5", "pt-5");
       for (const pestana of within(conjuntos).getAllByRole("tab")) {
         expect(pestana).toHaveClass("flex-1");
-        expect(pestana).not.toHaveClass("sm:flex-none");
+        expect(pestana).not.toHaveClass("sm:flex-initial");
       }
     });
 

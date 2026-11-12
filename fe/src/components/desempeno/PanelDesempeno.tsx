@@ -38,7 +38,12 @@ import { TablaDesempenoSemanal } from "@/components/desempeno/TablaDesempenoSema
 import { Button } from "@/components/ui/Button";
 import { PanelPestana } from "@/components/ui/PanelPestana";
 
-const GraficaDesempenoSemanal = lazy(() => import("@/components/desempeno/GraficaDesempenoSemanal"));
+// ¿Qué? La gráfica (Recharts) se descarga aparte, solo cuando se necesita.
+// ¿Para qué? Issue #644: el panel pedía la gráfica recién DESPUÉS de recibir los datos, así que se veían dos siluetas
+//           seguidas (datos, y luego la descarga de la gráfica). Ahora el panel la pide al montarse, a la vez que los datos.
+// ¿Impacto? Una sola espera; la gráfica sigue fuera del paquete principal (no se descarga en pantallas sin panel).
+const importarGrafica = () => import("@/components/desempeno/GraficaDesempenoSemanal");
+const GraficaDesempenoSemanal = lazy(importarGrafica);
 
 type Pestana = "semana" | "todas" | "temas";
 
@@ -66,6 +71,10 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
   // ¿Qué? Auditorías de cada semana ya pedidas, por "clave|lunes" (null = falló).
   const [listas, setListas] = useState<Record<string, AuditoriaConjunto[] | null>>({});
   const pedidas = useRef(new Set<string>());
+
+  useEffect(() => {
+    void importarGrafica();
+  }, []);
 
   useEffect(() => {
     let vigente = true;
@@ -105,7 +114,7 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
     }
   }, [llave, clave, idConjunto]);
 
-  if (!actual) return <Marco cabecera={cabecera}><Esqueleto mensaje={t("common.loading")} variante="bloque" /></Marco>;
+  if (!actual) return <Marco cabecera={cabecera}><Esqueleto mensaje={t("common.loading")} variante="bloque" alto="h-[48rem]" /></Marco>;
   if (!desempeno) return <Marco cabecera={cabecera}><Alert type="error" message={t("desempeno.errorCarga")} /></Marco>;
 
   const deSemana = (lunes: string | null) => (lunes ? listas[`${clave}|${lunes}`] : undefined);
@@ -182,7 +191,7 @@ export function PanelDesempeno({ idConjunto, semanas, cabecera, cargarHistorial 
         {comoTabla ? (
           <TablaDesempenoSemanal semanas={desempeno.semanas} seleccionada={seleccionada} onSeleccionar={elegir} />
         ) : (
-          <Suspense fallback={<Esqueleto mensaje={t("common.loading")} variante="bloque" />}>
+          <Suspense fallback={<Esqueleto mensaje={t("common.loading")} variante="bloque" alto="h-[18.75rem]" />}>
             <GraficaDesempenoSemanal semanas={desempeno.semanas} seleccionada={seleccionada} onSeleccionar={elegir} />
           </Suspense>
         )}

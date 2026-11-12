@@ -40,7 +40,10 @@ interface PestanasProps<T extends string> {
   /** ¿Qué? "subrayadas": una fila con una línea bajo la pestaña activa, a todo el ancho en celular.
    *  ¿Para qué? Issue #595: las pestañas de una sola tarjeta (el panel de cada conjunto) no deben parecerse a los
    *            filtros en píldora de su interior; ya se usaban así a mano en la página de Solicitudes del Admin del Sistema.
-   *  ¿Impacto? Ignora `dosColumnas` y `compacta`. Por omisión: "pastillas", como siempre. */
+   *  ¿Impacto? Ignora `dosColumnas` y `compacta`. Por omisión: "pastillas", como siempre.
+   *  ¿Qué más? Desde `sm` cada pestaña mide lo que su texto (`flex-initial`) pero SE ENCOGE si no hay sitio. Antes era `flex-none`
+   *            y "Historial de novedades" se cortaba a la derecha: `sm` mira el ancho de la ventana, no el de la tarjeta, y con el
+   *            menú lateral abierto la tarjeta es más angosta que la ventana. */
   variante?: "pastillas" | "subrayadas";
   /** ¿Qué? Solo con `subrayadas`: las pestañas se reparten SIEMPRE el ancho en partes iguales, también en ventana ancha.
    *  ¿Para qué? Issue #632 — las pestañas de CONJUNTO (Desempeño) se ven mejor repartidas: son nombres largos y de cantidad
@@ -76,7 +79,7 @@ export function Pestanas<T extends string>({
             aria-selected={activa === id}
             aria-controls={idPanel}
             onClick={() => onCambiar(id)}
-            className={`-mb-px flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 px-2 py-3 text-center text-xs font-bold leading-tight transition-colors min-[25rem]:gap-1.5 min-[25rem]:px-2 min-[25rem]:text-sm ${repartidas ? "sm:px-4" : "sm:flex-none sm:px-5"} ${
+            className={`-mb-px flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 px-2 py-3 text-center text-xs font-bold leading-tight transition-colors min-[25rem]:gap-1.5 min-[25rem]:px-2 min-[25rem]:text-sm ${repartidas ? "sm:px-4" : "sm:flex-initial sm:px-5"} ${
               activa === id
                 ? "border-accent-600 text-accent-700 dark:border-accent-400 dark:text-accent-300"
                 : "border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"

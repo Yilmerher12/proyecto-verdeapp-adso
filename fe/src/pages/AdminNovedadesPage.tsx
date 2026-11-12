@@ -411,7 +411,7 @@ export function AdminNovedadesPage() {
             {/* ¿Qué? Issue #615: antes el aviso "Cargando…" salía ARRIBA de las novedades viejas (las dos cosas
                       a la vez). Ahora la lista se atenúa con una barra de progreso al recargar y solo la
                       primera carga muestra el "Cargando…" completo. */}
-            <ContenidoRecargable cargando={cargando} mensaje={t("common.loading")}>
+            <ContenidoRecargable cargando={cargando} mensaje={t("common.loading")} cantidad={8}>
             {novedades.length === 0 && (
               <EmptyState
                 icon={Newspaper}
