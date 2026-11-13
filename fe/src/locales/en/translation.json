@@ -1179,7 +1179,7 @@
     "ownLocalityUnknown": "We couldn't detect your district",
     "emptyRecyclers": "No recyclers registered in this district.",
     "emptyPoints": "No collection points registered in this district.",
-    "searchPoints": "Search by name or address",
+    "searchPoints": "Search by name, address or organization",
     "noPointsMatch": "No point matches your search.",
     "call": "Call",
     "noPhone": "Does not share their phone",
@@ -1475,7 +1475,9 @@
       "howToGetThere": "Get directions",
       "howToGetThereAria": "Get directions to {{nombre}} on Google Maps",
       "noPhonePublished": "No phone number published.",
-      "uaespLine": "UAESP general line (not the point's own):"
+      "uaespLine": "UAESP general line (not the point's own):",
+      "email": "Email",
+      "organization": "Organization"
     }
   },
   "adminPuntosAcopio": {
@@ -1487,7 +1489,7 @@
     "noPhone": "No phone",
     "noManager": "No manager",
     "search": {
-      "placeholder": "Search by name or address",
+      "placeholder": "Search by name, address or organization",
       "noResults": "No point matches your search.",
       "status": {
         "todos": "All",

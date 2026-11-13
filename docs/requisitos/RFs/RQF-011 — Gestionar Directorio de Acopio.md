@@ -55,8 +55,8 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 
 ### Panel de gestión (frontend)
 
-- Los puntos se muestran en una tabla (columnas Punto, Localidad y Estado), ordenada por localidad y luego por nombre, con una fila compacta por punto. Arriba hay un resumen ("9 puntos en 6 localidades · 1 de baja").
-- Se puede buscar por nombre o dirección (sin importar tildes) y filtrar por localidad (solo las que tienen puntos) y por estado (Todos / Activos / De baja, con su conteo). Todo se calcula en el navegador con la lista completa que ya entrega el backend. Al cambiar la búsqueda o un filtro se pliega la fila abierta.
+- Los puntos se muestran en una tabla (columnas Punto, Localidad y Estado), ordenada por localidad y luego por nombre, con una fila compacta por punto, de a 20 por página (barra "Mostrando X–Y de Z" al pie). Arriba hay un resumen ("799 puntos en 18 localidades · 1 de baja").
+- Se puede buscar por nombre, dirección u organización (sin importar tildes) y filtrar por localidad (solo las que tienen puntos) y por estado (Todos / Activos / De baja, con su conteo). Desde el issue #664 todo se calcula en el servidor, porque el inventario de la UAESP trae cientos de puntos: la búsqueda espera unos 350 ms tras la última tecla, y los conteos y la lista de localidades vienen de `GET /admin/puntos-acopio/resumen`, que cuenta todos los puntos sin filtros. Al cambiar la búsqueda, un filtro o la página se pliega la fila abierta y se vuelve a la primera página.
 - Cada fila termina con un kebab (tres puntos) con las acciones: "Ver ficha", "Editar" y "Dar de baja" o, si el punto ya está de baja, "Reactivar" y "Eliminar definitivamente". Un clic en la fila no hace nada: la ficha solo se despliega desde el kebab.
 - "Ver ficha" despliega la fila (una a la vez) con la ficha del punto (Ubicación con el botón "Cómo llegar", que busca en Google Maps con dirección + localidad + Bogotá, y Contacto, con "Sin teléfono" y "Sin encargado" cuando faltan) y, debajo, los comentarios del administrador (autor y fecha) con su campo para agregar uno.
 - "Editar" abre el formulario en un modal centrado, el mismo de "Nuevo punto de acopio".
@@ -83,7 +83,8 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 
 | Método | Ruta                                | Auth requerida  | Descripción                                          |
 | ------ | ----------------------------------- | --------------- | ----------------------------------------------------- |
-| GET    | `/api/v1/admin/puntos-acopio`       | Sí (Admin)      | Lista todos los puntos, incluidos los dados de baja   |
+| GET    | `/api/v1/admin/puntos-acopio`       | Sí (Admin)      | Lista por páginas los puntos, incluidos los dados de baja: `{"items", "total"}`. Parámetros: `q`, `id_localidad`, `estado` (`todos`, `activos` o `baja`), `limit` (1 a 100, por defecto 20) y `offset` |
+| GET    | `/api/v1/admin/puntos-acopio/resumen` | Sí (Admin)    | Conteos de todos los puntos sin filtros: `total`, `activos`, `de_baja` y las `localidades` que tienen puntos |
 | POST   | `/api/v1/admin/puntos-acopio`       | Sí (Admin)      | Registra un nuevo punto de acopio (HU-015)            |
 | PUT    | `/api/v1/admin/puntos-acopio/{id}`  | Sí (Admin)      | Modifica los datos de un punto existente (HU-016)     |
 | DELETE | `/api/v1/admin/puntos-acopio/{id}`  | Sí (Admin)      | Da de baja un punto — soft-delete (HU-017)            |
@@ -91,7 +92,7 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 | DELETE | `/api/v1/admin/puntos-acopio/{id}/definitivo` | Sí (Admin) | Borra el registro por completo — solo si ya está dado de baja |
 | GET    | `/api/v1/admin/puntos-acopio/{id}/comentarios` | Sí (Admin) | Lista los comentarios internos del punto, del más reciente al más antiguo |
 | POST   | `/api/v1/admin/puntos-acopio/{id}/comentarios` | Sí (Admin) | Agrega un comentario interno firmado por el admin (también en puntos de baja) |
-| GET    | `/api/v1/directorio/puntos-acopio`  | Sí (cualquiera) | Lista solo los puntos activos — vista pública (incluye `url_foto`) |
+| GET    | `/api/v1/directorio/puntos-acopio`  | Sí (cualquiera) | Lista por páginas solo los puntos activos — vista pública (incluye `url_foto`, `organizacion` y `correo_contacto`): `{"items", "total"}`. Parámetros: `localidad_id`, `q`, `limit` (1 a 100, por defecto 20) y `offset` |
 
 ---
 
@@ -101,4 +102,5 @@ El sistema debe permitir al usuario con rol 'Admin_sistema' registrar, actualiza
 - RN-002: Exclusividad de escritura. La tabla `Puntos_Acopio` solo puede ser modificada por el `admin_sistema`.
 - RN-004: La foto de un punto (`url_foto`) solo puede ser una imagen que subió esta misma app. Un enlace externo dejaría que un tercero vea quién abre la ficha. El archivo está en `COLUMNAS_CON_ADJUNTOS` (`app/limpiar_adjuntos.py`): la limpieza de adjuntos no lo borra mientras algún punto lo use, y sí cuando se reemplaza o se quita.
 - RN-003: Los comentarios de un punto (`puntos_acopio_comentarios`) son internos del `admin_sistema`. Se borran junto con el punto al eliminarlo definitivamente; si se borra la cuenta del autor, el comentario se conserva sin autor.
+- RN-006 (issue #664): Los puntos que vienen del inventario de ECA de la UAESP (Resolución 698 de 2023) se cargan con `uv run python -m app.seed`, desde `be/app/data/eca_inventario_uaesp.csv`. Cada ECA se reconoce por `numero_resolucion` (único): correr el seed otra vez no duplica ni pisa lo que el Admin Sistema haya editado, y nunca borra puntos, porque borrarlos eliminaría sus comentarios. Esas columnas (`numero_resolucion`, `organizacion`, `correo_contacto`, `latitud`, `longitud`) son opcionales, de solo lectura para la API (editar un punto no las toca) y `NULL` en un punto creado a mano. El correo de contacto sale de `be/app/data/eca_correos_uaesp.csv`, que no se sube al repositorio (público; correos personales). Fuente, licencia y atribución en `docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md`.
 - RN-005: El aviso "¿Qué es una ECA?" de la página de puntos de acopio no afirma que un ciudadano pueda entregar materiales en una ECA, porque la UAESP todavía no lo ha confirmado (issue #500). La advertencia de que la lista es de 2020 y no incluye todas las ECA es siempre visible y no se puede cerrar. Ver CA-006.8 de HU-006.

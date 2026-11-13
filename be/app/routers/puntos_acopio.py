@@ -9,9 +9,10 @@ Descripción: Endpoints de gestión de puntos de acopio, exclusivos del Admin
           agregarse/corregirse editando seed.py a mano y re-desplegando.
 """
 
+from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db, require_role
@@ -20,9 +21,11 @@ from app.models.usuario import Usuario
 from app.schemas.puntos_acopio import (
     ComentarioCreate,
     ComentarioResponse,
+    PuntoAcopioAdminPagina,
     PuntoAcopioAdminResponse,
     PuntoAcopioCreate,
     PuntoAcopioUpdate,
+    ResumenPuntosAcopio,
 )
 from app.services import puntos_acopio_service as service
 from app.utils.audit_log import log_accion_admin
@@ -38,12 +41,36 @@ _requiere_admin_sistema = require_role(
 )
 
 
-@router.get("", response_model=list[PuntoAcopioAdminResponse], summary="Listar todos los puntos de acopio")
+# ¿Qué? Tope de filas por página del panel del Admin.
+MAX_LIMIT_PUNTOS_ACOPIO = 100
+
+
+@router.get("", response_model=PuntoAcopioAdminPagina, summary="Listar los puntos de acopio por páginas")
 def listar(
+    q: str | None = Query(None, max_length=100),
+    id_localidad: int | None = Query(None, ge=1),
+    estado: Literal["todos", "activos", "baja"] = Query("todos"),
+    limit: int = Query(20, ge=1, le=MAX_LIMIT_PUNTOS_ACOPIO),
+    offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
-) -> list[dict]:
-    return service.listar_todos(db)
+) -> dict:
+    items, total = service.listar_todos(
+        db, limit=limit, offset=offset, q=q, id_localidad=id_localidad, estado=estado
+    )
+    return {"items": items, "total": total}
+
+
+@router.get(
+    "/resumen",
+    response_model=ResumenPuntosAcopio,
+    summary="Conteos de todos los puntos de acopio, sin filtros",
+)
+def resumen(
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+) -> dict:
+    return service.resumen(db)
 
 
 @router.post(

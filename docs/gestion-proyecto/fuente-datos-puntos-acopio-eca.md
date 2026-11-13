@@ -234,8 +234,16 @@ horario, hay que pedirlos a las organizaciones; no es obligatorio para las tarje
 #664, #665 y #666. La línea general de la UAESP (601 3580400, extensión 2) sigue siendo
 el texto de respaldo y no es el teléfono de ninguna ECA.
 
+### Cómo se cargó (issue #664)
+
+- **CSV limpio** en `be/app/data/eca_inventario_uaesp.csv` (799 filas, sin correos). Los datos de la UAESP **no se cambiaron**: solo se quitaron espacios sobrantes, "NO APLICA" y las organizaciones vacías pasaron a "sin organización", y las 27 filas con dos direcciones quedaron con las dos separadas por " / ". Los nombres genéricos ("ECA", "ECA PRINCIPAL") se dejaron tal cual; la tabla muestra la organización debajo del nombre para distinguirlos.
+- **Número de la Resolución 698 repetido:** el 105 y el 605 aparecen cada uno en dos filas (dos organizaciones en la misma bodega, con las mismas coordenadas). Para que `numero_resolucion` sea único, la segunda fila lleva `-2` (`105-2` y `605-2`).
+- **Correos en un archivo aparte:** 540 de las 799 filas tienen correo. Van en `be/app/data/eca_correos_uaesp.csv`, que **no se sube al repositorio** porque es público y algunos son direcciones personales (Gmail, Yahoo); está en `.gitignore`, como el `.env`, y el equipo se lo pasa por otro medio. Sin ese archivo el seed funciona igual, sin correos.
+- **Las 9 ECA de 2020** ya no se siembran a mano: tres (Engativá, Puente Aranda 2 y Usaquén II) vienen en el inventario nuevo y las otras seis la UAESP dice que no son parte del inventario vigente.
+- **Atribución en la app:** el texto "Fuente: UAESP..." de la sección de licencia se agrega al aviso del directorio en #665.
+
 ### Qué sigue
 
-- #664: cargar las ECA del Excel a la base de datos y paginar el directorio.
+- #664 (esta tarjeta): cargar las ECA del Excel a la base de datos y paginar el directorio.
 - #665: cambiar el aviso del directorio con esta fuente y la confirmación de entrega.
 - #666: mostrar las ECA en un mapa.

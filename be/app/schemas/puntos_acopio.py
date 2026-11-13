@@ -70,8 +70,38 @@ class PuntoAcopioAdminResponse(PuntoAcopioBase):
     nombre_localidad: str
     activo: bool
     url_foto: Optional[str] = None
+    # ¿Qué? Datos del inventario de la UAESP (issue #664); solo de lectura: editar no los toca.
+    organizacion: Optional[str] = None
+    correo_contacto: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+class PuntoAcopioAdminPagina(BaseModel):
+    """¿Qué? Una página del panel del Admin: los puntos pedidos y cuántos hay con ese filtro."""
+
+    items: list[PuntoAcopioAdminResponse]
+    total: int
+
+
+class LocalidadConPuntos(BaseModel):
+    id_localidad: int
+    nombre_localidad: str
+
+
+class ResumenPuntosAcopio(BaseModel):
+    """
+    ¿Qué? Conteos de TODOS los puntos, sin filtros: la cabecera del panel ("N puntos en M
+          localidades · K de baja"), los conteos de los chips de estado y las localidades que
+          sí tienen puntos para el filtro.
+    ¿Para qué? Antes el panel los calculaba con la lista completa; con paginación en el
+              servidor la lista ya no llega completa.
+    """
+
+    total: int
+    activos: int
+    de_baja: int
+    localidades: list[LocalidadConPuntos]
 
 
 class ComentarioCreate(BaseModel):

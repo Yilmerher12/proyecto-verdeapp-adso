@@ -22,5 +22,15 @@ class PuntoAcopioDirectorioResponse(BaseModel):
     nombre_encargado: Optional[str] = None
     nombre_localidad: str
     url_foto: Optional[str] = None
+    # ¿Qué? Datos del inventario de la UAESP (issue #664); None en los puntos creados a mano.
+    organizacion: Optional[str] = None
+    correo_contacto: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+class PuntoAcopioDirectorioPagina(BaseModel):
+    """¿Qué? Una página del directorio: los puntos pedidos y cuántos hay en total con ese filtro."""
+
+    items: list[PuntoAcopioDirectorioResponse]
+    total: int

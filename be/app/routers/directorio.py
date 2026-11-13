@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import func, select
 from typing import List, Optional
 
 from app.dependencies import get_db, get_current_user
@@ -12,7 +12,8 @@ from app.models.reciclador import Reciclador
 from app.models.punto_acopio import PuntoAcopio
 from app.models.localidad import Localidad
 from app.models.rol import RolId
-from app.schemas.directorio import RecicladorDirectorioResponse, PuntoAcopioDirectorioResponse
+from app.schemas.directorio import RecicladorDirectorioResponse, PuntoAcopioDirectorioPagina
+from app.services.puntos_acopio_service import condicion_busqueda
 
 router = APIRouter(
     prefix="/api/v1/directorio",
@@ -91,13 +92,27 @@ def listar_recicladores(
     ]
 
 
-@router.get("/puntos-acopio", response_model=List[PuntoAcopioDirectorioResponse])
+@router.get("/puntos-acopio", response_model=PuntoAcopioDirectorioPagina)
 def listar_puntos_acopio(
     localidad_id: Optional[int] = Query(None),
-    limit: int = Query(50, ge=1, le=MAX_LIMIT_DIRECTORIO),
+    q: Optional[str] = Query(None, max_length=100),
+    # ¿Qué? Issue #664: con el inventario de la UAESP son cientos de puntos, así que el listado
+    #       se entrega por páginas ({"items", "total"}) y la búsqueda se hace aquí, no en el navegador.
+    limit: int = Query(20, ge=1, le=MAX_LIMIT_DIRECTORIO),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     _: Usuario = Depends(get_current_user),
 ):
+    # ¿Qué? RQF-011/HU-017: un punto dado de baja por el Admin Sistema
+    #       no debe seguir apareciendo en el directorio público.
+    condiciones = [PuntoAcopio.activo.is_(True)]
+    if localidad_id:
+        condiciones.append(PuntoAcopio.id_localidad == localidad_id)
+    busqueda = condicion_busqueda(q)
+    if busqueda is not None:
+        condiciones.append(busqueda)
+
+    total = db.scalar(select(func.count()).select_from(PuntoAcopio).where(*condiciones)) or 0
     stmt = (
         select(
             PuntoAcopio.id_punto_acopio,
@@ -106,28 +121,34 @@ def listar_puntos_acopio(
             PuntoAcopio.telefono_contacto,
             PuntoAcopio.nombre_encargado,
             PuntoAcopio.url_foto,
+            PuntoAcopio.organizacion,
+            PuntoAcopio.correo_contacto,
             Localidad.nombre_localidad,
         )
         .join(Localidad, PuntoAcopio.id_localidad == Localidad.id_localidad)
-        # ¿Qué? RQF-011/HU-017: un punto dado de baja por el Admin Sistema
-        #       no debe seguir apareciendo en el directorio público.
-        .where(PuntoAcopio.activo.is_(True))
+        .where(*condiciones)
+        # ¿Qué? id_punto_acopio al final: con nombres repetidos ("ECA" ×80) un orden con empates
+        #       podría repetir o saltar filas entre páginas.
+        .order_by(Localidad.nombre_localidad, PuntoAcopio.nombre, PuntoAcopio.id_punto_acopio)
+        .limit(limit)
+        .offset(offset)
     )
-    if localidad_id:
-        stmt = stmt.where(PuntoAcopio.id_localidad == localidad_id)
-
-    stmt = stmt.order_by(Localidad.nombre_localidad, PuntoAcopio.nombre).limit(limit)
     rows = db.execute(stmt).all()
 
-    return [
-        {
-            "id_punto_acopio": r.id_punto_acopio,
-            "nombre": r.nombre,
-            "direccion": r.direccion,
-            "telefono_contacto": r.telefono_contacto,
-            "nombre_encargado": r.nombre_encargado,
-            "nombre_localidad": r.nombre_localidad,
-            "url_foto": r.url_foto,
-        }
-        for r in rows
-    ]
+    return {
+        "items": [
+            {
+                "id_punto_acopio": r.id_punto_acopio,
+                "nombre": r.nombre,
+                "direccion": r.direccion,
+                "telefono_contacto": r.telefono_contacto,
+                "nombre_encargado": r.nombre_encargado,
+                "nombre_localidad": r.nombre_localidad,
+                "url_foto": r.url_foto,
+                "organizacion": r.organizacion,
+                "correo_contacto": r.correo_contacto,
+            }
+            for r in rows
+        ],
+        "total": total,
+    }

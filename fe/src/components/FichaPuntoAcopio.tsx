@@ -31,6 +31,9 @@ export interface PuntoFicha {
   url_foto?: string | null;
   /** ¿Qué? Solo lo trae la gestión del Admin; el Directorio solo lista puntos activos. */
   activo?: boolean;
+  /** ¿Qué? Datos del inventario de la UAESP: quién opera la ECA y su correo. Faltan en los puntos creados a mano. */
+  organizacion?: string | null;
+  correo_contacto?: string | null;
 }
 
 interface FichaPuntoAcopioProps {
@@ -134,6 +137,22 @@ export function FichaPuntoAcopio({ punto, variante }: FichaPuntoAcopioProps) {
                 </>
               )}
             </dd>
+            {punto.correo_contacto && (
+              <>
+                <dt className="text-gray-500 dark:text-gray-400">{t(`${k}.email`)}</dt>
+                <dd className="break-words font-medium text-gray-900 dark:text-white">
+                  <a href={`mailto:${punto.correo_contacto}`} className="link-text">
+                    {punto.correo_contacto}
+                  </a>
+                </dd>
+              </>
+            )}
+            {punto.organizacion && (
+              <>
+                <dt className="text-gray-500 dark:text-gray-400">{t(`${k}.organization`)}</dt>
+                <dd className="break-words font-medium text-gray-900 dark:text-white">{punto.organizacion}</dd>
+              </>
+            )}
             <dt className="text-gray-500 dark:text-gray-400">{t("adminPuntosAcopio.panel.manager")}</dt>
             <dd className="break-words font-medium text-gray-900 dark:text-white">
               {punto.nombre_encargado || t("adminPuntosAcopio.noManager")}

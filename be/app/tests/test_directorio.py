@@ -116,5 +116,5 @@ class TestPuntosAcopio:
     def test_con_login_devuelve_el_punto(self, client: TestClient, auth_headers, punto_acopio_test):
         response = client.get("/api/v1/directorio/puntos-acopio", headers=auth_headers)
         assert response.status_code == 200
-        nombres = [p["nombre"] for p in response.json()]
+        nombres = [p["nombre"] for p in response.json()["items"]]
         assert punto_acopio_test.nombre in nombres

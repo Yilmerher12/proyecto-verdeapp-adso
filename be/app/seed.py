@@ -29,6 +29,11 @@ from app.utils.ids import generar_uuid4
 
 SEED_FILE = Path(__file__).parent / "seed_data.sql"
 CONJUNTOS_CSV = Path(__file__).parent / "data" / "conjuntos_residenciales_bogota.csv"
+ECA_CSV = Path(__file__).parent / "data" / "eca_inventario_uaesp.csv"
+# ¿Qué? Correos de contacto de las organizaciones, en un archivo aparte que NO se sube al repositorio
+#       (está en .gitignore, como el .env). Si no existe, el directorio funciona igual, sin correos.
+# ¿Para qué? El repositorio es público y algunos correos son direcciones personales (Gmail, Yahoo).
+ECA_CORREOS_CSV = Path(__file__).parent / "data" / "eca_correos_uaesp.csv"
 
 # ¿Qué? Contraseña compartida por los usuarios de prueba: AdminVerde2026*
 PASSWORD_HASH_PRUEBA = "$2b$12$xSluyevTDoPhwiydwB3OhetVHh1miUiGivw99ChVJxBGl.zaC6EMW"
@@ -153,6 +158,64 @@ def importar_conjuntos_reales(connection: Connection) -> None:
     print(f"[seed] {len(filas_a_insertar)} conjuntos residenciales reales sembrados.")
 
 
+def importar_eca_inventario(connection: Connection) -> None:
+    """
+    ¿Qué? Carga las ECA del inventario de la UAESP (Resolución 698 de 2023) como puntos de acopio.
+          Fuente y licencia: docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md.
+    ¿Para qué? El directorio solo tenía 9 ECA de un dataset de 2020. Issue #664.
+    ¿Impacto? Se puede correr las veces que haga falta: una ECA que ya existe (mismo
+              numero_resolucion) no se toca, así que no duplica ni pisa lo que el Admin Sistema
+              haya editado. A diferencia de los conjuntos, NO hace DELETE: borraría los
+              comentarios internos de los puntos. Los correos solo rellenan los que están vacíos.
+    """
+    filas: list[dict] = []
+    with ECA_CSV.open(encoding="utf-8", newline="") as archivo:
+        for fila in csv.DictReader(archivo, delimiter=";"):
+            filas.append(
+                {
+                    "id_punto_acopio": generar_uuid4(),
+                    "numero_resolucion": fila["numero_resolucion"],
+                    "organizacion": fila["organizacion"] or None,
+                    "nombre": fila["nombre"],
+                    "latitud": fila["latitud"],
+                    "longitud": fila["longitud"],
+                    "direccion": fila["direccion"],
+                    "id_localidad": int(fila["id_localidad"]),
+                }
+            )
+
+    # ¿Qué? SQL crudo (text()): los default= del modelo no corren aquí, por eso el id y activo van a mano.
+    connection.execute(
+        text(
+            "INSERT INTO puntos_acopios (id_punto_acopio, numero_resolucion, organizacion, nombre, "
+            "latitud, longitud, direccion, id_localidad, activo) "
+            "VALUES (:id_punto_acopio, :numero_resolucion, :organizacion, :nombre, "
+            ":latitud, :longitud, :direccion, :id_localidad, TRUE) "
+            "ON CONFLICT (numero_resolucion) DO NOTHING"
+        ),
+        filas,
+    )
+    print(f"[seed] Inventario de ECA de la UAESP revisado: {len(filas)} filas en el CSV.")
+
+    if not ECA_CORREOS_CSV.exists():
+        print("[seed] No hay data/eca_correos_uaesp.csv: las ECA quedan sin correo de contacto.")
+        return
+    with ECA_CORREOS_CSV.open(encoding="utf-8", newline="") as archivo:
+        correos = [
+            {"numero_resolucion": f["numero_resolucion"], "correo": f["correo"]}
+            for f in csv.DictReader(archivo, delimiter=";")
+        ]
+    if correos:
+        connection.execute(
+            text(
+                "UPDATE puntos_acopios SET correo_contacto = :correo "
+                "WHERE numero_resolucion = :numero_resolucion AND correo_contacto IS NULL"
+            ),
+            correos,
+        )
+    print(f"[seed] {len(correos)} correos de contacto de ECA revisados.")
+
+
 def sembrar_usuarios_prueba(connection: Connection) -> None:
     """
     ¿Qué? Admin de Conjunto, Reciclador y Residente de prueba, todos
@@ -267,9 +330,10 @@ def sembrar_usuarios_prueba(connection: Connection) -> None:
 
 def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
     """
-    ¿Qué? Siembra el superadministrador, los 9 puntos de acopio reales y los
-          6 módulos de contenido educativo — datos que antes vivían como
-          INSERT estáticos en seed_data.sql.
+    ¿Qué? Siembra el superadministrador y los 6 módulos de contenido
+          educativo — datos que antes vivían como INSERT estáticos en
+          seed_data.sql. Los puntos de acopio ya no se siembran aquí: vienen
+          del inventario de la UAESP (importar_eca_inventario, issue #664).
     ¿Para qué? Sus llaves primarias ahora son UUID (generar_uuid4, ver
               app/utils/ids.py) — un INSERT de SQL puro y estático ya no
               puede generarlas, así que se movieron aquí junto con
@@ -288,33 +352,6 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
             "ON CONFLICT DO NOTHING"
         ),
         {"id_usuario": generar_uuid4()},
-    )
-
-    puntos_acopio = [
-        (8, "ECA Kennedy", "Carrera 84 # 11A-34"),
-        (1, "ECA Usaquén I", "Carrera 21 # 164-82"),
-        (1, "ECA Usaquén II", "Carrera 18 # 164-32"),
-        (10, "ECA Engativá", "Calle 80C # 92-44"),
-        (10, "ECA Engativá 2 (Las Ferias)", "Carrera 69K # 79-49"),
-        (9, "ECA Fontibón (Montevideo)", "Calle 17A # 69F-26"),
-        (14, "ECA Mártires", "Calle 8 # 26-80"),
-        (16, "ECA Puente Aranda 1", "Carrera 36 # 19-53"),
-        (16, "ECA Puente Aranda 2", "Carrera 65B # 17-80"),
-    ]
-    connection.execute(
-        text(
-            "INSERT INTO puntos_acopios (id_punto_acopio, id_localidad, nombre, direccion) "
-            "VALUES (:id_punto_acopio, :id_localidad, :nombre, :direccion) ON CONFLICT DO NOTHING"
-        ),
-        [
-            {
-                "id_punto_acopio": generar_uuid4(),
-                "id_localidad": id_localidad,
-                "nombre": nombre,
-                "direccion": direccion,
-            }
-            for id_localidad, nombre, direccion in puntos_acopio
-        ],
     )
 
     contenido_educativo = [
@@ -387,7 +424,7 @@ def sembrar_datos_con_uuid_generado(connection: Connection) -> None:
             for modulo_categoria, titulo_tema, cuerpo_texto, fecha_publicacion, url_video, url_guia in contenido_educativo
         ],
     )
-    print("[seed] Superadmin, puntos de acopio y contenido educativo sembrados.")
+    print("[seed] Superadmin y contenido educativo sembrados.")
 
 
 def main() -> None:
@@ -410,6 +447,10 @@ def main() -> None:
             connection.commit()
         else:
             print("[seed] Los conjuntos residenciales reales ya están importados, no se vuelven a traer del CSV.")
+
+        # ¿Qué? Se revisa siempre (es idempotente): quien ya tenía la base sembrada recibe las ECA nuevas.
+        importar_eca_inventario(connection)
+        connection.commit()
 
         if not nucleo_ya_sembrado:
             sembrar_usuarios_prueba(connection)
