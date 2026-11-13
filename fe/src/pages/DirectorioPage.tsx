@@ -1,5 +1,5 @@
 import { ANCHO_PAGINA } from "@/config/anchoPagina";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Phone, Map as MapIcon, HardHat, Warehouse, MessageCircle, Info, ExternalLink, Search, X, TriangleAlert } from "lucide-react";
@@ -10,7 +10,8 @@ import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { TablaPuntosAcopio } from "@/components/TablaPuntosAcopio";
-import { normalizarTexto } from "@/lib/normalizarTexto";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
 
 interface Localidad {
   id_localidad: number;
@@ -34,6 +35,9 @@ interface PuntoAcopio {
   nombre_encargado: string | null;
   nombre_localidad: string;
   url_foto: string | null;
+  // ¿Qué? Datos del inventario de la UAESP (issue #664); null en los puntos creados a mano.
+  organizacion: string | null;
+  correo_contacto: string | null;
 }
 
 type TabId = "recicladores" | "puntos";
@@ -48,6 +52,11 @@ interface DirectorioPageProps {
 //           apunten siempre al mismo lugar si algún día cambia.
 const FUENTE_ECA_URL =
   "https://www.uaesp.gov.co/sites/default/files/archivos-adjuntos/Listado_Inventario_inicial_ECA_y_Bodegas_PR.pdf";
+
+// ¿Qué? Cuántos puntos pide cada página al servidor.
+const TAMANO_PAGINA = 20;
+// ¿Qué? Espera, en ms, desde la última tecla antes de pedir la búsqueda al servidor (mismo valor que AdminDashboard).
+const ESPERA_BUSQUEDA_MS = 350;
 
 export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const { t } = useTranslation();
@@ -65,11 +74,17 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const [localidadPuntosId, setLocalidadPuntosId] = useState<number | "">("");
   const [localidadCargada, setLocalidadCargada] = useState(false);
   const [recicladores, setRecicladores] = useState<Reciclador[]>([]);
+  // ¿Qué? Solo la página de puntos que se ve y cuántos hay en total con ese filtro (issue #664: el
+  //       inventario de la UAESP trae cientos, así que el servidor entrega la lista por páginas).
   const [puntos, setPuntos] = useState<PuntoAcopio[]>([]);
-  // ¿Qué? Búsqueda por nombre o dirección y fila desplegada de la tabla de puntos.
-  // ¿Para qué? El filtro de localidad ya llega del backend; el de nombre se aplica
-  //           aquí porque la lista de una localidad es corta.
-  // ¿Impacto? La fila abierta se cierra al cambiar de pestaña, de localidad o de búsqueda.
+  const [totalPuntos, setTotalPuntos] = useState(0);
+  const paginacion = usePaginacion(TAMANO_PAGINA, totalPuntos);
+  const { offset, reiniciar } = paginacion;
+  // ¿Qué? Búsqueda por nombre, dirección u organización y fila desplegada de la tabla de puntos.
+  // ¿Para qué? El filtro de localidad y la búsqueda se hacen en el servidor. "busquedaEscrita" es lo que hay
+  //           en el cuadro; "busquedaPuntos" es lo que se pide, 350 ms después de la última tecla.
+  // ¿Impacto? La fila abierta se cierra al cambiar de pestaña, de localidad, de búsqueda o de página.
+  const [busquedaEscrita, setBusquedaEscrita] = useState("");
   const [busquedaPuntos, setBusquedaPuntos] = useState("");
   const [puntoAbiertoId, setPuntoAbiertoId] = useState<string | null>(null);
   // ¿Qué? Antes empezaba en "false". Mientras se resuelve la localidad del
@@ -112,9 +127,24 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
      
   }, [user]);
 
-  // 2. Cargar directorio cuando ya se resolvió la localidad y cambia tab/filtro
+  // 2a. Espera a que se deje de escribir antes de pedir la búsqueda al servidor. busquedaPedidaRef evita
+  //     reiniciar la página (y repetir la petición) si el texto, ya sin espacios, no cambió.
+  const busquedaPedidaRef = useRef("");
   useEffect(() => {
-    if (!user || !localidadCargada) return;
+    const id = setTimeout(() => {
+      const nueva = busquedaEscrita.trim();
+      if (nueva === busquedaPedidaRef.current) return;
+      busquedaPedidaRef.current = nueva;
+      setBusquedaPuntos(nueva);
+      setPuntoAbiertoId(null);
+      reiniciar();
+    }, ESPERA_BUSQUEDA_MS);
+    return () => clearTimeout(id);
+  }, [busquedaEscrita, reiniciar]);
+
+  // 2b. Cargar recicladores cuando ya se resolvió la localidad y se está en esa pestaña
+  useEffect(() => {
+    if (!user || !localidadCargada || tab !== "recicladores") return;
     // ¿Qué? Reinicia "cargando"/"error" antes de disparar la petición que
     //       viene justo debajo, para que la pantalla muestre el estado de
     //       carga real de este nuevo filtro/tab en vez del resultado (o
@@ -129,39 +159,57 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
     setCargandoDirectorio(true);
     setErrorDirectorio(false);
 
-    const localidadActiva = tab === "recicladores" ? localidadPropiaId : localidadPuntosId;
-    const params = localidadActiva ? { localidad_id: localidadActiva } : {};
+    const params = localidadPropiaId ? { localidad_id: localidadPropiaId } : {};
 
     // ¿Qué? Antes el catch ponía la lista en [] — se veía exactamente igual
     //       que "no hay resultados para este filtro" (un caso real y válido).
     // ¿Impacto? Ahora un fallo de red/servidor muestra su propio aviso en
     //           vez de disfrazarse de búsqueda vacía.
-    if (tab === "recicladores") {
-      axios
-        .get(`${API_BASE_URL}/api/v1/directorio/recicladores`, { params })
-        .then((res) => setRecicladores(res.data))
-        .catch(() => {
-          setRecicladores([]);
-          setErrorDirectorio(true);
-        })
-        .finally(() => setCargandoDirectorio(false));
-    } else {
-      axios
-        .get(`${API_BASE_URL}/api/v1/directorio/puntos-acopio`, { params })
-        .then((res) => setPuntos(res.data))
-        .catch(() => {
-          setPuntos([]);
-          setErrorDirectorio(true);
-        })
-        .finally(() => setCargandoDirectorio(false));
-    }
-     
-  }, [tab, localidadPropiaId, localidadPuntosId, localidadCargada, user]);
+    axios
+      .get(`${API_BASE_URL}/api/v1/directorio/recicladores`, { params })
+      .then((res) => setRecicladores(res.data))
+      .catch(() => {
+        setRecicladores([]);
+        setErrorDirectorio(true);
+      })
+      .finally(() => setCargandoDirectorio(false));
+  }, [tab, localidadPropiaId, localidadCargada, user]);
 
-  const consultaPuntos = normalizarTexto(busquedaPuntos.trim());
-  const puntosVisibles = puntos.filter(
-    (p) => !consultaPuntos || normalizarTexto(`${p.nombre} ${p.direccion}`).includes(consultaPuntos),
-  );
+  // 2c. Cargar la página de puntos de acopio: cambia con la pestaña, la localidad, la búsqueda y la página.
+  //     "cancelado" descarta una respuesta vieja que llega tarde (si escribes rápido, no debe pisar a la nueva).
+  useEffect(() => {
+    if (!user || !localidadCargada || tab !== "puntos") return;
+    let cancelado = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCargandoDirectorio(true);
+    setErrorDirectorio(false);
+
+    const params = {
+      ...(localidadPuntosId ? { localidad_id: localidadPuntosId } : {}),
+      ...(busquedaPuntos ? { q: busquedaPuntos } : {}),
+      limit: TAMANO_PAGINA,
+      offset,
+    };
+    axios
+      .get<{ items: PuntoAcopio[]; total: number }>(`${API_BASE_URL}/api/v1/directorio/puntos-acopio`, { params })
+      .then((res) => {
+        if (cancelado) return;
+        setPuntos(res.data.items);
+        setTotalPuntos(res.data.total);
+      })
+      .catch(() => {
+        if (cancelado) return;
+        setPuntos([]);
+        setTotalPuntos(0);
+        setErrorDirectorio(true);
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoDirectorio(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [tab, localidadPuntosId, busquedaPuntos, offset, localidadCargada, user]);
 
   const waLink = (tel: string) => `https://wa.me/57${tel.replace(/\D/g, "")}`;
   const callLink = (tel: string) => `tel:+57${tel.replace(/\D/g, "")}`;
@@ -231,11 +279,8 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
               <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 type="search"
-                value={busquedaPuntos}
-                onChange={(e) => {
-                  setBusquedaPuntos(e.target.value);
-                  setPuntoAbiertoId(null);
-                }}
+                value={busquedaEscrita}
+                onChange={(e) => setBusquedaEscrita(e.target.value)}
                 aria-label={t("directorio.searchPoints")}
                 placeholder={t("directorio.searchPoints")}
                 className="focus-ring w-full rounded-lg border border-edge bg-white py-2 pl-9 pr-3 text-sm text-gray-900 dark:border-night-edge dark:bg-night-panel dark:text-white"
@@ -249,6 +294,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                 onChange={(e) => {
                   setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value));
                   setPuntoAbiertoId(null);
+                  reiniciar();
                 }}
                 className="focus-ring min-w-0 max-w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               >
@@ -301,13 +347,33 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             </ul>
           )}
         </div>
-      ) : !cargandoDirectorio && !errorDirectorio && puntosVisibles.length > 0 ? (
+      ) : !errorDirectorio && puntos.length > 0 ? (
+        // ¿Qué? La tabla se queda con las filas de antes mientras llega la página nueva (no parpadea con cada tecla).
         <TablaPuntosAcopio
-          puntos={puntosVisibles}
+          puntos={puntos}
           variante="lectura"
           abiertoId={puntoAbiertoId}
           onAlternar={(id) => setPuntoAbiertoId((actual) => (actual === id ? null : id))}
           encabezado={<FranjaEca soloAcopio={soloAcopio} />}
+          pie={
+            <Paginacion
+              desde={paginacion.desde}
+              hasta={paginacion.hasta}
+              total={totalPuntos}
+              pagina={paginacion.pagina}
+              totalPaginas={paginacion.totalPaginas}
+              puedeAnterior={paginacion.puedeAnterior}
+              puedeSiguiente={paginacion.puedeSiguiente}
+              onAnterior={() => {
+                setPuntoAbiertoId(null);
+                paginacion.irAAnterior();
+              }}
+              onSiguiente={() => {
+                setPuntoAbiertoId(null);
+                paginacion.irASiguiente();
+              }}
+            />
+          }
         />
       ) : (
         // ¿Qué? Tarjeta 2 sin tabla (cargando, error o sin resultados): mantiene la misma franja arriba.
@@ -319,7 +385,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
               <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} />
             ) : errorDirectorio ? (
               <Alert type="error" message={t("common.loadError")} />
-            ) : puntos.length === 0 ? (
+            ) : !busquedaPuntos ? (
               <EmptyState icon={Warehouse} message={t("directorio.emptyPoints")} />
             ) : (
               <EmptyState icon={Search} message={t("directorio.noPointsMatch")} />

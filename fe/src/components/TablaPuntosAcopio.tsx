@@ -29,6 +29,8 @@ interface TablaPuntosAcopioProps<T extends PuntoFicha> {
   ocupadoId?: string | null;
   /** ¿Qué? Franja opcional arriba de la tabla, dentro de la misma tarjeta (el aviso de la ECA en el Directorio). */
   encabezado?: ReactNode;
+  /** ¿Qué? Franja opcional debajo de la tabla, dentro de la misma tarjeta (la barra de paginación). */
+  pie?: ReactNode;
 }
 
 const ENCABEZADO = "px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400";
@@ -42,15 +44,16 @@ export function TablaPuntosAcopio<T extends PuntoFicha>({
   renderExtra,
   ocupadoId = null,
   encabezado,
+  pie,
 }: TablaPuntosAcopioProps<T>) {
   const { t } = useTranslation();
   const k = "puntosAcopioTabla";
   const gestion = variante === "gestion";
   const columnas = gestion ? 4 : 3;
 
-  const ordenados = [...puntos].sort(
-    (a, b) => a.nombre_localidad.localeCompare(b.nombre_localidad) || a.nombre.localeCompare(b.nombre),
-  );
+  // ¿Qué? Ya no se reordena aquí: el servidor entrega cada página ordenada por localidad y nombre, y
+  //       reordenar solo la página en pantalla la dejaría distinta del orden global (issue #664).
+  const ordenados = puntos;
 
   return (
     <div className="@container overflow-x-auto rounded-2xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card">
@@ -83,6 +86,11 @@ export function TablaPuntosAcopio<T extends PuntoFicha>({
                       {p.direccion}
                       <span className="sm:hidden"> · {p.nombre_localidad}</span>
                     </p>
+                    {/* ¿Qué? La organización que opera la ECA, debajo de la dirección.
+                        ¿Para qué? Los nombres del inventario se repiten ("ECA" ×80): sin ella dos filas se ven iguales. */}
+                    {p.organizacion && (
+                      <p className="mt-0.5 break-words text-xs text-gray-500 dark:text-gray-400">{p.organizacion}</p>
+                    )}
                   </td>
                   <td className="hidden px-5 py-3 text-sm text-gray-600 dark:text-gray-300 sm:table-cell">{p.nombre_localidad}</td>
                   {gestion && (
@@ -139,6 +147,7 @@ export function TablaPuntosAcopio<T extends PuntoFicha>({
           })}
         </tbody>
       </table>
+      {pie}
     </div>
   );
 }

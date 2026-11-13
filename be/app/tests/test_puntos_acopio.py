@@ -32,7 +32,7 @@ class TestListar:
 
         response = client.get(BASE, headers=admin_sistema_auth_headers)
         assert response.status_code == 200
-        ids = [p["id_punto_acopio"] for p in response.json()]
+        ids = [p["id_punto_acopio"] for p in response.json()["items"]]
         assert str(punto_acopio_test.id_punto_acopio) in ids
 
 
@@ -127,12 +127,12 @@ class TestDarDeBaja:
     ):
         """CA-017.2: un punto dado de baja ya no debe verlo un Residente en el directorio."""
         antes = client.get("/api/v1/directorio/puntos-acopio", headers=auth_headers)
-        assert str(punto_acopio_test.id_punto_acopio) in [p["id_punto_acopio"] for p in antes.json()]
+        assert str(punto_acopio_test.id_punto_acopio) in [p["id_punto_acopio"] for p in antes.json()["items"]]
 
         client.delete(f"{BASE}/{punto_acopio_test.id_punto_acopio}", headers=admin_sistema_auth_headers)
 
         despues = client.get("/api/v1/directorio/puntos-acopio", headers=auth_headers)
-        assert str(punto_acopio_test.id_punto_acopio) not in [p["id_punto_acopio"] for p in despues.json()]
+        assert str(punto_acopio_test.id_punto_acopio) not in [p["id_punto_acopio"] for p in despues.json()["items"]]
 
     def test_punto_inexistente_devuelve_404(self, client: TestClient, admin_sistema_auth_headers):
         response = client.delete(
@@ -162,7 +162,7 @@ class TestReactivar:
 
         # Vuelve a aparecer en el directorio público.
         directorio = client.get("/api/v1/directorio/puntos-acopio", headers=auth_headers)
-        ids = [p["id_punto_acopio"] for p in directorio.json()]
+        ids = [p["id_punto_acopio"] for p in directorio.json()["items"]]
         assert str(punto_acopio_test.id_punto_acopio) in ids
 
     def test_punto_inexistente_devuelve_404(self, client: TestClient, admin_sistema_auth_headers):
@@ -198,7 +198,7 @@ class TestEliminarDefinitivamente:
         assert accion["punto_acopio"] == str(punto_acopio_test.id_punto_acopio)
 
         listado = client.get(BASE, headers=admin_sistema_auth_headers)
-        ids = [p["id_punto_acopio"] for p in listado.json()]
+        ids = [p["id_punto_acopio"] for p in listado.json()["items"]]
         assert str(punto_acopio_test.id_punto_acopio) not in ids
 
     def test_rechaza_si_el_punto_sigue_activo(

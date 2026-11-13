@@ -37,7 +37,7 @@ class TestFotoAlCrearYEditar:
         assert respuesta.status_code == 201
         assert respuesta.json()["url_foto"] == FOTO
         listado = client.get(BASE, headers=admin_sistema_auth_headers).json()
-        assert [p["url_foto"] for p in listado] == [FOTO]
+        assert [p["url_foto"] for p in listado["items"]] == [FOTO]
 
     def test_la_foto_es_opcional(self, client: TestClient, admin_sistema_auth_headers, localidad_test: Localidad):
         respuesta = client.post(BASE, headers=admin_sistema_auth_headers, json=_payload(localidad_test))
@@ -106,13 +106,13 @@ class TestFotoEnElDirectorio:
         respuesta = client.get(DIRECTORIO, headers=auth_headers)
 
         assert respuesta.status_code == 200
-        assert [p["url_foto"] for p in respuesta.json()] == [FOTO]
+        assert [p["url_foto"] for p in respuesta.json()["items"]] == [FOTO]
 
     def test_un_punto_sin_foto_devuelve_url_foto_nula(self, client: TestClient, auth_headers, punto_acopio_test: PuntoAcopio):
         respuesta = client.get(DIRECTORIO, headers=auth_headers)
 
         assert respuesta.status_code == 200
-        assert [p["url_foto"] for p in respuesta.json()] == [None]
+        assert [p["url_foto"] for p in respuesta.json()["items"]] == [None]
 
 
 class TestLimpiezaDeAdjuntos:
