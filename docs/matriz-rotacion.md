@@ -16,7 +16,7 @@ Reglas:
 |---|---|---|---|---|---|---|---|---|---|
 | Yilmer Hernández Camargo (@Yilmerher12) | E2E ([#467](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/467)) | E2E ([#586](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/586)) | | | | | | | |
 | Yordan Castro Guerrero (@yordancastrog7-pixel) | E2E | API | | | | | | | |
-| Juan Carlos Barajas (@Juanbarajas90) | E2E | BD ([#592](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/592)) | | | | | | | |
+| Juan Carlos Barajas (@Juanbarajas90) | E2E | BD ([#592](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pull/592)) | | Front | | | | | |
 | José Guerrero (@josperaes-dotcom) | E2E | Front | | | | | | | |
 
 ## Cobertura semanal
