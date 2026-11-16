@@ -57,12 +57,23 @@ const puntoEngativa = {
   nombre_localidad: "Engativá",
 };
 
+const sinTildes = (texto: string) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+// ¿Qué? Hace de servidor para los puntos de acopio: aplica la búsqueda y la página como el backend real
+//       (issue #664: llegan por páginas, {items, total}). El filtro de localidad no se simula: cada prueba
+//       entrega ya los puntos que quiere ver.
 function mockRespuestas({ nombreLocalidad, puntos = [] }: { nombreLocalidad: string | null; puntos?: unknown[] }) {
-  mockGet.mockImplementation((url: string) => {
+  mockGet.mockImplementation((url: string, config?: { params?: Record<string, string | number> }) => {
     if (url.includes("/geography/localidades")) return Promise.resolve({ data: localidades });
     if (url.includes("/users/me")) return Promise.resolve({ data: { nombre_localidad: nombreLocalidad } });
     if (url.includes("/directorio/recicladores")) return Promise.resolve({ data: [recicladorUsaquen] });
-    if (url.includes("/directorio/puntos-acopio")) return Promise.resolve({ data: puntos });
+    if (url.includes("/directorio/puntos-acopio")) {
+      const { q, limit = 20, offset = 0 } = config?.params ?? {};
+      const filtrados = (puntos as (typeof puntoKennedy)[]).filter(
+        (p) => !q || sinTildes(`${p.nombre} ${p.direccion}`).includes(sinTildes(String(q))),
+      );
+      return Promise.resolve({ data: { items: filtrados.slice(Number(offset), Number(offset) + Number(limit)), total: filtrados.length } });
+    }
     return Promise.resolve({ data: [] });
   });
 }
@@ -152,7 +163,7 @@ describe("DirectorioPage", () => {
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalledWith(
         expect.stringContaining("/directorio/puntos-acopio"),
-        expect.objectContaining({ params: { localidad_id: 2 } })
+        expect.objectContaining({ params: { localidad_id: 2, limit: 20, offset: 0 } })
       );
     });
 
@@ -351,16 +362,20 @@ describe("DirectorioPage", () => {
       expect(await navigator.clipboard.readText()).toBe("Carrera 84 # 11A-34");
     });
 
-    it("el buscador filtra por nombre o dirección sin importar tildes ni mayúsculas", async () => {
+    it("el buscador pide la búsqueda al servidor, que ignora tildes y mayúsculas, y espera a que dejes de escribir", async () => {
       mockRespuestas({ nombreLocalidad: "Kennedy", puntos: [puntoKennedy, puntoEngativa] });
       const user = userEvent.setup();
       renderPage(true);
 
       await screen.findByText("ECA Kennedy");
-      await user.type(screen.getByRole("searchbox", { name: "Buscar por nombre o dirección" }), "engativa");
+      await user.type(screen.getByRole("searchbox", { name: "Buscar por nombre, dirección u organización" }), "engativa");
 
-      expect(screen.getByText("ECA Engativá")).toBeInTheDocument();
-      expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument();
+      expect(await screen.findByText("ECA Engativá")).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument());
+      // ¿Qué? Una sola petición con el texto completo, no una por cada letra.
+      const conTexto = mockGet.mock.calls.filter(([url, cfg]) => String(url).includes("/directorio/puntos-acopio") && cfg?.params?.q);
+      expect(conTexto).toHaveLength(1);
+      expect(conTexto[0][1].params).toMatchObject({ q: "engativa", offset: 0 });
     });
 
     it("avisa si ningún punto coincide con la búsqueda", async () => {
@@ -371,7 +386,7 @@ describe("DirectorioPage", () => {
       await screen.findByText("ECA Kennedy");
       await user.type(screen.getByRole("searchbox"), "zzz");
 
-      expect(screen.getByText("Ningún punto coincide con tu búsqueda.")).toBeInTheDocument();
+      expect(await screen.findByText("Ningún punto coincide con tu búsqueda.")).toBeInTheDocument();
     });
 
     it("la fila desplegada se pliega al escribir en el buscador", async () => {
@@ -383,7 +398,7 @@ describe("DirectorioPage", () => {
       await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
       await user.type(screen.getByRole("searchbox"), "k");
 
-      expect(screen.queryByRole("region", { name: "Ficha de ECA Kennedy" })).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole("region", { name: "Ficha de ECA Kennedy" })).not.toBeInTheDocument());
     });
 
     describe("foto del punto", () => {
@@ -437,6 +452,94 @@ describe("DirectorioPage", () => {
 
         const ficha = await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
         expect(within(ficha).queryByRole("img")).not.toBeInTheDocument();
+      });
+    });
+
+    describe("inventario de la UAESP: organización y correo", () => {
+      const eca = { ...puntoKennedy, organizacion: "ASOCIACIÓN DE RECICLADORES ECOALIANZA", correo_contacto: "eca@example.com" };
+
+      it("la fila muestra la organización que opera la ECA, para distinguir las que se llaman igual", async () => {
+        mockRespuestas({ nombreLocalidad: "Kennedy", puntos: [eca, { ...puntoEngativa, nombre: "ECA Kennedy", organizacion: "OTRA ASOCIACIÓN" }] });
+        renderPage(true);
+
+        expect(await screen.findByText("ASOCIACIÓN DE RECICLADORES ECOALIANZA")).toBeInTheDocument();
+        expect(screen.getByText("OTRA ASOCIACIÓN")).toBeInTheDocument();
+      });
+
+      it("la ficha muestra la organización y el correo, con el correo como enlace", async () => {
+        mockRespuestas({ nombreLocalidad: "Kennedy", puntos: [eca] });
+        const user = userEvent.setup();
+        renderPage(true);
+
+        await user.click(await screen.findByRole("button", { name: "Ver ficha de ECA Kennedy" }));
+
+        const ficha = await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+        expect(ficha).toHaveTextContent("ASOCIACIÓN DE RECICLADORES ECOALIANZA");
+        expect(within(ficha).getByRole("link", { name: "eca@example.com" })).toHaveAttribute("href", "mailto:eca@example.com");
+      });
+
+      it("un punto sin esos datos no muestra filas de organización ni de correo", async () => {
+        mockRespuestas({ nombreLocalidad: "Kennedy", puntos: [puntoKennedy] });
+        const user = userEvent.setup();
+        renderPage(true);
+
+        await user.click(await screen.findByRole("button", { name: "Ver ficha de ECA Kennedy" }));
+
+        const ficha = await screen.findByRole("region", { name: "Ficha de ECA Kennedy" });
+        expect(ficha).not.toHaveTextContent("Organización");
+        expect(ficha).not.toHaveTextContent("Correo");
+      });
+    });
+
+    describe("paginación", () => {
+      const muchos = Array.from({ length: 45 }, (_, i) => ({
+        ...puntoKennedy,
+        id_punto_acopio: `p${i}`,
+        nombre: `ECA ${String(i + 1).padStart(2, "0")}`,
+      }));
+      const llamadasDePuntos = () => mockGet.mock.calls.filter(([url]) => String(url).includes("/directorio/puntos-acopio"));
+
+      it("pide de a 20 puntos y muestra cuántos hay en total", async () => {
+        mockRespuestas({ nombreLocalidad: "Kennedy", puntos: muchos });
+        renderPage(true);
+
+        expect(await screen.findByText("ECA 01")).toBeInTheDocument();
+        expect(screen.getByText("ECA 20")).toBeInTheDocument();
+        expect(screen.queryByText("ECA 21")).not.toBeInTheDocument();
+        expect(screen.getByText("Mostrando 1–20 de 45")).toBeInTheDocument();
+      });
+
+      it("pasa a la página siguiente, pide su offset y pliega la fila abierta", async () => {
+        mockRespuestas({ nombreLocalidad: "Kennedy", puntos: muchos });
+        const user = userEvent.setup();
+        renderPage(true);
+
+        await user.click(await screen.findByRole("button", { name: "Ver ficha de ECA 01" }));
+        await screen.findByRole("region", { name: "Ficha de ECA 01" });
+        await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+
+        expect(await screen.findByText("ECA 21")).toBeInTheDocument();
+        expect(screen.queryByText("ECA 01")).not.toBeInTheDocument();
+        expect(screen.getByText("Mostrando 21–40 de 45")).toBeInTheDocument();
+        expect(llamadasDePuntos().at(-1)?.[1].params).toMatchObject({ limit: 20, offset: 20 });
+        expect(screen.queryByRole("region", { name: /Ficha de/ })).not.toBeInTheDocument();
+      });
+
+      it("al buscar vuelve a la primera página", async () => {
+        mockRespuestas({ nombreLocalidad: "Kennedy", puntos: muchos });
+        const user = userEvent.setup();
+        renderPage(true);
+
+        await screen.findByText("ECA 01");
+        await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+        await screen.findByText("ECA 21");
+        await user.type(screen.getByRole("searchbox"), "ECA 3");
+
+        // ¿Qué? Se espera la petición, no el texto: "ECA 30" ya se veía en la página 2 antes de buscar.
+        await waitFor(() => expect(llamadasDePuntos().at(-1)?.[1].params).toMatchObject({ q: "ECA 3", offset: 0 }));
+        expect(await screen.findByText("Mostrando 1–10 de 10")).toBeInTheDocument();
+        expect(screen.getByText("ECA 30")).toBeInTheDocument();
+        expect(screen.queryByText("ECA 03")).not.toBeInTheDocument();
       });
     });
 

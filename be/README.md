@@ -92,12 +92,13 @@ be/
     ├── config.py           # Configuración centralizada desde variables de entorno
     ├── database.py         # Engine y sesión de SQLAlchemy
     ├── dependencies.py     # get_db, get_current_user, require_role, require_admin_conjunto
-    ├── seed.py             # Siembra roles, localidades, cuentas de prueba y conjuntos reales (idempotente)
+    ├── seed.py             # Siembra roles, localidades, cuentas de prueba, conjuntos reales y las ECA de la UAESP (idempotente)
     ├── seed_demo.py        # Comando manual: historia de demostración para presentar (3 conjuntos, auditorías con fotos, etc.)
     ├── limpiar_adjuntos.py # Comando manual: borra de uploads/adjuntos/ lo que ninguna fila usa (ver abajo)
     ├── limpiar_evidencias.py # Comando manual: borra las fotos de evidencia de auditorías con más de 6 meses (ver abajo)
     ├── purgar_tokens.py    # Comando manual: borra los tokens vencidos de 4 tablas (ver abajo)
-    ├── data/               # CSV de conjuntos residenciales reales de Bogotá (fuente del seed)
+    ├── data/               # CSV de conjuntos residenciales reales de Bogotá y de las 799 ECA de la UAESP (fuente del seed)
+    │                       #   eca_correos_uaesp.csv (correos de contacto) NO está en el repositorio: ver "Correos de las ECA" en el README de la raíz
     ├── models/             # Un archivo por tabla (usuario.py, residente.py, reciclador.py,
     │                       #   administrador_conjunto.py, conjunto_residencial.py, comunicado.py,
     │                       #   novedad.py, auditoria_conjunto.py, notificacion.py, punto_acopio.py…)

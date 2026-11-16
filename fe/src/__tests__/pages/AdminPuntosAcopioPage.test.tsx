@@ -54,11 +54,42 @@ const comentario = {
   autor: "admin@verdeapp.com",
 };
 
-// ¿Qué? "/comentarios" se revisa primero: su URL también contiene "/admin/puntos-acopio".
+type PuntoMock = typeof puntoActivo;
+
+const sinTildes = (texto: string) => texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+// ¿Qué? Hace de servidor: la búsqueda, los filtros y la página se aplican aquí, como en el backend real
+//       (issue #664: la página ya no recibe la lista completa). La lista se entrega en el orden en que se pasa.
+// ¿Impacto? "/comentarios" y "/resumen" se revisan primero: sus URL también contienen "/admin/puntos-acopio".
 function mockRespuestas(puntos: unknown[], comentarios: unknown[] = []) {
-  mockGet.mockImplementation((url: string) => {
+  const todos = puntos as PuntoMock[];
+  mockGet.mockImplementation((url: string, config?: { params?: Record<string, string | number> }) => {
     if (url.includes("/comentarios")) return Promise.resolve({ data: comentarios });
-    if (url.includes("/admin/puntos-acopio")) return Promise.resolve({ data: puntos });
+    if (url.includes("/admin/puntos-acopio/resumen")) {
+      const activos = todos.filter((p) => p.activo).length;
+      const porLocalidad = new Map(todos.map((p) => [p.id_localidad, p.nombre_localidad]));
+      return Promise.resolve({
+        data: {
+          total: todos.length,
+          activos,
+          de_baja: todos.length - activos,
+          localidades: [...porLocalidad]
+            .map(([id_localidad, nombre_localidad]) => ({ id_localidad, nombre_localidad }))
+            .sort((a, b) => a.nombre_localidad.localeCompare(b.nombre_localidad)),
+        },
+      });
+    }
+    if (url.includes("/admin/puntos-acopio")) {
+      const { q, estado, id_localidad, limit = 20, offset = 0 } = config?.params ?? {};
+      const filtrados = todos.filter(
+        (p) =>
+          (estado !== "activos" || p.activo) &&
+          (estado !== "baja" || !p.activo) &&
+          (!id_localidad || p.id_localidad === Number(id_localidad)) &&
+          (!q || sinTildes(`${p.nombre} ${p.direccion}`).includes(sinTildes(String(q)))),
+      );
+      return Promise.resolve({ data: { items: filtrados.slice(Number(offset), Number(offset) + Number(limit)), total: filtrados.length } });
+    }
     if (url.includes("/geography/localidades")) return Promise.resolve({ data: localidades });
     return Promise.resolve({ data: [] });
   });
@@ -287,7 +318,13 @@ describe("AdminPuntosAcopioPage", () => {
   describe("búsqueda y filtros", () => {
     const engativa = { ...puntoActivo, id_punto_acopio: "3", nombre: "ECA Engativá", direccion: "Calle 80C # 92-44", id_localidad: 2, nombre_localidad: "Engativá" };
 
-    it("filtra por texto sin importar tildes ni mayúsculas", async () => {
+    // ¿Qué? Los últimos parámetros con los que se pidió la lista al servidor.
+    const ultimosParametros = () => {
+      const llamadas = mockGet.mock.calls.filter(([url]) => String(url).endsWith("/admin/puntos-acopio"));
+      return llamadas[llamadas.length - 1][1].params;
+    };
+
+    it("pide la búsqueda al servidor, que ignora tildes y mayúsculas, y espera a que dejes de escribir", async () => {
       mockRespuestas([puntoActivo, engativa]);
       const user = userEvent.setup();
       renderPage();
@@ -295,8 +332,12 @@ describe("AdminPuntosAcopioPage", () => {
       await screen.findByText("ECA Kennedy");
       await user.type(screen.getByRole("searchbox"), "engativa");
 
-      expect(screen.getByText("ECA Engativá")).toBeInTheDocument();
-      expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument();
+      expect(await screen.findByText("ECA Engativá")).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument());
+      expect(ultimosParametros()).toMatchObject({ q: "engativa", offset: 0 });
+      // ¿Qué? Una sola petición con el texto completo, no una por cada letra.
+      const conTexto = mockGet.mock.calls.filter(([url, cfg]) => String(url).endsWith("/admin/puntos-acopio") && cfg?.params?.q);
+      expect(conTexto).toHaveLength(1);
     });
 
     it("muestra un aviso si nada coincide con la búsqueda", async () => {
@@ -307,44 +348,103 @@ describe("AdminPuntosAcopioPage", () => {
       await screen.findByText("ECA Kennedy");
       await user.type(screen.getByRole("searchbox"), "zzz");
 
-      expect(screen.getByText("Ningún punto coincide con tu búsqueda.")).toBeInTheDocument();
+      expect(await screen.findByText("Ningún punto coincide con tu búsqueda.")).toBeInTheDocument();
     });
 
-    it("filtra por estado y muestra el conteo de cada uno", async () => {
+    it("filtra por estado en el servidor y muestra el conteo de cada uno", async () => {
       mockRespuestas([puntoActivo, puntoInactivo]);
       const user = userEvent.setup();
       renderPage();
 
       await screen.findByText("ECA Kennedy");
-      expect(screen.getByRole("button", { name: "Todos · 2" })).toBeInTheDocument();
+      expect(await screen.findByRole("button", { name: "Todos · 2" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Activos · 1" })).toBeInTheDocument();
 
       await user.click(screen.getByRole("button", { name: "De baja · 1" }));
-      expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument();
-      expect(screen.getByText("ECA Retirado")).toBeInTheDocument();
+      expect(await screen.findByText("ECA Retirado")).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument());
+      expect(ultimosParametros()).toMatchObject({ estado: "baja" });
+      // ¿Qué? Los conteos son de todos los puntos, no de la página filtrada.
+      expect(screen.getByRole("button", { name: "Todos · 2" })).toBeInTheDocument();
     });
 
-    it("filtra por localidad, con solo las localidades que tienen puntos", async () => {
+    it("filtra por localidad en el servidor, con solo las localidades que tienen puntos", async () => {
       mockRespuestas([puntoActivo, engativa]);
       const user = userEvent.setup();
       renderPage();
 
       await screen.findByText("ECA Kennedy");
       const select = screen.getByRole("combobox", { name: "Localidad" });
-      expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual(["Todas las localidades", "Engativá", "Usaquén"]);
+      await waitFor(() =>
+        expect(within(select).getAllByRole("option").map((o) => o.textContent)).toEqual(["Todas las localidades", "Engativá", "Usaquén"]),
+      );
 
       await user.selectOptions(select, "2");
-      expect(screen.getByText("ECA Engativá")).toBeInTheDocument();
-      expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument();
+      expect(await screen.findByText("ECA Engativá")).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByText("ECA Kennedy")).not.toBeInTheDocument());
+      expect(ultimosParametros()).toMatchObject({ id_localidad: 2 });
     });
 
-    it("ordena la tabla por localidad y luego por nombre", async () => {
+    it("muestra las filas en el orden en que las entrega el servidor", async () => {
       mockRespuestas([puntoActivo, engativa, { ...engativa, id_punto_acopio: "5", nombre: "ECA Engativá 2" }]);
       renderPage();
 
       await screen.findByText("ECA Kennedy");
       const nombres = screen.getAllByRole("row").slice(1).map((fila) => within(fila).getAllByRole("cell")[0].querySelector("p")?.textContent);
-      expect(nombres).toEqual(["ECA Engativá", "ECA Engativá 2", "ECA Kennedy"]);
+      expect(nombres).toEqual(["ECA Kennedy", "ECA Engativá", "ECA Engativá 2"]);
+    });
+
+    it("muestra el resumen de puntos y localidades, y cuántos están de baja", async () => {
+      mockRespuestas([puntoActivo, puntoInactivo, engativa]);
+      renderPage();
+
+      expect(await screen.findByText("3 puntos en 2 localidades · 1 de baja")).toBeInTheDocument();
+    });
+
+    describe("paginación", () => {
+      const muchos = Array.from({ length: 45 }, (_, i) => ({
+        ...puntoActivo,
+        id_punto_acopio: `p${i}`,
+        nombre: `ECA ${String(i + 1).padStart(2, "0")}`,
+      }));
+
+      it("pide de a 20 puntos y muestra cuántos hay en total", async () => {
+        mockRespuestas(muchos);
+        renderPage();
+
+        expect(await screen.findByText("ECA 01")).toBeInTheDocument();
+        expect(screen.getByText("ECA 20")).toBeInTheDocument();
+        expect(screen.queryByText("ECA 21")).not.toBeInTheDocument();
+        expect(screen.getByText(/1.*20.*45/)).toBeInTheDocument();
+        expect(ultimosParametros()).toMatchObject({ limit: 20, offset: 0 });
+      });
+
+      it("pasa a la página siguiente y pide su offset", async () => {
+        mockRespuestas(muchos);
+        const user = userEvent.setup();
+        renderPage();
+
+        await screen.findByText("ECA 01");
+        await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+
+        expect(await screen.findByText("ECA 21")).toBeInTheDocument();
+        expect(screen.queryByText("ECA 01")).not.toBeInTheDocument();
+        expect(ultimosParametros()).toMatchObject({ offset: 20 });
+      });
+
+      it("al cambiar un filtro vuelve a la primera página", async () => {
+        mockRespuestas(muchos);
+        const user = userEvent.setup();
+        renderPage();
+
+        await screen.findByText("ECA 01");
+        await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+        await screen.findByText("ECA 21");
+        await user.click(await screen.findByRole("button", { name: "Activos · 45" }));
+
+        expect(await screen.findByText("ECA 01")).toBeInTheDocument();
+        expect(ultimosParametros()).toMatchObject({ estado: "activos", offset: 0 });
+      });
     });
 
     it("muestra el resumen de puntos y localidades, y cuántos están de baja", async () => {

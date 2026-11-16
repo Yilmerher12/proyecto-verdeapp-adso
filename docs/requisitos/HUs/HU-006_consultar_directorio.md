@@ -73,10 +73,20 @@
 
 - **Dado que** veo los puntos de acopio (el Residente en la pestaña Puntos de Acopio, el Reciclador en su página "Puntos de acopio"),
 - **cuando** la lista carga,
-- **entonces** los veo en una tabla con las columnas Punto (nombre y dirección) y Localidad, ordenada por localidad y luego por nombre. Puedo buscar por nombre o dirección sin importar tildes.
-- Al tocar la fila (o la flecha del final) se despliega la ficha del punto, de a una a la vez: **Ubicación** (dirección con botón para copiarla y el botón "Cómo llegar", que abre Google Maps) y **Contacto** (teléfono y encargado).
+- **entonces** los veo en una tabla con las columnas Punto (nombre, dirección y, si la tiene, la organización que opera la ECA) y Localidad, ordenada por localidad y luego por nombre. Puedo buscar por nombre, dirección u organización sin importar tildes ni mayúsculas.
+- Al tocar la fila (o la flecha del final) se despliega la ficha del punto, de a una a la vez: **Ubicación** (dirección con botón para copiarla y el botón "Cómo llegar", que abre Google Maps) y **Contacto** (teléfono, correo, organización y encargado; el correo y la organización solo salen si el punto los tiene).
 - Si el punto no tiene teléfono, veo "Sin teléfono publicado" y la línea general de la UAESP, aclarando que no es la del punto. No veo kebab, comentarios ni botones de edición: son solo del Admin del Sistema.
 
+
+### CA-006.9 — Los puntos de acopio se ven por páginas (issue #664)
+
+- **Dado que** el directorio tiene cientos de puntos (el inventario de la UAESP trae 799 ECA),
+- **cuando** veo la tabla de puntos de acopio,
+- **entonces** el servidor me entrega de a 20, con la barra "Mostrando X–Y de Z" y las flechas de página anterior y siguiente al pie de la tabla. La búsqueda y el filtro de localidad se aplican en el servidor sobre todos los puntos, no solo sobre los 20 que veo, y la búsqueda espera unos 350 ms después de la última tecla antes de pedirse.
+- Al cambiar de página, de búsqueda o de localidad se pliega la fila abierta y se vuelve a la primera página.
+- El orden es estable entre páginas: ningún punto se repite ni se salta, aunque varios se llamen igual.
+
+> **Cambio de formato (#664):** `GET /api/v1/directorio/puntos-acopio` ya no devuelve una lista, sino `{"items": [...], "total": N}`, y acepta `localidad_id`, `q` (texto), `limit` (1 a 100, por defecto 20) y `offset`. Cada punto trae `organizacion` y `correo_contacto`, que son `null` en los creados a mano.
 
 ### CA-006.8 — El aviso "¿Qué es una ECA?" se puede cerrar y la advertencia no
 

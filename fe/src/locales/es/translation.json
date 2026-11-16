@@ -1179,7 +1179,7 @@
     "ownLocalityUnknown": "No se pudo detectar tu localidad",
     "emptyRecyclers": "No hay recicladores registrados en esta localidad.",
     "emptyPoints": "No hay puntos de acopio registrados en esta localidad.",
-    "searchPoints": "Buscar por nombre o dirección",
+    "searchPoints": "Buscar por nombre, dirección u organización",
     "noPointsMatch": "Ningún punto coincide con tu búsqueda.",
     "call": "Llamar",
     "noPhone": "No comparte su teléfono",
@@ -1475,7 +1475,9 @@
       "howToGetThere": "Cómo llegar",
       "howToGetThereAria": "Cómo llegar a {{nombre}} en Google Maps",
       "noPhonePublished": "Sin teléfono publicado.",
-      "uaespLine": "Línea general de la UAESP (no es la del punto):"
+      "uaespLine": "Línea general de la UAESP (no es la del punto):",
+      "email": "Correo",
+      "organization": "Organización"
     }
   },
   "adminPuntosAcopio": {
@@ -1487,7 +1489,7 @@
     "noPhone": "Sin teléfono",
     "noManager": "Sin encargado",
     "search": {
-      "placeholder": "Buscar por nombre o dirección",
+      "placeholder": "Buscar por nombre, dirección u organización",
       "noResults": "Ningún punto coincide con tu búsqueda.",
       "status": {
         "todos": "Todos",

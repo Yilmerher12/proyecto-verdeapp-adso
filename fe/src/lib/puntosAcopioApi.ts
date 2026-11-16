@@ -18,6 +18,26 @@ export interface PuntoAcopioAdmin {
   activo: boolean;
   // ¿Qué? Ruta de la foto del punto (/uploads/adjuntos/...); null si no tiene.
   url_foto: string | null;
+  // ¿Qué? Datos del inventario de la UAESP (issue #664); null en los puntos creados a mano.
+  //       Solo de lectura: el formulario de edición no los envía.
+  organizacion: string | null;
+  correo_contacto: string | null;
+}
+
+export type FiltroEstadoPunto = "todos" | "activos" | "baja";
+
+// ¿Qué? Una página del listado y cuántos puntos hay en total con esos filtros.
+export interface PaginaPuntosAcopio {
+  items: PuntoAcopioAdmin[];
+  total: number;
+}
+
+// ¿Qué? Conteos de TODOS los puntos, sin filtros (cabecera, chips de estado y localidades con puntos).
+export interface ResumenPuntosAcopio {
+  total: number;
+  activos: number;
+  de_baja: number;
+  localidades: { id_localidad: number; nombre_localidad: string }[];
 }
 
 export type PuntoAcopioPayload = {
@@ -40,8 +60,30 @@ export interface ComentarioPunto {
   autor: string | null;
 }
 
-export async function listarPuntosAcopio(): Promise<PuntoAcopioAdmin[]> {
-  const { data } = await axios.get(API_BASE);
+export interface FiltrosPuntosAcopio {
+  q: string;
+  estado: FiltroEstadoPunto;
+  idLocalidad: number | "";
+  limit: number;
+  offset: number;
+}
+
+// ¿Qué? Pide una página al servidor: la búsqueda y los filtros se aplican allá (issue #664).
+export async function listarPuntosAcopio(filtros: FiltrosPuntosAcopio): Promise<PaginaPuntosAcopio> {
+  const { data } = await axios.get(API_BASE, {
+    params: {
+      q: filtros.q || undefined,
+      estado: filtros.estado,
+      id_localidad: filtros.idLocalidad || undefined,
+      limit: filtros.limit,
+      offset: filtros.offset,
+    },
+  });
+  return data;
+}
+
+export async function obtenerResumenPuntosAcopio(): Promise<ResumenPuntosAcopio> {
+  const { data } = await axios.get(`${API_BASE}/resumen`);
   return data;
 }
 
