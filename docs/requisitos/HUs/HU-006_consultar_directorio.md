@@ -88,12 +88,14 @@
 
 > **Cambio de formato (#664):** `GET /api/v1/directorio/puntos-acopio` ya no devuelve una lista, sino `{"items": [...], "total": N}`, y acepta `localidad_id`, `q` (texto), `limit` (1 a 100, por defecto 20) y `offset`. Cada punto trae `organizacion` y `correo_contacto`, que son `null` en los creados a mano.
 
-### CA-006.8 — El aviso "¿Qué es una ECA?" se puede cerrar y la advertencia no
+### CA-006.8 — El aviso "¿Qué es una ECA?" se puede cerrar y la nota de la fuente no
 
 - **Dado que** entro a los puntos de acopio,
 - **cuando** la página carga,
-- **entonces** veo el aviso "¿Qué es una ECA?", con un texto para el Residente ("aquí puedes ver las ECA de tu localidad") y otro para el Reciclador ("aquí puedes ubicar la más cercana a tu ruta"). Lo puedo cerrar con la X y, al cerrarlo, queda un enlace con el mismo título para volver a abrirlo. Solo se recuerda mientras dure mi sesión: en cada inicio de sesión vuelve a mostrarse.
-- Debajo del aviso, siempre veo (sin poder cerrarla) la advertencia "Lista oficial de 2020. No incluye todas las ECA de Bogotá", con el enlace a la fuente.
-- La página son dos tarjetas: la primera con el título, el subtítulo, las pestañas y los filtros; la segunda con la lista. El aviso y la advertencia van como una franja arriba de la tabla, dentro de la segunda tarjeta, y se ven igual cuando la lista está cargando, falla o no tiene resultados.
+- **entonces** veo el aviso "¿Qué es una ECA?", con un texto para el Residente ("aquí puedes ver las ECA de tu localidad", y que cualquier persona puede llevar residuos aprovechables a una ECA según el horario y las condiciones de su organización) y otro para el Reciclador ("aquí puedes ubicar la más cercana a tu ruta"). Lo puedo cerrar con la X y, al cerrarlo, queda un enlace con el mismo título para volver a abrirlo. Solo se recuerda mientras dure mi sesión: en cada inicio de sesión vuelve a mostrarse.
+- Debajo del aviso, siempre veo (sin poder cerrarla) la nota de la fuente: "Fuente: UAESP, inventario vigente de ECA (Resolución 698 de 2023, entregado en noviembre de 2026). Estar en la lista no garantiza que una ECA esté abierta hoy: su horario lo define cada organización." No lleva enlace (ver la nota de abajo).
+- La página son dos tarjetas: la primera con el título, el subtítulo, las pestañas y los filtros; la segunda con la lista. El aviso y la nota van como una franja arriba de la tabla, dentro de la segunda tarjeta, y se ven igual cuando la lista está cargando, falla o no tiene resultados.
 
-> **Decisión pendiente de la respuesta de la UAESP (issue #500):** el aviso ya no dice que un residente pueda "entregar materiales reciclables por su cuenta" en una ECA. No está confirmado que un ciudadano común pueda entregar en una ECA (ver `docs/gestion-proyecto/investigacion-tipos-puntos-acopio.md` y `prototipo-ficha-punto-acopio.md`). Cuando la UAESP responda, si se confirma, se puede volver a agregar esa frase con la fuente; si no, se deja como está. Decisión del 2026-10-30.
+> **Actualización (2026-11-16, issue #665):** la UAESP respondió (oficio 20265000341921, 2026-11-10) y confirmó que cualquier ciudadano puede llevar residuos aprovechables a una ECA, atendiendo los horarios y las condiciones de la organización que la opera; por eso la frase volvió al texto del Residente (el del Reciclador no la lleva). La nota de la fuente reemplaza a la advertencia "Lista oficial de 2020" y cita a la UAESP, como exige su licencia (nombrarla, no enlazarla).
+>
+> **Por qué la nota no lleva enlace:** la página de ECA de la UAESP responde 403 (acceso denegado), el PDF del inventario inicial es de diciembre de 2022 y contradice lo que se muestra, el dataset de Datos Abiertos responde 404, la Resolución 698 de 2023 no está publicada en un lugar que pudimos encontrar, y el Excel que entregó la UAESP trae correos de contacto. Más detalle en `docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md`.

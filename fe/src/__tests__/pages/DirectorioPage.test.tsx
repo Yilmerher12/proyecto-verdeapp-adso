@@ -172,45 +172,48 @@ describe("DirectorioPage", () => {
     expect(screen.getByText("Tu localidad: Usaquén")).toBeInTheDocument();
   });
 
-  it("el panel de ECA aclara que son los puntos del dataset de 2020 y enlaza al inventario de la UAESP", async () => {
+  // ¿Qué? La nota de procedencia cita a la UAESP como fuente del inventario (lo que exige su licencia) y aclara
+  //       que estar en la lista no garantiza que la ECA esté abierta. No lleva enlace (issue #665).
+  it("la nota cita a la UAESP y la Resolución 698 como fuente, sin enlace ni la lista de 2020", async () => {
     mockRespuestas({ nombreLocalidad: "Usaquén" });
     const user = userEvent.setup();
     renderPage();
 
     await user.click(await screen.findByRole("button", { name: "Puntos de acopio" }));
 
-    // ¿Qué? El panel ya no afirma que Bogotá solo tiene ECA en 6 de 20 localidades.
-    expect(await screen.findByText(/Lista oficial de 2020\. No incluye todas las ECA de Bogotá/)).toBeInTheDocument();
-    expect(screen.queryByText(/6 de sus 20/)).not.toBeInTheDocument();
-
-    expect(screen.getByRole("link", { name: /Ver fuente/ })).toHaveAttribute(
-      "href",
-      expect.stringContaining("Listado_Inventario_inicial_ECA_y_Bodegas_PR.pdf")
-    );
+    const nota = await screen.findByText(/Fuente: UAESP, inventario vigente de ECA \(Resolución 698 de 2023/);
+    expect(nota).toHaveTextContent("Estar en la lista no garantiza que una ECA esté abierta hoy");
+    expect(nota).toHaveTextContent("su horario lo define cada organización");
+    expect(nota.closest("p")?.querySelector("a")).toBeNull();
+    expect(screen.queryByRole("link", { name: /Ver fuente/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/2020/)).not.toBeInTheDocument();
   });
 
   // ¿Qué? El aviso "¿Qué es una ECA?" se puede cerrar con la X y se vuelve a abrir con su enlace; la
-  //       advertencia de que la lista es de 2020 NO se cierra. El texto cambia por rol y no promete que se
-  //       pueda entregar por cuenta propia (pendiente de la respuesta de la UAESP, issue #500).
+  //       nota de la fuente NO se cierra. Solo el texto del Residente dice que cualquier persona puede llevar
+  //       residuos a una ECA (la UAESP lo confirmó en el oficio 20265000341921, issue #500).
   describe('aviso "¿Qué es una ECA?"', () => {
-    it("el Residente lo ve completo, sin la frase de entregar por cuenta propia", async () => {
+    it("el Residente lo ve completo, con la frase de que cualquier persona puede llevar residuos", async () => {
       mockRespuestas({ nombreLocalidad: "Usaquén" });
       const user = userEvent.setup();
       renderPage();
       await user.click(await screen.findByRole("button", { name: "Puntos de acopio" }));
 
       expect(await screen.findByText(/Aquí puedes ver las ECA de tu localidad\./)).toBeInTheDocument();
-      expect(screen.queryByText(/entregar materiales reciclables por tu cuenta/)).not.toBeInTheDocument();
+      expect(
+        screen.getByText(/Cualquier persona puede llevar residuos aprovechables a una ECA, según el horario y las condiciones de su organización\./),
+      ).toBeInTheDocument();
     });
 
-    it("el Reciclador ve la versión pensada para su ruta", async () => {
+    it("el Reciclador ve la versión pensada para su ruta, sin la frase del ciudadano", async () => {
       mockRespuestas({ nombreLocalidad: "Usaquén" });
       renderPage(true);
 
       expect(await screen.findByText(/Aquí puedes ubicar la más cercana a tu ruta\./)).toBeInTheDocument();
+      expect(screen.queryByText(/Cualquier persona puede llevar residuos/)).not.toBeInTheDocument();
     });
 
-    it("se cierra con la X, queda el enlace para reabrirlo y la advertencia de 2020 sigue visible", async () => {
+    it("se cierra con la X, queda el enlace para reabrirlo y la nota de la fuente sigue visible", async () => {
       mockRespuestas({ nombreLocalidad: "Usaquén" });
       const user = userEvent.setup();
       renderPage(true);
@@ -219,7 +222,7 @@ describe("DirectorioPage", () => {
       await user.click(screen.getByRole("button", { name: "Cerrar" }));
 
       expect(screen.queryByText(/Aquí puedes ubicar la más cercana a tu ruta\./)).not.toBeInTheDocument();
-      expect(screen.getByText(/Lista oficial de 2020/)).toBeInTheDocument();
+      expect(screen.getByText(/Fuente: UAESP, inventario vigente de ECA/)).toBeInTheDocument();
 
       await user.click(screen.getByRole("button", { name: "¿Qué es una ECA?" }));
       expect(await screen.findByText(/Aquí puedes ubicar la más cercana a tu ruta\./)).toBeInTheDocument();

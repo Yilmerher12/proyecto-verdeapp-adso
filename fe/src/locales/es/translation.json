@@ -1192,10 +1192,9 @@
     },
     "infoPuntos": {
       "titulo": "¿Qué es una ECA?",
-      "fuenteLink": "Ver fuente",
-      "descripcionResidente": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen. Aquí puedes ver las ECA de tu localidad.",
+      "descripcionResidente": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen. Aquí puedes ver las ECA de tu localidad. Cualquier persona puede llevar residuos aprovechables a una ECA, según el horario y las condiciones de su organización.",
       "descripcionReciclador": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen en sus rutas. Aquí puedes ubicar la más cercana a tu ruta.",
-      "nota": "Lista oficial de 2020. No incluye todas las ECA de Bogotá."
+      "nota": "Fuente: UAESP, inventario vigente de ECA (Resolución 698 de 2023, entregado en noviembre de 2026). Estar en la lista no garantiza que una ECA esté abierta hoy: su horario lo define cada organización."
     }
   },
   "catalogoEducativo": {
