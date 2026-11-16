@@ -2,7 +2,7 @@ import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Phone, Map as MapIcon, HardHat, Warehouse, MessageCircle, Info, ExternalLink, Search, X, TriangleAlert } from "lucide-react";
+import { Phone, Map as MapIcon, HardHat, Warehouse, MessageCircle, Info, Search, X, TriangleAlert } from "lucide-react";
 import { useAvisoCerradoEnSesion } from "@/hooks/useAvisoCerradoEnSesion";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
@@ -45,13 +45,6 @@ type TabId = "recicladores" | "puntos";
 interface DirectorioPageProps {
   soloAcopio?: boolean;
 }
-
-// ¿Qué? URL de la fuente oficial usada en el banner de Puntos de Acopio.
-// ¿Para qué? Que el link del "Ver fuente" y el de la documentación de
-//           soporte (docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md)
-//           apunten siempre al mismo lugar si algún día cambia.
-const FUENTE_ECA_URL =
-  "https://www.uaesp.gov.co/sites/default/files/archivos-adjuntos/Listado_Inventario_inicial_ECA_y_Bodegas_PR.pdf";
 
 // ¿Qué? Cuántos puntos pide cada página al servidor.
 const TAMANO_PAGINA = 20;
@@ -377,7 +370,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
         />
       ) : (
         // ¿Qué? Tarjeta 2 sin tabla (cargando, error o sin resultados): mantiene la misma franja arriba.
-        // ¿Para qué? Que la advertencia de la lista de 2020 se vea siempre, también cuando no hay filas.
+        // ¿Para qué? Que la nota de la fuente (UAESP) se vea siempre, también cuando no hay filas.
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card">
           <FranjaEca soloAcopio={soloAcopio} />
           <div className="p-4">
@@ -398,12 +391,13 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
 }
 
 // ¿Qué? Franja que va arriba de la lista de puntos de acopio, dentro de su tarjeta: el aviso "¿Qué es una
-//       ECA?" (se puede cerrar y queda un enlace) y, siempre visible, la nota de procedencia con "Ver fuente".
-// ¿Para qué? La nota tiene que aclarar de dónde sale el dato (lista oficial de la UAESP de marzo de 2020) y
-//           que no son todas las ECA de la ciudad; sin ella, alguien podría tomar los 9 puntos como el total
-//           real de Bogotá. El enlace lleva al inventario de la UAESP, que lista muchas más.
-// ¿Impacto? El texto de la ECA cambia por rol y no dice que se pueda entregar por cuenta propia hasta que
-//           la UAESP lo confirme (#500). La nota NO se puede cerrar.
+//       ECA?" (se puede cerrar y queda un enlace) y, siempre visible, la nota de procedencia.
+// ¿Para qué? La nota cita a la UAESP como fuente del inventario (la licencia que dio la UAESP exige nombrarla,
+//           no enlazarla) y aclara que estar en la lista no garantiza que la ECA esté abierta hoy: el inventario
+//           no trae estado de funcionamiento. No lleva enlace: la página de ECA de la UAESP responde 403, la
+//           resolución no está publicada y el Excel trae correos, así que no hay un enlace útil que ofrecer.
+// ¿Impacto? El texto del Residente dice que cualquier persona puede llevar residuos aprovechables a una ECA
+//           (la UAESP lo confirmó en el oficio 20265000341921, issue #500). La nota NO se puede cerrar.
 function FranjaEca({ soloAcopio }: { soloAcopio: boolean }) {
   const { t } = useTranslation();
   return (
@@ -416,18 +410,7 @@ function FranjaEca({ soloAcopio }: { soloAcopio: boolean }) {
       />
       <p className="flex items-start gap-2 border-t border-amber-200 bg-amber-50 px-5 py-2 text-xs text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
         <TriangleAlert className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
-        <span>
-          {t("directorio.infoPuntos.nota")}{" "}
-          <a
-            href={FUENTE_ECA_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-semibold underline underline-offset-2"
-          >
-            {t("directorio.infoPuntos.fuenteLink")}
-            <ExternalLink className="icon-sm" aria-hidden="true" />
-          </a>
-        </span>
+        <span>{t("directorio.infoPuntos.nota")}</span>
       </p>
     </div>
   );

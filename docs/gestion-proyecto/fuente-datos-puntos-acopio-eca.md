@@ -240,7 +240,7 @@ el texto de respaldo y no es el teléfono de ninguna ECA.
 - **Número de la Resolución 698 repetido:** el 105 y el 605 aparecen cada uno en dos filas (dos organizaciones en la misma bodega, con las mismas coordenadas). Para que `numero_resolucion` sea único, la segunda fila lleva `-2` (`105-2` y `605-2`).
 - **Correos en un archivo aparte:** 540 de las 799 filas tienen correo. Van en `be/app/data/eca_correos_uaesp.csv`, que **no se sube al repositorio** porque es público y algunos son direcciones personales (Gmail, Yahoo); está en `.gitignore`, como el `.env`, y el equipo se lo pasa por otro medio. Sin ese archivo el seed funciona igual, sin correos.
 - **Las 9 ECA de 2020** ya no se siembran a mano: tres (Engativá, Puente Aranda 2 y Usaquén II) vienen en el inventario nuevo y las otras seis la UAESP dice que no son parte del inventario vigente.
-- **Atribución en la app:** el texto "Fuente: UAESP..." de la sección de licencia se agrega al aviso del directorio en #665.
+- **Atribución en la app (issue #665):** el aviso del directorio cita a la UAESP: "Fuente: UAESP, inventario vigente de ECA (Resolución 698 de 2023, entregado en noviembre de 2026)", y aclara que estar en la lista no garantiza que la ECA esté abierta hoy. **No lleva enlace**, porque no hay uno útil (el 2026-11-16 la página de ECA de la UAESP respondía 403, Datos Abiertos 404, y el PDF de 2022 es el inventario viejo) y la licencia exige nombrar a la UAESP, no enlazarla. El enlace "Ver fuente" que apuntaba al PDF de 2022 se quitó.
 
 ### Qué sigue
 
