@@ -308,6 +308,11 @@ class PuntoAcopio {
     +string telefono_contacto
     +string url_foto
     +bool activo
+    +string numero_resolucion
+    +string organizacion
+    +string correo_contacto
+    +decimal latitud
+    +decimal longitud
 }
 
 class PuntoAcopioComentario {
@@ -550,7 +555,7 @@ Representa apartamentos o unidades habitacionales (torre + apto) dentro de un co
 
 ## PuntoAcopio
 
-Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — dato abierto de la UAESP (dataset de marzo de 2020: 9 puntos en 6 de las 20 localidades; no son todas las ECA de Bogotá). `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive. `url_foto` es una foto opcional (issue #581) que sube el Admin Sistema y se ve en la ficha del punto.
+Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — salen del inventario vigente de la UAESP (Resolución 698 de 2023, entregado en noviembre de 2026: 799 ECA en 18 de las 20 localidades; detalle y licencia en `docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md`). `numero_resolucion` identifica cada ECA del inventario (única; la UAESP repite el 105 y el 605, así que la segunda fila lleva `-2`) y permite repetir la importación sin duplicar; `organizacion`, `correo_contacto`, `latitud` y `longitud` también vienen del inventario. Los cinco son opcionales y quedan en `NULL` en un punto creado a mano por el Admin Sistema; la edición no los toca. `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive. `url_foto` es una foto opcional (issue #581) que sube el Admin Sistema y se ve en la ficha del punto.
 
 ---
 

@@ -576,6 +576,13 @@ CONTENIDO_EDUCATIVO ──▶ CONTENIDO_EDUCATIVO_VISTOS ◀── USUARIOS (qu�
 | telefono_contacto | VARCHAR |
 | url_foto          | VARCHAR |
 | activo            | BOOLEAN |
+| numero_resolucion | VARCHAR (único, opcional) |
+| organizacion      | VARCHAR (opcional) |
+| correo_contacto   | VARCHAR (opcional) |
+| latitud           | NUMERIC(10,7) (opcional) |
+| longitud          | NUMERIC(10,7) (opcional) |
+
+Las cinco últimas columnas vienen del inventario de ECA de la UAESP (Resolución 698 de 2023, issue #664) y quedan en `NULL` en un punto creado a mano. `numero_resolucion` es la clave con la que la importación reconoce cada ECA (único; la UAESP repite el 105 y el 605, así que la segunda fila lleva `-2`).
 
 `activo` es un soft-delete (HU-017): un punto dado de baja no se borra, solo deja de verse en el directorio público hasta reactivarse. `url_foto` es opcional (issue #581): la sube el Admin del Sistema desde el formulario del punto y se ve en la ficha para los tres roles; si es `NULL` se muestra un dibujo por defecto.
 

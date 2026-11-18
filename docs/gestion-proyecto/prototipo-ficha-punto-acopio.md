@@ -9,7 +9,7 @@
 | "Cómo llegar" con la dirección, en la ficha (`mapsLink.ts`) | **Hecho** |
 | Aviso "¿Qué es una ECA?" y nota de la lista de 2020 en la franja de la tabla (#594) | **Hecho** |
 | Latitud y longitud, y "Cómo llegar" con coordenadas | **Pendiente** (tarjeta 7) |
-| Estado frente a la UAESP ("Activa en inventario" o "Por confirmar"), cuando responda la solicitud (#500) | **Pendiente** |
+| Estado frente a la UAESP: la UAESP respondió el 2026-11-10 (#500) y no entrega estado de funcionamiento. Las ECA se muestran como "inventario vigente", no como "abiertas hoy" | **Respondido**, la etiqueta se decide con #664 |
 | Categoría del punto (ECA, CCR, etc.) y paginación de la tabla | **Pendiente** |
 
 **Datos de las ECA usados en los modelos:** los 9 puntos que ya están en el directorio (ver [`fuente-datos-puntos-acopio-eca.md`](fuente-datos-puntos-acopio-eca.md)) y su estado frente al inventario de la UAESP (ver [`investigacion-tipos-puntos-acopio.md`](investigacion-tipos-puntos-acopio.md)).
@@ -44,7 +44,7 @@ Los términos se confunden porque en la calle se usan como si fueran lo mismo. E
 | Activo / dado de baja | Sí (`activo`) | Ya existe |
 | **Latitud y longitud** | **No**: están documentadas en `fuente-datos-puntos-acopio-eca.md` pero no se guardaron | Los 9 pares ya están escritos ahí (dataset de marzo de 2020) |
 | **Foto** | **Sí (2026-10-30, #581)**: columna `url_foto`, opcional | La sube el Admin del Sistema desde el formulario del punto, como en las lecciones de "Aprende a reciclar" (no se usan fotos de terceros). Los puntos actuales no tienen foto: se agregan cuando el equipo las consiga. Sin foto no se muestra nada (no hay dibujo por defecto) |
-| **Estado frente a la UAESP** ("Activa en inventario" o "Por confirmar") | **No** | Del cruce de la investigación #460; se actualiza cuando responda la solicitud a la UAESP (#500) |
+| **Estado frente a la UAESP** ("Activa en inventario" o "Por confirmar") | **No** | La UAESP respondió (#500, 2026-11-10) y su inventario no trae estado de funcionamiento. Lo que sí se sabe es si la ECA aparece en el inventario vigente (ver `fuente-datos-puntos-acopio-eca.md`, actualización 2026-11-13) |
 | Categoría (ECA, CCR, etc.) | **No** | Pendiente de aclarar por qué se cerró #461 como "NO SE HACE" |
 
 ---
@@ -159,7 +159,7 @@ Solo para dejarlo escrito; no se hace en esta tarjeta:
 1. **Modelo elegido** (A, B o C, o uno por rol).
 2. **Por qué se cerró #461 como "NO SE HACE"** y si eso cambia las categorías.
 3. **Foto:** quién la toma y sube, y si por ahora se usa solo el dibujo por defecto.
-4. **Respuesta de la UAESP (#500):** cuando llegue, se actualiza el estado de cada ECA y, si hay contactos reales, el teléfono.
+4. **Respuesta de la UAESP (#500):** llegó el 2026-11-10. No hay teléfono ni estado de funcionamiento por ECA; solo un inventario de 799 ECA con coordenadas y correo. Detalle en `fuente-datos-puntos-acopio-eca.md`. Resuelta.
 
 ## 8. Enlaces consultados el 2026-10-28
 

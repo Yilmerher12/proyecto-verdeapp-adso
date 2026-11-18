@@ -181,7 +181,7 @@ Razones, cada una con su fuente:
 | **Ecopunto** como punto fijo | **No** | Cambian de lugar cada semana (la ubicación no es estable). Mejor un texto con el enlace al cronograma de la UAESP. |
 | **Posconsumo** como punto fijo | **No** | La SDA ya los publica en su visor (1.046 en 2021); copiarlos duplicaría un dato que cambia. Mejor enlazar al visor. |
 | **Bodega privada / chatarrería** como categoría | **No** | (1) El Decreto 203 de 2022 manda trasladar su actividad: las direcciones son inestables. (2) En el inventario 1.026 de 1.710 bodegas (**60 %**) figuran inactivas. (3) No encontré fuente oficial de qué reciben ni a quién pagan. (4) Anunciar negocios privados en un directorio público es una decisión de producto con riesgo para el proyecto en la feria. |
-| **Cargar todas las ECA activas** (cientos) | **No de golpe** | Sin teléfono ni verificación, el volumen crearía datos sin respaldo. Mejor por etapas, empezando por confirmar las 9 actuales. |
+| **Cargar todas las ECA activas** (cientos) | **No de golpe** | Sin teléfono ni verificación, el volumen crearía datos sin respaldo. Mejor por etapas, empezando por confirmar las 9 actuales. **Actualización 2026-11-13 (#500):** la UAESP entregó su inventario vigente de 799 ECA con coordenadas y correo, y autorizó usarlo citándola como fuente. Con ese respaldo oficial la carga ya no es "datos sin respaldo" (issue #664). Sigue sin haber teléfono ni estado de funcionamiento. |
 
 ---
 

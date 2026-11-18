@@ -1,5 +1,5 @@
 import { ANCHO_PAGINA } from "@/config/anchoPagina";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Eye, MapPin, MapPinOff, Pencil, Plus, Search, Trash2, Warehouse } from "lucide-react";
 import axios from "axios";
@@ -14,17 +14,21 @@ import { MenuAcciones, type OpcionMenu } from "@/components/ui/MenuAcciones";
 import { ComentariosPunto } from "@/components/ComentariosPunto";
 import { PuntoAcopioForm } from "@/components/PuntoAcopioForm";
 import { TablaPuntosAcopio } from "@/components/TablaPuntosAcopio";
-import { normalizarTexto } from "@/lib/normalizarTexto";
 import { Button } from "@/components/ui/Button";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
 import {
   crearPuntoAcopio,
   darDeBajaPuntoAcopio,
   editarPuntoAcopio,
   eliminarPuntoAcopioDefinitivo,
   listarPuntosAcopio,
+  obtenerResumenPuntosAcopio,
   reactivarPuntoAcopio,
+  type FiltroEstadoPunto,
   type PuntoAcopioAdmin,
   type PuntoAcopioPayload,
+  type ResumenPuntosAcopio,
 } from "@/lib/puntosAcopioApi";
 
 interface Localidad {
@@ -32,7 +36,12 @@ interface Localidad {
   nombre_localidad: string;
 }
 
-type FiltroEstado = "todos" | "activos" | "baja";
+type FiltroEstado = FiltroEstadoPunto;
+
+// ¿Qué? Cuántos puntos pide cada página al servidor (issue #664: el inventario de la UAESP trae cientos).
+const TAMANO_PAGINA = 20;
+// ¿Qué? Espera, en ms, desde la última tecla antes de pedir la búsqueda al servidor (mismo valor que AdminDashboard).
+const ESPERA_BUSQUEDA_MS = 350;
 
 const FORM_VACIO: PuntoAcopioPayload = {
   nombre: "",
@@ -46,7 +55,10 @@ const FORM_VACIO: PuntoAcopioPayload = {
 export function AdminPuntosAcopioPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  // ¿Qué? Solo la página que se ve (no toda la lista) y los conteos de todos los puntos, que llegan aparte.
   const [puntos, setPuntos] = useState<PuntoAcopioAdmin[]>([]);
+  const [totalFiltrado, setTotalFiltrado] = useState(0);
+  const [resumen, setResumen] = useState<ResumenPuntosAcopio | null>(null);
   const [localidades, setLocalidades] = useState<Localidad[]>([]);
   const [cargando, setCargando] = useState(true);
   // ¿Qué? Errores del formulario (crear/editar) — se muestran dentro de él.
@@ -75,33 +87,79 @@ export function AdminPuntosAcopioPage() {
   const [confirmando, setConfirmando] = useState(false);
   const [reactivandoId, setReactivandoId] = useState<string | null>(null);
 
-  // ¿Qué? Búsqueda y filtros de estado y localidad — se aplican en el navegador:
-  //       el backend ya devuelve la lista completa (incluidos los dados de baja).
+  // ¿Qué? Búsqueda y filtros de estado y localidad — se aplican en el servidor (issue #664), porque ya
+  //       no llega la lista completa. "busquedaEscrita" es lo que hay en el cuadro; "busqueda" es lo que se
+  //       pide, 350 ms después de la última tecla (así cada letra no dispara su propia petición).
+  const [busquedaEscrita, setBusquedaEscrita] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("todos");
   const [filtroLocalidad, setFiltroLocalidad] = useState<number | "">("");
+  // ¿Qué? Sube cada vez que algo cambia los datos (crear, editar, baja...) para volver a pedir página y conteos.
+  const [version, setVersion] = useState(0);
 
-  const cargar = useCallback(() => {
+  const paginacion = usePaginacion(TAMANO_PAGINA, totalFiltrado);
+  const { offset, pagina, irAAnterior, reiniciar } = paginacion;
+
+  const cargar = useCallback(() => setVersion((v) => v + 1), []);
+
+  // ¿Qué? busquedaPedidaRef evita reiniciar la página (y repetir la petición) si el texto, ya sin espacios, no cambió.
+  const busquedaPedidaRef = useRef("");
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const nueva = busquedaEscrita.trim();
+      if (nueva === busquedaPedidaRef.current) return;
+      busquedaPedidaRef.current = nueva;
+      setBusqueda(nueva);
+      setAbiertoId(null);
+      reiniciar();
+    }, ESPERA_BUSQUEDA_MS);
+    return () => clearTimeout(id);
+  }, [busquedaEscrita, reiniciar]);
+
+  // ¿Qué? Pide la página actual con los filtros. "cancelado" descarta una respuesta vieja que llega tarde
+  //       (si escribes rápido, no debe pisar a la más reciente).
+  useEffect(() => {
     if (!user) return;
+    let cancelado = false;
     setCargando(true);
     setCargaError(false);
-    listarPuntosAcopio()
-      .then(setPuntos)
-      .catch(() => setCargaError(true))
-      .finally(() => setCargando(false));
-  }, [user]);
+    listarPuntosAcopio({ q: busqueda, estado: filtroEstado, idLocalidad: filtroLocalidad, limit: TAMANO_PAGINA, offset })
+      .then((p) => {
+        if (cancelado) return;
+        setPuntos(p.items);
+        setTotalFiltrado(p.total);
+      })
+      .catch(() => {
+        if (!cancelado) setCargaError(true);
+      })
+      .finally(() => {
+        if (!cancelado) setCargando(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [user, busqueda, filtroEstado, filtroLocalidad, offset, version]);
 
-  // ¿Qué? Issue #225 — "cargar" faltaba en las dependencias; se silenciaba
-  //       la advertencia en vez de arreglarla. Envolverla en useCallback
-  //       (arriba) la vuelve estable salvo cuando "user" cambia de verdad,
-  //       así que agregarla aquí no dispara peticiones de más.
+  // ¿Qué? Los conteos de todos los puntos (cabecera, chips y localidades con puntos) se piden aparte, y
+  //       solo de nuevo cuando algo cambia los datos: no dependen de la página ni de los filtros.
   useEffect(() => {
-    cargar();
+    if (!user) return;
+    obtenerResumenPuntosAcopio()
+      .then(setResumen)
+      .catch(() => {});
+  }, [user, version]);
+
+  useEffect(() => {
     axios
       .get<Localidad[]>(`${API_BASE_URL}/api/v1/geography/localidades`)
       .then((res) => setLocalidades(res.data))
       .catch(() => {});
-  }, [cargar]);
+  }, []);
+
+  // ¿Qué? Si se vació la última página (se dio de baja o eliminó su único punto con el filtro "Activos"), se retrocede una.
+  useEffect(() => {
+    if (!cargando && puntos.length === 0 && totalFiltrado > 0 && pagina > 0) irAAnterior();
+  }, [cargando, puntos, totalFiltrado, pagina, irAAnterior]);
 
   const editando = puntos.find((p) => p.id_punto_acopio === editandoId) ?? null;
 
@@ -188,40 +246,26 @@ export function AdminPuntosAcopioPage() {
     }
   };
 
-  const visibles = puntos.filter((p) => {
-    if (filtroEstado === "activos" && !p.activo) return false;
-    if (filtroEstado === "baja" && p.activo) return false;
-    if (filtroLocalidad !== "" && p.id_localidad !== filtroLocalidad) return false;
-    const q = normalizarTexto(busqueda.trim());
-    return !q || normalizarTexto(`${p.nombre} ${p.direccion}`).includes(q);
-  });
-
-  // ¿Qué? Cambiar la búsqueda o un filtro pliega la fila abierta: ya puede no estar a la vista.
-  const cambiarBusqueda = (valor: string) => {
-    setBusqueda(valor);
-    setAbiertoId(null);
-  };
+  // ¿Qué? Cambiar un filtro pliega la fila abierta (ya puede no estar a la vista) y vuelve a la primera página.
+  //       La búsqueda hace lo mismo, pero dentro de su espera (ver arriba).
   const cambiarEstado = (estado: FiltroEstado) => {
     setFiltroEstado(estado);
     setAbiertoId(null);
+    reiniciar();
   };
   const cambiarLocalidad = (valor: number | "") => {
     setFiltroLocalidad(valor);
     setAbiertoId(null);
+    reiniciar();
   };
   const alternarFila = (id: string) => setAbiertoId((actual) => (actual === id ? null : id));
 
-  // ¿Qué? Solo las localidades que tienen algún punto: elegir una sin puntos daría una tabla vacía.
-  const localidadesConPuntos = Array.from(new Map(puntos.map((p) => [p.id_localidad, p.nombre_localidad])))
-    .map(([id, nombre]) => ({ id, nombre }))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-  const totalActivos = puntos.filter((p) => p.activo).length;
-  const totalDeBaja = puntos.length - totalActivos;
-  const totalLocalidades = new Set(puntos.map((p) => p.id_localidad)).size;
+  // ¿Qué? Conteos de todos los puntos, sin filtros; vienen de /resumen (ver el efecto de arriba).
+  const totalPuntos = resumen?.total ?? 0;
+  const totalDeBaja = resumen?.de_baja ?? 0;
   const chips: { id: FiltroEstado; cantidad: number }[] = [
-    { id: "todos", cantidad: puntos.length },
-    { id: "activos", cantidad: totalActivos },
+    { id: "todos", cantidad: totalPuntos },
+    { id: "activos", cantidad: resumen?.activos ?? 0 },
     { id: "baja", cantidad: totalDeBaja },
   ];
 
@@ -267,15 +311,15 @@ export function AdminPuntosAcopioPage() {
         </Button>
       </div>
 
-      {puntos.length > 0 && (
+      {totalPuntos > 0 && (
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 dark:border-night-line dark:bg-night-card">
             <div className="relative min-w-[12.5rem] flex-1">
               <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 type="search"
-                value={busqueda}
-                onChange={(e) => cambiarBusqueda(e.target.value)}
+                value={busquedaEscrita}
+                onChange={(e) => setBusquedaEscrita(e.target.value)}
                 aria-label={t("adminPuntosAcopio.search.placeholder")}
                 placeholder={t("adminPuntosAcopio.search.placeholder")}
                 className="focus-ring w-full rounded-lg border border-edge bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 focus:border-accent-500 /20 dark:border-night-edge dark:bg-night-field dark:text-white"
@@ -288,9 +332,10 @@ export function AdminPuntosAcopioPage() {
               className="focus-ring cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-700 dark:border-night-edge dark:bg-night-field dark:text-gray-200"
             >
               <option value="">{t("directorio.allLocalities")}</option>
-              {localidadesConPuntos.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.nombre}
+              {/* ¿Qué? Solo las localidades que tienen algún punto: elegir una sin puntos daría una tabla vacía. */}
+              {(resumen?.localidades ?? []).map((l) => (
+                <option key={l.id_localidad} value={l.id_localidad}>
+                  {l.nombre_localidad}
                 </option>
               ))}
             </select>
@@ -315,8 +360,8 @@ export function AdminPuntosAcopioPage() {
 
           <p className="px-1 text-sm text-gray-600 dark:text-gray-300">
             {t("adminPuntosAcopio.summary.pointsIn", {
-              puntos: t("adminPuntosAcopio.summary.points", { count: puntos.length }),
-              localidades: t("adminPuntosAcopio.summary.localities", { count: totalLocalidades }),
+              puntos: t("adminPuntosAcopio.summary.points", { count: totalPuntos }),
+              localidades: t("adminPuntosAcopio.summary.localities", { count: resumen?.localidades.length ?? 0 }),
             })}
             {totalDeBaja > 0 && ` · ${t("adminPuntosAcopio.summary.inactive", { count: totalDeBaja })}`}
           </p>
@@ -324,25 +369,48 @@ export function AdminPuntosAcopioPage() {
       )}
 
       {errorAccion && <Alert type="error" message={errorAccion} onClose={() => setErrorAccion(null)} />}
-      {cargando && <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={10} enTarjeta />}
+      {/* ¿Qué? La silueta solo se ve mientras no hay filas que mostrar; al cambiar de página o de filtro quedan
+          las de antes hasta que llegan las nuevas, para que la tabla no parpadee con cada tecla. */}
+      {cargando && puntos.length === 0 && <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={10} enTarjeta />}
       {!cargando && cargaError && <Alert type="error" message={t("adminPuntosAcopio.loadError")} />}
 
-      {!cargando && !cargaError && puntos.length === 0 && (
+      {/* ¿Qué? "Todavía no hay puntos" solo si de verdad no hay ninguno (el resumen lo dice); si hay pero el
+          filtro no encuentra nada, es "ningún punto coincide". */}
+      {!cargando && !cargaError && resumen !== null && totalPuntos === 0 && (
         <EmptyState icon={Warehouse} message={t("adminPuntosAcopio.emptyState")} />
       )}
-      {!cargando && puntos.length > 0 && visibles.length === 0 && (
+      {!cargando && !cargaError && totalPuntos > 0 && puntos.length === 0 && (
         <EmptyState icon={Search} message={t("adminPuntosAcopio.search.noResults")} />
       )}
 
-      {visibles.length > 0 && (
+      {puntos.length > 0 && (
         <TablaPuntosAcopio
-          puntos={visibles}
+          puntos={puntos}
           variante="gestion"
           abiertoId={abiertoId}
           onAlternar={alternarFila}
           renderMenu={menuDe}
           renderExtra={(p) => <ComentariosPunto idPunto={p.id_punto_acopio} version={versionComentarios} />}
           ocupadoId={reactivandoId}
+          pie={
+            <Paginacion
+              desde={paginacion.desde}
+              hasta={paginacion.hasta}
+              total={totalFiltrado}
+              pagina={pagina}
+              totalPaginas={paginacion.totalPaginas}
+              puedeAnterior={paginacion.puedeAnterior}
+              puedeSiguiente={paginacion.puedeSiguiente}
+              onAnterior={() => {
+                setAbiertoId(null);
+                irAAnterior();
+              }}
+              onSiguiente={() => {
+                setAbiertoId(null);
+                paginacion.irASiguiente();
+              }}
+            />
+          }
         />
       )}
 
