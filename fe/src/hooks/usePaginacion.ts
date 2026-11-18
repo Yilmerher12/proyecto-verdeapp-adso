@@ -11,7 +11,7 @@
  *           en qué página se está y calcula el offset a pedir. Quien lo usa
  *           sigue siendo responsable de pedir los datos con ese offset.
  */
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 export function usePaginacion(tamanoPagina: number, total: number) {
   const [pagina, setPagina] = useState(0);
@@ -21,9 +21,15 @@ export function usePaginacion(tamanoPagina: number, total: number) {
   const desde = total === 0 ? 0 : offset + 1;
   const hasta = Math.min(total, offset + tamanoPagina);
 
-  const irAAnterior = () => setPagina((p) => Math.max(0, p - 1));
-  const irASiguiente = () => setPagina((p) => (p + 1 < totalPaginas ? p + 1 : p));
-  const reiniciar = () => setPagina(0);
+  // ¿Qué? useCallback: estas funciones mantienen su identidad entre renders (setPagina ya es estable).
+  // ¿Para qué? Poder usarlas como dependencia de un efecto sin que se reinicie en cada render
+  //           (el "debounce" de la búsqueda del directorio llama a reiniciar dentro de su efecto).
+  const irAAnterior = useCallback(() => setPagina((p) => Math.max(0, p - 1)), []);
+  const irASiguiente = useCallback(
+    () => setPagina((p) => (p + 1 < totalPaginas ? p + 1 : p)),
+    [totalPaginas],
+  );
+  const reiniciar = useCallback(() => setPagina(0), []);
 
   return {
     pagina,
