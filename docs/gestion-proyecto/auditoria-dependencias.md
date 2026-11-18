@@ -262,3 +262,15 @@ Dependabot abría PR cada lunes (hasta 6 por semana, uno por ecosistema) y el eq
 - **Lo que no cambia:** el `cooldown` de 7 días, un PR agrupado por ecosistema, `target-branch: develop` y la exclusión de saltos de versión mayor.
 - **Límite:** las revisiones no siempre caen en lunes. Una alerta de seguridad ya conocida la sigue atrapando el CI (`pip-audit` y `pnpm audit`), y Dependabot puede abrir PR de seguridad aparte del horario.
 - **Cuándo se activa:** Dependabot solo lee el archivo desde `main`; el cambio rige cuando llegue ahí.
+
+---
+
+## Actualización — alerta de `picomatch` ignorada de forma temporal (2026-11-18)
+
+El paso `pnpm audit` del CI quedó en rojo en todos los PR del frontend (se vio el 17 de noviembre) con 1 alerta alta: GHSA-fc5q-39xc-vjpf ("picomatch vulnerable to ReDoS through single-branch repeated extglobs"), en `picomatch` 4.0.7 o anterior. Llega como dependencia indirecta por `.>@tailwindcss/vite>vite>fdir>picomatch`; el proyecto no la usa directamente. La alerta se publicó el 19 de octubre y la base de GitHub no le da versión corregida (`first_patched_version` vacío): el registro de npm solo llega a la 4.0.7 (24 de agosto) y la 4.0.8 que sugiere `pnpm audit` no existe. Las pruebas de los PR no fallaban; fallaba solo este paso.
+
+- **Qué se hizo:** se agregó `auditConfig.ignoreGhsas` con ese identificador en `fe/pnpm-workspace.yaml`, con su comentario. No se tocó `package.json`, `pnpm-lock.yaml` ni `ci.yml`. La regla vale igual en local y en CI.
+- **Por qué es aceptable:** la librería solo llega por herramientas de compilación (Vite, Tailwind) y el ReDoS necesita un patrón de glob malicioso; aquí los patrones los escribe el proyecto, no el usuario final. Es un razonamiento, no una prueba.
+- **Verificado:** `pnpm audit` en `fe/` termina con código 0 y dice `Severity: 1 high (1 ignored)`. `e2e/` no tiene esta alerta.
+- **Es temporal:** quitar la regla cuando exista una versión de `picomatch` posterior a la 4.0.7 y subirla en `pnpm-lock.yaml` (`pnpm update picomatch --depth Infinity`), o revisarla a más tardar el 2 de diciembre de 2026. Cualquier otra alerta sigue haciendo fallar el paso.
+- **Nota sobre el estado del paquete:** el repositorio `micromatch/picomatch` no está archivado (último commit el 27 de agosto de 2026), pero publica cada uno o dos meses y tiene muchos issues abiertos.

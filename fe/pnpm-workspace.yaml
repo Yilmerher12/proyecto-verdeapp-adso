@@ -2,6 +2,22 @@ allowBuilds:
   core-js: true
   esbuild: true
 
+# ¿Qué? Se ignora la alerta GHSA-fc5q-39xc-vjpf (picomatch, ReDoS por extglobs
+#       repetidos) en `pnpm audit`, que falló en CI el 17 de noviembre de 2026.
+# ¿Para qué? Esa alerta no tiene versión corregida: el registro de npm solo
+#           llega a picomatch 4.0.7 (24 de agosto) y la 4.0.8 que pide el aviso
+#           no existe. Llega por @tailwindcss/vite > vite > fdir, que son
+#           herramientas de compilación: el ReDoS necesita un patrón de glob
+#           malicioso y aquí los patrones los escribe el proyecto, no el usuario.
+#           Sin esta línea, todos los PR del frontend quedan en rojo.
+# ¿Impacto? Es temporal. Quitar la regla en cuanto exista una versión de
+#           picomatch posterior a 4.0.7 (y subirla en pnpm-lock.yaml), o a más
+#           tardar el 2 de diciembre de 2026. Cualquier otra alerta sigue
+#           haciendo fallar el paso.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf
+
 # ¿Qué? Aquí vivía una lista de "overrides" (12 reglas que forzaban versiones
 #       de dependencias indirectas para parchar vulnerabilidades).
 # ¿Para qué se quitó? Issue #313: al actualizar las herramientas (vite, vitest,
