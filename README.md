@@ -596,6 +596,8 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 | Componentes React | `fe/src/__tests__/` | `pnpm test` desde `fe/` |
 | E2E (navegador real) | `e2e/tests/` | `pnpm test` desde `e2e/` |
 
+**Documentación de las pruebas** (`docs/pruebas/`): el [plan de pruebas](docs/pruebas/plan-de-pruebas.md) (alcance, niveles, ambiente y criterios), el [informe de pruebas automatizadas](docs/pruebas/informe-pruebas-automatizadas.md) (resultados y casos de una ejecución real) y el [reporte de ejecución y defectos](docs/pruebas/reporte-ejecucion-y-defectos.md) (defectos con su severidad y su estado).
+
 **Cobertura**: `uv run pytest` y `pnpm test` (en `fe/`) miden siempre qué porcentaje del código ejecutan las pruebas, y **fallan** si baja del umbral configurado (`fail_under` en `be/pyproject.toml`, `thresholds` en `fe/vite.config.ts`). El CI corre esos mismos comandos, así que un PR que baje la cobertura queda en rojo. El umbral solo sube; su historial está en [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md).
 
 **E2E, primera vez** (desde `e2e/`): `pnpm install`, luego `pnpm exec playwright install chromium` (descarga el navegador) y copia `e2e/.env.example` como `e2e/.env` (las cuentas de prueba que leen los tests; ese archivo no se sube a Git). Antes de `pnpm test`, el backend y la BD deben estar encendidos (Método B); el frontend lo levanta Playwright solo. `pnpm codegen` abre un navegador que graba lo que haces y lo convierte en código de test.
