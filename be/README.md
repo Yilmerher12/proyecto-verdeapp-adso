@@ -1094,16 +1094,18 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 | `reciclador_conjunto.py`    | `/api/v1/reciclador-conjunto`   |     7     | Invitar, listar, aceptar/rechazar la relación Reciclador↔Conjunto                  |
 | `directorio.py`             | `/api/v1/directorio`            |     2     | Directorio público de recicladores y puntos de acopio                              |
 | `notificaciones.py`         | `/api/v1/notificaciones`        |    10     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, avisos de un conjunto paginados, etc.) |
-| `auditoria_conjunto.py`     | `/api/v1/auditorias-conjunto`   |     9     | Semáforo de auditoría del Reciclador — registro, detalle, historiales (Residente, Admin de Conjunto y "mis auditorías" del Reciclador), desempeño semanal con su PDF y lista del Admin Sistema con periodo, filtros, orden y páginas, y su resumen semanal (RQF-009, issue #618) |
+| `auditoria_conjunto.py`     | `/api/v1/auditorias-conjunto`   |     10     | Semáforo de auditoría del Reciclador — registro, detalle, historiales (Residente, Admin de Conjunto y "mis auditorías" del Reciclador), desempeño semanal con su PDF y lista del Admin Sistema con periodo, filtros, orden y páginas, y su resumen semanal (RQF-009, issue #618) |
 | `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     9     | Catálogo de contenido educativo — lectura para todos, gestión y envío manual a conjuntos solo Admin Sistema, lecciones vistas solo Residente (RQF-004/010/013) |
 | `comunicados.py`            | `/api/v1/comunicados`           |     5     | Comunicados del conjunto — publica Admin de Conjunto, ven Residente/Reciclador (RQF-014) |
 | `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
 | `novedades_enviadas.py`     | `/api/v1/novedades-enviadas`    |     4     | Novedades que los usuarios le envían al Admin Sistema y su historial propio, y la bandeja de Soporte técnico del Admin Sistema (listar y actualizar estado, prioridad y respuesta) (RQF-021) |
-| `puntos_acopio.py`          | `/api/v1/admin/puntos-acopio` |     8     | Gestión de puntos de acopio del Admin Sistema — crear, editar, dar de baja e historial de comentarios (RQF-011) |
+| `puntos_acopio.py`          | `/api/v1/admin/puntos-acopio` |     9     | Gestión de puntos de acopio del Admin Sistema — crear, editar, dar de baja e historial de comentarios (RQF-011) |
 | `uploads.py`                | `/api/v1/uploads`               |     1     | Subida genérica de adjuntos (imagen, o PDF/Word/Excel si se pide) para comunicados, novedades, contenido educativo y la foto de los puntos de acopio. Cuota por usuario: Residente/Reciclador 3 por minuto y 5 por día, administradores 30 y 30 (429 al pasarse); cada archivo queda registrado en `archivos_subidos` con su dueño |
 | `contact.py`                | `/api/v1/contact`               |     1     | Formulario de contacto de la landing — público, 3/min por IP, reenvía el mensaje a `CONTACT_EMAIL` con `Reply-To` igual al correo de quien escribió (para responderle con "Responder"), con un aviso en el cuerpo de que esa dirección no está verificada (#403), y responde 503 si el correo no sale (#351) |
 
 Todos estos routers están cubiertos por tests en `app/tests/` (ver sección 17).
+
+La lista completa de los 104 endpoints, con quién puede usar cada uno, está en [`docs/api.md`](../docs/api.md).
 
 **Limpieza de adjuntos huérfanos (issue #395).** Quien sube una foto y nunca envía el formulario deja el archivo en `app/uploads/adjuntos/`. Este comando borra los archivos de esa carpeta que tienen más de 24 horas y que ninguna fila de la base de datos referencia. Es manual: nada lo corre solo (programarlo es del issue #317) y trabaja sobre la carpeta de la máquina donde se ejecuta; en Docker, dentro del contenedor del backend. Como borrar no se deshace, primero se corre `--simular`, que solo lista:
 
@@ -1424,14 +1426,7 @@ uv run pytest app/tests/test_auth.py -v --no-cov   # --no-cov: un solo archivo n
 
 ### 17.4 Cobertura del proyecto
 
-| Módulo                         | Cobertura |
-| ------------------------------ | --------- |
-| `app/routers/auth.py`          | ≥ 95%     |
-| `app/routers/users.py`         | 100%      |
-| `app/services/auth_service.py` | ≥ 90%     |
-| `app/utils/security.py`        | 100%      |
-| `app/dependencies.py`          | ≥ 85%     |
-| **Total**                      | **≥ 90%** |
+`uv run pytest` mide la cobertura solo y **falla si baja de `fail_under`** (97, en `pyproject.toml`). En la última medición (20 de noviembre de 2026) el total fue de **97.3 %** de líneas con 1012 pruebas del backend. El detalle por archivo se ve con `uv run pytest --cov-report=term-missing`, y los resultados de cada ejecución están en [`docs/pruebas/`](../docs/pruebas/informe-pruebas-automatizadas.md).
 
 ### 17.5 Tests de autenticación (`test_auth.py`)
 
