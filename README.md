@@ -570,6 +570,7 @@ Toda la documentación vive en `docs/`, en Markdown, versionada junto con el có
 | [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Modelo entidad-relación, modelo relacional (MR), diagrama de clases y catálogo de casos de uso |
 | [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance. En [`informes-scrum/`](docs/gestion-proyecto/informes-scrum/) están los informes semanales del Scrum Master |
 | [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md) | Bootcamp de testing: capa de cada integrante por semana y cobertura registrada |
+| [`docs/despliegue.md`](docs/despliegue.md) | Cómo arranca el backend, variables de entorno de cada parte, errores de arranque y cómo se desplegaría el proyecto |
 
 Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implementar`) que se actualiza cada vez que su funcionalidad cambia de verdad — es la fuente de verdad más confiable sobre qué tan avanzado está el proyecto, más que cualquier resumen (incluido este README).
 

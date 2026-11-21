@@ -43,8 +43,8 @@ from app.routers import contact
 #           interactiva expone todos los endpoints y schemas sin auth —
 #           útil en desarrollo, un riesgo real si queda pública en producción.
 # ¿Impacto? Con ENVIRONMENT=production, /docs y /redoc devuelven 404. En
-#           development/testing (el valor por defecto) siguen disponibles
-#           igual que antes.
+#           development siguen disponibles. ENVIRONMENT es obligatoria: sin
+#           ella el backend no arranca (ver app/config.py).
 _es_produccion = settings.ENVIRONMENT == "production"
 
 # ¿Qué? Issue #309 (CN-012): configura el logging raíz de Python en nivel INFO.
@@ -71,16 +71,28 @@ app = FastAPI(
 # ¿Para qué? Antes se usaba allow_origins=["*"] ("cualquier sitio web del
 #           mundo puede llamar a este backend"), lo cual es un riesgo real.
 #           Ahora solo los orígenes de esta lista pueden hacerlo.
-# ¿Impacto? Mientras el proyecto siga corriendo 100% local, basta con los
-#           puertos que usa Vite en modo desarrollo. CUANDO SE DESPLIEGUE
-#           A UN SERVIDOR REAL, agrega aquí la URL real del frontend.
-ALLOWED_ORIGINS = [
-    "http://localhost:5173",   # Vite — modo desarrollo (el que usan ahora)
+# ¿Impacto? El origen del frontend sale de la variable FRONTEND_URL, la misma que
+#           usan los enlaces de los correos, así que desplegar en otro dominio
+#           no exige editar este archivo. En desarrollo se suman los puertos de
+#           Vite (5173) y del frontend en Docker (3000); con
+#           ENVIRONMENT=production solo queda FRONTEND_URL.
+_ORIGENES_DE_DESARROLLO = [
+    "http://localhost:5173",   # Vite — modo desarrollo
     "http://127.0.0.1:5173",   # Mismo puerto, accedido por IP en vez de "localhost"
-    "http://localhost:3000",   # Por si se usa algún otro modo de arranque
+    "http://localhost:3000",   # Frontend en Docker (nginx)
     "http://127.0.0.1:3000",
-    # "https://TU-DOMINIO-DE-PRODUCCION-AQUI",  # <- agregar cuando se despliegue
 ]
+
+
+def origenes_permitidos(frontend_url: str, es_produccion: bool) -> list[str]:
+    """Orígenes que pueden llamar al backend desde un navegador (CORS)."""
+    # rstrip: un "/" final no coincidiría con el origen que manda el navegador.
+    frontend = frontend_url.rstrip("/")
+    base = [] if es_produccion else _ORIGENES_DE_DESARROLLO
+    return list(dict.fromkeys([*base, frontend]))
+
+
+ALLOWED_ORIGINS = origenes_permitidos(settings.FRONTEND_URL, _es_produccion)
 
 app.add_middleware(
     CORSMiddleware,

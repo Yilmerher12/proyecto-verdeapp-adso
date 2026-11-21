@@ -237,7 +237,9 @@ Esto actualiza `pyproject.toml` y `uv.lock` automáticamente — nunca se editan
 ## 5. Variables de entorno
 
 Las variables de entorno almacenan configuración sensible (contraseñas, claves, URLs)
-fuera del código fuente. **Nunca** van en el código ni en git.
+fuera del código fuente. **Nunca** van en el código ni en git. La tabla completa de
+variables, los errores de arranque y cómo se desplegaría están en
+[`docs/despliegue.md`](../docs/despliegue.md).
 
 **Paso 1:** Se copia el archivo de ejemplo:
 
@@ -1308,13 +1310,11 @@ app = FastAPI(
     openapi_url=None if _es_produccion else "/openapi.json",
 )
 
-# CORS — lista explícita de orígenes permitidos, NUNCA ["*"]. Mientras el
-# proyecto corre 100% local basta con los puertos de Vite; al desplegar a
-# un servidor real, se agrega ahí la URL real del frontend.
-ALLOWED_ORIGINS = [
-    "http://localhost:5173", "http://127.0.0.1:5173",
-    "http://localhost:3000", "http://127.0.0.1:3000",
-]
+# CORS — lista explícita de orígenes permitidos, NUNCA ["*"]. El origen del
+# frontend sale de FRONTEND_URL; en desarrollo se suman los puertos de Vite
+# (5173) y del frontend en Docker (3000), y con ENVIRONMENT=production solo
+# queda FRONTEND_URL.
+ALLOWED_ORIGINS = origenes_permitidos(settings.FRONTEND_URL, _es_produccion)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
