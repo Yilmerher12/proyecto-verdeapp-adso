@@ -147,8 +147,8 @@ Un **defecto** es un comportamiento del sistema que no cumple un requisito o que
 | Severidad | Cuándo se usa | Prioridad en el tablero |
 |---|---|---|
 | Crítica | Compromete cuentas o datos, o deja el sistema sin poder usarse. | P0 |
-| Alta | Falla de seguridad, pérdida o daño de datos, o un flujo principal que se rompe. | P0 |
-| Media | Falla funcional o de uso con una alternativa, o un incumplimiento de accesibilidad. | P1 |
+| Alta | Falla de seguridad que expone cuentas o datos, pérdida o daño de datos, o un flujo principal que se rompe. | P0 |
+| Media | Falla funcional o de uso con una alternativa, un incumplimiento de accesibilidad o un refuerzo de seguridad sin riesgo directo sobre cuentas o datos. | P1 |
 | Baja | Detalle visual o de redacción sin efecto en el uso. | P2 |
 
 **Estados:** Abierto, En corrección (rama y PR en revisión) y Cerrado (corregido, con su prueba, e integrado a `develop`).

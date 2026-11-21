@@ -25,7 +25,7 @@
 |---|---|---|---|---|---|---|---|
 | Backend (`pytest`) | 1012 | 1012 | 0 | 0 | 97.30 % de líneas | ≥ 97 % | 12 min 5 s |
 | Frontend (`vitest`) | 1124 | 1123 | 0 | 1 | 89.41 % de líneas | ≥ 89 % | 9 min 18 s |
-| E2E (`playwright`) | 2 | — | — | — | — | — | **No se ejecutó** (ver sección 6) |
+| E2E (`playwright`) | 2 | 2 | 0 | 0 | — | — | 21 s (ver sección 6) |
 
 | Verificación estática | Resultado |
 |---|---|
@@ -33,7 +33,7 @@
 | `tsc -b --noEmit` (frontend) | Sin errores |
 | `eslint .` (frontend) | Sin errores |
 
-**En total: 2136 pruebas automatizadas ejecutadas (1012 + 1124), 2135 pasaron, 0 fallaron y 1 quedó omitida a propósito** por un defecto conocido (sección 5). La cobertura cumple los umbrales de las dos capas.
+**En total: 2138 pruebas automatizadas ejecutadas (1012 + 1124 + 2), 2137 pasaron, 0 fallaron y 1 quedó omitida a propósito** por un defecto conocido (sección 5). La cobertura cumple los umbrales de las dos capas.
 
 La tabla de la sección 4 lista **42 casos distintos** elegidos del código real, con el requisito o la historia de usuario a la que responden.
 
@@ -179,7 +179,18 @@ Los casos están elegidos del código real y repartidos entre autenticación, co
 
 ## 6. Pruebas E2E
 
-Hay 2 pruebas E2E en `e2e/tests/` (inicio de sesión con credenciales incorrectas, y panel del Residente con credenciales válidas). **No se ejecutaron en esta corrida:** `Playwright` 1.65 necesita su propio navegador Chromium y en esta máquina no está instalado (`browserType.launch: Executable doesn't exist`). Es un problema del ambiente de esta máquina, no un fallo del sistema. Para correrlas, instalar el navegador una vez con `pnpm exec playwright install chromium` desde `e2e/`; los E2E tampoco corren en el CI (ver el [plan de pruebas](plan-de-pruebas.md), sección 9).
+Hay 2 pruebas E2E en `e2e/tests/`, y **las 2 pasaron** (21 s) el 20 de noviembre de 2026, en una corrida aparte de las anteriores:
+
+| Prueba | Archivo | Qué verifica | Resultado |
+|---|---|---|---|
+| Login con credenciales incorrectas | `login-error.spec.js` | Muestra el error y no deja entrar al panel | Pasó |
+| Panel del Residente con credenciales válidas | `test-login-resident.spec.js` | Inicia sesión con la cuenta de prueba del Residente y comprueba que el menú muestra el rol «Residente» | Pasó |
+
+**Cómo se corrieron:** el backend encendido con `uv run uvicorn` contra la base de desarrollo (`verdeapp_db`), y el frontend levantado por Playwright. Ninguna de las dos crea ni modifica datos de negocio: la de credenciales incorrectas usa un correo distinto en cada corrida, para no bloquear ninguna cuenta del seed.
+
+**Navegador:** el intento con `pnpm test` falló porque `Playwright` 1.65 pide su propio Chromium (`chromium_headless_shell-1254`) y en este equipo estaba instalada otra versión (`chromium-1243`, Chromium 153). La corrida válida usó ese Chromium ya instalado, a través de una configuración temporal que no se agregó al repositorio. Quien quiera repetirlo con el navegador que pide Playwright lo instala una vez con `pnpm exec playwright install chromium`, desde `e2e/`.
+
+Las E2E no corren en el CI (ver el [plan de pruebas](plan-de-pruebas.md), sección 9).
 
 ---
 

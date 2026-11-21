@@ -6,7 +6,8 @@
   ¿Para qué? Es la evidencia de «reporte de ejecución + defectos registrados con severidad y
             estado» que pide el comité (issue #678).
   ¿Impacto? Los defectos cerrados salen del historial real de PR del repositorio; las
-            severidades son una propuesta que el equipo debe validar (sección 3.4).
+            severidades se asignaron según la escala de la sección 2 y el equipo las revisó
+            y confirmó el 20 de noviembre de 2026 (sección 3.4).
 -->
 
 | Campo | Valor |
@@ -26,8 +27,8 @@
 |---|---|---|---|---|---|
 | Backend (`pytest`) | 1012 | 1012 | 0 | 0 | 97.30 % |
 | Frontend (`vitest`) | 1124 | 1123 | 0 | 1 | 89.41 % |
-| E2E (`playwright`) | 2 | No se ejecutaron | — | — | — |
-| **Total automatizadas** | **2136** | **2135** | **0** | **1** | |
+| E2E (`playwright`) | 2 | 2 | 0 | 0 | — |
+| **Total automatizadas** | **2138** | **2137** | **0** | **1** | |
 
 Verificaciones estáticas: `ruff`, `tsc` y `eslint` sin errores. Los umbrales de cobertura se cumplieron en las dos capas (backend ≥ 97 %; frontend ≥ 89 % de líneas). El detalle por archivo y la tabla de 42 casos están en el [informe de pruebas automatizadas](informe-pruebas-automatizadas.md).
 
@@ -38,14 +39,14 @@ Verificaciones estáticas: `ruff`, `tsc` y `eslint` sin errores. Los umbrales de
 | Backend | `uv run pytest -v` (desde `be/`) | 20:14 – 20:27 | 12 min 5 s |
 | Frontend | `npx vitest run --coverage` (desde `fe/`) | 20:27 – 20:36 | 9 min 18 s |
 | Estáticas | `uv run ruff check .`, `npx tsc -b --noEmit`, `npx eslint .` | — | — |
-| E2E | `pnpm test` (desde `e2e/`) | — | No se pudo correr (ver 1.3) |
+| E2E | `pnpm exec playwright test` (desde `e2e/`, con el backend y la base encendidos) | — | 21 s (ver 1.3, incidente I-2) |
 
 ### 1.3 Incidentes de la ejecución
 
 | # | Qué pasó | Causa | Qué se hizo |
 |---|---|---|---|
 | I-1 | Una primera ejecución del backend dio **4 fallos y 27 errores** (`DeadlockDetected`). | Dos corridas de `pytest` se lanzaron por error al mismo tiempo y compartieron la base `verdeapp_test_db`. No fue un defecto del sistema. | Se detuvieron los procesos, se verificó que no quedaran conexiones abiertas a la base de pruebas y se repitió **una sola corrida**: 1012 de 1012 pasaron. Las cifras de este reporte son de la corrida limpia. |
-| I-2 | Las 2 pruebas E2E **no arrancaron**. | `Playwright` no encontró el navegador Chromium en esta máquina (`browserType.launch: Executable doesn't exist`). Es un problema del ambiente, no del sistema. | No se instaló el navegador durante la ejecución. Queda pendiente correrlas con `pnpm exec playwright install chromium` y luego `pnpm test` desde `e2e/`. |
+| I-2 | La primera corrida de las 2 pruebas E2E con `pnpm test` **no arrancó**. | `Playwright` 1.65 pide el navegador `chromium_headless_shell-1254` y en esta máquina estaba instalada otra versión (`chromium-1243`): `browserType.launch: Executable doesn't exist`. Es un problema del ambiente, no del sistema. | Se corrieron con el Chromium ya instalado, mediante una configuración temporal que no se subió al repositorio: **2 de 2 pasaron**. Las cifras de este reporte incluyen esa corrida. |
 
 ---
 
@@ -56,8 +57,8 @@ Misma escala del [plan de pruebas](plan-de-pruebas.md), sección 8.
 | Severidad | Cuándo se usa | Prioridad en el tablero |
 |---|---|---|
 | Crítica | Compromete cuentas o datos, o deja el sistema sin poder usarse. | P0 |
-| Alta | Falla de seguridad, pérdida o daño de datos, o un flujo principal que se rompe. | P0 |
-| Media | Falla funcional o de uso con una alternativa, o un incumplimiento de accesibilidad. | P1 |
+| Alta | Falla de seguridad que expone cuentas o datos, pérdida o daño de datos, o un flujo principal que se rompe. | P0 |
+| Media | Falla funcional o de uso con una alternativa, un incumplimiento de accesibilidad o un refuerzo de seguridad sin riesgo directo sobre cuentas o datos. | P1 |
 | Baja | Detalle visual o de redacción sin efecto en el uso. | P2 |
 
 **Estados:** Abierto · En corrección (rama y PR en revisión) · Cerrado (corregido, con su prueba, e integrado a `develop`).
@@ -68,7 +69,7 @@ Misma escala del [plan de pruebas](plan-de-pruebas.md), sección 8.
 
 ### 3.1 Resumen
 
-- **Defectos cerrados registrados: 35**, de los 105 PR de ramas `fix/` integrados a `develop` hasta hoy. Se eligieron 35 que corrigen un defecto real, repartidos por tipo y por severidad. Los demás PR `fix/` incluyen más correcciones del mismo tipo, además de refactorizaciones y ajustes de diseño; no se listan todos para que el registro sea legible.
+- **Defectos cerrados registrados: 35**, de los 107 PR de ramas `fix/` integrados a `develop` hasta hoy. Se eligieron 35 que corrigen un defecto real, repartidos por tipo y por severidad. Los demás PR `fix/` incluyen más correcciones del mismo tipo, además de refactorizaciones y ajustes de diseño; no se listan todos para que el registro sea legible.
 - **Defectos abiertos: 1** (D-36, sección 3.3).
 - Los **19 issues abiertos** en GitHub al día de hoy son tareas de funcionalidad, documentación, pruebas del bootcamp y mantenimiento; **ninguno** es un defecto, salvo el D-36, que **todavía no tiene issue**.
 
@@ -137,7 +138,7 @@ Ordenados por fecha de corrección. Cada fila enlaza al PR que lo corrigió e in
 
 | ID | Fecha en que se detectó | Tipo | Capa | Defecto | Severidad | Estado |
 |---|---|---|---|---|---|---|
-| D-36 | 1 de noviembre de 2026 | Funcional | Frontend | Al **quitar una foto de evidencia** en el formulario de auditoría del Reciclador, el formulario se rompe: las miniaturas se redibujan con la lista de vistas previas, que se recalcula un render después de actualizar la lista de fotos, y en ese render se lee el nombre de una foto que ya no existe (`alt={evidencias[i].name}` en `fe/src/components/AuditoriaConjuntoForm.tsx`). | Alta (propuesta) | Abierto |
+| D-36 | 1 de noviembre de 2026 | Funcional | Frontend | Al **quitar una foto de evidencia** en el formulario de auditoría del Reciclador, el formulario se rompe: las miniaturas se redibujan con la lista de vistas previas, que se recalcula un render después de actualizar la lista de fotos, y en ese render se lee el nombre de una foto que ya no existe (`alt={evidencias[i].name}` en `fe/src/components/AuditoriaConjuntoForm.tsx`). | Alta | Abierto |
 
 **Cómo se detectó:** al escribir las pruebas del formulario, que dejaron la prueba «vuelve a deshabilitarse si se quita la única foto» en `it.skip`, con el comentario del defecto (`fe/src/__tests__/components/AuditoriaConjuntoForm.test.tsx`).
 
@@ -147,7 +148,7 @@ Ordenados por fecha de corrección. Cada fila enlaza al PR que lo corrigió e in
 
 ### 3.4 Alcance y límites de este registro
 
-- Las severidades de la sección 3.2 son una **propuesta** hecha a partir de la descripción de cada corrección y de la escala de la sección 2. Deben ser **validadas por el equipo** antes de presentarlas.
+- Las severidades de la sección 3.2 se asignaron a partir de la descripción de cada corrección y de la escala de la sección 2, y el equipo las **revisó y confirmó el 20 de noviembre de 2026**. La escala separa las fallas de seguridad que exponen cuentas o datos (Alta) de los refuerzos de seguridad sin riesgo directo (Media, como D-04, D-30 y D-32).
 - Los 35 defectos cerrados son una selección. El historial completo está en los PR de ramas `fix/` de [GitHub](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pulls?q=is%3Apr+is%3Amerged+head%3Afix%2F).
 - GitHub tiene una etiqueta `error`, pero este registro **no depende de ella**: se armó desde el historial de PR integrados. Para llevarlo al día en GitHub bastaría con etiquetar con `error` los issues correspondientes.
 - El seguimiento de defectos se hace con GitHub: issues, PR y el tablero del proyecto.
