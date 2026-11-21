@@ -571,6 +571,7 @@ Toda la documentación vive en `docs/`, en Markdown, versionada junto con el có
 | [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance. En [`informes-scrum/`](docs/gestion-proyecto/informes-scrum/) están los informes semanales del Scrum Master |
 | [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md) | Bootcamp de testing: capa de cada integrante por semana y cobertura registrada |
 | [`docs/despliegue.md`](docs/despliegue.md) | Cómo arranca el backend, variables de entorno de cada parte, errores de arranque y cómo se desplegaría el proyecto |
+| [`docs/api.md`](docs/api.md) | Lista completa de los 104 endpoints del backend: qué hace cada uno y quién puede usarlo |
 
 Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implementar`) que se actualiza cada vez que su funcionalidad cambia de verdad — es la fuente de verdad más confiable sobre qué tan avanzado está el proyecto, más que cualquier resumen (incluido este README).
 
@@ -597,6 +598,8 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 | E2E (navegador real) | `e2e/tests/` | `pnpm test` desde `e2e/` |
 
 **Documentación de las pruebas** (`docs/pruebas/`): el [plan de pruebas](docs/pruebas/plan-de-pruebas.md) (alcance, niveles, ambiente y criterios), el [informe de pruebas automatizadas](docs/pruebas/informe-pruebas-automatizadas.md) (resultados y casos de una ejecución real) y el [reporte de ejecución y defectos](docs/pruebas/reporte-ejecucion-y-defectos.md) (defectos con su severidad y su estado).
+
+**Última ejecución documentada (20 de noviembre de 2026):** 2138 pruebas automatizadas (1012 del backend, 1124 del frontend y 2 E2E), 2137 pasaron y 1 quedó omitida a propósito por un defecto conocido (issue #685). La cobertura fue de 97.3 % de líneas en el backend y 89.4 % en el frontend. El detalle está en el [informe de pruebas automatizadas](docs/pruebas/informe-pruebas-automatizadas.md).
 
 **Cobertura**: `uv run pytest` y `pnpm test` (en `fe/`) miden siempre qué porcentaje del código ejecutan las pruebas, y **fallan** si baja del umbral configurado (`fail_under` en `be/pyproject.toml`, `thresholds` en `fe/vite.config.ts`). El CI corre esos mismos comandos, así que un PR que baje la cobertura queda en rojo. El umbral solo sube; su historial está en [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md).
 
