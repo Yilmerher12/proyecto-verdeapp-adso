@@ -71,7 +71,7 @@ Misma escala del [plan de pruebas](plan-de-pruebas.md), sección 8.
 
 - **Defectos cerrados registrados: 35**, de los 107 PR de ramas `fix/` integrados a `develop` hasta hoy. Se eligieron 35 que corrigen un defecto real, repartidos por tipo y por severidad. Los demás PR `fix/` incluyen más correcciones del mismo tipo, además de refactorizaciones y ajustes de diseño; no se listan todos para que el registro sea legible.
 - **Defectos abiertos: 1** (D-36, sección 3.3).
-- Los **19 issues abiertos** en GitHub al día de hoy son tareas de funcionalidad, documentación, pruebas del bootcamp y mantenimiento; **ninguno** es un defecto, salvo el D-36, que **todavía no tiene issue**.
+- Los demás issues abiertos en GitHub son tareas de funcionalidad, documentación, pruebas del bootcamp y mantenimiento; **ninguno** es un defecto, salvo el D-36, que está registrado en el issue [#685](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/685) con la etiqueta `error`.
 
 | Severidad | Cerrados | Abiertos |
 |---|---|---|
@@ -138,17 +138,17 @@ Ordenados por fecha de corrección. Cada fila enlaza al PR que lo corrigió e in
 
 | ID | Fecha en que se detectó | Tipo | Capa | Defecto | Severidad | Estado |
 |---|---|---|---|---|---|---|
-| D-36 | 1 de noviembre de 2026 | Funcional | Frontend | Al **quitar una foto de evidencia** en el formulario de auditoría del Reciclador, el formulario se rompe: las miniaturas se redibujan con la lista de vistas previas, que se recalcula un render después de actualizar la lista de fotos, y en ese render se lee el nombre de una foto que ya no existe (`alt={evidencias[i].name}` en `fe/src/components/AuditoriaConjuntoForm.tsx`). | Alta | Abierto |
+| D-36 | 1 de noviembre de 2026 | Funcional | Frontend | Al **quitar una foto de evidencia** en el formulario de auditoría del Reciclador, el formulario se rompe: las miniaturas se redibujan con la lista de vistas previas, que se recalcula un render después de actualizar la lista de fotos, y en ese render se lee el nombre de una foto que ya no existe (`alt={evidencias[i].name}` en `fe/src/components/AuditoriaConjuntoForm.tsx`). | Alta | Abierto ([#685](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/685)) |
 
 **Cómo se detectó:** al escribir las pruebas del formulario, que dejaron la prueba «vuelve a deshabilitarse si se quita la única foto» en `it.skip`, con el comentario del defecto (`fe/src/__tests__/components/AuditoriaConjuntoForm.test.tsx`).
 
 **Por qué es Alta:** el formulario de auditoría es el flujo principal del Reciclador, y quitar una foto es una acción normal (por ejemplo, para cambiarla por otra).
 
-**Qué falta:** abrir el issue en GitHub (título con `fix:`, etiqueta `error`), corregirlo en una rama `fix/` y quitar el `skip` de la prueba, que ya describe el comportamiento esperado.
+**Seguimiento:** issue [#685](https://github.com/Yilmerher12/proyecto-verdeapp-adso/issues/685), abierto el 21 de noviembre de 2026 con la etiqueta `error`, severidad Alta y estado Abierto. **Qué falta:** corregirlo en una rama `fix/` y quitar el `skip` de la prueba, que ya describe el comportamiento esperado. Al integrarse el PR, el defecto pasa a Cerrado.
 
 ### 3.4 Alcance y límites de este registro
 
 - Las severidades de la sección 3.2 se asignaron a partir de la descripción de cada corrección y de la escala de la sección 2, y el equipo las **revisó y confirmó el 20 de noviembre de 2026**. La escala separa las fallas de seguridad que exponen cuentas o datos (Alta) de los refuerzos de seguridad sin riesgo directo (Media, como D-04, D-30 y D-32).
 - Los 35 defectos cerrados son una selección. El historial completo está en los PR de ramas `fix/` de [GitHub](https://github.com/Yilmerher12/proyecto-verdeapp-adso/pulls?q=is%3Apr+is%3Amerged+head%3Afix%2F).
-- GitHub tiene una etiqueta `error`, pero este registro **no depende de ella**: se armó desde el historial de PR integrados. Para llevarlo al día en GitHub bastaría con etiquetar con `error` los issues correspondientes.
+- Los 35 defectos cerrados se armaron desde el historial de PR integrados; el defecto abierto (D-36) está en un issue con la etiqueta `error`. GitHub tiene además 10 issues cerrados con esa etiqueta.
 - El seguimiento de defectos se hace con GitHub: issues, PR y el tablero del proyecto.
