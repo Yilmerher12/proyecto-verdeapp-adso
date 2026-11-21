@@ -456,7 +456,6 @@ A continuación se detalla la organización exacta del monorepositorio alojado e
 verde-app/
 ├── .github/                 # Configuraciones del repositorio y flujos de trabajo
 ├── .vscode/                 # Configuraciones de interfaz y entorno para VS Code
-├── assets/                  # Diagramas SVG y recursos gráficos de la arquitectura
 ├── scripts/                 # Utilidades Bash (start.sh, stop.sh) para automatizar contenedores
 ├── be/                      # Backend (Python + FastAPI)
 │   ├── app/                 # Código fuente principal de la API
@@ -566,6 +565,7 @@ Toda la documentación vive en `docs/`, en Markdown, versionada junto con el có
 | [`docs/requisitos/RFs/`](docs/requisitos/RFs/) | Requisitos Funcionales (RQF) — qué debe hacer el sistema, con reglas de negocio y endpoints asociados |
 | [`docs/requisitos/RNFs/`](docs/requisitos/RNFs/) | Requisitos No Funcionales — seguridad, disponibilidad, rendimiento, usabilidad, accesibilidad, mantenibilidad |
 | [`docs/requisitos/restricciones.md`](docs/requisitos/restricciones.md) | Reglas transversales del proyecto (idioma del código, convención de ramas/commits, versionado de dependencias) |
+| [`docs/arquitectura.md`](docs/arquitectura.md) | Diagramas de la arquitectura: el sistema completo, las capas del backend, la estructura del frontend, una petición autenticada y el flujo de ramas con el CI |
 | [`docs/conceptos/`](docs/conceptos/) | Explicación pedagógica de OWASP Top 10, accesibilidad (ARIA/WCAG) y patrones de arquitectura, con evidencia real de archivo y línea |
 | [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Modelo entidad-relación, modelo relacional (MR), diagrama de clases y catálogo de casos de uso |
 | [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance. En [`informes-scrum/`](docs/gestion-proyecto/informes-scrum/) están los informes semanales del Scrum Master |
