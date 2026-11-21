@@ -14,13 +14,14 @@
  *           encima (layer="stacked"). Las observaciones largas se cortan a 5
  *           líneas con "Ver más" — el botón solo aparece si el texto no cabe.
  */
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageOff, Maximize2 } from "lucide-react";
 import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import { Modal } from "@/components/ui/Modal";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { obtenerAuditoria, type AuditoriaConjunto } from "@/lib/auditoriaConjuntoApi";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
@@ -28,30 +29,36 @@ import { tiempoRelativo } from "@/lib/notificaciones";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 
 interface AuditoriaResultadoModalProps {
-  idAuditoria: string;
+  /** La pide al servidor por su id (Residente, Admin de Conjunto y Reciclador). */
+  idAuditoria?: string;
+  /** ¿Qué? La auditoría ya cargada: no se pide al servidor.
+   *  ¿Para qué? Issue #619: el Admin del Sistema ya tiene la fila en su tabla, y GET /auditorias-conjunto/{id}
+   *            rechaza a ese rol (el servicio solo deja ver la auditoría a quien pertenece al conjunto). */
+  auditoria?: AuditoriaConjunto;
+  /** ¿Qué? Contenido extra al pie de la ficha (ej. "Contenido recomendado" del Admin del Sistema). */
+  pie?: ReactNode;
   onClose: () => void;
 }
 
 const CLASE_FLECHA =
   "focus-ring absolute top-1/2 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/55 text-white transition-colors hover:bg-black/80";
 
-export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResultadoModalProps) {
+export function AuditoriaResultadoModal({ idAuditoria, auditoria: auditoriaRecibida, pie, onClose }: AuditoriaResultadoModalProps) {
   const { t } = useTranslation();
-  const [auditoria, setAuditoria] = useState<AuditoriaConjunto | null>(null);
-  const [cargando, setCargando] = useState(true);
+  const [auditoriaPedida, setAuditoriaPedida] = useState<AuditoriaConjunto | null>(null);
+  const [cargando, setCargando] = useState(!auditoriaRecibida);
   const [error, setError] = useState(false);
   const [indice, setIndice] = useState(0);
   const [ampliada, setAmpliada] = useState(false);
-  const [textoAbierto, setTextoAbierto] = useState(false);
-  const [hayMas, setHayMas] = useState(false);
-  const refObservaciones = useRef<HTMLParagraphElement>(null);
+  const auditoria = auditoriaRecibida ?? auditoriaPedida;
 
   useEffect(() => {
+    if (auditoriaRecibida || !idAuditoria) return;
     obtenerAuditoria(idAuditoria)
-      .then(setAuditoria)
+      .then(setAuditoriaPedida)
       .catch(() => setError(true))
       .finally(() => setCargando(false));
-  }, [idAuditoria]);
+  }, [idAuditoria, auditoriaRecibida]);
 
   // ¿Qué? Solo las fotos cuya ruta pasa enlaceAdjuntoSeguro (issue #400).
   const fotos = auditoria
@@ -61,13 +68,6 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
     : [];
   const actual = Math.min(indice, Math.max(fotos.length - 1, 0));
   const cambiarFoto = (paso: number) => setIndice((actual + paso + fotos.length) % fotos.length);
-
-  // ¿Qué? Mide si el texto cortado a 5 líneas deja algo oculto.
-  // ¿Para qué? "Ver más" solo aparece cuando hace falta, no en cada auditoría.
-  useLayoutEffect(() => {
-    const el = refObservaciones.current;
-    if (el && !textoAbierto) setHayMas(el.scrollHeight > el.clientHeight + 1);
-  }, [auditoria, textoAbierto]);
 
   useEffect(() => {
     if (fotos.length < 2) return;
@@ -90,7 +90,7 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
     <Modal onClose={onClose} extraWide aria-label={t("auditoriaResultado.modalTitle")}>
       {cargando && (
         <div className="p-6">
-          <LoadingState message={t("common.loading")} />
+          <Esqueleto mensaje={t("common.loading")} variante="bloque" />
         </div>
       )}
       {error && (
@@ -107,17 +107,34 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
               <p className="text-xs font-bold uppercase tracking-wide opacity-80">
                 {t("auditoriaResultado.modalTitle")}
               </p>
-              <h3 className="text-xl font-bold leading-tight">
+              <h2 className="text-lg font-bold leading-tight">
                 {t(
                   `dashboards.reciclador.auditoria.niveles.${auditoria.nivel_desempeno.toLowerCase()}`,
                 )}
-              </h3>
+              </h2>
               <p className="truncate text-sm">{auditoria.nombre_conjunto}</p>
             </div>
           </div>
 
           <div className="grid md:grid-cols-[1.4fr_1fr]">
             <div className="p-5">
+              {/* ¿Qué? Sin fotos: la foto se borró al pasar el plazo de retención de 6 meses (issue #587).
+                  ¿Para qué? Que la ficha no quede con un hueco sin explicación ni falle: el resultado, el tema y las
+                            observaciones se conservan y se siguen viendo a la derecha. */}
+              {fotos.length === 0 && (
+                <div
+                  role="status"
+                  className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 text-center dark:border-night-line dark:bg-night-inset/60"
+                >
+                  <ImageOff className="icon-xl text-gray-400 dark:text-gray-500" aria-hidden="true" />
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                    {t("auditoriaResultado.evidenciaNoDisponible")}
+                  </p>
+                  <p className="max-w-xs text-xs text-gray-500 dark:text-gray-400">
+                    {t("auditoriaResultado.evidenciaNoDisponibleAyuda")}
+                  </p>
+                </div>
+              )}
               {fotos.length > 0 && (
                 <>
                   <div className="relative overflow-hidden rounded-2xl bg-gray-100 dark:bg-night-line">
@@ -188,9 +205,9 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
                 <p className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   {t("auditoriaResultado.temaLabel")}
                 </p>
-                <h4 className="mt-0.5 text-lg font-bold leading-snug text-gray-900 dark:text-white">
+                <h3 className="mt-0.5 text-base font-bold leading-snug text-gray-900 dark:text-white">
                   {auditoria.tema_educativo}
-                </h4>
+                </h3>
               </div>
 
               {auditoria.descripcion && (
@@ -198,24 +215,11 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
                   <p className="text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                     {t("auditoriaResultado.descripcionLabel")}
                   </p>
-                  <p
-                    ref={refObservaciones}
-                    className={`mt-0.5 break-words text-sm text-gray-800 dark:text-gray-200 ${textoAbierto ? "" : "line-clamp-5"}`}
-                  >
-                    {auditoria.descripcion}
-                  </p>
-                  {(hayMas || textoAbierto) && (
-                    <button
-                      type="button"
-                      onClick={() => setTextoAbierto((v) => !v)}
-                      aria-expanded={textoAbierto}
-                      className="focus-ring mt-1 cursor-pointer text-sm font-semibold text-accent-700 hover:underline dark:text-accent-400"
-                    >
-                      {t(
-                        textoAbierto ? "auditoriaResultado.verMenos" : "auditoriaResultado.verMas",
-                      )}
-                    </button>
-                  )}
+                  <TextoRecortable
+                    texto={auditoria.descripcion}
+                    lineas={5}
+                    className="mt-0.5 break-words text-sm text-gray-800 dark:text-gray-200"
+                  />
                 </div>
               )}
 
@@ -240,6 +244,8 @@ export function AuditoriaResultadoModal({ idAuditoria, onClose }: AuditoriaResul
               </dl>
             </div>
           </div>
+
+          {pie && <div className="border-t border-gray-100 p-5 dark:border-night-line">{pie}</div>}
         </div>
       )}
 

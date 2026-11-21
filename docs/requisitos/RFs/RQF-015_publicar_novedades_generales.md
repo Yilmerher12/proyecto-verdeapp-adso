@@ -37,6 +37,7 @@ A diferencia de los comunicados de conjunto (RQF-014), las novedades las publica
 2. Solo ve las novedades dirigidas a su rol, que aún no han expirado ni sido archivadas y — si la novedad se acotó a uno o varios conjuntos — que pertenezca a alguno de ellos (un Reciclador o Admin de Conjunto puede pertenecer a varios).
 3. Las novedades están ordenadas de la más reciente a la más antigua.
 4. Puede abrir los adjuntos directamente desde la novedad.
+5. La lista llega paginada desde el servidor (`GET /api/v1/novedades/feed?limit=&offset=`, `{items, total}`, 10 por página, `limit` de 1 a 100) y se muestra como filas dentro de un solo contenedor con pestañas subrayadas; la barra de paginación al pie se ve siempre, igual que en las demás vistas (issue #632).
 
 ### Flujo C — Editar novedad (Admin Sistema)
 1. El Admin Sistema puede ver todas las novedades publicadas y seleccionar una para editar.

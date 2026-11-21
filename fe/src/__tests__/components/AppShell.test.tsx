@@ -63,6 +63,36 @@ describe("AppShell — foto de perfil", () => {
   });
 });
 
+// ¿Qué? Al cerrar sesión se olvidan los avisos que el usuario cerró con la X.
+// ¿Para qué? AppShell no pasa por clearAuth() (recarga la página directo), y el aviso de la ECA quedaba
+//           cerrado para la siguiente cuenta que entrara en el mismo navegador.
+// ¿Impacto? Si alguien quita limpiarAvisosCerrados() de handleLogout, esta prueba falla.
+describe("AppShell — cerrar sesión", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    responderConFoto(null);
+    // jsdom no implementa la navegación: se cambia window.location por un objeto simple.
+    vi.stubGlobal("location", { ...window.location, href: "" });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    sessionStorage.clear();
+  });
+
+  it("borra los avisos cerrados de la sesión", async () => {
+    sessionStorage.setItem("verdeapp:aviso-cerrado:directorio-eca", "1");
+    const user = userEvent.setup();
+    renderShell();
+
+    await user.click(screen.getAllByRole("button", { name: "Cerrar sesión" })[0]);
+    await user.click(screen.getByRole("button", { name: "Sí, cerrar sesión" }));
+
+    await waitFor(() => expect(window.location.href).toBe("/"));
+    expect(sessionStorage.getItem("verdeapp:aviso-cerrado:directorio-eca")).toBeNull();
+  });
+});
+
 // ¿Qué? Menú lateral por rol: "Puntos de Acopio" va suelto bajo "Panel
 //       Principal" (grupo "principal", sin encabezado), no dentro de "Recursos".
 // ¿Para qué? Issue #456: no es un recurso de consulta sino un lugar al que se
@@ -86,20 +116,21 @@ describe("AppShell — grupo de Puntos de Acopio", () => {
   const enlacesDelMenu = (container: HTMLElement) =>
     Array.from(container.querySelectorAll("nav a")).map((a) => a.textContent);
 
-  it("Reciclador: Puntos de Acopio va justo bajo Panel Principal y no hay grupo Recursos", () => {
+  it("Reciclador: Puntos de acopio va justo bajo Panel principal y no hay grupo Recursos", () => {
     const { container, queryByText } = renderComo(RoleId.RECICLADOR);
 
-    expect(enlacesDelMenu(container).slice(0, 2)).toEqual(["Panel Principal", "Puntos de Acopio"]);
+    expect(enlacesDelMenu(container).slice(0, 2)).toEqual(["Panel principal", "Puntos de acopio"]);
     expect(queryByText("Recursos")).not.toBeInTheDocument();
   });
 
-  it("Administrador del Sistema: Puntos de Acopio va bajo Panel Principal y Recursos solo tiene Contenido Educativo", () => {
+  it("Administrador del Sistema: Puntos de acopio va bajo Panel principal y Recursos solo tiene Contenido educativo", () => {
     const { container, getByText } = renderComo(RoleId.ADMIN_SISTEMA);
 
-    expect(enlacesDelMenu(container).slice(0, 2)).toEqual(["Panel Principal", "Puntos de Acopio"]);
+    // ¿Qué? Issue #596: "Solicitudes" (con su contador) va justo bajo el panel principal.
+    expect(enlacesDelMenu(container).slice(0, 3)).toEqual(["Panel principal", "Solicitudes", "Puntos de acopio"]);
     expect(getByText("Recursos")).toBeInTheDocument();
     const gruposRecursos = getByText("Recursos").parentElement as HTMLElement;
-    expect(Array.from(gruposRecursos.querySelectorAll("a")).map((a) => a.textContent)).toEqual(["Contenido Educativo"]);
+    expect(Array.from(gruposRecursos.querySelectorAll("a")).map((a) => a.textContent)).toEqual(["Contenido educativo"]);
   });
 
   // ¿Qué? Issue #487: "Desempeño" es solo del Admin de Conjunto, junto a Agenda.
@@ -116,14 +147,14 @@ describe("AppShell — grupo de Puntos de Acopio", () => {
     }
   });
 
-  it("Residente: el menú no cambia, Directorio General sigue en Recursos", () => {
+  it("Residente: el menú no cambia, Directorio general sigue en Recursos", () => {
     const { container, getByText } = renderComo(RoleId.RESIDENTE);
 
-    expect(enlacesDelMenu(container)).not.toContain("Puntos de Acopio");
+    expect(enlacesDelMenu(container)).not.toContain("Puntos de acopio");
     const gruposRecursos = getByText("Recursos").parentElement as HTMLElement;
     expect(Array.from(gruposRecursos.querySelectorAll("a")).map((a) => a.textContent)).toEqual([
-      "Aprende a Reciclar",
-      "Directorio General",
+      "Aprende a reciclar",
+      "Directorio general",
     ]);
   });
 });
@@ -193,5 +224,14 @@ describe("AppShell — menú en celular", () => {
     await user.click(screen.getByText("ir a otra página"));
     expect(screen.getAllByLabelText("Expandir menú").length).toBeGreaterThan(0);
     expect(screen.queryByLabelText("Colapsar menú")).not.toBeInTheDocument();
+  });
+
+  // ¿Qué? Issue #632 — el área principal reserva siempre el espacio de la barra de scroll.
+  // ¿Para qué? Con barras clásicas (Windows), una pestaña más alta que la pantalla hacía aparecer la barra y la tarjeta se
+  //           achicaba unos 17 px solo en esa pestaña: el ancho "saltaba" al cambiar de pestaña.
+  it("el área principal reserva el espacio de la barra de scroll para que el ancho no salte", () => {
+    const { container } = renderShell();
+
+    expect(container.querySelector("main")).toHaveClass("[scrollbar-gutter:stable]");
   });
 });

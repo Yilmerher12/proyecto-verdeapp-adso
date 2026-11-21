@@ -278,8 +278,14 @@ def _mis_conjuntos(db: Session, current_user: Usuario) -> set[UUID]:
     return set()
 
 
-def listar_feed(db: Session, current_user: Usuario) -> List[NovedadResponse]:
-    """HU-033: solo novedades activas (no vencidas, no archivadas) dirigidas al rol de quien consulta (CA-033.1/CA-033.2)."""
+def listar_feed(db: Session, current_user: Usuario, limit: int, offset: int) -> tuple[List[NovedadResponse], int]:
+    """HU-033: solo novedades activas (no vencidas, no archivadas) dirigidas al rol de quien consulta (CA-033.1/CA-033.2).
+
+    ¿Qué? Una página de ese feed (del más reciente al más antiguo) y cuántas hay en total.
+    ¿Para qué? Issue #632: el feed de Soporte técnico (Residente, Reciclador y Admin de Conjunto) lo traía completo; el
+              estándar del proyecto es que toda lista que puede crecer se pida de a páginas (limit/offset + total).
+    ¿Impacto? El total cuenta solo lo que esta persona puede ver (su rol y sus conjuntos), no todas las novedades.
+    """
     if current_user.id_rol == RolId.RESIDENTE:
         alcances = (AlcanceNovedad.TODOS, AlcanceNovedad.RESIDENTES)
     elif current_user.id_rol == RolId.RECICLADOR:
@@ -295,20 +301,26 @@ def listar_feed(db: Session, current_user: Usuario) -> List[NovedadResponse]:
     mis_conjuntos = _mis_conjuntos(db, current_user)
 
     ahora = datetime.now(timezone.utc)
+    condiciones = (
+        Novedad.alcance.in_(alcances),
+        Novedad.fecha_expiracion >= ahora,
+        Novedad.fecha_archivado.is_(None),
+        # ¿Qué? SQLAlchemy genera una condición siempre-falsa cuando
+        #       in_() recibe una colección vacía — no hace falta un
+        #       caso aparte para "mis_conjuntos vacío".
+        or_(
+            ~Novedad.destinos.any(),
+            Novedad.destinos.any(NovedadConjunto.id_conjunto_residencial.in_(mis_conjuntos)),
+        ),
+    )
+    total = db.execute(select(func.count()).select_from(Novedad).where(*condiciones)).scalar_one()
     stmt = (
         select(Novedad)
-        .where(
-            Novedad.alcance.in_(alcances),
-            Novedad.fecha_expiracion >= ahora,
-            Novedad.fecha_archivado.is_(None),
-            # ¿Qué? SQLAlchemy genera una condición siempre-falsa cuando
-            #       in_() recibe una colección vacía — no hace falta un
-            #       caso aparte para "mis_conjuntos vacío".
-            or_(
-                ~Novedad.destinos.any(),
-                Novedad.destinos.any(NovedadConjunto.id_conjunto_residencial.in_(mis_conjuntos)),
-            ),
-        )
-        .order_by(Novedad.created_at.desc())
+        .where(*condiciones)
+        # ¿Qué? El id desempata las que se crearon en el mismo instante: sin él, dos páginas seguidas podrían
+        #       repetir o saltarse una novedad.
+        .order_by(Novedad.created_at.desc(), Novedad.id_novedad)
+        .limit(limit)
+        .offset(offset)
     )
-    return [_a_response(n) for n in db.execute(stmt).scalars().all()]
+    return [_a_response(n) for n in db.execute(stmt).scalars().all()], total

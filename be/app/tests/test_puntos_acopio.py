@@ -32,7 +32,7 @@ class TestListar:
 
         response = client.get(BASE, headers=admin_sistema_auth_headers)
         assert response.status_code == 200
-        ids = [p["id_punto_acopio"] for p in response.json()]
+        ids = [p["id_punto_acopio"] for p in response.json()["items"]]
         assert str(punto_acopio_test.id_punto_acopio) in ids
 
 
@@ -74,6 +74,39 @@ class TestCrear:
             json={"nombre": "ECA X", "direccion": "Calle 1 # 1-1", "id_localidad": localidad_test.id_localidad},
         )
         assert response.status_code == 403
+        
+    def test_should_respond_401_when_creating_a_collection_point_without_token(self, client: TestClient):
+        # Arrange: solo se necesita `client`, el cliente que simula peticiones HTTP.
+        #          No se pasa ningún token: justo eso es lo que se prueba.
+
+        # Act: pedir crear un punto de acopio con datos válidos pero sin el header Authorization.
+        response = client.post(
+            BASE,
+            json={"nombre": "ECA X", "direccion": "Calle 1 # 1-1", "id_localidad": 999999},
+        )
+
+        # Assert: el API rechaza con 401 (Unauthorized) y el cuerpo trae el mensaje fijo de get_current_user.
+        assert response.status_code == 401
+        assert response.json()["detail"] == "No se pudieron validar las credenciales"
+
+    def test_should_respond_422_when_creating_a_collection_point_without_name(self, client: TestClient, admin_sistema_auth_headers):
+        # Arrange: `admin_sistema_auth_headers` trae el token de un Admin del Sistema, así el
+        #          401 y el 403 quedan descartados y el único error posible es el de validación.
+
+        # Act: crear un punto de acopio al que le falta el campo obligatorio `nombre`.
+        #      id_localidad no importa: la validación de campos corre antes de mirar la BD.
+        response = client.post(
+            BASE,
+            headers=admin_sistema_auth_headers,
+            json={"direccion": "Calle 1 # 1-1", "id_localidad": 3},
+        )
+
+        # Assert: 422 (Unprocessable Entity). `detail` es una lista que arma Pydantic; su primer
+        #         error (`[0]`) debe apuntar al campo `nombre` del cuerpo (`loc`). El Content-Type
+        #         fija que el error llega como JSON, que es lo que el frontend sabe leer.
+        assert response.status_code == 422
+        assert response.json()["detail"][0]["loc"] == ["body", "nombre"]
+        assert response.headers["content-type"] == "application/json"
 
 
 class TestEditar:
@@ -111,6 +144,43 @@ class TestEditar:
             json={"nombre": "X", "direccion": "Y", "id_localidad": 999999},
         )
         assert response.status_code == 400
+        
+    def test_should_respond_404_with_json_detail_when_editing_a_collection_point_that_does_not_exist(self, client: TestClient, admin_sistema_auth_headers, localidad_test: Localidad):
+        # Arrange: el Admin del Sistema y una localidad real. Con datos válidos, el único problema
+        #          posible es que el punto no existe (si faltaran campos, saldría un 422 antes).
+
+        # Act: editar con un UUID de formato válido, pero que ninguna fila de la BD tiene.
+        response = client.put(
+            f"{BASE}/00000000-0000-0000-0000-000000000000",
+            headers=admin_sistema_auth_headers,
+            json={"nombre": "X", "direccion": "Y", "id_localidad": localidad_test.id_localidad},
+        )
+
+        # Assert: 404 (Not Found). Este `detail` es texto, porque lo lanza el servicio con
+        #         HTTPException (en algunos con codigo de estado 422 es una lista). Content-Type confirma que es JSON.
+        assert response.status_code == 404
+        assert response.json()["detail"] == "No se encontró ese punto de acopio."
+        assert response.headers["content-type"] == "application/json"
+
+    def test_should_respond_422_with_json_detail_when_id_does_not_follow_uuid_standard(self, client: TestClient, admin_sistema_auth_headers, localidad_test: Localidad):
+        # Arrange: el Admin del Sistema y una localidad real. El cuerpo es válido a propósito:
+        #          así el único error posible es el id de la ruta.
+
+        # Act: editar con `abc` como id, que no tiene forma de UUID. FastAPI lo rechaza al
+        #      leer la ruta, antes de ejecutar el endpoint o tocar la BD.
+        response = client.put(
+            f"{BASE}/abc",
+            headers=admin_sistema_auth_headers,
+            json={"nombre": "X", "direccion": "Y", "id_localidad": localidad_test.id_localidad},
+        )
+
+        # Assert: 422. `loc` dice DÓNDE falló: en la ruta (`path`), parámetro `id_punto_acopio`
+        #         (en el test del nombre era `body`). `type` es el código estable del error
+        #         ('uuid_parsing'), a diferencia de `msg`, que es texto de la librería y puede cambiar.
+        assert response.status_code == 422
+        assert response.json()["detail"][0]["loc"] == ["path", "id_punto_acopio"]
+        assert response.json()["detail"][0]["type"] == "uuid_parsing"
+        assert response.headers["content-type"] == "application/json"
 
 
 class TestDarDeBaja:
@@ -127,12 +197,12 @@ class TestDarDeBaja:
     ):
         """CA-017.2: un punto dado de baja ya no debe verlo un Residente en el directorio."""
         antes = client.get("/api/v1/directorio/puntos-acopio", headers=auth_headers)
-        assert str(punto_acopio_test.id_punto_acopio) in [p["id_punto_acopio"] for p in antes.json()]
+        assert str(punto_acopio_test.id_punto_acopio) in [p["id_punto_acopio"] for p in antes.json()["items"]]
 
         client.delete(f"{BASE}/{punto_acopio_test.id_punto_acopio}", headers=admin_sistema_auth_headers)
 
         despues = client.get("/api/v1/directorio/puntos-acopio", headers=auth_headers)
-        assert str(punto_acopio_test.id_punto_acopio) not in [p["id_punto_acopio"] for p in despues.json()]
+        assert str(punto_acopio_test.id_punto_acopio) not in [p["id_punto_acopio"] for p in despues.json()["items"]]
 
     def test_punto_inexistente_devuelve_404(self, client: TestClient, admin_sistema_auth_headers):
         response = client.delete(
@@ -162,7 +232,7 @@ class TestReactivar:
 
         # Vuelve a aparecer en el directorio público.
         directorio = client.get("/api/v1/directorio/puntos-acopio", headers=auth_headers)
-        ids = [p["id_punto_acopio"] for p in directorio.json()]
+        ids = [p["id_punto_acopio"] for p in directorio.json()["items"]]
         assert str(punto_acopio_test.id_punto_acopio) in ids
 
     def test_punto_inexistente_devuelve_404(self, client: TestClient, admin_sistema_auth_headers):
@@ -198,7 +268,7 @@ class TestEliminarDefinitivamente:
         assert accion["punto_acopio"] == str(punto_acopio_test.id_punto_acopio)
 
         listado = client.get(BASE, headers=admin_sistema_auth_headers)
-        ids = [p["id_punto_acopio"] for p in listado.json()]
+        ids = [p["id_punto_acopio"] for p in listado.json()["items"]]
         assert str(punto_acopio_test.id_punto_acopio) not in ids
 
     def test_rechaza_si_el_punto_sigue_activo(

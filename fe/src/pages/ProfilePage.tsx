@@ -1,4 +1,5 @@
  
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,8 +34,9 @@ import {
 } from "@/lib/validacion";
 import { useAvisoTemporal } from "@/hooks/useAvisoTemporal";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { InputField } from "@/components/ui/InputField";
+import { Button } from "@/components/ui/Button";
 
 interface PerfilData {
   id: number;
@@ -241,7 +243,7 @@ export function ProfilePage() {
     }
   };
 
-  if (cargando) return <div className="pt-6"><LoadingState message={t("profile.loading")} /></div>;
+  if (cargando) return <div className="pt-6"><Esqueleto mensaje={t("profile.loading")} variante="campos" cantidad={7} /></div>;
   if (!perfil) return <div className="pt-6"><Alert type="error" message={t("profile.loadError")} /></div>;
 
   const role = ROLE_THEME[perfil.role_id] ?? ROLE_THEME[RoleId.RESIDENTE];
@@ -278,13 +280,7 @@ export function ProfilePage() {
           : t("profile.managedConjuntoPlural");
 
   return (
-    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
-      {/* Header */}
-      <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t("profile.subtitle")}</p>
-      </div>
-
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       {/* Success banner */}
       {exito && (
         <div className="flex items-center gap-2 rounded-xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm font-medium text-accent-700 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-400">
@@ -293,12 +289,17 @@ export function ProfilePage() {
         </div>
       )}
 
-      {/* ¿Qué? Tarjeta de identidad: foto, nombre y rol, arriba y a todo el ancho.
-          ¿Para qué? Antes la foto y los datos del rol vivían en una columna
-                    izquierda más corta que la información personal de la
-                    derecha, y los dos bloques blancos quedaban de distinta altura.
+      {/* ¿Qué? Una sola tarjeta arriba: el título de la página y, debajo, la identidad (foto, nombre y rol),
+                a todo el ancho.
+          ¿Para qué? Antes eran dos tarjetas seguidas (el título y la identidad) con espacio de sobra entre
+                    ellas, y la foto y los datos del rol vivían en una columna izquierda más corta que la
+                    información personal de la derecha.
           ¿Impacto? En celular la foto y el nombre se apilan y centran. */}
-      <div className="flex flex-col items-center gap-5 rounded-2xl border border-gray-100 bg-white p-6 text-center dark:border-night-line dark:bg-night-card sm:flex-row sm:p-8 sm:text-left">
+      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("profile.title")}</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("profile.subtitle")}</p>
+
+      <div className="mt-5 flex flex-col items-center gap-5 border-t border-gray-100 pt-5 text-center dark:border-night-line sm:flex-row sm:text-left">
         {/* Avatar — foto real si existe, si no el círculo con la inicial de siempre. */}
         <div className="relative shrink-0">
           {urlFotoPerfil ? (
@@ -308,7 +309,7 @@ export function ProfilePage() {
               className="h-20 w-20 rounded-full object-cover select-none"
             />
           ) : (
-            <div className="h-20 w-20 rounded-full bg-accent-700 flex items-center justify-center text-white text-3xl font-bold select-none">
+            <div className="h-20 w-20 rounded-full bg-accent-700 flex items-center justify-center text-white text-2xl font-bold select-none">
               {inicial}
             </div>
           )}
@@ -340,7 +341,7 @@ export function ProfilePage() {
 
           {/* Badge de rol — icono Lucide, sin emoji */}
           <span className={`inline-flex items-center gap-1.5 mt-2 rounded-full ${role.badgeBg} px-3 py-1 text-xs font-semibold ${role.badgeText}`}>
-            <RoleIcon className="h-3.5 w-3.5 shrink-0" />
+            <RoleIcon className="icon-sm shrink-0" />
             {roleLabel}
           </span>
 
@@ -352,6 +353,7 @@ export function ProfilePage() {
           )}
         </div>
       </div>
+      </div>
 
       {/* ¿Qué? Dos bloques de la misma altura (la cuadrícula los estira): a la
                 izquierda la información personal, a la derecha los datos propios
@@ -361,17 +363,14 @@ export function ProfilePage() {
                     trabajo, conjuntos que administra) y así quedan agrupados. */}
       <div className={`grid grid-cols-1 gap-6 ${hayDatosDeRol ? "lg:grid-cols-2" : ""}`}>
         {/* Información personal editable */}
-        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-8">
+        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t("profile.personalInfoSection.title")}</h3>
             {canEdit && !editando && (
-              <button
-                onClick={iniciarEdicion}
-                className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
-              >
+              <Button variant="secondary" size="sm" onClick={iniciarEdicion}>
                 <Pencil className="icon-sm" />
                 {t("common.edit")}
-              </button>
+              </Button>
             )}
           </div>
 
@@ -484,7 +483,7 @@ export function ProfilePage() {
                       type="checkbox"
                       checked={formMostrarContacto}
                       onChange={(e) => setFormMostrarContacto(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-accent-600 focus:ring-accent-500 dark:border-night-edge"
+                      className="focus-ring mt-0.5 h-4 w-4 shrink-0 rounded border-edge text-accent-600 dark:border-night-edge"
                     />
                     <span>
                       <span className="block text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -511,25 +510,18 @@ export function ProfilePage() {
                 <div className="rounded-xl border border-gray-100 bg-gray-100/70 px-4 py-2.5 dark:border-night-line dark:bg-night-inset/60">
                   <p className="text-sm text-gray-500 dark:text-gray-400">{perfil.email}</p>
                 </div>
-                <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("profile.emailNote")}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("profile.emailNote")}</p>
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button
-                  onClick={cancelarEdicion}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
-                >
+                <Button variant="secondary" fullWidth onClick={cancelarEdicion}>
                   <X className="icon-md" />
                   {t("common.cancel")}
-                </button>
-                <button
-                  onClick={guardarPerfil}
-                  disabled={guardando}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                >
+                </Button>
+                <Button variant="primary" fullWidth onClick={guardarPerfil} disabled={guardando}>
                   <BadgeCheck className="icon-md icon-draw" />
                   {guardando ? t("common.saving") : t("profile.saveChanges")}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -537,7 +529,7 @@ export function ProfilePage() {
 
         {/* Datos propios del rol (no editables aquí) */}
         {hayDatosDeRol && (
-          <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-8">
+          <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6">
             <h3 className="mb-6 text-sm font-bold text-gray-900 dark:text-white">{tituloDatosRol}</h3>
             <div className="space-y-3">
               {perfil.role_id === RoleId.RESIDENTE && (

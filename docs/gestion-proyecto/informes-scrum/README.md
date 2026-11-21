@@ -22,6 +22,6 @@ Si una tarjeta no se terminó, el Scrum Master de la semana siguiente decide con
 
 ## Qué se reporta
 
-Cualquier tarjeta del tablero, no solo las HU. Hoy las 48 HU de `docs/requisitos/HUs/` están implementadas, así que el trabajo de la semana suele ser de otro tipo: diseño, pruebas, seguridad, mantenimiento. Cada tarjeta se identifica con su tipo: `HU`, `diseño`, `tests`, `seguridad` o `chore`.
+Cualquier tarjeta del tablero, no solo las HU. Hoy las 53 HU de `docs/requisitos/HUs/` (HU-001 a HU-053) están implementadas, así que el trabajo de la semana suele ser de otro tipo: diseño, pruebas, seguridad, mantenimiento. Cada tarjeta se identifica con su tipo: `HU`, `diseño`, `tests`, `seguridad` o `chore`.
 
 Una tarjeta que no se puede trabajar todavía (por ejemplo, espera un diseño que otro integrante no terminó) se anota como **bloqueada**, con el motivo.

@@ -36,12 +36,13 @@ Este proceso es manual y requiere aprobación humana (Admin Sistema) para evitar
 
 ### Flujo A — Solicitar desvinculación (Admin Conjunto)
 1. El Admin Conjunto ve la lista de conjuntos que administra en su perfil.
-2. Selecciona uno y envía una solicitud de desvinculación con motivo opcional (máximo 1000 caracteres, issue #352; el motivo de rechazo del Admin Sistema tiene el mismo máximo).
+2. Selecciona uno y envía una solicitud de desvinculación con motivo opcional (máximo 1000 caracteres, issue #352; el motivo de rechazo del Admin Sistema tiene el mismo máximo). El motivo se escribe en una ventana que abre "Dejar de administrar este conjunto", al final de la pestaña Resumen del conjunto (issue #595).
 3. La solicitud queda pendiente hasta que el Admin Sistema la gestione.
 4. El Admin Conjunto recibe una notificación cuando se procesa su solicitud.
+5. Cuando el Admin Conjunto envía la solicitud, todos los Administradores del Sistema activos reciben una notificación `DESVINCULACION_SOLICITADA` en la campana, con su nombre y el conjunto; al tocarla llegan a la página Solicitudes (issue #617). Sin administradores activos la solicitud se guarda igual.
 
 ### Flujo B — Gestionar solicitudes (Admin Sistema)
-1. El Admin Sistema ve las solicitudes de desvinculación pendientes en la pestaña "Desvinculaciones" de su bandeja (la otra pestaña, "Soporte técnico", trae las consultas que le envían los usuarios — ver [RQF-021](RQF-021_novedades_enviadas_admin_sistema.md) y [HU-048](../HUs/HU-048_admin_sistema_revisa_bandeja_solicitudes.md)). Las desvinculaciones se resuelven igual que antes.
+1. El Admin Sistema ve las solicitudes de desvinculación pendientes en la pestaña "Desvinculaciones" de la página Solicitudes (`/admin/solicitudes`) (la otra pestaña, "Soporte técnico", trae las consultas que le envían los usuarios — ver [RQF-021](RQF-021_novedades_enviadas_admin_sistema.md) y [HU-048](../HUs/HU-048_admin_sistema_revisa_bandeja_solicitudes.md)). Las desvinculaciones se resuelven igual que antes.
 2. Puede aprobar o rechazar cada solicitud.
 3. Al aprobar, el conjunto se desvincula del Admin Conjunto y ambos reciben notificación.
 4. Al rechazar, el Admin Conjunto es notificado con el motivo.

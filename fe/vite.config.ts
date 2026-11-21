@@ -57,12 +57,15 @@ export default defineConfig({
         "src/vite-env.d.ts",
         "src/types/**",
       ],
-      // ¿Qué? Umbral mínimo de cobertura (bootcamp de testing, semana 1:
-      //       línea base del 6 de octubre de 2026, redondeada hacia abajo).
+      // ¿Qué? Umbral mínimo de cobertura (bootcamp de testing). Semana 1: línea base del
+      //       6 de octubre de 2026 (78 / 76 / 72 / 70). Cierre de la semana 2, 3 de noviembre
+      //       de 2026: cobertura real 86.4 / 84.9 / 82.9 / 81.2 (líneas, sentencias, ramas y
+      //       funciones), redondeada hacia abajo. Cierre de la semana 3, 10 de noviembre de 2026:
+      //       cobertura real 89.36 / 87.62 / 84.7 / 83.14, redondeada hacia abajo (89 / 87 / 84 / 83).
       // ¿Para qué? Si la cobertura baja de aquí, "pnpm test" falla — y con
       //           él el job de frontend del CI, que bloquea el PR.
       // ¿Impacto? Solo se sube, nunca se baja (ver docs/matriz-rotacion.md).
-      thresholds: { lines: 78, statements: 76, branches: 72, functions: 70 },
+      thresholds: { lines: 89, statements: 87, branches: 84, functions: 83 },
     },
   },
 });

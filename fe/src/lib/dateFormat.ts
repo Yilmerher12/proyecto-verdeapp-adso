@@ -9,21 +9,46 @@
  *           la pantalla.
  */
 
+import i18n from "i18next";
+
+// ¿Qué? El formato de fecha que corresponde al idioma ELEGIDO EN LA APP: español → "es-CO" (día/mes/año, 29/10/2026) e inglés →
+//       "en-US" (mes/día/año, 10/29/2026).
+// ¿Para qué? Issue #633 — antes las fechas se escribían con `toLocaleDateString()` sin idioma, que usa el del NAVEGADOR: con la app
+//           en español y Chrome en inglés se leía "10/29/2026". Una fecha escrita debe seguir el idioma de la app, no el del navegador.
+// ¿Impacto? Si i18next aún no se inicializó (en las pruebas) se usa español, el idioma por defecto de la app. Las pantallas que
+//           llaman a formatearFechaUTC / formatearFechaCreacion cambian solas.
+export function localeDeFechas(idioma: string | undefined = i18n.language): string {
+  return idioma?.toLowerCase().startsWith("en") ? "en-US" : "es-CO";
+}
+
 // ¿Qué? Muestra la fecha en UTC, no en la zona horaria del navegador.
 // ¿Para qué? Para Convocatoria, el backend calcula la expiración como
 //           "medianoche UTC del día siguiente al evento" — si se muestra
 //           en hora local de Bogotá (UTC-5), esa medianoche UTC cae la
 //           noche ANTERIOR en hora local, y la fecha mostrada retrocede
 //           un día respecto a la que el admin realmente eligió.
-export function formatearFechaUTC(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { timeZone: "UTC" });
+export function formatearFechaUTC(iso: string, idioma?: string): string {
+  return new Date(iso).toLocaleDateString(localeDeFechas(idioma), { timeZone: "UTC" });
 }
 
 // ¿Qué? "created_at" es un instante real (con hora), no una fecha elegida a
 //       mano como "fecha_expiracion" — se muestra en la zona horaria del
 //       navegador, sin el truco de UTC de formatearFechaUTC.
-export function formatearFechaCreacion(iso: string): string {
-  return new Date(iso).toLocaleDateString();
+export function formatearFechaCreacion(iso: string, idioma?: string): string {
+  return new Date(iso).toLocaleDateString(localeDeFechas(idioma));
+}
+
+// ¿Qué? La fecha elegida en un campo de fecha (YYYY-MM-DD) escrita con el mes en palabras: "20 de noviembre de 2026" /
+//       "November 20, 2026". Devuelve "" si el campo está vacío o la fecha no es válida.
+// ¿Para qué? Issue #633 — el campo `<input type="date">` lo dibuja el navegador con SU idioma y la página no puede cambiarlo: la
+//           frase de abajo quita la duda (¿es 3 de noviembre o 11 de marzo?) sin importar el idioma del navegador.
+// ¿Impacto? Cuenta de calendario en UTC (la fecha ya viene elegida), igual que formatearFechaUTC.
+export function fechaEnPalabras(fechaIso: string, idioma?: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaIso)) return "";
+  const [y, m, d] = fechaIso.split("-").map(Number);
+  const fecha = new Date(Date.UTC(y, m - 1, d));
+  if (Number.isNaN(fecha.getTime()) || fecha.getUTCMonth() !== m - 1) return "";
+  return fecha.toLocaleDateString(localeDeFechas(idioma), { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 }
 
 // ¿Qué? Igual que formatearFechaUTC, pero en formato YYYY-MM-DD (lo que
@@ -103,4 +128,30 @@ export function rangoSemanaUTC(lunesIso: string): string {
   const d2 = domingo.getUTCDate();
   if (m1 - 1 === m2) return `${d1}–${d2} ${MESES_CORTOS[m2]}`;
   return `${d1} ${MESES_CORTOS[m1 - 1]} – ${d2} ${MESES_CORTOS[m2]}`;
+}
+
+// ¿Qué? Issue #618 — cuentas de calendario con meses ("YYYY-MM"), para el modo Mes del periodo de Calificaciones.
+//       Como las de las semanas, trabajan en UTC sobre fechas ya elegidas: no convierten zonas horarias.
+export function mesBogota(ahora: Date = new Date()): string {
+  return fechaBogota(ahora.toISOString()).slice(0, 7);
+}
+
+export function moverMes(mes: string, delta: number): string {
+  const [y, m] = mes.split("-").map(Number);
+  return isoToDateInputUTC(new Date(Date.UTC(y, m - 1 + delta, 1)).toISOString()).slice(0, 7);
+}
+
+// ¿Qué? Primer y último día del mes (YYYY-MM-DD), que es lo que se manda como desde/hasta.
+export function rangoDeMes(mes: string): { desde: string; hasta: string } {
+  const [y, m] = mes.split("-").map(Number);
+  return {
+    desde: isoToDateInputUTC(new Date(Date.UTC(y, m - 1, 1)).toISOString()),
+    hasta: isoToDateInputUTC(new Date(Date.UTC(y, m, 0)).toISOString()),
+  };
+}
+
+// ¿Qué? "septiembre de 2026" / "September 2026" según el idioma.
+export function etiquetaMes(mes: string, locale?: string): string {
+  const [y, m] = mes.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(locale, { month: "long", year: "numeric", timeZone: "UTC" });
 }

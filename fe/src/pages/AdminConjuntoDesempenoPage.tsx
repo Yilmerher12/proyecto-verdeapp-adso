@@ -1,3 +1,4 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChartColumn, Download } from "lucide-react";
@@ -7,8 +8,10 @@ import { descargarDesempenoPdf, nombreArchivoDesempeno } from "@/lib/auditoriaCo
 import { descargarArchivo } from "@/lib/descargarArchivo";
 import { PanelDesempeno } from "@/components/desempeno/PanelDesempeno";
 import { Alert } from "@/components/ui/Alert";
+import { Pestanas } from "@/components/ui/Pestanas";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
+import { Button } from "@/components/ui/Button";
 
 /**
  * ¿Qué? Página "Desempeño" del Admin de Conjunto (HU-052): cómo va la separación
@@ -22,6 +25,9 @@ import { LoadingState } from "@/components/ui/LoadingState";
  *           que también reutiliza el Residente. Con un solo conjunto no hay
  *           selector. Con varios se pide siempre `id_conjunto`: el backend
  *           responde 422 si falta.
+ *           Issue #632: las pestañas de conjunto van DENTRO de la tarjeta del panel (por su prop `cabecera`), al tope,
+ *           pegadas al contenido que cambian; antes eran píldoras sueltas entre el encabezado y el panel. El período y
+ *           "Descargar PDF" se quedan en el encabezado (el PDF baja el conjunto y el período que estás viendo).
  */
 export function AdminConjuntoDesempenoPage() {
   const { t } = useTranslation();
@@ -63,7 +69,7 @@ export function AdminConjuntoDesempenoPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -85,7 +91,7 @@ export function AdminConjuntoDesempenoPage() {
               id="desempeno-periodo"
               value={semanas}
               onChange={(e) => setSemanas(Number(e.target.value))}
-              className="block cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
+              className="focus-ring block cursor-pointer rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-accent-500 /20 dark:border-night-edge dark:bg-night-field dark:text-gray-100"
             >
               {PERIODOS_SEMANAS.map((n) => (
                 <option key={n} value={n}>
@@ -94,15 +100,10 @@ export function AdminConjuntoDesempenoPage() {
               ))}
             </select>
           </div>
-          <button
-            type="button"
-            onClick={descargarPdf}
-            disabled={!idConjunto || bajando}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-          >
+          <Button variant="primary" type="button" onClick={descargarPdf} disabled={!idConjunto || bajando}>
             <Download className="icon-sm" />
             {bajando ? t("desempeno.descargando") : t("desempeno.descargarPdf")}
-          </button>
+          </Button>
         </div>
       </div>
       {errorDescarga && (
@@ -110,42 +111,28 @@ export function AdminConjuntoDesempenoPage() {
       )}
 
       {cargando ? (
-        <LoadingState message={t("common.loading")} />
+        <Esqueleto mensaje={t("common.loading")} variante="bloque" alto="h-[48rem]" />
       ) : errorCarga ? (
         <Alert type="error" message={t("common.loadError")} />
       ) : conjuntos.length === 0 ? (
         <EmptyState icon={ChartColumn} message={t("desempeno.noConjuntos")} />
       ) : (
-        <>
-          {conjuntos.length > 1 && (
-            <div
-              role="tablist"
-              aria-label={t("desempeno.conjuntoTabs")}
-              className="flex flex-wrap gap-2"
-            >
-              {conjuntos.map((c) => {
-                const activo = c.id_conjunto_residencial === idConjunto;
-                return (
-                  <button
-                    key={c.id_conjunto_residencial}
-                    type="button"
-                    role="tab"
-                    aria-selected={activo}
-                    onClick={() => setIdConjunto(c.id_conjunto_residencial)}
-                    className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${
-                      activo
-                        ? "border-accent-700 bg-accent-700 text-white dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                        : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:text-gray-300 dark:hover:bg-night-hover"
-                    }`}
-                  >
-                    {c.nombre_conjunto}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          <PanelDesempeno idConjunto={idConjunto} semanas={semanas} />
-        </>
+        <PanelDesempeno
+          idConjunto={idConjunto}
+          semanas={semanas}
+          cabecera={
+            conjuntos.length > 1 ? (
+              <Pestanas
+                variante="subrayadas"
+                repartidas
+                ariaLabel={t("desempeno.conjuntoTabs")}
+                activa={idConjunto}
+                onCambiar={setIdConjunto}
+                pestanas={conjuntos.map((c) => ({ id: c.id_conjunto_residencial, etiqueta: c.nombre_conjunto }))}
+              />
+            ) : undefined
+          }
+        />
       )}
     </div>
   );

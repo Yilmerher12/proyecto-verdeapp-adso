@@ -51,18 +51,29 @@ def _obtener_item(db: Session, id_conjunto: UUID, id_item: UUID) -> AgendaConjun
     return item
 
 
-def listar(db: Session, administrador: AdministradorConjunto, id_conjunto: UUID) -> list[AgendaConjunto]:
-    """¿Qué? Los temas PENDIENTES ("Por tratar"), el más reciente primero. Los archivados salen aparte, paginados."""
+def listar(
+    db: Session, administrador: AdministradorConjunto, id_conjunto: UUID, limit: int, offset: int
+) -> tuple[list[AgendaConjunto], int]:
+    """¿Qué? Una página de los temas PENDIENTES ("Por tratar"), el más reciente primero, + cuántos hay en total. Los
+    archivados salen aparte, también paginados.
+    ¿Para qué? Issue #632: nada limita cuántos temas se acumulan sin resolver; el estándar del proyecto es que toda lista
+              que puede crecer se pida de a páginas (limit/offset + total). El total también alimenta el contador de la
+              pestaña de cada conjunto en la Agenda.
+    """
     _verificar_conjunto_propio(administrador, id_conjunto)
+    donde = (
+        AgendaConjunto.id_conjunto_residencial == id_conjunto,
+        AgendaConjunto.estado == EstadoAgenda.PENDIENTE.value,
+    )
+    total = db.scalar(select(func.count()).select_from(AgendaConjunto).where(*donde))
     stmt = (
         select(AgendaConjunto)
-        .where(
-            AgendaConjunto.id_conjunto_residencial == id_conjunto,
-            AgendaConjunto.estado == EstadoAgenda.PENDIENTE.value,
-        )
+        .where(*donde)
         .order_by(AgendaConjunto.created_at.desc(), AgendaConjunto.id)
+        .limit(limit)
+        .offset(offset)
     )
-    return list(db.scalars(stmt).all())
+    return list(db.scalars(stmt).all()), total
 
 
 def listar_archivadas(

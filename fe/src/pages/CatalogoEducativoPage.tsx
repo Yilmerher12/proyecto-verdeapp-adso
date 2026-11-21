@@ -1,10 +1,11 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { BookOpen, Check, ChevronRight, Play } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { extraerIdDeYoutube } from "@/lib/youtube";
 import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
 import { TuSemana } from "@/components/educativo/TuSemana";
@@ -54,13 +55,17 @@ export function CatalogoEducativoPage() {
   const porcentaje = contenido.length ? Math.round((totalVistas / contenido.length) * 100) : 0;
 
   return (
-    <div className="mx-auto max-w-6xl 2xl:max-w-7xl space-y-10 pt-6 pb-12">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t("catalogoEducativo.title")}</h1>
+    <div className={`${ANCHO_PAGINA.normal} space-y-10 pt-6 pb-12`}>
+      {/* ¿Qué? Los títulos (el de la página y los de cada sección) van en una tarjeta, no sueltos sobre el fondo.
+          ¿Para qué? Igual que el título "Mi conjunto" del panel del Residente: se leen como parte de la
+                    pantalla y no se pierden sobre el fondo. Se conserva el estilo propio de Aprende a
+                    reciclar (esquinas más redondeadas). */}
+      <header className="space-y-2 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("catalogoEducativo.title")}</h1>
         <p className="max-w-2xl text-base text-gray-600 dark:text-gray-300">{t("catalogoEducativo.subtitle")}</p>
       </header>
 
-      {cargando && <LoadingState message={t("catalogoEducativo.loading")} />}
+      {cargando && <Esqueleto mensaje={t("catalogoEducativo.loading")} variante="tarjetas" cantidad={9} alto="h-80" />}
       {error && <Alert type="error" message={error} />}
 
       {!cargando && !error && categorias.length === 0 && (
@@ -81,7 +86,7 @@ export function CatalogoEducativoPage() {
                 {t("catalogoEducativo.progress.title")}
               </span>
               <p className="text-base text-gray-600 dark:text-gray-300">
-                <span className="mr-2 text-4xl font-bold text-accent-700 dark:text-accent-400">{totalVistas}</span>
+                <span className="mr-2 text-2xl font-bold text-accent-700 dark:text-accent-400">{totalVistas}</span>
                 {t("catalogoEducativo.progress.of", { total: contenido.length })}
               </p>
               <div
@@ -99,7 +104,7 @@ export function CatalogoEducativoPage() {
           </div>
 
           <section aria-labelledby="titulo-categorias" className="space-y-5">
-            <h2 id="titulo-categorias" className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 id="titulo-categorias" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-lg font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
               {t("catalogoEducativo.categoriesTitle")}
             </h2>
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
@@ -155,7 +160,7 @@ export function CatalogoEducativoPage() {
 
           {destacado && idDestacado && (
             <section aria-labelledby="titulo-destacado" className="space-y-5">
-              <h2 id="titulo-destacado" className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h2 id="titulo-destacado" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-lg font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
                 {t("catalogoEducativo.featuredTitle")}
               </h2>
               <Link

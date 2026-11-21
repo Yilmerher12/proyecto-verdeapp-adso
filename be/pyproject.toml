@@ -4,22 +4,22 @@ version = "0.1.0"
 description = "VerdeApp — backend FastAPI de coordinacion de reciclaje para conjuntos residenciales"
 requires-python = ">=3.12"
 dependencies = [
-    "alembic==1.20.0",
+    "alembic==1.20.1",
     "bcrypt==5.0.0",
     "email-validator==2.3.0",
-    "fastapi==0.149.0",
-    "fpdf2==2.8.9",
+    "fastapi==0.162.2",
+    "fpdf2==2.9.0",
     "pillow==13.0.0",
     "psycopg2-binary==2.9.13",
-    "pydantic==2.14.1",
-    "pydantic-settings==2.16.0",
+    "pydantic==2.14.3",
+    "pydantic-settings==2.16.2",
     "pygments==2.21.0",
     "pyjwt==2.15.1",
-    "python-multipart==0.0.32",
+    "python-multipart==0.0.33",
     "requests==2.34.2",
-    "resend==2.50.0",
+    "resend==2.53.0",
     "slowapi==0.1.10",
-    "sqlalchemy==2.1.5",
+    "sqlalchemy==2.1.8",
     # ¿Qué? Ya nada en app/ la usa (ver app/utils/ids.py, generar_uuid4 usa
     #       solo la librería estándar) — pero sigue siendo obligatoria: la
     #       migración histórica 00e3bf999d33 (ya aplicada, no se toca) hace
@@ -28,18 +28,18 @@ dependencies = [
     #       grafo de revisiones, aunque ya estén aplicadas. Sin esta
     #       dependencia, "alembic upgrade/downgrade" falla siempre,
     #       aunque el destino sea una revisión mucho más reciente.
-    "uuid-utils==0.18.0",
+    "uuid-utils==0.19.0",
     "uvicorn[standard]==0.54.0",
 ]
 
 [dependency-groups]
 dev = [
     "httpx==0.28.1",
-    "pypdf==6.21.1",
-    "pytest==9.1.1",
-    "pytest-asyncio==1.4.0",
+    "pypdf==6.21.4",
+    "pytest==9.2.0",
+    "pytest-asyncio==1.4.1.post1",
     "pytest-cov==7.1.0",
-    "ruff==0.17.1",
+    "ruff==0.17.4",
 ]
 
 # ¿Qué? Cada "uv run pytest" mide la cobertura del código de app/.
@@ -59,8 +59,9 @@ omit = ["app/tests/*", "app/seed.py"]
 
 [tool.coverage.report]
 # ¿Qué? Umbral mínimo (bootcamp de testing, semana 1: línea base del 6 de
-#       octubre de 2026, 96.69% redondeado hacia abajo). Solo se sube.
-fail_under = 96
+#       octubre de 2026, 96.69% redondeado hacia abajo). Cierre de la semana 3,
+#       10 de noviembre de 2026: cobertura real 97.24%, redondeada a 97. Solo se sube.
+fail_under = 97
 
 # ¿Qué? Reglas de lint fijadas a mano: las mismas que ruff 0.15 traía por
 #       defecto (errores de sintaxis, imports no usados, variables sin definir).

@@ -17,9 +17,13 @@ interface ProgressBarProps {
   /** Texto accesible y visible, ya traducido (ej. "Subiendo foto…"). */
   label: string;
   className?: string;
+  /** ¿Qué? Barra delgada (h-1) con el texto solo para lectores de pantalla.
+   *  ¿Para qué? Issue #615: es el aviso de "recargando" arriba de una lista que ya tiene filas,
+   *            donde un texto visible debajo de la barra sobraría. */
+  compacta?: boolean;
 }
 
-export function ProgressBar({ value, label, className = "" }: ProgressBarProps) {
+export function ProgressBar({ value, label, className = "", compacta = false }: ProgressBarProps) {
   const determinada = typeof value === "number";
   const porcentaje = determinada ? Math.min(100, Math.max(0, Math.round(value))) : undefined;
 
@@ -31,7 +35,7 @@ export function ProgressBar({ value, label, className = "" }: ProgressBarProps) 
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={porcentaje}
-        className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-night-line"
+        className={`${compacta ? "h-1" : "h-1.5"} w-full overflow-hidden rounded-full bg-gray-200 dark:bg-night-line`}
       >
         <div
           className={`h-full rounded-full bg-accent-600 dark:bg-accent-400 ${
@@ -40,10 +44,12 @@ export function ProgressBar({ value, label, className = "" }: ProgressBarProps) 
           style={determinada ? { width: `${porcentaje}%` } : undefined}
         />
       </div>
-      <div className="mt-1 flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
-        <span>{label}</span>
-        {determinada && <span aria-hidden="true">{porcentaje}%</span>}
-      </div>
+      {!compacta && (
+        <div className="mt-1 flex items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <span>{label}</span>
+          {determinada && <span aria-hidden="true">{porcentaje}%</span>}
+        </div>
+      )}
     </div>
   );
 }

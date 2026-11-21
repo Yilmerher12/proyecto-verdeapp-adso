@@ -61,6 +61,8 @@
 
 Antes había **7 dibujos distintos** de "cargando": el SVG de `Button`, el de `ProtectedRoute`, un círculo con borde en `VerifyEmailPage`, y el `LoaderCircle` de lucide-react en 4 sitios, cada uno con su propio tamaño y color. Ahora todos usan `components/ui/Spinner.tsx` (`size` sm/md/lg/xl y `tone` accent/current). Cambiar el indicador de toda la app es tocar ese archivo.
 
+**Recargas de listas (issue #615, 2026-11-06).** El "Cargando…" completo se reserva para la **primera carga** de una lista. Cuando una lista ya tiene filas y se vuelve a pedir (filtro, pestaña, página), se usa `ContenidoRecargable`: las filas se quedan atenuadas y sin clic, con una barra de progreso delgada (`ProgressBar` indeterminada y compacta) arriba. Se aplicó en Usuarios registrados, Soporte técnico y Novedades. La regla y sus motivos están en `decision-carga-al-filtrar.md`.
+
 ## 4. Comprobación en el navegador (red lenta simulada)
 
 | Prueba | Resultado |

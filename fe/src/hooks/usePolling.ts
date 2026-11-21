@@ -31,10 +31,16 @@ interface UsePollingOptions {
    *        la función para cancelar la suscripción. Opcional — solo
    *        AppShell.tsx lo necesitaba de las 4 pantallas originales. */
   onExternalTrigger?: (ejecutar: () => void) => () => void;
+  /** ¿Qué? Un valor que, al cambiar, reinicia el sondeo: vuelve a pedir los datos al instante y rearma el
+   *        temporizador. Opcional.
+   *  ¿Para qué? Issue #595: la pestaña Avisos pide una página distinta del servidor cada vez que se cambia de
+   *            página; sin esto había que esperar al siguiente ciclo (hasta 20 s) o pedir los datos dos veces.
+   *  ¿Impacto? Sin este valor el hook se comporta exactamente igual que antes. */
+  reiniciarCon?: unknown;
 }
 
 export function usePolling(fetchFn: () => void, options: UsePollingOptions = {}): void {
-  const { intervalMs = 20000, enabled = true, onExternalTrigger } = options;
+  const { intervalMs = 20000, enabled = true, onExternalTrigger, reiniciarCon } = options;
 
   // ¿Qué? Issue #225 — mutar "fetchRef.current" directo en el cuerpo del
   //       componente (durante el render) ahora lo marca como error una
@@ -66,5 +72,5 @@ export function usePolling(fetchFn: () => void, options: UsePollingOptions = {})
     //       nivel de módulo (notificationEvents.ts), que nunca cambia de
     //       referencia entre renders — agregarla no reinicia el temporizador
     //       de más.
-  }, [enabled, intervalMs, onExternalTrigger]);
+  }, [enabled, intervalMs, onExternalTrigger, reiniciarCon]);
 }

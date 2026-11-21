@@ -23,31 +23,33 @@ Este documento fija seis categorías de restricciones para VerdeApp: tecnología
 
 ## Tecnología Obligatoria
 
+> **Cómo leer las versiones (2026-11-03):** las tablas de abajo dan la versión **mayor y menor** (por ejemplo, React 19.3). La versión **exacta**, hasta el último número, está fijada en `be/pyproject.toml` y `fe/package.json`, que son la fuente real. Dependabot las sube el día 1 y el 15 de cada mes y solo edita esos archivos; si este documento copiara el número exacto, se desactualizaría en cada subida. Se actualiza esta tabla solo cuando cambia la versión mayor o menor.
+
 ### Backend
 
-| Tecnología   | Versión fijada  |
+| Tecnología   | Versión (mayor.menor) |
 | ------------ | ---------------- |
 | Python       | 3.12              |
-| FastAPI      | 0.142.2           |
-| SQLAlchemy   | 2.1.3 (ORM 2.0, no el estilo 1.x)|
-| Alembic      | 1.20.0 (migraciones versionadas — nunca `Base.metadata.create_all()`)|
-| Pydantic     | 2.13.5             |
-| fpdf2        | 2.8.9 (genera el PDF del historial de la agenda, issue #480; licencia LGPL-3.0, se usa como librería sin modificarla; puro Python, no necesita programas de sistema en Windows) |
-| pypdf        | 6.21.1 (solo en las pruebas: lee el PDF generado para comprobar su contenido; licencia BSD-3-Clause) |
+| FastAPI      | 0.x (exacta en `be/pyproject.toml`) |
+| SQLAlchemy   | 2.1 (ORM 2.0, no el estilo 1.x) |
+| Alembic      | 1.20 (migraciones versionadas — nunca `Base.metadata.create_all()`)|
+| Pydantic     | 2.14 |
+| fpdf2        | 2.8 (genera los PDF del historial de la agenda, issue #480, y del desempeño semanal, issue #558; licencia LGPL-3.0, se usa como librería sin modificarla; puro Python, no necesita programas de sistema en Windows) |
+| pypdf        | 6.21 (solo en las pruebas: lee el PDF generado para comprobar su contenido; licencia BSD-3-Clause) |
 
 No se permiten versiones sin fijar (`>=`, `~=`, sin versión) en `pyproject.toml` — toda dependencia va con `==`, reforzado además por `uv.lock`, que fija también las dependencias transitivas.
 
 ### Frontend
 
-| Tecnología      | Versión fijada |
+| Tecnología      | Versión (mayor.menor) |
 | ---------------- | --------------- |
-| React            | 19.3.0           |
-| TypeScript       | 5.9.3 (modo estricto)|
-| Vite             | 7.3.6             |
-| TailwindCSS      | 4.3.3             |
-| React Router     | 7.18.4            |
-| react-markdown   | 10.1.0            |
-| recharts         | 3.10.1 (solo la gráfica de desempeño semanal; se carga bajo demanda con `React.lazy`, nunca en la primera carga; licencia MIT) |
+| React            | 19.3 |
+| TypeScript       | 5.9 (modo estricto)|
+| Vite             | 7.3 |
+| TailwindCSS      | 4.3 |
+| React Router     | 7.18 |
+| react-markdown   | 10.1 |
+| recharts         | 3.10 (solo la gráfica de desempeño semanal; se carga bajo demanda con `React.lazy`, nunca en la primera carga; licencia MIT) |
 
 ### Base de datos
 
@@ -85,6 +87,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | Seguridad (cambiar contraseña) | `KeyRound` |
   | Semáforo de auditoría | Caritas `Smile` / `Meh` / `Frown` (definidas en `fe/src/config/nivelesDesempeno.ts`) |
   | Desempeño semanal (menú y gráfica) | `ChartColumn` · alternar gráfica/tabla `Table2` / lista `List` |
+  | Archivar un tema / devolverlo a "Por tratar" (Agenda) | `Archive` / `Undo2` |
   | Ampliar una imagen / abrir algo en otra pestaña | `Maximize2` / `ExternalLink` (siempre dentro de `InsigniaAccionImagen` o junto al texto del enlace) |
 
 - Tamaño de íconos: solo 5, con una clase por uso definida en `fe/src/index.css` — nunca `h-*`/`w-*` sueltos en un ícono:
@@ -97,7 +100,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | `icon-xl` | 32 px | Destacado: encabezado del dashboard, estado vacío, tarjetas de rol del registro |
   | `icon-deco` | 80 px | Decorativo: marca de agua del dashboard |
 
-- Pantallas grandes (televisor 4K de la feria): el tamaño base de la letra (`html` en `fe/src/index.css`) crece con el ancho de la pantalla: 16 px hasta 1536 px, 20 px a 1920 px y 40 px a 3840 px. Por eso todo tamaño se escribe en `rem` (o con las clases de Tailwind, que ya lo son): un valor en px fijo (`text-[11px]`, `min-w-[820px]`) no crece y se ve diminuto en el televisor. Si un componente dibuja en px (por ejemplo un SVG de recharts), multiplica sus medidas por `parseFloat(getComputedStyle(document.documentElement).fontSize) / 16` (ver `GraficaDesempenoSemanal.tsx`). Los topes de ancho de página suben un paso desde `2xl` (`max-w-5xl 2xl:max-w-6xl`).
+- Pantallas grandes (televisor 4K de la feria): el tamaño base de la letra (`html` en `fe/src/index.css`) crece con el ancho de la pantalla: 16 px hasta 1536 px, 20 px a 1920 px y 40 px a 3840 px. Por eso todo tamaño se escribe en `rem` (o con las clases de Tailwind, que ya lo son): un valor en px fijo (`text-[11px]`, `min-w-[820px]`) no crece y se ve diminuto en el televisor. Si un componente dibuja en px (por ejemplo un SVG de recharts), multiplica sus medidas por `parseFloat(getComputedStyle(document.documentElement).fontSize) / 16` (ver `GraficaDesempenoSemanal.tsx`). El ancho de las páginas ya no se decide página por página: hay **tres anchos fijos** en `fe/src/config/anchoPagina.ts` (`ANCHO_PAGINA`): `normal` (todo el área disponible, 80 rem; paneles, listas, catálogos y administración), `lectura` (48 rem; listas cortas de avisos) y `formulario` (32 rem; formularios cortos). Una página no escribe su propio `max-w-*` ni relleno lateral (`px-*`, `sm:p-*`) en su contenedor: el margen lo pone solo el `AppShell`. Los argumentos están en `docs/gestion-proyecto/decision-ancho-de-paginas.md` y una prueba (`anchoPaginas.test.ts`) cuida que se cumpla.
 - Animación de íconos (estándar de **3**, issue #502): solo se anima lo que se puede tocar o lo que aparece para avisar; nunca un ícono de adorno. Clases de `fe/src/index.css`, todas dentro de `prefers-reduced-motion: no-preference`:
 
   | Caso | Clase | Cuándo se mueve |
@@ -132,7 +135,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | `night-base` | Fondo raíz y sidebar (la capa más baja: auth, legales, shell, footer) |
   | `night-page` | Fondo del área de contenido de los paneles y del encabezado |
   | `night-card` | Tarjetas |
-  | `night-panel` | Modales, panel lateral y tarjeta de login (encima de las tarjetas) |
+  | `night-panel` | Modales y tarjeta de login (encima de las tarjetas) |
   | `night-inset` | Zonas hundidas: filas en hover, botón secundario |
   | `night-field` | Campos de formulario |
   | `night-line` | Bordes decorativos (tarjetas, divisiones): 1.94:1 sobre la tarjeta |
@@ -146,11 +149,12 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
   | Fondo raíz (auth, legales, footer) y sidebar | `bg-gray-50`; el sidebar es `bg-accent-900` (verde de marca) | `night-base` (sidebar y raíz, la capa más baja) |
   | Fondo del área de contenido y encabezado | `bg-gray-200` (contenido), `bg-white` (encabezado) | `night-page` (los dos; los separa el borde `night-line`) |
   | Tarjeta | `bg-white` | `night-card` |
-  | Modal, panel lateral, barra fija | `bg-white` | `night-panel` |
+  | Modal, barra fija | `bg-white` | `night-panel` |
   | Zona hundida, botón secundario | `bg-white` / `bg-gray-100` | `night-inset` |
   | Campo de formulario | `bg-white` | `night-field` |
   | Fondo al pasar el mouse | `hover:bg-gray-50` | `night-hover` |
   | Borde decorativo | `border-gray-100` o `border-gray-200` | `night-line` |
+  | Separador entre filas de una lista o tabla (`divide-y`) y línea sobre un pie (`border-t`) | `divide-gray-200` / `border-gray-200` | `dark:divide-night-line` / `dark:border-night-line`. No se usan `gray-50` (en claro casi no se ve) ni `gray-800` (en oscuro no se ve y no es un token `night-*`); issue #616 |
   | **Borde de un control** (campo, botón secundario) | `border-edge` | `dark:border-night-edge` |
   | Texto principal | `text-gray-900` | `dark:text-white` o `dark:text-gray-100` |
   | Texto secundario | `text-gray-500` | `dark:text-gray-400` |
@@ -164,6 +168,42 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 - Logo: solo en SVG, en `fe/public/logos/` (`logo`, `logo-white`, `logo-mark`, `logo-mark-white` y `favicon`). Ninguna página pone un `<img>` del logo a mano: siempre se usa el componente `BrandLogo` (`fe/src/components/ui/BrandLogo.tsx`), que elige la versión según el fondo y el modo oscuro. No se usan PNG ni íconos de `lucide-react` (como `Leaf`) en lugar del logo.
 - El color de marca (`accent-*`) es el único acento de color permitido en componentes reutilizables; los colores por rol (sidebar, badges) viven centralizados en `fe/src/config/roleTheme.ts`, no repetidos por archivo.
 - Todo componente nuevo debe soportar modo claro y modo oscuro (`dark:`) desde el primer commit — no se agrega como una tarea aparte después.
+- Modal o página (issue #621, `docs/gestion-proyecto/decision-modal-o-pagina.md`): **modal** para una tarea corta que se hace sin salir de donde se estaba (mirar una ficha, un formulario corto, una confirmación); **página** para una lista que se recorre, para un trabajo largo o para algo a lo que hay que poder volver o enlazar. Un modal nunca es más alto que la pantalla (scroll interno y X fija en `Modal.tsx`), uno sobre otro es excepcional (`layer="stacked"`, máximo dos capas) y no se usan paneles laterales.
+
+- **Escala tipográfica (issue #633).** Siempre en Inter, con el mismo peso por nivel; **Outfit** solo en `h1` a `h3` (los títulos de bloque no la usan). Los niveles de encabezado no saltan (no se pasa de `h2` a `h4`) y cada página tiene un solo `h1`. Todo en `rem`, como pide la regla de pantallas grandes:
+
+  | Nivel | Tamaño | Cómo se escribe | Ejemplo |
+  | --- | --- | --- | --- |
+  | Título de página | 24 px | `h1` con `text-2xl font-bold` | "Comunicados" |
+  | Título de tarjeta | 18 px | `h2` con `text-lg font-bold` | "Avisos de este conjunto" |
+  | Nombre de un ítem | 16 px | `h3` con `text-base font-bold` | El nombre de un conjunto |
+  | Título de un bloque | 14 px | `h3`/`h4` con `text-sm font-bold` (Inter) | "Cobertura" |
+  | Texto normal | 14 px | `text-sm` | Un comunicado, una fila |
+  | **Texto de ayuda** (descripciones, fechas, avisos, "Creado el…") | **12 px** | `text-xs` | La línea gris bajo un título |
+  | Pastillas y contadores (etiquetas cortas de una o dos palabras, números) | **mínimo 11 px** | `text-[0.6875rem]` | "Urgente", el 3 de una pestaña |
+
+  El **título de una ventana** (modal) o de una tarjeta mide 18 px (`h2` con `text-lg font-bold`), también en las ventanas de ingreso, registro e invitación. **Peso (grosor) de la letra, uno por función (issue #640):** títulos `font-bold`; botones y pastillas `font-semibold` (el componente `Button` ya es `font-semibold`, con esquina `rounded-lg` de 8 px, igual que `InputField`); nombres de campo (`label`) `font-medium`; texto corriente sin peso. No se usa `font-extrabold` fuera de la portada.
+  Nada mide menos de 11 px: no existe `text-[0.625rem]` (10 px) en la app. Una frase que se lee es texto de ayuda y mide 12 px; solo una etiqueta corta o un número puede medir 11 px. Una prueba (`tamanoTexto.test.ts`) falla si reaparece texto de 10 px. Otra prueba (`estandaresVisuales.test.ts`, issue #640) recorre TODOS los archivos de `fe/src/` y cuenta los botones primarios, secundarios o de peligro escritos a mano (deben usar `Button`), los íconos con medida suelta, el texto de 3xl o más fuera de la portada y los textos legales, y los títulos con un tamaño que no es el de su nivel: su conteo permitido es 0 desde el cierre del issue #640: cualquier caso nuevo hace fallar la prueba. El avance por pantalla está en `docs/gestion-proyecto/lista-verificacion-estandares-visuales.md`.
+- **Colores y efectos (issue #642):** (1) **Rojo** solo para peligro y error: el borde y el mensaje de un campo con error, el asterisco de "obligatorio", un botón de eliminar, un aviso de fallo. **Ámbar** para lo que pide atención sin ser un error, también en los contadores (por ejemplo, el de usuarios inactivos del panel del Administrador del Sistema). Los únicos colores son `accent`, `red`, `amber` y, de categoría, `purple`, `indigo` y `teal`: nada de `blue`, `yellow`, `orange`, `green`, etc. (2) **Sombras:** una tarjeta lleva `shadow-sm`; lo que flota sobre la página (un menú, la campana, el botón de subir) lleva `shadow-lg`; la ventana, `shadow-2xl`. (3) **Efectos al pasar el mouse:** solo suben 2 px (`hover:-translate-y-0.5`) las tarjetas en las que se puede hacer clic para abrir algo (Aprende a reciclar y la tarjeta de la portada) y el botón de subir se agranda (`hover:scale-110`); nada más sube ni se agranda. (4) **Foco con teclado:** todo control que muestra el anillo verde usa la clase `focus-ring`, nunca `focus:ring-accent-*` escrito a mano. Excepciones: el anillo **rojo** de un campo con error, que se escribe junto a su borde rojo, y el contenedor de la ventana (`Modal`) y las barras de la gráfica de desempeño, que manejan su propio foco. La prueba `estandaresVisuales.test.ts` cuenta los anillos verdes escritos a mano y los colores fuera de la lista.
+- **Dimensiones (issue #641):** (1) Una **tarjeta de página** (caja con borde, fondo de tarjeta y esquina de 16 px, `rounded-2xl`) lleva **24 px de relleno** (`p-6`). Más compactos, a propósito: un **elemento de una lista** (por ejemplo, un módulo o una novedad dentro de una lista) lleva 16 px (`p-4`), y una **barra de filtros o de pestañas** 12 px (`p-3`); las cajas internas de una tarjeta usan `rounded-xl` (12 px). Un **contenedor de lista** (filas separadas por una línea, con su paginación al pie) no lleva relleno propio: cada fila lleva 20 px a los lados y 16 px arriba y abajo (`px-5 py-4`) y las pestañas del contenedor, 20 px de margen (`mx-5`). (2) Los **bloques de una página** (tarjetas y listas, una debajo de otra) se separan **24 px** (`space-y-6` en el contenedor de la página); Aprende a reciclar conserva su separación propia, con su estilo documentado. (3) Un **campo de formulario** lleva esquina de **8 px** (`rounded-lg`), igual que `InputField` y `Button`, y 10 px de relleno vertical (`py-2.5`); solo los filtros compactos usan menos. (4) Una **ventana** (`Modal`) tiene tres anchos: el normal (`max-w-md`, para confirmaciones y formularios cortos), `wide` (`max-w-xl`, para formularios con más campos, como el registro) y `extraWide` (`max-w-5xl`, solo para el editor de contenido educativo, con su vista previa al lado). La prueba `estandaresVisuales.test.ts` cuenta las tarjetas con 20 px de relleno, los campos con esquina de 12 px y las páginas con otra separación.
+- **Botones (issue #640):** toda acción (guardar, cancelar, archivar, eliminar, descargar) usa el componente `Button` (`fe/src/components/ui/Button.tsx`), nunca un `<button>` con clases a mano. Variantes: `primary` (verde sólido), `secondary` (borde gris), `danger` (rojo sólido) y `dangerOutline` (borde rojo, para una acción destructiva de menos peso junto a otra principal); `warning` (ámbar sólido, para confirmar una acción que pide atención y no es destructiva, como avisar que el SHUT está lleno); tamaños `sm` (letra de 12 px), `md` (14 px) y `lg`; esquina de 8 px y letra semigruesa en todos. `Button` acepta los atributos normales de un botón (`aria-*`, `title`, `onClick`, `disabled`, `id`…) pero **no** `className` ni `style`: el aspecto sale solo de `variant` y `size`, y un botón que ocupa todo el ancho usa `fullWidth`. Quedan fuera de la regla, porque no son acciones: las pestañas, los chips de filtro y las tarjetas que hacen de botón (su estilo cambia según estén elegidos) y los botones de solo ícono, que llevan `aria-label` o `title`. La prueba `estandaresVisuales.test.ts` cuenta los botones que no cumplen.
+- **Alineación del contenido (issue #640):** tres reglas. (1) Un formulario o una lista **de la app** (nuevo comunicado, editar, filtros, listas) lleva el título, el subtítulo y los campos **a la izquierda**, con el nombre de cada campo arriba de él; los botones de acción van a la derecha, o a todo el ancho en una tarjeta angosta. (2) Un **mensaje de resultado** —un ícono, una frase y uno o dos botones: éxito, error, "enlace inválido", verificar correo, confirmar una eliminación— va **centrado** (`ConfirmModal`, `ErrorFallback`, los estados de `VerifyEmailPage` y `AceptarInvitacionPage`; en `AuthLayout` con la propiedad `centered`). (3) Las **ventanas de cuenta** (ingreso, registro y aceptar invitación) **conservan su encabezado centrado** —logo, título y subtítulo—, con la flecha de volver del registro en la esquina y los campos con su nombre a la izquierda. La alineación no cambia con el tamaño de la pantalla. Por qué: el texto de varias líneas se lee mejor alineado a la izquierda y lo breve que se ve de un vistazo se centra; es la práctica común (Material Design usa título e ícono a la izquierda y botones a la derecha por defecto). Las tres páginas "hermanas" (recuperar, restablecer y verificar correo) llevan el mismo título de 18 px.
+- **Alineación de las ventanas de cuenta: pendiente de revisar (issue #640, 2026-11-11).** Se probó alinear a la izquierda el encabezado del registro, del ingreso y de la invitación, y se descartó: con el logo y la flecha de volver en la misma fila, el logo y el título quedaban desordenados y corridos, y no estaba bien; quitar el logo y poner la flecha junto al título dejó el título corrido respecto al subtítulo. Se volvió al encabezado centrado de siempre. Hoy hay una incoherencia a la vista: el resto de la app va alineado a la izquierda y estas ventanas van centradas. **Para el futuro:** se resuelve junto con el diseño y el uso del logo (completo o solo el símbolo, y dónde va) en un issue de diseño aparte, con más cuidado; cualquier cambio del encabezado de una ventana de cuenta debe revisar antes cómo se ve junto a la flecha de volver.
+- **Fechas escritas (issue #633):** siguen el **idioma de la app**, no el del navegador. Español: día/mes/año (29/10/2026); inglés: mes/día/año (10/29/2026). Se escriben siempre con `lib/dateFormat.ts` (`formatearFechaUTC`, `formatearFechaCreacion`), nunca con `toLocaleDateString()` suelto. Debajo de cada campo de fecha (`<input type="date">`, que el navegador dibuja con su propio idioma) va el componente `FechaEnPalabras`, que escribe la fecha elegida con el mes en palabras ("Expira el 20 de noviembre de 2026"): así no hay duda entre día y mes en ningún navegador.
+- **Color con significado (issue #633):** el **rojo** es solo para peligro y error (borrar, fallo, "Urgente"). Un contador de avisos sin leer va en **ámbar**, no en rojo, porque pide atención pero no es un error. Las notas de la Agenda son de una sola tinta neutra: un color que no significa nada no se usa (la idea de teñirlas según su antigüedad está en `docs/gestion-proyecto/idea-color-por-antiguedad-agenda.md`).
+- **Listas de registros (issues #595 y #632):** una lista es **un contenedor** con las filas separadas por una línea y la **paginación al pie, siempre visible** (aunque solo haya una página: "Mostrando 1–2 de 2" con las flechas apagadas), igual que en todas las vistas. Las tarjetas sueltas se reservan para piezas grandes y distintas entre sí (el tablero de notas de la Agenda, los paneles). Las listas que pueden crecer se piden al servidor de 10 en 10 (`limit`/`offset`, respuesta `{items, total}`).
+- **Estados de carga (issue #644):** una pantalla, lista, tarjeta o formulario que espera datos del servidor muestra una **silueta gris** con la forma de lo que va a llegar (componente `Esqueleto`, `fe/src/components/ui/Esqueleto.tsx`), nunca un círculo "Cargando…". Variantes: `filas` (5 por omisión; las listas paginan de a 10), `tarjetas`, `campos` y `bloque`. El espacio se reserva desde el primer instante, pero las formas aparecen **a los 100 ms**: si los datos llegan antes no se ve nada, y así no hay un destello gris en las cargas rápidas (el RNF-004.3 pide el indicador a más tardar a los 500 ms). Se bajó de 200 a 100 ms tras medir con una respuesta de ~300 ms (Slow 4G): con 200 ms la silueta se veía solo ~110 ms y parecía no existir. Aspecto: **latido suave** (clase `animate-latido`, solo cambia la opacidad, sin degradados), quieto con "reducir movimiento"; el gris es `gray-200` en modo claro y `night-line` en oscuro. El aviso "Cargando…" para lectores de pantalla (`role="status"`, `aria-live`) está desde el primer momento. `ContenidoRecargable` la muestra en la primera carga de una lista (las recargas siguen con filas atenuadas y barra de progreso). Una acción corta (guardar, enviar) sigue con el círculo del botón (`Button` con `isLoading`). Para que la silueta mida lo mismo que el contenido real, `Esqueleto` acepta `cantidad`, `alto` (clase de Tailwind, para una gráfica o una portada) y `enTarjeta` (las filas dentro de una tarjeta con borde); cada pantalla elige la forma que se parece a su contenido (una tabla es `filas`, no `tarjetas`). Aun así, una silueta de 5 filas reduce el salto de altura pero no lo elimina si la lista trae otra cantidad; donde el alto no varía (un formulario, una tarjeta) queda exacta. Lo que aparece o no según el caso (los avisos de arriba del panel del Admin de Conjunto) no lleva silueta: reservar su espacio dejaría un hueco cuando no hay avisos. El componente `LoadingState` se eliminó y la prueba `estandaresVisuales` falla si reaparece en una pantalla.
+- **Movimiento (issue #643):** el contenido que aparece (otra pestaña, otra página, una lista que termina de cargar, un aviso o un mensaje de error) entra con un **desvanecimiento solo**, sin mover nada de lado ni de arriba a abajo: la clase `animate-fade-in` de `fe/src/index.css`. Hay **dos duraciones**: *rápida* de 150 ms (`transition-colors` sin `duration-…`, para el color al pasar el mouse o al enfocar) y *normal* de 200 ms (`duration-200` y la propia `animate-fade-in`, para contenido que aparece). No se escribe otra `duration-N` (la portada es la excepción). `animate-fade-in` usa `backwards`, no `forwards`: al terminar suelta el elemento, porque una opacidad animada que se queda aplicada crea una capa propia que puede tapar menús flotantes. Con "reducir movimiento" del sistema no hay animación. **Pestañas:** el panel de una fila de `Pestanas` es siempre el componente `PanelPestana` (`fe/src/components/ui/PanelPestana.tsx`), que lleva el rol, el vínculo con la pestaña activa y el desvanecimiento: con `claveActiva` se vuelve a crear al cambiar de pestaña; sin ella (paneles que tienen todas sus vistas montadas y ocultan las inactivas con `hidden`, como `TarjetaConjunto`) cada vista lleva su propio `animate-fade-in`, que se repite al volver a mostrarse. **Páginas:** `AppShell` envuelve la página en un bloque con `key={pathname}`, así cada ruta nueva se desvanece. **Listas:** `ContenidoRecargable` se desvanece solo la primera vez que termina de cargar, no en cada filtro. La prueba `estandaresVisuales` cuenta los `role="tabpanel"` escritos a mano y las duraciones distintas de 200 ms.
+- **Ventanas de confirmación (issue #642):** `ConfirmModal` dibuja sus dos botones con `Button` a todo el ancho (`fullWidth`), así Cancelar y Confirmar miden lo mismo y el texto del botón de confirmar no se parte. La prueba `estandaresVisuales` también revisa los botones con clase armada con una constante (`CLASE_BOTON…`), que antes se le escapaban.
+- **Botones (issue #633):** una acción para **agregar** algo va arriba, junto al título de la lista o de la página; lo **peligroso** va abajo y apartado, nunca pegado a una acción normal. En una tarjeta angosta (menos de 36 rem de ancho de la tarjeta, no de la ventana) el botón del encabezado baja debajo del texto, a todo el ancho; no se deja que parta su propio nombre en dos líneas.
+- **Acciones por fila (issue #633):** una o dos acciones van como **íconos visibles**; tres o más, en un **menú de tres puntos** (`MenuAcciones`).
+- **Pestañas (issues #595 y #632).** Tres usos, cada uno con su forma (componente `Pestanas`):
+  - **Subrayadas** (una línea bajo la activa) para cambiar el contenido de UNA tarjeta: Vigentes / Vencidos, Resumen / Avisos / Recicladores, las pestañas de Soporte técnico. Miden lo que su texto (desde 640 px de ventana) y llevan 20 px de margen a cada lado.
+  - **Subrayadas y repartidas** (`repartidas`: se reparten el ancho en partes iguales, también en ventana ancha) solo para elegir **conjunto** (Desempeño, Agenda): son nombres largos y de cantidad variable. Van al tope de la tarjeta, con 20 px de espacio arriba y a los lados. Con un solo conjunto no se muestran.
+  - **Burbujas** (`compacta`) para filtrar o alternar vistas del mismo contenido (Por tratar / Archivadas, filtros de Solicitudes). Llevan espacio debajo para no quedar pegadas a lo que sigue.
+  - Un conjunto no se elige con un `<select>` suelto dentro del contenedor: se probó y se descartó (corta el nombre y se ve mal en pantalla angosta).
+- **Ancho por rol (issue #632):** Soporte técnico es una sola página, pero cada rol la tiene junto a una pantalla distinta del menú: para el Admin de Conjunto usa `normal` (80 rem, como su Comunicados y su Agenda) y para el Residente y el Reciclador `lectura` (48 rem, como su Comunicados). Ver `docs/gestion-proyecto/decision-ancho-de-paginas.md`.
+- **El ancho no debe saltar:** el área principal reserva siempre el espacio de la barra de scroll (`scrollbar-gutter: stable` en `AppShell`), para que una pestaña más alta que la pantalla no achique la tarjeta solo en esa pestaña.
 
 ---
 
@@ -172,6 +212,7 @@ PostgreSQL 17 (imagen `postgres:17-alpine`), corriendo en Docker. No se usa SQLi
 - **Código** (variables, funciones, nombres de archivo, rutas de API): en **inglés**.
 - **Comentarios y documentación** (este documento incluido, los RFs, las HUs, los mensajes de commit descriptivos): en **español**.
 - Los mensajes de error mostrados al usuario final: en español, sin importar el idioma del código que los genera.
+- **La interfaz** está en español (por defecto) e inglés, y **todo lo que se escribe en pantalla sigue el idioma elegido en la app**, incluidas las fechas (ver "Fechas escritas" en Diseño Visual), no el idioma del navegador.
 
 ---
 

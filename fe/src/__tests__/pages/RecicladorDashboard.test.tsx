@@ -130,7 +130,7 @@ describe("RecicladorDashboard", () => {
 
     // Apagado no abre la confirmación del aviso.
     await user.click(boton);
-    expect(screen.queryByText("¿Enviar este aviso?")).not.toBeInTheDocument();
+    expect(screen.queryByText("¿Avisar que llegaste?")).not.toBeInTheDocument();
 
     expect(
       screen.getByText(/Los avisos de los residentes \(como SHUT lleno\) llegan de los conjuntos donde estés autorizado/)
@@ -196,8 +196,8 @@ describe("RecicladorDashboard", () => {
     await user.click(boton);
 
     // ¿Qué? El conjunto ya está elegido arriba: el modal solo confirma, sin volver a preguntar cuál.
-    expect(screen.getByText("¿Enviar este aviso?")).toBeInTheDocument();
-    expect(screen.getByText(/Vas a avisar "Llegué al conjunto" a los residentes y al administrador de Conjunto Los Alpes/)).toBeInTheDocument();
+    expect(screen.getByText("¿Avisar que llegaste?")).toBeInTheDocument();
+    expect(screen.getByText(/Se lo diremos a los residentes y al administrador de Conjunto Los Alpes/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Enviar aviso" }));
 
     await waitFor(() => {
@@ -208,12 +208,13 @@ describe("RecicladorDashboard", () => {
     });
   });
 
-  // ¿Qué? Orden de los bloques — invitaciones, mis conjuntos (el selector), avisos, auditoría
-  //       pendiente, notificaciones recibidas y, al final, el historial.
-  // ¿Impacto? Si alguien reordena el panel sin querer (o el aviso de auditoría vuelve a
-  //           empujar los botones hacia abajo), esta prueba falla. El selector va ARRIBA de los
-  //           botones porque los botones dependen del conjunto elegido (issue #515 y rediseño por conjunto).
-  it("muestra los bloques en orden: invitaciones, conjuntos, avisos, auditoría pendiente, notificaciones e historial", async () => {
+  // ¿Qué? Orden de los bloques — invitaciones, mis conjuntos (el selector), auditoría pendiente,
+  //       avisos, notificaciones recibidas y, al final, mis auditorías.
+  // ¿Impacto? Si alguien reordena el panel sin querer, esta prueba falla. El selector va ARRIBA de los
+  //           botones porque los botones dependen del conjunto elegido (issue #515 y rediseño por conjunto);
+  //           la auditoría pendiente va antes de los avisos (modelo B2 del rediseño del panel). En pantalla
+  //           ancha las dos últimas pasan a la columna derecha, pero el orden del HTML es el mismo.
+  it("muestra los bloques en orden: invitaciones, conjuntos, auditoría pendiente, avisos, notificaciones y mis auditorías", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("mis-invitaciones")) {
         return Promise.resolve({
@@ -237,10 +238,10 @@ describe("RecicladorDashboard", () => {
     const titulos = [
       await screen.findByRole("heading", { name: "Invitaciones pendientes" }),
       await screen.findByRole("heading", { name: "Mis conjuntos autorizados" }),
-      screen.getByRole("heading", { name: "Enviar notificación" }),
       await screen.findByRole("heading", { name: "Auditoría semanal pendiente" }),
+      screen.getByRole("heading", { name: "Enviar notificación" }),
       screen.getByRole("heading", { name: "Notificaciones recibidas" }),
-      screen.getByRole("heading", { name: "Historial de auditorías" }),
+      screen.getByRole("heading", { name: "Mis auditorías" }),
     ];
     for (let i = 0; i < titulos.length - 1; i++) {
       expect(titulos[i].compareDocumentPosition(titulos[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -282,7 +283,7 @@ describe("RecicladorDashboard", () => {
 
     const alerta = await screen.findByRole("alert");
     expect(alerta).toHaveTextContent("Ya enviaste este aviso a este conjunto hace menos de 5 minutos.");
-    expect(screen.getByText("¿Enviar este aviso?")).toBeInTheDocument();
+    expect(screen.getByText("¿Avisar que llegaste?")).toBeInTheDocument();
   });
 
   it("si el rechazo no trae motivo, muestra el aviso genérico dentro del modal", async () => {
@@ -308,7 +309,7 @@ describe("RecicladorDashboard", () => {
     renderPage();
 
     // ¿Qué? Nunca se ha auditado este conjunto, así que el aviso debe verse.
-    await screen.findByText("Ya puedes calificar la separación de residuos de Conjunto Los Alpes.");
+    await screen.findByText("Califica cómo separan el material en Conjunto Los Alpes esta semana.");
     await user.click(screen.getByRole("button", { name: "Auditar ahora" }));
 
     expect(screen.getByText("Auditar conjunto")).toBeInTheDocument();
@@ -326,7 +327,7 @@ describe("RecicladorDashboard", () => {
     // ¿Qué? Issue #9 — enviar ya no dispara la petición directo, primero
     //       pide confirmar (ConfirmModal apilado sobre el formulario).
     expect(screen.getByText("¿Enviar esta auditoría?")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Sí, enviar" }));
+    await user.click(within(screen.getByRole("dialog", { name: "Confirmar auditoría" })).getByRole("button", { name: "Enviar auditoría" }));
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
@@ -363,7 +364,7 @@ describe("RecicladorDashboard", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByText("Ya puedes calificar la separación de residuos de Conjunto Los Alpes.");
+    await screen.findByText("Califica cómo separan el material en Conjunto Los Alpes esta semana.");
     await user.click(screen.getByRole("button", { name: "Auditar ahora" }));
     await user.click(screen.getByRole("radio", { name: "Bueno" }));
     await user.selectOptions(await screen.findByRole("combobox"), "Separación en la fuente y código de colores");
@@ -391,7 +392,7 @@ describe("RecicladorDashboard", () => {
   //           de la primera página y el panel avisaría "pendiente" aunque se auditó hace poco.
   describe("aviso de auditoría pendiente", () => {
     const haceDias = (dias: number) => new Date(Date.now() - dias * 24 * 60 * 60 * 1000).toISOString();
-    const AVISO = "Ya puedes calificar la separación de residuos de Conjunto Los Alpes.";
+    const AVISO = "Califica cómo separan el material en Conjunto Los Alpes esta semana.";
 
     function mockConUltima(ultima: string | null) {
       mockGet.mockImplementation((url: string) => {
@@ -415,6 +416,16 @@ describe("RecicladorDashboard", () => {
         expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias/ultimas"));
       });
       expect(screen.queryByText(AVISO)).not.toBeInTheDocument();
+    });
+
+    // ¿Qué? Cuando ya se envió la de esta semana, la tarjeta no desaparece: dice que está al día.
+    it("con una auditoría reciente muestra la tarjeta 'al día' en vez del aviso", async () => {
+      mockConUltima(haceDias(2));
+      renderPage();
+
+      expect(await screen.findByRole("heading", { name: "Auditoría de esta semana" })).toBeInTheDocument();
+      expect(screen.getByText(/Ya enviaste la de Conjunto Los Alpes/)).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Auditoría semanal pendiente" })).not.toBeInTheDocument();
     });
 
     it("avisa un conjunto cuya última auditoría tiene 7 días o más", async () => {
@@ -585,20 +596,49 @@ describe("RecicladorDashboard", () => {
       expect(apagado("SHUT ya está libre")).toBe(false);
     });
 
-    it("apagado explica el motivo al tocarlo y no abre la confirmación", async () => {
+    // ¿Qué? Cada aviso tiene su propio título en la confirmación (antes todos decían "¿Enviar este aviso?").
+    it("la confirmación de cada aviso dice qué se está avisando", async () => {
       mockDosConjuntos();
       const user = userEvent.setup();
       renderPage();
       await screen.findByText("Estás en el conjunto");
 
-      await user.click(screen.getByRole("button", { name: "SHUT ya está libre" }));
+      await user.click(screen.getByRole("button", { name: "SHUT está lleno" }));
+      expect(screen.getByText("¿Avisar que el SHUT está lleno?")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Cancelar" }));
 
-      // ¿Qué? El motivo se ve en el aviso visible (role="status"); el mismo texto también va oculto
-      //       dentro del botón, para lectores de pantalla.
-      expect(
-        await within(await screen.findByRole("status")).findByText("El SHUT de este conjunto ya está reportado como libre.")
-      ).toBeInTheDocument();
-      expect(screen.queryByText("¿Enviar este aviso?")).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Finalicé separación" }));
+      expect(screen.getByText("¿Avisar que terminaste?")).toBeInTheDocument();
+    });
+
+    // ¿Qué? La razón corta se ve SIEMPRE dentro del botón apagado (antes salía solo al tocarlo, en un
+    //       mensaje largo). El botón apagado no se puede presionar: tocarlo no abre nada.
+    it("apagado muestra la razón dentro del botón y no abre la confirmación", async () => {
+      mockDosConjuntos();
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText("Estás en el conjunto");
+
+      const boton = screen.getByRole("button", { name: "SHUT ya está libre" });
+      expect(boton).toHaveAttribute("aria-disabled", "true");
+      expect(within(boton).getByText("Ya está reportado libre")).toBeInTheDocument();
+
+      await user.click(boton);
+      expect(screen.queryByText("¿Avisar que el SHUT está libre?")).not.toBeInTheDocument();
+    });
+
+    it("cada botón apagado dice su propia razón", async () => {
+      mockDosConjuntos();
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText("Estás en el conjunto");
+
+      // Las Flores: ya llegó y el SHUT está libre.
+      expect(within(screen.getByRole("button", { name: "Llegué al conjunto" })).getByText("Ya llegaste")).toBeInTheDocument();
+      // Los Alpes: no ha llegado.
+      await user.click(pastilla("Conjunto Los Alpes"));
+      expect(within(screen.getByRole("button", { name: "SHUT está lleno" })).getByText("Avisa tu llegada primero")).toBeInTheDocument();
+      expect(within(screen.getByRole("button", { name: "Finalicé separación" })).getByText("Avisa tu llegada primero")).toBeInTheDocument();
     });
 
     it("el aviso se envía al conjunto elegido", async () => {
@@ -609,7 +649,7 @@ describe("RecicladorDashboard", () => {
 
       await user.click(pastilla("Conjunto Los Alpes"));
       await user.click(screen.getByRole("button", { name: "Llegué al conjunto" }));
-      expect(screen.getByText(/Vas a avisar "Llegué al conjunto" a los residentes y al administrador de Conjunto Los Alpes/)).toBeInTheDocument();
+      expect(screen.getByText(/Se lo diremos a los residentes y al administrador de Conjunto Los Alpes/)).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Enviar aviso" }));
 
       await waitFor(() => {
@@ -717,7 +757,7 @@ describe("RecicladorDashboard", () => {
       const user = userEvent.setup();
       renderPage();
 
-      expect(await screen.findByText("Conjunto Los Alpes — Tema número 1")).toBeInTheDocument();
+      expect(await screen.findByText("Tema número 1")).toBeInTheDocument();
       expect(screen.getByText("Mostrando 1–10 de 25")).toBeInTheDocument();
       expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias"), {
         params: { limit: 10, offset: 0 },
@@ -725,7 +765,7 @@ describe("RecicladorDashboard", () => {
 
       await user.click(screen.getByRole("button", { name: "Página siguiente" }));
 
-      expect(await screen.findByText("Conjunto Los Alpes — Tema número 11")).toBeInTheDocument();
+      expect(await screen.findByText("Tema número 11")).toBeInTheDocument();
       expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/mias"), {
         params: { limit: 10, offset: 10 },
       });

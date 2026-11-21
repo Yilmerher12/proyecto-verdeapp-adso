@@ -7,6 +7,8 @@ Este documento describe los casos de uso identificados para la plataforma **Verd
 > **Nota (2026-08-29)**: este documento tenía dos problemas reales. Primero, **RQF012 describía por error el flujo de desvinculación/reasignación** — ese flujo en realidad vive en un requisito aparte, RQF-016 (`docs/requisitos/RFs/RQF-016_desvinculacion_reasignacion_conjuntos.md`), que nunca se había agregado aquí. Segundo, faltaban **RQF-016** y **RQF-017** (cambio de idioma) por completo — el catálogo real de requisitos funcionales llega hasta RQF-017, no hasta RQF-015. Corregido.
 >
 > **Nota (2026-09-08)**: RQF012 le agregó un tercer flujo — el Admin_conjunto ahora puede revocar el acceso de un reciclador que ya autorizó (HU-038), no solo invitarlo. Se documenta abajo como "Flujo C" de ese mismo caso de uso.
+>
+> **Nota (2026-11-20)**: se revisó el catálogo contra `docs/requisitos/RFs/`: están los 21 requisitos (RQF001 a RQF021), uno por archivo. Se actualizaron RQF005 y RQF011, que habían quedado atrás con el inventario de ECA de la UAESP (#664, #665): la lista del Admin_sistema ahora se pagina, se busca y se filtra, y "eliminar" es baja lógica con eliminación definitiva solo después.
 
 ---
 
@@ -20,6 +22,7 @@ Usuario principal de la plataforma encargado de:
 * Consultar información educativa.
 * Consultar recicladores y puntos de acopio (directorio).
 * Reportar niveles de capacidad SHUT (notificación).
+* Ver el resultado de las auditorías de su conjunto y su desempeño semanal (gráfica, historial y temas).
 * Gestionar su perfil(editarlo).
 * Enviarle novedades al Admin_sistema (RQF-021).
 * Cambiar el idioma de la interfaz (español/inglés).
@@ -35,6 +38,7 @@ Usuario encargado de:
 * Gestionar información relacionada con los conjuntos asignados.
 * Actualizar información de perfil.
 * Comunicar llegada al conjunto.
+* Auditar el desempeño de separación de un conjunto con fotos de evidencia.
 * Reportar niveles de capacidad SHUT (notificación).
 * Enviarle novedades al Admin_sistema (RQF-021).
 * Cambiar el idioma de la interfaz (español/inglés).
@@ -46,7 +50,8 @@ Usuario encargado de:
 
 Usuario responsable de:
 
-* Administrar el contenido educativo.
+* Administrar el contenido educativo y enviar un módulo a mano a un conjunto.
+* Ver las calificaciones de los conjuntos por localidad, conjunto y fecha.
 * Gestionar directorios de recicladores y puntos de acopio.
 * Consultar, buscar, filtrar y ordenar los usuarios registrados de cada rol, y activar o desactivar cualquier cuenta.
 * Supervisar el funcionamiento general del sistema.
@@ -68,6 +73,7 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 * Gestionar su perfil.
 * Editar el NIT y la cantidad de apartamentos, y regenerar el código de acceso de los conjuntos que administra.
 * Llevar una agenda privada de temas para el comité de cada conjunto (RQF-020).
+* Ver el desempeño semanal de sus conjuntos y descargarlo en PDF.
 * Enviarle novedades al Admin_sistema (RQF-021).
 * Cambiar el idioma de la interfaz (español/inglés).
 * Recuperar su contraseña si la olvida, o cambiarla estando autenticado.
@@ -83,15 +89,15 @@ Usuario responsable de la gestión de uno o más conjuntos residenciales:
 | RQF002 | Registrar usuarios                                       | Residente, Reciclador                |
 | RQF003 | Alertar máxima capacidad SHUT                            | Residente, Reciclador, Admin_conjunto |
 | RQF004 | Visualizar catálogo educativo                            | Residente                            |
-| RQF005 | Visualizar directorio de recicladores y puntos de acopio | Residente                            |
+| RQF005 | Visualizar directorio de recicladores y puntos de acopio | Residente, Reciclador                |
 | RQF006 | Notificar llegada al conjunto residencial                | Reciclador, Admin_conjunto           |
 | RQF007 | Cerrar sesión                                            | Residente, Reciclador, Admin_sistema, Admin_conjunto |
 | RQF008 | Actualizar perfil                                        | Residente, Reciclador, Admin_conjunto |
-| RQF009 | Visualizar gestión de residuos del conjunto              | Residente, Reciclador                |
+| RQF009 | Visualizar gestión de residuos del conjunto              | Residente, Reciclador, Admin_conjunto, Admin_sistema |
 | RQF010 | Gestionar contenido educativo                            | Admin_sistema                        |
 | RQF011 | Gestionar directorio de puntos de acopio y recicladores  | Admin_sistema                        |
 | RQF012 | Invitación, vinculación y revocación (admin de conjunto, reciclador) | Admin_sistema, Admin_conjunto, Reciclador |
-| RQF013 | Recomendar contenido educativo por auditoría (Por implementar) | Reciclador (dispara), Residente (recibe) |
+| RQF013 | Recomendar contenido educativo por auditoría             | Reciclador (dispara), Residente (recibe), Admin_sistema (envío manual) |
 | RQF014 | Gestionar comunicados del conjunto                       | Admin_conjunto, Residente, Reciclador |
 | RQF015 | Publicar novedades generales                             | Admin_sistema, Residente, Reciclador, Admin_conjunto |
 | RQF016 | Desvinculación y reasignación de conjuntos               | Admin_conjunto, Admin_sistema         |
@@ -125,7 +131,7 @@ flowchart TB
     RQF010([RQF010\nGestionar Contenido Educativo])
     RQF011([RQF011\nGestionar Directorio])
     RQF012([RQF012\nInvitación, Vinculación y Revocación])
-    RQF013([RQF013\nRecomendar Contenido por Auditoría\nPor implementar])
+    RQF013([RQF013\nRecomendar Contenido por Auditoría])
     RQF014([RQF014\nGestionar Comunicados del Conjunto])
     RQF015([RQF015\nPublicar Novedades Generales])
     RQF016([RQF016\nDesvinculación y Reasignación])
@@ -153,6 +159,7 @@ flowchart TB
     Reciclador --> RQF001
     Reciclador --> RQF002
     Reciclador --> RQF003
+    Reciclador --> RQF005
     Reciclador --> RQF006
     Reciclador --> RQF007
     Reciclador --> RQF008
@@ -166,9 +173,11 @@ flowchart TB
 
     Admin --> RQF001
     Admin --> RQF007
+    Admin --> RQF009
     Admin --> RQF010
     Admin --> RQF011
     Admin --> RQF012
+    Admin --> RQF013
     Admin --> RQF015
     Admin --> RQF016
     Admin --> RQF017
@@ -182,6 +191,7 @@ flowchart TB
     AdminConjunto --> RQF006
     AdminConjunto --> RQF007
     AdminConjunto --> RQF008
+    AdminConjunto --> RQF009
     AdminConjunto --> RQF012
     AdminConjunto --> RQF014
     AdminConjunto --> RQF015
@@ -283,13 +293,14 @@ Permite consultar contenido educativo relacionado con reciclaje y separación de
 
 ## RQF005 - Visualizar Directorio de Recicladores y Puntos de Acopio
 
-### Actor
+### Actores
 
-* Residente
+* Residente (directorio de recicladores y puntos de acopio de su localidad)
+* Reciclador (solo "Puntos de acopio", en lectura)
 
 ### Descripción
 
-Permite consultar el listado de recicladores y puntos de acopio registrados.
+Permite consultar el listado de recicladores (con "Llamar" y "WhatsApp" si el reciclador autorizó compartir su teléfono) y la tabla de puntos de acopio (solo los activos, con la UAESP citada como fuente del inventario, issue #665), cuya fila se despliega en una ficha con la ubicación, "Cómo llegar", el contacto y la foto.
 
 ---
 
@@ -337,12 +348,14 @@ Permite modificar la información personal registrada en el sistema.
 
 ### Actores
 
-* Residente
-* Reciclador
+* Reciclador (audita el conjunto y ve sus propias auditorías)
+* Residente (ve el resultado y el desempeño semanal de su conjunto)
+* Admin_conjunto (ve el historial y el desempeño semanal de sus conjuntos, y lo descarga en PDF)
+* Admin_sistema (ve las calificaciones de todos los conjuntos, filtradas por localidad, conjunto y fecha)
 
 ### Descripción
 
-Permite consultar información relacionada con la gestión de residuos dentro del conjunto residencial.
+Permite calificar y consultar la gestión de residuos de un conjunto: el Reciclador registra una auditoría (nivel Bueno, Regular o Malo, tema, observaciones y de 1 a 3 fotos); el conjunto ve el resultado, el historial y un desempeño semanal con gráfica, auditorías de la semana y temas donde más falla. Las fotos se guardan 6 meses y después se borran; la auditoría se conserva.
 
 ---
 
@@ -373,14 +386,15 @@ Permite administrar el contenido educativo de la plataforma.
 
 ### Descripción
 
-Permite administrar el directorio de recicladores y puntos de acopio registrados.
+Permite administrar los puntos de acopio del directorio. Desde el issue #664 el directorio parte del inventario de ECA de la UAESP (799 puntos), así que la lista se pagina, se busca y se filtra en el servidor.
 
 ### Funciones
 
-* Crear registros.
-* Editar registros.
-* Eliminar registros.
-* Consultar registros.
+* Crear y editar puntos de acopio, con foto opcional y un "motivo del cambio" que queda como comentario del punto.
+* Dar de baja un punto (baja lógica: deja de verse en el directorio público) y reactivarlo.
+* Eliminar definitivamente un punto que ya está de baja.
+* Buscar por nombre, dirección u organización, y filtrar por localidad y por estado (Todos, Activos o De baja).
+* Ver la ficha del punto y comentar.
 
 ---
 
@@ -418,7 +432,7 @@ Cubre cómo alguien se convierte en Admin_conjunto por primera vez, cómo un Adm
 
 ### Flujo E (pedir otro conjunto desde el panel, HU-051)
 
-1. El Admin_conjunto presiona "Solicitar otro conjunto" en su panel principal, debajo de la lista de sus conjuntos.
+1. El Admin_conjunto presiona "Solicitar otro conjunto" en su panel principal, arriba a la derecha de la lista de sus conjuntos.
 2. Lee el paso a paso y los dos documentos que debe adjuntar (los mismos del registro; no se suben a la aplicación).
 3. Presiona la dirección del equipo, que abre su correo con el asunto "Otro conjunto" y los datos a escribir ya puestos (o la copia con el ícono); adjunta los documentos y envía. El resto sigue por correo y el Admin_sistema le asigna el conjunto.
 
@@ -426,28 +440,29 @@ Cubre cómo alguien se convierte en Admin_conjunto por primera vez, cómo un Adm
 
 ## RQF013 - Recomendar Contenido Educativo por Auditoría
 
-> **Estado: Por implementar.** Este caso de uso describe el diseño previsto, no una funcionalidad ya construida — ver `docs/requisitos/RFs/RQF-013_recomendacion_contenido_educativo.md`. Se documenta la especificación completa para cuando se retome, no para dar a entender que ya existe.
+> **Estado: Implementado** (ver `docs/requisitos/RFs/RQF-013_recomendacion_contenido_educativo.md`). Hasta el 2026-11-03 este caso de uso decía "Por implementar" y describía un diseño con categorías negativas (Separación, Preparación, Presentación o Contaminación) que no es el que se construyó; se reescribió con lo que hace el código.
 
 ### Actores
 
 * Reciclador (dispara el evento al calificar)
 * Residente (recibe la recomendación)
+* Admin_sistema (puede enviar un módulo a mano a un conjunto)
 * Sistema (proceso automático)
 
 ### Descripción
 
-Cuando un reciclador registra una calificación de auditoría (RQF-009) con categorías negativas (Separación, Preparación, Presentación o Contaminación), el sistema recomienda automáticamente módulos del contenido educativo (RQF-010) relacionados a los residentes del conjunto auditado.
+Cuando un reciclador registra una auditoría (RQF-009) de nivel Regular o Malo, el sistema avisa a los residentes del conjunto auditado con una notificación de contenido recomendado (RQF-010, RQF-004). El módulo recomendado es el del catálogo cuya categoría tiene el mismo nombre que el tema de la auditoría: es una comparación directa de texto, sin inteligencia artificial.
 
 ### Flujo Principal
 
-1. El reciclador guarda la calificación de auditoría del conjunto.
-2. El sistema detecta las categorías con resultado negativo.
-3. Busca módulos educativos etiquetados con esas categorías.
-4. Marca los módulos encontrados como "Recomendados" para los residentes de ese conjunto.
+1. El reciclador guarda la auditoría del conjunto.
+2. Si el nivel es Regular o Malo, el sistema crea una notificación de contenido recomendado para los residentes de ese conjunto, que apunta a la auditoría.
+3. El residente la ve en "Notificaciones recibidas" y, al tocarla, el sistema lo lleva directo a la categoría de "Aprende a reciclar" que corresponde al tema.
 
 ### Flujo Alternativo
 
-* Si no hay módulos disponibles para una categoría fallida, no se genera una recomendación vacía.
+* Si el nivel es Bueno, no se genera ninguna notificación.
+* Envío manual: el Admin_sistema elige un módulo y uno o varios conjuntos; el sistema registra el envío y notifica a sus residentes aunque no haya una auditoría de por medio. Si el conjunto no tiene residentes, el envío se guarda pero no se notifica a nadie.
 
 ---
 

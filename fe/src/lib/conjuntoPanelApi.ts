@@ -74,8 +74,10 @@ export interface PaginaDeAgenda {
 // ¿Qué? Agenda interna del Admin de Conjunto, por conjunto — temas para
 //       llevar al comité (texto + foto opcional). Nunca llega al Admin Sistema.
 //       Devuelve solo los temas por tratar; los archivados se piden aparte.
-export async function listarAgenda(idConjunto: string): Promise<ItemAgenda[]> {
-  const { data } = await axios.get(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda`);
+// ¿Para qué? Issue #632: se pide de a páginas (limit/offset + total), igual que el historial; el total alimenta el
+//           contador de la pestaña de cada conjunto.
+export async function listarAgenda(idConjunto: string, limit: number, offset: number): Promise<PaginaDeAgenda> {
+  const { data } = await axios.get(`${API_BASE}/mis-conjuntos/${idConjunto}/agenda`, { params: { limit, offset } });
   return data;
 }
 

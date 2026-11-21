@@ -43,7 +43,7 @@
 ### CA-044.1 — Editar el NIT
 
 - **Dado que** administro un conjunto,
-- **cuando** edito su NIT con el botón "Editar datos del conjunto" (issue #513), que está dentro del conjunto desplegado, justo debajo de su nombre y al lado del NIT y la cantidad de apartamentos que edita,
+- **cuando** edito su NIT con el botón "Editar datos del conjunto" (issue #513), que está dentro del conjunto desplegado, justo debajo de su nombre y al lado del NIT y la cantidad de apartamentos que edita (se abre en una ventana corta con los dos campos y el resto del panel queda detrás; issue #595),
 - **entonces** el cambio se guarda de inmediato (el NIT admite máximo 50 caracteres, el tamaño de su columna; issue #352).
 - **y** si la petición no trae el campo NIT (por ejemplo, solo cambia la cantidad de apartamentos), el NIT guardado no se toca; solo se borra cuando llega vacío o `null` a propósito (issue #402). La pantalla siempre manda los dos campos, así que esto solo afecta a quien llame a la API directamente.
 
@@ -71,7 +71,7 @@
 - **Dado que** administro un conjunto,
 - **cuando** presiono "Regenerar código de acceso",
 - **entonces** el sistema genera uno nuevo y lo muestra de inmediato.
-- **y** en el panel principal el código de acceso está en la primera fila del conjunto desplegado (issue #491), como una tarjeta angosta a la derecha de la cobertura que en celular queda debajo de ella (issue #513).
+- **y** en el panel principal el código de acceso está en la pestaña Resumen del conjunto desplegado (issues #491 y #595), como una tarjeta angosta a la derecha de la cobertura que en celular queda debajo de ella (issue #513).
 
 ### CA-044.4 — El código anterior deja de servir
 

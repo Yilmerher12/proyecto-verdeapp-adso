@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BadgeCheck, OctagonX, Unlink } from "lucide-react";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
@@ -11,13 +11,9 @@ import {
   resolverSolicitudDesvinculacion,
   type SolicitudDesvinculacion,
 } from "@/lib/adminConjuntoApi";
+import { notificarSolicitudesActualizadas } from "@/lib/solicitudesEvents";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
-
-interface SolicitudesDesvinculacionProps {
-  /** ¿Para qué? El resumen de arriba del panel necesita el número de pendientes
-   *  ANTES de que el usuario abra la bandeja — se avisa cada vez que cambia. */
-  onCountChange?: (count: number) => void;
-}
+import { Button } from "@/components/ui/Button";
 
 /**
  * ¿Qué? Pestaña "Desvinculaciones" del Administrador del Sistema: las solicitudes
@@ -26,9 +22,11 @@ interface SolicitudesDesvinculacionProps {
  * ¿Para qué? Issue #512: antes iban mezcladas con las consultas de soporte en una
  *           sola lista. Son cosas distintas (una decisión de sí o no, sin prioridad
  *           ni respuesta), así que tienen su propio lugar.
- * ¿Impacto? Usa el mismo flujo y los mismos endpoints de RQF-016; solo cambia dónde se ve.
+ * ¿Impacto? Usa el mismo flujo y los mismos endpoints de RQF-016; solo cambia dónde se ve. Issue #596: ya
+ *          no reporta su número hacia arriba (lo lee useSolicitudesPendientes); al aprobar o rechazar
+ *          avisa con solicitudesEvents para que el contador del menú y la franja del panel se actualicen.
  */
-export function SolicitudesDesvinculacion({ onCountChange }: SolicitudesDesvinculacionProps = {}) {
+export function SolicitudesDesvinculacion() {
   const { t } = useTranslation();
   const [solicitudes, setSolicitudes] = useState<SolicitudDesvinculacion[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -39,13 +37,10 @@ export function SolicitudesDesvinculacion({ onCountChange }: SolicitudesDesvincu
 
   const cargar = useCallback(() => {
     listarSolicitudesDesvinculacion()
-      .then((lista) => {
-        setSolicitudes(lista);
-        onCountChange?.(lista.length);
-      })
+      .then(setSolicitudes)
       .catch((err) => console.error("Error cargando solicitudes de desvinculación", err))
       .finally(() => setCargando(false));
-  }, [onCountChange]);
+  }, []);
 
   useEffect(() => {
     cargar();
@@ -59,6 +54,7 @@ export function SolicitudesDesvinculacion({ onCountChange }: SolicitudesDesvincu
       setRechazandoId(null);
       setMotivoRechazo("");
       cargar();
+      notificarSolicitudesActualizadas();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || t("desvinculacion.adminSistema.errorDefault"));
@@ -67,7 +63,7 @@ export function SolicitudesDesvinculacion({ onCountChange }: SolicitudesDesvincu
     }
   };
 
-  if (cargando) return <LoadingState message={t("common.loading")} />;
+  if (cargando) return <Esqueleto mensaje={t("common.loading")} variante="filas" />;
 
   return (
     <div className="space-y-3">
@@ -95,7 +91,7 @@ export function SolicitudesDesvinculacion({ onCountChange }: SolicitudesDesvincu
 
             {rechazandoId === s.id ? (
               <div className="mt-3 space-y-2">
-                <label htmlFor={`motivo-rechazo-${s.id}`} className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                <label htmlFor={`motivo-rechazo-${s.id}`} className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   {t("desvinculacion.adminSistema.rejectModal.motivoLabel")}
                 </label>
                 <textarea
@@ -106,7 +102,7 @@ export function SolicitudesDesvinculacion({ onCountChange }: SolicitudesDesvincu
                   aria-describedby={`motivo-rechazo-contador-${s.id}`}
                   placeholder={t("desvinculacion.adminSistema.rejectModal.motivoPlaceholder")}
                   rows={2}
-                  className="w-full rounded-xl border border-edge bg-white p-2.5 text-sm text-gray-900 outline-none transition-colors focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                  className="focus-ring w-full rounded-lg border border-edge bg-white p-2.5 text-sm text-gray-900 transition-colors dark:border-night-edge dark:bg-night-field dark:text-white"
                 />
                 <ContadorCaracteres
                   id={`motivo-rechazo-contador-${s.id}`}
@@ -114,43 +110,28 @@ export function SolicitudesDesvinculacion({ onCountChange }: SolicitudesDesvincu
                   max={DESVINCULACION_MOTIVO_MAX_LENGTH}
                 />
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => resolver(s, false)}
-                    disabled={procesandoId === s.id || !motivoRechazo.trim()}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
+                  <Button variant="danger" size="sm" onClick={() => resolver(s, false)} disabled={procesandoId === s.id || !motivoRechazo.trim()}>
                     <OctagonX className="icon-sm icon-draw" />
                     {t("desvinculacion.adminSistema.rejectModal.confirm")}
-                  </button>
-                  <button
-                    onClick={() => {
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => {
                       setRechazandoId(null);
                       setMotivoRechazo("");
-                    }}
-                    className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-                  >
+                    }}>
                     {t("common.cancel")}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
               <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => resolver(s, true)}
-                  disabled={procesandoId === s.id}
-                  className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                >
+                <Button variant="primary" size="sm" onClick={() => resolver(s, true)} disabled={procesandoId === s.id}>
                   <BadgeCheck className="icon-sm icon-draw" />
                   {t("desvinculacion.adminSistema.approve")}
-                </button>
-                <button
-                  onClick={() => setRechazandoId(s.id)}
-                  disabled={procesandoId === s.id}
-                  className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400/30 dark:bg-transparent dark:hover:bg-red-400/15"
-                >
+                </Button>
+                <Button variant="dangerOutline" size="sm" onClick={() => setRechazandoId(s.id)} disabled={procesandoId === s.id}>
                   <OctagonX className="icon-sm icon-draw" />
                   {t("desvinculacion.adminSistema.reject")}
-                </button>
+                </Button>
               </div>
             )}
           </div>

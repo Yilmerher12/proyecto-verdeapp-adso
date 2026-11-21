@@ -536,8 +536,8 @@ describe("AdminDashboard", () => {
     //       que abrirlo antes de poder interactuar con sus campos.
     await user.click(screen.getByRole("button", { name: "+ Asignar conjunto" }));
 
+    // ¿Qué? Issue #596: la búsqueda del administrador es en vivo (sin botón "Buscar").
     await user.type(screen.getByPlaceholderText("Nombre, apellidos o correo"), "Ana");
-    await user.click(screen.getByRole("button", { name: "Buscar" }));
 
     const tarjetaAdmin = await screen.findByText("Ana Ríos");
     await user.click(tarjetaAdmin);
@@ -549,7 +549,7 @@ describe("AdminDashboard", () => {
     const opcionConjunto = await screen.findByText("RESERVA DE PRUEBA — Usaquén");
     await user.click(opcionConjunto);
 
-    await user.click(screen.getByRole("button", { name: "Asignar" }));
+    await user.click(screen.getByRole("button", { name: "Asignar conjunto" }));
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
@@ -600,7 +600,7 @@ describe("AdminDashboard", () => {
     expect((llamadaConjuntos?.[1] as { params: Record<string, unknown> }).params).not.toHaveProperty("id_localidad");
   });
 
-  it("el conteo de solicitudes pendientes llega antes de abrir el modal, y 'Ver solicitudes' lo abre", async () => {
+  it("avisa con una franja cuántas solicitudes hay pendientes y 'Ver solicitudes' lleva a su página", async () => {
     mockGet.mockImplementation((url: string) => {
       if (
         url.includes("/admin/vista-residentes") ||
@@ -631,21 +631,19 @@ describe("AdminDashboard", () => {
       }
       return Promise.resolve({ data: [] });
     });
-    const user = userEvent.setup();
     renderPage();
 
-    // ¿Qué? El número de pendientes (soporte + desvinculaciones) llega apenas
-    //       carga (BandejaAdminSistema avisa por onCountChange) gracias a la
-    //       instancia oculta (con "hidden", no deja de renderizarse) — antes
-    //       de que el usuario abra el modal, la solicitud ya está en el DOM
-    //       pero no visible.
+    // ¿Qué? Issue #596: el número (soporte + desvinculaciones) sale de useSolicitudesPendientes, el
+    //       mismo del menú lateral; el panel ya no abre un modal, solo enlaza a /admin/solicitudes.
     expect(await screen.findByText("1 solicitud pendiente por resolver.")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver solicitudes" })).toHaveAttribute("href", "/admin/solicitudes");
+  });
 
-    await user.click(screen.getByRole("button", { name: "Ver solicitudes" }));
-
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(await screen.findAllByText(/Conjunto Los Alpes/)).not.toHaveLength(0);
+  it("sin solicitudes pendientes no muestra la franja de aviso", async () => {
+    renderPage();
+    await waitFor(() => expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/novedades-enviadas/soporte"), expect.anything()));
+    expect(screen.queryByRole("link", { name: "Ver solicitudes" })).not.toBeInTheDocument();
   });
   describe("botón Inactivos, motivo de desactivación y perfil", () => {
     const inactivo = {
@@ -692,18 +690,38 @@ describe("AdminDashboard", () => {
       });
     }
 
-    it("ya no muestra el filtro de localidad", async () => {
-      mockConInactivos();
+    it("el filtro de localidad es opcional: empieza en 'Todas' y al elegir una manda localidad_id y limpia el conjunto", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/geography/localidades")) {
+          return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
+        }
+        if (url.includes("/admin/vista-residentes")) return Promise.resolve({ data: { items: [residente], total: 1 } });
+        if (url.includes("/admin/sp-recicladores") || url.includes("/admin/administradores-conjunto")) {
+          return Promise.resolve({ data: { items: [], total: 0 } });
+        }
+        return Promise.resolve({ data: [] });
+      });
+      const user = userEvent.setup();
       renderPage();
       await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
-      expect(screen.queryByText("Todas las localidades")).not.toBeInTheDocument();
+
+      const filtro = screen.getByRole("combobox", { name: "Filtrar por localidad" });
+      expect(filtro).toHaveValue("");
+      await user.selectOptions(filtro, "1");
+
+      await waitFor(() =>
+        expect(mockGet).toHaveBeenCalledWith(
+          expect.stringContaining("/admin/vista-residentes"),
+          expect.objectContaining({ params: expect.objectContaining({ localidad_id: 1, offset: 0 }) }),
+        ),
+      );
     });
 
     it("muestra las tarjetas de resumen ANTES de la tabla de usuarios", async () => {
       mockConInactivos();
       renderPage();
       await waitFor(() => expect(screen.getByText("Juan Pérez")).toBeInTheDocument());
-      const tarjeta = screen.getByRole("heading", { name: "Solicitudes pendientes" });
+      const tarjeta = screen.getByRole("heading", { name: "Totales del sistema" });
       const tabla = screen.getByRole("heading", { name: "Usuarios registrados" });
       expect(tarjeta.compareDocumentPosition(tabla) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });

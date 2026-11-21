@@ -231,6 +231,10 @@ ya estaba desplegada.
 **Ahora**: `aria-expanded={estado}` + `aria-controls` apuntando al `id` de la sección
 que se revela, en ambos botones.
 
+**Actualización (issue #595)**: "Ver detalle / Ocultar detalle" ya no existe. Las secciones del conjunto son tres pestañas
+(`role="tab"` con `aria-selected`, dentro de un `role="tablist"`) y "+ Invitar reciclador" abre una ventana
+(`role="dialog"` con `aria-modal`). El botón que abre y cierra cada conjunto conserva `aria-expanded` y `aria-controls`.
+
 ---
 
 ## Patrones ARIA de referencia usados en VerdeApp

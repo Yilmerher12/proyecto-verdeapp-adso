@@ -17,7 +17,7 @@ import type { LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
 import { Modal } from "@/components/ui/Modal";
-import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 
 interface ConfirmModalProps {
   /** ¿Qué? Ícono dentro del círculo de color, arriba del título (ej: TriangleAlert, Trash2, UserX). */
@@ -36,6 +36,11 @@ interface ConfirmModalProps {
   /** ¿Qué? Texto del botón mientras isConfirming=true. Por defecto, el mismo confirmLabel. */
   confirmingLabel?: string;
   isConfirming?: boolean;
+  /** ¿Qué? Apaga el botón de confirmar sin mostrar el spinner de "en curso".
+   *  ¿Para qué? Cuando la acción ya no se puede hacer (ej: el estado del conjunto cambió
+   *            mientras el Reciclador confirmaba un aviso) y el motivo va en `children`.
+   *  ¿Impacto? Opcional: sin pasarlo, el botón se comporta exactamente igual que antes. */
+  confirmDisabled?: boolean;
   error?: string | null;
   /** ¿Qué? Si se pasa, el aviso de error se puede cerrar sin cerrar todo el modal. */
   onDismissError?: () => void;
@@ -75,6 +80,7 @@ export function ConfirmModal({
   confirmLabel,
   confirmingLabel,
   isConfirming = false,
+  confirmDisabled = false,
   error,
   onDismissError,
   onConfirm,
@@ -100,27 +106,22 @@ export function ConfirmModal({
           </div>
         )}
         <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 cursor-pointer rounded-xl border border-gray-200 dark:border-night-line px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-night-hover transition-colors"
-          >
+          <Button variant="secondary" fullWidth type="button" onClick={onClose}>
             {t("common.cancel")}
-          </button>
-          <button
+          </Button>
+          {/* ¿Qué? Los dos botones son Button con fullWidth: reparten el ancho en partes iguales. El de confirmar toma el color de la
+                    variante de la ventana (danger, warning o primary) y muestra el spinner mientras la acción está en curso (issue #458). */}
+          <Button
+            variant={variant}
+            fullWidth
             type="button"
             onClick={onConfirm}
-            disabled={isConfirming}
-            aria-busy={isConfirming}
-            className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl ${estilo.boton} px-4 py-2.5 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60`}
+            disabled={confirmDisabled}
+            isLoading={isConfirming}
+            aria-label={isConfirming ? (confirmingLabel ?? confirmLabel) : undefined}
           >
-            {/* ¿Qué? Spinner mientras la acción está en curso (issue #458).
-                ¿Para qué? Antes solo cambiaba el texto, y muchas pantallas ni
-                          siquiera pasaban isConfirming: la acción tardaba y nada
-                          avisaba, ni impedía tocar el botón dos veces. */}
-            {isConfirming && <Spinner size="sm" tone="current" />}
             {isConfirming ? (confirmingLabel ?? confirmLabel) : confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

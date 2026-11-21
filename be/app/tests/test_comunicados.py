@@ -503,3 +503,124 @@ class TestFeed:
         assert response.status_code == 200
         data = response.json()
         assert data[0]["tipo"] == "URGENTE"
+
+
+class TestListarMisComunicadosPorVigencia:
+    """Issue #632: el Admin ve los comunicados vigentes y, aparte, los vencidos (su historial)."""
+
+    URL = "/api/v1/comunicados/mis-comunicados"
+
+    def _publicar(self, client: TestClient, headers, conjunto, texto: str) -> str:
+        respuesta = client.post(
+            "/api/v1/comunicados",
+            headers=headers,
+            json={
+                "id_conjunto_residencial": str(conjunto.id_conjunto_residencial),
+                "destinatarios": "AMBOS",
+                "tipo": "INFORMATIVO",
+                "texto": texto,
+            },
+        )
+        assert respuesta.status_code == 201
+        return respuesta.json()["id_comunicado"]
+
+    def _vencer(self, db: Session, id_comunicado: str) -> None:
+        from app.models.comunicado import Comunicado
+
+        comunicado = db.get(Comunicado, id_comunicado)
+        comunicado.fecha_expiracion = datetime.now(timezone.utc) - timedelta(hours=1)
+        db.commit()
+
+    def test_separa_vigentes_y_vencidos_con_su_total(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        vigente = self._publicar(client, admin_conjunto_auth_headers, conjunto_verificado, "Sigue vigente.")
+        vencido_a = self._publicar(client, admin_conjunto_auth_headers, conjunto_verificado, "Ya venció A.")
+        vencido_b = self._publicar(client, admin_conjunto_auth_headers, conjunto_verificado, "Ya venció B.")
+        self._vencer(db, vencido_a)
+        self._vencer(db, vencido_b)
+
+        vigentes = client.get(self.URL, params={"vigencia": "VIGENTES"}, headers=admin_conjunto_auth_headers).json()
+        vencidos = client.get(self.URL, params={"vigencia": "VENCIDOS"}, headers=admin_conjunto_auth_headers).json()
+
+        assert [c["id_comunicado"] for c in vigentes["items"]] == [vigente]
+        assert vigentes["total"] == 1
+        assert {c["id_comunicado"] for c in vencidos["items"]} == {vencido_a, vencido_b}
+        assert vencidos["total"] == 2
+
+    def test_sin_vigencia_trae_todos_como_antes(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        self._publicar(client, admin_conjunto_auth_headers, conjunto_verificado, "Vigente.")
+        self._vencer(db, self._publicar(client, admin_conjunto_auth_headers, conjunto_verificado, "Vencido."))
+
+        respuesta = client.get(self.URL, headers=admin_conjunto_auth_headers).json()
+
+        assert respuesta["total"] == 2
+
+    def test_pagina_de_10_en_10_y_el_total_es_el_del_filtro(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        for n in range(12):
+            self._publicar(client, admin_conjunto_auth_headers, conjunto_verificado, f"Vigente {n}.")
+        self._vencer(db, self._publicar(client, admin_conjunto_auth_headers, conjunto_verificado, "Vencido."))
+
+        primera = client.get(self.URL, params={"vigencia": "VIGENTES"}, headers=admin_conjunto_auth_headers).json()
+        segunda = client.get(
+            self.URL, params={"vigencia": "VIGENTES", "offset": 10}, headers=admin_conjunto_auth_headers
+        ).json()
+
+        assert primera["total"] == 12 and len(primera["items"]) == 10
+        assert segunda["total"] == 12 and len(segunda["items"]) == 2
+        ids = {c["id_comunicado"] for c in primera["items"]} | {c["id_comunicado"] for c in segunda["items"]}
+        assert len(ids) == 12
+
+    def test_un_comunicado_editado_con_fecha_nueva_pasa_de_vencidos_a_vigentes(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        id_comunicado = self._publicar(client, admin_conjunto_auth_headers, conjunto_verificado, "Se reutiliza.")
+        self._vencer(db, id_comunicado)
+        assert client.get(self.URL, params={"vigencia": "VENCIDOS"}, headers=admin_conjunto_auth_headers).json()["total"] == 1
+
+        nueva = (datetime.now(timezone.utc) + timedelta(days=5)).date().isoformat()
+        editado = client.patch(
+            f"/api/v1/comunicados/{id_comunicado}",
+            headers=admin_conjunto_auth_headers,
+            json={"tipo": "INFORMATIVO", "texto": "Se reutiliza.", "fecha_expiracion": f"{nueva}T23:59:59"},
+        )
+
+        assert editado.status_code == 200
+        assert client.get(self.URL, params={"vigencia": "VENCIDOS"}, headers=admin_conjunto_auth_headers).json()["total"] == 0
+        assert client.get(self.URL, params={"vigencia": "VIGENTES"}, headers=admin_conjunto_auth_headers).json()["total"] == 1
+
+    def test_no_incluye_comunicados_de_conjuntos_ajenos(
+        self,
+        client: TestClient,
+        db: Session,
+        admin_conjunto_test,
+        admin_conjunto_auth_headers,
+        conjunto_verificado,
+        conjunto_verificado_sin_admin,
+    ):
+        from app.models.comunicado import Comunicado, DestinatariosComunicado, TipoComunicado
+
+        db.add(
+            Comunicado(
+                id_conjunto_residencial=conjunto_verificado_sin_admin.id_conjunto_residencial,
+                id_administrador=admin_conjunto_test.id_administrador,
+                destinatarios=DestinatariosComunicado.AMBOS,
+                tipo=TipoComunicado.INFORMATIVO,
+                texto="De otro conjunto.",
+                fecha_expiracion=datetime.now(timezone.utc) + timedelta(days=3),
+            )
+        )
+        db.commit()
+
+        respuesta = client.get(self.URL, params={"vigencia": "VIGENTES"}, headers=admin_conjunto_auth_headers).json()
+
+        assert respuesta["total"] == 0
+
+    def test_vigencia_invalida_o_limit_fuera_de_rango_devuelven_422(self, client: TestClient, admin_conjunto_auth_headers):
+        assert client.get(self.URL, params={"vigencia": "OTRA"}, headers=admin_conjunto_auth_headers).status_code == 422
+        assert client.get(self.URL, params={"limit": 0}, headers=admin_conjunto_auth_headers).status_code == 422
+        assert client.get(self.URL, params={"limit": 101}, headers=admin_conjunto_auth_headers).status_code == 422
