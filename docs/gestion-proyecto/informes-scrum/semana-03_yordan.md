@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | **Scrum Master** | Yordan Castro Guerrero (@yordancastrog7-pixel) |
-| **Fechas** | octubre/2026 a octubre 2026 |
+| **Fechas** | 04/11/2026 al 10/11/2026 |
 | **Presentado al profesor** | Erick Granados |
 
 ## Resumen de la semana
