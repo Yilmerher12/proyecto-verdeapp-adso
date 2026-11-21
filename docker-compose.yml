@@ -79,6 +79,15 @@ services:
     build:
       context: ./fe
       dockerfile: Dockerfile
+      # ¿Qué? Pasa VITE_API_URL al momento de compilar la imagen del frontend.
+      # ¿Para qué? Vite escribe esa dirección dentro del JavaScript al compilar; el
+      #           contenedor final es solo nginx y no lee fe/.env al arrancar, así
+      #           que cambiar fe/.env no cambiaba la dirección del backend.
+      # ¿Impacto? Sin definirla se usa http://localhost:8000, igual que antes. Para
+      #           otra dirección: VITE_API_URL=https://api.ejemplo.com docker compose
+      #           build verde_fe (ver docs/despliegue.md).
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     container_name: verde_fe
     restart: unless-stopped
     env_file:
