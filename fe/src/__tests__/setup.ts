@@ -62,6 +62,14 @@ vi.mock("react-i18next", () => ({
   Trans: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+// ¿Qué? El navegador de las pruebas habla español.
+// ¿Para qué? AuthContext importa i18n.ts, que arranca el detector de idioma; jsdom dice "en-US" y el idioma global de i18next
+//           quedaba en inglés aunque el mock de arriba diga "es". Las fechas escritas (lib/dateFormat.ts) leen ese idioma global:
+//           con el mismo idioma en los dos lados, las pruebas dan lo mismo en cualquier computador.
+// ¿Impacto? Una prueba que necesite otro idioma lo cambia con i18n.changeLanguage o pasa el idioma a la función.
+Object.defineProperty(window.navigator, "language", { value: "es-CO", configurable: true });
+Object.defineProperty(window.navigator, "languages", { value: ["es-CO", "es"], configurable: true });
+
 // ¿Qué? Limpia el DOM después de cada test.
 // ¿Para qué? Evitar que el estado de un test interfiera con el siguiente.
 // ¿Impacto? Sin cleanup, elementos renderizados en un test quedarían en el DOM del siguiente.

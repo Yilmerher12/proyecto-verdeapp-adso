@@ -276,6 +276,228 @@ class TestCrearAuditoria:
         assert segunda.status_code == 400
 
 
+class TestCamposObligatorios:
+    """¿Qué? Qué pasa si el formulario llega con un campo vacío, ausente o demasiado largo.
+    ¿Para qué? El frontend ya deshabilita el botón con el formulario incompleto, pero la
+               API no puede fiarse de eso: cualquier cliente puede mandar la petición a mano.
+    ¿Impacto? En ningún caso debe quedar una auditoría a medias en la BD (una auditoría no se
+              puede editar después, así que una fila mala quedaría para siempre)."""
+
+    @pytest.mark.parametrize("campo", ["id_conjunto_residencial", "nivel_desempeno", "tema_educativo"])
+    def test_falta_un_campo_obligatorio_devuelve_422_y_no_guarda_nada(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado, campo: str
+    ):
+        payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
+        del payload[campo]
+
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=payload,
+            files=_archivo_valido(),
+        )
+
+        assert response.status_code == 422
+        assert campo in str(response.json()["detail"])
+        assert db.query(AuditoriaConjunto).count() == 0
+
+    def test_sin_fotos_de_evidencia_devuelve_422_y_no_guarda_nada(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+        )
+
+        assert response.status_code == 422
+        assert "evidencias" in str(response.json()["detail"])
+        assert db.query(AuditoriaConjunto).count() == 0
+
+    def test_tema_con_solo_espacios_devuelve_400_y_no_guarda_nada(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
+        payload["tema_educativo"] = "   "
+
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=payload,
+            files=_archivo_valido(),
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"] == "Selecciona un tema."
+        assert db.query(AuditoriaConjunto).count() == 0
+
+    def test_id_de_conjunto_que_no_es_uuid_devuelve_422(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
+        payload["id_conjunto_residencial"] = "no-soy-un-uuid"
+
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=payload,
+            files=_archivo_valido(),
+        )
+
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize("campo", ["tema_educativo", "descripcion"])
+    def test_texto_de_mas_de_255_caracteres_devuelve_422(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado, campo: str
+    ):
+        payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
+        payload[campo] = "x" * 256
+
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=payload,
+            files=_archivo_valido(),
+        )
+
+        assert response.status_code == 422
+
+    def test_texto_de_exactamente_255_caracteres_se_acepta(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        """¿Qué? El límite es 255 inclusive: esta es la otra cara del valor límite de arriba."""
+        _avisar_llegada(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
+        payload = _payload_valido(conjunto_verificado.id_conjunto_residencial)
+        payload["descripcion"] = "x" * 255
+
+        response = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=payload,
+            files=_archivo_valido(),
+        )
+
+        assert response.status_code == 201
+        assert response.json()["descripcion"] == "x" * 255
+
+
+class TestRespuestaYPersistencia:
+    """¿Qué? Qué devuelve la API al crear una auditoría (201) y qué queda realmente en PostgreSQL.
+    ¿Para qué? Los tests de arriba solo miran la respuesta HTTP. Una respuesta 201 correcta
+               no prueba que la fila se haya guardado bien: aquí se lee la fila de la BD
+               después de la petición y se compara contra lo que se envió.
+    ¿Impacto? Una auditoría no se puede editar después de enviada, así que un campo mal
+              guardado (nivel, tema, foto) quedaría mal para siempre."""
+
+    def _crear(self, client: TestClient, headers: dict, id_conjunto, **cambios):
+        payload = {**_payload_valido(id_conjunto), **cambios.pop("payload", {})}
+        _avisar_llegada(client, headers, id_conjunto)
+        return client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=headers,
+            data=payload,
+            files=cambios.pop("files", _archivo_valido()),
+        )
+
+    def _fila_en_la_bd(self, db: Session, id_auditoria: str) -> AuditoriaConjunto:
+        # ¿Qué? expire_all() obliga a leer de PostgreSQL y no de lo que la sesión ya tenía en memoria.
+        db.expire_all()
+        return db.query(AuditoriaConjunto).filter(AuditoriaConjunto.id_auditoria == uuid.UUID(id_auditoria)).one()
+
+    def test_201_devuelve_los_datos_de_la_auditoria_creada(
+        self, client: TestClient, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        response = self._crear(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
+
+        assert response.status_code == 201
+        data = response.json()
+        assert uuid.UUID(data["id_auditoria"])
+        assert data["id_conjunto_residencial"] == str(conjunto_verificado.id_conjunto_residencial)
+        assert data["nivel_desempeno"] == "REGULAR"
+        assert data["tema_educativo"] == "Separación en la fuente y código de colores"
+        assert data["created_at"]
+        # ¿Qué? El contador interno de orden nunca sale hacia el cliente (ver el modelo).
+        assert "orden_interno" not in data
+
+    def test_la_fila_queda_guardada_en_la_bd_con_lo_que_se_envio(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        assert db.query(AuditoriaConjunto).count() == 0
+
+        response = self._crear(
+            client,
+            reciclador_auth_headers,
+            conjunto_verificado.id_conjunto_residencial,
+            payload={"nivel_desempeno": "DEFICIENTE", "tema_educativo": "Tipos de residuos y su preparación", "descripcion": "Bolsas mezcladas"},
+        )
+
+        assert response.status_code == 201
+        assert db.query(AuditoriaConjunto).count() == 1
+        fila = self._fila_en_la_bd(db, response.json()["id_auditoria"])
+        assert fila.id_conjunto_residencial == conjunto_verificado.id_conjunto_residencial
+        assert fila.id_reciclador == reciclador_autorizado.id_reciclador
+        assert fila.nivel_desempeno == "DEFICIENTE"
+        assert fila.tema_educativo == "Tipos de residuos y su preparación"
+        assert fila.descripcion == "Bolsas mezcladas"
+        assert fila.created_at is not None
+        # ¿Qué? Lo que devuelve la API y lo que quedó en la BD es lo mismo.
+        assert fila.ruta_evidencia == response.json()["ruta_evidencia"]
+
+    def test_con_una_sola_foto_las_otras_dos_columnas_quedan_en_null(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        response = self._crear(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
+
+        fila = self._fila_en_la_bd(db, response.json()["id_auditoria"])
+        assert fila.ruta_evidencia.startswith("/uploads/evidencias-auditoria/")
+        assert fila.ruta_evidencia_2 is None
+        assert fila.ruta_evidencia_3 is None
+        assert fila.descripcion is None
+
+    def test_con_tres_fotos_cada_una_queda_en_su_columna_y_ninguna_se_repite(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        response = self._crear(
+            client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial, files=_archivos_multiples(3)
+        )
+
+        fila = self._fila_en_la_bd(db, response.json()["id_auditoria"])
+        rutas = [fila.ruta_evidencia, fila.ruta_evidencia_2, fila.ruta_evidencia_3]
+        assert all(rutas)
+        assert len(set(rutas)) == 3
+
+    def test_el_archivo_de_la_foto_queda_guardado_en_disco(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        from app.services.auditoria_conjunto_service import CARPETA_EVIDENCIAS
+
+        response = self._crear(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
+
+        fila = self._fila_en_la_bd(db, response.json()["id_auditoria"])
+        archivo = CARPETA_EVIDENCIAS / fila.ruta_evidencia.rsplit("/", 1)[-1]
+        try:
+            assert archivo.is_file()
+            assert archivo.stat().st_size > 0
+        finally:
+            # ¿Qué? Se borra el archivo de la prueba para no llenar be/app/uploads con fotos de test.
+            archivo.unlink(missing_ok=True)
+
+    def test_un_envio_rechazado_por_el_cooldown_no_agrega_una_segunda_fila(
+        self, client: TestClient, db: Session, reciclador_auth_headers, reciclador_autorizado, conjunto_verificado
+    ):
+        primera = self._crear(client, reciclador_auth_headers, conjunto_verificado.id_conjunto_residencial)
+        segunda = client.post(
+            "/api/v1/auditorias-conjunto",
+            headers=reciclador_auth_headers,
+            data=_payload_valido(conjunto_verificado.id_conjunto_residencial),
+            files=_archivo_valido(),
+        )
+
+        assert primera.status_code == 201
+        assert segunda.status_code == 400
+        assert db.query(AuditoriaConjunto).count() == 1
+
+
 class TestListarMisAuditorias:
     def test_sin_login_devuelve_401(self, client: TestClient):
         response = client.get("/api/v1/auditorias-conjunto/mias")

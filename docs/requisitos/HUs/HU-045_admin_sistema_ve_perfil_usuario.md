@@ -50,7 +50,7 @@
 - **Dado que** desplegué la información de una cuenta,
 - **cuando** la reviso,
 - **entonces** veo, para todos los roles: nombre, teléfono, correo, si el correo está verificado, idioma, y si la cuenta está bloqueada por intentos fallidos de contraseña. El rol lo da la pestaña y el estado (activo/inactivo) lo da la columna "Estado" de esa misma fila.
-- La información se pide al backend al desplegar la fila: mientras llega se ve "Cargando" y, si falla, un aviso de error.
+- La información se pide al backend al desplegar la fila: mientras llega se ve una silueta gris de los campos (los lectores de pantalla oyen "Cargando") y, si falla, un aviso de error.
 - Además, un Residente muestra conjunto, torre y apartamento; un Reciclador, asociación, conjuntos autorizados y si su contacto es visible en el Directorio; un Administrador de Conjunto, sus conjuntos.
 
 ### CA-045.3 — Cuenta desactivada

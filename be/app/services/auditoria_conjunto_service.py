@@ -11,7 +11,7 @@ from pathlib import Path
 from uuid import UUID
 
 from fastapi import HTTPException, UploadFile, status
-from sqlalchemy import Date, cast, func, select
+from sqlalchemy import Date, case, cast, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.administrador_conjunto import AdministradorConjunto
@@ -570,41 +570,108 @@ def _contar_avisados(db: Session, ids_auditoria: list[UUID]) -> dict[UUID, int]:
     return dict(db.execute(stmt).all())
 
 
+ORDENES_ADMIN = ("criticas", "recientes", "conjunto")
+
+
+def _condiciones_admin(
+    *,
+    desde: date | None,
+    hasta: date | None,
+    id_localidad: int | None,
+    id_conjunto: UUID | None,
+    buscar: str | None,
+) -> list:
+    """
+    ¿Qué? Los filtros de la lista del Admin del Sistema, SIN el de nivel.
+    ¿Para qué? Los conteos por nivel ("Malo 4", "Todas 10") se calculan sobre esto: deben ser lo que se vería
+              al pulsar ese botón, así que cuentan con todos los demás filtros puestos.
+    ¿Impacto? `desde` y `hasta` son días de calendario de Bogotá, ambos incluidos: el corte es la medianoche de
+              Bogotá del primer día y la del día siguiente al último (mismo criterio que la semana de siempre).
+    """
+    condiciones = []
+    if desde is not None:
+        condiciones.append(AuditoriaConjunto.created_at >= _inicio_dia_bogota(desde))
+    if hasta is not None:
+        condiciones.append(AuditoriaConjunto.created_at < _inicio_dia_bogota(hasta + timedelta(days=1)))
+    if id_localidad is not None:
+        condiciones.append(ConjuntoResidencial.id_localidad == id_localidad)
+    if id_conjunto is not None:
+        condiciones.append(AuditoriaConjunto.id_conjunto_residencial == id_conjunto)
+    if buscar and buscar.strip():
+        patron = f"%{buscar.strip()}%"
+        condiciones.append(
+            or_(
+                ConjuntoResidencial.nombre_conjunto.ilike(patron),
+                AuditoriaConjunto.tema_educativo.ilike(patron),
+                AuditoriaConjunto.descripcion.ilike(patron),
+            )
+        )
+    return condiciones
+
+
 def listar_admin(
-    db: Session, lunes: date | None, limit: int, offset: int
-) -> tuple[list[AuditoriaConjunto], int, dict[UUID, int]]:
+    db: Session,
+    *,
+    lunes: date | None = None,
+    desde: date | None = None,
+    hasta: date | None = None,
+    id_localidad: int | None = None,
+    id_conjunto: UUID | None = None,
+    buscar: str | None = None,
+    nivel: str | None = None,
+    orden: str = "recientes",
+    limit: int,
+    offset: int,
+) -> tuple[list[AuditoriaConjunto], int, dict[UUID, int], dict[str, int]]:
     """
     ¿Qué? RQF-009 — el Admin del Sistema ve las auditorías del reciclador
           sin importar a qué conjunto pertenecen, a diferencia de
           listar_historial (acotado al conjunto de quien pregunta).
-    ¿Para qué? Con `lunes`, se acota a esa semana completa: desde la
-              medianoche de Bogotá de ese lunes hasta la medianoche de Bogotá
-              del lunes siguiente (sin exigirlo) — la misma semana que ya usan
-              el desempeño del Admin de Conjunto y del Residente
-              (desempeno_semanal). Antes se cortaba en UTC: una auditoría del
-              domingo a las 9:00 p. m. en Bogotá ya es lunes en UTC y caía en
-              la semana siguiente. Sin `lunes`, trae las más recientes de
-              cualquier semana — así el catálogo educativo puede armar "a
-              qué conjuntos se le recomendó este módulo" sin acotarlo a una
-              sola semana.
-    ¿Impacto? El tercer valor devuelto es cuántos residentes fueron
-              avisados por cada auditoría (ver _contar_avisados) — siempre
-              0 para nivel BUENA, nunca un error de datos.
+    ¿Para qué? Issue #618: filtra, ordena y corta en la base de datos (antes la pantalla traía toda la semana y
+              lo hacía en el navegador). `lunes` sigue existiendo y equivale a desde=lunes, hasta=lunes+6;
+              sin ningún rango trae las más recientes de cualquier semana — así el catálogo educativo arma
+              "a qué conjuntos se le recomendó este módulo" sin acotarlo a una sola semana.
+    ¿Impacto? El cuarto valor son los conteos por nivel con todos los filtros MENOS el de nivel; el `total` sí
+              cuenta el nivel. El tercero es cuántos residentes fueron avisados por cada auditoría
+              (ver _contar_avisados) — siempre 0 para nivel BUENA, nunca un error de datos.
     """
-    condiciones = []
-    if lunes is not None:
-        desde = _inicio_dia_bogota(lunes)
-        condiciones.append(AuditoriaConjunto.created_at >= desde)
-        condiciones.append(AuditoriaConjunto.created_at < desde + timedelta(days=7))
+    if lunes is not None and desde is None and hasta is None:
+        desde, hasta = lunes, lunes + timedelta(days=6)
+    base = _condiciones_admin(desde=desde, hasta=hasta, id_localidad=id_localidad, id_conjunto=id_conjunto, buscar=buscar)
+    con_nivel = [*base, AuditoriaConjunto.nivel_desempeno == nivel] if nivel else base
+    unir = AuditoriaConjunto.id_conjunto_residencial == ConjuntoResidencial.id_conjunto_residencial
 
     total = db.execute(
-        select(func.count()).select_from(AuditoriaConjunto).where(*condiciones)
+        select(func.count()).select_from(AuditoriaConjunto).join(ConjuntoResidencial, unir).where(*con_nivel)
     ).scalar_one()
+    filas = db.execute(
+        select(AuditoriaConjunto.nivel_desempeno, func.count())
+        .join(ConjuntoResidencial, unir)
+        .where(*base)
+        .group_by(AuditoriaConjunto.nivel_desempeno)
+    ).all()
+    conteos = {"BUENA": 0, "REGULAR": 0, "DEFICIENTE": 0}
+    conteos.update({n: c for n, c in filas if n in conteos})
+
+    # ¿Qué? DEFICIENTE=0, REGULAR=1, BUENA=2 para el orden "críticas primero"; al final siempre lo más reciente,
+    #       y `orden_interno` fija el orden entre filas con la misma hora (sin él una página podría repetir o saltarse una).
+    gravedad = case(
+        (AuditoriaConjunto.nivel_desempeno == "DEFICIENTE", 0),
+        (AuditoriaConjunto.nivel_desempeno == "REGULAR", 1),
+        else_=2,
+    )
+    mas_reciente = (AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
+    criterios = {
+        "criticas": (gravedad, *mas_reciente),
+        "recientes": mas_reciente,
+        "conjunto": (ConjuntoResidencial.nombre_conjunto, *mas_reciente),
+    }[orden]
 
     stmt = (
         select(AuditoriaConjunto)
-        .where(*condiciones)
-        .order_by(AuditoriaConjunto.created_at.desc(), AuditoriaConjunto.orden_interno.desc())
+        .join(ConjuntoResidencial, unir)
+        .where(*con_nivel)
+        .order_by(*criterios)
         .options(
             selectinload(AuditoriaConjunto.conjunto).selectinload(ConjuntoResidencial.localidad),
             selectinload(AuditoriaConjunto.reciclador),
@@ -614,7 +681,36 @@ def listar_admin(
     )
     auditorias = list(db.execute(stmt).scalars().all())
     avisados_por_auditoria = _contar_avisados(db, [a.id_auditoria for a in auditorias])
-    return auditorias, total, avisados_por_auditoria
+    return auditorias, total, avisados_por_auditoria, conteos
+
+
+def resumen_semana_admin(db: Session, lunes: date) -> dict:
+    """
+    ¿Qué? Issue #618: lo que muestran las dos tarjetas de arriba de Calificaciones — cuántas calificaciones Buena,
+          Regular y Mala hubo esa semana, y los temas que tuvieron alguna Regular o Mala.
+    ¿Para qué? Antes la pantalla traía todas las calificaciones de la semana solo para contarlas.
+    ¿Impacto? `temas_con_recomendacion` es la lista de temas distintos con nivel REGULAR o DEFICIENTE; la pantalla
+              la cruza con los temas auditables para saber cuáles quedaron sin recomendar.
+    """
+    desde = _inicio_dia_bogota(lunes)
+    en_semana = [AuditoriaConjunto.created_at >= desde, AuditoriaConjunto.created_at < desde + timedelta(days=7)]
+    filas = db.execute(
+        select(AuditoriaConjunto.nivel_desempeno, func.count()).where(*en_semana).group_by(AuditoriaConjunto.nivel_desempeno)
+    ).all()
+    conteos = {n: c for n, c in filas}
+    temas = db.execute(
+        select(AuditoriaConjunto.tema_educativo)
+        .where(*en_semana, AuditoriaConjunto.nivel_desempeno != "BUENA")
+        .distinct()
+        .order_by(AuditoriaConjunto.tema_educativo)
+    ).scalars().all()
+    return {
+        "lunes": lunes,
+        "bueno": conteos.get("BUENA", 0),
+        "regular": conteos.get("REGULAR", 0),
+        "malo": conteos.get("DEFICIENTE", 0),
+        "temas_con_recomendacion": list(temas),
+    }
 
 
 def listar_mias(

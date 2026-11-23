@@ -15,8 +15,10 @@ import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
 import type { TemaDesempeno } from "@/lib/auditoriaConjuntoApi";
 import { CAMPOS_POR_NIVEL, claveNivel, rankingTemas, regularOMalo, totalTema } from "@/lib/desempeno";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 
-export function RankingTemas({ temas }: { temas: TemaDesempeno[] }) {
+// ¿Qué? `sinTarjeta`: sin marco propio, porque va dentro de una pestaña de la tarjeta del desempeño.
+export function RankingTemas({ temas, sinTarjeta = false }: { temas: TemaDesempeno[]; sinTarjeta?: boolean }) {
   const { t } = useTranslation();
   const [comoTabla, setComoTabla] = useState(false);
   const ordenados = rankingTemas(temas);
@@ -24,24 +26,22 @@ export function RankingTemas({ temas }: { temas: TemaDesempeno[] }) {
   return (
     <section
       aria-labelledby="desempeno-temas-titulo"
-      className="space-y-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card"
+      className={`space-y-3 ${
+        sinTarjeta ? "" : "rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card"
+      }`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 id="desempeno-temas-titulo" className="text-base font-bold text-gray-900 dark:text-white">
+          <h2 id="desempeno-temas-titulo" className="text-lg font-bold text-gray-900 dark:text-white">
             {t("desempeno.temas.titulo")}
           </h2>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{t("desempeno.temas.pista")}</p>
         </div>
         {ordenados.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setComoTabla((v) => !v)}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-          >
+          <Button variant="secondary" size="sm" type="button" onClick={() => setComoTabla((v) => !v)}>
             {comoTabla ? <List className="icon-sm" aria-hidden="true" /> : <Table2 className="icon-sm" aria-hidden="true" />}
             {comoTabla ? t("desempeno.temas.verComoLista") : t("desempeno.temas.verComoTabla")}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -66,7 +66,7 @@ export function RankingTemas({ temas }: { temas: TemaDesempeno[] }) {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-night-line">
+            <tbody className="divide-y divide-gray-200 dark:divide-night-line">
               {ordenados.map((tema) => (
                 <tr key={tema.tema}>
                   <th scope="row" className="py-2 pr-3 text-left font-normal text-gray-800 dark:text-gray-200">
@@ -86,7 +86,7 @@ export function RankingTemas({ temas }: { temas: TemaDesempeno[] }) {
           </table>
         </div>
       ) : (
-        <ol className="divide-y divide-gray-50 dark:divide-night-line">
+        <ol className="divide-y divide-gray-200 dark:divide-night-line">
           {ordenados.map((tema) => {
             const malas = regularOMalo(tema);
             return (

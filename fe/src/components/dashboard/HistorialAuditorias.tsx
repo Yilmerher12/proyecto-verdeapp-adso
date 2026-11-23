@@ -18,7 +18,7 @@ import { History } from "lucide-react";
 import { type AuditoriaConjunto, type PaginaAuditorias } from "@/lib/auditoriaConjuntoApi";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
@@ -33,9 +33,21 @@ interface HistorialAuditoriasProps {
   // ¿Para qué? Un Reciclador audita varios conjuntos; un Residente siempre ve el mismo.
   mostrarSiempreElConjunto?: boolean;
   recargar?: number;
+  // ¿Qué? Título de la tarjeta. Por omisión, "Historial de auditorías".
+  // ¿Para qué? Al Reciclador esta lista le muestra las que ÉL envió: "Mis auditorías" se entiende mejor.
+  titulo?: string;
+  // ¿Qué? Sin tarjeta ni título propios, solo la lista.
+  // ¿Para qué? En el panel del Residente es la pestaña "Todas las auditorías" de la tarjeta "Mi conjunto".
+  sinTarjeta?: boolean;
 }
 
-export function HistorialAuditorias({ cargar, mostrarSiempreElConjunto = false, recargar = 0 }: HistorialAuditoriasProps) {
+export function HistorialAuditorias({
+  cargar,
+  mostrarSiempreElConjunto = false,
+  recargar = 0,
+  titulo,
+  sinTarjeta = false,
+}: HistorialAuditoriasProps) {
   const { t } = useTranslation();
   const [auditorias, setAuditorias] = useState<AuditoriaConjunto[]>([]);
   const [total, setTotal] = useState(0);
@@ -70,19 +82,21 @@ export function HistorialAuditorias({ cargar, mostrarSiempreElConjunto = false, 
   const conNombreDeConjunto = mostrarSiempreElConjunto || variosConjuntos;
 
   return (
-    <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-5">
-      <div className="mb-4 flex items-center gap-2">
-        <History className="icon-md text-gray-500 dark:text-gray-400" />
-        <h2 className="text-sm font-bold text-gray-900 dark:text-white">{t("auditoriaResultado.historialTitle")}</h2>
-      </div>
+    <div className={sinTarjeta ? "" : "bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm p-6"}>
+      {!sinTarjeta && (
+        <div className="mb-4 flex items-center gap-2">
+          <History className="icon-md text-gray-500 dark:text-gray-400" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{titulo ?? t("auditoriaResultado.historialTitle")}</h2>
+        </div>
+      )}
 
       {cargando ? (
-        <LoadingState message={t("common.loading")} />
+        <Esqueleto mensaje={t("common.loading")} variante="filas" />
       ) : auditorias.length === 0 ? (
         <EmptyState icon={History} message={t("auditoriaResultado.historialEmpty")} />
       ) : (
         <>
-          <ul className="divide-y divide-gray-50 dark:divide-gray-800">
+          <ul className="divide-y divide-gray-200 dark:divide-night-line">
             {auditorias.map((a) => {
               const nivel = NIVELES_DESEMPENO[a.nivel_desempeno];
               return (
@@ -111,8 +125,8 @@ export function HistorialAuditorias({ cargar, mostrarSiempreElConjunto = false, 
               );
             })}
           </ul>
-          {total > TAMANO_PAGINA && (
-            <div className="mt-2 border-t border-gray-50 dark:border-night-line">
+          {total > 0 && (
+            <div className="mt-2 border-t border-gray-200 dark:border-night-line">
               <Paginacion
                 desde={paginacion.desde}
                 hasta={paginacion.hasta}

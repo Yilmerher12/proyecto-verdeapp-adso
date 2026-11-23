@@ -7,6 +7,8 @@ Este documento describe la estructura de clases del sistema **VerdeApp**, identi
 > **Nota (2026-08-29)**: este diagrama estaba muy desactualizado — le faltaban 7 entidades completas (`AuditoriaConjunto`, `Comunicado`, `Novedad`, `SolicitudDesvinculacion`, `PasswordResetToken`, `EmailVerificationToken`, `TokenRevocado`) y todos los IDs seguían marcados como `int`, cuando el proyecto migró 20 de sus 22 tablas a UUIDv7 (a pedido del profesor, para que las llaves primarias no sean adivinables). Se reconstruyó leyendo directamente `be/app/models/*.py`. También se dejó de listar un getter/setter por cada atributo (ruido que no aporta, y Python no los usa explícitamente) — ahora solo se muestran los métodos de negocio reales.
 >
 > **Nota (2026-09-08)**: 3 correcciones más, encontradas en una auditoría general de documentación. (1) El proyecto migró de UUIDv7 a UUIDv4 (issue #167) después de la nota de arriba — v7 seguía sin ser adivinable, pero codificaba la marca de tiempo de creación dentro del propio ID, algo que v4 no filtra. Todo el diagrama ya refleja `generar_uuid4()`. (2) `RecicladorConjunto` pasó de tabla puente plana a entidad completa con historial (`fecha_autorizacion`, `fecha_revocacion`, `revocado_por_id`) para poder revocar el acceso de un reciclador sin borrar el vínculo (HU-038) — ya se dibuja igual que `AdministradorConjuntoAsignacion`. (3) `PuntoAcopio` ganó un campo `activo` (soft-delete, HU-017).
+>
+> **Nota (2026-11-20)**: se comparó cada clase contra los modelos de `be/app/models/` (30 clases) y se agregó lo que faltaba: `Usuario.version_sesion` (contador que cierra las sesiones abiertas al cambiar la contraseña, issue #308), `ContenidoEducativo.url_imagen` y la relación `Usuario` → `InvitacionRecicladorConjunto`.
 
 ---
 
@@ -37,6 +39,7 @@ class Usuario {
     +string locale
     +int intentos_fallidos
     +datetime bloqueado_hasta
+    +int version_sesion
     +string foto_perfil_url
 
     +registrarUsuario()
@@ -306,7 +309,13 @@ class PuntoAcopio {
     +string nombre_encargado
     +string direccion
     +string telefono_contacto
+    +string url_foto
     +bool activo
+    +string numero_resolucion
+    +string organizacion
+    +string correo_contacto
+    +decimal latitud
+    +decimal longitud
 }
 
 class PuntoAcopioComentario {
@@ -325,6 +334,7 @@ class ContenidoEducativo {
     +date fecha_publicacion
     +string url_video
     +string url_guia
+    +string url_imagen
 }
 
 class ContenidoEducativoEnvio {
@@ -332,6 +342,19 @@ class ContenidoEducativoEnvio {
     +UUID id_contenido
     +UUID id_conjunto_residencial
     +UUID enviado_por_id
+    +datetime created_at
+}
+
+class ContenidoEducativoVisto {
+    +UUID id_usuario
+    +UUID id_contenido
+    +datetime visto_at
+}
+
+class ArchivoSubido {
+    +UUID id
+    +UUID id_usuario
+    +string ruta
     +datetime created_at
 }
 
@@ -382,6 +405,7 @@ ConjuntoResidencial "0..1" --> "*" NovedadEnviada
 AdministradorConjunto "1" --> "*" Comunicado
 ConjuntoResidencial "1" --> "*" Comunicado
 
+Usuario "1" --> "*" InvitacionRecicladorConjunto : invita
 InvitacionRecicladorConjunto "*" --> "1" Reciclador
 InvitacionRecicladorConjunto "*" --> "1" ConjuntoResidencial
 
@@ -392,6 +416,9 @@ Notificacion "1" --> "*" NotificacionDestinatario
 ContenidoEducativo "1" --> "*" ContenidoEducativoEnvio
 ConjuntoResidencial "1" --> "*" ContenidoEducativoEnvio : recibe
 Usuario "1" --> "*" ContenidoEducativoEnvio : envia
+Usuario "1" --> "*" ContenidoEducativoVisto : abre
+ContenidoEducativo "1" --> "*" ContenidoEducativoVisto
+Usuario "1" --> "*" ArchivoSubido : sube
 ```
 
 ---
@@ -533,7 +560,7 @@ Representa apartamentos o unidades habitacionales (torre + apto) dentro de un co
 
 ## PuntoAcopio
 
-Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — dato abierto de la UAESP (dataset de marzo de 2020: 9 puntos en 6 de las 20 localidades; no son todas las ECA de Bogotá). `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive.
+Representa los puntos ECA (Estación de Clasificación y Aprovechamiento) autorizados para entrega de material reciclable — salen del inventario vigente de la UAESP (Resolución 698 de 2023, entregado en noviembre de 2026: 799 ECA en 18 de las 20 localidades; detalle y licencia en `docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md`). `numero_resolucion` identifica cada ECA del inventario (única; la UAESP repite el 105 y el 605, así que la segunda fila lleva `-2`) y permite repetir la importación sin duplicar; `organizacion`, `correo_contacto`, `latitud` y `longitud` también vienen del inventario. Los cinco son opcionales y quedan en `NULL` en un punto creado a mano por el Admin Sistema; la edición no los toca. `activo` es un soft-delete (HU-017): un punto dado de baja por el Admin Sistema no se borra ni deja de aparecer en el panel de administración, pero sí desaparece del directorio público hasta que se reactive. `url_foto` es una foto opcional (issue #581) que sube el Admin Sistema y se ve en la ficha del punto.
 
 ---
 
@@ -552,6 +579,18 @@ Representa los módulos educativos publicados en la plataforma — texto, video 
 ## ContenidoEducativoEnvio
 
 Registra que el Admin Sistema envió un módulo del catálogo a mano a un conjunto puntual (RQF-013, Flujo C) — independiente de la recomendación automática que dispara una auditoría Regular/Mala. `enviado_por_id` queda `NULL` si el usuario que lo envió se elimina después, para no perder el historial del envío.
+
+---
+
+## ContenidoEducativoVisto
+
+Un módulo del catálogo que un Residente ya abrió (issue #545). Una fila por Residente y módulo (clave compuesta `id_usuario` + `id_contenido`): abrir la misma lección otra vez no duplica nada. "Visto" significa que abrió la lección, no que vio el video completo. Alimenta "Visto" en cada tarjeta y el avance de "Aprende a reciclar".
+
+---
+
+## ArchivoSubido
+
+Un registro por cada archivo que alguien sube con `POST /uploads/adjunto`: quién lo subió, la ruta pública y cuándo. Sirve para la cuota de subidas por usuario y para saber de quién es cada archivo. No es una referencia de uso: `limpiar_adjuntos` la ignora a propósito.
 
 ---
 
@@ -581,6 +620,9 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 | Localidad                   | PuntoAcopio                       | 1 : N    |
 | PuntoAcopio                 | PuntoAcopioComentario             | 1 : N    |
 | Usuario                     | PuntoAcopioComentario             | 1 : N (escribe) |
+| Usuario                     | ArchivoSubido                     | 1 : N (sube) |
+| Usuario                     | ContenidoEducativoVisto           | 1 : N (abre) |
+| ContenidoEducativo          | ContenidoEducativoVisto           | 1 : N    |
 | Localidad                   | Reciclador                        | 1 : N    |
 | ConjuntoResidencial         | Unidad                            | 1 : N    |
 | Unidad                      | Residente                         | 1 : N    |
@@ -600,6 +642,7 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 | ConjuntoResidencial         | Comunicado                        | 1 : N    |
 | Reciclador                  | InvitacionRecicladorConjunto      | 1 : N    |
 | ConjuntoResidencial         | InvitacionRecicladorConjunto      | 1 : N    |
+| Usuario                     | InvitacionRecicladorConjunto      | 1 : N (invita) |
 | ConjuntoResidencial         | Notificacion                      | 1 : N    |
 | ConjuntoResidencial         | AuditoriaConjunto                 | 1 : N    |
 | Notificacion                | NotificacionDestinatario          | 1 : N    |
@@ -609,7 +652,7 @@ Catálogo fijo de las 20 localidades de Bogotá. Junto con `Role`, es la única 
 # 📌 Observaciones
 
 * El modelo sigue una estructura orientada a objetos alineada con la base de datos del proyecto (`be/app/models/`).
-* Solo `Role` y `Localidad` usan llave primaria `Integer` — las demás 20 tablas usan `UUID` versión 4 (`generar_uuid4()`). El proyecto migró de UUIDv7 a UUIDv4 (issue #167): v7 sigue sin ser adivinable, pero codifica la marca de tiempo de creación dentro del propio ID — v4 no filtra esa información.
+* Solo `Role` y `Localidad` usan llave primaria `Integer` — las demás 28 tablas usan `UUID` versión 4 (`generar_uuid4()`). El proyecto migró de UUIDv7 a UUIDv4 (issue #167): v7 sigue sin ser adivinable, pero codifica la marca de tiempo de creación dentro del propio ID — v4 no filtra esa información.
 * Las clases `Residente`, `Reciclador` y `AdministradorConjunto` representan perfiles especializados asociados 1:1 a un `Usuario`, uno por cada rol (2, 3 y 4 respectivamente). El rol 1 (Admin_sistema) no tiene una clase de perfil propia: sus datos viven directamente en `Usuario`.
 * `AdministradorConjunto` nunca se crea por registro público — únicamente mediante `InvitacionAdminConjunto`, aceptada con un token de un solo uso.
 * Las relaciones N:M con historial propio (`AdministradorConjuntoAsignacion` entre `AdministradorConjunto`↔`ConjuntoResidencial`, y `RecicladorConjunto` entre `Reciclador`↔`ConjuntoResidencial`) se dibujan como entidad completa, no como asociación directa, porque ambas tienen atributos propios (fechas de asignación/revocación) — no son simples tablas puente.

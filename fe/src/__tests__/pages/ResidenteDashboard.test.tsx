@@ -4,7 +4,7 @@
  *              SHUT y notificaciones, y el reporte de "SHUT lleno".
  */
 
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, beforeEach } from "vitest";
 import { Route, Routes } from "react-router-dom";
@@ -69,10 +69,10 @@ describe("ResidenteDashboard", () => {
     expect(screen.getByText("Test User")).toBeInTheDocument();
   });
 
-  // ¿Qué? Issue #514: orden de los bloques — primero lo que pasó (avisos), luego lo que el
-  //       Residente puede hacer, luego la actividad, y al final lo de consulta.
+  // ¿Qué? Orden de los bloques: la tarjeta del SHUT (con la acción), el resultado de la última auditoría,
+  //       las notificaciones recibidas y, al final, lo de consulta ("Mi conjunto").
   // ¿Impacto? Si alguien reordena el panel sin querer, esta prueba falla.
-  it("muestra los bloques en orden: avisos, reportar, actividad reciente y mi conjunto", async () => {
+  it("muestra los bloques en orden: SHUT, auditoría, notificaciones recibidas y mi conjunto", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("estado-shut")) {
         return Promise.resolve({ data: { lleno: true, created_at: "2026-08-24T10:00:00Z" } });
@@ -97,19 +97,17 @@ describe("ResidenteDashboard", () => {
     renderPage();
 
     const titulos = [
-      await screen.findByText("El SHUT está lleno"),
+      await screen.findByRole("heading", { name: "El SHUT está lleno" }),
       await screen.findByText("Nueva auditoría de tu conjunto"),
-      screen.getByRole("heading", { name: "Reportar SHUT lleno" }),
-      screen.getByRole("heading", { name: "Actividad reciente" }),
+      screen.getByRole("heading", { name: "Notificaciones recibidas" }),
       screen.getByRole("heading", { name: "Mi conjunto" }),
-      screen.getByRole("heading", { name: "Historial de auditorías" }),
     ];
     for (let i = 0; i < titulos.length - 1; i++) {
       expect(titulos[i].compareDocumentPosition(titulos[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
   });
 
-  it("el aviso de error de carga va después del aviso de auditoría y antes de reportar", async () => {
+  it("el aviso de error de carga va arriba, antes de la tarjeta del SHUT y del aviso de auditoría", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("estado-shut")) return Promise.reject(new Error("Network Error"));
       if (url.includes("mis-notificaciones")) {
@@ -134,8 +132,8 @@ describe("ResidenteDashboard", () => {
     const auditoria = await screen.findByText("Nueva auditoría de tu conjunto");
     const error = screen.getByText("No se pudo cargar la información. Intenta de nuevo más tarde.");
     const reportar = screen.getByRole("heading", { name: "Reportar SHUT lleno" });
-    expect(auditoria.compareDocumentPosition(error) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(error.compareDocumentPosition(reportar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(reportar.compareDocumentPosition(auditoria) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("muestra un aviso de error si falla la carga (issue #223, f9 del diagnóstico)", async () => {
@@ -182,7 +180,7 @@ describe("ResidenteDashboard", () => {
     renderPage();
     await waitFor(() => {
       expect(
-        screen.getByText("No tienes notificaciones aún. Aparecerán aquí cuando el reciclador envíe avisos.")
+        screen.getByText("No tienes notificaciones aún. Aquí aparecerán los avisos del reciclador y de tu administración.")
       ).toBeInTheDocument();
     });
   });
@@ -200,12 +198,18 @@ describe("ResidenteDashboard", () => {
     });
   });
 
-  it("reporta SHUT lleno al hacer clic en el botón y muestra confirmación", async () => {
+  // ¿Qué? Reportar pide confirmación: el botón de la tarjeta solo abre la ventana, y el reporte sale al confirmar.
+  it("reporta SHUT lleno solo después de confirmar en la ventana, y muestra 'Reporte enviado'", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    const boton = await screen.findByRole("button", { name: "Reportar" });
-    await user.click(boton);
+    await user.click(await screen.findByRole("button", { name: "Reportar SHUT lleno" }));
+
+    expect(screen.getByText("¿Reportar que el SHUT está lleno?")).toBeInTheDocument();
+    expect(screen.getByText("Tu reporte es anónimo.")).toBeInTheDocument();
+    expect(mockPost).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Reportar" }));
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
@@ -213,7 +217,50 @@ describe("ResidenteDashboard", () => {
         { tipo: "SHUT_LLENO" }
       );
     });
-    expect(await screen.findByText("Enviado")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Reporte enviado" })).toBeDisabled();
+    expect(screen.queryByText("¿Reportar que el SHUT está lleno?")).not.toBeInTheDocument();
+  });
+
+  it("al cancelar la confirmación no se envía nada", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Reportar SHUT lleno" }));
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(mockPost).not.toHaveBeenCalled();
+    expect(screen.queryByText("¿Reportar que el SHUT está lleno?")).not.toBeInTheDocument();
+  });
+
+  it("la confirmación nombra el conjunto del residente cuando el perfil lo trae", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });
+      if (url.endsWith("/users/me")) return Promise.resolve({ data: { nombre_conjunto: "Conjunto Los Alpes" } });
+      return Promise.resolve(respuestaPorDefecto(url));
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Reportar SHUT lleno" }));
+
+    expect(
+      await screen.findByText("Se notificará al reciclador y al administrador de Conjunto Los Alpes."),
+    ).toBeInTheDocument();
+  });
+
+  // ¿Qué? Con el SHUT ya reportado la tarjeta es una sola (ámbar) y el botón queda apagado.
+  it("con el SHUT ya reportado muestra una sola tarjeta con 'Ya reportado' y sin la invitación a reportar", async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("estado-shut")) {
+        return Promise.resolve({ data: { lleno: true, created_at: "2026-08-24T10:00:00Z" } });
+      }
+      return Promise.resolve(respuestaPorDefecto(url));
+    });
+    renderPage();
+
+    expect(await screen.findByRole("button", { name: "Ya reportado" })).toBeDisabled();
+    expect(screen.getByText(/No bajes más material reciclable/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Reportar SHUT lleno" })).not.toBeInTheDocument();
   });
 
   // ¿Qué? Issue #414: el motivo exacto del rechazo llega a la pantalla.
@@ -224,9 +271,12 @@ describe("ResidenteDashboard", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(await screen.findByRole("button", { name: "Reportar" }));
+    await user.click(await screen.findByRole("button", { name: "Reportar SHUT lleno" }));
+    await user.click(screen.getByRole("button", { name: "Reportar" }));
 
+    // ¿Qué? El motivo sale dentro de la ventana de confirmación, que sigue abierta.
     expect(await screen.findByText("El SHUT de tu conjunto ya está reportado como lleno.")).toBeInTheDocument();
+    expect(screen.getByText("¿Reportar que el SHUT está lleno?")).toBeInTheDocument();
   });
 
   it("muestra el aviso de auditoría publicada, aparte del feed normal, y su detalle al hacer clic en Ver", async () => {
@@ -290,6 +340,17 @@ describe("ResidenteDashboard", () => {
   it("muestra el historial de auditorías y abre el detalle al hacer clic en una fila", async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.includes("estado-shut")) return Promise.resolve({ data: { lleno: false, created_at: null } });
+      // ¿Qué? Con 4 o más auditorías en el período el panel muestra la gráfica y las pestañas.
+      if (url.endsWith("/auditorias-conjunto/desempeno")) {
+        return Promise.resolve({
+          data: {
+            id_conjunto_residencial: "c1",
+            total: 5,
+            semanas: [{ lunes: "2026-10-19", bueno: 5, regular: 0, malo: 0 }],
+            temas: [],
+          },
+        });
+      }
       if (url.includes("/auditorias-conjunto/historial")) {
         return Promise.resolve({
           data: {
@@ -330,8 +391,8 @@ describe("ResidenteDashboard", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByText("Historial de auditorías");
-    await user.click(screen.getByText("Economía circular y aprovechamiento"));
+    await user.click(await screen.findByRole("tab", { name: "Todas las auditorías" }, { timeout: 5000 }));
+    await user.click(await screen.findByText("Economía circular y aprovechamiento"));
 
     expect(await screen.findByText("Resultado de la auditoría")).toBeInTheDocument();
     expect(screen.getAllByText("Bueno").length).toBeGreaterThan(0);
@@ -371,10 +432,15 @@ describe("ResidenteDashboard", () => {
       expect(
         await screen.findByRole("button", { name: /^Semana en curso, del .*: Bueno 2, Regular 0, Malo 1$/ }, { timeout: 5000 }),
       ).toBeInTheDocument();
-      expect(screen.getByRole("region", { name: "Temas del período" })).toBeInTheDocument();
-      // ¿Qué? Dos botones: uno para la gráfica y otro para el ranking de temas.
-      expect(screen.getAllByRole("button", { name: "Ver como tabla" })).toHaveLength(2);
-      expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+      // ¿Qué? Tres pestañas dentro de la misma tarjeta: semana elegida, todas las auditorías y por tema.
+      const pestanas = screen.getByRole("tablist", { name: "Qué ver del desempeño" });
+      expect(within(pestanas).getAllByRole("tab").map((p) => p.textContent)).toEqual([
+        "Semana elegida",
+        "Todas las auditorías",
+        "Por tema",
+      ]);
+      expect(screen.getAllByRole("button", { name: "Ver como tabla" })).toHaveLength(1);
+      expect(screen.queryByRole("tablist", { name: "Conjunto" })).not.toBeInTheDocument();
       expect(screen.queryByLabelText("Período")).not.toBeInTheDocument();
     });
 
@@ -395,7 +461,8 @@ describe("ResidenteDashboard", () => {
 
       expect(await screen.findByText(/Todavía no hay suficientes auditorías para mostrar la gráfica/)).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /^Semana/ })).not.toBeInTheDocument();
-      expect(screen.getByText("Historial de auditorías")).toBeInTheDocument();
+      // ¿Qué? Con pocas auditorías no hay pestañas: se ve directo el historial completo.
+      expect(await screen.findByText("Todavía no hay auditorías registradas.")).toBeInTheDocument();
     });
 
     it("si falla el desempeño lo avisa en su sección y el resto del panel sigue funcionando", async () => {
@@ -407,7 +474,8 @@ describe("ResidenteDashboard", () => {
       renderPage();
 
       expect(await screen.findByText("No se pudo cargar el desempeño.")).toBeInTheDocument();
-      expect(screen.getByText("Historial de auditorías")).toBeInTheDocument();
+      // ¿Qué? El título de la tarjeta sigue visible aunque falle la carga.
+      expect(screen.getByRole("heading", { name: "Mi conjunto" })).toBeInTheDocument();
       expect(screen.getByText("Panel del Residente")).toBeInTheDocument();
     });
   });

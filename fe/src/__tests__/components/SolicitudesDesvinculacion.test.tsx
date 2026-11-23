@@ -46,15 +46,13 @@ describe("SolicitudesDesvinculacion", () => {
     expect(await screen.findByText("No hay solicitudes pendientes.")).toBeInTheDocument();
   });
 
-  it("lista la solicitud con quién la pidió y su motivo, y avisa el conteo", async () => {
+  it("lista la solicitud con quién la pidió y su motivo", async () => {
     mockGet.mockResolvedValue({ data: [solicitud] });
-    const onCountChange = vi.fn();
-    renderWithProviders(<SolicitudesDesvinculacion onCountChange={onCountChange} />);
+    renderWithProviders(<SolicitudesDesvinculacion />);
 
     expect(await screen.findByText("Quintas de Aranjuez")).toBeInTheDocument();
     expect(screen.getByText("Solicitado por Admin de Prueba")).toBeInTheDocument();
     expect(screen.getByText("Me mudé de ciudad.")).toBeInTheDocument();
-    await waitFor(() => expect(onCountChange).toHaveBeenCalledWith(1));
   });
 
   it("aprueba con el endpoint de su propia solicitud", async () => {

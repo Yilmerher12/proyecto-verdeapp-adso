@@ -1,56 +1,43 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import ReactMarkdown from "react-markdown";
 import {
   BookOpen,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
   FileText,
-  Heading2,
   ImagePlus,
   List as ListIcon,
   Bold,
-  ChevronDown,
-  FilterX,
-  Maximize2,
   Pencil,
   Plus,
   Search,
   Send,
-  SlidersHorizontal,
   Trash2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Modal } from "@/components/ui/Modal";
-import { PanelLateral } from "@/components/ui/PanelLateral";
-import { InsigniaAccionImagen } from "@/components/ui/InsigniaAccionImagen";
+import { MenuAcciones } from "@/components/ui/MenuAcciones";
+import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Alert } from "@/components/ui/Alert";
 import { InputField } from "@/components/ui/InputField";
-import { Button } from "@/components/ui/Button";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import { ImagenAdjuntaField } from "@/components/ui/ImagenAdjuntaField";
-import { MuroLeccion } from "@/components/educativo/MuroLeccion";
+import { CategoriaField, type ModoCategoria } from "@/components/educativo/CategoriaField";
+import { ResumenMuro } from "@/components/educativo/ResumenMuro";
+import { VistaPreviaModulo } from "@/components/educativo/VistaPreviaModulo";
+import { Pestanas } from "@/components/ui/Pestanas";
+import { categoriaDuplicada } from "@/lib/categoriaEducativa";
 import { subirAdjunto } from "@/lib/uploadsApi";
-import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
-import { ConjuntoCombobox, type ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
-import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
-import { API_BASE_URL, motivoDelServidor } from "@/api/axios";
-import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
-import axios from "axios";
-import { COMPONENTES_MARKDOWN } from "@/config/contenidoEducativoMarkdown";
+import { motivoDelServidor } from "@/api/axios";
 import { ICONOS_CATEGORIAS, ICONO_CATEGORIA_DEFAULT, CATEGORIAS_NO_AUDITABLES } from "@/config/categoriasEducativas";
-import { NIVELES_DESEMPENO } from "@/config/nivelesDesempeno";
-import { domingoDeLunesUTC, fechaBogota, formatearFechaCreacion, isoToDateInputUTC, lunesBogota, lunesUTC, rangoSemanaUTC } from "@/lib/dateFormat";
+import { formatearFechaCreacion, lunesBogota, rangoSemanaUTC } from "@/lib/dateFormat";
 import {
   crearContenido,
   editarContenido,
   eliminarContenido,
-  enviarContenido,
   listarContenido,
   listarEnvios,
   type ContenidoEducativo,
@@ -59,17 +46,23 @@ import {
 } from "@/lib/contenidoEducativoApi";
 import {
   CONTENIDO_CUERPO_MAX_LENGTH,
-  CONTENIDO_MODULO_MAX_LENGTH,
   CONTENIDO_TITULO_MAX_LENGTH,
   ENLACE_MAX_LENGTH,
   REGEX_VIDEO_YOUTUBE,
 } from "@/lib/validacion";
-import { listarAuditoriasAdmin, listarAuditoriasAdminDeSemana, type AuditoriaAdmin, type NivelDesempeno } from "@/lib/auditoriaConjuntoApi";
+import {
+  listarAuditoriasAdmin,
+  obtenerResumenSemanaAdmin,
+  type AuditoriaAdmin,
+  type ResumenSemanaAdmin,
+} from "@/lib/auditoriaConjuntoApi";
+import { CalificacionesPorConjunto } from "@/components/educativo/CalificacionesPorConjunto";
+import { ContenidoRecomendadoCalificacion } from "@/components/educativo/ContenidoRecomendadoCalificacion";
+import { EnviarAConjuntosModal } from "@/components/educativo/EnviarAConjuntosModal";
+import { ModuloEducativoModal } from "@/components/educativo/ModuloEducativoModal";
+import { combinarConEnvios, destinatariosAutoDe } from "@/lib/destinatariosModulo";
+import { Button } from "@/components/ui/Button";
 
-type OrdenCalificaciones = "criticas" | "recientes" | "conjunto";
-const ORDENES_CALIFICACIONES: OrdenCalificaciones[] = ["criticas", "recientes", "conjunto"];
-const CLASE_CONTROL_FILTRO =
-  "touch-target-h rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200";
 
 const FORM_VACIO: ContenidoEducativoPayload = {
   modulo_categoria: "",
@@ -80,81 +73,11 @@ const FORM_VACIO: ContenidoEducativoPayload = {
   url_imagen: "",
 };
 
-const NUEVA_CATEGORIA = "__nueva__";
-
 // ¿Qué? Cuántas auditorías "de todos los tiempos" se piden para cruzar
 //       "a qué conjuntos se recomendó cada módulo" en la tabla y en el
 //       resumen — no toda la historia, las más recientes alcanzan para el
 //       tamaño real de este catálogo (6-20 módulos).
 const LIMITE_AUDITORIAS_RECIENTES = 100;
-
-function fetchConjuntos(query: string): Promise<ConjuntoOption[]> {
-  return axios
-    .get(`${API_BASE_URL}/api/v1/geography/conjuntos/todos`, { params: { search: query || undefined, limit: 20 } })
-    .then((res) => res.data)
-    .catch(() => []);
-}
-
-// ¿Qué? Destinatario ya resuelto de un módulo — une las auditorías Regular
-//       o Malo (automáticas) con los envíos manuales, sin repetir un mismo
-//       conjunto dos veces.
-// ¿Para qué? Si un conjunto tiene ambas, se queda la calificación (trae más
-//           contexto: el semáforo y quién la hizo) — el envío manual solo
-//           se muestra para los conjuntos que no tienen ya una calificación
-//           de ese tema.
-interface Destinatario {
-  id_conjunto_residencial: string;
-  nombre_conjunto: string;
-  tipo: "auto" | "manual";
-  nivel?: NivelDesempeno;
-  fecha: string;
-}
-
-function destinatariosAutoDe(modulo: ContenidoEducativo, auditorias: AuditoriaAdmin[]): Destinatario[] {
-  const vistos = new Set<string>();
-  const out: Destinatario[] = [];
-  const ordenadas = [...auditorias]
-    .filter((a) => a.tema_educativo === modulo.modulo_categoria && a.nivel_desempeno !== "BUENA")
-    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-  for (const a of ordenadas) {
-    if (vistos.has(a.id_conjunto_residencial)) continue;
-    vistos.add(a.id_conjunto_residencial);
-    out.push({
-      id_conjunto_residencial: a.id_conjunto_residencial,
-      nombre_conjunto: a.nombre_conjunto,
-      tipo: "auto",
-      nivel: a.nivel_desempeno,
-      fecha: a.created_at,
-    });
-  }
-  return out;
-}
-
-function combinarConEnvios(auto: Destinatario[], envios: EnvioContenido[]): Destinatario[] {
-  const vistos = new Set(auto.map((d) => d.id_conjunto_residencial));
-  const manuales: Destinatario[] = envios
-    .filter((e) => !vistos.has(e.id_conjunto_residencial))
-    .map((e) => ({
-      id_conjunto_residencial: e.id_conjunto_residencial,
-      nombre_conjunto: e.nombre_conjunto,
-      tipo: "manual" as const,
-      fecha: e.created_at,
-    }));
-  return [...auto, ...manuales];
-}
-
-// ¿Qué? La guía de apoyo puede ser una imagen subida, un PDF subido, o un
-//       link externo escrito a mano (GuiaApoyoField admite las 3 formas) —
-//       solo las imágenes se pueden mostrar integradas con una <img>; un PDF
-//       (o un link cuyo tipo no se puede saber sin descargarlo) se queda
-//       como el botón "Ver guía de apoyo" de siempre.
-// ¿Para qué? Antes, ver la foto de la guía exigía un clic extra a ciegas
-//           (el botón no daba ninguna pista de que había una imagen detrás).
-const EXTENSIONES_IMAGEN_GUIA = [".jpg", ".jpeg", ".png", ".webp"];
-function esImagenGuia(url: string): boolean {
-  const limpia = url.split("?")[0].split("#")[0].toLowerCase();
-  return EXTENSIONES_IMAGEN_GUIA.some((ext) => limpia.endsWith(ext));
-}
 
 export function AdminContenidoEducativoPage() {
   const { t } = useTranslation();
@@ -162,13 +85,6 @@ export function AdminContenidoEducativoPage() {
   const p = "adminContenidoEducativo";
 
   const [tab, setTab] = useState<"cal" | "mod">("cal");
-  // ¿Qué? El contenido de la pestaña activa (semana/chips/tabla, o
-  //       buscador/lista de módulos) se puede recoger para que no ocupe
-  //       espacio cuando no se está usando — solo las dos pestañas quedan
-  //       siempre visibles. Empieza expandido: recogerlo es una decisión
-  //       explícita del Admin, no algo que tenga que abrir cada vez que
-  //       entra al panel.
-  const [panelExpandido, setPanelExpandido] = useState(true);
 
   // ---------- Catálogo (módulos) ----------
   const [contenido, setContenido] = useState<ContenidoEducativo[]>([]);
@@ -190,128 +106,34 @@ export function AdminContenidoEducativoPage() {
 
   // ---------- Auditorías recientes (cruce "recomendado a", todos los módulos) ----------
   const [auditoriasRecientes, setAuditoriasRecientes] = useState<AuditoriaAdmin[]>([]);
+  // ¿Qué? true cuando ya terminó de pedirlas (con o sin éxito): la tabla de Calificaciones espera esto para decidir
+  //       si abre en la última semana con datos (issue #618).
+  const [recientesCargadas, setRecientesCargadas] = useState(false);
   useEffect(() => {
     if (!user) return;
     listarAuditoriasAdmin({ limit: LIMITE_AUDITORIAS_RECIENTES })
       .then((res) => setAuditoriasRecientes(res.items))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setRecientesCargadas(true));
   }, [user]);
 
-  // ---------- Semana en curso (tarjeta de resumen — siempre la de HOY, sin importar qué semana se esté navegando) ----------
-  // ¿Qué? La semana de hoy en hora de Bogotá, igual que la corta el backend (listar_admin).
+  // ---------- Semana en curso (tarjeta de resumen — siempre la de HOY, sin importar qué periodo se esté viendo) ----------
+  // ¿Qué? La semana de hoy en hora de Bogotá, igual que la corta el backend.
+  // ¿Para qué? Issue #618: los conteos y los temas con recomendación los calcula el servidor (antes se traían
+  //           todas las calificaciones de la semana al navegador solo para contarlas).
   const semanaActual = useMemo(() => lunesBogota(), []);
-  const [calSemanaActual, setCalSemanaActual] = useState<AuditoriaAdmin[]>([]);
+  const [resumenSemana, setResumenSemana] = useState<ResumenSemanaAdmin | null>(null);
   useEffect(() => {
     if (!user) return;
-    listarAuditoriasAdminDeSemana(semanaActual)
-      .then(setCalSemanaActual)
+    obtenerResumenSemanaAdmin(semanaActual)
+      .then(setResumenSemana)
       .catch(() => {});
   }, [user, semanaActual]);
 
   // ---------- Pestaña "Calificaciones por conjunto" ----------
-  const [semana, setSemana] = useState(semanaActual);
-  const [calSemana, setCalSemana] = useState<AuditoriaAdmin[]>([]);
-  const [cargandoCal, setCargandoCal] = useState(true);
-  const [errorCal, setErrorCal] = useState(false);
-  const [nivelFiltro, setNivelFiltro] = useState<"" | NivelDesempeno>("");
-  const [buscarCal, setBuscarCal] = useState("");
-  const [localidadFiltro, setLocalidadFiltro] = useState("");
-  const [conjuntoFiltro, setConjuntoFiltro] = useState("");
-  const [desde, setDesde] = useState("");
-  const [hasta, setHasta] = useState("");
-  const [orden, setOrden] = useState<OrdenCalificaciones>("criticas");
-  const [masFiltrosAbiertos, setMasFiltrosAbiertos] = useState(false);
-  const [calAbierta, setCalAbierta] = useState<string | null>(null);
-  const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
-
-  const limpiarFiltros = () => {
-    setNivelFiltro("");
-    setBuscarCal("");
-    setLocalidadFiltro("");
-    setConjuntoFiltro("");
-    setDesde("");
-    setHasta("");
-  };
-
-  useEffect(() => {
-    if (!user) return;
-    setCargandoCal(true);
-    setErrorCal(false);
-    listarAuditoriasAdminDeSemana(semana)
-      .then(setCalSemana)
-      .catch(() => setErrorCal(true))
-      .finally(() => setCargandoCal(false));
-    // Semana nueva: los filtros de la semana anterior ya no aplican (el orden no es un filtro, se queda).
-    limpiarFiltros();
-    setCalAbierta(null);
-  }, [user, semana]);
-
-  const cambiarSemana = (dias: number) => {
-    const [y, m, d] = semana.split("-").map(Number);
-    const nueva = new Date(Date.UTC(y, m - 1, d + dias));
-    setSemana(lunesUTC(nueva));
-  };
-
-  // ¿Qué? Los conjuntos que tienen al menos una calificación esa semana, para el selector;
-  //       con una localidad elegida, solo los de esa localidad.
-  // ¿Impacto? El valor es el id (no el nombre): dos conjuntos pueden llamarse igual.
-  const conjuntosDeLaSemana = useMemo(() => {
-    const porId = new Map<string, string>();
-    for (const a of calSemana) {
-      if (!localidadFiltro || String(a.id_localidad) === localidadFiltro) porId.set(a.id_conjunto_residencial, a.nombre_conjunto);
-    }
-    return [...porId].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [calSemana, localidadFiltro]);
-
-  // ¿Qué? Las localidades que tienen al menos una calificación esa semana, para el primer selector.
-  // ¿Para qué? En producción hay conjuntos en las 20 localidades de Bogotá: se busca primero por localidad.
-  const localidadesDeLaSemana = useMemo(() => {
-    const porId = new Map<string, string>();
-    for (const a of calSemana) porId.set(String(a.id_localidad), a.nombre_localidad);
-    return [...porId].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [calSemana]);
-
-  const hayFiltros = Boolean(nivelFiltro || buscarCal || localidadFiltro || conjuntoFiltro || desde || hasta);
-  // ¿Qué? Cuántos de los filtros guardados en "Más filtros" están activos (el orden cuenta si no es el de siempre).
-  // ¿Para qué? Se muestra en el botón: un filtro escondido en el panel plegado no debe pasar desapercibido.
-  const filtrosExtraActivos = (desde ? 1 : 0) + (hasta ? 1 : 0) + (orden !== "criticas" ? 1 : 0);
-  // ¿Qué? Sin calificaciones esa semana (o cargando / con error) no hay nada que filtrar: los controles se
-  //       desactivan y los selectores avisan por qué están vacíos, para que no parezcan rotos.
-  const sinCalificaciones = !cargandoCal && !errorCal && calSemana.length === 0;
-  const filtrosInactivos = cargandoCal || errorCal || calSemana.length === 0;
-  const domingoSemana = useMemo(() => isoToDateInputUTC(domingoDeLunesUTC(semana).toISOString()), [semana]);
-
-  // ¿Qué? Las calificaciones que pasan todos los filtros MENOS el de nivel.
-  // ¿Para qué? Los botones de nivel ("Malo 4", "Todas 10") cuentan sobre esto: si ya filtraste por
-  //           localidad, conjunto, fecha o texto, el número debe ser el de lo que verías al pulsarlo.
-  const calSinNivel = useMemo(() => {
-    const q = buscarCal.trim().toLowerCase();
-    return calSemana
-      .filter((a) => !localidadFiltro || String(a.id_localidad) === localidadFiltro)
-      .filter((a) => !conjuntoFiltro || a.id_conjunto_residencial === conjuntoFiltro)
-      .filter((a) => !desde || fechaBogota(a.created_at) >= desde)
-      .filter((a) => !hasta || fechaBogota(a.created_at) <= hasta)
-      .filter((a) => !q || `${a.nombre_conjunto} ${a.tema_educativo} ${a.descripcion ?? ""}`.toLowerCase().includes(q));
-  }, [calSemana, buscarCal, localidadFiltro, conjuntoFiltro, desde, hasta]);
-
-  const conteoNiveles = useMemo(() => {
-    const c = { BUENA: 0, REGULAR: 0, DEFICIENTE: 0 } as Record<string, number>;
-    for (const a of calSinNivel) c[a.nivel_desempeno] = (c[a.nivel_desempeno] ?? 0) + 1;
-    return c;
-  }, [calSinNivel]);
-
-  const calFiltradas = useMemo(() => {
-    const gravedad: Record<string, number> = { DEFICIENTE: 0, REGULAR: 1, BUENA: 2 };
-    const masReciente = (a: AuditoriaAdmin, b: AuditoriaAdmin) => (a.created_at < b.created_at ? 1 : -1);
-    const comparadores: Record<OrdenCalificaciones, (a: AuditoriaAdmin, b: AuditoriaAdmin) => number> = {
-      criticas: (a, b) => (gravedad[a.nivel_desempeno] ?? 3) - (gravedad[b.nivel_desempeno] ?? 3) || masReciente(a, b),
-      recientes: masReciente,
-      conjunto: (a, b) => a.nombre_conjunto.localeCompare(b.nombre_conjunto) || masReciente(a, b),
-    };
-    return calSinNivel.filter((a) => !nivelFiltro || a.nivel_desempeno === nivelFiltro).sort(comparadores[orden]);
-  }, [calSinNivel, nivelFiltro, orden]);
-
-  const auditoriaAbierta = calAbierta ? calSemana.find((a) => a.id_auditoria === calAbierta) : undefined;
+  // ¿Qué? La tabla, el periodo y los filtros viven en CalificacionesPorConjunto; aquí solo se guarda cuál
+  //       calificación está abierta en su modal de detalle.
+  const [calAbierta, setCalAbierta] = useState<AuditoriaAdmin | null>(null);
 
   // ---------- Tarjeta "Sin recomendar" ----------
   const categorias = useMemo(() => {
@@ -327,90 +149,46 @@ export function AdminContenidoEducativoPage() {
   }, [contenido]);
   const categoriasAuditables = useMemo(() => categorias.filter((c) => !CATEGORIAS_NO_AUDITABLES.has(c)), [categorias]);
   const sinRecomendar = useMemo(() => {
-    const conRecomendacion = new Set(
-      calSemanaActual.filter((a) => a.nivel_desempeno !== "BUENA").map((a) => a.tema_educativo)
-    );
+    const conRecomendacion = new Set(resumenSemana?.temas_con_recomendacion ?? []);
     return categoriasAuditables.filter((c) => !conRecomendacion.has(c)).length;
-  }, [categoriasAuditables, calSemanaActual]);
+  }, [categoriasAuditables, resumenSemana]);
 
-  // ---------- Panel de un módulo (vista previa + recomendado a + enviar) ----------
+  // ---------- Módulo abierto (modal de ver) y su envío a conjuntos ----------
+  // ¿Qué? Los envíos manuales de cada módulo que ya se pidieron, por id. La lista los usa para el chip
+  //       "Recomendado a N conjuntos" y el modal de ver para su pestaña; se actualizan al abrir un módulo y al enviar.
+  // ¿Para qué? Issue #619: que enviar a conjuntos cambie el chip de la lista sin recargar la página.
   const [moduloAbierto, setModuloAbierto] = useState<string | null>(null);
-  const [enviosDelModulo, setEnviosDelModulo] = useState<EnvioContenido[]>([]);
+  const [enviosPorModulo, setEnviosPorModulo] = useState<Record<string, EnvioContenido[]>>({});
   const [cargandoEnvios, setCargandoEnvios] = useState(false);
-  const [conjuntoUnico, setConjuntoUnico] = useState<ConjuntoOption | null>(null);
-  const [conjuntosVarios, setConjuntosVarios] = useState<ConjuntoOption[]>([]);
-  const [enviando, setEnviando] = useState(false);
-  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
+  const [aEnviar, setAEnviar] = useState<ContenidoEducativo | null>(null);
 
   const moduloAbiertoObj = moduloAbierto ? contenido.find((m) => m.id_contenido === moduloAbierto) : undefined;
 
-  useEffect(() => {
-    if (!moduloAbierto) {
-      setEnviosDelModulo([]);
-      setConjuntoUnico(null);
-      setConjuntosVarios([]);
-      setErrorEnvio(null);
-      return;
-    }
+  const cargarEnvios = (idContenido: string) => {
     setCargandoEnvios(true);
-    listarEnvios(moduloAbierto)
-      .then(setEnviosDelModulo)
-      .catch(() => setEnviosDelModulo([]))
+    listarEnvios(idContenido)
+      .then((envios) => setEnviosPorModulo((previos) => ({ ...previos, [idContenido]: envios })))
+      .catch(() => {})
       .finally(() => setCargandoEnvios(false));
+  };
+
+  useEffect(() => {
+    if (moduloAbierto) cargarEnvios(moduloAbierto);
   }, [moduloAbierto]);
 
-  const destinatariosDelModuloAbierto = useMemo(() => {
-    if (!moduloAbiertoObj) return [];
-    return combinarConEnvios(destinatariosAutoDe(moduloAbiertoObj, auditoriasRecientes), enviosDelModulo);
-  }, [moduloAbiertoObj, auditoriasRecientes, enviosDelModulo]);
-
-  const refrescarTrasEnvio = () => {
-    if (!moduloAbierto) return;
-    setCargandoEnvios(true);
-    listarEnvios(moduloAbierto)
-      .then(setEnviosDelModulo)
-      .finally(() => setCargandoEnvios(false));
-  };
-
-  const enviarAUno = async () => {
-    if (!moduloAbierto || !conjuntoUnico) return;
-    setEnviando(true);
-    setErrorEnvio(null);
-    try {
-      await enviarContenido(moduloAbierto, [conjuntoUnico.id_conjunto_residencial]);
-      setConjuntoUnico(null);
-      refrescarTrasEnvio();
-    } catch {
-      setErrorEnvio(t(`${p}.send.error`));
-    } finally {
-      setEnviando(false);
-    }
-  };
-
-  const enviarAVarios = async () => {
-    if (!moduloAbierto || conjuntosVarios.length === 0) return;
-    setEnviando(true);
-    setErrorEnvio(null);
-    try {
-      await enviarContenido(
-        moduloAbierto,
-        conjuntosVarios.map((c) => c.id_conjunto_residencial)
-      );
-      setConjuntosVarios([]);
-      refrescarTrasEnvio();
-    } catch {
-      setErrorEnvio(t(`${p}.send.error`));
-    } finally {
-      setEnviando(false);
-    }
-  };
+  const destinatariosDe = (modulo: ContenidoEducativo) =>
+    combinarConEnvios(destinatariosAutoDe(modulo, auditoriasRecientes), enviosPorModulo[modulo.id_contenido] ?? []);
 
   // ---------- Formulario crear/editar (con vista previa en vivo) ----------
   const [editando, setEditando] = useState<ContenidoEducativo | null>(null);
   const [creando, setCreando] = useState(false);
   const [form, setForm] = useState<ContenidoEducativoPayload>(FORM_VACIO);
-  const [categoriaSeleccion, setCategoriaSeleccion] = useState("");
+  // ¿Qué? Issue #620: la categoría se elige en uno de dos modos, "Existente" o "Nueva" (ver CategoriaField).
+  const [modoCategoria, setModoCategoria] = useState<ModoCategoria>("existente");
+  const [categoriaExistente, setCategoriaExistente] = useState("");
   const [nuevaCategoriaTexto, setNuevaCategoriaTexto] = useState("");
+  // ¿Qué? En celular el formulario y la vista previa no caben juntos: se alterna entre los dos.
+  const [vistaMovil, setVistaMovil] = useState<"editar" | "vista">("editar");
   const [guardando, setGuardando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -419,10 +197,13 @@ export function AdminContenidoEducativoPage() {
   const [subiendoImagenTexto, setSubiendoImagenTexto] = useState(false);
   const [errorImagenTexto, setErrorImagenTexto] = useState<string | null>(null);
 
-  const abrirCrear = (categoriaPrevia?: string) => {
+  const abrirCrear = () => {
     setForm(FORM_VACIO);
-    setCategoriaSeleccion(categoriaPrevia ?? "");
+    // Sin ninguna categoría creada todavía, solo se puede crear una nueva.
+    setModoCategoria(categorias.length > 0 ? "existente" : "nueva");
+    setCategoriaExistente("");
     setNuevaCategoriaTexto("");
+    setVistaMovil("editar");
     setFieldErrors({});
     setErrorMsg(null);
     setCreando(true);
@@ -437,8 +218,10 @@ export function AdminContenidoEducativoPage() {
       url_guia: item.url_guia ?? "",
       url_imagen: item.url_imagen ?? "",
     });
-    setCategoriaSeleccion(item.modulo_categoria);
+    setModoCategoria("existente");
+    setCategoriaExistente(item.modulo_categoria);
     setNuevaCategoriaTexto("");
+    setVistaMovil("editar");
     setFieldErrors({});
     setErrorMsg(null);
     setModuloAbierto(null);
@@ -452,7 +235,9 @@ export function AdminContenidoEducativoPage() {
     setFieldErrors({});
   };
 
-  const categoriaEfectiva = categoriaSeleccion === NUEVA_CATEGORIA ? nuevaCategoriaTexto.trim() : categoriaSeleccion;
+  const categoriaEfectiva = modoCategoria === "nueva" ? nuevaCategoriaTexto.trim() : categoriaExistente;
+  // ¿Qué? Una categoría "Nueva" que ya existe (sin distinguir mayúsculas ni tildes) no se puede guardar: se duplicaría.
+  const categoriaRepetida = modoCategoria === "nueva" ? categoriaDuplicada(nuevaCategoriaTexto, categorias) : null;
 
   const actualizarCampo = <K extends keyof ContenidoEducativoPayload>(campo: K, valor: ContenidoEducativoPayload[K]) => {
     setForm((prev) => ({ ...prev, [campo]: valor }));
@@ -480,6 +265,7 @@ export function AdminContenidoEducativoPage() {
     let mensaje = "";
     if (campo === "url_video" || campo === "url_guia") mensaje = errorDeEnlace(campo);
     if (campo === "categoria" && !categoriaEfectiva) mensaje = t(`${p}.validation.categoryRequired`);
+    if (campo === "categoria" && categoriaRepetida) mensaje = t(`${p}.validation.categoryDuplicate`);
     if (campo === "titulo_tema") {
       if (!form.titulo_tema.trim()) mensaje = t(`${p}.validation.titleRequired`);
       else if (form.titulo_tema.trim().length < 5) mensaje = t(`${p}.validation.titleTooShort`);
@@ -491,12 +277,13 @@ export function AdminContenidoEducativoPage() {
     setFieldErrors((prev) => (mensaje ? { ...prev, [campo]: mensaje } : prev));
   };
 
-  const formularioIncompleto = !categoriaEfectiva || !form.titulo_tema.trim() || !form.cuerpo_texto.trim();
+  const formularioIncompleto = !categoriaEfectiva || Boolean(categoriaRepetida) || !form.titulo_tema.trim() || !form.cuerpo_texto.trim();
 
   const guardar = async () => {
     if (!user) return;
     const errores: Record<string, string> = {};
     if (!categoriaEfectiva) errores.categoria = t(`${p}.validation.categoryRequired`);
+    else if (categoriaRepetida) errores.categoria = t(`${p}.validation.categoryDuplicate`);
     if (!form.titulo_tema.trim()) errores.titulo_tema = t(`${p}.validation.titleRequired`);
     else if (form.titulo_tema.trim().length < 5) errores.titulo_tema = t(`${p}.validation.titleTooShort`);
     if (!form.cuerpo_texto.trim()) errores.cuerpo_texto = t(`${p}.validation.bodyRequired`);
@@ -556,7 +343,7 @@ export function AdminContenidoEducativoPage() {
   // ¿Qué? Envuelve la línea (o la selección) actual del textarea en la
   //       sintaxis Markdown elegida — mismo patrón para las 3 opciones,
   //       aplicado sobre selectionStart/End del elemento real.
-  const aplicarFormato = (tipo: "h" | "b" | "ul") => {
+  const aplicarFormato = (tipo: "b" | "ul") => {
     const ta = textareaRef.current;
     if (!ta) return;
     const { selectionStart: a, selectionEnd: b, value: v } = ta;
@@ -570,7 +357,7 @@ export function AdminContenidoEducativoPage() {
       const inicioLinea = v.lastIndexOf("\n", a - 1) + 1;
       let finBloque = v.indexOf("\n", b);
       if (finBloque === -1) finBloque = v.length;
-      const prefijo = tipo === "h" ? "## " : "- ";
+      const prefijo = "- ";
       const bloque = v
         .slice(inicioLinea, finBloque)
         .split("\n")
@@ -583,6 +370,27 @@ export function AdminContenidoEducativoPage() {
     requestAnimationFrame(() => {
       ta.focus();
       ta.setSelectionRange(cursorFinal, cursorFinal);
+    });
+  };
+
+  // ¿Qué? Issue #620: "+ Tarjeta" agrega, donde está el cursor, un párrafo nuevo que empieza con "Título de la tarjeta: " y deja
+  //       seleccionado ese título para escribir encima.
+  // ¿Para qué? Cada párrafo es una tarjeta del muro y su título es lo que va antes de los dos puntos (lib/muroLeccion.ts); así nadie
+  //           tiene que conocer la regla para armar una tarjeta.
+  // ¿Impacto? Separa con una línea en blanco del texto de antes y de después, que es lo que parte las tarjetas.
+  const agregarTarjeta = () => {
+    const ta = textareaRef.current;
+    const v = form.cuerpo_texto;
+    const posicion = ta ? ta.selectionStart : v.length;
+    const antes = v.slice(0, posicion).replace(/\s+$/, "");
+    const despues = v.slice(posicion).replace(/^\s+/, "");
+    const titulo = t(`${p}.fields.cardTitlePlaceholder`);
+    const separador = antes ? "\n\n" : "";
+    const inicioTitulo = antes.length + separador.length;
+    actualizarCampo("cuerpo_texto", `${antes}${separador}${titulo}: ${despues ? `\n\n${despues}` : ""}`);
+    requestAnimationFrame(() => {
+      ta?.focus();
+      ta?.setSelectionRange(inicioTitulo, inicioTitulo + titulo.length);
     });
   };
 
@@ -613,44 +421,21 @@ export function AdminContenidoEducativoPage() {
   const idVideoReconocido = REGEX_VIDEO_YOUTUBE.test(form.url_video || "");
 
   return (
-    <div className="mx-auto max-w-6xl 2xl:max-w-7xl space-y-5 px-0 py-6 sm:p-6">
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="flex items-center gap-4 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-300/10">
           <BookOpen className="icon-xl text-accent-700 dark:text-accent-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t(`${p}.title`)}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t(`${p}.title`)}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t(`${p}.subtitle`)}</p>
         </div>
       </div>
 
       {/* Franja de resumen — igual patrón que el Panel Principal: antes de
           la tabla, no encima de ella. */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
-          <div className="flex items-center gap-2">
-            <Plus className="icon-md text-accent-600" />
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.newSection.title`)}</h3>
-          </div>
-          <div className="flex flex-1 flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => abrirCrear()}
-              className="touch-target-h cursor-pointer rounded-xl bg-accent-700 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-            >
-              {t(`${p}.newModule`)}
-            </button>
-            <button
-              type="button"
-              onClick={() => abrirCrear(NUEVA_CATEGORIA)}
-              className="touch-target-h cursor-pointer rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
-            >
-              {t(`${p}.newSection.newCategory`)}
-            </button>
-          </div>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
           <div className="flex items-center gap-2">
             <BookOpen className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.catalogSection.title`)}</h3>
@@ -658,63 +443,52 @@ export function AdminContenidoEducativoPage() {
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{contenido.length}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.modules`)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.modules`)}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{categorias.length}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.categories`)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.categories`)}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-extrabold text-gray-900 dark:text-white">{sinRecomendar}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.notRecommended`)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.catalogSection.notRecommended`)}</p>
             </div>
           </div>
-          <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             {sinRecomendar > 0 ? t(`${p}.catalogSection.notRecommendedHint`, { count: sinRecomendar }) : t(`${p}.catalogSection.allCovered`)}
           </p>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
+        <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card">
           <div className="flex items-center gap-2">
             <Calendar className="icon-md text-accent-600" />
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t(`${p}.currentWeek.title`, { rango: rangoSemanaUTC(semanaActual) })}</h3>
           </div>
           <div className="grid flex-1 grid-cols-3 items-center gap-2">
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "BUENA").length}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.good`)}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{resumenSemana?.bueno ?? 0}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.good`)}</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "REGULAR").length}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.regular`)}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{resumenSemana?.regular ?? 0}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.regular`)}</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{calSemanaActual.filter((a) => a.nivel_desempeno === "DEFICIENTE").length}</p>
-              <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.bad`)}</p>
+              <p className="text-lg font-extrabold text-gray-900 dark:text-white">{resumenSemana?.malo ?? 0}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t(`${p}.currentWeek.bad`)}</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm overflow-hidden">
-        {/* ¿Qué? Toda la barra recoge/expande al hacer clic (no solo el
-            texto "Recoger"/"Ver..." de la derecha) — las pestañas cortan la
-            propagación para que elegir una NO dispare también el toggle,
-            ya que un <button> no puede ir anidado dentro de otro <button>
-            (por eso esta barra es un <div>, no un <button>, a diferencia
-            del encabezado de "Usuarios registrados" en AdminDashboard.tsx,
-            que sí es un solo <button> porque no tiene pestañas adentro). */}
-        <div
-          onClick={() => setPanelExpandido((v) => !v)}
-          className="flex flex-wrap cursor-pointer items-center justify-between gap-2 px-5 py-4"
-        >
+        {/* ¿Qué? Issue #619: la barra de pestañas ya no se recoge (se quitó "Recoger / Ver calificaciones / Ver módulos"):
+            ocultar la tabla no aportaba nada y el panel queda siempre abierto. */}
+        <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4">
           <div className="flex flex-wrap rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-night-line dark:bg-night-inset/60">
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setTab("cal");
-              }}
+              onClick={() => setTab("cal")}
               className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 tab === "cal" ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
@@ -724,10 +498,7 @@ export function AdminContenidoEducativoPage() {
             </button>
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setTab("mod");
-              }}
+              onClick={() => setTab("mod")}
               className={`touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                 tab === "mod" ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
@@ -737,272 +508,15 @@ export function AdminContenidoEducativoPage() {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPanelExpandido((v) => !v);
-            }}
-            aria-expanded={panelExpandido}
-            className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-night-inset/60 dark:hover:text-gray-200"
-          >
-            {panelExpandido ? t(`${p}.collapse`) : tab === "cal" ? t(`${p}.expandRatings`) : t(`${p}.expandModules`)}
-            <ChevronDown className={`icon-sm transition-transform ${panelExpandido ? "rotate-180" : ""}`} />
-          </button>
         </div>
 
-        {panelExpandido && (tab === "cal" ? (
-          <div>
-            <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-night-line">
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => cambiarSemana(-7)}
-                  aria-label={t(`${p}.week.prev`)}
-                  title={t(`${p}.week.prev`)}
-                  className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
-                >
-                  <ChevronLeft className="icon-md" />
-                </button>
-                <div className="min-w-[8.125rem] text-center">
-                  <p className="text-xs font-bold text-gray-800 dark:text-gray-200">{rangoSemanaUTC(semana)}</p>
-                  <p className="text-[0.625rem] text-gray-500 dark:text-gray-400">{t(`${p}.week.mondayToSunday`)}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => cambiarSemana(7)}
-                  disabled={semana >= semanaActual}
-                  aria-label={t(`${p}.week.next`)}
-                  title={t(`${p}.week.next`)}
-                  className="touch-target flex cursor-pointer items-center justify-center rounded-lg border border-gray-200 p-1.5 text-gray-500 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 dark:border-night-line dark:text-gray-400 dark:hover:bg-night-hover"
-                >
-                  <ChevronRight className="icon-md" />
-                </button>
-              </div>
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-[0.6875rem] font-bold uppercase tracking-wide ${
-                  semana === semanaActual
-                    ? "bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
-                    : "bg-gray-100 text-gray-500 dark:bg-night-inset dark:text-gray-400"
-                }`}
-              >
-                {semana === semanaActual ? t(`${p}.week.inProgress`) : t(`${p}.week.closed`, { fecha: domingoDeLunesUTC(semana).getUTCDate() })}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-end gap-3 px-5 pb-4">
-              <div className="relative w-full sm:w-56">
-                <Search className="icon-sm absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
-                <input
-                  value={buscarCal}
-                  onChange={(e) => setBuscarCal(e.target.value)}
-                  placeholder={t(`${p}.week.searchPlaceholder`)}
-                  aria-label={t(`${p}.week.searchPlaceholder`)}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} w-full pl-8`}
-                />
-              </div>
-              <div className="w-full sm:w-auto">
-                <label htmlFor="cal-filtro-localidad" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.localidad`)}</label>
-                <select
-                  id="cal-filtro-localidad"
-                  value={localidadFiltro}
-                  onChange={(e) => {
-                    setLocalidadFiltro(e.target.value);
-                    // El conjunto elegido puede no ser de la localidad nueva.
-                    setConjuntoFiltro("");
-                  }}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer sm:w-48`}
-                >
-                  <option value="">{sinCalificaciones ? t(`${p}.week.filters.noData`) : t(`${p}.week.filters.allLocalidades`)}</option>
-                  {localidadesDeLaSemana.map(([id, nombre]) => (
-                    <option key={id} value={id}>
-                      {nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="w-full sm:w-auto">
-                <label htmlFor="cal-filtro-conjunto" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.conjunto`)}</label>
-                <select
-                  id="cal-filtro-conjunto"
-                  value={conjuntoFiltro}
-                  onChange={(e) => setConjuntoFiltro(e.target.value)}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer sm:w-48`}
-                >
-                  <option value="">{sinCalificaciones ? t(`${p}.week.filters.noData`) : t(`${p}.week.filters.allConjuntos`)}</option>
-                  {conjuntosDeLaSemana.map(([id, nombre]) => (
-                    <option key={id} value={id}>
-                      {nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMasFiltrosAbiertos((v) => !v)}
-                aria-expanded={masFiltrosAbiertos}
-                aria-controls="cal-mas-filtros"
-                className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg border border-edge px-2.5 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-night-edge dark:text-gray-300 dark:hover:bg-night-inset/60"
-              >
-                <SlidersHorizontal className="icon-sm" />
-                {t(`${p}.week.filters.more`)}
-                {filtrosExtraActivos > 0 && (
-                  <span className="rounded-full bg-accent-50 px-1.5 text-[0.625rem] font-bold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
-                    {filtrosExtraActivos}
-                  </span>
-                )}
-                <ChevronDown className={`icon-sm transition-transform ${masFiltrosAbiertos ? "rotate-180" : ""}`} />
-              </button>
-              {hayFiltros && (
-                <button
-                  type="button"
-                  onClick={limpiarFiltros}
-                  className="touch-target-h flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-night-inset/60"
-                >
-                  <FilterX className="icon-sm" />
-                  {t(`${p}.week.filters.clear`)}
-                </button>
-              )}
-            </div>
-
-            {masFiltrosAbiertos && (
-            <div id="cal-mas-filtros" className="flex flex-wrap items-end gap-3 px-5 pb-4">
-              <div className="w-[calc(50%-0.375rem)] sm:w-auto">
-                <label htmlFor="cal-filtro-desde" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.from`)}</label>
-                <input
-                  id="cal-filtro-desde"
-                  type="date"
-                  value={desde}
-                  min={semana}
-                  max={hasta || domingoSemana}
-                  onChange={(e) => setDesde(e.target.value)}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer`}
-                />
-              </div>
-              <div className="w-[calc(50%-0.375rem)] sm:w-auto">
-                <label htmlFor="cal-filtro-hasta" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.filters.to`)}</label>
-                <input
-                  id="cal-filtro-hasta"
-                  type="date"
-                  value={hasta}
-                  min={desde || semana}
-                  max={domingoSemana}
-                  onChange={(e) => setHasta(e.target.value)}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer`}
-                />
-              </div>
-              <div className="w-full sm:w-auto">
-                <label htmlFor="cal-orden" className="block text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">{t(`${p}.week.sort.label`)}</label>
-                <select
-                  id="cal-orden"
-                  value={orden}
-                  onChange={(e) => setOrden(e.target.value as OrdenCalificaciones)}
-                  disabled={filtrosInactivos}
-                  className={`${CLASE_CONTROL_FILTRO} mt-1 block w-full cursor-pointer sm:w-48`}
-                >
-                  {ORDENES_CALIFICACIONES.map((o) => (
-                    <option key={o} value={o}>
-                      {t(`${p}.week.sort.${o}`)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            )}
-
-            <div className="flex flex-wrap gap-2 border-b border-gray-100 px-5 pb-4 dark:border-night-line">
-              {(["" , "DEFICIENTE", "REGULAR", "BUENA"] as const).map((nivel) => (
-                <button
-                  key={nivel || "todas"}
-                  type="button"
-                  onClick={() => setNivelFiltro(nivel)}
-                  aria-pressed={nivelFiltro === nivel}
-                  className={`touch-target-h cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-                    nivelFiltro === nivel
-                      ? "border-accent-600 bg-accent-50 text-accent-700 dark:bg-accent-300/10 dark:text-accent-400"
-                      : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-400"
-                  }`}
-                >
-                  {nivel === "" ? t(`${p}.week.all`, { count: calSinNivel.length }) : `${t(`dashboards.reciclador.auditoria.niveles.${nivel.toLowerCase()}`)} ${conteoNiveles[nivel] ?? 0}`}
-                </button>
-              ))}
-            </div>
-
-            {/* ¿Qué? Sin resultados, el mensaje va FUERA de la tabla: la tabla mide mínimo 820 px y, en
-                celular, el texto centrado dentro de ella quedaba cortado. */}
-            {!cargandoCal && !errorCal && calFiltradas.length === 0 ? (
-              <div className="px-5 py-6">
-                <EmptyState icon={Search} message={t(`${p}.week.empty`)} />
-              </div>
-            ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[51.25rem] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 dark:border-night-line dark:bg-night-inset/60">
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.conjunto`)}</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.tema`)}</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.nivel`)}</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.observaciones`)}</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.fecha`)}</th>
-                    <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.week.headers.avisados`)}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                  {cargandoCal ? (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-6">
-                        <LoadingState message={t("common.loading")} />
-                      </td>
-                    </tr>
-                  ) : errorCal ? (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-6">
-                        <Alert type="error" message={t("common.loadError")} />
-                      </td>
-                    </tr>
-                  ) : (
-                    calFiltradas.map((a) => {
-                      const nivel = NIVELES_DESEMPENO[a.nivel_desempeno];
-                      return (
-                        <tr
-                          key={a.id_auditoria}
-                          onClick={() => setCalAbierta(a.id_auditoria)}
-                          className="cursor-pointer hover:bg-gray-50 dark:hover:bg-night-inset/40 transition-colors"
-                        >
-                          <td className="px-5 py-3">
-                            <button type="button" className="focus-ring cursor-pointer rounded text-left font-semibold text-gray-900 underline decoration-gray-500 underline-offset-4 hover:text-accent-700 hover:decoration-accent-600 dark:text-white dark:decoration-gray-400">
-                              {a.nombre_conjunto}
-                            </button>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{a.nombre_reciclador}</p>
-                          </td>
-                          <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">{a.tema_educativo}</td>
-                          <td className="px-5 py-3">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${nivel.claseBadge}`}>
-                              <nivel.icon className="icon-sm" />
-                              {t(`dashboards.reciclador.auditoria.niveles.${a.nivel_desempeno.toLowerCase()}`)}
-                            </span>
-                          </td>
-                          <td className="max-w-[13.75rem] px-5 py-3 text-xs text-gray-600 dark:text-gray-300">
-                            {a.descripcion ? <span className="line-clamp-2">{a.descripcion}</span> : <span className="italic text-gray-500 dark:text-gray-400">{t(`${p}.week.noObservations`)}</span>}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-3 text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(a.created_at)}</td>
-                          <td className="px-5 py-3 text-xs text-gray-600 dark:text-gray-300">
-                            {a.avisados > 0 ? t(`${p}.week.notified`, { count: a.avisados }) : <span className="text-gray-500 dark:text-gray-400">{t(`${p}.week.noRecommendation`)}</span>}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-            )}
-          </div>
+        {tab === "cal" ? (
+          <CalificacionesPorConjunto
+            semanaActual={semanaActual}
+            ultimaFecha={auditoriasRecientes[0]?.created_at ?? null}
+            recientesCargadas={recientesCargadas}
+            onAbrir={setCalAbierta}
+          />
         ) : (
           <div>
             <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4 dark:border-night-line">
@@ -1013,14 +527,14 @@ export function AdminContenidoEducativoPage() {
                   onChange={(e) => setBuscarMod(e.target.value)}
                   placeholder={t(`${p}.modules.searchPlaceholder`)}
                   aria-label={t(`${p}.modules.searchPlaceholder`)}
-                  className="touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 sm:w-56"
+                  className="focus-ring touch-target-h w-full rounded-lg border border-edge bg-white py-1.5 pl-8 pr-3 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200 sm:w-56"
                 />
               </div>
               <select
                 value={categoriaFiltro}
                 onChange={(e) => setCategoriaFiltro(e.target.value)}
                 aria-label={t(`${p}.modules.categoryFilterLabel`)}
-                className="cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="focus-ring cursor-pointer rounded-lg border border-edge bg-white px-2 py-1.5 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               >
                 <option value="">{t(`${p}.modules.allCategories`)}</option>
                 {categorias.map((c) => (
@@ -1032,12 +546,16 @@ export function AdminContenidoEducativoPage() {
               <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-night-inset dark:text-gray-300">
                 {t(`${p}.modules.total`, { count: contenido.length })}
               </span>
+              {/* ¿Qué? Issue #620: el ÚNICO camino para crear un módulo. Se quitaron la tarjeta "Nuevo contenido" y el botón
+                        "+ Nueva categoría": una categoría no existe sola, es el texto que trae cada módulo. */}
+              <Button variant="primary" size="sm" type="button" onClick={abrirCrear}>
+                <Plus className="icon-sm" aria-hidden="true" />
+                {t(`${p}.newModule`)}
+              </Button>
             </div>
 
             {cargandoContenido && (
-              <div className="px-5 py-6">
-                <LoadingState message={t("common.loading")} />
-              </div>
+              <Esqueleto mensaje={t("common.loading")} variante="filas" />
             )}
             {!cargandoContenido && errorContenido && (
               <div className="px-5 py-6">
@@ -1059,332 +577,121 @@ export function AdminContenidoEducativoPage() {
                 })
                 .map((item) => {
                   const Icono = ICONOS_CATEGORIAS[item.modulo_categoria] ?? ICONO_CATEGORIA_DEFAULT;
-                  const nRecomendados = destinatariosAutoDe(item, auditoriasRecientes).length;
+                  const nRecomendados = destinatariosDe(item).length;
                   return (
+                    // ¿Qué? Issue #619: pulsar la fila sirve para VER (abre el modal); las acciones (enviar, editar,
+                    //       eliminar) están en el menú de tres puntos. El botón de la izquierda hace la fila alcanzable con
+                    //       el teclado: su clic sube a la fila, que es la que abre el modal.
                     <div
                       key={item.id_contenido}
                       onClick={() => setModuloAbierto(item.id_contenido)}
                       className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-card dark:hover:bg-night-inset/40"
                     >
-                      <div className="flex min-w-0 items-start gap-3">
+                      <button type="button" className="focus-ring flex min-w-0 flex-1 cursor-pointer items-start gap-3 rounded-lg text-left">
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
                           <Icono className="icon-lg" />
                         </span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">{item.modulo_categoria}</p>
-                          <p className="truncate text-sm font-bold text-gray-900 dark:text-white">{item.titulo_tema}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(item.fecha_publicacion)}</p>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">{item.modulo_categoria}</span>
+                          <span className="block truncate text-sm font-bold text-gray-900 dark:text-white">{item.titulo_tema}</span>
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(item.fecha_publicacion)}</span>
+                        </span>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         {nRecomendados > 0 && (
-                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
+                          <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-teal-700 dark:bg-teal-400/10 dark:text-teal-300">
                             {t(`${p}.modules.recommendedTo`, { count: nRecomendados })}
                           </span>
                         )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            abrirEditar(item);
-                          }}
-                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
-                          aria-label={t(`${p}.editAria`, { titulo: item.titulo_tema })}
-                          title={t(`${p}.editAria`, { titulo: item.titulo_tema })}
-                        >
-                          <Pencil className="icon-md" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setAEliminar(item);
-                          }}
-                          className="cursor-pointer rounded-lg border border-gray-200 p-2 text-red-500 transition-colors hover:bg-red-50 dark:border-night-line dark:hover:bg-red-400/15"
-                          aria-label={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
-                          title={t(`${p}.deleteAria`, { titulo: item.titulo_tema })}
-                        >
-                          <Trash2 className="icon-md" />
-                        </button>
+                        <MenuAcciones
+                          ariaLabel={t(`${p}.modules.actionsFor`, { titulo: item.titulo_tema })}
+                          grupos={[
+                            [
+                              { id: "enviar", label: t(`${p}.send.menuItem`), icon: Send, onSelect: () => setAEnviar(item) },
+                              { id: "editar", label: t("common.edit"), icon: Pencil, onSelect: () => abrirEditar(item) },
+                            ],
+                            [{ id: "eliminar", label: t(`${p}.deleteConfirm.action`), icon: Trash2, peligrosa: true, onSelect: () => setAEliminar(item) }],
+                          ]}
+                        />
                       </div>
                     </div>
                   );
                 })}
             </div>
           </div>
-        ))}
+        )}
       </div>
 
-      {/* ---------- Panel: detalle de una calificación ---------- */}
-      {auditoriaAbierta && (
-        <PanelLateral onClose={() => setCalAbierta(null)} aria-label={t(`${p}.ratingPanel.ariaLabel`, { conjunto: auditoriaAbierta.nombre_conjunto })}>
-          <div className="border-b border-gray-100 p-5 pr-14 dark:border-night-line">
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">{auditoriaAbierta.nombre_conjunto}</h2>
-            {(() => {
-              const nivel = NIVELES_DESEMPENO[auditoriaAbierta.nivel_desempeno];
-              return (
-                <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${nivel.claseBadge}`}>
-                  <nivel.icon className="icon-sm" />
-                  {t(`dashboards.reciclador.auditoria.niveles.${auditoriaAbierta.nivel_desempeno.toLowerCase()}`)}
-                </div>
-              );
-            })()}
-          </div>
-
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.details`)}</h3>
-            <dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-sm">
-              <dt className="text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.theme`)}</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">{auditoriaAbierta.tema_educativo}</dd>
-              <dt className="text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.date`)}</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">{formatearFechaCreacion(auditoriaAbierta.created_at)}</dd>
-              <dt className="text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.recycler`)}</dt>
-              <dd className="font-medium text-gray-900 dark:text-white">{auditoriaAbierta.nombre_reciclador}</dd>
-            </dl>
-          </section>
-
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.observations`)}</h3>
-            {auditoriaAbierta.descripcion ? (
-              <p className="border-l-2 border-gray-200 pl-3 text-sm text-gray-800 dark:border-night-line dark:text-gray-200">{auditoriaAbierta.descripcion}</p>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.week.noObservations`)}</p>
-            )}
-          </section>
-
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.evidence`)}</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {[auditoriaAbierta.ruta_evidencia, auditoriaAbierta.ruta_evidencia_2, auditoriaAbierta.ruta_evidencia_3]
-                .filter((r): r is string => Boolean(enlaceAdjuntoSeguro(r)))
-                .map((ruta) => (
-                  <button
-                    key={ruta}
-                    type="button"
-                    onClick={() => setFotoAmpliada(ruta)}
-                    className="focus-ring relative aspect-square cursor-pointer overflow-hidden rounded-xl border border-gray-100 transition-opacity hover:opacity-80 dark:border-night-line"
-                    aria-label={t(`${p}.ratingPanel.enlarge`)}
-                    title={t(`${p}.ratingPanel.enlarge`)}
-                  >
-                    <img src={enlaceAdjuntoSeguro(ruta) ?? undefined} alt="" className="h-full w-full object-cover" />
-                    <InsigniaAccionImagen icono={Maximize2} />
-                  </button>
-                ))}
-            </div>
-          </section>
-
-          <section className="p-5">
-            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.recommendedContent`)}</h3>
-            {auditoriaAbierta.avisados > 0 ? (
-              <>
-                <p className="mb-2 text-sm text-gray-600 dark:text-gray-300">{t(`${p}.week.notified`, { count: auditoriaAbierta.avisados })}</p>
-                {contenido
-                  .filter((m) => m.modulo_categoria === auditoriaAbierta.tema_educativo)
-                  .map((m) => (
-                    <button
-                      key={m.id_contenido}
-                      type="button"
-                      onClick={() => {
-                        setCalAbierta(null);
-                        setTab("mod");
-                        setModuloAbierto(m.id_contenido);
-                      }}
-                      className="mb-1.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-gray-100 bg-white px-3 py-2 text-left text-sm text-gray-800 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-night-panel dark:text-gray-200 dark:hover:bg-night-inset"
-                    >
-                      {m.titulo_tema}
-                      <Eye className="icon-sm shrink-0 text-gray-500 dark:text-gray-400" />
-                    </button>
-                  ))}
-              </>
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.ratingPanel.noRecommendationHint`)}</p>
-            )}
-          </section>
-        </PanelLateral>
+      {/* ---------- Detalle de una calificación (issue #619: el mismo modal que ven los demás roles) ---------- */}
+      {calAbierta && (
+        <AuditoriaResultadoModal
+          auditoria={calAbierta}
+          onClose={() => setCalAbierta(null)}
+          pie={
+            <ContenidoRecomendadoCalificacion
+              auditoria={calAbierta}
+              modulos={contenido}
+              onAbrirModulo={(id) => {
+                setCalAbierta(null);
+                setTab("mod");
+                setModuloAbierto(id);
+              }}
+            />
+          }
+        />
       )}
 
-      {fotoAmpliada && (
-        <Modal onClose={() => setFotoAmpliada(null)} layer="stacked" wide aria-label={t(`${p}.ratingPanel.enlarge`)}>
-          {/* ¿Qué? La imagen de la guía puede venir de un link externo pegado a
-              mano (https://) o de un archivo subido (/uploads/...);
-              enlaceAdjuntoSeguro completa solo el segundo caso con la URL del
-              backend (issue #400). */}
-          <img
-            src={enlaceAdjuntoSeguro(fotoAmpliada) ?? undefined}
-            alt=""
-            className="max-h-[80vh] w-full rounded-2xl object-contain"
-          />
-        </Modal>
-      )}
-
-      {/* ---------- Panel: un módulo (vista previa + recomendado a + enviar) ---------- */}
+      {/* ---------- Ver un módulo (vista previa + recomendado a) ---------- */}
       {moduloAbiertoObj && (
-        <PanelLateral onClose={() => setModuloAbierto(null)} aria-label={t(`${p}.modulePanel.ariaLabel`, { titulo: moduloAbiertoObj.titulo_tema })}>
-          <div className="border-b border-gray-100 p-5 pr-14 dark:border-night-line">
-            <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">{moduloAbiertoObj.modulo_categoria}</span>
-            <h2 className="mt-1 text-base font-bold text-gray-900 dark:text-white">{moduloAbiertoObj.titulo_tema}</h2>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(moduloAbiertoObj.fecha_publicacion)}</p>
-          </div>
+        <ModuloEducativoModal
+          modulo={moduloAbiertoObj}
+          destinatarios={destinatariosDe(moduloAbiertoObj)}
+          cargandoEnvios={cargandoEnvios}
+          onClose={() => setModuloAbierto(null)}
+        />
+      )}
 
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <ReactMarkdown components={COMPONENTES_MARKDOWN}>{moduloAbiertoObj.cuerpo_texto}</ReactMarkdown>
-            {moduloAbiertoObj.url_video && <YoutubeEmbed url={moduloAbiertoObj.url_video} titulo={moduloAbiertoObj.titulo_tema} />}
-            {enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) && (
-              esImagenGuia(moduloAbiertoObj.url_guia!) ? (
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    onClick={() => setFotoAmpliada(moduloAbiertoObj.url_guia!)}
-                    className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl border border-gray-100 dark:border-night-line"
-                    aria-label={t(`${p}.ratingPanel.enlarge`)}
-                    title={t(`${p}.ratingPanel.enlarge`)}
-                  >
-                    <img
-                      src={enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) ?? undefined}
-                      alt=""
-                      className="max-h-64 w-full object-cover"
-                    />
-                    <InsigniaAccionImagen icono={Maximize2} />
-                  </button>
-                  <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.modulePanel.guideImageHint`)}</p>
-                </div>
-              ) : (
-                <a
-                  href={enlaceAdjuntoSeguro(moduloAbiertoObj.url_guia) ?? undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex w-fit items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-200 dark:hover:bg-night-hover"
-                >
-                  <FileText className="icon-md shrink-0" />
-                  {t("categoriaEducativa.viewGuide")}
-                </a>
-              )
-            )}
-          </section>
-
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              {t(`${p}.modulePanel.recommendedTo`, { count: destinatariosDelModuloAbierto.length })}
-            </h3>
-            {cargandoEnvios ? (
-              <LoadingState message={t("common.loading")} />
-            ) : destinatariosDelModuloAbierto.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.modulePanel.noneYet`)}</p>
-            ) : (
-              <div className="space-y-2">
-                {destinatariosDelModuloAbierto.map((d) => (
-                  <div key={d.id_conjunto_residencial} className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-2 text-sm first:border-t-0 first:pt-0 dark:border-night-line">
-                    <span className="flex-1 font-semibold text-gray-900 dark:text-white">{d.nombre_conjunto}</span>
-                    {d.tipo === "auto" && d.nivel ? (
-                      (() => {
-                        const nivel = NIVELES_DESEMPENO[d.nivel];
-                        return (
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold ${nivel.claseBadge}`}>
-                            <nivel.icon className="icon-sm" />
-                            {t(`dashboards.reciclador.auditoria.niveles.${d.nivel.toLowerCase()}`)}
-                          </span>
-                        );
-                      })()
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[0.6875rem] font-semibold text-purple-700 dark:bg-purple-400/10 dark:text-purple-300">
-                        <Send className="icon-sm" />
-                        {t(`${p}.modulePanel.sentManually`)}
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{formatearFechaCreacion(d.fecha)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="border-b border-gray-100 p-5 dark:border-night-line">
-            <h3 className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.send.title`)}</h3>
-            {errorEnvio && (
-              <div className="mb-3">
-                <Alert type="error" message={errorEnvio} onClose={() => setErrorEnvio(null)} />
-              </div>
-            )}
-            <div className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600 dark:text-gray-300">{t(`${p}.send.oneLabel`)}</label>
-                <div className="flex gap-2">
-                  <div className="min-w-0 flex-1 [&_input]:!mt-0">
-                    <ConjuntoCombobox value={conjuntoUnico} onChange={setConjuntoUnico} fetchOptions={fetchConjuntos} placeholder={t(`${p}.send.searchPlaceholder`)} ariaLabel={t(`${p}.send.oneLabel`)} />
-                  </div>
-                  <Button type="button" size="sm" onClick={enviarAUno} isLoading={enviando} disabled={!conjuntoUnico}>
-                    <Send className="icon-sm mr-1" />
-                    {t(`${p}.send.button`)}
-                  </Button>
-                </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600 dark:text-gray-300">{t(`${p}.send.severalLabel`)}</label>
-                <ConjuntoComboboxMultiple value={conjuntosVarios} onChange={setConjuntosVarios} fetchOptions={fetchConjuntos} placeholder={t(`${p}.send.searchPlaceholder`)} ariaLabel={t(`${p}.send.severalLabel`)} />
-                <Button type="button" size="sm" fullWidth onClick={enviarAVarios} isLoading={enviando} disabled={conjuntosVarios.length === 0}>
-                  <Send className="icon-sm mr-1" />
-                  {conjuntosVarios.length > 0 ? t(`${p}.send.buttonMany`, { count: conjuntosVarios.length }) : t(`${p}.send.button`)}
-                </Button>
-              </div>
-            </div>
-          </section>
-
-          <div className="sticky bottom-0 mt-auto flex flex-wrap gap-2 border-t border-gray-100 bg-white p-5 dark:border-night-line dark:bg-night-card">
-            <Button type="button" size="sm" onClick={() => abrirEditar(moduloAbiertoObj)}>
-              <Pencil className="icon-sm mr-1" />
-              {t("common.edit")}
-            </Button>
-            <Button type="button" size="sm" variant="danger" onClick={() => setAEliminar(moduloAbiertoObj)}>
-              <Trash2 className="icon-sm mr-1" />
-              {t(`${p}.deleteConfirm.confirm`)}
-            </Button>
-          </div>
-        </PanelLateral>
+      {aEnviar && (
+        <EnviarAConjuntosModal
+          modulo={aEnviar}
+          onEnviado={() => cargarEnvios(aEnviar.id_contenido)}
+          onClose={() => setAEnviar(null)}
+        />
       )}
 
       {/* ---------- Formulario crear/editar, con vista previa en vivo ---------- */}
       {(creando || editando) && (
         <Modal onClose={cerrarFormulario} extraWide closeOnBackdrop={false} aria-label={editando ? t(`${p}.modal.editTitle`) : t(`${p}.newModule`)}>
+          {/* ¿Qué? Solo en celular: alterna entre el formulario y la vista previa (en pantallas anchas van lado a lado). */}
+          <div className="px-6 pb-1 pt-5 md:hidden">
+            <Pestanas
+              ariaLabel={t(`${p}.editor.mobileTabsLabel`)}
+              activa={vistaMovil}
+              onCambiar={setVistaMovil}
+              compacta
+              pestanas={[
+                { id: "editar", etiqueta: t(`${p}.editor.edit`) },
+                { id: "vista", etiqueta: t(`${p}.editor.preview`) },
+              ]}
+            />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="space-y-4 p-6 sm:p-8">
+            <div className={`space-y-4 p-6 sm:p-8 ${vistaMovil === "vista" ? "hidden md:block" : ""}`}>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editando ? t(`${p}.modal.editTitle`) : t(`${p}.newModule`)}</h2>
 
               {errorMsg && <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
-              <div>
-                <label htmlFor="contenido-categoria" className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">
-                  {t(`${p}.fields.category`)} <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="contenido-categoria"
-                  value={categoriaSeleccion}
-                  onChange={(e) => setCategoriaSeleccion(e.target.value)}
-                  onBlur={() => validarCampo("categoria")}
-                  className={`w-full cursor-pointer rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    fieldErrors.categoria ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
-                  }`}
-                >
-                  <option value="">{t(`${p}.fields.categoryPlaceholderSelect`)}</option>
-                  {categorias.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                  <option value={NUEVA_CATEGORIA}>{t(`${p}.fields.newCategoryOption`)}</option>
-                </select>
-                {categoriaSeleccion === NUEVA_CATEGORIA && (
-                  <div className="mt-2">
-                    <input
-                      value={nuevaCategoriaTexto}
-                      onChange={(e) => setNuevaCategoriaTexto(e.target.value)}
-                      onBlur={() => validarCampo("categoria")}
-                      maxLength={CONTENIDO_MODULO_MAX_LENGTH}
-                      placeholder={t(`${p}.fields.categoryPlaceholder`)}
-                      className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
-                    />
-                    <p className="mt-1 text-xs text-amber-600 dark:text-amber-200">{t(`${p}.fields.newCategoryWarning`)}</p>
-                  </div>
-                )}
-                {fieldErrors.categoria && <p className="mt-1 text-sm text-red-600 dark:text-red-300">{fieldErrors.categoria}</p>}
-              </div>
+              <CategoriaField
+                modo={modoCategoria}
+                onCambiarModo={setModoCategoria}
+                categorias={categorias}
+                existente={categoriaExistente}
+                onExistente={setCategoriaExistente}
+                nueva={nuevaCategoriaTexto}
+                onNueva={setNuevaCategoriaTexto}
+                error={fieldErrors.categoria}
+                onBlur={() => validarCampo("categoria")}
+              />
 
               <InputField
                 label={t(`${p}.fields.titleField`)}
@@ -1402,24 +709,42 @@ export function AdminContenidoEducativoPage() {
                   <label htmlFor="contenido-cuerpo" className="text-xs font-medium text-gray-500 dark:text-gray-400">
                     {t(`${p}.fields.content`)} <span className="text-red-500">*</span>
                   </label>
-                  <span id="contenido-cuerpo-contador" className="text-[0.6875rem] text-gray-500 dark:text-gray-400">
+                  <span id="contenido-cuerpo-contador" className="text-xs text-gray-500 dark:text-gray-400">
                     {t(`${p}.fields.charCount`, { count: form.cuerpo_texto.length, max: CONTENIDO_CUERPO_MAX_LENGTH })}
                   </span>
                 </div>
-                <div className="mb-1.5 flex gap-1.5">
-                  <button type="button" onClick={() => aplicarFormato("h")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
-                    <Heading2 className="icon-sm" />
-                    {t(`${p}.fields.formatHeading`)}
+                <div className="mb-1.5 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={agregarTarjeta}
+                    title={t(`${p}.fields.addCardHint`)}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-accent-300 bg-accent-50 px-2 py-1 text-xs font-semibold text-accent-800 hover:bg-accent-100 dark:border-accent-300/40 dark:bg-accent-300/10 dark:text-accent-300 dark:hover:bg-accent-300/15"
+                  >
+                    <Plus className="icon-sm" aria-hidden="true" />
+                    {t(`${p}.fields.addCard`)}
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("b")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
+                  <button
+                    type="button"
+                    onClick={() => aplicarFormato("b")}
+                    title={t(`${p}.fields.boldHint`)}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+                  >
                     <Bold className="icon-sm" />
                     {t(`${p}.fields.formatBold`)}
                   </button>
-                  <button type="button" onClick={() => aplicarFormato("ul")} className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
+                  <button
+                    type="button"
+                    onClick={() => aplicarFormato("ul")}
+                    title={t(`${p}.fields.listHint`)}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+                  >
                     <ListIcon className="icon-sm" />
                     {t(`${p}.fields.formatList`)}
                   </button>
-                  <label className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover">
+                  <label
+                    title={t(`${p}.fields.insertImageHint`)}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+                  >
                     <ImagePlus className="icon-sm" />
                     {subiendoImagenTexto ? t(`${p}.fields.insertingImage`) : t(`${p}.fields.insertImage`)}
                     <input
@@ -1444,12 +769,14 @@ export function AdminContenidoEducativoPage() {
                   aria-describedby={
                     fieldErrors.cuerpo_texto ? "contenido-cuerpo-error contenido-cuerpo-contador" : "contenido-cuerpo-contador"
                   }
-                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
-                    fieldErrors.cuerpo_texto ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "border-edge focus:border-accent-500 focus:ring-accent-500/20 dark:border-night-edge"
+                  className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 dark:bg-night-field dark:text-white ${
+                    fieldErrors.cuerpo_texto ? "focus:outline-none focus:ring-1 border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400" : "focus-ring border-edge focus:border-accent-500 dark:border-night-edge"
                   }`}
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMarkdownHint`)}</p>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentMuroHint`)}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t(`${p}.fields.contentHint`)}</p>
+                <div className="mt-2">
+                  <ResumenMuro texto={form.cuerpo_texto} />
+                </div>
                 {errorImagenTexto && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                     {errorImagenTexto}
@@ -1475,10 +802,10 @@ export function AdminContenidoEducativoPage() {
                   placeholder="https://www.youtube.com/watch?v=..."
                   aria-invalid={!!fieldErrors.url_video}
                   aria-describedby={fieldErrors.url_video ? "contenido-url-video-error" : undefined}
-                  className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                  className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 dark:bg-night-field dark:text-white ${
                     fieldErrors.url_video
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                      : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
+                      ? "focus:outline-none focus:ring-1 border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                      : "focus-ring border-edge focus:border-accent-500 dark:border-night-edge"
                   }`}
                 />
                 {fieldErrors.url_video ? (
@@ -1510,48 +837,31 @@ export function AdminContenidoEducativoPage() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button
-                  onClick={cerrarFormulario}
-                  className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
-                >
+                <Button variant="secondary" fullWidth onClick={cerrarFormulario}>
                   {t("common.cancel")}
-                </button>
-                <button
-                  onClick={guardar}
-                  disabled={guardando || formularioIncompleto}
-                  className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-                >
+                </Button>
+                <Button variant="primary" fullWidth onClick={guardar} disabled={guardando || formularioIncompleto}>
                   {guardando ? t("common.saving") : formularioIncompleto ? t("common.formIncomplete") : t("common.save")}
-                </button>
+                </Button>
               </div>
             </div>
 
-            {/* ¿Qué? Vista previa en vivo — el mismo componente (MuroLeccion) que usa
-                CategoriaEducativaPage.tsx (lo que ve el Residente), en una sola columna por ser angosta. */}
-            <aside className="border-t border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-panel sm:p-8 md:border-l md:border-t-0">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.preview.label`)}</span>
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[0.625rem] font-bold uppercase text-gray-500 dark:bg-night-inset dark:text-gray-400">{t(`${p}.preview.live`)}</span>
-              </div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-500">
-                {categoriaEfectiva || t(`${p}.preview.categoryPlaceholder`)}
-              </p>
-              {form.cuerpo_texto.trim() ? (
-                <MuroLeccion
-                  compacto
-                  mostrarTitulo
-                  modulo={{
-                    modulo_categoria: categoriaEfectiva,
-                    titulo_tema: form.titulo_tema || t(`${p}.preview.titlePlaceholder`),
-                    cuerpo_texto: form.cuerpo_texto,
-                    url_video: idVideoReconocido ? form.url_video?.trim() || null : null,
-                    url_guia: form.url_guia?.trim() || null,
-                    url_imagen: form.url_imagen?.trim() || null,
-                  }}
-                />
-              ) : (
-                <p className="text-sm italic text-gray-500 dark:text-gray-400">{t(`${p}.preview.bodyPlaceholder`)}</p>
-              )}
+            {/* ¿Qué? Vista previa fija mientras se recorre el formulario (sticky) — el mismo MuroLeccion que ve el Residente. */}
+            <aside
+              className={`border-t border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-panel sm:p-8 md:sticky md:top-0 md:self-start md:border-l md:border-t-0 ${
+                vistaMovil === "editar" ? "hidden md:block" : ""
+              }`}
+            >
+              <VistaPreviaModulo
+                modulo={{
+                  modulo_categoria: categoriaEfectiva,
+                  titulo_tema: form.titulo_tema,
+                  cuerpo_texto: form.cuerpo_texto,
+                  url_video: idVideoReconocido ? form.url_video?.trim() || null : null,
+                  url_guia: form.url_guia?.trim() || null,
+                  url_imagen: form.url_imagen?.trim() || null,
+                }}
+              />
             </aside>
           </div>
         </Modal>

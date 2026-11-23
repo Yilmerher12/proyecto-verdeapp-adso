@@ -13,7 +13,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { obtenerPerfilUsuario, type PerfilUsuarioAdmin } from "@/lib/adminUsuariosApi";
 import { RoleId } from "@/types/auth";
 
@@ -68,13 +68,13 @@ export function PerfilUsuarioDetalle({ correo, version }: PerfilUsuarioDetallePr
   return (
     <div role="region" aria-label={t(`${p}.ariaLabel`, { nombre: nombreCompleto })} className="p-5">
       {error && <Alert type="error" message={t("common.loadError")} />}
-      {!error && !perfil && <LoadingState message={t("common.loading")} />}
+      {!error && !perfil && <Esqueleto mensaje={t("common.loading")} variante="campos" cantidad={3} />}
 
       {perfil && (
         <div className="space-y-5">
           {!perfil.habilitado && (
             <section className="rounded-xl border border-red-100 bg-red-50 p-4 dark:border-red-400/30 dark:bg-red-400/10">
-              <h3 className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">{t(`${p}.sections.deactivated`)}</h3>
+              <h3 className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">{t(`${p}.sections.deactivated`)}</h3>
               <dl className="grid grid-cols-[8rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm text-red-900 dark:text-red-200">
                 <Fila etiqueta={t(`${p}.fields.since`)} valor={perfil.fecha_desactivacion ? formatoFecha(perfil.fecha_desactivacion) : "—"} />
                 <Fila

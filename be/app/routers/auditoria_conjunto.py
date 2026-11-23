@@ -6,7 +6,7 @@ Descripción: Endpoints de la auditoría del Reciclador al conjunto (RQF-009).
            que pueda ver el historial de las que ya envió.
 """
 from datetime import date
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
@@ -21,6 +21,8 @@ from app.schemas.auditoria_conjunto import (
     AuditoriaConjuntoResponse,
     AuditoriasAdminListResponse,
     AuditoriasListResponse,
+    ConteosNivelAdmin,
+    ResumenSemanaAdminResponse,
     DESCRIPCION_MAX_LENGTH,
     DesempenoConjuntoResponse,
     NivelDesempeno,
@@ -138,18 +140,42 @@ def listar_historial(
 @router.get(
     "/admin",
     response_model=AuditoriasAdminListResponse,
-    summary="Admin Sistema ve las auditorías del reciclador, por semana o las más recientes (RQF-009)",
+    summary="Admin Sistema ve las auditorías del reciclador, con filtros, orden y páginas (RQF-009, issue #618)",
 )
 def listar_admin(
     lunes: Optional[date] = Query(
-        None, description="Lunes de la semana a consultar — sin este parámetro, trae las más recientes de cualquier semana"
+        None, description="Lunes de la semana a consultar (atajo de desde=lunes y hasta=lunes+6)"
     ),
+    desde: Optional[date] = Query(None, description="Primer día del periodo, en hora de Bogotá (incluido)"),
+    hasta: Optional[date] = Query(None, description="Último día del periodo, en hora de Bogotá (incluido)"),
+    id_localidad: Optional[int] = Query(None, description="Solo conjuntos de esta localidad"),
+    id_conjunto: Optional[UUID] = Query(None, description="Solo este conjunto"),
+    buscar: Optional[str] = Query(None, max_length=100, description="Texto en el conjunto, el tema o la descripción"),
+    nivel: Optional[NivelDesempeno] = Query(None, description="Solo este nivel (los conteos no lo aplican)"),
+    orden: Literal["criticas", "recientes", "conjunto"] = Query("recientes"),
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(_requiere_admin_sistema),
     db: Session = Depends(get_db),
 ) -> AuditoriasAdminListResponse:
-    auditorias, total, avisados_por_auditoria = service.listar_admin(db, lunes=lunes, limit=limit, offset=offset)
+    if desde is not None and hasta is not None and hasta < desde:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="hasta no puede ser anterior a desde.",
+        )
+    auditorias, total, avisados_por_auditoria, conteos = service.listar_admin(
+        db,
+        lunes=lunes,
+        desde=desde,
+        hasta=hasta,
+        id_localidad=id_localidad,
+        id_conjunto=id_conjunto,
+        buscar=buscar,
+        nivel=nivel,
+        orden=orden,
+        limit=limit,
+        offset=offset,
+    )
     items = [
         AuditoriaAdminResponse(
             **_a_response(a).model_dump(),
@@ -159,7 +185,20 @@ def listar_admin(
         )
         for a in auditorias
     ]
-    return AuditoriasAdminListResponse(items=items, total=total)
+    return AuditoriasAdminListResponse(items=items, total=total, conteos=ConteosNivelAdmin(**conteos))
+
+
+@router.get(
+    "/admin/resumen-semana",
+    response_model=ResumenSemanaAdminResponse,
+    summary="Admin Sistema: conteos por nivel y temas con recomendación de una semana (issue #618)",
+)
+def resumen_semana_admin(
+    lunes: date = Query(..., description="Lunes de la semana a resumir"),
+    current_user: Usuario = Depends(_requiere_admin_sistema),
+    db: Session = Depends(get_db),
+) -> ResumenSemanaAdminResponse:
+    return ResumenSemanaAdminResponse(**service.resumen_semana_admin(db, lunes))
 
 
 # ¿Qué? Se valida a mano porque Literal[4, 8, 12] en un Query no convierte

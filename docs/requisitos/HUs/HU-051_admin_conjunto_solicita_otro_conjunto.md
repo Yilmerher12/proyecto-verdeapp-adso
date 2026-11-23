@@ -34,15 +34,15 @@
 
 ## Criterios de aceptación
 
-### CA-051.1 — La fila "Solicitar otro conjunto"
+### CA-051.1 — El botón "Solicitar otro conjunto"
 
 - **Dado que** inicié sesión como Administrador de Conjunto,
 - **cuando** abro mi panel principal,
-- **entonces** veo, debajo de la lista de mis conjuntos, una fila con borde punteado "Solicitar otro conjunto" con la ayuda "Pide que te asignen otro conjunto." Se ve aunque todavía no tenga ningún conjunto asignado.
+- **entonces** veo, arriba a la derecha de la lista "Conjuntos que administras", un botón pequeño "+ Solicitar otro conjunto" (issue #595; antes era una fila grande con borde punteado al final de la página, que obligaba a bajar con un conjunto abierto). Se ve aunque todavía no tenga ningún conjunto asignado.
 
 ### CA-051.2 — El paso a paso
 
-- **Dado que** presiono esa fila,
+- **Dado que** presiono ese botón,
 - **cuando** se abre la ventana,
 - **entonces** veo dos pasos escritos para quien **ya tiene cuenta** (el segundo dice que el conjunto se asigna a mi cuenta y aparece en el panel), los dos documentos que debo adjuntar y el aviso de que los documentos nunca se suben a VerdeApp.
 - **y** la lista de documentos y el aviso de privacidad son **los mismos** que ve quien se registra (RQF-012, `auth.register.adminRequest.*`): al corregirlos, cambian en los dos lugares.
@@ -58,7 +58,7 @@
 
 - **Dado que** despliego uno de mis conjuntos,
 - **cuando** miro su contenido,
-- **entonces** el **código de acceso** está en la primera fila, junto a la cobertura (a su derecha en pantallas anchas, debajo de ella en celular), con sus botones de copiar y de generar un código nuevo (HU-044).
+- **entonces** el **código de acceso** está en la pestaña **Resumen** del conjunto (issue #595), junto a la cobertura (a su derecha en pantallas anchas, debajo de ella en celular), con sus botones de copiar y de generar un código nuevo (HU-044).
 
 ---
 

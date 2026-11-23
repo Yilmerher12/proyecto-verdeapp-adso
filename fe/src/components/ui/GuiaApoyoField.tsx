@@ -39,6 +39,19 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
   const [modo, setModo] = useState<"archivo" | "link">(
     value && !value.startsWith("/uploads/") ? "link" : "archivo"
   );
+  // ¿Qué? Lo último que tuvo cada modo (el archivo subido y el link escrito), por separado.
+  // ¿Para qué? Issue #616: antes, cambiar de modo borraba el valor, y también pulsar el modo que ya
+  //           estaba activo; escribir un link, mirar "Subir archivo" y volver lo perdía.
+  // ¿Impacto? Lo que se guarda (value) es siempre lo del modo activo, que es lo que se ve en pantalla.
+  const [borradores, setBorradores] = useState<Record<"archivo" | "link", string>>({
+    archivo: value.startsWith("/uploads/") ? value : "",
+    link: value && !value.startsWith("/uploads/") ? value : "",
+  });
+
+  const guardar = (url: string) => {
+    setBorradores((b) => ({ ...b, [modo]: url }));
+    onChange(url);
+  };
 
   const manejarArchivo = async (archivo: File | undefined) => {
     if (!archivo) return;
@@ -57,7 +70,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
     setProgreso(undefined);
     try {
       const url = await subirAdjunto(archivo, { permitirDocumentos: true, onProgress: setProgreso });
-      onChange(url);
+      guardar(url);
     } catch (err) {
       setError(motivoDelServidor(err) ?? t("guiaApoyo.errorSubida"));
     } finally {
@@ -67,14 +80,15 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
   };
 
   const cambiarModo = (nuevoModo: "archivo" | "link") => {
+    if (nuevoModo === modo) return;
     setModo(nuevoModo);
     setError(null);
-    onChange("");
+    onChange(borradores[nuevoModo]);
   };
 
   return (
     <div>
-      <label className="mb-2 flex items-center gap-1 text-xs font-bold text-gray-600 dark:text-gray-400">
+      <label className="mb-2 flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400">
         <FileText className="icon-md" />
         {label}
       </label>
@@ -89,7 +103,8 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           role="radio"
           aria-checked={modo === "archivo"}
           onClick={() => cambiarModo("archivo")}
-          className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+          disabled={subiendo}
+          className={`cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "archivo"
               ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-400"
               : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
@@ -102,7 +117,8 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           role="radio"
           aria-checked={modo === "link"}
           onClick={() => cambiarModo("link")}
-          className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+          disabled={subiendo}
+          className={`cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
             modo === "link"
               ? "bg-accent-100 text-accent-800 dark:bg-accent-300/10 dark:text-accent-400"
               : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-night-field dark:text-gray-400 dark:hover:bg-night-hover"
@@ -117,17 +133,17 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           <input
             type="text"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => guardar(e.target.value)}
             onBlur={onBlurEnlace}
             maxLength={ENLACE_MAX_LENGTH}
             placeholder="https://..."
             aria-label={label}
             aria-invalid={!!errorEnlace}
             aria-describedby={errorEnlace ? "guia-apoyo-enlace-error" : undefined}
-            className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+            className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 dark:bg-night-field dark:text-white ${
               errorEnlace
-                ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
+                ? "focus:outline-none focus:ring-1 border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                : "focus-ring border-edge focus:border-accent-500 dark:border-night-edge"
             }`}
           />
           {errorEnlace && (
@@ -144,7 +160,7 @@ export function GuiaApoyoField({ label, value, onChange, errorEnlace, onBlurEnla
           </span>
           <button
             type="button"
-            onClick={() => onChange("")}
+            onClick={() => guardar("")}
             className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-400/15"
           >
             <X className="icon-sm" />

@@ -37,6 +37,14 @@
 - **cuando** lo veo,
 - **entonces** debe haber un botón claramente visible para reportar "SHUT lleno".
 
+> **Actualización (2026-11-03, issue #593)**: la tarjeta del SHUT es una sola con dos estados. Sin reportar, invita a reportar (título "Reportar SHUT lleno" y su botón). Con el SHUT ya reportado pasa a ámbar: "El SHUT está lleno", cuándo se reportó y el consejo de no bajar más material reciclable, con el botón apagado ("Ya reportado"). Antes eran dos bloques seguidos.
+
+### CA-003.0 — Confirmar antes de reportar
+
+- **Dado que** toco "Reportar SHUT lleno",
+- **cuando** se abre la ventana "¿Reportar que el SHUT está lleno?",
+- **entonces** leo a quién le llega el aviso ("Se notificará al reciclador y al administrador de <mi conjunto>") y que mi reporte es anónimo, y el reporte solo se envía si presiono "Reportar". Con "Cancelar" no se envía nada. Si el servidor rechaza el reporte, el motivo exacto sale dentro de la misma ventana.
+
 ### CA-003.2 — No se puede reportar dos veces
 
 - **Dado que** el SHUT de mi conjunto ya está marcado como lleno,
@@ -55,7 +63,7 @@
 
 - **Dado que** reporté el SHUT lleno exitosamente,
 - **cuando** el sistema procesa mi reporte,
-- **entonces** debo ver una confirmación en pantalla de que se envió.
+- **entonces** debo ver una confirmación en pantalla de que se envió: el botón queda apagado con el texto "Reporte enviado".
 
 ### CA-003.5 — Reporte anónimo
 

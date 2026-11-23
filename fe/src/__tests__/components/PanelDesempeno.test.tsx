@@ -215,10 +215,46 @@ describe("PanelDesempeno", () => {
     expect(await screen.findByRole("button", { name: "Ver detalle de la auditoría de Residuos orgánicos" })).toBeInTheDocument();
   });
 
+  it("las pestañas son: semana elegida y por tema (y todas las auditorías solo si se pasa el historial)", async () => {
+    mockRespuestas(DESEMPENO, { "2026-10-19": SEMANA_ACTUAL });
+    renderWithProviders(<PanelDesempeno idConjunto="c1" semanas={8} />);
+
+    const pestanas = await screen.findByRole("tablist", { name: "Qué ver del desempeño" });
+    expect(within(pestanas).getAllByRole("tab").map((p) => p.textContent)).toEqual(["Semana elegida", "Por tema"]);
+    expect(within(pestanas).getByRole("tab", { name: "Semana elegida" })).toHaveAttribute("aria-selected", "true");
+    // ¿Qué? Con la pestaña de la semana abierta, el ranking no se dibuja todavía.
+    expect(screen.queryByRole("region", { name: "Temas del período" })).not.toBeInTheDocument();
+  });
+
+  it("con cargarHistorial agrega la pestaña Todas las auditorías y pide la lista solo al abrirla", async () => {
+    const user = userEvent.setup();
+    const cargarHistorial = vi.fn().mockResolvedValue({ items: [], total: 0 });
+    mockRespuestas(DESEMPENO, { "2026-10-19": SEMANA_ACTUAL });
+    renderWithProviders(<PanelDesempeno semanas={8} cargarHistorial={cargarHistorial} />);
+
+    const pestana = await screen.findByRole("tab", { name: "Todas las auditorías" });
+    expect(cargarHistorial).not.toHaveBeenCalled();
+
+    await user.click(pestana);
+
+    expect(await screen.findByText("Todavía no hay auditorías registradas.")).toBeInTheDocument();
+    expect(cargarHistorial).toHaveBeenCalledWith(10, 0);
+  });
+
+  it("la cabecera que se le pasa sale dentro de la misma tarjeta, también mientras carga", async () => {
+    mockObtenerDesempeno.mockReturnValue(new Promise(() => {}));
+    renderWithProviders(<PanelDesempeno semanas={8} cabecera={<h2>Mi conjunto</h2>} />);
+
+    expect(screen.getByRole("heading", { name: "Mi conjunto" })).toBeInTheDocument();
+    expect(screen.getByText("Cargando...")).toBeInTheDocument();
+  });
+
   it("el ranking pone arriba el tema con más Regular o Malo y lo escribe con palabras", async () => {
     mockRespuestas(DESEMPENO, { "2026-10-19": SEMANA_ACTUAL });
     renderWithProviders(<PanelDesempeno idConjunto="c1" semanas={8} />);
 
+    // ¿Qué? El ranking vive en la pestaña "Por tema": hay que abrirla.
+    await userEvent.setup().click(await screen.findByRole("tab", { name: "Por tema" }));
     const ranking = await screen.findByRole("region", { name: "Temas del período" });
     // ¿Qué? Solo los temas (hijos directos de la lista ordenada), no las cifras por nivel de cada uno.
     const items = within(ranking).getAllByRole("listitem").filter((li) => li.parentElement?.tagName === "OL");
@@ -237,6 +273,8 @@ describe("PanelDesempeno", () => {
     mockRespuestas(DESEMPENO, { "2026-10-19": SEMANA_ACTUAL });
     renderWithProviders(<PanelDesempeno idConjunto="c1" semanas={8} />);
 
+    // ¿Qué? El ranking vive en la pestaña "Por tema": hay que abrirla.
+    await userEvent.setup().click(await screen.findByRole("tab", { name: "Por tema" }));
     const ranking = await screen.findByRole("region", { name: "Temas del período" });
     await user.click(within(ranking).getByRole("button", { name: "Ver como tabla" }));
 

@@ -16,7 +16,7 @@ const mockMias = vi.fn();
 const mockConjuntos = vi.fn();
 
 vi.mock("@/lib/novedadesApi", () => ({
-  verFeedNovedades: () => Promise.resolve([]),
+  verFeedNovedades: () => Promise.resolve({ items: [], total: 0 }),
 }));
 vi.mock("@/lib/novedadesEnviadasApi", () => ({
   enviarNovedad: (...args: unknown[]) => mockEnviar(...args),
@@ -359,5 +359,44 @@ describe("Novedades enviadas al Admin Sistema", () => {
 
     await user.click(screen.getByRole("tab", { name: "Historial de novedades" }));
     expect(await screen.findByText("Todavía no has enviado ninguna novedad.")).toBeInTheDocument();
+  });
+
+  // ¿Qué? Issue #632 — filas dentro de la tarjeta de la página, y la barra de paginación siempre visible (como en el resto de vistas).
+  it("Historial de novedades: con una sola página igual muestra la barra, con las flechas apagadas", async () => {
+    mockMias.mockResolvedValue({
+      items: [
+        {
+          id: "solo",
+          texto: "Única novedad.",
+          url_imagen: null,
+          estado: "NUEVA",
+          prioridad: "MEDIA",
+          nombre_conjunto: null,
+          respuesta: null,
+          respondida_at: null,
+          created_at: "2026-09-22T10:00:00Z",
+        },
+      ],
+      total: 1,
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(screen.getByRole("tab", { name: "Historial de novedades" }));
+
+    expect(await screen.findByText("Única novedad.")).toBeInTheDocument();
+    expect(screen.getByText("Mostrando 1–1 de 1")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Página siguiente" })).toBeDisabled();
+  });
+
+  it("el formulario de Escribir novedad vive dentro de la tarjeta de la página, sin tarjeta propia", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await abrirFormulario(user);
+
+    const panel = screen.getByRole("tabpanel");
+    expect(panel).toContainElement(screen.getByRole("button", { name: "Enviar consulta" }));
+    expect(panel.querySelector(".shadow-sm")).toBeNull();
   });
 });

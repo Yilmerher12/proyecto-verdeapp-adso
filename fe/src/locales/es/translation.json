@@ -11,19 +11,20 @@
   "appShell": {
     "ariaLabel": "Navegación VerdeApp",
     "nav": {
-      "panelPrincipal": "Panel Principal",
+      "panelPrincipal": "Panel principal",
       "seguridad": "Seguridad",
-      "crearNovedades": "Crear Novedades",
-      "contenidoEducativo": "Contenido Educativo",
-      "miPerfil": "Mi Perfil",
+      "solicitudes": "Solicitudes",
+      "crearNovedades": "Novedades",
+      "contenidoEducativo": "Contenido educativo",
+      "miPerfil": "Mi perfil",
       "novedades": "Soporte técnico",
-      "puntosAcopio": "Puntos de Acopio",
+      "puntosAcopio": "Puntos de acopio",
       "gestionarComunicados": "Comunicados",
       "agenda": "Agenda",
       "desempeno": "Desempeño",
       "comunicados": "Comunicados",
-      "aprenderGuias": "Aprende a Reciclar",
-      "directorioGeneral": "Directorio General",
+      "aprenderGuias": "Aprende a reciclar",
+      "directorioGeneral": "Directorio general",
       "groupRecursos": "Recursos",
       "groupCuenta": "Cuenta"
     },
@@ -41,12 +42,12 @@
     }
   },
   "passwordStrength": {
-    "ariaLabel": "Fortaleza de contraseña: {{label}}",
     "1": "Muy débil",
     "2": "Débil",
     "3": "Regular",
     "4": "Buena",
-    "5": "Fuerte"
+    "5": "Fuerte",
+    "ariaLabel": "Fortaleza de contraseña: {{label}}"
   },
   "roles": {
     "adminSistema": "Administrador",
@@ -77,6 +78,8 @@
     "back": "Volver",
     "or": "o",
     "close": "Cerrar",
+    "viewMore": "Ver más",
+    "viewLess": "Ver menos",
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
     "edit": "Editar",
@@ -650,7 +653,6 @@
         "show": "+ Invitar administrador"
       },
       "pendingRequests": {
-        "title": "Solicitudes pendientes",
         "withCount": "{{count}} solicitud pendiente por resolver.",
         "withCount_other": "{{count}} solicitudes pendientes por resolver.",
         "viewButton": "Ver solicitudes"
@@ -662,10 +664,13 @@
       "conjuntoFilter": {
         "placeholder": "Buscar conjunto..."
       },
+      "localidadFilter": {
+        "label": "Filtrar por localidad",
+        "all": "Todas las localidades"
+      },
       "loadingData": "Cargando datos...",
       "usersSection": {
         "title": "Usuarios registrados",
-        "totalBadge": "{{count}} en total",
         "tabs": {
           "residentes": "Residentes",
           "recicladores": "Recicladores",
@@ -766,11 +771,17 @@
         "aceptada": "Aceptada",
         "rechazada": "Rechazada"
       },
+      "tabs": {
+        "label": "Secciones del conjunto",
+        "resumen": "Resumen",
+        "avisos": "Avisos",
+        "recicladores": "Recicladores"
+      },
       "recyclersSection": {
         "title": "Recicladores",
-        "showDetail": "Ver detalle",
-        "hideDetail": "Ocultar detalle",
         "invite": "+ Invitar reciclador",
+        "inviteModalTitle": "Invitar reciclador",
+        "inviteModalHint": "Escribe el correo del reciclador. Quedará como invitación pendiente hasta que la acepte.",
         "emailPlaceholder": "correo.del.reciclador@ejemplo.com",
         "sending": "Enviando...",
         "inviteButton": "Invitar",
@@ -795,7 +806,6 @@
       },
       "otroConjunto": {
         "tileTitle": "Solicitar otro conjunto",
-        "tileHelp": "Pide que te asignen otro conjunto.",
         "modalTitle": "Solicitar otro conjunto",
         "heading": "Solicitar otro conjunto",
         "intro": "Para administrar otro conjunto, el equipo de VerdeApp primero verifica tu cargo en él. Así se hace:",
@@ -868,6 +878,14 @@
       },
       "feedbackSent": "Notificación enviada: \"{{label}}\"",
       "genericNotificationSent": "Notificación enviada",
+      "misAuditorias": "Mis auditorías",
+      "razon": {
+        "yaPresente": "Ya llegaste",
+        "avisoLlegadaReciente": "Avisaste hace menos de 2 h",
+        "debesLlegarPrimero": "Avisa tu llegada primero",
+        "yaEstaLleno": "Ya está reportado lleno",
+        "yaEstaLibre": "Ya está reportado libre"
+      },
       "sendSection": {
         "title": "Enviar notificación",
         "subtitle": "Avisa a los residentes y al administrador del conjunto.",
@@ -898,8 +916,13 @@
         "emptyWithoutConjuntos": "No tienes notificaciones. Los avisos de los residentes (como SHUT lleno) llegan de los conjuntos donde estés autorizado."
       },
       "modal": {
-        "confirmTitle": "¿Enviar este aviso?",
-        "confirmDescription": "Vas a avisar \"{{accion}}\" a los residentes y al administrador de {{conjunto}}.",
+        "confirmTitles": {
+          "llegada": "¿Avisar que llegaste?",
+          "shutLleno": "¿Avisar que el SHUT está lleno?",
+          "shutLibre": "¿Avisar que el SHUT está libre?",
+          "finalizacion": "¿Avisar que terminaste?"
+        },
+        "confirmDescription": "Se lo diremos a los residentes y al administrador de {{conjunto}}.",
         "sending": "Enviando...",
         "submit": "Enviar aviso",
         "yaPresente": "Ya avisaste tu llegada a este conjunto — avisa que ya te vas antes de volver a llegar.",
@@ -910,12 +933,15 @@
       },
       "auditoria": {
         "bannerTitle": "Auditoría semanal pendiente",
-        "bannerSubtitle": "Ya puedes calificar la separación de residuos de {{conjunto}}.",
+        "bannerSubtitle": "Califica cómo separan el material en {{conjunto}} esta semana.",
         "bannerAction": "Auditar ahora",
+        "alDiaTitle": "Auditoría de esta semana",
+        "alDiaText": "Ya enviaste la de {{conjunto}} ({{fecha}}).",
         "modalTitle": "Auditar conjunto",
         "modalSubtitle": "Califica cómo está separando el material reciclable este conjunto — la calificación queda respaldada con una foto.",
         "conjuntoLabel": "Conjunto",
         "nivelLabel": "Nivel de desempeño",
+        "nivelElegido": "Elegiste: {{nivel}}",
         "niveles": {
           "buena": "Bueno",
           "regular": "Regular",
@@ -941,8 +967,9 @@
         "confirmSubmit": {
           "ariaLabel": "Confirmar auditoría",
           "title": "¿Enviar esta auditoría?",
-          "warning": "Vas a calificar \"{{tema}}\" como {{nivel}}. Una vez enviada, la auditoría no se puede editar.",
-          "confirm": "Sí, enviar"
+          "description": "Vas a calificar {{tema}} como {{nivel}} en {{conjunto}}.",
+          "irreversible": "Después de enviarla no podrás editarla.",
+          "confirm": "Enviar auditoría"
         },
         "validation": {
           "conjunto": "Selecciona un conjunto.",
@@ -966,12 +993,21 @@
       "reportSection": {
         "title": "Reportar SHUT lleno",
         "description": "Avisa al reciclador y al administrador que el cuarto de basuras está lleno. El reporte es anónimo.",
-        "sent": "Enviado",
-        "submit": "Reportar"
+        "sent": "Reporte enviado",
+        "alreadyReported": "Ya reportado",
+        "submit": "Reportar SHUT lleno"
+      },
+      "confirmReport": {
+        "title": "¿Reportar que el SHUT está lleno?",
+        "description": "Se notificará al reciclador y al administrador de {{conjunto}}.",
+        "descriptionSinNombre": "Se notificará al reciclador y al administrador de tu conjunto.",
+        "anonymous": "Tu reporte es anónimo.",
+        "submit": "Reportar",
+        "sending": "Reportando..."
       },
       "notifications": {
-        "title": "Actividad reciente",
-        "empty": "No tienes notificaciones aún. Aparecerán aquí cuando el reciclador envíe avisos."
+        "title": "Notificaciones recibidas",
+        "empty": "No tienes notificaciones aún. Aquí aparecerán los avisos del reciclador y de tu administración."
       }
     }
   },
@@ -1004,14 +1040,14 @@
     "auditadoPor": "Auditado por {{nombre}}",
     "auditorLabel": "Auditor",
     "fechaLabel": "Fecha",
-    "verMas": "Ver más",
-    "verMenos": "Ver menos",
     "evidenciaContador": "{{actual}} / {{total}}",
     "fotoAnterior": "Foto anterior",
     "fotoSiguiente": "Foto siguiente",
     "irAFoto": "Ir a la foto {{n}}",
     "evidenciaAlt": "Foto de evidencia de la auditoría",
     "evidenciaAmpliar": "Ver foto en tamaño completo",
+    "evidenciaNoDisponible": "La foto ya no está disponible",
+    "evidenciaNoDisponibleAyuda": "Las fotos de evidencia se guardan 6 meses. La calificación y su detalle se conservan.",
     "errorLoad": "No se pudo cargar la auditoría.",
     "historialTitle": "Historial de auditorías",
     "historialEmpty": "Todavía no hay auditorías registradas."
@@ -1051,6 +1087,12 @@
       "tablaSemana": "Semana",
       "tablaTotal": "Total",
       "tablaCaption": "Auditorías por semana y nivel"
+    },
+    "pestanas": {
+      "aria": "Qué ver del desempeño",
+      "semana": "Semana elegida",
+      "todas": "Todas las auditorías",
+      "temas": "Por tema"
     },
     "pocosDatos": "Todavía no hay suficientes auditorías para mostrar la gráfica. Aparecerá con al menos {{minimo}} auditorías en las últimas {{semanas}} semanas. Mientras tanto, mira la lista de abajo.",
     "temas": {
@@ -1137,10 +1179,10 @@
     "ownLocalityUnknown": "No se pudo detectar tu localidad",
     "emptyRecyclers": "No hay recicladores registrados en esta localidad.",
     "emptyPoints": "No hay puntos de acopio registrados en esta localidad.",
-    "searchPoints": "Buscar por nombre o dirección",
+    "searchPoints": "Buscar por nombre, dirección u organización",
     "noPointsMatch": "Ningún punto coincide con tu búsqueda.",
     "call": "Llamar",
-    "noPhone": "Sin teléfono registrado",
+    "noPhone": "No comparte su teléfono",
     "copyAddress": "Copiar dirección",
     "infoRecicladores": {
       "titulo": "¿Qué es este directorio?",
@@ -1150,10 +1192,9 @@
     },
     "infoPuntos": {
       "titulo": "¿Qué es una ECA?",
-      "descripcion": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen en sus rutas.",
-      "paraQueSirve": "Si necesitas entregar materiales reciclables por tu cuenta, aquí puedes ubicar el punto más cercano a tu localidad.",
-      "fuenteTexto": "Los puntos que ves vienen del dataset \"Aprovechamiento ECAS\" de Datos Abiertos Bogotá (UAESP), de marzo de 2020. No son todas las ECA de Bogotá: el inventario de la UAESP registra muchas más.",
-      "fuenteLink": "Ver fuente"
+      "descripcionResidente": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen. Aquí puedes ver las ECA de tu localidad. Cualquier persona puede llevar residuos aprovechables a una ECA, según el horario y las condiciones de su organización.",
+      "descripcionReciclador": "Una Estación de Clasificación y Aprovechamiento (ECA) es el lugar formal, regulado por la UAESP, donde los recicladores de oficio organizados pesan y clasifican lo que recogen en sus rutas. Aquí puedes ubicar la más cercana a tu ruta.",
+      "nota": "Fuente: UAESP, inventario vigente de ECA (Resolución 698 de 2023, entregado en noviembre de 2026). Estar en la lista no garantiza que una ECA esté abierta hoy: su horario lo define cada organización."
     }
   },
   "catalogoEducativo": {
@@ -1209,8 +1250,6 @@
     "subtitle": "Crea, edita y elimina los módulos del catálogo, y revisa qué se recomendó a cada conjunto.",
     "newModule": "Nuevo módulo",
     "emptyState": "Todavía no hay módulos creados.",
-    "editAria": "Editar {{titulo}}",
-    "deleteAria": "Eliminar {{titulo}}",
     "modal": {
       "editTitle": "Editar módulo",
       "deleteAriaLabel": "Confirmar eliminación"
@@ -1222,24 +1261,21 @@
       "bodyRequired": "El contenido es obligatorio.",
       "bodyTooShort": "El contenido debe tener al menos 20 caracteres.",
       "videoNotYoutube": "El video debe ser un enlace de YouTube que empiece por https:// (por ejemplo https://youtu.be/...).",
-      "guideNotHttps": "El enlace de la guía debe empezar por https://."
+      "guideNotHttps": "El enlace de la guía debe empezar por https://.",
+      "categoryDuplicate": "Esa categoría ya existe. Elígela en «Existente» para no duplicarla."
     },
     "deleteError": "No se pudo eliminar. Intenta de nuevo.",
-    "newSection": {
-      "title": "Nuevo contenido",
-      "newCategory": "+ Nueva categoría"
-    },
     "catalogSection": {
       "title": "Catálogo",
       "modules": "Módulos",
       "categories": "Categorías",
-      "notRecommended": "Sin recomendar",
+      "notRecommended": "Temas sin recomendación",
       "notRecommendedHint": "Esta semana no hay recomendación en {{count}} tema — puedes enviar contenido a mano para variar los temas.",
       "notRecommendedHint_other": "Esta semana no hay recomendación en {{count}} temas — puedes enviar contenido a mano para variar los temas.",
       "allCovered": "Todos los temas tuvieron alguna recomendación esta semana."
     },
     "currentWeek": {
-      "title": "Semana {{rango}}",
+      "title": "Calificaciones de esta semana · {{rango}}",
       "good": "Bueno",
       "regular": "Regular",
       "bad": "Malo"
@@ -1247,6 +1283,17 @@
     "tabs": {
       "ratings": "Calificaciones por conjunto",
       "modules": "Módulos"
+    },
+    "period": {
+      "label": "Periodo",
+      "semana": "Semana",
+      "mes": "Mes",
+      "rango": "Personalizado",
+      "prevMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente",
+      "from": "Desde",
+      "to": "Hasta",
+      "rangeInvalid": "\"Hasta\" no puede ser anterior a \"Desde\"."
     },
     "week": {
       "prev": "Semana anterior",
@@ -1257,7 +1304,10 @@
       "searchPlaceholder": "Buscar conjunto u observación…",
       "all": "Todas {{count}}",
       "noObservations": "Sin observaciones",
-      "empty": "No hay calificaciones con esos filtros en esta semana.",
+      "empty": "No hay calificaciones con esos filtros en este periodo.",
+      "emptyPeriod": "Todavía no hay calificaciones en este periodo.",
+      "lastWeekNotice": "La semana en curso todavía no tiene calificaciones. Estás viendo la última semana con datos ({{rango}}).",
+      "viewThisWeek": "Ver esta semana",
       "notified": "Se avisó a {{count}} residente",
       "notified_other": "Se avisó a {{count}} residentes",
       "noRecommendation": "Sin recomendación",
@@ -1266,10 +1316,7 @@
         "allLocalidades": "Todas las localidades",
         "conjunto": "Conjunto",
         "allConjuntos": "Todos los conjuntos",
-        "more": "Más filtros",
-        "noData": "Sin calificaciones",
-        "from": "Desde",
-        "to": "Hasta",
+        "conjuntoPlaceholder": "Buscar conjunto…",
         "clear": "Limpiar filtros"
       },
       "sort": {
@@ -1293,8 +1340,9 @@
       "allCategories": "Todas las categorías",
       "total": "{{count}} módulo",
       "total_other": "{{count}} módulos",
-      "recommendedTo": "{{count}} conjunto",
-      "recommendedTo_other": "{{count}} conjuntos"
+      "recommendedTo": "Recomendado a {{count}} conjunto",
+      "recommendedTo_other": "Recomendado a {{count}} conjuntos",
+      "actionsFor": "Acciones de {{titulo}}"
     },
     "ratingPanel": {
       "ariaLabel": "Calificación de {{conjunto}}",
@@ -1304,22 +1352,27 @@
       "recycler": "Reciclador",
       "observations": "Observaciones",
       "evidence": "Evidencia",
+      "evidenceGone": "La foto ya no está disponible (las fotos se guardan 6 meses).",
       "enlarge": "Ampliar foto",
       "recommendedContent": "Contenido recomendado",
       "noRecommendationHint": "Una calificación Buena no genera recomendación: no hay nada que mejorar en este tema."
     },
     "modulePanel": {
       "ariaLabel": "Módulo: {{titulo}}",
-      "recommendedTo": "Recomendado a {{count}} conjunto",
-      "recommendedTo_other": "Recomendado a {{count}} conjuntos",
+      "tabsLabel": "Secciones del módulo",
+      "preview": "Vista previa",
+      "recommendedTab": "Recomendado a ({{count}})",
       "noneYet": "Todavía no se ha recomendado a ningún conjunto.",
       "sentManually": "Enviado a mano",
       "guideImageHint": "Clic en la imagen para ampliarla."
     },
     "send": {
-      "title": "Enviar a otros conjuntos",
-      "oneLabel": "A un conjunto específico",
-      "severalLabel": "A varios conjuntos",
+      "title": "Enviar a conjuntos",
+      "menuItem": "Enviar a conjuntos…",
+      "subtitle": "Elige los conjuntos que recibirán «{{titulo}}».",
+      "localidadLabel": "Localidad (opcional)",
+      "allLocalidades": "Todas las localidades",
+      "severalLabel": "Conjuntos",
       "searchPlaceholder": "Buscar conjunto…",
       "button": "Enviar",
       "buttonMany": "Enviar a {{count}} conjunto",
@@ -1330,14 +1383,25 @@
       "category": "Categoría",
       "categoryPlaceholder": "Ej: Separación en la fuente",
       "categoryPlaceholderSelect": "Elige una categoría…",
-      "newCategoryOption": "+ Nueva categoría…",
-      "newCategoryWarning": "Se creará una categoría nueva en el catálogo del Residente. Escríbela igual que las existentes para no duplicarla.",
+      "categoryModeAria": "Cómo elegir la categoría",
+      "categoryMode": {
+        "existing": "Existente",
+        "new": "Nueva"
+      },
+      "categoryNoneYet": "Todavía no hay categorías creadas: escribe una nueva.",
+      "categoryDuplicate": "Ya existe la categoría «{{nombre}}».",
+      "useExistingCategory": "Usar «{{nombre}}»",
+      "newCategoryWarning": "Una categoría nueva también será un tema que los recicladores podrán calificar al auditar un conjunto.",
       "titleField": "Título",
       "titlePlaceholder": "Ej: Código de colores de bolsas",
       "content": "Contenido",
-      "contentMarkdownHint": "Puedes usar ## para subtítulos, **negrita** y - para listas.",
       "charCount": "{{count}}/{{max}} caracteres · mínimo 20",
-      "formatHeading": "Subtítulo",
+      "addCard": "Tarjeta",
+      "addCardHint": "Agrega un párrafo nuevo con su título, listo para escribir",
+      "cardTitlePlaceholder": "Título de la tarjeta",
+      "boldHint": "Pone en negrita el texto seleccionado",
+      "listHint": "Convierte las líneas seleccionadas en una lista",
+      "insertImageHint": "Sube una imagen y la pega en el texto; va con la tarjeta que sigue",
       "formatBold": "Negrita",
       "formatList": "Lista",
       "boldPlaceholder": "texto en negrita",
@@ -1345,7 +1409,7 @@
       "videoRecognized": "✓ Link de YouTube reconocido",
       "videoNotRecognized": "Este link no parece de YouTube: el Residente no verá el video.",
       "guideLink": "Guía de apoyo",
-      "contentMuroHint": "Cada párrafo (separado por una línea en blanco) será una tarjeta del muro. Empieza el párrafo con un título corto y dos puntos (por ejemplo, «Bolsa blanca: ...»). El primer párrafo sin título es la introducción. Una imagen en su propia línea se pega a la tarjeta que viene después.",
+      "contentHint": "Cada párrafo, separado por una línea en blanco, es una tarjeta del muro. Con «Tarjeta» empiezas una con su título; el primer párrafo sin título es la introducción.",
       "insertImage": "Insertar imagen",
       "insertingImage": "Subiendo...",
       "insertImageError": "No se pudo subir la imagen. Intenta de nuevo.",
@@ -1353,9 +1417,29 @@
       "coverImage": "Imagen de portada (opcional)",
       "coverImageHint": "Se ve en la tarjeta de la categoría. Mejor una imagen ancha (16:9), propia o de uso libre. JPG, PNG o WEBP de hasta 5 MB. Sin imagen se usa el dibujo de la categoría."
     },
+    "wallSummary": {
+      "title": "Así se dividirá tu texto en el muro",
+      "empty": "Escribe el contenido y aquí verás su introducción, sus tarjetas y su cierre.",
+      "intro": "Introducción",
+      "cards_one": "{{count}} tarjeta",
+      "cards_other": "{{count}} tarjetas",
+      "noTitle": "Sin título",
+      "closing": "Cierre",
+      "none": "ninguno"
+    },
+    "editor": {
+      "mobileTabsLabel": "Qué ver",
+      "edit": "Editar",
+      "preview": "Vista previa"
+    },
     "preview": {
       "label": "Así lo verá el Residente",
-      "live": "en vivo",
+      "updates": "Se actualiza al escribir",
+      "tabsLabel": "Qué parte ver",
+      "tabLesson": "Lección",
+      "tabCatalog": "Tarjeta del catálogo",
+      "catalogHint": "Así se ve este módulo en la lista de «Aprende a reciclar».",
+      "catalogNoCover": "Sin imagen de portada se usa el dibujo de la categoría. Sube una portada para verla aquí.",
       "categoryPlaceholder": "Categoría",
       "titlePlaceholder": "Aquí verás el título",
       "bodyPlaceholder": "Aquí verás el contenido tal como lo leerá el Residente."
@@ -1363,11 +1447,9 @@
     "deleteConfirm": {
       "title": "¿Eliminar \"{{titulo}}\"?",
       "warning": "Esta acción no se puede deshacer.",
+      "action": "Eliminar",
       "confirm": "Sí, eliminar"
-    },
-    "collapse": "Recoger",
-    "expandRatings": "Ver calificaciones",
-    "expandModules": "Ver módulos"
+    }
   },
   "puntosAcopioTabla": {
     "headers": {
@@ -1392,7 +1474,9 @@
       "howToGetThere": "Cómo llegar",
       "howToGetThereAria": "Cómo llegar a {{nombre}} en Google Maps",
       "noPhonePublished": "Sin teléfono publicado.",
-      "uaespLine": "Línea general de la UAESP (no es la del punto):"
+      "uaespLine": "Línea general de la UAESP (no es la del punto):",
+      "email": "Correo",
+      "organization": "Organización"
     }
   },
   "adminPuntosAcopio": {
@@ -1404,7 +1488,7 @@
     "noPhone": "Sin teléfono",
     "noManager": "Sin encargado",
     "search": {
-      "placeholder": "Buscar por nombre o dirección",
+      "placeholder": "Buscar por nombre, dirección u organización",
       "noResults": "Ningún punto coincide con tu búsqueda.",
       "status": {
         "todos": "Todos",
@@ -1637,9 +1721,11 @@
     },
     "respuestaTitulo": "Respuesta del Administrador del Sistema ({{fecha}})"
   },
-  "bandejaAdmin": {
-    "sectionTitle": "Soporte técnico y desvinculaciones",
-    "pestanas": {
+  "solicitudesAdmin": {
+    "title": "Solicitudes",
+    "subtitle": "Atiende las consultas de soporte técnico y las solicitudes de desvinculación.",
+    "tabsLabel": "Tipo de solicitud",
+    "tabs": {
       "soporte": "Soporte técnico",
       "desvinculaciones": "Desvinculaciones"
     }
@@ -1680,7 +1766,9 @@
     "marcarResuelta": "Marcar como resuelta",
     "reabrir": "Reabrir",
     "cambiarPrioridad": "Cambiar la prioridad",
-    "prioridadOpcion": "Prioridad {{prioridad}}"
+    "prioridadOpcion": "Prioridad {{prioridad}}",
+    "prioridadFiltro": "Prioridad: {{valor}}",
+    "masAcciones": "Más acciones de la solicitud de {{nombre}}"
   },
   "desvinculacion": {
     "sectionTitle": "Tu rol como administrador",
@@ -1717,7 +1805,10 @@
       "openButton": "+ Asignar conjunto",
       "searchLabel": "Buscar administrador",
       "searchPlaceholder": "Nombre, apellidos o correo",
-      "searchButton": "Buscar",
+      "searchHint": "Escribe para buscar. Los resultados salen mientras escribes.",
+      "stepSearch": "1 · Busca al administrador",
+      "stepPlace": "2 · Elige la localidad y el conjunto",
+      "stepConfirm": "3 · Confirma",
       "noResults": "No se encontraron administradores.",
       "currentConjuntos": "Administra:",
       "noConjuntos": "Ningún conjunto todavía",
@@ -1726,7 +1817,7 @@
       "selectLocalityFirst": "Selecciona una localidad para poder buscar el conjunto.",
       "selectConjuntoLabel": "Conjunto a asignar",
       "noConjuntosDisponibles": "No hay conjuntos sin administrador disponibles.",
-      "assignButton": "Asignar",
+      "assignButton": "Asignar conjunto",
       "assigning": "Asignando...",
       "successMessage": "Conjunto asignado correctamente.",
       "errorDefault": "No se pudo asignar el conjunto."
@@ -1767,7 +1858,7 @@
       "button": "Descargar agenda",
       "noTopics": "Todavía no hay temas para descargar. Agrega uno y podrás bajar el historial.",
       "title": "Descargar agenda",
-      "description": "Descarga un archivo con los temas de este conjunto para anexar al acta del comité.",
+      "description": "Descarga un archivo con los temas de {{conjunto}} para anexar al acta del comité.",
       "formatLabel": "Formato",
       "formatCsv": "CSV (Excel)",
       "formatPdf": "PDF",
@@ -1816,12 +1907,20 @@
       "subtitle": "Publica avisos para los residentes y/o recicladores de tus conjuntos.",
       "newButton": "Nuevo comunicado",
       "noConjuntos": "No administras ningún conjunto todavía.",
-      "emptyState": "Todavía no has publicado ningún comunicado.",
+      "tabs": {
+        "label": "Vigencia de los comunicados",
+        "vigentes": "Vigentes",
+        "vencidos": "Vencidos"
+      },
+      "emptyVigentes": "No tienes comunicados vigentes. Los que ya vencieron están en la pestaña «Vencidos».",
+      "emptyVencidos": "Todavía no tienes comunicados vencidos.",
       "editAria": "Editar {{resumen}}",
       "deleteAria": "Eliminar {{resumen}}",
       "editTitle": "Editar comunicado",
       "creadoEl": "Creado el {{fecha}}",
       "expiraEl": "Expira el {{fecha}}",
+      "eventoEl": "Evento el {{fecha}}",
+      "vencioEl": "Venció el {{fecha}}",
       "destinatariosNoEditable": "El conjunto y los destinatarios no se pueden cambiar después de publicar. Si te equivocaste, elimina este comunicado y crea uno nuevo.",
       "deleteError": "No se pudo eliminar. Intenta de nuevo.",
       "validation": {
@@ -1849,7 +1948,11 @@
     "feed": {
       "title": "Comunicados",
       "subtitle": "Avisos activos de tu conjunto.",
-      "empty": "No hay comunicados activos por ahora."
+      "empty": "No hay comunicados activos por ahora.",
+      "filtroLabel": "Filtrar por tipo",
+      "filtroTodos": "Todos",
+      "estaSemana": "Esta semana",
+      "anteriores": "Anteriores"
     }
   },
   "novedades": {
@@ -1891,9 +1994,7 @@
         "fechaExpiracionHint": "Si la dejas vacía, se usa una fecha sugerida por el sistema.",
         "urlVideo": "Enlace de video (YouTube, opcional)"
       },
-      "listBar": "Filtros y lista",
-      "collapse": "Recoger",
-      "expand": "Ver novedades",
+      "listBar": "Novedades publicadas",
       "filters": {
         "all": "Todas",
         "showArchived": "Ver archivadas",
@@ -1931,7 +2032,7 @@
     },
     "feed": {
       "title": "Soporte técnico",
-      "subtitle": "Avisos generales de la plataforma VerdeApp.",
+      "subtitle": "Escribe al equipo de VerdeApp y revisa las novedades de la plataforma.",
       "empty": "No hay novedades activas por ahora."
     }
   }

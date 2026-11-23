@@ -6,7 +6,7 @@ Descripción: Endpoints de novedades generales de la plataforma (RQF-015).
            - GET /feed -> Residente, Reciclador o Admin de Conjunto (ven, no publican).
 """
 
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -95,10 +95,13 @@ def archivar_novedad(
     return MessageResponse(message="Novedad archivada correctamente.")
 
 
-@router.get("/feed", response_model=List[NovedadResponse])
+@router.get("/feed")
 def ver_feed(
+    limit: int = Query(10, ge=1, le=MAX_LIMIT_NOVEDADES),
+    offset: int = Query(0, ge=0),
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """RQF-015 / HU-033: novedades activas dirigidas a mi rol."""
-    return novedad_service.listar_feed(db, current_user)
+    """RQF-015 / HU-033: novedades activas dirigidas a mi rol. Paginado (issue #632): `{items, total}`."""
+    items, total = novedad_service.listar_feed(db, current_user, limit, offset)
+    return {"items": items, "total": total}

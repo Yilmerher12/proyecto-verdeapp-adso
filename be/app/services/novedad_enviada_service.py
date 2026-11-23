@@ -26,7 +26,7 @@ from app.models.residente import Residente
 from app.models.rol import RolId
 from app.models.usuario import Usuario
 from app.schemas.novedad_enviada import ActualizarSoporteRequest, CrearNovedadEnviadaRequest
-from app.services.notificaciones_helpers import crear_notificacion
+from app.services.notificaciones_helpers import avisar_admins_del_sistema, crear_notificacion
 
 ROLES_QUE_ENVIAN = {RolId.RESIDENTE, RolId.RECICLADOR, RolId.ADMIN_CONJUNTO}
 
@@ -90,6 +90,20 @@ def crear(db: Session, usuario: Usuario, data: CrearNovedadEnviadaRequest) -> No
         prioridad=PRIORIDAD_POR_MOTIVO.get(data.motivo, PrioridadNovedadEnviada.MEDIA).value,
     )
     db.add(novedad)
+    # ¿Qué? Issue #617: avisa a los Administradores del Sistema que llegó una consulta nueva.
+    # ¿Para qué? Antes solo se enteraban entrando a la página de solicitudes. El flush da el id de la
+    #           consulta para que el aviso lleve a ella.
+    # ¿Impacto? El aviso y la consulta se guardan juntos en el mismo commit; sin administradores
+    #           activos no se crea ningún aviso y la consulta se guarda igual.
+    db.flush()
+    rol, _ = _rol_y_nombre(usuario)
+    avisar_admins_del_sistema(
+        db,
+        tipo="SOPORTE_NUEVO",
+        mensaje=f"Nueva consulta de soporte técnico ({rol}).",
+        id_referencia=novedad.id,
+        id_emisor=usuario.id_usuario,
+    )
     db.commit()
     db.refresh(novedad)
     return novedad

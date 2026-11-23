@@ -1,3 +1,4 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
@@ -20,13 +21,14 @@ import { enlaceAdjuntoSeguro } from "@/lib/enlaceSeguro";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { ContenidoRecargable } from "@/components/ui/ContenidoRecargable";
 import { GuiaApoyoField } from "@/components/ui/GuiaApoyoField";
 import type { ConjuntoOption } from "@/components/ui/ConjuntoCombobox";
 import { ConjuntoComboboxMultiple } from "@/components/ui/ConjuntoComboboxMultiple";
 import { Alert } from "@/components/ui/Alert";
 import { Paginacion } from "@/components/ui/Paginacion";
 import { ContadorCaracteres } from "@/components/ui/ContadorCaracteres";
+import { FechaEnPalabras } from "@/components/ui/FechaEnPalabras";
 import {
   DIAS_MAX_EXPIRACION,
   ENLACE_MAX_LENGTH,
@@ -36,7 +38,9 @@ import {
   validarFechaAviso,
 } from "@/lib/validacion";
 import { usePaginacion } from "@/hooks/usePaginacion";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
 import { formatearFechaUTC, formatearFechaCreacion, isoToDateInputUTC } from "@/lib/dateFormat";
+import { Button } from "@/components/ui/Button";
 import {
   archivarNovedad,
   crearNovedad,
@@ -123,8 +127,7 @@ export function AdminNovedadesPage() {
   //       guardar o archivar) sin depender de que cambie un filtro.
   const [version, setVersion] = useState(0);
 
-  // ---------- Filtros y lista recogible ----------
-  const [listaAbierta, setListaAbierta] = useState(true);
+  // ---------- Filtros ----------
   const [alcanceFiltro, setAlcanceFiltro] = useState<"" | AlcanceNovedad>("");
   const [verArchivadas, setVerArchivadas] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -322,7 +325,7 @@ export function AdminNovedadesPage() {
         : t("novedades.admin.destino.several", { count: item.conjuntos.length });
 
   return (
-    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
       <div className="flex items-center justify-between gap-3 bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-300/10 dark:text-accent-500">
@@ -333,37 +336,20 @@ export function AdminNovedadesPage() {
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("novedades.admin.subtitle")}</p>
           </div>
         </div>
-        <button
-          onClick={abrirCrear}
-          className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl bg-accent-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-        >
+        <Button variant="primary" onClick={abrirCrear}>
           <Plus className="icon-md" />
           {t("novedades.admin.newButton")}
-        </button>
+        </Button>
       </div>
 
       {errorMsg && !creando && !editando && (
         <Alert type="error" message={errorMsg} onClose={() => setErrorMsg(null)} />
       )}
 
-      {/* Barra recogible — mismo patrón que "Usuarios registrados" (un solo
-          <button> que abre/cierra todo lo de abajo). */}
+      {/* Issue #596: la lista ya no se recoge (el "Recoger/Desplegar" no aportaba nada), solo lleva su título. */}
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setListaAbierta((v) => !v)}
-          aria-expanded={listaAbierta}
-          aria-controls="novedades-lista-cuerpo"
-          className="flex w-full cursor-pointer items-center justify-between gap-2 px-5 py-4 text-left"
-        >
-          <span className="text-sm font-bold text-gray-900 dark:text-white">{t("novedades.admin.listBar")}</span>
-          <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400">
-            {listaAbierta ? t("novedades.admin.collapse") : t("novedades.admin.expand")}
-            <ChevronDown className={`icon-sm transition-transform ${listaAbierta ? "rotate-180" : ""}`} />
-          </span>
-        </button>
+        <h2 className="px-5 py-4 text-lg font-bold text-gray-900 dark:text-white">{t("novedades.admin.listBar")}</h2>
 
-        {listaAbierta && (
           <div id="novedades-lista-cuerpo" className="space-y-4 border-t border-gray-100 p-5 dark:border-night-line">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-2">
@@ -418,13 +404,15 @@ export function AdminNovedadesPage() {
                 placeholder={t("novedades.admin.filters.searchPlaceholder")}
                 aria-label={t("novedades.admin.filters.searchPlaceholder")}
                 maxLength={100}
-                className="touch-target-h w-full rounded-lg border border-edge bg-white py-2 pl-8 pr-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="focus-ring touch-target-h w-full rounded-lg border border-edge bg-white py-2 pl-8 pr-3 text-xs text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               />
             </div>
 
-            {cargando && <LoadingState message={t("common.loading")} />}
-
-            {!cargando && novedades.length === 0 && (
+            {/* ¿Qué? Issue #615: antes el aviso "Cargando…" salía ARRIBA de las novedades viejas (las dos cosas
+                      a la vez). Ahora la lista se atenúa con una barra de progreso al recargar y solo la
+                      primera carga muestra el "Cargando…" completo. */}
+            <ContenidoRecargable cargando={cargando} mensaje={t("common.loading")} cantidad={8}>
+            {novedades.length === 0 && (
               <EmptyState
                 icon={Newspaper}
                 message={hayFiltros ? t("novedades.admin.filters.noResults") : t("novedades.admin.emptyState")}
@@ -467,9 +455,9 @@ export function AdminNovedadesPage() {
                             <span className="text-xs italic text-gray-500 dark:text-gray-400">{t("comunicados.editedBadge")}</span>
                           )}
                         </div>
-                        <p className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{item.texto}</p>
+                        <TextoRecortable texto={item.texto} className="mt-2 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line" />
                         {item.conjuntos.length > 1 && (
-                          <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             {item.conjuntos.map((c) => c.nombre_conjunto).join(" · ")}
                           </p>
                         )}
@@ -533,10 +521,10 @@ export function AdminNovedadesPage() {
                 );
               })}
             </div>
+            </ContenidoRecargable>
           </div>
-        )}
 
-        {listaAbierta && !cargando && total > 0 && (
+        {total > 0 && (
           <div className="border-t border-gray-100 dark:border-night-line">
             <Paginacion
               desde={paginacion.desde}
@@ -544,8 +532,8 @@ export function AdminNovedadesPage() {
               total={total}
               pagina={paginacion.pagina}
               totalPaginas={paginacion.totalPaginas}
-              puedeAnterior={paginacion.puedeAnterior}
-              puedeSiguiente={paginacion.puedeSiguiente}
+              puedeAnterior={paginacion.puedeAnterior && !cargando}
+              puedeSiguiente={paginacion.puedeSiguiente && !cargando}
               onAnterior={paginacion.irAAnterior}
               onSiguiente={paginacion.irASiguiente}
             />
@@ -609,8 +597,8 @@ export function AdminNovedadesPage() {
                     ? t("novedades.admin.destino.allConjuntos")
                     : editando.conjuntos.map((c) => c.nombre_conjunto).join(", ")}
                 </p>
-                <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("novedades.admin.alcanceNoEditable")}</p>
-                <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("novedades.admin.conjunto.notEditable")}</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("novedades.admin.alcanceNoEditable")}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t("novedades.admin.conjunto.notEditable")}</p>
               </div>
             )}
 
@@ -659,19 +647,19 @@ export function AdminNovedadesPage() {
                       emptyLabel={t("novedades.admin.conjunto.noResults")}
                     />
                     {form.conjuntos.length === 0 && (
-                      <p role="status" className="text-[0.6875rem] font-semibold text-amber-700 dark:text-amber-200">
+                      <p role="status" className="text-xs font-semibold text-amber-700 dark:text-amber-200">
                         {t("novedades.admin.conjunto.pickAtLeastOne")}
                       </p>
                     )}
                   </div>
                 ) : (
-                  <div role="status" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[0.6875rem] font-semibold leading-snug text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
+                  <div role="status" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-snug text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
                     <TriangleAlert className="icon-sm mt-px shrink-0 icon-appear icon-shake" />
                     {t("novedades.admin.conjunto.massWarning")}
                   </div>
                 )}
 
-                <p className="text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("novedades.admin.conjunto.example")}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t("novedades.admin.conjunto.example")}</p>
               </div>
             )}
 
@@ -686,7 +674,7 @@ export function AdminNovedadesPage() {
                 maxLength={NOVEDAD_TEXTO_MAX_LENGTH}
                 aria-describedby="novedad-texto-contador"
                 rows={5}
-                className="w-full rounded-xl border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
+                className="focus-ring w-full rounded-lg border border-edge bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:border-accent-500 dark:border-night-edge dark:bg-night-field dark:text-white"
               />
               <ContadorCaracteres id="novedad-texto-contador" actual={form.texto.length} max={NOVEDAD_TEXTO_MAX_LENGTH} />
             </div>
@@ -705,18 +693,19 @@ export function AdminNovedadesPage() {
                 onBlur={validarFechaExpiracion}
                 aria-invalid={!!errorFechaExpiracion}
                 aria-describedby={errorFechaExpiracion ? "novedad-fecha-expiracion-error" : undefined}
-                className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 dark:bg-night-field dark:text-white ${
                   errorFechaExpiracion
-                    ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                    : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
+                    ? "focus:outline-none focus:ring-1 border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                    : "focus-ring border-edge focus:border-accent-500 dark:border-night-edge"
                 }`}
               />
+              <FechaEnPalabras valor={form.fecha_expiracion} frase="novedades.admin.expiraEl" />
               {errorFechaExpiracion && (
                 <p id="novedad-fecha-expiracion-error" className="mt-1 text-sm text-red-600 dark:text-red-300" role="alert">
                   {errorFechaExpiracion}
                 </p>
               )}
-              <p className="mt-1 text-[0.6875rem] text-gray-500 dark:text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("novedades.admin.fields.fechaExpiracionHint")}</p>
             </div>
 
             {/* "Más opciones": todo lo que no hace falta para un aviso rápido
@@ -733,7 +722,7 @@ export function AdminNovedadesPage() {
                   {t("novedades.admin.moreOptions.title")}{" "}
                   <span className="font-medium text-gray-500 dark:text-gray-400">— {t("novedades.admin.moreOptions.hint")}</span>
                 </span>
-                <span className="flex shrink-0 items-center gap-1 text-[0.6875rem] font-semibold text-gray-500 dark:text-gray-400">
+                <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
                   {masOpciones ? t("novedades.admin.moreOptions.hide") : t("novedades.admin.moreOptions.show")}
                   <ChevronDown className={`icon-sm transition-transform ${masOpciones ? "rotate-180" : ""}`} />
                 </span>
@@ -763,10 +752,10 @@ export function AdminNovedadesPage() {
                       placeholder="https://www.youtube.com/watch?v=..."
                       aria-invalid={!!errorVideo}
                       aria-describedby={errorVideo ? "novedad-url-video-error" : undefined}
-                      className={`w-full rounded-xl border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 dark:bg-night-field dark:text-white ${
+                      className={`w-full rounded-lg border bg-gray-50 px-4 py-2.5 text-sm text-gray-900 dark:bg-night-field dark:text-white ${
                         errorVideo
-                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
-                          : "border-edge focus:border-accent-500 focus:ring-accent-500 dark:border-night-edge"
+                          ? "focus:outline-none focus:ring-1 border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-400"
+                          : "focus-ring border-edge focus:border-accent-500 dark:border-night-edge"
                       }`}
                     />
                     {errorVideo && (
@@ -780,23 +769,16 @@ export function AdminNovedadesPage() {
             </div>
 
             <div className="flex gap-2 pt-2">
-              <button
-                onClick={cerrarFormulario}
-                className="flex-1 cursor-pointer rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover transition-colors"
-              >
+              <Button variant="secondary" fullWidth onClick={cerrarFormulario}>
                 {t("common.cancel")}
-              </button>
-              <button
-                onClick={guardar}
-                disabled={guardando || formularioIncompleto}
-                className="flex-1 cursor-pointer rounded-xl bg-accent-700 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-              >
+              </Button>
+              <Button variant="primary" fullWidth onClick={guardar} disabled={guardando || formularioIncompleto}>
                 {guardando
                   ? t("common.saving")
                   : formularioIncompleto
                     ? t("common.formIncomplete")
                     : t("common.save")}
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>

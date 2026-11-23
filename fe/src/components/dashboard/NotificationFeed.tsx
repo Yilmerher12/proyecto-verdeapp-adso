@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   DoorOpen,
   GraduationCap,
+  Headset,
   LifeBuoy,
   Megaphone,
   MessageSquareReply,
@@ -55,6 +56,9 @@ const TIPO_META: Record<string, { Icon: LucideIcon; color: string }> = {
   // Soporte técnico: respuesta y cambio de estado de la consulta que el usuario envió
   RESPUESTA_SOPORTE: { Icon: MessageSquareReply, color: "text-accent-700 dark:text-accent-500" },
   ESTADO_SOPORTE: { Icon: LifeBuoy, color: "text-accent-700 dark:text-accent-500" },
+  // Issue #617: lo que le llega al Admin del Sistema para atender (consulta de soporte y solicitud de desvinculación)
+  SOPORTE_NUEVO: { Icon: Headset, color: "text-amber-700 dark:text-amber-200" },
+  DESVINCULACION_SOLICITADA: { Icon: Unlink, color: "text-amber-700 dark:text-amber-200" },
   // RQF-009 (resultado de la auditoría del reciclador)
   AUDITORIA_PUBLICADA: { Icon: ClipboardCheck, color: "text-teal-700 dark:text-teal-300" },
   // RQF-013 (recomendación de contenido educativo según auditoría)
@@ -98,6 +102,102 @@ interface NotificationFeedProps {
    *           suya además se verían dos bordes uno dentro del otro.
    */
   flat?: boolean;
+  /**
+   * ¿Qué? Si cada fila escribe el nombre de su conjunto. Por omisión, sí.
+   * ¿Para qué? En el panel del Reciclador la lista ya es del conjunto elegido arriba: repetir el
+   *           nombre en cada fila no aporta. Las notificaciones generales de VerdeApp (que no
+   *           son de ningún conjunto) conservan su etiqueta.
+   */
+  mostrarConjunto?: boolean;
+}
+
+interface FilaNotificacionProps {
+  n: NotificacionItem;
+  /** Fondo de la fila cuando está sin leer (claro + oscuro). */
+  accentHighlight: string;
+  /** Si la fila escribe el nombre de su conjunto (por omisión, sí). */
+  mostrarConjunto?: boolean;
+  onMarkRead: (id: string) => void;
+  onItemClick?: (notif: NotificacionItem) => void;
+  esAccionable?: (notif: NotificacionItem) => boolean;
+}
+
+/**
+ * ¿Qué? Una fila de aviso: ícono del tipo en un círculo, el mensaje y una línea con el conjunto (o "VerdeApp"), la
+ *       hora y si es nueva o ya leída.
+ * ¿Para qué? Issue #595: salió de NotificationFeed para que la pestaña "Avisos" de cada conjunto (una lista paginada
+ *           por el servidor, sin título ni botón "ver más") dibuje cada aviso igual que el resto de la app.
+ * ¿Impacto? Es el mismo código de antes, sin cambios de comportamiento: NotificationFeed la usa para cada fila.
+ *           Va dentro de un <ul>.
+ */
+export function FilaNotificacion({
+  n,
+  accentHighlight,
+  mostrarConjunto = true,
+  onMarkRead,
+  onItemClick,
+  esAccionable,
+}: FilaNotificacionProps) {
+  const { t } = useTranslation();
+  const meta = TIPO_META[n.tipo] ?? { Icon: Bell, color: "text-gray-500 dark:text-gray-400" };
+  const interactiva = !n.leida || Boolean(onItemClick && (esAccionable?.(n) ?? true));
+  const activar = () => {
+    if (!n.leida) onMarkRead(n.id);
+    onItemClick?.(n);
+  };
+  return (
+    <li
+      onClick={() => interactiva && activar()}
+      onKeyDown={(e) => {
+        if (interactiva && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          activar();
+        }
+      }}
+      role={interactiva ? "button" : undefined}
+      tabIndex={interactiva ? 0 : undefined}
+      aria-label={
+        interactiva
+          ? !n.leida
+            ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}`
+            : n.mensaje
+          : undefined
+      }
+      className={`flex items-start gap-3 px-5 py-3.5 transition-colors ${interactiva ? "cursor-pointer" : ""} ${
+        !n.leida ? accentHighlight : interactiva ? "hover:bg-gray-50 dark:hover:bg-night-inset/60" : ""
+      }`}
+    >
+      {/* ¿Qué? Issue #516 — el ícono va en un círculo, y debajo del mensaje una fila
+                fija: de qué conjunto (o "VerdeApp"), cuándo y si es nueva o leída.
+          ¿Para qué? Antes el estado era solo un punto de color; ahora se dice con
+                    palabras y se lee igual con lector de pantalla. */}
+      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-night-inset">
+        <meta.Icon className={`icon-md ${meta.color}`} aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm ${!n.leida ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
+          {n.mensaje}
+        </p>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+          {(mostrarConjunto || !n.nombre_conjunto) && (
+            <span className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 font-medium text-gray-700 dark:border-night-line dark:bg-night-inset dark:text-gray-300">
+              {n.nombre_conjunto ?? t("notificationFeed.platformLabel")}
+            </span>
+          )}
+          <time dateTime={n.created_at} title={formatearFechaCreacion(n.created_at)}>
+            {tiempoRelativo(n.created_at)}
+          </time>
+          {n.leida ? (
+            <span>{t("notificationFeed.read")}</span>
+          ) : (
+            <span className="rounded-md bg-accent-100 px-2 py-0.5 font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
+              {t("notificationFeed.new")}
+            </span>
+          )}
+        </div>
+      </div>
+    </li>
+  );
 }
 
 export function NotificationFeed({
@@ -113,6 +213,7 @@ export function NotificationFeed({
   onItemClick,
   esAccionable,
   flat = false,
+  mostrarConjunto = true,
 }: NotificationFeedProps) {
   const { t } = useTranslation();
   const [expandido, setExpandido] = useState(false);
@@ -120,12 +221,14 @@ export function NotificationFeed({
 
   return (
     <div className={flat ? "" : "bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line shadow-sm"}>
-      <div className={`flex items-center justify-between gap-3 px-5 pt-5 ${description ? "pb-2" : "pb-3"}`}>
+      {/* ¿Qué? `flex-wrap` y `shrink-0` en el ícono: en un espacio angosto los botones "Marcar leídas / Limpiar
+                leídas" bajan a otra fila en vez de apretar el título y encoger el ícono del reloj (barrido #602). */}
+      <div className={`flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-5 pt-5 ${description ? "pb-2" : "pb-3"}`}>
         <div className="flex items-center gap-2">
-          <Clock className="icon-md text-accent-600" />
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h2>
+          <Clock className="icon-md shrink-0 text-accent-600" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
           {noLeidas > 0 && (
-            <span className={`rounded-full px-1.5 py-0.5 text-[0.625rem] font-bold text-white ${accentBg}`}>
+            <span className={`rounded-full px-1.5 py-0.5 text-[0.6875rem] font-bold text-white ${accentBg}`}>
               {noLeidas}
             </span>
           )}
@@ -152,72 +255,23 @@ export function NotificationFeed({
         <p className="px-5 pb-5 text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</p>
       ) : (
         <>
-          <ul className="divide-y divide-gray-50 dark:divide-gray-800">
-            {(expandido ? notifications : notifications.slice(0, 5)).map((n) => {
-              const meta = TIPO_META[n.tipo] ?? { Icon: Bell, color: "text-gray-500 dark:text-gray-400" };
-              const interactiva = !n.leida || Boolean(onItemClick && (esAccionable?.(n) ?? true));
-              const activar = () => {
-                if (!n.leida) onMarkRead(n.id);
-                onItemClick?.(n);
-              };
-              return (
-                <li
-                  key={n.id}
-                  onClick={() => interactiva && activar()}
-                  onKeyDown={(e) => {
-                    if (interactiva && (e.key === "Enter" || e.key === " ")) {
-                      e.preventDefault();
-                      activar();
-                    }
-                  }}
-                  role={interactiva ? "button" : undefined}
-                  tabIndex={interactiva ? 0 : undefined}
-                  aria-label={
-                    interactiva
-                      ? !n.leida
-                        ? `${n.mensaje}. ${t("notificationFeed.markReadHint")}`
-                        : n.mensaje
-                      : undefined
-                  }
-                  className={`flex items-start gap-3 px-5 py-3.5 transition-colors ${interactiva ? "cursor-pointer" : ""} ${
-                    !n.leida ? accentHighlight : interactiva ? "hover:bg-gray-50 dark:hover:bg-night-inset/60" : ""
-                  }`}
-                >
-                  {/* ¿Qué? Issue #516 — el ícono va en un círculo, y debajo del mensaje una fila
-                            fija: de qué conjunto (o "VerdeApp"), cuándo y si es nueva o leída.
-                      ¿Para qué? Antes el estado era solo un punto de color; ahora se dice con
-                                palabras y se lee igual con lector de pantalla. */}
-                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-night-inset">
-                    <meta.Icon className={`icon-md ${meta.color}`} aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className={`text-sm ${!n.leida ? "font-semibold text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
-                      {n.mensaje}
-                    </p>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                      <span className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 font-medium text-gray-700 dark:border-night-line dark:bg-night-inset dark:text-gray-300">
-                        {n.nombre_conjunto ?? t("notificationFeed.platformLabel")}
-                      </span>
-                      <time dateTime={n.created_at} title={formatearFechaCreacion(n.created_at)}>
-                        {tiempoRelativo(n.created_at)}
-                      </time>
-                      {n.leida ? (
-                        <span>{t("notificationFeed.read")}</span>
-                      ) : (
-                        <span className="rounded-md bg-accent-100 px-2 py-0.5 font-semibold text-accent-700 dark:bg-accent-300/10 dark:text-accent-400">
-                          {t("notificationFeed.new")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
+          <ul className="divide-y divide-gray-200 dark:divide-night-line">
+            {(expandido ? notifications : notifications.slice(0, 5)).map((n) => (
+              <FilaNotificacion
+                key={n.id}
+                n={n}
+                accentHighlight={accentHighlight}
+                mostrarConjunto={mostrarConjunto}
+                onMarkRead={onMarkRead}
+                onItemClick={onItemClick}
+                esAccionable={esAccionable}
+              />
+            ))}
           </ul>
           {notifications.length > 5 && (
             <button
               onClick={() => setExpandido((v) => !v)}
-              className="w-full cursor-pointer py-2.5 text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 border-t border-gray-50 dark:border-night-line transition-colors"
+              className="w-full cursor-pointer py-2.5 text-xs font-medium text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 border-t border-gray-200 dark:border-night-line transition-colors"
             >
               {expandido ? t("notificationFeed.showLess") : t("notificationFeed.showMore", { count: notifications.length - 5 })}
             </button>

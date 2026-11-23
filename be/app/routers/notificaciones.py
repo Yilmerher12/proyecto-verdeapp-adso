@@ -17,12 +17,17 @@ from app.schemas.notificacion import (
     EstadoRecicladorConjuntoResponse,
     EstadoShutResponse,
     NotificacionEnviarBody,
+    NoLeidasDeConjuntoResponse,
     NotificacionResponse,
+    PaginaDeNotificacionesResponse,
 )
 from app.services import notificaciones_service as service
 from app.utils.limiter import limiter
 
 router = APIRouter(prefix="/api/v1/notificaciones", tags=["notificaciones"])
+
+# ¿Qué? Tope de avisos por página en la pestaña "Avisos" de un conjunto (issue #595).
+MAX_LIMIT_AVISOS = 50
 
 
 @router.post("/enviar", status_code=status.HTTP_201_CREATED)
@@ -48,6 +53,28 @@ def mis_notificaciones(
     current_user: Usuario = Depends(get_current_user),
 ):
     return service.listar_mis_notificaciones(db, current_user)
+
+
+@router.get("/por-conjunto/{id_conjunto_residencial}", response_model=PaginaDeNotificacionesResponse)
+def avisos_de_un_conjunto(
+    id_conjunto_residencial: UUID,
+    limit: int = Query(10, ge=1, le=MAX_LIMIT_AVISOS),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """Avisos de UN conjunto del usuario en sesión (los que ve el Admin de Conjunto en su panel). Paginado."""
+    items, total = service.listar_avisos_de_conjunto(db, current_user, id_conjunto_residencial, limit, offset)
+    return {"items": items, "total": total}
+
+
+@router.get("/no-leidas-por-conjunto", response_model=List[NoLeidasDeConjuntoResponse])
+def no_leidas_por_conjunto(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    """Cuántos avisos sin leer tiene cada conjunto del usuario en sesión, para las pastillas de su panel."""
+    return service.contar_no_leidas_por_conjunto(db, current_user)
 
 
 @router.get("/no-leidas-count", response_model=ContadorNoLeidasResponse)

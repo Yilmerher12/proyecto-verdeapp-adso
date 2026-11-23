@@ -11,7 +11,7 @@ import userEvent from "@testing-library/user-event";
 import { Trash2 } from "lucide-react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
-function renderModal(props: { isConfirming?: boolean; onConfirm?: () => void }) {
+function renderModal(props: { isConfirming?: boolean; confirmDisabled?: boolean; onConfirm?: () => void }) {
   return render(
     <ConfirmModal
       icon={Trash2}
@@ -24,6 +24,7 @@ function renderModal(props: { isConfirming?: boolean; onConfirm?: () => void }) 
       onConfirm={props.onConfirm ?? vi.fn()}
       onClose={vi.fn()}
       isConfirming={props.isConfirming}
+      confirmDisabled={props.confirmDisabled}
     />
   );
 }
@@ -46,6 +47,24 @@ describe("ConfirmModal — acción en curso", () => {
     expect(boton).toHaveAttribute("aria-busy", "true");
     expect(boton.querySelector("svg.animate-spin")).not.toBeNull();
     expect(container.ownerDocument.querySelectorAll("svg.animate-spin")).toHaveLength(1);
+
+    await user.click(boton);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+});
+
+describe("ConfirmModal — confirmar deshabilitado", () => {
+  // ¿Qué? confirmDisabled apaga el botón SIN mostrar el spinner de "en curso".
+  // ¿Para qué? El aviso del Reciclador lo usa cuando el estado del conjunto cambió mientras confirmaba.
+  it("apaga el botón, no confirma y no muestra el spinner ni cambia el texto", async () => {
+    const onConfirm = vi.fn();
+    const user = userEvent.setup();
+    renderModal({ confirmDisabled: true, onConfirm });
+
+    const boton = screen.getByRole("button", { name: "Sí, eliminar" });
+    expect(boton).toBeDisabled();
+    expect(boton).toHaveAttribute("aria-busy", "false");
+    expect(boton.querySelector("svg.animate-spin")).toBeNull();
 
     await user.click(boton);
     expect(onConfirm).not.toHaveBeenCalled();

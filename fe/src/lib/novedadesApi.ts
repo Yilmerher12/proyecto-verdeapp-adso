@@ -98,8 +98,9 @@ export async function archivarNovedad(idNovedad: string) {
   return data;
 }
 
-// ¿Qué? Residente/Reciclador/Admin Conjunto — HU-033.
-export async function verFeedNovedades(): Promise<Novedad[]> {
-  const { data } = await axios.get(`${API_BASE}/feed`);
+// ¿Qué? Residente/Reciclador/Admin Conjunto — HU-033, de a páginas (limit/offset + total).
+// ¿Para qué? Issue #632: el feed de Soporte técnico se pide de 10 en 10, igual que el resto de listas que pueden crecer.
+export async function verFeedNovedades(limit: number, offset: number): Promise<PaginaDeNovedades> {
+  const { data } = await axios.get(`${API_BASE}/feed`, { params: { limit, offset } });
   return data;
 }

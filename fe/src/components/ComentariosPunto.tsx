@@ -13,9 +13,11 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/ui/Alert";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { formatearFechaCreacion } from "@/lib/dateFormat";
 import { agregarComentario, listarComentarios, type ComentarioPunto } from "@/lib/puntosAcopioApi";
+import { TextoRecortable } from "@/components/ui/TextoRecortable";
+import { Button } from "@/components/ui/Button";
 
 interface ComentariosPuntoProps {
   idPunto: string;
@@ -67,18 +69,18 @@ export function ComentariosPunto({ idPunto, version }: ComentariosPuntoProps) {
 
   return (
     <section className="space-y-3 border-t border-gray-100 p-5 dark:border-night-line">
-      <h3 className="text-[0.6875rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.title`)}</h3>
+      <h3 className="text-[0.6875rem] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t(`${p}.title`)}</h3>
 
       {errorCarga && <Alert type="error" message={t(`${p}.loadError`)} />}
-      {!errorCarga && comentarios === null && <LoadingState message={t("common.loading")} />}
+      {!errorCarga && comentarios === null && <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} />}
       {comentarios?.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400">{t(`${p}.empty`)}</p>}
       {comentarios?.map((c) => (
         <div key={c.id_comentario} className="rounded-xl border border-gray-100 bg-white px-3 py-2.5 dark:border-night-line dark:bg-night-card">
-          <div className="flex justify-between gap-2 text-[0.6875rem] text-gray-500 dark:text-gray-400">
+          <div className="flex justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
             <span className="min-w-0 truncate font-semibold text-gray-600 dark:text-gray-300">{c.autor ?? t(`${p}.deletedAuthor`)}</span>
             <span className="shrink-0">{formatearFechaCreacion(c.created_at)}</span>
           </div>
-          <p className="mt-1 whitespace-pre-line break-words text-sm text-gray-700 dark:text-gray-200">{c.texto}</p>
+          <TextoRecortable texto={c.texto} className="mt-1 whitespace-pre-line break-words text-sm text-gray-700 dark:text-gray-200" />
         </div>
       ))}
 
@@ -90,18 +92,13 @@ export function ComentariosPunto({ idPunto, version }: ComentariosPuntoProps) {
           rows={2}
           aria-label={t(`${p}.placeholder`)}
           placeholder={t(`${p}.placeholder`)}
-          className="w-full resize-none rounded-xl border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500/20 dark:border-night-edge dark:bg-night-field dark:text-white"
+          className="focus-ring w-full resize-none rounded-lg border border-edge bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-accent-500 /20 dark:border-night-edge dark:bg-night-field dark:text-white"
         />
         {errorEnvio && <Alert type="error" message={t(`${p}.addError`)} onClose={() => setErrorEnvio(false)} />}
         <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={enviar}
-            disabled={enviando || !nuevo.trim()}
-            className="cursor-pointer rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-          >
+          <Button variant="primary" type="button" onClick={enviar} disabled={enviando || !nuevo.trim()}>
             {enviando ? t("common.saving") : t(`${p}.add`)}
-          </button>
+          </Button>
         </div>
       </div>
     </section>

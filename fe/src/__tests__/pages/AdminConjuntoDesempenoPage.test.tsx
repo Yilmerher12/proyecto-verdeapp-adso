@@ -1,9 +1,11 @@
 /**
  * Archivo: __tests__/pages/AdminConjuntoDesempenoPage.test.tsx
  * Descripción: Página "Desempeño" del Admin de Conjunto (issue #487): elegir
- *              conjunto y período, y que el panel pida los datos del elegido.
+ *              conjunto y período, y que el panel pida los datos del elegido. Issue #632: las pestañas de
+ *              conjunto van dentro de la tarjeta del panel, no sueltas entre el encabezado y el panel.
  */
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminConjuntoDesempenoPage } from "@/pages/AdminConjuntoDesempenoPage";
@@ -26,12 +28,16 @@ vi.mock("@/lib/descargarArchivo", () => ({
 }));
 
 // ¿Qué? El panel (gráfica, ranking...) tiene sus propias pruebas: aquí solo
-//       interesa con qué conjunto y período lo monta la página.
+//       interesa con qué conjunto y período lo monta la página, y que le pase las pestañas por `cabecera`
+//       (el mock la dibuja arriba, dentro de la misma tarjeta, como hace el panel real).
 vi.mock("@/components/desempeno/PanelDesempeno", () => ({
-  PanelDesempeno: ({ idConjunto, semanas }: { idConjunto?: string; semanas: number }) => (
-    <p>
-      panel:{idConjunto}:{semanas}
-    </p>
+  PanelDesempeno: ({ idConjunto, semanas, cabecera }: { idConjunto?: string; semanas: number; cabecera?: ReactNode }) => (
+    <div data-testid="tarjeta-panel">
+      {cabecera}
+      <p>
+        panel:{idConjunto}:{semanas}
+      </p>
+    </div>
   ),
 }));
 
@@ -156,6 +162,55 @@ describe("AdminConjuntoDesempenoPage", () => {
         await screen.findByText("No hay auditorías en este período para descargar."),
       ).toBeInTheDocument();
       expect(mockDescargarArchivo).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("pestañas de conjunto dentro de la tarjeta del panel (issue #632)", () => {
+    it("las pestañas van dentro de la misma tarjeta que el contenido del panel, no sueltas", async () => {
+      mockObtenerMisConjuntos.mockResolvedValue([conjunto("c1", "Los Alpes"), conjunto("c2", "Capellanía")]);
+      renderWithProviders(<AdminConjuntoDesempenoPage />);
+
+      const tarjeta = await screen.findByTestId("tarjeta-panel");
+      expect(within(tarjeta).getByRole("tablist", { name: "Conjunto" })).toBeInTheDocument();
+      expect(within(tarjeta).getByText("panel:c1:8")).toBeInTheDocument();
+      // ¿Qué? Y ya no existe una fila de pestañas suelta fuera de esa tarjeta.
+      expect(screen.getAllByRole("tablist")).toHaveLength(1);
+    });
+
+    it("son subrayadas, con una línea debajo", async () => {
+      mockObtenerMisConjuntos.mockResolvedValue([conjunto("c1", "Los Alpes"), conjunto("c2", "Capellanía")]);
+      renderWithProviders(<AdminConjuntoDesempenoPage />);
+
+      expect(await screen.findByRole("tablist", { name: "Conjunto" })).toHaveClass("border-b");
+    });
+
+    it("el período y 'Descargar PDF' se quedan en el encabezado, fuera de la tarjeta del panel", async () => {
+      mockObtenerMisConjuntos.mockResolvedValue([conjunto("c1", "Los Alpes"), conjunto("c2", "Capellanía")]);
+      renderWithProviders(<AdminConjuntoDesempenoPage />);
+
+      const tarjeta = await screen.findByTestId("tarjeta-panel");
+      expect(tarjeta).not.toContainElement(screen.getByLabelText("Período"));
+      expect(tarjeta).not.toContainElement(screen.getByRole("button", { name: "Descargar PDF" }));
+    });
+
+    it("con un solo conjunto la tarjeta no lleva pestañas", async () => {
+      mockObtenerMisConjuntos.mockResolvedValue([conjunto("c1", "Los Alpes")]);
+      renderWithProviders(<AdminConjuntoDesempenoPage />);
+
+      const tarjeta = await screen.findByTestId("tarjeta-panel");
+      expect(within(tarjeta).queryByRole("tablist")).not.toBeInTheDocument();
+    });
+
+    it("al cambiar de conjunto con las pestañas, el PDF baja el del conjunto elegido", async () => {
+      const user = userEvent.setup();
+      mockObtenerMisConjuntos.mockResolvedValue([conjunto("c1", "Los Alpes"), conjunto("c2", "Capellanía")]);
+      mockDescargarPdf.mockResolvedValue(new Blob(["%PDF"]));
+      renderWithProviders(<AdminConjuntoDesempenoPage />);
+
+      await user.click(await screen.findByRole("tab", { name: "Capellanía" }));
+      await user.click(screen.getByRole("button", { name: "Descargar PDF" }));
+
+      await waitFor(() => expect(mockDescargarPdf).toHaveBeenCalledWith("c2", 8));
     });
   });
 });

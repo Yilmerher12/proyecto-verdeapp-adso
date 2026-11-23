@@ -142,3 +142,6 @@ be/.env.demo
 # Frontend demo: página de creación de usuario demo
 fe/src/pages/demo/
 fe/.env.demo
+
+# Correos de contacto de las ECA (datos personales de organizaciones; repositorio público). Se pasan por otro medio, como el .env.
+be/app/data/eca_correos_uaesp.csv

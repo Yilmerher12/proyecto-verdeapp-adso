@@ -399,3 +399,37 @@ class TestBandejaConPocasConsultas:
         con_muchas = self._contar_consultas(client, admin_sistema_auth_headers)
 
         assert con_pocas == con_muchas
+
+
+class TestAvisoAlAdminSistema:
+    """Issue #617: al llegar una consulta de soporte, la campana del Admin Sistema lo avisa."""
+
+    def test_consulta_nueva_avisa_a_los_admins_del_sistema(
+        self, client: TestClient, db, admin_sistema_auth_headers, auth_headers
+    ):
+        client.post(BASE, headers=auth_headers, json={"texto": "No puedo entrar."})
+        id_novedad = client.get(SOPORTE, headers=admin_sistema_auth_headers).json()["items"][0]["id"]
+
+        avisos = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_sistema_auth_headers).json()
+        [aviso] = [a for a in avisos if a["tipo"] == "SOPORTE_NUEVO"]
+        assert aviso["id_referencia"] == id_novedad
+        assert "Residente" in aviso["mensaje"]
+        # El texto de la consulta no viaja en el aviso: se lee en la página de solicitudes.
+        assert "No puedo entrar." not in aviso["mensaje"]
+
+    def test_el_autor_no_recibe_el_aviso(self, client: TestClient, admin_sistema_auth_headers, auth_headers):
+        client.post(BASE, headers=auth_headers, json={"texto": "Hola"})
+        propios = client.get("/api/v1/notificaciones/mis-notificaciones", headers=auth_headers).json()
+        assert all(a["tipo"] != "SOPORTE_NUEVO" for a in propios)
+
+    def test_un_admin_desactivado_no_recibe_el_aviso(
+        self, client: TestClient, db, admin_sistema_test, auth_headers
+    ):
+        admin_sistema_test.habilitado = False
+        db.commit()
+        assert client.post(BASE, headers=auth_headers, json={"texto": "Hola"}).status_code == 201
+        assert db.query(Notificacion).filter(Notificacion.tipo == "SOPORTE_NUEVO").count() == 0
+
+    def test_sin_admins_del_sistema_la_consulta_se_guarda_igual(self, client: TestClient, db, auth_headers):
+        assert client.post(BASE, headers=auth_headers, json={"texto": "Hola"}).status_code == 201
+        assert db.query(Notificacion).filter(Notificacion.tipo == "SOPORTE_NUEVO").count() == 0

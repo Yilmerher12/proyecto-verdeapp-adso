@@ -35,7 +35,7 @@
 
 - **Dado que** estoy en mi perfil,
 - **cuando** veo la lista de conjuntos que administro,
-- **entonces** debo poder seleccionar uno y enviar una solicitud de desvinculación, con un motivo opcional.
+- **entonces** debo poder seleccionar uno y enviar una solicitud de desvinculación, con un motivo opcional que escribo en una ventana (se abre con "Dejar de administrar este conjunto", al final de la pestaña Resumen del conjunto; issue #595).
 
 ### CA-022.2 — No duplicar solicitudes
 

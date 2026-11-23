@@ -105,6 +105,11 @@ def listar_mis_conjuntos(
             AdministradorConjuntoAsignacion.fecha_desvinculacion.is_(None),
         )
         .options(selectinload(ConjuntoResidencial.localidad))
+        # ¿Qué? Orden alfabético por nombre (el id desempata dos conjuntos con el mismo nombre).
+        # ¿Para qué? Issue #595: sin orden, la base de datos los devolvía como quisiera y el conjunto que viene
+        #           abierto al entrar al panel (el primero) podía cambiar de un inicio de sesión a otro.
+        # ¿Impacto? El panel los muestra en este mismo orden; Agenda, Desempeño y Comunicados lo heredan.
+        .order_by(ConjuntoResidencial.nombre_conjunto, ConjuntoResidencial.id_conjunto_residencial)
     ).scalars().all()
 
     # ¿Qué? Cuántos apartamentos y residentes ya están registrados, por
@@ -267,21 +272,26 @@ def regenerar_codigo_acceso(
 
     return CodigoAccesoResponse(codigo_acceso=nuevo_codigo)
 
+# ¿Qué? Tope de filas por página de la agenda (por tratar y archivadas), igual que "Historial de novedades".
+MAX_LIMIT_AGENDA = 100
+
+
 @router.get(
     "/mis-conjuntos/{id_conjunto_residencial}/agenda",
-    response_model=List[AgendaItemResponse],
+    response_model=PaginaDeAgendaResponse,
 )
 def listar_agenda(
     id_conjunto_residencial: UUID,
+    limit: int = Query(10, ge=1, le=MAX_LIMIT_AGENDA),
+    offset: int = Query(0, ge=0),
     administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
 ):
-    """Agenda interna de uno de mis conjuntos — los temas por tratar; nunca sale de mi panel."""
-    return agenda_conjunto_service.listar(db, administrador, id_conjunto_residencial)
-
-
-# ¿Qué? Tope de filas por página del historial, igual que "Historial de novedades".
-MAX_LIMIT_ARCHIVADAS = 100
+    """Agenda interna de uno de mis conjuntos — los temas por tratar, de a páginas; nunca sale de mi panel."""
+    items, total = agenda_conjunto_service.listar(
+        db, administrador, id_conjunto_residencial, limit=limit, offset=offset
+    )
+    return {"items": items, "total": total}
 
 
 @router.get(
@@ -290,7 +300,7 @@ MAX_LIMIT_ARCHIVADAS = 100
 )
 def listar_agenda_archivada(
     id_conjunto_residencial: UUID,
-    limit: int = Query(10, ge=1, le=MAX_LIMIT_ARCHIVADAS),
+    limit: int = Query(10, ge=1, le=MAX_LIMIT_AGENDA),
     offset: int = Query(0, ge=0),
     administrador: AdministradorConjunto = Depends(_requiere_admin_conjunto),
     db: Session = Depends(get_db),
