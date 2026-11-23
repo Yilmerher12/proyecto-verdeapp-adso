@@ -1,10 +1,11 @@
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Check, ChevronRight, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { IlustracionCategoria } from "@/components/educativo/IlustracionCategoria";
 import { MuroLeccion } from "@/components/educativo/MuroLeccion";
 import { imagenPropiaSegura } from "@/lib/enlaceSeguro";
@@ -58,7 +59,7 @@ export function CategoriaEducativaPage() {
   const conGuia = temas.filter((c) => c.url_guia).length;
 
   return (
-    <div className="mx-auto max-w-6xl 2xl:max-w-7xl space-y-9 pt-6 pb-12">
+    <div className={`${ANCHO_PAGINA.normal} space-y-9 pt-6 pb-12`}>
       <Link
         to="/catalogo-educativo"
         className="link-text touch-target-h flex w-fit items-center gap-1.5 text-sm font-semibold"
@@ -67,11 +68,12 @@ export function CategoriaEducativaPage() {
         {t("categoriaEducativa.back")}
       </Link>
 
-      <header className="space-y-3">
+      {/* ¿Qué? El título de la categoría y el de "Sigue aprendiendo" van en una tarjeta (ver CatalogoEducativoPage). */}
+      <header className="space-y-3 rounded-3xl border border-gray-100 bg-white p-6 dark:border-night-line dark:bg-night-card">
         <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">
           {categoriaDecodificada}
         </span>
-        <h1 className="max-w-3xl text-3xl font-bold leading-tight text-gray-900 dark:text-white">
+        <h1 className="max-w-3xl text-2xl font-bold leading-tight text-gray-900 dark:text-white">
           {temas.length === 1 ? temas[0].titulo_tema : categoriaDecodificada}
         </h1>
         {temas.length > 0 && (
@@ -91,7 +93,7 @@ export function CategoriaEducativaPage() {
         )}
       </header>
 
-      {cargando && <LoadingState message={t("common.loading")} />}
+      {cargando && <Esqueleto mensaje={t("common.loading")} variante="bloque" alto="h-96" />}
 
       {!cargando && temas.length === 0 && (
         <EmptyState icon={FileText} message={t("categoriaEducativa.emptyForCategory")} />
@@ -105,7 +107,7 @@ export function CategoriaEducativaPage() {
 
       {otras.length > 0 && (
         <section aria-labelledby="titulo-sigue" className="space-y-5">
-          <h2 id="titulo-sigue" className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h2 id="titulo-sigue" className="rounded-3xl border border-gray-100 bg-white px-6 py-4 text-lg font-bold text-gray-900 dark:border-night-line dark:bg-night-card dark:text-white">
             {t("categoriaEducativa.keepLearning")}
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

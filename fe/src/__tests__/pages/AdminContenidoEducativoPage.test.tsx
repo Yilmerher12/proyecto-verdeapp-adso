@@ -19,6 +19,7 @@ import { AdminContenidoEducativoPage } from "@/pages/AdminContenidoEducativoPage
 import { renderWithProviders, mockUser } from "../helpers";
 import type { ContenidoEducativo } from "@/lib/contenidoEducativoApi";
 import type { AuditoriaAdmin } from "@/lib/auditoriaConjuntoApi";
+import { domingoDeLunesUTC, fechaBogota, isoToDateInputUTC } from "@/lib/dateFormat";
 
 const mockGet = vi.fn();
 const mockPost = vi.fn();
@@ -106,7 +107,7 @@ const califBueno: AuditoriaAdmin = {
   ruta_evidencia: "/uploads/evidencias-auditoria/foto2.jpg",
   ruta_evidencia_2: null,
   ruta_evidencia_3: null,
-  created_at: "2026-09-20T09:00:00Z",
+  created_at: "2026-09-22T09:00:00Z",
   nombre_reciclador: "Marta Peña",
   avisados: 0,
 };
@@ -121,7 +122,12 @@ const califBueno: AuditoriaAdmin = {
 function respuestaPorDefecto(url: string) {
   if (url.includes("/contenido-educativo") && url.includes("/envios")) return { data: [] };
   if (url.includes("/contenido-educativo")) return { data: [] };
-  if (url.includes("/auditorias-conjunto/admin")) return { data: { items: [], total: 0 } };
+  if (url.includes("/auditorias-conjunto/admin/resumen-semana")) {
+    return { data: { lunes: SEMANA_ACTUAL, bueno: 0, regular: 0, malo: 0, temas_con_recomendacion: [] } };
+  }
+  if (url.includes("/auditorias-conjunto/admin")) {
+    return { data: { items: [], total: 0, conteos: { BUENA: 0, REGULAR: 0, DEFICIENTE: 0 } } };
+  }
   if (url.includes("/geography/conjuntos/todos")) return { data: [] };
   return { data: [] };
 }
@@ -130,9 +136,90 @@ function mockRespuestasVacias() {
   mockGet.mockImplementation((url: string) => Promise.resolve(respuestaPorDefecto(url)));
 }
 
+// ¿Qué? Issue #618: simula el servidor de calificaciones — filtra, ordena, corta en páginas y cuenta por nivel
+//       igual que GET /auditorias-conjunto/admin, y responde el resumen de la semana, las localidades y los
+//       conjuntos. Así las pruebas comprueban lo que la pantalla PIDE y lo que muestra con la respuesta.
+function simularServidor(auditorias: AuditoriaAdmin[], extra: { modulos?: ContenidoEducativo[] } = {}) {
+  const dia = (iso: string) => fechaBogota(iso);
+  mockGet.mockImplementation((url: string, config?: { params?: Record<string, unknown> }) => {
+    const params = config?.params ?? {};
+    if (url.includes("/auditorias-conjunto/admin/resumen-semana")) {
+      const lunes = String(params.lunes);
+      const domingo = isoToDateInputUTC(domingoDeLunesUTC(lunes).toISOString());
+      const semana = auditorias.filter((a) => dia(a.created_at) >= lunes && dia(a.created_at) <= domingo);
+      return Promise.resolve({
+        data: {
+          lunes,
+          bueno: semana.filter((a) => a.nivel_desempeno === "BUENA").length,
+          regular: semana.filter((a) => a.nivel_desempeno === "REGULAR").length,
+          malo: semana.filter((a) => a.nivel_desempeno === "DEFICIENTE").length,
+          temas_con_recomendacion: [...new Set(semana.filter((a) => a.nivel_desempeno !== "BUENA").map((a) => a.tema_educativo))],
+        },
+      });
+    }
+    if (url.includes("/auditorias-conjunto/admin")) {
+      const { desde, hasta, id_localidad, id_conjunto, buscar, nivel, orden = "recientes", limit = 100, offset = 0 } = params as {
+        desde?: string;
+        hasta?: string;
+        id_localidad?: number;
+        id_conjunto?: string;
+        buscar?: string;
+        nivel?: string;
+        orden?: string;
+        limit?: number;
+        offset?: number;
+      };
+      const q = buscar?.toLowerCase();
+      const sinNivel = auditorias
+        .filter((a) => !desde || dia(a.created_at) >= desde)
+        .filter((a) => !hasta || dia(a.created_at) <= hasta)
+        .filter((a) => !id_localidad || a.id_localidad === id_localidad)
+        .filter((a) => !id_conjunto || a.id_conjunto_residencial === id_conjunto)
+        .filter((a) => !q || `${a.nombre_conjunto} ${a.tema_educativo} ${a.descripcion ?? ""}`.toLowerCase().includes(q));
+      const gravedad: Record<string, number> = { DEFICIENTE: 0, REGULAR: 1, BUENA: 2 };
+      const masReciente = (a: AuditoriaAdmin, b: AuditoriaAdmin) => (a.created_at < b.created_at ? 1 : -1);
+      const comparadores: Record<string, (a: AuditoriaAdmin, b: AuditoriaAdmin) => number> = {
+        criticas: (a, b) => gravedad[a.nivel_desempeno] - gravedad[b.nivel_desempeno] || masReciente(a, b),
+        recientes: masReciente,
+        conjunto: (a, b) => a.nombre_conjunto.localeCompare(b.nombre_conjunto) || masReciente(a, b),
+      };
+      const filtradas = sinNivel.filter((a) => !nivel || a.nivel_desempeno === nivel).sort(comparadores[orden]);
+      const cuenta = (n: string) => sinNivel.filter((a) => a.nivel_desempeno === n).length;
+      return Promise.resolve({
+        data: {
+          items: filtradas.slice(offset, offset + limit),
+          total: filtradas.length,
+          conteos: { BUENA: cuenta("BUENA"), REGULAR: cuenta("REGULAR"), DEFICIENTE: cuenta("DEFICIENTE") },
+        },
+      });
+    }
+    if (url.includes("/geography/localidades")) {
+      return Promise.resolve({
+        data: [
+          { id_localidad: 1, nombre_localidad: "Usaquén" },
+          { id_localidad: 2, nombre_localidad: "Chapinero" },
+        ],
+      });
+    }
+    if (url.includes("/geography/conjuntos/todos")) {
+      const idLocalidad = params.id_localidad as number | undefined;
+      const conjuntos = new Map(auditorias.map((a) => [a.id_conjunto_residencial, a]));
+      return Promise.resolve({
+        data: [...conjuntos.values()]
+          .filter((a) => !idLocalidad || a.id_localidad === idLocalidad)
+          .map((a) => ({ id_conjunto_residencial: a.id_conjunto_residencial, nombre_conjunto: a.nombre_conjunto, nombre_localidad: a.nombre_localidad })),
+      });
+    }
+    if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: extra.modulos ?? [] });
+    return Promise.resolve(respuestaPorDefecto(url));
+  });
+}
+
 // ¿Qué? Los nombres de conjunto también salen como <option> del selector de conjunto: se busca
 //       dentro de la tabla para no encontrar el mismo texto dos veces.
 const enTabla = () => within(screen.getByRole("table"));
+// ¿Qué? La primera vez la tabla aparece cuando llega la respuesta (antes se muestra "Cargando…").
+const tablaLista = async () => within(await screen.findByRole("table"));
 
 function renderPage() {
   return renderWithProviders(<AdminContenidoEducativoPage />, {
@@ -162,55 +249,72 @@ describe("AdminContenidoEducativoPage", () => {
     expect(screen.getByRole("button", { name: "Módulos" })).toBeInTheDocument();
   });
 
-  it("el contenido de la pestaña se puede recoger y volver a expandir, sin esconder las pestañas", async () => {
+  // ¿Qué? Issue #619: se quitó "Recoger / Ver calificaciones / Ver módulos"; el panel queda siempre abierto.
+  it("el panel ya no se recoge: no hay botón Recoger en ninguna pestaña", async () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
-    await screen.findByText("No hay calificaciones con esos filtros en esta semana.");
+    await screen.findByText("Todavía no hay calificaciones en este periodo.");
+    expect(screen.queryByRole("button", { name: "Recoger" })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Recoger" }));
-    expect(screen.queryByText("No hay calificaciones con esos filtros en esta semana.")).not.toBeInTheDocument();
-    // ¿Qué? Las pestañas siguen ahí — recoger solo esconde el contenido de
-    //       la pestaña activa, no la navegación entre pestañas.
-    expect(screen.getByRole("button", { name: /Calificaciones por conjunto/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Módulos" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Ver calificaciones" }));
-    expect(await screen.findByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
-  });
-
-  it("un clic en las pestañas cambia de pestaña sin recoger el panel", async () => {
-    const user = userEvent.setup({ delay: null });
-    renderPage();
-    await screen.findByText("No hay calificaciones con esos filtros en esta semana.");
-
-    // ¿Qué? La barra completa recoge/expande al hacer clic — las pestañas
-    //       cortan la propagación para no disparar también el toggle. Este
-    //       test cubre justo ese riesgo: elegir "Módulos" no debe cerrar
-    //       el panel de un golpe.
     await user.click(screen.getByRole("button", { name: "Módulos" }));
     expect(await screen.findByText("Todavía no hay módulos creados.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Recoger" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Recoger|Ver módulos|Ver calificaciones/ })).not.toBeInTheDocument();
   });
 
-  it("cambia el texto del botón para recoger según la pestaña activa", async () => {
+  it("un clic en las pestañas cambia de pestaña", async () => {
     const user = userEvent.setup({ delay: null });
     renderPage();
-    await user.click(screen.getByRole("button", { name: "Módulos" }));
-    await screen.findByText("Todavía no hay módulos creados.");
+    await screen.findByText("Todavía no hay calificaciones en este periodo.");
 
-    await user.click(screen.getByRole("button", { name: "Recoger" }));
-    expect(screen.getByRole("button", { name: "Ver módulos" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Módulos" }));
+    expect(await screen.findByText("Todavía no hay módulos creados.")).toBeInTheDocument();
+    expect(screen.queryByText("Todavía no hay calificaciones en este periodo.")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Calificaciones por conjunto/ }));
+    expect(await screen.findByText("Todavía no hay calificaciones en este periodo.")).toBeInTheDocument();
+  });
+
+  it("las tarjetas de arriba dicen lo que cuentan: 'Temas sin recomendación' y 'Calificaciones de esta semana'", async () => {
+    renderPage();
+    expect(await screen.findByText("Temas sin recomendación")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Calificaciones de esta semana · 21–27 sep/ })).toBeInTheDocument();
   });
 
   describe("pestaña Calificaciones por conjunto", () => {
-    it("consulta la semana actual al montar", async () => {
+    // ¿Qué? Issue #618: el servidor filtra, ordena y corta; estas pruebas simulan ese servidor y comprueban lo que la
+    //       pantalla le pide y lo que muestra con su respuesta.
+    const pedidosAAuditorias = () =>
+      mockGet.mock.calls
+        .filter(([url]) => String(url).endsWith("/auditorias-conjunto/admin"))
+        .map(([, config]) => (config as { params: Record<string, unknown> }).params);
+    const ultimoPedido = () => pedidosAAuditorias().at(-1)!;
+
+    // ¿Qué? Cada calificación se identifica por su observación (la 4.ª celda de la fila).
+    const OBS_MALO = "Bolsas mezcladas en varios pisos.";
+    const OBS_REGULAR = "Faltan bolsas verdes.";
+    const OBS_DOMINGO = "Todo en orden el domingo.";
+    const domingo: AuditoriaAdmin = { ...califDomingoNoche, descripcion: OBS_DOMINGO };
+
+    const observacionesEnTabla = () =>
+      enTabla()
+        .getAllByRole("row")
+        .slice(1)
+        .map((fila) => within(fila).getAllByRole("cell")[3].textContent);
+
+    const montar = async (items: AuditoriaAdmin[]) => {
+      simularServidor(items);
+      const user = userEvent.setup({ delay: null });
       renderPage();
-      await waitFor(() => {
-        expect(mockGet).toHaveBeenCalledWith(
-          expect.stringContaining("/auditorias-conjunto/admin"),
-          expect.objectContaining({ params: expect.objectContaining({ lunes: SEMANA_ACTUAL }) })
-        );
-      });
+      await screen.findByRole("table");
+      return user;
+    };
+
+    it("consulta la semana actual al montar, de a 10 filas y con el peor primero", async () => {
+      renderPage();
+      await waitFor(() => expect(pedidosAAuditorias().length).toBeGreaterThan(0));
+      expect(pedidosAAuditorias()).toContainEqual(
+        expect.objectContaining({ desde: SEMANA_ACTUAL, hasta: "2026-09-27", limit: 10, offset: 0, orden: "criticas" })
+      );
     });
 
     // ¿Qué? Domingo 20 de septiembre a las 9 p. m. en Bogotá = lunes 21 a las 2 a. m. en UTC.
@@ -222,327 +326,324 @@ describe("AdminContenidoEducativoPage", () => {
 
       await screen.findByText("14–20 sep");
       expect(screen.getByRole("button", { name: "Semana siguiente" })).toBeDisabled();
-      await waitFor(() => {
-        expect(mockGet).toHaveBeenCalledWith(
-          expect.stringContaining("/auditorias-conjunto/admin"),
-          expect.objectContaining({ params: expect.objectContaining({ lunes: "2026-09-14" }) })
-        );
-      });
+      await waitFor(() => expect(pedidosAAuditorias()).toContainEqual(expect.objectContaining({ desde: "2026-09-14", hasta: "2026-09-20" })));
     });
 
-    it("muestra un estado vacío cuando no hay calificaciones esa semana", async () => {
+    it("sin calificaciones y sin filtros dice que todavía no hay en el periodo (no 'con esos filtros')", async () => {
       renderPage();
-      expect(await screen.findByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
+      expect(await screen.findByText("Todavía no hay calificaciones en este periodo.")).toBeInTheDocument();
     });
 
     it("lista las calificaciones de la semana con su semáforo y sus observaciones", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califMalo, califBueno], total: 2 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
-      renderPage();
-      expect(await enTabla().findByText("Torres de Aranjuez")).toBeInTheDocument();
+      await montar([califMalo, califBueno]);
       expect(enTabla().getByText("Reserva de Prueba")).toBeInTheDocument();
       expect(screen.getByText("Bolsas mezcladas en varios pisos.")).toBeInTheDocument();
-      // ¿Qué? Se acota al <tr> de cada calificación porque "Malo"/"Bueno"
-      //       también aparecen como etiquetas fijas en la tarjeta "Semana en
-      //       curso" — sin acotar, getByText encuentra dos coincidencias.
+      // ¿Qué? Se acota al <tr> de cada calificación porque "Malo"/"Bueno" también aparecen como etiquetas fijas
+      //       en la tarjeta "Semana en curso" — sin acotar, getByText encuentra dos coincidencias.
       const filaMalo = enTabla().getByText("Torres de Aranjuez").closest("tr")!;
       expect(within(filaMalo).getByText("Malo")).toBeInTheDocument();
       const filaBuena = enTabla().getByText("Reserva de Prueba").closest("tr")!;
       expect(within(filaBuena).getByText("Bueno")).toBeInTheDocument();
     });
 
-    it("filtra por semáforo con los chips", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califMalo, califBueno], total: 2 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
-      const user = userEvent.setup({ delay: null });
-      renderPage();
-      await enTabla().findByText("Torres de Aranjuez");
+    it("los botones de nivel muestran los conteos del servidor y filtran pidiéndolo al servidor", async () => {
+      const user = await montar([califMalo, califBueno, califRegular, domingo]);
+      expect(screen.getByRole("button", { name: "Todas 4" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Malo 1" })).toBeInTheDocument();
 
       await user.click(screen.getByRole("button", { name: "Malo 1" }));
-      expect(enTabla().getByText("Torres de Aranjuez")).toBeInTheDocument();
-      expect(enTabla().queryByText("Reserva de Prueba")).not.toBeInTheDocument();
+
+      await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ nivel: "DEFICIENTE", offset: 0 })));
+      await waitFor(() => expect(observacionesEnTabla()).toEqual([OBS_MALO]));
+      // Los conteos no cambian al elegir un nivel: cuentan con los demás filtros, no con este.
+      expect(screen.getByRole("button", { name: "Regular 1" })).toBeInTheDocument();
     });
 
-    it("busca por conjunto o por observación", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califMalo, califBueno], total: 2 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
-      const user = userEvent.setup({ delay: null });
-      renderPage();
-      await enTabla().findByText("Torres de Aranjuez");
+    it("la búsqueda espera a que termines de escribir y se la manda al servidor", async () => {
+      const user = await montar([califMalo, califBueno]);
+      const antes = pedidosAAuditorias().length;
 
       await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "Reserva");
-      expect(enTabla().queryByText("Torres de Aranjuez")).not.toBeInTheDocument();
+
+      await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ buscar: "Reserva" })));
+      // Una sola petición nueva con el texto completo, no una por tecla.
+      expect(pedidosAAuditorias().length - antes).toBeLessThanOrEqual(2);
+      await waitFor(() => expect(enTabla().queryByText("Torres de Aranjuez")).not.toBeInTheDocument());
       expect(enTabla().getByText("Reserva de Prueba")).toBeInTheDocument();
     });
 
-    describe("filtros por conjunto y fecha, orden y limpiar filtros", () => {
-      // ¿Qué? Cada calificación se identifica por su observación (la 4.ª celda de la fila).
-      const OBS_MALO = "Bolsas mezcladas en varios pisos.";
-      const OBS_REGULAR = "Faltan bolsas verdes.";
-      const OBS_BUENO = "Sin observaciones";
-      const OBS_DOMINGO = "Todo en orden el domingo.";
+    it("al elegir una localidad pide solo esa localidad y los conteos se recalculan", async () => {
+      const user = await montar([califMalo, califBueno, califRegular, domingo]);
+      await screen.findByRole("option", { name: "Chapinero" });
 
-      const domingo: AuditoriaAdmin = { ...califDomingoNoche, descripcion: OBS_DOMINGO };
+      await user.selectOptions(screen.getByLabelText("Localidad"), "2");
 
-      const montarConCuatro = async () => {
-        mockGet.mockImplementation((url: string) => {
-          if (url.includes("/auditorias-conjunto/admin")) {
-            return Promise.resolve({ data: { items: [califMalo, califBueno, califRegular, domingo], total: 4 } });
-          }
-          return Promise.resolve(respuestaPorDefecto(url));
-        });
-        const user = userEvent.setup({ delay: null });
-        renderPage();
-        await enTabla().findByText(OBS_MALO);
-        return user;
-      };
+      await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ id_localidad: 2 })));
+      expect(await screen.findByRole("button", { name: "Todas 2" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Malo 0" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Bueno 2" })).toBeInTheDocument();
+    });
 
-      const observacionesEnTabla = () =>
-        enTabla()
-          .getAllByRole("row")
-          .slice(1)
-          .map((fila) => within(fila).getAllByRole("cell")[3].textContent);
+    it("elige un conjunto en el buscador (acotado a la localidad) y se lo manda al servidor", async () => {
+      const user = await montar([califMalo, califBueno, califRegular]);
+      await screen.findByRole("option", { name: "Usaquén" });
+      await user.selectOptions(screen.getByLabelText("Localidad"), "1");
 
-      // ¿Qué? Desde, Hasta y Ordenar por viven en el panel plegado "Más filtros".
-      const abrirMasFiltros = (user: ReturnType<typeof userEvent.setup>) =>
-        user.click(screen.getByRole("button", { name: /Más filtros/ }));
+      await user.type(screen.getByPlaceholderText("Buscar conjunto…"), "Torres");
+      await user.click(await screen.findByText("Torres de Aranjuez — Usaquén"));
 
-      it("Desde, Hasta y Ordenar por están plegados hasta abrir 'Más filtros', que cuenta los activos", async () => {
-        const user = await montarConCuatro();
-        expect(screen.queryByLabelText("Desde")).not.toBeInTheDocument();
-        expect(screen.queryByLabelText("Ordenar por")).not.toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Más filtros" })).toHaveAttribute("aria-expanded", "false");
+      await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ id_localidad: 1, id_conjunto: "c1" })));
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/geography/conjuntos/todos"),
+        expect.objectContaining({ params: expect.objectContaining({ id_localidad: 1 }) })
+      );
+      await waitFor(() => expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR]));
+    });
 
-        await abrirMasFiltros(user);
-        expect(screen.getByLabelText("Desde")).toBeInTheDocument();
-        await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
-        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-22" } });
+    it("al cambiar de localidad se reinicia el conjunto elegido (podría no ser de la nueva)", async () => {
+      const user = await montar([califMalo, califBueno, califRegular]);
+      await screen.findByRole("option", { name: "Chapinero" });
+      await user.selectOptions(screen.getByLabelText("Localidad"), "1");
+      await user.type(screen.getByPlaceholderText("Buscar conjunto…"), "Torres");
+      await user.click(await screen.findByText("Torres de Aranjuez — Usaquén"));
+      await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ id_conjunto: "c1" })));
 
-        // ¿Qué? Se vuelve a plegar: el botón sigue mostrando que hay 2 filtros activos dentro.
-        await abrirMasFiltros(user);
-        expect(screen.queryByLabelText("Desde")).not.toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /Más filtros\s*2/ })).toBeInTheDocument();
+      await user.selectOptions(screen.getByLabelText("Localidad"), "2");
+
+      await waitFor(() => expect(ultimoPedido()).not.toHaveProperty("id_conjunto", "c1"));
+      expect(ultimoPedido()).toEqual(expect.objectContaining({ id_localidad: 2 }));
+    });
+
+    it("ordena: peor calificación primero por defecto, y se puede cambiar", async () => {
+      const user = await montar([califMalo, califBueno, califRegular, domingo]);
+      expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR, OBS_DOMINGO, "Sin observaciones"]);
+
+      await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
+      await waitFor(() => expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_REGULAR, "Sin observaciones", OBS_MALO]));
+      expect(ultimoPedido()).toEqual(expect.objectContaining({ orden: "recientes" }));
+
+      await user.selectOptions(screen.getByLabelText("Ordenar por"), "conjunto");
+      await waitFor(() => expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, "Sin observaciones", OBS_REGULAR, OBS_MALO]));
+    });
+
+    it("'Limpiar filtros' solo aparece con algún filtro activo y los deja todos en blanco", async () => {
+      const user = await montar([califMalo, califBueno, califRegular, domingo]);
+      await screen.findByRole("option", { name: "Usaquén" });
+      expect(screen.queryByRole("button", { name: "Limpiar filtros" })).not.toBeInTheDocument();
+
+      await user.selectOptions(screen.getByLabelText("Localidad"), "1");
+      await user.click(screen.getByRole("button", { name: /^Malo/ }));
+      await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "bolsas");
+      await user.click(await screen.findByRole("button", { name: "Limpiar filtros" }));
+
+      await waitFor(() => expect(ultimoPedido().buscar).toBeUndefined());
+      expect(ultimoPedido().nivel).toBeUndefined();
+      expect(ultimoPedido().id_localidad).toBeUndefined();
+      expect(screen.getByLabelText("Localidad")).toHaveValue("");
+      expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toHaveValue("");
+      expect(screen.queryByRole("button", { name: "Limpiar filtros" })).not.toBeInTheDocument();
+    });
+
+    it("con filtros sin resultados dice 'con esos filtros'", async () => {
+      const user = await montar([califMalo, califBueno]);
+      await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "zzz");
+      expect(await screen.findByText("No hay calificaciones con esos filtros en este periodo.")).toBeInTheDocument();
+    });
+
+    describe("paginación", () => {
+      const muchas = Array.from({ length: 12 }, (_, i) => ({
+        ...califMalo,
+        id_auditoria: `m${i}`,
+        nombre_conjunto: `Conjunto ${String(i).padStart(2, "0")}`,
+        descripcion: `Obs ${i}`,
+        created_at: `2026-09-21T${String(10 + i).padStart(2, "0")}:00:00Z`,
+      }));
+
+      it("muestra 10 filas, el total y pide la siguiente página al servidor", async () => {
+        const user = await montar(muchas);
+        expect(observacionesEnTabla()).toHaveLength(10);
+        expect(screen.getByText("Mostrando 1–10 de 12")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ offset: 10, limit: 10 })));
+        expect(await screen.findByText("Mostrando 11–12 de 12")).toBeInTheDocument();
+        expect(observacionesEnTabla()).toHaveLength(2);
       });
 
-      it("sin calificaciones esa semana, los controles se desactivan y los selectores dicen por qué", async () => {
-        renderPage();
-        await screen.findByText("No hay calificaciones con esos filtros en esta semana.");
-
-        expect(screen.getByLabelText("Localidad")).toBeDisabled();
-        expect(screen.getByLabelText("Conjunto")).toBeDisabled();
-        expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toBeDisabled();
-        expect(within(screen.getByLabelText("Localidad")).getByRole("option")).toHaveTextContent("Sin calificaciones");
-      });
-
-      it("el selector solo ofrece los conjuntos que tienen calificaciones esa semana, sin repetirlos", async () => {
-        await montarConCuatro();
-        const opciones = within(screen.getByLabelText("Conjunto")).getAllByRole("option").map((o) => o.textContent);
-        expect(opciones).toEqual(["Todos los conjuntos", "Conjunto Domingo", "Reserva de Prueba", "Torres de Aranjuez"]);
-      });
-
-      it("el selector de localidad solo ofrece las localidades con calificaciones esa semana, sin repetirlas", async () => {
-        await montarConCuatro();
-        const opciones = within(screen.getByLabelText("Localidad")).getAllByRole("option").map((o) => o.textContent);
-        expect(opciones).toEqual(["Todas las localidades", "Chapinero", "Usaquén"]);
-      });
-
-      it("al elegir una localidad, solo se ven sus conjuntos en el selector y en la tabla", async () => {
-        const user = await montarConCuatro();
-        await user.selectOptions(screen.getByLabelText("Localidad"), "2");
-
-        const opciones = within(screen.getByLabelText("Conjunto")).getAllByRole("option").map((o) => o.textContent);
-        expect(opciones).toEqual(["Todos los conjuntos", "Conjunto Domingo", "Reserva de Prueba"]);
-        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_BUENO]);
-      });
-
-      it("los botones de nivel cuentan solo lo que pasa los demás filtros", async () => {
-        const user = await montarConCuatro();
-        expect(screen.getByRole("button", { name: "Todas 4" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Malo 1" })).toBeInTheDocument();
-
-        // ¿Qué? Localidad 2 = Chapinero: solo las dos calificaciones Buenas (Reserva y Domingo).
-        await user.selectOptions(screen.getByLabelText("Localidad"), "2");
-        expect(screen.getByRole("button", { name: "Todas 2" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Malo 0" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Regular 0" })).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: "Bueno 2" })).toBeInTheDocument();
-      });
-
-      it("al cambiar de localidad se reinicia el conjunto elegido (podría no ser de la nueva)", async () => {
-        const user = await montarConCuatro();
-        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
-        expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR]);
-
-        await user.selectOptions(screen.getByLabelText("Localidad"), "2");
-        expect(screen.getByLabelText("Conjunto")).toHaveValue("");
-        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_BUENO]);
-      });
-
-      it("filtra por el conjunto elegido en la lista", async () => {
-        const user = await montarConCuatro();
-        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
-        expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR]);
-      });
-
-      it("filtra por rango de fechas, con el día de Bogotá (el domingo en la noche cuenta como domingo)", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-22" } });
-        expect(observacionesEnTabla()).toEqual([OBS_REGULAR, OBS_DOMINGO]);
-
-        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-23" } });
-        expect(observacionesEnTabla()).toEqual([OBS_REGULAR]);
-
-        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-27" } });
-        expect(observacionesEnTabla()).toEqual([OBS_REGULAR, OBS_DOMINGO]);
-      });
-
-      it("las fechas solo dejan elegir días de la semana que se está viendo", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        expect(screen.getByLabelText("Desde")).toHaveAttribute("min", "2026-09-21");
-        expect(screen.getByLabelText("Desde")).toHaveAttribute("max", "2026-09-27");
-        expect(screen.getByLabelText("Hasta")).toHaveAttribute("max", "2026-09-27");
-      });
-
-      it("combina conjunto, nivel y fecha", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
-        await user.click(screen.getByRole("button", { name: "Regular 1" }));
-        expect(observacionesEnTabla()).toEqual([OBS_REGULAR]);
-
-        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-22" } });
-        expect(screen.getByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
-      });
-
-      it("ordena: peor calificación primero por defecto, y se puede cambiar", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        expect(observacionesEnTabla()).toEqual([OBS_MALO, OBS_REGULAR, OBS_DOMINGO, OBS_BUENO]);
+      it("cambiar un filtro vuelve a la página 1", async () => {
+        const user = await montar(muchas);
+        await user.click(screen.getByRole("button", { name: "Página siguiente" }));
+        await screen.findByText("Mostrando 11–12 de 12");
 
         await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
-        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_REGULAR, OBS_MALO, OBS_BUENO]);
 
-        await user.selectOptions(screen.getByLabelText("Ordenar por"), "conjunto");
-        expect(observacionesEnTabla()).toEqual([OBS_DOMINGO, OBS_BUENO, OBS_REGULAR, OBS_MALO]);
-      });
-
-      it("'Limpiar filtros' solo aparece con algún filtro activo y los deja todos en blanco", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        expect(screen.queryByRole("button", { name: "Limpiar filtros" })).not.toBeInTheDocument();
-
-        await user.selectOptions(screen.getByLabelText("Localidad"), "1");
-        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
-        await user.click(screen.getByRole("button", { name: "Malo 1" }));
-        await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "bolsas");
-        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-22" } });
-        expect(screen.getByText("No hay calificaciones con esos filtros en esta semana.")).toBeInTheDocument();
-
-        await user.click(screen.getByRole("button", { name: "Limpiar filtros" }));
-        expect(observacionesEnTabla()).toHaveLength(4);
-        expect(screen.getByLabelText("Localidad")).toHaveValue("");
-        expect(screen.getByLabelText("Conjunto")).toHaveValue("");
-        expect(screen.getByLabelText("Desde")).toHaveValue("");
-        expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toHaveValue("");
-        expect(screen.queryByRole("button", { name: "Limpiar filtros" })).not.toBeInTheDocument();
-      });
-
-      it("al cambiar de semana se reinician los filtros (incluida la búsqueda) pero no el orden", async () => {
-        const user = await montarConCuatro();
-        await abrirMasFiltros(user);
-        await user.selectOptions(screen.getByLabelText("Conjunto"), "c1");
-        await user.type(screen.getByPlaceholderText("Buscar conjunto u observación…"), "bolsas");
-        await user.selectOptions(screen.getByLabelText("Ordenar por"), "recientes");
-
-        await user.click(screen.getByRole("button", { name: "Semana anterior" }));
-        await screen.findByText("14–20 sep");
-        await waitFor(() => expect(screen.getByLabelText("Conjunto")).toHaveValue(""));
-        expect(screen.getByPlaceholderText("Buscar conjunto u observación…")).toHaveValue("");
-        expect(screen.getByLabelText("Ordenar por")).toHaveValue("recientes");
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ offset: 0, orden: "recientes" })));
+        expect(await screen.findByText("Mostrando 1–10 de 12")).toBeInTheDocument();
       });
     });
 
-    // ¿Qué? El backend entrega máximo 200 por página; esta semana tiene 250.
-    it("trae todas las páginas de la semana, no solo la primera", async () => {
-      const mucha = (n: number, desdeIndice: number): AuditoriaAdmin[] =>
-        Array.from({ length: n }, (_, i) => ({
-          ...califMalo,
-          id_auditoria: `m${desdeIndice + i}`,
-          nombre_conjunto: `Conjunto ${desdeIndice + i}`,
-          descripcion: `Obs ${desdeIndice + i}`,
-        }));
-      mockGet.mockImplementation((url: string, config?: { params?: { offset?: number } }) => {
-        if (url.includes("/auditorias-conjunto/admin")) {
-          const offset = config?.params?.offset ?? 0;
-          return Promise.resolve({ data: { items: offset === 0 ? mucha(200, 0) : mucha(50, 200), total: 250 } });
-        }
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
-      renderPage();
+    describe("periodo: semana, mes o personalizado", () => {
+      it("navega a la semana anterior, y 'siguiente' se deshabilita en la semana en curso", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText("21–27 sep");
+        expect(screen.getByRole("button", { name: "Semana siguiente" })).toBeDisabled();
 
-      expect(await screen.findByText("Obs 249")).toBeInTheDocument();
-      expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining("/auditorias-conjunto/admin"),
-        expect.objectContaining({ params: expect.objectContaining({ lunes: SEMANA_ACTUAL, limit: 200, offset: 200 }) })
+        await user.click(screen.getByRole("button", { name: "Semana anterior" }));
+
+        expect(await screen.findByText("14–20 sep")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Semana siguiente" })).not.toBeDisabled();
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ desde: "2026-09-14", hasta: "2026-09-20" })));
+      });
+
+      it("el modo Mes pide el mes entero, se mueve con flechas y no pasa del mes actual", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText("21–27 sep");
+
+        await user.click(screen.getByRole("tab", { name: "Mes" }));
+
+        expect(await screen.findByText(/septiembre de 2026/i)).toBeInTheDocument();
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ desde: "2026-09-01", hasta: "2026-09-30" })));
+        expect(screen.getByRole("button", { name: "Mes siguiente" })).toBeDisabled();
+
+        await user.click(screen.getByRole("button", { name: "Mes anterior" }));
+
+        expect(await screen.findByText(/agosto de 2026/i)).toBeInTheDocument();
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ desde: "2026-08-01", hasta: "2026-08-31" })));
+        expect(screen.getByRole("button", { name: "Mes siguiente" })).not.toBeDisabled();
+      });
+
+      it("el modo Personalizado acepta cualquier rango, con varias semanas", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText("21–27 sep");
+
+        await user.click(screen.getByRole("tab", { name: "Personalizado" }));
+        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-08-10" } });
+        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-15" } });
+
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ desde: "2026-08-10", hasta: "2026-09-15" })));
+        // No se puede elegir una fecha futura.
+        expect(screen.getByLabelText("Hasta")).toHaveAttribute("max", "2026-09-21");
+      });
+
+      it("'Hasta' anterior a 'Desde' se avisa y no se manda al servidor", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText("21–27 sep");
+        await user.click(screen.getByRole("tab", { name: "Personalizado" }));
+        fireEvent.change(screen.getByLabelText("Desde"), { target: { value: "2026-09-15" } });
+        await waitFor(() => expect(ultimoPedido()).toEqual(expect.objectContaining({ desde: "2026-09-15" })));
+        const pedidos = pedidosAAuditorias().length;
+
+        fireEvent.change(screen.getByLabelText("Hasta"), { target: { value: "2026-09-01" } });
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("\"Hasta\" no puede ser anterior a \"Desde\".");
+        expect(pedidosAAuditorias().length).toBe(pedidos);
+      });
+    });
+
+    describe("semana en curso vacía", () => {
+      const califSemanaPasada: AuditoriaAdmin = { ...califBueno, created_at: "2026-09-20T09:00:00Z" };
+
+      it("abre en la última semana con datos y lo explica, con un botón para volver a esta semana", async () => {
+        simularServidor([califSemanaPasada]); // 20 de septiembre: la semana en curso (21–27) no tiene nada
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+
+        expect(await screen.findByText(/La semana en curso todavía no tiene calificaciones/)).toBeInTheDocument();
+        expect(screen.getByText(/última semana con datos \(14–20 sep\)/)).toBeInTheDocument();
+        expect(await (await tablaLista()).findByText("Reserva de Prueba")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Ver esta semana" }));
+
+        expect(await screen.findByText("21–27 sep")).toBeInTheDocument();
+        expect(screen.queryByText(/La semana en curso todavía no tiene calificaciones/)).not.toBeInTheDocument();
+        expect(await screen.findByText("Todavía no hay calificaciones en este periodo.")).toBeInTheDocument();
+      });
+
+      it("no salta de semana si la semana en curso sí tiene calificaciones", async () => {
+        await montar([califMalo, califBueno]);
+        expect(screen.getByText("21–27 sep")).toBeInTheDocument();
+        expect(screen.queryByText(/La semana en curso todavía no tiene calificaciones/)).not.toBeInTheDocument();
+      });
+
+      it("la franja desaparece al moverse de semana por cuenta propia", async () => {
+        simularServidor([califSemanaPasada]);
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText(/La semana en curso todavía no tiene calificaciones/);
+
+        await user.click(screen.getByRole("button", { name: "Semana anterior" }));
+
+        expect(screen.queryByText(/La semana en curso todavía no tiene calificaciones/)).not.toBeInTheDocument();
+      });
+    });
+
+    it("las tarjetas de arriba salen del resumen del servidor", async () => {
+      simularServidor([califMalo, califRegular, califBueno]);
+      renderPage();
+      await waitFor(() =>
+        expect(mockGet).toHaveBeenCalledWith(
+          expect.stringContaining("/auditorias-conjunto/admin/resumen-semana"),
+          expect.objectContaining({ params: { lunes: SEMANA_ACTUAL } })
+        )
       );
     });
 
-    it("navega a la semana anterior, y 'siguiente' se deshabilita en la semana en curso", async () => {
+    it("abre el modal de la auditoría de una calificación Mala, con las fotos y el módulo recomendado", async () => {
+      simularServidor([califMalo], { modulos: [moduloExistente] });
       const user = userEvent.setup({ delay: null });
       renderPage();
-      await screen.findByText("21–27 sep");
+      await user.click(await (await tablaLista()).findByText("Torres de Aranjuez"));
 
-      expect(screen.getByRole("button", { name: "Semana siguiente" })).toBeDisabled();
-
-      await user.click(screen.getByRole("button", { name: "Semana anterior" }));
-      expect(await screen.findByText("14–20 sep")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Semana siguiente" })).not.toBeDisabled();
-
-      await waitFor(() => {
-        expect(mockGet).toHaveBeenCalledWith(
-          expect.stringContaining("/auditorias-conjunto/admin"),
-          expect.objectContaining({ params: expect.objectContaining({ lunes: "2026-09-14" }) })
-        );
-      });
+      // ¿Qué? Issue #619: es el mismo modal que ven los demás roles, con la ficha ya cargada (no se pide al servidor:
+      //       GET /auditorias-conjunto/{id} rechaza al Admin del Sistema).
+      const modal = await screen.findByRole("dialog", { name: "Resultado de la auditoría" });
+      expect(within(modal).getByText("Carlos Gómez")).toBeInTheDocument();
+      expect(within(modal).getByRole("button", { name: "Ver foto en tamaño completo" })).toBeInTheDocument();
+      // ¿Qué? El mock de t() en __tests__/setup.ts no pluraliza (siempre usa la forma "_other" en bare) — se
+      //       verifica con una expresión regular sin la "s" final, así sirve tanto aquí como con el i18next real.
+      expect(within(modal).getByText("Contenido recomendado")).toBeInTheDocument();
+      expect(within(modal).getByText(/Se avisó a 12 residente/)).toBeInTheDocument();
+      expect(within(modal).getByRole("button", { name: /Código de colores/ })).toBeInTheDocument();
+      expect(mockGet).not.toHaveBeenCalledWith(expect.stringContaining("/auditorias-conjunto/a1"), expect.anything());
     });
 
-    it("abre el detalle de una calificación Mala, con evidencia y el módulo recomendado", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califMalo], total: 1 } });
-        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
+    it("el módulo recomendado del modal de la calificación abre su modal en la pestaña Módulos", async () => {
+      simularServidor([califMalo], { modulos: [moduloExistente] });
       const user = userEvent.setup({ delay: null });
       renderPage();
-      await user.click(await enTabla().findByText("Torres de Aranjuez"));
+      await user.click(await (await tablaLista()).findByText("Torres de Aranjuez"));
+      const modal = await screen.findByRole("dialog", { name: "Resultado de la auditoría" });
 
-      const panel = await screen.findByRole("dialog", { name: "Calificación de Torres de Aranjuez" });
-      expect(within(panel).getByText("Carlos Gómez")).toBeInTheDocument();
-      // ¿Qué? El mock de t() en __tests__/setup.ts no pluraliza (siempre usa
-      //       la forma "_other" en bare) — se verifica con una expresión
-      //       regular sin la "s" final, así sirve tanto aquí como con el
-      //       i18next real de la app (que sí pluraliza correctamente).
-      expect(within(panel).getByText(/Se avisó a 12 residente/)).toBeInTheDocument();
-      expect(within(panel).getByRole("button", { name: "Ampliar foto" })).toBeInTheDocument();
-      expect(within(panel).getByText("Código de colores")).toBeInTheDocument();
+      await user.click(within(modal).getByRole("button", { name: /Código de colores/ }));
+
+      expect(await screen.findByRole("dialog", { name: /Módulo: Código de colores/ })).toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "Resultado de la auditoría" })).not.toBeInTheDocument();
+    });
+
+    // ¿Qué? Issue #587: pasados 6 meses la foto se borra (rutas en null) y el detalle lo avisa.
+    it("el detalle de una calificación sin fotos (ya se borraron) lo avisa y conserva lo demás", async () => {
+      const sinFotos: AuditoriaAdmin = { ...califMalo, ruta_evidencia: null, ruta_evidencia_2: null, ruta_evidencia_3: null };
+      simularServidor([sinFotos]);
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await user.click(await (await tablaLista()).findByText("Torres de Aranjuez"));
+
+      const modal = await screen.findByRole("dialog", { name: "Resultado de la auditoría" });
+      expect(within(modal).getByText(/La foto ya no está disponible/)).toBeInTheDocument();
+      expect(within(modal).queryByRole("button", { name: "Ver foto en tamaño completo" })).not.toBeInTheDocument();
+      expect(within(modal).getByText("Carlos Gómez")).toBeInTheDocument();
     });
 
     it("el detalle de una calificación Buena dice que no hay recomendación", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califBueno], total: 1 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
+      simularServidor([{ ...califBueno, created_at: "2026-09-21T09:00:00Z" }]);
       const user = userEvent.setup({ delay: null });
       renderPage();
-      await user.click(await enTabla().findByText("Reserva de Prueba"));
+      await user.click(await (await tablaLista()).findByText("Reserva de Prueba"));
 
       expect(await screen.findByText("Una calificación Buena no genera recomendación: no hay nada que mejorar en este tema.")).toBeInTheDocument();
     });
@@ -576,11 +677,7 @@ describe("AdminContenidoEducativoPage", () => {
     });
 
     it("muestra 'Sin recomendar' cuando ninguna categoría auditable tuvo calificación esta semana", async () => {
-      mockGet.mockImplementation((url: string, config?: { params?: Record<string, unknown> }) => {
-        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
-        if (url.includes("/auditorias-conjunto/admin") && config?.params?.lunes === SEMANA_ACTUAL) return Promise.resolve({ data: { items: [], total: 0 } });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
+      simularServidor([], { modulos: [moduloExistente] });
       renderPage();
       await waitFor(() => {
         const numeros = screen.getAllByText("1");
@@ -601,7 +698,7 @@ describe("AdminContenidoEducativoPage", () => {
       await screen.findByText("Código de colores");
 
       await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
-      await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+      await user.selectOptions(screen.getByLabelText("Categoría"), "Separación en la fuente");
       await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Nuevo tema de prueba");
       const textarea = screen.getByLabelText("Contenido *");
       await user.type(textarea, "Contenido de prueba con más de veinte caracteres.");
@@ -636,7 +733,7 @@ describe("AdminContenidoEducativoPage", () => {
         const user = userEvent.setup({ delay: null });
         await abrirFormularioNuevo(user);
 
-        expect(screen.getByText(/Cada párrafo \(separado por una línea en blanco\) será una tarjeta del muro/)).toBeInTheDocument();
+        expect(screen.getByText(/Cada párrafo, separado por una línea en blanco, es una tarjeta del muro/)).toBeInTheDocument();
       });
 
       it("la vista previa dibuja el muro: 'De qué trata' y una tarjeta con su título", async () => {
@@ -727,7 +824,7 @@ describe("AdminContenidoEducativoPage", () => {
       it("la imagen de portada se sube y se envía al guardar el módulo", async () => {
         const user = userEvent.setup({ delay: null });
         await abrirFormularioNuevo(user);
-        await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+        await user.selectOptions(screen.getByLabelText("Categoría"), "Separación en la fuente");
         await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema con portada");
         await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
 
@@ -747,7 +844,7 @@ describe("AdminContenidoEducativoPage", () => {
       it("un módulo sin portada se guarda con url_imagen en null", async () => {
         const user = userEvent.setup({ delay: null });
         await abrirFormularioNuevo(user);
-        await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+        await user.selectOptions(screen.getByLabelText("Categoría"), "Separación en la fuente");
         await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema sin portada");
         await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
 
@@ -773,7 +870,7 @@ describe("AdminContenidoEducativoPage", () => {
       await screen.findByText("Código de colores");
 
       await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
-      await user.selectOptions(screen.getByLabelText("Categoría *"), "Separación en la fuente");
+      await user.selectOptions(screen.getByLabelText("Categoría"), "Separación en la fuente");
       await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Nuevo tema de prueba");
       await user.type(screen.getByLabelText("Contenido *"), "Contenido de prueba con más de veinte caracteres.");
       await user.type(screen.getByPlaceholderText("https://www.youtube.com/watch?v=..."), "https://sitio-malo.com/video");
@@ -790,11 +887,190 @@ describe("AdminContenidoEducativoPage", () => {
       await irAModulos(user);
 
       await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
-      await user.selectOptions(screen.getByLabelText("Categoría *"), "+ Nueva categoría…");
-
-      expect(screen.getByText(/Se creará una categoría nueva en el catálogo del Residente/)).toBeInTheDocument();
+      // Sin ninguna categoría creada, el formulario abre directo en "Nueva".
+      expect(screen.getByRole("radio", { name: "Nueva" })).toHaveAttribute("aria-checked", "true");
+      expect(screen.getByText(/también será un tema que los recicladores podrán calificar/)).toBeInTheDocument();
       await user.type(screen.getByPlaceholderText("Ej: Separación en la fuente"), "Compostaje en casa");
-      expect(screen.getByText("Compostaje en casa")).toBeInTheDocument(); // vista previa
+      // La categoría escrita se ve en la "Tarjeta del catálogo" de la vista previa.
+      await user.click(screen.getByRole("tab", { name: "Tarjeta del catálogo" }));
+      expect(within(screen.getByRole("tabpanel", { name: "Tarjeta del catálogo" })).getByText("Compostaje en casa")).toBeInTheDocument();
+    });
+
+    describe("editor de módulos (issue #620)", () => {
+      async function abrirNuevo(user: ReturnType<typeof userEvent.setup>) {
+        mockGet.mockImplementation((url: string) => {
+          if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+          return Promise.resolve(respuestaPorDefecto(url));
+        });
+        renderPage();
+        await irAModulos(user);
+        await screen.findByText("Código de colores");
+        await user.click(screen.getByRole("button", { name: "Nuevo módulo" }));
+      }
+      const cuerpo = () => screen.getByLabelText("Contenido *") as HTMLTextAreaElement;
+
+      it("crear un módulo tiene un solo camino: el botón de la pestaña Módulos", async () => {
+        const user = userEvent.setup({ delay: null });
+        renderPage();
+        await screen.findByText("Todavía no hay calificaciones en este periodo.");
+        // En la pestaña Calificaciones no hay botón para crear, y ya no existen la tarjeta "Nuevo contenido" ni "+ Nueva categoría".
+        expect(screen.queryByRole("button", { name: "Nuevo módulo" })).not.toBeInTheDocument();
+        expect(screen.queryByText("Nuevo contenido")).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /Nueva categoría/ })).not.toBeInTheDocument();
+
+        await irAModulos(user);
+        expect(screen.getAllByRole("button", { name: "Nuevo módulo" })).toHaveLength(1);
+      });
+
+      it("la categoría tiene dos modos: 'Existente' elige solo entre las ya creadas, sin la opción de crear una", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+
+        expect(screen.getByRole("radio", { name: "Existente" })).toHaveAttribute("aria-checked", "true");
+        const opciones = within(screen.getByLabelText("Categoría")).getAllByRole("option").map((o) => o.textContent);
+        expect(opciones).toEqual(["Elige una categoría…", "Separación en la fuente"]);
+
+        await user.click(screen.getByRole("radio", { name: "Nueva" }));
+        // En "Nueva" el campo es de texto, ya no un selector.
+        expect(screen.getByLabelText("Categoría").tagName).toBe("INPUT");
+        expect(screen.getByPlaceholderText("Ej: Separación en la fuente")).toBeInTheDocument();
+      });
+
+      it("una categoría 'Nueva' que ya existe (en minúscula y sin tilde) avisa del duplicado y no deja guardar", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema con duplicado");
+        await user.type(cuerpo(), "Contenido de prueba con más de veinte caracteres.");
+
+        await user.click(screen.getByRole("radio", { name: "Nueva" }));
+        await user.type(screen.getByPlaceholderText("Ej: Separación en la fuente"), "separacion  en la FUENTE");
+
+        expect(await screen.findByText(/Ya existe la categoría «Separación en la fuente»/)).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Completa el formulario" })).toBeDisabled();
+        expect(mockPost).not.toHaveBeenCalled();
+      });
+
+      it("'Usar «…»' cambia a 'Existente' con esa categoría y ya se puede guardar", async () => {
+        mockPost.mockResolvedValue({ data: moduloExistente });
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema sin duplicar");
+        await user.type(cuerpo(), "Contenido de prueba con más de veinte caracteres.");
+        await user.click(screen.getByRole("radio", { name: "Nueva" }));
+        await user.type(screen.getByPlaceholderText("Ej: Separación en la fuente"), "separación en la fuente");
+
+        await user.click(await screen.findByRole("button", { name: "Usar «Separación en la fuente»" }));
+
+        expect(screen.getByRole("radio", { name: "Existente" })).toHaveAttribute("aria-checked", "true");
+        expect(screen.getByLabelText("Categoría")).toHaveValue("Separación en la fuente");
+        await user.click(screen.getByRole("button", { name: "Guardar" }));
+        await waitFor(() =>
+          expect(mockPost).toHaveBeenCalledWith(
+            expect.stringMatching(/\/contenido-educativo$/),
+            expect.objectContaining({ modulo_categoria: "Separación en la fuente" })
+          )
+        );
+      });
+
+      it("una categoría realmente nueva se guarda con el nombre escrito", async () => {
+        mockPost.mockResolvedValue({ data: moduloExistente });
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema de compostaje");
+        await user.type(cuerpo(), "Contenido de prueba con más de veinte caracteres.");
+        await user.click(screen.getByRole("radio", { name: "Nueva" }));
+        await user.type(screen.getByPlaceholderText("Ej: Separación en la fuente"), "Compostaje en casa");
+
+        await user.click(screen.getByRole("button", { name: "Guardar" }));
+
+        await waitFor(() =>
+          expect(mockPost).toHaveBeenCalledWith(
+            expect.stringMatching(/\/contenido-educativo$/),
+            expect.objectContaining({ modulo_categoria: "Compostaje en casa" })
+          )
+        );
+      });
+
+      it("ya no existe el botón 'Subtítulo' y quedan Negrita, Lista e Insertar imagen", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+
+        expect(screen.queryByRole("button", { name: "Subtítulo" })).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Negrita" })).toHaveAttribute("title", "Pone en negrita el texto seleccionado");
+        expect(screen.getByRole("button", { name: "Lista" })).toHaveAttribute("title", expect.stringContaining("lista"));
+        expect(screen.getByText("Insertar imagen").closest("label")).toHaveAttribute("title", expect.stringContaining("tarjeta que sigue"));
+      });
+
+      it("'Tarjeta' agrega un párrafo con su título seleccionado, separado del texto anterior", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        await user.type(cuerpo(), "Introducción del tema.");
+
+        await user.click(screen.getByRole("button", { name: "Tarjeta" }));
+
+        expect(cuerpo().value).toBe("Introducción del tema.\n\nTítulo de la tarjeta: ");
+        // El título queda seleccionado para escribir encima.
+        await waitFor(() => {
+          expect(cuerpo().selectionStart).toBe("Introducción del tema.\n\n".length);
+          expect(cuerpo().selectionEnd).toBe("Introducción del tema.\n\nTítulo de la tarjeta".length);
+        });
+      });
+
+      it("'Tarjeta' en un texto vacío empieza directo, sin líneas en blanco de más", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+
+        await user.click(screen.getByRole("button", { name: "Tarjeta" }));
+
+        expect(cuerpo().value).toBe("Título de la tarjeta: ");
+      });
+
+      it("el recuadro en vivo cuenta introducción, tarjetas con su título y cierre", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        const recuadro = screen.getByRole("status", { name: "Así se dividirá tu texto en el muro" });
+        expect(within(recuadro).getByText(/Escribe el contenido y aquí verás/)).toBeInTheDocument();
+
+        await user.type(
+          cuerpo(),
+          "Los tres colores se usan en toda la ciudad.\n\nBolsa blanca: material limpio.\n\nBolsa negra: otros residuos.\n\nGracias por separar bien."
+        );
+
+        expect(within(recuadro).getByText(/Los tres colores se usan en toda la ciudad/)).toBeInTheDocument();
+        expect(within(recuadro).getByText("2 tarjetas")).toBeInTheDocument();
+        expect(within(recuadro).getByText("Bolsa blanca")).toBeInTheDocument();
+        expect(within(recuadro).getByText("Bolsa negra")).toBeInTheDocument();
+        expect(within(recuadro).getByText(/Gracias por separar bien/)).toBeInTheDocument();
+      });
+
+      it("la vista previa tiene dos pestañas: 'Lección' (el muro) y 'Tarjeta del catálogo'", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        await user.type(screen.getByPlaceholderText("Ej: Código de colores de bolsas"), "Tema para la vista previa");
+
+        expect(screen.getByRole("tab", { name: "Lección" })).toHaveAttribute("aria-selected", "true");
+        expect(screen.getByText("Se actualiza al escribir")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("tab", { name: "Tarjeta del catálogo" }));
+        const panel = screen.getByRole("tabpanel", { name: "Tarjeta del catálogo" });
+        expect(within(panel).getByText("Tema para la vista previa")).toBeInTheDocument();
+        expect(within(panel).getByText(/Sin imagen de portada se usa el dibujo de la categoría/)).toBeInTheDocument();
+      });
+
+      it("en celular se alterna entre 'Editar' y 'Vista previa'", async () => {
+        const user = userEvent.setup({ delay: null });
+        await abrirNuevo(user);
+        const columnaFormulario = () => cuerpo().closest(".space-y-4")!;
+        expect(screen.getByRole("tab", { name: "Editar" })).toHaveAttribute("aria-selected", "true");
+        expect(columnaFormulario().className).not.toMatch(/\bhidden\b/);
+
+        await user.click(screen.getByRole("tab", { name: "Vista previa" }));
+
+        expect(screen.getByRole("tab", { name: "Vista previa" })).toHaveAttribute("aria-selected", "true");
+        // Con la vista previa elegida, el formulario se esconde en pantallas angostas (y sigue visible desde md).
+        expect(columnaFormulario().className).toMatch(/\bhidden\b/);
+        expect(columnaFormulario().className).toContain("md:block");
+      });
     });
 
     it("el botón Negrita envuelve el texto seleccionado en **", async () => {
@@ -831,7 +1107,7 @@ describe("AdminContenidoEducativoPage", () => {
       expect(mockPost).not.toHaveBeenCalled();
     });
 
-    it("edita un módulo existente desde su panel", async () => {
+    it("edita un módulo existente desde el menú de la fila", async () => {
       mockGet.mockImplementation((url: string) => {
         if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
         return Promise.resolve(respuestaPorDefecto(url));
@@ -840,9 +1116,8 @@ describe("AdminContenidoEducativoPage", () => {
       const user = userEvent.setup({ delay: null });
       renderPage();
       await irAModulos(user);
-      await user.click(await screen.findByText("Código de colores"));
-
-      await user.click(await screen.findByRole("button", { name: "Editar" }));
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Editar" }));
       const inputTitulo = screen.getByDisplayValue("Código de colores");
       await user.clear(inputTitulo);
       await user.type(inputTitulo, "Código de colores actualizado");
@@ -856,7 +1131,36 @@ describe("AdminContenidoEducativoPage", () => {
       });
     });
 
-    it("elimina un módulo tras confirmar, desde el panel", async () => {
+    it("pulsar la fila abre el modal de ver, y 'Recomendado a' muestra los conjuntos sin repetir uno dos veces", async () => {
+      const califViejaMismoConjunto: AuditoriaAdmin = { ...califMalo, id_auditoria: "a0", created_at: "2026-09-01T09:00:00Z" };
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/contenido-educativo") && url.includes("/envios")) return Promise.resolve({ data: [] });
+        if (url.includes("/contenido-educativo")) return Promise.resolve({ data: [moduloExistente] });
+        if (url.includes("/auditorias-conjunto/admin/resumen-semana")) return Promise.resolve(respuestaPorDefecto(url));
+        if (url.includes("/auditorias-conjunto/admin")) {
+          return Promise.resolve({ data: { items: [califMalo, califViejaMismoConjunto], total: 2, conteos: { BUENA: 0, REGULAR: 0, DEFICIENTE: 2 } } });
+        }
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      // ¿Qué? El chip de la fila ya dice "Recomendado a N conjuntos" (no "N conjunto").
+      expect(await screen.findByText("Recomendado a 1 conjunto")).toBeInTheDocument();
+      await user.click(await screen.findByText("Código de colores"));
+
+      const modal = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
+      // Se abre en "Vista previa": el contenido del módulo, no la lista de conjuntos.
+      expect(within(modal).getByRole("tab", { name: "Vista previa" })).toHaveAttribute("aria-selected", "true");
+      expect(within(modal).getByText(/Blanco, negro y verde/)).toBeInTheDocument();
+      expect(within(modal).queryByText("Torres de Aranjuez")).not.toBeInTheDocument();
+
+      await user.click(within(modal).getByRole("tab", { name: "Recomendado a (1)" }));
+      expect(within(modal).getAllByText("Torres de Aranjuez")).toHaveLength(1);
+    });
+
+    // ¿Qué? Cada acción tiene un solo lugar: el menú de tres puntos de la fila. El modal de ver solo muestra.
+    it("el modal de ver no tiene acciones: ni Enviar, ni Editar, ni Eliminar", async () => {
       mockGet.mockImplementation((url: string) => {
         if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
         return Promise.resolve(respuestaPorDefecto(url));
@@ -865,66 +1169,65 @@ describe("AdminContenidoEducativoPage", () => {
       renderPage();
       await irAModulos(user);
       await user.click(await screen.findByText("Código de colores"));
-      await user.click(await screen.findByRole("button", { name: "Sí, eliminar" }));
 
-      const dialog = screen.getByRole("dialog", { name: "Confirmar eliminación" });
+      const modal = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
+      expect(within(modal).queryByRole("button", { name: /Enviar a conjuntos|Editar|Eliminar/ })).not.toBeInTheDocument();
+    });
+
+    it("el menú de tres puntos de la fila solo tiene acciones (Enviar, Editar y Eliminar), sin 'Ver'", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+
+      const menu = await screen.findByRole("menu");
+      expect(within(menu).getAllByRole("menuitem").map((o) => o.textContent)).toEqual(["Enviar a conjuntos…", "Editar", "Eliminar"]);
+      // Abrir el menú no abre el modal de ver: el clic no sube a la fila.
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    it("Eliminar desde el menú de la fila pide confirmación antes de borrar", async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
+        return Promise.resolve(respuestaPorDefecto(url));
+      });
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Eliminar" }));
+
+      expect(mockDelete).not.toHaveBeenCalled();
+      const dialog = await screen.findByRole("dialog", { name: "Confirmar eliminación" });
       await user.click(within(dialog).getByRole("button", { name: "Sí, eliminar" }));
-
-      await waitFor(() => {
-        expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining(moduloExistente.id_contenido));
-      });
+      await waitFor(() => expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining(moduloExistente.id_contenido)));
     });
 
-    it("abre el panel de un módulo y muestra a qué conjuntos se recomendó, sin repetir uno dos veces", async () => {
-      const califViejaMismoConjunto: AuditoriaAdmin = { ...califMalo, id_auditoria: "a0", created_at: "2026-09-01T09:00:00Z" };
+    it("Editar desde el menú de la fila abre el formulario de edición", async () => {
       mockGet.mockImplementation((url: string) => {
-        if (url.includes("/contenido-educativo") && url.includes("/envios")) return Promise.resolve({ data: [] });
-        if (url.includes("/contenido-educativo")) return Promise.resolve({ data: [moduloExistente] });
-        if (url.includes("/auditorias-conjunto/admin")) return Promise.resolve({ data: { items: [califMalo, califViejaMismoConjunto], total: 2 } });
+        if (url.includes("/contenido-educativo") && !url.includes("/envios")) return Promise.resolve({ data: [moduloExistente] });
         return Promise.resolve(respuestaPorDefecto(url));
       });
       const user = userEvent.setup({ delay: null });
       renderPage();
       await irAModulos(user);
-      await user.click(await screen.findByText("Código de colores"));
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Editar" }));
 
-      const panel = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
-      expect(within(panel).getByText("Recomendado a 1 conjunto")).toBeInTheDocument();
-      expect(within(panel).getAllByText("Torres de Aranjuez")).toHaveLength(1);
+      expect(await screen.findByDisplayValue("Código de colores")).toBeInTheDocument();
     });
 
-    it("envía el módulo a un conjunto específico", async () => {
+    // ¿Qué? Issue #619: un solo control de varios conjuntos y un botón que dice cuántos se enviarán.
+    const montarEnvio = (enviosDespues: unknown[] = []) => {
+      let yaEnvio = false;
       mockGet.mockImplementation((url: string) => {
-        if (url.includes("/contenido-educativo") && url.includes("/envios")) return Promise.resolve({ data: [] });
+        if (url.includes("/contenido-educativo") && url.includes("/envios")) return Promise.resolve({ data: yaEnvio ? enviosDespues : [] });
         if (url.includes("/contenido-educativo")) return Promise.resolve({ data: [moduloExistente] });
-        if (url.includes("/geography/conjuntos/todos")) return Promise.resolve({ data: [{ id_conjunto_residencial: "c9", nombre_conjunto: "Conjunto Los Alpes" }] });
-        return Promise.resolve(respuestaPorDefecto(url));
-      });
-      mockPost.mockResolvedValue({ data: [{ id_conjunto_residencial: "c9", nombre_conjunto: "Conjunto Los Alpes", created_at: "2026-09-21T10:00:00Z" }] });
-      const user = userEvent.setup({ delay: null });
-      renderPage();
-      await irAModulos(user);
-      await user.click(await screen.findByText("Código de colores"));
-
-      const panel = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
-      await user.type(within(panel).getByLabelText("A un conjunto específico"), "Alpes");
-      await user.click(await within(panel).findByText("Conjunto Los Alpes"));
-      // ¿Qué? Se acota al bloque "A un conjunto específico" porque el botón
-      //       "Enviar" del bloque "A varios conjuntos" tiene el mismo texto
-      //       mientras no hay ninguno seleccionado — sin acotar, hay dos
-      //       botones con ese nombre exacto.
-      const bloqueUno = within(panel).getByText("A un conjunto específico").closest("div")!;
-      await user.click(within(bloqueUno).getByRole("button", { name: "Enviar" }));
-
-      await waitFor(() => {
-        expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/enviar"), { conjuntos: ["c9"] });
-      });
-    });
-
-    it("envía el módulo a varios conjuntos a la vez", async () => {
-      mockGet.mockImplementation((url: string) => {
-        if (url.includes("/contenido-educativo") && url.includes("/envios")) return Promise.resolve({ data: [] });
-        if (url.includes("/contenido-educativo")) return Promise.resolve({ data: [moduloExistente] });
+        if (url.includes("/geography/localidades")) return Promise.resolve({ data: [{ id_localidad: 1, nombre_localidad: "Usaquén" }] });
         if (url.includes("/geography/conjuntos/todos")) {
           return Promise.resolve({
             data: [
@@ -935,32 +1238,117 @@ describe("AdminContenidoEducativoPage", () => {
         }
         return Promise.resolve(respuestaPorDefecto(url));
       });
-      mockPost.mockResolvedValue({ data: [] });
+      mockPost.mockImplementation(() => {
+        yaEnvio = true;
+        return Promise.resolve({ data: [] });
+      });
+    };
+
+    it("envía el módulo a un conjunto desde la ventana 'Enviar a conjuntos', y el chip de la lista se actualiza", async () => {
+      montarEnvio([{ id_conjunto_residencial: "c9", nombre_conjunto: "Conjunto Los Alpes", created_at: "2026-09-21T10:00:00Z" }]);
       const user = userEvent.setup({ delay: null });
       renderPage();
       await irAModulos(user);
-      await user.click(await screen.findByText("Código de colores"));
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Enviar a conjuntos…" }));
 
-      const panel = await screen.findByRole("dialog", { name: /Módulo: Código de colores/ });
-      const buscador = within(panel).getByLabelText("A varios conjuntos");
-      await user.type(buscador, "a");
-      await user.click(await within(panel).findByText("Conjunto Los Alpes"));
-      await user.type(buscador, "a");
-      await user.click(await within(panel).findByText("Parques de Bogotá Urapan"));
+      const ventana = await screen.findByRole("dialog", { name: "Enviar a conjuntos" });
+      await user.type(within(ventana).getByLabelText("Conjuntos"), "Alpes");
+      // ¿Qué? Las opciones se buscan en `screen`: la lista del buscador se dibuja fuera de la ventana (`anchor`, issue #615).
+      await user.click(await screen.findByText("Conjunto Los Alpes"));
+      await user.keyboard("{Escape}");
+      // ¿Qué? El mock de t() no pluraliza: el botón queda en singular ("conjunto") aunque haya más de uno.
+      await user.click(within(ventana).getByRole("button", { name: /Enviar a 1 conjunto/ }));
 
-      // ¿Qué? El combobox de selección múltiple de Headless UI no cierra su
-      //       lista al elegir un ítem (a propósito, para poder seguir
-      //       marcando varios) — mientras sigue abierta, marca el resto del
-      //       panel con aria-hidden="true", y el botón "Enviar" queda fuera
-      //       del árbol de accesibilidad hasta cerrarla con Escape.
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/enviar"), { conjuntos: ["c9"] }));
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Enviar a conjuntos" })).not.toBeInTheDocument());
+      expect(await screen.findByText("Recomendado a 1 conjunto")).toBeInTheDocument();
+    });
+
+    it("envía el módulo a varios conjuntos a la vez", async () => {
+      montarEnvio();
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Enviar a conjuntos…" }));
+
+      const ventana = await screen.findByRole("dialog", { name: "Enviar a conjuntos" });
+      const buscador = within(ventana).getByLabelText("Conjuntos");
+      await user.type(buscador, "a");
+      await user.click(await screen.findByText("Conjunto Los Alpes"));
+      await user.type(buscador, "a");
+      await user.click(await screen.findByText("Parques de Bogotá Urapan"));
+
+      // ¿Qué? El combobox de selección múltiple de Headless UI no cierra su lista al elegir un ítem (a propósito, para
+      //       poder seguir marcando varios) — mientras sigue abierta, marca el resto con aria-hidden="true", y el botón
+      //       queda fuera del árbol de accesibilidad hasta cerrarla con Escape.
+      await user.keyboard("{Escape}");
+      await user.click(within(ventana).getByRole("button", { name: /Enviar a 2 conjunto/ }));
+
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/enviar"), { conjuntos: ["c9", "c8"] }));
+    });
+
+    it("la Localidad es opcional: acota la búsqueda de conjuntos y los ya elegidos se conservan al cambiarla", async () => {
+      montarEnvio();
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Enviar a conjuntos…" }));
+      const ventana = await screen.findByRole("dialog", { name: "Enviar a conjuntos" });
+      // Sin elegir localidad ya se puede buscar y enviar: no es obligatoria.
+      expect(within(ventana).getByLabelText("Localidad (opcional)")).toHaveValue("");
+      await user.type(within(ventana).getByLabelText("Conjuntos"), "Alpes");
+      await user.click(await screen.findByText("Conjunto Los Alpes"));
+      await user.keyboard("{Escape}");
+      expect(within(ventana).getByRole("button", { name: /Enviar a 1 conjunto/ })).toBeEnabled();
+
+      await screen.findByRole("option", { name: "Usaquén" });
+      await user.selectOptions(within(ventana).getByLabelText("Localidad (opcional)"), "1");
+      await user.type(within(ventana).getByLabelText("Conjuntos"), "a");
+
+      await waitFor(() =>
+        expect(mockGet).toHaveBeenCalledWith(
+          expect.stringContaining("/geography/conjuntos/todos"),
+          expect.objectContaining({ params: expect.objectContaining({ id_localidad: 1 }) })
+        )
+      );
+      // El conjunto elegido antes de cambiar de localidad sigue ahí (con la lista abierta el resto queda aria-hidden).
+      await user.keyboard("{Escape}");
+      expect(within(ventana).getByText("Conjunto Los Alpes")).toBeInTheDocument();
+      expect(within(ventana).getByRole("button", { name: /Enviar a 1 conjunto/ })).toBeInTheDocument();
+    });
+
+    it("sin ningún conjunto elegido el botón de enviar está desactivado", async () => {
+      montarEnvio();
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Enviar a conjuntos…" }));
+
+      const ventana = await screen.findByRole("dialog", { name: "Enviar a conjuntos" });
+      expect(within(ventana).getByRole("button", { name: "Enviar" })).toBeDisabled();
+    });
+
+    it("si falla el envío lo avisa y la ventana se queda abierta con lo elegido", async () => {
+      montarEnvio();
+      mockPost.mockRejectedValue(new Error("falló"));
+      const user = userEvent.setup({ delay: null });
+      renderPage();
+      await irAModulos(user);
+      await user.click(await screen.findByRole("button", { name: "Acciones de Código de colores" }));
+      await user.click(await screen.findByRole("menuitem", { name: "Enviar a conjuntos…" }));
+      const ventana = await screen.findByRole("dialog", { name: "Enviar a conjuntos" });
+      await user.type(within(ventana).getByLabelText("Conjuntos"), "Alpes");
+      await user.click(await screen.findByText("Conjunto Los Alpes"));
       await user.keyboard("{Escape}");
 
-      // ¿Qué? Mismo motivo que arriba: el mock de t() no pluraliza, el botón
-      //       queda en singular ("conjunto") aunque count=2.
-      await user.click(within(panel).getByRole("button", { name: /Enviar a 2 conjunto/ }));
-      await waitFor(() => {
-        expect(mockPost).toHaveBeenCalledWith(expect.stringContaining("/enviar"), { conjuntos: ["c9", "c8"] });
-      });
+      await user.click(within(ventana).getByRole("button", { name: /Enviar a 1 conjunto/ }));
+
+      expect(await within(ventana).findByText("No se pudo enviar. Intenta de nuevo.")).toBeInTheDocument();
+      expect(within(ventana).getByRole("button", { name: /Enviar a 1 conjunto/ })).toBeInTheDocument();
     });
 
     it("muestra la guía de apoyo integrada cuando es una imagen, y se puede ampliar", async () => {

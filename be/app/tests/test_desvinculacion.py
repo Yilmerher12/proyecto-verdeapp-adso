@@ -50,6 +50,37 @@ class TestSolicitarDesvinculacion:
         )
         assert response.status_code == 201
 
+    def test_avisa_a_los_admins_del_sistema_activos(
+        self, client: TestClient, db: Session, admin_sistema_auth_headers, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        """Issue #617: la solicitud llega a la campana del Admin Sistema, con el conjunto en el mensaje."""
+        client.post(
+            f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}/solicitar-desvinculacion",
+            headers=admin_conjunto_auth_headers,
+            json={},
+        )
+        avisos = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_sistema_auth_headers).json()
+        [aviso] = [a for a in avisos if a["tipo"] == "DESVINCULACION_SOLICITADA"]
+        assert conjunto_verificado.nombre_conjunto in aviso["mensaje"]
+        assert aviso["id_referencia"]
+
+        # Quien pide desvincularse no recibe su propio aviso.
+        propios = client.get("/api/v1/notificaciones/mis-notificaciones", headers=admin_conjunto_auth_headers).json()
+        assert all(a["tipo"] != "DESVINCULACION_SOLICITADA" for a in propios)
+
+    def test_sin_admins_del_sistema_la_solicitud_se_guarda_igual(
+        self, client: TestClient, db: Session, admin_conjunto_auth_headers, conjunto_verificado
+    ):
+        from app.models.notificacion import Notificacion
+
+        response = client.post(
+            f"/api/v1/conjunto-panel/mis-conjuntos/{conjunto_verificado.id_conjunto_residencial}/solicitar-desvinculacion",
+            headers=admin_conjunto_auth_headers,
+            json={},
+        )
+        assert response.status_code == 201
+        assert db.query(Notificacion).filter(Notificacion.tipo == "DESVINCULACION_SOLICITADA").count() == 0
+
     def test_no_permite_solicitud_duplicada_pendiente(
         self, client: TestClient, admin_conjunto_auth_headers, conjunto_verificado
     ):

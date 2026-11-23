@@ -42,7 +42,7 @@ El proyecto utiliza una estructura de arquitectura limpia y desacoplada, facilit
 | Gestor de Paquetes (Frontend) | pnpm (Corepack)         | 11.0.9                   | Resolución eficiente de dependencias mediante almacenamiento enlazado.            |
 | Infraestructura               | Docker & Docker Compose | 24+ / 2.20+              | Contenedores herméticos que aseguran el funcionamiento idéntico en cualquier PC.  |
 | Servidor Web FE               | Nginx                   | 1.27-alpine              | Servidor de alto rendimiento para la distribución de los estáticos del Frontend.  |
-| Servidor SMTP Dev             | Mailpit                 | v1.31.0 | Captura local de correos (verificación, recuperación, invitaciones) en el puerto 8025. |
+| Servidor SMTP Dev             | Mailpit                 | v1.31 | Captura local de correos (verificación, recuperación, invitaciones) en el puerto 8025. |
 
 ---
 
@@ -166,6 +166,8 @@ uv run uvicorn app.main:app --reload --port 8000
 
 > **Datos de demostración (opcional, para presentar el proyecto):** después del seed normal, `uv run python -m app.seed_demo` agrega 3 conjuntos con residentes, recicladores, 8 semanas de auditorías con fotos, comunicados, novedades, soporte y agenda, para que ningún panel se vea vacío. Los usuarios inventados terminan en `@demo.verdeapp.com` y comparten la contraseña de las cuentas de prueba. Las fechas son relativas al día en que se corre, así que conviene correrlo justo antes de presentar. Las fotos viven en `be/app/data/demo/fotos/`. Si ya hay usuarios `@demo.verdeapp.com`, no hace nada.
 
+> **Correos de las ECA (opcional):** el seed carga las 799 ECA del inventario vigente de la UAESP (Resolución 698 de 2023; fuente y licencia en `docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md`), con su organización y coordenadas, pero **sin correo de contacto**. Los correos están en `be/app/data/eca_correos_uaesp.csv`, un archivo que **no se sube al repositorio** (es público y algunos correos son personales; está en `.gitignore`, igual que el `.env`) y que el equipo se pasa por otro medio. Si lo tienes, ponlo en esa ruta y corre `uv run python -m app.seed` otra vez: rellena los correos vacíos sin duplicar nada. Sin ese archivo todo funciona igual, solo que las fichas no muestran correo.
+
 > En ejecuciones siguientes normalmente solo hace falta encender uvicorn (uv usa el entorno correcto solo). Repetir `uv run python -m app.seed` no hace daño, pero solo es necesario si empezaste con una base de datos nueva (ej: borraste el volumen de Docker):
 > ```powershell
 > uv run uvicorn app.main:app --reload --port 8000
@@ -208,7 +210,7 @@ Una vez encendido, la aplicación está disponible en:
             auditorías, fotos, todo. No hay forma de recuperarlos.
 -->
 
-> ⚠️ **Esto borra todos los datos** (usuarios que creaste, comunicados, auditorías, fotos subidas). Al terminar solo quedan los datos del seed: las 4 [cuentas de prueba](#-usuarios-de-prueba-precargados), las localidades y los conjuntos reales de Bogotá.
+> ⚠️ **Esto borra todos los datos** (usuarios que creaste, comunicados, auditorías, fotos subidas). Al terminar solo quedan los datos del seed: las 4 [cuentas de prueba](#-usuarios-de-prueba-precargados), las localidades, los conjuntos reales de Bogotá y las 799 ECA del inventario de la UAESP.
 
 Sigue solo el caso del método con el que corres el proyecto.
 
@@ -454,11 +456,10 @@ A continuación se detalla la organización exacta del monorepositorio alojado e
 verde-app/
 ├── .github/                 # Configuraciones del repositorio y flujos de trabajo
 ├── .vscode/                 # Configuraciones de interfaz y entorno para VS Code
-├── assets/                  # Diagramas SVG y recursos gráficos de la arquitectura
 ├── scripts/                 # Utilidades Bash (start.sh, stop.sh) para automatizar contenedores
 ├── be/                      # Backend (Python + FastAPI)
 │   ├── app/                 # Código fuente principal de la API
-│   │   ├── data/            # CSV de conjuntos residenciales reales de Bogotá (lo usa seed.py)
+│   │   ├── data/            # CSV de conjuntos residenciales reales y de las 799 ECA de la UAESP (lo usa seed.py)
 │   │   ├── models/          # Entidades e imperativos relacionales de SQLAlchemy
 │   │   ├── routers/         # Controladores de endpoints divididos por recursos
 │   │   ├── schemas/         # Modelos de validación estricta de Pydantic (DTOs)
@@ -466,7 +467,7 @@ verde-app/
 │   │   ├── tests/           # Entorno de pruebas automatizadas (pytest)
 │   │   ├── uploads/         # Imágenes subidas por los usuarios, servidas en /uploads
 │   │   ├── utils/           # Helpers de infraestructura (seguridad, correo, imágenes, logs)
-│   │   ├── seed.py          # Siembra roles, localidades, cuentas de prueba y conjuntos reales
+│   │   ├── seed.py          # Siembra roles, localidades, cuentas de prueba, conjuntos reales y ECA de la UAESP
 │   │   ├── database.py      # Configuración de la sesión y conexión con la BD
 │   │   ├── dependencies.py  # Inyección de dependencias (Autenticación, Sesión DB)
 │   │   └── main.py          # Punto de entrada y configuración central de FastAPI
@@ -564,10 +565,13 @@ Toda la documentación vive en `docs/`, en Markdown, versionada junto con el có
 | [`docs/requisitos/RFs/`](docs/requisitos/RFs/) | Requisitos Funcionales (RQF) — qué debe hacer el sistema, con reglas de negocio y endpoints asociados |
 | [`docs/requisitos/RNFs/`](docs/requisitos/RNFs/) | Requisitos No Funcionales — seguridad, disponibilidad, rendimiento, usabilidad, accesibilidad, mantenibilidad |
 | [`docs/requisitos/restricciones.md`](docs/requisitos/restricciones.md) | Reglas transversales del proyecto (idioma del código, convención de ramas/commits, versionado de dependencias) |
+| [`docs/arquitectura.md`](docs/arquitectura.md) | Diagramas de la arquitectura: el sistema completo, las capas del backend, la estructura del frontend, una petición autenticada y el flujo de ramas con el CI |
 | [`docs/conceptos/`](docs/conceptos/) | Explicación pedagógica de OWASP Top 10, accesibilidad (ARIA/WCAG) y patrones de arquitectura, con evidencia real de archivo y línea |
-| [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Diagrama de clases y catálogo de casos de uso |
+| [`docs/referencia-proyecto/diagramas-UML/`](docs/referencia-proyecto/diagramas-UML/) | Modelo entidad-relación, modelo relacional (MR), diagrama de clases y catálogo de casos de uso |
 | [`docs/gestion-proyecto/`](docs/gestion-proyecto/) | Auditoría de dependencias, seguimiento de sprints y decisiones de alcance. En [`informes-scrum/`](docs/gestion-proyecto/informes-scrum/) están los informes semanales del Scrum Master |
 | [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md) | Bootcamp de testing: capa de cada integrante por semana y cobertura registrada |
+| [`docs/despliegue.md`](docs/despliegue.md) | Cómo arranca el backend, variables de entorno de cada parte, errores de arranque y cómo se desplegaría el proyecto |
+| [`docs/api.md`](docs/api.md) | Lista completa de los 104 endpoints del backend: qué hace cada uno y quién puede usarlo |
 
 Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implementar`) que se actualiza cada vez que su funcionalidad cambia de verdad — es la fuente de verdad más confiable sobre qué tan avanzado está el proyecto, más que cualquier resumen (incluido este README).
 
@@ -577,11 +581,11 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 
 | Métrica | Avance |
 |---|---|
-| Historias de Usuario | 48 / 48 implementadas |
+| Historias de Usuario | 53 / 53 implementadas |
 | Requisitos Funcionales | 21 / 21 implementados |
 | Requisitos No Funcionales | 4 / 6 completos (2 parciales — de naturaleza continua: se miden, no se "terminan") |
-| Pruebas backend (pytest) | 604 (6 de octubre de 2026; conteo de hoy: `uv run pytest -q` desde `be/`) |
-| Pruebas frontend (vitest) | Más de 410 (conteo de hoy: `pnpm test` desde `fe/`) |
+| Pruebas backend (pytest) | 915 (3 de noviembre de 2026; conteo de hoy: `uv run pytest -q` desde `be/`) |
+| Pruebas frontend (vitest) | 899 (3 de noviembre de 2026; conteo de hoy: `pnpm test` desde `fe/`) |
 
 ---
 
@@ -592,6 +596,10 @@ Cada HU/RF/RNF tiene un campo **Estado** (`Implementada`, `Parcial`, `Por implem
 | API e integración (BD real `verdeapp_test_db`) | `be/app/tests/` | `uv run pytest` desde `be/` |
 | Componentes React | `fe/src/__tests__/` | `pnpm test` desde `fe/` |
 | E2E (navegador real) | `e2e/tests/` | `pnpm test` desde `e2e/` |
+
+**Documentación de las pruebas** (`docs/pruebas/`): el [plan de pruebas](docs/pruebas/plan-de-pruebas.md) (alcance, niveles, ambiente y criterios), el [informe de pruebas automatizadas](docs/pruebas/informe-pruebas-automatizadas.md) (resultados y casos de una ejecución real) y el [reporte de ejecución y defectos](docs/pruebas/reporte-ejecucion-y-defectos.md) (defectos con su severidad y su estado).
+
+**Última ejecución documentada (20 de noviembre de 2026):** 2138 pruebas automatizadas (1012 del backend, 1124 del frontend y 2 E2E), 2137 pasaron y 1 quedó omitida a propósito por un defecto conocido (issue #685). La cobertura fue de 97.3 % de líneas en el backend y 89.4 % en el frontend. El detalle está en el [informe de pruebas automatizadas](docs/pruebas/informe-pruebas-automatizadas.md).
 
 **Cobertura**: `uv run pytest` y `pnpm test` (en `fe/`) miden siempre qué porcentaje del código ejecutan las pruebas, y **fallan** si baja del umbral configurado (`fail_under` en `be/pyproject.toml`, `thresholds` en `fe/vite.config.ts`). El CI corre esos mismos comandos, así que un PR que baje la cobertura queda en rojo. El umbral solo sube; su historial está en [`docs/matriz-rotacion.md`](docs/matriz-rotacion.md).
 

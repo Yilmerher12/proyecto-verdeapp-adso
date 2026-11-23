@@ -2,6 +2,8 @@
 
 > **Nota (2026-09-08)**: este diagrama estaba muy desactualizado — solo documentaba 16 de las 22 tablas reales (le faltaban `auditorias_conjunto`, `comunicados`, `novedades`, `solicitudes_desvinculacion`, `password_reset_tokens`, `email_verification_tokens`, `tokens_revocados`), y todos los IDs seguían marcados como `INT` desde antes de cualquier migración a UUID. Se reconstruyó leyendo directamente `be/app/models/*.py`, mismo criterio que ya se había aplicado en `diagrama-clases.md` el 28 de agosto.
 
+> **Nota (2026-11-20)**: se comparó este diagrama, columna por columna y relación por relación, contra `Base.metadata` de SQLAlchemy (las 30 tablas de `be/app/models/`). Se agregó `usuarios.version_sesion`, `agenda_conjunto.archivado_en`, las 5 columnas del inventario ECA en `puntos_acopios` y la relación `usuarios` → `invitaciones_reciclador_conjunto`. El modelo relacional (llaves, tipos y restricciones) está en [`diagrama-mr.md`](diagrama-mr.md).
+
 El sistema permite:
 
 * Administrar usuarios y roles (Administrador del Sistema, Administrador de Conjunto, Reciclador, Residente).
@@ -57,6 +59,7 @@ erDiagram
         VARCHAR locale
         INT intentos_fallidos
         TIMESTAMP bloqueado_hasta
+        INT version_sesion
         VARCHAR foto_perfil_url
     }
 
@@ -114,7 +117,13 @@ erDiagram
         VARCHAR nombre_encargado
         VARCHAR direccion
         VARCHAR telefono_contacto
+        VARCHAR url_foto
         BOOLEAN activo
+        VARCHAR numero_resolucion
+        VARCHAR organizacion
+        VARCHAR correo_contacto
+        NUMERIC latitud
+        NUMERIC longitud
     }
 
     PUNTOS_ACOPIO_COMENTARIOS {
@@ -208,6 +217,7 @@ erDiagram
         VARCHAR url_evidencia
         VARCHAR estado
         TIMESTAMP created_at
+        TIMESTAMP archivado_en
     }
 
     NOVEDADES_ENVIADAS {
@@ -311,6 +321,13 @@ erDiagram
         TIMESTAMP expira_en
     }
 
+    ARCHIVOS_SUBIDOS {
+        UUID id PK
+        UUID id_usuario FK
+        VARCHAR ruta
+        TIMESTAMP created_at
+    }
+
     ROLES ||--o{ USUARIOS : posee
 
     USUARIOS ||--|| RESIDENTES : pertenece
@@ -319,7 +336,9 @@ erDiagram
     USUARIOS ||--o{ PASSWORD_RESET_TOKENS : solicita
     USUARIOS ||--o{ EMAIL_VERIFICATION_TOKENS : solicita
     USUARIOS ||--o{ INVITACIONES_ADMIN_CONJUNTO : invita
+    USUARIOS ||--o{ INVITACIONES_RECICLADOR_CONJUNTO : invita_reciclador
     USUARIOS ||--o{ SOLICITUDES_DESVINCULACION : resuelve
+    USUARIOS ||--o{ ARCHIVOS_SUBIDOS : sube
     USUARIOS ||--o{ NOVEDADES : publica
     NOVEDADES ||--o{ NOVEDADES_CONJUNTOS : dirige
     CONJUNTOS_RESIDENCIALES ||--o{ NOVEDADES_CONJUNTOS : recibe
@@ -429,6 +448,8 @@ USUARIOS (Admin_sistema) ── NOVEDADES
 
 TOKENS_REVOCADOS  (lista negra de JWT, sin relación a otras tablas)
 
+USUARIOS ── ARCHIVOS_SUBIDOS  (registro de quién subió cada adjunto, para la cuota de subidas)
+
 CONTENIDO_EDUCATIVO
    │
    ▼
@@ -474,7 +495,10 @@ CONTENIDO_EDUCATIVO ──▶ CONTENIDO_EDUCATIVO_VISTOS ◀── USUARIOS (qu�
 | locale             | VARCHAR   |
 | intentos_fallidos  | INT       |
 | bloqueado_hasta    | TIMESTAMP |
+| version_sesion     | INT       |
 | foto_perfil_url    | VARCHAR   |
+
+`version_sesion` es un contador que sube cada vez que el usuario cambia o restablece su contraseña (issue #308). Cada JWT lleva la versión vigente al emitirse y se rechaza si ya no coincide, así que cambiar la contraseña cierra las sesiones abiertas en otros equipos.
 
 `is_active` refleja si el correo ya fue verificado al registrarse; `habilitado` es un interruptor manual aparte, que solo el Admin Sistema puede apagar (RQF: gestión de usuarios). Una cuenta puede tener `is_active = true` y `habilitado = false` — no puede iniciar sesión de todas formas. Al desactivarla se guardan `fecha_desactivacion` y `motivo_desactivacion` (opcional, máx. 200 caracteres); al reactivarla se borran.
 
@@ -563,9 +587,17 @@ CONTENIDO_EDUCATIVO ──▶ CONTENIDO_EDUCATIVO_VISTOS ◀── USUARIOS (qu�
 | nombre_encargado  | VARCHAR |
 | direccion         | VARCHAR |
 | telefono_contacto | VARCHAR |
+| url_foto          | VARCHAR |
 | activo            | BOOLEAN |
+| numero_resolucion | VARCHAR (único, opcional) |
+| organizacion      | VARCHAR (opcional) |
+| correo_contacto   | VARCHAR (opcional) |
+| latitud           | NUMERIC(10,7) (opcional) |
+| longitud          | NUMERIC(10,7) (opcional) |
 
-`activo` es un soft-delete (HU-017): un punto dado de baja no se borra, solo deja de verse en el directorio público hasta reactivarse.
+Las cinco últimas columnas vienen del inventario de ECA de la UAESP (Resolución 698 de 2023, issue #664) y quedan en `NULL` en un punto creado a mano. `numero_resolucion` es la clave con la que la importación reconoce cada ECA (único; la UAESP repite el 105 y el 605, así que la segunda fila lleva `-2`).
+
+`activo` es un soft-delete (HU-017): un punto dado de baja no se borra, solo deja de verse en el directorio público hasta reactivarse. `url_foto` es opcional (issue #581): la sube el Admin del Sistema desde el formulario del punto y se ve en la ficha para los tres roles; si es `NULL` se muestra un dibujo por defecto.
 
 ---
 
@@ -843,7 +875,7 @@ PRIMARY KEY (id_notificacion, id_usuario)
 | created_at                  | TIMESTAMP |
 | orden_interno                | BIGINT    |
 
-Calificación de desempeño que un Reciclador registra tras visitar un conjunto (RQF-009/RQF-013). Solo `ruta_evidencia` es obligatoria; las otras 2 fotos son opcionales. `orden_interno` es un contador autoincremental aparte del `id` (UUID, no ordenable) para mostrar el historial en el orden real en que ocurrió.
+Calificación de desempeño que un Reciclador registra tras visitar un conjunto (RQF-009/RQF-013). Solo `ruta_evidencia` es obligatoria al crear la auditoría (la exige el servicio); las otras 2 fotos son opcionales. Pasados 6 meses las tres rutas quedan en `NULL` porque la foto se borra (issue #587), y la auditoría se conserva; por eso la columna acepta `NULL`. `orden_interno` es un contador autoincremental aparte del `id` (UUID, no ordenable) para mostrar el historial en el orden real en que ocurrió.
 
 ---
 
@@ -859,6 +891,19 @@ Calificación de desempeño que un Reciclador registra tras visitar un conjunto 
 | created_at  | TIMESTAMP |
 
 Estructura idéntica entre ambas tablas — tokens de un solo uso, con expiración (1 hora para recuperar contraseña, 24 horas para verificar correo).
+
+---
+
+## archivos_subidos
+
+| Campo      | Tipo      |
+| ---------- | --------- |
+| id         | UUID      |
+| id_usuario | UUID      |
+| ruta       | VARCHAR   |
+| created_at | TIMESTAMP |
+
+Un registro por cada archivo que alguien sube con `POST /api/v1/uploads/adjunto`: quién lo subió, la ruta pública y cuándo. Sirve para la cuota de subidas por usuario (cuántas lleva en el último minuto y en el último día) y para saber de quién es cada archivo. **No es una referencia de uso**: que la tabla tenga la ruta no significa que el archivo se use (`app/limpiar_adjuntos.py` la ignora a propósito). `id_usuario` es `NULL` si la cuenta se borra (`SET NULL`).
 
 ---
 
@@ -878,6 +923,7 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 | Entidad A                    | Entidad B                       | Cardinalidad |
 | ------------------------------ | --------------------------------- | ------------ |
 | Roles                          | Usuarios                         | 1:N          |
+| Usuarios                       | Archivos_subidos                 | 1:N          |
 | Usuarios                       | Residentes                       | 1:1          |
 | Usuarios                       | Recicladores                     | 1:1          |
 | Usuarios                       | Administradores de Conjunto      | 1:1          |
@@ -937,5 +983,6 @@ Lista negra de tokens JWT invalidados por un logout real (HU-008/RQF-007). `jti`
 * Un Residente, Reciclador o Admin de Conjunto puede enviarle novedades (consultas de soporte) al Admin Sistema; este les cambia el estado (`NUEVA`, `EN_REVISION`, `RESUELTA`), corrige su prioridad y le responde al autor. No son las `novedades` que el Admin Sistema publica (ver [novedades y novedades enviadas](../../conceptos/novedades-y-novedades-enviadas.md)).
 * Un Admin de Conjunto publica comunicados dirigidos a los residentes y/o recicladores de su propio conjunto; un Admin Sistema publica novedades de alcance general (todos los usuarios, o un rol específico).
 * Las notificaciones (llegada del reciclador, SHUT lleno/vaciado, revocación de acceso) se generan una sola vez por evento y se reparten a varios destinatarios, cada uno con su propio estado de lectura.
+* Cada adjunto subido (`POST /uploads/adjunto`) deja un registro en `archivos_subidos` con su dueño, para aplicar la cuota de subidas por usuario.
 * Un logout real invalida el token de sesión agregando su `jti` a `tokens_revocados` — no basta con que el frontend "olvide" el token.
 * El contenido educativo puede ser consultado por los usuarios del sistema, y puede recibir texto en formato Markdown.

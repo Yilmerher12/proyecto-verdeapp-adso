@@ -19,7 +19,9 @@ from app.models.notificacion import Notificacion, NotificacionDestinatario
 from app.models.reciclador import Reciclador
 from app.models.reciclador_conjunto import RecicladorConjunto
 from app.models.residente import Residente
+from app.models.rol import RolId
 from app.models.unidad import Unidad
+from app.models.usuario import Usuario
 
 
 def residentes_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
@@ -61,6 +63,50 @@ def admins_del_conjunto(db: Session, id_conjunto: UUID) -> list[UUID]:
         )
     )
     return [r[0] for r in db.execute(stmt).all()]
+
+
+def admins_del_sistema(db: Session) -> list[UUID]:
+    """
+    ¿Qué? Los Administradores del Sistema activos: cuenta verificada y no desactivada.
+    ¿Para qué? Issue #617: cuando llega una consulta de soporte o una solicitud de desvinculación, el aviso
+              va a ellos. Una cuenta desactivada no debe seguir recibiendo avisos de trabajo.
+    ¿Impacto? Este rol no tiene tabla de perfil propia: sale directo de `usuarios`.
+    """
+    stmt = select(Usuario.id_usuario).where(
+        Usuario.id_rol == RolId.ADMIN_SISTEMA,
+        Usuario.is_active.is_(True),
+        Usuario.habilitado.is_(True),
+    )
+    return [r[0] for r in db.execute(stmt).all()]
+
+
+def avisar_admins_del_sistema(
+    db: Session,
+    *,
+    tipo: str,
+    mensaje: str,
+    id_referencia: Optional[UUID] = None,
+    id_emisor: Optional[UUID] = None,
+    id_conjunto: Optional[UUID] = None,
+) -> None:
+    """
+    ¿Qué? Crea el aviso para todos los Administradores del Sistema activos (no hace nada si no hay ninguno).
+    ¿Para qué? Quien crea la consulta o la solicitud no debe fallar ni dejar una notificación sin
+              destinatarios por culpa de que no haya administradores.
+    ¿Impacto? No hace commit: el aviso se guarda en la misma transacción que la consulta o solicitud.
+    """
+    destinatarios = admins_del_sistema(db)
+    if not destinatarios:
+        return
+    crear_notificacion(
+        db,
+        tipo=tipo,
+        mensaje=mensaje,
+        destinatarios=destinatarios,
+        id_conjunto=id_conjunto,
+        id_referencia=id_referencia,
+        id_emisor=id_emisor,
+    )
 
 
 def reciclador_esta_presente(db: Session, id_conjunto: UUID, id_usuario_reciclador: UUID) -> bool:

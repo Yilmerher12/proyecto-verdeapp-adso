@@ -65,14 +65,22 @@ export function ConjuntoCombobox({
             aria-hidden="true"
           />
           <ComboboxInput
-            className="mt-1 w-full rounded-xl border border-edge bg-white p-2.5 pl-9 text-gray-900 outline-none focus:ring-2 focus:ring-accent-500 disabled:bg-gray-100 disabled:text-gray-400 dark:border-night-edge dark:bg-night-field dark:text-gray-100 dark:disabled:bg-night-inset"
+            className="focus-ring mt-1 w-full rounded-xl border border-edge bg-white p-2.5 pl-9 text-gray-900 disabled:bg-gray-100 disabled:text-gray-400 dark:border-night-edge dark:bg-night-field dark:text-gray-100 dark:disabled:bg-night-inset"
             displayValue={(c: ConjuntoOption | null) => c?.nombre_conjunto ?? ""}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
             aria-label={ariaLabel}
           />
         </div>
-        <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-night-line dark:bg-night-field">
+        {/* ¿Qué? `anchor` saca la lista del contenedor y la dibuja al final de la página, pegada al campo
+            (Headless UI deja su ancho en --input-width); z-[80] queda sobre un Modal "stacked" (z-[70]).
+            ¿Para qué? Dentro de un Modal con scroll interno (issue #615) una lista con posición absoluta
+                      quedaba recortada y había que bajar el scroll del modal para ver las opciones.
+            ¿Impacto? Se ve igual dentro y fuera de un modal. */}
+        <ComboboxOptions
+          anchor={{ to: "bottom start", padding: 8 }}
+          className="z-[80] mt-1 max-h-60 w-(--input-width) overflow-auto rounded-xl border border-gray-200 bg-white py-1 shadow-lg dark:border-night-line dark:bg-night-field"
+        >
           {loading && (
             <div role="status" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
               <Spinner size="sm" />

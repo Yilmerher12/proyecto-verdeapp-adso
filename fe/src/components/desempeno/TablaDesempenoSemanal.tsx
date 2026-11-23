@@ -38,7 +38,7 @@ export function TablaDesempenoSemanal({ semanas, seleccionada, onSeleccionar }: 
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-50 dark:divide-night-line">
+        <tbody className="divide-y divide-gray-200 dark:divide-night-line">
           {semanas.map((semana) => {
             const { desde, hasta } = rangoSemana(semana.lunes, i18n.language);
             const activa = semana.lunes === seleccionada;

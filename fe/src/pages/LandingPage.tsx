@@ -128,7 +128,7 @@ function PilarCard({
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 dark:bg-accent-300/10">
           <Icon className="icon-lg text-accent-300" aria-hidden="true" />
         </div>
-        <span className="text-[0.625rem] font-bold tracking-widest text-accent-300">{numero}</span>
+        <span className="text-[0.6875rem] font-bold tracking-widest text-accent-300">{numero}</span>
       </div>
       <h3 className="mb-2 text-base font-bold text-white sm:text-lg">{titulo}</h3>
       <p className="text-sm leading-relaxed text-white/60 dark:text-gray-400">
@@ -279,7 +279,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             to="/"
-            className="touch-target inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+            className="focus-ring touch-target inline-flex items-center rounded-lg "
             aria-label={t("landing.nav.homeAriaLabel")}
             title={t("landing.nav.homeAriaLabel")}
           >
@@ -293,7 +293,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
             <li className="hidden sm:block">
               <Link
                 to="/login"
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-white/75 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
+                className="focus-ring rounded-lg px-3 py-1.5 text-sm font-medium text-white/75 transition-colors hover:text-white "
               >
                 {t("landing.nav.login")}
               </Link>
@@ -301,7 +301,7 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
             <li>
               <Link
                 to="/register"
-                className="touch-target-h inline-flex items-center rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-300 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+                className="focus-ring touch-target-h inline-flex items-center rounded-xl bg-accent-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-600 active:scale-95 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
               >
                 {t("landing.nav.register")}
               </Link>
@@ -419,13 +419,13 @@ export function LandingPage({ asBackdrop = false }: LandingPageProps = {}) {
                             accent-900 sobre blanco pasa WCAG AA con holgura. */}
               <Link
                 to="/login"
-                className="flex w-full items-center justify-center rounded-xl border-2 border-white bg-black/20 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:w-auto dark:border-accent-200 dark:text-accent-50 dark:focus-visible:ring-accent-200 lg:px-10 lg:py-4 lg:text-base"
+                className="focus-ring flex w-full items-center justify-center rounded-xl border-2 border-white bg-black/20 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/15 focus-visible:ring-white/60 sm:w-auto dark:border-accent-200 dark:text-accent-50 lg:px-10 lg:py-4 lg:text-base"
               >
                 {t("landing.hero.ctaLogin")}
               </Link>
               <Link
                 to="/register"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-accent-900 shadow-lg transition-all hover:bg-accent-50 hover:shadow-xl active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 sm:w-auto dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200 dark:focus-visible:ring-accent-200 lg:px-10 lg:py-4 lg:text-base"
+                className="focus-ring flex w-full items-center justify-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-accent-900 shadow-lg transition-all hover:bg-accent-50 hover:shadow-xl active:scale-95 focus-visible:ring-white/70 sm:w-auto dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200 lg:px-10 lg:py-4 lg:text-base"
               >
                 {t("landing.hero.ctaRegister")} <ArrowRight className="icon-md" aria-hidden="true" />
               </Link>

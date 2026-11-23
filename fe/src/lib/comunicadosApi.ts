@@ -6,6 +6,8 @@ const API_BASE = `${API_BASE_URL}/api/v1/comunicados`;
 
 export type TipoComunicado = "INFORMATIVO" | "URGENTE" | "CONVOCATORIA" | "MANTENIMIENTO" | "RECICLAJE";
 export type DestinatariosComunicado = "RESIDENTES" | "RECICLADORES" | "AMBOS";
+// ¿Qué? Issue #632: la lista del admin se pide por pestaña, "Vigentes" o "Vencidos" (el servidor filtra).
+export type VigenciaComunicado = "VIGENTES" | "VENCIDOS";
 
 export interface Comunicado {
   id_comunicado: string;
@@ -53,8 +55,12 @@ export interface PaginaDeComunicados {
 // ¿Qué? Admin Conjunto — todo lo que ha publicado, en todos sus conjuntos.
 // ¿Para qué? Issue #11 — pedido de a páginas (limit/offset), igual que
 //           listarTodasLasNovedades (issue #227).
-export async function listarMisComunicados(limit: number, offset: number): Promise<PaginaDeComunicados> {
-  const { data } = await axios.get(`${API_BASE}/mis-comunicados`, { params: { limit, offset } });
+export async function listarMisComunicados(
+  limit: number,
+  offset: number,
+  vigencia?: VigenciaComunicado
+): Promise<PaginaDeComunicados> {
+  const { data } = await axios.get(`${API_BASE}/mis-comunicados`, { params: { limit, offset, vigencia } });
   return data;
 }
 

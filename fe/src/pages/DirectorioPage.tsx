@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react";
+import { ANCHO_PAGINA } from "@/config/anchoPagina";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
-import { Phone, Map as MapIcon, HardHat, Warehouse, MessageCircle, Info, ExternalLink, Search } from "lucide-react";
+import { Phone, Map as MapIcon, HardHat, Warehouse, MessageCircle, Info, Search, X, TriangleAlert } from "lucide-react";
+import { useAvisoCerradoEnSesion } from "@/hooks/useAvisoCerradoEnSesion";
 import axios from "axios";
 import { API_BASE_URL } from "@/api/axios";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { TablaPuntosAcopio } from "@/components/TablaPuntosAcopio";
-import { normalizarTexto } from "@/lib/normalizarTexto";
+import { Paginacion } from "@/components/ui/Paginacion";
+import { usePaginacion } from "@/hooks/usePaginacion";
 
 interface Localidad {
   id_localidad: number;
@@ -32,6 +35,9 @@ interface PuntoAcopio {
   nombre_encargado: string | null;
   nombre_localidad: string;
   url_foto: string | null;
+  // ¿Qué? Datos del inventario de la UAESP (issue #664); null en los puntos creados a mano.
+  organizacion: string | null;
+  correo_contacto: string | null;
 }
 
 type TabId = "recicladores" | "puntos";
@@ -40,12 +46,10 @@ interface DirectorioPageProps {
   soloAcopio?: boolean;
 }
 
-// ¿Qué? URL de la fuente oficial usada en el banner de Puntos de Acopio.
-// ¿Para qué? Que el link del "Ver fuente" y el de la documentación de
-//           soporte (docs/gestion-proyecto/fuente-datos-puntos-acopio-eca.md)
-//           apunten siempre al mismo lugar si algún día cambia.
-const FUENTE_ECA_URL =
-  "https://www.uaesp.gov.co/sites/default/files/archivos-adjuntos/Listado_Inventario_inicial_ECA_y_Bodegas_PR.pdf";
+// ¿Qué? Cuántos puntos pide cada página al servidor.
+const TAMANO_PAGINA = 20;
+// ¿Qué? Espera, en ms, desde la última tecla antes de pedir la búsqueda al servidor (mismo valor que AdminDashboard).
+const ESPERA_BUSQUEDA_MS = 350;
 
 export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const { t } = useTranslation();
@@ -63,11 +67,17 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
   const [localidadPuntosId, setLocalidadPuntosId] = useState<number | "">("");
   const [localidadCargada, setLocalidadCargada] = useState(false);
   const [recicladores, setRecicladores] = useState<Reciclador[]>([]);
+  // ¿Qué? Solo la página de puntos que se ve y cuántos hay en total con ese filtro (issue #664: el
+  //       inventario de la UAESP trae cientos, así que el servidor entrega la lista por páginas).
   const [puntos, setPuntos] = useState<PuntoAcopio[]>([]);
-  // ¿Qué? Búsqueda por nombre o dirección y fila desplegada de la tabla de puntos.
-  // ¿Para qué? El filtro de localidad ya llega del backend; el de nombre se aplica
-  //           aquí porque la lista de una localidad es corta.
-  // ¿Impacto? La fila abierta se cierra al cambiar de pestaña, de localidad o de búsqueda.
+  const [totalPuntos, setTotalPuntos] = useState(0);
+  const paginacion = usePaginacion(TAMANO_PAGINA, totalPuntos);
+  const { offset, reiniciar } = paginacion;
+  // ¿Qué? Búsqueda por nombre, dirección u organización y fila desplegada de la tabla de puntos.
+  // ¿Para qué? El filtro de localidad y la búsqueda se hacen en el servidor. "busquedaEscrita" es lo que hay
+  //           en el cuadro; "busquedaPuntos" es lo que se pide, 350 ms después de la última tecla.
+  // ¿Impacto? La fila abierta se cierra al cambiar de pestaña, de localidad, de búsqueda o de página.
+  const [busquedaEscrita, setBusquedaEscrita] = useState("");
   const [busquedaPuntos, setBusquedaPuntos] = useState("");
   const [puntoAbiertoId, setPuntoAbiertoId] = useState<string | null>(null);
   // ¿Qué? Antes empezaba en "false". Mientras se resuelve la localidad del
@@ -110,9 +120,24 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
      
   }, [user]);
 
-  // 2. Cargar directorio cuando ya se resolvió la localidad y cambia tab/filtro
+  // 2a. Espera a que se deje de escribir antes de pedir la búsqueda al servidor. busquedaPedidaRef evita
+  //     reiniciar la página (y repetir la petición) si el texto, ya sin espacios, no cambió.
+  const busquedaPedidaRef = useRef("");
   useEffect(() => {
-    if (!user || !localidadCargada) return;
+    const id = setTimeout(() => {
+      const nueva = busquedaEscrita.trim();
+      if (nueva === busquedaPedidaRef.current) return;
+      busquedaPedidaRef.current = nueva;
+      setBusquedaPuntos(nueva);
+      setPuntoAbiertoId(null);
+      reiniciar();
+    }, ESPERA_BUSQUEDA_MS);
+    return () => clearTimeout(id);
+  }, [busquedaEscrita, reiniciar]);
+
+  // 2b. Cargar recicladores cuando ya se resolvió la localidad y se está en esa pestaña
+  useEffect(() => {
+    if (!user || !localidadCargada || tab !== "recicladores") return;
     // ¿Qué? Reinicia "cargando"/"error" antes de disparar la petición que
     //       viene justo debajo, para que la pantalla muestre el estado de
     //       carga real de este nuevo filtro/tab en vez del resultado (o
@@ -127,46 +152,67 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
     setCargandoDirectorio(true);
     setErrorDirectorio(false);
 
-    const localidadActiva = tab === "recicladores" ? localidadPropiaId : localidadPuntosId;
-    const params = localidadActiva ? { localidad_id: localidadActiva } : {};
+    const params = localidadPropiaId ? { localidad_id: localidadPropiaId } : {};
 
     // ¿Qué? Antes el catch ponía la lista en [] — se veía exactamente igual
     //       que "no hay resultados para este filtro" (un caso real y válido).
     // ¿Impacto? Ahora un fallo de red/servidor muestra su propio aviso en
     //           vez de disfrazarse de búsqueda vacía.
-    if (tab === "recicladores") {
-      axios
-        .get(`${API_BASE_URL}/api/v1/directorio/recicladores`, { params })
-        .then((res) => setRecicladores(res.data))
-        .catch(() => {
-          setRecicladores([]);
-          setErrorDirectorio(true);
-        })
-        .finally(() => setCargandoDirectorio(false));
-    } else {
-      axios
-        .get(`${API_BASE_URL}/api/v1/directorio/puntos-acopio`, { params })
-        .then((res) => setPuntos(res.data))
-        .catch(() => {
-          setPuntos([]);
-          setErrorDirectorio(true);
-        })
-        .finally(() => setCargandoDirectorio(false));
-    }
-     
-  }, [tab, localidadPropiaId, localidadPuntosId, localidadCargada, user]);
+    axios
+      .get(`${API_BASE_URL}/api/v1/directorio/recicladores`, { params })
+      .then((res) => setRecicladores(res.data))
+      .catch(() => {
+        setRecicladores([]);
+        setErrorDirectorio(true);
+      })
+      .finally(() => setCargandoDirectorio(false));
+  }, [tab, localidadPropiaId, localidadCargada, user]);
 
-  const consultaPuntos = normalizarTexto(busquedaPuntos.trim());
-  const puntosVisibles = puntos.filter(
-    (p) => !consultaPuntos || normalizarTexto(`${p.nombre} ${p.direccion}`).includes(consultaPuntos),
-  );
+  // 2c. Cargar la página de puntos de acopio: cambia con la pestaña, la localidad, la búsqueda y la página.
+  //     "cancelado" descarta una respuesta vieja que llega tarde (si escribes rápido, no debe pisar a la nueva).
+  useEffect(() => {
+    if (!user || !localidadCargada || tab !== "puntos") return;
+    let cancelado = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCargandoDirectorio(true);
+    setErrorDirectorio(false);
+
+    const params = {
+      ...(localidadPuntosId ? { localidad_id: localidadPuntosId } : {}),
+      ...(busquedaPuntos ? { q: busquedaPuntos } : {}),
+      limit: TAMANO_PAGINA,
+      offset,
+    };
+    axios
+      .get<{ items: PuntoAcopio[]; total: number }>(`${API_BASE_URL}/api/v1/directorio/puntos-acopio`, { params })
+      .then((res) => {
+        if (cancelado) return;
+        setPuntos(res.data.items);
+        setTotalPuntos(res.data.total);
+      })
+      .catch(() => {
+        if (cancelado) return;
+        setPuntos([]);
+        setTotalPuntos(0);
+        setErrorDirectorio(true);
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoDirectorio(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [tab, localidadPuntosId, busquedaPuntos, offset, localidadCargada, user]);
 
   const waLink = (tel: string) => `https://wa.me/57${tel.replace(/\D/g, "")}`;
   const callLink = (tel: string) => `tel:+57${tel.replace(/\D/g, "")}`;
 
   return (
-    <div className="mx-auto max-w-5xl 2xl:max-w-6xl space-y-6 pt-6">
-      {/* Encabezado */}
+    <div className={`${ANCHO_PAGINA.normal} space-y-6 pt-6`}>
+      {/* ¿Qué? Tarjeta 1: título, subtítulo y controles (pestañas y filtros) juntos.
+          ¿Para qué? Antes eran dos bloques sueltos (el título en una tarjeta y los controles flotando
+                    debajo sobre el fondo de la página).
+          ¿Impacto? El contenido (la lista) va en una segunda tarjeta, debajo. */}
       <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-100 dark:border-night-line p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {soloAcopio ? t("appShell.nav.puntosAcopio") : t("appShell.nav.directorioGeneral")}
@@ -176,16 +222,18 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
             ? t("directorio.subtitleAcopio")
             : t("directorio.subtitleGeneral")}
         </p>
-      </div>
 
       {/* Controles: tabs + filtro localidad */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         {!soloAcopio && (
-          <div className="flex rounded-xl border border-gray-200 bg-white p-1 dark:border-night-line dark:bg-night-panel">
+          // ¿Qué? En celular (375 px) las dos pestañas se reparten el ancho de la tarjeta en partes iguales (el
+          //       texto largo baja a una segunda línea); desde `sm` van juntas, cada una del tamaño de su texto.
+          // ¿Para qué? Con `whitespace-nowrap` las dos medían 326 px y se salían 22 px de la tarjeta de 278 px.
+          <div className="grid w-full grid-cols-2 rounded-xl border border-gray-200 bg-white p-1 dark:border-night-line dark:bg-night-panel sm:flex sm:w-auto sm:shrink-0">
             {(
               [
-                { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <HardHat className="icon-md" /> },
-                { id: "puntos" as TabId, label: t("appShell.nav.puntosAcopio"), icon: <Warehouse className="icon-md" /> },
+                { id: "recicladores" as TabId, label: t("directorio.tabs.recyclers"), icon: <HardHat className="icon-md shrink-0" /> },
+                { id: "puntos" as TabId, label: t("appShell.nav.puntosAcopio"), icon: <Warehouse className="icon-md shrink-0" /> },
               ] as const
             ).map(({ id, label, icon }) => (
               <button
@@ -194,7 +242,7 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                   setTab(id);
                   setPuntoAbiertoId(null);
                 }}
-                className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2 text-center text-sm font-medium leading-tight transition-colors sm:whitespace-nowrap sm:px-4 ${
                   tab === id
                     ? "bg-accent-700 text-white shadow-sm dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
                     : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
@@ -219,19 +267,16 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
               : t("directorio.ownLocalityUnknown")}
           </div>
         ) : (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="relative min-w-[12.5rem]">
               <Search className="icon-md pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
               <input
                 type="search"
-                value={busquedaPuntos}
-                onChange={(e) => {
-                  setBusquedaPuntos(e.target.value);
-                  setPuntoAbiertoId(null);
-                }}
+                value={busquedaEscrita}
+                onChange={(e) => setBusquedaEscrita(e.target.value)}
                 aria-label={t("directorio.searchPoints")}
                 placeholder={t("directorio.searchPoints")}
-                className="w-full rounded-lg border border-edge bg-white py-2 pl-9 pr-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-white"
+                className="focus-ring w-full rounded-lg border border-edge bg-white py-2 pl-9 pr-3 text-sm text-gray-900 dark:border-night-edge dark:bg-night-panel dark:text-white"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -242,8 +287,9 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
                 onChange={(e) => {
                   setLocalidadPuntosId(e.target.value === "" ? "" : Number(e.target.value));
                   setPuntoAbiertoId(null);
+                  reiniciar();
                 }}
-                className="cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-accent-500 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
+                className="focus-ring min-w-0 max-w-full cursor-pointer rounded-lg border border-edge bg-white px-3 py-2 text-sm text-gray-700 dark:border-night-edge dark:bg-night-panel dark:text-gray-200"
               >
                 <option value="">{t("directorio.allLocalities")}</option>
                 {localidades.map((l) => (
@@ -256,126 +302,197 @@ export function DirectorioPage({ soloAcopio = false }: DirectorioPageProps) {
           </div>
         )}
       </div>
-
-      {/* ¿Qué? Aviso informativo, distinto según la pestaña activa.
-          ¿Para qué? El de Recicladores explica qué es y para qué le sirve
-          al residente (directorio propio, sin fuente externa). El de
-          Puntos de Acopio, además, tiene que aclarar la procedencia del
-          dato (dataset UAESP de marzo de 2020) y que no son todas las ECA
-          de la ciudad — sin esto, alguien podría tomar los 9 puntos como
-          el total real de Bogotá. El enlace lleva al inventario de la
-          UAESP, que lista muchas más (su cifra exacta no está clara). */}
-      {tab === "recicladores" && !soloAcopio ? (
-        <InfoBanner
-          titulo={t("directorio.infoRecicladores.titulo")}
-          descripcion={t("directorio.infoRecicladores.descripcion")}
-          paraQueSirve={t("directorio.infoRecicladores.paraQueSirve")}
-          fuenteTexto={t("directorio.infoRecicladores.fuenteTexto")}
-        />
-      ) : (
-        <InfoBanner
-          titulo={t("directorio.infoPuntos.titulo")}
-          descripcion={t("directorio.infoPuntos.descripcion")}
-          paraQueSirve={t("directorio.infoPuntos.paraQueSirve")}
-          fuenteTexto={t("directorio.infoPuntos.fuenteTexto")}
-          fuenteHref={FUENTE_ECA_URL}
-          fuenteLinkLabel={t("directorio.infoPuntos.fuenteLink")}
-        />
-      )}
+      </div>
 
       {/* Contenido */}
-      {cargandoDirectorio ? (
-        <LoadingState message={t("common.loading")} />
-      ) : errorDirectorio ? (
-        <Alert type="error" message={t("common.loadError")} />
-      ) : tab === "recicladores" && !soloAcopio ? (
-        recicladores.length === 0 ? (
-          <EmptyState icon={HardHat} message={t("directorio.emptyRecyclers")} />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {recicladores.map((r) => (
-              <TarjetaReciclador
-                key={r.id_reciclador}
-                reciclador={r}
-                waLink={waLink}
-                callLink={callLink}
-              />
-            ))}
+      {tab === "recicladores" && !soloAcopio ? (
+        // ¿Qué? Tarjeta 2 de la pestaña Recicladores: arriba la franja con el aviso "¿Qué es este directorio?"
+        //       (se puede cerrar con la X y queda un enlace con su título; solo se recuerda en la sesión) y
+        //       debajo la lista, una fila por reciclador con Llamar y WhatsApp a la vista.
+        // ¿Para qué? Antes eran tarjetas sueltas en dos columnas con la localidad repetida en cada una (ya
+        //           está fija arriba) y el aviso flotando como otro bloque.
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card">
+          <div className="border-b border-gray-100 dark:border-night-line">
+            <InfoBanner
+              enFranja
+              id="directorio-recicladores"
+              titulo={t("directorio.infoRecicladores.titulo")}
+              descripcion={t("directorio.infoRecicladores.descripcion")}
+              paraQueSirve={t("directorio.infoRecicladores.paraQueSirve")}
+              fuenteTexto={t("directorio.infoRecicladores.fuenteTexto")}
+            />
           </div>
-        )
-      ) : puntos.length === 0 ? (
-        <EmptyState icon={Warehouse} message={t("directorio.emptyPoints")} />
-      ) : puntosVisibles.length === 0 ? (
-        <EmptyState icon={Search} message={t("directorio.noPointsMatch")} />
-      ) : (
+          {cargandoDirectorio ? (
+            <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} />
+          ) : errorDirectorio ? (
+            <div className="p-4">
+              <Alert type="error" message={t("common.loadError")} />
+            </div>
+          ) : recicladores.length === 0 ? (
+            <div className="p-4">
+              <EmptyState icon={HardHat} message={t("directorio.emptyRecyclers")} />
+            </div>
+          ) : (
+            <ul className="divide-y divide-gray-200 dark:divide-night-line">
+              {recicladores.map((r) => (
+                <FilaReciclador key={r.id_reciclador} reciclador={r} waLink={waLink} callLink={callLink} />
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : !errorDirectorio && puntos.length > 0 ? (
+        // ¿Qué? La tabla se queda con las filas de antes mientras llega la página nueva (no parpadea con cada tecla).
         <TablaPuntosAcopio
-          puntos={puntosVisibles}
+          puntos={puntos}
           variante="lectura"
           abiertoId={puntoAbiertoId}
           onAlternar={(id) => setPuntoAbiertoId((actual) => (actual === id ? null : id))}
+          encabezado={<FranjaEca soloAcopio={soloAcopio} />}
+          pie={
+            <Paginacion
+              desde={paginacion.desde}
+              hasta={paginacion.hasta}
+              total={totalPuntos}
+              pagina={paginacion.pagina}
+              totalPaginas={paginacion.totalPaginas}
+              puedeAnterior={paginacion.puedeAnterior}
+              puedeSiguiente={paginacion.puedeSiguiente}
+              onAnterior={() => {
+                setPuntoAbiertoId(null);
+                paginacion.irAAnterior();
+              }}
+              onSiguiente={() => {
+                setPuntoAbiertoId(null);
+                paginacion.irASiguiente();
+              }}
+            />
+          }
         />
+      ) : (
+        // ¿Qué? Tarjeta 2 sin tabla (cargando, error o sin resultados): mantiene la misma franja arriba.
+        // ¿Para qué? Que la nota de la fuente (UAESP) se vea siempre, también cuando no hay filas.
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white dark:border-night-line dark:bg-night-card">
+          <FranjaEca soloAcopio={soloAcopio} />
+          <div className="p-4">
+            {cargandoDirectorio ? (
+              <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} />
+            ) : errorDirectorio ? (
+              <Alert type="error" message={t("common.loadError")} />
+            ) : !busquedaPuntos ? (
+              <EmptyState icon={Warehouse} message={t("directorio.emptyPoints")} />
+            ) : (
+              <EmptyState icon={Search} message={t("directorio.noPointsMatch")} />
+            )}
+          </div>
+        </div>
       )}
+    </div>
+  );
+}
+
+// ¿Qué? Franja que va arriba de la lista de puntos de acopio, dentro de su tarjeta: el aviso "¿Qué es una
+//       ECA?" (se puede cerrar y queda un enlace) y, siempre visible, la nota de procedencia.
+// ¿Para qué? La nota cita a la UAESP como fuente del inventario (la licencia que dio la UAESP exige nombrarla,
+//           no enlazarla) y aclara que estar en la lista no garantiza que la ECA esté abierta hoy: el inventario
+//           no trae estado de funcionamiento. No lleva enlace: la página de ECA de la UAESP responde 403, la
+//           resolución no está publicada y el Excel trae correos, así que no hay un enlace útil que ofrecer.
+// ¿Impacto? El texto del Residente dice que cualquier persona puede llevar residuos aprovechables a una ECA
+//           (la UAESP lo confirmó en el oficio 20265000341921, issue #500). La nota NO se puede cerrar.
+function FranjaEca({ soloAcopio }: { soloAcopio: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <div className="border-b border-gray-100 dark:border-night-line">
+      <InfoBanner
+        enFranja
+        id="directorio-eca"
+        titulo={t("directorio.infoPuntos.titulo")}
+        descripcion={t(soloAcopio ? "directorio.infoPuntos.descripcionReciclador" : "directorio.infoPuntos.descripcionResidente")}
+      />
+      <p className="flex items-start gap-2 border-t border-amber-200 bg-amber-50 px-5 py-2 text-xs text-amber-800 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200">
+        <TriangleAlert className="icon-sm mt-0.5 shrink-0" aria-hidden="true" />
+        <span>{t("directorio.infoPuntos.nota")}</span>
+      </p>
     </div>
   );
 }
 
 // ¿Qué? Caja informativa compartida por las 2 pestañas del directorio, con
 //       la misma estructura (qué es / para qué sirve / de dónde viene) pero
-//       contenido distinto según el tipo de dato.
+//       contenido distinto según el tipo de dato. Se puede cerrar con la X.
 // ¿Para qué? Usa los tokens accent-* de la marca (no el Alert genérico de
 //           tipo "info", que es azul neutro) para que se sienta parte del
 //           sistema de diseño de VerdeApp, no una alerta del navegador.
+//           Cerrada, queda un enlace con el título para volver a abrirla.
 // ¿Impacto? Sin esto, alguien nuevo en el directorio no tiene forma de
-//           saber, por ejemplo, por qué 14 de 20 localidades no muestran
-//           ningún punto de acopio — con esto queda aclarado la primera
-//           vez que entra, cada vez que entra.
+//           saber, por ejemplo, qué es una ECA. La preferencia solo dura la
+//           sesión (ver useAvisoCerradoEnSesion): en cada inicio de sesión
+//           vuelve a mostrarse.
 function InfoBanner({
+  id,
   titulo,
   descripcion,
   paraQueSirve,
   fuenteTexto,
-  fuenteHref,
-  fuenteLinkLabel,
+  enFranja = false,
 }: {
+  id: string;
   titulo: string;
   descripcion: string;
-  paraQueSirve: string;
-  fuenteTexto: string;
-  fuenteHref?: string;
-  fuenteLinkLabel?: string;
+  paraQueSirve?: string;
+  fuenteTexto?: string;
+  /** ¿Qué? Dentro de la tarjeta de la lista: sin esquinas ni borde propios, a todo el ancho. */
+  enFranja?: boolean;
 }) {
+  const { t } = useTranslation();
+  const { cerrado, cerrar, reabrir } = useAvisoCerradoEnSesion(id);
+
+  if (cerrado) {
+    const enlace = (
+      <button type="button" onClick={reabrir} className="link-text inline-flex cursor-pointer items-center gap-1.5 text-sm">
+        <Info className="icon-sm" aria-hidden="true" />
+        {titulo}
+      </button>
+    );
+    return enFranja ? <div className="px-5 py-3">{enlace}</div> : enlace;
+  }
+
   return (
-    <div className="rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-300/40 dark:bg-accent-300/10">
+    <div
+      className={
+        enFranja
+          ? "bg-accent-50 px-5 py-4 dark:bg-accent-300/10"
+          : "rounded-2xl border border-accent-200 bg-accent-50 p-4 dark:border-accent-300/40 dark:bg-accent-300/10"
+      }
+    >
       <div className="flex gap-3">
         <Info className="icon-lg mt-0.5 shrink-0 text-accent-600 dark:text-accent-400" />
-        <div className="space-y-1.5 text-sm">
+        <div className="min-w-0 flex-1 space-y-1.5 text-sm">
           <p className="font-semibold text-accent-900 dark:text-accent-200">{titulo}</p>
           <p className="text-accent-800/90 dark:text-accent-300/90">{descripcion}</p>
-          <p className="text-accent-800/90 dark:text-accent-300/90">{paraQueSirve}</p>
-          <p className="text-xs text-accent-800 dark:text-accent-300">
-            {fuenteTexto}
-            {fuenteHref && fuenteLinkLabel && (
-              <>
-                {" — "}
-                <a
-                  href={fuenteHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-semibold underline underline-offset-2 transition-colors hover:text-accent-900 dark:hover:text-accent-200"
-                >
-                  {fuenteLinkLabel}
-                  <ExternalLink className="icon-sm" aria-hidden="true" />
-                </a>
-              </>
-            )}
-          </p>
+          {paraQueSirve && <p className="text-accent-800/90 dark:text-accent-300/90">{paraQueSirve}</p>}
+          {fuenteTexto && <p className="text-xs text-accent-800 dark:text-accent-300">{fuenteTexto}</p>}
         </div>
+        <button
+          type="button"
+          onClick={cerrar}
+          aria-label={t("common.close")}
+          title={t("common.close")}
+          className="touch-target-h -mr-1 -mt-1 flex h-8 shrink-0 cursor-pointer items-center justify-center rounded-lg px-1.5 text-accent-700 transition-colors hover:bg-accent-100 dark:text-accent-300 dark:hover:bg-accent-300/15"
+        >
+          <X className="icon-md" aria-hidden="true" />
+        </button>
       </div>
     </div>
   );
 }
 
-function TarjetaReciclador({
+// ¿Qué? Una fila de la lista de recicladores: nombre, asociación (si tiene) y, a la derecha, Llamar y
+//       WhatsApp. Si el reciclador no comparte su teléfono, en su lugar dice "No comparte su teléfono".
+// ¿Para qué? Lo que el Residente viene a hacer aquí es contactar: los dos botones quedan siempre a la vista,
+//           sin desplegar nada. La localidad no se escribe porque la lista ya es de la localidad fija de arriba.
+// ¿Impacto? El backend solo manda el teléfono si el reciclador activó `mostrar_contacto_directorio`; sin
+//           teléfono es una decisión del reciclador, no un dato faltante.
+function FilaReciclador({
   reciclador: r,
   waLink,
   callLink,
@@ -385,55 +502,43 @@ function TarjetaReciclador({
   callLink: (t: string) => string;
 }) {
   const { t } = useTranslation();
+  const nombre = `${r.nombre} ${r.apellidos}`;
   return (
-    <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card">
-      <div className="mb-3 flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-400/15">
-          <HardHat className="icon-lg text-teal-700 dark:text-teal-300" />
+    <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-400/15">
+          <HardHat className="icon-lg text-teal-700 dark:text-teal-300" aria-hidden="true" />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 break-words font-semibold text-gray-900 dark:text-white">
-            {r.nombre} {r.apellidos}
-          </p>
-          {r.nombre_localidad && (
-            <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[0.6875rem] font-medium text-gray-600 dark:bg-night-inset dark:text-gray-300">
-              <MapIcon className="icon-sm" />
-              {r.nombre_localidad}
-            </span>
-          )}
+        <div className="min-w-0">
+          <p className="break-words text-sm font-semibold text-gray-900 dark:text-white">{nombre}</p>
+          {r.asociacion && <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{r.asociacion}</p>}
         </div>
       </div>
 
-      {r.asociacion && (
-        <span className="mb-4 inline-flex w-fit items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[0.6875rem] font-semibold text-teal-700 dark:bg-teal-400/10 dark:text-teal-300">
-          {r.asociacion}
-        </span>
+      {r.numero_telefonico ? (
+        <div className="flex gap-2">
+          <a
+            href={callLink(r.numero_telefonico)}
+            aria-label={`${t("directorio.call")} ${nombre}`}
+            className="touch-target-h flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
+          >
+            <Phone className="icon-sm" aria-hidden="true" />
+            {t("directorio.call")}
+          </a>
+          <a
+            href={waLink(r.numero_telefonico)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`WhatsApp ${nombre}`}
+            className="touch-target-h flex items-center justify-center gap-1.5 rounded-lg bg-accent-700 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
+          >
+            <MessageCircle className="icon-sm" aria-hidden="true" />
+            WhatsApp
+          </a>
+        </div>
+      ) : (
+        <p className="text-xs text-gray-500 dark:text-gray-400">{t("directorio.noPhone")}</p>
       )}
-
-      <div className="mt-auto pt-1">
-        {r.numero_telefonico ? (
-          <div className="flex gap-2">
-            <a
-              href={callLink(r.numero_telefonico)}
-              className="touch-target-h flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-night-line dark:text-gray-300 dark:hover:bg-night-hover"
-            >
-              <Phone className="icon-sm" />
-              {t("directorio.call")}
-            </a>
-            <a
-              href={waLink(r.numero_telefonico)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="touch-target-h flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent-700 py-2 text-xs font-medium text-white transition-colors hover:bg-accent-600 dark:bg-accent-300 dark:text-accent-950 dark:hover:bg-accent-200"
-            >
-              <MessageCircle className="icon-sm" />
-              WhatsApp
-            </a>
-          </div>
-        ) : (
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t("directorio.noPhone")}</p>
-        )}
-      </div>
-    </div>
+    </li>
   );
 }

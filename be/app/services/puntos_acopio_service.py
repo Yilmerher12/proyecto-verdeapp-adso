@@ -7,10 +7,11 @@ Descripción: Lógica de negocio de la gestión de puntos de acopio (RQF-011).
           escritos a mano en seed.py.
 """
 
+import unicodedata
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.localidad import Localidad
@@ -39,13 +40,64 @@ def _obtener_punto_o_404(db: Session, id_punto_acopio: UUID) -> PuntoAcopio:
     return punto
 
 
-def listar_todos(db: Session) -> list[dict]:
+_CON_TILDE = "ÁÉÍÓÚÜÑáéíóúüñ"
+_SIN_TILDE = "AEIOUUNaeiouun"
+
+
+def _sin_tildes(texto: str) -> str:
+    """Misma normalización que normalizarTexto del frontend: sin tildes y en minúscula."""
+    sin_marcas = "".join(c for c in unicodedata.normalize("NFD", texto) if unicodedata.category(c) != "Mn")
+    return sin_marcas.lower()
+
+
+def condicion_busqueda(q: str | None):
+    """
+    ¿Qué? Condición SQL: el texto está en el nombre, la dirección o la organización, sin importar
+          mayúsculas ni tildes. Devuelve None si no hay texto que buscar.
+    ¿Para qué? CA-006.7 pide buscar sin tildes; con 799 puntos el filtro ya no puede vivir en el
+              navegador. Se usa translate() de Postgres (sin instalar la extensión unaccent).
+    ¿Impacto? Las tildes se quitan ANTES de pasar a minúscula: lower() de Postgres depende de la
+              configuración regional de la base y puede no bajar "Á". Compartida por el directorio
+              y el panel del Admin.
+    """
+    texto = _sin_tildes((q or "").strip())
+    if not texto:
+        return None
+    columnas = func.concat_ws(" ", PuntoAcopio.nombre, PuntoAcopio.direccion, PuntoAcopio.organizacion)
+    sin_tildes = func.lower(func.translate(columnas, _CON_TILDE, _SIN_TILDE))
+    return sin_tildes.contains(texto, autoescape=True)
+
+
+def listar_todos(
+    db: Session,
+    *,
+    limit: int,
+    offset: int,
+    q: str | None = None,
+    id_localidad: int | None = None,
+    estado: str = "todos",
+) -> tuple[list[dict], int]:
     """
     ¿Qué? Vista de administración: incluye los puntos dados de baja
-          (activo=False), a diferencia de GET /directorio/puntos-acopio.
+          (activo=False), a diferencia de GET /directorio/puntos-acopio. Devuelve
+          una página y el total con los mismos filtros, no la lista completa.
     ¿Para qué? El Admin Sistema necesita ver todo lo que existe para poder
-              gestionarlo, no solo lo que hoy se muestra a Residentes.
+              gestionarlo, no solo lo que hoy se muestra a Residentes. Con el inventario
+              de la UAESP son cientos de puntos (issue #664).
+    ¿Impacto? estado: "todos", "activos" o "baja".
     """
+    condiciones = []
+    if estado == "activos":
+        condiciones.append(PuntoAcopio.activo.is_(True))
+    elif estado == "baja":
+        condiciones.append(PuntoAcopio.activo.is_(False))
+    if id_localidad is not None:
+        condiciones.append(PuntoAcopio.id_localidad == id_localidad)
+    busqueda = condicion_busqueda(q)
+    if busqueda is not None:
+        condiciones.append(busqueda)
+
+    total = db.scalar(select(func.count()).select_from(PuntoAcopio).where(*condiciones)) or 0
     stmt = (
         select(
             PuntoAcopio.id_punto_acopio,
@@ -56,13 +108,19 @@ def listar_todos(db: Session) -> list[dict]:
             PuntoAcopio.id_localidad,
             PuntoAcopio.activo,
             PuntoAcopio.url_foto,
+            PuntoAcopio.organizacion,
+            PuntoAcopio.correo_contacto,
             Localidad.nombre_localidad,
         )
         .join(Localidad, PuntoAcopio.id_localidad == Localidad.id_localidad)
-        .order_by(Localidad.nombre_localidad, PuntoAcopio.nombre)
+        .where(*condiciones)
+        # ¿Qué? id_punto_acopio al final: dos ECA con el mismo nombre y dirección no se pueden
+        #       mezclar entre páginas (un orden con empates puede repetir o saltar filas).
+        .order_by(Localidad.nombre_localidad, PuntoAcopio.nombre, PuntoAcopio.id_punto_acopio)
+        .limit(limit)
+        .offset(offset)
     )
-    rows = db.execute(stmt).all()
-    return [
+    items = [
         {
             "id_punto_acopio": r.id_punto_acopio,
             "nombre": r.nombre,
@@ -73,9 +131,32 @@ def listar_todos(db: Session) -> list[dict]:
             "nombre_localidad": r.nombre_localidad,
             "activo": r.activo,
             "url_foto": r.url_foto,
+            "organizacion": r.organizacion,
+            "correo_contacto": r.correo_contacto,
         }
-        for r in rows
+        for r in db.execute(stmt).all()
     ]
+    return items, total
+
+
+def resumen(db: Session) -> dict:
+    """
+    ¿Qué? Conteos de todos los puntos (activos y de baja) y las localidades que tienen al menos uno.
+    ¿Para qué? La cabecera y los filtros del panel del Admin; ver ResumenPuntosAcopio.
+    """
+    activos = db.scalar(select(func.count()).select_from(PuntoAcopio).where(PuntoAcopio.activo.is_(True))) or 0
+    de_baja = db.scalar(select(func.count()).select_from(PuntoAcopio).where(PuntoAcopio.activo.is_(False))) or 0
+    localidades = db.execute(
+        select(Localidad.id_localidad, Localidad.nombre_localidad)
+        .where(Localidad.id_localidad.in_(select(PuntoAcopio.id_localidad)))
+        .order_by(Localidad.nombre_localidad)
+    ).all()
+    return {
+        "total": activos + de_baja,
+        "activos": activos,
+        "de_baja": de_baja,
+        "localidades": [{"id_localidad": i, "nombre_localidad": n} for i, n in localidades],
+    }
 
 
 def _a_dict(punto: PuntoAcopio) -> dict:
@@ -91,6 +172,8 @@ def _a_dict(punto: PuntoAcopio) -> dict:
         "nombre_localidad": punto.localidad.nombre_localidad,
         "activo": punto.activo,
         "url_foto": punto.url_foto,
+        "organizacion": punto.organizacion,
+        "correo_contacto": punto.correo_contacto,
     }
 
 

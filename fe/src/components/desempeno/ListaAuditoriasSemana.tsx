@@ -18,26 +18,32 @@ import { claveNivel } from "@/lib/desempeno";
 import { AuditoriaResultadoModal } from "@/components/dashboard/AuditoriaResultadoModal";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Esqueleto } from "@/components/ui/Esqueleto";
+import { Button } from "@/components/ui/Button";
 
 interface ListaAuditoriasSemanaProps {
   titulo: string;
   // ¿Qué? undefined = cargando; null = falló la carga.
   auditorias: AuditoriaConjunto[] | null | undefined;
   mensajeVacio: string;
+  // ¿Qué? Sin marco propio (borde, fondo, sombra).
+  // ¿Para qué? Dentro de la tarjeta única "Mi conjunto" / Desempeño la lista va en una pestaña, no en otra tarjeta.
+  sinTarjeta?: boolean;
 }
 
-export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio }: ListaAuditoriasSemanaProps) {
+export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio, sinTarjeta = false }: ListaAuditoriasSemanaProps) {
   const { t } = useTranslation();
   const [idAbierta, setIdAbierta] = useState<string | null>(null);
 
   return (
     <section
       aria-label={titulo}
-      className="space-y-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-night-line dark:bg-night-card"
+      className={`space-y-3 ${
+        sinTarjeta ? "" : "rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-night-line dark:bg-night-card"
+      }`}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-base font-bold text-gray-900 dark:text-white">{titulo}</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{titulo}</h2>
         {auditorias && auditorias.length > 0 && (
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {t("desempeno.semana.cantidad", { count: auditorias.length })}
@@ -46,13 +52,13 @@ export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio }: List
       </div>
 
       {auditorias === undefined ? (
-        <LoadingState message={t("common.loading")} />
+        <Esqueleto mensaje={t("common.loading")} variante="filas" cantidad={3} />
       ) : auditorias === null ? (
         <Alert type="error" message={t("desempeno.semana.errorCarga")} />
       ) : auditorias.length === 0 ? (
         <EmptyState icon={ClipboardList} message={mensajeVacio} />
       ) : (
-        <ul className="divide-y divide-gray-50 dark:divide-night-line">
+        <ul className="divide-y divide-gray-200 dark:divide-night-line">
           {auditorias.map((a) => {
             const nivel = NIVELES_DESEMPENO[a.nivel_desempeno];
             return (
@@ -68,14 +74,9 @@ export function ListaAuditoriasSemana({ titulo, auditorias, mensajeVacio }: List
                     <nivel.icon className="icon-sm" aria-hidden="true" />
                     {t(claveNivel(a.nivel_desempeno))}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setIdAbierta(a.id_auditoria)}
-                    aria-label={t("desempeno.semana.verDetalleDe", { tema: a.tema_educativo })}
-                    className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-night-line dark:bg-transparent dark:text-gray-300 dark:hover:bg-night-hover"
-                  >
+                  <Button variant="secondary" size="sm" type="button" onClick={() => setIdAbierta(a.id_auditoria)} aria-label={t("desempeno.semana.verDetalleDe", { tema: a.tema_educativo })}>
                     {t("desempeno.semana.verDetalle")}
-                  </button>
+                  </Button>
                 </div>
               </li>
             );

@@ -13,6 +13,7 @@
  */
 import { useTranslation } from "react-i18next";
 import { Info, Lightbulb } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 // ¿Qué? Los motivos cuya respuesta se verificó contra el código y cuántos pasos
 //       lleva cada uno (paso1, paso2... en las traducciones; ver
@@ -63,20 +64,12 @@ export function AyudaMotivo({ motivo, onResuelto, onNoResuelto }: AyudaMotivoPro
             <span className="text-sm font-semibold text-gray-900 dark:text-white">
               {t("novedadesEnviadas.ayuda.pregunta")}
             </span>
-            <button
-              type="button"
-              onClick={onResuelto}
-              className="focus-ring cursor-pointer rounded-lg border border-edge bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50 dark:border-night-edge dark:bg-night-field dark:text-gray-100 dark:hover:bg-night-hover"
-            >
+            <Button variant="secondary" type="button" onClick={onResuelto}>
               {t("novedadesEnviadas.ayuda.si")}
-            </button>
-            <button
-              type="button"
-              onClick={onNoResuelto}
-              className="focus-ring cursor-pointer rounded-lg border border-edge bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50 dark:border-night-edge dark:bg-night-field dark:text-gray-100 dark:hover:bg-night-hover"
-            >
+            </Button>
+            <Button variant="secondary" type="button" onClick={onNoResuelto}>
               {t("novedadesEnviadas.ayuda.no")}
-            </button>
+            </Button>
           </div>
         </>
       ) : (

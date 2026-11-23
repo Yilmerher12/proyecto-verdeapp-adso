@@ -17,9 +17,12 @@ import {
   User,
   ClipboardList,
   ChartColumn,
+  Inbox,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolling } from "@/hooks/usePolling";
+import { useSolicitudesPendientes } from "@/hooks/useSolicitudesPendientes";
 import * as authApi from "@/api/auth";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
@@ -34,6 +37,7 @@ import { onCualquierCambioDeNotificaciones } from "@/lib/notificationEvents";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { onFotoPerfilActualizada } from "@/lib/profileEvents";
 import { borrarSesionActiva } from "@/lib/sesionActiva";
+import { limpiarAvisosCerrados } from "@/hooks/useAvisoCerradoEnSesion";
 
 interface AppShellProps {
   children: ReactNode;
@@ -125,6 +129,11 @@ export function AppShell({ children }: AppShellProps) {
     }
 
     borrarSesionActiva();
+    // ¿Qué? Olvida los avisos que el usuario cerró con la X (ECA, directorio, etc.).
+    // ¿Para qué? Aquí no se llama a clearAuth() (ver comentario de arriba), que es quien los borraba:
+    //           el aviso de la ECA quedaba cerrado para la siguiente cuenta que iniciara sesión en el mismo navegador.
+    // ¿Impacto? En cada inicio de sesión los avisos vuelven a aparecer.
+    limpiarAvisosCerrados();
     sessionStorage.removeItem("landing-scroll-y");
     window.location.href = "/";
   };
@@ -171,6 +180,12 @@ export function AppShell({ children }: AppShellProps) {
   const roleId = user?.role_id ?? RoleId.RESIDENTE;
   const roleMeta = ROLE_THEME[roleId] ?? ROLE_THEME[RoleId.RESIDENTE];
 
+  // ¿Qué? Cuántas solicitudes tiene pendientes el Administrador del Sistema (contador de "Solicitudes").
+  // ¿Para qué? Issue #596: la bandeja salió del panel principal a su propia página; el contador del menú
+  //           es la señal de que hay algo por atender desde cualquier pantalla.
+  // ¿Impacto? Solo pide datos si el rol es Administrador del Sistema (enabled).
+  const solicitudesPendientes = useSolicitudesPendientes(!!user && roleId === RoleId.ADMIN_SISTEMA);
+
   // ¿Qué? ROLE_THEME (fe/src/config/roleTheme.ts) es un objeto de configuración
   //       plano, no un componente — no puede llamar a useTranslation() por su
   //       cuenta. Por eso la etiqueta traducida del rol se resuelve aquí, en
@@ -205,8 +220,10 @@ export function AppShell({ children }: AppShellProps) {
   //           el rol tiene al menos una opción en ese grupo (ver
   //           GRUPOS_NAV más abajo).
   type GrupoNav = "principal" | "comunidad" | "recursos" | "cuenta";
+  // ¿Qué? `badge` es un contador opcional que se muestra a la derecha de la opción (solo "Solicitudes").
+  type ItemNav = { icon: LucideIcon; label: string; href: string; enabled: boolean; group: GrupoNav; badge?: number };
 
-  const getNavItemsByRole = () => {
+  const getNavItemsByRole = (): ItemNav[] => {
     const commonStart = [
       { icon: LayoutDashboard, label: t("appShell.nav.panelPrincipal"), href: roleMeta.dashboardHref, enabled: true, group: "principal" as GrupoNav },
     ];
@@ -218,6 +235,7 @@ export function AppShell({ children }: AppShellProps) {
     if (roleId === RoleId.ADMIN_SISTEMA) {
       return [
         ...commonStart,
+        { icon: Inbox, label: t("appShell.nav.solicitudes"), href: "/admin/solicitudes", enabled: true, group: "principal" as GrupoNav, badge: solicitudesPendientes.total ?? 0 },
         { icon: Newspaper, label: t("appShell.nav.crearNovedades"), href: "/admin/novedades", enabled: true, group: "comunidad" as GrupoNav },
         { icon: BookOpen, label: t("appShell.nav.contenidoEducativo"), href: "/admin/contenido-educativo", enabled: true, group: "recursos" as GrupoNav },
         { icon: Warehouse, label: t("appShell.nav.puntosAcopio"), href: "/admin/puntos-acopio", enabled: true, group: "principal" as GrupoNav },
@@ -362,7 +380,7 @@ export function AppShell({ children }: AppShellProps) {
                   {displayName}
                 </p>
                 <span className={`flex min-w-0 items-center gap-1.5 text-xs font-medium mt-0.5 ${roleMeta.sidebarAccentText}`}>
-                  <roleMeta.Icon className="h-3 w-3 shrink-0" />
+                  <roleMeta.Icon className="icon-sm shrink-0" />
                   <span className="truncate">{roleLabel}</span>
                 </span>
               </div>
@@ -393,7 +411,7 @@ export function AppShell({ children }: AppShellProps) {
                   </p>
                 )}
                 <ul className="min-w-0 space-y-0.5">
-                  {itemsDelGrupo.map(({ icon: Icon, label, href, enabled }, idx) => {
+                  {itemsDelGrupo.map(({ icon: Icon, label, href, enabled, badge }, idx) => {
                     if (enabled && href) {
                       return (
                         <li key={idx} className="min-w-0">
@@ -411,8 +429,19 @@ export function AppShell({ children }: AppShellProps) {
                           >
                             {/* Animación al pasar el mouse: comunicados "suena", novedades
                                 crece, el resto se redibuja (ver index.css). */}
-                            <Icon className={"icon-lg shrink-0 icon-draw"} />
-                            {!collapsed && <span className="min-w-0 truncate">{label}</span>}
+                            <span className="relative shrink-0">
+                              <Icon className={"icon-lg shrink-0 icon-draw"} />
+                              {/* ¿Qué? Con el menú colapsado no cabe el número: un punto sobre el ícono. */}
+                              {collapsed && !!badge && (
+                                <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-amber-400" />
+                              )}
+                            </span>
+                            {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+                            {!collapsed && !!badge && (
+                              <span className="ml-auto shrink-0 rounded-full bg-amber-400 px-2 py-0.5 text-[0.6875rem] font-bold text-amber-950">
+                                {badge}
+                              </span>
+                            )}
                           </NavLink>
                         </li>
                       );
@@ -431,7 +460,7 @@ export function AppShell({ children }: AppShellProps) {
                           {!collapsed && (
                             <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
                               <span className="min-w-0 truncate">{label}</span>
-                              <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[0.5625rem] font-semibold uppercase tracking-wider text-accent-100/70">
+                              <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-accent-100/70">
                                 {t("appShell.proximamente")}
                               </span>
                             </span>
@@ -507,7 +536,7 @@ export function AppShell({ children }: AppShellProps) {
             encima; no combinaba con la paleta nueva y se pidió quitarla.
             ¿Impacto? Contraste tarjeta/fondo depende solo de los dos colores
             sólidos (claro: gray-200, oscuro: night-page). */}
-        <main className="relative flex-1 overflow-y-auto bg-gray-200 dark:bg-night-page">
+        <main className="relative flex-1 overflow-y-auto bg-gray-200 [scrollbar-gutter:stable] dark:bg-night-page">
           {/* ¿Qué? 16 px de margen lateral en celular (24 px desde `sm`).
               ¿Para qué? Con 24 px del contenedor + 24 px de la página, las
                         tarjetas ocupaban solo el 74% del ancho de un celular
@@ -518,11 +547,15 @@ export function AppShell({ children }: AppShellProps) {
             {/* ¿Qué? ErrorBoundary solo alrededor de la página, no del sidebar.
                 ¿Para qué? Si una página falla al dibujarse, el menú lateral
                            sigue funcionando para ir a otra (issue #378).
-                ¿Impacto? key={pathname} crea un ErrorBoundary nuevo al cambiar
-                          de ruta, así el error se limpia solo al navegar con
-                          el menú — sin key, la pantalla de error se quedaría
-                          pegada en todas las páginas siguientes. */}
-            <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+                ¿Impacto? key={pathname} en el div crea un ErrorBoundary nuevo al
+                          cambiar de ruta, así el error se limpia solo al navegar
+                          con el menú — sin key, la pantalla de error se quedaría
+                          pegada en todas las páginas siguientes. El mismo key
+                          repite el desvanecimiento estándar en cada página nueva
+                          (issue #643). */}
+            <div key={pathname} className="animate-fade-in">
+              <ErrorBoundary>{children}</ErrorBoundary>
+            </div>
           </div>
         </main>
       </div>

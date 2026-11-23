@@ -62,16 +62,19 @@ export function VerifyEmailPage() {
         {/* Esta página no usa AuthLayout ni AppShell: el logo va aquí directo. */}
         <Link
           to="/"
-          className="mb-5 flex justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+          className="focus-ring mb-5 flex justify-center rounded-lg "
           aria-label={t("common.backToHome")}
           title={t("common.backToHome")}
         >
-          <BrandLogo className="h-10" />
-        </Link>
-        <div className="bg-white dark:bg-night-card rounded-2xl border border-gray-200 dark:border-night-line p-8 shadow-sm text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            {t("verifyEmail.title")}
+          {/* ¿Qué? El logo es el encabezado principal (h1) y el título de la tarjeta un h2 de 18 px, igual que en AuthLayout (recuperar y restablecer contraseña): las tres páginas son hermanas y deben verse iguales (issue #640). */}
+          <h1 className="flex justify-center">
+            <BrandLogo className="h-10" />
           </h1>
+        </Link>
+        <div className="bg-white dark:bg-night-card rounded-xl border border-gray-200 dark:border-night-line p-6 sm:p-8 shadow-sm text-center">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+            {t("verifyEmail.title")}
+          </h2>
 
           {/* ──── Estado: cargando ──── */}
           {status === "loading" && (

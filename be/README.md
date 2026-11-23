@@ -92,18 +92,21 @@ be/
     ├── config.py           # Configuración centralizada desde variables de entorno
     ├── database.py         # Engine y sesión de SQLAlchemy
     ├── dependencies.py     # get_db, get_current_user, require_role, require_admin_conjunto
-    ├── seed.py             # Siembra roles, localidades, cuentas de prueba y conjuntos reales (idempotente)
+    ├── seed.py             # Siembra roles, localidades, cuentas de prueba, conjuntos reales y las ECA de la UAESP (idempotente)
     ├── seed_demo.py        # Comando manual: historia de demostración para presentar (3 conjuntos, auditorías con fotos, etc.)
     ├── limpiar_adjuntos.py # Comando manual: borra de uploads/adjuntos/ lo que ninguna fila usa (ver abajo)
+    ├── limpiar_evidencias.py # Comando manual: borra las fotos de evidencia de auditorías con más de 6 meses (ver abajo)
     ├── purgar_tokens.py    # Comando manual: borra los tokens vencidos de 4 tablas (ver abajo)
-    ├── data/               # CSV de conjuntos residenciales reales de Bogotá (fuente del seed)
+    ├── data/               # CSV de conjuntos residenciales reales de Bogotá y de las 799 ECA de la UAESP (fuente del seed)
+    │                       #   eca_correos_uaesp.csv (correos de contacto) NO está en el repositorio: ver "Correos de las ECA" en el README de la raíz
     ├── models/             # Un archivo por tabla (usuario.py, residente.py, reciclador.py,
     │                       #   administrador_conjunto.py, conjunto_residencial.py, comunicado.py,
     │                       #   novedad.py, auditoria_conjunto.py, notificacion.py, punto_acopio.py…)
     ├── schemas/            # Schemas Pydantic de entrada/salida, uno por dominio
     ├── routers/            # Endpoints, un archivo por dominio (17 — tabla completa en la sección 14)
     ├── services/           # Lógica de negocio cuando el router hace más que un CRUD
-    │                       #   (auth_service, comunicado_service, notificaciones_helpers…)
+    │                       #   (auth_service, comunicado_service, auditoria_conjunto_service,
+    │                       #   cuota_subidas_service, notificaciones_helpers…)
     ├── utils/              # Herramientas compartidas:
     │   ├── security.py     #   hash de contraseñas y JWT
     │   ├── email.py        #   envío de correos (SMTP / Resend / solo log)
@@ -111,11 +114,12 @@ be/
     │   ├── limiter.py      #   rate limiting (slowapi)
     │   ├── audit_log.py    #   log de eventos de seguridad y acciones de administración
     │   ├── codigo_acceso.py #  código de acceso de 6 caracteres de cada conjunto
+    │   ├── pdf_agenda.py, pdf_desempeno.py #  PDF del historial de la agenda y del desempeño semanal (fpdf2)
     │   └── fechas.py, enlaces.py, ids.py
     ├── uploads/            # Imágenes subidas (una subcarpeta por feature), servidas en /uploads
     └── tests/
         ├── conftest.py     # Fixtures compartidos (BD de pruebas verdeapp_test_db, cliente, usuarios)
-        └── test_*.py       # Un archivo por dominio (27); el conteo actual: uv run pytest -q
+        └── test_*.py       # Un archivo por dominio (35); el conteo actual: uv run pytest -q
 ```
 
 > **El patrón de capas**
@@ -177,22 +181,26 @@ dependencias de desarrollo (solo para testing y linting, nunca se instalan en la
 de producción — ver el `Dockerfile`, que usa `uv sync --no-dev`).
 
 ```toml
-# pyproject.toml (resumen)
+# pyproject.toml (resumen). Las versiones exactas (siempre con ==) están en pyproject.toml:
+# aquí se escriben "==…" a propósito, porque Dependabot las sube cada 15 días y esta copia se desactualizaría.
 [project]
 dependencies = [
-    "fastapi==0.142.2",              # El framework web — maneja rutas, requests, responses
-    "uvicorn[standard]==0.54.0",     # Servidor ASGI que ejecuta FastAPI
-    "python-multipart==0.0.22",      # Necesario para leer form data (como el login)
-    "sqlalchemy==2.1.3",            # ORM — permite manejar la BD con clases Python
-    "alembic==1.20.0",               # Migraciones versionadas de la BD
-    "psycopg2-binary==2.9.13",       # Driver que conecta Python con PostgreSQL
-    "pydantic==2.13.5",              # Validación de datos con tipos Python
-    "pydantic-settings==2.13.1",     # Leer y validar variables de entorno
-    "email-validator==2.3.0",        # Validar formato de emails (lo usa Pydantic)
-    "pyjwt==2.15.1",                 # Crear y verificar tokens JWT (HS256)
-    "bcrypt==5.0.0",                 # Hashear y verificar contraseñas
-    "resend==2.49.1",                # SDK del servicio de envío de emails Resend
-    "slowapi==0.1.10",               # Rate limiting — limita peticiones por IP (OWASP A04)
+    "fastapi==…",              # El framework web — maneja rutas, requests, responses
+    "uvicorn[standard]==…",    # Servidor ASGI que ejecuta FastAPI
+    "python-multipart==…",     # Necesario para leer form data (como el login)
+    "sqlalchemy==…",           # ORM — permite manejar la BD con clases Python
+    "alembic==…",              # Migraciones versionadas de la BD
+    "psycopg2-binary==…",      # Driver que conecta Python con PostgreSQL
+    "pydantic==…",             # Validación de datos con tipos Python
+    "pydantic-settings==…",    # Leer y validar variables de entorno
+    "email-validator==…",      # Validar formato de emails (lo usa Pydantic)
+    "pyjwt==…",                # Crear y verificar tokens JWT (HS256)
+    "bcrypt==…",               # Hashear y verificar contraseñas
+    "resend==…",               # SDK del servicio de envío de emails Resend
+    "slowapi==…",              # Rate limiting — limita peticiones por IP (OWASP A04)
+    "pillow==…",               # Valida el contenido real de las imágenes subidas
+    "fpdf2==…",                # Genera los PDF (historial de la agenda y desempeño semanal)
+    "uuid-utils==…",           # Solo la importa una migración histórica (ver pyproject.toml)
     # + pines de seguridad de dependencias transitivas con CVEs conocidos
     # (pygments, requests) — ver pyproject.toml para el detalle.
     # Issue #312: antes se usaban python-jose y passlib (sin mantenimiento),
@@ -201,11 +209,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pytest==9.1.1",           # Framework de testing
-    "pytest-asyncio==1.4.0",   # Soporte para funciones async en tests
-    "httpx==0.28.1",           # Cliente HTTP para llamar a la API en los tests
-    "pytest-cov==7.1.0",       # Medir cobertura de código
-    "ruff==0.16.10",           # Linter y formateador ultrarrápido
+    "pytest==…",           # Framework de testing
+    "pytest-asyncio==…",   # Soporte para funciones async en tests
+    "httpx==…",            # Cliente HTTP para llamar a la API en los tests
+    "pytest-cov==…",       # Medir cobertura de código
+    "pypdf==…",            # Lee los PDF generados para comprobar su contenido
+    "ruff==…",             # Linter y formateador ultrarrápido
 ]
 ```
 
@@ -228,7 +237,9 @@ Esto actualiza `pyproject.toml` y `uv.lock` automáticamente — nunca se editan
 ## 5. Variables de entorno
 
 Las variables de entorno almacenan configuración sensible (contraseñas, claves, URLs)
-fuera del código fuente. **Nunca** van en el código ni en git.
+fuera del código fuente. **Nunca** van en el código ni en git. La tabla completa de
+variables, los errores de arranque y cómo se desplegaría están en
+[`docs/despliegue.md`](../docs/despliegue.md).
 
 **Paso 1:** Se copia el archivo de ejemplo:
 
@@ -1070,7 +1081,7 @@ Los tokens de sesión viajan en cookies `httpOnly` (`access_token`, `refresh_tok
 ### 14.3 Otros routers del dominio (resumen)
 
 Las tablas anteriores solo cubrían `auth.py` y `users.py` — el backend real
-tiene 14 routers más, casi todos del dominio de reciclaje. En vez de repetir el
+tiene 15 routers más, casi todos del dominio de reciclaje. En vez de repetir el
 fragmento pedagógico completo para cada uno (ver directamente el código,
 cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 
@@ -1078,21 +1089,23 @@ cada router tiene su propio docstring ¿Qué?/¿Para qué?), aquí va el mapa:
 | --------------------------- | ------------------------------- | :-------: | ----------------------------------------------------------------------------------- |
 | `geography.py`              | `/api/v1/geography`             |     4     | Localidades, conjuntos y unidades para llenar formularios dinámicos (registro, filtros). `/localidades` y `/conjuntos/{id_localidad}` son públicos (el registro los usa sin cuenta; el segundo con límite de 120/min por IP); `/conjuntos/todos` y `/conjuntos/sin-administrador` exigen sesión (el primero solo Admin Sistema). `search` mide máximo 255 caracteres (#403) |
 | `admin.py`                  | `/api/v1/admin`                 |     5     | Panel exclusivo del Admin del Sistema — vista SQL y procedimiento almacenado (Criterios 6 y 7), listado de Admins de Conjunto y activar/desactivar cuentas |
-| `admin_conjunto.py`         | `/api/v1/admin-conjunto`        |     9     | Invitación, desvinculación y reasignación de Administradores de Conjunto (RQF-016) |
-| `conjunto_panel.py`         | `/api/v1/conjunto-panel`        |     8     | Panel propio del Admin de Conjunto — solo ve/edita SUS conjuntos, nunca los de otro (datos, código de acceso, agenda del comité) |
+| `admin_conjunto.py`         | `/api/v1/admin-conjunto`        |     7     | Invitación, desvinculación y reasignación de Administradores de Conjunto (RQF-016) |
+| `conjunto_panel.py`         | `/api/v1/conjunto-panel`        |    12     | Panel propio del Admin de Conjunto — solo ve/edita SUS conjuntos, nunca los de otro (datos, código de acceso, agenda del comité y su historial en CSV y PDF, solicitud de desvinculación) |
 | `reciclador_conjunto.py`    | `/api/v1/reciclador-conjunto`   |     7     | Invitar, listar, aceptar/rechazar la relación Reciclador↔Conjunto                  |
 | `directorio.py`             | `/api/v1/directorio`            |     2     | Directorio público de recicladores y puntos de acopio                              |
-| `notificaciones.py`         | `/api/v1/notificaciones`        |     8     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, etc.)      |
-| `auditoria_conjunto.py`     | `/api/v1/auditorias-conjunto`   |     5     | Semáforo de auditoría del Reciclador — registro, historiales e historial global del Admin Sistema por semana (RQF-009) |
+| `notificaciones.py`         | `/api/v1/notificaciones`        |    10     | Notificaciones (SHUT lleno/vacío, llegada del reciclador, marcar leídas, avisos de un conjunto paginados, etc.) |
+| `auditoria_conjunto.py`     | `/api/v1/auditorias-conjunto`   |     10     | Semáforo de auditoría del Reciclador — registro, detalle, historiales (Residente, Admin de Conjunto y "mis auditorías" del Reciclador), desempeño semanal con su PDF y lista del Admin Sistema con periodo, filtros, orden y páginas, y su resumen semanal (RQF-009, issue #618) |
 | `contenido_educativo.py`    | `/api/v1/contenido-educativo`   |     9     | Catálogo de contenido educativo — lectura para todos, gestión y envío manual a conjuntos solo Admin Sistema, lecciones vistas solo Residente (RQF-004/010/013) |
 | `comunicados.py`            | `/api/v1/comunicados`           |     5     | Comunicados del conjunto — publica Admin de Conjunto, ven Residente/Reciclador (RQF-014) |
 | `novedades.py`              | `/api/v1/novedades`             |     5     | Novedades de toda la plataforma — publica Admin Sistema, ven los demás roles (RQF-015) |
-| `novedades_enviadas.py`     | `/api/v1/novedades-enviadas`    |     2     | Novedades que los usuarios le envían al Admin Sistema y su historial propio (RQF-021) |
-| `puntos_acopio.py`          | `/api/v1/admin/puntos-acopio` |     8     | Gestión de puntos de acopio del Admin Sistema — crear, editar, dar de baja e historial de comentarios (RQF-011) |
+| `novedades_enviadas.py`     | `/api/v1/novedades-enviadas`    |     4     | Novedades que los usuarios le envían al Admin Sistema y su historial propio, y la bandeja de Soporte técnico del Admin Sistema (listar y actualizar estado, prioridad y respuesta) (RQF-021) |
+| `puntos_acopio.py`          | `/api/v1/admin/puntos-acopio` |     9     | Gestión de puntos de acopio del Admin Sistema — crear, editar, dar de baja e historial de comentarios (RQF-011) |
 | `uploads.py`                | `/api/v1/uploads`               |     1     | Subida genérica de adjuntos (imagen, o PDF/Word/Excel si se pide) para comunicados, novedades, contenido educativo y la foto de los puntos de acopio. Cuota por usuario: Residente/Reciclador 3 por minuto y 5 por día, administradores 30 y 30 (429 al pasarse); cada archivo queda registrado en `archivos_subidos` con su dueño |
 | `contact.py`                | `/api/v1/contact`               |     1     | Formulario de contacto de la landing — público, 3/min por IP, reenvía el mensaje a `CONTACT_EMAIL` con `Reply-To` igual al correo de quien escribió (para responderle con "Responder"), con un aviso en el cuerpo de que esa dirección no está verificada (#403), y responde 503 si el correo no sale (#351) |
 
 Todos estos routers están cubiertos por tests en `app/tests/` (ver sección 17).
+
+La lista completa de los 104 endpoints, con quién puede usar cada uno, está en [`docs/api.md`](../docs/api.md).
 
 **Limpieza de adjuntos huérfanos (issue #395).** Quien sube una foto y nunca envía el formulario deja el archivo en `app/uploads/adjuntos/`. Este comando borra los archivos de esa carpeta que tienen más de 24 horas y que ninguna fila de la base de datos referencia. Es manual: nada lo corre solo (programarlo es del issue #317) y trabaja sobre la carpeta de la máquina donde se ejecuta; en Docker, dentro del contenedor del backend. Como borrar no se deshace, primero se corre `--simular`, que solo lista:
 
@@ -1102,6 +1115,15 @@ uv run python -m app.limpiar_adjuntos
 ```
 
 Las columnas que cuentan como "uso" están en `COLUMNAS_CON_ADJUNTOS` (`app/limpiar_adjuntos.py`). Si un modelo nuevo guarda rutas de `/uploads/adjuntos/`, hay que sumarla ahí o el comando borraría archivos que sí se usan; `test_limpiar_adjuntos.py` falla si aparece una columna de enlace sin clasificar. También cuenta como "uso" una imagen de `/uploads/adjuntos/` escrita dentro del `cuerpo_texto` de un módulo educativo (Markdown `![](ruta)`), no solo las columnas de la lista.
+
+**Retención de las fotos de evidencia de las auditorías (issue #587).** Cada auditoría guarda hasta 3 fotos en `app/uploads/evidencias-auditoria/` y nada las borraba. Este comando borra las fotos de las auditorías con más de 6 meses (180 días, `PLAZO_RETENCION` en `app/limpiar_evidencias.py`) y deja sus tres rutas en `NULL`; **la auditoría se conserva** (nivel, tema, observaciones y fecha), porque el historial y las gráficas del conjunto salen de esos datos, y la pantalla muestra "La foto ya no está disponible". Una foto compartida con una auditoría que se conserva no se borra del disco. Es manual: nada lo corre solo y trabaja sobre la carpeta de la máquina donde se ejecuta (en Docker, dentro del contenedor del backend). Como borrar no se deshace, primero `--simular`:
+
+```bash
+uv run python -m app.limpiar_evidencias --simular
+uv run python -m app.limpiar_evidencias
+```
+
+El plazo es una propuesta pendiente de aprobación del grupo y del profesor (ver `docs/gestion-proyecto/politica-retencion-fotos-evidencia.md`). Para programarlo en producción hay que agendarlo en el servidor, por ejemplo una tarea mensual que corra `python -m app.limpiar_evidencias` dentro del contenedor del backend (tarjeta #317, igual que los otros dos comandos). Si las fotos se guardan en otro servidor o servicio de archivos, solo hay que cambiar la función `borrar_archivo` de ese archivo. La migración `d606da68c80c` hizo que `auditorias_conjunto.ruta_evidencia` acepte `NULL`; la foto sigue siendo obligatoria al crear una auditoría (la exige el servicio).
 
 **Purga de tokens vencidos (issue #403).** Cuatro tablas solo reciben filas y nada las borraba: `tokens_revocados` (una por cada cierre y cada renovación de sesión), `email_verification_tokens`, `password_reset_tokens` e `invitaciones_admin_conjunto`. Desde `be/`:
 
@@ -1270,7 +1292,7 @@ def log_accion_admin(correo_admin: str, accion: str, **detalles) -> None: ...
 ## 16. Punto de entrada (`main.py`)
 
 ```python
-# app/main.py — versión condensada (el real registra 12 routers + sirve /uploads)
+# app/main.py — versión condensada (el real registra 17 routers + sirve /uploads)
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -1290,13 +1312,11 @@ app = FastAPI(
     openapi_url=None if _es_produccion else "/openapi.json",
 )
 
-# CORS — lista explícita de orígenes permitidos, NUNCA ["*"]. Mientras el
-# proyecto corre 100% local basta con los puertos de Vite; al desplegar a
-# un servidor real, se agrega ahí la URL real del frontend.
-ALLOWED_ORIGINS = [
-    "http://localhost:5173", "http://127.0.0.1:5173",
-    "http://localhost:3000", "http://127.0.0.1:3000",
-]
+# CORS — lista explícita de orígenes permitidos, NUNCA ["*"]. El origen del
+# frontend sale de FRONTEND_URL; en desarrollo se suman los puertos de Vite
+# (5173) y del frontend en Docker (3000), y con ENVIRONMENT=production solo
+# queda FRONTEND_URL.
+ALLOWED_ORIGINS = origenes_permitidos(settings.FRONTEND_URL, _es_produccion)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -1406,18 +1426,11 @@ uv run pytest app/tests/test_auth.py -v --no-cov   # --no-cov: un solo archivo n
 
 ### 17.4 Cobertura del proyecto
 
-| Módulo                         | Cobertura |
-| ------------------------------ | --------- |
-| `app/routers/auth.py`          | ≥ 95%     |
-| `app/routers/users.py`         | 100%      |
-| `app/services/auth_service.py` | ≥ 90%     |
-| `app/utils/security.py`        | 100%      |
-| `app/dependencies.py`          | ≥ 85%     |
-| **Total**                      | **≥ 90%** |
+`uv run pytest` mide la cobertura solo y **falla si baja de `fail_under`** (97, en `pyproject.toml`). En la última medición (20 de noviembre de 2026) el total fue de **97.3 %** de líneas con 1012 pruebas del backend. El detalle por archivo se ve con `uv run pytest --cov-report=term-missing`, y los resultados de cada ejecución están en [`docs/pruebas/`](../docs/pruebas/informe-pruebas-automatizadas.md).
 
 ### 17.5 Tests de autenticación (`test_auth.py`)
 
-Esta tabla solo resume `test_auth.py`. La suite completa tiene 27 archivos en `app/tests/`, uno por dominio (comunicados, novedades, auditorías, puntos de acopio, contacto, límites de longitud...), con más de 600 pruebas en total (octubre de 2026). Para ver el conteo exacto de hoy: `uv run pytest -q`.
+Esta tabla solo resume `test_auth.py`. La suite completa tiene 35 archivos en `app/tests/`, uno por dominio (comunicados, novedades, auditorías, puntos de acopio, contacto, límites de longitud...), con 915 pruebas en total (3 de noviembre de 2026). Para ver el conteo exacto de hoy: `uv run pytest -q`.
 
 | Clase de test           | Endpoint              | Casos cubiertos                                                                       |
 | ----------------------- | --------------------- | ------------------------------------------------------------------------------------- |

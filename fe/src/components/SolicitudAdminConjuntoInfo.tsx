@@ -64,7 +64,7 @@ export function SolicitudAdminConjuntoInfo({ variante = "registro" }: { variante
       className={
         esOtroConjunto
           ? "space-y-5"
-          : "space-y-5 p-5 bg-accent-50/30 dark:bg-accent-300/10 border border-accent-100 dark:border-accent-300/40 rounded-2xl"
+          : "space-y-5 p-6 bg-accent-50/30 dark:bg-accent-300/10 border border-accent-100 dark:border-accent-300/40 rounded-2xl"
       }
     >
       <div className="flex items-center gap-2">

@@ -80,8 +80,9 @@ describe("AdminNovedadesPage", () => {
     mockListar.mockResolvedValue({ items: [NOVEDAD], total: 1 });
     renderPage();
 
-    const creadoEsperado = new Date(FECHA_CREACION).toLocaleDateString();
-    const expiraEsperado = new Date(FECHA_EXPIRACION).toLocaleDateString(undefined, { timeZone: "UTC" });
+    // ¿Para qué? Issue #633 — la fecha sigue el idioma de la app (español → día/mes/año), no el del navegador.
+    const creadoEsperado = new Date(FECHA_CREACION).toLocaleDateString("es-CO");
+    const expiraEsperado = new Date(FECHA_EXPIRACION).toLocaleDateString("es-CO", { timeZone: "UTC" });
 
     await waitFor(() => {
       expect(screen.getByText(`Creado el ${creadoEsperado}`)).toBeInTheDocument();
@@ -194,18 +195,14 @@ describe("AdminNovedadesPage", () => {
       expect(mockListar).not.toHaveBeenCalledWith(8, 0, expect.objectContaining({ search: "vi" }));
     });
 
-    it("la barra recoge y expande todo el contenido de la lista", async () => {
+    it("la lista lleva su título y ya no se recoge (issue #596)", async () => {
       mockListar.mockResolvedValue({ items: [NOVEDAD], total: 1 });
-      const user = userEvent.setup();
       renderPage();
       await screen.findByText(NOVEDAD.texto);
 
-      await user.click(screen.getByRole("button", { name: /Recoger/ }));
-      expect(screen.queryByText(NOVEDAD.texto)).not.toBeInTheDocument();
-      expect(screen.queryByPlaceholderText("Buscar en el texto de la novedad…")).not.toBeInTheDocument();
-
-      await user.click(screen.getByRole("button", { name: /Ver novedades/ }));
-      expect(await screen.findByText(NOVEDAD.texto)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Novedades publicadas" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Recoger/ })).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText("Buscar en el texto de la novedad…")).toBeInTheDocument();
     });
   });
 
@@ -345,11 +342,13 @@ describe("AdminNovedadesPage", () => {
 
       const buscador = within(dialogo).getByRole("combobox", { name: "Conjuntos" });
       await user.type(buscador, "Torres");
-      await user.click(await within(dialogo).findByText(/Torres de Aranjuez/));
+      // ¿Qué? Las opciones se buscan en `screen`, no dentro del diálogo: la lista del buscador se
+      //       dibuja fuera del modal (`anchor`, issue #615) para que el scroll interno no la recorte.
+      await user.click(await screen.findByText(/Torres de Aranjuez/));
       // ¿Qué? El buscador conserva lo escrito ("Torres") al elegir — lo que se
       //       escribe ahora se suma, y la búsqueda pasa a incluir "Alpes".
       await user.type(buscador, "Alpes");
-      await user.click(await within(dialogo).findByText(/Conjunto Los Alpes/));
+      await user.click(await screen.findByText(/Conjunto Los Alpes/));
       // ¿Qué? El combobox de selección múltiple deja su lista abierta y
       //       oculta (aria-hidden) el resto del modal hasta cerrarla.
       await user.keyboard("{Escape}");

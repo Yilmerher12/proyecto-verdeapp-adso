@@ -7,6 +7,7 @@ Descripción: Schemas de comunicados del conjunto (RQF-014).
 """
 
 from datetime import date, datetime
+from enum import Enum
 from typing import Optional
 from uuid import UUID
 
@@ -21,6 +22,13 @@ from app.models.comunicado import DestinatariosComunicado, TipoComunicado
 #       la app se podía publicar un texto enorme en el feed de todos.
 # ¿Impacto? Debe coincidir con COMUNICADO_TEXTO_MAX_LENGTH de fe/src/lib/validacion.ts.
 TEXTO_MAX_LENGTH = 2000
+
+
+class VigenciaComunicado(str, Enum):
+    """¿Qué? Filtro de la lista de "mis comunicados" (issue #632): los que siguen activos o los que ya vencieron.
+    ¿Para qué? El Admin de Conjunto ve los vigentes por defecto y los vencidos como historial, en otra pestaña."""
+    VIGENTES = "VIGENTES"
+    VENCIDOS = "VENCIDOS"
 
 
 class CrearComunicadoRequest(BaseModel):

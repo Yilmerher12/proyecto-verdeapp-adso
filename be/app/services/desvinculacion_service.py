@@ -29,7 +29,7 @@ from app.services.admin_conjunto_service import (
     nombres_con_administrador_activo,
     nombres_con_invitacion_pendiente_de_otro,
 )
-from app.services.notificaciones_helpers import crear_notificacion
+from app.services.notificaciones_helpers import avisar_admins_del_sistema, crear_notificacion
 
 
 def _crear_notificacion(
@@ -85,6 +85,19 @@ def solicitar_desvinculacion(
         estado=EstadoSolicitudDesvinculacion.PENDIENTE,
     )
     db.add(solicitud)
+    # ¿Qué? Issue #617: avisa a los Administradores del Sistema que hay una solicitud por resolver.
+    # ¿Impacto? Se guarda junto con la solicitud, en el mismo commit; sin administradores activos
+    #           no se crea ningún aviso y la solicitud se guarda igual.
+    db.flush()
+    conjunto = db.get(ConjuntoResidencial, id_conjunto)
+    avisar_admins_del_sistema(
+        db,
+        tipo="DESVINCULACION_SOLICITADA",
+        mensaje=f"{administrador.nombre} {administrador.apellidos} pidió desvincularse de {conjunto.nombre_conjunto}.",
+        id_conjunto=id_conjunto,
+        id_referencia=solicitud.id,
+        id_emisor=administrador.id_usuario,
+    )
     db.commit()
     db.refresh(solicitud)
     return solicitud
